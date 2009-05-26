@@ -16,6 +16,7 @@ MODE	 = debug
 
 # BOSCHUNGIO: yes or no
 BOSCHUNGIO	= yes
+IMISIO		= no
 
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
@@ -63,6 +64,10 @@ LD_PAROC	=  -L$(LIBDIR) -lmeteoio -lfilter
 LDFLAGS_PAROC	= $(LD_PAROC)
 LDFLAGS		= $(LIBS)
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
+
+INCLUDE_ORA = -I/software/oracle/client_1/rdbms/public/
+LIBS_ORA = -L/software/oracle/client_1/lib -L/usr/lib/
+LDFLAGS_ORA = -locci -lclntsh -lstdc++
 #CCFLAGS += -DSVNREV="\"$(SVNREV)\""
 
 
@@ -136,7 +141,7 @@ seq: $(LIBDIR)/libmeteoio.a build_dynamiclibs build_staticlibs
 
 build_staticlibs: $(LIBDIR)/libfilter.a
 
-build_dynamiclibs: $(LIBDIR)/libBoschungIO.so
+build_dynamiclibs: $(LIBDIR)/libBoschungIO.so $(LIBDIR)/libImisIO.so
 
 ############## PAROC ##############
 paroc: meteoio_lib_paroc meteoio_module_paroc filter_lib_paroc
@@ -172,6 +177,10 @@ ifeq ($(BOSCHUNGIO),yes)
 	$(LDFLAGS_SEQ) $(LDFLAGS) $(shell pkg-config --libs libxml++-2.6)
 endif
 
+$(LIBDIR)/libImisIO.so: $(SRCDIR)/ImisIO.cc $(SRCDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
+ifeq ($(IMISIO),yes)
+	g++-3.3 -Wall $(DEBUG) $(INCLUDE) -Xlinker -zmuldefs $(INCLUDE_ORA) $(SRCDIR)/ImisIO.cc $(LIBS_ORA) $(LDFLAGS_ORA) -o imis
+endif
 
 meteoio.module: libmeteoioparoc.a $(SRCDIR)/PackMeteoIO_par.o
 	$(PAROCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@   $(SLFIODIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_PAROC)
