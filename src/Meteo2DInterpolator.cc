@@ -141,6 +141,7 @@ void Meteo2DInterpolator::interpolateVW(CArray2D<double>& vw){
 
   printf("[i] interpolating VW using %d stations\n", (int)vecSelectedStations.size());
   Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_LAPSE_IDWK, vecInput, vecSelectedStations, dem);
+  //Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, vecInput, vecSelectedStations, dem);
   VW.calculate(vw);
 }
 

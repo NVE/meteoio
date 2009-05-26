@@ -14,8 +14,8 @@ DEST	 = grid
 MODE	 = release
 MODE	 = debug
 
-# BOSCHUNGIO: yes or no
-BOSCHUNGIO	= yes
+# specific plugins to build: yes or no
+BOSCHUNGIO	= no
 IMISIO		= no
 
 #SVNREV_GEN	= $(shell main/version.sh)
@@ -26,7 +26,8 @@ ifeq ($(DEST),grid)		#for grid
 	#CXX	 = colorgcc
 	LINKER   = g++ -DGNU
 	PAROCC   = parocc
-	ARCH     = -march=prescott
+	#ARCH     = -march=prescott
+	ARCH     = -march=pentium4
 	OPTIM    = -fomit-frame-pointer -O3 #-fdata-sections
 else				#for Zeus
         CXX      = g++
@@ -136,6 +137,16 @@ FILTER_OBJ_PAROC  = 	$(FILTERDIR)/FilterBase_par.o \
 ####### Build rules SEQ
 
 all: seq 
+	@printf "*** MeteoIO compiled for \033[36m%s\033[0m\n" $(DEST)
+
+help:
+	@printf "MeteoIO Makefile targets for \033[36m%s\033[0m:\n" $(DEST)
+	@printf " \033[36mseq\033[0m \n"
+	@printf " \033[36mparoc\033[0m \n"
+	@printf " \033[36minstall\033[0m \n"
+	@printf " \033[36mclean\033[0m \n"
+	@printf " \033[36mdistclean\033[0m \n"
+	@printf " \033[36mdocumentation\033[0m\n"
 
 seq: $(LIBDIR)/libmeteoio.a build_dynamiclibs build_staticlibs
 
@@ -156,6 +167,14 @@ meteoio_module_paroc: meteoio.module
 clean:
 	rm -f $(SRCDIR)/*~ $(LIBDIR)/*.a $(SRCDIR)/*.o $(LIBDIR)/*.so $(FILTERDIR)/*~ $(FILTERDIR)/*.o
 
+distclean: clean
+	
+
+install:
+	@printf "Installing MeteoIO\n"
+
+documentation:
+	doxygen $(SRCDIR)/config.dox
 
 ####### Compile
 

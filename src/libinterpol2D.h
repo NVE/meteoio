@@ -23,7 +23,7 @@
 class Interpol2D {
 	public:
 		//available methods for single source and multiple sources interpolations
-		typedef enum INTERP_TYPES {I_PRESS, I_RH, I_CST, I_IDWK, I_LAPSE_CST, I_LAPSE_IDWK} interp_types;
+		typedef enum INTERP_TYPES {I_PRESS, I_RH, I_VW, I_CST, I_IDWK, I_LAPSE_CST, I_LAPSE_IDWK} interp_types;
 		typedef enum REG_TYPES {R_CST, R_LIN} reg_types;
 		
 		/**
