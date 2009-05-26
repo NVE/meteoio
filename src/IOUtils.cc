@@ -1,13 +1,13 @@
-#include "slfutils.h"
+#include "IOUtils.h"
 
-bool slfutils::checkEpsilonEquality(double val1, double val2, double epsilon){
+bool IOUtils::checkEpsilonEquality(double val1, double val2, double epsilon){
   if (((val1-epsilon) < val2) && ((val1+epsilon) > val2))
     return true;
 
   return false;
 }
 
-void slfutils::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out){
+void IOUtils::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out){
 //converts WGS84 coordinates (lat,long) to the Swiss coordinates. See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 //The elevation is supposed to be above sea level, so it does not require any conversion
 //lat and long must be decimal (and they will be converted to seconds)
@@ -34,7 +34,7 @@ void slfutils::WGS84_to_CH1903(const double& lat_in, const double& long_in, doub
 	*/
 }
 
-void slfutils::CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out){
+void IOUtils::CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out){
 //converts Swiss coordinates to WGS84 coordinates (lat,long). See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 //The elevation is supposed to be above sea level, so it does not require any conversion
 //lat and long are decimal
@@ -65,7 +65,7 @@ void slfutils::CH1903_to_WGS84(const double& east_in, const double& north_in, do
 }
 
 
-void slfutils::trim(string& str){
+void IOUtils::trim(string& str){
   size_t startpos = str.find_first_not_of(" \t\r\n"); // Find the first character position after excluding leading blank spaces  
   size_t endpos = str.find_last_not_of(" \t\r\n"); // Find the first character position from reverse af  
 
@@ -82,7 +82,7 @@ void slfutils::trim(string& str){
   - delimiter: string that separates key and value
   - return value: bool, depending on success of operation. true when line is empty
  */
-bool slfutils::readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map){
+bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map){
 
   //size_t pos = in_line.find(delimiter); //first occurence of '='
 
@@ -98,8 +98,8 @@ bool slfutils::readKeyValuePair(const string& in_line, const string& delimiter, 
       string key = in_line.substr(0, pos);
       string value = in_line.substr(pos + 1);
 
-      slfutils::trim(key);
-      slfutils::trim(value);
+      IOUtils::trim(key);
+      IOUtils::trim(value);
       //cerr << "key:" << key << " val:" << value << endl;
 
       if ((key == "") || (value==""))
@@ -113,7 +113,7 @@ bool slfutils::readKeyValuePair(const string& in_line, const string& delimiter, 
   return true;
 }
 
-bool slfutils::fileExists(const std::string& filename) {
+bool IOUtils::fileExists(const std::string& filename) {
   struct stat buffer ;
 
   if ((stat( filename.c_str(), &buffer))==0) //File exists if stat returns 0
@@ -122,7 +122,7 @@ bool slfutils::fileExists(const std::string& filename) {
   return false;
 }
 
-bool slfutils::validFileName(const std::string& filename) {
+bool IOUtils::validFileName(const std::string& filename) {
   size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces  
   if((startpos!=0) || (filename==".") || (filename==".."))
     return false;
@@ -130,7 +130,7 @@ bool slfutils::validFileName(const std::string& filename) {
   return true;
 }
 
-void slfutils::readKeyValueHeader(map<string,string>& headermap, 
+void IOUtils::readKeyValueHeader(map<string,string>& headermap, 
 				  std::istream& fin,
 				  const unsigned int& linecount, 
 				  const std::string& delimiter)
@@ -139,19 +139,19 @@ void slfutils::readKeyValueHeader(map<string,string>& headermap,
   std::string line="";
 
   //make a test for end of line encoding:
-  char eol = slfutils::getEoln(fin);
+  char eol = IOUtils::getEoln(fin);
 
   for (unsigned int ii=0; ii< linecount; ii++){
     if (std::getline(fin, line, eol)) {
       //cout << line <<endl;
       linenr++;
 
-      bool result = slfutils::readKeyValuePair(line, delimiter, headermap);
+      bool result = IOUtils::readKeyValuePair(line, delimiter, headermap);
 
       if (!result) { //  means if ((key == "") || (value==""))
 	stringstream out;
 	out << "Invalid key value pair in line: " << linenr << " of header";
-       THROW SLFException(out.str(), AT);
+       THROW IOException(out.str(), AT);
       }
     } else {
       THROW InvalidFormatException("Premature EOF while reading Header", AT);
@@ -159,7 +159,7 @@ void slfutils::readKeyValueHeader(map<string,string>& headermap,
   }
 }
 
-char slfutils::getEoln(std::istream& fin){
+char IOUtils::getEoln(std::istream& fin){
   streambuf* pbuf;
   char tmp = '0';
   int chars = 0;
@@ -192,7 +192,7 @@ char slfutils::getEoln(std::istream& fin){
   return '\n';
 }
 
-void slfutils::skipLines(std::istream& fin, unsigned int nbLines, char eoln){
+void IOUtils::skipLines(std::istream& fin, unsigned int nbLines, char eoln){
   string dummy;
   for (unsigned int ii=0; ii<nbLines; ii++){
     if(!getline(fin, dummy, eoln))
@@ -200,7 +200,7 @@ void slfutils::skipLines(std::istream& fin, unsigned int nbLines, char eoln){
   }
 }
 
-unsigned int slfutils::readLineToVec(const string& line_in, vector<string>& vecString){
+unsigned int IOUtils::readLineToVec(const string& line_in, vector<string>& vecString){
   vecString.clear();
   std::istringstream iss(line_in); //construct inputstream with the string line as input
 
@@ -217,7 +217,7 @@ unsigned int slfutils::readLineToVec(const string& line_in, vector<string>& vecS
   return vecString.size();
 }
 
-void slfutils::readDirectory(const string& path, list<string>& dirlist, const string& pattern){
+void IOUtils::readDirectory(const string& path, list<string>& dirlist, const string& pattern){
   DIR *dp;
   struct dirent *dirp;
   
@@ -242,7 +242,7 @@ void slfutils::readDirectory(const string& path, list<string>& dirlist, const st
 // generic template function convertString must be defined in the header
 
 const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-template<> bool slfutils::convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&)) {
+template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&)) {
   string s = str; 
   trim(s); //delete trailing and leading whitespaces and tabs
   
@@ -273,7 +273,7 @@ template<> bool slfutils::convertString<bool>(bool& t, const std::string str, st
   return true;
 }
 
-template<> bool slfutils::convertString<Date>(Date& t, const std::string str, std::ios_base& (*f)(std::ios_base&)) {
+template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&)) {
   string s = str; 
   trim(s); //delete trailing and leading whitespaces and tabs
   
@@ -281,11 +281,11 @@ template<> bool slfutils::convertString<Date>(Date& t, const std::string str, st
   unsigned int year, month, day, hour, minute;
   char rest[32] = "";
   if (sscanf(s.c_str(), "%u-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-    t.setDate(year, month, day, hour, minute);
+    t.setDate_IO(year, month, day, hour, minute);
   } else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
-    t.setDate(year, month, day);
+    t.setDate_IO(year, month, day);
   } else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
-    t = Date( ((double)hour)/24. + ((double)minute)/24./60. );
+    t = Date_IO( ((double)hour)/24. + ((double)minute)/24./60. );
   } else {
     return false;
   }

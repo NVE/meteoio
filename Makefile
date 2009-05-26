@@ -69,15 +69,15 @@ INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
 ######## Sources, objects, headers
 SLFIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/StationData.o \
-		$(SRCDIR)/A3DIO.o \
 		$(SRCDIR)/IOHandler.o \
+		$(SRCDIR)/IOInterface.o \
 		$(SRCDIR)/DynamicLibrary.o \
-		$(SRCDIR)/ASCIIFileIO.o \
+		$(SRCDIR)/A3DIO.o \
 		$(SRCDIR)/ConfigReader.o \
-		$(SRCDIR)/Date.o \
+		$(SRCDIR)/Date_IO.o \
 		$(SRCDIR)/Grid2DObject.o \
-		$(SRCDIR)/slfexceptions.o \
-		$(SRCDIR)/slfutils.o \
+		$(SRCDIR)/IOExceptions.o \
+		$(SRCDIR)/IOUtils.o \
 		$(SRCDIR)/libinterpol2D.o \
 		$(SRCDIR)/libinterpol1D.o \
 		$(SRCDIR)/Meteo1DResampler.o \
@@ -86,19 +86,19 @@ SLFIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/Meteo1DResampler.o \
 		$(SRCDIR)/LegacyIO.o 
 
-SLFIO_OBJ_PAROC =  $(SRCDIR)/IOHandler_par.o \
+SLFIO_OBJ_PAROC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/LegacyIO_par.o \
 		$(SRCDIR)/IOInterface_par.o \
-		$(SRCDIR)/A3DIO_par.o \
-		$(SRCDIR)/IOHandler.stub.o \
+		$(SRCDIR)/IOHandler_par.o \
+		$(SRCDIR)/IOInterface.stub.o \
 		$(SRCDIR)/LegacyIO.stub.o \
 		$(SRCDIR)/MeteoData_par.o \
 		$(SRCDIR)/StationData_par.o \
 		$(SRCDIR)/ConfigReader_par.o \
-		$(SRCDIR)/Date_par.o \
+		$(SRCDIR)/Date_IO_par.o \
 		$(SRCDIR)/Grid2DObject_par.o \
-		$(SRCDIR)/slfexceptions_par.o \
-		$(SRCDIR)/slfutils_par.o \
+		$(SRCDIR)/IOExceptions_par.o \
+		$(SRCDIR)/IOUtils_par.o \
 		$(SRCDIR)/libinterpol2D_par.o \
 		$(SRCDIR)/libinterpol1D_par.o \
 		$(SRCDIR)/Meteo1DResampler_par.o \
@@ -173,8 +173,8 @@ ifeq ($(BOSCHUNGIO),yes)
 endif
 
 
-meteoio.module: libmeteoioparoc.a $(SRCDIR)/PackSlfio_par.o
-	$(PAROCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@   $(SLFIODIR)/PackSlfio_par.o $(LDFLAGS) $(LDFLAGS_PAROC)
+meteoio.module: libmeteoioparoc.a $(SRCDIR)/PackMeteoIO_par.o
+	$(PAROCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@   $(SLFIODIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_PAROC)
 
 libmeteoioparoc.a:  $(SLFIO_OBJ_PAROC)
 	ar -r $@ $(SLFIO_OBJ_PAROC)

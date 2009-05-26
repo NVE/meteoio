@@ -10,7 +10,7 @@ MeteoBuffer::MeteoBuffer(const unsigned int& maxsize_in, const unsigned int& ini
   maxsize = maxsize_in;
 
   if (initsize_in > maxsize)
-    THROW SLFException("In constructor of MeteoBuffer: cannot initilize more than maxsize_in objects", AT);
+    THROW IOException("In constructor of MeteoBuffer: cannot initilize more than maxsize_in objects", AT);
 
   MeteoData md;
   StationData sd;
@@ -81,7 +81,7 @@ void MeteoBuffer::erase(const unsigned int& index){
   stationbuffer.erase(stationbuffer.begin()+index, stationbuffer.end());
 }
 
-unsigned int MeteoBuffer::seek(const Date& date_in){ //returns index of element, if element does not exist it returns closest index
+unsigned int MeteoBuffer::seek(const Date_IO& date_in){ //returns index of element, if element does not exist it returns closest index
   unsigned int ii = 1;
 
   if (size() <= 0) //no elements in buffer

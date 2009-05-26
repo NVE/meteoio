@@ -1,142 +1,48 @@
 #ifndef __IOHANDLER_H__
 #define __IOHANDLER_H__
 
-#include "StationData.h"
-#include "MeteoData.h"
-#include "Grid2DObject.h"
-#include "Date.h"
-#include "DynamicLibrary.h"
-#include "Array.h"
-#include "Array2D.h"
+#ifdef _PAROC_
+#error
+#endif
 
-#include <vector>
+#include "IOInterface.h"
+#include "A3DIO.h"
+#include "IOExceptions.h"
 
-/**
- * @class IOHandler
- * @brief An abstract class representing the IO Layer of the software Alpine3D. For each type of IO (File, DB, Webservice, etc)
- *        a derived class is to be created that holds the specific implementation of the purely virtual member funtions. So far 
- *        the following children have been implemented:
- * - class ASCIIFileIO is able to interface with ASCII files
- * - class BoschungIO is able to interface with the specific IO system of the company Boschung
- * - class A3DIO is a wrapper class that is able to deal with all above implementations of the IOHandler abstract base class.
- *   Which implementation is used for a specific member function can be configured in a key/value file.
- *
- * @author Thomas Egger
- * @date   2009-01-08
- */
-class IOHandler : public PluginObject {
+class IOHandler : public IOInterface {
  public:
+  // virtual IOHandler* clone() const; // lwk : not used yet
 
-  IOHandler(void (*delObj)(void*));
+  IOHandler(const std::string& configfile);
+  IOHandler(const IOHandler&);
+  IOHandler(const ConfigReader&);
+  ~IOHandler() throw();
 
-  /**
-   * @brief A virtual copy constructor used for cloning objects
-   *    
-   * Example Usage:
-   * @code
-   * IOHandler *io1,*io2;
-   * io1 = new A3DIO("io.ini");
-   * io2 = io1->clone(); 
-   * @endcode
-   * @return A pointer to the cloned object.
-   */
-  //virtual IOHandler* clone() const = 0;
+  virtual void get2DGridSize(int& nx, int& ny);
+  virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
 
-  /**
-   * @brief Get the grid size of a 2D grid in cells. The underlying mechanism may vary 
-   * (e.g. ASCIIFileIO reads the header of the DEM file to retrieve the information)
-   *    
-   * Example Usage:
-   * @code
-   * int nx, ny;
-   * A3DIO io1("io.ini");
-   * io1.get2DGridSize(nx, ny);
-   * @endcode
-   * @param nx Number of columns of the 2D grid
-   * @param ny Number of rows of the 2D grid
-   */
-  virtual void get2DGridSize(int& nx, int& ny) = 0;
+  virtual void readDEM(Grid2DObject& dem_out);
+  virtual void readLanduse(Grid2DObject& landuse_out);
 
-  /**
-   * @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the 
-   * specific 2D grid to be parsed into the Grid2DObject.
-   * @param grid_out A Grid2DObject instance 
-   * @param parameter A std::string representing some information for the function on what grid to retrieve
-   */ 
-  virtual void read2DGrid(Grid2DObject& grid_out, const string& parameter="") = 0;
+  virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo);
+  virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
 
-  /**
-   * @brief Parse the DEM (Digital Elevation Model) into the Grid2DObject
-   *    
-   * Example Usage:
-   * @code
-   * Grid2DObject dem;
-   * A3DIO io1("io.ini");
-   * io1.readDEM(dem);
-   * @endcode
-   * @param dem_out A Grid2DObject that holds the DEM
-   */
-  virtual void readDEM(Grid2DObject& dem_out) = 0;
+  virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+  virtual void readSpecialPoints(CSpecialPTSArray& pts);
 
-  /**
-   * @brief Parse the landuse model into the Grid2DObject
-   *    
-   * Example Usage:
-   * @code
-   * Grid2DObject landuse;
-   * A3DIO io1("io.ini");
-   * io1.readLanduse(landuse);
-   * @endcode
-   * @param landuse_out A Grid2DObject that holds the landuse model
-   */
-  virtual void readLanduse(Grid2DObject& landuse_out) = 0;
+  virtual void write2DGrid(const Grid2DObject& grid_in, const string& filename);
 
+  static const string ascii_src;
+  static const string boschung_src;
 
-  /**
-   * @brief See MeteoData::readMeteoData(const Date& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation).
-   */
-  virtual void readMeteoData(const Date& date_in, vector<MeteoData>& vecMeteo) = 0;
+ private:
+  void cleanup() throw();
+  void loadDynamicPlugins();
 
-  /**
-   * @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets 
-   * corresponding to the time indicated by the Date object.
-   * Matching rule: Find first data set for every station which has an event time (measurement time) that is greater 
-   * (newer) or equal to the time represented by the Date object parameter. The vector<StationData> object holds multiple 
-   * StationData objects representing meta information about the meteo stations that recorded the meteo data.
-   *    
-   * Example Usage:
-   * @code
-   * vector<MeteoData> vecMeteo;      //empty vector
-   * vector<StationData> vecStation;  //empty vector
-   * Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-   * A3DIO io1("io.ini");
-   * io1.readMeteoData(d1, vecMeteo, vecStation);
-   * @endcode
-   * @param date_in     A Date object representing the approximate date/time for the sought MeteoData objects
-   * @param vecMeteo    A vector of MeteoData objects to be filled with data
-   * @param vecStation  A vector of StationData objects to be filled with data
-   */
-  virtual void readMeteoData(const Date& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation) = 0;
-
-
-  /**
-   * @brief Parse the assimilation data into a Grid2DObject for a certain date represented by the Date object
-   *    
-   * Example Usage:
-   * @code
-   * Grid2DObject adata;
-   * Date d1(2008,06,21,11,00);       //21.6.2008 11:00
-   * A3DIO io1("io.ini");
-   * io1.readAssimilationData(d1, adata);
-   * @endcode
-   * @param date_in A Date object representing the date of the assimilation data
-   * @param da_out  A Grid2DObject that holds the assimilation data for every grid point
-   */
-  virtual void readAssimilationData(const Date& date_in, Grid2DObject& da_out) = 0;
-  
-  virtual void readSpecialPoints(CSpecialPTSArray& pts) = 0;
-
-  virtual void write2DGrid(const Grid2DObject& grid_in, const string& options="") = 0;
+  ConfigReader cfg;
+  A3DIO fileio;
+  DynamicLibrary* dynLibraryBoschung;
+  IOInterface* boschungio;
 };
 
 #endif

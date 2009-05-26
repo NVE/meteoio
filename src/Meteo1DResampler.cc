@@ -4,9 +4,9 @@ Meteo1DResampler::Meteo1DResampler(){
 
 }
 
-void Meteo1DResampler::resample(const unsigned int& index_in, const Date& date_in, MeteoBuffer& mbuffer_out){
+void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& date_in, MeteoBuffer& mbuffer_out){
   if ((index_in == 0) && (index_in >= mbuffer_out.size()))
-    THROW SLFException("[e] Not enough data to do resampling or index out of bounds", AT);
+    THROW IOException("[e] Not enough data to do resampling or index out of bounds", AT);
 
   MeteoData newmd;
   double ta, iswr, vw, rh, lwr, nswc, ts0; 
@@ -85,7 +85,7 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date& date_i
 
     mbuffer_out.insert(index_in, newmd, mbuffer_out.getStationData(index_in));
   } else {
-    THROW SLFException("[e] index of meteobuffer not sensible", AT);
+    THROW IOException("[e] index of meteobuffer not sensible", AT);
   }
 
 

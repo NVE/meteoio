@@ -33,9 +33,9 @@ const string MinMaxValue::getName() const {
   return c_name;
 }
 
-void MinMaxValue::getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime) {
+void MinMaxValue::getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) {
   minNbPoints = 1;
-  minDeltaTime = Date(2000, 1, 1, 0, 0) - Date(2000, 1, 1, 0, 0);
+  minDeltaTime = Date_IO(2000, 1, 1, 0, 0) - Date_IO(2000, 1, 1, 0, 0);
 }
 
 void MinMaxValue::prepareCheck() {
@@ -44,11 +44,11 @@ void MinMaxValue::prepareCheck() {
 
   // read the "minValue" parameter
   if (m_paramsValue.find(c_minValue) != m_paramsValue.end()) {
-    if (!slfutils::convertString<double>(m_minValue, m_paramsValue[c_minValue]))
+    if (!IOUtils::convertString<double>(m_minValue, m_paramsValue[c_minValue]))
       THROW InvalidArgumentException("parameter '"+c_minValue+"' has to be a float (or double)", AT);
   }
   if (m_paramsValue.find(c_maxValue) != m_paramsValue.end()) {
-    if (!slfutils::convertString<double>(m_maxValue, m_paramsValue[c_maxValue]))
+    if (!IOUtils::convertString<double>(m_maxValue, m_paramsValue[c_maxValue]))
       THROW InvalidArgumentException("parameter '"+c_maxValue+"' has to be a float (or double)", AT);
   }
   if (m_minValue == MeteoData::nodata && m_maxValue == MeteoData::nodata) {

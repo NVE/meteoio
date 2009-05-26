@@ -2,7 +2,7 @@
 #define ARRAY2D_H
 
 #include <vector>
-#include "slfexceptions.h"
+#include "IOExceptions.h"
 
 template <class T> class CArray2D;
 

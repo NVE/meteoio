@@ -1,5 +1,5 @@
-#ifndef __SLFUTILS_H__
-#define __SLFUTILS_H__
+#ifndef __IOUTILS_H__
+#define __IOUTILS_H__
 
 #include <sstream>
 #include <string>
@@ -12,12 +12,12 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-#include "slfexceptions.h"
-#include "Date.h"
+#include "IOExceptions.h"
+#include "Date_IO.h"
 
 using namespace std;
 
-namespace slfutils {
+namespace IOUtils {
 
   /**
    * @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
@@ -101,7 +101,7 @@ namespace slfutils {
   }
   // fully specialized template functions (implementation must not be in header)
   template<> bool convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
-  template<> bool convertString<Date>(Date& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
+  template<> bool convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 
   /**
    * Returns, with the requested type, the value associated to a key (template function). 
@@ -121,6 +121,6 @@ namespace slfutils {
       THROW ConversionFailedException(value, AT);
   }
   
-}; //end namespace slfutils
+}; //end namespace IOUtils
 
 #endif

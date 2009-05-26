@@ -2,7 +2,7 @@
 #define ARRAY_H
 
 #include <vector>
-#include "slfexceptions.h"
+#include "IOExceptions.h"
 
 /**
  * @class CArray

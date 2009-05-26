@@ -36,7 +36,7 @@ void FilterBase::setParamValue(const string& name, const string& value) {
 void FilterBase::prepareCheck() {
   // read the "isSoft" parameter
   if (m_paramsValue.find(c_isSoft) != m_paramsValue.end()) {
-    if (!slfutils::convertString<bool>(m_isSoft, m_paramsValue[c_isSoft])) 
+    if (!IOUtils::convertString<bool>(m_isSoft, m_paramsValue[c_isSoft])) 
       THROW InvalidArgumentException("parameter '"+c_isSoft+"' has to be a boolean",AT);
   }
 }

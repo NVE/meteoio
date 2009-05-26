@@ -48,10 +48,10 @@ bool StationData::operator==(const StationData& in) const{
   const double long_epsilon = grid_epsilon / earth_radius;	//in degrees. small angle, so sin(x)=x
   const double lat_epsilon = long_epsilon/2.;			//in degrees. Since long is for 360deg and lat only 180, then epsilonj is 1/2
 
-  return (slfutils::checkEpsilonEquality(longitude, in.longitude, long_epsilon)
-	  && slfutils::checkEpsilonEquality(latitude, in.latitude, lat_epsilon) 
-	  && slfutils::checkEpsilonEquality(eastCoordinate, in.eastCoordinate, grid_epsilon) 
-	  && slfutils::checkEpsilonEquality(northCoordinate, in.northCoordinate, grid_epsilon)
+  return (IOUtils::checkEpsilonEquality(longitude, in.longitude, long_epsilon)
+	  && IOUtils::checkEpsilonEquality(latitude, in.latitude, lat_epsilon) 
+	  && IOUtils::checkEpsilonEquality(eastCoordinate, in.eastCoordinate, grid_epsilon) 
+	  && IOUtils::checkEpsilonEquality(northCoordinate, in.northCoordinate, grid_epsilon)
 	  && (altitude == in.altitude));
 	  // && (stationName == in.stationName)); //HACK: stationName not part of check, since it is not always read (example: meteo1d meteo2d files)
 }

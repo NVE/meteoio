@@ -2,7 +2,7 @@
 #define __GRID2DOBJECT_H__
 
 #include "Array2D.h"
-#include "slfexceptions.h"
+#include "IOExceptions.h"
 
 /**
  * @class Grid2DObject

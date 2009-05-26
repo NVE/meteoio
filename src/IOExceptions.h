@@ -1,5 +1,5 @@
-#ifndef __SLFEXCEPTIONS_H__
-#define __SLFEXCEPTIONS_H__
+#ifndef __IOEXCEPTIONS_H__
+#define __IOEXCEPTIONS_H__
 
 #include <exception>
 #include <string>
@@ -10,15 +10,15 @@
 #define AT __FILE__ ":" TOSTRING(__LINE__)
 
 /**
- * @class SLFException
+ * @class IOException
  * @brief The basic exception class adjusted for the needs of SLF software
  *
  * @author Thomas Egger
  */
-class SLFException : public std::exception {
+class IOException : public std::exception {
  public:
-  SLFException(const std::string& message="SLFException occured", const std::string& position="");
-  ~SLFException() throw();
+  IOException(const std::string& message="IOException occured", const std::string& position="");
+  ~IOException() throw();
   const char* what() const throw();
 
  protected:
@@ -31,10 +31,10 @@ class SLFException : public std::exception {
  *
  * @author Thomas Egger
  */
-class FileNotFoundException : public SLFException {
+class FileNotFoundException : public IOException {
  public:
  FileNotFoundException(const std::string& filename="",
-		       const std::string& position="") : SLFException("FileNotFoundException: " + filename,position){}
+		       const std::string& position="") : IOException("FileNotFoundException: " + filename,position){}
 };
 
 /**
@@ -43,10 +43,10 @@ class FileNotFoundException : public SLFException {
  *
  * @author Thomas Egger
  */
-class FileAccessException : public SLFException {
+class FileAccessException : public IOException {
  public:
  FileAccessException(const std::string& filename="",
-		     const std::string& position="") : SLFException("FileAccessException: " + filename,position){}
+		     const std::string& position="") : IOException("FileAccessException: " + filename,position){}
 };
 
 /**
@@ -55,10 +55,10 @@ class FileAccessException : public SLFException {
  *
  * @author Thomas Egger
  */
-class InvalidFileNameException : public SLFException {
+class InvalidFileNameException : public IOException {
  public:
   InvalidFileNameException(const std::string& filename="",
-			   const std::string& position="") : SLFException("InvalidFileNameException: " + filename, position){}
+			   const std::string& position="") : IOException("InvalidFileNameException: " + filename, position){}
 };
 
 /**
@@ -67,10 +67,10 @@ class InvalidFileNameException : public SLFException {
  *
  * @author Thomas Egger
  */
-class InvalidFormatException : public SLFException {
+class InvalidFormatException : public IOException {
  public:
   InvalidFormatException(const std::string& message="",
-			 const std::string& position="") : SLFException("InvalidFormatException: " + message, position){}
+			 const std::string& position="") : IOException("InvalidFormatException: " + message, position){}
 };
 
 /**
@@ -79,10 +79,10 @@ class InvalidFormatException : public SLFException {
  *
  * @author Thomas Egger
  */
-class IndexOutOfBoundsException : public SLFException {
+class IndexOutOfBoundsException : public IOException {
  public:
   IndexOutOfBoundsException(const std::string& message="",
-			    const std::string& position="") : SLFException("IndexOutOfBoundsException: " + message, position){}
+			    const std::string& position="") : IOException("IndexOutOfBoundsException: " + message, position){}
 };
 
 /**
@@ -91,10 +91,10 @@ class IndexOutOfBoundsException : public SLFException {
  *
  * @author Thomas Egger
  */
-class ConversionFailedException : public SLFException {
+class ConversionFailedException : public IOException {
  public:
   ConversionFailedException(const std::string& message="",
-			    const std::string& position="") : SLFException("ConversionFailedException: " + message, position){}
+			    const std::string& position="") : IOException("ConversionFailedException: " + message, position){}
 };
 
 /**
@@ -103,10 +103,10 @@ class ConversionFailedException : public SLFException {
  *
  * @author Florian Hof
  */
-class InvalidArgumentException : public SLFException {
+class InvalidArgumentException : public IOException {
  public:
   InvalidArgumentException(const std::string& message="",
-			 const std::string& position="") : SLFException("InvalidArgumentException: " + message, position){}
+			 const std::string& position="") : IOException("InvalidArgumentException: " + message, position){}
 };
 
 /**
@@ -115,10 +115,10 @@ class InvalidArgumentException : public SLFException {
  *
  * @author Florian Hof
  */
-class UnknownValueException : public SLFException {
+class UnknownValueException : public IOException {
  public:
   UnknownValueException(const std::string& message="",
-			 const std::string& position="") : SLFException("UnknownValueException: " + message, position){}
+			 const std::string& position="") : IOException("UnknownValueException: " + message, position){}
 };
 
 /**
@@ -127,10 +127,10 @@ class UnknownValueException : public SLFException {
  *
  * @author Florian Hof
  */
-class NoAvailableDataException : public SLFException {
+class NoAvailableDataException : public IOException {
  public:
   NoAvailableDataException(const std::string& message="",
-			 const std::string& position="") : SLFException("NoAvailableDataException: " + message, position){}
+			 const std::string& position="") : IOException("NoAvailableDataException: " + message, position){}
 };
 
 
@@ -141,8 +141,8 @@ class NoAvailableDataException : public SLFException {
 #undef THROW
 #endif
 #define THROW
-#ifndef __SLFEXCEPTION_CC__
-#define SLFException(a,b) std::cout<<"SLFException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
+#ifndef __IOException_CC__
+#define IOException(a,b) std::cout<<"IOException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
 #define FileNotFoundException(a,b) std::cout<<"FileNotFoundException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
 #define FileAccessException(a,b) std::cout<<"FileAccessException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
 #define InvalidFileNameException(a,b) std::cout<<"InvalidFileNameException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
@@ -152,9 +152,9 @@ class NoAvailableDataException : public SLFException {
 #define InvalidArgumentException(a,b) std::cout<<"InvalidArgumentException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
 #define UnknownValueException(a,b) std::cout<<"UnknownValueException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
 #define NoAvailableDataException(a,b) std::cout<<"NoAvailableDataException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#endif /*__SLFEXCEPTION_CC__*/
+#endif /*__IOException_CC__*/
 #else
 #define THROW throw 
 #endif /*_PAROC_*/
 
-#endif /*__SLFEXCEPTIONS_H__*/
+#endif /*__IOException_H__*/

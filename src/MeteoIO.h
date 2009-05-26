@@ -23,7 +23,7 @@
 #include "Array.h"	//HACK
 #include "Array2D.h"
 #include "Array3D.h"
+#include "IOInterface.h"
 #include "IOHandler.h"
-#include "A3DIO.h"
 
 #endif

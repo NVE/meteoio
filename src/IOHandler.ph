@@ -1,10 +1,10 @@
-#ifndef __A3DIO_H__
-#define __A3DIO_H__
+#ifndef __IOHANDLER_H__
+#define __IOHANDLER_H__
 
-#include "IOHandler.h"
-#include "ASCIIFileIO.h"
+#include "IOInterface.h"
+#include "A3DIO.h"
 #include "LegacyIO.ph"
-#include "slfexceptions.h"
+#include "IOExceptions.h"
 
 /*#include "ConfigReader.h"
 #include "StationData.h"
@@ -15,13 +15,13 @@
 
 #include "marshal_Alpine3D.h"
 
-parclass A3DIO;
+parclass IOHandler;
 
-parclass A3DIO{ // Note : No heritage here for POPC++ : a parclass cannot herit from a class
+parclass IOHandler{ // Note : No heritage here for POPC++ : a parclass cannot herit from a class
   classuid(1003);
  public:
-  A3DIO(const string& configfile) @{ power=100 ?: 50; };
-  ~A3DIO();
+  IOHandler(const string& configfile) @{ power=100 ?: 50; };
+  ~IOHandler();
 
   virtual void get2DGridSize(int& nx, int& ny);
   virtual void read2DGrid([out]Grid2DObject& dem_out, const string& parameter="");
@@ -50,9 +50,9 @@ parclass A3DIO{ // Note : No heritage here for POPC++ : a parclass cannot herit 
   void loadDynamicPlugins();
   
   ConfigReader cfg;
-  ASCIIFileIO fileio;
+  A3DIO fileio;
   DynamicLibrary* dynLibraryBoschung;
-  IOHandler* boschungio;
+  IOInterface* boschungio;
 };
 
 #endif

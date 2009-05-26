@@ -1,8 +1,8 @@
 #ifndef __CONFIGREADER_H__
 #define __CONFIGREADER_H__
 
-#include "slfutils.h"
-#include "slfexceptions.h"
+#include "IOUtils.h"
+#include "IOExceptions.h"
 
 #include <fstream>
 #include <string>
@@ -54,7 +54,7 @@ class ConfigReader {
    * @param t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
    */
   template <class T> void getValue(const std::string& key, T& t) const {
-    slfutils::getValueForKey<T>(properties, key, t);
+    IOUtils::getValueForKey<T>(properties, key, t);
   }
 
   /** 

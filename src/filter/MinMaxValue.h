@@ -22,7 +22,7 @@ class MinMaxValue : public FilterValue1Stn {
   
   const string getName() const;
 
-  void getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime);
+  void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
 
   /** 
    * Registers the filter's definition to the FilterFacade's filter list. 

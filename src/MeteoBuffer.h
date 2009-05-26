@@ -1,7 +1,7 @@
 #ifndef __METEOBUFFER_H__
 #define __METEOBUFFER_H__
 
-#include "Date.h"
+#include "Date_IO.h"
 #include "MeteoData.h"
 #include "StationData.h"
 
@@ -90,12 +90,12 @@ class MeteoBuffer {
 
   /**
    * @brief Find the index of the MeteoData object in the ring buffer, that matches the date_in parameter best
-   * @param date_in Date of MeteoData object
-   * @return unsigned int that represents the index of the element with the specified date, or the index closest to the Date
+   * @param date_in Date_IO of MeteoData object
+   * @return unsigned int that represents the index of the element with the specified date, or the index closest to the Date_IO
    *         if no element is found it returns MeteoBuffer::npos
    *
    */  
-  unsigned int seek(const Date& date_in); //returns index of element, if element does not exist in 
+  unsigned int seek(const Date_IO& date_in); //returns index of element, if element does not exist in 
 
 
   static const unsigned int npos = (unsigned int)-1;             ///<npos is the out-of-range value

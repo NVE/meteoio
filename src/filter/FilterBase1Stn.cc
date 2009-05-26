@@ -35,7 +35,7 @@ MeteoData& MeteoBufferIterator::getPrevious(){
 MeteoData& MeteoBufferIterator::getPreviousUnfiltered(){
   if (m_iFilteredElement != MeteoBuffer::npos) {
     // switch from filtered buffer to unfiltered buffer
-    Date& currDate = m_filteredMeteoBuffer.getMeteoData(m_iFilteredElement).date;
+    Date_IO& currDate = m_filteredMeteoBuffer.getMeteoData(m_iFilteredElement).date;
     m_iFilteredElement = MeteoBuffer::npos;
     m_iUnfilteredElement = m_unfilteredMeteoBuffer.seek(currDate);
   }

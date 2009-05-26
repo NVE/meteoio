@@ -1,7 +1,7 @@
 #ifndef __METEODATA_H__
 #define __METEODATA_H__
 
-#include "Date.h"
+#include "Date_IO.h"
 #include "Laws.h"
 #include <string>
 #include <sstream>
@@ -9,7 +9,7 @@
 
 /**
  * @class MeteoData
- * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date object)
+ * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date_IO object)
  *
  * @author Thomas Egger
  * @date   2008-12-05
@@ -23,13 +23,13 @@ class MeteoData : POPBase {
 #endif  
  public:
   /**
-   * @brief The default constructor initializing every double attribute to nodata and the Date to julian==0.0
+   * @brief The default constructor initializing every double attribute to nodata and the Date_IO to julian==0.0
    */
   MeteoData(void);
 
   /**
    * @brief A constructor that takes one to eight arguments
-   * @param date_in A Date object representing the time of the measurement
+   * @param date_in A Date_IO object representing the time of the measurement
    * @param ta AIR TEMPERATURE in CELSIUS (default MeteoData::nodata)
    * @param iswr Incoming SHORTWAVE radiation in W m-2 (default MeteoData::nodata)
    * @param vw Wind VELOCITY in m s-1 (default MeteoData::nodata)
@@ -38,7 +38,7 @@ class MeteoData : POPBase {
    * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default MeteoData::nodata)
    * @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default MeteoData::nodata)
    */
-  MeteoData(const Date& date_in, 
+  MeteoData(const Date_IO& date_in, 
 	    const double& ta=nodata, 
 	    const double& iswr=nodata, 
 	    const double& vw=nodata, 
@@ -49,7 +49,7 @@ class MeteoData : POPBase {
 
   /**
    * @brief General setter function, requires one to eight arguments
-   * @param date_in A Date object representing the time of the measurement
+   * @param date_in A Date_IO object representing the time of the measurement
    * @param ta AIR TEMERATURE in KELVIN (default MeteoData::nodata)
    * @param iswr Incoming SHORTWAVE radiation in W m-2 (default MeteoData::nodata)
    * @param vw Wind VELOCITY in m s-1 (default MeteoData::nodata)
@@ -58,7 +58,7 @@ class MeteoData : POPBase {
    * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default MeteoData::nodata)
    * @param ts0 Soil or snow bottom TEMPERATURE in KELVIN (default MeteoData::nodata)
    */
-  void setMeteoData(const Date& date_in, 
+  void setMeteoData(const Date_IO& date_in, 
 		    const double& ta=nodata, 
 		    const double& iswr=nodata, 
 		    const double& vw=nodata, 
@@ -84,7 +84,7 @@ class MeteoData : POPBase {
 
 
   double ta, iswr, vw, rh, lwr, nswc, ts0; //direct access allowed
-  Date date;///<Date/Time of the measurement
+  Date_IO date;///<Date_IO/Time of the measurement
 
 };
 

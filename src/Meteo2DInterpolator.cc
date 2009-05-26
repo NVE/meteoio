@@ -7,7 +7,7 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Grid2DObject& dem_in,
 					 const vector<StationData>& vecMeta) : dem(dem_in), SourcesData(vecData), SourcesMeta(vecMeta){
 //check whether the size of the two vectors is equal
 	if (vecData.size() != vecMeta.size())
-		THROW SLFException("Size of vector<MeteoData> and vector<StationData> are no equal", AT);
+		THROW IOException("Size of vector<MeteoData> and vector<StationData> are no equal", AT);
 
 }
 

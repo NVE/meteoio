@@ -17,7 +17,7 @@ NoObservedChange::NoObservedChange() :
 
   // initialization of interpreted parameters to default values
   m_minNbPoints = 2;
-  m_minDeltaTime = Date(2000, 1, 1, 0, 1) - Date(2000, 1, 1, 0, 0); // 1 min
+  m_minDeltaTime = Date_IO(2000, 1, 1, 0, 1) - Date_IO(2000, 1, 1, 0, 0); // 1 min
 }
 
 FilterBase1Stn* createNoObservedChange() {
@@ -33,7 +33,7 @@ const string NoObservedChange::getName() const {
   return c_name;
 }
 
-void NoObservedChange::getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime) {
+void NoObservedChange::getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) {
   minNbPoints = m_minNbPoints;
   minDeltaTime = m_minDeltaTime;
 }
@@ -44,11 +44,11 @@ void NoObservedChange::prepareCheck() {
 
   // read the parameters
   if (m_paramsValue.find(c_minNbPoints) != m_paramsValue.end()) {
-    if (!slfutils::convertString<unsigned int>(m_minNbPoints, m_paramsValue[c_minNbPoints])) 
+    if (!IOUtils::convertString<unsigned int>(m_minNbPoints, m_paramsValue[c_minNbPoints])) 
       THROW InvalidArgumentException("parameter '"+c_minNbPoints+"' has to be an unsigned integer", AT);
   }
   if (m_paramsValue.find(c_minDeltaTime) != m_paramsValue.end()) {
-    if (!slfutils::convertString<Date>(m_minDeltaTime, m_paramsValue[c_minDeltaTime])) 
+    if (!IOUtils::convertString<Date_IO>(m_minDeltaTime, m_paramsValue[c_minDeltaTime])) 
       THROW InvalidArgumentException("parameter '"+c_minDeltaTime+"' has to be a time (format HH:MM)", AT);
   }
   if (m_paramsValue.find(c_minNbPoints) != m_paramsValue.end() && m_paramsValue.find(c_minDeltaTime) != m_paramsValue.end()) {

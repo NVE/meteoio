@@ -24,7 +24,7 @@ class NoObservedChange : public FilterValue1Stn {
   
   const string getName() const;
 
-  void getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime);
+  void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
 
   /** 
    * Registers the filter's definition to the FilterFacade's filter list. 
@@ -46,7 +46,7 @@ class NoObservedChange : public FilterValue1Stn {
   unsigned int m_minNbPoints;
 
   /** The minimal time frame (delta time) before declaring a NOC (default is 1 minute) */
-  Date m_minDeltaTime;
+  Date_IO m_minDeltaTime;
 
 };
 

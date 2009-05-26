@@ -1,5 +1,5 @@
 #include "FilterFacade.h"
-#include "IOHandler.h"
+#include "IOInterface.h"
 #include "ConfigReader.h"
 
 // references to each filters
@@ -122,7 +122,7 @@ void FilterFacade::addActiveFilters(const string& filename) {
   FilterBase1Stn* filter1Stn = NULL;
   FilterBaseMStn* filterMStn = NULL;
 
-  if (!slfutils::fileExists(filename)) THROW FileNotFoundException(filename, AT);
+  if (!IOUtils::fileExists(filename)) THROW FileNotFoundException(filename, AT);
   inputFileStream.open (filename.c_str(), ifstream::in);
   if (inputFileStream.fail()) THROW FileAccessException(filename,AT);
 
@@ -233,11 +233,11 @@ void FilterFacade::clearActiveFilters() {
   m_activeFiltersMStn.clear();
 }
 
-void FilterFacade::getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime) {
+void FilterFacade::getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) {
   minNbPoints = 1;
-  minDeltaTime = Date(2000, 1, 1, 0, 0) - Date(2000, 1, 1, 0, 0);
+  minDeltaTime = Date_IO(2000, 1, 1, 0, 0) - Date_IO(2000, 1, 1, 0, 0);
   unsigned int minNbPointsTmp = minNbPoints;
-  Date minDeltaTimeTmp = minDeltaTime;
+  Date_IO minDeltaTimeTmp = minDeltaTime;
   vector<FilterBase1Stn*>::iterator iter1;
   for( iter1 = m_activeFilters1Stn.begin(); iter1 != m_activeFilters1Stn.end(); ++iter1 ) {
     (*iter1)->getMinimalWindow(minNbPointsTmp, minDeltaTimeTmp);
@@ -276,7 +276,7 @@ void FilterFacade::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filt
     ;// all right
   } else {
     tmpStringStream << "Existing content in filteredMeteoBuffer prevents to insert at a previous date";
-    THROW SLFException(tmpStringStream.str(), AT);
+    THROW IOException(tmpStringStream.str(), AT);
   }
   vector<FilterBase1Stn*>::iterator iter;
   for( iter = m_activeFilters1Stn.begin(); iter != m_activeFilters1Stn.end(); ++iter ) {

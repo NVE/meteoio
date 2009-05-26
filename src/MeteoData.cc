@@ -5,15 +5,15 @@ using namespace std;
 const double MeteoData::nodata = -999.0;
 
 MeteoData::MeteoData(){
-  setMeteoData(Date(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata);
+  setMeteoData(Date_IO(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata);
 }
 
-MeteoData::MeteoData(const Date& date_in, const double& ta_in, const double& iswr_in, 
+MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
 		     const double& vw_in, const double& rh_in, const double& lwr_in, const double& nswc_in, const double& ts0_in){
   setMeteoData(date_in, ta_in, iswr_in, vw_in, rh_in, lwr_in, nswc_in, ts0_in);
 }
 
-void MeteoData::setMeteoData(const Date& date_in, const double& ta_in, const double& iswr_in, 
+void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
 			     const double& vw_in, const double& rh_in, const double& lwr_in, const double& nswc_in, const double& ts0_in){
 
   date = date_in;
@@ -73,7 +73,7 @@ bool MeteoData::operator!=(const MeteoData& in) const{
 const string MeteoData::toString() const{
   stringstream tmpstr;
 
-  tmpstr << setprecision(10) << "Date: " << date.toString() << endl 
+  tmpstr << setprecision(10) << "Date_IO: " << date.toString() << endl 
 	 << setw(6) << "ta: " << setw(15) << ta << endl
 	 << setw(6) << "iswr: " << setw(15) << iswr << endl
 	 << setw(6) << "vw: " << setw(15) << vw  << endl

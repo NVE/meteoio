@@ -30,9 +30,9 @@ const string MaxValue::getName() const {
   return c_name;
 }
 
-void MaxValue::getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime) {
+void MaxValue::getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) {
   minNbPoints = 1;
-  minDeltaTime = Date(2000, 1, 1, 0, 0) - Date(2000, 1, 1, 0, 0);
+  minDeltaTime = Date_IO(2000, 1, 1, 0, 0) - Date_IO(2000, 1, 1, 0, 0);
 }
 
 void MaxValue::prepareCheck() {
@@ -41,7 +41,7 @@ void MaxValue::prepareCheck() {
 
   // read the "limitValue" parameter
   if (m_paramsValue.find(c_limitValue) != m_paramsValue.end()) {
-    if (!slfutils::convertString<double>(m_limitValue, m_paramsValue[c_limitValue]))
+    if (!IOUtils::convertString<double>(m_limitValue, m_paramsValue[c_limitValue]))
       THROW InvalidArgumentException("parameter '"+c_limitValue+"' has to be a float (or double)", AT);
   } else {
     THROW InvalidArgumentException("mandatory parameter '"+c_limitValue+"' not found", AT);

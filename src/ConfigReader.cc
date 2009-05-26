@@ -19,12 +19,12 @@ ConfigReader::ConfigReader(const std::string& filename/*, const std::string& del
   //Read first line -> if not [Parameters] -> throw WrongFormatException
   //Read Key Value Pairs and put them into map 
   file = filename;
-  if (!slfutils::validFileName(filename)) THROW InvalidFileNameException(filename,AT);
+  if (!IOUtils::validFileName(filename)) THROW InvalidFileNameException(filename,AT);
 
   int linenr = 0;
 
   //Check whether file exists
-  if (!slfutils::fileExists(filename)) THROW FileNotFoundException(filename, AT);
+  if (!IOUtils::fileExists(filename)) THROW FileNotFoundException(filename, AT);
 
   //Open file
   fin.open (filename.c_str(), ifstream::in);
@@ -66,7 +66,7 @@ bool ConfigReader::readConfigLine(std::istream& fin, int lineNb, int& lineType, 
     //cout << "[D] readConfigLine lineNb="<<lineNb<<" lineType="<<lineType<<" str1='"<<str1<<"' str2='"<<str2<<"'."<<endl;
     return isSuccess;
   }
-  slfutils::trim(line);
+  IOUtils::trim(line);
 
   if (line[0] == ';' || line[0] == '#') {
     // handle comment
@@ -81,7 +81,7 @@ bool ConfigReader::readConfigLine(std::istream& fin, int lineNb, int& lineType, 
     if (pos != line.npos) {
       str1 = line.substr(1, pos-1);
       line = line.substr(pos+1);
-      slfutils::trim(line);
+      IOUtils::trim(line);
       if (line.length() > 0 && line[0] != ';' && line[0] != '#'){
         tmpStringStream << "Invalid non-comment data at line "<<lineNb<<" after section ["<<str1<<"].";
         THROW InvalidFormatException(tmpStringStream.str(), AT);
@@ -99,8 +99,8 @@ bool ConfigReader::readConfigLine(std::istream& fin, int lineNb, int& lineType, 
       lineType = CfgLineKeyValue;
       str1 = line.substr(0, pos);
       str2 = line.substr(pos + 1);
-      slfutils::trim(str1);
-      slfutils::trim(str2);
+      IOUtils::trim(str1);
+      IOUtils::trim(str2);
       if (str1 == "") {
         tmpStringStream << "Unallowed empty key at line "<<lineNb<<" of config file.";
         THROW InvalidFormatException(tmpStringStream.str(), AT);

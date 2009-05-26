@@ -1,11 +1,11 @@
 #ifndef FILTERBASE_H_INCLUDED
 #define FILTERBASE_H_INCLUDED
 
-#include "slfutils.h"
+#include "IOUtils.h"
 #include "MeteoData.h"
 #include "StationData.h"
 #include "MeteoBuffer.h"
-#include "slfexceptions.h"
+#include "IOExceptions.h"
 
 #include <string>
 #include <vector>
@@ -54,7 +54,7 @@ class FilterBase {
    * @param minNbPoints   [out] The minimal number of measures. Returns 1 for single-value filters (for ex. min-max).
    * @param minDeltaTime   [out] The minimal delta of the time frame. Returns an empty delta for single-value filters. 
    */
-  virtual void getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime) = 0;
+  virtual void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) = 0;
 
   // parameters handling
 

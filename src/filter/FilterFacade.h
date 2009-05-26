@@ -148,7 +148,7 @@ class FilterFacade {
    * @param minNbPoints   [out] The minimal number of measures. Returns 1 for single-value filters (for ex. min-max).
    * @param minDeltaTime   [out] The minimal delta of the time frame. Returns an empty delta for single-value filters. 
    */
-  void getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime);
+  void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
 
   /**
    * Make some initialisation and parameters' validation before the real checks.

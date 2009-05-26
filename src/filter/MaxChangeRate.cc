@@ -35,9 +35,9 @@ const string MaxChangeRate::getName() const {
   return c_name;
 }
 
-void MaxChangeRate::getMinimalWindow(unsigned int& minNbPoints, Date& minDeltaTime) {
+void MaxChangeRate::getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) {
   minNbPoints = 2;
-  minDeltaTime = Date(2000, 1, 1, 0, 0) - Date(2000, 1, 1, 0, 0);
+  minDeltaTime = Date_IO(2000, 1, 1, 0, 0) - Date_IO(2000, 1, 1, 0, 0);
 }
 
 void MaxChangeRate::prepareCheck() {
@@ -47,7 +47,7 @@ void MaxChangeRate::prepareCheck() {
   // read the parameters
   if (m_paramsValue.find(c_maxRate) != m_paramsValue.end()) {
     if (m_paramsValue.find(c_maxIncrRate) == m_paramsValue.end() && m_paramsValue.find(c_maxDecrRate) == m_paramsValue.end()) {
-      if (!slfutils::convertString<double>(m_maxIncrRate, m_paramsValue[c_maxRate])) 
+      if (!IOUtils::convertString<double>(m_maxIncrRate, m_paramsValue[c_maxRate])) 
         THROW InvalidArgumentException("parameter '"+c_maxRate+"' has to be a float (or double)", AT);
       m_maxDecrRate = m_maxIncrRate;
     } else {
@@ -55,11 +55,11 @@ void MaxChangeRate::prepareCheck() {
     }
   } else {
     if (m_paramsValue.find(c_maxIncrRate) != m_paramsValue.end()) {
-      if (!slfutils::convertString<double>(m_maxIncrRate, m_paramsValue[c_maxIncrRate])) 
+      if (!IOUtils::convertString<double>(m_maxIncrRate, m_paramsValue[c_maxIncrRate])) 
         THROW InvalidArgumentException("parameter '"+c_maxIncrRate+"' has to be a float (or double)", AT);
     }
     if (m_paramsValue.find(c_maxDecrRate) != m_paramsValue.end()) {
-      if (!slfutils::convertString<double>(m_maxDecrRate, m_paramsValue[c_maxDecrRate])) 
+      if (!IOUtils::convertString<double>(m_maxDecrRate, m_paramsValue[c_maxDecrRate])) 
         THROW InvalidArgumentException("parameter '"+c_maxDecrRate+"' has to be a float (or double)", AT);
     }
     if (m_maxIncrRate == MeteoData::nodata && m_maxDecrRate == MeteoData::nodata) {

@@ -33,14 +33,14 @@ const string& FilterValue::getMeasureName() const {
 
 double& FilterValue::getMeasureValue(MeteoData& data) const {
   if (! m_measurePtr) {
-    THROW SLFException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
+    THROW IOException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
   }
   return data.*m_measurePtr;
 }
 
 const double& FilterValue::getMeasureValue(const MeteoData& data) const {
   if (! m_measurePtr) {
-    THROW SLFException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
+    THROW IOException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
   }
   return data.*m_measurePtr;
 }
