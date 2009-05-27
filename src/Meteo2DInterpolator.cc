@@ -1,6 +1,7 @@
 #include "Meteo2DInterpolator.h"
 
 using namespace std;
+using namespace IOUtils;
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Grid2DObject& dem_in,
 					 const vector<MeteoData>& vecData,
@@ -48,7 +49,7 @@ void Meteo2DInterpolator::interpolateNSWC(CArray2D<double>& nswc){
   unsigned int datacount = SourcesData.size();
 
   for (unsigned int ii=0; ii<datacount; ii++){
-    if(SourcesData[ii].nswc != MeteoData::nodata) {
+    if(SourcesData[ii].nswc != nodata) {
       //cout << SourcesData[ii].nswc << endl;
       vecSelectedStations.push_back(SourcesMeta[ii]);
       vecInput.push_back(SourcesData[ii].nswc);
@@ -68,10 +69,10 @@ void Meteo2DInterpolator::interpolateRH(CArray2D<double>& rh, CArray2D<double>& 
   unsigned int rh_count=0;
 
   for (unsigned int ii=0; ii<datacount; ii++){
-    if(SourcesData[ii].rh != MeteoData::nodata) {
+    if(SourcesData[ii].rh != nodata) {
       //cout << SourcesData[ii].rh << endl;
 	rh_count++;
-	if(SourcesData[ii].ta != MeteoData::nodata) {
+	if(SourcesData[ii].ta != nodata) {
 		vecSelectedStations.push_back(SourcesMeta[ii]);
 		vecInput.push_back(SourcesData[ii].rh);
 		vecExtraInput.push_back(SourcesData[ii].ta);
@@ -89,7 +90,7 @@ void Meteo2DInterpolator::interpolateRH(CArray2D<double>& rh, CArray2D<double>& 
 	vecInput.clear();
 	vecExtraInput.clear();
 	for (unsigned int ii=0; ii<datacount; ii++){
-		if(SourcesData[ii].rh != MeteoData::nodata) {
+		if(SourcesData[ii].rh != nodata) {
 			//cout << SourcesData[ii].rh << endl;
 			vecSelectedStations.push_back(SourcesMeta[ii]);
 			vecInput.push_back(SourcesData[ii].rh);
@@ -108,7 +109,7 @@ void Meteo2DInterpolator::interpolateTA(CArray2D<double>& ta){
   unsigned int datacount = SourcesData.size();
 
   for (unsigned int ii=0; ii<datacount; ii++){
-    if(SourcesData[ii].ta != MeteoData::nodata) {
+    if(SourcesData[ii].ta != nodata) {
       //cout << SourcesData[ii].ta << endl;
       vecSelectedStations.push_back(SourcesMeta[ii]);
       vecInput.push_back(SourcesData[ii].ta);
@@ -132,7 +133,7 @@ void Meteo2DInterpolator::interpolateVW(CArray2D<double>& vw){
   unsigned int datacount = SourcesData.size();
 
   for (unsigned int ii=0; ii<datacount; ii++){
-    if(SourcesData[ii].vw != MeteoData::nodata) {
+    if(SourcesData[ii].vw != nodata) {
       //cout << SourcesData[ii].vw << endl;
       vecSelectedStations.push_back(SourcesMeta[ii]);
       vecInput.push_back(SourcesData[ii].vw);
@@ -160,7 +161,7 @@ void Meteo2DInterpolator::interpolateISWR(CArray2D<double>& iswr){
   unsigned int datacount = SourcesData.size();
 
   for (unsigned int ii=0; ii<datacount; ii++){
-    if(SourcesData[ii].iswr != MeteoData::nodata) {
+    if(SourcesData[ii].iswr != nodata) {
       //cout << SourcesData[ii].iswr << endl;
       vecSelectedStations.push_back(SourcesMeta[ii]);
       vecInput.push_back(SourcesData[ii].iswr);
@@ -178,7 +179,7 @@ void Meteo2DInterpolator::interpolateISWR(CArray2D<double>& iswr){
   unsigned int datacount = SourcesData.size();
 
   for (unsigned int ii=0; ii<datacount; ii++){
-    if(SourcesData[ii].ea != MeteoData::nodata) {
+    if(SourcesData[ii].ea != nodata) {
       //cout << SourcesData[ii].iswr << endl;
       vecSelectedStations.push_back(SourcesMeta[ii]);
       vecInput.push_back(SourcesData[ii].ea);

@@ -9,12 +9,14 @@ using namespace std;
 #ifndef _PAROC_
 const string IOHandler::ascii_src = "FILE";
 const string IOHandler::boschung_src = "BOSCHUNG";
+const string IOHandler::imis_src = "IMIS";
 #endif
 
 #ifdef _PAROC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(cfg){
   IOHandler::ascii_src = "FILE";
   IOHandler::boschung_src = "BOSCHUNG";
+  IOHandler::imis_src = "IMIS";
   //load all dynamic plugins
   loadDynamicPlugins();
 #else
@@ -65,6 +67,15 @@ IOHandler::~IOHandler() throw(){
     // Close the dynamic library
     delete dynLibraryBoschung;
   }
+  
+   if (dynLibraryImis != NULL) {
+    if (imisio != NULL) {
+      imisio->deleteSelf();
+      imisio = NULL;
+    }
+    // Close the dynamic library
+    delete dynLibraryImis;
+  }
    
   cleanup();
 }
@@ -105,6 +116,32 @@ void IOHandler::loadDynamicPlugins(){
   } catch (exception& e){
     if (dynLibraryBoschung != NULL)
       delete dynLibraryBoschung;
+    cerr << "\t" << e.what() << endl;
+  }
+  
+  try {
+    cfg.getValue("PLUGINPATH", pluginpath); 
+    
+    //ImisIO dynamic library needs to be loaded
+    cout << "\t" << "Trying to load libImisIO.so ... ";
+    string filename = pluginpath + "/libImisIO.so";
+    dynLibraryImis = DynamicLoader::loadObjectFile(filename, RTLD_NOW);
+    
+    if(dynLibraryImis == NULL) {
+      cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << dlerror() << endl;
+    } else {
+      imisio = dynamic_cast<IOInterface*>(dynLibraryImis->newObject("ImisIO", cfg.getFileName()));
+      
+      if(imisio == NULL) {
+	cout << "failed" << endl;
+	//delete dynLibraryImis; This causes a segfault !!
+      } else {
+	cout << "success" << endl;
+      }
+    }
+  } catch (exception& e){
+    if (dynLibraryImis != NULL)
+      delete dynLibraryImis;
     cerr << "\t" << e.what() << endl;
   }
 }
@@ -211,8 +248,14 @@ void IOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMete
       } else {
 	THROW IOException("Requesting to read data with plugin libBoschungIO.so, but plugin is not loaded", AT);
       }
-    } else {
-      THROW IOException("METEOSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+    } else if (meteo2dsource==imis_src) {
+		if (imisio != NULL) {
+			imisio->readMeteoData(date_in, vecMeteo, vecStation);
+		} else {
+			THROW IOException("Requesting to read data with plugin libImisIO.so, but plugin is not loaded", AT);
+		}
+	} else {
+		THROW IOException("METEOSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
     }
 
   } catch (...){

@@ -2,19 +2,17 @@
 
 using namespace std;
 
-const double MeteoData::nodata = -999.0;
-
 MeteoData::MeteoData(){
-  setMeteoData(Date_IO(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata);
+  setMeteoData(Date_IO(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata);
 }
 
-MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
-		     const double& vw_in, const double& rh_in, const double& lwr_in, const double& nswc_in, const double& ts0_in){
-  setMeteoData(date_in, ta_in, iswr_in, vw_in, rh_in, lwr_in, nswc_in, ts0_in);
+MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, const double& vw_in, const double& rh_in,
+			const double& lwr_in, const double& nswc_in, const double& ts0_in, const double& hs_in, const double& rswr_in){
+  setMeteoData(date_in, ta_in, iswr_in, vw_in, rh_in, lwr_in, nswc_in, ts0_in, hs_in, rswr_in);
 }
 
-void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
-			     const double& vw_in, const double& rh_in, const double& lwr_in, const double& nswc_in, const double& ts0_in){
+void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, const double& vw_in, const double& rh_in,
+				const double& lwr_in, const double& nswc_in, const double& ts0_in, const double& hs_in, const double& rswr_in){
 
   date = date_in;
   ta = ta_in;
@@ -24,6 +22,8 @@ void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const 
   lwr = lwr_in;
   nswc = nswc_in;
   ts0 = ts0_in;
+  hs = hs_in;
+  rswr = rswr_in;
 
 }
 
@@ -56,6 +56,10 @@ void MeteoData::cleanData(){
 	Check_min_max(ts0, -70., -70., 70., 70.);
 
 	Check_min_max(lwr, -50., 0., 2000., 2000.);
+	
+	Check_min_max(hs, -5., 0., 350., 350.);
+	
+	Check_min_max(rswr, -50., 0., 2000., 2000.);
 
 }
 
@@ -63,7 +67,8 @@ bool MeteoData::operator==(const MeteoData& in) const{
   return ((date==in.date) && (ta==in.ta) 
 	  && (iswr==in.iswr) && (vw==in.vw) 
 	  && (rh==in.rh) && (lwr==in.lwr) 
-	  && (nswc==in.nswc) && (ts0==in.ts0));
+	  && (nswc==in.nswc) && (ts0==in.ts0)
+	  && (hs==in.hs) && (rswr==in.rswr));
 }
 
 bool MeteoData::operator!=(const MeteoData& in) const{
@@ -80,7 +85,9 @@ const string MeteoData::toString() const{
 	 << setw(6) << "rh: " << setw(15) << rh << endl
 	 << setw(6) << "lwr: " << setw(15) << lwr << endl
 	 << setw(6) << "nswc: " << setw(15) << nswc << endl
-	 << setw(6) << "ts0: " << setw(15) << ts0;
+	 << setw(6) << "ts0: " << setw(15) << ts0
+	 << setw(6) << "hs: " << setw(15) << hs << endl
+	 << setw(6) << "rswr: " << setw(15) << rswr << endl;
 
   return tmpstr.str();
 }

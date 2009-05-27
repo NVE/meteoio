@@ -15,6 +15,7 @@
 #include "IOExceptions.h"
 #include "DynamicLibrary.h"
 
+using namespace IOUtils;
 class BoschungIO : public IOInterface {
  public:
 	//virtual BoschungIO* clone() const;

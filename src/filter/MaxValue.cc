@@ -14,7 +14,7 @@ MaxValue::MaxValue() :
   m_paramsName.insert(c_limitValue);
 
   // initialization of interpreted parameters
-  m_limitValue = MeteoData::nodata;
+  m_limitValue = nodata;
 }
 
 FilterBase1Stn* createMaxValue() {
@@ -55,14 +55,14 @@ void MaxValue::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filtered
   MeteoData& currData = filteredMeteoBuffer.getMeteoData(iFilteredElement);
   double& currValue = getMeasureValue(currData);
   // check and handle if beyond the limit
-  if ((currValue != MeteoData::nodata) && (currValue > m_limitValue)) {
+  if ((currValue != nodata) && (currValue > m_limitValue)) {
     tmpStringStream << "measure of "<<getMeasureName()<<" at "<<currData.date.toString()<<
       " value "<<currValue<<" is beyond the max "<<m_limitValue;
     if (isSoft()) {
       currValue = m_limitValue;
       tmpStringStream << ", forced to max";
     } else {
-      currValue = MeteoData::nodata;
+      currValue = nodata;
       tmpStringStream << ", forced to nodata";
     }
     reportNF(tmpStringStream.str());

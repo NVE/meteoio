@@ -70,7 +70,7 @@ void ImisIO::readSpecialPoints(CSpecialPTSArray& pts)
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::write2DGrid(Grid2DObject& grid_in, const string& options)
+void ImisIO::write2DGrid(const Grid2DObject& grid_in, const string& options)
 {
 	//Nothing so far
 	(void)options;
@@ -395,7 +395,7 @@ int main(int argc, char** argv) {
 }
 extern "C"
 {
-	using namespace MeteoIO;
+	//using namespace MeteoIO;
 	void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}

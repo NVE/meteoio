@@ -16,8 +16,8 @@ MinMaxValue::MinMaxValue() :
   m_paramsName.insert(c_maxValue);
 
   // initialization of interpreted parameters
-  m_minValue = MeteoData::nodata;
-  m_maxValue = MeteoData::nodata;
+  m_minValue = nodata;
+  m_maxValue = nodata;
 }
 
 FilterBase1Stn* createMinMaxValue() {
@@ -51,7 +51,7 @@ void MinMaxValue::prepareCheck() {
     if (!IOUtils::convertString<double>(m_maxValue, m_paramsValue[c_maxValue]))
       THROW InvalidArgumentException("parameter '"+c_maxValue+"' has to be a float (or double)", AT);
   }
-  if (m_minValue == MeteoData::nodata && m_maxValue == MeteoData::nodata) {
+  if (m_minValue == nodata && m_maxValue == nodata) {
     THROW InvalidArgumentException("at least one of the 2 parameters "+c_minValue+" or "+c_maxValue+" has to be set", AT);
   }
 }
@@ -63,26 +63,26 @@ void MinMaxValue::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filte
   MeteoData& currData = filteredMeteoBuffer.getMeteoData(iFilteredElement);
   double& currValue = getMeasureValue(currData);
   // check and handle if beyond the limit
-  if ((m_minValue != MeteoData::nodata) && (currValue != MeteoData::nodata) && (currValue < m_minValue)) {
+  if ((m_minValue != nodata) && (currValue != nodata) && (currValue < m_minValue)) {
     tmpStringStream << "measure of "<<getMeasureName()<<" at "<<currData.date.toString()<<
       " value "<<currValue<<" is beyond the min "<<m_minValue;
     if (isSoft()) {
       currValue = m_minValue;
       tmpStringStream << ", forced to min";
     } else {
-      currValue = MeteoData::nodata;
+      currValue = nodata;
       tmpStringStream << ", forced to nodata";
     }
     reportNF(tmpStringStream.str());
   }
-  if ((m_maxValue != MeteoData::nodata) && (currValue != MeteoData::nodata) && (currValue > m_maxValue)) {
+  if ((m_maxValue != nodata) && (currValue != nodata) && (currValue > m_maxValue)) {
     tmpStringStream << "measure of "<<getMeasureName()<<" at "<<currData.date.toString()<<
       " value "<<currValue<<" is beyond the max "<<m_maxValue;
     if (isSoft()) {
       currValue = m_maxValue;
       tmpStringStream << ", forced to max";
     } else {
-      currValue = MeteoData::nodata;
+      currValue = nodata;
       tmpStringStream << ", forced to nodata";
     }
     reportNF(tmpStringStream.str());

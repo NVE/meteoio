@@ -3,10 +3,12 @@
 
 #include "Date_IO.h"
 #include "Laws.h"
+#include "IOUtils.h"
 #include <string>
 #include <sstream>
 #include <iomanip>
 
+using namespace IOUtils;
 /**
  * @class MeteoData
  * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date_IO object)
@@ -30,13 +32,15 @@ class MeteoData : POPBase {
   /**
    * @brief A constructor that takes one to eight arguments
    * @param date_in A Date_IO object representing the time of the measurement
-   * @param ta AIR TEMPERATURE in CELSIUS (default MeteoData::nodata)
-   * @param iswr Incoming SHORTWAVE radiation in W m-2 (default MeteoData::nodata)
-   * @param vw Wind VELOCITY in m s-1 (default MeteoData::nodata)
-   * @param rh RELATIVE HUMIDITY (default MeteoData::nodata)
-   * @param lwr LONG WAVE radiation in W m-2 (default MeteoData::nodata)
-   * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default MeteoData::nodata)
-   * @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default MeteoData::nodata)
+   * @param ta AIR TEMPERATURE in CELSIUS (default nodata)
+   * @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
+   * @param vw Wind VELOCITY in m s-1 (default nodata)
+   * @param rh RELATIVE HUMIDITY (default nodata)
+   * @param lwr LONG WAVE radiation in W m-2 (default nodata)
+   * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
+   * @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+   * @param hs Snow height in cm (default nodata)
+   * @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
    */
   MeteoData(const Date_IO& date_in, 
 	    const double& ta=nodata, 
@@ -45,18 +49,22 @@ class MeteoData : POPBase {
 	    const double& rh=nodata, 
 	    const double& lwr=nodata, 
 	    const double& nswc=nodata,
-	    const double& ts0=nodata);
+	    const double& ts0=nodata,
+	    const double& hs=nodata,
+	    const double& rswr=nodata);
 
   /**
    * @brief General setter function, requires one to eight arguments
    * @param date_in A Date_IO object representing the time of the measurement
-   * @param ta AIR TEMERATURE in KELVIN (default MeteoData::nodata)
-   * @param iswr Incoming SHORTWAVE radiation in W m-2 (default MeteoData::nodata)
-   * @param vw Wind VELOCITY in m s-1 (default MeteoData::nodata)
-   * @param rh RELATIVE HUMIDITY, between 0 and 1 (default MeteoData::nodata)
-   * @param lwr LONG WAVE radiation in W m-2 (default MeteoData::nodata)
-   * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default MeteoData::nodata)
-   * @param ts0 Soil or snow bottom TEMPERATURE in KELVIN (default MeteoData::nodata)
+   * @param ta AIR TEMPERATURE in CELSIUS (default nodata)
+   * @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
+   * @param vw Wind VELOCITY in m s-1 (default nodata)
+   * @param rh RELATIVE HUMIDITY (default nodata)
+   * @param lwr LONG WAVE radiation in W m-2 (default nodata)
+   * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
+   * @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+   * @param hs Snow height in cm (default nodata)
+   * @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
    */
   void setMeteoData(const Date_IO& date_in, 
 		    const double& ta=nodata, 
@@ -65,7 +73,9 @@ class MeteoData : POPBase {
 		    const double& rh=nodata, 
 		    const double& lwr=nodata, 
 		    const double& nswc=nodata,
-		    const double& ts0=nodata);
+		    const double& ts0=nodata,
+		    const double& hs=nodata,
+		    const double& rswr=nodata);
 
   /**
    * @brief Check data for plausibility and set fishy data to MeteoData::nodata
@@ -80,10 +90,7 @@ class MeteoData : POPBase {
   bool operator==(const MeteoData&) const; ///<Operator that tests for equality
   bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
-  static const double nodata; ///<value == -999.0
-
-
-  double ta, iswr, vw, rh, lwr, nswc, ts0; //direct access allowed
+  double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr; //direct access allowed
   Date_IO date;///<Date_IO/Time of the measurement
 
 };

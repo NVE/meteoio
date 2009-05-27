@@ -5,6 +5,7 @@
 #include "libinterpol2D.h"
 #include "MeteoData.h"
 #include "StationData.h"
+#include "IOUtils.h"
 #include "IOExceptions.h"
 
 #include <vector>

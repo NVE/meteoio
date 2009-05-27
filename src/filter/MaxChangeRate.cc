@@ -18,8 +18,8 @@ MaxChangeRate::MaxChangeRate() :
   m_paramsName.insert(c_maxDecrRate);
 
   // initialization of interpreted parameters
-  m_maxIncrRate = MeteoData::nodata;
-  m_maxDecrRate = MeteoData::nodata;
+  m_maxIncrRate = nodata;
+  m_maxDecrRate = nodata;
 }
 
 FilterBase1Stn* createMaxChangeRate() {
@@ -62,7 +62,7 @@ void MaxChangeRate::prepareCheck() {
       if (!IOUtils::convertString<double>(m_maxDecrRate, m_paramsValue[c_maxDecrRate])) 
         THROW InvalidArgumentException("parameter '"+c_maxDecrRate+"' has to be a float (or double)", AT);
     }
-    if (m_maxIncrRate == MeteoData::nodata && m_maxDecrRate == MeteoData::nodata) {
+    if (m_maxIncrRate == nodata && m_maxDecrRate == nodata) {
       THROW InvalidArgumentException("at least one of the 3 parameters "+c_maxRate+", "+c_maxIncrRate+" or "+c_maxDecrRate+" has to be set", AT);
     }
   }
@@ -78,8 +78,8 @@ void MaxChangeRate::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& fil
     MeteoData& prevData = meteoIter.getPrevious();
     double& prevValue = getMeasureValue(prevData);
     // check and handle if beyond the limit
-    if ((currValue != MeteoData::nodata) && (prevValue != MeteoData::nodata)) {
-      if (currValue > prevValue && m_maxIncrRate != MeteoData::nodata) {
+    if ((currValue != nodata) && (prevValue != nodata)) {
+      if (currValue > prevValue && m_maxIncrRate != nodata) {
         double deltaHour = (currData.date.getJulian() - prevData.date.getJulian()) * 24.;
         if ( (currValue - prevValue) / deltaHour > m_maxIncrRate ) {
           tmpStringStream << "measure of "<<getMeasureName()<<" at "<<currData.date.toString()<<
@@ -87,12 +87,12 @@ void MaxChangeRate::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& fil
           if (isSoft()) {
             tmpStringStream << ", kept unchanged";
           } else {
-            currValue = MeteoData::nodata;
+            currValue = nodata;
             tmpStringStream << ", forced to nodata";
           }
           reportNF(tmpStringStream.str());
         } else {}
-      } else if (currValue < prevValue && m_maxDecrRate != MeteoData::nodata) {
+      } else if (currValue < prevValue && m_maxDecrRate != nodata) {
         double deltaHour = (currData.date.getJulian() - prevData.date.getJulian()) * 24.;
         if ( (prevValue - currValue) / deltaHour > m_maxDecrRate ) {
           tmpStringStream << "measure of "<<getMeasureName()<<" at "<<currData.date.toString()<<
@@ -100,7 +100,7 @@ void MaxChangeRate::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& fil
           if (isSoft()) {
             tmpStringStream << ", kept unchanged";
           } else {
-            currValue = MeteoData::nodata;
+            currValue = nodata;
             tmpStringStream << ", forced to nodata";
           }
           reportNF(tmpStringStream.str());

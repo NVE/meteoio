@@ -2,17 +2,17 @@
 #include "MeteoIO.h"
 
 int main() {
-  Date d1(2009,01,01,18,00);
+  Date_IO d1(2009,01,01,18,00);
 
   vector<MeteoData> vecMeteo;
   vector<StationData> vecStation;
 
-  IOHandler *ioTest=NULL; //Initialization vital!
+  IOInterface *ioTest=NULL; //Initialization vital!
 
   try {
-    ioTest = new A3DIO("io.ini");
+    ioTest = new IOHandler("io.ini");
   } catch (exception& e){
-    cout << "Problem with A3DIO handler cration, cause: " << e.what() << endl;
+    cout << "Problem with IOHandler creation, cause: " << e.what() << endl;
   }
 
  try {
@@ -31,5 +31,4 @@ int main() {
 }
 
 
-
-//compile with: g++ slfio_demo.cc -I ../snowpack/snowpack_core/ -I ../common/ -I ../snowpack/ -I filter -I . Date.o A3DIO.o ASCIIFileIO.o slfexceptions.o  slfutils.o MeteoBuffer.o MeteoData.o StationData.o ConfigReader.o DynamicLibrary.o -ldl IOHandler.o Meteo1DResampler.o libinterpol1D.o Grid2DObject.o
+//compile with: g++ test/meteoio_demo.cc -I ./src/ -I ./src/filter/ -L ./lib/ -lmeteoIO -ldl

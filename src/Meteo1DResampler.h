@@ -5,6 +5,9 @@
 #include "Date_IO.h"
 #include "libinterpol1D.h"
 #include <string>
+#include "IOUtils.h"
+
+using namespace IOUtils;
 
 class Meteo1DResampler {
 

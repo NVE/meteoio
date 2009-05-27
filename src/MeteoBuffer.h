@@ -97,6 +97,10 @@ class MeteoBuffer {
    */  
   unsigned int seek(const Date_IO& date_in); //returns index of element, if element does not exist in 
 
+		deque<MeteoData> getMeteobuffer();
+		
+		deque<StationData> getStationbuffer();
+
 
   static const unsigned int npos = (unsigned int)-1;             ///<npos is the out-of-range value
   

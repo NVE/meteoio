@@ -61,20 +61,20 @@ void NoObservedChange::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& 
   // get the values (with a reference to it)
   MeteoData& currData = filteredMeteoBuffer.getMeteoData(iFilteredElement);
   double& currValue = getMeasureValue(currData);
-  if (currValue == MeteoData::nodata) return;
+  if (currValue == nodata) return;
   MeteoBufferIterator meteoIter(unfilteredMeteoBuffer, filteredMeteoBuffer, iFilteredElement);
   for (unsigned int i = 2 ; ; i++) {
     try {
       MeteoData& prevData = meteoIter.getPreviousUnfiltered();
       double& prevValue = getMeasureValue(prevData);
-      if (currValue != prevValue && prevValue != MeteoData::nodata) break; // found change, end successfully
+      if (currValue != prevValue && prevValue != nodata) break; // found change, end successfully
       if (i >= m_minNbPoints && currData.date - prevData.date >= m_minDeltaTime) {
         tmpStringStream << "measure of "<<getMeasureName()<<" at "<<currData.date.toString()<<
           " has no change over an extended period";
         if (isSoft()) {
           tmpStringStream << ", kept unchanged";
         } else {
-          currValue = MeteoData::nodata;
+          currValue = nodata;
           tmpStringStream << ", forced to nodata";
         }
         reportNF(tmpStringStream.str());

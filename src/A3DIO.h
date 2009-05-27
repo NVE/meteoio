@@ -14,6 +14,8 @@
 #include <vector>
 #include <map>
 
+using namespace IOUtils;
+
 class A3DIO : public IOInterface {
  public:
 	//virtual A3DIO* clone() const;

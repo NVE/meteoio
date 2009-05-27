@@ -34,6 +34,7 @@ class IOHandler : public IOInterface {
 
   static const string ascii_src;
   static const string boschung_src;
+  static const string imis_src;
 
  private:
   void cleanup() throw();
@@ -43,6 +44,8 @@ class IOHandler : public IOInterface {
   A3DIO fileio;
   DynamicLibrary* dynLibraryBoschung;
   IOInterface* boschungio;
+  DynamicLibrary* dynLibraryImis;
+  IOInterface* imisio;
 };
 
 #endif

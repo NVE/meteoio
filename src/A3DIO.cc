@@ -210,14 +210,14 @@ void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out){
 
 void A3DIO::convertUnits(MeteoData& meteo){
 	//converts C to Kelvin, converts RH to [0,1]
-	if(meteo.ta!=meteo.nodata) meteo.ta=C_TO_K(meteo.ta);
-	if(meteo.ts0!=meteo.nodata) meteo.ts0=C_TO_K(meteo.ts0);
-	if(meteo.rh!=meteo.nodata) meteo.rh /= 100.;
+	if(meteo.ta!=nodata) meteo.ta=C_TO_K(meteo.ta);
+	if(meteo.ts0!=nodata) meteo.ts0=C_TO_K(meteo.ts0);
+	if(meteo.rh!=nodata) meteo.rh /= 100.;
 }
 
 void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out, StationData& station_out){
-	double latitude=StationData::nodata, longitude=StationData::nodata, 
-		xcoord=StationData::nodata, ycoord=StationData::nodata, altitude=StationData::nodata;
+	double latitude=nodata, longitude=nodata, 
+		xcoord=nodata, ycoord=nodata, altitude=nodata;
 	string tmp="", line="";
 	Date_IO tmp_date;
 	vector<string> tmpvec;
@@ -321,7 +321,7 @@ void A3DIO::readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoDa
 			THROW InvalidFormatException(filename + ": " + line, AT);
 	}
       
-	tmpdata.setMeteoData(tmp_date, tmp_values[0], tmp_values[1], tmp_values[2], tmp_values[3], tmp_values[4], tmp_values[5], MeteoData::nodata);
+	tmpdata.setMeteoData(tmp_date, tmp_values[0], tmp_values[1], tmp_values[2], tmp_values[3], tmp_values[4], tmp_values[5], nodata, nodata, nodata);
 }
 
 

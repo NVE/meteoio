@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 
+using namespace IOUtils;
 /**
  * @class StationData
  * @brief A class to represent meteo stations with attributes like longitude, latitude, etc.
@@ -88,8 +89,6 @@ class StationData {
   bool operator!=(const StationData&) const; ///<Operator that tests for inequality
 
  public:
-  static const double nodata; ///<Takes on the value of -999.0
-
   double longitude, latitude, altitude, eastCoordinate, northCoordinate;
   std::string stationName; ///<Name of the Station
 };

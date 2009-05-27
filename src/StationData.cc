@@ -2,8 +2,6 @@
 
 using namespace std;
 
-const double StationData::nodata = -999.0;	//HACK: we should define the same nodata everywhere...
-
 //Default constructor initializing every double attribute to nodata and strings to  ""
 StationData::StationData(){
   setStationData(nodata, nodata, nodata, "", nodata, nodata);

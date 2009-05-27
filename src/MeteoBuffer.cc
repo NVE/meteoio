@@ -36,6 +36,16 @@ unsigned int MeteoBuffer::getMaxSize(){
   return maxsize;
 }
 
+deque<MeteoData> MeteoBuffer::getMeteobuffer()
+{//HACK: for debugging
+	return meteobuffer;
+}
+
+deque<StationData> MeteoBuffer::getStationbuffer()
+{//HACK: for debugging
+	return stationbuffer;
+}
+
 MeteoData& MeteoBuffer::getMeteoData(const unsigned int& index){
   if (index >= meteobuffer.size())
     THROW IndexOutOfBoundsException("MeteoBuffer", AT);

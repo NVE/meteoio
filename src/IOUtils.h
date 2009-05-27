@@ -19,6 +19,8 @@ using namespace std;
 
 namespace IOUtils {
 
+	const double nodata = -999.0;	//HACK: we should define the same nodata everywhere...
+
   /**
    * @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
    * @param lat_in Decimal Latitude 

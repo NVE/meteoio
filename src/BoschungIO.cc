@@ -248,8 +248,8 @@ void BoschungIO::checkForMeteoFiles(const string& xmlpath, const string& station
 }
 
 void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, MeteoData& md, StationData& sd){
-	double ta=MeteoData::nodata, iswr=MeteoData::nodata, vw=MeteoData::nodata, rh=MeteoData::nodata, lwr=MeteoData::nodata, nswc=MeteoData::nodata;
-	double longitude=StationData::nodata, latitude=StationData::nodata, altitude=StationData::nodata;
+	double ta=nodata, iswr=nodata, vw=nodata, rh=nodata, lwr=nodata, nswc=nodata;
+	double longitude=nodata, latitude=nodata, altitude=nodata;
 
 	//Try to read xml file
 	xmlpp::DomParser parser;
@@ -300,7 +300,7 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 		string str_sb = xmlGetNodeContent(pNode, "sb");
 		xmlParseStringToDouble(str_sb, lwr, "sb");
 
-		md.setMeteoData(date_in, ta, iswr, vw, rh, lwr, nswc, md.nodata);
+		md.setMeteoData(date_in, ta, iswr, vw, rh, lwr, nswc, nodata, nodata, nodata);
 		convertUnits(md);
     
 	} else {
@@ -441,12 +441,12 @@ void BoschungIO::write2DGrid(const Grid2DObject&, const string& filename){
 
 void BoschungIO::convertUnits(MeteoData& meteo){
 	//converts C to Kelvin, converts lwr to ea, converts RH to [0,1]
-	if(meteo.ta==meteo.nodata) meteo.ta=meteo.nodata;
+	if(meteo.ta==nodata) meteo.ta=nodata;
 	else meteo.ta=C_TO_K(meteo.ta);
-	if(meteo.ts0==meteo.nodata) meteo.ts0=meteo.nodata;
+	if(meteo.ts0==nodata) meteo.ts0=nodata;
 	else meteo.ts0=C_TO_K(meteo.ts0);
 
-	if(meteo.rh==meteo.nodata) meteo.rh=meteo.nodata;
+	if(meteo.rh==nodata) meteo.rh=nodata;
 	else meteo.rh /= 100.;
 }
 
