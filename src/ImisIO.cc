@@ -36,6 +36,8 @@ vector<string> ImisIO::getVecStationName()
 void ImisIO::get2DGridSize(int& nx, int& ny)
 {
 	//Nothing so far
+	(void)nx;
+	(void)ny;
 	THROW IOException("Nothing implemented here", AT);
 }
 
@@ -43,36 +45,43 @@ void ImisIO::read2DGrid(Grid2DObject& grid_out, const string& parameter)
 {
 	//Nothing so far
 	(void)parameter;
+	(void)grid_out;
 	THROW IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readDEM(Grid2DObject& dem_out)
 {
 	//Nothing so far
+	(void)dem_out;
 	THROW IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readLanduse(Grid2DObject& landuse_out)
 {
 	//Nothing so far
+	(void)landuse_out;
 	THROW IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
 	//Nothing so far
+	(void)date_in;
+	(void)da_out;
 	THROW IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readSpecialPoints(CSpecialPTSArray& pts)
 {
 	//Nothing so far
+	(void)pts;
 	THROW IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::write2DGrid(const Grid2DObject& grid_in, const string& options)
 {
 	//Nothing so far
+	(void)grid_in;
 	(void)options;
 	THROW IOException("Nothing implemented here", AT);
 }

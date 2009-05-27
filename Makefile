@@ -67,8 +67,8 @@ LDFLAGS		= $(LIBS)
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
 
 INCLUDE_ORA = -I/software/oracle/client_1/rdbms/public/
-LIBS_ORA = -L/software/oracle/client_1/lib -L/usr/lib/
-LDFLAGS_ORA = -Xlinker -zmuldefs -locci -lclntsh -lstdc++ 
+LIBS_ORA = -L/local/instantclient_11_1
+LDFLAGS_ORA = -locci -lclntsh -lstdc++
 #CCFLAGS += -DSVNREV="\"$(SVNREV)\""
 
 
@@ -171,7 +171,7 @@ distclean: clean
 	
 
 install:
-	@printf "Installing MeteoIO\n"
+	@printf "**** Installing MeteoIO\n"
 
 documentation:
 	doxygen $(SRCDIR)/config.dox
@@ -182,6 +182,7 @@ documentation:
 	$(CXX) $(CCFLAGS) -c $< $(INCLUDE) -o $@
 
 $(LIBDIR)/libmeteoIO.a: $(METEOIO_OBJ)
+	@printf "**** Compiling libmeteoIO\n"
 	ar -r $@ $(METEOIO_OBJ)
 	ranlib $@
 
@@ -191,16 +192,16 @@ $(LIBDIR)/libfilter.a: $(FILTER_OBJ)
 
 $(LIBDIR)/libBoschungIO.so: $(SRCDIR)/BoschungIO.cc $(SRCDIR)/BoschungIO.h $(LIBDIR)/libmeteoIO.a $(LIBDIR)/libfilter.a
 ifeq ($(BOSCHUNGIO),yes)
+	@printf "**** Compiling Boschung plugin\n"
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) $(shell pkg-config --cflags libxml++-2.6) -c -o $(SRCDIR)/BoschungIO.o $(SRCDIR)/BoschungIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libBoschungIO.so -o $@ $(SRCDIR)/BoschungIO.o \
-	$(LDFLAGS_SEQ) $(LDFLAGS) $(shell pkg-config --libs libxml++-2.6)
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libBoschungIO.so -o $@ $(SRCDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) $(shell pkg-config --libs libxml++-2.6)
 endif
 
 $(LIBDIR)/libImisIO.so: $(SRCDIR)/ImisIO.cc $(SRCDIR)/ImisIO.h $(LIBDIR)/libmeteoIO.a $(LIBDIR)/libfilter.a
 ifeq ($(IMISIO),yes)
-	g++-3.3 -Wall $(DEBUG) -fPIC $(INCLUDE) $(INCLUDE_ORA) $(SRCDIR)/ImisIO.cc -c -o $(SRCDIR)/ImisIO.o
-	g++-3.3 $(DEBUG) -rdynamic -shared -Wl,-soname,libImisIO.so -o $@ $(SRCDIR)/ImisIO.o \
-	$(LDFLAGS_SEQ) $(LDFLAGS) $(LIBS_ORA) $(LDFLAGS_ORA)
+	@printf "**** Compiling Imis plugin\n"
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) $(INCLUDE_ORA) $(SRCDIR)/ImisIO.cc -c -o $(SRCDIR)/ImisIO.o
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libImisIO.so -o $@ $(SRCDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) $(LIBS_ORA) $(LDFLAGS_ORA)
 endif
 
 meteoIO.module: libmeteoOIOparoc.a $(SRCDIR)/PackMeteoIO_par.o
