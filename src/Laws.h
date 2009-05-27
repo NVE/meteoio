@@ -31,6 +31,7 @@
 #ifndef LAWS_H
 #define LAWS_H
 
+#include <math.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,7 +42,14 @@ extern "C" {
 
 /*
 * CONSTANTS
-*/
+*/ //HACK: included some constants coming from Constants.h ...
+/*---------------------------------------------------------------------------------------------+ 
+ | Physical constants                                                                          |
+ +---------------------------------------------------------------------------------------------*/
+#define GRAVITY	9.80665		     // (m s-2)
+#define STEFAN_BOLTZMANN 5.67051e-8  // (W m-2 K-4)
+#define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1)   ( for air! )
+#define SPECIFIC_HEAT_AIR 1004.67    // see Stull "Meteorology for scientists and engineers" p44
 
 /*
 * STRUCTURES

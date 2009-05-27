@@ -25,5 +25,6 @@
 #include "Array3D.h"
 #include "IOInterface.h"
 #include "IOHandler.h"
+#include "Meteo2DInterpolator.h"
 
 #endif
