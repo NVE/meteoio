@@ -14,6 +14,10 @@ DEST	 = safe
 MODE	 = release
 MODE	 = debug
 
+# plugins to build (yes/no)
+BOSCHUNGIO 	= no
+IMISIO		= no
+
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
@@ -94,10 +98,6 @@ LD_PAROC	= -L$(LIBDIR) -lmeteoIO -lfilter
 LDFLAGS_PAROC	= $(LD_PAROC)
 LDFLAGS		= $(LIBS)
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
-
-INCLUDE_ORA = -I/software/oracle/client_1/rdbms/public/
-LIBS_ORA = -L/local/instantclient_11_1
-LDFLAGS_ORA = -locci -lclntsh -lstdc++
 
 ######## Sources, objects, headers
 METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
@@ -227,8 +227,8 @@ endif
 $(LIBDIR)/libImisIO.so: $(SRCDIR)/ImisIO.cc $(SRCDIR)/ImisIO.h $(LIBDIR)/libmeteoIO.a $(LIBDIR)/libfilter.a
 ifeq ($(IMISIO),yes)
 	@printf "**** Compiling Imis plugin\n"
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) $(INCLUDE_ORA) $(SRCDIR)/ImisIO.cc -c -o $(SRCDIR)/ImisIO.o
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libImisIO.so -o $@ $(SRCDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) $(LIBS_ORA) $(LDFLAGS_ORA)
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/rdbms/public $(SRCDIR)/ImisIO.cc -c -o $(SRCDIR)/ImisIO.o
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libImisIO.so -o $@ $(SRCDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif
 
 meteoIO.module: libmeteoOIOparoc.a $(SRCDIR)/PackMeteoIO_par.o
