@@ -4,47 +4,81 @@
 #################################################
 # USER OPTIONS: MAKE CHANGES IN THIS SECTION ONLY
 #################################################
-
-####### COMPILERS AND OPTIONS
-#Destination system: either zeus or grid
-DEST	 = grid
+####### USER CONFIGURATION
+#Destination system: either zeus, grid or safe
+DEST	 = safe
+#DEST	 = grid
 #DEST	 = zeus
 
 # build mode: release or debug
 MODE	 = release
 MODE	 = debug
 
-# specific plugins to build: yes or no
-BOSCHUNGIO	= no
-IMISIO		= no
-
+####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
 
-ifeq ($(DEST),grid)		#for grid
+ifeq ($(DEST),safe)		#safe defaults
+	CC       = gcc -DGNU
 	CXX      = g++
-	#CXX	 = colorgcc
+	FF	 = gfortran
 	LINKER   = g++ -DGNU
 	PAROCC   = parocc
-	#ARCH     = -march=prescott
-	ARCH     = -march=pentium4
+	ARCH     = -march=pentium3
+	OPTIM    = -fomit-frame-pointer -O3
+	FFOPTIM  = $(OPTIM) -march=pentium3
+	FFEXTRA  = $(FFOPTIM)
+	#MAKE_OPTIM = -pipe
+	DEBUG    = -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr 
+	WARNING  = -Wall #-Weffc++ #-pedantic-errors #-Werror
+endif
+ifeq ($(DEST),grid)		#for grid
+	CC	 = colorgcc
+	CXX	 = colorgcc
+	FF	 = gfortran
+	LINKER   = g++ -DGNU
+	PAROCC   = parocc
+	ARCH     = -march=native #-mmmx -msse -msse2 -mfpmath=sse -malign-double
 	OPTIM    = -fomit-frame-pointer -O3 #-fdata-sections
-else				#for Zeus
+	FFOPTIM  = $(OPTIM) -march=native #-m3dnow -m64 -mmmx -msse -msse2 -ffast-stdlib 
+	FFEXTRA  = $(FFOPTIM) #-fno-second-underscore
+	MAKE_OPTIM = -combine -pipe
+	DEBUG    = -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr 
+	WARNING  = -Wall -Wextra #-Weffc++ #-pedantic-errors #-Werror
+endif
+ifeq ($(DEST),zeus)		#for Zeus
+	CC       = gcc -DGNU
+        #CC      = pathcc -DGNU
         CXX      = g++
         #CXX     = pathcc -DGNU
+        FF       = pathf90 -DGNU
         LINKER   = g++
         PAROCC   = parocc
-        ARCH     = -march=x86-64
+        ARCH     = -march=x86-64 #-mmmx -msse -msse2 -m3dnow -mfpmath=sse #-malign-double
+        #ARCH     = -march=opteron -mmmx -msse -msse2 -m3dnow
         OPTIM    = #-fomit-frame-pointer #-O3 -fdata-sections
         #OPTIM   = -O2 -Wstrict-aliasing #-fno-strict-aliasing
+        FFOPTIM  = $(OPTIM) -march=opteron #-m3dnow -m64 -mmmx -msse -msse2 -ffast-stdlib 
+        FFEXTRA  = -fno-second-underscore $(FFOPTIM)
+	MAKE_OPTIM = -pipe
+	DEBUG    = -g -O0 -D__DEBUG
+	WARNING  = -Wall
 endif
 
-DEBUG    = -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr 
-WARNING  = -Wall -Wextra #-Weffc++ #-pedantic-errors #-Werror
+ifeq ($(MODE),debug)		#for debug
+	CFLAGS   = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
+	CCFLAGS  = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
+	FFLAGS	 = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
+else				#for release
+	CFLAGS   = $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
+	CCFLAGS  = $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
+	FFLAGS	 = $(MAKE_OPTIM) $(ARCH) $(FFOPTIM) $(WARNING)
+endif
+#CCFLAGS += -DSVNREV="\"$(SVNREV)\""
 
-#DIRECTORIES
-TARGET		= meteoIO
-TARGET_PAROC	= meteoIO_paroc
+####### DIRECTORIES
+TARGET		= meteoio
+TARGET_PAROC	= meteoio_paroc
 
 SRCDIR		= ./src
 LIBDIR		= ./lib
@@ -54,14 +88,9 @@ FILTERDIR	= $(SRCDIR)/filter
 # END USER OPTIONS
 #################################################
 
-ifeq ($(MODE),debug)		#for debug
-	CCFLAGS  = -combine -pipe $(ARCH) $(DEBUG) $(WARNING)
-else				#for release
-	CCFLAGS  = -combine -pipe $(ARCH) $(OPTIM) $(WARNING)
-endif
 LIBS		= -lc
-LDFLAGS_SEQ	=  -L$(LIBDIR) -lmeteoIO -lfilter
-LD_PAROC	=  -L$(LIBDIR) -lmeteoIO -lfilter
+LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoIO -lfilter
+LD_PAROC	= -L$(LIBDIR) -lmeteoIO -lfilter
 LDFLAGS_PAROC	= $(LD_PAROC)
 LDFLAGS		= $(LIBS)
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
@@ -69,8 +98,6 @@ INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
 INCLUDE_ORA = -I/software/oracle/client_1/rdbms/public/
 LIBS_ORA = -L/local/instantclient_11_1
 LDFLAGS_ORA = -locci -lclntsh -lstdc++
-#CCFLAGS += -DSVNREV="\"$(SVNREV)\""
-
 
 ######## Sources, objects, headers
 METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \

@@ -486,7 +486,7 @@ void BoschungIO::convertUnits(MeteoData& meteo)
 	if(meteo.ta==nodata) {
 		meteo.ta=nodata;
 	} else {
-	 meteo.ta=C_TO_K(meteo.ta);
+		meteo.ta=C_TO_K(meteo.ta);
 	}
 	
 	if(meteo.ts0==nodata) {
