@@ -33,7 +33,8 @@
  * @param lwr const double
  * @param T const double
  */
-double lw_emissivity(const double lwr, const double T) {
+double lw_emissivity(const double lwr, const double T)
+{
 	
 	return ( lwr / (STEFAN_BOLTZMANN * (T*T*T*T)) );
 }

@@ -47,7 +47,7 @@ class ImisIO : public IOInterface {
 		 * @param station_in <string>: station data from the database
 		 */
 		void createData(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation,
-				vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
+				vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb, const Date_IO& date_in);
 		
 		virtual void get2DGridSize(int& nx, int& ny);
 		
@@ -117,7 +117,7 @@ class ImisIO : public IOInterface {
 		/**
 		 * @brief function which display meteo and station data
 		 */
-		void displayData(); 
+		void displayData(vector<MeteoData>& vecMeteo); 
 		
  	private:
 		

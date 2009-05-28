@@ -18,37 +18,37 @@ using namespace std;
  */
 class NoObservedChange : public FilterValue1Stn {
 
- public:
+	public:
 
-  // base definition
+		// base definition
 
-  NoObservedChange();
-  
-  const string getName() const;
+		NoObservedChange();
 
-  void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
+		const string getName() const;
 
-  /** 
-   * Registers the filter's definition to the FilterFacade's filter list. 
-   * It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
-   */
-  static void registerFilter();
+		void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
 
-  // check handling
+		/** 
+		* Registers the filter's definition to the FilterFacade's filter list. 
+		* It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
+		*/
+		static void registerFilter();
 
-  void prepareCheck();
+		// check handling
 
-  void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
+		void prepareCheck();
 
- private:
+		void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
 
-  // interpreted parameters
+	private:
 
-  /** The minimal number of points (aka measures) before declaring a NOC  (default is 2) */
-  unsigned int m_minNbPoints;
+		// interpreted parameters
 
-  /** The minimal time frame (delta time) before declaring a NOC (default is 1 minute) */
-  Date_IO m_minDeltaTime;
+		/** The minimal number of points (aka measures) before declaring a NOC  (default is 2) */
+		unsigned int m_minNbPoints;
+
+		/** The minimal time frame (delta time) before declaring a NOC (default is 1 minute) */
+		Date_IO m_minDeltaTime;
 
 };
 

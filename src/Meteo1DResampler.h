@@ -11,13 +11,13 @@ using namespace IOUtils;
 
 class Meteo1DResampler {
 
- public:
-  Meteo1DResampler();
-  void resample(const unsigned int& index_in, const Date_IO& date_in, MeteoBuffer& mbuffer_out); 
+	public:
+		Meteo1DResampler();
+		void resample(const unsigned int& index_in, const Date_IO& date_in, MeteoBuffer& mbuffer_out); 
 
 
- private:
-  void seekIndices(MeteoBuffer& mbuffer, const std::string& parameter, unsigned int& leftindex, unsigned int& rightindex);
+	private:
+		void seekIndices(MeteoBuffer& mbuffer, const std::string& parameter, unsigned int& leftindex, unsigned int& rightindex);
 };
 
 #endif

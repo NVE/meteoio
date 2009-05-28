@@ -36,33 +36,33 @@
 extern "C" {
 #endif
 
-//HACK: CONVERSIONS
-#define C_TO_K( T ) ( T + 273.15 )	  // Celsius to Kelvin
-#define K_TO_C( T ) ( T - 273.15 )	  // Kelvin to Celsius
+	//HACK: CONVERSIONS
+	#define C_TO_K( T ) ( T + 273.15 )	  // Celsius to Kelvin
+	#define K_TO_C( T ) ( T - 273.15 )	  // Kelvin to Celsius
 
-/*
-* CONSTANTS
-*/ //HACK: included some constants coming from Constants.h ...
-/*---------------------------------------------------------------------------------------------+ 
- | Physical constants                                                                          |
- +---------------------------------------------------------------------------------------------*/
-#define GRAVITY	9.80665		     // (m s-2)
-#define STEFAN_BOLTZMANN 5.67051e-8  // (W m-2 K-4)
-#define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1)   ( for air! )
-#define SPECIFIC_HEAT_AIR 1004.67    // see Stull "Meteorology for scientists and engineers" p44
+	/*
+	* CONSTANTS
+	*/ //HACK: included some constants coming from Constants.h ...
+	/*---------------------------------------------------------------------------------------------+ 
+	 | Physical constants                                                                          |
+	 +---------------------------------------------------------------------------------------------*/
+	#define GRAVITY	9.80665		     // (m s-2)
+	#define STEFAN_BOLTZMANN 5.67051e-8  // (W m-2 K-4)
+	#define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1)   ( for air! )
+	#define SPECIFIC_HEAT_AIR 1004.67    // see Stull "Meteorology for scientists and engineers" p44
 
-/*
-* STRUCTURES
-*/
+	/*
+	* STRUCTURES
+	*/
 
-// FUNCTION PROTOTYPES:
-  double lw_emissivity(const double lwr, const double T);
-  double lw_TairLapseRate(const double ta, const double ref_alti, const double altitude);
-  double lw_AirPressure(const double altitude);
-  double lw_WetBulbTemperature(const double L, const double T, const double RH, const double altitude);
-  double lw_SaturationPressure(const double T);
-  double RhtoDewPoint(double RH, double TA);
-  double DewPointtoRh(double TD, double TA);
+	// FUNCTION PROTOTYPES:
+	double lw_emissivity(const double lwr, const double T);
+	double lw_TairLapseRate(const double ta, const double ref_alti, const double altitude);
+	double lw_AirPressure(const double altitude);
+	double lw_WetBulbTemperature(const double L, const double T, const double RH, const double altitude);
+	double lw_SaturationPressure(const double T);
+	double RhtoDewPoint(double RH, double TA);
+	double DewPointtoRh(double TD, double TA);
 #ifdef __cplusplus
 }
 #endif

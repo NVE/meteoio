@@ -14,15 +14,17 @@ template <class T> class CArray2D;
  * @author Thomas Egger
  */
 template <class T> class CArray2DProxy {
- public:
-	friend class CArray2D<T>;
-	T& operator[](unsigned int j) { return array2D(anx, j); }
-	~CArray2DProxy(){}
+	public:
+		friend class CArray2D<T>;
+		T& operator[](unsigned int j) {
+			return array2D(anx, j);
+		}
+		~CArray2DProxy(){}
 
- private:
- CArray2DProxy(CArray2D<T>& _array2D, int _anx) : array2D(_array2D), anx(_anx){}
-	CArray2D<T>& array2D;
-	unsigned int anx;
+	private:
+		CArray2DProxy(CArray2D<T>& _array2D, int _anx) : array2D(_array2D), anx(_anx){}
+		CArray2D<T>& array2D;
+		unsigned int anx;
 }; 
 
 /**
@@ -32,32 +34,33 @@ template <class T> class CArray2DProxy {
  * @author Thomas Egger
  */
 template<class T> class CArray2D {
- public:
-	CArray2D();
-	CArray2D(int anx, int any);
-	~CArray2D();
+	public:
+		CArray2D();
+		CArray2D(int anx, int any);
+		~CArray2D();
 
-	void Create(int nx, int ny);
-	void Create(int nx, int ny, T init);
-	void GetSize(int &nx, int &ny);
+		void Create(int nx, int ny);
+		void Create(int nx, int ny, T init);
+		void GetSize(int &nx, int &ny);
 
-	void Destroy();
-	CArray2D<T>& operator=(CArray2D &val);
-	T& operator ()(unsigned int x, unsigned int y);
-	const T operator ()(unsigned int x, unsigned int y) const;
-	CArray2DProxy<T> operator[](unsigned int i);
-	
- protected:
-	std::vector<T> vecData;
-	unsigned int nx;
-	unsigned int ny;
-};
+		void Destroy();
+		CArray2D<T>& operator=(CArray2D &val);
+		T& operator ()(unsigned int x, unsigned int y);
+		const T operator ()(unsigned int x, unsigned int y) const;
+		CArray2DProxy<T> operator[](unsigned int i);
+
+	protected:
+		std::vector<T> vecData;
+		unsigned int nx;
+		unsigned int ny;
+		};
 
 
-template<class T> T& CArray2D<T>::operator()(unsigned int x, unsigned int y){
+template<class T> T& CArray2D<T>::operator()(unsigned int x, unsigned int y) {
 #ifndef NOSAFECHECKS
-	if ((x >= nx) || (y >= ny))
+	if ((x >= nx) || (y >= ny)) {
 		THROW IndexOutOfBoundsException("", AT);
+	}
 #endif
 
 	//the 2D array is stored by columns in a 1D vector. Each column follows the previous one.
@@ -67,34 +70,35 @@ template<class T> T& CArray2D<T>::operator()(unsigned int x, unsigned int y){
 
 template<class T> const T CArray2D<T>::operator()(unsigned int x, unsigned int y) const {
 #ifndef NOSAFECHECKS
-	if ((x >= nx) || (y >= ny))
+	if ((x >= nx) || (y >= ny)) {
 		THROW IndexOutOfBoundsException("", AT);
+	}
 #endif
 	return vecData[x*ny + y];
 }
 
-template<class T> CArray2DProxy<T> CArray2D<T>::operator[](unsigned int i){
+template<class T> CArray2DProxy<T> CArray2D<T>::operator[](unsigned int i) {
 	return CArray2DProxy<T>(*this, i); 
 }
 
 
-template<class T> CArray2D<T>::CArray2D(){
+template<class T> CArray2D<T>::CArray2D() {
 	nx = ny = 0;
 }
 
-template<class T> CArray2D<T>::CArray2D(int anx, int any){
+template<class T> CArray2D<T>::CArray2D(int anx, int any) {
 	nx = ny = 0;
 	Create(anx,any);
 }
 
-template<class T> CArray2D<T>::~CArray2D(){
+template<class T> CArray2D<T>::~CArray2D() {
 	Destroy();
 }
 
-template<class T> void CArray2D<T>::Create(int anx, int any){
+template<class T> void CArray2D<T>::Create(int anx, int any) {
 	Destroy();
 
-	if ((anx > 0) && (any > 0)){
+	if ((anx > 0) && (any > 0)) {
 		vecData.resize(anx*any);
 		nx = anx;
 		ny = any;
@@ -103,27 +107,27 @@ template<class T> void CArray2D<T>::Create(int anx, int any){
 	}
 }
 
-template<class T> void CArray2D<T>::Create(int anx, int any, T init){
+template<class T> void CArray2D<T>::Create(int anx, int any, T init) {
 	Create(anx, any);
 
-	for (unsigned int ii=0; ii<nx; ii++){
-		for (unsigned int jj=0; jj<ny; jj++){
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
 			operator()(ii,jj) = init;
 		}
 	}
 }
 
-template<class T> void CArray2D<T>::GetSize(int &anx, int &any){
+template<class T> void CArray2D<T>::GetSize(int &anx, int &any) {
 	anx=nx;
 	any=ny;
 }
 
-template<class T> void CArray2D<T>::Destroy(){
+template<class T> void CArray2D<T>::Destroy() {
 	vecData.clear();
 	nx=ny=0;
 }
 
-template<class T> CArray2D<T>& CArray2D<T>::operator=(CArray2D<T>& val){
+template<class T> CArray2D<T>& CArray2D<T>::operator=(CArray2D<T>& val) {
 	int anx,any;
 	val.GetSize(anx,any);
 	

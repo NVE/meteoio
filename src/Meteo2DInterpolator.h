@@ -17,34 +17,33 @@
  * @date   2009-01-20
  */
 class Meteo2DInterpolator {
- public:
-  /**
-   * @brief Constructor. It builds a vector of input data and metadata, merging meteo1D and meteo2D input files
-   */
-  Meteo2DInterpolator(const Grid2DObject& dem, 
-		      const vector<MeteoData>& vecData, 
-		      const vector<StationData>& vecMeta);
-  
-  /**
-   * @brief This function calls the interpolation class for each individual meteo parameter. 
-   *        It also builds a list of valid data sources for the given parameter.
-   */
-  void interpolate(CArray2D<double>& nswc, CArray2D<double>& rh, CArray2D<double>& ta, CArray2D<double>& vw, CArray2D<double>& p);
-  void interpolate(CArray2D<double>& nswc, CArray2D<double>& rh, CArray2D<double>& ta, CArray2D<double>& vw, CArray2D<double>& p, CArray2D<double>& iswr/*, CArray2D<double>& ea*/);
+	public:
+		/**
+		* @brief Constructor. It builds a vector of input data and metadata, merging meteo1D and meteo2D input files
+		*/
+		Meteo2DInterpolator(const Grid2DObject& dem, const vector<MeteoData>& vecData, const vector<StationData>& vecMeta);
 
- private:
-  void interpolateP(CArray2D<double>& p);
-  void interpolateNSWC(CArray2D<double>& nswc);
-  void interpolateTA(CArray2D<double>& ta);
-  void interpolateRH(CArray2D<double>& rh, CArray2D<double>& ta);
-  void interpolateVW(CArray2D<double>& vw);
-  void interpolateISWR(CArray2D<double>& iswr);
-  //void interpolateEA(CArray2D<double>& ea);
+		/**
+		* @brief This function calls the interpolation class for each individual meteo parameter. 
+		*        It also builds a list of valid data sources for the given parameter.
+		*/
+		void interpolate(CArray2D<double>& nswc, CArray2D<double>& rh, CArray2D<double>& ta, CArray2D<double>& vw, CArray2D<double>& p);
+		void interpolate(CArray2D<double>& nswc, CArray2D<double>& rh, CArray2D<double>& ta,
+				 CArray2D<double>& vw, CArray2D<double>& p, CArray2D<double>& iswr/*, CArray2D<double>& ea*/);
 
-  const Grid2DObject& dem; //HACK: This doesn't hold for PAROC
+	private:
+		void interpolateP(CArray2D<double>& p);
+		void interpolateNSWC(CArray2D<double>& nswc);
+		void interpolateTA(CArray2D<double>& ta);
+		void interpolateRH(CArray2D<double>& rh, CArray2D<double>& ta);
+		void interpolateVW(CArray2D<double>& vw);
+		void interpolateISWR(CArray2D<double>& iswr);
+		//void interpolateEA(CArray2D<double>& ea);
 
-  vector<MeteoData> SourcesData;
-  vector<StationData> SourcesMeta;
+		const Grid2DObject& dem; //HACK: This doesn't hold for PAROC
+
+		vector<MeteoData> SourcesData;
+		vector<StationData> SourcesMeta;
 };
 
 #endif

@@ -112,13 +112,13 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 		getStation2Data(station,stao,data2s);
 		getImisData(station,stao,date_io,data_imis);		
 		MeteoBuffer mb(1000);
-		createData(vecMeteo,vecStation,data_imis,data2s,mb);
+		createData(vecMeteo,vecStation,data_imis,data2s,mb,date_in);
 		mbImis.push_back(mb);
 	}	
 }
 
 void ImisIO::createData(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation,
-			vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb)
+			vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb, const Date_IO& date_in)
 {
 	MeteoData md;
 	StationData sd;
@@ -136,7 +136,6 @@ void ImisIO::createData(vector<MeteoData>& vecMeteo, vector<StationData>& vecSta
 	}
 	WGS84_to_CH1903(lat, lon, east, north);
 	sd.setStationData(east, north, alt, sName, lat, lon);
-	vecStation.push_back(sd);
 	
 	double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr;
 	for (unsigned int i=0; i<meteo_in.size(); i++) {
@@ -151,7 +150,10 @@ void ImisIO::createData(vector<MeteoData>& vecMeteo, vector<StationData>& vecSta
 		/*hs = strToDouble(meteo_in[i][8]);*/convertString(hs, meteo_in[i][8], dec);
 		/*rswr = strToDouble(meteo_in[i][9]);*/convertString(rswr, meteo_in[i][9], dec);
 		md.setMeteoData(tmpDate, ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr);
-		vecMeteo.push_back(md);
+		if (date_in == md.date) {
+			vecMeteo.push_back(md);
+			vecStation.push_back(sd);
+		}
 		mb.put(md, sd);
 	}	
 }
@@ -340,38 +342,34 @@ double ImisIO::strToDouble(const string &str)
 	}
 }
 
-void ImisIO::displayData()
+void ImisIO::displayData(vector<MeteoData>& vecMeteo)
 {
-	cout<<endl <<"Contenu de mbImis : " <<endl;
+	cout<<endl <<"Contenu de vecMeteo : " <<endl;
 	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
 	cout<<" N° |    Station    |          Date          | ta  | iswr |  vw |  rh  | lwr  | nswc | ts0  |  hs  | rswr |" <<endl;
 	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
-	int rows = 0;
-	for (unsigned int i=0; i<mbImis.size(); i++) {
-		deque<MeteoData> mbMet = mbImis[i].getMeteobuffer();
-		deque<StationData> mbSta = mbImis[i].getStationbuffer();
-		for (unsigned int ii=0; ii<mbMet.size(); ii++) {
-			if (rows<9) {
-				cout<<"00" <<rows+1 <<" | ";
-			} else if (rows<99){
-				cout<<"0" <<rows+1 <<" | ";
-			} else {
-				cout<<rows+1 <<" | ";
-			}
-			cout<<mbSta[ii].stationName <<" | ";
-			cout<<mbMet[ii].date <<" | ";
-			cout<<mbMet[ii].ta <<" | ";
-			cout<<mbMet[ii].iswr <<" | ";
-			cout<<mbMet[ii].vw <<" | ";
-			cout<<mbMet[ii].rh <<" | ";
-			cout<<mbMet[ii].lwr <<" | ";
-			cout<<mbMet[ii].nswc <<" | ";
-			cout<<mbMet[ii].ts0 <<" | ";
-			cout<<mbMet[ii].hs <<" | ";
-			cout<<mbMet[ii].rswr <<" | ";
-			cout<<endl;
-			rows++;
+	vector<string> stations = getVecStationName();
+	unsigned int rows = stations.size();
+	for (unsigned int ii=0; ii<rows; ii++) {
+		if (rows<9) {
+			cout<<"00" <<ii+1 <<" | ";
+		} else if (rows<99){
+			cout<<"0" <<ii+1 <<" | ";
+		} else {
+			cout<<ii+1 <<" | ";
 		}
+		cout<<stations[ii] <<" | ";
+		cout<<vecMeteo[ii].date <<" | ";
+		cout<<vecMeteo[ii].ta <<" | ";
+		cout<<vecMeteo[ii].iswr <<" | ";
+		cout<<vecMeteo[ii].vw <<" | ";
+		cout<<vecMeteo[ii].rh <<" | ";
+		cout<<vecMeteo[ii].lwr <<" | ";
+		cout<<vecMeteo[ii].nswc <<" | ";
+		cout<<vecMeteo[ii].ts0 <<" | ";
+		cout<<vecMeteo[ii].hs <<" | ";
+		cout<<vecMeteo[ii].rswr <<" | ";
+		cout<<endl;
 	}
 	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
 	cout<<"rows : " <<rows <<endl;
@@ -383,13 +381,13 @@ void ImisIO::test(vector<int> date) {
 		
 	Date_IO date_in(date[0],date[1],date[2],date[3],date[4]);
 	readMeteoData(date_in, vecMeteo);
-	displayData();
+	displayData(vecMeteo);
 
 }
 
 int main(int argc, char** argv) {
 	if(argc<6) {
-		cout<< " Pas assez d'arguments, tu t'es planté mon pote ahahahahahahaha........:-)E) "<< endl;
+		cout<< "No enough arguments, you did wrong my friend ahahahahahahaha........:-)E) "<< endl;
 		exit(1);
 	} else {
 		vector<int> date;

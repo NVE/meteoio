@@ -16,37 +16,37 @@ using namespace std;
  */
 class MinMaxValue : public FilterValue1Stn {
 
- public:
+	public:
 
-  // base definition
+		// base definition
 
-  MinMaxValue();
-  
-  const string getName() const;
+		MinMaxValue();
 
-  void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
+		const string getName() const;
 
-  /** 
-   * Registers the filter's definition to the FilterFacade's filter list. 
-   * It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
-   */
-  static void registerFilter();
+		void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
 
-  // check handling
+		/** 
+		* Registers the filter's definition to the FilterFacade's filter list. 
+		* It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
+		*/
+		static void registerFilter();
 
-  void prepareCheck();
+		// check handling
 
-  void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
+		void prepareCheck();
 
- private:
+		void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
 
-  // interpreted parameters
+	private:
 
-  /** The minimal value */
-  double m_minValue;
+		// interpreted parameters
 
-  /** The maximal value */
-  double m_maxValue;
+		/** The minimal value */
+		double m_minValue;
+
+		/** The maximal value */
+		double m_maxValue;
 
 };
 

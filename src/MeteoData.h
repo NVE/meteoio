@@ -18,55 +18,31 @@ using namespace IOUtils;
  */
 #ifdef _PAROC_
 class MeteoData : POPBase {
-  public:
-    void Serialize(paroc_buffer &buf, bool pack);
+	public:
+		void Serialize(paroc_buffer &buf, bool pack);
 #else
-  class MeteoData {
+class MeteoData {
 #endif  
- public:
-  /**
-   * @brief The default constructor initializing every double attribute to nodata and the Date_IO to julian==0.0
-   */
-  MeteoData(void);
+	public:
+		/**
+		* @brief The default constructor initializing every double attribute to nodata and the Date_IO to julian==0.0
+		*/
+		MeteoData(void);
 
-  /**
-   * @brief A constructor that takes one to eight arguments
-   * @param date_in A Date_IO object representing the time of the measurement
-   * @param ta AIR TEMPERATURE in CELSIUS (default nodata)
-   * @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
-   * @param vw Wind VELOCITY in m s-1 (default nodata)
-   * @param rh RELATIVE HUMIDITY (default nodata)
-   * @param lwr LONG WAVE radiation in W m-2 (default nodata)
-   * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
-   * @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
-   * @param hs Snow height in cm (default nodata)
-   * @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
-   */
-  MeteoData(const Date_IO& date_in, 
-	    const double& ta=nodata, 
-	    const double& iswr=nodata, 
-	    const double& vw=nodata, 
-	    const double& rh=nodata, 
-	    const double& lwr=nodata, 
-	    const double& nswc=nodata,
-	    const double& ts0=nodata,
-	    const double& hs=nodata,
-	    const double& rswr=nodata);
-
-  /**
-   * @brief General setter function, requires one to eight arguments
-   * @param date_in A Date_IO object representing the time of the measurement
-   * @param ta AIR TEMPERATURE in CELSIUS (default nodata)
-   * @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
-   * @param vw Wind VELOCITY in m s-1 (default nodata)
-   * @param rh RELATIVE HUMIDITY (default nodata)
-   * @param lwr LONG WAVE radiation in W m-2 (default nodata)
-   * @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
-   * @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
-   * @param hs Snow height in cm (default nodata)
-   * @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
-   */
-  void setMeteoData(const Date_IO& date_in, 
+		/**
+		* @brief A constructor that takes one to eight arguments
+		* @param date_in A Date_IO object representing the time of the measurement
+		* @param ta AIR TEMPERATURE in CELSIUS (default nodata)
+		* @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
+		* @param vw Wind VELOCITY in m s-1 (default nodata)
+		* @param rh RELATIVE HUMIDITY (default nodata)
+		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
+		* @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
+		* @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+		* @param hs Snow height in cm (default nodata)
+		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
+		*/
+		MeteoData(const Date_IO& date_in, 
 		    const double& ta=nodata, 
 		    const double& iswr=nodata, 
 		    const double& vw=nodata, 
@@ -77,21 +53,45 @@ class MeteoData : POPBase {
 		    const double& hs=nodata,
 		    const double& rswr=nodata);
 
-  /**
-   * @brief Check data for plausibility and set fishy data to MeteoData::nodata
-   */
-  void cleanData();
+		/**
+		* @brief General setter function, requires one to eight arguments
+		* @param date_in A Date_IO object representing the time of the measurement
+		* @param ta AIR TEMPERATURE in CELSIUS (default nodata)
+		* @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
+		* @param vw Wind VELOCITY in m s-1 (default nodata)
+		* @param rh RELATIVE HUMIDITY (default nodata)
+		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
+		* @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
+		* @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+		* @param hs Snow height in cm (default nodata)
+		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
+		*/
+		void setMeteoData(const Date_IO& date_in, 
+			    const double& ta=nodata, 
+			    const double& iswr=nodata, 
+			    const double& vw=nodata, 
+			    const double& rh=nodata, 
+			    const double& lwr=nodata, 
+			    const double& nswc=nodata,
+			    const double& ts0=nodata,
+			    const double& hs=nodata,
+			    const double& rswr=nodata);
 
-  const std::string toString(void) const;
+		/**
+		* @brief Check data for plausibility and set fishy data to MeteoData::nodata
+		*/
+		void cleanData();
 
-  void Check_min_max(double& param, const double low_hard, const double low_soft, const double high_soft, const double high_hard);
+		const std::string toString(void) const;
 
-  //Comparison operators
-  bool operator==(const MeteoData&) const; ///<Operator that tests for equality
-  bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
+		void Check_min_max(double& param, const double low_hard, const double low_soft, const double high_soft, const double high_hard);
 
-  double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr; //direct access allowed
-  Date_IO date;///<Date_IO/Time of the measurement
+		//Comparison operators
+		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
+		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
+
+		double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr; //direct access allowed
+		Date_IO date;///<Date_IO/Time of the measurement
 
 };
 

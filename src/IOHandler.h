@@ -10,42 +10,42 @@
 #include "IOExceptions.h"
 
 class IOHandler : public IOInterface {
- public:
-  // virtual IOHandler* clone() const; // lwk : not used yet
+	public:
+		// virtual IOHandler* clone() const; // lwk : not used yet
 
-  IOHandler(const std::string& configfile);
-  IOHandler(const IOHandler&);
-  IOHandler(const ConfigReader&);
-  ~IOHandler() throw();
+		IOHandler(const std::string& configfile);
+		IOHandler(const IOHandler&);
+		IOHandler(const ConfigReader&);
+		~IOHandler() throw();
 
-  virtual void get2DGridSize(int& nx, int& ny);
-  virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
+		virtual void get2DGridSize(int& nx, int& ny);
+		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
 
-  virtual void readDEM(Grid2DObject& dem_out);
-  virtual void readLanduse(Grid2DObject& landuse_out);
+		virtual void readDEM(Grid2DObject& dem_out);
+		virtual void readLanduse(Grid2DObject& landuse_out);
 
-  virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo);
-  virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
+		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo);
+		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
 
-  virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
-  virtual void readSpecialPoints(CSpecialPTSArray& pts);
+		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+		virtual void readSpecialPoints(CSpecialPTSArray& pts);
 
-  virtual void write2DGrid(const Grid2DObject& grid_in, const string& filename);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const string& filename);
 
-  static const string ascii_src;
-  static const string boschung_src;
-  static const string imis_src;
+		static const string ascii_src;
+		static const string boschung_src;
+		static const string imis_src;
 
- private:
-  void cleanup() throw();
-  void loadDynamicPlugins();
+	private:
+		void cleanup() throw();
+		void loadDynamicPlugins();
 
-  ConfigReader cfg;
-  A3DIO fileio;
-  DynamicLibrary* dynLibraryBoschung;
-  IOInterface* boschungio;
-  DynamicLibrary* dynLibraryImis;
-  IOInterface* imisio;
+		ConfigReader cfg;
+		A3DIO fileio;
+		DynamicLibrary* dynLibraryBoschung;
+		IOInterface* boschungio;
+		DynamicLibrary* dynLibraryImis;
+		IOInterface* imisio;
 };
 
 #endif

@@ -4,7 +4,8 @@ using namespace std;
 
 BoschungIO::BoschungIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}
 
-BoschungIO::BoschungIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile){
+BoschungIO::BoschungIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+{
 	//Nothing else so far
 }
 
@@ -13,23 +14,28 @@ BoschungIO::BoschungIO(const std::string& configfile) : IOInterface(NULL), cfg(c
 //  createBuffer();
 //}
 
-BoschungIO::BoschungIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader){
+BoschungIO::BoschungIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+{
 	//Nothing else so far
 }
 
-BoschungIO::~BoschungIO() throw(){
+BoschungIO::~BoschungIO() throw()
+{
 	cleanup();
 }
 
-void BoschungIO::cleanup() throw(){
-	if (fin.is_open()) //close fin if open
+void BoschungIO::cleanup() throw()
+{
+	if (fin.is_open()) {//close fin if open
 		fin.close();
+	}
 }
 
 //Clone function
 //BoschungIO* BoschungIO::clone() const { return new BoschungIO(*this); }
 
-void BoschungIO::createBuffer(){
+void BoschungIO::createBuffer()
+{
 	//Clear the buffers
 	unfilteredMeteoBuffer.clear();
 	filteredMeteoBuffer.clear();
@@ -39,44 +45,51 @@ void BoschungIO::createBuffer(){
 	int stations=0;
 
 	cfg.getValue("NROFSTATIONS", str_stations);
-	if (!IOUtils::convertString(stations, str_stations, std::dec))
+	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
 		THROW ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+	}
 
 	//Allocate one MeteoBuffer per station
-	for (int ii=0; ii<stations; ii++){
+	for (int ii=0; ii<stations; ii++) {
 		unfilteredMeteoBuffer.push_back(MeteoBuffer(5000));
 		filteredMeteoBuffer.push_back(MeteoBuffer(5000));
 	}
 	cout << "[i] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
 }
 
-void BoschungIO::get2DGridSize(int& , int& ){
+void BoschungIO::get2DGridSize(int& , int& )
+{
 	//Nothing so far
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::read2DGrid(Grid2DObject&, const string& filename){
+void BoschungIO::read2DGrid(Grid2DObject&, const string& filename)
+{
 	//Nothing so far
 	(void)filename;
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::readDEM(Grid2DObject&){
+void BoschungIO::readDEM(Grid2DObject&)
+{
 	//Nothing so far
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::readLanduse(Grid2DObject&){
+void BoschungIO::readLanduse(Grid2DObject&)
+{
 	//Nothing so far
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& meteo_out){
+void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& meteo_out)
+{
 	vector<StationData> vecStation;
 	readMeteoData(date_in, meteo_out, vecStation);
 }
 
-void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation){
+void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
+{
 	//For every station: See whether data is already buffered
 	//Filter
 	//Resample if necessary
@@ -86,39 +99,41 @@ void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMet
 	vecMeteo.clear();
 	vecStation.clear();
 
-	if (unfilteredMeteoBuffer.size() == 0){ //initialize buffer
+	if (unfilteredMeteoBuffer.size() == 0) { //initialize buffer
 		createBuffer(); //creates MeteoBuffer objects for all stations
 		readStationNames(); //reads station names into vector<string> vecStationName
 	}
 
 	//loop through all meteo buffers
-	for (unsigned int ii=0; ii<unfilteredMeteoBuffer.size(); ii++){
+	for (unsigned int ii=0; ii<unfilteredMeteoBuffer.size(); ii++) {
 		unsigned int index = MeteoBuffer::npos;
 
-		if (unfilteredMeteoBuffer[ii].size() > 0) //check whether meteo data for the date exists in buffer
+		if (unfilteredMeteoBuffer[ii].size() > 0) {//check whether meteo data for the date exists in buffer
 			index = unfilteredMeteoBuffer[ii].seek(date_in);
+		}
 
-		if (index == MeteoBuffer::npos){ //not in buffer
+		if (index == MeteoBuffer::npos) { //not in buffer
 			cout << "[i] Station " << vecStationName[ii] << " data for date " << date_in.toString() << " not in buffer ..." << endl;
       
 			bool dataexists = bufferData(date_in, ii);
 
-			if (dataexists) //date_in is contained in buffer
+			if (dataexists) {//date_in is contained in buffer
 				index = unfilteredMeteoBuffer[ii].seek(date_in);
+			}
 
 		} else {
 			cout << "[i] Found data for station " << vecStationName[ii] << " and date " << date_in.toString() << " in buffer" << endl;
 		}
     
 		// RESAMPLING
-		if ((index != MeteoBuffer::npos) && (unfilteredMeteoBuffer[ii].getMeteoData(index).date != date_in)){
+		if ((index != MeteoBuffer::npos) && (unfilteredMeteoBuffer[ii].getMeteoData(index).date != date_in)) {
 			cerr << "[i] Resampling required for date: " << date_in.toString() << endl;
       
 			Meteo1DResampler mresampler;
 			mresampler.resample(index, date_in, unfilteredMeteoBuffer[ii]);
 		}
     
-		if (index != MeteoBuffer::npos){
+		if (index != MeteoBuffer::npos) {
 			vecMeteo.push_back(unfilteredMeteoBuffer[ii].getMeteoData(index));
 			vecStation.push_back(unfilteredMeteoBuffer[ii].getStationData(index));
 		} else {
@@ -127,11 +142,13 @@ void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMet
 		}
 	}
 
-	if (vecMeteo.size() == 0) //No data found
+	if (vecMeteo.size() == 0) {//No data found
 		THROW IOException("[e] No data for any station for date " + date_in.toString() + " found", AT);
+	}
 }
 
-void BoschungIO::readStationNames(){
+void BoschungIO::readStationNames()
+{
 	vecStationName.clear();
 
 	//Read in the StationNames
@@ -140,10 +157,11 @@ void BoschungIO::readStationNames(){
 
 	cfg.getValue("NROFSTATIONS", str_stations);
 
-	if (!IOUtils::convertString(stations, str_stations, std::dec))
+	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
 		THROW ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+	}
   
-	for (int ii=0; ii<stations; ii++){
+	for (int ii=0; ii<stations; ii++) {
 		stringstream tmp_stream;
 		string stationname="", tmp_file="";
 		Date_IO tmp_date(0);
@@ -156,7 +174,8 @@ void BoschungIO::readStationNames(){
 	}    
 }
 void BoschungIO::getFiles(const string& stationname, const Date_IO& start_date, const Date_IO& end_date, 
-					 vector<string>& vecFiles, vector<Date_IO>& vecDate_IO){
+					 vector<string>& vecFiles, vector<Date_IO>& vecDate_IO)
+{
 	list<string> dirlist = list<string>();
 	Date_IO tmp_date;
 	string xmlpath="";
@@ -173,11 +192,11 @@ void BoschungIO::getFiles(const string& stationname, const Date_IO& start_date, 
   
 	while ((it != dirlist.end()) && (tmp_date < end_date)) {
 		//check validity of filename
-		if (validFilename(*it)){
+		if (validFilename(*it)) {
 			string filename_out = *it;
 			stringToDate_IO(filename_out, tmp_date);
 
-			if ((tmp_date > start_date) && (tmp_date <= end_date)){
+			if ((tmp_date > start_date) && (tmp_date <= end_date)) {
 				vecFiles.push_back(xmlpath + "/" + filename_out);
 				vecDate_IO.push_back(tmp_date);
 			}
@@ -187,12 +206,14 @@ void BoschungIO::getFiles(const string& stationname, const Date_IO& start_date, 
 	}
 }
 
-bool BoschungIO::bufferData(const Date_IO& date_in, const unsigned int& stationnr){
+bool BoschungIO::bufferData(const Date_IO& date_in, const unsigned int& stationnr)
+{
 	vector<string> vecFiles;
 	vector<Date_IO> vecDate_IO;
 
-	if (stationnr >= unfilteredMeteoBuffer.size())
+	if (stationnr >= unfilteredMeteoBuffer.size()) {
 		THROW IndexOutOfBoundsException("", AT);
+	}
 
 	unfilteredMeteoBuffer[stationnr].clear();
 	filteredMeteoBuffer[stationnr].clear();
@@ -200,19 +221,21 @@ bool BoschungIO::bufferData(const Date_IO& date_in, const unsigned int& stationn
 	getFiles(vecStationName[stationnr], date_in-(Date_IO(1900,1,1,8)), date_in+Date_IO(20.0), vecFiles, vecDate_IO);
 	//cout << "[i] Buffering station number: " << vecStationName[stationnr] << "  " << vecFiles.size() << " files" << endl;
 
-	if (vecFiles.size()==0)
+	if (vecFiles.size()==0) {
 		return false;
+	}
 
-	if ((vecFiles.size() ==0) || (!((date_in >= vecDate_IO[0]) && (vecDate_IO[vecDate_IO.size()-1] >= date_in)))){
+	if ((vecFiles.size() ==0) || (!((date_in >= vecDate_IO[0]) && (vecDate_IO[vecDate_IO.size()-1] >= date_in)))) {
 		unfilteredMeteoBuffer[stationnr].clear();
 		return false;
 	}
 	//If we reach this point: Date_IO is definitely covered
 
-	if (vecFiles.size() > unfilteredMeteoBuffer[stationnr].getMaxSize())
+	if (vecFiles.size() > unfilteredMeteoBuffer[stationnr].getMaxSize()) {
 		THROW IOException("MeteoBuffer too small to hold all meteo data", AT);
+	}
   
-	for (unsigned int ii=0; ii<vecFiles.size(); ii++){
+	for (unsigned int ii=0; ii<vecFiles.size(); ii++) {
 		MeteoData meteoData;
 		StationData stationData;
 		xmlExtractData(vecFiles[ii], vecDate_IO[ii], meteoData, stationData);    
@@ -225,7 +248,8 @@ bool BoschungIO::bufferData(const Date_IO& date_in, const unsigned int& stationn
 
 
 void BoschungIO::checkForMeteoFiles(const string& xmlpath, const string& stationname, const Date_IO& date_in,
-							 string& filename_out, Date_IO& date_out){
+							 string& filename_out, Date_IO& date_out)
+{
 	list<string> dirlist = list<string>();
 	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + ".xml");
 
@@ -237,7 +261,7 @@ void BoschungIO::checkForMeteoFiles(const string& xmlpath, const string& station
   
 	while ((it != dirlist.end()) && (date_out < date_in)) {
 		//check validity of filename
-		if (validFilename(*it)){
+		if (validFilename(*it)) {
 			filename_out = *it;
 			stringToDate_IO(filename_out, date_out);
 			//cout << tmp_file << "  " << tmp_date.toString() << endl;
@@ -247,7 +271,8 @@ void BoschungIO::checkForMeteoFiles(const string& xmlpath, const string& station
 	}  
 }
 
-void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, MeteoData& md, StationData& sd){
+void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, MeteoData& md, StationData& sd)
+{
 	double ta=nodata, iswr=nodata, vw=nodata, rh=nodata, lwr=nodata, nswc=nodata;
 	double longitude=nodata, latitude=nodata, altitude=nodata;
 
@@ -256,7 +281,7 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 	//parser.set_validate(); provide DTD to check syntax
 	parser.set_substitute_entities(); //We just want the text to be resolved/unescaped automatically.
 	parser.parse_file(filename);
-	if(parser){
+	if(parser) {
 		//Walk the tree: ROOT NODE
 		xmlpp::Node* pNode = parser.get_document()->get_root_node(); //deleted by DomParser.
 
@@ -308,19 +333,22 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 	}
 }
 
-void BoschungIO::xmlParseStringToDouble(const string& str_in, double& d_out, const string& parname){
+void BoschungIO::xmlParseStringToDouble(const string& str_in, double& d_out, const string& parname)
+{
 	if (str_in!="") {//do nothing if empty content for a node was read
-		if (!IOUtils::convertString(d_out, str_in, std::dec)) //but if content of node is not empty, try conversion
+		if (!IOUtils::convertString(d_out, str_in, std::dec)) {//but if content of node is not empty, try conversion
 			THROW ConversionFailedException("Error while reading value for " + parname, AT);
+		}
 	}
 }
 
-std::string BoschungIO::xmlGetNodeContent(xmlpp::Node* pNode, const string& nodename){
+std::string BoschungIO::xmlGetNodeContent(xmlpp::Node* pNode, const string& nodename)
+{
 	xmlpp::Node* tmpNode= xmlGetNode(pNode, nodename);
   
-	if (tmpNode!=NULL){
+	if (tmpNode!=NULL) {
 		xmlpp::Node* tmpNode2= xmlGetNode(tmpNode, "text"); //Try to retrieve text content
-		if (tmpNode2!=NULL){
+		if (tmpNode2!=NULL) {
 			const xmlpp::TextNode* nodeText = dynamic_cast<const xmlpp::TextNode*>(tmpNode2);
 			return string(nodeText->get_content());
 		}
@@ -330,31 +358,35 @@ std::string BoschungIO::xmlGetNodeContent(xmlpp::Node* pNode, const string& node
 }
 
 
-xmlpp::Node* BoschungIO::xmlGetNode(xmlpp::Node* parentNode, const string& nodename){
-	if (xmlGetNodeName(parentNode)==nodename){
+xmlpp::Node* BoschungIO::xmlGetNode(xmlpp::Node* parentNode, const string& nodename)
+{
+	if (xmlGetNodeName(parentNode)==nodename) {
 		return parentNode;
 	}
 
 	xmlpp::Node::NodeList list = parentNode->get_children();
 
-	for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter){
+	for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter) {
 		//xmlpp::Node* tmpNode= *iter;
 		//cout << tmpNode->get_name() << endl;
 
 		xmlpp::Node* tmpNode2= (xmlGetNode(*iter, nodename));
-		if (tmpNode2!=NULL)
+		if (tmpNode2!=NULL) {
 			return tmpNode2;
+		}
 	}
 
 	return NULL;
 }
 
-std::string BoschungIO::xmlGetNodeName(xmlpp::Node* pNode){
+std::string BoschungIO::xmlGetNodeName(xmlpp::Node* pNode)
+{
 	string nodename = pNode->get_name();
 	return nodename;
 }
 
-void BoschungIO::stringToDate_IO(const string& instr, Date_IO& date_out) const{
+void BoschungIO::stringToDate_IO(const string& instr, Date_IO& date_out) const
+{
 	int tmp[5];
 
 	string year = "20" + instr.substr(0,2);
@@ -372,20 +404,24 @@ void BoschungIO::stringToDate_IO(const string& instr, Date_IO& date_out) const{
 	date_out.setDate_IO(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]);
 }
 
-bool BoschungIO::validFilename(const string& tmp) const{
+bool BoschungIO::validFilename(const string& tmp) const
+{
 	size_t pos = tmp.find_first_not_of("0123456789");//Filename must start with 10 numbers
-	if (pos!=10)
+	if (pos!=10) {
 		return false;
+	}
   
 	return true;
 }
 
-void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& meteo_out){
+void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& meteo_out)
+{
 	vector<StationData> vecStation;
 	read2DMeteo(date_in, meteo_out, vecStation);
 }
 
-void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation){
+void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
+{
 	vecMeteo.clear();
 	vecStation.clear();
 
@@ -396,10 +432,11 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo
 	cfg.getValue("NROFSTATIONS", str_stations);
 	cfg.getValue("XMLPATH", xmlpath);
 
-	if (!IOUtils::convertString(stations, str_stations, std::dec))
+	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
 		THROW ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+	}
   
-	for (int ii=0; ii<stations; ii++){
+	for (int ii=0; ii<stations; ii++) {
 		stringstream tmp_stream;
 		string stationname="", tmp_file="";
 		Date_IO tmp_date(0);
@@ -411,9 +448,10 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo
 
 		checkForMeteoFiles(xmlpath, stationname, date_in, tmp_file, tmp_date);
 		//Check whether file was found
-		if (tmp_date<date_in)
+		if (tmp_date<date_in) {
 			THROW FileNotFoundException("No XML file in path '" + xmlpath 
 								   + "' found for date " + date_in.toString() + " for station " + stationname, AT);
+		}
 
 		//Read in data from XML File
 		xmlExtractData(xmlpath+"/"+tmp_file, tmp_date, md, sd);
@@ -423,31 +461,45 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo
 	}  
 }
 
-void BoschungIO::readAssimilationData(const Date_IO&, Grid2DObject&){
+void BoschungIO::readAssimilationData(const Date_IO&, Grid2DObject&)
+{
 	//Nothing so far
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::readSpecialPoints(CSpecialPTSArray&){
+void BoschungIO::readSpecialPoints(CSpecialPTSArray&)
+{
 	//Nothing so far
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::write2DGrid(const Grid2DObject&, const string& filename){
+void BoschungIO::write2DGrid(const Grid2DObject&, const string& filename)
+{
 	//Nothing so far
 	(void)filename;
 	THROW IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::convertUnits(MeteoData& meteo){
+void BoschungIO::convertUnits(MeteoData& meteo)
+{
 	//converts C to Kelvin, converts lwr to ea, converts RH to [0,1]
-	if(meteo.ta==nodata) meteo.ta=nodata;
-	else meteo.ta=C_TO_K(meteo.ta);
-	if(meteo.ts0==nodata) meteo.ts0=nodata;
-	else meteo.ts0=C_TO_K(meteo.ts0);
+	if(meteo.ta==nodata) {
+		meteo.ta=nodata;
+	} else {
+	 meteo.ta=C_TO_K(meteo.ta);
+	}
+	
+	if(meteo.ts0==nodata) {
+		meteo.ts0=nodata;
+	} else {
+		meteo.ts0=C_TO_K(meteo.ts0);
+	}
 
-	if(meteo.rh==nodata) meteo.rh=nodata;
-	else meteo.rh /= 100.;
+	if(meteo.rh==nodata) {
+		meteo.rh=nodata;
+	} else {
+		meteo.rh /= 100.;
+	}
 }
 
 extern "C"

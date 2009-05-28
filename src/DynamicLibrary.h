@@ -15,18 +15,18 @@
  * @date   2009-03-10
  */
 class PluginObject {
- private:
-  // Callback function that should be called to delete dynamic object
-  void (*_deleteObject)(void*);
- public:
-  // The constructor sets the callback function to use
-  PluginObject(void (*delObj)(void*));
-  
-  // The destructor
-  virtual ~PluginObject(void);
-  
-  // Sends "this" to the callback destructor function.
-  void deleteSelf(void);
+	private:
+		// Callback function that should be called to delete dynamic object
+		void (*_deleteObject)(void*);
+	public:
+		// The constructor sets the callback function to use
+		PluginObject(void (*delObj)(void*));
+
+		// The destructor
+		virtual ~PluginObject(void);
+
+		// Sends "this" to the callback destructor function.
+		void deleteSelf(void);
 };
 
 /**
@@ -37,29 +37,29 @@ class PluginObject {
  * @date   2009-03-10
  */
 class DynamicLibrary {
- protected:
-  // The handle to the shared library that was opened
-  void* _objFile;
+	protected:
+		// The handle to the shared library that was opened
+		void* _objFile;
 
-  // Since an instance of DynamicLibrary manages lifetime of an open 
-  // library, it is important to make sure that the object isn't 
-  // copied.
-  DynamicLibrary(const DynamicLibrary&) {}
-  DynamicLibrary& operator=(const DynamicLibrary&) {return *this;}
+		// Since an instance of DynamicLibrary manages lifetime of an open 
+		// library, it is important to make sure that the object isn't 
+		// copied.
+		DynamicLibrary(const DynamicLibrary&) {}
+		DynamicLibrary& operator=(const DynamicLibrary&) {return *this;}
 
-  // Creates a new library, with the object file handle that is passed 
-  // in. Protected so that only the DynamicLoader can create an 
-  // instance (since it is declared friend.
-  DynamicLibrary(void* objFile);
- public:
-  // Destructor, closes the open shared library
-  ~DynamicLibrary(void);
-  
-  // Creates a new instance of the named class, or returns NULL is the 
-  // class isn't found. 
-  PluginObject* newObject(const std::string& name, const std::string& filename);
-  
-  friend class DynamicLoader; ///< The friend class DynamicLoader can solely instantiate the DynamicLibrary class (protected constructor)
+		// Creates a new library, with the object file handle that is passed 
+		// in. Protected so that only the DynamicLoader can create an 
+		// instance (since it is declared friend.
+		DynamicLibrary(void* objFile);
+	public:
+		// Destructor, closes the open shared library
+		~DynamicLibrary(void);
+
+		// Creates a new instance of the named class, or returns NULL is the 
+		// class isn't found. 
+		PluginObject* newObject(const std::string& name, const std::string& filename);
+
+		friend class DynamicLoader; ///< The friend class DynamicLoader can solely instantiate the DynamicLibrary class (protected constructor)
 };
 
 /**
@@ -70,10 +70,10 @@ class DynamicLibrary {
  * @date   2009-03-10
  */
 class DynamicLoader {
- public:
-  static DynamicLibrary* loadObjectFile(const std::string& file, int flags);
-  // Loads a DynamicLibrary, given the shared library file
-  // "file", with the dlopen flags supplied.
+	public:
+		static DynamicLibrary* loadObjectFile(const std::string& file, int flags);
+		// Loads a DynamicLibrary, given the shared library file
+		// "file", with the dlopen flags supplied.
 };
 
 #endif

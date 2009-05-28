@@ -51,25 +51,25 @@ inline void printdebug(...) {};
  | Nodes                                                         |                                                                          
  +---------------------------------------------------------------*/
 typedef struct {
-  double x;
-  double y;
-  double z;
-  double u;
-  double v;
-  double w;
+	double x;
+	double y;
+	double z;
+	double u;
+	double v;
+	double w;
 
-  double slope; /* In wind direction [-PI/2,PI/2]*/
-  double sl;    /* General (maximum) slope angle */
-  double tet;
-  double p;
-  double Km;
-  double lm;
-  double wstar;
-  double e;
-  double c;
-  double azi;  /* Slope Azimut */
-  double sx;   /* x -component of normal on Surface element */
-  double sy;   /* y -component of normal on Surface element */
+	double slope; /* In wind direction [-PI/2,PI/2]*/
+	double sl;    /* General (maximum) slope angle */
+	double tet;
+	double p;
+	double Km;
+	double lm;
+	double wstar;
+	double e;
+	double c;
+	double azi;  /* Slope Azimut */
+	double sx;   /* x -component of normal on Surface element */
+	double sy;   /* y -component of normal on Surface element */
 } NODE;
 
 /*---------------------------------------------------------------+                                                                          
@@ -89,18 +89,18 @@ typedef CArray<int> CIntArray;
 
 class LegacyIO
 {
- public:
-  LegacyIO(char *meteopath);
-  ~LegacyIO();
+	public:
+		LegacyIO(char *meteopath);
+		~LegacyIO();
 
-  virtual void GetGridSize(int &nx, int &ny, int &nz);
-  virtual void GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z);
-  virtual void GetGridData(CNodeArray &data, char *hour);
-  virtual void PrepareNextWindField(char *hour);
+		virtual void GetGridSize(int &nx, int &ny, int &nz);
+		virtual void GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z);
+		virtual void GetGridData(CNodeArray &data, char *hour);
+		virtual void PrepareNextWindField(char *hour);
 
- private:
-  char meteopathname[MAX_STRING_LENGTH];
-  int dimx, dimy, dimz;
+	private:
+		char meteopathname[MAX_STRING_LENGTH];
+		int dimx, dimy, dimz;
 };
 
 

@@ -25,134 +25,134 @@ using namespace std;
  */
 class FilterBase {
 
- public:
+	public:
 
-  // base definition
+	// base definition
 
-  /**
-   * Constructs a base filter.
-   * To be called by any subclasses' constructor.
-   */
-  FilterBase();
+	/**
+	* Constructs a base filter.
+	* To be called by any subclasses' constructor.
+	*/
+	FilterBase();
 
-  /**
-   * Destructor.
-   */
-  virtual ~FilterBase();
+	/**
+	* Destructor.
+	*/
+	virtual ~FilterBase();
 
-  /**
-   * Returns the name of the type of the filter, used as the filter's identifier.
-   * Has to be defined by the concrete filter implementation, with one unique name per type of filter.
-   * Note that to be accessible, the filter also has to be registered somewhere, for example in the FilterFacade::registerFilters() method.
-   */
-  virtual const string getName() const = 0;
-  
-  /**
-   * Returns the minimal size of the window that the filter requires.
-   * Both conditions has to be fullfilled for the filter to make the proper decision (otherwise, a warning is printed during doCheck). 
-   * Before calling getMinimalWindow, the parameters have to be filled and the prepareCheck method called!
-   * @param minNbPoints   [out] The minimal number of measures. Returns 1 for single-value filters (for ex. min-max).
-   * @param minDeltaTime   [out] The minimal delta of the time frame. Returns an empty delta for single-value filters. 
-   */
-  virtual void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) = 0;
+	/**
+	* Returns the name of the type of the filter, used as the filter's identifier.
+	* Has to be defined by the concrete filter implementation, with one unique name per type of filter.
+	* Note that to be accessible, the filter also has to be registered somewhere, for example in the FilterFacade::registerFilters() method.
+	*/
+	virtual const string getName() const = 0;
 
-  // parameters handling
+	/**
+	* Returns the minimal size of the window that the filter requires.
+	* Both conditions has to be fullfilled for the filter to make the proper decision (otherwise, a warning is printed during doCheck). 
+	* Before calling getMinimalWindow, the parameters have to be filled and the prepareCheck method called!
+	* @param minNbPoints   [out] The minimal number of measures. Returns 1 for single-value filters (for ex. min-max).
+	* @param minDeltaTime   [out] The minimal delta of the time frame. Returns an empty delta for single-value filters. 
+	*/
+	virtual void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime) = 0;
 
-  /**
-   * Returns the name of the allowed filter's parameters.
-   */
-  const set<string>& getParamsName() const;
+	// parameters handling
 
-  /**
-   * Returns the value of the given filter's parameters.
-   */
-  const string getParamValue(const string& name);
+	/**
+	* Returns the name of the allowed filter's parameters.
+	*/
+	const set<string>& getParamsName() const;
 
-  /**
-   * Sets the value of the given filter's parameters.
-   * The parameter's name has to be declared (in getParamsName).
-   */
-  void setParamValue(const string& name, const string& value);
+	/**
+	* Returns the value of the given filter's parameters.
+	*/
+	const string getParamValue(const string& name);
 
-  // base parameters accessors
-  
-  /**
-   * Is the filter soft (warn and force the value) or hard (warn and set to no_data).
-   * Filled by the preCheck method.
-   */
-  bool isSoft() const;
-  
-  /**
-   * Gets the name of the filter instance, usually the section name in the .ini config file.
-   * @return The name of the filter instance, or empty if undefined. 
-   */
-  const string getSectionName() const;
-  
-  // check handling
+	/**
+	* Sets the value of the given filter's parameters.
+	* The parameter's name has to be declared (in getParamsName).
+	*/
+	void setParamValue(const string& name, const string& value);
 
-  /**
-   * Make some initialisation and parameters' validation before the real check.
-   * Has to be called before any doCheck and getMinimalWindow methods and after any parameters modification!
-   */
-  virtual void prepareCheck();
+	// base parameters accessors
 
-  /**
-   * Report a warning about a non-fulfilled condition. 
-   * Used by filter implementation to report warnings.
-   * @param message   The (explicit please) warning message
-   */
-  void reportNF(const char* message);
+	/**
+	* Is the filter soft (warn and force the value) or hard (warn and set to no_data).
+	* Filled by the preCheck method.
+	*/
+	bool isSoft() const;
 
-  /**
-   * Report a warning about a non-fulfilled condition. 
-   * Used by filter implementation to report warnings.
-   * @param message   The (explicit please) warning message
-   */
-  void reportNF(const string& message);
+	/**
+	* Gets the name of the filter instance, usually the section name in the .ini config file.
+	* @return The name of the filter instance, or empty if undefined. 
+	*/
+	const string getSectionName() const;
 
-  /**
-   * Report a warning about a filtering problem (for example not enough data to decide). 
-   * Used by filter implementation to report warnings.
-   * @param message   The (explicit please) warning message
-   */
-  void reportP(const char* message);
+	// check handling
 
-  /**
-   * Report a warning about a filtering problem (for example not enough data to decide). 
-   * Used by filter implementation to report warnings.
-   * @param message   The (explicit please) warning message
-   */
-  void reportP(const string& message);
+	/**
+	* Make some initialisation and parameters' validation before the real check.
+	* Has to be called before any doCheck and getMinimalWindow methods and after any parameters modification!
+	*/
+	virtual void prepareCheck();
 
- protected:
+	/**
+	* Report a warning about a non-fulfilled condition. 
+	* Used by filter implementation to report warnings.
+	* @param message   The (explicit please) warning message
+	*/
+	void reportNF(const char* message);
 
-  // raw parameters
+	/**
+	* Report a warning about a non-fulfilled condition. 
+	* Used by filter implementation to report warnings.
+	* @param message   The (explicit please) warning message
+	*/
+	void reportNF(const string& message);
 
-  /**
-   * Names of the allowed filter's parameters.
-   * Has to be filled in the constructor.
-   */
-  set<string> m_paramsName;
+	/**
+	* Report a warning about a filtering problem (for example not enough data to decide). 
+	* Used by filter implementation to report warnings.
+	* @param message   The (explicit please) warning message
+	*/
+	void reportP(const char* message);
 
-  /**
-   * Values of the filter's parameters.
-   * The values' list is managed by this base class.
-   */
-  map<string,string> m_paramsValue;
-  
- private:
+	/**
+	* Report a warning about a filtering problem (for example not enough data to decide). 
+	* Used by filter implementation to report warnings.
+	* @param message   The (explicit please) warning message
+	*/
+	void reportP(const string& message);
 
-  // interpreted parameters
+	protected:
 
-  /**
-   * Is the filter soft (warn and force the value) or hard (warn and set to no_data).
-   * Filled by the preCheck method.
-   */
-  bool m_isSoft;
-  
-  // friends
-  
-  friend class FilterValue;
+	// raw parameters
+
+	/**
+	* Names of the allowed filter's parameters.
+	* Has to be filled in the constructor.
+	*/
+	set<string> m_paramsName;
+
+	/**
+	* Values of the filter's parameters.
+	* The values' list is managed by this base class.
+	*/
+	map<string,string> m_paramsValue;
+
+	private:
+
+	// interpreted parameters
+
+	/**
+	* Is the filter soft (warn and force the value) or hard (warn and set to no_data).
+	* Filled by the preCheck method.
+	*/
+	bool m_isSoft;
+
+	// friends
+
+	friend class FilterValue;
 
 };
 

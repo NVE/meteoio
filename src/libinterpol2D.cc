@@ -17,7 +17,8 @@ Interpol2D::Interpol2D(interp_types Isingle,
 		       interp_types Imultiple, 
 		       const vector<double>& vecData, 
 		       const vector<StationData>& vecMeta, 
-		       const Grid2DObject& dem_in) : dem(dem_in), InputTopo(dem.grid2D), InputMeta(vecMeta), inputData(vecData){
+		       const Grid2DObject& dem_in) : dem(dem_in), InputTopo(dem.grid2D), InputMeta(vecMeta), inputData(vecData)
+{
 
 	single_type   = Isingle;
 	multiple_type = Imultiple;

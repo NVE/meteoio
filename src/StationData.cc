@@ -3,55 +3,60 @@
 using namespace std;
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
-StationData::StationData(){
-  setStationData(nodata, nodata, nodata, "", nodata, nodata);
+StationData::StationData()
+{
+	setStationData(nodata, nodata, nodata, "", nodata, nodata);
 }
 
 StationData::StationData(const double& x_in, const double& y_in, 
 			 const double& alt_in, const std::string& name_in,
-			 const double& lat_in, const double& long_in){
-  setStationData(x_in, y_in, alt_in, name_in, lat_in, long_in);
+			 const double& lat_in, const double& long_in)
+{
+	setStationData(x_in, y_in, alt_in, name_in, lat_in, long_in);
 }
 
 void StationData::setStationData(const double& easting_in, const double& northing_in, 
 				 const double& alt_in, const std::string& name_in,
-				 const double& lat_in, const double& long_in){
-  altitude = alt_in;
-  stationName = name_in;
-  eastCoordinate = easting_in;
-  northCoordinate = northing_in;
-  longitude = long_in;
-  latitude = lat_in;
+				 const double& lat_in, const double& long_in)
+{
+	altitude = alt_in;
+	stationName = name_in;
+	eastCoordinate = easting_in;
+	northCoordinate = northing_in;
+	longitude = long_in;
+	latitude = lat_in;
 }
 
 void StationData::getStationData(double& easting_out, double& northing_out, 
 				 double& alt_out, std::string& name_out,
-				 double& lat_out, double& long_out) const {
-  easting_out = eastCoordinate;
-  northing_out = northCoordinate;
-  alt_out = altitude;
-  name_out = stationName;
-  lat_out = latitude;
-  long_out = longitude;
+				 double& lat_out, double& long_out) const
+{
+	easting_out = eastCoordinate;
+	northing_out = northCoordinate;
+	alt_out = altitude;
+	name_out = stationName;
+	lat_out = latitude;
+	long_out = longitude;
 }
 
 
 //Comparison operator
-bool StationData::operator==(const StationData& in) const{
-  /*
-   * latitude, longitude, eastCoordinate and northCoordinate are checked for equality in an epsilon environment
-   */
-  const double earth_radius = 6371e3;				//in meters
-  const double grid_epsilon = 5.;				//in meters
-  const double long_epsilon = grid_epsilon / earth_radius;	//in degrees. small angle, so sin(x)=x
-  const double lat_epsilon = long_epsilon/2.;			//in degrees. Since long is for 360deg and lat only 180, then epsilonj is 1/2
+bool StationData::operator==(const StationData& in) const
+{
+	
+	//latitude, longitude, eastCoordinate and northCoordinate are checked for equality in an epsilon environment
+	
+	const double earth_radius = 6371e3;				//in meters
+	const double grid_epsilon = 5.;				//in meters
+	const double long_epsilon = grid_epsilon / earth_radius;	//in degrees. small angle, so sin(x)=x
+	const double lat_epsilon = long_epsilon/2.;			//in degrees. Since long is for 360deg and lat only 180, then epsilonj is 1/2
 
-  return (IOUtils::checkEpsilonEquality(longitude, in.longitude, long_epsilon)
-	  && IOUtils::checkEpsilonEquality(latitude, in.latitude, lat_epsilon) 
-	  && IOUtils::checkEpsilonEquality(eastCoordinate, in.eastCoordinate, grid_epsilon) 
-	  && IOUtils::checkEpsilonEquality(northCoordinate, in.northCoordinate, grid_epsilon)
-	  && (altitude == in.altitude));
-	  // && (stationName == in.stationName)); //HACK: stationName not part of check, since it is not always read (example: meteo1d meteo2d files)
+	return (IOUtils::checkEpsilonEquality(longitude, in.longitude, long_epsilon)
+		&& IOUtils::checkEpsilonEquality(latitude, in.latitude, lat_epsilon) 
+		&& IOUtils::checkEpsilonEquality(eastCoordinate, in.eastCoordinate, grid_epsilon) 
+		&& IOUtils::checkEpsilonEquality(northCoordinate, in.northCoordinate, grid_epsilon)
+		&& (altitude == in.altitude));
+	// && (stationName == in.stationName)); //HACK: stationName not part of check, since it is not always read (example: meteo1d meteo2d files)
 }
 
 bool StationData::operator!=(const StationData& in) const{
@@ -59,20 +64,43 @@ bool StationData::operator!=(const StationData& in) const{
 }
 
 //Specific Getter Functions for StationData
-double StationData::getLatitude() const{ return latitude; }
-double StationData::getLongitude() const{ return longitude; }
-double StationData::getEasting() const{ return eastCoordinate; }
-double StationData::getNorthing() const{ return northCoordinate; }
-double StationData::getAltitude() const{ return altitude; }
-string StationData::getStationName() const{ return stationName; }
+double StationData::getLatitude() const{
+	return latitude;
+}
+
+double StationData::getLongitude() const
+{
+	return longitude;
+}
+
+double StationData::getEasting() const
+{ 
+	return eastCoordinate;
+}
+
+double StationData::getNorthing() const
+{ 
+	return northCoordinate;
+}
+
+double StationData::getAltitude() const
+{
+	return altitude;
+}
+
+string StationData::getStationName() const
+{ 
+	return stationName;
+}
 
 
-const string StationData::toString() const{
-  stringstream tmpstr;
+const string StationData::toString() const
+{
+	stringstream tmpstr;
 
-  tmpstr << setprecision(10)
-	 << "Longitude: " << setw(15) << longitude << setw(10) << "  Latitude: " << setw(15) << latitude << "  Altitude: " << altitude << endl
-	 << "Easting:   " << setw(15) << eastCoordinate << setw(10) << "  Northing: " << setw(15) << northCoordinate << "  Name:     " << stationName;
+	tmpstr << setprecision(10)
+	 	<< "Longitude: " << setw(15) << longitude << setw(10) << "  Latitude: " << setw(15) << latitude << "  Altitude: " << altitude << endl
+	 	<< "Easting:   " << setw(15) << eastCoordinate << setw(10) << "  Northing: " << setw(15) << northCoordinate << "  Name:     " << 			stationName;
 
-  return tmpstr.str();
+	return tmpstr.str();
 }

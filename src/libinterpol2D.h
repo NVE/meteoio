@@ -38,7 +38,7 @@ class Interpol2D {
 			interp_types Imultiple, 
 			const vector<double>& sourcesData, 
 			const vector<StationData>& sourcesMeta, 
-	     const Grid2DObject& dem);
+	    	const Grid2DObject& dem);
 		
 		/**
 		* @brief Computes the interpolation using the parameters set by the constructor

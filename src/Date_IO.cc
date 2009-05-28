@@ -6,19 +6,25 @@ const int Date_IO::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
 const int Date_IO::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 const long Date_IO::offset = 2415021;	//we define julian date as days since 1900/01/01, so we have an offset compared to std julian dates
 
-Date_IO::Date_IO(const double& julian_in){
+Date_IO::Date_IO(const double& julian_in)
+{
 	julian = julian_in;
 	calculateValues();
 }
 
-void Date_IO::setDate_IO(const double& julian_in){
+void Date_IO::setDate_IO(const double& julian_in)
+{
 	julian = julian_in;
 	calculateValues();
 }
 
-double Date_IO::getJulian() const { return julian; }
+double Date_IO::getJulian() const
+{
+	return julian;
+}
 
-Date_IO::Date_IO(const Date_IO& orig){
+Date_IO::Date_IO(const Date_IO& orig)
+{
 	julian = orig.julian;
 	year = orig.year;
 	month = orig.month;
@@ -27,9 +33,11 @@ Date_IO::Date_IO(const Date_IO& orig){
 	minute = orig.minute;
 }
 
-Date_IO& Date_IO::operator=(const Date_IO& orig){
-	if (this == &orig) //Check for self assignment
+Date_IO& Date_IO::operator=(const Date_IO& orig)
+{
+	if (this == &orig) {//Check for self assignment
 		return *this;
+	}
 
 	julian = orig.julian;
 	year = orig.year;
@@ -41,19 +49,22 @@ Date_IO& Date_IO::operator=(const Date_IO& orig){
 	return *this;
 }
 
-Date_IO& Date_IO::operator+=(const Date_IO& indate){
+Date_IO& Date_IO::operator+=(const Date_IO& indate)
+{
 	julian += indate.julian;
 	calculateValues();
 	return *this;
 }
 
-Date_IO& Date_IO::operator-=(const Date_IO& indate){
+Date_IO& Date_IO::operator-=(const Date_IO& indate)
+{
 	julian -= indate.julian;
 	calculateValues();
 	return *this;
 }
 
-bool Date_IO::operator==(const Date_IO& indate) const{ 
+bool Date_IO::operator==(const Date_IO& indate) const
+{ 
 	const double epsilon=1./(24.*3600.);	//that is, 1 second in units of days
   
 	return( fabs(indate.getJulian() - getJulian()) < epsilon );
@@ -62,24 +73,29 @@ bool Date_IO::operator==(const Date_IO& indate) const{
 	  && (indate.minute==minute));*/
 }
 
-bool Date_IO::operator<(const Date_IO& indate) const{
-	if (*this == indate)
+bool Date_IO::operator<(const Date_IO& indate) const
+{
+	if (*this == indate) {
 		return false;
+	}
 
 	return (julian < indate.julian);
 }
 
-const Date_IO Date_IO::operator+(const Date_IO& indate) const{
+const Date_IO Date_IO::operator+(const Date_IO& indate) const
+{
 	Date_IO tmp(julian + indate.julian);
 	return tmp;
 }
 
-const Date_IO Date_IO::operator-(const Date_IO& indate) const{
+const Date_IO Date_IO::operator-(const Date_IO& indate) const
+{
 	Date_IO tmp(julian - indate.julian);
 	return tmp;
 }
 
-Date_IO::Date_IO(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute){
+Date_IO::Date_IO(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute)
+{
 	plausibilityCheck(in_year, in_month, in_day, in_hour, in_minute);
 
 	year = in_year;
@@ -91,7 +107,8 @@ Date_IO::Date_IO(const int& in_year, const int& in_month, const int& in_day, con
 	calculateJulianDate_IO();
 }
 
-void Date_IO::setDate_IO(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute){
+void Date_IO::setDate_IO(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute)
+{
 	plausibilityCheck(in_year, in_month, in_day, in_hour, in_minute);
 
 	year = in_year;
@@ -103,14 +120,16 @@ void Date_IO::setDate_IO(const int& in_year, const int& in_month, const int& in_
 	calculateJulianDate_IO();
 }
 
-void Date_IO::calculateJulianDate_IO(void){
+void Date_IO::calculateJulianDate_IO(void)
+{
 	const long julday = getJulianDay(year, month, day) - offset; // Begin on the 1.1.1900, OFFSET
 	double frac = (minute+60.0*hour) / 1440.0;
 
 	julian = ((double)julday) + frac;
 }
 
-void Date_IO::calculateValues(void){
+void Date_IO::calculateValues(void)
+{
 	long t1, t2, yr, mo, julday;
 
 	julday = (long) floor(julian);
@@ -141,7 +160,8 @@ void Date_IO::calculateValues(void){
 }
 
 
-bool Date_IO::isLeapYear(const int& iYear) const{
+bool Date_IO::isLeapYear(const int& iYear) const
+{
 	long jd1, jd2;
 	jd1 = getJulianDay( iYear, 2, 28 );
 	jd2 = getJulianDay( iYear, 3, 1 );
@@ -149,13 +169,15 @@ bool Date_IO::isLeapYear(const int& iYear) const{
 }
 
 
-long Date_IO::getJulianDay(const int& inyear, const int& inmonth, const int& inday) const{
+long Date_IO::getJulianDay(const int& inyear, const int& inmonth, const int& inday) const
+{
 	const long lmonth = (long) inmonth, lday = (long) inday;
 	long lyear = (long) inyear;
 	long julday = 0;
 
-	if ( lyear < 0 ) // Adjust BC years
+	if ( lyear < 0 ) {// Adjust BC years
 		lyear++;
+	}
 
 	julday = lday - 32075L +
 		1461L * ( lyear + 4800L + ( lmonth - 14L ) / 12L ) / 4L +
@@ -165,7 +187,8 @@ long Date_IO::getJulianDay(const int& inyear, const int& inmonth, const int& ind
 	return julday;
 }
 
-const string Date_IO::toString() const{
+const string Date_IO::toString() const
+{
 	stringstream tmpstr;
 	tmpstr << setprecision(10) << julian << "  " << year << "/" << month << "/" << day << " " 
 		  << setw(2) << setfill('0') << hour << ":" 
@@ -173,7 +196,8 @@ const string Date_IO::toString() const{
 	return tmpstr.str();
 }
 
-ostream& operator<<(ostream &os, const Date_IO &date){
+ostream& operator<<(ostream &os, const Date_IO &date)
+{
 	os<<date.toString();
 	return os;
 }
@@ -184,32 +208,35 @@ void Date_IO::plausibilityCheck(const int& in_year, const int& in_month, const i
 	    || (in_day < 1) || ((in_day > daysNonLeapYear[in_month-1]) && !isLeapYear(in_year)) 
 	    || ((in_day > daysLeapYear[in_month-1]) && isLeapYear(in_year)) 
 	    || (in_hour < 0) || (in_hour > 24) 
-	    || (in_minute < 0) || (in_minute > 59))
-		{
-			THROW IOException("InvalidDate_IOFormat", AT);
-		}
+	    || (in_minute < 0) || (in_minute > 59)) {
+	    
+		THROW IOException("InvalidDate_IOFormat", AT);
+	}
 
-	if ((in_hour == 24) && (in_minute != 0))
-		{
-			THROW IOException("InvalidDate_IOFormat", AT);
-		}
+	if ((in_hour == 24) && (in_minute != 0)) {
+		THROW IOException("InvalidDate_IOFormat", AT);
+	}
 }
 
-void Date_IO::getDate_IO(double& julian_out) const{
+void Date_IO::getDate_IO(double& julian_out) const
+{
 	julian_out = julian;
 }
 
-void Date_IO::getDate_IO(int& year_out, int& month_out, int& day_out) const{
+void Date_IO::getDate_IO(int& year_out, int& month_out, int& day_out) const
+{
 	int tmp;
 	getDate_IO(year_out, month_out, day_out, tmp, tmp);
 }
 
-void Date_IO::getDate_IO(int& year_out, int& month_out, int& day_out, int& hour_out) const{
+void Date_IO::getDate_IO(int& year_out, int& month_out, int& day_out, int& hour_out) const
+{
 	int tmp;
 	getDate_IO(year_out, month_out, day_out, hour_out, tmp);
 }
  
-void Date_IO::getDate_IO(int& year_out, int& month_out, int& day_out, int& hour_out, int& minute_out) const{
+void Date_IO::getDate_IO(int& year_out, int& month_out, int& day_out, int& hour_out, int& minute_out) const
+{
 	year_out = year;
 	month_out=month;
 	day_out=day;
@@ -222,11 +249,13 @@ void Date_IO::getDate_IO(int& year_out, int& month_out, int& day_out, int& hour_
   The following functions are based on information from 
   http://aa.usno.navy.mil/data/docs/JulianDate_IO.php
 */ 
-void Date_IO::setRealJulianDate_IO(const double& julian_in){
+void Date_IO::setRealJulianDate_IO(const double& julian_in)
+{
 	julian = julian_in - (double)offset + 0.5;
 	calculateValues();
 }
 
-void Date_IO::getRealJulianDate_IO(double& julian_out) const{
+void Date_IO::getRealJulianDate_IO(double& julian_out) const
+{
 	julian_out = julian + (double)offset - 0.5;
 }

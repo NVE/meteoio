@@ -16,37 +16,37 @@ using namespace std;
  */
 class MaxChangeRate : public FilterValue1Stn {
 
- public:
+	public:
 
-  // base definition
+		// base definition
 
-  MaxChangeRate();
-  
-  const string getName() const;
+		MaxChangeRate();
 
-  void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
+		const string getName() const;
 
-  /** 
-   * Registers the filter's definition to the FilterFacade's filter list. 
-   * It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
-   */
-  static void registerFilter();
+		void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
 
-  // check handling
+		/** 
+		* Registers the filter's definition to the FilterFacade's filter list. 
+		* It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
+		*/
+		static void registerFilter();
 
-  void prepareCheck();
+		// check handling
 
-  void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
+		void prepareCheck();
 
- private:
+		void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
 
-  // interpreted parameters
+	private:
 
-  /** The maximal incremental rate, in unit/h, always positive or nodata */
-  double m_maxIncrRate;
+		// interpreted parameters
 
-  /** The maximal decremental rate, in unit/h, always positive or nodata */
-  double m_maxDecrRate;
+		/** The maximal incremental rate, in unit/h, always positive or nodata */
+		double m_maxIncrRate;
+
+		/** The maximal decremental rate, in unit/h, always positive or nodata */
+		double m_maxDecrRate;
 
 };
 

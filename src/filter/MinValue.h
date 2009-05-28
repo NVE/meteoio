@@ -16,36 +16,36 @@ using namespace std;
  */
 class MinValue : public FilterValue1Stn {
 
- public:
+	public:
 
-  // base definition
+		// base definition
 
-  MinValue();
-  
-  const string getName() const;
+		MinValue();
 
-  void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
+		const string getName() const;
 
-  /** 
-   * Registers the filter's definition to the FilterFacade's filter list. 
-   * It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
-   */
-  static void registerFilter();
+		void getMinimalWindow(unsigned int& minNbPoints, Date_IO& minDeltaTime);
 
-  // check handling
+		/** 
+		* Registers the filter's definition to the FilterFacade's filter list. 
+		* It is usually called by FilterFacade::registerFilters, where all filter classes are listed. 
+		*/
+		static void registerFilter();
 
-  void prepareCheck();
+		// check handling
 
-  void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
-  //void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iUnfilteredElement, unsigned int iFilteredElement, unsigned int iStation);
-  //void doCheckOne(vector<StationData>& stations, vector<vector<MeteoData> >& data, int iStation, int iData);
+		void prepareCheck();
 
- private:
+		void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iFilteredElement);
+		//void doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filteredMeteoBuffer, unsigned int iUnfilteredElement, unsigned int 					iFilteredElement, unsigned int iStation);
+		//void doCheckOne(vector<StationData>& stations, vector<vector<MeteoData> >& data, int iStation, int iData);
 
-  // interpreted parameters
+	private:
 
-  /** The limit of the value (here the minimal value) */
-  double m_limitValue;
+		// interpreted parameters
+
+		/** The limit of the value (here the minimal value) */
+		double m_limitValue;
 
 };
 
