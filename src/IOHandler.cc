@@ -6,6 +6,7 @@
 
 using namespace std;
 
+//HACK: could we not have them as private members??
 #ifndef _PAROC_
 const string IOHandler::ascii_src = "FILE";
 const string IOHandler::boschung_src = "BOSCHUNG";
