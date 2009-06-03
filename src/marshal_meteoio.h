@@ -1,11 +1,5 @@
 #ifndef MARSHAL_ALPINE3D_H
 #define MARSHAL_ALPINE3D_H
-//#include "paroc_buffer.h"
-
-//#include "Alpine3D.h"
-//#include "Constants.h"
-//#include "Snowpack.h"
-//#include "DriftData.h"
 
 #include "Grid2DObject.h"
 #include "StationData.h"
@@ -14,8 +8,11 @@
 #include "LegacyIO.ph"
 
 typedef CArray2D<double> TYPE_DOUBLE2D;
+typedef CArray2D<int> TYPE_INT2D;
 
 void marshal_TYPE_DOUBLE2D(paroc_buffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, paroc_memspool *temp);
+
+void marshal_TYPE_INT2D(paroc_buffer &buf, TYPE_INT2D &data,int maxsize, int flag, paroc_memspool *temp);
 
 void marshal_CDoubleArray(paroc_buffer &buf, CDoubleArray &data,int maxsize, int flag, paroc_memspool *temp);
 

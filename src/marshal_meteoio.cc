@@ -132,6 +132,38 @@ void marshal_TYPE_DOUBLE2D(paroc_buffer &buf, TYPE_DOUBLE2D &data,int maxsize, i
     }
 }
 
+void marshal_TYPE_INT2D(paroc_buffer &buf, TYPE_INT2D &data,int maxsize, int flag, paroc_memspool *temp)
+{
+  if (flag & FLAG_MARSHAL)
+    {
+      int dim[2];
+      data.GetSize(dim[0],dim[1]);
+      buf.Pack(dim,2);
+      int nx=dim[0];
+      int ny=dim[1];
+      // int **tmp=&data[0];
+      if (nx>0 && ny>0)
+	{
+	  // for (int i=0;i<nx;i++,tmp++) buf.Pack(*tmp,ny); 
+	  for (int i=0;i<nx;i++) buf.Pack(&data[i][0],ny); 
+	}
+    }
+  else
+    {
+      int dim[2];
+      buf.UnPack(dim,2);
+      int nx=dim[0];
+      int ny=dim[1];
+      data.Create(nx,ny);
+      //int **tmp=&data[0];
+      if (nx>0 && ny>0)
+	{
+	  //for (int i=0;i<nx;i++,tmp++) buf.UnPack(*tmp,ny); 
+	  for (int i=0;i<nx;i++) buf.UnPack(&data[i][0],ny); 
+	}
+    }
+}
+
 void marshal_CDoubleArray(paroc_buffer &buf, CDoubleArray &data,int maxsize, int flag, paroc_memspool *temp)
 {
   assert(false); /* This line is here to check if the method is used*/
