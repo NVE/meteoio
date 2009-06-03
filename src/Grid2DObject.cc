@@ -63,3 +63,32 @@ void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_i
 	grid2D = grid2D_in; //Copy by value, after destroying the old grid
 }
 
+#ifdef _PAROC_
+#include "marshal_meteoio.h"
+void Grid2DObject::Serialize(paroc_buffer &buf, bool pack)
+{
+	if (pack)
+	{
+		buf.Pack(&ncols,1);
+		buf.Pack(&nrows,1);
+		buf.Pack(&xllcorner,1);
+		buf.Pack(&yllcorner,1);
+		buf.Pack(&cellsize,1);
+		buf.Pack(&nodata,1);
+		int x,y;
+		grid2D.GetSize(x,y);
+		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
+	}
+	else
+	{
+		buf.UnPack(&ncols,1);
+		buf.UnPack(&nrows,1);
+		buf.UnPack(&xllcorner,1);
+		buf.UnPack(&yllcorner,1);
+		buf.UnPack(&cellsize,1);
+		buf.UnPack(&nodata,1);
+		grid2D.Destroy();//if(grid2D!=NULL)delete(grid2D);
+		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
+	}
+}
+#endif

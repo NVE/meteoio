@@ -6,27 +6,18 @@
 
 using namespace std;
 
-//HACK: could we not have them as private members??
-#ifndef _PAROC_
-const string IOHandler::ascii_src = "FILE";
-const string IOHandler::boschung_src = "BOSCHUNG";
-const string IOHandler::imis_src = "IMIS";
-#endif
 
 #ifdef _PAROC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(cfg){
-	IOHandler::ascii_src = "FILE";
-	IOHandler::boschung_src = "BOSCHUNG";
-	IOHandler::imis_src = "IMIS";
-	//load all dynamic plugins
-	loadDynamicPlugins();
 #else
 IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(cfg)
 {
+#endif
+	ascii_src = "FILE";
+	boschung_src = "BOSCHUNG";
+	imis_src = "IMIS";
 	//load all dynamic plugins
 	loadDynamicPlugins();
-#endif
-
 }
 
 //Copy constructor

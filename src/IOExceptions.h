@@ -141,7 +141,7 @@ class NoAvailableDataException : public IOException {
 #undef THROW
 #endif
 #define THROW
-#ifndef __IOException_CC__
+#ifndef __IOEXCEPTION_CC__
 #define IOException(a,b) std::cout<<"IOException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
 #define FileNotFoundException(a,b) std::cout<<"FileNotFoundException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
 #define FileAccessException(a,b) std::cout<<"FileAccessException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"

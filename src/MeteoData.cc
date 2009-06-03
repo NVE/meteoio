@@ -102,3 +102,32 @@ const string MeteoData::toString() const
 
 	return tmpstr.str();
 }
+#ifdef _PAROC_
+void MeteoData::Serialize(paroc_buffer &buf, bool pack)
+{
+	if (pack){
+		date.Serialize(buf,true);
+		buf.Pack(&ta,1);
+		buf.Pack(&iswr,1);
+		buf.Pack(&vw,1);
+		buf.Pack(&rh,1);
+		buf.Pack(&lwr,1);
+    //buf.Pack(&ea,1);
+		buf.Pack(&nswc,1);
+		buf.Pack(&ts0,1);
+	}else{
+		date.Serialize(buf,false);
+		buf.UnPack(&ta,1);
+		buf.UnPack(&iswr,1);
+		buf.UnPack(&vw,1);
+		buf.UnPack(&rh,1);
+		buf.UnPack(&lwr,1);
+    //buf.UnPack(&ea,1);
+		buf.UnPack(&nswc,1);
+		buf.UnPack(&ts0,1);
+	}
+
+  
+  
+}
+#endif

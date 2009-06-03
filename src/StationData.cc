@@ -104,3 +104,23 @@ const string StationData::toString() const
 
 	return tmpstr.str();
 }
+#ifdef _PAROC_
+void StationData::Serialize(paroc_buffer &buf, bool pack)
+{
+	if (pack){
+		buf.Pack(&altitude,1);
+		buf.Pack(&stationName, 1);
+		buf.Pack(&eastCoordinate,1);
+		buf.Pack(&northCoordinate,1);
+		buf.Pack(&longitude,1);
+		buf.Pack(&latitude,1);
+	}else{
+		buf.UnPack(&altitude,1);
+		buf.UnPack(&stationName, 1);
+		buf.UnPack(&eastCoordinate,1);
+		buf.UnPack(&northCoordinate,1);
+		buf.UnPack(&longitude,1);
+		buf.UnPack(&latitude,1);
+	}
+}
+#endif

@@ -259,3 +259,24 @@ void Date_IO::getRealJulianDate_IO(double& julian_out) const
 {
 	julian_out = julian + (double)offset - 0.5;
 }
+
+#ifdef _PAROC_
+void Date_IO::Serialize(paroc_buffer &buf, bool pack)
+{
+	if (pack){
+		buf.Pack(&julian,1);
+		buf.Pack(&year,1);
+		buf.Pack(&month,1);
+		buf.Pack(&day,1);
+		buf.Pack(&hour,1);
+		buf.Pack(&minute,1);
+	}else{
+		buf.UnPack(&julian,1);
+		buf.UnPack(&year,1);
+		buf.UnPack(&month,1);
+		buf.UnPack(&day,1);
+		buf.UnPack(&hour,1);
+		buf.UnPack(&minute,1);
+	}
+}
+#endif

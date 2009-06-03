@@ -94,7 +94,7 @@ FILTERDIR	= $(SRCDIR)/filter
 
 LIBS		= -lc
 LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoIO -lfilter
-LD_PAROC	= -L$(LIBDIR) -lmeteoIO -lfilter
+LD_PAROC	= -L$(LIBDIR) -lmeteoIOparoc -lfilterparoc
 LDFLAGS_PAROC	= $(LD_PAROC)
 LDFLAGS		= $(LIBS)
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
@@ -122,8 +122,9 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 METEOIO_OBJ_PAROC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/LegacyIO_par.o \
 		$(SRCDIR)/IOInterface_par.o \
+		$(SRCDIR)/IOHandler.stub.o \
 		$(SRCDIR)/IOHandler_par.o \
-		$(SRCDIR)/IOInterface.stub.o \
+		$(SRCDIR)/A3DIO_par.o \
 		$(SRCDIR)/LegacyIO.stub.o \
 		$(SRCDIR)/MeteoData_par.o \
 		$(SRCDIR)/StationData_par.o \
@@ -138,7 +139,8 @@ METEOIO_OBJ_PAROC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/Meteo2DInterpolator_par.o \
 		$(SRCDIR)/MeteoBuffer_par.o \
 		$(SRCDIR)/Meteo1DResampler_par.o \
-		$(SRCDIR)/DynamicLibrary_par.o 
+		$(SRCDIR)/DynamicLibrary_par.o \
+		$(SRCDIR)/marshal_meteoio_par.o 
 
 FILTER_OBJ = 	$(FILTERDIR)/FilterBase.o \
 		$(FILTERDIR)/FilterBase1Stn.o \
@@ -184,15 +186,15 @@ build_dynamiclibs: $(LIBDIR)/libBoschungIO.so $(LIBDIR)/libImisIO.so
 ############## PAROC ##############
 paroc: meteoIO_lib_paroc meteoIO_module_paroc filter_lib_paroc
 
-filter_lib_paroc: libfilterparoc.a
+filter_lib_paroc: $(LIBDIR)/libfilterparoc.a
 
-meteoIO_lib_paroc: libmeteoIOparoc.a 
+meteoIO_lib_paroc: $(LIBDIR)/libmeteoIOparoc.a 
 
-meteoIO_module_paroc: meteoIO.module
+meteoIO_module_paroc: $(LIBDIR)/meteoIO.module
 ##############  END  ##############
 
 clean:
-	rm -f $(SRCDIR)/*~ $(LIBDIR)/*.a $(SRCDIR)/*.o $(LIBDIR)/*.so $(FILTERDIR)/*~ $(FILTERDIR)/*.o
+	rm -f $(SRCDIR)/*~ $(LIBDIR)/*.a $(LIBDIR)/*.module $(SRCDIR)/*.o $(LIBDIR)/*.so $(FILTERDIR)/*~ $(FILTERDIR)/*.o
 
 distclean: clean
 	
@@ -207,6 +209,13 @@ documentation:
 
 .cc.o: $*.cc $*.h
 	$(CXX) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+
+%_par.o : %.cc
+	$(PAROCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+
+%.stub.o : %.ph
+	$(PAROCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+
 
 $(LIBDIR)/libmeteoIO.a: $(METEOIO_OBJ)
 	@printf "**** Compiling libmeteoIO\n"
@@ -231,14 +240,14 @@ ifeq ($(IMISIO),yes)
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libImisIO.so -o $@ $(SRCDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif
 
-meteoIO.module: libmeteoOIOparoc.a $(SRCDIR)/PackMeteoIO_par.o
-	$(PAROCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(METEOIODIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_PAROC)
+$(LIBDIR)/meteoIO.module: $(LIBDIR)/libmeteoIOparoc.a $(LIBDIR)/libfilterparoc.a $(SRCDIR)/PackMeteoIO_par.o
+	$(PAROCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_PAROC)
 
-libmeteoIOparoc.a:  $(METEOIO_OBJ_PAROC)
+$(LIBDIR)/libmeteoIOparoc.a:  $(METEOIO_OBJ_PAROC)
 	ar -r $@ $(METEOIO_OBJ_PAROC)
 	ranlib $@
 
-libfilterparoc.a: $(FILTER_OBJ_PAROC)
+$(LIBDIR)/libfilterparoc.a: $(FILTER_OBJ_PAROC)
 	ar -r $@ $(FILTER_OBJ_PAROC)
 	ranlib $@
 

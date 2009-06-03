@@ -32,9 +32,10 @@ class IOHandler : public IOInterface {
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const string& filename);
 
-		static const string ascii_src;
-		static const string boschung_src;
-		static const string imis_src;
+	private:
+		string ascii_src;
+		string boschung_src;
+		string imis_src;
 
 	private:
 		void cleanup() throw();
