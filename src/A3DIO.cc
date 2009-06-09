@@ -352,7 +352,7 @@ void A3DIO::readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoDa
 			THROW InvalidFormatException(filename + ": " + line, AT);
 	}
 
-	tmp_date.setDate_IO(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3]);
+	tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3]);
 
 	//Read rest of line with values ta, iswr, vw, rh, ea, nswc
   
@@ -477,7 +477,7 @@ void A3DIO::constructMeteo2DFilenames(const Date_IO& date_in, vector<string>& fi
 
 	filenames.clear();
  
-	date_in.getDate_IO(year, dummy, dummy);
+	date_in.getDate(year, dummy, dummy);
 	ss << year;
 
 	cfg.getValue("METEOPATH", tmp); 
@@ -583,7 +583,7 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 				THROW InvalidFormatException("Check date columns in " + filename, AT);
 			}
 		}
-		tmp_date.setDate_IO(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3]);
+		tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3]);
 
 		MeteoData& currentMeteoData = unfilteredMeteoBuffer[0].getMeteoData(bufferindex); //1D Element to synchronize date
 		if (tmp_date == currentMeteoData.date) {
@@ -718,7 +718,7 @@ void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& 
 void A3DIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
 	int yyyy, mm, dd, hh;
-	date_in.getDate_IO(yyyy, mm, dd, hh);
+	date_in.getDate(yyyy, mm, dd, hh);
 	string filepath="";
 
 	cfg.getValue("DAPATH", filepath); // cout << tmp << endl;

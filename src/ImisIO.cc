@@ -33,7 +33,7 @@ void ImisIO::createBuffer()
 	for (int ii=0; ii<stations; ii++) {
 		mbImis.push_back(MeteoBuffer(1000));
 	}
-	cout << "[i] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
+	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
 }
 
 ConfigReader ImisIO::getCfg()
@@ -125,7 +125,7 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 	}
 
 	if (vecMeteo.size() == 0) {//No data found
-		THROW IOException("[e] No data for any station for date " + date_in.toString() + " found", AT);
+		THROW IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
 	}
 
 }
@@ -322,7 +322,7 @@ void ImisIO::getStationName()
 void ImisIO::setMbImis(const Date_IO& date_in)
 {
 	int date[5];
-	date_in.getDate_IO(date[0],date[1],date[2],date[3],date[4]);
+	date_in.getDate(date[0],date[1],date[2],date[3],date[4]);
 	bool isLeapYear = (date[0]%400 == 0 || (date[0]%100 != 0 && date[0]%4 == 0));	
 	
 	oneHourBefore(isLeapYear, date);
@@ -421,7 +421,7 @@ void ImisIO::stringToDate(const string& instr, Date_IO& date_out)
 	convertString(tmp[3], hour, dec);
 	convertString(tmp[4], min, dec);
 	
-	date_out.setDate_IO(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]);
+	date_out.setDate(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]);
 }
 
 double ImisIO::strToDouble(const string &str)

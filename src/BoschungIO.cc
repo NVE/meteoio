@@ -54,7 +54,7 @@ void BoschungIO::createBuffer()
 		unfilteredMeteoBuffer.push_back(MeteoBuffer(5000));
 		filteredMeteoBuffer.push_back(MeteoBuffer(5000));
 	}
-	cout << "[i] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
+	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
 }
 
 void BoschungIO::get2DGridSize(int& , int& )
@@ -113,7 +113,7 @@ void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMet
 		}
 
 		if (index == MeteoBuffer::npos) { //not in buffer
-			cout << "[i] Station " << vecStationName[ii] << " data for date " << date_in.toString() << " not in buffer ..." << endl;
+			cout << "[I] Station " << vecStationName[ii] << " data for date " << date_in.toString() << " not in buffer ..." << endl;
       
 			bool dataexists = bufferData(date_in, ii);
 
@@ -122,12 +122,12 @@ void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMet
 			}
 
 		} else {
-			cout << "[i] Found data for station " << vecStationName[ii] << " and date " << date_in.toString() << " in buffer" << endl;
+			cout << "[I] Found data for station " << vecStationName[ii] << " and date " << date_in.toString() << " in buffer" << endl;
 		}
     
 		// RESAMPLING
 		if ((index != MeteoBuffer::npos) && (unfilteredMeteoBuffer[ii].getMeteoData(index).date != date_in)) {
-			cerr << "[i] Resampling required for date: " << date_in.toString() << endl;
+			cerr << "[I] Resampling required for date: " << date_in.toString() << endl;
       
 			Meteo1DResampler mresampler;
 			mresampler.resample(index, date_in, unfilteredMeteoBuffer[ii]);
@@ -137,13 +137,13 @@ void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMet
 			vecMeteo.push_back(unfilteredMeteoBuffer[ii].getMeteoData(index));
 			vecStation.push_back(unfilteredMeteoBuffer[ii].getStationData(index));
 		} else {
-			cout << "[i] Buffering data for Station " << vecStationName[ii] << " at date " 
+			cout << "[I] Buffering data for Station " << vecStationName[ii] << " at date " 
 				<< date_in.toString() << " failed" << endl;
 		}
 	}
 
 	if (vecMeteo.size() == 0) {//No data found
-		THROW IOException("[e] No data for any station for date " + date_in.toString() + " found", AT);
+		THROW IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
 	}
 }
 
@@ -401,7 +401,7 @@ void BoschungIO::stringToDate_IO(const string& instr, Date_IO& date_out) const
 	IOUtils::convertString(tmp[3], hour, std::dec);
 	IOUtils::convertString(tmp[4], minute, std::dec);
   
-	date_out.setDate_IO(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]);
+	date_out.setDate(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]);
 }
 
 bool BoschungIO::validFilename(const string& tmp) const

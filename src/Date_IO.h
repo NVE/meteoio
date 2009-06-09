@@ -45,20 +45,20 @@ class Date_IO {
 		Date_IO(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
 		//Date_IO(const time_t&);
 
-		void setDate_IO(const double& julian_in);
-		void setDate_IO(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
+		void setDate(const double& julian_in);
+		void setDate(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
 
 		double getJulian() const;
 
-		void getDate_IO(double& julian_out) const;
-		void getDate_IO(int& year, int& month, int& day) const;
-		void getDate_IO(int& year, int& month, int& day, int& hour) const;
-		void getDate_IO(int& year, int& month, int& day, int& hour, int& minute) const;
+		void getDate(double& julian_out) const;
+		void getDate(int& year, int& month, int& day) const;
+		void getDate(int& year, int& month, int& day, int& hour) const;
+		void getDate(int& year, int& month, int& day, int& hour, int& minute) const;
 
 		///Since at SLF julian dates are always treated with an offset, this function provides a way to deal with real julian dates
-		void setRealJulianDate_IO(const double& julian_in);
+		void setRealJulianDate(const double& julian_in);
 		///Since at SLF julian dates are always treated with an offset, this function provides a way to deal with real julian dates
-		void getRealJulianDate_IO(double& julian_out) const;
+		void getRealJulianDate(double& julian_out) const;
 
 		///The toString representation outputs the date in the form of "[double]julian_date yyyy/mm/dd hh:mm"
 		const std::string toString(void) const;
@@ -78,7 +78,7 @@ class Date_IO {
 		const Date_IO operator-(const Date_IO&) const;
 
 	private:
-		void calculateJulianDate_IO(void);
+		void calculateJulianDate(void);
 		void calculateValues(void);
 		long getJulianDay(const int&, const int&, const int&) const;
 		bool isLeapYear(const int&) const;

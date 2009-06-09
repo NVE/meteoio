@@ -64,4 +64,4 @@ int main() {
 	cout << "Writing the Grids was successful" << endl;
 }
 
-//compile with: g++ meteoio_demo.cc ../src/Laws.c -I ../src/ -I ../src/filter/ -L ../lib/ -lmeteoIO -ldl -lm -o meteoio_demo -rdynamic
+//compile with: g++ meteoio_demo.cc ../src/Laws.c -I ../src/ -I ../src/filter/ -L ../lib/ -lmeteoio -ldl -lm -o meteoio_demo -rdynamic

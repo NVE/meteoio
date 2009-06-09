@@ -94,8 +94,8 @@ void IOHandler::loadDynamicPlugins()
 		cfg.getValue("PLUGINPATH", pluginpath); 
 
 		//BoschungIO dynamic library needs to be loaded
-		cout << "\t" << "Trying to load libBoschungIO.so ... ";
-		string filename = pluginpath + "/libBoschungIO.so";
+		cout << "\t" << "Trying to load libboschungio.so ... ";
+		string filename = pluginpath + "/libboschungio.so";
 		dynLibraryBoschung = DynamicLoader::loadObjectFile(filename, RTLD_NOW);
 
 		if(dynLibraryBoschung == NULL) {
@@ -120,8 +120,8 @@ void IOHandler::loadDynamicPlugins()
 		cfg.getValue("PLUGINPATH", pluginpath); 
 
 		//ImisIO dynamic library needs to be loaded
-		cout << "\t" << "Trying to load libImisIO.so ... ";
-		string filename = pluginpath + "/libImisIO.so";
+		cout << "\t" << "Trying to load libimisio.so ... ";
+		string filename = pluginpath + "/libimisio.so";
 		dynLibraryImis = DynamicLoader::loadObjectFile(filename, RTLD_NOW);
 
 		if(dynLibraryImis == NULL) {
