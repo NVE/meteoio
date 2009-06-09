@@ -87,6 +87,10 @@ void IOUtils::trim(string& str)
  * - read a string line, parse it and save it into a map object, that is passed by reference
  * - delimiter: string that separates key and value
  * - return value: bool, depending on success of operation. true when line is empty
+ * @param in_line const string
+ * @param delimiter const string
+ * @param out_map map'<'string,string>
+ * @return bool
  */
 bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map)
 {
@@ -259,6 +263,31 @@ void IOUtils::readDirectory(const string& path, list<string>& dirlist, const str
 // generic template function convertString must be defined in the header
 
 const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+template<> bool IOUtils::convertString<string>(string& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
+{
+	string s = str; 
+	trim(s); //delete trailing and leading whitespaces and tabs
+	if (s.size() == 0) {
+		t = "";
+		return true;
+	} else {
+		std::istringstream iss(s);
+		iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
+	
+		if (iss.fail()) {//Conversion failed
+			return false;
+		}
+		string tmp="";
+		getline(iss,  tmp); //get rest of line, if any
+		trim(tmp);
+		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
+			return false;
+		}
+		return true;
+	}
+}
+
 template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
 	string s = str; 

@@ -152,15 +152,15 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr;
 	for (unsigned int i=0; i<meteo_in.size(); i++) {
 		ImisIO::stringToDate(meteo_in[i][0], tmpDate);
-		ta = strToDouble(meteo_in[i][1]);//*/convertString(ta, meteo_in[i][1], dec);
-		iswr = strToDouble(meteo_in[i][2]);//*/convertString(iswr, meteo_in[i][2], dec);
-		vw = strToDouble(meteo_in[i][3]);//*/convertString(vw, meteo_in[i][3], dec);
-		rh = strToDouble(meteo_in[i][4]);//*/convertString(rh, meteo_in[i][4], dec);
-		lwr = strToDouble(meteo_in[i][5]);//*/convertString(lwr, meteo_in[i][5], dec);
-		nswc = strToDouble(meteo_in[i][6]);//*/convertString(nswc, meteo_in[i][6], dec);
-		ts0 = strToDouble(meteo_in[i][7]);//*/convertString(ts0, meteo_in[i][7], dec);
-		hs = strToDouble(meteo_in[i][8]);//*/convertString(hs, meteo_in[i][8], dec);
-		rswr = strToDouble(meteo_in[i][9]);//*/convertString(rswr, meteo_in[i][9], dec);
+		convertString(ta, meteo_in[i][1], dec);
+		convertString(iswr, meteo_in[i][2], dec);
+		convertString(vw, meteo_in[i][3], dec);
+		convertString(rh, meteo_in[i][4], dec);
+		convertString(lwr, meteo_in[i][5], dec);
+		convertString(nswc, meteo_in[i][6], dec);
+		convertString(ts0, meteo_in[i][7], dec);
+		convertString(hs, meteo_in[i][8], dec);
+		convertString(rswr, meteo_in[i][9], dec);
 		md.setMeteoData(tmpDate, ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr);
 		
 		mb.put(md, sd);

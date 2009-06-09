@@ -104,6 +104,7 @@ namespace IOUtils {
 		return true;
 	}
 	// fully specialized template functions (implementation must not be in header)
+	template<> bool convertString<string>(string& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 
