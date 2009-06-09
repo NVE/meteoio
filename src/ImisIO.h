@@ -26,7 +26,7 @@ using namespace IOUtils;
 /**
  * @class ImisIO 
  * @brief The class with-in the data from the database are treated. The MeteoData and the StationData will be set in.
- * This class also herited to IOhandler class which is abstract.
+ * This class also herited to IOInterface class which is abstract.
  * @author Moustapha Mbengue
  * @date 2009-05-12
  */
@@ -39,15 +39,13 @@ class ImisIO : public IOInterface {
 		virtual ~ImisIO() throw();
 			
 		/**
-		 * @brief Once the data're got form the database, this method is used to fill the meteo data and the station data
-		 * into the respective vectors MeteoData and StationData
-		 * @param vecMeteo <MeteoData>: vector in which meteo data will be filled
-		 * @param vecStation <StationData>: vector in which station data will be filled
-		 * @param meteo_in <vector<string>>: meteo data from the database
-		 * @param station_in <string>: station data from the database
+		 * @brief Once the data's retrieved form the database, this method is used to create a MeteoBuffer which contain 
+		 * the meteo data and the station data of each single station in the configfile.
+		 * @param meteo_in <vector<string>> : meteo data from the database.
+		 * @param station_in <string> : station data from the database.
+		 * @param mb MeteoBuffer : variable in which stationdata and meteodata are filled.
 		 */
-		void createData(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation,
-				vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb, const Date_IO& date_in);
+		void createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
 		
 		virtual void get2DGridSize(int& nx, int& ny);
 		
@@ -84,7 +82,7 @@ class ImisIO : public IOInterface {
 		void cleanup() throw();		
 		
 		/**
-		 * @brief Get back station's name from "io.ini"
+		 * @brief Get back station's name from the configfile
 		 */		
 		void getStationName();	
 		
@@ -97,7 +95,23 @@ class ImisIO : public IOInterface {
 		 * @brief Returns vecStationName, a string vector in which StationName are saved
 		 */
 		vector<string> getVecStationName();
-
+		
+		/**
+		 * @brief Method which allows putting meteodata and stationdata into mbImis (vector<MeteoBuffer>)
+		 * @param date_in Date_IO: recording date 
+		 */
+		void setMbImis(const Date_IO& date_in);
+		
+		/**
+		 * @brief Selects the data corresponding to date_in. But whether we're looking for a date which is not in the database
+		 * but that is between two recording date, this method will interpolate data for this given date.
+		 * @param vecMeteo vector<MeteoData>: vector of meteodata corresponding to date_in
+		 * @param vecStation vector<StationData>: vector of stationdata corresponding to date_in
+		 * @param date_in const Date_IO: recording date
+		 */
+		void resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation, const Date_IO& date_in);
+		
+		//HACK for debugging
 		void test(vector<int> date);	
 		
 		/**
@@ -116,8 +130,21 @@ class ImisIO : public IOInterface {
 		
 		/**
 		 * @brief function which display meteo and station data
+		 * HACK for debugging
 		 */
 		void displayData(vector<MeteoData>& vecMeteo); 
+		
+		/**
+		 * @brief Defines the maximum size of MeteoBuffer (mbImis)
+		 */
+		void createBuffer();
+		
+		/**
+		 * @brief Allows to shift the given date of one hour, while ensuring that it is correct
+		 * @param isLeapYear bool : true if year is leap, false if not.
+		 * @param date_out (IN and OUT) : [YYYY, MM, DD, HH:24, mm] shifted date.
+		 */
+		void oneHourBefore(const bool isLeapYear, int date_out[5]);
 		
  	private:
 		

@@ -124,3 +124,4 @@ void StationData::Serialize(paroc_buffer &buf, bool pack)
 	}
 }
 #endif
+

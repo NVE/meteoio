@@ -23,6 +23,19 @@ void ImisIO::cleanup() throw()
 	vecStationName.clear();
 }
 
+void ImisIO::createBuffer()
+{
+	//Clear the buffers
+	mbImis.clear();
+	int stations = (int)vecStationName.size();
+
+	//Allocate one MeteoBuffer per station
+	for (int ii=0; ii<stations; ii++) {
+		mbImis.push_back(MeteoBuffer(1000));
+	}
+	cout << "[i] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
+}
+
 ConfigReader ImisIO::getCfg()
 {
 	return cfg;
@@ -96,29 +109,28 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 {
 	vecMeteo.clear();
 	vecStation.clear();
-	int date[5];
-	date_in.getDate_IO(date[0],date[1],date[2],date[3],date[4]);
-	vector<int> date_io(date, date+sizeof(date)/sizeof(int));
 	
-	getStationName();
-	for (unsigned int i=0; i< vecStationName.size(); i++) {
-		vector<string> data2s;
-		vector< vector<string> > data_imis;
-		string station = vecStationName[i].substr(0,3);
-		int stao;
-		if (!convertString(stao, vecStationName[i].substr(3), dec)) {
-			THROW ConversionFailedException("Error while reading station number in readMeteoData(...) ", AT);
+	if (mbImis.size() == 0) {
+		getStationName();
+		//createBuffer();	
+		setMbImis(date_in);
+		resampleMbImis(vecMeteo, vecStation, date_in);
+	} else {
+		if (mbImis[0].getMeteoData(0).date <= date_in && mbImis[0].getMeteoData(mbImis[0].size()-1).date >= date_in) {
+			resampleMbImis(vecMeteo, vecStation, date_in);
+		} else {
+			setMbImis(date_in);
+			resampleMbImis(vecMeteo, vecStation, date_in);
 		}
-		getStation2Data(station,stao,data2s);
-		getImisData(station,stao,date_io,data_imis);		
-		MeteoBuffer mb(1000);
-		createData(vecMeteo,vecStation,data_imis,data2s,mb,date_in);
-		mbImis.push_back(mb);
-	}	
+	}
+
+	if (vecMeteo.size() == 0) {//No data found
+		THROW IOException("[e] No data for any station for date " + date_in.toString() + " found", AT);
+	}
+
 }
 
-void ImisIO::createData(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation,
-			vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb, const Date_IO& date_in)
+void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb)
 {
 	MeteoData md;
 	StationData sd;
@@ -140,22 +152,19 @@ void ImisIO::createData(vector<MeteoData>& vecMeteo, vector<StationData>& vecSta
 	double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr;
 	for (unsigned int i=0; i<meteo_in.size(); i++) {
 		ImisIO::stringToDate(meteo_in[i][0], tmpDate);
-		/*ta = strToDouble(meteo_in[i][1]);*/convertString(ta, meteo_in[i][1], dec);
-		/*iswr = strToDouble(meteo_in[i][2]);*/convertString(iswr, meteo_in[i][2], dec);
-		/*vw = strToDouble(meteo_in[i][3]);*/convertString(vw, meteo_in[i][3], dec);
-		/*rh = strToDouble(meteo_in[i][4]);*/convertString(rh, meteo_in[i][4], dec);
-		/*lwr = strToDouble(meteo_in[i][5]);*/convertString(lwr, meteo_in[i][5], dec);
-		/*nswc = strToDouble(meteo_in[i][6]);*/convertString(nswc, meteo_in[i][6], dec);
-		/*ts0 = strToDouble(meteo_in[i][7]);*/convertString(ts0, meteo_in[i][7], dec);
-		/*hs = strToDouble(meteo_in[i][8]);*/convertString(hs, meteo_in[i][8], dec);
-		/*rswr = strToDouble(meteo_in[i][9]);*/convertString(rswr, meteo_in[i][9], dec);
+		ta = strToDouble(meteo_in[i][1]);//*/convertString(ta, meteo_in[i][1], dec);
+		iswr = strToDouble(meteo_in[i][2]);//*/convertString(iswr, meteo_in[i][2], dec);
+		vw = strToDouble(meteo_in[i][3]);//*/convertString(vw, meteo_in[i][3], dec);
+		rh = strToDouble(meteo_in[i][4]);//*/convertString(rh, meteo_in[i][4], dec);
+		lwr = strToDouble(meteo_in[i][5]);//*/convertString(lwr, meteo_in[i][5], dec);
+		nswc = strToDouble(meteo_in[i][6]);//*/convertString(nswc, meteo_in[i][6], dec);
+		ts0 = strToDouble(meteo_in[i][7]);//*/convertString(ts0, meteo_in[i][7], dec);
+		hs = strToDouble(meteo_in[i][8]);//*/convertString(hs, meteo_in[i][8], dec);
+		rswr = strToDouble(meteo_in[i][9]);//*/convertString(rswr, meteo_in[i][9], dec);
 		md.setMeteoData(tmpDate, ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr);
-		if (date_in == md.date) {
-			vecMeteo.push_back(md);
-			vecStation.push_back(sd);
-		}
+		
 		mb.put(md, sd);
-	}	
+	}
 }
 
 void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector<string>& data2S)
@@ -309,6 +318,92 @@ void ImisIO::getStationName()
 		vecStationName.push_back(stationname);
 	}
 }
+		
+void ImisIO::setMbImis(const Date_IO& date_in)
+{
+	int date[5];
+	date_in.getDate_IO(date[0],date[1],date[2],date[3],date[4]);
+	bool isLeapYear = (date[0]%400 == 0 || (date[0]%100 != 0 && date[0]%4 == 0));	
+	
+	oneHourBefore(isLeapYear, date);
+	vector<int> date_io(date, date+sizeof(date)/sizeof(int));
+	string station;
+	int stao;
+	//vector<MeteoBuffer>::iterator it = mbImis.begin();
+	
+	for (unsigned int i=0; i<vecStationName.size(); i++) {
+		vector<string>* data2s = new vector<string>;
+		vector< vector<string> >* data_imis = new vector< vector<string> >;
+		MeteoBuffer* mb = new MeteoBuffer(1000);
+		station = vecStationName[i].substr(0,3);
+	
+		if (!convertString(stao, vecStationName[i].substr(3), dec)) {
+			THROW ConversionFailedException("Error while reading station number in readMeteoData(...) ", AT);
+		}
+	
+		getStation2Data(station,stao,*data2s);
+		getImisData(station,stao,date_io,*data_imis);
+		createData(*data_imis,*data2s,*mb);
+		mbImis.push_back(*mb);
+		//mbImis.insert(it,*mb,*mb);
+		//it++;
+		free(data2s);
+		free(data_imis);
+		free(mb);
+	}
+}
+
+void ImisIO::resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation, const Date_IO& date_in)
+{
+	for (unsigned int ii=0; ii<mbImis.size(); ii++) {
+		unsigned int index = mbImis[ii].seek(date_in);
+		if (index != MeteoBuffer::npos) {
+			if (mbImis[ii].getMeteoData(index).date == date_in) {
+				vecMeteo.push_back(mbImis[ii].getMeteoData(index));
+				vecStation.push_back(mbImis[ii].getStationData(index));
+			} else {
+				Meteo1DResampler mresampler;
+				mresampler.resample(index, date_in, mbImis[ii]);
+				if (index != MeteoBuffer::npos) {
+					vecMeteo.push_back(mbImis[ii].getMeteoData(index));
+					vecStation.push_back(mbImis[ii].getStationData(index));
+				} else {
+					cout << "[i] Buffering data for Station " << vecStationName[ii] << " at date " 
+						<< date_in.toString() << " failed" << endl;
+				}
+			}
+		}
+	}
+}
+	
+void ImisIO::oneHourBefore(const bool isLeapYear, int date_out[5])
+{
+	if(date_out[3]-1 < 0) {		
+		date_out[3] = date_out[3]+23;
+		date_out[2] = date_out[2]-1;
+		if (date_out[2] == 0) {
+			if (date_out[1]-1 == 2) {
+				if (isLeapYear) {
+					date_out[2] = date_out[2]+29;
+				} else {
+					date_out[2] = date_out[2]+28;
+				}
+			
+			} else if (date_out[1]-1 == 0) {
+				date_out[2] = date_out[2]+31;
+			} else {
+				date_out[2] = date_out[2]+Date_IO::daysLeapYear[date_out[1]-1];
+			}
+			date_out[1] = date_out[1]-1;
+			if (date_out[1] == 0) {
+				date_out[1] = date_out[1]+12;
+				date_out[0] = date_out[0]-1;
+			}
+		}
+	} else {
+		date_out[3] = date_out[3]-1;
+	}
+}
 
 void ImisIO::stringToDate(const string& instr, Date_IO& date_out)
 {
@@ -342,6 +437,7 @@ double ImisIO::strToDouble(const string &str)
 	}
 }
 
+//HACK for debugging
 void ImisIO::displayData(vector<MeteoData>& vecMeteo)
 {
 	cout<<endl <<"Contenu de vecMeteo : " <<endl;
@@ -375,6 +471,7 @@ void ImisIO::displayData(vector<MeteoData>& vecMeteo)
 	cout<<"rows : " <<rows <<endl;
 }
 
+//HACK for debugging
 void ImisIO::test(vector<int> date) {
 	vector<MeteoData> vecMeteo;
 	vector<StationData> vecStation;
@@ -385,6 +482,7 @@ void ImisIO::test(vector<int> date) {
 
 }
 
+//HACK for debugging
 int main(int argc, char** argv) {
 	if(argc<6) {
 		cout<< "No enough arguments, you did wrong my friend ahahahahahahaha........:-)E) "<< endl;
@@ -400,6 +498,7 @@ int main(int argc, char** argv) {
 	}
 	return EXIT_SUCCESS;	
 }
+
 extern "C"
 {
 	//using namespace MeteoIO;

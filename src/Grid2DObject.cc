@@ -92,3 +92,4 @@ void Grid2DObject::Serialize(paroc_buffer &buf, bool pack)
 	}
 }
 #endif
+

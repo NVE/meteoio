@@ -22,7 +22,7 @@ IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(con
 
 //Copy constructor
 #ifdef _PAROC_
-//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(cfg), boschungio(cfg){
+//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(cfg), boschungio(cfg), imisio(cfg){
 	//Nothing else so far
 //}
 #else
@@ -34,9 +34,10 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 #endif
 
 #ifdef _PAROC_
-/*IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg), boschungio(cfg){
+/*IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg), boschungio(cfg), imisio(cfg){
   IOHandler::ascii_src = "FILE";
   IOHandler::boschung_src = "BOSCHUNG";
+  IOHandler::imis_src = "IMIS";
   loadDynamicPlugins();
 }*/
 #else
@@ -158,6 +159,10 @@ void IOHandler::get2DGridSize(int& nx, int& ny)
 			//Nothing so far
 			THROW IOException("Nothing implemented here", AT);
 
+		} else if (demsource==imis_src){
+			//Nothing so far
+			THROW IOException("Nothing implemented here", AT);
+
 		} else {
 			THROW IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
@@ -189,6 +194,10 @@ void IOHandler::readDEM(Grid2DObject& dem_out)
 			//Nothing so far
 			THROW IOException("Nothing implemented here", AT);
 
+		} else if (demsource==imis_src) {
+			//Nothing so far
+			THROW IOException("Nothing implemented here", AT);
+
 		} else {
 			THROW IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
@@ -210,6 +219,10 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 			fileio.readLanduse(landuse_out);
 
 		} else if (landusesource==boschung_src) {
+			//Nothing so far
+			THROW IOException("Nothing implemented here", AT);
+
+		} else if (landusesource==imis_src) {
 			//Nothing so far
 			THROW IOException("Nothing implemented here", AT);
 
@@ -282,6 +295,10 @@ void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_ou
 			//Nothing so far
 			THROW IOException("Nothing implemented here", AT);
 
+		} else if (dasrc==imis_src) {
+			//Nothing so far
+			THROW IOException("Nothing implemented here", AT);
+
 		} else {
 			THROW IOException("DASRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
@@ -305,6 +322,10 @@ void IOHandler::readSpecialPoints(CSpecialPTSArray& pts) {
 			//Nothing so far
 			THROW IOException("Nothing implemented here", AT);
 
+		} else if (specialptssrc==imis_src) {
+			//Nothing so far
+			THROW IOException("Nothing implemented here", AT);
+
 		} else {
 			THROW IOException("SPECIALPTSSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
@@ -324,6 +345,10 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& filename)
 			//A3DIO fileio(cfg.getFileName());
 			fileio.write2DGrid(grid_in, filename);
 		} else if (output==boschung_src) {
+			//Nothing so far
+			THROW IOException("Nothing implemented here", AT);
+
+		} else if (output==imis_src) {
 			//Nothing so far
 			THROW IOException("Nothing implemented here", AT);
 
