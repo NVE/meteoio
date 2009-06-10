@@ -149,19 +149,21 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	WGS84_to_CH1903(lat, lon, east, north);
 	sd.setStationData(east, north, alt, sName, lat, lon);
 	
-	double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr;
+	double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr;
 	for (unsigned int i=0; i<meteo_in.size(); i++) {
 		ImisIO::stringToDate(meteo_in[i][0], tmpDate);
 		convertString(ta, meteo_in[i][1], dec);
 		convertString(iswr, meteo_in[i][2], dec);
 		convertString(vw, meteo_in[i][3], dec);
-		convertString(rh, meteo_in[i][4], dec);
+		convertString(dw, meteo_in[i][4], dec);
+		convertString(rh, meteo_in[i][5], dec);
 		convertString(lwr, meteo_in[i][5], dec);
-		convertString(nswc, meteo_in[i][6], dec);
-		convertString(ts0, meteo_in[i][7], dec);
-		convertString(hs, meteo_in[i][8], dec);
-		convertString(rswr, meteo_in[i][9], dec);
-		md.setMeteoData(tmpDate, ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr);
+		convertString(nswc, meteo_in[i][7], dec);
+		convertString(tsg, meteo_in[i][8], dec);
+		convertString(tss, meteo_in[i][9], dec);
+		convertString(hs, meteo_in[i][10], dec);
+		convertString(rswr, meteo_in[i][11], dec);
+		md.setMeteoData(tmpDate, ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr);
 		
 		mb.put(md, sd);
 	}
@@ -253,7 +255,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 				exit(1);
 			}
 			try {
-				stmt = conn->createStatement("select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,rh,lwr,nswc,ts0,hs,rswr   						     	     from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2 and DATUM >=: 3 and rownum<=100");
+				stmt = conn->createStatement("select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss, 								hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2 and DATUM >=: 3 and rownum<=100");
 				Date edate(env, date_in[0], date_in[1], date_in[2], date_in[3], date_in[4]); // year, month, day, hour, minutes
 				stmt->setString(1, stat_abk); // set 1st variable's value
 				stmt->setInt(2, stao_nr); // set 2nd variable's value 		   
@@ -266,10 +268,10 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 				exit(1);
 			}
 			try {			
-				rs->setMaxColumnSize(6,22);
+				rs->setMaxColumnSize(7,22);
 				while (rs->next() == true) {
 					vec.clear();
-					for (int i=1; i<=10; i++) { // 10 columns 
+					for (int i=1; i<=12; i++) { // 12 columns 
 						vec.push_back(rs->getString(i));
 					}
 					dataImis.push_back(vec);
@@ -442,7 +444,7 @@ void ImisIO::displayData(vector<MeteoData>& vecMeteo)
 {
 	cout<<endl <<"Contenu de vecMeteo : " <<endl;
 	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
-	cout<<" N° |    Station    |          Date          | ta  | iswr |  vw |  rh  | lwr  | nswc | ts0  |  hs  | rswr |" <<endl;
+	cout<<" N° |    Station    |          Date          | ta  | iswr |  vw |  rh  | lwr  | nswc | tsg  |  hs  | rswr |" <<endl;
 	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
 	vector<string> stations = getVecStationName();
 	unsigned int rows = stations.size();
@@ -462,7 +464,7 @@ void ImisIO::displayData(vector<MeteoData>& vecMeteo)
 		cout<<vecMeteo[ii].rh <<" | ";
 		cout<<vecMeteo[ii].lwr <<" | ";
 		cout<<vecMeteo[ii].nswc <<" | ";
-		cout<<vecMeteo[ii].ts0 <<" | ";
+		cout<<vecMeteo[ii].tsg <<" | ";
 		cout<<vecMeteo[ii].hs <<" | ";
 		cout<<vecMeteo[ii].rswr <<" | ";
 		cout<<endl;

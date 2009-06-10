@@ -67,14 +67,18 @@ double MeteoData::* FilterValue::getMeasurePtr(const string& measureName)
 		return &MeteoData::iswr;
 	} else if (measureName == "vw") {
 		return &MeteoData::vw;
+	} else if (measureName == "dw") {
+		return &MeteoData::dw;
 	} else if (measureName == "rh") {
 		return &MeteoData::rh;
 	} else if (measureName == "lwr") {
 		return &MeteoData::lwr;
 	} else if (measureName == "nswc") {
 		return &MeteoData::nswc;
-	} else if (measureName == "ts0") {
-		return &MeteoData::ts0;
+	} else if (measureName == "tsg") {
+		return &MeteoData::tsg;
+	} else if (measureName == "tss") {
+		return &MeteoData::tss;
 	} else if (measureName == "hs") {
 		return &MeteoData::hs;
 	} else if (measureName == "rswr") {

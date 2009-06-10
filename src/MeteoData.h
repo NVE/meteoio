@@ -35,10 +35,12 @@ class MeteoData {
 		* @param ta AIR TEMPERATURE in CELSIUS (default nodata)
 		* @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
 		* @param vw Wind VELOCITY in m s-1 (default nodata)
+		* @param dw Wind DIRECTION in m s-1 (default nodata)
 		* @param rh RELATIVE HUMIDITY (default nodata)
 		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
 		* @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
-		* @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+		* @param tsg Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
 		* @param hs Snow height in cm (default nodata)
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
 		*/
@@ -46,10 +48,12 @@ class MeteoData {
 		    const double& ta=nodata, 
 		    const double& iswr=nodata, 
 		    const double& vw=nodata, 
+		    const double& dw=nodata, 
 		    const double& rh=nodata, 
 		    const double& lwr=nodata, 
 		    const double& nswc=nodata,
-		    const double& ts0=nodata,
+		    const double& tsg=nodata,
+		    const double& tss=nodata, 
 		    const double& hs=nodata,
 		    const double& rswr=nodata);
 
@@ -59,23 +63,27 @@ class MeteoData {
 		* @param ta AIR TEMPERATURE in CELSIUS (default nodata)
 		* @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
 		* @param vw Wind VELOCITY in m s-1 (default nodata)
+		* @param dw Wind DIRECTION in m s-1 (default nodata)
 		* @param rh RELATIVE HUMIDITY (default nodata)
 		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
 		* @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
-		* @param ts0 Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+		* @param tsg Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
+		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
 		* @param hs Snow height in cm (default nodata)
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
 		*/
 		void setMeteoData(const Date_IO& date_in, 
-			    const double& ta=nodata, 
-			    const double& iswr=nodata, 
-			    const double& vw=nodata, 
-			    const double& rh=nodata, 
-			    const double& lwr=nodata, 
-			    const double& nswc=nodata,
-			    const double& ts0=nodata,
-			    const double& hs=nodata,
-			    const double& rswr=nodata);
+		    	const double& ta=nodata, 
+		    	const double& iswr=nodata, 
+		    	const double& vw=nodata, 
+		    	const double& dw=nodata, 
+		    	const double& rh=nodata, 
+		    	const double& lwr=nodata, 
+		    	const double& nswc=nodata,
+		    	const double& tsg=nodata,
+		    	const double& tss=nodata, 
+		    	const double& hs=nodata,
+	    		const double& rswr=nodata);
 
 		/**
 		* @brief Check data for plausibility and set fishy data to MeteoData::nodata
@@ -90,7 +98,7 @@ class MeteoData {
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
 		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
-		double ta, iswr, vw, rh, lwr, nswc, ts0, hs, rswr; //direct access allowed
+		double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr; //direct access allowed
 		Date_IO date;///<Date_IO/Time of the measurement
 
 };

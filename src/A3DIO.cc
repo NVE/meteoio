@@ -242,8 +242,8 @@ void A3DIO::convertUnits(MeteoData& meteo)
 	if(meteo.ta!=nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
-	if(meteo.ts0!=nodata) {
-		meteo.ts0=C_TO_K(meteo.ts0);
+	if(meteo.tsg!=nodata) {
+		meteo.tsg=C_TO_K(meteo.tsg);
 	}
 	if(meteo.rh!=nodata) {
 		meteo.rh /= 100.;

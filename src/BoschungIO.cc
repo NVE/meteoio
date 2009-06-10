@@ -273,7 +273,7 @@ void BoschungIO::checkForMeteoFiles(const string& xmlpath, const string& station
 
 void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, MeteoData& md, StationData& sd)
 {
-	double ta=nodata, iswr=nodata, vw=nodata, rh=nodata, lwr=nodata, nswc=nodata;
+	double ta=nodata, iswr=nodata, vw=nodata, dw=nodata, rh=nodata, lwr=nodata, nswc=nodata, tsg=nodata, tss=nodata, hs=nodata, rswr=nodata;
 	double longitude=nodata, latitude=nodata, altitude=nodata;
 
 	//Try to read xml file
@@ -325,7 +325,7 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 		string str_sb = xmlGetNodeContent(pNode, "sb");
 		xmlParseStringToDouble(str_sb, lwr, "sb");
 
-		md.setMeteoData(date_in, ta, iswr, vw, rh, lwr, nswc, nodata, nodata, nodata);
+		md.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr);
 		convertUnits(md);
     
 	} else {
@@ -489,10 +489,16 @@ void BoschungIO::convertUnits(MeteoData& meteo)
 		meteo.ta=C_TO_K(meteo.ta);
 	}
 	
-	if(meteo.ts0==nodata) {
-		meteo.ts0=nodata;
+	if(meteo.tsg==nodata) {
+		meteo.tsg=nodata;
 	} else {
-		meteo.ts0=C_TO_K(meteo.ts0);
+		meteo.tsg=C_TO_K(meteo.tss);
+	}
+	
+	if(meteo.tss==nodata) {
+		meteo.tss=nodata;
+	} else {
+		meteo.tss=C_TO_K(meteo.tss);
 	}
 
 	if(meteo.rh==nodata) {

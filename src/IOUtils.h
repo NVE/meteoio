@@ -86,22 +86,26 @@ namespace IOUtils {
 	template <class T> bool convertString(T& t, const std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
 		string s = str; 
 		trim(s); //delete trailing and leading whitespaces and tabs
-
-		std::istringstream iss(s);
-		iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
-
-		if (iss.fail()) {//Conversion failed
-			return false;
+		if (s.size() == 0) {
+			t = static_cast<T> (nodata);
+			return true;
+		} else {
+			std::istringstream iss(s);
+			iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
+		
+			if (iss.fail()) {
+				//Conversion failed
+				return false;
+			}
+			string tmp="";
+			getline(iss,  tmp); //get rest of line, if any
+			trim(tmp);
+			if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {
+				//if line holds more than one value it's invalid
+				return false;
+			}
+			return true;
 		}
-
-		string tmp="";
-		getline(iss,  tmp); //get rest of line, if any
-		trim(tmp);
-		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
-			return false;
-		}
-
-		return true;
 	}
 	// fully specialized template functions (implementation must not be in header)
 	template<> bool convertString<string>(string& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
