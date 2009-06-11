@@ -356,7 +356,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 
 			//Compute dew point temperatures at stations
 			for (unsigned int i=0; i<(unsigned int)inputData.size(); i++) {
-				vecTdStations[i] = RhtoDewPoint(inputData[i],vecExtraData[i]);
+				vecTdStations[i] = RhtoDewPoint(inputData[i],vecExtraData[i], 1);
 			}
 			
 			//Krieging on Td
@@ -368,7 +368,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 			//Recompute Rh from the interpolated td
 			for (unsigned int i=0;i<nx;i++) {
 				for (unsigned int j=0;j<ny;j++) {
-					param_out(i,j) = DewPointtoRh(param_out(i,j),extra_param_in(i,j));
+					param_out(i,j) = DewPointtoRh(param_out(i,j),extra_param_in(i,j), 1);
 				}
 			}
 			

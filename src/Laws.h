@@ -55,14 +55,19 @@ extern "C" {
 	* STRUCTURES
 	*/
 
-	// FUNCTION PROTOTYPES:
-	double lw_emissivity(const double lwr, const double T);
-	double lw_TairLapseRate(const double ta, const double ref_alti, const double altitude);
-	double lw_AirPressure(const double altitude);
-	double lw_WetBulbTemperature(const double L, const double T, const double RH, const double altitude);
-	double lw_SaturationPressure(const double T);
-	double RhtoDewPoint(double RH, double TA);
-	double DewPointtoRh(double TD, double TA);
+
+
+// FUNCTION PROTOTYPES:
+  double lw_emissivity(const double lwr, const double T);
+  double lw_TairLapseRate(const double ta, const double ref_alti, const double altitude);
+  double lw_AirPressure(const double altitude);
+  double lw_WetBulbTemperature(const double L, const double T, const double RH, const double altitude);
+  double lw_SaturationPressure(const double T);
+  double RhtoDewPoint(double RH, double TA, const short int force_water);
+  double DewPointtoRh(double TD, double TA, const short int force_water);
+  double lw_LW_Brutsaert(const double e0, const double Ta);
+  double lw_Omstedt(const double e0, const double cloud_frac);
+  double lw_SnowResidualWaterContent(const double theta_i);
 #ifdef __cplusplus
 }
 #endif
