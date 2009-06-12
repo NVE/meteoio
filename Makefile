@@ -87,16 +87,17 @@ TARGET_PAROC	= meteoio_paroc
 SRCDIR		= ./src
 LIBDIR		= ./lib
 FILTERDIR	= $(SRCDIR)/filter
+TOOLSDIR	= ./tools
 
 #################################################
 # END USER OPTIONS
 #################################################
 
-LIBS		= -lc
+LIBS		= -lc -ldl
 LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoio -lfilter
 LD_PAROC	= -L$(LIBDIR) -lmeteoioparoc -lfilterparoc
 LDFLAGS_PAROC	= $(LD_PAROC)
-LDFLAGS		= $(LIBS)
+LDFLAGS		= $(LIBS) -rdynamic
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
 
 ######## Sources, objects, headers
@@ -162,6 +163,7 @@ FILTER_OBJ_PAROC  = 	$(FILTERDIR)/FilterBase_par.o \
 		$(FILTERDIR)/NoObservedChange_par.o \
 		$(FILTERDIR)/FilterFacade_par.o 
 
+TOOLS_OBJ =	$(TOOLSDIR)/createA3DFiles.o
 
 ####### Build rules SEQ
 
@@ -171,6 +173,7 @@ all: seq
 help:
 	@printf "MeteoIO Makefile targets for \033[36m%s\033[0m:\n" $(DEST)
 	@printf " \033[36mseq\033[0m \n"
+	@printf " \033[36mcreateA3DFiles\033[0m \n"
 	@printf " \033[36mparoc\033[0m \n"
 	@printf " \033[36minstall\033[0m \n"
 	@printf " \033[36mclean\033[0m \n"
@@ -194,16 +197,20 @@ meteoIO_module_paroc: $(LIBDIR)/meteoio.module
 ##############  END  ##############
 
 clean:
-	rm -f $(SRCDIR)/*~ $(LIBDIR)/*.a $(LIBDIR)/*.module $(SRCDIR)/*.o $(LIBDIR)/*.so $(FILTERDIR)/*~ $(FILTERDIR)/*.o
+	rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(FILTERDIR)/*~ $(FILTERDIR)/*.o $(TOOLSDIR)/*.o
 
 distclean: clean
-	
+	rm $(TOOLSDIR)/createA3DFiles
+	rm $(LIBDIR)/*.a $(LIBDIR)/*.so $(LIBDIR)/*.module
 
 install:
 	@printf "**** Installing MeteoIO\n"
 
 documentation:
 	doxygen $(SRCDIR)/config.dox
+
+createA3DFiles: $(TOOLS_OBJ)
+	$(CXX) $(CCFLAGS) $< $(INCLUDE) $(LDFLAGS_SEQ) $(LDFLAGS) -o $(TOOLSDIR)/$@
 
 ####### Compile
 

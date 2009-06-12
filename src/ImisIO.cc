@@ -46,6 +46,11 @@ vector<string> ImisIO::getVecStationName()
 	return vecStationName;
 }
 
+vector<MeteoBuffer> ImisIO::getMbImis()
+{
+	return mbImis;
+}
+
 void ImisIO::get2DGridSize(int& nx, int& ny)
 {
 	//Nothing so far
@@ -106,10 +111,7 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo)
 }
 
 void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
-{
-	vecMeteo.clear();
-	vecStation.clear();
-	
+{	
 	if (mbImis.size() == 0) {
 		getStationName();
 		//createBuffer();	
@@ -137,8 +139,8 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	Date_IO tmpDate;
 	
 	double east, north, lat, lon, alt;
-	convertString(lat, station_in[1], dec);
-	convertString(lon, station_in[2], dec);
+	convertString(east, station_in[1], dec);
+	convertString(north, station_in[2], dec);
 	convertString(alt, station_in[3], dec);
 	string sName = "";
 	if (station_in[0].size() == 0) {
@@ -146,7 +148,8 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	} else {
 		sName = station_in[0];
 	}
-	WGS84_to_CH1903(lat, lon, east, north);
+	//cout<<"		" <<sName <<endl;
+	CH1903_to_WGS84(east, north, lat, lon);
 	sd.setStationData(east, north, alt, sName, lat, lon);
 	
 	double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr;
@@ -187,7 +190,7 @@ void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector
 				conn = env->createConnection(userName, password, dbName);
 				timeOut++;
 			} catch (SQLException &connex) {
-				cout <<"Connection failed, please verify if userName, password and dbName are correct........."<< endl;
+				cout <<"getStation2Data : Connection failed, please verify if userName, password and dbName are correct........"<< endl;
 				cout << connex.getMessage();
 				exit(1);
 			}
@@ -198,7 +201,7 @@ void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector
 				rs = stmt->executeQuery(); // execute the statement stmt
 				timeOut++;
 			} catch (SQLException &stmtex) {
-				cout <<"Statement failed, please verify if it is correctly written............"<< endl;
+				cout <<"getStation2Data : Statement failed, please verify if it is correctly written............"<< endl;
 				cout << stmtex.getMessage();
 				exit(1);
 			}
@@ -210,7 +213,7 @@ void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector
 				}
 				timeOut++;
 			} catch (SQLException &rsex) {
-				cout <<"ResultSet manipulation failed, please verify if there is no mistake............."<< endl;
+				cout <<"getStation2Data : ResultSet manipulation failed, please verify if there is no mistake............."<< endl;
 				cout << rsex.getMessage();
 				exit(1);
 			}catch (exception &cppex) { // C++ exception
@@ -250,7 +253,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 				conn = env->createConnection(userName, password, dbName);
 				timeOut++;
 			} catch (SQLException &connex) {
-				cout <<"Connection failed, please verify if userName, password and dbName are correct........."<< endl;
+				cout <<"getImisData : Connection failed, please verify if userName, password and dbName are correct........."<< endl;
 				cout << connex.getMessage();
 				exit(1);
 			}
@@ -263,7 +266,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 				rs = stmt->executeQuery(); // execute the statement stmt
 				timeOut++;
 			} catch (SQLException &stmtex) {
-				cout <<"Statement failed, please verify if it is correctly written............"<< endl;
+				cout <<"getImisData : Statement failed, please verify if it is correctly written............"<< endl;
 				cout << stmtex.getMessage();
 				exit(1);
 			}
@@ -278,7 +281,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 				}
 				timeOut++;
 			} catch (SQLException &rsex) {
-				cout <<"ResultSet manipulation failed, please verify if there is no mistake............."<< endl;
+				cout <<"getImisData : ResultSet manipulation failed, please verify if there is no mistake............."<< endl;
 				cout << rsex.getMessage();
 				exit(1);
 			}catch (exception &cppex) { // C++ exception
@@ -321,17 +324,15 @@ void ImisIO::getStationName()
 	}
 }
 		
-void ImisIO::setMbImis(const Date_IO& date_in)
+void ImisIO::setMbImis(Date_IO date_in)
 {
+	mbImis.clear();
 	int date[5];
+	date_in -= 1./24.; // one hour before
 	date_in.getDate(date[0],date[1],date[2],date[3],date[4]);
-	bool isLeapYear = (date[0]%400 == 0 || (date[0]%100 != 0 && date[0]%4 == 0));	
-	
-	oneHourBefore(isLeapYear, date);
 	vector<int> date_io(date, date+sizeof(date)/sizeof(int));
 	string station;
 	int stao;
-	//vector<MeteoBuffer>::iterator it = mbImis.begin();
 	
 	for (unsigned int i=0; i<vecStationName.size(); i++) {
 		vector<string>* data2s = new vector<string>;
@@ -347,8 +348,6 @@ void ImisIO::setMbImis(const Date_IO& date_in)
 		getImisData(station,stao,date_io,*data_imis);
 		createData(*data_imis,*data2s,*mb);
 		mbImis.push_back(*mb);
-		//mbImis.insert(it,*mb,*mb);
-		//it++;
 		free(data2s);
 		free(data_imis);
 		free(mb);
@@ -357,6 +356,9 @@ void ImisIO::setMbImis(const Date_IO& date_in)
 
 void ImisIO::resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation, const Date_IO& date_in)
 {
+	vecMeteo.clear();
+	vecStation.clear();
+	
 	for (unsigned int ii=0; ii<mbImis.size(); ii++) {
 		unsigned int index = mbImis[ii].seek(date_in);
 		if (index != MeteoBuffer::npos) {
@@ -375,35 +377,6 @@ void ImisIO::resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& ve
 				}
 			}
 		}
-	}
-}
-	
-void ImisIO::oneHourBefore(const bool isLeapYear, int date_out[5])
-{
-	if(date_out[3]-1 < 0) {		
-		date_out[3] = date_out[3]+23;
-		date_out[2] = date_out[2]-1;
-		if (date_out[2] == 0) {
-			if (date_out[1]-1 == 2) {
-				if (isLeapYear) {
-					date_out[2] = date_out[2]+29;
-				} else {
-					date_out[2] = date_out[2]+28;
-				}
-			
-			} else if (date_out[1]-1 == 0) {
-				date_out[2] = date_out[2]+31;
-			} else {
-				date_out[2] = date_out[2]+Date_IO::daysLeapYear[date_out[1]-1];
-			}
-			date_out[1] = date_out[1]-1;
-			if (date_out[1] == 0) {
-				date_out[1] = date_out[1]+12;
-				date_out[0] = date_out[0]-1;
-			}
-		}
-	} else {
-		date_out[3] = date_out[3]-1;
 	}
 }
 
@@ -437,68 +410,6 @@ double ImisIO::strToDouble(const string &str)
 		ss >> result;		
 		return result;
 	}
-}
-
-//HACK for debugging
-void ImisIO::displayData(vector<MeteoData>& vecMeteo)
-{
-	cout<<endl <<"Contenu de vecMeteo : " <<endl;
-	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
-	cout<<" N° |    Station    |          Date          | ta  | iswr |  vw |  rh  | lwr  | nswc | tsg  |  hs  | rswr |" <<endl;
-	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
-	vector<string> stations = getVecStationName();
-	unsigned int rows = stations.size();
-	for (unsigned int ii=0; ii<rows; ii++) {
-		if (rows<9) {
-			cout<<"00" <<ii+1 <<" | ";
-		} else if (rows<99){
-			cout<<"0" <<ii+1 <<" | ";
-		} else {
-			cout<<ii+1 <<" | ";
-		}
-		cout<<stations[ii] <<" | ";
-		cout<<vecMeteo[ii].date <<" | ";
-		cout<<vecMeteo[ii].ta <<" | ";
-		cout<<vecMeteo[ii].iswr <<" | ";
-		cout<<vecMeteo[ii].vw <<" | ";
-		cout<<vecMeteo[ii].rh <<" | ";
-		cout<<vecMeteo[ii].lwr <<" | ";
-		cout<<vecMeteo[ii].nswc <<" | ";
-		cout<<vecMeteo[ii].tsg <<" | ";
-		cout<<vecMeteo[ii].hs <<" | ";
-		cout<<vecMeteo[ii].rswr <<" | ";
-		cout<<endl;
-	}
-	cout<<"----------------------------------------------------------------------------------------------------------" <<endl;
-	cout<<"rows : " <<rows <<endl;
-}
-
-//HACK for debugging
-void ImisIO::test(vector<int> date) {
-	vector<MeteoData> vecMeteo;
-	vector<StationData> vecStation;
-		
-	Date_IO date_in(date[0],date[1],date[2],date[3],date[4]);
-	readMeteoData(date_in, vecMeteo);
-	displayData(vecMeteo);
-
-}
-
-//HACK for debugging
-int main(int argc, char** argv) {
-	if(argc<6) {
-		cout<< "No enough arguments, you did wrong my friend ahahahahahahaha........:-)E) "<< endl;
-		exit(1);
-	} else {
-		vector<int> date;
-		for (int i=0; i<argc-1; i++) {
-			date.push_back(atoi(argv[i+1]));
-		}
-		ImisIO imis("io.ini");
-		
-		imis.test(date);
-	}
-	return EXIT_SUCCESS;	
 }
 
 extern "C"

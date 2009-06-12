@@ -96,11 +96,13 @@ class ImisIO : public IOInterface {
 		 */
 		vector<string> getVecStationName();
 		
+		vector<MeteoBuffer> getMbImis();
+		
 		/**
 		 * @brief Method which allows putting meteodata and stationdata into mbImis (vector<MeteoBuffer>)
 		 * @param date_in Date_IO: recording date 
 		 */
-		void setMbImis(const Date_IO& date_in);
+		void setMbImis(Date_IO date_in);
 		
 		/**
 		 * @brief Selects the data corresponding to date_in. But whether we're looking for a date which is not in the database
@@ -110,9 +112,6 @@ class ImisIO : public IOInterface {
 		 * @param date_in const Date_IO: recording date
 		 */
 		void resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation, const Date_IO& date_in);
-		
-		//HACK for debugging
-		void test(vector<int> date);	
 		
 		/**
 		 * @brief It allows to convert a date which is in string format to SLFIO date/time format
@@ -129,22 +128,9 @@ class ImisIO : public IOInterface {
 		static double strToDouble(const string &str);
 		
 		/**
-		 * @brief function which display meteo and station data
-		 * HACK for debugging
-		 */
-		void displayData(vector<MeteoData>& vecMeteo); 
-		
-		/**
 		 * @brief Defines the maximum size of MeteoBuffer (mbImis)
 		 */
 		void createBuffer();
-		
-		/**
-		 * @brief Allows to shift the given date of one hour, while ensuring that it is correct
-		 * @param isLeapYear bool : true if year is leap, false if not.
-		 * @param date_out (IN and OUT) : [YYYY, MM, DD, HH:24, mm] shifted date.
-		 */
-		void oneHourBefore(const bool isLeapYear, int date_out[5]);
 		
  	private:
 		
