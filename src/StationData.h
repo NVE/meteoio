@@ -14,7 +14,7 @@ using namespace IOUtils;
  * @author Thomas Egger
  * @date   2008-11-29
  */
-#ifdef _PAROC_
+#ifdef _POPC_
 class StationData :POPBase {
 	public:
 		void Serialize(paroc_buffer &buf, bool pack);

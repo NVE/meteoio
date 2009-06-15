@@ -1,4 +1,4 @@
-#ifdef _PAROC_
+#ifdef _POPC_
 #include "LegacyIO.ph"
 #else
 #include "LegacyIO.h"
@@ -10,14 +10,14 @@ LegacyIO::LegacyIO(char *meteopath)
 	strcpy(meteopathname,meteopath);
 	dimx=dimy=dimz=0;
 
-#ifdef _PAROC_
+#ifdef _POPC_
 	*cache_Hour=0;
 #endif
 }
 
 LegacyIO::~LegacyIO()
 {
-#ifdef _PAROC_
+#ifdef _POPC_
 	printf("Total time for reading grid data: %g seconds\n", timer.Elapsed());
 #endif
 }
@@ -118,7 +118,7 @@ void LegacyIO::GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z )
 
 void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 {
-#ifdef _PAROC_ 
+#ifdef _POPC_ 
 	if (hour!=NULL && 0==strcmp(hour,cache_Hour) && cache_WindField.GetSize()) {
 		DEBUG("GET WIND FIELD DATA FROM CACHE");
 		nodes=cache_WindField;
@@ -253,7 +253,7 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 
 	fclose(fp);
 
-#ifdef _PAROC_ 
+#ifdef _POPC_ 
 	timer.Stop();
 	DEBUG("Read wind field for hour %s OK",hour);
 #endif
@@ -261,7 +261,7 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 
 void LegacyIO::PrepareNextWindField(char *hour)
 {
-#ifdef _PAROC_
+#ifdef _POPC_
 	cache_WindField.RemoveAll();
 	try {
 		DEBUG("Read grid data (hour=%s) for caching",hour);

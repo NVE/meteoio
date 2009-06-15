@@ -1,7 +1,7 @@
 #ifndef __IOHANDLER_H__
 #define __IOHANDLER_H__
 
-#ifdef _PAROC_
+#ifdef _POPC_
 #error
 #endif
 

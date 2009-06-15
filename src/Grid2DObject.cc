@@ -63,7 +63,7 @@ void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_i
 	grid2D = grid2D_in; //Copy by value, after destroying the old grid
 }
 
-#ifdef _PAROC_
+#ifdef _POPC_
 #include "marshal_meteoio.h"
 void Grid2DObject::Serialize(paroc_buffer &buf, bool pack)
 {

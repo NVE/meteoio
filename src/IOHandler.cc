@@ -1,4 +1,4 @@
-#ifdef _PAROC_
+#ifdef _POPC_
 #include "IOHandler.ph"
 #else
 #include "IOHandler.h"
@@ -7,7 +7,7 @@
 using namespace std;
 
 
-#ifdef _PAROC_
+#ifdef _POPC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(cfg){
 #else
 IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(cfg)
@@ -21,7 +21,7 @@ IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(con
 }
 
 //Copy constructor
-#ifdef _PAROC_
+#ifdef _POPC_
 //IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(cfg), boschungio(cfg), imisio(cfg){
 	//Nothing else so far
 //}
@@ -33,7 +33,7 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 }
 #endif
 
-#ifdef _PAROC_
+#ifdef _POPC_
 /*IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg), boschungio(cfg), imisio(cfg){
   IOHandler::ascii_src = "FILE";
   IOHandler::boschung_src = "BOSCHUNG";
@@ -48,7 +48,7 @@ IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfg
 }
 #endif
 
-#ifdef _PAROC_
+#ifdef _POPC_
 IOHandler::~IOHandler(){
 #else
 IOHandler::~IOHandler() throw(){
@@ -78,7 +78,7 @@ IOHandler::~IOHandler() throw(){
 
 //Clone function
 //IOHandler* IOHandler::clone() const { return new IOHandler(*this); }
-#ifdef _PAROC_
+#ifdef _POPC_
 void IOHandler::cleanup(){
 #else
 void IOHandler::cleanup() throw(){

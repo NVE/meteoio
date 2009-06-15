@@ -3,7 +3,7 @@
 
 using namespace std;
 
-int main() {
+int main(int argc, char** argv) {
 	Date_IO d1(2009,01,01,18,00);
 	
 	vector<MeteoData> vecMeteo;
@@ -62,6 +62,7 @@ int main() {
 	ioTest->write2DGrid(rh2, "output/rh.2d");
 	
 	cout << "Writing the Grids was successful" << endl;
+	return 0;
 }
 
 //compile with: g++ meteoio_demo.cc ../src/Laws.c -I ../src/ -I ../src/filter/ -L ../lib/ -lmeteoio -ldl -lm -o meteoio_demo -rdynamic

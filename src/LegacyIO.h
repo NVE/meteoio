@@ -1,7 +1,7 @@
 #ifndef LEGACYIO_H
 #define LEGACYIO_H
 
-#ifdef _PAROC_
+#ifdef _POPC_
 #error
 #endif
 

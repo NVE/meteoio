@@ -16,7 +16,7 @@ using namespace IOUtils;
  * @author Thomas Egger
  * @date   2008-12-05
  */
-#ifdef _PAROC_
+#ifdef _POPC_
 class MeteoData : POPBase {
 	public:
 		void Serialize(paroc_buffer &buf, bool pack);

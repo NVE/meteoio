@@ -3,22 +3,22 @@ A3DROOT=../..
 CFLAGS=-Wall -Wextra
 PAROCC   = parocc
 
-SLFIODIR	= ../src
-FILTERDIR	= $(SLFIODIR)/filter
+METEOIODIR	= ../src
+FILTERDIR	= $(METEOIODIR)/filter
 
-vpath    %.h     $(SLFIODIR) $(FILTERDIR) ./
-vpath    %.c     $(SLFIODIR) $(FILTERDIR) ./
-vpath    %.cc    $(SLFIODIR) $(FILTERDIR) ./
+vpath    %.h     $(METEOIODIR) $(FILTERDIR) ./
+vpath    %.c     $(METEOIODIR) $(FILTERDIR) ./
+vpath    %.cc    $(METEOIODIR) $(FILTERDIR) ./
 
-LIBS      =-L../ -L../../snowpack -rdynamic -lstdc++ -lsnowpack -ldl -L../lib -lmeteoio -lfilter 
-LIBS_PAROC=-L../ -L../filter -L../../snowpack -L../../common -lstdc++ -lcommonparoc -lfilterparoc -lmeteoioparoc -lsnowpackparoc
+LIBS      =-L../ -L$(A3DROOT)/snowpack -rdynamic -lstdc++ -lsnowpack -ldl -L../lib -lmeteoio -lfilter 
+LIBS_PAROC=-L../ -L../lib -L$(A3DROOT)/snowpack -L$(A3DROOT)/common -lstdc++ -lcommonparoc -lfilterparoc -lmeteoioparoc -lsnowpackparoc
 
 DEBUG = -g -O0 -DDEBUG -ggdb
-INCLUDE=-I. -I$(SLFIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ 
+INCLUDE=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ 
 
-INCLUDE_PAROC=-I. -I$(SLFIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ $(shell pkg-config --cflags libxml++-2.6) -I$(A3DROOT)/snowdrift
+INCLUDE_PAROC=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ $(shell pkg-config --cflags libxml++-2.6) -I$(A3DROOT)/snowdrift
 
-all: testFile
+all: meteoio_demo
 
 .cc.o: $*.cc $*.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE)
@@ -36,8 +36,8 @@ testStation: StationData.o testStation.o
 	g++ -o testStation StationData.o testStation.o
 
 #testFile: testFile.o makeLib
-testFile: testFile.o
-	$(CC) $(DEBUG) -o $@ testFile.o ${LIBS}
+meteoio_demo: meteoio_demo.o
+	$(CC) $(DEBUG) -o $@ meteoio_demo.o ${LIBS}
 
 testThomas: testThomas.o 
 	$(CC) $(DEBUG) -rdynamic -o $@ testThomas.o ${LIBS} 
@@ -45,7 +45,7 @@ testThomas: testThomas.o
 testConfigReader: main.o ConfigReader.o slfutils.o slfexceptions.o
 	$(CC) -o $@ main.o ConfigReader.o slfutils.o slfexceptions.o
 
-all_paroc: testFile.paroc
+all_paroc: meteoio_demo.paroc
 
 %_par.o : %.cc
 	$(PAROCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_PAROC) -o $@
@@ -53,9 +53,9 @@ all_paroc: testFile.paroc
  %.stub.o : %.ph
 	$(PAROCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_PAROC) -o $@
 
-testFile.paroc: testFile_par.o 
-	$(PAROCC) $(DEBUG) -o $@ testFile_par.o ${LIBS_PAROC}
+meteoio_demo.paroc: meteoio_demo_par.o 
+	$(PAROCC) $(DEBUG) -o $@ meteoio_demo_par.o ${LIBS_PAROC}
 
 clean:
-	rm -rf *~ *.o libslfio.a main testThomas testFile testDate testConfigReader testMeteo testStation testFile.paroc *.out testArray
+	rm -rf *~ *.o libslfio.a main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.paroc *.out testArray
 

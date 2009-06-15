@@ -24,7 +24,11 @@
 #include "Array2D.h"
 #include "Array3D.h"
 #include "IOInterface.h"
+#ifdef _POPC_
+#include "IOHandler.ph"
+#else
 #include "IOHandler.h"
+#endif
 #include "Meteo2DInterpolator.h"
 
 #endif

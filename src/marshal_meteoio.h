@@ -1,5 +1,5 @@
-#ifndef MARSHAL_ALPINE3D_H
-#define MARSHAL_ALPINE3D_H
+#ifndef MARSHAL_METEOIO_H
+#define MARSHAL_METEOIO_H
 
 #include "Grid2DObject.h"
 #include "StationData.h"

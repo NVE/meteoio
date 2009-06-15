@@ -136,7 +136,7 @@ class NoAvailableDataException : public IOException {
 
 /// HACK for POPC by Laurent Winkler : Print error message instead of throw
 // lwk debug : a THROW macro is defined
-#ifdef _PAROC_
+#ifdef _POPC_
 #ifdef THROW
 #undef THROW
 #endif
@@ -155,6 +155,6 @@ class NoAvailableDataException : public IOException {
 #endif /*__IOException_CC__*/
 #else
 #define THROW throw 
-#endif /*_PAROC_*/
+#endif /*_POPC_*/
 
 #endif /*__IOException_H__*/

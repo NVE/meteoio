@@ -11,7 +11,7 @@
  * @author Thomas Egger
  * @date   2008-12-20
  */
-#ifdef _PAROC_
+#ifdef _POPC_
 class Grid2DObject : POPBase {
 	public:
 		void Serialize(paroc_buffer &buf, bool pack);

@@ -260,7 +260,7 @@ void Date_IO::getRealJulianDate(double& julian_out) const
 	julian_out = julian + (double)offset - 0.5;
 }
 
-#ifdef _PAROC_
+#ifdef _POPC_
 void Date_IO::Serialize(paroc_buffer &buf, bool pack)
 {
 	if (pack){

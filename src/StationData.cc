@@ -104,7 +104,7 @@ const string StationData::toString() const
 
 	return tmpstr.str();
 }
-#ifdef _PAROC_
+#ifdef _POPC_
 void StationData::Serialize(paroc_buffer &buf, bool pack)
 {
 	if (pack){

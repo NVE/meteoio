@@ -24,7 +24,7 @@ using namespace rel_ops;
  *
  * @author Thomas Egger
  */
-#ifdef _PAROC_
+#ifdef _POPC_
 class Date_IO : POPBase {
 	public:
 		void Serialize(paroc_buffer &buf, bool pack);
