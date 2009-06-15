@@ -8,7 +8,6 @@ using namespace std;
 A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	//Nothing else so far
-  
 }
 
 //Copy constructor
@@ -79,6 +78,7 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
   
 	unsigned int ncols, nrows;
 	double xllcorner, yllcorner, cellsize, nodata;
+	double latitude, longitude;
 	vector<string> tmpvec;
 	string line="";
 	map<string, string> header; // A map to save key value pairs of the file header
@@ -108,10 +108,11 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 		IOUtils::getValueForKey(header, "cellsize", cellsize);
 		IOUtils::getValueForKey(header, "NODATA_value", nodata);
 
-		//cout << ncols << " " << nrows << " " << xllcorner<< " " << yllcorner<< " " << cellsize<< " " << nodata <<endl;
+		//compute WGS coordinates (considered as the true reference)
+		CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
     
 		//Initialize the 2D grid
-		grid_out.set(ncols, nrows, xllcorner, yllcorner, cellsize, nodata);
+		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize, nodata);
 
 		if ((ncols==0) || (nrows==0)) {
 			THROW IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
@@ -287,6 +288,13 @@ void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out, StationDat
 		IOUtils::getValueForKey(header, "Y_Coord", ycoord);
 		IOUtils::getValueForKey(header, "Altitude", altitude);
 
+		//calculate coordinates if necessary
+		if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
+			if(xcoord==IOUtils::nodata || ycoord==IOUtils::nodata) {
+				THROW InvalidFormatException("Too many nodata values for coordinates conversion in file " + tmp, AT);
+			}
+			CH1903_to_WGS84(xcoord, ycoord, latitude, longitude);
+		}
 		station_out.setStationData(xcoord, ycoord, altitude, "", latitude, longitude);
 
 		//Read one line, construct Date_IO object and see whether date is greater or equal than the date_in object
@@ -503,7 +511,7 @@ void A3DIO::constructMeteo2DFilenames(const Date_IO& date_in, vector<string>& fi
 // 	filenames.push_back(wdirFilename);
 
 	for (unsigned int ii=0; ii<filenames.size(); ii++) {
-		if (!IOUtils::fileExists(filenames[ii])) {
+		if (!IOUtils::fileExists(filenames[ii])/* && ii<4*/) { //for keeping dw optional
 			THROW FileNotFoundException(filenames[ii], AT);
 		}
 	}
@@ -726,10 +734,13 @@ void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& 
 			THROW ConversionFailedException("Conversion of station description failed in " + filename, AT);  
 		}
 
-		//Now convert the swiss grid coordinates into latitude and longitude
-		IOUtils::CH1903_to_WGS84(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate, 
-							 vecS[stationnr-1].latitude, vecS[stationnr-1].longitude);
-
+		//calculate coordinates if necessary
+		if(vecS[stationnr-1].latitude==IOUtils::nodata || vecS[stationnr-1].longitude==IOUtils::nodata) {
+			if(vecS[stationnr-1].eastCoordinate==IOUtils::nodata || vecS[stationnr-1].northCoordinate==IOUtils::nodata) {
+				THROW InvalidFormatException("Too many nodata values for coordinates conversion in file " + filename, AT);
+			}
+			CH1903_to_WGS84(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate, vecS[stationnr-1].latitude, vecS[stationnr-1].longitude);
+		}
 		//cout << stationnr << endl;
 	}
 

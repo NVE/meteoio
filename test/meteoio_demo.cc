@@ -4,7 +4,8 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-	Date_IO d1(2009,01,01,18,00);
+	Date_IO d1;
+	convertString(d1,argv[1]);
 	
 	vector<MeteoData> vecMeteo;
 	vector<StationData> vecStation;
@@ -26,8 +27,8 @@ int main(int argc, char** argv) {
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++) {
 		cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << endl;
-		cout << "  Name: " << vecStation[ii].getStationName() << endl;
-		cout << "  Air Temperature: " << vecMeteo[ii].ta << endl;
+		cout << "  Name: " << vecStation[ii].getStationName() << "coordinates: "<< vecStation[ii].eastCoordinate <<","<< vecStation[ii].northCoordinate << endl;
+		cout << "  Air Temperature: " << vecMeteo[ii].rh << endl;
 	}
 	
 	Grid2DObject dem;
@@ -47,11 +48,11 @@ int main(int argc, char** argv) {
 	
 	Grid2DObject p2, nswc2, vw2, rh2, ta2;
 	cout << "Convert CArray2D to Grid2DObject" << endl;
-	p2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.cellsize, dem.nodata, p);
-	nswc2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.cellsize, dem.nodata, nswc);
-	ta2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.cellsize, dem.nodata, ta);
-	rh2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.cellsize, dem.nodata, rh);
-	vw2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.cellsize, dem.nodata, vw);
+	p2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, p);
+	nswc2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, nswc);
+	ta2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, ta);
+	rh2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, rh);
+	vw2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, vw);
 	cout << "conversion was successful" << endl;
 	
 	cout << "Writing the Grids to *.2d files" << endl;

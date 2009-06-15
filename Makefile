@@ -112,6 +112,7 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/Grid2DObject.o \
 		$(SRCDIR)/IOExceptions.o \
 		$(SRCDIR)/IOUtils.o \
+		$(SRCDIR)/Laws.o \
 		$(SRCDIR)/libinterpol2D.o \
 		$(SRCDIR)/libinterpol1D.o \
 		$(SRCDIR)/Meteo1DResampler.o \
@@ -134,6 +135,7 @@ METEOIO_OBJ_PAROC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/Grid2DObject_par.o \
 		$(SRCDIR)/IOExceptions_par.o \
 		$(SRCDIR)/IOUtils_par.o \
+		$(SRCDIR)/Laws_par.o \
 		$(SRCDIR)/libinterpol2D_par.o \
 		$(SRCDIR)/libinterpol1D_par.o \
 		$(SRCDIR)/Meteo1DResampler_par.o \

@@ -41,13 +41,14 @@ Interpol2D::Interpol2D(interp_types Isingle,
 double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2)
 {
 	//This function computes the horizontaldistance between two points
-	//coordinates are given in the Swiss grid system
+	//coordinates are given in a square, metric grid system
 	return sqrt( (X1-X2)*(X1-X2) + (Y1-Y2)*(Y1-Y2) );
 }
 
 double Interpol2D::HorizontalDistance(const int& i, const int& j, const double& X2, const double& Y2)
 {
-	//This function computes the horizontaldistance between two points
+	//This function computes the horizontal distance between two points
+	//coordinates are given in a square, metric grid system
 	//for grid points toward real coordinates
 	const double X1 = (xllcorner+i*cellsize);
 	const double Y1 = (yllcorner+j*cellsize);

@@ -297,9 +297,8 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 		sd.longitude = longitude;
 		sd.latitude = latitude;
 		sd.altitude = altitude;
-
-		//Convert latitude and longitude to swiss grid coordinates
-		IOUtils::WGS84_to_CH1903(sd.latitude, sd.longitude, sd.eastCoordinate, sd.northCoordinate);
+		sd.eastCoordinate = nodata;
+		sd.northCoordinate = nodata;
 
 		//Air temperature
 		string str_lt = xmlGetNodeContent(pNode, "lt");

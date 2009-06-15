@@ -1,5 +1,9 @@
 #include "IOUtils.h"
 
+#ifndef PI
+	#define PI 3.141592653589
+#endif
+
 bool IOUtils::checkEpsilonEquality(double val1, double val2, double epsilon)
 {
 	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {
@@ -8,6 +12,12 @@ bool IOUtils::checkEpsilonEquality(double val1, double val2, double epsilon)
 
 	return false;
 }
+
+double IOUtils::pow2(const double val)
+{
+	return (val*val);
+}
+
 
 void IOUtils::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out)
 {
@@ -68,6 +78,121 @@ void IOUtils::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 	*/
 }
 
+void IOUtils::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing)
+{
+	easting = VincentyDistance(0., lon_ref, 0., lon);
+	northing = VincentyDistance(lat_ref, 0., lat, 0.);
+}
+
+void IOUtils::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon)
+{
+	const double to_deg = 180.0 / PI;
+	const double bearing = atan2(northing, easting)*to_deg;
+	const double distance = sqrt( pow2(easting) + pow2(northing) );
+
+	VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+}
+
+double IOUtils::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
+{
+	const double thresh = 1.e-12;	//convergence absolute threshold
+	const int n_max = 100;		//maximum number of iterations
+	const double a = 6378137.;	//major ellipsoid semi-axis, value for wgs84
+	const double b = 6356752.3142;	//minor ellipsoid semi-axis, value for wgs84
+	const double f = (a - b) / a;	//ellispoid flattening
+	const double to_rad = PI / 180.0;
+	
+	const double L = (lon1 - lon2)*to_rad;
+	const double U1 = atan( (1.-f)*tan(lat1*to_rad) );
+	const double U2 = atan( (1.-f)*tan(lat2*to_rad) );
+
+	double lambda = L, lambda_p=0., delta_sigma;
+	double sin_sigma, cos_sigma, sigma, sin_alpha, cos_alpha2, cos_2sigma_m;
+	double C, u2, A, B, s;
+	int n=0;
+	do {
+		sin_sigma = sqrt( pow2(cos(U2)*sin(lambda)) + pow2(cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda)) );
+		if(sin_sigma==0.) {
+			//co-incident points
+			return 0.;
+		}
+		cos_sigma = sin(U1)*sin(U2) + cos(U1)*cos(U2)*cos(lambda);
+		sigma = atan2(sin_sigma,cos_sigma);
+		sin_alpha = cos(U1)*cos(U2)*sin(lambda) / sin_sigma;
+		cos_alpha2 = 1. - pow2(sin_alpha);
+		if(lat1==0. && lat2==0.) {
+			cos_2sigma_m = 0.;
+		} else {
+			cos_2sigma_m = cos_sigma - 2.*sin(U1)*sin(U2)/cos_alpha2;
+		}
+		C = f/16. * cos_alpha2*(4.+f*(4.-3.*cos_alpha2));
+		lambda_p = lambda;
+		lambda = L + (1.-C)*f*sin_alpha*( sigma+C*sin_sigma*( cos_2sigma_m+C*cos_sigma*(-1.+2.*pow2(cos_2sigma_m)) ) );
+		n++;
+	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
+	
+	if(n>n_max) {
+		THROW IOException("Distance calculation not converging", AT);
+	}
+	
+	u2 = cos_alpha2 * (a*a - b*b) / (b*b);
+	A = 1. + u2/16384. * ( 4096.+u2*(-768.+u2*(320.-175.*u2)) );
+	B = u2/1024. * ( 256.+u2*(-128.+u2*(74.-47.*u2)) );
+	delta_sigma = B*sin_sigma*( cos_2sigma_m+B/4.*( cos_sigma*(-1.+2.*pow2(cos_2sigma_m)) - B/6.*(cos_2sigma_m*(-3.+4.*pow2(sin_sigma))*(-3.+4.*pow2(cos_2sigma_m))) ) );
+	s = b*A*(sigma - delta_sigma);	//distance between the two points
+	
+	//alpha1 = atan2(cos(U2)*sin(lambda), cos(U1)*sin(U2)-sin(U1)*cos(U2)*cos(lambda));
+	//alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda));
+	return s;
+}
+
+void IOUtils::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
+{
+	const double thresh = 1.e-12;	//convergence absolute threshold
+	const double a = 6378137.;	//major ellipsoid semi-axis, value for wgs84
+	const double b = 6356752.3142;	//minor ellipsoid semi-axis, value for wgs84
+	const double f = (a - b) / a;	//ellispoid flattening
+	const double to_rad = PI / 180.0;
+	const double to_deg = 180.0 / PI;
+
+	const double alpha1 = bearing*to_rad;
+	const double tanU1 = (1.-f)*tan(lat_ref*to_rad);
+	const double cosU1 = 1./sqrt(1.+pow2(tanU1));
+	const double sinU1 = tanU1*cosU1;
+	const double sigma1 = atan2(tanU1,cos(alpha1));
+	const double sinAlpha = cosU1*sin(alpha1);
+	const double cos2alpha = 1. - pow2(sinAlpha);
+	const double u2 = cos2alpha * (a*a - b*b) / (b*b);
+	const double A = 1. + u2/16384. * (4096. + u2*(-768.+u2*(320.-175*u2)) );
+	const double B = u2/1024. * (256. + u2*(-128.+u2*(74.-47.*u2)));
+	
+	double sigma = distance / (b*A);
+	double sigma_p = 2.*PI;
+	double cos2sigma_m;
+
+	while (fabs(sigma - sigma_p) > thresh) {
+		cos2sigma_m = cos( 2.*sigma1 + sigma );
+		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * ( 
+			cos(sigma)*(-1.+2.*pow2(cos2sigma_m)) 
+			-B/6. * cos2sigma_m * (-3.+4.*pow2(sin(sigma))) * (-3.+4.*pow2(cos2sigma_m))
+			) );
+		sigma_p = sigma;
+		sigma = distance / (b*A) + delta_sigma;
+	}
+	
+	lat = atan2( sinU1*cos(sigma) + cosU1*cos(sigma)*cos(alpha1),
+		     (1.-f) * sqrt( pow2(sinAlpha) + pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
+		   );
+	const double lambda = atan2( sin(sigma)*sin(alpha1), cosU1*cos(sigma) - sinU1*sin(sigma)*cos(alpha1) );
+	const double C = f/16. * cos2alpha * (4.+f*(4.-3.*cos2alpha));
+	const double L = lambda - (1.-C) * f * sinAlpha * (
+				sigma + C * sin(sigma) * ( cos2sigma_m+C*cos(sigma) * (-1.+2.*pow2(cos2sigma_m)) )
+				);
+
+	lat = lat * to_deg;
+	lon = lon_ref + (L*to_deg);
+	//const double alpha2 = atan2( sinAlpha, -(sinU1*sin(sigma)-cosU1*cos(sigma)*cos(alpha1)) ); //reverse azimuth
+}
 
 void IOUtils::trim(string& str)
 {
@@ -328,6 +453,8 @@ template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string st
 	unsigned int year, month, day, hour, minute;
 	char rest[32] = "";
 	if (sscanf(s.c_str(), "%u-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
+		t.setDate(year, month, day, hour, minute);
+	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
 		t.setDate(year, month, day, hour, minute);
 	} else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
 		t.setDate(year, month, day);

@@ -40,6 +40,56 @@ namespace IOUtils {
 	void CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out);
 
 	/**
+	* @brief Coordinate conversion: from WGS84 Lat/Long to local metric grid
+	* @param lat_ref Decimal Latitude of origin (const double&)
+	* @param lon_ref Decimal Longitude of origin (const double&)
+	* @param lat Decimal Latitude (const double&)
+	* @param lon Decimal Longitude(const double&)
+	* @param easting easting coordinate in local grid (double&)
+	* @param northing northing coordinate in local grid (double&)
+	*/
+	void WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing);
+
+	/**
+	* @brief Coordinate conversion: from local metric grid to WGS84 Lat/Long
+	* @param lat_ref Decimal Latitude of origin (const double&)
+	* @param lon_ref Decimal Longitude of origin (const double&)
+	* @param easting easting coordinate in local grid (double&)
+	* @param northing northing coordinate in local grid (double&)
+	* @param lat Decimal Latitude (double&)
+	* @param lon Decimal Longitude(double&)
+	*/
+	void local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon);
+
+	/**
+	* @brief Vincenty Distance calculation between points in WGS84 (decimal Lat/Long)
+	* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", 
+	* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, 
+	* http://www.springerlink.com/content/y7108u6862473583
+	* @param lat1 Decimal Latitude (const double&)
+	* @param lon1 Decimal Longitude (const double&)
+	* @param lat2 Decimal Latitude (const double&)
+	* @param lon2 Decimal Longitude (const double&)
+	* @return distance (double)
+	*/
+	double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2);
+
+	/**
+	* @brief Vincenty Inverse calculation giving WGS84 (decimal Lat/Long) position
+	* given a start location (lat,lon) a distance and a bearing
+	* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", 
+	* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, 
+	* http://www.springerlink.com/content/y7108u6862473583
+	* @param lat_ref Decimal Latitude (const double&)
+	* @param lon_ref Decimal Longitude (const double&)
+	* @param distance Distance in meters (const double&)
+	* @param bearing bearing in degrees, 0 being north (const double&)
+	* @param lat Decimal latitude of target point (double&)
+	* @param lon Decimal longitude of target point (double&)
+	*/
+	void VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
+
+	/**
 	* @brief Check whether two values are equal regarding a certain epsilon environment (within certain radius of each other)
 	* @param val1
 	* @param val2
@@ -47,6 +97,8 @@ namespace IOUtils {
 	* @return true if val2 is within the radius around val1, false otherwise.
 	*/
 	bool checkEpsilonEquality(double val1, double val2, double epsilon);
+
+	double pow2(const double val);
 
 	void readDirectory(const string& path, list<string>& dirlist, const string& pattern = "");
 

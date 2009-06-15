@@ -27,10 +27,10 @@ void ImisIO::createBuffer()
 {
 	//Clear the buffers
 	mbImis.clear();
-	int stations = (int)vecStationName.size();
+	const unsigned int stations = (unsigned int)vecStationName.size();
 
 	//Allocate one MeteoBuffer per station
-	for (int ii=0; ii<stations; ii++) {
+	for (unsigned int ii=0; ii<stations; ii++) {
 		mbImis.push_back(MeteoBuffer(1000));
 	}
 	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
@@ -152,7 +152,7 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	sd.setStationData(east, north, alt, sName, lat, lon);
 	
 	double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr;
-	unsigned int size = meteo_in.size();
+	const unsigned int size = meteo_in.size();
 	for (unsigned int i=0; i<size; i++) {
 		ImisIO::stringToDate(meteo_in[i][0], tmpDate);
 		convertString(ta, meteo_in[i][1], dec);
@@ -177,7 +177,7 @@ void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector
 	const string userName = "slf";
 	const string password = "sdb+4u";
 	const string dbName = "sdbo";
-	int timeOut = 0, seconds = 60;
+	unsigned int timeOut = 0, seconds = 60;
 
 	Environment *env = Environment::createEnvironment();// static OCCI function
 	{
@@ -240,7 +240,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 	const string password = "sdb+4u";
 	const string dbName = "sdbo"; //or sdbo
 	vector<string> vec;
-	int timeOut = 0, seconds = 60;
+	unsigned int timeOut = 0, seconds = 60;
 
 	Environment *env = Environment::createEnvironment();// static OCCI function
 	{
@@ -340,7 +340,7 @@ void ImisIO::setMbImis(Date_IO date_in)
 	date_in.getDate(date[0],date[1],date[2],date[3],date[4]);
 	vector<int> date_io(date, date+sizeof(date)/sizeof(int));
 	string station, name, number;
-	unsigned int size = vecStationName.size();
+	const unsigned int size = vecStationName.size();
 	
 	for (unsigned int i=0; i<size; i++) {
 		vector<string>* data2s = new vector<string>;
@@ -368,7 +368,7 @@ void ImisIO::resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& ve
 {
 	vecMeteo.clear();
 	vecStation.clear();
-	unsigned int size = mbImis.size();
+	const unsigned int size = mbImis.size();
 	
 	for (unsigned int ii=0; ii<size; ii++) {
 		unsigned int index = mbImis[ii].seek(date_in);
@@ -411,7 +411,7 @@ void ImisIO::stringToDate(const string& instr, Date_IO& date_out)
 }
 
 double ImisIO::strToDouble(const string &str)
-{
+{ //HACK: this method should be replaced by a call to a standard one
 	int length = str.size();
 	double result;
 	if (length == 0) {

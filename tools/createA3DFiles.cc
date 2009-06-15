@@ -167,34 +167,16 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 	}
 }
 
-Date_IO toDate(const string& date)
-{
-	int tmp[5];
-	string year = date.substr(0,4);
-	string month = date.substr(5,2);
-	string day = date.substr(8,2);
-	string hour = date.substr(11,2);
-	string min = date.substr(14,2);
-	
-	convertString(tmp[0], year, dec);
-	convertString(tmp[1], month, dec);
-	convertString(tmp[2], day, dec);
-	convertString(tmp[3], hour, dec);
-	convertString(tmp[4], min, dec);
-	
-	Date_IO d(tmp[0], tmp[1], tmp[2], tmp[3], tmp[4]);
-	return d;
-}
-
-
 int main(int argc, string argv[3])
 {
 	if (argc!=3) {
 		cout<<"Two (2) date are needed in this format : YYYY-MM-DDTHH:mm:ss" <<endl;
 		exit(1);
 	} else {
-		Date_IO d1 = toDate(argv[1]);
-		Date_IO d2 = toDate(argv[2]);
+		Date_IO d1;
+		Date_IO d2;
+		convertString(d1,argv[1]);
+		convertString(d2,argv[2]);
 	
 		vector<MeteoData> vecMeteo;
 		vector<StationData> vecStation;

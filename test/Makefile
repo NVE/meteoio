@@ -10,11 +10,11 @@ vpath    %.h     $(METEOIODIR) $(FILTERDIR) ./
 vpath    %.c     $(METEOIODIR) $(FILTERDIR) ./
 vpath    %.cc    $(METEOIODIR) $(FILTERDIR) ./
 
-LIBS      =-L../ -L$(A3DROOT)/snowpack -rdynamic -lstdc++ -lsnowpack -ldl -L../lib -lmeteoio -lfilter 
+LIBS      =-rdynamic -lstdc++ -ldl -L../lib -lmeteoio -lfilter
 LIBS_PAROC=-L../ -L../lib -L$(A3DROOT)/snowpack -L$(A3DROOT)/common -lstdc++ -lcommonparoc -lfilterparoc -lmeteoioparoc -lsnowpackparoc
 
 DEBUG = -g -O0 -DDEBUG -ggdb
-INCLUDE=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ 
+INCLUDE=-I. -I$(METEOIODIR) -I$(FILTERDIR)
 
 INCLUDE_PAROC=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ $(shell pkg-config --cflags libxml++-2.6) -I$(A3DROOT)/snowdrift
 

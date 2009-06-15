@@ -25,12 +25,14 @@ class Grid2DObject{
 		*/
 		Grid2DObject();
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-		       const double& xllcorner, const double& yllcorner,
-		       const double& cellsize, const double& nodata);
+			const double& xllcorner, const double& yllcorner,
+			const double& latitude, const double& longitude,
+			const double& cellsize, const double& nodata);
 
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-		       const double& xllcorner, const double& yllcorner,
-		       const double& cellsize, const double& nodata,
+			const double& xllcorner, const double& yllcorner,
+			const double& latitude, const double& longitude,
+			const double& cellsize, const double& nodata,
 		       CArray2D<double>& grid2D_in);
 
 		/**
@@ -38,8 +40,9 @@ class Grid2DObject{
 		* const double& cellsize, const double& nodata, CArray2D<double>& grid2D_in);
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-		   const double& xllcorner, const double& yllcorner,
-		   const double& cellsize, const double& nodata);
+			const double& xllcorner, const double& yllcorner,
+			const double& latitude, const double& longitude,
+			const double& cellsize, const double& nodata);
 		/**
 		* @brief Set all variables in one go. Notably the member grid2D of type CArray2D<double> 
 		* will be destroyed and recreated to size ncols x nrows.
@@ -53,9 +56,10 @@ class Grid2DObject{
 		* @param grid2D_in A CArray<double> grid to be copied by value
 		*/  
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-		   const double& xllcorner, const double& yllcorner,
-		   const double& cellsize, const double& nodata,
-		   CArray2D<double>& grid2D_in);
+			const double& xllcorner, const double& yllcorner,
+			const double& latitude, const double& longitude,
+			const double& cellsize, const double& nodata,
+			CArray2D<double>& grid2D_in);
 
 
 		/**
@@ -67,6 +71,7 @@ class Grid2DObject{
 		CArray2D<double> grid2D;
 		unsigned int ncols, nrows;
 		double xllcorner, yllcorner, cellsize, nodata;
+		double latitude, longitude;
 };
 
 #endif
