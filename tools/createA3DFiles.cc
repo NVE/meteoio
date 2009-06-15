@@ -167,39 +167,62 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 	}
 }
 
-
-int main()
+Date_IO toDate(const string& date)
 {
-	Date_IO d1(2009,06,10,00,00);
-	Date_IO d2(2009,06,10,23,59);
+	int tmp[5];
+	string year = date.substr(0,4);
+	string month = date.substr(5,2);
+	string day = date.substr(8,2);
+	string hour = date.substr(11,2);
+	string min = date.substr(14,2);
 	
-	vector<MeteoData> vecMeteo;
-	vector<StationData> vecStation;
-	vector< vector<MeteoData> > data;
-	//vector<string> stations;
+	convertString(tmp[0], year, dec);
+	convertString(tmp[1], month, dec);
+	convertString(tmp[2], day, dec);
+	convertString(tmp[3], hour, dec);
+	convertString(tmp[4], min, dec);
 	
-	IOInterface *ioTest=NULL; //Initialization vital!
+	Date_IO d(tmp[0], tmp[1], tmp[2], tmp[3], tmp[4]);
+	return d;
+}
+
+
+int main(int argc, string argv[3])
+{
+	if (argc!=3) {
+		cout<<"Two (2) date are needed in this format : YYYY-MM-DDTHH:mm:ss" <<endl;
+		exit(1);
+	} else {
+		Date_IO d1 = toDate(argv[1]);
+		Date_IO d2 = toDate(argv[2]);
 	
-	try {
-		ioTest = new IOHandler("io.ini");
-	} catch (exception& e){
-		cout << "Problem with IOHandler creation, cause: " << e.what() << endl;
-	}
+		vector<MeteoData> vecMeteo;
+		vector<StationData> vecStation;
+		vector< vector<MeteoData> > data;
 	
-	try {
-		while (d1 < d2) {
-			ioTest->readMeteoData(d1, vecMeteo, vecStation);
-			data.push_back(vecMeteo); 
-			d1 += 1./24.; // incremented by 1 hour
+		IOInterface *ioTest=NULL; //Initialization vital!
+	
+		try {
+			ioTest = new IOHandler("io.ini");
+		} catch (exception& e){
+			cout << "Problem with IOHandler creation, cause: " << e.what() << endl;
 		}
-	} catch (exception& e){
-		cout << "Problem when reading data, cause: " << e.what() << endl;
-	}
 	
-	create1DFile(data, vecStation);
-	string type[] = {"nswc","rh","ta","vw","dw"};
-	for(int i=0; i<5; i++) {
-		create2DFile(type[i], data, vecStation);
+		try {
+			while (d1 < d2) {
+				ioTest->readMeteoData(d1, vecMeteo, vecStation);
+				data.push_back(vecMeteo); 
+				d1 += 1./24.; // incremented by 1 hour
+			}
+		} catch (exception& e){
+			cout << "Problem when reading data, cause: " << e.what() << endl;
+		}
+		
+		create1DFile(data, vecStation);
+		string type[] = {"nswc","rh","ta","vw","dw"};
+		for(int i=0; i<5; i++) {
+			create2DFile(type[i], data, vecStation);
+		}
 	}
 	
 	return 0;
