@@ -23,7 +23,7 @@ Interpol2D::Interpol2D(interp_types Isingle,
 	single_type   = Isingle;
 	multiple_type = Imultiple;
 	
-	xllcorner = dem.xllcorner;	//TODO: instead, access DEM members in functions
+	xllcorner = dem.xllcorner;	//TODO: instead, access by address of DEM member
 	yllcorner = dem.yllcorner;
 	cellsize  = dem.cellsize;
 	nx        = dem.ncols;

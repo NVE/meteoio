@@ -294,6 +294,12 @@ void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out, StationDat
 				THROW InvalidFormatException("Too many nodata values for coordinates conversion in file " + tmp, AT);
 			}
 			CH1903_to_WGS84(xcoord, ycoord, latitude, longitude);
+		} else if(xcoord!=IOUtils::nodata || ycoord!=IOUtils::nodata) {
+			double tmp_lat, tmp_lon;
+			CH1903_to_WGS84(xcoord, ycoord, tmp_lat, tmp_lon);
+			if(!checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
+				THROW InvalidArgumentException("Latitude/longitude and Xcoord/Ycoord don't match in header of file " + tmp, AT);
+			}
 		}
 		station_out.setStationData(xcoord, ycoord, altitude, "", latitude, longitude);
 

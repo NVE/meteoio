@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++) {
 		cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << endl;
-		cout << "  Name: " << vecStation[ii].getStationName() << "coordinates: "<< vecStation[ii].eastCoordinate <<","<< vecStation[ii].northCoordinate << endl;
+		cout << "  Name: " << vecStation[ii].getStationName() << endl;
 		cout << "  Air Temperature: " << vecMeteo[ii].rh << endl;
 	}
 	
@@ -36,6 +36,14 @@ int main(int argc, char** argv) {
 	int nx,ny;
 	ioTest->get2DGridSize(nx,ny);
 	
+	//convert to local grid coordinates
+	dem.xllcorner = 0.;
+	dem.yllcorner = 0.;
+	for (unsigned i = 0; i < vecMeteo.size() ; ++i) {
+		//setup reference station, convert coordinates to local grid
+		IOUtils::WGS84_to_local(dem.latitude, dem.longitude, vecStation[i].latitude, vecStation[i].longitude, vecStation[i].eastCoordinate, vecStation[i].northCoordinate);
+	}
+
 	CArray2D<double> p, nswc, vw, rh, ta;
 	ta.Create(nx,ny);
 	p.Create(nx,ny);

@@ -18,6 +18,12 @@ double IOUtils::pow2(const double val)
 	return (val*val);
 }
 
+double IOUtils::normalizeBearing(double angle)
+{
+	if(angle<0.) angle = 360.0 + angle;
+	if(angle>360.) angle = angle - 360.;
+	return angle;
+}
 
 void IOUtils::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out)
 {
@@ -74,26 +80,51 @@ void IOUtils::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 	/*// if necessary for the elevation, uncomment this block
 	h_out = h_in + 49.55
 		- 12.60		* y_p
-		- 6.94		* x_p;
+		- 22.64		* x_p;
 	*/
 }
 
 void IOUtils::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing)
 {
-	easting = VincentyDistance(0., lon_ref, 0., lon);
-	northing = VincentyDistance(lat_ref, 0., lat, 0.);
+//	easting = VincentyDistance((lat_ref+lat)/2., lon_ref, (lat_ref+lat)/2., lon);
+//	northing = VincentyDistance(lat_ref, (lon_ref+lon)/2., lat, (lon_ref+lon)/2.);
+//	easting = cosineDistance((lat_ref+lat)/2., lon_ref, (lat_ref+lat)/2., lon);
+//	northing = cosineDistance(lat_ref, (lon_ref+lon)/2., lat, (lon_ref+lon)/2.);
+	double alpha;
+	const double to_rad = PI / 180.0;
+	const double distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
+	easting = -distance*sin(alpha*to_rad);
+	northing = distance*cos(alpha*to_rad);
 }
 
 void IOUtils::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon)
 {
 	const double to_deg = 180.0 / PI;
-	const double bearing = atan2(northing, easting)*to_deg;
+	double bearing = atan2(northing, easting)*to_deg;
 	const double distance = sqrt( pow2(easting) + pow2(northing) );
 
+	bearing = normalizeBearing(bearing);
 	VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
 }
 
+double IOUtils::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
+{
+	const double Rearth = 6371.e3;
+	const double to_rad = PI / 180.0;
+	const double d = acos( 
+		sin(lat1*to_rad) * sin(lat2*to_rad) 
+		+ cos(lat1*to_rad) * cos(lat2*to_rad) * cos((lon2-lon1)*to_rad) 
+		) * Rearth;
+	return d;
+}
+
 double IOUtils::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
+{
+	double alpha;
+	return VincentyDistance(lat1, lon1, lat2, lon2, alpha);
+}
+
+double IOUtils::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
 	const double thresh = 1.e-12;	//convergence absolute threshold
 	const int n_max = 100;		//maximum number of iterations
@@ -127,7 +158,9 @@ double IOUtils::VincentyDistance(const double& lat1, const double& lon1, const d
 		}
 		C = f/16. * cos_alpha2*(4.+f*(4.-3.*cos_alpha2));
 		lambda_p = lambda;
-		lambda = L + (1.-C)*f*sin_alpha*( sigma+C*sin_sigma*( cos_2sigma_m+C*cos_sigma*(-1.+2.*pow2(cos_2sigma_m)) ) );
+		lambda = L + (1.-C)*f*sin_alpha*( 
+			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*pow2(cos_2sigma_m)) ) 
+			);
 		n++;
 	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
 	
@@ -139,10 +172,22 @@ double IOUtils::VincentyDistance(const double& lat1, const double& lon1, const d
 	A = 1. + u2/16384. * ( 4096.+u2*(-768.+u2*(320.-175.*u2)) );
 	B = u2/1024. * ( 256.+u2*(-128.+u2*(74.-47.*u2)) );
 	delta_sigma = B*sin_sigma*( cos_2sigma_m+B/4.*( cos_sigma*(-1.+2.*pow2(cos_2sigma_m)) - B/6.*(cos_2sigma_m*(-3.+4.*pow2(sin_sigma))*(-3.+4.*pow2(cos_2sigma_m))) ) );
+
 	s = b*A*(sigma - delta_sigma);	//distance between the two points
 	
-	//alpha1 = atan2(cos(U2)*sin(lambda), cos(U1)*sin(U2)-sin(U1)*cos(U2)*cos(lambda));
-	//alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda));
+	//computation of the average forward bearing
+	double alpha1 = atan2(cos(U2)*sin(lambda), cos(U1)*sin(U2)-sin(U1)*cos(U2)*cos(lambda)) / to_rad; //forward azimuth
+	double alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda)) / to_rad; //reverse azimuth
+	//converting reverse azimuth back to normal azimuth
+	if(alpha2>180.) {
+		alpha2 = alpha2 - 180.;
+	} else {
+		alpha2 = 180. - alpha2;
+	}
+	alpha1 = normalizeBearing(alpha1);
+	alpha2 = normalizeBearing(alpha2);
+
+	alpha = (alpha1+alpha2)/2.;
 	return s;
 }
 

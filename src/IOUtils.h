@@ -62,6 +62,16 @@ namespace IOUtils {
 	void local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon);
 
 	/**
+	* @brief Sperical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
+	* @param lat1 Decimal Latitude (const double&)
+	* @param lon1 Decimal Longitude (const double&)
+	* @param lat2 Decimal Latitude (const double&)
+	* @param lon2 Decimal Longitude (const double&)
+	* @return distance (double)
+	*/
+	double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2);
+
+	/**
 	* @brief Vincenty Distance calculation between points in WGS84 (decimal Lat/Long)
 	* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", 
 	* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, 
@@ -70,8 +80,10 @@ namespace IOUtils {
 	* @param lon1 Decimal Longitude (const double&)
 	* @param lat2 Decimal Latitude (const double&)
 	* @param lon2 Decimal Longitude (const double&)
+	* @param alpha average bearing (double&)
 	* @return distance (double)
 	*/
+	double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
 	double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2);
 
 	/**
@@ -99,6 +111,13 @@ namespace IOUtils {
 	bool checkEpsilonEquality(double val1, double val2, double epsilon);
 
 	double pow2(const double val);
+
+	/**
+	* @brief Converts an angle to a bearing, that is between 0 and 360 degrees
+	* @param angle angle in degrees (double&)
+	* @return bearing between 0 and 360 degrees (double)
+	*/
+	double normalizeBearing(double angle);
 
 	void readDirectory(const string& path, list<string>& dirlist, const string& pattern = "");
 
