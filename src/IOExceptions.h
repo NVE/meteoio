@@ -133,6 +133,12 @@ class NoAvailableDataException : public IOException {
 						const std::string& position="") : IOException("NoAvailableDataException: " + message, position){}
 };
 
+// Define DEBUG an empty function for seq compilation
+#ifndef DEBUG
+#define DEBUG printdebug
+inline void printdebug(...) {};
+#endif
+
 
 /// HACK for POPC by Laurent Winkler : Print error message instead of throw
 // lwk debug : a THROW macro is defined

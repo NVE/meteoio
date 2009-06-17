@@ -132,18 +132,18 @@ void MeteoData::Serialize(paroc_buffer &buf, bool pack)
 		buf.Pack(&rswr,1);
 	}else{
 		date.Serialize(buf,false);
-		buf.Pack(&ta,1);
-		buf.Pack(&iswr,1);
-		buf.Pack(&vw,1);
-		buf.Pack(&dw,1);
-		buf.Pack(&rh,1);
-		buf.Pack(&lwr,1);
-    //buf.Pack(&ea,1);
-		buf.Pack(&nswc,1);
-		buf.Pack(&tsg,1);
-		buf.Pack(&tss,1);
-		buf.Pack(&hs,1);
-		buf.Pack(&rswr,1);
+		buf.UnPack(&ta,1);
+		buf.UnPack(&iswr,1);
+		buf.UnPack(&vw,1);
+		buf.UnPack(&dw,1);
+		buf.UnPack(&rh,1);
+		buf.UnPack(&lwr,1);
+    //buf.UnPack(&ea,1);
+		buf.UnPack(&nswc,1);
+		buf.UnPack(&tsg,1);
+		buf.UnPack(&tss,1);
+		buf.UnPack(&hs,1);
+		buf.UnPack(&rswr,1);
 	}
 
   

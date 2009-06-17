@@ -37,12 +37,6 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_LINE_LENGTH 6000
 
-#ifndef DEBUG
-#define DEBUG printdebug
-#endif
-
-inline void printdebug(...) {};
-
 
 /*---------------------------------------------------------------+                                                                          
  | Define Data Structures                                        |                                                                          
