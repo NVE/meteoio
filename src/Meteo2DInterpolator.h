@@ -37,6 +37,7 @@ class Meteo2DInterpolator {
 		void interpolateTA(CArray2D<double>& ta);
 		void interpolateRH(CArray2D<double>& rh, CArray2D<double>& ta);
 		void interpolateVW(CArray2D<double>& vw);
+		void interpolateDW(CArray2D<double>& dw);
 		void interpolateISWR(CArray2D<double>& iswr);
 		//void interpolateEA(CArray2D<double>& ea);
 

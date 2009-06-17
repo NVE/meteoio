@@ -109,7 +109,16 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 		IOUtils::getValueForKey(header, "NODATA_value", nodata);
 
 		//compute WGS coordinates (considered as the true reference)
-		CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+		//CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+
+		//HACK: check how we can input coordinates as WGS84 directly.
+		//this HACK is a very cheap "extension" of the dem file format...
+		if(xllcorner<360. || yllcorner<360.) {
+			latitude = xllcorner;
+			longitude = yllcorner;
+		} else {
+			CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+		}
     
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize, nodata);
@@ -433,9 +442,9 @@ void A3DIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vec
 		read2DMeteoHeader(filenames[1], hashStations, vecStation);
 		read2DMeteoHeader(filenames[2], hashStations, vecStation);
 		read2DMeteoHeader(filenames[3], hashStations, vecStation);
-// 		if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
-// 			read2DMeteoHeader(filenames[4], hashStations, vecStation);
-// 		}
+		if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
+			read2DMeteoHeader(filenames[4], hashStations, vecStation);
+		}
 
 		for (unsigned int ii=1; ii<unfilteredMeteoBuffer.size(); ii++) {//loop through all MeteoBuffers
 			for (unsigned int jj=0; jj<unfilteredMeteoBuffer[ii].size(); jj++) { //loop through all allocated StationData within one MeteoBuffer
@@ -455,15 +464,14 @@ void A3DIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vec
 			bufferindex = currentindex;
 			read2DMeteoData(filenames[3], "vw", date_in, hashStations, vecMeteo, bufferindex);
 			
-// 			if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
-// 				bufferindex = currentindex;
-// 				read2DMeteoData(filenames[4], "dw", date_in, hashStations, vecMeteo, bufferindex);
-// 			}
+			if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
+				bufferindex = currentindex;
+				read2DMeteoData(filenames[4], "dw", date_in, hashStations, vecMeteo, bufferindex);
+			}
 			//cerr << "bufferindex: " << bufferindex << "  Expected size()" << unfilteredMeteoBuffer[0].size() << endl;
 
 			if (bufferindex < (unfilteredMeteoBuffer[0].size()-1)) {
 				//construct new filenames for the continued buffering
-				//cerr << unfilteredMeteoBuffer[0].getMeteoData(bufferindex).date.toString() << endl;
 				constructMeteo2DFilenames(unfilteredMeteoBuffer[0].getMeteoData(bufferindex).date, filenames);
 			}
 		} while(bufferindex < (unfilteredMeteoBuffer[0].size()));
@@ -508,16 +516,16 @@ void A3DIO::constructMeteo2DFilenames(const Date_IO& date_in, vector<string>& fi
 	string rhFilename = tmp + "/rhum" + ss.str() + ".txt";
 	string taFilename = tmp + "/tair" + ss.str() + ".txt";
 	string wspdFilename = tmp + "/wspd" + ss.str() + ".txt";
-// 	string wdirFilename = tmp + "/wdir" + ss.str() + ".txt";
+	string wdirFilename = tmp + "/wdir" + ss.str() + ".txt";
 
 	filenames.push_back(precFilename);
 	filenames.push_back(rhFilename);
 	filenames.push_back(taFilename);
 	filenames.push_back(wspdFilename);
-// 	filenames.push_back(wdirFilename);
+	filenames.push_back(wdirFilename);
 
 	for (unsigned int ii=0; ii<filenames.size(); ii++) {
-		if (!IOUtils::fileExists(filenames[ii])/* && ii<4*/) { //for keeping dw optional
+		if (!IOUtils::fileExists(filenames[ii]) && ii<4) { //for keeping dw optional
 			THROW FileNotFoundException(filenames[ii], AT);
 		}
 	}
@@ -536,9 +544,9 @@ unsigned int A3DIO::getNrOfStations(vector<string>& filenames, map<string, unsig
 		fin.clear();
 		fin.open (filename.c_str(), ifstream::in);
 		if (fin.fail()) {
-// 			if(ii==4) { //for keeping dw optional
-// 				return (hashStations.size());
-// 			}
+			if(ii==4) { //for keeping dw optional
+				return (hashStations.size());
+			}
 			THROW FileAccessException(filename, AT);
 		}
   
@@ -551,10 +559,8 @@ unsigned int A3DIO::getNrOfStations(vector<string>& filenames, map<string, unsig
 			//check each station name and whether it's already hashed, otherwise: hash!
 			for (unsigned int ii=4; ii<cols; ii++) {
 				unsigned int tmp_int = hashStations.count(tmpvec.at(ii));
-				//cout << tmp_int << endl;
 				if (tmp_int == 0) {
 					hashStations[tmpvec.at(ii)] = hashStations.size();
-					//cout << "adding hash for station " + tmpvec.at(ii) + ": " << hashStations[tmpvec.at(ii)] << endl;
 				}
 			} 
 		}
@@ -614,8 +620,6 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 
 		MeteoData& currentMeteoData = unfilteredMeteoBuffer[0].getMeteoData(bufferindex); //1D Element to synchronize date
 		if (tmp_date == currentMeteoData.date) {
-			//cout << "parsing data: Last Date_IO: " << currentMeteoData.date.toString() << "   Meteobufferindex: " << bufferindex<< endl;    
-      
 			//Read in data
 			for (unsigned int ii=4; ii<columns; ii++) {
 				unsigned int stationnr = hashStations[vec_names.at(ii)]; 
@@ -652,7 +656,6 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 		//} while(tmp_date<date_in);
 		if ((tmp_date >= date_in) && (old==true)) {
 			old=false;
-			//cout << tmp_date.toString() << endl;
 			//Write Data into MeteoData objects; which data is in the file determined by switch 'parameter'
 			for (unsigned int ii=4; ii<columns; ii++) {
 				unsigned int stationnr = hashStations[vec_names.at(ii)]; 
@@ -687,12 +690,6 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 
 	} while((tmp_date<lastMeteoData.date) && (!fin.eof()));
 
-	//cout << "Found 2D meteo data for " << parameter << " for date: " << tmp_date.toString() << endl;
-	//for (int ii=0; ii<columns; ii++){
-	//  cout << tmpvec[ii] << " ";
-	//}
-	//cout << endl;
-  
 	cleanup();
 }
 
@@ -747,7 +744,6 @@ void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& 
 			}
 			CH1903_to_WGS84(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate, vecS[stationnr-1].latitude, vecS[stationnr-1].longitude);
 		}
-		//cout << stationnr << endl;
 	}
 
 	cleanup();
@@ -812,7 +808,6 @@ void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
 	for (unsigned int jj=0; jj<mypts.size(); jj++) {
 		pts[jj].ix = mypts.at(jj).first;
 		pts[jj].iy = mypts.at(jj).second;
-		//cout << mypts.at(jj).first << "/" << mypts.at(jj).second << endl;
 	}
 }
 

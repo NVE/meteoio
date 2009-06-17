@@ -315,15 +315,6 @@ void Interpol2D::calculate(CArray2D<double>& param_out)
 			LapseRateProject = &Interpol2D::LinProject;
 			LapseIDWKrieging(param_out, InputTopo, inputData, InputMeta);
 			flag_ok=1;
-		} else if (multiple_type==I_VW) { 
-			//Welcome Gaël Rosset!! This is your part!
-			//here, do the wind interpolation
-			//since this is a very specific method, it makes sense to simply call a function from here
-			//and have all the processing managed by it
-
-			//SimpleDEMWindInterpolate(param_out, InputTopo, inputData, InputMeta);
-			
-			flag_ok=1;
 		}
 
 		if (flag_ok==0) {
@@ -372,6 +363,16 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 					param_out(i,j) = DewPointtoRh(param_out(i,j),extra_param_in(i,j), 1);
 				}
 			}
+			
+			flag_ok=1;
+		} else if (multiple_type==I_VW) {
+			//SimpleDEMWindInterpolate(param_out, InputTopo, inputData, InputMeta, extra_param_in);
+			//Welcome Gaël Rosset!! This is your part!
+			//here, do the wind interpolation
+			//since this is a very specific method, it makes sense to simply call a function from here
+			//and have all the processing managed by it
+
+			//SimpleDEMWindInterpolate(param_out, InputTopo, inputData, InputMeta);
 			
 			flag_ok=1;
 		}

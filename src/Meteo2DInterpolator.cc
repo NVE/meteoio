@@ -126,11 +126,37 @@ void Meteo2DInterpolator::interpolateTA(CArray2D<double>& ta)
 	TA.calculate(ta);
 }
 
-void Meteo2DInterpolator::interpolateVW(CArray2D<double>& vw)
+void Meteo2DInterpolator::interpolateDW(CArray2D<double>& dw)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
+
+	for (unsigned int ii=0; ii<datacount; ii++) {
+		if(SourcesData[ii].dw != nodata) {
+			vecSelectedStations.push_back(SourcesMeta[ii]);
+			vecInput.push_back(SourcesData[ii].dw);
+		}
+	}
+
+	printf("[i] interpolating DW using %d stations\n", (int)vecSelectedStations.size());
+	Interpol2D DW(Interpol2D::I_CST, Interpol2D::I_IDWK, vecInput, vecSelectedStations, dem);
+	DW.calculate(dw);
+}
+
+void Meteo2DInterpolator::interpolateVW(CArray2D<double>& vw)
+{	//HACK this is a quick and dirty fix for the wind interpolation...
+	//HACK we *really* need a better design for the interpolations...
+	vector<StationData> vecSelectedStations;
+	vector<double> vecInput;
+	unsigned int datacount = SourcesData.size();
+// 	vector<double> vecEmpty;
+// 	int nx, ny;
+// 	vw.GetSize(nx, ny);
+// 
+// 	CArray2D<double> dw;
+// 	dw.Create(nx,ny);
+// 	interpolateDW(dw);
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
 		if(SourcesData[ii].vw != nodata) {
@@ -142,8 +168,9 @@ void Meteo2DInterpolator::interpolateVW(CArray2D<double>& vw)
 
 	printf("[i] interpolating VW using %d stations\n", (int)vecSelectedStations.size());
 	Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_LAPSE_IDWK, vecInput, vecSelectedStations, dem);
-	//Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, vecInput, vecSelectedStations, dem);
 	VW.calculate(vw);
+	//Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, vecInput, vecSelectedStations, dem);
+	//VW.calculate(vw, vecEmpty, dw);
 }
 
 void Meteo2DInterpolator::interpolateP(CArray2D<double>& p)
