@@ -4,6 +4,7 @@
 using namespace std;
 
 int main(int argc, char** argv) {
+	(void)argc;
 	Date_IO d1;
 	convertString(d1,argv[1]);
 	
@@ -28,7 +29,7 @@ int main(int argc, char** argv) {
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++) {
 		cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << endl;
 		cout << "  Name: " << vecStation[ii].getStationName() << endl;
-		cout << "  Air Temperature: " << vecMeteo[ii].rh << endl;
+		cout << "  RH: " << vecMeteo[ii].rh << endl;
 	}
 	
 	Grid2DObject dem;
