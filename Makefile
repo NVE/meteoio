@@ -135,7 +135,7 @@ METEOIO_OBJ_PAROC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/Grid2DObject_par.o \
 		$(SRCDIR)/IOExceptions_par.o \
 		$(SRCDIR)/IOUtils_par.o \
-		$(SRCDIR)/Laws_par.o \
+		$(SRCDIR)/Laws.o \
 		$(SRCDIR)/libinterpol2D_par.o \
 		$(SRCDIR)/libinterpol1D_par.o \
 		$(SRCDIR)/Meteo1DResampler_par.o \
@@ -202,8 +202,8 @@ clean:
 	rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(FILTERDIR)/*~ $(FILTERDIR)/*.o $(TOOLSDIR)/*.o
 
 distclean: clean
-	rm $(TOOLSDIR)/createA3DFiles
-	rm $(LIBDIR)/*.a $(LIBDIR)/*.so $(LIBDIR)/*.module
+	rm -f $(TOOLSDIR)/createA3DFiles
+	rm -f $(LIBDIR)/*.a $(LIBDIR)/*.so $(LIBDIR)/*.module
 
 install:
 	@printf "**** Installing MeteoIO\n"
