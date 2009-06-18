@@ -23,7 +23,7 @@ else
 fi
 
 #source files for SNOWPACK
-src_files="src/*.cc src/*.h src/*.ph Makefile"
+src_files="src/*.cc src/*.h src/*.ph src/*.c src/config.dox Makefile src/filter/*.cc src/filter/*.h"
 test_files="test/*.cc test/Makefile"
 tools_files="tools/*.cc"
 others=""
