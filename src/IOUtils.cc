@@ -241,8 +241,9 @@ void IOUtils::VincentyInverse(const double& lat_ref, const double& lon_ref, cons
 
 void IOUtils::trim(string& str)
 {
-	size_t startpos = str.find_first_not_of(" \t\r\n"); // Find the first character position after excluding leading blank spaces  
-	size_t endpos = str.find_last_not_of(" \t\r\n"); // Find the first character position from reverse af  
+	const string whitespaces (" \t\f\v\n\r");
+	size_t startpos = str.find_first_not_of(whitespaces); // Find the first character position after excluding leading blank spaces  
+	size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af  
 
 	// if all spaces or empty return an empty string  
 	if(( string::npos == startpos ) || ( string::npos == endpos)) {  

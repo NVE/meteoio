@@ -93,7 +93,7 @@ TOOLSDIR	= ./tools
 # END USER OPTIONS
 #################################################
 
-LIBS		= -lc -ldl
+LIBS		= -lc -ldl -lm -lstdc++
 LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoio -lfilter
 LD_PAROC	= -L$(LIBDIR) -lmeteoioparoc -lfilterparoc
 LDFLAGS_PAROC	= $(LD_PAROC)

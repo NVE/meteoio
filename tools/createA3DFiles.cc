@@ -167,7 +167,7 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 	}
 }
 
-int main(int argc, string argv[3])
+int main(int argc, char *argv[])
 {
 	if (argc!=3) {
 		cout<<"Two (2) date are needed in this format : YYYY-MM-DDTHH:mm:ss" <<endl;
@@ -175,8 +175,8 @@ int main(int argc, string argv[3])
 	} else {
 		Date_IO d1;
 		Date_IO d2;
-		convertString(d1,argv[1]);
-		convertString(d2,argv[2]);
+		convertString(d1,string(argv[1]));
+		convertString(d2,string(argv[2]));
 	
 		vector<MeteoData> vecMeteo;
 		vector<StationData> vecStation;

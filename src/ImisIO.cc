@@ -25,13 +25,14 @@ void ImisIO::cleanup() throw()
 
 void ImisIO::createBuffer()
 {
+	//WARNING: this function is currently not called anymore
 	//Clear the buffers
 	mbImis.clear();
-	const unsigned int stations = (unsigned int)vecStationName.size();
+	const unsigned int stations = vecStationName.size();
 
 	//Allocate one MeteoBuffer per station
 	for (unsigned int ii=0; ii<stations; ii++) {
-		mbImis.push_back(MeteoBuffer(1000));
+		mbImis.push_back(MeteoBuffer(5000));
 	}
 	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
 }
@@ -119,8 +120,10 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 		resampleMbImis(vecMeteo, vecStation, date_in);
 	} else {
 		if (mbImis[0].getMeteoData(0).date <= date_in && mbImis[0].getMeteoData(mbImis[0].size()-1).date >= date_in) {
+			cerr << "[I] Buffered data found for date: " << date_in.toString() << endl;
 			resampleMbImis(vecMeteo, vecStation, date_in);
 		} else {
+			cerr << "[I] Data for date " << date_in.toString() << " not found in buffer, rebuffering" << endl;
 			setMbImis(date_in);
 			resampleMbImis(vecMeteo, vecStation, date_in);
 		}
@@ -259,13 +262,13 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 			}
 			try {
 				if (stao_nr != 0) {
-					stmt = conn->createStatement("select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc, 									    tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2             									    and DATUM >=: 3 and rownum<=1000");
+					stmt = conn->createStatement("select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc, 									    tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2             									    and DATUM >=: 3 and rownum<=4800");
 					Date edate(env, date_in[0], date_in[1], date_in[2], date_in[3], date_in[4]); // year, month, day, hour, minutes
 					stmt->setString(1, stat_abk); // set 1st variable's value
 					stmt->setInt(2, stao_nr); // set 2nd variable's value
 					stmt->setDate(3, edate); // set 3rd variable's value
 				} else {
-					string sql = "select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr 								from ams.v_amsio where STAT_ABK=:1 AND STAO_NR is null and DATUM>=:2 and rownum<=1000";
+					string sql = "select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr 								from ams.v_amsio where STAT_ABK=:1 AND STAO_NR is null and DATUM>=:2 and rownum<=4800";
 					stmt = conn->createStatement(sql);
 					Date edate(env, date_in[0], date_in[1], date_in[2], date_in[3], date_in[4]); // year, month, day, hour, minutes
 					stmt->setString(1, stat_abk); // set 1st variable's value
@@ -278,7 +281,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 				cout << stmtex.getMessage();
 				exit(1);
 			}
-			try {			
+			try {		
 				rs->setMaxColumnSize(7,22);
 				while (rs->next() == true) {
 					vec.clear();
@@ -337,6 +340,7 @@ void ImisIO::setMbImis(Date_IO date_in)
 	mbImis.clear();
 	int date[5], stao;
 	date_in -= 1./24.; // one hour before
+	date_in += 1./(24.*3600.*100.); //Oracle does not want 24:00, so we must make sure we use 00:00 instead
 	date_in.getDate(date[0],date[1],date[2],date[3],date[4]);
 	vector<int> date_io(date, date+sizeof(date)/sizeof(int));
 	string station, name, number;
@@ -345,7 +349,7 @@ void ImisIO::setMbImis(Date_IO date_in)
 	for (unsigned int i=0; i<size; i++) {
 		vector<string>* data2s = new vector<string>;
 		vector< vector<string> >* data_imis = new vector< vector<string> >;
-		MeteoBuffer* mb = new MeteoBuffer(1000);
+		MeteoBuffer* mb = new MeteoBuffer(5000);
 		station = vecStationName[i];
 		number = station.substr(station.length()-1);
 		name = station.substr(0, station.length()-1);
