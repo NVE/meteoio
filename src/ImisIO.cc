@@ -120,10 +120,10 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 		resampleMbImis(vecMeteo, vecStation, date_in);
 	} else {
 		if (mbImis[0].getMeteoData(0).date <= date_in && mbImis[0].getMeteoData(mbImis[0].size()-1).date >= date_in) {
-			cerr << "[I] Buffered data found for date: " << date_in.toString() << endl;
+			//cerr << "[I] Buffered data found for date: " << date_in.toString() << endl;
 			resampleMbImis(vecMeteo, vecStation, date_in);
 		} else {
-			cerr << "[I] Data for date " << date_in.toString() << " not found in buffer, rebuffering" << endl;
+			//cerr << "[I] Data for date " << date_in.toString() << " not found in buffer, rebuffering" << endl;
 			setMbImis(date_in);
 			resampleMbImis(vecMeteo, vecStation, date_in);
 		}
@@ -157,7 +157,7 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr;
 	const unsigned int size = meteo_in.size();
 	for (unsigned int i=0; i<size; i++) {
-		ImisIO::stringToDate(meteo_in[i][0], tmpDate);
+		convertString(tmpDate, meteo_in[i][0], dec);
 		convertString(ta, meteo_in[i][1], dec);
 		convertString(iswr, meteo_in[i][2], dec);
 		convertString(vw, meteo_in[i][3], dec);
@@ -262,13 +262,13 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 			}
 			try {
 				if (stao_nr != 0) {
-					stmt = conn->createStatement("select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc, 									    tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2             									    and DATUM >=: 3 and rownum<=4800");
+					stmt = conn->createStatement("select to_char(datum, 'YYYY-MM-DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc, 									    tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2             									    and DATUM >=: 3 and rownum<=4800");
 					Date edate(env, date_in[0], date_in[1], date_in[2], date_in[3], date_in[4]); // year, month, day, hour, minutes
 					stmt->setString(1, stat_abk); // set 1st variable's value
 					stmt->setInt(2, stao_nr); // set 2nd variable's value
 					stmt->setDate(3, edate); // set 3rd variable's value
 				} else {
-					string sql = "select to_char(datum, 'YYYY/MM/DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr 								from ams.v_amsio where STAT_ABK=:1 AND STAO_NR is null and DATUM>=:2 and rownum<=4800";
+					string sql = "select to_char(datum, 'YYYY-MM-DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr 								from ams.v_amsio where STAT_ABK=:1 AND STAO_NR is null and DATUM>=:2 and rownum<=4800";
 					stmt = conn->createStatement(sql);
 					Date edate(env, date_in[0], date_in[1], date_in[2], date_in[3], date_in[4]); // year, month, day, hour, minutes
 					stmt->setString(1, stat_abk); // set 1st variable's value
@@ -392,38 +392,6 @@ void ImisIO::resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& ve
 				}
 			}
 		}
-	}
-}
-
-void ImisIO::stringToDate(const string& instr, Date_IO& date_out)
-{
-	int tmp[5];
-	
-	string year = instr.substr(0,4);
-	string month = instr.substr(5,2);
-	string day = instr.substr(8,2);	
-	string hour = instr.substr(11,2);
-	string min = instr.substr(14,2);
-	
-	convertString(tmp[0], year, dec);
-	convertString(tmp[1], month, dec);
-	convertString(tmp[2], day, dec);
-	convertString(tmp[3], hour, dec);
-	convertString(tmp[4], min, dec);
-	
-	date_out.setDate(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]);
-}
-
-double ImisIO::strToDouble(const string &str)
-{ //HACK: this method should be replaced by a call to a standard one
-	int length = str.size();
-	double result;
-	if (length == 0) {
-		return nodata;
-	} else {
-		istringstream ss(str);
-		ss >> result;		
-		return result;
 	}
 }
 

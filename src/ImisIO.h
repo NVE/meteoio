@@ -79,12 +79,12 @@ class ImisIO : public IOInterface {
 		/**
 		 * @brief ImisIO cleaner function
 		 */
-		void cleanup() throw();		
+		void cleanup() throw();
 		
 		/**
 		 * @brief Get back station's name from the configfile
 		 */		
-		void getStationName();	
+		void getStationName();
 		
 		/**
 		 * @brief Returns the ConfigFile
@@ -96,6 +96,9 @@ class ImisIO : public IOInterface {
 		 */
 		vector<string> getVecStationName();
 		
+		/**
+		 * @brief Returns mbImis
+		 */
 		vector<MeteoBuffer> getMbImis();
 		
 		/**
@@ -112,20 +115,6 @@ class ImisIO : public IOInterface {
 		 * @param date_in const Date_IO: recording date
 		 */
 		void resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation, const Date_IO& date_in);
-		
-		/**
-		 * @brief It allows to convert a date which is in string format to SLFIO date/time format
-		 * @param instr : string to convert
-		 * @param date_out : date in Date_IO format (SFLIO date/time)
-		 */
-		static void stringToDate(const string& instr, Date_IO& date_out);
-		
-		/**
-		 * @brief Data from the db are all string, this function convert the double in string format to real double
-		 * @param str : string to convert into double
-		 * @return : double which corresponds to the double in string format
-		 */
-		static double strToDouble(const string &str);
 		
 		/**
 		 * @brief Defines the maximum size of MeteoBuffer (mbImis)
@@ -155,8 +144,7 @@ class ImisIO : public IOInterface {
 		/**
 		 * @brief Variable in which the configFile will be saved
 		 */
-		ConfigReader cfg;
-		//ifstream fin; //Input file streams		
+		ConfigReader cfg;	
 				
 		/**
 		 * @brief A vector for StationName's saving
