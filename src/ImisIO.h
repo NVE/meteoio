@@ -45,7 +45,7 @@ class ImisIO : public IOInterface {
 		 * @param station_in <string> : station data from the database.
 		 * @param mb MeteoBuffer : variable in which stationdata and meteodata are filled.
 		 */
-		void createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
+		void createData(const Date_IO& date_in, vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
 		
 		virtual void get2DGridSize(int& nx, int& ny);
 		
@@ -103,18 +103,21 @@ class ImisIO : public IOInterface {
 		
 		/**
 		 * @brief Method which allows putting meteodata and stationdata into mbImis (vector<MeteoBuffer>)
-		 * @param date_in Date_IO: recording date 
+		 * @param date_in Date_IO: recording date
+		 * @param stationName const string: string keys for database's queries
+		 * @param buffer MeteoBuffer: container in which data're filled
 		 */
-		void setMbImis(Date_IO date_in);
+		void setMbImis(Date_IO date_in, const string& stationName, MeteoBuffer& buffer);
 		
 		/**
 		 * @brief Selects the data corresponding to date_in. But whether we're looking for a date which is not in the database
 		 * but that is between two recording date, this method will interpolate data for this given date.
-		 * @param vecMeteo vector<MeteoData>: vector of meteodata corresponding to date_in
-		 * @param vecStation vector<StationData>: vector of stationdata corresponding to date_in
+		 * @param meteo MeteoData:  a meteodata corresponding to date_in
+		 * @param mtation StationData:  a stationdata corresponding to date_in
 		 * @param date_in const Date_IO: recording date
+		 * @param mb MeteoBuffer: data's container
 		 */
-		void resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation, const Date_IO& date_in);
+		void resampleMbImis(MeteoData& meteo, StationData& station, const Date_IO& date_in, MeteoBuffer& mb);
 		
 		/**
 		 * @brief Defines the maximum size of MeteoBuffer (mbImis)

@@ -78,7 +78,35 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 			writeHeader(file, stations, "precipitations");
 			for(unsigned int ii=0; ii<size; ii++) {
 				data[ii][0].date.getDate(year, month, day, hour);
-				file<<year <<" " <<month <<" " <<day <<" " <<hour;
+				if (month<10) {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				} else {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" " <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" " <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				}
 				for(unsigned int j=0; j<sta_nr; j++) {
 					file<<" " <<data[ii][j].nswc;
 				}
@@ -97,7 +125,35 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 			
 			for(unsigned int ii=0; ii<size; ii++) {
 				data[ii][0].date.getDate(year, month, day, hour);
-				file<<year <<" " <<month <<" " <<day <<" " <<hour;
+				if (month<10) {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				} else {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" " <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" " <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				}
 				for(unsigned int j=0; j<sta_nr; j++) {
 					file<<" " <<data[ii][j].rh;
 				}
@@ -116,7 +172,35 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 			
 			for(unsigned int ii=0; ii<size; ii++) {
 				data[ii][0].date.getDate(year, month, day, hour);
-				file<<year <<" " <<month <<" " <<day <<" " <<hour;
+				if (month<10) {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				} else {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" " <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" " <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				}
 				for(unsigned int j=0; j<sta_nr; j++) {
 					file<<" " <<data[ii][j].ta;
 				}
@@ -135,7 +219,35 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 			
 			for(unsigned int ii=0; ii<size; ii++) {
 				data[ii][0].date.getDate(year, month, day, hour);
-				file<<year <<" " <<month <<" " <<day <<" " <<hour;
+				if (month<10) {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				} else {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" " <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" " <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				}
 				for(unsigned int j=0; j<sta_nr; j++) {
 					file<<" " <<data[ii][j].vw;
 				}
@@ -154,16 +266,44 @@ void create2DFile(const string& type, const vector< vector<MeteoData> >& data, c
 			
 			for(unsigned int ii=0; ii<size; ii++) {
 				data[ii][0].date.getDate(year, month, day, hour);
-				file<<year <<" " <<month <<" " <<day <<" " <<hour;
+				if (month<10) {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" 0" <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" 0" <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				} else {
+					if (day<10) {
+						if (hour<10) {
+							file<<year <<" " <<month <<" 0" <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" 0" <<day <<" " <<hour;
+						}
+					} else {
+						if (hour<10) {
+							file<<year <<" " <<month <<" " <<day <<" 0" <<hour;
+						} else {
+							file<<year <<" " <<month <<" " <<day <<" " <<hour;
+						}
+					}
+				}
 				for(unsigned int j=0; j<sta_nr; j++) {
 					file<<" " <<data[ii][j].dw;
 				}
 				file<<endl;
 			}
 			file.close();
-		} else { 
+		} else {
 			cerr << "Erreur à l'ouverture !" << endl;
-	        }	
+	        }
 	}
 }
 
@@ -180,7 +320,9 @@ int main(int argc, char *argv[])
 	
 		vector<MeteoData> vecMeteo;
 		vector<StationData> vecStation;
+		vector<StationData> tmpStation;
 		vector< vector<MeteoData> > data;
+		unsigned int k = 0;
 	
 		IOInterface *ioTest=NULL; //Initialization vital!
 	
@@ -192,8 +334,12 @@ int main(int argc, char *argv[])
 	
 		try {
 			while (d1 < d2) {
-				ioTest->readMeteoData(d1, vecMeteo, vecStation);
-				data.push_back(vecMeteo); 
+				ioTest->readMeteoData(d1, vecMeteo, tmpStation);
+				data.push_back(vecMeteo);
+				if (tmpStation.size() > k) {
+					k = tmpStation.size();
+					vecStation = tmpStation;
+				}
 				d1 += 1./24.; // incremented by 1 hour
 			}
 		} catch (exception& e){

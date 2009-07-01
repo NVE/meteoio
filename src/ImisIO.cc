@@ -25,7 +25,6 @@ void ImisIO::cleanup() throw()
 
 void ImisIO::createBuffer()
 {
-	//WARNING: this function is currently not called anymore
 	//Clear the buffers
 	mbImis.clear();
 	const unsigned int stations = vecStationName.size();
@@ -112,21 +111,32 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo)
 }
 
 void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
-{	
+{
+	vecMeteo.clear();
+	vecStation.clear();
+	
 	if (mbImis.size() == 0) {
 		getStationName();
-		//createBuffer();	
-		setMbImis(date_in);
-		resampleMbImis(vecMeteo, vecStation, date_in);
-	} else {
-		if (mbImis[0].getMeteoData(0).date <= date_in && mbImis[0].getMeteoData(mbImis[0].size()-1).date >= date_in) {
-			//cerr << "[I] Buffered data found for date: " << date_in.toString() << endl;
-			resampleMbImis(vecMeteo, vecStation, date_in);
+		createBuffer();
+	}
+	
+	unsigned int size = mbImis.size();
+	
+	for(unsigned int ii=0; ii<size; ii++) {
+		MeteoData md;
+		md.date = date_in;
+		StationData sd;
+		if (mbImis[ii].seek(date_in) == MeteoBuffer::npos) {
+			setMbImis(date_in, vecStationName[ii], mbImis[ii]);
+			resampleMbImis(md, sd, date_in, mbImis[ii]);
 		} else {
-			//cerr << "[I] Data for date " << date_in.toString() << " not found in buffer, rebuffering" << endl;
-			setMbImis(date_in);
-			resampleMbImis(vecMeteo, vecStation, date_in);
+			if (mbImis[ii].getMeteoData(ii).date <= date_in && mbImis[ii].getMeteoData(mbImis[ii].size()-1).date >= date_in) {
+				//cerr << "[I] Buffered data found for date: " << date_in.toString() << endl;
+				resampleMbImis(md, sd, date_in, mbImis[ii]);
+			}
 		}
+		vecMeteo.push_back(md);
+		vecStation.push_back(sd);
 	}
 
 	if (vecMeteo.size() == 0) {//No data found
@@ -135,7 +145,7 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 
 }
 
-void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb)
+void ImisIO::createData(const Date_IO& date_in, vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb)
 {
 	MeteoData md;
 	StationData sd;
@@ -241,7 +251,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 {
 	const string userName = "slf";
 	const string password = "sdb+4u";
-	const string dbName = "sdbo"; //or sdbo
+	const string dbName = "sdbo";
 	vector<string> vec;
 	unsigned int timeOut = 0, seconds = 60;
 
@@ -295,7 +305,7 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 				cout <<"getImisData : ResultSet manipulation failed, please verify if there is no mistake............."<< endl;
 				cout << rsex.getMessage();
 				exit(1);
-			}catch (exception &cppex) { // C++ exception
+			} catch (exception &cppex) { // C++ exception
 				cout<< "Error "<< cppex.what()<<endl;
 			}
 			if (timeOut != 3 && seconds <= 27*60) {
@@ -335,61 +345,49 @@ void ImisIO::getStationName()
 	}
 }
 		
-void ImisIO::setMbImis(Date_IO date_in)
+void ImisIO::setMbImis(Date_IO date_in, const string& stationName, MeteoBuffer& buffer)
 {
-	mbImis.clear();
+	buffer.clear();
 	int date[5], stao;
 	date_in -= 1./24.; // one hour before
 	date_in += 1./(24.*3600.*100.); //Oracle does not want 24:00, so we must make sure we use 00:00 instead
 	date_in.getDate(date[0],date[1],date[2],date[3],date[4]);
 	vector<int> date_io(date, date+sizeof(date)/sizeof(int));
 	string station, name, number;
-	const unsigned int size = vecStationName.size();
 	
-	for (unsigned int i=0; i<size; i++) {
-		vector<string>* data2s = new vector<string>;
-		vector< vector<string> >* data_imis = new vector< vector<string> >;
-		MeteoBuffer* mb = new MeteoBuffer(5000);
-		station = vecStationName[i];
-		number = station.substr(station.length()-1);
-		name = station.substr(0, station.length()-1);
-	
-		if (!convertString(stao, number, dec)) {
-			THROW ConversionFailedException("Error while reading station number in readMeteoData(...) ", AT);
-		}
-	
-		getStation2Data(name,stao,*data2s);
-		getImisData(name,stao,date_io,*data_imis);
-		createData(*data_imis,*data2s,*mb);
-		mbImis.push_back(*mb);
-		free(data2s);
-		free(data_imis);
-		free(mb);
+	vector<string>* data2s = new vector<string>;
+	vector< vector<string> >* data_imis = new vector< vector<string> >;
+	station = stationName;
+	number = station.substr(station.length()-1);
+	name = station.substr(0, station.length()-1);
+
+	if (!convertString(stao, number, dec)) {
+		THROW ConversionFailedException("Error while reading station number in readMeteoData(...) ", AT);
 	}
+
+	getStation2Data(name, stao, *data2s);
+	getImisData(name, stao, date_io, *data_imis);
+	createData(date_in, *data_imis, *data2s, buffer);
+	free(data2s);
+	free(data_imis);
 }
 
-void ImisIO::resampleMbImis(vector<MeteoData>& vecMeteo, vector<StationData>& vecStation, const Date_IO& date_in)
+void ImisIO::resampleMbImis(MeteoData& meteo, StationData& station, const Date_IO& date_in, MeteoBuffer& mb)
 {
-	vecMeteo.clear();
-	vecStation.clear();
-	const unsigned int size = mbImis.size();
-	
-	for (unsigned int ii=0; ii<size; ii++) {
-		unsigned int index = mbImis[ii].seek(date_in);
-		if (index != MeteoBuffer::npos) {
-			if (mbImis[ii].getMeteoData(index).date == date_in) {
-				vecMeteo.push_back(mbImis[ii].getMeteoData(index));
-				vecStation.push_back(mbImis[ii].getStationData(index));
+	unsigned int index = mb.seek(date_in);
+	if (index != MeteoBuffer::npos) {
+		if (mb.getMeteoData(index).date == date_in) {
+			meteo = mb.getMeteoData(index);
+			station = mb.getStationData(index);
+		} else {
+			Meteo1DResampler mresampler;
+			mresampler.resample(index, date_in, mb);
+			if (index != MeteoBuffer::npos) {
+				meteo = mb.getMeteoData(index);
+				station = mb.getStationData(index);
 			} else {
-				Meteo1DResampler mresampler;
-				mresampler.resample(index, date_in, mbImis[ii]);
-				if (index != MeteoBuffer::npos) {
-					vecMeteo.push_back(mbImis[ii].getMeteoData(index));
-					vecStation.push_back(mbImis[ii].getStationData(index));
-				} else {
-					cout << "[i] Buffering data for Station " << vecStationName[ii] << " at date " 
-						<< date_in.toString() << " failed" << endl;
-				}
+				cout << "[i] Buffering data for Station " << station.stationName << " at date " 
+					<< date_in.toString() << " failed" << endl;
 			}
 		}
 	}
