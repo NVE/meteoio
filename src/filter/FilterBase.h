@@ -38,7 +38,7 @@ class FilterBase {
 	/**
 	* Destructor.
 	*/
-	virtual ~FilterBase();
+	virtual ~FilterBase(); //HACK: the destructors should be implemented in the derived classes!!
 
 	/**
 	* Returns the name of the type of the filter, used as the filter's identifier.

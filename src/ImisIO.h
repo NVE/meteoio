@@ -42,12 +42,11 @@ class ImisIO : public IOInterface {
 		/**
 		 * @brief Puts the data that has been retrieved from the database into a MeteoBuffer
 		 * which contains the meteo data and the station data of each single station in the configfile.
-		 * @param date_in (Date_IO&) requested date
 		 * @param meteo_in (vector \<vector \<string\>\>&) meteo data from the database.
 		 * @param station_in (vector \<string\>&) station data from the database.
 		 * @param mb (MeteoBuffer&) variable in which stationdata and meteodata are filled.
 		 */
-		void createData(const Date_IO& date_in, vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
+		void createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
 		
 		virtual void get2DGridSize(int& nx, int& ny);
 		

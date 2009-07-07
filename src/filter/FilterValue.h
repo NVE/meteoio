@@ -27,6 +27,7 @@ class FilterValue {
 		* Constructor of the FilterValue helper, based on an abstract filter. 
 		*/
 		FilterValue(FilterBase* filter);
+		virtual ~FilterValue(){};
 
 		// check handling
 

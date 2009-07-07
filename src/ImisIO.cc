@@ -144,7 +144,7 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 
 }
 
-void ImisIO::createData(const Date_IO& date_in, vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb)
+void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb)
 {
 	MeteoData md;
 	StationData sd;
@@ -366,7 +366,7 @@ void ImisIO::setMbImis(Date_IO date_in, const string& stationName, MeteoBuffer& 
 
 	getStation2Data(name, stao, *data2s);
 	getImisData(name, stao, date_io, *data_imis);
-	createData(date_in, *data_imis, *data2s, buffer);
+	createData(*data_imis, *data2s, buffer);
 	free(data2s);
 	free(data_imis);
 }

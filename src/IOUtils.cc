@@ -467,7 +467,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std
 		t = (i != 0);
 	}
 
-	unsigned int pos = s.find_first_not_of(ALPHANUM);
+	std::string::size_type pos = s.find_first_not_of(ALPHANUM);
 	if (pos != string::npos) {
 		string tmp = s.substr(pos);
 		trim(tmp);

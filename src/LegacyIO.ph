@@ -89,12 +89,12 @@ parclass LegacyIO
 		LegacyIO( [in, proc=marshalstring, size=256] char *meteopath);
 		~LegacyIO();
 
-		virtual void GetGridSize([out] int &nx, [out] int &ny, [out] int &nz);
-		virtual void GetGridPoints([out, proc=marshal_CDoubleArray] CDoubleArray &x,[out, proc=marshal_CDoubleArray]  CDoubleArray &y,
+		void GetGridSize([out] int &nx, [out] int &ny, [out] int &nz);
+		void GetGridPoints([out, proc=marshal_CDoubleArray] CDoubleArray &x,[out, proc=marshal_CDoubleArray]  CDoubleArray &y,
 						[out, proc=marshal_CDoubleArray]  CDoubleArray &z);
-		virtual void GetGridData([out, proc=marshal_input_CNodeArray] CNodeArray &data, [in, proc=marshalstring, size=256] char *hour);
+		void GetGridData([out, proc=marshal_input_CNodeArray] CNodeArray &data, [in, proc=marshalstring, size=256] char *hour);
 
-		async virtual void PrepareNextWindField([in, proc=marshalstring, size=256] char *hour);
+		async void PrepareNextWindField([in, proc=marshalstring, size=256] char *hour);
 
 		classuid(1002);
 

@@ -43,14 +43,19 @@ void NoObservedChange::getMinimalWindow(unsigned int& minNbPoints, Date_IO& minD
 
 void NoObservedChange::prepareCheck()
 {
+	int minNbPoints;
 	// read the ancestor's parameters
 	FilterValue1Stn::prepareCheck();
 
 	// read the parameters
 	if (m_paramsValue.find(c_minNbPoints) != m_paramsValue.end()) {
-		if (!IOUtils::convertString<unsigned int>(m_minNbPoints, m_paramsValue[c_minNbPoints])) {
+		if (!IOUtils::convertString<int>(minNbPoints, m_paramsValue[c_minNbPoints])) {
+			THROW InvalidArgumentException("parameter '"+c_minNbPoints+"' has to be an (unsigned) integer", AT);
+		}
+		if(minNbPoints<0) {
 			THROW InvalidArgumentException("parameter '"+c_minNbPoints+"' has to be an unsigned integer", AT);
 		}
+		m_minNbPoints = (unsigned int)minNbPoints;
 	}
 	if (m_paramsValue.find(c_minDeltaTime) != m_paramsValue.end()) {
 		if (!IOUtils::convertString<Date_IO>(m_minDeltaTime, m_paramsValue[c_minDeltaTime])) {

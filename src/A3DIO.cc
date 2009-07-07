@@ -75,7 +75,8 @@ void A3DIO::get2DGridSize(int& nx, int& ny)
 }
 
 void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
-  
+
+	int i_ncols, i_nrows;
 	unsigned int ncols, nrows;
 	double xllcorner, yllcorner, cellsize, nodata;
 	double latitude, longitude;
@@ -101,12 +102,21 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 	//Go through file, save key value pairs
 	try {
 		IOUtils::readKeyValueHeader(header, fin, 6, " ");
-		IOUtils::getValueForKey(header, "ncols", ncols);
-		IOUtils::getValueForKey(header, "nrows", nrows);
+		IOUtils::getValueForKey(header, "ncols", i_ncols);
+		IOUtils::getValueForKey(header, "nrows", i_nrows);
 		IOUtils::getValueForKey(header, "xllcorner", xllcorner);
 		IOUtils::getValueForKey(header, "yllcorner", yllcorner);
 		IOUtils::getValueForKey(header, "cellsize", cellsize);
 		IOUtils::getValueForKey(header, "NODATA_value", nodata);
+
+		if ((i_ncols==0) || (i_nrows==0)) {
+			THROW IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
+		}
+		if((i_ncols<0) || (i_nrows<0)) {
+			THROW IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + filename, AT);
+		}
+		ncols = (unsigned int)i_ncols;
+		nrows = (unsigned int)i_nrows;
 
 		//compute WGS coordinates (considered as the true reference)
 		//CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
@@ -122,10 +132,6 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
     
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize, nodata);
-
-		if ((ncols==0) || (nrows==0)) {
-			THROW IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
-		}
 		
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {

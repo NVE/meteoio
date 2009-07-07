@@ -65,7 +65,7 @@ ConfigReader::ConfigReader(const std::string& filename/*, const std::string& del
 bool ConfigReader::readConfigLine(std::istream& fin, int lineNb, int& lineType, string& str1, string& str2)
 {
 	string line="";
-	unsigned int pos = 0;
+	std::string::size_type pos = 0;
 	stringstream tmpStringStream;
 	bool isSuccess = false;
 

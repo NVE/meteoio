@@ -87,10 +87,10 @@ class LegacyIO
 		LegacyIO(char *meteopath);
 		~LegacyIO();
 
-		virtual void GetGridSize(int &nx, int &ny, int &nz);
-		virtual void GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z);
-		virtual void GetGridData(CNodeArray &data, char *hour);
-		virtual void PrepareNextWindField(char *hour);
+		void GetGridSize(int &nx, int &ny, int &nz);
+		void GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z);
+		void GetGridData(CNodeArray &data, char *hour);
+		void PrepareNextWindField(char *hour);
 
 	private:
 		char meteopathname[MAX_STRING_LENGTH];
