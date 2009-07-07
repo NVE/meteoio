@@ -253,19 +253,8 @@ void IOUtils::trim(string& str)
 	}
 }
 
-/**
- * @brief FUNCTION readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map)
- * - read a string line, parse it and save it into a map object, that is passed by reference
- * - delimiter: string that separates key and value
- * - return value: bool, depending on success of operation. true when line is empty
- * @param in_line const string
- * @param delimiter const string
- * @param out_map map'<'string,string>
- * @return bool
- */
 bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map)
 {
-
 	//size_t pos = in_line.find(delimiter); //first occurence of '='
 
 	size_t pos = string::npos;

@@ -9,7 +9,7 @@
  * @brief The template class CArray is a 1D array (vector) able to hold any type of object as datatype
  *
  * @author Thomas Egger
- * @data   2009-05-02
+ * @date   2009-05-02
  */
 template<class T> class CArray {
 	public:

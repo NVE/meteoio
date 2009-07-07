@@ -23,6 +23,7 @@ namespace IOUtils {
 
 	/**
 	* @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
+	* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
 	* @param lat_in Decimal Latitude 
 	* @param long_in Decimal Longitude
 	* @param east_out easting coordinate (Swiss system)
@@ -32,6 +33,7 @@ namespace IOUtils {
 
 	/**
 	* @brief Coordinate conversion: from Swiss grid to WGS84 Lat/Long
+	* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
 	* @param east_in easting coordinate (Swiss system)
 	* @param north_in northing coordinate (Swiss system)
 	* @param lat_out Decimal Latitude 
@@ -62,7 +64,8 @@ namespace IOUtils {
 	void local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon);
 
 	/**
-	* @brief Sperical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
+	* @brief Spherical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
+	* See http://www.movable-type.co.uk/scripts/latlong.html for more
 	* @param lat1 Decimal Latitude (const double&)
 	* @param lon1 Decimal Longitude (const double&)
 	* @param lat2 Decimal Latitude (const double&)
@@ -75,7 +78,7 @@ namespace IOUtils {
 	* @brief Vincenty Distance calculation between points in WGS84 (decimal Lat/Long)
 	* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", 
 	* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, 
-	* http://www.springerlink.com/content/y7108u6862473583
+	* see http://www.springerlink.com/content/y7108u6862473583 for more
 	* @param lat1 Decimal Latitude (const double&)
 	* @param lon1 Decimal Longitude (const double&)
 	* @param lat2 Decimal Latitude (const double&)
@@ -91,7 +94,7 @@ namespace IOUtils {
 	* given a start location (lat,lon) a distance and a bearing
 	* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", 
 	* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, 
-	* http://www.springerlink.com/content/y7108u6862473583
+	* see http://www.springerlink.com/content/y7108u6862473583 for more
 	* @param lat_ref Decimal Latitude (const double&)
 	* @param lon_ref Decimal Longitude (const double&)
 	* @param distance Distance in meters (const double&)
@@ -126,8 +129,8 @@ namespace IOUtils {
 	bool fileExists(const std::string& filename);
 
 	/**
-	* Removes trailing and leading whitespaces, tabs and newlines from a string. 
-	* @param string   The reference of the string to trim (in/out parameter)
+	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string. 
+	* @param s The reference of the string to trim (in/out parameter)
 	*/
 	void trim(string &s);
 
@@ -135,6 +138,13 @@ namespace IOUtils {
 
 	void skipLines(std::istream& fin, unsigned int nbLines, char eoln='\n');
 
+	/**
+	* @brief read a string line, parse it and save it into a map object, that is passed by reference
+	* @param in_line (const string&) string to parse
+	* @param delimiter (const string&) delimiter to use for the parsing
+	* @param out_map (map\<string,string\>&) map after parsing
+	* @return (bool) true when line is empty
+	*/
 	bool readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map);
 
 	unsigned int readLineToVec(const string& line_in, vector<string>& vecString);
@@ -146,8 +156,8 @@ namespace IOUtils {
 
 
 	/** 
-	* Convert a string to the requested type (template function). 
-	* @param class T   [in] The type wanted for the return value (template type parameter). 
+	* @brief Convert a string to the requested type (template function). 
+	* @tparam T   [in] The type wanted for the return value (template type parameter). 
 	* @param t   [out] The value converted to the requested type. 
 	* @param str   [in] The input string to convert; trailling whitespaces are ignored, 
 	*              comment after non-string values are allowed, but multiple values are not allowed. 
@@ -184,8 +194,8 @@ namespace IOUtils {
 	template<> bool convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 
 	/**
-	* Returns, with the requested type, the value associated to a key (template function). 
-	* @param class T   [in] The type wanted for the return value (template type parameter). 
+	* @brief Returns, with the requested type, the value associated to a key (template function). 
+	* @tparam T   [in] The type wanted for the return value (template type parameter). 
 	* @param properties   [in] A map containing all the parameters. 
 	* @param key   [in] The key of the parameter to retrieve.
 	* @param t   [out] The value associated to the key, converted to the requested type

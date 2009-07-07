@@ -3,7 +3,6 @@
 using namespace oracle;
 using namespace oracle::occi;
 
-
 ImisIO::ImisIO(const string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	mbImis.clear();
@@ -31,7 +30,7 @@ void ImisIO::createBuffer()
 
 	//Allocate one MeteoBuffer per station
 	for (unsigned int ii=0; ii<stations; ii++) {
-		mbImis.push_back(MeteoBuffer(5000));
+		mbImis.push_back(MeteoBuffer(IMIS_BUFF_SIZE));
 	}
 	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
 }

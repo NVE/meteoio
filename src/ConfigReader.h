@@ -25,9 +25,8 @@ class ConfigReader {
 		/**
 		* @brief Main constructor. The file is parsed and a key/value map object is internally created
 		* @param filename string representing the absolute filename of the key/value file
-		* @param delimiter string that separates KEY and VALUE in the key/value file
 		*/
-		ConfigReader(const std::string& filename/*, const std::string& delimiter="="*/); //delimiter: separates keys and values
+		ConfigReader(const std::string& filename);
 
 		/**
 		* @brief Explicit copy constructor. It is required, because the private ifstream fin cannot be copied.

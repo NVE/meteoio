@@ -19,6 +19,7 @@
 #include "Meteo1DResampler.h"
 #include "IOExceptions.h"
 
+#define IMIS_BUFF_SIZE 5000
 
 using namespace std;
 using namespace IOUtils;
@@ -39,11 +40,12 @@ class ImisIO : public IOInterface {
 		virtual ~ImisIO() throw();
 			
 		/**
-		 * @brief Once the data's retrieved form the database, this method is used to create a MeteoBuffer which contain 
-		 * the meteo data and the station data of each single station in the configfile.
-		 * @param meteo_in <vector<string>> : meteo data from the database.
-		 * @param station_in <string> : station data from the database.
-		 * @param mb MeteoBuffer : variable in which stationdata and meteodata are filled.
+		 * @brief Puts the data that has been retrieved from the database into a MeteoBuffer
+		 * which contains the meteo data and the station data of each single station in the configfile.
+		 * @param date_in (Date_IO&) requested date
+		 * @param meteo_in (vector \<vector \<string\>\>&) meteo data from the database.
+		 * @param station_in (vector \<string\>&) station data from the database.
+		 * @param mb (MeteoBuffer&) variable in which stationdata and meteodata are filled.
 		 */
 		void createData(const Date_IO& date_in, vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
 		
@@ -69,9 +71,9 @@ class ImisIO : public IOInterface {
 		/**
 		 * @brief this method is used to get back meteo and station data for a given day
 		 * into the respective vectors MeteoData and StationData
-		 * @param date_in Date_IO: recording date
-		 * @param vecMeteo <MeteoData>: vector in which meteo data will be filled
-		 * @param vecStation <StationData>: vector in which station data will be filled
+		 * @param date_in (Date_IO&) recording date
+		 * @param vecMeteo (vector \<MeteoData\>&) vector in which meteo data will be filled
+		 * @param vecStation (vector \<StationData\>&) vector in which station data will be filled
 		 */
 	  	virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
 		
@@ -113,7 +115,7 @@ class ImisIO : public IOInterface {
 		 * @brief Selects the data corresponding to date_in. But whether we're looking for a date which is not in the database
 		 * but that is between two recording date, this method will interpolate data for this given date.
 		 * @param meteo MeteoData:  a meteodata corresponding to date_in
-		 * @param mtation StationData:  a stationdata corresponding to date_in
+		 * @param station StationData:  a stationdata corresponding to date_in
 		 * @param date_in const Date_IO: recording date
 		 * @param mb MeteoBuffer: data's container
 		 */

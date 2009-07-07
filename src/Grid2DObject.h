@@ -36,8 +36,15 @@ class Grid2DObject{
 		       CArray2D<double>& grid2D_in);
 
 		/**
-		* @brief See Grid2DObject::set(const unsigned int& ncols, const unsigned int& nrows,const double& xllcorner, const double& yllcorner,
-		* const double& cellsize, const double& nodata, CArray2D<double>& grid2D_in);
+		* @brief Set all variables in one go.
+		* @param ncols (unsigned int&) number of colums in the grid2D
+		* @param nrows (unsigned int&) number of rows in the grid2D
+		* @param xllcorner (double&) x-coordinate of lower left corner
+		* @param yllcorner (double&) y-coordinate of lower left corner
+		* @param latitude (double&) decimal latitude
+		* @param longitude (double&) decimal longitude
+		* @param cellsize (double&) value for cellsize in grid2D
+		* @param nodata (double&) value representing a NODATA value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
@@ -47,14 +54,16 @@ class Grid2DObject{
 		* @brief Set all variables in one go. Notably the member grid2D of type CArray2D<double> 
 		* will be destroyed and recreated to size ncols x nrows.
 		*
-		* @param ncols unsigned int number of colums in the grid2D
-		* @param nrows unsigned int number of rows in the grid2D
-		* @param xllcorner double x-coordinate of lower left corner
-		* @param yllcorner double y-coordinate of lower left corner
-		* @param cellsize double value for cellsize in grid2D
-		* @param nodata double value representing a NODATA value
-		* @param grid2D_in A CArray<double> grid to be copied by value
-		*/  
+		* @param ncols (unsigned int&) number of colums in the grid2D
+		* @param nrows (unsigned int&) number of rows in the grid2D
+		* @param xllcorner (double&) x-coordinate of lower left corner
+		* @param yllcorner (double&) y-coordinate of lower left corner
+		* @param latitude (double&) decimal latitude
+		* @param longitude (double&) decimal longitude
+		* @param cellsize (double&) value for cellsize in grid2D
+		* @param nodata (double&) value representing a NODATA value
+		* @param grid2D_in (CArray<double>&) grid to be copied by value
+		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
