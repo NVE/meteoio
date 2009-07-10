@@ -110,10 +110,10 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 		IOUtils::getValueForKey(header, "NODATA_value", nodata);
 
 		if ((i_ncols==0) || (i_nrows==0)) {
-			THROW IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
+			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
 		}
 		if((i_ncols<0) || (i_nrows<0)) {
-			THROW IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + filename, AT);
+			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + filename, AT);
 		}
 		ncols = (unsigned int)i_ncols;
 		nrows = (unsigned int)i_nrows;
