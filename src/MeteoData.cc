@@ -114,7 +114,7 @@ const string MeteoData::toString() const
 }
 
 #ifdef _POPC_
-void MeteoData::Serialize(paroc_buffer &buf, bool pack)
+void MeteoData::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack){
 		date.Serialize(buf,true);

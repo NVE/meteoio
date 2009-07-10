@@ -55,7 +55,7 @@ void ImisIO::get2DGridSize(int& nx, int& ny)
 	//Nothing so far
 	(void)nx;
 	(void)ny;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::read2DGrid(Grid2DObject& grid_out, const string& parameter)
@@ -63,21 +63,21 @@ void ImisIO::read2DGrid(Grid2DObject& grid_out, const string& parameter)
 	//Nothing so far
 	(void)parameter;
 	(void)grid_out;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readDEM(Grid2DObject& dem_out)
 {
 	//Nothing so far
 	(void)dem_out;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readLanduse(Grid2DObject& landuse_out)
 {
 	//Nothing so far
 	(void)landuse_out;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
@@ -85,14 +85,14 @@ void ImisIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	//Nothing so far
 	(void)date_in;
 	(void)da_out;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readSpecialPoints(CSpecialPTSArray& pts)
 {
 	//Nothing so far
 	(void)pts;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::write2DGrid(const Grid2DObject& grid_in, const string& options)
@@ -100,7 +100,7 @@ void ImisIO::write2DGrid(const Grid2DObject& grid_in, const string& options)
 	//Nothing so far
 	(void)grid_in;
 	(void)options;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo)
@@ -139,7 +139,7 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 	}
 
 	if (vecMeteo.size() == 0) {//No data found
-		THROW IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
+		throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
 	}
 
 }
@@ -331,7 +331,7 @@ void ImisIO::getStationName()
 	cfg.getValue("NROFSTATIONS", str_stations);
 	
 	if (!convertString(stations, str_stations, dec)) {
-		THROW ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
 	}
 	for (int ii=0; ii<stations; ii++) {
 		stringstream tmp_stream;
@@ -361,7 +361,7 @@ void ImisIO::setMbImis(Date_IO date_in, const string& stationName, MeteoBuffer& 
 	name = station.substr(0, station.length()-1);
 
 	if (!convertString(stao, number, dec)) {
-		THROW ConversionFailedException("Error while reading station number in readMeteoData(...) ", AT);
+		throw ConversionFailedException("Error while reading station number in readMeteoData(...) ", AT);
 	}
 
 	getStation2Data(name, stao, *data2s);

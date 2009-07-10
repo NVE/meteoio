@@ -59,7 +59,7 @@ template<class T> class CArray2D {
 template<class T> T& CArray2D<T>::operator()(unsigned int x, unsigned int y) {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny)) {
-		THROW IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
 
@@ -71,7 +71,7 @@ template<class T> T& CArray2D<T>::operator()(unsigned int x, unsigned int y) {
 template<class T> const T CArray2D<T>::operator()(unsigned int x, unsigned int y) const {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny)) {
-		THROW IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
 	return vecData[x*ny + y];
@@ -103,7 +103,7 @@ template<class T> void CArray2D<T>::Create(int anx, int any) {
 		nx = anx;
 		ny = any;
 	} else {
-		THROW IndexOutOfBoundsException("", AT);    
+		throw IndexOutOfBoundsException("", AT);    
 	}
 }
 

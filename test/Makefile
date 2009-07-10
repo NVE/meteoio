@@ -1,7 +1,7 @@
 CC=g++ -DGNU
 A3DROOT=../..
 CFLAGS=-Wall -Wextra
-PAROCC   = parocc
+POPCC   = popcc
 
 METEOIODIR	= ../src
 FILTERDIR	= $(METEOIODIR)/filter
@@ -11,12 +11,12 @@ vpath    %.c     $(METEOIODIR) $(FILTERDIR) ./
 vpath    %.cc    $(METEOIODIR) $(FILTERDIR) ./
 
 LIBS      =-rdynamic -lstdc++ -ldl -L../lib -lmeteoio -lfilter
-LIBS_PAROC=-L../ -L../lib -L$(A3DROOT)/snowpack -L$(A3DROOT)/common -lstdc++ -lcommonparoc -lfilterparoc -lmeteoioparoc -lsnowpackparoc
+LIBS_POPC=-L../ -L../lib -L$(A3DROOT)/snowpack -L$(A3DROOT)/common -lstdc++ -lcommonpopc -lfilterpopc -lmeteoiopopc -lsnowpackpopc
 
 DEBUG = -g -O0 -DDEBUG -ggdb
 INCLUDE=-I. -I$(METEOIODIR) -I$(FILTERDIR)
 
-INCLUDE_PAROC=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ $(shell pkg-config --cflags libxml++-2.6) -I$(A3DROOT)/snowdrift
+INCLUDE_POPC=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ $(shell pkg-config --cflags libxml++-2.6) -I$(A3DROOT)/snowdrift
 
 all: meteoio_demo
 
@@ -45,17 +45,17 @@ testThomas: testThomas.o
 testConfigReader: main.o ConfigReader.o slfutils.o slfexceptions.o
 	$(CC) -o $@ main.o ConfigReader.o slfutils.o slfexceptions.o
 
-all_paroc: meteoio_demo.paroc
+all_par: meteoio_demo.popc
 
 %_par.o : %.cc
-	$(PAROCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_PAROC) -o $@
+	$(POPCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_POPC) -o $@
 
  %.stub.o : %.ph
-	$(PAROCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_PAROC) -o $@
+	$(POPCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_POPC) -o $@
 
-meteoio_demo.paroc: meteoio_demo_par.o 
-	$(PAROCC) $(DEBUG) -o $@ meteoio_demo_par.o ${LIBS_PAROC}
+meteoio_demo.popc: meteoio_demo_par.o 
+	$(POPCC) $(DEBUG) -o $@ meteoio_demo_par.o ${LIBS_POPC}
 
 clean:
-	rm -rf *~ *.o libslfio.a main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.paroc *.out testArray
+	rm -rf *~ *.o libslfio.a main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.popc *.out testArray
 

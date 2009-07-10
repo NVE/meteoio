@@ -31,7 +31,7 @@ const string FilterBase::getParamValue(const string& name)
 void FilterBase::setParamValue(const string& name, const string& value)
 {
 	if (m_paramsName.find(name) == m_paramsName.end()) {
-		THROW InvalidArgumentException("invalid parameter named " + name, AT);
+		throw InvalidArgumentException("invalid parameter named " + name, AT);
 	} else {
 		m_paramsValue[name] = value;
 	}
@@ -42,7 +42,7 @@ void FilterBase::prepareCheck()
 	// read the "isSoft" parameter
 	if (m_paramsValue.find(c_isSoft) != m_paramsValue.end()) {
 		if (!IOUtils::convertString<bool>(m_isSoft, m_paramsValue[c_isSoft])) {
-			THROW InvalidArgumentException("parameter '"+c_isSoft+"' has to be a boolean",AT);
+			throw InvalidArgumentException("parameter '"+c_isSoft+"' has to be a boolean",AT);
 		}
 	}
 }

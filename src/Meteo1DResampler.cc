@@ -7,7 +7,7 @@ Meteo1DResampler::Meteo1DResampler(){
 void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& date_in, MeteoBuffer& mbuffer_out)
 {
 	if ((index_in == 0) && (index_in >= mbuffer_out.size())) {
-		THROW IOException("[e] Not enough data to do resampling or index out of bounds", AT);
+		throw IOException("[e] Not enough data to do resampling or index out of bounds", AT);
 	}
 
 	MeteoData newmd;
@@ -111,7 +111,7 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 
 		mbuffer_out.insert(index_in, newmd, mbuffer_out.getStationData(index_in));
 	} else {
-		THROW IOException("[e] index of meteobuffer not sensible", AT);
+		throw IOException("[e] index of meteobuffer not sensible", AT);
 	}
 
 

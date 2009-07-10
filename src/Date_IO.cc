@@ -210,11 +210,11 @@ void Date_IO::plausibilityCheck(const int& in_year, const int& in_month, const i
 	    || (in_hour < 0) || (in_hour > 24) 
 	    || (in_minute < 0) || (in_minute > 59)) {
 	    
-		THROW IOException("InvalidDate_IOFormat", AT);
+		throw IOException("InvalidDate_IOFormat", AT);
 	}
 
 	if ((in_hour == 24) && (in_minute != 0)) {
-		THROW IOException("InvalidDate_IOFormat", AT);
+		throw IOException("InvalidDate_IOFormat", AT);
 	}
 }
 
@@ -261,7 +261,7 @@ void Date_IO::getRealJulianDate(double& julian_out) const
 }
 
 #ifdef _POPC_
-void Date_IO::Serialize(paroc_buffer &buf, bool pack)
+void Date_IO::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack){
 		buf.Pack(&julian,1);

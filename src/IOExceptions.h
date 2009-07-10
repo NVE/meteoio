@@ -15,7 +15,11 @@
  *
  * @author Thomas Egger
  */
+#ifdef _POPC_
+class IOException :  public POPException, public std::exception {
+#else
 class IOException : public std::exception {
+#endif
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
 		~IOException() throw();
@@ -138,29 +142,5 @@ class NoAvailableDataException : public IOException {
 #define DEBUG printdebug
 inline void printdebug(...) {};
 #endif
-
-
-/// HACK for POPC by Laurent Winkler : Print error message instead of throw
-// lwk debug : a THROW macro is defined
-#ifdef _POPC_
-#ifdef THROW
-#undef THROW
-#endif
-#define THROW
-#ifndef __IOEXCEPTION_CC__
-#define IOException(a,b) std::cout<<"IOException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define FileNotFoundException(a,b) std::cout<<"FileNotFoundException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define FileAccessException(a,b) std::cout<<"FileAccessException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define InvalidFileNameException(a,b) std::cout<<"InvalidFileNameException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define InvalidFormatException(a,b) std::cout<<"InvalidFormatException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define IndexOutOfBoundsException(a,b) std::cout<<"IndexOutOfBoundsException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define ConversionFailedException(a,b) std::cout<<"ConversionFailedException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define InvalidArgumentException(a,b) std::cout<<"InvalidArgumentException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define UnknownValueException(a,b) std::cout<<"UnknownValueException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#define NoAvailableDataException(a,b) std::cout<<"NoAvailableDataException ("<<(a)<<", "<<(b)<<") at line "<<__LINE__<<" of file "<<__FILE__<<"\n"
-#endif /*__IOException_CC__*/
-#else
-#define THROW throw 
-#endif /*_POPC_*/
 
 #endif /*__IOException_H__*/

@@ -157,14 +157,14 @@ void IOHandler::get2DGridSize(int& nx, int& ny)
 
 		} else if (demsource==boschung_src){
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else if (demsource==imis_src){
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else {
-			THROW IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
 
 	} catch (...){
@@ -176,7 +176,7 @@ void IOHandler::read2DGrid(Grid2DObject&, const string& filename)
 {
 	//Nothing so far
 	(void)filename;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void IOHandler::readDEM(Grid2DObject& dem_out)
@@ -192,14 +192,14 @@ void IOHandler::readDEM(Grid2DObject& dem_out)
 
 		} else if (demsource==boschung_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else if (demsource==imis_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else {
-			THROW IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
 
 	} catch (...) {
@@ -220,14 +220,14 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 
 		} else if (landusesource==boschung_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else if (landusesource==imis_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else {
-			THROW IOException("LANDUSESRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("LANDUSESRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
 
 	} catch (...) {
@@ -262,16 +262,16 @@ void IOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMete
 			if (boschungio != NULL) {
 				boschungio->readMeteoData(date_in, vecMeteo, vecStation);
 			} else {
-				THROW IOException("Requesting to read data with plugin libBoschungIO.so, but plugin is not loaded", AT);
+				throw IOException("Requesting to read data with plugin libBoschungIO.so, but plugin is not loaded", AT);
 			}
 		} else if (meteo2dsource==imis_src) {
 			if (imisio != NULL) {
 				imisio->readMeteoData(date_in, vecMeteo, vecStation);
 			} else {
-				THROW IOException("Requesting to read data with plugin libImisIO.so, but plugin is not loaded", AT);
+				throw IOException("Requesting to read data with plugin libImisIO.so, but plugin is not loaded", AT);
 			}
 		} else {
-			THROW IOException("METEOSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("METEOSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
 
 	} catch (...) {
@@ -293,14 +293,14 @@ void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_ou
 
 		} else if (dasrc==boschung_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else if (dasrc==imis_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else {
-			THROW IOException("DASRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("DASRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
 
 	} catch (...) {
@@ -320,14 +320,14 @@ void IOHandler::readSpecialPoints(CSpecialPTSArray& pts) {
 
 		} else if (specialptssrc==boschung_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else if (specialptssrc==imis_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else {
-			THROW IOException("SPECIALPTSSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("SPECIALPTSSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
 
 	} catch (...) {
@@ -346,14 +346,14 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& filename)
 			fileio.write2DGrid(grid_in, filename);
 		} else if (output==boschung_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else if (output==imis_src) {
 			//Nothing so far
-			THROW IOException("Nothing implemented here", AT);
+			throw IOException("Nothing implemented here", AT);
 
 		} else {
-			THROW IOException("OUTPUT does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("OUTPUT does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
 
 	} catch (...) {

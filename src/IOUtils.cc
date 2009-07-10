@@ -165,7 +165,7 @@ double IOUtils::VincentyDistance(const double& lat1, const double& lon1, const d
 	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
 	
 	if(n>n_max) {
-		THROW IOException("Distance calculation not converging", AT);
+		throw IOException("Distance calculation not converging", AT);
 	}
 	
 	u2 = cos_alpha2 * (a*a - b*b) / (b*b);
@@ -327,10 +327,10 @@ void IOUtils::readKeyValueHeader(map<string,string>& headermap,
 			if (!result) { //  means if ((key == "") || (value==""))
 				stringstream out;
 				out << "Invalid key value pair in line: " << linenr << " of header";
-				THROW IOException(out.str(), AT);
+				throw IOException(out.str(), AT);
 			}
 		} else {
-			THROW InvalidFormatException("Premature EOF while reading Header", AT);
+			throw InvalidFormatException("Premature EOF while reading Header", AT);
 		}
 	}
 }
@@ -374,7 +374,7 @@ void IOUtils::skipLines(std::istream& fin, unsigned int nbLines, char eoln)
 	string dummy;
 	for (unsigned int ii=0; ii<nbLines; ii++) {
 		if(!getline(fin, dummy, eoln)) {
-			THROW InvalidFormatException("Premature EOF while skipping lines", AT);
+			throw InvalidFormatException("Premature EOF while skipping lines", AT);
 		}
 	}
 }
@@ -403,7 +403,7 @@ void IOUtils::readDirectory(const string& path, list<string>& dirlist, const str
 	struct dirent *dirp;
 
 	if((dp  = opendir(path.c_str())) == NULL) {
-		THROW FileAccessException("Error opening directory " + path, AT);
+		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
 	while ((dirp = readdir(dp)) != NULL) {

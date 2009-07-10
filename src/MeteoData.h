@@ -19,7 +19,7 @@ using namespace IOUtils;
 #ifdef _POPC_
 class MeteoData : POPBase {
 	public:
-		void Serialize(paroc_buffer &buf, bool pack);
+		void Serialize(POPBuffer &buf, bool pack);
 #else
 class MeteoData {
 #endif  

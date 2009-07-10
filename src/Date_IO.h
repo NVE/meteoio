@@ -27,7 +27,7 @@ using namespace rel_ops;
 #ifdef _POPC_
 class Date_IO : POPBase {
 	public:
-		void Serialize(paroc_buffer &buf, bool pack);
+		void Serialize(POPBuffer &buf, bool pack);
 #else
 class Date_IO {
 #endif  

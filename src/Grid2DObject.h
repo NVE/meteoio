@@ -14,7 +14,7 @@
 #ifdef _POPC_
 class Grid2DObject : POPBase {
 	public:
-		void Serialize(paroc_buffer &buf, bool pack);
+		void Serialize(POPBuffer &buf, bool pack);
 #else
 class Grid2DObject{
 #endif  

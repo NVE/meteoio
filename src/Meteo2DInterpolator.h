@@ -41,7 +41,7 @@ class Meteo2DInterpolator {
 		void interpolateISWR(CArray2D<double>& iswr);
 		//void interpolateEA(CArray2D<double>& ea);
 
-		const Grid2DObject& dem; //HACK: This doesn't hold for PAROC
+		const Grid2DObject& dem;
 
 		vector<MeteoData> SourcesData;
 		vector<StationData> SourcesMeta;

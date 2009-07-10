@@ -203,16 +203,16 @@ namespace IOUtils {
 	*/
 	template <class T> void getValueForKey(const map<string,string>& properties, const string& key, T& t) {
 		if (key == "") {
-			THROW InvalidArgumentException("Empty key", AT);
+			throw InvalidArgumentException("Empty key", AT);
 		}
 		const string value = (const_cast<map<string,string>&>(properties))[key];  
 
 		if (value == "") {
-			THROW UnknownValueException("No value for key " + key, AT);
+			throw UnknownValueException("No value for key " + key, AT);
 		}
 
 		if(!convertString<T>(t, value, std::dec)) {
-			THROW ConversionFailedException(value, AT);
+			throw ConversionFailedException(value, AT);
 		}
 	}
   

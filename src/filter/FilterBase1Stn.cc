@@ -17,7 +17,7 @@ MeteoData& MeteoBufferIterator::getCurrent()
 	} else if (m_iUnfilteredElement != MeteoBuffer::npos) {
 		return m_unfilteredMeteoBuffer.getMeteoData(m_iUnfilteredElement);
 	} else {
-		THROW NoAvailableDataException("no corresponding data available in the buffers", AT);
+		throw NoAvailableDataException("no corresponding data available in the buffers", AT);
 	}
 }
 
@@ -44,7 +44,7 @@ MeteoData& MeteoBufferIterator::getPreviousUnfiltered()
 	}
 	
 	if (m_iUnfilteredElement == MeteoBuffer::npos || m_iUnfilteredElement == 0) {
-		THROW NoAvailableDataException("no previous data available in the buffers", AT);
+		throw NoAvailableDataException("no previous data available in the buffers", AT);
 	}
         m_iUnfilteredElement--;
 	return m_unfilteredMeteoBuffer.getMeteoData(m_iUnfilteredElement);

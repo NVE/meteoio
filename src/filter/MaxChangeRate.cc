@@ -52,24 +52,24 @@ void MaxChangeRate::prepareCheck()
 	if (m_paramsValue.find(c_maxRate) != m_paramsValue.end()) {
 	if (m_paramsValue.find(c_maxIncrRate) == m_paramsValue.end() && m_paramsValue.find(c_maxDecrRate) == m_paramsValue.end()) {
 	if (!IOUtils::convertString<double>(m_maxIncrRate, m_paramsValue[c_maxRate])) 
-	THROW InvalidArgumentException("parameter '"+c_maxRate+"' has to be a float (or double)", AT);
+	throw InvalidArgumentException("parameter '"+c_maxRate+"' has to be a float (or double)", AT);
 	m_maxDecrRate = m_maxIncrRate;
 	} else {
-	THROW InvalidArgumentException("when parameter '"+c_maxRate+"' is set, neither "+c_maxIncrRate+" nor "+c_maxDecrRate+" should be set", AT);
+	throw InvalidArgumentException("when parameter '"+c_maxRate+"' is set, neither "+c_maxIncrRate+" nor "+c_maxDecrRate+" should be set", AT);
 	}
 	} else {
 		if (m_paramsValue.find(c_maxIncrRate) != m_paramsValue.end()) {
 			if (!IOUtils::convertString<double>(m_maxIncrRate, m_paramsValue[c_maxIncrRate])) {
-				THROW InvalidArgumentException("parameter '"+c_maxIncrRate+"' has to be a float (or double)", AT);
+				throw InvalidArgumentException("parameter '"+c_maxIncrRate+"' has to be a float (or double)", AT);
 			}
 		}
 		if (m_paramsValue.find(c_maxDecrRate) != m_paramsValue.end()) {
 			if (!IOUtils::convertString<double>(m_maxDecrRate, m_paramsValue[c_maxDecrRate])) {
-				THROW InvalidArgumentException("parameter '"+c_maxDecrRate+"' has to be a float (or double)", AT);
+				throw InvalidArgumentException("parameter '"+c_maxDecrRate+"' has to be a float (or double)", AT);
 			}
 		}
 		if (m_maxIncrRate == nodata && m_maxDecrRate == nodata) {
-			THROW InvalidArgumentException("at least one of the 3 parameters "+c_maxRate+", "+c_maxIncrRate+" or "+c_maxDecrRate+" has to be set", AT);
+			throw InvalidArgumentException("at least one of the 3 parameters "+c_maxRate+", "+c_maxIncrRate+" or "+c_maxDecrRate+" has to be set", AT);
 		}
 	}
 }

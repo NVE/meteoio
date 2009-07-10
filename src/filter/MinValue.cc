@@ -47,10 +47,10 @@ void MinValue::prepareCheck()
 	if (m_paramsValue.find(c_limitValue) != m_paramsValue.end()) {
 		//m_limitValue = atof(m_paramsValue[c_limitValue].c_str());
 		if (!IOUtils::convertString<double>(m_limitValue, m_paramsValue[c_limitValue])) {
-			THROW InvalidArgumentException("parameter '"+c_limitValue+"' has to be a float (or double)", AT);
+			throw InvalidArgumentException("parameter '"+c_limitValue+"' has to be a float (or double)", AT);
 		}
 	} else {
-		THROW InvalidArgumentException("mandatory parameter '"+c_limitValue+"' not found", AT);
+		throw InvalidArgumentException("mandatory parameter '"+c_limitValue+"' not found", AT);
 	}
 }
 

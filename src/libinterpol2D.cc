@@ -149,7 +149,7 @@ int Interpol2D::LinRegression(const vector<double>& X, const vector<double>& Y, 
 		//for (unsigned int i=0; i<X.size(); i++){
 		// printf("%g %g\n",X[i],Y[i]);
 		// }
-		//THROW IOException("Poor linear regression coefficient", AT);
+		//throw IOException("Poor linear regression coefficient", AT);
 	}
 
 	return EXIT_SUCCESS;
@@ -170,7 +170,7 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 {
 	//linear lapse: coeffs must have been already computed
 	if (coeffs.size()<1) {
-		THROW IOException("Linear regression coefficients not initialized", AT);
+		throw IOException("Linear regression coefficients not initialized", AT);
 	}
 	return (value + coeffs[1] * (new_altitude - altitude));
 }
@@ -275,7 +275,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out)
 		}
 	
 		if (flag_ok==0) {
-                  	THROW IOException("Wrong interpolation type for zero data source", AT);
+                  	throw IOException("Wrong interpolation type for zero data source", AT);
 		}
 	}
 	
@@ -292,7 +292,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out)
 		}
 	
 		if (flag_ok==0) {
-			THROW IOException("Wrong interpolation type for single data source", AT);
+			throw IOException("Wrong interpolation type for single data source", AT);
 		}
 	}
 	
@@ -318,7 +318,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out)
 		}
 
 		if (flag_ok==0) {
-			THROW IOException("Wrong interpolation type for multiple data sources", AT);
+			throw IOException("Wrong interpolation type for multiple data sources", AT);
 		}
 	}
 }
@@ -329,14 +329,14 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 	
 	if (InputSize==0) { //no data
 		if (flag_ok==0) {
-			THROW IOException("Wrong interpolation type for zero data source", AT);
+			throw IOException("Wrong interpolation type for zero data source", AT);
 		}
 	}
 	
 	if (InputSize==1) {
 		//single data source
 		if (flag_ok==0) {
-			THROW IOException("Wrong interpolation type for single data source", AT);
+			throw IOException("Wrong interpolation type for single data source", AT);
 		}
 	}
 
@@ -378,7 +378,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 		}
 
 		if (flag_ok==0) {
-			THROW IOException("Wrong interpolation type for multiple data sources", AT);
+			throw IOException("Wrong interpolation type for multiple data sources", AT);
 		}
 	}
 }

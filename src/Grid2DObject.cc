@@ -67,7 +67,7 @@ void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_i
 	int nx, ny;
 	grid2D_in.GetSize(nx, ny);
 	if (((int)ncols != nx) || ((int)nrows != ny)) {
-		THROW IOException("Mismatch in size of CArray2D<double> parameter grid2D_in and size of Grid2DObject", AT);
+		throw IOException("Mismatch in size of CArray2D<double> parameter grid2D_in and size of Grid2DObject", AT);
 	}
 
 	grid2D = grid2D_in; //Copy by value, after destroying the old grid
@@ -75,7 +75,7 @@ void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_i
 
 #ifdef _POPC_
 #include "marshal_meteoio.h"
-void Grid2DObject::Serialize(paroc_buffer &buf, bool pack)
+void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack)
 	{

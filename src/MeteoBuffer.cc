@@ -10,7 +10,7 @@ MeteoBuffer::MeteoBuffer(const unsigned int& maxsize_in, const unsigned int& ini
 	maxsize = maxsize_in;
 
 	if (initsize_in > maxsize) {
-		THROW IOException("In constructor of MeteoBuffer: cannot initilize more than maxsize_in objects", AT);
+		throw IOException("In constructor of MeteoBuffer: cannot initilize more than maxsize_in objects", AT);
 	}
 
 	MeteoData md;
@@ -54,7 +54,7 @@ deque<StationData> MeteoBuffer::getStationbuffer()
 MeteoData& MeteoBuffer::getMeteoData(const unsigned int& index)
 {
 	if (index >= meteobuffer.size()) {
-		THROW IndexOutOfBoundsException("MeteoBuffer", AT);
+		throw IndexOutOfBoundsException("MeteoBuffer", AT);
 	}
 
 	return meteobuffer[index];
@@ -63,7 +63,7 @@ MeteoData& MeteoBuffer::getMeteoData(const unsigned int& index)
 StationData& MeteoBuffer::getStationData(const unsigned int& index)
 {
 	if (index >= stationbuffer.size()) {
-		THROW IndexOutOfBoundsException("MeteoBuffer", AT);
+		throw IndexOutOfBoundsException("MeteoBuffer", AT);
 	}
 
 	return stationbuffer[index];
@@ -72,7 +72,7 @@ StationData& MeteoBuffer::getStationData(const unsigned int& index)
 void MeteoBuffer::insert(const unsigned int& index, MeteoData& meteo_in, StationData& station_in)
 {
 	if (index >= meteobuffer.size()) {
-		THROW IndexOutOfBoundsException("Tried to insert into MeteoBuffer", AT);
+		throw IndexOutOfBoundsException("Tried to insert into MeteoBuffer", AT);
 	}
 
 	meteobuffer.insert(meteobuffer.begin()+index, meteo_in);
@@ -97,7 +97,7 @@ void MeteoBuffer::put(MeteoData& meteo_in, StationData& station_in){ //copied in
 void MeteoBuffer::erase(const unsigned int& index)
 {
 	if (index >= stationbuffer.size()) {
-		THROW IndexOutOfBoundsException("MeteoBuffer", AT);
+		throw IndexOutOfBoundsException("MeteoBuffer", AT);
 	}
 
 	meteobuffer.erase(meteobuffer.begin()+index, meteobuffer.end());

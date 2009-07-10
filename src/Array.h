@@ -54,7 +54,7 @@ template<class T> void CArray<T>::SetSize(unsigned int asize) {
 template<class T> T& CArray<T>::operator [](unsigned int index) {
 #ifndef NOSAFECHECKS
 	if (index >= size) {
-		THROW IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
 	
@@ -64,7 +64,7 @@ template<class T> T& CArray<T>::operator [](unsigned int index) {
 template<class T> const T CArray<T>::operator [](unsigned int index) const {
 #ifndef NOSAFECHECKS
 	if (index >= size) {
-		THROW IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
 
@@ -90,7 +90,7 @@ template<class T> void CArray<T>::InsertAt(int index, T e) {
 		vecData.insert(vecData.begin() + index, e);
 		size++;
 	} else {
-		THROW IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("", AT);
 	}
 }
 

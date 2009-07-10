@@ -46,7 +46,7 @@ void BoschungIO::createBuffer()
 
 	cfg.getValue("NROFSTATIONS", str_stations);
 	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
-		THROW ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
 	}
 
 	//Allocate one MeteoBuffer per station
@@ -60,26 +60,26 @@ void BoschungIO::createBuffer()
 void BoschungIO::get2DGridSize(int& , int& )
 {
 	//Nothing so far
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void BoschungIO::read2DGrid(Grid2DObject&, const string& filename)
 {
 	//Nothing so far
 	(void)filename;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void BoschungIO::readDEM(Grid2DObject&)
 {
 	//Nothing so far
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void BoschungIO::readLanduse(Grid2DObject&)
 {
 	//Nothing so far
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& meteo_out)
@@ -143,7 +143,7 @@ void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMet
 	}
 
 	if (vecMeteo.size() == 0) {//No data found
-		THROW IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
+		throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
 	}
 }
 
@@ -158,7 +158,7 @@ void BoschungIO::readStationNames()
 	cfg.getValue("NROFSTATIONS", str_stations);
 
 	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
-		THROW ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
 	}
   
 	for (int ii=0; ii<stations; ii++) {
@@ -212,7 +212,7 @@ bool BoschungIO::bufferData(const Date_IO& date_in, const unsigned int& stationn
 	vector<Date_IO> vecDate_IO;
 
 	if (stationnr >= unfilteredMeteoBuffer.size()) {
-		THROW IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("", AT);
 	}
 
 	unfilteredMeteoBuffer[stationnr].clear();
@@ -232,7 +232,7 @@ bool BoschungIO::bufferData(const Date_IO& date_in, const unsigned int& stationn
 	//If we reach this point: Date_IO is definitely covered
 
 	if (vecFiles.size() > unfilteredMeteoBuffer[stationnr].getMaxSize()) {
-		THROW IOException("MeteoBuffer too small to hold all meteo data", AT);
+		throw IOException("MeteoBuffer too small to hold all meteo data", AT);
 	}
   
 	for (unsigned int ii=0; ii<vecFiles.size(); ii++) {
@@ -328,7 +328,7 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 		convertUnits(md);
     
 	} else {
-		THROW IOException("Error parsing XML", AT);
+		throw IOException("Error parsing XML", AT);
 	}
 }
 
@@ -336,7 +336,7 @@ void BoschungIO::xmlParseStringToDouble(const string& str_in, double& d_out, con
 {
 	if (str_in!="") {//do nothing if empty content for a node was read
 		if (!IOUtils::convertString(d_out, str_in, std::dec)) {//but if content of node is not empty, try conversion
-			THROW ConversionFailedException("Error while reading value for " + parname, AT);
+			throw ConversionFailedException("Error while reading value for " + parname, AT);
 		}
 	}
 }
@@ -432,7 +432,7 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo
 	cfg.getValue("XMLPATH", xmlpath);
 
 	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
-		THROW ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
 	}
   
 	for (int ii=0; ii<stations; ii++) {
@@ -448,7 +448,7 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo
 		checkForMeteoFiles(xmlpath, stationname, date_in, tmp_file, tmp_date);
 		//Check whether file was found
 		if (tmp_date<date_in) {
-			THROW FileNotFoundException("No XML file in path '" + xmlpath 
+			throw FileNotFoundException("No XML file in path '" + xmlpath 
 								   + "' found for date " + date_in.toString() + " for station " + stationname, AT);
 		}
 
@@ -463,20 +463,20 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo
 void BoschungIO::readAssimilationData(const Date_IO&, Grid2DObject&)
 {
 	//Nothing so far
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void BoschungIO::readSpecialPoints(CSpecialPTSArray&)
 {
 	//Nothing so far
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void BoschungIO::write2DGrid(const Grid2DObject&, const string& filename)
 {
 	//Nothing so far
 	(void)filename;
-	THROW IOException("Nothing implemented here", AT);
+	throw IOException("Nothing implemented here", AT);
 }
 
 void BoschungIO::convertUnits(MeteoData& meteo)

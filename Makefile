@@ -27,7 +27,7 @@ ifeq ($(DEST),safe)		#safe defaults
 	CXX      = g++
 	FF	 = gfortran
 	LINKER   = g++ -DGNU
-	PAROCC   = parocc
+	POPCC   = popcc
 	ARCH     = -march=pentium3
 	OPTIM    = -fomit-frame-pointer -O3
 	FFOPTIM  = $(OPTIM) -march=pentium3
@@ -41,7 +41,7 @@ ifeq ($(DEST),grid)		#for grid
 	CXX	 = colorgcc
 	FF	 = gfortran
 	LINKER   = g++ -DGNU
-	PAROCC   = parocc
+	POPCC   = popcc
 	ARCH     = -march=native #-mmmx -msse -msse2 -mfpmath=sse -malign-double
 	OPTIM    = -fomit-frame-pointer -O3 #-fdata-sections
 	FFOPTIM  = $(OPTIM) -march=native #-m3dnow -m64 -mmmx -msse -msse2 -ffast-stdlib 
@@ -57,7 +57,7 @@ ifeq ($(DEST),zeus)		#for Zeus
         #CXX     = pathcc -DGNU
         FF       = pathf90 -DGNU
         LINKER   = g++
-        PAROCC   = parocc
+        POPCC   = popcc
         ARCH     = -march=x86-64 #-mmmx -msse -msse2 -m3dnow -mfpmath=sse #-malign-double
         #ARCH     = -march=opteron -mmmx -msse -msse2 -m3dnow
         OPTIM    = #-fomit-frame-pointer #-O3 -fdata-sections
@@ -82,7 +82,7 @@ endif
 
 ####### DIRECTORIES
 TARGET		= meteoio
-TARGET_PAROC	= meteoio_paroc
+TARGET_POPC	= meteoio_par
 
 SRCDIR		= ./src
 LIBDIR		= ./lib
@@ -95,8 +95,8 @@ TOOLSDIR	= ./tools
 
 LIBS		= -lc -ldl -lm -lstdc++
 LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoio -lfilter
-LD_PAROC	= -L$(LIBDIR) -lmeteoioparoc -lfilterparoc
-LDFLAGS_PAROC	= $(LD_PAROC)
+LD_POPC	= -L$(LIBDIR) -lmeteoiopopc -lfilterpopc
+LDFLAGS_POPC	= $(LD_POPC)
 LDFLAGS		= $(LIBS) -rdynamic
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
 
@@ -121,7 +121,7 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/Meteo1DResampler.o \
 		$(SRCDIR)/LegacyIO.o 
 
-METEOIO_OBJ_PAROC =  $(SRCDIR)/IOInterface_par.o \
+METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/LegacyIO_par.o \
 		$(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/IOHandler.stub.o \
@@ -155,7 +155,7 @@ FILTER_OBJ = 	$(FILTERDIR)/FilterBase.o \
 		$(FILTERDIR)/NoObservedChange.o \
 		$(FILTERDIR)/FilterFacade.o 
 
-FILTER_OBJ_PAROC  = 	$(FILTERDIR)/FilterBase_par.o \
+FILTER_OBJ_POPC  = 	$(FILTERDIR)/FilterBase_par.o \
 		$(FILTERDIR)/FilterBase1Stn_par.o \
 		$(FILTERDIR)/FilterValue_par.o \
 		$(FILTERDIR)/MinValue_par.o \
@@ -176,7 +176,7 @@ help:
 	@printf "MeteoIO Makefile targets for \033[36m%s\033[0m:\n" $(DEST)
 	@printf " \033[36mseq\033[0m \n"
 	@printf " \033[36mcreateA3DFiles\033[0m \n"
-	@printf " \033[36mparoc\033[0m \n"
+	@printf " \033[36mpopc\033[0m \n"
 	@printf " \033[36minstall\033[0m \n"
 	@printf " \033[36mclean\033[0m \n"
 	@printf " \033[36mdistclean\033[0m \n"
@@ -188,14 +188,14 @@ build_staticlibs: $(LIBDIR)/libfilter.a
 
 build_dynamiclibs: $(LIBDIR)/libboschungio.so $(LIBDIR)/libimisio.so
 
-############## PAROC ##############
-paroc: meteoIO_lib_paroc meteoIO_module_paroc filter_lib_paroc
+############## POPC ##############
+par: meteoIO_lib_par meteoIO_module_par filter_lib_par
 
-filter_lib_paroc: $(LIBDIR)/libfilterparoc.a
+filter_lib_par: $(LIBDIR)/libfilterpopc.a
 
-meteoIO_lib_paroc: $(LIBDIR)/libmeteoioparoc.a 
+meteoIO_lib_par: $(LIBDIR)/libmeteoiopopc.a 
 
-meteoIO_module_paroc: $(LIBDIR)/meteoio.module
+meteoIO_module_par: $(LIBDIR)/meteoio.module
 ##############  END  ##############
 
 clean:
@@ -220,10 +220,10 @@ createA3DFiles: $(TOOLS_OBJ)
 	$(CXX) $(CCFLAGS) -c $< $(INCLUDE) -o $@
 
 %_par.o : %.cc
-	$(PAROCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+	$(POPCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
 
 %.stub.o : %.ph
-	$(PAROCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+	$(POPCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
 
 
 $(LIBDIR)/libmeteoio.a: $(METEOIO_OBJ)
@@ -249,14 +249,14 @@ ifeq ($(IMISIO),yes)
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(SRCDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif
 
-$(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoioparoc.a $(LIBDIR)/libfilterparoc.a $(SRCDIR)/PackMeteoIO_par.o
-	$(PAROCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_PAROC)
+$(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoiopopc.a $(LIBDIR)/libfilterpopc.a $(SRCDIR)/PackMeteoIO_par.o
+	$(POPCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_POPC)
 
-$(LIBDIR)/libmeteoioparoc.a:  $(METEOIO_OBJ_PAROC)
-	ar -r $@ $(METEOIO_OBJ_PAROC)
+$(LIBDIR)/libmeteoiopopc.a:  $(METEOIO_OBJ_POPC)
+	ar -r $@ $(METEOIO_OBJ_POPC)
 	ranlib $@
 
-$(LIBDIR)/libfilterparoc.a: $(FILTER_OBJ_PAROC)
-	ar -r $@ $(FILTER_OBJ_PAROC)
+$(LIBDIR)/libfilterpopc.a: $(FILTER_OBJ_POPC)
+	ar -r $@ $(FILTER_OBJ_POPC)
 	ranlib $@
 

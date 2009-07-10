@@ -68,19 +68,19 @@ void FilterFacade::registerFilter(const string& name, const Filter1StnCreator cr
 	stringstream tmpStringStream;
 	if (name.empty()) {
 		tmpStringStream<<"Invalid empty name for filter.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	if (!creator) {
 		tmpStringStream<<"Invalid null creator for filter '"<<name<<"'.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	if (FilterFacade::s_registeredFilters1StnByName.find(name) != FilterFacade::s_registeredFilters1StnByName.end()) {
 		tmpStringStream<<"A filter already exists with name '"<<name<<"'.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	if (FilterFacade::s_registeredFiltersMStnByName.find(name) != FilterFacade::s_registeredFiltersMStnByName.end()) {
 		tmpStringStream<<"A multi-station filter already exists with name '"<<name<<"'.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	FilterFacade::s_registeredFilters1StnByName[name] = creator;
 }
@@ -94,19 +94,19 @@ void FilterFacade::registerFilter(const string& name, const FilterMStnCreator cr
 	stringstream tmpStringStream;
 	if (name.empty()) {
 		tmpStringStream<<"Invalid empty name for filter.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	if (!creator) {
 		tmpStringStream<<"Invalid null creator for filter '"<<name<<"'.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	if (FilterFacade::s_registeredFilters1StnByName.find(name) != FilterFacade::s_registeredFilters1StnByName.end()) {
 		tmpStringStream<<"A single-station filter already exists with name '"<<name<<"'.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	if (FilterFacade::s_registeredFiltersMStnByName.find(name) != FilterFacade::s_registeredFiltersMStnByName.end()) {
 		tmpStringStream<<"A filter already exists with name '"<<name<<"'.";
-		THROW InvalidArgumentException(tmpStringStream.str(), AT);
+		throw InvalidArgumentException(tmpStringStream.str(), AT);
 	}
 	FilterFacade::s_registeredFiltersMStnByName[name] = creator;
 }
@@ -148,12 +148,12 @@ void FilterFacade::addActiveFilters(const string& filename)
 	FilterBaseMStn* filterMStn = NULL;
 
 	if (!IOUtils::fileExists(filename)) {
-		THROW FileNotFoundException(filename, AT);
+		throw FileNotFoundException(filename, AT);
 	}
 	
 	inputFileStream.open (filename.c_str(), ifstream::in);
 	if (inputFileStream.fail()) {
-		THROW FileAccessException(filename,AT);
+		throw FileAccessException(filename,AT);
 	}
 
 	while (ConfigReader::readConfigLine(inputFileStream, ++lineNb, lineType, str1, str2)) {
@@ -182,15 +182,15 @@ void FilterFacade::addActiveFilters(const string& filename)
 						    filterMStn->setParamValue(c_sectionName, section);
 					  } else {
 						    tmpStringStream<<"Unknown filter named '"<<str2<<"'.";
-						    THROW UnknownValueException(tmpStringStream.str(), AT);
+						    throw UnknownValueException(tmpStringStream.str(), AT);
 					  }
 				} else {
 					  tmpStringStream<<"Missplaced '"<<c_name<<"' parameter at line "<<lineNb<<" , it must be just after a section start.";
-					  THROW InvalidFormatException(tmpStringStream.str(), AT);
+					  throw InvalidFormatException(tmpStringStream.str(), AT);
 				}
 			} else if (str1 == c_sectionName) {
 				  tmpStringStream<<"Unallowed used of reserved '"<<c_sectionName<<"' parameter at line "<<lineNb<<".";
-				  THROW InvalidFormatException(tmpStringStream.str(), AT);
+				  throw InvalidFormatException(tmpStringStream.str(), AT);
 			} else {
 				// other parameters
 				if (filter1Stn) {
@@ -199,7 +199,7 @@ void FilterFacade::addActiveFilters(const string& filename)
 				  	filterMStn->setParamValue(str1, str2);
 				} else {
 					tmpStringStream<<"Missplaced parameter at line "<<lineNb<<" , the first parameter of a filter has to be '"<<c_name<<"'.";
-					THROW InvalidFormatException(tmpStringStream.str(), AT);
+					throw InvalidFormatException(tmpStringStream.str(), AT);
 				}
 			}
 		}
@@ -326,7 +326,7 @@ void FilterFacade::doCheck(MeteoBuffer& unfilteredMeteoBuffer, MeteoBuffer& filt
 		;// all right
 	} else {
 		tmpStringStream << "Existing content in filteredMeteoBuffer prevents to insert at a previous date";
-		THROW IOException(tmpStringStream.str(), AT);
+		throw IOException(tmpStringStream.str(), AT);
 	}
 	
 	vector<FilterBase1Stn*>::iterator iter;

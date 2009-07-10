@@ -50,20 +50,20 @@ void NoObservedChange::prepareCheck()
 	// read the parameters
 	if (m_paramsValue.find(c_minNbPoints) != m_paramsValue.end()) {
 		if (!IOUtils::convertString<int>(minNbPoints, m_paramsValue[c_minNbPoints])) {
-			THROW InvalidArgumentException("parameter '"+c_minNbPoints+"' has to be an (unsigned) integer", AT);
+			throw InvalidArgumentException("parameter '"+c_minNbPoints+"' has to be an (unsigned) integer", AT);
 		}
 		if(minNbPoints<0) {
-			THROW InvalidArgumentException("parameter '"+c_minNbPoints+"' has to be an unsigned integer", AT);
+			throw InvalidArgumentException("parameter '"+c_minNbPoints+"' has to be an unsigned integer", AT);
 		}
 		m_minNbPoints = (unsigned int)minNbPoints;
 	}
 	if (m_paramsValue.find(c_minDeltaTime) != m_paramsValue.end()) {
 		if (!IOUtils::convertString<Date_IO>(m_minDeltaTime, m_paramsValue[c_minDeltaTime])) {
-			THROW InvalidArgumentException("parameter '"+c_minDeltaTime+"' has to be a time (format HH:MM)", AT);
+			throw InvalidArgumentException("parameter '"+c_minDeltaTime+"' has to be a time (format HH:MM)", AT);
 		}
 	}
 	if (m_paramsValue.find(c_minNbPoints) != m_paramsValue.end() && m_paramsValue.find(c_minDeltaTime) != m_paramsValue.end()) {
-		THROW InvalidArgumentException("at least one of the 2 parameters "+c_minNbPoints+" or "+c_minDeltaTime+" has to be set", AT);
+		throw InvalidArgumentException("at least one of the 2 parameters "+c_minNbPoints+" or "+c_minDeltaTime+" has to be set", AT);
 	}
 }
 

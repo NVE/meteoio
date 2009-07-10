@@ -23,7 +23,7 @@ void FilterValue::prepareCheck()
 		m_measurePtr = getMeasurePtr(m_filter->m_paramsValue[c_measureName]);
 		m_measureName = m_filter->m_paramsValue[c_measureName]; // assign if previous call has not failled
 	} else {
-		THROW InvalidArgumentException("mandatory parameter '"+c_measureName+"' not found", AT);
+		throw InvalidArgumentException("mandatory parameter '"+c_measureName+"' not found", AT);
 	}
 }
 
@@ -35,7 +35,7 @@ const string& FilterValue::getMeasureName() const
 double& FilterValue::getMeasureValue(MeteoData& data) const
 {
 	if (! m_measurePtr) {
-		THROW IOException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
+		throw IOException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
 	}
 	return data.*m_measurePtr;
 }
@@ -43,7 +43,7 @@ double& FilterValue::getMeasureValue(MeteoData& data) const
 const double& FilterValue::getMeasureValue(const MeteoData& data) const
 {
 	if (! m_measurePtr) {
-		THROW IOException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
+		throw IOException("parameter '"+c_measureName+"' not well defined (perhaps prepareCheck has not been called?)", AT);
 	}
 	return data.*m_measurePtr;
 }
@@ -84,7 +84,7 @@ double MeteoData::* FilterValue::getMeasurePtr(const string& measureName)
 	} else if (measureName == "rswr") {
 		return &MeteoData::rswr;
 	} else {
-		THROW InvalidArgumentException("parameter '"+c_measureName+"' has unexpected value "+measureName+
+		throw InvalidArgumentException("parameter '"+c_measureName+"' has unexpected value "+measureName+
 		", expected are ta, iswr, vw, rh, lwr, nswc, ts0", AT);
 	}
 }

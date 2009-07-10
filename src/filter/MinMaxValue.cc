@@ -49,16 +49,16 @@ void MinMaxValue::prepareCheck()
 	// read the "minValue" parameter
 	if (m_paramsValue.find(c_minValue) != m_paramsValue.end()) {
 		if (!IOUtils::convertString<double>(m_minValue, m_paramsValue[c_minValue])) {
-			THROW InvalidArgumentException("parameter '"+c_minValue+"' has to be a float (or double)", AT);
+			throw InvalidArgumentException("parameter '"+c_minValue+"' has to be a float (or double)", AT);
 		}
 	}
 	if (m_paramsValue.find(c_maxValue) != m_paramsValue.end()) {
 		if (!IOUtils::convertString<double>(m_maxValue, m_paramsValue[c_maxValue])) {
-			THROW InvalidArgumentException("parameter '"+c_maxValue+"' has to be a float (or double)", AT);
+			throw InvalidArgumentException("parameter '"+c_maxValue+"' has to be a float (or double)", AT);
 		}
 	}
 	if (m_minValue == nodata && m_maxValue == nodata) {
-		THROW InvalidArgumentException("at least one of the 2 parameters "+c_minValue+" or "+c_maxValue+" has to be set", AT);
+		throw InvalidArgumentException("at least one of the 2 parameters "+c_minValue+" or "+c_maxValue+" has to be set", AT);
 	}
 }
 
