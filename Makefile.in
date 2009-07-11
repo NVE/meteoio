@@ -1,32 +1,33 @@
 #
 # Makefile for the METEOIO Library
 #
-#################################################
-# USER OPTIONS: MAKE CHANGES IN THIS SECTION ONLY
-#################################################
+#Destination system: either zeus, grid or safe
+
+#Prefix: 	@prefix@
+#C compiler: 	@CC@
+#C++ compiler: 	@CXX@
+#libxml++ libs: 	@XMLPP_LIBS@
+
 ####### USER CONFIGURATION
 #Destination system: either zeus, grid or safe
-DEST	 = safe
-#DEST	 = grid
-#DEST	 = zeus
+DEST 	= @DEST@
 
 # build mode: release or debug
-MODE	 = release
-MODE	 = debug
+MODE	 = @MODE@
 
 # plugins to build (yes/no)
-BOSCHUNGIO 	= no
-IMISIO		= no
+BOSCHUNGIO 	= @BOSCHUNGIO@
+IMISIO		= @IMISIO@
 
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
 
 ifeq ($(DEST),safe)		#safe defaults
-	CC       = gcc -DGNU
-	CXX      = g++
+	CC       = @CC@ -DGNU
+	CXX      = @CXX@
 	FF	 = gfortran
-	LINKER   = g++ -DGNU
+	LINKER   = @CXX@ -DGNU
 	POPCC   = popcc
 	ARCH     = -march=pentium3
 	OPTIM    = -fomit-frame-pointer -O3
@@ -238,8 +239,8 @@ $(LIBDIR)/libfilter.a: $(FILTER_OBJ)
 $(LIBDIR)/libboschungio.so: $(SRCDIR)/BoschungIO.cc $(SRCDIR)/BoschungIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(BOSCHUNGIO),yes)
 	@printf "**** Compiling Boschung plugin\n"
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) $(shell pkg-config --cflags libxml++-2.6) -c -o $(SRCDIR)/BoschungIO.o $(SRCDIR)/BoschungIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(SRCDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) $(shell pkg-config --libs libxml++-2.6)
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(SRCDIR)/BoschungIO.o $(SRCDIR)/BoschungIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(SRCDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
 endif
 
 $(LIBDIR)/libimisio.so: $(SRCDIR)/ImisIO.cc $(SRCDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
@@ -249,14 +250,14 @@ ifeq ($(IMISIO),yes)
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(SRCDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif
 
-$(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoiopopc.a $(LIBDIR)/libfilterpopc.a $(SRCDIR)/PackMeteoIO_par.o
-	$(POPCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_POPC)
+$(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoioparoc.a $(LIBDIR)/libfilterparoc.a $(SRCDIR)/PackMeteoIO_par.o
+	$(PAROCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_PAROC)
 
-$(LIBDIR)/libmeteoiopopc.a:  $(METEOIO_OBJ_POPC)
-	ar -r $@ $(METEOIO_OBJ_POPC)
+$(LIBDIR)/libmeteoioparoc.a:  $(METEOIO_OBJ_PAROC)
+	ar -r $@ $(METEOIO_OBJ_PAROC)
 	ranlib $@
 
-$(LIBDIR)/libfilterpopc.a: $(FILTER_OBJ_POPC)
-	ar -r $@ $(FILTER_OBJ_POPC)
+$(LIBDIR)/libfilterparoc.a: $(FILTER_OBJ_PAROC)
+	ar -r $@ $(FILTER_OBJ_PAROC)
 	ranlib $@
 
