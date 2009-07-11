@@ -7,14 +7,14 @@ AC_INIT(meteoio, 0.1, bavay@slf.ch)
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
-
+#AC_PROG_LIBTOOL
 AC_LANG(C++)
 
 # Checks for libraries.
-AC_CHECK_LIB([dl], [main])
+AC_CHECK_LIB([dl], [main],,[AC_MSG_ERROR([Error, the dl library is missing!])])
 
 # Checks for header files.
-AC_CHECK_HEADERS([occi.h dlfcn.h dirent.h sys/stat.h math.h])
+AC_CHECK_HEADERS([dlfcn.h dirent.h sys/stat.h math.h],,[AC_MSG_ERROR([The header files must be present!])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 #AC_HEADER_STDBOOL
@@ -23,9 +23,12 @@ AC_CHECK_HEADERS([occi.h dlfcn.h dirent.h sys/stat.h math.h])
 
 # Checks for library functions.
 #AC_FUNC_REALLOC
-#AC_CHECK_FUNCS([floor pow sqrt])
+AC_CHECK_FUNCS([floor pow sqrt])
 
-
+echo
+echo "================================="
+echo "=         USER OPTIONS          ="
+echo "================================="
 ######################## DEBUG MODE ######################
 AC_ARG_ENABLE(debug, [  --enable-debug	  Enable debug mode], [debug=yes])
 if test "$debug" == "yes"
@@ -35,8 +38,10 @@ else
    AC_SUBST(MODE,release)
 fi
 
+AC_MSG_NOTICE([Compiling for mode '$MODE'])
+
 ######################## TARGET ##########################
-AC_ARG_WITH(dest, [  --with-target=ARG	  where ARG is either 'safe' (default), 'grid' or 'zeus'])
+AC_ARG_WITH(target, [  --with-target=ARG	  where ARG is either 'safe' (default), 'grid' or 'zeus'])
 AC_SUBST(DEST,safe)
 
 if test "$with_target" == "safe" 
@@ -51,40 +56,58 @@ then
 elif test "$with_target" == "yes" 
 then
    AC_MSG_ERROR([Please specify a valid argument for --with-target=ARG option])
+elif test "$with_target" == "" 
+then
+   true
+else
+   AC_MSG_ERROR([Unknown ARG in --with-target=ARG])
 fi
 
+AC_MSG_NOTICE([Compiling for target '$DEST'])
 
 ######################## PLUGINS ##########################
+CPPFLAGSOLD="$CPPFLAGS"
+LDFLAGSOLD="$LDFLAGS"
+
 echo ""
 echo "================================="
 echo "=       ACTIVATED PLUGINS       ="
 echo "================================="
 AC_ARG_WITH(boschungio, [  --with-boschungio	  enable BoschungIO (libxml++-2.6 required)])
 AC_SUBST(BOSCHUNGIO,no)
-AC_ARG_WITH(imisio, [  --with-imisio	  enable IMISIO])
+AC_ARG_WITH(imisio,	[  --with-imisio	  enable IMISIO ($ORACLE_HOME needs to be set)])
 AC_SUBST(IMISIO,no)
+AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
 
 if test "$with_boschungio" == "yes"
 then
 	AC_MSG_NOTICE([BoschungIO enabled. Checking for prerequisites...])
 	PKG_CHECK_MODULES(XMLPP, libxml++-2.6 >= 2.8)
 	CPPFLAGS="$CPPFLAGS $XMLPP_CFLAGS"
-	AC_CHECK_HEADERS(libxml++/libxml++.h)
+
+	AC_CHECK_HEADER([libxml++/libxml++.h],,[AC_MSG_ERROR([Error, the libxml++.h header file is missing!])])
+	AC_CHECK_LIB(xml2, xmlParseFile,,[AC_MSG_ERROR([Error, the xml++ library is missing!])])
+
 	AC_SUBST(XMLPP_CFLAGS)
  	AC_SUBST(XMLPP_LIBS)
 
-	if test "$ac_cv_header_libxmlpp_libxmlpp_h" == "no"
-	then
-		AC_MSG_ERROR([Error, the libxml++.h header file is missing!])
-	fi
 	AC_SUBST(BOSCHUNGIO,yes)
 fi
 
 if test "$with_imisio" == "yes"
 then
+	echo ""
+	AC_MSG_NOTICE([IMISIO enabled. Checking for prerequisites...])
+	CPPFLAGS="$CPPFLAGS -I$ORACLE_HOME/include"
+	LDFLAGS="$LDFLAGS -L$ORACLE_HOME/lib  -lclntsh -lnnz11"
+	AC_CHECK_HEADER([occi.h],,[AC_MSG_ERROR([Error, the occi.h header file is missing!])])
+	AC_CHECK_LIB([occi], [main],,[AC_MSG_ERROR([Error, the occi library is missing!])])
 	AC_SUBST(IMISIO,yes)
 fi
 
+AC_SUBST(CPPFLAGS, $CPPFLAGSOLD)
+AC_SUBST(LDFLAGS,$LDFLAGSOLD)
 
-#AC_CONFIG_FILES([test/Makefile])
+echo 
 AC_OUTPUT(Makefile)
+echo "Run 'make' to compile the meteoio library"
