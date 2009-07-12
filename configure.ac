@@ -1,12 +1,22 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
+AC_PREREQ([2.6])
 AC_INIT(meteoio, 0.1, bavay@slf.ch)
 
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AC_PATH_PROG(ac_prog_pkg_config, pkg-config, no) 
+if test "$ac_cv_path_ac_prog_pkg_config" = "no" ; then
+   echo "*** The pkg-config script could not be found. Make sure it is"
+   echo "*** in your path, or set the PKG_CONFIG environment variable"
+   echo "*** to the full path to pkg-config."
+   echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+   rm -f configure config.status
+   exit 1
+fi
+
 #AC_PROG_LIBTOOL
 AC_LANG(C++)
 

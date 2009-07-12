@@ -31,10 +31,25 @@ fi
 rm -f config.cache acconfig.h 
 
 echo "Running aclocal..."       && \
-aclocal                         && \
-echo "Running autoconf..."      && \
+aclocal
+
+if test "$?" != "0" 
+then
+    echo "Can't find program 'aclocal' - is the autoconf package installed?"
+    exit 1
+fi
+
+echo "Running autoconf..."
 autoconf
 
+if test "$?" != "0" 
+then
+    echo "Can't find program 'autoconf' - is the autoconf package installed?"
+    exit 1
+fi
+
+echo
 echo "Please run './configure' to create the Makefile"
+echo
 
 exit 0
