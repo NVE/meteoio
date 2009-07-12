@@ -50,30 +50,31 @@ fi
 
 AC_MSG_NOTICE([Compiling for mode '$MODE'])
 
-######################## TARGET ##########################
-AC_ARG_WITH(target, [  --with-target=ARG	  where ARG is either 'safe' (default), 'grid' or 'zeus'])
+###################### DESTINATION #######################
+AC_ARG_WITH(destination, [  --with-destination=ARG  where ARG is either 'safe' (default), 'grid' or 'zeus'])
 AC_SUBST(DEST,safe)
 
-if test "$with_target" == "safe" 
+if test "$with_destination" == "safe" 
 then
    AC_SUBST(DEST,safe)
-elif test "$with_target" == "grid" 
+elif test "$with_destination" == "grid" 
 then 
    AC_SUBST(DEST,grid)
-elif test "$with_target" == "zeus" 
+elif test "$with_destination" == "zeus" 
 then 
    AC_SUBST(DEST,zeus)
-elif test "$with_target" == "yes" 
+elif test "$with_destination" == "yes" 
 then
-   AC_MSG_ERROR([Please specify a valid argument for --with-target=ARG option])
-elif test "$with_target" == "" 
+   AC_MSG_ERROR([Please specify a valid  ssh -L3690:svn.slf.local:3690 montblanc
+argument for --with-destination=ARG option])
+elif test "$with_destination" == "" 
 then
    true
 else
-   AC_MSG_ERROR([Unknown ARG in --with-target=ARG])
+   AC_MSG_ERROR([Unknown ARG in --with-destination=ARG])
 fi
 
-AC_MSG_NOTICE([Compiling for target '$DEST'])
+AC_MSG_NOTICE([Compiling for destination '$DEST'])
 
 ######################## PLUGINS ##########################
 CPPFLAGSOLD="$CPPFLAGS"
@@ -85,7 +86,7 @@ echo "=       ACTIVATED PLUGINS       ="
 echo "================================="
 AC_ARG_WITH(boschungio, [  --with-boschungio	  enable BoschungIO (libxml++-2.6 required)])
 AC_SUBST(BOSCHUNGIO,no)
-AC_ARG_WITH(imisio,	[  --with-imisio	  enable IMISIO ($ORACLE_HOME needs to be set)])
+AC_ARG_WITH(imisio,	[  --with-imisio		  enable IMISIO ($ORACLE_HOME needs to be set)])
 AC_SUBST(IMISIO,no)
 AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
 
