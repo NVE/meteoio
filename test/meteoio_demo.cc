@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
 	vector<MeteoData> vecMeteo;
 	vector<StationData> vecStation;
 	
-	IOInterface *ioTest=NULL; //Initialization vital!
+	IOHandler *ioTest=NULL; //Initialization vital!
 	
 	try {
 		ioTest = new IOHandler("io.ini");

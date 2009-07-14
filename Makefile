@@ -3,31 +3,31 @@
 #
 #Destination system: either zeus, grid or safe
 
-#Prefix: 	@prefix@
-#C compiler: 	@CC@
-#C++ compiler: 	@CXX@
-#libxml++ libs: 	@XMLPP_LIBS@
+#Prefix: 	/usr/local
+#C compiler: 	gcc
+#C++ compiler: 	g++
+#libxml++ libs: 	
 
 ####### USER CONFIGURATION
 #Destination system: either zeus, grid or safe
-DEST 	= @DEST@
+DEST 	= safe
 
 # build mode: release or debug
-MODE	 = @MODE@
+MODE	 = release
 
 # plugins to build (yes/no)
-BOSCHUNGIO 	= @BOSCHUNGIO@
-IMISIO		= @IMISIO@
+BOSCHUNGIO 	= no
+IMISIO		= no
 
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
 
 ifeq ($(DEST),safe)		#safe defaults
-	CC       = @CC@ -DGNU
-	CXX      = @CXX@
+	CC       = gcc -DGNU
+	CXX      = g++
 	FF	 = gfortran
-	LINKER   = @CXX@ -DGNU
+	LINKER   = g++ -DGNU
 	POPCC   = popcc
 	ARCH     = -march=pentium3
 	OPTIM    = -fomit-frame-pointer -O3
@@ -239,8 +239,8 @@ $(LIBDIR)/libfilter.a: $(FILTER_OBJ)
 $(LIBDIR)/libboschungio.so: $(SRCDIR)/BoschungIO.cc $(SRCDIR)/BoschungIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(BOSCHUNGIO),yes)
 	@printf "**** Compiling Boschung plugin\n"
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(SRCDIR)/BoschungIO.o $(SRCDIR)/BoschungIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(SRCDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE)  -c -o $(SRCDIR)/BoschungIO.o $(SRCDIR)/BoschungIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(SRCDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) 
 endif
 
 $(LIBDIR)/libimisio.so: $(SRCDIR)/ImisIO.cc $(SRCDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a

@@ -18,7 +18,7 @@ INCLUDE=-I. -I$(METEOIODIR) -I$(FILTERDIR)
 
 INCLUDE_POPC=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ $(shell pkg-config --cflags libxml++-2.6) -I$(A3DROOT)/snowdrift
 
-all: meteoio_demo
+seq: meteoio_demo
 
 .cc.o: $*.cc $*.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE)
@@ -45,7 +45,7 @@ testThomas: testThomas.o
 testConfigReader: main.o ConfigReader.o slfutils.o slfexceptions.o
 	$(CC) -o $@ main.o ConfigReader.o slfutils.o slfexceptions.o
 
-all_par: meteoio_demo.popc
+par: meteoio_demo.popc
 
 %_par.o : %.cc
 	$(POPCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_POPC) -o $@
