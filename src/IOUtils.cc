@@ -208,12 +208,12 @@ void IOUtils::VincentyInverse(const double& lat_ref, const double& lon_ref, cons
 	const double sinAlpha = cosU1*sin(alpha1);
 	const double cos2alpha = 1. - pow2(sinAlpha);
 	const double u2 = cos2alpha * (a*a - b*b) / (b*b);
-	const double A = 1. + u2/16384. * (4096. + u2*(-768.+u2*(320.-175*u2)) );
+	const double A = 1. + u2/16384. * (4096. + u2*(-768.+u2*(320.-175.*u2)) );
 	const double B = u2/1024. * (256. + u2*(-128.+u2*(74.-47.*u2)));
 	
 	double sigma = distance / (b*A);
 	double sigma_p = 2.*PI;
-	double cos2sigma_m;
+	double cos2sigma_m = cos( 2.*sigma1 + sigma ); //required to avoid uninitialized value
 
 	while (fabs(sigma - sigma_p) > thresh) {
 		cos2sigma_m = cos( 2.*sigma1 + sigma );

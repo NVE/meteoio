@@ -4,6 +4,8 @@
 #include <vector>
 #include "IOExceptions.h"
 
+#define NOSAFECHECKS
+
 /**
  * @class CArray
  * @brief The template class CArray is a 1D array (vector) able to hold any type of object as datatype

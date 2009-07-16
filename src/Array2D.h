@@ -4,6 +4,8 @@
 #include <vector>
 #include "IOExceptions.h"
 
+#define NOSAFECHECKS
+
 template <class T> class CArray2D;
 
 /**

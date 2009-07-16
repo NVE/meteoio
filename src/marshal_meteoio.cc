@@ -5,6 +5,8 @@
 
 void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize, int flag, POPMemspool *temp)
 {
+  (void)maxsize;
+  (void)*temp;
   if (flag & FLAG_MARSHAL)
     {
       int n=data.GetSize();
@@ -21,7 +23,10 @@ void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize
     }
 }
 
-void marshal_vector_MeteoData(POPBuffer &buf, vector<MeteoData> &data, int maxsize, int flag, POPMemspool *temp){
+void marshal_vector_MeteoData(POPBuffer &buf, vector<MeteoData> &data, int maxsize, int flag, POPMemspool *temp)
+{
+  (void)maxsize;
+  (void)*temp;
   if(flag&FLAG_MARSHAL)
   {
     int n=data.size();
@@ -46,7 +51,10 @@ void marshal_vector_MeteoData(POPBuffer &buf, vector<MeteoData> &data, int maxsi
 }
 
 
-void marshal_vector_StationData(POPBuffer &buf, vector<StationData> &data, int maxsize, int flag, POPMemspool *temp){
+void marshal_vector_StationData(POPBuffer &buf, vector<StationData> &data, int maxsize, int flag, POPMemspool *temp)
+{
+  (void)maxsize;
+  (void)*temp;
   if(flag&FLAG_MARSHAL)
   {
     int n=data.size();
@@ -70,7 +78,10 @@ void marshal_vector_StationData(POPBuffer &buf, vector<StationData> &data, int m
   }
 }
 
-void marshal_vector_Grid2DObject(POPBuffer &buf, vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp){
+void marshal_vector_Grid2DObject(POPBuffer &buf, vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp)
+{
+  (void)maxsize;
+  (void)*temp;
   assert(false); /* This line is here to check if the method is used*/
   if(flag&FLAG_MARSHAL)
   {
@@ -99,6 +110,8 @@ void marshal_vector_Grid2DObject(POPBuffer &buf, vector<Grid2DObject> &data, int
 
 void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp)
 {
+  (void)maxsize;
+  (void)*temp;
   if (flag & FLAG_MARSHAL)
     {
       //int dim[2];
@@ -134,6 +147,8 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
 
 void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp)
 {
+  (void)maxsize;
+  (void)*temp;
   if (flag & FLAG_MARSHAL)
     {
       int dim[2];
@@ -166,6 +181,8 @@ void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, 
 
 void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int flag, POPMemspool *temp)
 {
+  (void)maxsize;
+  (void)*temp;
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
@@ -180,11 +197,13 @@ void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int fl
       data.SetSize(n);
       if (n) buf.UnPack((double *)&data[0],n);
     }
-       
+
 }
 
 void marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
 {
+  (void)maxsize;
+  (void)*temp;
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
@@ -209,6 +228,8 @@ void marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, P
 
 void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
 {
+  (void)maxsize;
+  (void)*temp;
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
@@ -259,6 +280,8 @@ void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int 
 
 void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
 {
+  (void)maxsize;
+  (void)*temp;
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
