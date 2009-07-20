@@ -16,11 +16,9 @@
 template<class T> class CArray {
 	public:
 		CArray(unsigned int asize=0);
-		~CArray();
 
 		T& operator [](unsigned int index);
 		const T operator [](unsigned int index) const;
-		CArray<T>& operator =(CArray<T>& val);
 
 		unsigned int GetSize();
 		void SetSize(unsigned int asize);
@@ -36,10 +34,6 @@ template<class T> class CArray {
 template<class T> CArray<T>::CArray(unsigned int asize) {
 	SetSize(asize);
 	size = asize;
-}
-
-template<class T> CArray<T>::~CArray() {
-	RemoveAll();
 }
 
 template<class T> unsigned int CArray<T>::GetSize() {
@@ -71,12 +65,6 @@ template<class T> const T CArray<T>::operator [](unsigned int index) const {
 #endif
 
 	return vecData[index];
-}
-
-template<class T> CArray<T>& CArray<T>::operator=(CArray & val) {
-	vecData = val.vecData;
-	size = val.size;
-	return *this;
 }
 
 template<class T> void CArray<T>::RemoveAll() {

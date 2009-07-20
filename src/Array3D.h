@@ -1,134 +1,158 @@
 #ifndef ARRAY3D_H
 #define ARRAY3D_H
 
-#include <errno.h>
-#include <memory.h>
-#include <stdlib.h>
+#include "IOExceptions.h"
+#include "Array2D.h"
+#include <vector>
 
-template<class T> class CArray3D
-{
-	public:
-		CArray3D();
-		CArray3D(int anx, int any, int anz);
-		~CArray3D();
-		void Create(int anx, int any, int anz);
+#define NOSAFECHECKS
 
-		void GetSize(int &anx, int &any, int &anz);
+template <class T> class Array3D;
+template <class T> class Array3DProxy2;
 
-		void Destroy();
+/**
+ * @class Array3DProxy
+ * @brief The template class Array3DProxy is a helper class for the template class Array3D
+ *        with the purpose of adding the [][][] operator to Array3D
+ *
+ * @author Thomas Egger
+ */
+template <class T> class Array3DProxy {
+ 	public:
+		friend class Array3D<T>;
+		Array3DProxy2<T> operator[](unsigned int _any) {
+			return Array3DProxy2<T>(array3D, anx, _any); 
+		}
 
-		inline operator T***();
-	protected:
-		T ***data;
-		int nx;
-		int ny;
-		int nz;
+ 	private:
+ 		Array3DProxy(Array3D<T>& _array3D, unsigned int& _anx) : array3D(_array3D), anx(_anx){}
+		Array3D<T>& array3D;
+		unsigned int anx;
 };
 
-template<class T> 
-CArray3D<T>::CArray3D()
-{
-	nx=ny=nz=0;
-	data=0;
-}
-
-template<class T> 
-CArray3D<T>::CArray3D(int anx, int any, int anz)
-{
-	nx=ny=nz=0;
-	data=0;
-	Create(anx,any,anz);
-}
-
-template<class T> 
-CArray3D<T>::~CArray3D()
-{
-	Destroy();
-}
-
-template<class T> 
-void CArray3D<T>::Create(int anx, int any, int anz)
-{
-	if (anx==nx && any==ny && anz==nz) {
-		return;
-	}
-
-	if (anx<=0 || any<=0 || anz<=0) {
-		Destroy();
-		return;
-	}
-
-	T ***tmpdat;
-	//1st dimension
-	if ( (tmpdat=new T **[anx])==NULL) {
-		throw errno;
-	}
-
-	//2nd dimension
-	for (int i=0;i<anx;i++) {
-		if ( (tmpdat[i]=new T * [any])==NULL) {
-			for (int k=0;k<i;k++) delete tmpdat[k];
-			delete tmpdat;
-			throw errno;
+/**
+ * @class Array3DProxy2
+ * @brief The template class Array3DProxy2 is a helper class for the template class Array3D
+ *        with the purpose of adding the [][][] operator to Array3D
+ *
+ * @author Thomas Egger
+ */
+template <class T> class Array3DProxy2 {
+ 	public:
+		friend class Array3DProxy<T>;
+		T& operator[](unsigned int _anz) {
+			return array3D(anx, any, _anz);
 		}
+
+	private:
+ 		Array3DProxy2(Array3D<T>& _array3D, unsigned int& _anx, unsigned int& _any) : array3D(_array3D), anx(_anx), any(_any){}
+		Array3D<T>& array3D;
+		unsigned int anx;
+		unsigned int any;
+}; 
+
+
+/**
+ * @class Array3D
+ * @brief The template class Array3D is a 3D Array (Tensor) able to hold any type of object as datatype
+ *
+ * @date  2009-07-19
+ * @author Thomas Egger
+ */
+template<class T> class Array3D {
+	public:
+		Array3D();
+		Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz);
+		Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init);
+
+		void resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz);
+		void resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init);
+		void size(unsigned int& _nx, unsigned int& _ny, unsigned int& _nz) const;
+		void clear();
+
+		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
+		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
+		Array3DProxy<T> operator[](unsigned int i);
+
+	protected:
+		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
+		unsigned int nx;
+		unsigned int ny;
+		unsigned int nz;
+		unsigned int nxny; //nx times ny
+};
+
+
+template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) {
+#ifndef NOSAFECHECKS
+	if ((x >= nx) || (y >= ny) || (z >= nz)) {
+		throw IndexOutOfBoundsException("", AT);
 	}
-
-	//3rd dimension....
-	for (int i=0;i<anx;i++)
-	for (int j=0;j<any;j++)
-	if ( (tmpdat[i][j]=new T[anz])==NULL) {
-		//delete all allocated memory and throw errno
-		for (int i1=0;i1<i;i1++)
-		for (int j1=0;j1<ny;j1++) if (tmpdat[i1][j1]!=NULL) delete tmpdat[i1][j1];
-		for (int j1=0;j1<j;j1++) if (tmpdat[i][j1]!=NULL) delete tmpdat[i][j1];
-
-		for (int i1=0;i1<anx;i1++) {
-			delete tmpdat[i1];
-		}
-		delete tmpdat;
-		throw errno;
-	}
-
-	Destroy();
-	data=tmpdat;
-	nx=anx;
-	ny=any;
-	nz=anz;
+#endif
+	return vecData[x*ny + y + z*nxny];
 }
 
-template<class T> 
-void CArray3D<T>::GetSize(int &anx, int &any, int &anz)
-{
-	anx=nx;
-	any=ny;
-	anz=nz;
+template<class T> const T Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const {
+#ifndef NOSAFECHECKS
+	if ((x >= nx) || (y >= ny) || (z >= nz)) {
+		throw IndexOutOfBoundsException("", AT);
+	}
+#endif
+	return vecData[x*ny + y + z*nxny];
 }
 
-template<class T> 
-void CArray3D<T>::Destroy()
-{
-	if (data==NULL) {
-		return;
+template<class T> Array3DProxy<T> Array3D<T>::operator[](unsigned int i) {
+	return Array3DProxy<T>(*this, i); 
+}
+
+
+template<class T> Array3D<T>::Array3D() {
+	nx = ny = nz = nxny = 0;
+}
+
+template<class T> Array3D<T>::Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz) {
+	resize(_nx, _ny, _nz);
+}
+
+template<class T> Array3D<T>::Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init) {
+	resize(_nx, _ny, _nz, _init);
+}
+
+template<class T> void Array3D<T>::resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz) {
+	clear();
+
+	if ((_nx > 0) && (_ny > 0) && (_nz > 0)) {
+		vecData.resize(_nx*_ny*_nz);
+		nx = _nx;
+		ny = _ny;
+		nz = _nz;
+		nxny = nx*ny;
+	} else {
+		throw IndexOutOfBoundsException("", AT);    
 	}
-	for (int i=0;i<nx;i++) {
-		if (data[i]!=NULL) {
-			for (int j=0;j<ny;j++) {
-				if (data[i][j]!=NULL) {
-					delete data[i][j];
-				}
+}
+
+template<class T> void Array3D<T>::resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init) {
+	resize(_nx, _ny, _nz);
+
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for (unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) = _init;
 			}
-			delete data[i];
 		}
 	}
-	delete data;
-	data=NULL;
-	nx=ny=nz=0;
 }
 
-template<class T> 
-inline CArray3D<T>::operator T***()
-{
-	return data;
+template<class T> void Array3D<T>::size(unsigned int& _nx, unsigned int& _ny, unsigned int& _nz) const {
+	_nx=nx;
+	_ny=ny;
+	_nz=nz;
+}
+
+template<class T> void Array3D<T>::clear() {
+	vecData.clear();
+	nx = ny = nz = nxny = 0;
 }
 
 #endif

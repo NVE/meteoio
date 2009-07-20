@@ -21,7 +21,6 @@ template <class T> class CArray2DProxy {
 		T& operator[](unsigned int j) {
 			return array2D(anx, j);
 		}
-		~CArray2DProxy(){}
 
 	private:
 		CArray2DProxy(CArray2D<T>& _array2D, int _anx) : array2D(_array2D), anx(_anx){}
@@ -39,14 +38,12 @@ template<class T> class CArray2D {
 	public:
 		CArray2D();
 		CArray2D(int anx, int any);
-		~CArray2D();
 
 		void Create(int nx, int ny);
 		void Create(int nx, int ny, T init);
 		void GetSize(int &nx, int &ny);
 
 		void Destroy();
-		CArray2D<T>& operator=(CArray2D &val);
 		T& operator ()(unsigned int x, unsigned int y);
 		const T operator ()(unsigned int x, unsigned int y) const;
 		CArray2DProxy<T> operator[](unsigned int i);
@@ -93,10 +90,6 @@ template<class T> CArray2D<T>::CArray2D(int anx, int any) {
 	Create(anx,any);
 }
 
-template<class T> CArray2D<T>::~CArray2D() {
-	Destroy();
-}
-
 template<class T> void CArray2D<T>::Create(int anx, int any) {
 	Destroy();
 
@@ -127,17 +120,6 @@ template<class T> void CArray2D<T>::GetSize(int &anx, int &any) {
 template<class T> void CArray2D<T>::Destroy() {
 	vecData.clear();
 	nx=ny=0;
-}
-
-template<class T> CArray2D<T>& CArray2D<T>::operator=(CArray2D<T>& val) {
-	int anx,any;
-	val.GetSize(anx,any);
-	
-	vecData = val.vecData;
-	nx = anx;
-	ny = any;
-
-	return *this;
 }
 
 #endif
