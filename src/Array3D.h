@@ -2,7 +2,6 @@
 #define ARRAY3D_H
 
 #include "IOExceptions.h"
-#include "Array2D.h"
 #include <vector>
 
 #define NOSAFECHECKS
@@ -89,7 +88,9 @@ template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigne
 		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
-	return vecData[x*ny + y + z*nxny];
+
+	//ROW-MAJOR allignment of the vector: fully C-compatible memory layout
+	return vecData[x + y*nx + z*nxny];
 }
 
 template<class T> const T Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const {
@@ -98,7 +99,7 @@ template<class T> const T Array3D<T>::operator()(const unsigned int& x, const un
 		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
-	return vecData[x*ny + y + z*nxny];
+	return vecData[x + y*nx + z*nxny];
 }
 
 template<class T> Array3DProxy<T> Array3D<T>::operator[](unsigned int i) {
@@ -135,10 +136,10 @@ template<class T> void Array3D<T>::resize(const unsigned int& _nx, const unsigne
 template<class T> void Array3D<T>::resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init) {
 	resize(_nx, _ny, _nz);
 
-	for (unsigned int ii=0; ii<nx; ii++) {
+	for (unsigned int ii=0; ii<nz; ii++) { 
 		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) = _init;
+			for (unsigned int kk=0; kk<nx; kk++) {
+				operator()(kk,jj,ii) = _init; //Running through the vector in order of memory alignment
 			}
 		}
 	}
