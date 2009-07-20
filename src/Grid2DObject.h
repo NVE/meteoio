@@ -20,56 +20,58 @@ class Grid2DObject{
 #endif  
 	public:
 		/**
-		* Default constructor.
-		* Initializes all variables to 0, except nodata, which is initialized to -9999.0
+		* @brief Default constructor.
+		* Initializes all variables to 0, except lat/long which are initialized to IOUtils::nodata
 		*/
 		Grid2DObject();
-		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const double& nodata);
+		Grid2DObject(const unsigned int ncols, const unsigned int nrows,
+			const double xllcorner, const double yllcorner,
+			const double latitude, const double longitude,
+			const double cellsize);
 
-		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const double& nodata,
-		       CArray2D<double>& grid2D_in);
+		Grid2DObject(const unsigned int ncols, const unsigned int nrows,
+			const double xllcorner, const double yllcorner,
+			const double latitude, const double longitude,
+			const double cellsize, CArray2D<double>& grid2D_in);
 
 		/**
 		* @brief Set all variables in one go.
-		* @param ncols (unsigned int&) number of colums in the grid2D
-		* @param nrows (unsigned int&) number of rows in the grid2D
-		* @param xllcorner (double&) x-coordinate of lower left corner
-		* @param yllcorner (double&) y-coordinate of lower left corner
-		* @param latitude (double&) decimal latitude
-		* @param longitude (double&) decimal longitude
-		* @param cellsize (double&) value for cellsize in grid2D
-		* @param nodata (double&) value representing a NODATA value
+		* @param ncols (unsigned int) number of colums in the grid2D
+		* @param nrows (unsigned int) number of rows in the grid2D
+		* @param xllcorner (double) x-coordinate of lower left corner
+		* @param yllcorner (double) y-coordinate of lower left corner
+		* @param latitude (double) decimal latitude
+		* @param longitude (double) decimal longitude
+		* @param cellsize (double) value for cellsize in grid2D
 		*/
-		void set(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const double& nodata);
+		void set(const unsigned int ncols, const unsigned int nrows,
+			const double xllcorner, const double yllcorner,
+			const double latitude, const double longitude,
+			const double cellsize);
 		/**
-		* @brief Set all variables in one go. Notably the member grid2D of type CArray2D<double> 
-		* will be destroyed and recreated to size ncols x nrows.
-		*
-		* @param ncols (unsigned int&) number of colums in the grid2D
-		* @param nrows (unsigned int&) number of rows in the grid2D
-		* @param xllcorner (double&) x-coordinate of lower left corner
-		* @param yllcorner (double&) y-coordinate of lower left corner
-		* @param latitude (double&) decimal latitude
-		* @param longitude (double&) decimal longitude
-		* @param cellsize (double&) value for cellsize in grid2D
-		* @param nodata (double&) value representing a NODATA value
-		* @param grid2D_in (CArray<double>&) grid to be copied by value
+		* @brief Set all variables in one go. Notably the member grid2D of type 
+		* CArray2D\<double\> will be destroyed and recreated to size ncols x nrows.
+		* @param ncols (unsigned int) number of colums in the grid2D
+		* @param nrows (unsigned int) number of rows in the grid2D
+		* @param xllcorner (double) x-coordinate of lower left corner
+		* @param yllcorner (double) y-coordinate of lower left corner
+		* @param latitude (double) decimal latitude
+		* @param longitude (double) decimal longitude
+		* @param cellsize (double) value for cellsize in grid2D
+		* @param nodata (double) value representing a NODATA value
+		* @param grid2D_in (CArray\<double\>&) grid to be copied by value
 		*/
-		void set(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const double& nodata,
-			CArray2D<double>& grid2D_in);
-
+		void set(const unsigned int ncols, const unsigned int nrows,
+			const double xllcorner, const double yllcorner,
+			const double latitude, const double longitude,
+			const double cellsize, CArray2D<double>& grid2D_in); //TODO: const CArray would be better...
+		
+		/**
+		* @brief returns a subset of the grid object
+		* @param start_col (const int) starting column of the subset
+		* @param nb_cols (const int) number of columns of the subset
+		*/
+		virtual Grid2DObject* sub(const unsigned int start_col, const unsigned int nb_cols);
 
 		/**
 		* @brief Serialize method for POPC. Used to marshall data and send it from an object to another.
@@ -79,7 +81,7 @@ class Grid2DObject{
 		*/  
 		CArray2D<double> grid2D;
 		unsigned int ncols, nrows;
-		double xllcorner, yllcorner, cellsize, nodata;
+		double xllcorner, yllcorner, cellsize;
 		double latitude, longitude;
 };
 

@@ -7,6 +7,7 @@ AC_INIT(meteoio, 0.1, bavay@slf.ch)
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_RANLIB
 AC_PATH_PROG(ac_prog_pkg_config, pkg-config, no) 
 if test "$ac_cv_path_ac_prog_pkg_config" = "no" ; then
    echo "*** The pkg-config script could not be found. Make sure it is"
@@ -22,18 +23,24 @@ AC_LANG(C++)
 
 # Checks for libraries.
 AC_CHECK_LIB([dl], [main],,[AC_MSG_ERROR([Error, the dl library is missing!])])
+AC_CHECK_LIB([c], [main],,[AC_MSG_ERROR([Error, the c library is missing!])])
+AC_CHECK_LIB([m], [main],,[AC_MSG_ERROR([Error, the math library is missing!])])
 
 # Checks for header files.
-AC_CHECK_HEADERS([dlfcn.h dirent.h sys/stat.h math.h],,[AC_MSG_ERROR([The header files must be present!])])
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_CHECK_HEADERS([dlfcn.h memory.h stdlib.h string.h sys/stat.h math.h],,[AC_MSG_ERROR([The header files must be present!])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 #AC_HEADER_STDBOOL
+AC_C_CONST
 #AC_C_INLINE
 #AC_TYPE_SIZE_T
 
 # Checks for library functions.
-#AC_FUNC_REALLOC
-AC_CHECK_FUNCS([floor pow sqrt])
+AC_FUNC_CLOSEDIR_VOID
+AC_FUNC_STAT
+AC_CHECK_FUNCS([floor pow sqrt cos sin tan atan atan2])
 
 echo
 echo "================================="

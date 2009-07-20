@@ -17,6 +17,13 @@
 
 using namespace std;
 
+#ifndef MAX
+#define MAX(x,y)    (((x) < (y)) ? (y) : (x))
+#endif
+#ifndef MIN
+#define MIN(x,y)    (((x) < (y)) ? (x) : (y))
+#endif
+
 namespace IOUtils {
 
 	const double nodata = -999.0;	//HACK: we should define the same nodata everywhere...

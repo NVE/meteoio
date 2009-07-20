@@ -80,6 +80,7 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 	unsigned int ncols, nrows;
 	double xllcorner, yllcorner, cellsize, nodata;
 	double latitude, longitude;
+	double tmp_val;
 	vector<string> tmpvec;
 	string line="";
 	map<string, string> header; // A map to save key value pairs of the file header
@@ -131,7 +132,7 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 		}
     
 		//Initialize the 2D grid
-		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize, nodata);
+		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize);
 		
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
@@ -143,8 +144,15 @@ void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 			}
 			
 			for (unsigned int ll=0; ll < ncols; ll++){
-				if (!IOUtils::convertString(grid_out.grid2D(ll, kk), tmpvec.at(ll), std::dec)) {
+				if (!IOUtils::convertString(tmp_val, tmpvec.at(ll), std::dec)) {
 					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
+				}
+				
+				if(tmp_val<=nodata) {
+					//replace file's nodata by uniform, internal nodata
+					grid_out.grid2D(ll, kk) = IOUtils::nodata;
+				} else {
+					grid_out.grid2D(ll, kk) = tmp_val;
 				}
 			}
 		}
@@ -835,7 +843,7 @@ void A3DIO::write2DGrid(const Grid2DObject& grid_in, const string& filename) {
 		fout << "xllcorner \t" << grid_in.xllcorner << endl;
 		fout << "yllcorner \t" << grid_in.yllcorner << endl;    
 		fout << "cellsize \t" << grid_in.cellsize << endl;
-		fout << "NODATA_value \t" << (int)(grid_in.nodata) << endl;
+		fout << "NODATA_value \t" << (int)(IOUtils::nodata) << endl;
 
 		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 			for (unsigned int ll=0; ll < grid_in.ncols; ll++){

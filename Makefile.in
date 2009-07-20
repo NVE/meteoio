@@ -111,6 +111,7 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/ConfigReader.o \
 		$(SRCDIR)/Date_IO.o \
 		$(SRCDIR)/Grid2DObject.o \
+		$(SRCDIR)/DEMObject.o \
 		$(SRCDIR)/IOExceptions.o \
 		$(SRCDIR)/IOUtils.o \
 		$(SRCDIR)/Laws.o \
@@ -134,6 +135,7 @@ METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/ConfigReader_par.o \
 		$(SRCDIR)/Date_IO_par.o \
 		$(SRCDIR)/Grid2DObject_par.o \
+		$(SRCDIR)/DEMObject_par.o \
 		$(SRCDIR)/IOExceptions_par.o \
 		$(SRCDIR)/IOUtils_par.o \
 		$(SRCDIR)/Laws.o \

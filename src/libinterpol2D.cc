@@ -8,6 +8,7 @@
 #include "IOExceptions.h"
 #include "Laws.h"
 #include "libinterpol2D.h"
+#include "IOUtils.h"
 
 
 const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
@@ -180,10 +181,10 @@ void Interpol2D::StdPressureFill(CArray2D<double>& param, const CArray2D<double>
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (unsigned int i=0; i<nx; i++) {
 		for (unsigned int j=0; j<ny; j++) {
-			if (topoheight(i,j)!=dem.nodata) {
+			if (topoheight(i,j)!=IOUtils::nodata) {
 				param(i,j) = lw_AirPressure(topoheight(i,j));
 			} else {
-				param(i,j) = dem.nodata;
+				param(i,j) = IOUtils::nodata;
 			}
 		}
 	}
@@ -205,10 +206,10 @@ void Interpol2D::LapseConstFill(CArray2D<double>& param_out, const double& value
 	//the laspe rate parameters must have been set before
 	for (unsigned int i=0; i<nx; i++) {
 		for (unsigned int j=0; j<ny; j++) {
-			if (topoHeight(i,j)!=dem.nodata) {
+			if (topoHeight(i,j)!=IOUtils::nodata) {
 				param_out(i,j) = (this->*LapseRateProject)(value, altitude,topoHeight(i,j), vecCoefficients);
 			} else {
-				param_out(i,j) = dem.nodata;
+				param_out(i,j) = IOUtils::nodata;
 			}
 		}
 	}
@@ -241,11 +242,11 @@ void Interpol2D::LapseIDWKrieging(CArray2D<double>& T, const CArray2D<double>& t
 	
 	for (unsigned int i=0; i<nx; i++) {
 		for (unsigned int j=0; j<ny; j++) {
-			if (topoHeight(i,j)!=dem.nodata) {
+			if (topoHeight(i,j)!=IOUtils::nodata) {
 				T(i,j) = IDWKriegingCore((xllcorner+i*cellsize), (yllcorner+j*cellsize),vecTref, vecStations_in);
 				T(i,j) = (this->*LapseRateProject)(T(i,j), ref_altitude, topoHeight(i,j), vecCoefficients);
 			} else {
-				T(i,j) = dem.nodata;
+				T(i,j) = IOUtils::nodata;
 			}
 		}
 	}
