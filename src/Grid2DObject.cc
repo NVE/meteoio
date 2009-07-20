@@ -16,26 +16,26 @@ Grid2DObject::Grid2DObject() : grid2D()
 	cellsize = 0.0;
 }
 
-Grid2DObject::Grid2DObject(const unsigned int ncols_in, const unsigned int nrows_in,
-				const double xllcorner_in, const double yllcorner_in,
-				const double latitude_in, const double longitude_in,
-				const double cellsize_in)
+Grid2DObject::Grid2DObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+				const double& xllcorner_in, const double& yllcorner_in,
+				const double& latitude_in, const double& longitude_in,
+				const double& cellsize_in)
 {
 	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in);
 }
 
-Grid2DObject::Grid2DObject(const unsigned int ncols_in, const unsigned int nrows_in,
-				const double xllcorner_in, const double yllcorner_in,
-				const double latitude_in, const double longitude_in,
-				const double cellsize_in, CArray2D<double>& grid2D_in)
+Grid2DObject::Grid2DObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+				const double& xllcorner_in, const double& yllcorner_in,
+				const double& latitude_in, const double& longitude_in,
+				const double& cellsize_in, const CArray2D<double>& grid2D_in)
 {
 	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in, grid2D_in);
 }
 
-void Grid2DObject::set(const unsigned int ncols_in, const unsigned int nrows_in,
-			const double xllcorner_in, const double yllcorner_in,
-			const double latitude_in, const double longitude_in,
-			const double cellsize_in)
+void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_in,
+			const double& xllcorner_in, const double& yllcorner_in,
+			const double& latitude_in, const double& longitude_in,
+			const double& cellsize_in)
 {
 	ncols = ncols_in;
 	nrows = nrows_in;
@@ -67,10 +67,10 @@ void Grid2DObject::set(const unsigned int ncols_in, const unsigned int nrows_in,
 
 }
 
-void Grid2DObject::set(const unsigned int ncols_in, const unsigned int nrows_in,
-			const double xllcorner_in, const double yllcorner_in,
-			const double latitude_in, const double longitude_in,
-			const double cellsize_in, CArray2D<double>& grid2D_in)
+void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_in,
+			const double& xllcorner_in, const double& yllcorner_in,
+			const double& latitude_in, const double& longitude_in,
+			const double& cellsize_in, const CArray2D<double>& grid2D_in)
 {
 	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in);
 
@@ -82,15 +82,10 @@ void Grid2DObject::set(const unsigned int ncols_in, const unsigned int nrows_in,
 	}
 
 	//Copy by value, after destroying the old grid
-	grid2D.Create(ncols, nrows);
-	for(unsigned int i=0; i<ncols; i++) {
-		for(unsigned int j=0; j<nrows; j++) {
-			grid2D(i,j) = grid2D_in(i,j);
-		}
-	}
+	grid2D = grid2D_in;
 }
 
-Grid2DObject *Grid2DObject::sub(const unsigned int start_col, const unsigned int nb_cols)
+Grid2DObject *Grid2DObject::sub(const unsigned int& start_col, const unsigned int& nb_cols)
 {
 	if(nb_cols==0) {
 		throw InvalidArgumentException("requesting a subset of 0 columns for Grid2DObject", AT);

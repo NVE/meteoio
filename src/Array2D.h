@@ -41,7 +41,7 @@ template<class T> class CArray2D {
 
 		void Create(int nx, int ny);
 		void Create(int nx, int ny, T init);
-		void GetSize(int &nx, int &ny);
+		void GetSize(int &nx, int &ny) const;
 
 		void Destroy();
 		T& operator ()(unsigned int x, unsigned int y);
@@ -112,7 +112,7 @@ template<class T> void CArray2D<T>::Create(int anx, int any, T init) {
 	}
 }
 
-template<class T> void CArray2D<T>::GetSize(int &anx, int &any) {
+template<class T> void CArray2D<T>::GetSize(int &anx, int &any) const{
 	anx=nx;
 	any=ny;
 }

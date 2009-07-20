@@ -6,7 +6,7 @@
 * @brief Constructor that sets variables from a Grid2DObject
 * @param dem_in (Grid2DObject&) grid contained in a Grid2DObject
 */
-DEMObject::DEMObject(Grid2DObject& dem_in)
+DEMObject::DEMObject(const Grid2DObject& dem_in)
 {
 	set(dem_in.ncols, dem_in.nrows, dem_in.xllcorner, dem_in.yllcorner, dem_in.latitude, dem_in.longitude, dem_in.cellsize, dem_in.grid2D);
 }
@@ -17,17 +17,17 @@ DEMObject::DEMObject(Grid2DObject& dem_in)
 * @param nb_cols (unsigned int) number of columns
 * @return new DEMObject
 */
-DEMObject* DEMObject::sub(const unsigned int start_col, const unsigned int nb_cols)
+DEMObject* DEMObject::sub(const unsigned int& start_col, const unsigned int& nb_cols)
 {
 	if(nb_cols==0) {
 		throw InvalidArgumentException("requesting a subset of 0 columns for DEMObject", AT);
 	}
 
 	//allocate memory and get a pointer to it for the sub_dem
-	//DEMObject* sub_dem = new DEMObject(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
+	DEMObject* sub_dem = new DEMObject(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
 
-	DEMObject* sub_dem = new DEMObject();
-	sub_dem->set(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
+	//DEMObject* sub_dem = new DEMObject();
+	//sub_dem->set(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
 
 	//filling the grids
 	for (unsigned int i=0; i<nb_cols; i++) {
@@ -67,7 +67,7 @@ void DEMObject::Update() {
 	CalculateAziSlopeCurve(0);
 }
 
-void DEMObject::CalculateAziSlopeCurve(const int Hick) {
+void DEMObject::CalculateAziSlopeCurve(const int& Hick) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 //****        DEFINITIONS           ****//
 // coordinate:                          //
@@ -111,7 +111,7 @@ void DEMObject::CalculateAziSlopeCurve(const int Hick) {
 
 } // end of CalculateAziSlope
 
-double DEMObject::CalculateAzi(const double Nx, const double Ny, const double Nz, const double slope) {
+double DEMObject::CalculateAzi(const double& Nx, const double& Ny, const double& Nz, const double& slope) {
 //Calculates the aspect at a given point knowing its normal vector and slope
 //(direction of the normal pointing out of the surface, clockwise from north)
 //This azimuth calculation is similar to Hodgson (1998)
@@ -137,7 +137,7 @@ double DEMObject::CalculateAzi(const double Nx, const double Ny, const double Nz
 }
 
 
-void DEMObject::CalculateHickNormal(const unsigned int i, const unsigned int j, const double dx_sum, const double dy_sum) {
+void DEMObject::CalculateHickNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum) {
 //This calculates the surface normal vector using the steepest slope method:
 //the steepest slope found in the eight cells surrounding (i,j) is given to be the slope in (i,j)
 //Beware, sudden steps could happen
@@ -172,7 +172,7 @@ void DEMObject::CalculateHickNormal(const unsigned int i, const unsigned int j, 
 	}
 }
 
-void DEMObject::CalculateCorripioNormal(const unsigned int i, const unsigned int j, const double dx_sum, const double dy_sum) {
+void DEMObject::CalculateCorripioNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum) {
 //This calculates the surface normal vector using the two triangle method given in Corripio (2002)
 
 	if ( i > 0 && i < ncols - 1 && j > 0 && j < nrows - 1 ) { // for not border grid cells
@@ -200,7 +200,7 @@ void DEMObject::CalculateCorripioNormal(const unsigned int i, const unsigned int
 	}
 }
 
-void DEMObject::CalculateSurfaceDeltas(const unsigned int i, const unsigned int j, double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3) {
+void DEMObject::CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j, double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3) {
 //Compute the deltaZ for a given cell (i,j) accross its eight surrounding cells
 // principal axis twice to emphasize height difference in that direction
 // gradient estimation method of Horn (1981)
@@ -287,7 +287,7 @@ void DEMObject::CalculateSurfaceDeltas(const unsigned int i, const unsigned int 
 	}
 }
 	
-double DEMObject::OppositeDir(const double z1, const double z2, const double z) {
+double DEMObject::OppositeDir(const double& z1, const double& z2, const double& z) {
 //This method chooses the right topographic height to make the calcul
 //and returns the sum of the opposites
 	if ( z1 != 0. && z2 != 0.) {
@@ -306,7 +306,7 @@ double DEMObject::OppositeDir(const double z1, const double z2, const double z) 
 	}
 }
 
-double DEMObject::getCurvature(const unsigned int i, const unsigned int j) {
+double DEMObject::getCurvature(const unsigned int& i, const unsigned int& j) {
 //This methode computes and returns the curvature of a specific cell
 
 	// Declaration

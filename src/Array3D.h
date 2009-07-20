@@ -89,7 +89,7 @@ template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigne
 	}
 #endif
 
-	//ROW-MAJOR allignment of the vector: fully C-compatible memory layout
+	//ROW-MAJOR alignment of the vector: fully C-compatible memory layout
 	return vecData[x + y*nx + z*nxny];
 }
 

@@ -19,23 +19,27 @@ class DEMObject: public Grid2DObject {
 		CArray2D<double> curvature;
 		CArray2D<double> Nx, Ny, Nz;
 		
-		DEMObject():Grid2DObject(){};
-		DEMObject(Grid2DObject& dem_in);
+		DEMObject() : Grid2DObject(){}
+		DEMObject(const unsigned int& ncols, const unsigned int& nrows, 
+				const double& xllcorner, const double& yllcorner, 
+				const double& latitude, const double& longitude, 
+				const double& cellsize) : Grid2DObject(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize){}
+		DEMObject(const Grid2DObject& dem_in);
 		
 		void Update();
 
-		virtual DEMObject* sub(const unsigned int start_col, const unsigned int nb_cols);
+		virtual DEMObject* sub(const unsigned int& start_col, const unsigned int& nb_cols);
 
 	private:
-		void CalculateAziSlopeCurve(const int Hick);
-		double CalculateAzi(const double Nx, const double Ny, const double Nz, const double slope);
-		void CalculateHickNormal(const unsigned int i, const unsigned int j, const double dx_sum, const double dy_sum);
-		void CalculateCorripioNormal(const unsigned int i, const unsigned int j, const double dx_sum, const double dy_sum);
-		double getCurvature(const unsigned int i, const unsigned int j);
+		void CalculateAziSlopeCurve(const int& Hick);
+		double CalculateAzi(const double& Nx, const double& Ny, const double& Nz, const double& slope);
+		void CalculateHickNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum);
+		void CalculateCorripioNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum);
+		double getCurvature(const unsigned int& i, const unsigned int& j);
 	
-		void CalculateSurfaceDeltas(const unsigned int i, const unsigned int j,double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3);
+		void CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j, double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3);
 		
-		double OppositeDir(const double z1, const double z2, const double z);
+		double OppositeDir(const double& z1, const double& z2, const double& z);
 
 #ifdef _POPC_
 	public:
