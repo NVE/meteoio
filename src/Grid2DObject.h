@@ -33,6 +33,15 @@ class Grid2DObject{
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
 			const double& cellsize, const CArray2D<double>& grid2D_in);
+		/**
+		* @brief constructs an object as a subset of another grid object
+		* @param grid_in (const Grid2DObject) initial grid object
+		* @param start_col (const int) starting column of the subset
+		* @param nb_cols (const int) number of columns of the subset
+		*/
+
+		Grid2DObject(const Grid2DObject& grid_in, 
+			const unsigned int& start_col, const unsigned int& nb_cols);
 
 		/**
 		* @brief Set all variables in one go.
@@ -66,13 +75,6 @@ class Grid2DObject{
 			const double& latitude, const double& longitude,
 			const double& cellsize, const CArray2D<double>& grid2D_in); //TODO: const CArray would be better...
 		
-		/**
-		* @brief returns a subset of the grid object
-		* @param start_col (const int) starting column of the subset
-		* @param nb_cols (const int) number of columns of the subset
-		*/
-		virtual Grid2DObject* sub(const unsigned int& start_col, const unsigned int& nb_cols);
-
 		/**
 		* @brief Serialize method for POPC. Used to marshall data and send it from an object to another.
 		*

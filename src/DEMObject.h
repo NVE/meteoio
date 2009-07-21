@@ -18,17 +18,27 @@ class DEMObject: public Grid2DObject {
 		CArray2D<double> azi;
 		CArray2D<double> curvature;
 		CArray2D<double> Nx, Ny, Nz;
+		double min_altitude, max_altitude;
+		double min_slope, max_slope;
+		double min_curvature, max_curvature;
 		
-		DEMObject() : Grid2DObject(){}
-		DEMObject(const unsigned int& ncols, const unsigned int& nrows, 
-				const double& xllcorner, const double& yllcorner, 
-				const double& latitude, const double& longitude, 
-				const double& cellsize) : Grid2DObject(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize){}
+		DEMObject();
+		
+		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+			const double& xllcorner_in, const double& yllcorner_in,
+			const double& latitude_in, const double& longitude_in,
+			const double& cellsize_in);
+	
+		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+			const double& xllcorner_in, const double& yllcorner_in,
+			const double& latitude_in, const double& longitude_in,
+			const double& cellsize_in, const CArray2D<double>& altitude_in);
+		
 		DEMObject(const Grid2DObject& dem_in);
-		
-		void Update();
 
-		virtual DEMObject* sub(const unsigned int& start_col, const unsigned int& nb_cols);
+		DEMObject (const DEMObject& dem_in, const unsigned int start_col, const unsigned int nb_cols);
+		
+		void update();
 
 	private:
 		void CalculateAziSlopeCurve(const int& Hick);
@@ -37,9 +47,10 @@ class DEMObject: public Grid2DObject {
 		void CalculateCorripioNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum);
 		double getCurvature(const unsigned int& i, const unsigned int& j);
 	
-		void CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j, double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3);
+		void CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j,double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3);
 		
 		double OppositeDir(const double& z1, const double& z2, const double& z);
+		void updateAllMinMax();
 
 #ifdef _POPC_
 	public:

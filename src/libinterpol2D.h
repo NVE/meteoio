@@ -7,6 +7,7 @@
 #include "StationData.h"
 #include "MeteoData.h"
 #include "Grid2DObject.h"
+#include "DEMObject.h"
 
 #define MAX_INPUT_STATIONS 255
 
@@ -38,7 +39,7 @@ class Interpol2D {
 			interp_types Imultiple, 
 			const vector<double>& sourcesData, 
 			const vector<StationData>& sourcesMeta, 
-	    	const Grid2DObject& dem);
+	    	const DEMObject& dem);
 		
 		/**
 		* @brief Computes the interpolation using the parameters set by the constructor
@@ -79,12 +80,14 @@ class Interpol2D {
 		double IDWKriegingCore(const double& x, const double& y, 
 					const vector<double>& vecData_in, const vector<StationData>& vecStations);
 		void IDWKrieging(CArray2D<double>& T, const vector<double>& data_in, const vector<StationData>& vecStations);
-		
+		void SimpleDEMWindInterpolate(CArray2D<double>& VW, CArray2D<double>& DW);
 
 	private:
 		//static members
-		const static double ref_altitude;
-		const static double dflt_temperature_lapse_rate;
+		const static double ref_altitude;		///elevation to use for common elevation reprojection
+		const static double dflt_temperature_lapse_rate;///default lapse rate for temperature(elevation)
+		const static double wind_ys;			///coefficient for wind dependency on slope
+		const static double wind_yc;			///coefficient for wind dependency on curvature
 		
 		interp_types single_type, multiple_type;	//interpolations choices for single and multiple sources
 		//reg_types reg_type;				//choice of regression methods
@@ -93,11 +96,11 @@ class Interpol2D {
 		unsigned int nx, ny;				//2D grid dimensions
 		unsigned int InputSize;
 		
-		vector<double> vecCoefficients;	      ///<Regression coefficients 0-3
-		const Grid2DObject& dem;                    ///<Reference to be initialized in the constructor
-		const CArray2D<double>& InputTopo;          ///<Reference to be initialized in the constructor
-		const vector<StationData>& InputMeta;       ///<Reference to be initialized in the constructor
-		const vector<double>& inputData;            ///<Reference to be initialized in the constructor
+		vector<double> vecCoefficients;		///<Regression coefficients 0-3
+		const DEMObject& dem;			///<Reference to be initialized in the constructor
+		const CArray2D<double>& InputTopo;	///<Reference to be initialized in the constructor
+		const vector<StationData>& InputMeta;	///<Reference to be initialized in the constructor
+		const vector<double>& inputData;	///<Reference to be initialized in the constructor
 };
 
 #endif

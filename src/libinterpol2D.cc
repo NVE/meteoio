@@ -9,16 +9,19 @@
 #include "Laws.h"
 #include "libinterpol2D.h"
 #include "IOUtils.h"
+#include "DEMObject.h"
 
 
 const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
 const double Interpol2D::ref_altitude = 1500.;
+const double Interpol2D::wind_ys = 0.58;
+const double Interpol2D::wind_yc = 0.42;
 
 Interpol2D::Interpol2D(interp_types Isingle, 
 		       interp_types Imultiple, 
 		       const vector<double>& vecData, 
 		       const vector<StationData>& vecMeta, 
-		       const Grid2DObject& dem_in) : dem(dem_in), InputTopo(dem.grid2D), InputMeta(vecMeta), inputData(vecData)
+		       const DEMObject& dem_in) : dem(dem_in), InputTopo(dem.grid2D), InputMeta(vecMeta), inputData(vecData)
 {
 
 	single_type   = Isingle;
@@ -367,13 +370,12 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 			
 			flag_ok=1;
 		} else if (multiple_type==I_VW) {
-			//SimpleDEMWindInterpolate(param_out, InputTopo, inputData, InputMeta, extra_param_in);
-			//Welcome Gaël Rosset!! This is your part!
-			//here, do the wind interpolation
-			//since this is a very specific method, it makes sense to simply call a function from here
-			//and have all the processing managed by it
-
-			//SimpleDEMWindInterpolate(param_out, InputTopo, inputData, InputMeta);
+			//Krieging
+			BuildStationsElevations(InputMeta, vecStationElevations);
+			LinRegression(vecStationElevations, inputData, vecCoefficients);
+			LapseRateProject = &Interpol2D::LinProject;
+			LapseIDWKrieging(param_out, InputTopo, inputData, InputMeta);
+			SimpleDEMWindInterpolate(param_out, extra_param_in);//HACK: extra_param_in is DW, how do we bring it out?
 			
 			flag_ok=1;
 		}
@@ -384,3 +386,70 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 	}
 }
 
+void Interpol2D::SimpleDEMWindInterpolate(CArray2D<double>& VW, CArray2D<double>& DW)
+{
+//This method computes the speed of the wind and returns a table in 2D with this values
+//This Wind interpolation is similar to Liston and Elder (2006)
+	double speed;			// Wind speed (m s-1)
+	double dir;			// Wind direction
+	double u;			// Zonal component u (m s-1)
+	double v;			// Meridional component v (m s-1)
+	double beta;			// Terrain slope
+	double azi;			// Topographic slope azimuth
+	double curvature;		// Topographic curvature
+	double slopeDir;		// Slope in the direction of the wind
+	double Ww;			// Wind weighting
+	double Od;			// Diverting factor
+	
+	// For each cell
+	for (unsigned int i=0;i<nx-1;i++) {
+		for (unsigned int j=0;j<ny-1;j++){
+			// Get data
+			speed = VW(i,j);
+			dir = DW(i,j) * ((M_PI) / 180.);		
+
+			//Speed and direction converted to zonal et meridional
+			//components 
+			u = (-1.) * (speed * sin(dir));
+			v = (-1.) * (speed * cos(dir));
+
+			// Converted back to speed and direction
+			speed = sqrt(u*u + v*v);
+			dir = (1.5 * M_PI) - atan(v/u);
+			
+			// Get the slope of this cell
+			beta = dem.slope(i, j);
+			
+			// Get the slope azimuth of this cell
+			azi = dem.azi(i, j);
+			
+			// Get the curvature of this cell
+			curvature = dem.curvature(i, j);
+
+			//normalize curvature and beta. 
+			//Note: it should be slopeDir instead of beta, but beta is more efficient
+			//to compute (only once for each dem) and it should not be that different...
+			beta = (beta - dem.min_slope)/(dem.max_slope - dem.min_slope) - 0.5;
+			curvature = (curvature - dem.min_curvature)/(dem.max_curvature - dem.min_curvature) - 0.5;
+
+			// Calculate the slope in the direction of the wind
+			slopeDir = beta * cos(dir - azi);
+	
+			// Calculate the wind weighting factor
+			Ww = 1. + wind_ys * slopeDir + wind_yc * curvature;
+
+			// Calculate the terrain-modified wind speed
+			VW(i, j) = Ww * speed;
+
+			// Modify the wind direction by a diverting factor
+			Od = -0.5 * slopeDir * sin(2.*(azi - dir));
+
+			// Add this factor to the wind direction and
+			// transform this in degrees
+			DW(i, j) = (dir + Od) * (180. / (M_PI));
+			if( DW(i, j)>360. ) {
+				DW(i, j) -= 360.;
+			}
+		}
+	}
+}

@@ -7,6 +7,7 @@
 #include "StationData.h"
 #include "IOUtils.h"
 #include "IOExceptions.h"
+#include "DEMObject.h"
 
 #include <vector>
 
@@ -21,7 +22,7 @@ class Meteo2DInterpolator {
 		/**
 		* @brief Constructor. It builds a vector of input data and metadata, merging meteo1D and meteo2D input files
 		*/
-		Meteo2DInterpolator(const Grid2DObject& dem, const vector<MeteoData>& vecData, const vector<StationData>& vecMeta);
+		Meteo2DInterpolator(const DEMObject& dem, const vector<MeteoData>& vecData, const vector<StationData>& vecMeta);
 
 		/**
 		* @brief This function calls the interpolation class for each individual meteo parameter. 
@@ -41,7 +42,7 @@ class Meteo2DInterpolator {
 		void interpolateISWR(CArray2D<double>& iswr);
 		//void interpolateEA(CArray2D<double>& ea);
 
-		const Grid2DObject& dem;
+		const DEMObject& dem;
 
 		vector<MeteoData> SourcesData;
 		vector<StationData> SourcesMeta;

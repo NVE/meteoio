@@ -1,6 +1,68 @@
 #include <math.h>
+#include <limits>
 #include "DEMObject.h"
+#include "Grid2DObject.h"
 
+/**
+* @brief Default constructor.
+* Initializes all variables to 0, except lat/long which are initialized to IOUtils::nodata
+*/
+DEMObject::DEMObject()
+{
+	ncols = 0;
+	nrows = 0;
+	xllcorner = 0.0;
+	yllcorner = 0.0;
+	latitude = IOUtils::nodata;
+	longitude = IOUtils::nodata;
+	cellsize = 0.0;
+	min_altitude = max_altitude = IOUtils::nodata;
+	min_slope = max_slope = IOUtils::nodata;
+	min_curvature = max_curvature = IOUtils::nodata;
+}
+
+/**
+* @brief Constructor that sets variables.
+* @param ncols_in (unsigned int) number of colums in the grid2D
+* @param nrows_in (unsigned int) number of rows in the grid2D
+* @param xllcorner_in (double) x-coordinate of lower left corner
+* @param yllcorner_in (double) y-coordinate of lower left corner
+* @param latitude_in (double) decimal latitude, can be IOUtils::nodata
+* @param longitude_in (double) decimal longitude, can be IOUtils::nodata
+* @param cellsize_in (double) value for cellsize in grid2D
+*/
+DEMObject::DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+			const double& xllcorner_in, const double& yllcorner_in,
+			const double& latitude_in, const double& longitude_in,
+			const double& cellsize_in)
+{
+	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in);
+	min_altitude = max_altitude = IOUtils::nodata;
+	min_slope = max_slope = IOUtils::nodata;
+	min_curvature = max_curvature = IOUtils::nodata;
+}
+
+/**
+* @brief Constructor that sets variables.
+* @param ncols_in (unsigned int) number of colums in the grid2D
+* @param nrows_in (unsigned int) number of rows in the grid2D
+* @param xllcorner_in (double) x-coordinate of lower left corner
+* @param yllcorner_in (double) y-coordinate of lower left corner
+* @param latitude_in (double) decimal latitude, can be IOUtils::nodata
+* @param longitude_in (double) decimal longitude, can be IOUtils::nodata
+* @param cellsize_in (double) value for cellsize in grid2D
+* @param altitude_in (CArray2D\<double\>&) grid2D of elevations
+*/
+DEMObject::DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+			const double& xllcorner_in, const double& yllcorner_in,
+			const double& latitude_in, const double& longitude_in,
+			const double& cellsize_in, const CArray2D<double>& altitude_in)
+{
+	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in, altitude_in);
+	min_altitude = max_altitude = IOUtils::nodata;
+	min_slope = max_slope = IOUtils::nodata;
+	min_curvature = max_curvature = IOUtils::nodata;
+}
 
 /**
 * @brief Constructor that sets variables from a Grid2DObject
@@ -9,41 +71,43 @@
 DEMObject::DEMObject(const Grid2DObject& dem_in)
 {
 	set(dem_in.ncols, dem_in.nrows, dem_in.xllcorner, dem_in.yllcorner, dem_in.latitude, dem_in.longitude, dem_in.cellsize, dem_in.grid2D);
+	min_altitude = max_altitude = IOUtils::nodata;
+	min_slope = max_slope = IOUtils::nodata;
+	min_curvature = max_curvature = IOUtils::nodata;
 }
 
 /**
-* @brief Extract a subset of the dem, given a starting column (first index being 0) and a number of columns
+* @brief Constructor that sets variables from a subset of another DEMObject, 
+* given a starting column (first index being 0) and a number of columns
+* @param dem_in (DEMObject&) dem contained in a DEMDObject
 * @param start_col (unsigned int) starting column index
 * @param nb_cols (unsigned int) number of columns
 * @return new DEMObject
 */
-DEMObject* DEMObject::sub(const unsigned int& start_col, const unsigned int& nb_cols)
+DEMObject::DEMObject (const DEMObject& dem_in, const unsigned int start_col, const unsigned int nb_cols)
 {
 	if(nb_cols==0) {
 		throw InvalidArgumentException("requesting a subset of 0 columns for DEMObject", AT);
 	}
 
-	//allocate memory and get a pointer to it for the sub_dem
-	DEMObject* sub_dem = new DEMObject(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
-
-	//DEMObject* sub_dem = new DEMObject();
-	//sub_dem->set(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
+	//fill metadata information
+	set(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
 
 	//filling the grids
 	for (unsigned int i=0; i<nb_cols; i++) {
 		for (unsigned int j=0; j < nrows; j++){
-			sub_dem->grid2D(i,j) = grid2D(i+start_col,j);
-			sub_dem->slope(i,j) = slope(i+start_col,j);
-			sub_dem->azi(i,j) = azi(i+start_col,j);
-			sub_dem->curvature(i,j) = curvature(i+start_col,j);
-			sub_dem->Nx(i,j) = Nx(i+start_col,j);
-			sub_dem->Ny(i,j) = Ny(i+start_col,j);
-			sub_dem->Nz(i,j) = Nz(i+start_col,j);
+			grid2D(i,j) = dem_in.grid2D(i+start_col,j);
+			slope(i,j) = dem_in.slope(i+start_col,j);
+			azi(i,j) = dem_in.azi(i+start_col,j);
+			curvature(i,j) = dem_in.curvature(i+start_col,j);
+			Nx(i,j) = dem_in.Nx(i+start_col,j);
+			Ny(i,j) = dem_in.Ny(i+start_col,j);
+			Nz(i,j) = dem_in.Nz(i+start_col,j);
 		}
 	}
 
-	//returning the pointer
-	return sub_dem;
+	//recompute the min/max
+	updateAllMinMax();
 }
 
 /**
@@ -51,7 +115,7 @@ DEMObject* DEMObject::sub(const unsigned int& start_col, const unsigned int& nb_
 * It has to be called manually since it can require some time to compute. Without this call, 
 * the above mentionned parameters are NOT up to date.
 */
-void DEMObject::Update() {
+void DEMObject::update() {
 //This method recomputes the attributes that are not read as parameters 
 //(such as slope, azimuth, normal vector)
 
@@ -65,6 +129,34 @@ void DEMObject::Update() {
 
 	// Calculate the slope and the slope azimuth
 	CalculateAziSlopeCurve(0);
+	updateAllMinMax();
+}
+
+void DEMObject::updateAllMinMax() {
+//updates the min/max parameters of all 2D tables
+	min_altitude = min_slope = min_curvature = numeric_limits<double>::max();
+	max_altitude = max_slope = max_curvature = numeric_limits<double>::min();
+
+	for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			if(grid2D(i,j)>max_altitude) max_altitude = grid2D(i,j);
+			if(grid2D(i,j)<min_altitude) min_altitude = grid2D(i,j);
+		}
+	}
+	
+	for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			if(slope(i,j)>max_slope) max_slope = slope(i,j);
+			if(slope(i,j)<min_slope) min_slope = slope(i,j);
+		}
+	}
+
+	for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			if(curvature(i,j)>max_curvature) max_curvature = curvature(i,j);
+			if(curvature(i,j)<min_curvature) min_curvature = curvature(i,j);
+		}
+	}
 }
 
 void DEMObject::CalculateAziSlopeCurve(const int& Hick) {
@@ -91,9 +183,10 @@ void DEMObject::CalculateAziSlopeCurve(const int& Hick) {
 				azi(i,j) = IOUtils::nodata;
 				curvature(i,j) = IOUtils::nodata;
 			} else {
+				// principal axis twice to emphasize height difference in that direction
 				CalculateSurfaceDeltas(i, j, &dx1, &dx2, &dx3, &dy1, &dy2, &dy3);
-				dx_sum = (dx1 + dx2 + dx3) * 0.25;
-				dy_sum = (dy1 + dy2 + dy3) * 0.25;
+				dx_sum = (dx1 + 2.*dx2 + dx3) * 0.25;
+				dy_sum = (dy1 + 2.*dy2 + dy3) * 0.25;
 		
 				//calculate slope and normal vector's components using one of two algorithms 
 				//(knowing that Hick is the worst performing)
@@ -174,7 +267,7 @@ void DEMObject::CalculateHickNormal(const unsigned int& i, const unsigned int& j
 
 void DEMObject::CalculateCorripioNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum) {
 //This calculates the surface normal vector using the two triangle method given in Corripio (2002)
-
+	//TODO: proper handling of nodata in dem
 	if ( i > 0 && i < ncols - 1 && j > 0 && j < nrows - 1 ) { // for not border grid cells
 		// See Corripio (2002), knowing that here we normalize the result (divided by Nz=cellsize*cellsize)
 		Nx(i,j) = (0.5 * ((grid2D(i,j) - grid2D(i+1,j) + grid2D(i,j+1) - grid2D(i+1,j+1) ))) / cellsize;
@@ -202,88 +295,89 @@ void DEMObject::CalculateCorripioNormal(const unsigned int& i, const unsigned in
 
 void DEMObject::CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j, double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3) {
 //Compute the deltaZ for a given cell (i,j) accross its eight surrounding cells
-// principal axis twice to emphasize height difference in that direction
 // gradient estimation method of Horn (1981)
+//TODO: proper handling of nodata in dem
+//instead, fill a 3*3 grid with the proper values (taking nodata and borders into account) and compute dx, dy and diags from there...
 	if ( i > 0 && i < ncols - 1 && j > 0 && j < nrows - 1 ) { //away from the borders
 		// (*dx1+*dx2+*dx3) is an approximation of dz/*dx 
-		*dx1 =       grid2D(i+1,j-1) - grid2D(i-1,j-1);
-		*dx2 = 2. * (grid2D(i+1,j  ) - grid2D(i-1,j  ));
-		*dx3 =       grid2D(i+1,j+1) - grid2D(i-1,j+1);
+		*dx1 = grid2D(i+1,j-1) - grid2D(i-1,j-1);
+		*dx2 = grid2D(i+1,j  ) - grid2D(i-1,j  );
+		*dx3 = grid2D(i+1,j+1) - grid2D(i-1,j+1);
 		
 		// (*dy1+*dy2+*dy3) is an approximation of dz/*dy
-		*dy1 =       grid2D(i-1,j+1) - grid2D(i-1,j-1);
-		*dy2 = 2. * (grid2D(i  ,j+1) - grid2D(i  ,j-1));
-		*dy3 =       grid2D(i+1,j+1) - grid2D(i+1,j-1);
+		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j-1);
+		*dy2 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
+		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j-1);
 	}
 
 	//borders
 	else if ( i == 0 && j > 0 && j < nrows - 1 ) {
-		*dx1 =       grid2D(i+1,j-1) - grid2D(i  ,j-1);
-		*dx2 = 2. * (grid2D(i+1,j  ) - grid2D(i  ,j  )); 
-		*dx3 =       grid2D(i+1,j+1) - grid2D(i  ,j+1);	 
-		*dy1 =       grid2D(i  ,j+1) - grid2D(i  ,j-1);
-		*dy2 = 2. *  (*dy1);
-		*dy3 =       grid2D(i+1,j+1) - grid2D(i+1,j-1);
+		*dx1 = grid2D(i+1,j-1) - grid2D(i  ,j-1);
+		*dx2 = grid2D(i+1,j  ) - grid2D(i  ,j  ); 
+		*dx3 = grid2D(i+1,j+1) - grid2D(i  ,j+1);	 
+		*dy1 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
+		*dy2 = *dy1;
+		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j-1);
 	}
 	else if ( j == 0 && i > 0 && i < ncols - 1 ) {
-		*dx1 =       grid2D(i+1,j  ) - grid2D(i-1,j  );
-		*dx2 = 2. *  (*dx1);
-		*dx3 =       grid2D(i+1,j+1) - grid2D(i-1,j+1);
-		*dy1 =       grid2D(i-1,j+1) - grid2D(i-1,j  );
-		*dy2 = 2. * (grid2D(i  ,j+1) - grid2D(i  ,j  ));
-		*dy3 =       grid2D(i+1,j+1) - grid2D(i+1,j  );
+		*dx1 = grid2D(i+1,j  ) - grid2D(i-1,j  );
+		*dx2 = *dx1;
+		*dx3 = grid2D(i+1,j+1) - grid2D(i-1,j+1);
+		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j  );
+		*dy2 = grid2D(i  ,j+1) - grid2D(i  ,j  );
+		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j  );
 	}
 	else if ( i == ncols - 1 && j > 0 && j < nrows - 1 ) {
-		*dx1 =       grid2D(i  ,j-1) - grid2D(i-1,j-1);
-		*dx2 = 2. * (grid2D(i  ,j  ) - grid2D(i-1,j  )); 
-		*dx3 =       grid2D(i  ,j+1) - grid2D(i-1,j+1);
-		*dy1 =       grid2D(i-1,j+1) - grid2D(i-1,j-1);
-		*dy2 = 2. * (grid2D(i  ,j+1) - grid2D(i  ,j-1));
-		*dy3 =       (*dy2) * 0.5;
+		*dx1 = grid2D(i  ,j-1) - grid2D(i-1,j-1);
+		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  ); 
+		*dx3 = grid2D(i  ,j+1) - grid2D(i-1,j+1);
+		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j-1);
+		*dy2 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
+		*dy3 = *dy2;
 	}
 	else if ( j == nrows - 1 && i > 0 && i < ncols - 1 ) {
-		*dx1 =       grid2D(i+1,j-1) - grid2D(i-1,j-1);
-		*dx2 = 2. * (grid2D(i+1,j  ) - grid2D(i-1,j  ));
-		*dx3 =       (*dx2) * 0.5;
-		*dy1 =       grid2D(i-1,j  ) - grid2D(i-1,j-1);
-		*dy2 = 2. * (grid2D(i  ,j  ) - grid2D(i  ,j-1));
-		*dy3 =       grid2D(i+1,j  ) - grid2D(i+1,j-1);
+		*dx1 = grid2D(i+1,j-1) - grid2D(i-1,j-1);
+		*dx2 = grid2D(i+1,j  ) - grid2D(i-1,j  );
+		*dx3 = *dx2;
+		*dy1 = grid2D(i-1,j  ) - grid2D(i-1,j-1);
+		*dy2 = grid2D(i  ,j  ) - grid2D(i  ,j-1);
+		*dy3 = grid2D(i+1,j  ) - grid2D(i+1,j-1);
 	}
 
 	// four edges
 	else if ( i == 0 && j == 0 ) {
-		*dx2 = 2. * (grid2D(i+1,j  ) - grid2D(i  ,j  ));
-		*dx1 =       (*dx2) * 0.5;
-		*dx3 =       grid2D(i+1,j+1) - grid2D(i  ,j+1);
-		*dy1 =       grid2D(i  ,j+1) - grid2D(i  ,j  );
-		*dy2 = 2. *  (*dy1);
-		*dy3 =       grid2D(i+1,j+1) - grid2D(i+1,j  );
+		*dx2 = grid2D(i+1,j  ) - grid2D(i  ,j  );
+		*dx1 = *dx2;
+		*dx3 = grid2D(i+1,j+1) - grid2D(i  ,j+1);
+		*dy1 = grid2D(i  ,j+1) - grid2D(i  ,j  );
+		*dy2 = *dy1;
+		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j  );
 	}
 	else if ( i == ncols - 1 && j == nrows - 1 ) {
-		*dx1 =       grid2D(i  ,j-1) - grid2D(i-1,j-1);
-		*dx2 = 2. * (grid2D(i  ,j  ) - grid2D(i-1,j  )); 
-		*dx3 =       (*dx2) * 0.5;
-		*dy1 =       grid2D(i-1,j  ) - grid2D(i-1,j-1);
-		*dy3 =       grid2D(i  ,j  ) - grid2D(i  ,j-1);
-		*dy2 = 2. *  (*dy3);
+		*dx1 = grid2D(i  ,j-1) - grid2D(i-1,j-1);
+		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  ); 
+		*dx3 = *dx2;
+		*dy1 = grid2D(i-1,j  ) - grid2D(i-1,j-1);
+		*dy3 = grid2D(i  ,j  ) - grid2D(i  ,j-1);
+		*dy2 = *dy3;
 	}
 	else if ( i == 0 && j == nrows - 1 ) {
-		*dx1 =       grid2D(i+1,j-1) - grid2D(i  ,j-1);
-		*dx2 = 2. * (grid2D(i+1,j  ) - grid2D(i  ,j  ));
-		*dx3 =       (*dx2) * 0.5;
-		*dy1 =       grid2D(i  ,j  ) - grid2D(i  ,j-1);
-		*dy2 = 2. * (*dy1);
-		*dy3 =       grid2D(i+1,j  ) - grid2D(i+1,j-1);
+		*dx1 = grid2D(i+1,j-1) - grid2D(i  ,j-1);
+		*dx2 = grid2D(i+1,j  ) - grid2D(i  ,j  );
+		*dx3 = *dx2;
+		*dy1 = grid2D(i  ,j  ) - grid2D(i  ,j-1);
+		*dy2 = *dy1;
+		*dy3 = grid2D(i+1,j  ) - grid2D(i+1,j-1);
 	}
 	
 	//if ( j == 0 && i == ncols - 1 ) 
 	else {
-		*dx1 =       grid2D(i  ,j  ) - grid2D(i-1,j  ); 
-		*dx2 = 2. * (*dx1); 
-		*dx3 =       grid2D(i  ,j+1) - grid2D(i-1,j+1);
-		*dy1 =       grid2D(i-1,j+1) - grid2D(i-1,j  );
-		*dy3 =       grid2D(i  ,j+1) - grid2D(i  ,j  );
-		*dy2 = 2. *  (*dy3);
+		*dx1 = grid2D(i  ,j  ) - grid2D(i-1,j  ); 
+		*dx2 = *dx1; 
+		*dx3 = grid2D(i  ,j+1) - grid2D(i-1,j+1);
+		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j  );
+		*dy3 = grid2D(i  ,j+1) - grid2D(i  ,j  );
+		*dy2 = *dy3;
 	}
 }
 	
@@ -437,6 +531,12 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&latitude,1);
 		buf.Pack(&longitude,1);
 		buf.Pack(&cellsize,1);
+		buf.Pack(&min_altitude,1);
+		buf.Pack(&max_altitude,1);
+		buf.Pack(&min_slope,1);
+		buf.Pack(&max_slope,1);
+		buf.Pack(&min_curvature,1);
+		buf.Pack(&max_curvature,1);
 		int x,y;
 		grid2D.GetSize(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
@@ -456,6 +556,12 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&latitude,1);
 		buf.UnPack(&longitude,1);
 		buf.UnPack(&cellsize,1);
+		buf.UnPack(&min_altitude,1);
+		buf.UnPack(&max_altitude,1);
+		buf.UnPack(&min_slope,1);
+		buf.UnPack(&max_slope,1);
+		buf.UnPack(&min_curvature,1);
+		buf.UnPack(&max_curvature,1);
 		grid2D.Destroy();//if(grid2D!=NULL)delete(grid2D);
 		slope.Destroy();
 		azi.Destroy();

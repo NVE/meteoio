@@ -1,9 +1,10 @@
 #include "Meteo2DInterpolator.h"
+#include "DEMObject.h"
 
 using namespace std;
 using namespace IOUtils;
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Grid2DObject& dem_in, const vector<MeteoData>& vecData,
+Meteo2DInterpolator::Meteo2DInterpolator(const DEMObject& dem_in, const vector<MeteoData>& vecData,
 					 const vector<StationData>& vecMeta) : dem(dem_in), SourcesData(vecData), SourcesMeta(vecMeta)
 {
 	//check whether the size of the two vectors is equal
@@ -150,27 +151,35 @@ void Meteo2DInterpolator::interpolateVW(CArray2D<double>& vw)
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
-// 	vector<double> vecEmpty;
-// 	int nx, ny;
-// 	vw.GetSize(nx, ny);
-// 
-// 	CArray2D<double> dw;
-// 	dw.Create(nx,ny);
-// 	interpolateDW(dw);
+	unsigned int countDataDir = 0.;
+	vector<double> vecEmpty;
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
 		if(SourcesData[ii].vw != nodata) {
-			//cout << SourcesData[ii].vw << endl;
 			vecSelectedStations.push_back(SourcesMeta[ii]);
 			vecInput.push_back(SourcesData[ii].vw);
 		}
+		if(SourcesData[ii].dw != nodata) {
+			countDataDir++;
+		}
 	}
 
+	//countDataDir=0.; //HACK, to prevent using the enhanced method...
 	printf("[i] interpolating VW using %d stations\n", (int)vecSelectedStations.size());
-	Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_LAPSE_IDWK, vecInput, vecSelectedStations, dem);
-	VW.calculate(vw);
-	//Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, vecInput, vecSelectedStations, dem);
-	//VW.calculate(vw, vecEmpty, dw);
+	// If direction doesn't exist, use the kriging
+	if( countDataDir > 0.) {
+		int nx, ny;
+		vw.GetSize(nx, ny);
+		CArray2D<double> dw;
+		dw.Create(nx,ny);
+		interpolateDW(dw);
+		Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, vecInput, vecSelectedStations, dem);
+		VW.calculate(vw, vecEmpty, dw);
+	} else {
+		Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_LAPSE_IDWK, vecInput, vecSelectedStations, dem);
+		VW.calculate(vw);
+	}
+
 }
 
 void Meteo2DInterpolator::interpolateP(CArray2D<double>& p)

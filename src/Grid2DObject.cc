@@ -32,6 +32,23 @@ Grid2DObject::Grid2DObject(const unsigned int& ncols_in, const unsigned int& nro
 	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in, grid2D_in);
 }
 
+Grid2DObject::Grid2DObject(const Grid2DObject& grid_in, const unsigned int& start_col, const unsigned int& nb_cols)
+{
+	if(nb_cols==0) {
+		throw InvalidArgumentException("requesting a subset of 0 columns for Grid2DObject", AT);
+	}
+
+	//allocate memory and get a pointer to it for the sub_grid
+	set(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
+
+	//filling the grid
+	for (unsigned int i=0; i<nb_cols; i++) {
+		for (unsigned int j=0; j < nrows; j++){
+			grid2D(i,j) = grid_in.grid2D(i+start_col,j);
+		}
+	}
+}
+
 void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_in,
 			const double& xllcorner_in, const double& yllcorner_in,
 			const double& latitude_in, const double& longitude_in,
@@ -83,28 +100,6 @@ void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_i
 
 	//Copy by value, after destroying the old grid
 	grid2D = grid2D_in;
-}
-
-Grid2DObject *Grid2DObject::sub(const unsigned int& start_col, const unsigned int& nb_cols)
-{
-	if(nb_cols==0) {
-		throw InvalidArgumentException("requesting a subset of 0 columns for Grid2DObject", AT);
-	}
-
-	//allocate memory and get a pointer to it for the sub_grid
-	Grid2DObject* sub_grid = new Grid2DObject(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner,
-					IOUtils::nodata, IOUtils::nodata, cellsize);
-
-	//filling the grid
-	for (unsigned int i=0; i<nb_cols; i++) {
-		for (unsigned int j=0; j < nrows; j++){
-			sub_grid->grid2D(i,j) = grid2D(i+start_col,j);
-		}
-	}
-
-	//returning the pointer
-	return sub_grid;
-
 }
 
 #ifdef _POPC_
