@@ -7,15 +7,8 @@
 * @brief Default constructor.
 * Initializes all variables to 0, except lat/long which are initialized to IOUtils::nodata
 */
-DEMObject::DEMObject()
+DEMObject::DEMObject() : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	ncols = 0;
-	nrows = 0;
-	xllcorner = 0.0;
-	yllcorner = 0.0;
-	latitude = IOUtils::nodata;
-	longitude = IOUtils::nodata;
-	cellsize = 0.0;
 	min_altitude = max_altitude = IOUtils::nodata;
 	min_slope = max_slope = IOUtils::nodata;
 	min_curvature = max_curvature = IOUtils::nodata;
@@ -31,12 +24,13 @@ DEMObject::DEMObject()
 * @param longitude_in (double) decimal longitude, can be IOUtils::nodata
 * @param cellsize_in (double) value for cellsize in grid2D
 */
-DEMObject::DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& xllcorner_in, const double& yllcorner_in,
-			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in)
+DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _xllcorner, const double& _yllcorner,
+				const double& _latitude, const double& _longitude,
+				const double& _cellsize)
+	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize),
+	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in);
 	min_altitude = max_altitude = IOUtils::nodata;
 	min_slope = max_slope = IOUtils::nodata;
 	min_curvature = max_curvature = IOUtils::nodata;
@@ -53,12 +47,13 @@ DEMObject::DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
 * @param cellsize_in (double) value for cellsize in grid2D
 * @param altitude_in (CArray2D\<double\>&) grid2D of elevations
 */
-DEMObject::DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& xllcorner_in, const double& yllcorner_in,
-			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in, const CArray2D<double>& altitude_in)
+DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _xllcorner, const double& _yllcorner,
+				const double& _latitude, const double& _longitude,
+				const double& _cellsize, const CArray2D<double>& _altitude)
+	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _altitude),
+	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in, altitude_in);
 	min_altitude = max_altitude = IOUtils::nodata;
 	min_slope = max_slope = IOUtils::nodata;
 	min_curvature = max_curvature = IOUtils::nodata;
@@ -68,9 +63,10 @@ DEMObject::DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
 * @brief Constructor that sets variables from a Grid2DObject
 * @param dem_in (Grid2DObject&) grid contained in a Grid2DObject
 */
-DEMObject::DEMObject(const Grid2DObject& dem_in)
+DEMObject::DEMObject(const Grid2DObject& _dem) 
+  : Grid2DObject(_dem.ncols, _dem.nrows, _dem.xllcorner, _dem.yllcorner, _dem.latitude, _dem.longitude, _dem.cellsize, _dem.grid2D), 
+    slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	set(dem_in.ncols, dem_in.nrows, dem_in.xllcorner, dem_in.yllcorner, dem_in.latitude, dem_in.longitude, dem_in.cellsize, dem_in.grid2D);
 	min_altitude = max_altitude = IOUtils::nodata;
 	min_slope = max_slope = IOUtils::nodata;
 	min_curvature = max_curvature = IOUtils::nodata;
