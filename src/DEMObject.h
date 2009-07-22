@@ -36,7 +36,9 @@ class DEMObject: public Grid2DObject {
 		
 		DEMObject(const Grid2DObject& dem_in);
 
-		DEMObject (const DEMObject& dem_in, const unsigned int start_col, const unsigned int nb_cols);
+		DEMObject (const DEMObject& _dem,
+				   const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
+				   const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
 		
 		void update();
 

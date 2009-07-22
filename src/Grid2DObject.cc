@@ -16,58 +16,80 @@ Grid2DObject::Grid2DObject() : grid2D()
 	cellsize = 0.0;
 }
 
-Grid2DObject::Grid2DObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-				const double& xllcorner_in, const double& yllcorner_in,
-				const double& latitude_in, const double& longitude_in,
-				const double& cellsize_in)
+Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _xllcorner, const double& _yllcorner,
+				const double& _latitude, const double& _longitude,
+				const double& _cellsize) : grid2D(_ncols, _nrows, IOUtils::nodata)
 {
-	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in);
+	//set metadata, grid2D already successfully created
+	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
 }
 
-Grid2DObject::Grid2DObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-				const double& xllcorner_in, const double& yllcorner_in,
-				const double& latitude_in, const double& longitude_in,
-				const double& cellsize_in, const CArray2D<double>& grid2D_in)
+Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _xllcorner, const double& _yllcorner,
+				const double& _latitude, const double& _longitude,
+				const double& _cellsize, const CArray2D<double>& _grid2D) : grid2D()
 {
-	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in, grid2D_in);
+	set(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _grid2D);
 }
 
-Grid2DObject::Grid2DObject(const Grid2DObject& grid_in, const unsigned int& start_col, const unsigned int& nb_cols)
+Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _nx, const unsigned int& _ny,
+				const unsigned int& _ncols, const unsigned int& _nrows) 
+	: grid2D(_grid2Dobj.grid2D, _nx,_ny, _ncols,_nrows)
 {
-	if(nb_cols==0) {
-		throw InvalidArgumentException("requesting a subset of 0 columns for Grid2DObject", AT);
-	}
 
-	//allocate memory and get a pointer to it for the sub_grid
-	set(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
-
-	//filling the grid
-	for (unsigned int i=0; i<nb_cols; i++) {
-		for (unsigned int j=0; j < nrows; j++){
-			grid2D(i,j) = grid_in.grid2D(i+start_col,j);
-		}
-	}
+	setValues(_ncols, _nrows, (_grid2Dobj.xllcorner+_nx*_grid2Dobj.cellsize), (_grid2Dobj.yllcorner+_ny*_grid2Dobj.cellsize), 
+			IOUtils::nodata, IOUtils::nodata, _grid2Dobj.cellsize);
 }
 
-void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& xllcorner_in, const double& yllcorner_in,
-			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in)
+void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _xllcorner, const double& _yllcorner,
+				const double& _latitude, const double& _longitude,
+				const double& _cellsize)
 {
-	ncols = ncols_in;
-	nrows = nrows_in;
+	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
 	grid2D.Create(ncols, nrows, IOUtils::nodata);
-	cellsize = cellsize_in;
-	
-	xllcorner = xllcorner_in;
-	yllcorner = yllcorner_in;
-	latitude = latitude_in;
-	longitude = longitude_in;
-	
+}
+
+void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _xllcorner, const double& _yllcorner,
+				const double& _latitude, const double& _longitude,
+				const double& _cellsize, const CArray2D<double>& _grid2D)
+{
+	//Test for equality in size: Only compatible CArray2D<double> grids are permitted
+	unsigned int nx,ny;
+	_grid2D.GetSize(nx,ny);
+	if ((_ncols != nx) || (_nrows != ny)) {
+		throw IOException("Mismatch in size of CArray2D<double> parameter _grid2D and size of Grid2DObject", AT);
+	}
+
+	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
+
+	//Copy by value, after destroying the old grid
+	grid2D = _grid2D;
+}
+
+void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _xllcorner, const double& _yllcorner,
+				const double& _latitude, const double& _longitude, const double& _cellsize)
+{
+	ncols = _ncols;
+	nrows = _nrows;
+	cellsize = _cellsize;
+	xllcorner = _xllcorner;
+	yllcorner = _yllcorner;
+	latitude = _latitude;
+	longitude = _longitude;
+
+	checkCoordinates();
+}
+
+void Grid2DObject::checkCoordinates()
+{
 	//calculate/check coordinates if necessary
 	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
-			throw InvalidArgumentException("missing positional parameters (xll,yll) or (lat,long) for Grid2DObject", AT);
+			throw InvalidArgumentException("missing positional parameters (xll,yll) or (lat,long) for Grid3DObject", AT);
 		}
 		IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude); //HACK: replace by local_to_WGS84
 	} else {
@@ -77,30 +99,12 @@ void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_i
 			double tmp_lat, tmp_lon;
 			IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, tmp_lat, tmp_lon); //HACK: replace by WGS84_to_local
 			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
-				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for Grid2DObject", AT);
+				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for Grid3DObject", AT);
 			}
 		}
 	}
-
 }
 
-void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& xllcorner_in, const double& yllcorner_in,
-			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in, const CArray2D<double>& grid2D_in)
-{
-	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in);
-
-	//Test for equality in size: Only compatible CArray2D<double> grids are permitted
-	unsigned int nx, ny;
-	grid2D_in.GetSize(nx, ny);
-	if ((ncols != nx) || (nrows != ny)) {
-		throw IOException("Mismatch in size of CArray2D<double> parameter grid2D_in and size of Grid2DObject", AT);
-	}
-
-	//Copy by value, after destroying the old grid
-	grid2D = grid2D_in;
-}
 
 #ifdef _POPC_
 #include "marshal_meteoio.h"

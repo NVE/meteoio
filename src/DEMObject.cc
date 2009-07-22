@@ -84,27 +84,18 @@ DEMObject::DEMObject(const Grid2DObject& dem_in)
 * @param nb_cols (unsigned int) number of columns
 * @return new DEMObject
 */
-DEMObject::DEMObject (const DEMObject& dem_in, const unsigned int start_col, const unsigned int nb_cols)
+DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsigned int& _ny, 
+				 const unsigned int& _ncols, const unsigned int& _nrows)
+	: Grid2DObject(_dem, _nx,_ny, _ncols,_nrows), slope(_dem.slope,_nx,_ny, _ncols,_nrows),
+	  azi(_dem.azi,_nx,_ny, _ncols,_nrows), curvature(_dem.curvature,_nx,_ny, _ncols,_nrows),
+	  Nx(_dem.Nx,_nx,_ny, _ncols,_nrows), Ny(_dem.Ny,_nx,_ny, _ncols,_nrows), Nz(_dem.Nz,_nx,_ny, _ncols,_nrows)
 {
-	if(nb_cols==0) {
-		throw InvalidArgumentException("requesting a subset of 0 columns for DEMObject", AT);
-	}
+	if ((_ncols==0) || (_nrows==0))
+		throw InvalidArgumentException("requesting a subset of 0 columns or rows for DEMObject", AT);
 
 	//fill metadata information
-	set(nb_cols, nrows, (xllcorner+start_col*cellsize), yllcorner, IOUtils::nodata, IOUtils::nodata, cellsize);
-
-	//filling the grids
-	for (unsigned int i=0; i<nb_cols; i++) {
-		for (unsigned int j=0; j < nrows; j++){
-			grid2D(i,j) = dem_in.grid2D(i+start_col,j);
-			slope(i,j) = dem_in.slope(i+start_col,j);
-			azi(i,j) = dem_in.azi(i+start_col,j);
-			curvature(i,j) = dem_in.curvature(i+start_col,j);
-			Nx(i,j) = dem_in.Nx(i+start_col,j);
-			Ny(i,j) = dem_in.Ny(i+start_col,j);
-			Nz(i,j) = dem_in.Nz(i+start_col,j);
-		}
-	}
+	setValues(_ncols, _nrows, (_dem.xllcorner+_nx*_dem.cellsize), (_dem.yllcorner+_ny*_dem.cellsize), 
+			IOUtils::nodata, IOUtils::nodata, _dem.cellsize);
 
 	//recompute the min/max
 	updateAllMinMax();

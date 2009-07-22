@@ -33,15 +33,18 @@ class Grid2DObject{
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
 			const double& cellsize, const CArray2D<double>& grid2D_in);
+
 		/**
 		* @brief constructs an object as a subset of another grid object
-		* @param grid_in (const Grid2DObject) initial grid object
-		* @param start_col (const int) starting column of the subset
-		* @param nb_cols (const int) number of columns of the subset
+		* @param _grid2Dobj (const Grid2DObject&) initial grid object
+		* @param _nx (const unsigned int) starting column of the subset
+		* @param _ny (const unsigned int) starting row of the subset
+		* @param _ncols (const unsigned int) number of columns of the subset
+		* @param _nrows (const unsigned int) number of rows of the subset
 		*/
-
-		Grid2DObject(const Grid2DObject& grid_in, 
-			const unsigned int& start_col, const unsigned int& nb_cols);
+		Grid2DObject(const Grid2DObject& _grid2Dobj,
+				   const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
+				   const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
 
 		/**
 		* @brief Set all variables in one go.
@@ -85,6 +88,13 @@ class Grid2DObject{
 		unsigned int ncols, nrows;
 		double xllcorner, yllcorner, cellsize;
 		double latitude, longitude;
+
+ protected:
+		void setValues(const unsigned int& ncols, const unsigned int& nrows,
+			const double& xllcorner, const double& yllcorner,
+			const double& latitude, const double& longitude, const double& cellsize);
+
+		void checkCoordinates();
 };
 
 #endif

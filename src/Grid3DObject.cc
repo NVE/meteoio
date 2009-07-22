@@ -12,7 +12,8 @@ Grid3DObject::Grid3DObject(const Grid3DObject& _grid3Dobj,
 				const unsigned int& _nwidth, const unsigned int& _nheight, const unsigned int& _ndepth) 
 	: grid3D(_grid3Dobj.grid3D, _nx,_ny,_nz, _nwidth,_nheight,_ndepth)
 {
-	setValues(_nwidth, _nheight, _ndepth, _grid3Dobj.xllcorner, _grid3Dobj.yllcorner, 
+	setValues(_nwidth, _nheight, _ndepth, 
+			(_grid3Dobj.xllcorner+_nx*_grid3Dobj.cellsize), (_grid3Dobj.yllcorner+_ny*_grid3Dobj.cellsize), 
 			_grid3Dobj.latitude, _grid3Dobj.longitude, _grid3Dobj.cellsize);
 }
 

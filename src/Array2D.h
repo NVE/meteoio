@@ -38,6 +38,7 @@ template<class T> class CArray2D {
 	public:
 		CArray2D();
 		CArray2D(const unsigned int& anx, const unsigned int& any);
+		CArray2D(const unsigned int& anx, const unsigned int& any, const T& init);
 
 		/**
 		* A constructor that can be used to create an CArray2D object that is contained in the
@@ -48,7 +49,7 @@ template<class T> class CArray2D {
 			    const unsigned int& _ncols, const unsigned int& _nrows);
 
 		void Create(const unsigned int& nx, const unsigned int& ny);
-		void Create(const unsigned int& nx, const unsigned int& ny, T init);
+		void Create(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void GetSize(unsigned int& nx, unsigned int& ny) const;
 
 		void Destroy();
@@ -114,6 +115,11 @@ template<class T> CArray2D<T>::CArray2D(const CArray2D<T>& _array2D, const unsig
 
 }
 
+template<class T> CArray2D<T>::CArray2D(const unsigned int& anx, const unsigned int& any, const T& init) {
+	nx = ny = 0;
+	Create(anx,any,init);
+}
+
 template<class T> CArray2D<T>::CArray2D(const unsigned int& anx, const unsigned int& any) {
 	nx = ny = 0;
 	Create(anx,any);
@@ -131,7 +137,7 @@ template<class T> void CArray2D<T>::Create(const unsigned int& anx, const unsign
 	}
 }
 
-template<class T> void CArray2D<T>::Create(const unsigned int& anx, const unsigned int& any, T init) {
+template<class T> void CArray2D<T>::Create(const unsigned int& anx, const unsigned int& any, const T& init) {
 	Create(anx, any);
 
 	for (unsigned int ii=0; ii<nx; ii++) {
