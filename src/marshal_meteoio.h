@@ -7,8 +7,8 @@
 #include <vector>
 #include "LegacyIO.ph"
 
-typedef CArray2D<double> TYPE_DOUBLE2D;
-typedef CArray2D<int> TYPE_INT2D;
+typedef Array2D<double> TYPE_DOUBLE2D;
+typedef Array2D<int> TYPE_INT2D;
 
 void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp);
 

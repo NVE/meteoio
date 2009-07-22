@@ -74,7 +74,7 @@ enum {Flat, Luff, Lee, N_SLOPE};
 typedef CArray<NODE> CNodeArray;
 
 //typedef CArray<int[8]> CElementArray;                                                                                                     
-typedef CArray2D<int> CElementArray;
+typedef Array2D<int> CElementArray;
 
 typedef CArray<double> CDoubleArray;
 

@@ -9,7 +9,7 @@ void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize
   (void)*temp;
   if (flag & FLAG_MARSHAL)
     {
-      int n=data.GetSize();
+      int n=data.size();
       buf.Pack(&n,1);
       if (n) buf.Pack((int *)((SPECIAL_PTS *)&data[0]), 2*n);
     }
@@ -116,7 +116,7 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
     {
       //int dim[2];
       int nx,ny;
-      data.GetSize(nx,ny);
+      data.size(nx,ny);
 
       buf.Pack(&nx,1);
       buf.Pack(&ny,1);
@@ -134,7 +134,7 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
       int nx,ny;//dim[2];
       buf.UnPack(&nx,1);
       buf.UnPack(&ny,1);
-      data.Create(nx,ny);
+      data.resize(nx,ny);
       //double **tmp=data;
     
       if (nx>0 && ny>0)
@@ -152,7 +152,7 @@ void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, 
   if (flag & FLAG_MARSHAL)
     {
       int dim[2];
-      data.GetSize(dim[0],dim[1]);
+      data.size(dim[0],dim[1]);
       buf.Pack(dim,2);
       int nx=dim[0];
       int ny=dim[1];
@@ -169,7 +169,7 @@ void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, 
       buf.UnPack(dim,2);
       int nx=dim[0];
       int ny=dim[1];
-      data.Create(nx,ny);
+      data.resize(nx,ny);
       //int **tmp=&data[0];
       if (nx>0 && ny>0)
 	{
@@ -186,7 +186,7 @@ void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int fl
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
-      int n=data.GetSize();
+      int n=data.size();
       buf.Pack(&n,1);
       if (n) buf.Pack((double *)&data[0],n);
     }
@@ -207,7 +207,7 @@ void marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, P
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
-      int n=data.GetSize();
+      int n=data.size();
       buf.Pack(&n,1);
       if (n)
 	{
@@ -233,7 +233,7 @@ void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int 
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
-      int n=data.GetSize();
+      int n=data.size();
       buf.Pack(&n,1);
       NODE *tmp=&data[0];
       for (int i=0;i<n;i++,tmp++)
@@ -285,7 +285,7 @@ void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int f
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
-      int n=data.GetSize();
+      int n=data.size();
       buf.Pack(&n,1);
       NODE *tmp=&data[0];
       for (int i=0;i<n;i++,tmp++)

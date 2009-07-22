@@ -180,7 +180,7 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 }
 
 //Filling Functions
-void Interpol2D::StdPressureFill(CArray2D<double>& param, const CArray2D<double>& topoheight) {
+void Interpol2D::StdPressureFill(Array2D<double>& param, const Array2D<double>& topoheight) {
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (unsigned int i=0; i<nx; i++) {
 		for (unsigned int j=0; j<ny; j++) {
@@ -193,7 +193,7 @@ void Interpol2D::StdPressureFill(CArray2D<double>& param, const CArray2D<double>
 	}
 }
 
-void Interpol2D::ConstFill(CArray2D<double>& param, const double& value)
+void Interpol2D::ConstFill(Array2D<double>& param, const double& value)
 {
 	//fills a data table with constant values
 	for (unsigned int i=0; i<nx; i++) {
@@ -203,7 +203,7 @@ void Interpol2D::ConstFill(CArray2D<double>& param, const double& value)
 	}
 }
 
-void Interpol2D::LapseConstFill(CArray2D<double>& param_out, const double& value, const double& altitude, const CArray2D<double>& topoHeight)
+void Interpol2D::LapseConstFill(Array2D<double>& param_out, const double& value, const double& altitude, const Array2D<double>& topoHeight)
 {
 	//fills a data table with constant values and then reprojects it to the DEM's elevation from a given altitude
 	//the laspe rate parameters must have been set before
@@ -233,7 +233,7 @@ double Interpol2D::IDWKriegingCore(const double& x, const double& y,
 }
 
 
-void Interpol2D::LapseIDWKrieging(CArray2D<double>& T, const CArray2D<double>& topoHeight, 
+void Interpol2D::LapseIDWKrieging(Array2D<double>& T, const Array2D<double>& topoHeight, 
 				  const vector<double>& vecData_in, const vector<StationData>& vecStations_in)
 {
 	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
@@ -256,7 +256,7 @@ void Interpol2D::LapseIDWKrieging(CArray2D<double>& T, const CArray2D<double>& t
 }
 
 
-void Interpol2D::IDWKrieging(CArray2D<double>& T, const vector<double>& vecData_in, const vector<StationData>& vecStations)
+void Interpol2D::IDWKrieging(Array2D<double>& T, const vector<double>& vecData_in, const vector<StationData>& vecStations)
 {
 	//multiple source stations: simple IDW Krieging
 	for (unsigned int i=0; i<nx; i++) {
@@ -267,7 +267,7 @@ void Interpol2D::IDWKrieging(CArray2D<double>& T, const vector<double>& vecData_
 }
 
 
-void Interpol2D::calculate(CArray2D<double>& param_out)
+void Interpol2D::calculate(Array2D<double>& param_out)
 {
 	unsigned short int flag_ok=0;
 	vector<double> vecStationElevations;
@@ -327,7 +327,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out)
 	}
 }
 
-void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& vecExtraData, CArray2D<double>& extra_param_in) {
+void Interpol2D::calculate(Array2D<double>& param_out, const vector<double>& vecExtraData, Array2D<double>& extra_param_in) {
 	unsigned short int flag_ok=0;
 	vector<double> vecStationElevations;
 	
@@ -386,7 +386,7 @@ void Interpol2D::calculate(CArray2D<double>& param_out, const vector<double>& ve
 	}
 }
 
-void Interpol2D::SimpleDEMWindInterpolate(CArray2D<double>& VW, CArray2D<double>& DW)
+void Interpol2D::SimpleDEMWindInterpolate(Array2D<double>& VW, Array2D<double>& DW)
 {
 //This method computes the speed of the wind and returns a table in 2D with this values
 //This Wind interpolation is similar to Liston and Elder (2006)

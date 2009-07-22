@@ -45,12 +45,12 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 * @param latitude_in (double) decimal latitude, can be IOUtils::nodata
 * @param longitude_in (double) decimal longitude, can be IOUtils::nodata
 * @param cellsize_in (double) value for cellsize in grid2D
-* @param altitude_in (CArray2D\<double\>&) grid2D of elevations
+* @param altitude_in (Array2D\<double\>&) grid2D of elevations
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const CArray2D<double>& _altitude)
+				const double& _cellsize, const Array2D<double>& _altitude)
 	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
@@ -107,12 +107,12 @@ void DEMObject::update() {
 //(such as slope, azimuth, normal vector)
 
 	// Creating tables
-	slope.Create(ncols, nrows);
-	azi.Create(ncols, nrows);
-	curvature.Create(ncols, nrows);
-	Nx.Create(ncols, nrows);
-	Ny.Create(ncols, nrows);
-	Nz.Create(ncols, nrows);
+	slope.resize(ncols, nrows);
+	azi.resize(ncols, nrows);
+	curvature.resize(ncols, nrows);
+	Nx.resize(ncols, nrows);
+	Ny.resize(ncols, nrows);
+	Nz.resize(ncols, nrows);
 
 	// Calculate the slope and the slope azimuth
 	CalculateAziSlopeCurve(0);
@@ -525,7 +525,7 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&min_curvature,1);
 		buf.Pack(&max_curvature,1);
 		int x,y;
-		grid2D.GetSize(x,y);
+		grid2D.size(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, azi, 0, FLAG_MARSHAL, NULL);
@@ -549,13 +549,13 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&max_slope,1);
 		buf.UnPack(&min_curvature,1);
 		buf.UnPack(&max_curvature,1);
-		grid2D.Destroy();//if(grid2D!=NULL)delete(grid2D);
-		slope.Destroy();
-		azi.Destroy();
-		curvature.Destroy();
-		Nx.Destroy();
-		Ny.Destroy();
-		Nz.Destroy();
+		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
+		slope.clear();
+		azi.clear();
+		curvature.clear();
+		Nx.clear();
+		Ny.clear();
+		Nz.clear();
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, slope, 0, !FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, azi, 0, !FLAG_MARSHAL, NULL);

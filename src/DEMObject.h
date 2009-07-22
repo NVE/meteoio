@@ -14,10 +14,10 @@
  */
 class DEMObject: public Grid2DObject {
 	public:
-		CArray2D<double> slope;
-		CArray2D<double> azi;
-		CArray2D<double> curvature;
-		CArray2D<double> Nx, Ny, Nz;
+		Array2D<double> slope;
+		Array2D<double> azi;
+		Array2D<double> curvature;
+		Array2D<double> Nx, Ny, Nz;
 		double min_altitude, max_altitude;
 		double min_slope, max_slope;
 		double min_curvature, max_curvature;
@@ -32,7 +32,7 @@ class DEMObject: public Grid2DObject {
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
 			const double& xllcorner_in, const double& yllcorner_in,
 			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in, const CArray2D<double>& altitude_in);
+			const double& cellsize_in, const Array2D<double>& altitude_in);
 		
 		DEMObject(const Grid2DObject& dem_in);
 

@@ -3,7 +3,7 @@
 
 /*
  * Default constructor. 
- * grid2D attribute is initialized by CArray2D default constructor.
+ * grid2D attribute is initialized by Array2D default constructor.
  */
 Grid2DObject::Grid2DObject() : grid2D()
 {
@@ -28,7 +28,7 @@ Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrow
 Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const CArray2D<double>& _grid2D) : grid2D()
+				const double& _cellsize, const Array2D<double>& _grid2D) : grid2D()
 {
 	set(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _grid2D);
 }
@@ -48,19 +48,19 @@ void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _cellsize)
 {
 	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
-	grid2D.Create(ncols, nrows, IOUtils::nodata);
+	grid2D.resize(ncols, nrows, IOUtils::nodata);
 }
 
 void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const CArray2D<double>& _grid2D)
+				const double& _cellsize, const Array2D<double>& _grid2D)
 {
-	//Test for equality in size: Only compatible CArray2D<double> grids are permitted
+	//Test for equality in size: Only compatible Array2D<double> grids are permitted
 	unsigned int nx,ny;
-	_grid2D.GetSize(nx,ny);
+	_grid2D.size(nx,ny);
 	if ((_ncols != nx) || (_nrows != ny)) {
-		throw IOException("Mismatch in size of CArray2D<double> parameter _grid2D and size of Grid2DObject", AT);
+		throw IOException("Mismatch in size of Array2D<double> parameter _grid2D and size of Grid2DObject", AT);
 	}
 
 	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
@@ -120,7 +120,7 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&longitude,1);
 		buf.Pack(&cellsize,1);
 		int x,y;
-		grid2D.GetSize(x,y);
+		grid2D.size(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 	}
 	else
@@ -132,7 +132,7 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&latitude,1);
 		buf.UnPack(&longitude,1);
 		buf.UnPack(&cellsize,1);
-		grid2D.Destroy();//if(grid2D!=NULL)delete(grid2D);
+		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
 	}
 }

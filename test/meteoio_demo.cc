@@ -45,18 +45,18 @@ int main(int argc, char** argv) {
 		IOUtils::WGS84_to_local(dem.latitude, dem.longitude, vecStation[i].latitude, vecStation[i].longitude, vecStation[i].eastCoordinate, vecStation[i].northCoordinate);
 	}
 
-	CArray2D<double> p, nswc, vw, rh, ta;
-	ta.Create(nx,ny);
-	p.Create(nx,ny);
-	nswc.Create(nx,ny);
-	rh.Create(nx,ny);
-	vw.Create(nx,ny);
+	Array2D<double> p, nswc, vw, rh, ta;
+	ta.resize(nx,ny);
+	p.resize(nx,ny);
+	nswc.resize(nx,ny);
+	rh.resize(nx,ny);
+	vw.resize(nx,ny);
 	
 	Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
 	mi.interpolate(nswc, rh, ta, vw, p);
 	
 	Grid2DObject p2, nswc2, vw2, rh2, ta2;
-	cout << "Convert CArray2D to Grid2DObject" << endl;
+	cout << "Convert Array2D to Grid2DObject" << endl;
 	p2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, p);
 	nswc2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, nswc);
 	ta2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, ta);

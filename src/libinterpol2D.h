@@ -45,8 +45,8 @@ class Interpol2D {
 		* @brief Computes the interpolation using the parameters set by the constructor
 		* @param param_out 2D grid containing the interpolated values
 		*/
-		void calculate(CArray2D<double>& param_out);
-		void calculate(CArray2D<double>& param_out, const vector<double>& vecExtraStations, CArray2D<double>& extra_param_in);
+		void calculate(Array2D<double>& param_out);
+		void calculate(Array2D<double>& param_out, const vector<double>& vecExtraStations, Array2D<double>& extra_param_in);
 
 	private:
 		//generic functions
@@ -70,17 +70,17 @@ class Interpol2D {
 							const vector<double>& coeffs); 
 		
 		//filling functions
-		void StdPressureFill(CArray2D<double>& param, const CArray2D<double>& topoheight);
-		void ConstFill(CArray2D<double>& param, const double& value);
-		void LapseConstFill(CArray2D<double>& param, const double& value, const double& altitude, const CArray2D<double>& topoHeight);
+		void StdPressureFill(Array2D<double>& param, const Array2D<double>& topoheight);
+		void ConstFill(Array2D<double>& param, const double& value);
+		void LapseConstFill(Array2D<double>& param, const double& value, const double& altitude, const Array2D<double>& topoHeight);
 		
 		
-		void LapseIDWKrieging(CArray2D<double>& T, const CArray2D<double>& topoHeight, 
+		void LapseIDWKrieging(Array2D<double>& T, const Array2D<double>& topoHeight, 
 					const vector<double>& vecData_in, const vector<StationData>& vecStations_in);
 		double IDWKriegingCore(const double& x, const double& y, 
 					const vector<double>& vecData_in, const vector<StationData>& vecStations);
-		void IDWKrieging(CArray2D<double>& T, const vector<double>& data_in, const vector<StationData>& vecStations);
-		void SimpleDEMWindInterpolate(CArray2D<double>& VW, CArray2D<double>& DW);
+		void IDWKrieging(Array2D<double>& T, const vector<double>& data_in, const vector<StationData>& vecStations);
+		void SimpleDEMWindInterpolate(Array2D<double>& VW, Array2D<double>& DW);
 
 	private:
 		//static members
@@ -98,7 +98,7 @@ class Interpol2D {
 		
 		vector<double> vecCoefficients;		///<Regression coefficients 0-3
 		const DEMObject& dem;			///<Reference to be initialized in the constructor
-		const CArray2D<double>& InputTopo;	///<Reference to be initialized in the constructor
+		const Array2D<double>& InputTopo;	///<Reference to be initialized in the constructor
 		const vector<StationData>& InputMeta;	///<Reference to be initialized in the constructor
 		const vector<double>& inputData;	///<Reference to be initialized in the constructor
 };

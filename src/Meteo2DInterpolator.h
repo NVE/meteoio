@@ -28,19 +28,19 @@ class Meteo2DInterpolator {
 		* @brief This function calls the interpolation class for each individual meteo parameter. 
 		*        It also builds a list of valid data sources for the given parameter.
 		*/
-		void interpolate(CArray2D<double>& nswc, CArray2D<double>& rh, CArray2D<double>& ta, CArray2D<double>& vw, CArray2D<double>& p);
-		void interpolate(CArray2D<double>& nswc, CArray2D<double>& rh, CArray2D<double>& ta,
-				 CArray2D<double>& vw, CArray2D<double>& p, CArray2D<double>& iswr/*, CArray2D<double>& ea*/);
+		void interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, Array2D<double>& vw, Array2D<double>& p);
+		void interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta,
+				 Array2D<double>& vw, Array2D<double>& p, Array2D<double>& iswr/*, Array2D<double>& ea*/);
 
 	private:
-		void interpolateP(CArray2D<double>& p);
-		void interpolateNSWC(CArray2D<double>& nswc);
-		void interpolateTA(CArray2D<double>& ta);
-		void interpolateRH(CArray2D<double>& rh, CArray2D<double>& ta);
-		void interpolateVW(CArray2D<double>& vw);
-		void interpolateDW(CArray2D<double>& dw);
-		void interpolateISWR(CArray2D<double>& iswr);
-		//void interpolateEA(CArray2D<double>& ea);
+		void interpolateP(Array2D<double>& p);
+		void interpolateNSWC(Array2D<double>& nswc);
+		void interpolateTA(Array2D<double>& ta);
+		void interpolateRH(Array2D<double>& rh, Array2D<double>& ta);
+		void interpolateVW(Array2D<double>& vw);
+		void interpolateDW(Array2D<double>& dw);
+		void interpolateISWR(Array2D<double>& iswr);
+		//void interpolateEA(Array2D<double>& ea);
 
 		const DEMObject& dem;
 

@@ -20,7 +20,7 @@ template<class T> class CArray {
 		T& operator [](unsigned int index);
 		const T operator [](unsigned int index) const;
 
-		unsigned int GetSize();
+		unsigned int size();
 		void SetSize(unsigned int asize);
 		void RemoveAll();
 		void InsertAt(int index, T e);
@@ -28,28 +28,28 @@ template<class T> class CArray {
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
-		unsigned int size;      ///<this is introduced to omit the costly vecData.size()
+		unsigned int arraySize;      ///<this is introduced to omit the costly vecData.size()
 };
 
 template<class T> CArray<T>::CArray(unsigned int asize) {
 	SetSize(asize);
-	size = asize;
+	arraySize = asize;
 }
 
-template<class T> unsigned int CArray<T>::GetSize() {
-	return size;
+template<class T> unsigned int CArray<T>::size() {
+	return arraySize;
 }
 
 template<class T> void CArray<T>::SetSize(unsigned int asize) {
 	if (asize != vecData.size()) {
 		vecData.resize(asize);
-		size = asize;
+		arraySize = asize;
 	}
 }
 
 template<class T> T& CArray<T>::operator [](unsigned int index) {
 #ifndef NOSAFECHECKS
-	if (index >= size) {
+	if (index >= arraySize) {
 		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
@@ -59,7 +59,7 @@ template<class T> T& CArray<T>::operator [](unsigned int index) {
 
 template<class T> const T CArray<T>::operator [](unsigned int index) const {
 #ifndef NOSAFECHECKS
-	if (index >= size) {
+	if (index >= arraySize) {
 		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
@@ -69,16 +69,16 @@ template<class T> const T CArray<T>::operator [](unsigned int index) const {
 
 template<class T> void CArray<T>::RemoveAll() {
 	vecData.clear();
-	size = 0;
+	arraySize = 0;
 }
 
 template<class T> void CArray<T>::InsertAt(int index, T e) {
 	if (index < 0) {
 		vecData.push_back(e);
-                size++;
+                arraySize++;
 	} else if ((index >= 0) && (index < (int)vecData.size())) {
 		vecData.insert(vecData.begin() + index, e);
-		size++;
+		arraySize++;
 	} else {
 		throw IndexOutOfBoundsException("", AT);
 	}
@@ -87,7 +87,7 @@ template<class T> void CArray<T>::InsertAt(int index, T e) {
 template<class T> void CArray<T>::RemoveAt(unsigned int index) {
 	if (index < vecData.size()) {
 		vecData.erase(vecData.begin()+index);
-		size--;
+		arraySize--;
 	}
 }
 

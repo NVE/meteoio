@@ -119,7 +119,7 @@ void LegacyIO::GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z )
 void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 {
 #ifdef _POPC_ 
-	if (hour!=NULL && 0==strcmp(hour,cache_Hour) && cache_WindField.GetSize()) {
+	if (hour!=NULL && 0==strcmp(hour,cache_Hour) && cache_WindField.size()) {
 		DEBUG("GET WIND FIELD DATA FROM CACHE");
 		nodes=cache_WindField;
 		cache_WindField.RemoveAll();

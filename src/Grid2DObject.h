@@ -32,7 +32,7 @@ class Grid2DObject{
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
-			const double& cellsize, const CArray2D<double>& grid2D_in);
+			const double& cellsize, const Array2D<double>& grid2D_in);
 
 		/**
 		* @brief constructs an object as a subset of another grid object
@@ -62,7 +62,7 @@ class Grid2DObject{
 			const double& cellsize);
 		/**
 		* @brief Set all variables in one go. Notably the member grid2D of type 
-		* CArray2D\<double\> will be destroyed and recreated to size ncols x nrows.
+		* Array2D\<double\> will be destroyed and recreated to size ncols x nrows.
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
 		* @param xllcorner (double) x-coordinate of lower left corner
@@ -76,7 +76,7 @@ class Grid2DObject{
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
-			const double& cellsize, const CArray2D<double>& grid2D_in); //TODO: const CArray would be better...
+			const double& cellsize, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
 		
 		/**
 		* @brief Serialize method for POPC. Used to marshall data and send it from an object to another.
@@ -84,7 +84,7 @@ class Grid2DObject{
 		* @param buf pointer to the communication buffer
 		* @param pack indicates if the data is sent or received
 		*/  
-		CArray2D<double> grid2D;
+		Array2D<double> grid2D;
 		unsigned int ncols, nrows;
 		double xllcorner, yllcorner, cellsize;
 		double latitude, longitude;
