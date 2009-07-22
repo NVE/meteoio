@@ -18,7 +18,7 @@ void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize
       int n;
 
       buf.UnPack(&n,1);
-      data.SetSize(n);
+      data.resize(n);
       if (n) buf.UnPack((int *)((SPECIAL_PTS *)&data[0]), 2*n);
     }
 }
@@ -194,7 +194,7 @@ void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int fl
     {
       int n;
       buf.UnPack(&n,1);
-      data.SetSize(n);
+      data.resize(n);
       if (n) buf.UnPack((double *)&data[0],n);
     }
 
@@ -218,7 +218,7 @@ void marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, P
     {
       int n;
       buf.UnPack(&n,1);
-      data.SetSize(n);
+      data.resize(n);
       if (n)
 	{
 	  buf.UnPack((double *)((NODE *)&data[0]),n*(sizeof(NODE)/sizeof(double)));
@@ -257,7 +257,7 @@ void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int 
     {
       int n;
       buf.UnPack(&n,1);
-      data.SetSize(n);
+      data.resize(n);
       NODE *tmp=&data[0];
       for (int i=0;i<n;i++,tmp++)
 	{
@@ -304,7 +304,7 @@ void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int f
     {
       int n;
       buf.UnPack(&n,1);
-      data.SetSize(n);
+      data.resize(n);
       NODE *tmp=&data[0];
       for (int i=0;i<n;i++,tmp++)
 	{

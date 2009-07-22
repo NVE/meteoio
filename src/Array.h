@@ -7,47 +7,47 @@
 #define NOSAFECHECKS
 
 /**
- * @class CArray
- * @brief The template class CArray is a 1D array (vector) able to hold any type of object as datatype
+ * @class Array
+ * @brief The template class Array is a 1D array (vector) able to hold any type of object as datatype
  *
  * @author Thomas Egger
  * @date   2009-05-02
  */
-template<class T> class CArray {
+template<class T> class Array {
 	public:
-		CArray(unsigned int asize=0);
+		Array(unsigned int asize=0);
 
 		T& operator [](unsigned int index);
 		const T operator [](unsigned int index) const;
 
 		unsigned int size();
-		void SetSize(unsigned int asize);
-		void RemoveAll();
-		void InsertAt(int index, T e);
-		void RemoveAt(unsigned int index);
+		void resize(unsigned int asize);
+		void clear();
+		void insertAt(int index, T e);
+		void removeAt(unsigned int index);
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
 		unsigned int arraySize;      ///<this is introduced to omit the costly vecData.size()
 };
 
-template<class T> CArray<T>::CArray(unsigned int asize) {
-	SetSize(asize);
+template<class T> Array<T>::Array(unsigned int asize) {
+	resize(asize);
 	arraySize = asize;
 }
 
-template<class T> unsigned int CArray<T>::size() {
+template<class T> unsigned int Array<T>::size() {
 	return arraySize;
 }
 
-template<class T> void CArray<T>::SetSize(unsigned int asize) {
+template<class T> void Array<T>::resize(unsigned int asize) {
 	if (asize != vecData.size()) {
 		vecData.resize(asize);
 		arraySize = asize;
 	}
 }
 
-template<class T> T& CArray<T>::operator [](unsigned int index) {
+template<class T> T& Array<T>::operator [](unsigned int index) {
 #ifndef NOSAFECHECKS
 	if (index >= arraySize) {
 		throw IndexOutOfBoundsException("", AT);
@@ -57,7 +57,7 @@ template<class T> T& CArray<T>::operator [](unsigned int index) {
 	return vecData[index];
 }
 
-template<class T> const T CArray<T>::operator [](unsigned int index) const {
+template<class T> const T Array<T>::operator [](unsigned int index) const {
 #ifndef NOSAFECHECKS
 	if (index >= arraySize) {
 		throw IndexOutOfBoundsException("", AT);
@@ -67,12 +67,12 @@ template<class T> const T CArray<T>::operator [](unsigned int index) const {
 	return vecData[index];
 }
 
-template<class T> void CArray<T>::RemoveAll() {
+template<class T> void Array<T>::clear() {
 	vecData.clear();
 	arraySize = 0;
 }
 
-template<class T> void CArray<T>::InsertAt(int index, T e) {
+template<class T> void Array<T>::insertAt(int index, T e) {
 	if (index < 0) {
 		vecData.push_back(e);
                 arraySize++;
@@ -84,7 +84,7 @@ template<class T> void CArray<T>::InsertAt(int index, T e) {
 	}
 }
 
-template<class T> void CArray<T>::RemoveAt(unsigned int index) {
+template<class T> void Array<T>::removeAt(unsigned int index) {
 	if (index < vecData.size()) {
 		vecData.erase(vecData.begin()+index);
 		arraySize--;
@@ -97,6 +97,6 @@ struct SPECIAL_PTS
   int iy;
 };
 
-typedef CArray<SPECIAL_PTS> CSpecialPTSArray;
+typedef Array<SPECIAL_PTS> CSpecialPTSArray;
 
 #endif

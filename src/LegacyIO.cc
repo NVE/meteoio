@@ -62,9 +62,9 @@ void LegacyIO::GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z )
 	int nx, ny, nz;
 	GetGridSize(nx,ny,nz);
 
-	x.SetSize(nx);
-	y.SetSize(ny);
-	z.SetSize(nz*ny*nx);
+	x.resize(nx);
+	y.resize(ny);
+	z.resize(nz*ny*nx);
 
 	char dummy[MAX_LINE_LENGTH], fname[MAX_STRING_LENGTH];
 	int j;
@@ -122,7 +122,7 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 	if (hour!=NULL && 0==strcmp(hour,cache_Hour) && cache_WindField.size()) {
 		DEBUG("GET WIND FIELD DATA FROM CACHE");
 		nodes=cache_WindField;
-		cache_WindField.RemoveAll();
+		cache_WindField.clear();
 		*cache_Hour=0;
 		return;
 	}
@@ -131,7 +131,7 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 	int nx, ny, nz;
 	GetGridSize(nx,ny,nz);
 
-	nodes.SetSize(nx*ny*nz);
+	nodes.resize(nx*ny*nz);
 	FILE *fp;
 	char dummy[MAX_LINE_LENGTH], fname[MAX_STRING_LENGTH];
 
@@ -262,7 +262,7 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 void LegacyIO::PrepareNextWindField(char *hour)
 {
 #ifdef _POPC_
-	cache_WindField.RemoveAll();
+	cache_WindField.clear();
 	try {
 		DEBUG("Read grid data (hour=%s) for caching",hour);
 		GetGridData(cache_WindField,hour);

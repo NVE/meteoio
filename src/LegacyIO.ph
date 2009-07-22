@@ -71,14 +71,14 @@ typedef struct {
  +---------------------------------------------------------------*/
 enum {Flat, Luff, Lee, N_SLOPE};
 
-typedef CArray<NODE> CNodeArray;
+typedef Array<NODE> CNodeArray;
 
-//typedef CArray<int[8]> CElementArray;                                                                                                     
+//typedef Array<int[8]> CElementArray;                                                                                                     
 typedef Array2D<int> CElementArray;
 
-typedef CArray<double> CDoubleArray;
+typedef Array<double> CDoubleArray;
 
-typedef CArray<int> CIntArray;
+typedef Array<int> CIntArray;
 
 // marshal_slfio must be included after the structures'definitions
 #include "marshal_meteoio.h"

@@ -70,7 +70,7 @@ class Grid3DObject{
 		* @param latitude (double&) decimal latitude
 		* @param longitude (double&) decimal longitude
 		* @param cellsize (double&) value for cellsize in grid3D
-		* @param grid3D_in (CArray<double>&) grid to be copied by value
+		* @param grid3D_in (Array<double>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
 			const double& xllcorner, const double& yllcorner,

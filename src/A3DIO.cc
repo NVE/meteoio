@@ -817,7 +817,7 @@ void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
 	cleanup();
 
 	//Now put everything into that legacy struct CSpecialPTSArray
-	pts.SetSize(mypts.size());
+	pts.resize(mypts.size());
 
 	for (unsigned int jj=0; jj<mypts.size(); jj++) {
 		pts[jj].ix = mypts.at(jj).first;
