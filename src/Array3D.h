@@ -61,6 +61,9 @@ template <class T> class Array3DProxy2 {
 template<class T> class Array3D {
 	public:
 		Array3D();
+		Array3D(const Array3D<T>& _array3D,
+			   const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
+			   const unsigned int& _cols, const unsigned int& _nrows, const unsigned int& _ndepth);
 		Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz);
 		Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init);
 
@@ -109,6 +112,30 @@ template<class T> Array3DProxy<T> Array3D<T>::operator[](unsigned int i) {
 
 template<class T> Array3D<T>::Array3D() {
 	nx = ny = nz = nxny = 0;
+}
+
+template<class T> Array3D<T>::Array3D(const Array3D<T>& _array3D,
+			   const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
+			   const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth) 
+{
+	
+	if (((_nx+_ncols) > _array3D.nx) || ((_ny+_nrows) > _array3D.ny) || ((_nz+_ndepth) > _array3D.nz))
+		throw IndexOutOfBoundsException("", AT);
+
+	if ((_ncols == 0) || (_nrows == 0) || (_ndepth == 0)) //the space has to make sense
+		throw IndexOutOfBoundsException("", AT);
+
+	resize(_ncols, _nrows, _ndepth); //create new Array3D object
+
+	//Copy by value subspace
+	for (unsigned int ii=0; ii<nz; ii++) { 
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for (unsigned int kk=0; kk<nx; kk++) {
+				//Running through the vector in order of memory alignment
+				operator()(kk,jj,ii) = _array3D(_nx+kk, _ny+jj, _nz+ii); 
+			}
+		}
+	}
 }
 
 template<class T> Array3D<T>::Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz) {
