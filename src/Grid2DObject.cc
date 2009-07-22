@@ -92,9 +92,9 @@ void Grid2DObject::set(const unsigned int& ncols_in, const unsigned int& nrows_i
 	set(ncols_in, nrows_in, xllcorner_in, yllcorner_in, latitude_in, longitude_in, cellsize_in);
 
 	//Test for equality in size: Only compatible CArray2D<double> grids are permitted
-	int nx, ny;
+	unsigned int nx, ny;
 	grid2D_in.GetSize(nx, ny);
-	if (((int)ncols != nx) || ((int)nrows != ny)) {
+	if ((ncols != nx) || (nrows != ny)) {
 		throw IOException("Mismatch in size of CArray2D<double> parameter grid2D_in and size of Grid2DObject", AT);
 	}
 

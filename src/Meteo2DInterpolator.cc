@@ -168,7 +168,7 @@ void Meteo2DInterpolator::interpolateVW(CArray2D<double>& vw)
 	printf("[i] interpolating VW using %d stations\n", (int)vecSelectedStations.size());
 	// If direction doesn't exist, use the kriging
 	if( countDataDir > 0.) {
-		int nx, ny;
+		unsigned int nx, ny;
 		vw.GetSize(nx, ny);
 		CArray2D<double> dw;
 		dw.Create(nx,ny);

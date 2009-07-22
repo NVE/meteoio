@@ -19,14 +19,14 @@ template <class T> class Array3DProxy2;
 template <class T> class Array3DProxy {
  	public:
 		friend class Array3D<T>;
-		Array3DProxy2<T> operator[](unsigned int _any) {
+		Array3DProxy2<T> operator[](const unsigned int& _any) {
 			return Array3DProxy2<T>(array3D, anx, _any); 
 		}
 
  	private:
- 		Array3DProxy(Array3D<T>& _array3D, unsigned int& _anx) : array3D(_array3D), anx(_anx){}
+ 		Array3DProxy(Array3D<T>& _array3D, const unsigned int& _anx) : array3D(_array3D), anx(_anx){}
 		Array3D<T>& array3D;
-		unsigned int anx;
+		const unsigned int anx;
 };
 
 /**
@@ -39,15 +39,16 @@ template <class T> class Array3DProxy {
 template <class T> class Array3DProxy2 {
  	public:
 		friend class Array3DProxy<T>;
-		T& operator[](unsigned int _anz) {
+		T& operator[](const unsigned int& _anz) {
 			return array3D(anx, any, _anz);
 		}
 
 	private:
- 		Array3DProxy2(Array3D<T>& _array3D, unsigned int& _anx, unsigned int& _any) : array3D(_array3D), anx(_anx), any(_any){}
+ 		Array3DProxy2(Array3D<T>& _array3D, const unsigned int& _anx, 
+				    const unsigned int& _any) : array3D(_array3D), anx(_anx), any(_any){}
 		Array3D<T>& array3D;
-		unsigned int anx;
-		unsigned int any;
+		const unsigned int anx;
+		const unsigned int any;
 }; 
 
 
@@ -61,6 +62,12 @@ template <class T> class Array3DProxy2 {
 template<class T> class Array3D {
 	public:
 		Array3D();
+
+		/**
+		* A constructor that can be used to create an Array3D object that is contained in the
+		* one passed as _array3D argument. The resulting Array3D object is a by value copy of
+		* a subspace of the space spanned by the _array3D
+		*/
 		Array3D(const Array3D<T>& _array3D,
 			   const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
 			   const unsigned int& _cols, const unsigned int& _nrows, const unsigned int& _ndepth);
@@ -74,7 +81,7 @@ template<class T> class Array3D {
 
 		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
 		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
-		Array3DProxy<T> operator[](unsigned int i);
+		Array3DProxy<T> operator[](const unsigned int& i);
 
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
@@ -105,7 +112,7 @@ template<class T> const T Array3D<T>::operator()(const unsigned int& x, const un
 	return vecData[x + y*nx + z*nxny];
 }
 
-template<class T> Array3DProxy<T> Array3D<T>::operator[](unsigned int i) {
+template<class T> Array3DProxy<T> Array3D<T>::operator[](const unsigned int& i) {
 	return Array3DProxy<T>(*this, i); 
 }
 

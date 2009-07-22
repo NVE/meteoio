@@ -78,12 +78,6 @@ class Grid3DObject{
 			const double& cellsize, const Array3D<double>& grid3D_in);
 
 
-		/**
-		* @brief Serialize method for POPC. Used to marshall data and send it from an object to another.
-		*
-		* @param buf pointer to the communication buffer
-		* @param pack indicates if the data is sent or received
-		*/  
 		Array3D<double> grid3D;
 		unsigned int ncols, nrows, ndepth;
 		double xllcorner, yllcorner, cellsize;
