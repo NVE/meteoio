@@ -28,7 +28,7 @@ template<class T> class Array {
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
-		unsigned int arraySize;      ///<this is introduced to omit the costly vecData.size()
+		unsigned int arraySize; ///<this is introduced to omit the costly vecData.size()
 };
 
 template<class T> Array<T>::Array(unsigned int asize) {

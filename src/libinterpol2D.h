@@ -23,28 +23,31 @@
  
 class Interpol2D {
 	public:
-		//available methods for single source and multiple sources interpolations
-		typedef enum INTERP_TYPES {I_PRESS, I_RH, I_VW, I_CST, I_IDWK, I_LAPSE_CST, I_LAPSE_IDWK} interp_types;
-		typedef enum REG_TYPES {R_CST, R_LIN} reg_types;
-		
 		/**
-		* @brief Constructor. Sets private members for latter use
-		* @param Isingle enum for the type of single data source interpolation strategy
-		* @param Imultiple enum for the type of multiple data source interpolation strategy
-		* @param sourcesData vector of source data
-		* @param sourcesMeta vector of metadata about the sources
-		* @param dem Digital Elevation Model object
+		* @enum INTERP_TYPES
+		* keywords for selecting the spatial interpolation algorithm
 		*/
+		//available methods for single source and multiple sources interpolations
+		typedef enum INTERP_TYPES {
+			I_PRESS, ///< standard air pressure interpolation
+			I_RH, ///< relative humidity interpolation
+			I_VW, ///< wind velocity interpolation (using a heuristic terrain effect)
+			I_CST, ///< constant fill
+			I_IDWK, ///< Inverse Distance Weighting fill
+			I_LAPSE_CST, ///< constant fill with an elevation lapse rate
+			I_LAPSE_IDWK ///< Inverse Distance Weighting with an elevation lapse rate fill
+		} interp_types;
+		typedef enum REG_TYPES {
+			R_CST, ///< no elevation dependence (ie: constant)
+			R_LIN ///< linear elevation dependence
+		} reg_types;
+		
 		Interpol2D(interp_types Isingle, 
 			interp_types Imultiple, 
 			const vector<double>& sourcesData, 
 			const vector<StationData>& sourcesMeta, 
 	    	const DEMObject& dem);
 		
-		/**
-		* @brief Computes the interpolation using the parameters set by the constructor
-		* @param param_out 2D grid containing the interpolated values
-		*/
 		void calculate(Array2D<double>& param_out);
 		void calculate(Array2D<double>& param_out, const vector<double>& vecExtraStations, Array2D<double>& extra_param_in);
 
@@ -84,10 +87,11 @@ class Interpol2D {
 
 	private:
 		//static members
-		const static double ref_altitude;		///elevation to use for common elevation reprojection
 		const static double dflt_temperature_lapse_rate;///default lapse rate for temperature(elevation)
 		const static double wind_ys;			///coefficient for wind dependency on slope
 		const static double wind_yc;			///coefficient for wind dependency on curvature
+
+		double ref_altitude;				///elevation to use for common elevation reprojection
 		
 		interp_types single_type, multiple_type;	//interpolations choices for single and multiple sources
 		//reg_types reg_type;				//choice of regression methods

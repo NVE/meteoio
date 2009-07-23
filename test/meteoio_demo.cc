@@ -32,18 +32,18 @@ int main(int argc, char** argv) {
 		cout << "  RH: " << vecMeteo[ii].rh << endl;
 	}
 	
-	Grid2DObject dem;
+	DEMObject dem;
 	ioTest->readDEM(dem);
-	int nx,ny;
-	ioTest->get2DGridSize(nx,ny);
+	int nx=dem.ncols,ny=dem.nrows;
+	dem.update();
 	
 	//convert to local grid coordinates
-	dem.xllcorner = 0.;
+	/*dem.xllcorner = 0.;
 	dem.yllcorner = 0.;
 	for (unsigned i = 0; i < vecMeteo.size() ; ++i) {
 		//setup reference station, convert coordinates to local grid
 		IOUtils::WGS84_to_local(dem.latitude, dem.longitude, vecStation[i].latitude, vecStation[i].longitude, vecStation[i].eastCoordinate, vecStation[i].northCoordinate);
-	}
+	}*/
 
 	Array2D<double> p, nswc, vw, rh, ta;
 	ta.resize(nx,ny);
@@ -57,11 +57,11 @@ int main(int argc, char** argv) {
 	
 	Grid2DObject p2, nswc2, vw2, rh2, ta2;
 	cout << "Convert Array2D to Grid2DObject" << endl;
-	p2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, p);
-	nswc2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, nswc);
-	ta2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, ta);
-	rh2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, rh);
-	vw2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, dem.nodata, vw);
+	p2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, p);
+	nswc2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, nswc);
+	ta2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, ta);
+	rh2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, rh);
+	vw2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, vw);
 	cout << "conversion was successful" << endl;
 	
 	cout << "Writing the Grids to *.2d files" << endl;

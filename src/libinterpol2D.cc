@@ -13,10 +13,17 @@
 
 
 const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
-const double Interpol2D::ref_altitude = 1500.;
 const double Interpol2D::wind_ys = 0.58;
 const double Interpol2D::wind_yc = 0.42;
 
+/**
+* @brief Constructor. Sets private members for latter use
+* @param Isingle enum for the type of single data source interpolation strategy
+* @param Imultiple enum for the type of multiple data source interpolation strategy
+* @param sourcesData vector of source data
+* @param sourcesMeta vector of metadata about the sources
+* @param dem Digital Elevation Model object
+*/
 Interpol2D::Interpol2D(interp_types Isingle, 
 		       interp_types Imultiple, 
 		       const vector<double>& vecData, 
@@ -32,16 +39,28 @@ Interpol2D::Interpol2D(interp_types Isingle,
 	cellsize  = dem.cellsize;
 	nx        = dem.ncols;
 	ny        = dem.nrows;
+	if(dem.min_altitude!=IOUtils::nodata && dem.max_altitude!=IOUtils::nodata) {
+		//we use the median elevation as the reference elevation for reprojections
+		ref_altitude = 0.5 * (dem.min_altitude+dem.max_altitude); 
+	} else {
+		//since there is nothing else that we can do, we use an arbitrary elevation
+		ref_altitude = 1500.;
+	}
 
 	vecCoefficients.resize(4, 0.0); //Coefficients 0-3 TODO!! make it more dynamic!
 	InputSize = (unsigned int)inputData.size();
 
-	//Debugging output:
-	//std::cerr << AT << "\n    inputData.size()==" << inputData.size() 
-	//	  << "\n    dim: " << nx << " x " << ny << std::endl;
 }
 
 //Usefull functions
+/**
+* @brief Computes the horizontal distance between points, given by coordinates in a geographic grid
+* @param X1 (const double) first point's X coordinate
+* @param Y1 (const double) first point's Y coordinate
+* @param X2 (const double) second point's X coordinate
+* @param Y2 (const double) second point's Y coordinate
+* @return (double) distance in m
+*/
 double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2)
 {
 	//This function computes the horizontaldistance between two points
@@ -49,6 +68,14 @@ double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const 
 	return sqrt( (X1-X2)*(X1-X2) + (Y1-Y2)*(Y1-Y2) );
 }
 
+/**
+* @brief Computes the horizontal distance between points, given by their cells indexes
+* @param X1 (const double) first point's i index
+* @param Y1 (const double) first point's j index
+* @param X2 (const double) second point's X coordinate
+* @param Y2 (const double) second point's Y coordinate
+* @return (double) distance in m
+*/
 double Interpol2D::HorizontalDistance(const int& i, const int& j, const double& X2, const double& Y2)
 {
 	//This function computes the horizontal distance between two points
@@ -60,6 +87,11 @@ double Interpol2D::HorizontalDistance(const int& i, const int& j, const double& 
 	return sqrt( (X1-X2)*(X1-X2) + (Y1-Y2)*(Y1-Y2) );
 }
 
+/**
+* @brief Returns the average of data contained in a vector
+* @param data_in (vector\<double\>) vector of data
+* @return (double) average of the vector
+*/
 double Interpol2D::AvgSources(const vector<double>& data_in)
 {
 	//This function computes the average of all the data sources
@@ -71,6 +103,11 @@ double Interpol2D::AvgSources(const vector<double>& data_in)
 	return (avg/(double)data_in.size());
 }
 
+/**
+* @brief From a vector of StationData, builds a vector of elevations
+* @param vecStations_in (vector\<StationData\>) vector of StationData objects
+* @param vecElevations (vector\<double\>) vector of elevations (same order as the input)
+*/
 void Interpol2D::BuildStationsElevations(const vector<StationData>& vecStations_in, vector<double>& vecElevations)
 {
 	//from a vector of stations meta data, builds a 1D array
@@ -80,6 +117,16 @@ void Interpol2D::BuildStationsElevations(const vector<StationData>& vecStations_
 }
 
 //Data regression models
+/**
+* @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
+* the linear regression has the form Y = aX + b with a regression coefficient r
+* @param X (vector\<double\>) vector of X coordinates
+* @param Y (vector\<double\>) vector of Y coordinates (same order as X)
+* @param a (double) slope of the linear regression
+* @param b (double) origin of the linear regression
+* @param r (double) linear regression coefficient
+* @param ignore_index (const int) if positive, index of a point to exclude from the regression
+*/
 void Interpol2D::LinRegressionCore(const vector<double>& X, const vector<double>& Y, double& a, double& b, double& r, const int ignore_index)
 {
 	//finds the linear regression for points (x,y,z,Value)
@@ -118,6 +165,14 @@ void Interpol2D::LinRegressionCore(const vector<double>& X, const vector<double>
 	r = sxy / sqrt(sx*sy);		//r
 }
 
+/**
+* @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
+* the linear regression has the form Y = aX + b with a regression coefficient r. If the regression coefficient is not good enough, a bad point is looked removed.
+* @param X (vector\<double\>) vector of X coordinates
+* @param Y (vector\<double\>) vector of Y coordinates (same order as X)
+* @param coeffs (vector\<double\>) a,b,r coefficients in a vector
+* @return (int) EXIT_SUCCESS or EXIT_FAILURE
+*/
 int Interpol2D::LinRegression(const vector<double>& X, const vector<double>& Y, vector<double>& coeffs)
 {
 	//finds the linear regression for points (x,y,z,Value)
@@ -162,6 +217,15 @@ int Interpol2D::LinRegression(const vector<double>& X, const vector<double>& Y, 
 
 //Now, the core interpolation functions: they project a given parameter to a reference altitude, given a constant lapse rate
 //example: Ta projected to 1500m with a rate of -0.0065K/m
+/**
+* @brief Projects a given parameter to another elevation: 
+* This implementation keeps the value constant as a function of the elevation
+* @param value (const double) original value
+* @param altitude (const double) altitude of the original value (unused)
+* @param new_altitude (const double) altitude of the reprojected value (unused)
+* @param coeffs (const vector\<double\>) coefficients to use for the projection (unused)
+* @return (double) reprojected value
+*/
 double Interpol2D::ConstProject(const double& value, const double& altitude, const double& new_altitude, const vector<double>& coeffs)
 {
 	(void) altitude;	//to avoid the compiler seeing them as unused
@@ -170,6 +234,15 @@ double Interpol2D::ConstProject(const double& value, const double& altitude, con
 	return value;
 }
 
+/**
+* @brief Projects a given parameter to another elevation: 
+* This implementation assumes a linear dependency of the value as a function of the elevation
+* @param value (const double) original value
+* @param altitude (const double) altitude of the original value
+* @param new_altitude (const double) altitude of the reprojected value
+* @param coeffs (const vector\<double\>) coefficients to use for the projection
+* @return (double) reprojected value
+*/
 double Interpol2D::LinProject(const double& value, const double& altitude, const double& new_altitude, const vector<double>& coeffs)
 {
 	//linear lapse: coeffs must have been already computed
@@ -180,6 +253,12 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 }
 
 //Filling Functions
+/**
+* @brief Grid filling function: 
+* This implementation builds a standard air pressure as a function of the elevation
+* @param param (Array2D\<double\>) 2D array to fill
+* @param topoheight (Array2D\<double\>) array of elevations (dem)
+*/
 void Interpol2D::StdPressureFill(Array2D<double>& param, const Array2D<double>& topoheight) {
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (unsigned int i=0; i<nx; i++) {
@@ -193,6 +272,12 @@ void Interpol2D::StdPressureFill(Array2D<double>& param, const Array2D<double>& 
 	}
 }
 
+/**
+* @brief Grid filling function: 
+* This implementation fills the grid with a constant value
+* @param param (Array2D\<double\>) 2D array to fill
+* @param value (double) value to put in the grid
+*/
 void Interpol2D::ConstFill(Array2D<double>& param, const double& value)
 {
 	//fills a data table with constant values
@@ -203,6 +288,15 @@ void Interpol2D::ConstFill(Array2D<double>& param, const double& value)
 	}
 }
 
+/**
+* @brief Grid filling function: 
+* This implementation fills a flat grid with a constant value, and then reproject it to the terrain's elevation.
+* for example, the air temperature measured at one point at 1500m would be given as value, the 1500m as altitude and the dem would allow to reproject this temperature on the full DEM using a default lapse rate.
+* @param param_out (Array2D\<double\>) 2D array to fill
+* @param value (double) value to put in the grid
+* @param altitude (double) altitude of the "value"
+* @param topoheight (Array2D\<double\>) array of elevations (dem)
+*/
 void Interpol2D::LapseConstFill(Array2D<double>& param_out, const double& value, const double& altitude, const Array2D<double>& topoHeight)
 {
 	//fills a data table with constant values and then reprojects it to the DEM's elevation from a given altitude
@@ -255,7 +349,6 @@ void Interpol2D::LapseIDWKrieging(Array2D<double>& T, const Array2D<double>& top
 	}
 }
 
-
 void Interpol2D::IDWKrieging(Array2D<double>& T, const vector<double>& vecData_in, const vector<StationData>& vecStations)
 {
 	//multiple source stations: simple IDW Krieging
@@ -266,7 +359,10 @@ void Interpol2D::IDWKrieging(Array2D<double>& T, const vector<double>& vecData_i
 	}
 }
 
-
+/**
+* @brief Computes the interpolation using the parameters set by the constructor
+* @param param_out 2D grid containing the interpolated values
+*/
 void Interpol2D::calculate(Array2D<double>& param_out)
 {
 	unsigned short int flag_ok=0;

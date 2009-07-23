@@ -164,7 +164,7 @@ void Meteo2DInterpolator::interpolateVW(Array2D<double>& vw)
 		}
 	}
 
-	//countDataDir=0.; //HACK, to prevent using the enhanced method...
+	countDataDir=0.; //HACK, to prevent using the enhanced method...
 	printf("[i] interpolating VW using %d stations\n", (int)vecSelectedStations.size());
 	// If direction doesn't exist, use the kriging
 	if( countDataDir > 0.) {

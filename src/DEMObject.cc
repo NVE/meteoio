@@ -78,7 +78,6 @@ DEMObject::DEMObject(const Grid2DObject& _dem)
 * @param dem_in (DEMObject&) dem contained in a DEMDObject
 * @param start_col (unsigned int) starting column index
 * @param nb_cols (unsigned int) number of columns
-* @return new DEMObject
 */
 DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsigned int& _ny, 
 				 const unsigned int& _ncols, const unsigned int& _nrows)
@@ -86,12 +85,9 @@ DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsig
 	  azi(_dem.azi,_nx,_ny, _ncols,_nrows), curvature(_dem.curvature,_nx,_ny, _ncols,_nrows),
 	  Nx(_dem.Nx,_nx,_ny, _ncols,_nrows), Ny(_dem.Ny,_nx,_ny, _ncols,_nrows), Nz(_dem.Nz,_nx,_ny, _ncols,_nrows)
 {
-	if ((_ncols==0) || (_nrows==0))
+	if ((_ncols==0) || (_nrows==0)) {
 		throw InvalidArgumentException("requesting a subset of 0 columns or rows for DEMObject", AT);
-
-	//fill metadata information
-	setValues(_ncols, _nrows, (_dem.xllcorner+_nx*_dem.cellsize), (_dem.yllcorner+_ny*_dem.cellsize), 
-			IOUtils::nodata, IOUtils::nodata, _dem.cellsize);
+	}
 
 	//recompute the min/max
 	updateAllMinMax();
@@ -122,7 +118,7 @@ void DEMObject::update() {
 void DEMObject::updateAllMinMax() {
 //updates the min/max parameters of all 2D tables
 	min_altitude = min_slope = min_curvature = numeric_limits<double>::max();
-	max_altitude = max_slope = max_curvature = numeric_limits<double>::min();
+	max_altitude = max_slope = max_curvature = -numeric_limits<double>::max();
 
 	for ( unsigned int i = 0; i < ncols; i++ ) {
 		for ( unsigned int j = 0; j < nrows; j++ ) {

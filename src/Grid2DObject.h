@@ -70,7 +70,6 @@ class Grid2DObject{
 		* @param latitude (double) decimal latitude
 		* @param longitude (double) decimal longitude
 		* @param cellsize (double) value for cellsize in grid2D
-		* @param nodata (double) value representing a NODATA value
 		* @param grid2D_in (CArray\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
