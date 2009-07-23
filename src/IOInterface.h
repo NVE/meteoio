@@ -136,7 +136,21 @@ class IOInterface : public PluginObject {
 
 		virtual void readSpecialPoints(CSpecialPTSArray& pts) = 0;
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& options="") = 0;
+		/**
+		* @brief Writes 2D grids
+		* @param grid_in (Array2D\<double\>) grid to write
+		* @param xllcorner (const double) lower left coordinate of the grid
+		* @param yllcorner (const double) lower left coordinate of the grid
+		* @param cellsize (const double) cellsize of the grid
+		* @param name (const string) grid name (for building a file name, a db name, etc)
+		*/
+		virtual void write2DGrid(const Array2D<double>& grid_in, const double& xllcorner, const double& yllcorner, const double& cellsize, const string& name="") = 0;
+		/**
+		* @brief Writes 2D grids
+		* @param grid_in (Grid2DObject) grid to write
+		* @param name (const string) grid name (for building a file name, a db name, etc)
+		*/
+		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name="") = 0;
 };
 
 #endif

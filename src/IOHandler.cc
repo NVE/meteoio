@@ -334,7 +334,8 @@ void IOHandler::readSpecialPoints(CSpecialPTSArray& pts) {
 		throw;
 	}
 }
-void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& filename)
+
+void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& name)
 {
 	string output="";
 
@@ -342,14 +343,11 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& filename)
 		cfg.getValue("OUTPUT", output); 
 
 		if (output==ascii_src) {
-			//A3DIO fileio(cfg.getFileName());
-			fileio.write2DGrid(grid_in, filename);
+			fileio.write2DGrid(grid_in, name);
 		} else if (output==boschung_src) {
-			//Nothing so far
 			throw IOException("Nothing implemented here", AT);
 
 		} else if (output==imis_src) {
-			//Nothing so far
 			throw IOException("Nothing implemented here", AT);
 
 		} else {
@@ -361,4 +359,27 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& filename)
 	}
 }
 
+void IOHandler::write2DGrid(const Array2D<double>& grid_in, const double& xllcorner, const double& yllcorner, const double& cellsize, const string& name)
+{
+	string output="";
+
+	try {
+		cfg.getValue("OUTPUT", output); 
+
+		if (output==ascii_src) {
+			fileio.write2DGrid(grid_in, xllcorner, yllcorner, cellsize, name);
+		} else if (output==boschung_src) {
+			throw IOException("Nothing implemented here", AT);
+
+		} else if (output==imis_src) {
+			throw IOException("Nothing implemented here", AT);
+
+		} else {
+			throw IOException("OUTPUT does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+		}
+
+	} catch (...) {
+		throw;
+	}
+}
 

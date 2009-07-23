@@ -95,11 +95,18 @@ void ImisIO::readSpecialPoints(CSpecialPTSArray& pts)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::write2DGrid(const Grid2DObject& grid_in, const string& options)
+void ImisIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
 {
-	//Nothing so far
+	write2DGrid(grid_in.grid2D, grid_in.xllcorner, grid_in.yllcorner, grid_in.cellsize, name);
+}
+
+void ImisIO::write2DGrid(const Array2D<double>& grid_in, const double& xllcorner, const double& yllcorner, const double& cellsize, const string& name)
+{
 	(void)grid_in;
-	(void)options;
+	(void)xllcorner;
+	(void)yllcorner;
+	(void)cellsize;
+	(void)name;
 	throw IOException("Nothing implemented here", AT);
 }
 

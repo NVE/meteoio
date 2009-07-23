@@ -40,7 +40,8 @@ class BoschungIO : public IOInterface {
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& filename);
+		virtual void write2DGrid(const Array2D<double>& grid_in, const double& xllcorner, const double& yllcorner, const double& cellsize, const string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name);
 
 		void read2DMeteo(const Date_IO&, vector<MeteoData>&); ///< No buffering
 		void read2DMeteo(const Date_IO&, vector<MeteoData>&, vector<StationData>&); ///<No buffering

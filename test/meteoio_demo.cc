@@ -11,16 +11,16 @@ int main(int argc, char** argv) {
 	vector<MeteoData> vecMeteo;
 	vector<StationData> vecStation;
 	
-	IOHandler *ioTest=NULL; //Initialization vital!
+	IOHandler *io=NULL; //Initialization vital!
 	
 	try {
-		ioTest = new IOHandler("io.ini");
+		io = new IOHandler("io.ini");
 	} catch (exception& e){
 		cout << "Problem with IOHandler creation, cause: " << e.what() << endl;
 	}
 	
 	try {
-		ioTest->readMeteoData(d1, vecMeteo, vecStation);
+		io->readMeteoData(d1, vecMeteo, vecStation);
 	} catch (exception& e){
 		cout << "Problem when reading data, cause: " << e.what() << endl;
 	}
@@ -32,9 +32,11 @@ int main(int argc, char** argv) {
 		cout << "  RH: " << vecMeteo[ii].rh << endl;
 	}
 	
+	//And now, doing spatial interpolations
 	DEMObject dem;
-	ioTest->readDEM(dem);
-	int nx=dem.ncols,ny=dem.nrows;
+	io->readDEM(dem);
+
+	int nx=dem.ncols, ny=dem.nrows;
 	dem.update();
 	
 	//convert to local grid coordinates
@@ -45,34 +47,18 @@ int main(int argc, char** argv) {
 		IOUtils::WGS84_to_local(dem.latitude, dem.longitude, vecStation[i].latitude, vecStation[i].longitude, vecStation[i].eastCoordinate, vecStation[i].northCoordinate);
 	}*/
 
-	Array2D<double> p, nswc, vw, rh, ta;
-	ta.resize(nx,ny);
-	p.resize(nx,ny);
-	nswc.resize(nx,ny);
-	rh.resize(nx,ny);
-	vw.resize(nx,ny);
-	
+	Array2D<double> p(nx,ny), nswc(nx,ny), vw(nx,ny), rh(nx,ny), ta(nx,ny);
 	Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
+
 	mi.interpolate(nswc, rh, ta, vw, p);
 	
-	Grid2DObject p2, nswc2, vw2, rh2, ta2;
-	cout << "Convert Array2D to Grid2DObject" << endl;
-	p2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, p);
-	nswc2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, nswc);
-	ta2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, ta);
-	rh2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, rh);
-	vw2.set(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize, vw);
-	cout << "conversion was successful" << endl;
-	
 	cout << "Writing the Grids to *.2d files" << endl;
-	ioTest->write2DGrid(ta2, "output/ta.2d");
-	ioTest->write2DGrid(p2, "output/p.2d");
-	ioTest->write2DGrid(vw2, "output/vw.2d");
-	ioTest->write2DGrid(nswc2, "output/nswc.2d");
-	ioTest->write2DGrid(rh2, "output/rh.2d");
+	io->write2DGrid(ta, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/ta.2d");
+	io->write2DGrid(p, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/p.2d");
+	io->write2DGrid(vw, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/vw.2d");
+	io->write2DGrid(nswc, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/nswc.2d");
+	io->write2DGrid(rh, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/rh.2d");
 	
 	cout << "Writing the Grids was successful" << endl;
 	return 0;
 }
-
-//compile with: g++ meteoio_demo.cc ../src/Laws.c -I ../src/ -I ../src/filter/ -L ../lib/ -lmeteoio -ldl -lm -o meteoio_demo -rdynamic

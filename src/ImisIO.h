@@ -60,7 +60,8 @@ class ImisIO : public IOInterface {
 		
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
 		
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& options="");
+		virtual void write2DGrid(const Array2D<double>& grid_in, const double& xllcorner, const double& yllcorner, const double& cellsize, const string& name="");
+		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name="");
 	  	
 		/**
 		 * @brief refer to void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
