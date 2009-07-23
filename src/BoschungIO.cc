@@ -472,17 +472,9 @@ void BoschungIO::readSpecialPoints(CSpecialPTSArray&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
+void BoschungIO::write2DGrid(const Grid2DObject&, const string& name)
 {
-	write2DGrid(grid_in.grid2D, grid_in.xllcorner, grid_in.yllcorner, grid_in.cellsize, name);
-}
-
-void BoschungIO::write2DGrid(const Array2D<double>& grid_in, const double& xllcorner, const double& yllcorner, const double& cellsize, const string& name)
-{
-	(void)grid_in;
-	(void)xllcorner;
-	(void)yllcorner;
-	(void)cellsize;
+	//Nothing so far
 	(void)name;
 	throw IOException("Nothing implemented here", AT);
 }

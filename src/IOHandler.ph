@@ -39,7 +39,9 @@ parclass IOHandler{ // Note : No heritage here for POPC++ : a parclass cannot he
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_CSpecialPTSArray]CSpecialPTSArray& pts);
 
-		virtual void write2DGrid([in]const Grid2DObject& grid_in, const string& filename);
+		//BUG: popc does not see that TYPE_DOUBLE2D and Array2D are the same... and it does not like the Array2D<double> either...
+		//virtual void write2DGrid([in, proc=marshal_TYPE_DOUBLE2D]const Array2D<double>& grid_in, [in]const double& xllcorner, [in]const double& yllcorner, [in]const double& cellsize, [in]const string& name);
+		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const string& name);
 
 	private:
 		string ascii_src;

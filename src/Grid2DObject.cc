@@ -119,7 +119,7 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&latitude,1);
 		buf.Pack(&longitude,1);
 		buf.Pack(&cellsize,1);
-		int x,y;
+		unsigned int x,y;
 		grid2D.size(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 	}

@@ -16,6 +16,30 @@ Meteo2DInterpolator::Meteo2DInterpolator(const DEMObject& dem_in, const vector<M
 
 //This function calls the interpolation class for each individual meteo parameter.
 //It also builds a list of valid data sources for the given parameter.
+void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta, 
+				      Grid2DObject& vw, Grid2DObject& p)
+{
+
+	interpolateP(p.grid2D);
+	interpolateNSWC(nswc.grid2D);
+	interpolateTA(ta.grid2D);
+	interpolateRH(rh.grid2D,ta.grid2D);
+	interpolateVW(vw.grid2D);
+}
+
+void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta,
+					Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/)
+{
+
+	interpolateP(p.grid2D);
+	interpolateNSWC(nswc.grid2D);
+	interpolateTA(ta.grid2D);
+	interpolateRH(rh.grid2D,ta.grid2D);
+	interpolateVW(vw.grid2D);
+	interpolateISWR(iswr.grid2D);
+	//interpolateEA(ea.grid2D);
+}
+
 void Meteo2DInterpolator::interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, 
 				      Array2D<double>& vw, Array2D<double>& p)
 {
@@ -26,8 +50,8 @@ void Meteo2DInterpolator::interpolate(Array2D<double>& nswc, Array2D<double>& rh
 	interpolateRH(rh,ta);
 	interpolateVW(vw);
 }
-void Meteo2DInterpolator::interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta,
-					Array2D<double>& vw, Array2D<double>& p, Array2D<double>& iswr/*, Array2D<double>& ea*/)
+void Meteo2DInterpolator::interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, 
+				      Array2D<double>& vw, Array2D<double>& p, Array2D<double>& iswr/*, Array2D<double>& ea*/)
 {
 
 	interpolateP(p);

@@ -1,8 +1,5 @@
 #include "marshal_meteoio.h"
 
-
-
-
 void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize, int flag, POPMemspool *temp)
 {
   (void)maxsize;
@@ -115,7 +112,7 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
   if (flag & FLAG_MARSHAL)
     {
       //int dim[2];
-      int nx,ny;
+      unsigned int nx,ny;
       data.size(nx,ny);
 
       buf.Pack(&nx,1);
@@ -125,13 +122,13 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
       if (nx>0 && ny>0)
 	{
           //for (int i=0;i<nx;i++,tmp++) buf.Pack(*tmp,ny);
-          for (int i=0;i<nx;i++) buf.Pack(&data[i][0],ny);
+          for (unsigned int i=0;i<nx;i++) buf.Pack(&data[i][0],ny);
 	}
     }
   else
     {
     
-      int nx,ny;//dim[2];
+      unsigned int nx,ny;//dim[2];
       buf.UnPack(&nx,1);
       buf.UnPack(&ny,1);
       data.resize(nx,ny);
@@ -140,7 +137,7 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
       if (nx>0 && ny>0)
 	{
 	  //for (int i=0;i<nx;i++,tmp++) buf.UnPack(*tmp,ny); 
-	  for (int i=0;i<nx;i++) buf.UnPack(&data[i][0],ny); 
+	  for (unsigned int i=0;i<nx;i++) buf.UnPack(&data[i][0],ny); 
 	}
     }
 }
@@ -151,30 +148,30 @@ void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, 
   (void)*temp;
   if (flag & FLAG_MARSHAL)
     {
-      int dim[2];
+      unsigned int dim[2];
       data.size(dim[0],dim[1]);
       buf.Pack(dim,2);
-      int nx=dim[0];
-      int ny=dim[1];
+      unsigned int nx=dim[0];
+      unsigned int ny=dim[1];
       // int **tmp=&data[0];
       if (nx>0 && ny>0)
 	{
 	  // for (int i=0;i<nx;i++,tmp++) buf.Pack(*tmp,ny); 
-	  for (int i=0;i<nx;i++) buf.Pack(&data[i][0],ny); 
+	  for (unsigned int i=0;i<nx;i++) buf.Pack(&data[i][0],ny); 
 	}
     }
   else
     {
-      int dim[2];
+      unsigned int dim[2];
       buf.UnPack(dim,2);
-      int nx=dim[0];
-      int ny=dim[1];
+      unsigned int nx=dim[0];
+      unsigned int ny=dim[1];
       data.resize(nx,ny);
       //int **tmp=&data[0];
       if (nx>0 && ny>0)
 	{
 	  //for (int i=0;i<nx;i++,tmp++) buf.UnPack(*tmp,ny); 
-	  for (int i=0;i<nx;i++) buf.UnPack(&data[i][0],ny); 
+	  for (unsigned int i=0;i<nx;i++) buf.UnPack(&data[i][0],ny); 
 	}
     }
 }
@@ -186,13 +183,13 @@ void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int fl
   assert(false); /* This line is here to check if the method is used*/
   if (flag & FLAG_MARSHAL)
     {
-      int n=data.size();
+      unsigned int n=data.size();
       buf.Pack(&n,1);
       if (n) buf.Pack((double *)&data[0],n);
     }
   else
     {
-      int n;
+      unsigned int n;
       buf.UnPack(&n,1);
       data.resize(n);
       if (n) buf.UnPack((double *)&data[0],n);

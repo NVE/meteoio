@@ -35,8 +35,6 @@ int main(int argc, char** argv) {
 	//And now, doing spatial interpolations
 	DEMObject dem;
 	io->readDEM(dem);
-
-	int nx=dem.ncols, ny=dem.nrows;
 	dem.update();
 	
 	//convert to local grid coordinates
@@ -47,17 +45,21 @@ int main(int argc, char** argv) {
 		IOUtils::WGS84_to_local(dem.latitude, dem.longitude, vecStation[i].latitude, vecStation[i].longitude, vecStation[i].eastCoordinate, vecStation[i].northCoordinate);
 	}*/
 
-	Array2D<double> p(nx,ny), nswc(nx,ny), vw(nx,ny), rh(nx,ny), ta(nx,ny);
+	Grid2DObject    p(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+	Grid2DObject nswc(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+	Grid2DObject   vw(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+	Grid2DObject   rh(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+	Grid2DObject   ta(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
 	Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
 
 	mi.interpolate(nswc, rh, ta, vw, p);
 	
 	cout << "Writing the Grids to *.2d files" << endl;
-	io->write2DGrid(ta, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/ta.2d");
-	io->write2DGrid(p, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/p.2d");
-	io->write2DGrid(vw, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/vw.2d");
-	io->write2DGrid(nswc, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/nswc.2d");
-	io->write2DGrid(rh, dem.xllcorner, dem.yllcorner, dem.cellsize, "output/rh.2d");
+	io->write2DGrid(ta, "output/ta.2d");
+	io->write2DGrid(p, "output/p.2d");
+	io->write2DGrid(vw, "output/vw.2d");
+	io->write2DGrid(nswc, "output/nswc.2d");
+	io->write2DGrid(rh, "output/rh.2d");
 	
 	cout << "Writing the Grids was successful" << endl;
 	return 0;

@@ -520,7 +520,7 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&max_slope,1);
 		buf.Pack(&min_curvature,1);
 		buf.Pack(&max_curvature,1);
-		int x,y;
+		unsigned int x,y;
 		grid2D.size(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);

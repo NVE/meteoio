@@ -28,9 +28,13 @@ class Meteo2DInterpolator {
 		* @brief This function calls the interpolation class for each individual meteo parameter. 
 		*        It also builds a list of valid data sources for the given parameter.
 		*/
-		void interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, Array2D<double>& vw, Array2D<double>& p);
-		void interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta,
-				 Array2D<double>& vw, Array2D<double>& p, Array2D<double>& iswr/*, Array2D<double>& ea*/);
+		void interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta, Grid2DObject& vw, Grid2DObject& p);
+		void interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta,
+				 Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/);
+		void interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, 
+				      Array2D<double>& vw, Array2D<double>& p);
+		void interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, 
+				      Array2D<double>& vw, Array2D<double>& p, Array2D<double>& iswr/*, Array2D<double>& ea*/);
 
 	private:
 		void interpolateP(Array2D<double>& p);

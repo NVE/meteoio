@@ -825,13 +825,7 @@ void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
 	}
 }
 
-void A3DIO::write2DGrid(const Grid2DObject& grid_in, const string& name) 
-{
-	write2DGrid(grid_in.grid2D, grid_in.xllcorner, grid_in.yllcorner, grid_in.cellsize, name);
-}
-
-void A3DIO::write2DGrid(const Array2D<double>& grid_in, const double& xllcorner, const double& yllcorner, const double& cellsize, const string& name) 
-{
+void A3DIO::write2DGrid(const Grid2DObject& grid_in, const string& name) {
   
 	if (IOUtils::fileExists(name)) {
 		throw IOException("File " + name + " already exists!", AT);
@@ -842,20 +836,18 @@ void A3DIO::write2DGrid(const Array2D<double>& grid_in, const double& xllcorner,
 		throw FileAccessException(name, AT);
 	}
 
-	unsigned int ncols, nrows;
-	grid_in.size(ncols, nrows);
 
 	try {
-		fout << "ncols \t\t" << ncols << endl;
-		fout << "nrows \t\t" << nrows << endl;
-		fout << "xllcorner \t" << xllcorner << endl;
-		fout << "yllcorner \t" << yllcorner << endl;    
-		fout << "cellsize \t" << cellsize << endl;
+		fout << "ncols \t\t" << grid_in.ncols << endl;
+		fout << "nrows \t\t" << grid_in.nrows << endl;
+		fout << "xllcorner \t" << grid_in.xllcorner << endl;
+		fout << "yllcorner \t" << grid_in.yllcorner << endl;    
+		fout << "cellsize \t" << grid_in.cellsize << endl;
 		fout << "NODATA_value \t" << (int)(IOUtils::nodata) << endl;
 
-		for (unsigned int kk=nrows-1; kk < nrows; kk--) {
-			for (unsigned int ll=0; ll < ncols; ll++){
-				fout << grid_in(ll, kk) << "\t";
+		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
+			for (unsigned int ll=0; ll < grid_in.ncols; ll++){
+				fout << grid_in.grid2D(ll, kk) << "\t";
 			}
 			fout << endl;
 		}
@@ -867,6 +859,7 @@ void A3DIO::write2DGrid(const Array2D<double>& grid_in, const double& xllcorner,
 
 	cleanup();
 }
+
 
 /*extern "C"
 {
