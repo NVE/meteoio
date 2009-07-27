@@ -13,7 +13,8 @@ class Meteo1DResampler {
 
 	public:
 		Meteo1DResampler();
-		void resample(const unsigned int& index_in, const Date_IO& date_in, MeteoBuffer& mbuffer_out); 
+		void resample(const unsigned int& index_in, const Date_IO& date_in, 
+				    std::vector<MeteoData>& mbuffer_out, std::vector<StationData>& sbuffer_out); 
 
 
 	private:

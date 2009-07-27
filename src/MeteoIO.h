@@ -30,6 +30,7 @@
 #include "DEMObject.h"
 #include "Date_IO.h"
 #include "DynamicLibrary.h"
+#include "BufferedIOHandler.h"
 
 #include "IOInterface.h"
 #ifdef _POPC_

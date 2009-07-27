@@ -54,6 +54,7 @@ class Date_IO {
 		void getDate(int& year, int& month, int& day) const;
 		void getDate(int& year, int& month, int& day, int& hour) const;
 		void getDate(int& year, int& month, int& day, int& hour, int& minute) const;
+		int getYear() const;
 
 		///Since at SLF julian dates are always treated with an offset, this function provides a way to deal with real julian dates
 		void setRealJulianDate(const double& julian_in);

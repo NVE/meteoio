@@ -43,6 +43,9 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 #else
 IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfg)
 {
+	ascii_src = "FILE";
+	boschung_src = "BOSCHUNG";
+	imis_src = "IMIS";
 	//Nothing else so far
 	loadDynamicPlugins();
 }
@@ -236,13 +239,10 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 }
 
 
-void IOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>& meteo_out)
-{
-	vector<StationData> vecStation;
-	readMeteoData(date_in, meteo_out, vecStation);
-}
-
-void IOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
+void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+						std::vector< std::vector<MeteoData> >& vecMeteo, 
+						std::vector< std::vector<StationData> >& vecStation,
+						unsigned int stationindex)
 {
 	//See whether data is already buffered
 	//Filter
@@ -256,17 +256,17 @@ void IOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMete
 
 		if (meteo2dsource==ascii_src) {
 			//A3DIO fileio(cfg.getFileName());
-			fileio.readMeteoData(date_in, vecMeteo, vecStation);
+			fileio.readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 
 		} else if (meteo2dsource==boschung_src) {
 			if (boschungio != NULL) {
-				boschungio->readMeteoData(date_in, vecMeteo, vecStation);
+				boschungio->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 			} else {
 				throw IOException("Requesting to read data with plugin libBoschungIO.so, but plugin is not loaded", AT);
 			}
 		} else if (meteo2dsource==imis_src) {
 			if (imisio != NULL) {
-				imisio->readMeteoData(date_in, vecMeteo, vecStation);
+				imisio->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 			} else {
 				throw IOException("Requesting to read data with plugin libImisIO.so, but plugin is not loaded", AT);
 			}

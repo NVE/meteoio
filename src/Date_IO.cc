@@ -223,6 +223,11 @@ void Date_IO::getDate(double& julian_out) const
 	julian_out = julian;
 }
 
+int Date_IO::getYear() const
+{
+	return year;
+}
+
 void Date_IO::getDate(int& year_out, int& month_out, int& day_out) const
 {
 	int tmp;

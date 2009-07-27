@@ -32,36 +32,39 @@ class A3DIO : public IOInterface {
 
 		virtual void readDEM(Grid2DObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
-
-		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo);
-		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
-
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+
+		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+							  std::vector< std::vector<MeteoData> >& vecMeteo);
+
+		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+							  std::vector< std::vector<StationData> >& vecStation,
+							  unsigned int stationindex=IOUtils::npos);
+
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name);
 
 	private:
-		void read1DMeteo(const Date_IO&, MeteoData&); ///< No buffering
-		void read1DMeteo(const Date_IO&, MeteoData&, StationData&); ///< No buffering
-		void read2DMeteo(const Date_IO&, vector<MeteoData>&); ///< No buffering
-		void read2DMeteo(const Date_IO&, vector<MeteoData>&, vector<StationData>&); ///< No buffering
+		void read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd, 
+					  vector< vector<MeteoData> >&, vector< vector<StationData> >&); ///< No buffering
+		void read2DMeteo(vector< vector<MeteoData> >&, vector< vector<StationData> >&); ///< No buffering
 
-		void constructMeteo2DFilenames(const Date_IO& date_in, vector<string>& filenames);
-		void readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoData& tmpdata, std::string filename);
+		void constructMeteo2DFilenames(const Date_IO& _date, vector<string>& _filenames);
+		bool readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoData& tmpdata, std::string filename);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
-		void read2DMeteoData(const string&, const string&, const Date_IO&, 
-						 map<string,unsigned int>& hashStations, vector<MeteoData>&, unsigned int& bufferindex);
-		void read2DMeteoHeader(const string& filename, map<string, unsigned int>& hashStations, vector<StationData>&);
-		//unsigned int getNrOfStations(const string& filename);
-		unsigned int getNrOfStations(vector<string>& filenames, map<string, unsigned int>& hashStations);
+		void read2DMeteoData(const std::string&, const std::string&, std::map<std::string,unsigned int>& hashStations, 
+						 std::vector< std::vector<MeteoData> >&, unsigned int& bufferindex);
+		void read2DMeteoHeader(const string& filename, std::map<std::string, unsigned int>& hashStations, 
+						   std::vector<StationData>&);
+		unsigned int getNrOfStations(std::vector<std::string>& filenames, 
+							    std::map<std::string, unsigned int>& hashStations);
 
 		ConfigReader cfg;
 		ifstream fin; //Input file streams
 		ofstream fout;//Output file streams
-		vector<MeteoBuffer> unfilteredMeteoBuffer;
-		vector<MeteoBuffer> filteredMeteoBuffer;
 };
 
 #endif

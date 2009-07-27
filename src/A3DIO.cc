@@ -181,83 +181,37 @@ void A3DIO::readLanduse(Grid2DObject& landuse_out)
 	read2DGrid(landuse_out, filename);
 }
 
-void A3DIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& meteo_out)
+void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, vector< vector<MeteoData> >& vecMeteo)
 {
-	vector<StationData> vecStation;
-	readMeteoData(date_in, meteo_out, vecStation);
+	vector< vector<StationData> > vecStation;
+	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
 }
 
-void A3DIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
+
+void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+					 std::vector< std::vector<MeteoData> >& vecMeteo, 
+					 std::vector< std::vector<StationData> >& vecStation,
+					 unsigned int stationindex)
 {
-	//See whether data is already buffered
-	//Filter
-	//Resample if necessary
-	//Filter resampled value
-	//return that value
-	/*
-	  1. FilterFacade filterFacade("filters.ini");
-	  2. filterFacade.getMinimalWindow(minNbPoints, minDeltaTime);
-	  3. fiterFacade.doCheck(unfilteredMeteoBuffer, filteredMeteoBuffer,
-	*/
-
-	//FilterFacade filterFacade("filters.ini");
-
-	unsigned int index = MeteoBuffer::npos;
-	if (unfilteredMeteoBuffer.size()>0) {//check whether meteo data for the date exists in buffer
-		index = unfilteredMeteoBuffer[0].seek(date_in);
-	}
-	//cerr << "Buffered MeteoBuffers: " << unfilteredMeteoBuffer.size() << "  Found data at index: " << index << endl;
-
-	if (( index != MeteoBuffer::npos ) && (unfilteredMeteoBuffer[0].getMeteoData(index).date == date_in)) {//in the buffer, return from buffer
-		cerr << "[I] Buffered data found for date: " << date_in.toString() << endl;
-
-	} else if (index == MeteoBuffer::npos) { //not in buffer, rebuffering needed
-		cerr << "[I] Data for date " << date_in.toString() << " not found in buffer, rebuffering" << endl;
-		unfilteredMeteoBuffer.clear();
-		filteredMeteoBuffer.clear();
-
-		MeteoData md;
-		read1DMeteo(date_in, md);
-		index = unfilteredMeteoBuffer[0].seek(date_in);
-		//cerr << "read 1D meteo" << endl;
-    
-		try {
-			read2DMeteo(date_in, vecMeteo, vecStation);
-		} catch(exception& e){
-			cerr << "[I] No meteo2d data found or error while reading it, using only Meteo1D data: " << e.what() << endl;
-      
-			if (unfilteredMeteoBuffer.size()>1) {
-				unfilteredMeteoBuffer.erase(unfilteredMeteoBuffer.begin()+1, unfilteredMeteoBuffer.end());
-			}
-		}
-	}
-
-	// RESAMPLING
-	if (( index != MeteoBuffer::npos ) && (unfilteredMeteoBuffer[0].getMeteoData(index).date != date_in)) {//in the buffer, resampling needed 
-		cerr << "[I] Resampling required for date: " << date_in.toString() << endl;
-    
-		Meteo1DResampler mresampler;
-		for (unsigned int ii=0; ii<unfilteredMeteoBuffer.size(); ii++) {
-			mresampler.resample(index, date_in, unfilteredMeteoBuffer[ii]);
-		}
-	}
-
-	//FILTERING
-
-	//fill the vectors with data, previously gathered into the MeteoBuffer
+	//if dateStart and dateEnd are the same: return exact match for date
+	//if dateStart > dateEnd: return first data set with date > dateStart
+	//read in all data starting with dateStart until dateEnd
+	//if there is no data at all then the vector will be empty, no exception will be thrown
+	(void)stationindex;
 	vecMeteo.clear();
 	vecStation.clear();
-	for (unsigned int ii=0; ii<unfilteredMeteoBuffer.size(); ii++) {
-		vecMeteo.push_back(unfilteredMeteoBuffer[ii].getMeteoData(index));
-		vecStation.push_back(unfilteredMeteoBuffer[ii].getStationData(index));
+
+	//first from meteo1d.txt
+	read1DMeteo(dateStart, dateEnd, vecMeteo, vecStation);
+
+	//then all corresponding data sets from the 2d meteo files
+	//note: they have to be entirely corresponding (for every date)
+	try {
+		read2DMeteo(vecMeteo, vecStation);
+	} catch(exception& e){
+		cerr << "[I] No meteo2d data found or error while reading it, using only Meteo1D data: " 
+			<< endl << "\t" << e.what() << endl;
 	}
-}
-
-
-void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out)
-{
-	StationData sd_tmp;
-	read1DMeteo(date_in, meteo_out, sd_tmp);
 }
 
 void A3DIO::convertUnits(MeteoData& meteo)
@@ -274,18 +228,18 @@ void A3DIO::convertUnits(MeteoData& meteo)
 	}
 }
 
-void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out, StationData& station_out)
+void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd, 
+				    vector< vector<MeteoData> >& vecMeteo, vector< vector<StationData> >& vecStation)
 {
-	double latitude=nodata, longitude=nodata, xcoord=nodata, ycoord=nodata, altitude=nodata;
+	double latitude=IOUtils::nodata, longitude=IOUtils::nodata, 
+		xcoord=IOUtils::nodata, ycoord=IOUtils::nodata, altitude=IOUtils::nodata;
 	string tmp="", line="";
 	Date_IO tmp_date;
 	vector<string> tmpvec;
 	map<string, string> header; // A map to save key value pairs of the file header
-	int parsedLines = 0;
 	MeteoData tmpdata;
-
-	unfilteredMeteoBuffer.push_back(MeteoBuffer(600));
-	filteredMeteoBuffer.push_back(MeteoBuffer(600));
+	StationData sd;
+	bool eofreached = false;
 
 	cfg.getValue("METEOPATH", tmp); 
 	tmp += "/meteo1d.txt";
@@ -304,6 +258,7 @@ void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out, StationDat
    
 	//Go through file, save key value pairs
 	try {
+		//Read in station meta data
 		IOUtils::readKeyValueHeader(header, fin, 5, "="); //Read in 5 lines as header
 		IOUtils::getValueForKey(header, "Latitude", latitude);
 		IOUtils::getValueForKey(header, "Longitude", longitude);
@@ -324,46 +279,42 @@ void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out, StationDat
 				throw InvalidArgumentException("Latitude/longitude and Xcoord/Ycoord don't match in header of file " + tmp, AT);
 			}
 		}
-		station_out.setStationData(xcoord, ycoord, altitude, "", latitude, longitude);
+		sd.setStationData(xcoord, ycoord, altitude, "", latitude, longitude);
 
 		//Read one line, construct Date_IO object and see whether date is greater or equal than the date_in object
 		IOUtils::skipLines(fin, 1, eoln); //skip rest of line
 
+		
+		//Loop going through the data sequentially until dateStart is found
 		do {
 			getline(fin, line, eoln); //read complete line
-			parsedLines++;
-			//cout << line << endl;
-
-			readMeteoDataLine(line, date_in, tmpdata, tmp);
+			eofreached = readMeteoDataLine(line, dateStart, tmpdata, tmp);
 			tmpdata.cleanData();
 			convertUnits(tmpdata);
 
-			unfilteredMeteoBuffer[0].put(tmpdata, station_out);
+		} while((tmpdata.date < dateStart) && (!eofreached));
 
-			//} while(tmp_date<date_in);
+		if ((dateEnd < dateStart) && (!eofreached)){ //Special case
+			vecMeteo.push_back( vector<MeteoData>() );
+			vecStation.push_back( vector<StationData>() );
+			vecMeteo[0].push_back(tmpdata);
+			vecStation[0].push_back(sd);
+		} else if ((tmpdata.date <= dateEnd)  && (!eofreached)) {
+			vecMeteo.push_back( vector<MeteoData>() );
+			vecStation.push_back( vector<StationData>() );
+		}
 
-		} while(tmpdata.date < date_in);
+		while ((tmpdata.date <= dateEnd)  && (!eofreached)) {
+			//At this point tmpdata.date is >= dateStart
+			vecMeteo[0].push_back(tmpdata);
+			vecStation[0].push_back(sd);
 
-		meteo_out = tmpdata; //copy by value
-		//meteo_out.cleanData();
-		//convertUnits(meteo_out);
-
-		//Lese weiter in den Buffer (bis zu 400 Werte)
-		try {
-			for (int ii=0; ii<400; ii++) {
-				getline(fin, line, eoln); //read complete line
-				parsedLines++;
-				//cout << line << endl;
-	
-				readMeteoDataLine(line, date_in, tmpdata, tmp);
-				tmpdata.cleanData();
-				convertUnits(tmpdata);
-	
-				unfilteredMeteoBuffer[0].put(tmpdata, station_out);
-			}
-		} catch(...){;} //just continue
-    
-		//cout << tmp_date.toString() << endl;
+			getline(fin, line, eoln); //read complete line
+			eofreached = readMeteoDataLine(line, dateStart, tmpdata, tmp);
+			tmpdata.cleanData();
+			convertUnits(tmpdata);
+		}
+		//cout << "Size of buffer: " << vecMeteo[0].size() << "   " << tmp_date.toString() << endl;
 	} catch(...) {
 		cout << "[e] " << AT << ": "<< endl;
 		cleanup();
@@ -373,7 +324,7 @@ void A3DIO::read1DMeteo(const Date_IO& date_in, MeteoData& meteo_out, StationDat
 	cleanup();
 }
 
-void A3DIO::readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoData& tmpdata, string filename)
+bool A3DIO::readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoData& tmpdata, string filename)
 {
 	Date_IO tmp_date;
 	int tmp_ymdh[4];
@@ -381,7 +332,8 @@ void A3DIO::readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoDa
 	double tmp_values[6];
 
 	if (IOUtils::readLineToVec(line, tmpvec) != 10) {
-		throw InvalidFormatException("Premature End of Line or no data for date " + date_in.toString() + " found in File " + filename, AT);
+		return true;
+		//throw InvalidFormatException("Premature End of Line or no data for date " + date_in.toString() + " found in File " + filename, AT);
 	}
       
 	for (int ii=0; ii<4; ii++) {
@@ -400,14 +352,10 @@ void A3DIO::readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoDa
 	}
       
 	tmpdata.setMeteoData(tmp_date, tmp_values[0], tmp_values[1], tmp_values[2], nodata, tmp_values[3], tmp_values[4], tmp_values[5], nodata, nodata, nodata);
+	
+	return false;
 }
 
-
-void A3DIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& meteo_out)
-{
-	vector<StationData> vecStation;
-	read2DMeteo(date_in, meteo_out, vecStation);
-}
 
 /*
   Preamble: Files are in METEOFILE directory. 4 types of files: 
@@ -419,96 +367,89 @@ void A3DIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& meteo_out)
   Remarks: The headers of the files may defer - for each unique 
   StationData one MeteoData and one StationData object will be created
 */
-void A3DIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
+ void A3DIO::read2DMeteo(vector< vector<MeteoData> >& vecMeteo, vector< vector<StationData> >& vecStation)
 {
+	
 	unsigned int stations=0, bufferindex=0;
 	map<string, unsigned int> hashStations = map<string, unsigned int>();
 	vector<string> filenames = vector<string>();
 
-	vecMeteo.clear();
-	vecStation.clear();
- 
-	constructMeteo2DFilenames(unfilteredMeteoBuffer[0].getMeteoData(0).date, filenames);
+	//Requirement: meteo1D data must exist:
+	if ((vecMeteo.size() == 0) || (vecMeteo[0].size() == 0))
+		return;
+	
+	//1D and 2D data must correspond, that means that if there is 1D data
+	//for a certain date (e.g. 1.1.2006) then 2D data must exist (prec2006.txt etc), 
+	//otherwise throw FileNotFoundException
+	constructMeteo2DFilenames(vecMeteo[0][0].date, filenames);
+
 	stations = getNrOfStations(filenames, hashStations);
 	cerr << "[I] Number of 2D meteo stations: " << stations << endl;
-  
+
 	if (stations < 1) {
 		throw InvalidFormatException("No StationData found in 2D Meteo Files", AT); 
-	} else {
-		vecMeteo.clear();
-		vecStation.clear();
+	} 
 
-		MeteoBuffer tmpbuffer(600, unfilteredMeteoBuffer[0].size());
-
-		for (unsigned int ii=0; ii<stations; ii++) {
-			StationData tmp_sd;
-			MeteoData tmp_md;
-      
-			unfilteredMeteoBuffer.push_back(tmpbuffer);
-
-			vecMeteo.push_back(tmp_md);
-			vecStation.push_back(tmp_sd);
-		}
-	}
+	vector<StationData> tmpvecS = vector<StationData>(stations); //stores unique stations
 
 	try {
-		read2DMeteoHeader(filenames[0], hashStations, vecStation);
-		read2DMeteoHeader(filenames[1], hashStations, vecStation);
-		read2DMeteoHeader(filenames[2], hashStations, vecStation);
-		read2DMeteoHeader(filenames[3], hashStations, vecStation);
+		read2DMeteoHeader(filenames[0], hashStations, tmpvecS);
+		read2DMeteoHeader(filenames[1], hashStations, tmpvecS);
+		read2DMeteoHeader(filenames[2], hashStations, tmpvecS);
+		read2DMeteoHeader(filenames[3], hashStations, tmpvecS);
 		if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
-			read2DMeteoHeader(filenames[4], hashStations, vecStation);
+			read2DMeteoHeader(filenames[4], hashStations, tmpvecS);
 		}
 
-		for (unsigned int ii=1; ii<unfilteredMeteoBuffer.size(); ii++) {//loop through all MeteoBuffers
-			for (unsigned int jj=0; jj<unfilteredMeteoBuffer[ii].size(); jj++) { //loop through all allocated StationData within one MeteoBuffer
-				StationData& bufferedStation = unfilteredMeteoBuffer[ii].getStationData(jj);
-				bufferedStation = vecStation[ii-1];
+		//init vecStation with proper StationData, vecMeteo with nodata
+		for (unsigned int jj=0; jj<tmpvecS.size(); jj++){
+			vecMeteo.push_back( vector<MeteoData>() );
+			vecStation.push_back( vector<StationData>() );
+			for (unsigned int ii=0; ii<vecMeteo[0].size(); ii++){
+				//NOTE: there needs to be the same amount of 1D and 2D data
+				vecStation[jj+1].push_back(tmpvecS[jj]);
+				vecMeteo[jj+1].push_back(MeteoData());
 			}
 		}
 
 		do {
-
 			unsigned int currentindex = bufferindex;
-			read2DMeteoData(filenames[0], "nswc", date_in, hashStations, vecMeteo, bufferindex);
+			read2DMeteoData(filenames[0], "nswc", hashStations, vecMeteo, bufferindex);
 			bufferindex = currentindex;
-			read2DMeteoData(filenames[1], "rh", date_in, hashStations, vecMeteo, bufferindex);
+			read2DMeteoData(filenames[1], "rh", hashStations, vecMeteo, bufferindex);
 			bufferindex = currentindex;
-			read2DMeteoData(filenames[2], "ta", date_in, hashStations, vecMeteo, bufferindex);
+			read2DMeteoData(filenames[2], "ta", hashStations, vecMeteo, bufferindex);
 			bufferindex = currentindex;
-			read2DMeteoData(filenames[3], "vw", date_in, hashStations, vecMeteo, bufferindex);
+			read2DMeteoData(filenames[3], "vw", hashStations, vecMeteo, bufferindex);
 			
 			if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
 				bufferindex = currentindex;
-				read2DMeteoData(filenames[4], "dw", date_in, hashStations, vecMeteo, bufferindex);
+				read2DMeteoData(filenames[4], "dw", hashStations, vecMeteo, bufferindex);
 			}
-			//cerr << "bufferindex: " << bufferindex << "  Expected size()" << unfilteredMeteoBuffer[0].size() << endl;
+			//cerr << "bufferindex: " << bufferindex << "  Expected size()" << vecMeteo[0].size() << endl;
 
-			if (bufferindex < (unfilteredMeteoBuffer[0].size()-1)) {
+			if (bufferindex < (vecMeteo[0].size())) { //number of 1D meteo data
 				//construct new filenames for the continued buffering
-				constructMeteo2DFilenames(unfilteredMeteoBuffer[0].getMeteoData(bufferindex).date, filenames);
+				constructMeteo2DFilenames(vecMeteo[0][bufferindex].date, filenames);
 			}
-		} while(bufferindex < (unfilteredMeteoBuffer[0].size()));
+		} while(bufferindex < (vecMeteo[0].size()));
 	} catch(...) {
-		vecMeteo.clear();
-		vecStation.clear();
-    
-		//TODO: cleanup of buffer
+		//clear all 2D meteo data if error occurs
+		if (vecMeteo.size() > 1)
+			vecMeteo.erase(vecMeteo.begin()+1, vecMeteo.end());
+		
+		if (vecStation.size() > 1)
+			vecStation.erase(vecStation.begin()+1, vecStation.end());
 
 		cleanup();
 		throw;
 	}
   
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++) {
-		vecMeteo[ii].cleanData();
-		convertUnits(vecMeteo[ii]);
-	}
-
-	for (unsigned int ii=1; ii<unfilteredMeteoBuffer.size(); ii++) {//loop through all MeteoBuffers
-		for (unsigned int jj=0; jj<unfilteredMeteoBuffer[ii].size(); jj++){ //loop through all allocated MeteoData within one MeteoBuffer
-			MeteoData& bufferedMeteo = unfilteredMeteoBuffer[ii].getMeteoData(jj);
-			bufferedMeteo.cleanData();
-			convertUnits(bufferedMeteo);
+	//clean data and convert the units
+	for (unsigned int ii=1; ii<vecMeteo.size(); ii++) { //loop over all stations except 1D Meteo
+		for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++){ //Meteo1D data already cleaned
+			vecMeteo[ii][jj].cleanData();
+			convertUnits(vecMeteo[ii][jj]);
 		}
 	}
 }
@@ -584,16 +525,16 @@ unsigned int A3DIO::getNrOfStations(vector<string>& filenames, map<string, unsig
 	return (hashStations.size());
 }
 
-void A3DIO::read2DMeteoData(const string& filename, const string& parameter, const Date_IO& date_in, 
-						    map<string,unsigned int>& hashStations, vector<MeteoData>& vecM, unsigned int& bufferindex)
+void A3DIO::read2DMeteoData(const string& filename, const string& parameter, 
+					   map<string,unsigned int>& hashStations, 
+					   vector< vector<MeteoData> >& vecM, unsigned int& bufferindex)
 {
+	
 	string line_in = "";
 	unsigned int columns;
 	vector<string> tmpvec, vec_names;
 	Date_IO tmp_date;
 	int tmp_ymdh[4];
-	//unsigned int bufferindex=0;
-	bool old = true;
 
 	fin.clear();
 	fin.open (filename.c_str(), ifstream::in);
@@ -610,7 +551,8 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 		throw InvalidFormatException("Premature end of line in file " + filename, AT);
 	}
 
-	MeteoData& lastMeteoData = unfilteredMeteoBuffer[0].getMeteoData(unfilteredMeteoBuffer[0].size()-1); //last time stamp in buffer of 1D meteo
+	MeteoData& lastMeteoData = vecM[0][vecM[0].size()-1]; //last time stamp in buffer of 1D meteo
+
 	do {
 		getline(fin, line_in, eoln); 
 		string tmpline = line_in;
@@ -620,8 +562,8 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 			break;
 		}
 
-		if (IOUtils::readLineToVec(line_in, tmpvec)!=columns) {
-			throw InvalidFormatException("Premature End of Line or no data for date " + date_in.toString() 
+		if (IOUtils::readLineToVec(line_in, tmpvec)!=columns) { //Every station has to have its own column
+			throw InvalidFormatException("Premature End of Line or no data for date " + vecM[0][bufferindex].date.toString() 
 								    + " found in File " + filename, AT);
 		}
     
@@ -632,12 +574,12 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 		}
 		tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3]);
 
-		MeteoData& currentMeteoData = unfilteredMeteoBuffer[0].getMeteoData(bufferindex); //1D Element to synchronize date
+		MeteoData& currentMeteoData = vecM[0][bufferindex]; //1D Element to synchronize date
 		if (tmp_date == currentMeteoData.date) {
 			//Read in data
 			for (unsigned int ii=4; ii<columns; ii++) {
 				unsigned int stationnr = hashStations[vec_names.at(ii)]; 
-				MeteoData& tmpmd = unfilteredMeteoBuffer[stationnr].getMeteoData(bufferindex);
+				MeteoData& tmpmd = vecM[stationnr][bufferindex];
 				tmpmd.date = tmp_date;
 
 				if (parameter == "nswc") {
@@ -667,43 +609,8 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter, con
 
 			bufferindex++;
 		}
-		//} while(tmp_date<date_in);
-		if ((tmp_date >= date_in) && (old==true)) {
-			old=false;
-			//Write Data into MeteoData objects; which data is in the file determined by switch 'parameter'
-			for (unsigned int ii=4; ii<columns; ii++) {
-				unsigned int stationnr = hashStations[vec_names.at(ii)]; 
-				vecM.at(stationnr-1).date = tmp_date;
-
-				if (parameter == "nswc") {
-					if (!IOUtils::convertString(vecM.at(stationnr-1).nswc, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For nswc value in " + filename + "  for date " + tmp_date.toString(), AT);
-					}
-    
-				} else if (parameter == "rh") {
-					if (!IOUtils::convertString(vecM.at(stationnr-1).rh, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For rh value in " + filename + "  for date " + tmp_date.toString(), AT);
-					}
-	  
-				} else if (parameter == "ta") {
-					if (!IOUtils::convertString(vecM.at(stationnr-1).ta, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For ta value in " + filename + "  for date " + tmp_date.toString(), AT);
-					}
-	  
-				} else if (parameter == "vw") {
-					if (!IOUtils::convertString(vecM.at(stationnr-1).vw, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For vw value in " + filename + "  for date " + tmp_date.toString(), AT);
-					}
-				} else if (parameter == "dw") {
-					if (!IOUtils::convertString(vecM.at(stationnr-1).dw, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For dw value in " + filename + "  for date " + tmp_date.toString(), AT);
-					}
-				}
-			}
-		}
-
 	} while((tmp_date<lastMeteoData.date) && (!fin.eof()));
-
+	
 	cleanup();
 }
 

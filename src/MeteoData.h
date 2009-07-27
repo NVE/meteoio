@@ -90,6 +90,9 @@ class MeteoData {
 		*/
 		void cleanData();
 
+		bool isResampled();
+		void setResampled(const bool&);
+
 		const std::string toString(void) const;
 
 		void Check_min_max(double& param, const double low_hard, const double low_soft, const double high_soft, const double high_hard);
@@ -101,6 +104,8 @@ class MeteoData {
 		double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr; //direct access allowed
 		Date_IO date;///<Date_IO/Time of the measurement
 
+ private:
+		bool resampled; ///<set this to true if MeteoData is result of resampling
 };
 
 #endif

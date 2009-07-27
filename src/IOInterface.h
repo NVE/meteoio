@@ -95,7 +95,7 @@ class IOInterface : public PluginObject {
 		/**
 		* @brief See MeteoData::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation).
 		*/
-		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo) = 0;
+		//virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo) = 0;
 
 		/**
 		* @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets 
@@ -116,8 +116,10 @@ class IOInterface : public PluginObject {
 		* @param vecMeteo    A vector of MeteoData objects to be filled with data
 		* @param vecStation  A vector of StationData objects to be filled with data
 		*/
-		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation) = 0;
-
+		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+							  std::vector< std::vector<StationData> >& vecStation,
+							  unsigned int stationindex=IOUtils::npos) = 0;
 
 		/**
 		* @brief Parse the assimilation data into a Grid2DObject for a certain date represented by the Date_IO object

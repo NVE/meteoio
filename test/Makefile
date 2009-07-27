@@ -39,7 +39,7 @@ testStation: StationData.o testStation.o
 meteoio_demo: meteoio_demo.o
 	$(CC) $(DEBUG) -o $@ meteoio_demo.o ${LIBS}
 
-testThomas: testThomas.o 
+testThomas: testThomas.o ../lib/libmeteoio.a
 	$(CC) $(DEBUG) -rdynamic -o $@ testThomas.o ${LIBS} 
 
 testConfigReader: main.o ConfigReader.o slfutils.o slfexceptions.o

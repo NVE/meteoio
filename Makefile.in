@@ -108,6 +108,7 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/IOInterface.o \
 		$(SRCDIR)/DynamicLibrary.o \
 		$(SRCDIR)/A3DIO.o \
+		$(SRCDIR)/BufferedIOHandler.o \
 		$(SRCDIR)/ConfigReader.o \
 		$(SRCDIR)/Date_IO.o \
 		$(SRCDIR)/Grid2DObject.o \

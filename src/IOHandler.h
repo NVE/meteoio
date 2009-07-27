@@ -24,8 +24,10 @@ class IOHandler : public IOInterface {
 		virtual void readDEM(Grid2DObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
-		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo);
-		virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
+		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+							  std::vector< std::vector<StationData> >& vecStation,
+							  unsigned int stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);

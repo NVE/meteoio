@@ -4,7 +4,8 @@ Meteo1DResampler::Meteo1DResampler(){
 
 }
 
-void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& date_in, MeteoBuffer& mbuffer_out)
+void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& date_in, 
+						  std::vector<MeteoData>& mbuffer_out, std::vector<StationData>& sbuffer_out)
 {
 	if ((index_in == 0) && (index_in >= mbuffer_out.size())) {
 		throw IOException("[e] Not enough data to do resampling or index out of bounds", AT);
@@ -13,8 +14,8 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 	MeteoData newmd;
 	double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr; 
 
-	MeteoData& tmpmd1 = mbuffer_out.getMeteoData(index_in);
-	MeteoData& tmpmd2 = mbuffer_out.getMeteoData(index_in-1);
+	MeteoData& tmpmd1 = mbuffer_out.at(index_in);
+	MeteoData& tmpmd2 = mbuffer_out.at(index_in-1);
 
 	double weight = (date_in.getJulian() - tmpmd2.date.getJulian()) / (tmpmd1.date.getJulian() - tmpmd2.date.getJulian());
 	//cout << "WEIGHT" << weight << endl;
@@ -109,7 +110,8 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 
 		newmd.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr); 
 
-		mbuffer_out.insert(index_in, newmd, mbuffer_out.getStationData(index_in));
+		mbuffer_out.insert(mbuffer_out.begin()+index_in, newmd);
+		sbuffer_out.insert(sbuffer_out.begin()+index_in, sbuffer_out[index_in]);
 	} else {
 		throw IOException("[e] index of meteobuffer not sensible", AT);
 	}
