@@ -150,7 +150,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 		}
 	}
 
-	if (vecMeteo.size() == 0) {//No data found
+	if (vecMeteo.size() == 0) {//No data found - return one object set to nodata completely
 		vecMeteo.push_back(MeteoData());
 		vecStation.push_back(StationData());
 		//throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
@@ -169,14 +169,24 @@ void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, vector<MeteoData>
 	vector< vector<StationData> > stationTmpBuffer;
 	readMeteoData(_date, (_date-Date_IO(1900,1,2)), meteoTmpBuffer, stationTmpBuffer);	
 
+	unsigned int emptycounter = 0;
 	for (unsigned int ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
-		vecMeteo.push_back(meteoTmpBuffer[ii][0]);
-		vecStation.push_back(stationTmpBuffer[ii][0]);
+		if ((meteoTmpBuffer[ii].size() > 0) && (stationTmpBuffer[ii].size() > 0)){
+			vecMeteo.push_back(meteoTmpBuffer[ii][0]);
+			vecStation.push_back(stationTmpBuffer[ii][0]);
+		} else {
+			emptycounter++;
+		}
+	}
+
+	if (emptycounter == meteoTmpBuffer.size()){
+		vecMeteo.clear();
+		vecStation.clear();
 	}
 }
 
 void BufferedIOHandler::bufferAllData(const Date_IO& _date){
-	Date_IO fromDate = _date - (Date_IO(1900,1,5)); //minus 5 days
+	Date_IO fromDate = _date - (Date_IO(1900,1,5));  //minus 5 days
 	Date_IO toDate   = _date + (Date_IO(1900,1,20)); //plus 20 days
 
 	readMeteoData(fromDate, toDate, meteoBuffer, stationBuffer);
@@ -184,8 +194,8 @@ void BufferedIOHandler::bufferAllData(const Date_IO& _date){
 
 bool BufferedIOHandler::bufferData(const Date_IO& _date, const unsigned int& stationindex)
 {
-	Date_IO fromDate = _date - (Date_IO(1900,1,1,10)); //minus 10 days
-	Date_IO toDate   = _date + (Date_IO(1900,1,1,20)); //plus 20 days
+	Date_IO fromDate = _date - (Date_IO(1900,1,5));  //minus 5 days
+	Date_IO toDate   = _date + (Date_IO(1900,1,20)); //plus 20 days
 
 	readMeteoData(fromDate, toDate, meteoBuffer, stationBuffer, stationindex);
 

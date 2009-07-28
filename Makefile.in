@@ -86,6 +86,7 @@ TARGET		= meteoio
 TARGET_POPC	= meteoio_par
 
 SRCDIR		= ./src
+PLUGINDIR	= ./src/plugins
 LIBDIR		= ./lib
 FILTERDIR	= $(SRCDIR)/filter
 TOOLSDIR	= ./tools
@@ -241,11 +242,11 @@ $(LIBDIR)/libfilter.a: $(FILTER_OBJ)
 	ar -r $@ $(FILTER_OBJ)
 	ranlib $@
 
-$(LIBDIR)/libboschungio.so: $(SRCDIR)/BoschungIO.cc $(SRCDIR)/BoschungIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
+$(LIBDIR)/libboschungio.so: $(PLUGINDIR)/BoschungIO.cc $(PLUGINDIR)/BoschungIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(BOSCHUNGIO),yes)
 	@printf "**** Compiling Boschung plugin\n"
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(SRCDIR)/BoschungIO.o $(SRCDIR)/BoschungIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(SRCDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(PLUGINDIR)/BoschungIO.o $(PLUGINDIR)/BoschungIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(PLUGINDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
 endif
 
 $(LIBDIR)/libimisio.so: $(SRCDIR)/ImisIO.cc $(SRCDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a

@@ -34,29 +34,6 @@ void BoschungIO::cleanup() throw()
 //Clone function
 //BoschungIO* BoschungIO::clone() const { return new BoschungIO(*this); }
 
-void BoschungIO::createBuffer()
-{
-	//Clear the buffers
-	unfilteredMeteoBuffer.clear();
-	filteredMeteoBuffer.clear();
-
-	//Read in the number of stations
-	string str_stations="";
-	int stations=0;
-
-	cfg.getValue("NROFSTATIONS", str_stations);
-	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
-		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
-	}
-
-	//Allocate one MeteoBuffer per station
-	for (int ii=0; ii<stations; ii++) {
-		unfilteredMeteoBuffer.push_back(MeteoBuffer(5000));
-		filteredMeteoBuffer.push_back(MeteoBuffer(5000));
-	}
-	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
-}
-
 void BoschungIO::get2DGridSize(int& , int& )
 {
 	//Nothing so far
@@ -82,68 +59,35 @@ void BoschungIO::readLanduse(Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& meteo_out)
+void BoschungIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+							  std::vector< std::vector<StationData> >& vecStation,
+							  unsigned int stationindex)
 {
-	vector<StationData> vecStation;
-	readMeteoData(date_in, meteo_out, vecStation);
-}
-
-void BoschungIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
-{
-	//For every station: See whether data is already buffered
-	//Filter
-	//Resample if necessary
-	//Filter resampled value
-	//return the values
-
-	vecMeteo.clear();
-	vecStation.clear();
-
-	if (unfilteredMeteoBuffer.size() == 0) { //initialize buffer
-		createBuffer(); //creates MeteoBuffer objects for all stations
+	if (vecStationName.size() == 0)
 		readStationNames(); //reads station names into vector<string> vecStationName
-	}
 
-	//loop through all meteo buffers
-	for (unsigned int ii=0; ii<unfilteredMeteoBuffer.size(); ii++) {
-		unsigned int index = MeteoBuffer::npos;
+	unsigned int indexStart=0, indexEnd=vecStationName.size();
 
-		if (unfilteredMeteoBuffer[ii].size() > 0) {//check whether meteo data for the date exists in buffer
-			index = unfilteredMeteoBuffer[ii].seek(date_in);
-		}
-
-		if (index == MeteoBuffer::npos) { //not in buffer
-			cout << "[I] Station " << vecStationName[ii] << " data for date " << date_in.toString() << " not in buffer ..." << endl;
-      
-			bool dataexists = bufferData(date_in, ii);
-
-			if (dataexists) {//date_in is contained in buffer
-				index = unfilteredMeteoBuffer[ii].seek(date_in);
-			}
-
+	//The following part decides whether all the stations are rebuffered or just one station
+	if (stationindex == IOUtils::npos){
+		vecMeteo.clear();
+		vecStation.clear();
+		
+		vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), vector<MeteoData>());
+		vecStation.insert(vecStation.begin(), vecStationName.size(), vector<StationData>());
+	} else {
+		if ((stationindex < vecMeteo.size()) && (stationindex < vecStation.size())){
+			indexStart = stationindex;
+			indexEnd   = stationindex+1;
 		} else {
-			cout << "[I] Found data for station " << vecStationName[ii] << " and date " << date_in.toString() << " in buffer" << endl;
-		}
-    
-		// RESAMPLING
-		if ((index != MeteoBuffer::npos) && (unfilteredMeteoBuffer[ii].getMeteoData(index).date != date_in)) {
-			cerr << "[I] Resampling required for date: " << date_in.toString() << endl;
-      
-			Meteo1DResampler mresampler;
-			mresampler.resample(index, date_in, unfilteredMeteoBuffer[ii]);
-		}
-    
-		if (index != MeteoBuffer::npos) {
-			vecMeteo.push_back(unfilteredMeteoBuffer[ii].getMeteoData(index));
-			vecStation.push_back(unfilteredMeteoBuffer[ii].getStationData(index));
-		} else {
-			cout << "[I] Buffering data for Station " << vecStationName[ii] << " at date " 
-				<< date_in.toString() << " failed" << endl;
+			throw IndexOutOfBoundsException("", AT);
 		}
 	}
 
-	if (vecMeteo.size() == 0) {//No data found
-		throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
+	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+		//cout << vecStationName[ii] << endl;
+		bufferData(dateStart, dateEnd, vecMeteo, vecStation, ii);
 	}
 }
 
@@ -170,9 +114,9 @@ void BoschungIO::readStationNames()
 		cfg.getValue(string("STATION"+tmp_stream.str()), stationname);
 
 		vecStationName.push_back(stationname);
-		//cout << stationname << endl;
 	}    
 }
+
 void BoschungIO::getFiles(const string& stationname, const Date_IO& start_date, const Date_IO& end_date, 
 					 vector<string>& vecFiles, vector<Date_IO>& vecDate_IO)
 {
@@ -189,14 +133,33 @@ void BoschungIO::getFiles(const string& stationname, const Date_IO& start_date, 
 
 	//Check date in every filename
 	list<string>::iterator it = dirlist.begin(); 
-  
+
+	if (start_date > end_date){ //Special case return first data >= dateStart
+		while ((it != dirlist.end())) {
+			//check validity of filename
+			if (validFilename(*it)) {
+				string filename_out = *it;
+				stringToDate_IO(filename_out, tmp_date);
+
+				if (tmp_date > start_date) {
+					vecFiles.push_back(xmlpath + "/" + filename_out);
+					vecDate_IO.push_back(tmp_date);
+					return;
+				}
+			}
+			
+			it++;
+		}
+		return;
+	}
+	
 	while ((it != dirlist.end()) && (tmp_date < end_date)) {
 		//check validity of filename
 		if (validFilename(*it)) {
 			string filename_out = *it;
 			stringToDate_IO(filename_out, tmp_date);
 
-			if ((tmp_date > start_date) && (tmp_date <= end_date)) {
+			if ((tmp_date >= start_date) && (tmp_date <= end_date)) {
 				vecFiles.push_back(xmlpath + "/" + filename_out);
 				vecDate_IO.push_back(tmp_date);
 			}
@@ -206,41 +169,35 @@ void BoschungIO::getFiles(const string& stationname, const Date_IO& start_date, 
 	}
 }
 
-bool BoschungIO::bufferData(const Date_IO& date_in, const unsigned int& stationnr)
+bool BoschungIO::bufferData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+					   std::vector< std::vector<MeteoData> >& vecMeteo, 
+					   std::vector< std::vector<StationData> >& vecStation,					   
+					   const unsigned int& stationnr)
 {
 	vector<string> vecFiles;
 	vector<Date_IO> vecDate_IO;
 
-	if (stationnr >= unfilteredMeteoBuffer.size()) {
+	if (stationnr >= vecMeteo.size()) {
 		throw IndexOutOfBoundsException("", AT);
 	}
 
-	unfilteredMeteoBuffer[stationnr].clear();
-	filteredMeteoBuffer[stationnr].clear();
+	vecMeteo[stationnr].clear();
+	vecStation[stationnr].clear();
 
-	getFiles(vecStationName[stationnr], date_in-(Date_IO(1900,1,1,8)), date_in+Date_IO(20.0), vecFiles, vecDate_IO);
+	getFiles(vecStationName[stationnr], dateStart, dateEnd, vecFiles, vecDate_IO);
 	//cout << "[i] Buffering station number: " << vecStationName[stationnr] << "  " << vecFiles.size() << " files" << endl;
 
-	if (vecFiles.size()==0) {
+	if (vecFiles.size()==0) { //No files in range between dateStart and dateEnd
 		return false;
 	}
 
-	if ((vecFiles.size() ==0) || (!((date_in >= vecDate_IO[0]) && (vecDate_IO[vecDate_IO.size()-1] >= date_in)))) {
-		unfilteredMeteoBuffer[stationnr].clear();
-		return false;
-	}
-	//If we reach this point: Date_IO is definitely covered
-
-	if (vecFiles.size() > unfilteredMeteoBuffer[stationnr].getMaxSize()) {
-		throw IOException("MeteoBuffer too small to hold all meteo data", AT);
-	}
-  
 	for (unsigned int ii=0; ii<vecFiles.size(); ii++) {
 		MeteoData meteoData;
 		StationData stationData;
 		xmlExtractData(vecFiles[ii], vecDate_IO[ii], meteoData, stationData);    
     
-		unfilteredMeteoBuffer[stationnr].put(meteoData, stationData);
+		vecMeteo[stationnr].push_back(meteoData);
+		vecStation[stationnr].push_back(stationData);
 	}
 
 	return true;
