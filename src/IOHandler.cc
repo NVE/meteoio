@@ -147,39 +147,31 @@ void IOHandler::loadDynamicPlugins()
 	}
 }
  
-void IOHandler::get2DGridSize(int& nx, int& ny)
+void IOHandler::read2DGrid(Grid2DObject& _grid, const string& _filename)
 {
-	string demsource="";
+	string grid2Dsrc=""; //TODO: io.ini needs a field for this GRID2DSRC?
 
 	try {
-		cfg.getValue("DEMSRC", demsource);
+		cfg.getValue("GRID2DSRC", grid2Dsrc); // cout << tmp << endl;
 
-		if (demsource==ascii_src){
+		if (grid2Dsrc==ascii_src){
 			//A3DIO fileio(cfg.getFileName());
-			fileio.get2DGridSize(nx, ny);
+			fileio.read2DGrid(_grid, _filename);
 
-		} else if (demsource==boschung_src){
+		} else if (grid2Dsrc==boschung_src){
 			//Nothing so far
 			throw IOException("Nothing implemented here", AT);
 
-		} else if (demsource==imis_src){
+		} else if (grid2Dsrc==imis_src){
 			//Nothing so far
 			throw IOException("Nothing implemented here", AT);
 
 		} else {
-			throw IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+			throw IOException("GRID2DSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 		}
-
 	} catch (...){
 		throw;
 	}
-}
-
-void IOHandler::read2DGrid(Grid2DObject&, const string& filename)
-{
-	//Nothing so far
-	(void)filename;
-	throw IOException("Nothing implemented here", AT);
 }
 
 void IOHandler::readDEM(Grid2DObject& dem_out)

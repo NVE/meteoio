@@ -50,14 +50,6 @@ vector<MeteoBuffer> ImisIO::getMbImis()
 	return mbImis;
 }
 
-void ImisIO::get2DGridSize(int& nx, int& ny)
-{
-	//Nothing so far
-	(void)nx;
-	(void)ny;
-	throw IOException("Nothing implemented here", AT);
-}
-
 void ImisIO::read2DGrid(Grid2DObject& grid_out, const string& parameter)
 {
 	//Nothing so far

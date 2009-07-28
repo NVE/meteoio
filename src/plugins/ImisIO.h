@@ -48,8 +48,6 @@ class ImisIO : public IOInterface {
 		 */
 		void createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
 		
-		virtual void get2DGridSize(int& nx, int& ny);
-		
 		virtual void read2DGrid(Grid2DObject& grid_out, const string& parameter="");
 		
 		virtual void readDEM(Grid2DObject& dem_out);

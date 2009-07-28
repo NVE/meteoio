@@ -18,7 +18,6 @@ class IOHandler : public IOInterface {
 		IOHandler(const ConfigReader&);
 		~IOHandler() throw();
 
-		virtual void get2DGridSize(int& nx, int& ny);
 		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
 
 		virtual void readDEM(Grid2DObject& dem_out);

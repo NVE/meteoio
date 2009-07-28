@@ -249,11 +249,11 @@ ifeq ($(BOSCHUNGIO),yes)
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(PLUGINDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
 endif
 
-$(LIBDIR)/libimisio.so: $(SRCDIR)/ImisIO.cc $(SRCDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
+$(LIBDIR)/libimisio.so: $(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(IMISIO),yes)
 	@printf "**** Compiling Imis plugin\n"
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/rdbms/public $(SRCDIR)/ImisIO.cc -c -o $(SRCDIR)/ImisIO.o
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(SRCDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/rdbms/public $(PLUGINDIR)/ImisIO.cc -c -o $(PLUGINDIR)/ImisIO.o
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif
 
 $(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoiopopc.a $(LIBDIR)/libfilterpopc.a $(SRCDIR)/PackMeteoIO_par.o

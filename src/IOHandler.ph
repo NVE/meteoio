@@ -23,7 +23,6 @@ parclass IOHandler{ // Note : No heritage here for POPC++ : a parclass cannot he
 		IOHandler(const string& configfile) @{ power=100 ?: 50; };
 		~IOHandler();
 
-		virtual void get2DGridSize(int& nx, int& ny);
 		virtual void read2DGrid([out]Grid2DObject& dem_out, const string& parameter="");
 
 		virtual void readDEM([out]Grid2DObject& dem_out);

@@ -13,12 +13,6 @@ BufferedIOHandler::~BufferedIOHandler() throw()
 	//Nothing else so far
 }
 
-void BufferedIOHandler::get2DGridSize(int& , int& )
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const string& _filename)
 {
 	map<string, Grid2DObject>::iterator it = mapBufferedGrids.find(_filename);
@@ -150,8 +144,10 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 		}
 	}
 
-	if (vecMeteo.size() == 0) {//No data found - return one object set to nodata completely
+	if (vecMeteo.size() == 0) {//No data found - return one object set to date_in and nodata in all other fields
 		vecMeteo.push_back(MeteoData());
+		vecMeteo[0].date = date_in;
+
 		vecStation.push_back(StationData());
 		//throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
 	}	

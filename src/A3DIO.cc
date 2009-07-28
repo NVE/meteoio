@@ -39,41 +39,6 @@ void A3DIO::cleanup() throw()
 	}
 }
 
-void A3DIO::get2DGridSize(int& nx, int& ny)
-{
-	string filename="";
-	map<string, string> header; // A map to save key value pairs of the file header
-
-	cfg.getValue("DEMFILE", filename); // cout << tmp << endl;
-
-	if (!IOUtils::validFileName(filename)) {
-		throw InvalidFileNameException(filename, AT);
-	}
-	if (!IOUtils::fileExists(filename)) {
-		throw FileNotFoundException(filename, AT);
-	}
-  
-	fin.clear();
-	fin.open (filename.c_str(), ifstream::in);
-	if (fin.fail()) {
-		throw FileAccessException(filename, AT);    
-	}
-   
-	//Go through file, save key value pairs
-	try {
-		IOUtils::readKeyValueHeader(header, fin, 2, " ");
-		IOUtils::getValueForKey(header, "ncols", nx);
-		IOUtils::getValueForKey(header, "nrows", ny);
-	} catch(std::exception& e) {
-		cout << "[E] " << AT << ": "<< endl;
-		nx=0;
-		ny=0;
-		cleanup();
-		throw;
-	}
-	cleanup();
-}
-
 void A3DIO::read2DGrid(Grid2DObject& grid_out, const string& filename){
 
 	int i_ncols, i_nrows;

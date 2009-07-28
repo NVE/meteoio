@@ -43,21 +43,6 @@ class IOInterface : public PluginObject {
 		//virtual IOInterface* clone() const = 0;
 
 		/**
-		* @brief Get the grid size of a 2D grid in cells. The underlying mechanism may vary 
-		* (e.g. A3DIO reads the header of the DEM file to retrieve the information)
-		*    
-		* Example Usage:
-		* @code
-		* int nx, ny;
-		* IOHandler io1("io.ini");
-		* io1.get2DGridSize(nx, ny);
-		* @endcode
-		* @param nx Number of columns of the 2D grid
-		* @param ny Number of rows of the 2D grid
-		*/
-		virtual void get2DGridSize(int& nx, int& ny) = 0;
-
-		/**
 		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the 
 		* specific 2D grid to be parsed into the Grid2DObject.
 		* @param grid_out A Grid2DObject instance 

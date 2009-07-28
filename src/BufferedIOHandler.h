@@ -28,7 +28,6 @@ class BufferedIOHandler : public IOInterface {
 	void clearBuffer();
 	void enableResampling(const bool& _enable);
 
-	virtual void get2DGridSize(int& nx, int& ny);
 	virtual void read2DGrid(Grid2DObject& grid_out, const string& parameter="");
 	virtual void readDEM(Grid2DObject& dem_out);
 	virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out);

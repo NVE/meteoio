@@ -34,12 +34,6 @@ void BoschungIO::cleanup() throw()
 //Clone function
 //BoschungIO* BoschungIO::clone() const { return new BoschungIO(*this); }
 
-void BoschungIO::get2DGridSize(int& , int& )
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-}
-
 void BoschungIO::read2DGrid(Grid2DObject&, const string& filename)
 {
 	//Nothing so far
