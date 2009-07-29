@@ -3,7 +3,7 @@
 using namespace std;
 
 BufferedIOHandler::BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg) 
-	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
+	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids(), resample(true)
 {
 	//Nothing else so far
 }
@@ -109,9 +109,8 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 		if (index == BufferedIOHandler::npos) { //not in buffer
 			cout << "[I] Station " << ii << "(" << stationName 
 				<< ") data for date " << date_in.toString() << " not in buffer ..." << endl;
-      
-			bool dataexists = bufferData(date_in, ii);
 
+			bool dataexists = bufferData(date_in, ii);
 			if (dataexists) {//date_in is contained in buffer
 				index = seek(date_in, meteoBuffer[ii]);
 			}
@@ -129,6 +128,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 			} else {
 				//insert a nodata touple
 				meteoBuffer[ii].insert(meteoBuffer[ii].begin()+index, MeteoData());
+				meteoBuffer[ii][index].date = date_in; //set correct date
 				stationBuffer[ii].insert(stationBuffer[ii].begin()+index, sd);
 			}
 		}
@@ -140,13 +140,15 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 			cout << "[I] Buffering data for Station " << stationName << " at date " 
 				<< date_in.toString() << " failed" << endl;
 			vecMeteo.push_back(MeteoData());
-			vecStation.push_back(sd);
+			vecMeteo[ii].date = date_in; //set correct date
+
+			vecStation.push_back(StationData());
 		}
 	}
 
 	if (vecMeteo.size() == 0) {//No data found - return one object set to date_in and nodata in all other fields
 		vecMeteo.push_back(MeteoData());
-		vecMeteo[0].date = date_in;
+		vecMeteo[0].date = date_in; //set correct date
 
 		vecStation.push_back(StationData());
 		//throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
@@ -195,13 +197,16 @@ bool BufferedIOHandler::bufferData(const Date_IO& _date, const unsigned int& sta
 
 	readMeteoData(fromDate, toDate, meteoBuffer, stationBuffer, stationindex);
 
+	if (meteoBuffer.size() == 0) {
+		return false;
+	}
+	
 	if (meteoBuffer[stationindex].size() == 0) {
 		return false;
 	}
 
-	if ((meteoBuffer[stationindex].size() == 0)
-	    || (!((_date >= meteoBuffer[stationindex][0].date) 
-			&& (meteoBuffer[stationindex][meteoBuffer[stationindex].size()-1].date >= _date)))) {
+	if ((!((_date >= meteoBuffer[stationindex][0].date) 
+		  && (meteoBuffer[stationindex][meteoBuffer[stationindex].size()-1].date >= _date)))) {
 		meteoBuffer[stationindex].clear();
 		return false;
 	}

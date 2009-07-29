@@ -109,7 +109,7 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 		}
 
 		newmd.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr); 
-
+		newmd.setResampled(true);
 		mbuffer_out.insert(mbuffer_out.begin()+index_in, newmd);
 		sbuffer_out.insert(sbuffer_out.begin()+index_in, sbuffer_out[index_in]);
 	} else {

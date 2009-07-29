@@ -78,28 +78,28 @@ class IOInterface : public PluginObject {
 
 
 		/**
-		* @brief See MeteoData::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation).
-		*/
-		//virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo) = 0;
-
-		/**
-		* @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets 
-		* corresponding to the time indicated by the Date_IO object.
-		* Matching rule: Find first data set for every station which has an event time (measurement time) that is greater 
-		* (newer) or equal to the time represented by the Date_IO object parameter. The vector<StationData> object holds multiple 
-		* StationData objects representing meta information about the meteo stations that recorded the meteo data.
+		* @brief Fill vecMeteo and vecStation with a time series of objects  
+		* corresponding to the interval indicated by dateStart and dateEnd.
+		*
+		* Matching rules:
+		* - if dateStart and dateEnd are the same: return exact match for date
+		* - if dateStart > dateEnd: return first data set with date > dateStart
+		* - read in all data starting with dateStart until dateEnd
+		* - if there is no data at all then the vectors will be empty, no exception will be thrown
 		*    
 		* Example Usage:
 		* @code
-		* vector<MeteoData> vecMeteo;      //empty vector
-		* vector<StationData> vecStation;  //empty vector
+		* vector< vector<MeteoData> > vecMeteo;      //empty vector
+		* vector< vector<StationData> > vecStation;  //empty vector
 		* Date_IO d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date_IO d2(2008,07,21,11,00);       //21.7.2008 11:00
 		* IOHandler io1("io.ini");
-		* io1.readMeteoData(d1, vecMeteo, vecStation);
+		* io1.readMeteoData(d1, d2, vecMeteo, vecStation);
 		* @endcode
-		* @param date_in     A Date_IO object representing the approximate date/time for the sought MeteoData objects
-		* @param vecMeteo    A vector of MeteoData objects to be filled with data
-		* @param vecStation  A vector of StationData objects to be filled with data
+		* @param dateStart   A Date_IO object representing the beginning of an interval (inclusive)
+		* @param dateEnd     A Date_IO object representing the end of an interval (inclusive)
+		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
+		* @param vecStation  A vector of vector<StationData> objects to be filled with data
 		*/
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
