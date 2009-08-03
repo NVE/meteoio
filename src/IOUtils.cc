@@ -397,6 +397,20 @@ unsigned int IOUtils::readLineToVec(const string& line_in, vector<string>& vecSt
 	return vecString.size();
 }
 
+unsigned int IOUtils::readLineToVec(const string& line_in, vector<string>& vecString, const char& delim)
+{
+	vecString.clear();
+	string tmp_string;
+	std::istringstream iss(line_in);
+
+	while (getline(iss, tmp_string, delim)){
+		vecString.push_back(tmp_string);
+	}
+
+	return vecString.size();
+}
+
+
 void IOUtils::readDirectory(const string& path, list<string>& dirlist, const string& pattern)
 {
 	DIR *dp;

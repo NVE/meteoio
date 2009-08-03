@@ -18,6 +18,7 @@ MODE	 = @MODE@
 # plugins to build (yes/no)
 BOSCHUNGIO 	= @BOSCHUNGIO@
 IMISIO		= @IMISIO@
+GEOTOPIO	= @GEOTOPIO@
 
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
@@ -193,7 +194,7 @@ seq: $(LIBDIR)/libmeteoio.a build_dynamiclibs build_staticlibs
 
 build_staticlibs: $(LIBDIR)/libfilter.a
 
-build_dynamiclibs: $(LIBDIR)/libboschungio.so $(LIBDIR)/libimisio.so
+build_dynamiclibs: $(LIBDIR)/libboschungio.so $(LIBDIR)/libimisio.so $(LIBDIR)/libgeotopio.so 
 
 ############## POPC ##############
 par: meteoIO_lib_par meteoIO_module_par filter_lib_par
@@ -247,6 +248,13 @@ ifeq ($(BOSCHUNGIO),yes)
 	@printf "**** Compiling Boschung plugin\n"
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(PLUGINDIR)/BoschungIO.o $(PLUGINDIR)/BoschungIO.cc 
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(PLUGINDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
+endif
+
+$(LIBDIR)/libgeotopio.so:$(PLUGINDIR)/GeotopIO.cc $(PLUGINDIR)/GeotopIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
+ifeq ($(GEOTOPIO),yes)
+	@printf "**** Compiling GeoTOP plugin\n"
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GeotopIO.o $(PLUGINDIR)/GeotopIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgeotopio.so -o $@ $(PLUGINDIR)/GeotopIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
 endif
 
 $(LIBDIR)/libimisio.so: $(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a

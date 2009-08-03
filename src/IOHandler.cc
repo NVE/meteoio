@@ -16,6 +16,8 @@ IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(con
 	ascii_src = "FILE";
 	boschung_src = "BOSCHUNG";
 	imis_src = "IMIS";
+	geotop_src = "GEOTOP";
+
 	//load all dynamic plugins
 	loadDynamicPlugins();
 }
@@ -46,6 +48,8 @@ IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfg
 	ascii_src = "FILE";
 	boschung_src = "BOSCHUNG";
 	imis_src = "IMIS";
+	geotop_src = "GEOTOP";
+
 	//Nothing else so far
 	loadDynamicPlugins();
 }
@@ -56,25 +60,10 @@ IOHandler::~IOHandler(){
 #else
 IOHandler::~IOHandler() throw(){
 #endif
-	// Get rid of the object
-
-	if (dynLibraryBoschung != NULL) {
-		if (boschungio != NULL) {
-			boschungio->deleteSelf();
-			boschungio = NULL;
-		}
-		// Close the dynamic library
-		delete dynLibraryBoschung;
-	}
-
-	if (dynLibraryImis != NULL) {
-		if (imisio != NULL) {
-			imisio->deleteSelf();
-			imisio = NULL;
-		}
-		// Close the dynamic library
-		delete dynLibraryImis;
-	}
+	// Get rid of the objects
+	deletePlugin(dynLibraryImis, imisio);
+	deletePlugin(dynLibraryBoschung, boschungio);
+	deletePlugin(dynLibraryGeoTOP, geotopio);
 
 	cleanup();
 }
@@ -90,62 +79,57 @@ void IOHandler::cleanup() throw(){
 
 void IOHandler::loadDynamicPlugins()
 {
+	cout << "[i] " << AT << ": Loading dynamic plugins:" << endl;
+
+	loadPlugin("libboschungio.so", "BoschungIO", dynLibraryBoschung, boschungio);
+	loadPlugin("libimisio.so", "ImisIO", dynLibraryImis, imisio);
+	loadPlugin("libgeotopio.so", "GeotopIO", dynLibraryGeoTOP, geotopio);
+}
+
+void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw()
+{
+	if (dynLibrary != NULL) {
+		if (io != NULL) {
+			io->deleteSelf();
+			io = NULL;
+		}
+
+		// Close the dynamic library
+		delete dynLibrary;
+	}
+}
+
+void IOHandler::loadPlugin(const string& libname, const string& classname, DynamicLibrary*& dynLibrary, IOInterface*& io)
+{
 	string pluginpath = "";
 
-	cout << "[i] " << AT << ": Loading dynamic plugins:" << endl;
 	try {
 		cfg.getValue("PLUGINPATH", pluginpath); 
 
-		//BoschungIO dynamic library needs to be loaded
-		cout << "\t" << "Trying to load libboschungio.so ... ";
-		string filename = pluginpath + "/libboschungio.so";
-		dynLibraryBoschung = DynamicLoader::loadObjectFile(filename, RTLD_NOW);
-
-		if(dynLibraryBoschung == NULL) {
+		//Which dynamic library needs to be loaded
+		cout << "\t" << "Trying to load " << libname << " ... ";
+		string filename = pluginpath + "/" + libname;
+		dynLibrary = DynamicLoader::loadObjectFile(filename, RTLD_NOW);
+		
+		if(dynLibrary == NULL) {
 			cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << dlerror() << endl;
 		} else {
-			boschungio = dynamic_cast<IOInterface*>(dynLibraryBoschung->newObject("BoschungIO", cfg.getFileName()));
+			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg.getFileName()));
 
-			if(boschungio == NULL) {
+			if(io == NULL) {
 				cout << "failed" << endl;
-				//delete dynLibraryBoschung; This causes a segfault !!
+				//delete dynLibrary; This causes a segfault !!
 			} else {
 				cout << "success" << endl;
 			}
-		}
-	} catch (exception& e) {
-		if (dynLibraryBoschung != NULL)
-		delete dynLibraryBoschung;
-		cerr << "\t" << e.what() << endl;
-	}
-
-	try {
-		cfg.getValue("PLUGINPATH", pluginpath); 
-
-		//ImisIO dynamic library needs to be loaded
-		cout << "\t" << "Trying to load libimisio.so ... ";
-		string filename = pluginpath + "/libimisio.so";
-		dynLibraryImis = DynamicLoader::loadObjectFile(filename, RTLD_NOW);
-
-		if(dynLibraryImis == NULL) {
-			cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << dlerror() << endl;
-		} else {
-			imisio = dynamic_cast<IOInterface*>(dynLibraryImis->newObject("ImisIO", cfg.getFileName()));
-
-			if(imisio == NULL) {
-				cout << "failed" << endl;
-				//delete dynLibraryImis; This causes a segfault !!
-			} else {
-				cout << "success" << endl;
 			}
-		}
 	} catch (exception& e) {
-		if (dynLibraryImis != NULL) {
-			delete dynLibraryImis;
-		}
+		if (dynLibrary != NULL)
+		delete dynLibrary;
 		cerr << "\t" << e.what() << endl;
 	}
 }
+
  
 void IOHandler::read2DGrid(Grid2DObject& _grid, const string& _filename)
 {
@@ -255,6 +239,12 @@ void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 				boschungio->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 			} else {
 				throw IOException("Requesting to read data with plugin libBoschungIO.so, but plugin is not loaded", AT);
+			}
+		} else if (meteo2dsource==geotop_src) {
+			if (geotopio != NULL) {
+				geotopio->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
+			} else {
+				throw IOException("Requesting to read data with plugin libgeotopio.so, but plugin is not loaded", AT);
 			}
 		} else if (meteo2dsource==imis_src) {
 			if (imisio != NULL) {

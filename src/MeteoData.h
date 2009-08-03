@@ -101,7 +101,7 @@ class MeteoData {
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
 		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
-		double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr; //direct access allowed
+		double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr, p; //direct access allowed
 		Date_IO date;///<Date_IO/Time of the measurement
 
  private:

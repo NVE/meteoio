@@ -95,7 +95,14 @@ AC_ARG_WITH(boschungio, [  --with-boschungio	  enable BoschungIO (libxml++-2.6 r
 AC_SUBST(BOSCHUNGIO,no)
 AC_ARG_WITH(imisio,	[  --with-imisio		  enable IMISIO ($ORACLE_HOME needs to be set)])
 AC_SUBST(IMISIO,no)
+AC_ARG_WITH(geotopio,	[  --with-geotopio		  enable GeotopIO ])
+AC_SUBST(GEOTOPIO,no)
 AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
+
+if test "$with_geotopio" == "yes"
+then
+	AC_SUBST(GEOTOPIO,yes)	
+fi
 
 if test "$with_boschungio" == "yes"
 then

@@ -157,7 +157,7 @@ namespace IOUtils {
 	bool readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map);
 
 	unsigned int readLineToVec(const string& line_in, vector<string>& vecString);
-
+	unsigned int readLineToVec(const string& line_in, vector<string>& vecString, const char& delim);
 	void readKeyValueHeader(map<string,string>& headermap, 
 				    std::istream& bs,
 				    const unsigned int& linecount=1, 

@@ -37,10 +37,14 @@ class IOHandler : public IOInterface {
 		string ascii_src;
 		string boschung_src;
 		string imis_src;
+		string geotop_src;
 
 	private:
 		void cleanup() throw();
 		void loadDynamicPlugins();
+		void loadPlugin(const std::string& libname, const std::string& classname, 
+					 DynamicLibrary*& dynLibrary, IOInterface*& io);
+		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
 
 		ConfigReader cfg;
 		A3DIO fileio;
@@ -48,6 +52,8 @@ class IOHandler : public IOInterface {
 		IOInterface* boschungio;
 		DynamicLibrary* dynLibraryImis;
 		IOInterface* imisio;
+		DynamicLibrary* dynLibraryGeoTOP;
+		IOInterface* geotopio;
 };
 
 #endif

@@ -118,7 +118,8 @@ const string MeteoData::toString() const
 				   << setw(6) << "tsg: " << setw(15) << tsg << endl
 				   << setw(6) << "tss: " << setw(15) << tss << endl
 				   << setw(6) << "hs: " << setw(15) << hs << endl
-				   << setw(6) << "rswr: " << setw(15) << rswr << endl;
+				   << setw(6) << "rswr: " << setw(15) << rswr << endl
+				   << setw(6) << "p: " << setw(15) << p << endl;
 
 	return tmpstr.str();
 }
