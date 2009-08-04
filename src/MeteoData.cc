@@ -4,20 +4,21 @@ using namespace std;
 
 MeteoData::MeteoData() : resampled(false)
 {
-	setMeteoData(Date_IO(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata);
+	setMeteoData(Date_IO(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata);
 }
 
 MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
 				 const double& vw_in, const double& dw_in, const double& rh_in,
 				 const double& lwr_in, const double& nswc_in, const double& tsg_in, 
-				 const double& tss_in, const double& hs_in, const double& rswr_in) : resampled(false)
+				 const double& tss_in, const double& hs_in, const double& rswr_in, const double& _p) : resampled(false)
 {
-	setMeteoData(date_in, ta_in, iswr_in, vw_in, dw_in, rh_in, lwr_in, nswc_in, tsg_in, tss_in, hs_in, rswr_in);
+	setMeteoData(date_in, ta_in, iswr_in, vw_in, dw_in, rh_in, lwr_in, nswc_in, tsg_in, tss_in, hs_in, rswr_in, _p);
 }
 
 void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, const double& vw_in,
 					    const double& dw_in, const double& rh_in, const double& lwr_in, const double& nswc_in,
-					    const double& tsg_in, const double& tss_in, const double& hs_in, const double& rswr_in)
+					    const double& tsg_in, const double& tss_in, const double& hs_in, const double& rswr_in, 
+					    const double& _p)
 {
 	date = date_in;
 	ta = ta_in;
@@ -31,6 +32,7 @@ void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const 
 	tss = tss_in;
 	hs = hs_in;
 	rswr = rswr_in;
+	p=_p;
 }
 
 bool MeteoData::isResampled()
@@ -91,11 +93,12 @@ void MeteoData::cleanData()
 bool MeteoData::operator==(const MeteoData& in) const
 {
 	return ((date==in.date) && (ta==in.ta) 
-				&& (iswr==in.iswr) && (vw==in.vw) 
-				&& (rh==in.rh) && (lwr==in.lwr) 
-				&& (dw==in.dw) && (tss==in.tss)
-				&& (nswc==in.nswc) && (tsg==in.tsg)
-				&& (hs==in.hs) && (rswr==in.rswr));
+			&& (iswr==in.iswr) && (vw==in.vw) 
+			&& (rh==in.rh) && (lwr==in.lwr) 
+			&& (dw==in.dw) && (tss==in.tss)
+			&& (nswc==in.nswc) && (tsg==in.tsg)
+			&& (hs==in.hs) && (rswr==in.rswr) 
+			&& (p==in.p));
 }
 
 bool MeteoData::operator!=(const MeteoData& in) const

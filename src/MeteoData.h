@@ -55,7 +55,8 @@ class MeteoData {
 		    const double& tsg=nodata,
 		    const double& tss=nodata, 
 		    const double& hs=nodata,
-		    const double& rswr=nodata);
+		    const double& rswr=nodata,
+		    const double& p=nodata);
 
 		/**
 		* @brief General setter function, requires one to eight arguments
@@ -82,8 +83,9 @@ class MeteoData {
 		    	const double& nswc=nodata,
 		    	const double& tsg=nodata,
 		    	const double& tss=nodata, 
-		    	const double& hs=nodata,
-	    		const double& rswr=nodata);
+			const double& hs=nodata,
+			const double& rswr=nodata,
+		     const double& p=nodata);
 
 		/**
 		* @brief Check data for plausibility and set fishy data to MeteoData::nodata
