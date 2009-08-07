@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <iostream>
 
-//#include <ctime>
+#include <ctime>
 //#include "IOUtils.h"
 #include "IOExceptions.h"
 
@@ -43,10 +43,11 @@ class Date_IO {
 		Date_IO(const double& julian_in=0.0);
 		///All values passed will be checked for plausibility 
 		Date_IO(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
-		//Date_IO(const time_t&);
+		Date_IO(const time_t&);
 
 		void setDate(const double& julian_in);
 		void setDate(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
+		void setDate(const time_t& _time);
 
 		double getJulian() const;
 
@@ -55,6 +56,9 @@ class Date_IO {
 		void getDate(int& year, int& month, int& day, int& hour) const;
 		void getDate(int& year, int& month, int& day, int& hour, int& minute) const;
 		int getYear() const;
+
+		//Dealing with epoch time (seconds since 00:00:00 on January 1 (UTC))
+		time_t getEpochTime() const;
 
 		///Since at SLF julian dates are always treated with an offset, this function provides a way to deal with real julian dates
 		void setRealJulianDate(const double& julian_in);

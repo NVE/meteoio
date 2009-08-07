@@ -12,6 +12,11 @@ Date_IO::Date_IO(const double& julian_in)
 	calculateValues();
 }
 
+Date_IO::Date_IO(const time_t& _time)
+{
+	setDate(_time);
+}
+
 void Date_IO::setDate(const double& julian_in)
 {
 	julian = julian_in;
@@ -119,6 +124,31 @@ void Date_IO::setDate(const int& in_year, const int& in_month, const int& in_day
 
 	calculateJulianDate();
 }
+
+time_t Date_IO::getEpochTime() const {
+	struct tm tmptime;
+
+	if (year < 1970)
+		throw IOException("Dates before 1970 cannot be displayed in epoch time", AT);
+
+	tmptime.tm_year  = year - 1900;
+	tmptime.tm_mon   = month-1;
+	tmptime.tm_mday  = day;
+	tmptime.tm_hour  = hour;
+	tmptime.tm_min   = minute;
+	tmptime.tm_sec   = 0;
+	tmptime.tm_isdst = -1; //Daylight saving time not taken into account
+
+	return mktime(&tmptime);
+}
+
+void Date_IO::setDate(const time_t& _time)
+{
+	struct tm *tmptime;
+	tmptime = localtime(&_time);
+	setDate((tmptime->tm_year + 1900),(tmptime->tm_mon + 1),tmptime->tm_mday,tmptime->tm_hour,tmptime->tm_min);
+}
+
 
 void Date_IO::calculateJulianDate(void)
 {

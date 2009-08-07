@@ -102,7 +102,7 @@ void BoschungIO::readStationNames()
 	for (int ii=0; ii<stations; ii++) {
 		stringstream tmp_stream;
 		string stationname="", tmp_file="";
-		Date_IO tmp_date(0);
+		Date_IO tmp_date(0.0);
     
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(string("STATION"+tmp_stream.str()), stationname);
@@ -389,7 +389,7 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, vector<MeteoData>& vecMeteo
 	for (int ii=0; ii<stations; ii++) {
 		stringstream tmp_stream;
 		string stationname="", tmp_file="";
-		Date_IO tmp_date(0);
+		Date_IO tmp_date(0.0);
 		MeteoData md;
 		StationData sd;
     
