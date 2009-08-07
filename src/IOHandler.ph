@@ -28,13 +28,16 @@ parclass IOHandler{ // Note : No heritage here for POPC++ : a parclass cannot he
 		virtual void readDEM([out]Grid2DObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 
-		virtual void readMeteoData([in]const Date_IO& date_in,
-				     [out, proc=marshal_vector_MeteoData]vector<MeteoData>& vecMeteo);
-
+		virtual void readMeteoData([in]const Date_IO& dateStart, 
+			     			     [in]const Date_IO& dateEnd,
+			     			     std::vector< std::vector<MeteoData> >& vecMeteo, 
+						     std::vector< std::vector<StationData> >& vecStation,
+						     const unsigned int& stationindex=IOUtils::npos);
+		/*				     
 		virtual void readMeteoData([in]const Date_IO& date_in,
 				     [out, proc=marshal_vector_MeteoData]vector<MeteoData>& vecMeteo,
 				     [out, proc=marshal_vector_StationData]vector<StationData>& vecStation);
-
+		*/
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_CSpecialPTSArray]CSpecialPTSArray& pts);
 
@@ -48,7 +51,6 @@ parclass IOHandler{ // Note : No heritage here for POPC++ : a parclass cannot he
 		string imis_src;
 
 	private:
-		void cleanup();// throw();
 		void loadDynamicPlugins();
 
 		ConfigReader cfg;

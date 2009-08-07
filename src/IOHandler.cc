@@ -6,6 +6,15 @@
 
 using namespace std;
 
+void IOHandler::registerPlugins()
+{
+	mapPlugins["FILE"]      = IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["BOSCHUNG"]  = IOPlugin("libboschungio.so", "BoschungIO", NULL, NULL);
+	mapPlugins["IMIS"]  = IOPlugin("libimisio.so", "ImisIO", NULL, NULL);
+	mapPlugins["GEOTOP"]  = IOPlugin("libgeotopio.so", "GeotopIO", NULL, NULL);
+	mapPlugins["GSN"]  = IOPlugin("libgsnio.so", "GSNIO", NULL, NULL);
+	mapPlugins["ESRI"]  = IOPlugin("libesriio.so", "EsriIO", NULL, NULL);
+}
 
 #ifdef _POPC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(cfg){
@@ -13,13 +22,7 @@ IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(c
 IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(cfg)
 {
 #endif
-	ascii_src = "FILE";
-	boschung_src = "BOSCHUNG";
-	imis_src = "IMIS";
-	geotop_src = "GEOTOP";
-
-	//load all dynamic plugins
-	loadDynamicPlugins();
+	registerPlugins();
 }
 
 //Copy constructor
@@ -37,21 +40,11 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 
 #ifdef _POPC_
 /*IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg), boschungio(cfg), imisio(cfg){
-  IOHandler::ascii_src = "FILE";
-  IOHandler::boschung_src = "BOSCHUNG";
-  IOHandler::imis_src = "IMIS";
-  loadDynamicPlugins();
 }*/
 #else
 IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfg)
 {
-	ascii_src = "FILE";
-	boschung_src = "BOSCHUNG";
-	imis_src = "IMIS";
-	geotop_src = "GEOTOP";
-
-	//Nothing else so far
-	loadDynamicPlugins();
+	registerPlugins();	
 }
 #endif
 
@@ -61,29 +54,9 @@ IOHandler::~IOHandler(){
 IOHandler::~IOHandler() throw(){
 #endif
 	// Get rid of the objects
-	deletePlugin(dynLibraryImis, imisio);
-	deletePlugin(dynLibraryBoschung, boschungio);
-	deletePlugin(dynLibraryGeoTOP, geotopio);
-
-	cleanup();
-}
-
-//Clone function
-//IOHandler* IOHandler::clone() const { return new IOHandler(*this); }
-#ifdef _POPC_
-void IOHandler::cleanup(){
-#else
-void IOHandler::cleanup() throw(){
-#endif
-}
-
-void IOHandler::loadDynamicPlugins()
-{
-	cout << "[i] " << AT << ": Loading dynamic plugins:" << endl;
-
-	loadPlugin("libboschungio.so", "BoschungIO", dynLibraryBoschung, boschungio);
-	loadPlugin("libimisio.so", "ImisIO", dynLibraryImis, imisio);
-	loadPlugin("libgeotopio.so", "GeotopIO", dynLibraryGeoTOP, geotopio);
+	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); mapit++){
+		deletePlugin((mapit->second).dynLibrary, (mapit->second).io);
+	}
 }
 
 void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw()
@@ -101,6 +74,7 @@ void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) thro
 
 void IOHandler::loadPlugin(const string& libname, const string& classname, DynamicLibrary*& dynLibrary, IOInterface*& io)
 {
+	cout << "[i] " << AT << ": Loading dynamic plugin: " << libname << endl;
 	string pluginpath = "";
 
 	try {
@@ -130,217 +104,68 @@ void IOHandler::loadPlugin(const string& libname, const string& classname, Dynam
 	}
 }
 
- 
+IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
+{
+	string op_src="";
+	cfg.getValue(cfgvalue, op_src); 
+
+	mapit = mapPlugins.find(op_src);		
+	if (mapit == mapPlugins.end())
+		throw IOException(cfgvalue + "does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+	
+	if ((mapit->second).io == NULL){
+		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
+	}			
+	
+	if ((mapit->second).io == NULL)	
+		throw IOException("Requesting to read/write data with plugin for " + cfgvalue + ", but plugin is not loaded", AT);			
+
+	return (mapit->second).io;
+}
+
 void IOHandler::read2DGrid(Grid2DObject& _grid, const string& _filename)
 {
-	string grid2Dsrc=""; //TODO: io.ini needs a field for this GRID2DSRC?
-
-	try {
-		cfg.getValue("GRID2DSRC", grid2Dsrc); // cout << tmp << endl;
-
-		if (grid2Dsrc==ascii_src){
-			//A3DIO fileio(cfg.getFileName());
-			fileio.read2DGrid(_grid, _filename);
-
-		} else if (grid2Dsrc==boschung_src){
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else if (grid2Dsrc==imis_src){
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else {
-			throw IOException("GRID2DSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
-		}
-	} catch (...){
-		throw;
-	}
+	IOInterface *plugin = getPlugin("GRID2DSRC");
+	plugin->read2DGrid(_grid, _filename);
 }
 
 void IOHandler::readDEM(Grid2DObject& dem_out)
 {
-	string demsource="";
-
-	try {
-		cfg.getValue("DEMSRC", demsource); // cout << tmp << endl;
-
-		if (demsource==ascii_src) {
-			//A3DIO fileio(cfg.getFileName());
-			fileio.readDEM(dem_out);
-
-		} else if (demsource==boschung_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else if (demsource==imis_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else {
-			throw IOException("DEMSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
-		}
-
-	} catch (...) {
-		throw;
-	}
+	IOInterface *plugin = getPlugin("DEMSRC");
+	plugin->readDEM(dem_out);
 }
 
 void IOHandler::readLanduse(Grid2DObject& landuse_out)
 {
-	string landusesource="";
-
-	try {
-		cfg.getValue("LANDUSESRC", landusesource); 
-
-		if (landusesource==ascii_src) {
-			//A3DIO fileio(cfg.getFileName());
-			fileio.readLanduse(landuse_out);
-
-		} else if (landusesource==boschung_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else if (landusesource==imis_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else {
-			throw IOException("LANDUSESRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
-		}
-
-	} catch (...) {
-		throw;
-	}
+	IOInterface *plugin = getPlugin("LANDUSESRC");
+	plugin->readLanduse(landuse_out);
 }
 
 
 void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 						std::vector< std::vector<MeteoData> >& vecMeteo, 
 						std::vector< std::vector<StationData> >& vecStation,
-						unsigned int stationindex)
+						const unsigned int& stationindex)
 {
-	//See whether data is already buffered
-	//Filter
-	//Resample if necessary
-	//Filter resampled value
-	//return that value
-	string meteo2dsource="";
-
-	try {
-		cfg.getValue("METEOSRC", meteo2dsource); 
-
-		if (meteo2dsource==ascii_src) {
-			//A3DIO fileio(cfg.getFileName());
-			fileio.readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
-
-		} else if (meteo2dsource==boschung_src) {
-			if (boschungio != NULL) {
-				boschungio->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
-			} else {
-				throw IOException("Requesting to read data with plugin libBoschungIO.so, but plugin is not loaded", AT);
-			}
-		} else if (meteo2dsource==geotop_src) {
-			if (geotopio != NULL) {
-				geotopio->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
-			} else {
-				throw IOException("Requesting to read data with plugin libgeotopio.so, but plugin is not loaded", AT);
-			}
-		} else if (meteo2dsource==imis_src) {
-			if (imisio != NULL) {
-				imisio->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
-			} else {
-				throw IOException("Requesting to read data with plugin libImisIO.so, but plugin is not loaded", AT);
-			}
-		} else {
-			throw IOException("METEOSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
-		}
-
-	} catch (...) {
-		throw;
-	}
-
+	IOInterface *plugin = getPlugin("METEOSRC");
+	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
 
 void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
-	string dasrc="";
-
-	try {
-		cfg.getValue("DASRC", dasrc); 
-
-		if (dasrc==ascii_src) {
-			//A3DIO fileio(cfg.getFileName());
-			fileio.readAssimilationData(date_in, da_out);
-
-		} else if (dasrc==boschung_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else if (dasrc==imis_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else {
-			throw IOException("DASRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
-		}
-
-	} catch (...) {
-		throw;
-	}
+	IOInterface *plugin = getPlugin("DASRC");
+	plugin->readAssimilationData(date_in, da_out);
 }
 
 void IOHandler::readSpecialPoints(CSpecialPTSArray& pts) {
-	string specialptssrc="";
-
-	try {
-		cfg.getValue("SPECIALPTSSRC", specialptssrc); 
-
-		if (specialptssrc==ascii_src) {
-			//A3DIO fileio(cfg.getFileName());
-			fileio.readSpecialPoints(pts);
-
-		} else if (specialptssrc==boschung_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else if (specialptssrc==imis_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else {
-			throw IOException("SPECIALPTSSRC does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
-		}
-
-	} catch (...) {
-		throw;
-	}
+	IOInterface *plugin = getPlugin("SPECIALPTSSRC");
+	plugin->readSpecialPoints(pts);
 }
+
 void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& name)
 {
-	string output="";
-
-	try {
-		cfg.getValue("OUTPUT", output); 
-
-		if (output==ascii_src) {
-			//A3DIO fileio(cfg.getFileName());
-			fileio.write2DGrid(grid_in, name);
-		} else if (output==boschung_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else if (output==imis_src) {
-			//Nothing so far
-			throw IOException("Nothing implemented here", AT);
-
-		} else {
-			throw IOException("OUTPUT does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
-		}
-
-	} catch (...) {
-		throw;
-	}
+	IOInterface *plugin = getPlugin("OUTPUT");
+	plugin->write2DGrid(grid_in, name);
 }
 
 

@@ -156,7 +156,7 @@ void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, vect
 void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 					 std::vector< std::vector<MeteoData> >& vecMeteo, 
 					 std::vector< std::vector<StationData> >& vecStation,
-					 unsigned int stationindex)
+					 const unsigned int& stationindex)
 {
 	//if dateStart and dateEnd are the same: return exact match for date
 	//if dateStart > dateEnd: return first data set with date > dateStart

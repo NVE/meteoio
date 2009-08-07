@@ -9,6 +9,19 @@
 #include "A3DIO.h"
 #include "IOExceptions.h"
 
+#include <map>
+
+class IOPlugin {
+ public:
+	std::string libname;
+	std::string classname;
+	IOInterface *io;
+	DynamicLibrary *dynLibrary;
+	
+	IOPlugin(std::string _s1, std::string _s2, IOInterface *p1, DynamicLibrary *p2) : libname(_s1), classname(_s2), io(p1), dynLibrary(p2){}
+	IOPlugin() : libname(""), classname(""), io(NULL), dynLibrary(NULL){}
+};
+
 class IOHandler : public IOInterface {
 	public:
 		// virtual IOHandler* clone() const; // lwk : not used yet
@@ -26,7 +39,7 @@ class IOHandler : public IOInterface {
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
-							  unsigned int stationindex=IOUtils::npos);
+							  const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
@@ -40,20 +53,17 @@ class IOHandler : public IOInterface {
 		string geotop_src;
 
 	private:
-		void cleanup() throw();
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname, 
 					 DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
+		void registerPlugins();
+		IOInterface *getPlugin(const std::string&);
 
 		ConfigReader cfg;
+		map<std::string, IOPlugin> mapPlugins;
+		map<std::string, IOPlugin>::iterator mapit;
 		A3DIO fileio;
-		DynamicLibrary* dynLibraryBoschung;
-		IOInterface* boschungio;
-		DynamicLibrary* dynLibraryImis;
-		IOInterface* imisio;
-		DynamicLibrary* dynLibraryGeoTOP;
-		IOInterface* geotopio;
 };
 
 #endif
