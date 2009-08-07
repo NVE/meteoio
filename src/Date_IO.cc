@@ -28,32 +28,6 @@ double Date_IO::getJulian() const
 	return julian;
 }
 
-Date_IO::Date_IO(const Date_IO& orig)
-{
-	julian = orig.julian;
-	year = orig.year;
-	month = orig.month;
-	day = orig.day;
-	hour = orig.hour;
-	minute = orig.minute;
-}
-
-Date_IO& Date_IO::operator=(const Date_IO& orig)
-{
-	if (this == &orig) {//Check for self assignment
-		return *this;
-	}
-
-	julian = orig.julian;
-	year = orig.year;
-	month = orig.month;
-	day = orig.day;
-	hour = orig.hour;
-	minute = orig.minute;
-
-	return *this;
-}
-
 Date_IO& Date_IO::operator+=(const Date_IO& indate)
 {
 	julian += indate.julian;

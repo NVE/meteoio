@@ -36,8 +36,6 @@ class Date_IO {
 		static const int daysNonLeapYear[];
 		static const long offset;
 
-		///Explicitly implemented Copy Constructor
-		Date_IO(const Date_IO&); //Copy Constructor
 		///Note that constructing an Date_IO object without any parameter results 
 		///in constructing Date_IO(0.0) which in its current expression results in a date of 1900/1/1 00:00:00
 		Date_IO(const double& julian_in=0.0);
@@ -70,7 +68,6 @@ class Date_IO {
 		friend ostream& operator<<(ostream& os, const Date_IO& date);
 
 		//Operator Prototypes
-		Date_IO& operator=(const Date_IO&);
 		///Can be used to add an interval to an existing Date_IO object. 
 		///Construct a Date_IO object representing the interval e.g. Date_IO(1.0) for 1 day and add that to another Date_IO object.
 		Date_IO& operator+=(const Date_IO&);
