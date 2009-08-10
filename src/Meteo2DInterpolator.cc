@@ -175,7 +175,7 @@ void Meteo2DInterpolator::interpolateVW(Array2D<double>& vw)
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
-	unsigned int countDataDir = 0.;
+	unsigned int countDataDir = 0;
 	vector<double> vecEmpty;
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
@@ -188,7 +188,7 @@ void Meteo2DInterpolator::interpolateVW(Array2D<double>& vw)
 		}
 	}
 
-	countDataDir=0.; //HACK, to prevent using the enhanced method...
+	countDataDir=0; //HACK, to prevent using the enhanced method...
 	printf("[i] interpolating VW using %d stations\n", (int)vecSelectedStations.size());
 	// If direction doesn't exist, use the kriging
 	if( countDataDir > 0.) {
