@@ -93,15 +93,30 @@ echo "=       ACTIVATED PLUGINS       ="
 echo "================================="
 AC_ARG_WITH(boschungio, [  --with-boschungio	  enable BoschungIO (libxml++-2.6 required)])
 AC_SUBST(BOSCHUNGIO,no)
-AC_ARG_WITH(imisio,	[  --with-imisio		  enable IMISIO ($ORACLE_HOME needs to be set)])
+AC_ARG_WITH(gsnio,      [  --with-gsnio	          enable GSNIO (gsoap++ required)])
+AC_SUBST(GSNIO,no)
+AC_ARG_WITH(imisio,	[  --with-imisio           enable IMISIO ($ORACLE_HOME needs to be set)])
 AC_SUBST(IMISIO,no)
-AC_ARG_WITH(geotopio,	[  --with-geotopio		  enable GeotopIO ])
+AC_ARG_WITH(geotopio,	[  --with-geotopio         enable GeotopIO ])
 AC_SUBST(GEOTOPIO,no)
 AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
 
 if test "$with_geotopio" == "yes"
 then
+	AC_MSG_NOTICE([GeotopIO enabled. No prerequisites...])
 	AC_SUBST(GEOTOPIO,yes)	
+fi
+
+if test "$with_gsnio" == "yes"
+then
+	AC_MSG_NOTICE([GSNIO enabled. Checking for prerequisites...])
+	PKG_CHECK_MODULES(GSOAPPP, gsoap++ >= 2.0)
+	CPPFLAGS="$CPPFLAGS $GSOAPPP_CFLAGS"
+
+	AC_SUBST(GSOAPPP_CFLAGS)
+	AC_SUBST(GSOAPPP_LIBS)
+
+	AC_SUBST(GSNIO,yes)	
 fi
 
 if test "$with_boschungio" == "yes"

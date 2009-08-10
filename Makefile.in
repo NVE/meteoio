@@ -19,6 +19,7 @@ MODE	 = @MODE@
 BOSCHUNGIO 	= @BOSCHUNGIO@
 IMISIO		= @IMISIO@
 GEOTOPIO	= @GEOTOPIO@
+GSNIO		= @GSNIO@
 
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
@@ -194,7 +195,7 @@ seq: $(LIBDIR)/libmeteoio.a build_dynamiclibs build_staticlibs
 
 build_staticlibs: $(LIBDIR)/libfilter.a
 
-build_dynamiclibs: $(LIBDIR)/libboschungio.so $(LIBDIR)/libimisio.so $(LIBDIR)/libgeotopio.so 
+build_dynamiclibs: $(LIBDIR)/libboschungio.so $(LIBDIR)/libimisio.so $(LIBDIR)/libgeotopio.so $(LIBDIR)/libgsnio.so 
 
 ############## POPC ##############
 par: meteoIO_lib_par meteoIO_module_par filter_lib_par
@@ -207,7 +208,8 @@ meteoIO_module_par: $(LIBDIR)/meteoio.module
 ##############  END  ##############
 
 clean:
-	rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(FILTERDIR)/*~ $(FILTERDIR)/*.o $(TOOLSDIR)/*.o
+	rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(FILTERDIR)/*~ $(FILTERDIR)/*.o $(TOOLSDIR)/*.o $(PLUGINDIR)/*.o
+	cd $(PLUGINDIR)/gsn; make clean
 
 distclean: clean
 	rm -f $(TOOLSDIR)/createA3DFiles
@@ -255,6 +257,14 @@ ifeq ($(GEOTOPIO),yes)
 	@printf "**** Compiling GeoTOP plugin\n"
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GeotopIO.o $(PLUGINDIR)/GeotopIO.cc 
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgeotopio.so -o $@ $(PLUGINDIR)/GeotopIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
+endif
+
+$(LIBDIR)/libgsnio.so:$(PLUGINDIR)/GSNIO.cc $(PLUGINDIR)/GSNIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
+ifeq ($(GSNIO),yes)
+	@printf "**** Compiling GSN plugin\n"
+	cd $(PLUGINDIR)/gsn; make
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @GSOAPPP_CFLAGS@ -c -o $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/GSNIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgsnio.so -o $@ $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/gsn/soapA3DWebServiceSoap12BindingProxy.o $(PLUGINDIR)/gsn/soapC.o $(LDFLAGS_SEQ) $(LDFLAGS) @GSOAPPP_LIBS@ 
 endif
 
 $(LIBDIR)/libimisio.so: $(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
