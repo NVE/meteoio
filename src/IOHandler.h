@@ -11,6 +11,8 @@
 
 #include <map>
 
+typedef std::map<string, string> MAP_STR_STR;
+
 class IOPlugin {
  public:
 	std::string libname;
@@ -37,8 +39,8 @@ class IOHandler : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  std::vector< std::vector<StationData> >& vecStation,
+							  std::vector<METEO_DATASET>& vecMeteo, 
+							  std::vector<STATION_DATASET>& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);

@@ -144,3 +144,24 @@ std::string ConfigReader::getFileName()
 {
 	return file;
 }
+
+#ifdef _POPC_
+#include "marshal_meteoio.h"
+void ConfigReader::Serialize(POPBuffer &buf, bool pack)
+{
+	if (pack)
+	{
+		buf.Pack(&fin,1);
+		buf.Pack(&properties,1);
+		buf.Pack(&file,1);
+		//marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
+	}
+	else
+	{
+		buf.UnPack(&fin,1);
+		buf.UnPack(&properties,1);
+		buf.UnPack(&file,1);
+		//marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
+	}
+}
+#endif

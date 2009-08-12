@@ -17,7 +17,7 @@ class Grid2DObject : POPBase {
 		void Serialize(POPBuffer &buf, bool pack);
 #else
 class Grid2DObject{
-#endif  
+#endif
 	public:
 		/**
 		* @brief Default constructor.

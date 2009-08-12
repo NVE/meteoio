@@ -93,4 +93,6 @@ class StationData {
 		std::string stationName; ///<Name of the Station
 };
 
+typedef std::vector<StationData> STATION_DATASET;
+
 #endif

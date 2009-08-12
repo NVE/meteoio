@@ -24,9 +24,13 @@ void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data, int maxsize, int 
 
 void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_vector_MeteoData(POPBuffer &buf, vector<MeteoData> &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_vector_StationData(POPBuffer &buf, vector<StationData> &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_vector_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_Grid2DObject(POPBuffer &buf, vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp);
 

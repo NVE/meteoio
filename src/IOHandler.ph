@@ -11,7 +11,7 @@
 
 parclass IOHandler;
 
-parclass IOPlugin {
+/*parclass IOPlugin {
 	public:
 		std::string libname;
 		std::string classname;
@@ -20,7 +20,7 @@ parclass IOPlugin {
 		
 		IOPlugin(std::string _s1, std::string _s2, IOInterface *p1, DynamicLibrary *p2) : libname(_s1), classname(_s2), io(p1), dynLibrary(p2){}
 		IOPlugin() : libname(""), classname(""), io(NULL), dynLibrary(NULL){}
-};
+};*/
 
 parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
@@ -41,8 +41,8 @@ parclass IOHandler {
 		//Pbl with vector of vector...
 		virtual void readMeteoData([in]const Date_IO& dateStart, 
 			     			     [in]const Date_IO& dateEnd,
-			     			     std::vector< std::vector<MeteoData> >& vecMeteo, 
-						     std::vector< std::vector<StationData> >& vecStation,
+			     			     [proc=marshall_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
+						     [proc=marshall_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
 						     const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
@@ -60,7 +60,8 @@ parclass IOHandler {
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname, 
 					 DynamicLibrary*& dynLibrary, IOInterface*& io);
-		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
+		//void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw(); //pbl with throw()
+		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string&);
 

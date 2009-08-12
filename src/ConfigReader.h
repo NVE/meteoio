@@ -20,7 +20,13 @@
  * @author Thomas Egger
  * @date   2008-11-30
  */
+#ifdef _POPC_
+class ConfigReader : POPBase {
+	public:
+		void Serialize(POPBuffer &buf, bool pack);
+#else
 class ConfigReader {
+#endif
 	public:
 		/**
 		* @brief Main constructor. The file is parsed and a key/value map object is internally created

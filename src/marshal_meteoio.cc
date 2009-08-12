@@ -20,7 +20,7 @@ void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize
     }
 }
 
-void marshal_vector_MeteoData(POPBuffer &buf, vector<MeteoData> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int flag, POPMemspool *temp)
 {
   (void)maxsize;
   (void)*temp;
@@ -47,8 +47,91 @@ void marshal_vector_MeteoData(POPBuffer &buf, vector<MeteoData> &data, int maxsi
   }
 }
 
+void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
+{
+  (void)maxsize;
+  (void)*temp;
+  if(flag&FLAG_MARSHAL)
+  {
+    int n=data.size();
+    buf.Pack(&n,1);
+    for(int i=0;i<n;i++)
+    {
+      data[i].Serialize(buf,true);
+    }
+  }
+  else
+  {
+    int n=0;
+    buf.UnPack(&n,1);
+    data.clear();  
+    for(int i=0;i<n;i++)
+    {
+      MeteoData obj;
+      obj.Serialize(buf,false);
+      data.push_back(obj);
+    }
+  }
+}
 
-void marshal_vector_StationData(POPBuffer &buf, vector<StationData> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_map_str_str(POPBuffer &buf, MAP_STR_STR &data, int maxsize, int flag, POPMemspool *temp)
+{
+  (void)maxsize;
+  (void)*temp;
+  if(flag&FLAG_MARSHAL)
+  {
+    int n=data.size();
+    buf.Pack(&n,1);
+    for(MAP_STR_STR::const_iterator it = data.begin(); it != data.end(); ++it)
+    {
+        cout << "Who(key = first): " << it->first;
+        cout << " Score(value = second): " << it->second << '\n';
+    }
+
+  }
+  else
+  {
+    int n=0;
+    buf.UnPack(&n,1);
+    data.clear();
+    for(int i=0;i<n;i++)
+    {
+      StationData obj;
+      obj.Serialize(buf,false);
+      data.push_back(obj);
+    }
+
+  }
+}
+
+void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp)
+{
+  (void)maxsize;
+  (void)*temp;
+  if(flag&FLAG_MARSHAL)
+  {
+    int n=data.size();
+    buf.Pack(&n,1);
+    for(int i=0;i<n;i++)
+    {
+      data[i].Serialize(buf,true);
+    }
+  }
+  else
+  {
+    int n=0;
+    buf.UnPack(&n,1);
+    data.clear();
+    for(int i=0;i<n;i++)
+    {
+      StationData obj;
+      obj.Serialize(buf,false);
+      data.push_back(obj);
+    }
+  }
+}
+
+void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
 {
   (void)maxsize;
   (void)*temp;
