@@ -57,7 +57,8 @@ void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &da
     buf.Pack(&n,1);
     for(int i=0;i<n;i++)
     {
-      data[i].Serialize(buf,true);
+      //data[i].Serialize(buf,true);
+      marshal_METEO_DATASET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
     }
   }
   else
@@ -68,37 +69,40 @@ void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &da
     for(int i=0;i<n;i++)
     {
       MeteoData obj;
-      obj.Serialize(buf,false);
+      //obj.Serialize(buf,false);
+      marshal_METEO_DATASET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
       data.push_back(obj);
     }
   }
 }
 
-void marshal_map_str_str(POPBuffer &buf, MAP_STR_STR &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_map_str_str(POPBuffer &buf, MAP_STR_STR &data_map, int maxsize, int flag, POPMemspool *temp)
 {
   (void)maxsize;
   (void)*temp;
   if(flag&FLAG_MARSHAL)
   {
-    int n=data.size();
+    int n=data_map.size();
     buf.Pack(&n,1);
-    for(MAP_STR_STR::const_iterator it = data.begin(); it != data.end(); ++it)
+    for(MAP_STR_STR::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
     {
-        cout << "Who(key = first): " << it->first;
-        cout << " Score(value = second): " << it->second << '\n';
+	buf.Pack(&(it->first),1);
+	buf.Pack(&(it->second),1);
     }
 
   }
   else
   {
     int n=0;
+    std:string key;
+    std::string value;
     buf.UnPack(&n,1);
-    data.clear();
+    data_map.clear();
     for(int i=0;i<n;i++)
     {
-      StationData obj;
-      obj.Serialize(buf,false);
-      data.push_back(obj);
+	buf.UnPack(&key,1);
+	buf.UnPack(&value,1);
+	data_map[key] = value;
     }
 
   }
@@ -141,7 +145,8 @@ void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET>
     buf.Pack(&n,1);
     for(int i=0;i<n;i++)
     {
-      data[i].Serialize(buf,true);
+      //data[i].Serialize(buf,true);
+      marshal_STATION_DATASET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
     }
   }
   else
@@ -152,7 +157,8 @@ void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET>
     for(int i=0;i<n;i++)
     {
       StationData obj;
-      obj.Serialize(buf,false);
+      //obj.Serialize(buf,false);
+      marshal_STATION_DATASET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
       data.push_back(obj);
     }
   }

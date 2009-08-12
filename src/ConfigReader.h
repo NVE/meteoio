@@ -24,6 +24,7 @@
 class ConfigReader : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);
+		ConfigReader(){};
 #else
 class ConfigReader {
 #endif
@@ -86,8 +87,7 @@ class ConfigReader {
 		static const int CfgLineUnknown = 9;
 
 	private:
-		std::ifstream fin; //Input file streams
-		std::map<string, string> properties; //Save key value pairs  
+		std::map<string, string> properties; //Save key value pairs
 		std::string file; //Absolute filename of the key/value file
 
 }; //end class definition ConfigReader

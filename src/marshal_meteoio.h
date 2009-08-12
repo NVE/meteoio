@@ -30,7 +30,7 @@ void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &da
 
 void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_vector_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_Grid2DObject(POPBuffer &buf, vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp);
 

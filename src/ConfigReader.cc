@@ -3,15 +3,7 @@
 using namespace std;
 
 //DECONSTRUCTOR
-ConfigReader::~ConfigReader() throw()
-{
-	//properties.clear();
-	//file.~string();
-
-	if (fin.is_open()) {//close fin if open
-		fin.close();
-	}
-}
+ConfigReader::~ConfigReader() throw() {}
 
 //CONSTRUCTORS
 ConfigReader::ConfigReader(const ConfigReader& configreader) : properties(configreader.properties), file(configreader.file){}
@@ -21,6 +13,7 @@ ConfigReader::ConfigReader(const std::string& filename/*, const std::string& del
 	//Check whether file exists and is accessible -> throw FileNotFound or FileNotAccessible Exception
 	//Read first line -> if not [Parameters] -> throw WrongFormatException
 	//Read Key Value Pairs and put them into map 
+	std::ifstream fin; //Input file streams
 	file = filename;
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename,AT);
@@ -39,26 +32,35 @@ ConfigReader::ConfigReader(const std::string& filename/*, const std::string& del
 		throw FileAccessException(filename, AT);
 	}
 
-	int lineType = ConfigReader::CfgLineComment /*dummy non-problematic initial value*/;
-	string str1, str2;
-	stringstream tmpStringStream;
-
-	//Read header, should be [Parameters]
-	ConfigReader::readConfigLine(fin, ++linenr, lineType, str1, str2);
-	if (lineType != ConfigReader::CfgLineSection || str1 != "Parameters") {
-		throw InvalidFormatException("Missing header [Parameters] in file " + filename, AT);    
-	}
-	//Go through file, save key value pairs
-	while (ConfigReader::readConfigLine(fin, ++linenr, lineType, str1, str2)) {
-		if (lineType == ConfigReader::CfgLineKeyValue) {
-			properties[str1] = str2;
-		} else if (lineType != ConfigReader::CfgLineComment) {
-			tmpStringStream << "Expected key-value pair at line "<<linenr<<".";
-			throw InvalidFormatException(tmpStringStream.str(), AT);
+	try {
+		int lineType = ConfigReader::CfgLineComment /*dummy non-problematic initial value*/;
+		string str1, str2;
+		stringstream tmpStringStream;
+	
+		//Read header, should be [Parameters]
+		ConfigReader::readConfigLine(fin, ++linenr, lineType, str1, str2);
+		if (lineType != ConfigReader::CfgLineSection || str1 != "Parameters") {
+			throw InvalidFormatException("Missing header [Parameters] in file " + filename, AT);    
 		}
+		//Go through file, save key value pairs
+		while (ConfigReader::readConfigLine(fin, ++linenr, lineType, str1, str2)) {
+			if (lineType == ConfigReader::CfgLineKeyValue) {
+				properties[str1] = str2;
+			} else if (lineType != ConfigReader::CfgLineComment) {
+				tmpStringStream << "Expected key-value pair at line "<<linenr<<".";
+				throw InvalidFormatException(tmpStringStream.str(), AT);
+			}
+		}
+
+		//done reading, so closing the file
+		fin.close();
+	} catch (...) {
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
 	}
 
-	fin.close();
 } // end ConfigReader::ConfigReader
 
   
@@ -151,17 +153,13 @@ void ConfigReader::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack)
 	{
-		buf.Pack(&fin,1);
-		buf.Pack(&properties,1);
 		buf.Pack(&file,1);
-		//marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
+		marshal_map_str_str(buf, properties, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
-		buf.UnPack(&fin,1);
-		buf.UnPack(&properties,1);
 		buf.UnPack(&file,1);
-		//marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
+		marshal_map_str_str(buf, properties, 0, !FLAG_MARSHAL, NULL);
 	}
 }
 #endif
