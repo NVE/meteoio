@@ -45,14 +45,14 @@ class BufferedIOHandler : public IOInterface {
 		 * @param vecMeteo   A vector of MeteoData objects to be filled with data
 		 * @param vecStation A vector of StationData objects to be filled with meta data
 		 */
-		void getNextMeteoData(const Date_IO& _date, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
+		void getNextMeteoData(const Date_IO& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 		
 		/**
 		 * @brief See BufferedIOHandler::readMeteoData(const Date& date_in, 
 		 *                                             vector<MeteoData>& vecMeteo, 
 		 *                                             vector<StationData>& vecStation).
 		 */
-		void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, vector< vector<MeteoData> >& vecMeteo);
+		void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		/**
 		 * @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets 
@@ -80,7 +80,7 @@ class BufferedIOHandler : public IOInterface {
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
 		 * @param vecStation  A vector of StationData objects to be filled with data
 		 */
-		void readMeteoData(const Date_IO& _date, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
+		void readMeteoData(const Date_IO& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 
 		/**
 		 * @brief Clear all buffers in BufferedIOHandler and hence force rebuffering
@@ -93,7 +93,7 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		void enableResampling(const bool& _enable);
 
-		virtual void read2DGrid(Grid2DObject& grid_out, const string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void readDEM(Grid2DObject& dem_out);
 		virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
@@ -103,7 +103,7 @@ class BufferedIOHandler : public IOInterface {
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& options="");
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
 
 		static const unsigned int npos = (unsigned int)-1;             ///<npos is the out-of-range value
@@ -115,8 +115,8 @@ class BufferedIOHandler : public IOInterface {
 		
 		IOInterface& iohandler;
 		ConfigReader cfg;
-		vector< vector<MeteoData> > meteoBuffer;
-		vector< vector<StationData> > stationBuffer;
+		std::vector< std::vector<MeteoData> > meteoBuffer;
+		std::vector< std::vector<StationData> > stationBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 		bool resample;
 };

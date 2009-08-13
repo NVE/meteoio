@@ -3,18 +3,14 @@
 
 #include "IOInterface.h"
 
-#include "FilterFacade.h"
 #include "ConfigReader.h"
 #include "IOExceptions.h"
 #include "IOUtils.h"
 #include "MeteoBuffer.h"
-#include "Meteo1DResampler.h"
 
 #include <string>
 #include <vector>
 #include <map>
-
-using namespace IOUtils;
 
 class A3DIO : public IOInterface {
 	public:
@@ -47,10 +43,10 @@ class A3DIO : public IOInterface {
 
 	private:
 		void read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd, 
-					  vector< vector<MeteoData> >&, vector< vector<StationData> >&); ///< No buffering
-		void read2DMeteo(vector< vector<MeteoData> >&, vector< vector<StationData> >&); ///< No buffering
+					  std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
+		void read2DMeteo(std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 
-		void constructMeteo2DFilenames(const Date_IO& _date, vector<string>& _filenames);
+		void constructMeteo2DFilenames(const Date_IO& _date, std::vector<string>& _filenames);
 		bool readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoData& tmpdata, std::string filename);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();

@@ -15,8 +15,6 @@
 #include "IOExceptions.h"
 #include "Date_IO.h"
 
-using namespace std;
-
 #ifndef MAX
 #define MAX(x,y)    (((x) < (y)) ? (y) : (x))
 #endif
@@ -141,7 +139,7 @@ namespace IOUtils {
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string. 
 	* @param s The reference of the string to trim (in/out parameter)
 	*/
-	void trim(string &s);
+	void trim(std::string &s);
 
 	char getEoln(std::istream& fin);
 
@@ -154,11 +152,11 @@ namespace IOUtils {
 	* @param out_map (map\<string,string\>&) map after parsing
 	* @return (bool) true when line is empty
 	*/
-	bool readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map);
+	bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, std::map<std::string,std::string>& out_map);
 
-	unsigned int readLineToVec(const string& line_in, vector<string>& vecString);
-	unsigned int readLineToVec(const string& line_in, vector<string>& vecString, const char& delim);
-	void readKeyValueHeader(map<string,string>& headermap, 
+	unsigned int readLineToVec(const std::string& line_in, std::vector<string>& vecString);
+	unsigned int readLineToVec(const std::string& line_in, std::vector<string>& vecString, const char& delim);
+	void readKeyValueHeader(std::map<std::string, std::string>& headermap, 
 				    std::istream& bs,
 				    const unsigned int& linecount=1, 
 				    const std::string& delimiter="=");
@@ -174,7 +172,7 @@ namespace IOUtils {
 	* @return true if everything went fine, false otherwise
 	*/
 	template <class T> bool convertString(T& t, const std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
-		string s = str; 
+		std::string s = str; 
 		trim(s); //delete trailing and leading whitespaces and tabs
 		if (s.size() == 0) {
 			t = static_cast<T> (nodata);
@@ -187,7 +185,7 @@ namespace IOUtils {
 				//Conversion failed
 				return false;
 			}
-			string tmp="";
+			std::string tmp="";
 			getline(iss,  tmp); //get rest of line, if any
 			trim(tmp);
 			if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {
@@ -198,7 +196,7 @@ namespace IOUtils {
 		}
 	}
 	// fully specialized template functions (implementation must not be in header)
-	template<> bool convertString<string>(string& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<std::string>(std::string& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 
@@ -209,11 +207,11 @@ namespace IOUtils {
 	* @param key   [in] The key of the parameter to retrieve.
 	* @param t   [out] The value associated to the key, converted to the requested type
 	*/
-	template <class T> void getValueForKey(const map<string,string>& properties, const string& key, T& t) {
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, const std::string& key, T& t) {
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
-		const string value = (const_cast<map<string,string>&>(properties))[key];  
+		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];  
 
 		if (value == "") {
 			throw UnknownValueException("No value for key " + key, AT);

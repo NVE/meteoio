@@ -44,33 +44,33 @@ class Interpol2D {
 		
 		Interpol2D(interp_types Isingle, 
 			interp_types Imultiple, 
-			const vector<double>& sourcesData, 
-			const vector<StationData>& sourcesMeta, 
+			const std::vector<double>& sourcesData, 
+			const std::vector<StationData>& sourcesMeta, 
 	    	const DEMObject& dem);
 		
 		void calculate(Array2D<double>& param_out);
-		void calculate(Array2D<double>& param_out, const vector<double>& vecExtraStations, Array2D<double>& extra_param_in);
+		void calculate(Array2D<double>& param_out, const std::vector<double>& vecExtraStations, Array2D<double>& extra_param_in);
 
 	private:
 		//generic functions
 		double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
 		double HorizontalDistance(const int& i, const int& j, const double& X2, const double& Y2);
-		double AvgSources(const vector<double>& data_in);
-		void BuildStationsElevations(const vector<StationData>& vecStations_in, vector<double>& vecElevations);
+		double AvgSources(const std::vector<double>& data_in);
+		void BuildStationsElevations(const std::vector<StationData>& vecStations_in, std::vector<double>& vecElevations);
 		
 		//regressions
-		void LinRegressionCore(const vector<double>& X, const vector<double>& Y, double& a, double& b, double& r, const int ignore_index);
-		int LinRegression(const vector<double>& data_in, const vector<double>& elevations, vector<double>& coeffs);
+		void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, const int ignore_index);
+		int LinRegression(const std::vector<double>& data_in, const std::vector<double>& elevations, std::vector<double>& coeffs);
 		
 		//projections functions
-		double ConstProject(const double& val, const double& alt, const double& new_alt, const vector<double>& coeffs);
-		double LinProject(const double& value, const double& altitude, const double& new_altitude, const vector<double>& coeffs);
+		double ConstProject(const double& val, const double& alt, const double& new_alt, const std::vector<double>& coeffs);
+		double LinProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs);
 		
 		///Member function pointer
 		double (Interpol2D::*LapseRateProject)(const double& value, 
 							const double& altitude, 
 							const double& new_altitude, 
-							const vector<double>& coeffs); 
+							const std::vector<double>& coeffs); 
 		
 		//filling functions
 		void StdPressureFill(Array2D<double>& param, const Array2D<double>& topoheight);
@@ -79,10 +79,10 @@ class Interpol2D {
 		
 		
 		void LapseIDWKrieging(Array2D<double>& T, const Array2D<double>& topoHeight, 
-					const vector<double>& vecData_in, const vector<StationData>& vecStations_in);
+						  const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in);
 		double IDWKriegingCore(const double& x, const double& y, 
-					const vector<double>& vecData_in, const vector<StationData>& vecStations);
-		void IDWKrieging(Array2D<double>& T, const vector<double>& data_in, const vector<StationData>& vecStations);
+						   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations);
+		void IDWKrieging(Array2D<double>& T, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);
 		void SimpleDEMWindInterpolate(Array2D<double>& VW, Array2D<double>& DW);
 
 	private:
@@ -100,11 +100,11 @@ class Interpol2D {
 		unsigned int nx, ny;				//2D grid dimensions
 		unsigned int InputSize;
 		
-		vector<double> vecCoefficients;		///<Regression coefficients 0-3
+		std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
 		const DEMObject& dem;			///<Reference to be initialized in the constructor
 		const Array2D<double>& InputTopo;	///<Reference to be initialized in the constructor
-		const vector<StationData>& InputMeta;	///<Reference to be initialized in the constructor
-		const vector<double>& inputData;	///<Reference to be initialized in the constructor
+		const std::vector<StationData>& InputMeta;	///<Reference to be initialized in the constructor
+		const std::vector<double>& inputData;	///<Reference to be initialized in the constructor
 };
 
 #endif
