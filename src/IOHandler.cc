@@ -58,8 +58,11 @@ IOHandler::~IOHandler() throw(){
 		deletePlugin((mapit->second).dynLibrary, (mapit->second).io);
 	}
 }
-
+#ifdef _POPC_
+void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io)
+#else
 void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw()
+#endif
 {
 	if (dynLibrary != NULL) {
 		if (io != NULL) {
@@ -140,7 +143,6 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 	IOInterface *plugin = getPlugin("LANDUSESRC");
 	plugin->readLanduse(landuse_out);
 }
-
 
 void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 						std::vector< std::vector<MeteoData> >& vecMeteo, 

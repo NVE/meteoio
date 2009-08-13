@@ -2,24 +2,27 @@
 
 using namespace std;
 
-//DECONSTRUCTOR
-ConfigReader::~ConfigReader() throw() {}
-
 //CONSTRUCTORS
-ConfigReader::ConfigReader(const ConfigReader& configreader) : properties(configreader.properties), file(configreader.file){}
+ConfigReader::ConfigReader(const ConfigReader& configreader) : properties(configreader.properties), filename(configreader.filename){}
 
-ConfigReader::ConfigReader(const std::string& filename/*, const std::string& delimiter*/)
+ConfigReader::ConfigReader(const std::string& filename_in/*, const std::string& delimiter*/)
 {
 	//Check whether file exists and is accessible -> throw FileNotFound or FileNotAccessible Exception
 	//Read first line -> if not [Parameters] -> throw WrongFormatException
 	//Read Key Value Pairs and put them into map 
+	filename = filename_in;
+	parseFile();
+
+} // end ConfigReader::ConfigReader
+
+void ConfigReader::parseFile()
+{
 	std::ifstream fin; //Input file streams
-	file = filename;
+	int linenr = 0;
+
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename,AT);
 	}
-
-	int linenr = 0;
 
 	//Check whether file exists
 	if (!IOUtils::fileExists(filename)) {
@@ -60,10 +63,8 @@ ConfigReader::ConfigReader(const std::string& filename/*, const std::string& del
 		}
 		throw;
 	}
+}
 
-} // end ConfigReader::ConfigReader
-
-  
 bool ConfigReader::readConfigLine(std::istream& fin, int lineNb, int& lineType, string& str1, string& str2)
 {
 	string line="";
@@ -144,7 +145,7 @@ bool ConfigReader::readConfigLine(std::istream& fin, int lineNb, int& lineType, 
 //Return key/value filename
 std::string ConfigReader::getFileName()
 {
-	return file;
+	return filename;
 }
 
 #ifdef _POPC_

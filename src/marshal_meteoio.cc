@@ -1,5 +1,22 @@
 #include "marshal_meteoio.h"
 
+void marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag, POPMemspool *temp)
+{
+  (void)maxsize;
+  (void)*temp;
+  if (flag & FLAG_MARSHAL)
+    {
+      int n=(int)data;
+      buf.Pack(&n,1);
+    }
+  else
+    {
+      int n;
+      buf.UnPack(&n,1);
+      data=(unsigned int)n;
+    }
+}
+
 void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize, int flag, POPMemspool *temp)
 {
   (void)maxsize;

@@ -33,7 +33,7 @@ class ConfigReader {
 		* @brief Main constructor. The file is parsed and a key/value map object is internally created
 		* @param filename string representing the absolute filename of the key/value file
 		*/
-		ConfigReader(const std::string& filename);
+		ConfigReader(const std::string& filename_in);
 
 		/**
 		* @brief Explicit copy constructor. It is required, because the private ifstream fin cannot be copied.
@@ -44,7 +44,7 @@ class ConfigReader {
 		/**
 		* @brief Default destructor. Closes the key/value file if it is open.
 		*/
-		~ConfigReader() throw(); //close file if object gets destroyed prematurely
+		~ConfigReader() throw(){};
 
 
 		/**
@@ -87,8 +87,10 @@ class ConfigReader {
 		static const int CfgLineUnknown = 9;
 
 	private:
+		void parseFile();
+
 		std::map<string, string> properties; //Save key value pairs
-		std::string file; //Absolute filename of the key/value file
+		std::string filename; //Absolute filename of the key/value file
 
 }; //end class definition ConfigReader
 

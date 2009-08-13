@@ -10,8 +10,6 @@
 
 #include "marshal_meteoio.h"
 
-parclass IOHandler;
-
 typedef map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 parclass IOHandler {
@@ -29,12 +27,10 @@ parclass IOHandler {
 		virtual void readDEM([out]Grid2DObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 
-		//Pbl with vector of vector...
-		virtual void readMeteoData([in]const Date_IO& dateStart, 
-			     			     [in]const Date_IO& dateEnd,
-			     			     [proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
-						     [proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation/*,
-						     const unsigned int& stationindex=IOUtils::npos*/);
+		virtual void readMeteoData([in]const Date_IO& dateStart, [in]const Date_IO& dateEnd,
+			     			[proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
+						[proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
+						const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_CSpecialPTSArray]CSpecialPTSArray& pts);

@@ -10,6 +10,8 @@
 typedef Array2D<double> TYPE_DOUBLE2D;
 typedef Array2D<int> TYPE_INT2D;
 
+void marshal_uint(POPBuffer &buf,unsigned int &data, int maxsize, int flag, POPMemspool *temp);
+
 void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp);
 
 void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp);

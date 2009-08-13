@@ -253,7 +253,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		//Loop going through the data sequentially until dateStart is found
 		do {
 			getline(fin, line, eoln); //read complete line
-			eofreached = readMeteoDataLine(line, dateStart, tmpdata, tmp);
+			eofreached = readMeteoDataLine(line, tmpdata, tmp);
 			tmpdata.cleanData();
 			convertUnits(tmpdata);
 
@@ -275,7 +275,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 			vecStation[0].push_back(sd);
 
 			getline(fin, line, eoln); //read complete line
-			eofreached = readMeteoDataLine(line, dateStart, tmpdata, tmp);
+			eofreached = readMeteoDataLine(line, tmpdata, tmp);
 			tmpdata.cleanData();
 			convertUnits(tmpdata);
 		}
@@ -289,7 +289,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 	cleanup();
 }
 
-bool A3DIO::readMeteoDataLine(std::string& line, const Date_IO& date_in, MeteoData& tmpdata, string filename)
+bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, string filename)
 {
 	Date_IO tmp_date;
 	int tmp_ymdh[4];
