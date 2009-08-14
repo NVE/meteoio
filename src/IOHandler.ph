@@ -18,7 +18,7 @@ parclass IOHandler {
 	public:
 		// virtual IOHandler* clone() const; // lwk : not used yet
 		IOHandler(const std::string& configfile) @{ power=100 ?: 50; };
-		IOHandler(const IOHandler&);
+		//IOHandler(const IOHandler&);
 		IOHandler(const ConfigReader&);
 		~IOHandler();
 
@@ -30,7 +30,7 @@ parclass IOHandler {
 		virtual void readMeteoData([in]const Date_IO& dateStart, [in]const Date_IO& dateEnd,
 			     			[proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
 						[proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
-						const unsigned int& stationindex=IOUtils::npos);
+						const unsigned& stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_CSpecialPTSArray]CSpecialPTSArray& pts);

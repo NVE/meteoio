@@ -20,7 +20,7 @@ INCLUDE_POPC=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DRO
 
 all: testThomas
 
-seq: meteoio_demo
+demo: meteoio_demo
 
 .cc.o: $*.cc $*.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE)

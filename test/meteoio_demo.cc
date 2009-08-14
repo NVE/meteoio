@@ -11,10 +11,13 @@ int main(int argc, char** argv) {
 	vector<MeteoData> vecMeteo;
 	vector<StationData> vecStation;
 	
-	IOHandler *io=NULL; //Initialization vital!
-	
+	IOHandler *raw_io = NULL;
+	BufferedIOHandler *io = NULL;
+
 	try {
-		io = new IOHandler("io.ini");
+		ConfigReader cfg("io.ini");
+		raw_io = new IOHandler(cfg);
+		io = new BufferedIOHandler(*raw_io, cfg);
 	} catch (exception& e){
 		cout << "Problem with IOHandler creation, cause: " << e.what() << endl;
 	}

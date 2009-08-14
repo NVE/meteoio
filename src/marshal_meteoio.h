@@ -30,6 +30,8 @@ void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int
 
 void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
 
+void marshal_map_str_str(POPBuffer &buf, std::map<string, string> &data_map, int maxsize, int flag, POPMemspool *temp);
+
 void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp);

@@ -3,7 +3,11 @@
 using namespace std;
 
 //CONSTRUCTORS
+#ifdef _POPC_
+ConfigReader::ConfigReader(const ConfigReader& configreader) : paroc_base(), properties(configreader.properties), filename(configreader.filename){}
+#else
 ConfigReader::ConfigReader(const ConfigReader& configreader) : properties(configreader.properties), filename(configreader.filename){}
+#endif
 
 ConfigReader::ConfigReader(const std::string& filename_in/*, const std::string& delimiter*/)
 {
@@ -154,12 +158,12 @@ void ConfigReader::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack)
 	{
-		buf.Pack(&file,1);
+		buf.Pack(&filename,1);
 		marshal_map_str_str(buf, properties, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
-		buf.UnPack(&file,1);
+		buf.UnPack(&filename,1);
 		marshal_map_str_str(buf, properties, 0, !FLAG_MARSHAL, NULL);
 	}
 }

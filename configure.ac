@@ -8,14 +8,12 @@ AC_INIT(meteoio, 0.1, bavay@slf.ch)
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_RANLIB
-AC_PATH_PROG(ac_prog_pkg_config, pkg-config, no) 
-if test "$ac_cv_path_ac_prog_pkg_config" = "no" ; then
-   echo "*** The pkg-config script could not be found. Make sure it is"
-   echo "*** in your path, or set the PKG_CONFIG environment variable"
-   echo "*** to the full path to pkg-config."
-   echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
-   rm -f configure config.status
-   exit 1
+AC_CHECK_PROG([COLORGCC], [colorgcc], [yes], [no])
+if test "$COLORGCC" == "yes"
+then
+	AC_MSG_NOTICE([Compiling using colorgcc])
+	CC=colorgcc
+	CXX=colorgcc
 fi
 
 #AC_PROG_LIBTOOL
@@ -122,6 +120,15 @@ fi
 if test "$with_boschungio" == "yes"
 then
 	AC_MSG_NOTICE([BoschungIO enabled. Checking for prerequisites...])
+	AC_PATH_PROG(ac_prog_pkg_config, pkg-config, no) 
+	if test "$ac_cv_path_ac_prog_pkg_config" = "no" ; then
+		echo "*** The pkg-config script could not be found. Make sure it is"
+		echo "*** in your path, or set the PKG_CONFIG environment variable"
+		echo "*** to the full path to pkg-config."
+		echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+		rm -f configure config.status
+		exit 1
+	fi
 	PKG_CHECK_MODULES(XMLPP, libxml++-2.6 >= 2.8)
 	CPPFLAGS="$CPPFLAGS $XMLPP_CFLAGS"
 

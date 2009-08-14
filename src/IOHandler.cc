@@ -39,14 +39,13 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 #endif
 
 #ifdef _POPC_
-/*IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg), boschungio(cfg), imisio(cfg){
-}*/
+IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg)
 #else
 IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfg)
+#endif
 {
 	registerPlugins();	
 }
-#endif
 
 #ifdef _POPC_
 IOHandler::~IOHandler(){
