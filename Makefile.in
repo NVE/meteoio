@@ -133,6 +133,7 @@ METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/IOHandler.stub.o \
 		$(SRCDIR)/IOHandler_par.o \
+		$(SRCDIR)/BufferedIOHandler_par.o \
 		$(SRCDIR)/A3DIO_par.o \
 		$(SRCDIR)/LegacyIO.stub.o \
 		$(SRCDIR)/MeteoData_par.o \

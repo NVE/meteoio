@@ -291,6 +291,41 @@ double lw_SnowResidualWaterContent(const double theta_i)
 	}
 }
 
+/**
+ * @brief Compute air emissivity
+ * Uses either incoming long wave radiation, Brutsaert parametrization or Omstedt cloudiness
+ * @param input (double) either a fractional cloud cover (if between 0 and 1), 
+ * or an incoming longwave radiation (in W/m^2, if greater than 1) or request a parametrization (if less than 0)
+ * @param Ta (double) air temperature (K)
+ * @param Rh (double) relative humidity (1)
+ * @return double (1)
+ */
+double lw_AirEmissivity(const double input, const double Ta, const double Rh)
+{
+	if(input > 1.) {
+		//the input must be an incoming long wave radiation
+		return (input / (STEFAN_BOLTZMANN*Ta*Ta*Ta*Ta));
+	}
+
+	const double e0 = Rh * lw_SaturationPressure(Ta); //pressure in Pa
+	if (input <= 0.) {
+		//we don't know anything -> using Brutsaert
+		const double ea = lw_LW_Brutsaert(e0, Ta);
+		if(ea<1.) {
+			return ea;
+		} else {
+			return 1.;
+		}
+	} else {
+		//the input is a fractional cloud cover
+		const double ea = lw_Omstedt(e0, input);
+		if(ea<1.) {
+			return ea;
+		} else {
+			return 1.;
+		}
+	}
+}
 
 /*
 * END of Laws.c

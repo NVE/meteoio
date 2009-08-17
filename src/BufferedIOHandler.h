@@ -17,7 +17,11 @@
  * @author Thomas Egger
  * @date   2009-07-25
  */
+#ifdef _POPC_
+class BufferedIOHandler {
+#else
 class BufferedIOHandler : public IOInterface {
+#endif
 	public:
 	
 		/**
@@ -33,8 +37,12 @@ class BufferedIOHandler : public IOInterface {
 		 * @endcode
 		 */
 		BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg);
+	#ifdef _POPC_
+		~BufferedIOHandler();
+	#else
 		~BufferedIOHandler() throw();
-		
+	#endif
+
 		/**
 		 * @brief The function returns the next MeteoData object for each station with a 
 		 *        date >= to the parameter _date. vecMeteo and vecStation will be empty if there 

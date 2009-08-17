@@ -68,6 +68,8 @@ extern "C" {
   double lw_LW_Brutsaert(const double e0, const double Ta);
   double lw_Omstedt(const double e0, const double cloud_frac);
   double lw_SnowResidualWaterContent(const double theta_i);
+  double lw_AirEmissivity(const double input, const double Ta, const double Rh);
+
 #ifdef __cplusplus
 }
 #endif

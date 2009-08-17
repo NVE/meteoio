@@ -2,13 +2,22 @@
 
 using namespace std;
 
+#ifdef _POPC_
+BufferedIOHandler::BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg) 
+	: iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids(), resample(true)
+#else
 BufferedIOHandler::BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg) 
 	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids(), resample(true)
+#endif
 {
 	//Nothing else so far
 }
 
+#ifdef _POPC_
+BufferedIOHandler::~BufferedIOHandler()
+#else
 BufferedIOHandler::~BufferedIOHandler() throw()
+#endif
 {
 	//Nothing else so far
 }
