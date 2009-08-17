@@ -85,10 +85,10 @@ void IOHandler::loadPlugin(const string& libname, const string& classname, Dynam
 		//Which dynamic library needs to be loaded
 		cout << "\t" << "Trying to load " << libname << " ... ";
 		string filename = pluginpath + "/" + libname;
-		dynLibrary = DynamicLoader::loadObjectFile(filename, RTLD_NOW);
+		dynLibrary = DynamicLoader::loadObjectFile(filename);
 		
 		if(dynLibrary == NULL) {
-			cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << dlerror() << endl;
+			cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << DynamicLoader::getErrorMessage() << endl;
 		} else {
 			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg.getFileName()));
 

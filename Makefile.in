@@ -179,17 +179,17 @@ TOOLS_OBJ =	$(TOOLSDIR)/createA3DFiles.o
 ####### Build rules SEQ
 
 all: seq 
-	@printf "*** MeteoIO compiled for \033[36m%s\033[0m\n" $(DEST)
+	@echo -e "*** MeteoIO compiled for \033[36m$(DEST)\033[0m"
 
 help:
-	@printf "MeteoIO Makefile targets for \033[36m%s\033[0m:\n" $(DEST)
-	@printf " \033[36mseq\033[0m \n"
-	@printf " \033[36mcreateA3DFiles\033[0m \n"
-	@printf " \033[36mpopc\033[0m \n"
-	@printf " \033[36minstall\033[0m \n"
-	@printf " \033[36mclean\033[0m \n"
-	@printf " \033[36mdistclean\033[0m \n"
-	@printf " \033[36mdocumentation\033[0m\n"
+	@echo -e "MeteoIO Makefile targets for \033[36m$(DEST)\033[0m:" 
+	@echo -e " \033[36mseq\033[0m"
+	@echo -e " \033[36mcreateA3DFiles\033[0m"
+	@echo -e " \033[36mpopc\033[0m"
+	@echo -e " \033[36minstall\033[0m"
+	@echo -e " \033[36mclean\033[0m"
+	@echo -e " \033[36mdistclean\033[0m"
+	@echo -e " \033[36mdocumentation\033[0m"
 
 seq: $(LIBDIR)/libmeteoio.a build_dynamiclibs build_staticlibs
 
@@ -216,7 +216,7 @@ distclean: clean
 	rm -f $(LIBDIR)/*.a $(LIBDIR)/*.so $(LIBDIR)/*.module
 
 install:
-	@printf "**** Installing MeteoIO\n"
+	@echo **** Installing MeteoIO
 
 documentation:
 	doxygen $(SRCDIR)/config.dox
@@ -237,7 +237,7 @@ createA3DFiles: $(TOOLS_OBJ)
 
 
 $(LIBDIR)/libmeteoio.a: $(METEOIO_OBJ)
-	@printf "**** Compiling libmeteoIO\n"
+	@echo **** Compiling libmeteoIO
 	ar -r $@ $(METEOIO_OBJ)
 	ranlib $@
 
@@ -247,21 +247,21 @@ $(LIBDIR)/libfilter.a: $(FILTER_OBJ)
 
 $(LIBDIR)/libboschungio.so: $(PLUGINDIR)/BoschungIO.cc $(PLUGINDIR)/BoschungIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(BOSCHUNGIO),yes)
-	@printf "**** Compiling Boschung plugin\n"
+	@echo **** Compiling Boschung plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(PLUGINDIR)/BoschungIO.o $(PLUGINDIR)/BoschungIO.cc 
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(PLUGINDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
 endif
 
 $(LIBDIR)/libgeotopio.so:$(PLUGINDIR)/GeotopIO.cc $(PLUGINDIR)/GeotopIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(GEOTOPIO),yes)
-	@printf "**** Compiling GeoTOP plugin\n"
+	@echo **** Compiling GeoTOP plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GeotopIO.o $(PLUGINDIR)/GeotopIO.cc 
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgeotopio.so -o $@ $(PLUGINDIR)/GeotopIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
 endif
 
 $(LIBDIR)/libgsnio.so:$(PLUGINDIR)/GSNIO.cc $(PLUGINDIR)/GSNIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(GSNIO),yes)
-	@printf "**** Compiling GSN plugin\n"
+	@echo **** Compiling GSN plugin
 	cd $(PLUGINDIR)/gsn; make
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @GSOAPPP_CFLAGS@ -c -o $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/GSNIO.cc 
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgsnio.so -o $@ $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/gsn/soapA3DWebServiceSoap12BindingProxy.o $(PLUGINDIR)/gsn/soapC.o $(LDFLAGS_SEQ) $(LDFLAGS) @GSOAPPP_LIBS@ 
@@ -269,7 +269,7 @@ endif
 
 $(LIBDIR)/libimisio.so: $(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(IMISIO),yes)
-	@printf "**** Compiling Imis plugin\n"
+	@echo **** Compiling Imis plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/rdbms/public $(PLUGINDIR)/ImisIO.cc -c -o $(PLUGINDIR)/ImisIO.o
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif

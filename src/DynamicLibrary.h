@@ -1,10 +1,19 @@
 #ifndef __DYNAMICLIB_H__
 #define __DYNAMICLIB_H__
 
+
+#ifndef USE_PRECOMPILED_HEADERS
+#ifdef WIN32
+#include <direct.h>
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <cstdlib>
+#endif
 
 /**
  * @class PluginObject
@@ -39,7 +48,11 @@ class PluginObject {
 class DynamicLibrary {
 	protected:
 		// The handle to the shared library that was opened
-		void* _objFile;
+#ifdef WIN32
+		HINSTANCE _objFile;
+#else
+		void *_objFile;
+#endif
 
 		// Since an instance of DynamicLibrary manages lifetime of an open 
 		// library, it is important to make sure that the object isn't 
@@ -50,7 +63,12 @@ class DynamicLibrary {
 		// Creates a new library, with the object file handle that is passed 
 		// in. Protected so that only the DynamicLoader can create an 
 		// instance (since it is declared friend.
+#ifdef WIN32
+		DynamicLibrary(HINSTANCE objFile);
+#else
 		DynamicLibrary(void* objFile);
+#endif
+
 	public:
 		// Destructor, closes the open shared library
 		~DynamicLibrary(void);
@@ -71,9 +89,12 @@ class DynamicLibrary {
  */
 class DynamicLoader {
 	public:
-		static DynamicLibrary* loadObjectFile(const std::string& file, int flags);
+		static DynamicLibrary* loadObjectFile(const std::string& file);
 		// Loads a DynamicLibrary, given the shared library file
 		// "file", with the dlopen flags supplied.
+
+		//Return last error message of dynamic link libraries
+		static std::string getErrorMessage();
 };
 
 #endif
