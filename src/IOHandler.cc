@@ -8,12 +8,13 @@ using namespace std;
 
 void IOHandler::registerPlugins()
 {
-	mapPlugins["FILE"]      = IOPlugin("", "A3DIO", &fileio, NULL);
-	mapPlugins["BOSCHUNG"]  = IOPlugin("libboschungio.so", "BoschungIO", NULL, NULL);
-	mapPlugins["IMIS"]  = IOPlugin("libimisio.so", "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]  = IOPlugin("libgeotopio.so", "GeotopIO", NULL, NULL);
-	mapPlugins["GSN"]  = IOPlugin("libgsnio.so", "GSNIO", NULL, NULL);
-	mapPlugins["ESRI"]  = IOPlugin("libesriio.so", "EsriIO", NULL, NULL);
+	mapPlugins["A3D"]		= IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungio.so", "BoschungIO", NULL, NULL);
+	mapPlugins["IMIS"]		= IOPlugin("libimisio.so", "ImisIO", NULL, NULL);
+	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio.so", "GeotopIO", NULL, NULL);
+	mapPlugins["GSN"]		= IOPlugin("libgsnio.so", "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]		= IOPlugin("libarcio.so", "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]		= IOPlugin("libgrassio.so", "GrassIO", NULL, NULL);
 }
 
 #ifdef _POPC_

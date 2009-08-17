@@ -59,7 +59,6 @@ class A3DIO : public IOInterface {
 
 		ConfigReader cfg;
 		ifstream fin; //Input file streams
-		ofstream fout;//Output file streams
 };
 
 #endif

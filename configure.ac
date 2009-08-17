@@ -95,15 +95,14 @@ AC_ARG_WITH(gsnio,      [  --with-gsnio	          enable GSNIO (gsoap++ required
 AC_SUBST(GSNIO,no)
 AC_ARG_WITH(imisio,	[  --with-imisio           enable IMISIO ($ORACLE_HOME needs to be set)])
 AC_SUBST(IMISIO,no)
-AC_ARG_WITH(geotopio,	[  --with-geotopio         enable GeotopIO ])
-AC_SUBST(GEOTOPIO,no)
+AC_ARG_WITH(geotopio,	[  --with-geotopio         enable GeotopIO ], [use_geotopio=$withval], [use_geotop=no])
+AC_SUBST(GEOTOPIO,$use_geotopio)
+AC_ARG_WITH(arcio,	[  --without-arcio         disable ARCIO plugin (default: enabled)], [use_arcio=$withval], [use_arcio=yes])
+AC_SUBST(ARCIO,$use_arcio)
 AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
 
-if test "$with_geotopio" == "yes"
-then
-	AC_MSG_NOTICE([GeotopIO enabled. No prerequisites...])
-	AC_SUBST(GEOTOPIO,yes)	
-fi
+if test "$with_geotopio" == "yes"; then AC_MSG_NOTICE([GeotopIO enabled. No prerequisites...]); fi
+if test "x$use_arcio" == "xyes"; then AC_MSG_NOTICE([ARCIO enabled. No prerequisites...]); fi
 
 if test "$with_gsnio" == "yes"
 then
@@ -120,8 +119,8 @@ fi
 if test "$with_boschungio" == "yes"
 then
 	AC_MSG_NOTICE([BoschungIO enabled. Checking for prerequisites...])
-	AC_PATH_PROG(ac_prog_pkg_config, pkg-config, no) 
-	if test "$ac_cv_path_ac_prog_pkg_config" = "no" ; then
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, no) 
+	if test "$PKG_CONFIG" == "no"; then
 		echo "*** The pkg-config script could not be found. Make sure it is"
 		echo "*** in your path, or set the PKG_CONFIG environment variable"
 		echo "*** to the full path to pkg-config."
