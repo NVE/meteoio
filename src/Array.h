@@ -93,8 +93,8 @@ template<class T> void Array<T>::removeAt(unsigned int index) {
 
 struct SPECIAL_PTS
 {
-  int ix;
-  int iy;
+  unsigned int ix;
+  unsigned int iy;
 };
 
 typedef Array<SPECIAL_PTS> CSpecialPTSArray;
