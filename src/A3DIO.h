@@ -23,7 +23,7 @@ class A3DIO : public IOInterface {
 		A3DIO(const ConfigReader&);
 		~A3DIO() throw();
 
-		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
+		virtual void read2DGrid(Grid2DObject& dem_out, const string& name="");
 
 		virtual void readDEM(Grid2DObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);

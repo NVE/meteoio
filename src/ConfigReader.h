@@ -31,7 +31,7 @@ class ConfigReader {
 	public:
 		/**
 		* @brief Main constructor. The file is parsed and a key/value map object is internally created
-		* @param filename string representing the absolute filename of the key/value file
+		* @param filename_in string representing the absolute filename of the key/value file
 		*/
 		ConfigReader(const std::string& filename_in);
 

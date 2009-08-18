@@ -14,12 +14,17 @@
 /**
  * @class IOInterface
  * @brief An abstract class representing the IO Layer of the software Alpine3D. For each type of IO (File, DB, Webservice, etc)
- *        a derived class is to be created that holds the specific implementation of the purely virtual member funtions. So far 
- *        the following children have been implemented:
- * - class A3DIO is able to interface with ASCII files
- * - class BoschungIO is able to interface with the specific IO system of the company Boschung
- * - class IOHandler is a wrapper class that is able to deal with all above implementations of the IOInterface abstract base class.
- *   Which implementation is used for a specific member function can be configured in a key/value file.
+ * a derived class is to be created that holds the specific implementation of the purely virtual member funtions. So far 
+ * the following children have been implemented (by keyword for the io.ini key/value config file):
+ * - A3D for reading original Alpine3D meteo files (no extra requirements)
+ * - BOSCHUNG for reading Boshung xml meteo files (requires libxml)
+ * - IMIS for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
+ * - GEOTOP for reading original GeoTop meteo files (no extra requirements)
+ * - GSN for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
+ * - ARC for reading ESRI/ARC DEM files (no extra requirements)
+ * - GRASS for reading Grass DEM files (no extra requirements)
+ * 
+ * The IOHandler class is a wrapper class that is able to deal with all above implementations of the IOInterface abstract base class.
  *
  * @author Thomas Egger
  * @date   2009-01-08
@@ -100,6 +105,7 @@ class IOInterface : public PluginObject {
 		* @param dateEnd     A Date_IO object representing the end of an interval (inclusive)
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
 		* @param vecStation  A vector of vector<StationData> objects to be filled with data
+		* @param stationindex (optional) update only the station given by this index
 		*/
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
@@ -121,8 +127,18 @@ class IOInterface : public PluginObject {
 		*/
 		virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out) = 0;
 
+		/**
+		* @brief Read a list of points by their grid coordinates
+		* This allows for example to get a list of points where to produce more detailed outputs.
+		* @param pts (CSpecialPTSArray) A vector of points coordinates
+		*/
 		virtual void readSpecialPoints(CSpecialPTSArray& pts) = 0;
 
+		/**
+		* @brief Write a Grid2DObject
+		* @param grid_in (Grid2DObject) The grid to write
+		* @param name (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
+		*/
 		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name="") = 0;
 };
 

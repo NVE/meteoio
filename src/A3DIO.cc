@@ -45,18 +45,22 @@ void A3DIO::read2DGrid(Grid2DObject&, const string&)
 void A3DIO::readDEM(Grid2DObject& dem_out)
 {
 	//Nothing so far
+	(void)dem_out;
 	throw IOException("Nothing implemented here", AT);	
 }
 
 void A3DIO::readLanduse(Grid2DObject& landuse_out)
 {
 	//Nothing so far
+	(void)landuse_out;
 	throw IOException("Nothing implemented here", AT);	
 }
 
 void A3DIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
 	//Nothing so far
+	(void)date_in;
+	(void)da_out;
 	throw IOException("Nothing implemented here", AT);	
 }
 

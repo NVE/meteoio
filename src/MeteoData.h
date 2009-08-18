@@ -43,6 +43,7 @@ class MeteoData {
 		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
 		* @param hs Snow height in cm (default nodata)
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
+		* @param p Atmospheric pressure in Pa (default nodata)
 		*/
 		MeteoData(const Date_IO& date_in, 
 		    const double& ta=nodata, 
@@ -72,6 +73,7 @@ class MeteoData {
 		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
 		* @param hs Snow height in cm (default nodata)
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
+		* @param p Atmospheric pressure in Pa (default nodata)
 		*/
 		void setMeteoData(const Date_IO& date_in, 
 		    	const double& ta=nodata, 

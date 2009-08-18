@@ -12,6 +12,11 @@
 
 #include <map>
 
+/**
+* @file IOHandler.h
+* The is the class implementing the interface as defined by the IOInterface class.
+* This class is responsible for loading the necessary plugins and getting the data through them.
+*/
 class IOHandler : public IOInterface {
 	public:
 		// virtual IOHandler* clone() const; // lwk : not used yet
