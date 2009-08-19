@@ -206,6 +206,31 @@ ostream& operator<<(ostream &os, const Date_IO &date)
 	return os;
 }
 
+
+const string Date_IO::toString(FORMATS type) const
+{
+	stringstream tmpstr;
+	if(type==ISO) {
+			tmpstr 
+			<< setw(4) << setfill('0') << year << "-"
+			<< setw(2) << setfill('0') << month << "-"
+			<< setw(2) << setfill('0') << day << "T" 
+			<< setw(2) << setfill('0') << hour << ":"
+			<< setw(2) << setfill('0') << minute << ":" ;
+	} else if(type==NUM) {
+			tmpstr 
+			<< setw(4) << setfill('0') << year
+			<< setw(2) << setfill('0') << month
+			<< setw(2) << setfill('0') << day
+			<< setw(2) << setfill('0') << hour
+			<< setw(2) << setfill('0') << minute ;
+	} else {
+		throw InvalidArgumentException("Wrong date conversion format requested", AT);
+	}
+
+	return tmpstr.str();
+}
+
 void Date_IO::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const{
 	if ((in_year < -3000) || (in_year >3000) 
 	    || (in_month < 1) || (in_month > 12) 

@@ -34,7 +34,7 @@ ifeq ($(DEST),safe)		#safe defaults
 	POPCC   = popcc
 	ARCH     = -march=pentium3
 	OPTIM    = -fomit-frame-pointer -O3
-	FFOPTIM  = $(OPTIM) -march=pentium3
+	FFOPTIM  = $(OPTIM) $(ARCH)
 	FFEXTRA  = $(FFOPTIM)
 	#MAKE_OPTIM = -pipe
 	DEBUG    = -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr 
@@ -48,7 +48,7 @@ ifeq ($(DEST),grid)		#for grid
 	POPCC   = popcc
 	ARCH     = -march=native #-mmmx -msse -msse2 -mfpmath=sse -malign-double
 	OPTIM    = -fomit-frame-pointer -O3 #-fdata-sections
-	FFOPTIM  = $(OPTIM) -march=native #-m3dnow -m64 -mmmx -msse -msse2 -ffast-stdlib 
+	FFOPTIM  = $(OPTIM) - $(ARCH)
 	FFEXTRA  = $(FFOPTIM) #-fno-second-underscore
 	MAKE_OPTIM = -combine -pipe
 	DEBUG    = -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr 
@@ -76,11 +76,11 @@ endif
 ifeq ($(MODE),debug)		#for debug
 	CFLAGS   = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
 	CCFLAGS  = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
-	FFLAGS	 = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
+	FFLAGS	 = $(MAKE_OPTIM) $(DEBUG) $(WARNING)
 else				#for release
 	CFLAGS   = $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
 	CCFLAGS  = $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
-	FFLAGS	 = $(MAKE_OPTIM) $(ARCH) $(FFOPTIM) $(WARNING)
+	FFLAGS	 = $(MAKE_OPTIM) $(FFOPTIM) $(WARNING)
 endif
 #CCFLAGS += -DSVNREV="\"$(SVNREV)\""
 

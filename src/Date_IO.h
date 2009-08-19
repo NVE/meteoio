@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include <ctime>
-//#include "IOUtils.h"
 #include "IOExceptions.h"
 
 using namespace std; 
@@ -32,6 +31,7 @@ class Date_IO : POPBase {
 class Date_IO {
 #endif  
 	public:
+		typedef enum {ISO, NUM} FORMATS;
 		static const int daysLeapYear[];
 		static const int daysNonLeapYear[];
 		static const long offset;
@@ -66,6 +66,8 @@ class Date_IO {
 		///The toString representation outputs the date in the form of "[double]julian_date yyyy/mm/dd hh:mm"
 		const std::string toString(void) const;
 		friend ostream& operator<<(ostream& os, const Date_IO& date);
+
+		const std::string toString(FORMATS type) const;
 
 		//Operator Prototypes
 		///Can be used to add an interval to an existing Date_IO object. 
