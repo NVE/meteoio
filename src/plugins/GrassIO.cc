@@ -35,7 +35,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 	int _nx, _ny;
 	unsigned int ncols, nrows;
 	double north, east, south, west, latitude, longitude;
-	double tmp_val;
+	double tmp_val, xllcorner, yllcorner, cellsize;
 	vector<string> tmpvec;
 	string line="";
 	map<string, string> header; // A map to save key value pairs of the file header
@@ -68,7 +68,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 		if ((_nx==0) || (_ny==0)) {
 			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
 		}
-		if((_nx<0) || (i_ny<0)) {
+		if((_nx<0) || (_ny<0)) {
 			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + filename, AT);
 		}
 		ncols = (unsigned int)_nx;
