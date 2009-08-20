@@ -21,6 +21,7 @@ IMISIO		= @IMISIO@
 GEOTOPIO	= @GEOTOPIO@
 GSNIO		= @GSNIO@
 ARCIO		= @ARCIO@
+GRASSIO		= @GRASSIO@
 
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
@@ -197,7 +198,12 @@ seq: $(LIBDIR)/libmeteoio.a build_dynamiclibs build_staticlibs
 
 build_staticlibs: $(LIBDIR)/libfilter.a
 
-build_dynamiclibs: $(LIBDIR)/libboschungio.so $(LIBDIR)/libimisio.so $(LIBDIR)/libgeotopio.so $(LIBDIR)/libgsnio.so $(LIBDIR)/libarcio.so 
+build_dynamiclibs: $(LIBDIR)/libboschungio.so \
+			$(LIBDIR)/libimisio.so \
+			$(LIBDIR)/libgeotopio.so \
+			$(LIBDIR)/libgsnio.so \
+			$(LIBDIR)/libarcio.so \
+			$(LIBDIR)/libgrassio.so 
 
 ############## POPC ##############
 par: meteoIO_lib_par meteoIO_module_par filter_lib_par
@@ -266,6 +272,13 @@ ifeq ($(ARCIO),yes)
 	@echo **** Compiling ARC file plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/ARCIO.o $(PLUGINDIR)/ARCIO.cc 
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libarcio.so -o $@ $(PLUGINDIR)/ARCIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
+endif
+
+$(LIBDIR)/libgrassio.so:$(PLUGINDIR)/GrassIO.cc $(PLUGINDIR)/GrassIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
+ifeq ($(GRASSIO),yes)
+	@echo **** Compiling GRASS file plugin
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GrassIO.o $(PLUGINDIR)/GrassIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgrassio.so -o $@ $(PLUGINDIR)/GrassIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
 endif
 
 $(LIBDIR)/libgsnio.so:$(PLUGINDIR)/GSNIO.cc $(PLUGINDIR)/GSNIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
