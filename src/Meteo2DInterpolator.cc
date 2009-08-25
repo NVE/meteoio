@@ -20,38 +20,15 @@ void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid
 				      Grid2DObject& vw, Grid2DObject& p)
 {
 
-	interpolateP(p.grid2D);
-	interpolateNSWC(nswc.grid2D);
-	interpolateTA(ta.grid2D);
-	interpolateRH(rh.grid2D,ta.grid2D);
-	interpolateVW(vw.grid2D);
-}
-
-void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta,
-					Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/)
-{
-
-	interpolateP(p.grid2D);
-	interpolateNSWC(nswc.grid2D);
-	interpolateTA(ta.grid2D);
-	interpolateRH(rh.grid2D,ta.grid2D);
-	interpolateVW(vw.grid2D);
-	interpolateISWR(iswr.grid2D);
-	//interpolateEA(ea.grid2D);
-}
-
-void Meteo2DInterpolator::interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, 
-				      Array2D<double>& vw, Array2D<double>& p)
-{
-
 	interpolateP(p);
 	interpolateNSWC(nswc);
 	interpolateTA(ta);
 	interpolateRH(rh,ta);
 	interpolateVW(vw);
 }
-void Meteo2DInterpolator::interpolate(Array2D<double>& nswc, Array2D<double>& rh, Array2D<double>& ta, 
-				      Array2D<double>& vw, Array2D<double>& p, Array2D<double>& iswr/*, Array2D<double>& ea*/)
+
+void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta,
+					Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/)
 {
 
 	interpolateP(p);
@@ -63,7 +40,7 @@ void Meteo2DInterpolator::interpolate(Array2D<double>& nswc, Array2D<double>& rh
 	//interpolateEA(ea);
 }
 
-void Meteo2DInterpolator::interpolateNSWC(Array2D<double>& nswc)
+void Meteo2DInterpolator::interpolateNSWC(Grid2DObject& nswc)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
@@ -82,7 +59,7 @@ void Meteo2DInterpolator::interpolateNSWC(Array2D<double>& nswc)
 	NSWC.calculate(nswc);
 }
 
-void Meteo2DInterpolator::interpolateRH(Array2D<double>& rh, Array2D<double>& ta)
+void Meteo2DInterpolator::interpolateRH(Grid2DObject& rh, Grid2DObject& ta)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecExtraInput;
@@ -126,7 +103,7 @@ void Meteo2DInterpolator::interpolateRH(Array2D<double>& rh, Array2D<double>& ta
 
 }
 
-void Meteo2DInterpolator::interpolateTA(Array2D<double>& ta)
+void Meteo2DInterpolator::interpolateTA(Grid2DObject& ta)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
@@ -151,7 +128,7 @@ void Meteo2DInterpolator::interpolateTA(Array2D<double>& ta)
 	TA.calculate(ta);
 }
 
-void Meteo2DInterpolator::interpolateDW(Array2D<double>& dw)
+void Meteo2DInterpolator::interpolateDW(Grid2DObject& dw)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
@@ -169,7 +146,7 @@ void Meteo2DInterpolator::interpolateDW(Array2D<double>& dw)
 	DW.calculate(dw);
 }
 
-void Meteo2DInterpolator::interpolateVW(Array2D<double>& vw)
+void Meteo2DInterpolator::interpolateVW(Grid2DObject& vw)
 {	//HACK this is a quick and dirty fix for the wind interpolation...
 	//HACK we *really* need a better design for the interpolations...
 	vector<StationData> vecSelectedStations;
@@ -192,10 +169,7 @@ void Meteo2DInterpolator::interpolateVW(Array2D<double>& vw)
 	printf("[i] interpolating VW using %d stations\n", (int)vecSelectedStations.size());
 	// If direction doesn't exist, use the kriging
 	if( countDataDir > 0.) {
-		unsigned int nx, ny;
-		vw.size(nx, ny);
-		Array2D<double> dw;
-		dw.resize(nx,ny);
+		Grid2DObject dw(vw, 0, 0, vw.ncols, vw.nrows);
 		interpolateDW(dw);
 		Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, vecInput, vecSelectedStations, dem);
 		VW.calculate(vw, vecEmpty, dw);
@@ -206,7 +180,7 @@ void Meteo2DInterpolator::interpolateVW(Array2D<double>& vw)
 
 }
 
-void Meteo2DInterpolator::interpolateP(Array2D<double>& p)
+void Meteo2DInterpolator::interpolateP(Grid2DObject& p)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
@@ -216,7 +190,7 @@ void Meteo2DInterpolator::interpolateP(Array2D<double>& p)
 	P.calculate(p);
 }
 
-void Meteo2DInterpolator::interpolateISWR(Array2D<double>& iswr)
+void Meteo2DInterpolator::interpolateISWR(Grid2DObject& iswr)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
@@ -235,7 +209,7 @@ void Meteo2DInterpolator::interpolateISWR(Array2D<double>& iswr)
 	ISWR.calculate(iswr);
 }
 
-/*void Meteo2DInterpolator::interpolateEA(Array2D<double>& ea)
+/*void Meteo2DInterpolator::interpolateEA(Grid2DObject& ea)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;

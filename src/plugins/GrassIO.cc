@@ -150,10 +150,10 @@ void GrassIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	read2DGrid(da_out, ss.str());
 }
 
-void GrassIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
-					 std::vector< std::vector<MeteoData> >& vecMeteo, 
-					 std::vector< std::vector<StationData> >& vecStation,
-					 const unsigned int& stationindex)
+void GrassIO::readMeteoData(const Date_IO&, const Date_IO&, 
+					 std::vector< std::vector<MeteoData> >&, 
+					 std::vector< std::vector<StationData> >&,
+					 const unsigned int&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

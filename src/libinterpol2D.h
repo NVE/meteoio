@@ -3,7 +3,6 @@
 #define INTERPOL2D_H
 
 #include <vector>
-#include "Array2D.h"
 #include "StationData.h"
 #include "MeteoData.h"
 #include "Grid2DObject.h"
@@ -48,8 +47,8 @@ class Interpol2D {
 			const std::vector<StationData>& sourcesMeta, 
 	    	const DEMObject& dem);
 		
-		void calculate(Array2D<double>& param_out);
-		void calculate(Array2D<double>& param_out, const std::vector<double>& vecExtraStations, Array2D<double>& extra_param_in);
+		void calculate(Grid2DObject& param_out);
+		void calculate(Grid2DObject& param_out, const std::vector<double>& vecExtraStations, Grid2DObject& extra_param_in);
 
 	private:
 		//generic functions
@@ -73,17 +72,17 @@ class Interpol2D {
 							const std::vector<double>& coeffs); 
 		
 		//filling functions
-		void StdPressureFill(Array2D<double>& param, const Array2D<double>& topoheight);
-		void ConstFill(Array2D<double>& param, const double& value);
-		void LapseConstFill(Array2D<double>& param, const double& value, const double& altitude, const Array2D<double>& topoHeight);
+		void StdPressureFill(Grid2DObject& param, const DEMObject& topoHeight);
+		void ConstFill(Grid2DObject& param, const double& value);
+		void LapseConstFill(Grid2DObject& param_out, const DEMObject& topoHeight, const double& value, const double& altitude);
 		
 		
-		void LapseIDWKrieging(Array2D<double>& T, const Array2D<double>& topoHeight, 
-						  const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in);
+		void LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
+				const vector<double>& vecData_in, const vector<StationData>& vecStations_in);
 		double IDWKriegingCore(const double& x, const double& y, 
 						   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations);
-		void IDWKrieging(Array2D<double>& T, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);
-		void SimpleDEMWindInterpolate(Array2D<double>& VW, Array2D<double>& DW);
+		void IDWKrieging(Grid2DObject& T, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);
+		void SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW);
 
 	private:
 		//static members
@@ -96,15 +95,12 @@ class Interpol2D {
 		interp_types single_type, multiple_type;	//interpolations choices for single and multiple sources
 		//reg_types reg_type;				//choice of regression methods
 		
-		double xllcorner, yllcorner, cellsize;	//for more transparent access, to set when instanciating
-		unsigned int nx, ny;				//2D grid dimensions
 		unsigned int InputSize;
 		
 		std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
-		const DEMObject& dem;			///<Reference to be initialized in the constructor
-		const Array2D<double>& InputTopo;	///<Reference to be initialized in the constructor
+		const DEMObject& dem;				///<Reference to be initialized in the constructor
 		const std::vector<StationData>& InputMeta;	///<Reference to be initialized in the constructor
-		const std::vector<double>& inputData;	///<Reference to be initialized in the constructor
+		const std::vector<double>& inputData;		///<Reference to be initialized in the constructor
 };
 
 #endif

@@ -40,7 +40,7 @@ class DEMObject: public Grid2DObject {
 				   const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
 				   const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
 		
-		void update();
+		void update(); //TODO: add arguments to choose slope algorithm, etc
 
 	private:
 		void CalculateAziSlopeCurve(const int& Hick);
