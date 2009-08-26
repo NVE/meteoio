@@ -77,8 +77,15 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 		yllcorner = south;
 		cellsize = (east - west) / (double)ncols;
 
+		string coordsys="", coordparam="";
+		try {
+			cfg.getValue("COORDIN", coordsys);
+			cfg.getValue("COORDPARAM", coordparam); 
+		} catch(std::exception& e){
+			//problems while reading values for COORDIN or COORDPARAM
+		}
+
 		//compute WGS coordinates (considered as the true reference)
-		//CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
 
 		//HACK: check how we can input coordinates as WGS84 directly.
 		//this HACK is a very cheap "extension" of the dem file format...
@@ -86,7 +93,8 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 			latitude = xllcorner;
 			longitude = yllcorner;
 		} else {
-			IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+			MapProj mymapproj(coordsys, coordparam);
+			mymapproj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
 		}
     
 		//Initialize the 2D grid
@@ -102,11 +110,15 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 			}
 			
 			for (unsigned int ll=0; ll < ncols; ll++){
-				if (!IOUtils::convertString(tmp_val, tmpvec.at(ll), std::dec)) {
-					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
+				if (tmpvec[ll] == "*"){
+					tmp_val = IOUtils::nodata;
+				} else {
+					if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
+						throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
+					}
 				}
 				
-				if(tmp_val<=nodata) {
+				if(tmp_val <= IOUtils::nodata) {
 					//replace file's nodata by uniform, internal nodata
 					grid_out.grid2D(ll, kk) = IOUtils::nodata;
 				} else {
@@ -167,31 +179,41 @@ void GrassIO::readSpecialPoints(CSpecialPTSArray&)
 
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
 {  
-	if (IOUtils::fileExists(name)) {
-		throw IOException("File " + name + " already exists!", AT);
-	}
-
 	fout.open(name.c_str());
 	if (fout.fail()) {
 		throw FileAccessException(name, AT);
 	}
 
+	fout << setprecision(6) << fixed;
+
 	try {
-		fout << "ncols \t\t" << grid_in.ncols << endl;
-		fout << "nrows \t\t" << grid_in.nrows << endl;
-		fout << "xllcorner \t" << grid_in.xllcorner << endl;
-		fout << "yllcorner \t" << grid_in.yllcorner << endl;    
-		fout << "cellsize \t" << grid_in.cellsize << endl;
-		fout << "NODATA_value \t" << (int)(IOUtils::nodata) << endl;
+		fout << "north:" << (grid_in.yllcorner+grid_in.cellsize*grid_in.nrows) << endl;    
+		fout << "south:" << grid_in.yllcorner << endl;    
+		fout << "east:"  << (grid_in.xllcorner+grid_in.cellsize*grid_in.ncols)  << endl;
+		fout << "west:"  << grid_in.xllcorner << endl;
+		fout << "rows:"  << grid_in.nrows << endl;
+		fout << "cols:"  << grid_in.ncols << endl;
 
 		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
-			for (unsigned int ll=0; ll < grid_in.ncols; ll++){
-				fout << grid_in.grid2D(ll, kk) << "\t";
+			unsigned int ll = 0;
+			for (ll=0; ll < (grid_in.ncols-1); ll++){
+				if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
+					fout << "* ";
+				} else {
+					fout << grid_in.grid2D(ll, kk) << " ";
+				}
+			}
+
+			//The last value in a line does not have a trailing " "
+			if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
+				fout << "*";
+			} else {
+				fout << grid_in.grid2D(ll, kk);
 			}
 			fout << endl;
 		}
-	} catch(...) {
-		cout << "[E] " << AT << ": "<< endl;
+	} catch(std::exception& e) {
+		cout << "[E] " << AT << ": " << e.what() << endl;
 		cleanup();
 		throw;
 	}

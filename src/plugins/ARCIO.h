@@ -4,13 +4,13 @@
 #include "IOInterface.h"
 #include "ConfigReader.h"
 #include "IOUtils.h"
+#include "MapProj.h"
+#include "IOExceptions.h"
+#include "DynamicLibrary.h"
 
 #include <string>
 #include <sstream>
 #include <iostream>
-
-#include "IOExceptions.h"
-#include "DynamicLibrary.h"
 
 using namespace IOUtils;
 

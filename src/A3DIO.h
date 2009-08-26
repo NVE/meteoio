@@ -3,6 +3,7 @@
 
 #include "IOInterface.h"
 
+#include "MapProj.h"
 #include "ConfigReader.h"
 #include "IOExceptions.h"
 #include "IOUtils.h"

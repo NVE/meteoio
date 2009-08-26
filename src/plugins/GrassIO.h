@@ -5,10 +5,12 @@
 #include "ConfigReader.h"
 #include "IOUtils.h"
 #include "IOExceptions.h"
+#include "MapProj.h"
 
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 
 class GrassIO : public IOInterface {
 	public:

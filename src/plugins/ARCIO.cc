@@ -75,8 +75,15 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 		ncols = (unsigned int)i_ncols;
 		nrows = (unsigned int)i_nrows;
 
+		string coordsys="", coordparam="";
+		try {
+			cfg.getValue("COORDIN", coordsys);
+			cfg.getValue("COORDPARAM", coordparam); 
+		} catch(std::exception& e){
+			//problems while reading values for COORDIN or COORDPARAM
+		}
+		
 		//compute WGS coordinates (considered as the true reference)
-		//CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
 
 		//HACK: check how we can input coordinates as WGS84 directly.
 		//this HACK is a very cheap "extension" of the dem file format...
@@ -84,7 +91,8 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 			latitude = xllcorner;
 			longitude = yllcorner;
 		} else {
-			IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+			MapProj mymapproj(coordsys, coordparam);
+			mymapproj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
 		}
     
 		//Initialize the 2D grid
@@ -100,7 +108,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 			}
 			
 			for (unsigned int ll=0; ll < ncols; ll++){
-				if (!IOUtils::convertString(tmp_val, tmpvec.at(ll), std::dec)) {
+				if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
 					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
 				}
 				
@@ -165,14 +173,19 @@ void ARCIO::readSpecialPoints(CSpecialPTSArray&)
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
 {  
-	if (IOUtils::fileExists(name)) {
-		throw IOException("File " + name + " already exists!", AT);
-	}
+	//uncomment if no overwriting should be allowed
+	/* 
+	 if (IOUtils::fileExists(name)) {
+	   throw IOException("File " + name + " already exists!", AT);
+	 }
+	*/
 
 	fout.open(name.c_str());
 	if (fout.fail()) {
 		throw FileAccessException(name, AT);
 	}
+	
+	fout << fixed << showpoint << setprecision(6);
 
 	try {
 		fout << "ncols \t\t" << grid_in.ncols << endl;

@@ -149,15 +149,24 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		IOUtils::getValueForKey(header, "Y_Coord", ycoord);
 		IOUtils::getValueForKey(header, "Altitude", altitude);
 
+		string coordsys="", coordparam="";
+		try {
+			cfg.getValue("COORDIN", coordsys);
+			cfg.getValue("COORDPARAM", coordparam); 
+		} catch(std::exception& e){
+			//problems while reading values for COORDIN or COORDPARAM
+		}
+		MapProj mymapproj(coordsys, coordparam);
+
 		//calculate coordinates if necessary
 		if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 			if(xcoord==IOUtils::nodata || ycoord==IOUtils::nodata) {
 				throw InvalidFormatException("Too many nodata values for coordinates conversion in file " + tmp, AT);
 			}
-			CH1903_to_WGS84(xcoord, ycoord, latitude, longitude);
+			mymapproj.convert_to_WGS84(xcoord, ycoord, latitude, longitude);
 		} else if(xcoord!=IOUtils::nodata || ycoord!=IOUtils::nodata) {
 			double tmp_lat, tmp_lon;
-			CH1903_to_WGS84(xcoord, ycoord, tmp_lat, tmp_lon);
+			mymapproj.convert_to_WGS84(xcoord, ycoord, tmp_lat, tmp_lon);
 			if(!checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
 				throw InvalidArgumentException("Latitude/longitude and Xcoord/Ycoord don't match in header of file " + tmp, AT);
 			}
@@ -166,7 +175,6 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 		//Read one line, construct Date_IO object and see whether date is greater or equal than the date_in object
 		IOUtils::skipLines(fin, 1, eoln); //skip rest of line
-
 		
 		//Loop going through the data sequentially until dateStart is found
 		do {
@@ -503,6 +511,16 @@ void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& 
 	unsigned int columns = 0;
 	vector<string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
 
+	//Build MapProj object to convert easting/northing values to lat/long in WGS84
+	string coordsys="", coordparam="";
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam); 
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+	}
+	MapProj mymapproj(coordsys, coordparam);
+
 	fin.clear();
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
@@ -546,7 +564,7 @@ void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& 
 			if(vecS[stationnr-1].eastCoordinate==IOUtils::nodata || vecS[stationnr-1].northCoordinate==IOUtils::nodata) {
 				throw InvalidFormatException("Too many nodata values for coordinates conversion in file " + filename, AT);
 			}
-			CH1903_to_WGS84(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate, vecS[stationnr-1].latitude, vecS[stationnr-1].longitude);
+			mymapproj.convert_to_WGS84(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate, vecS[stationnr-1].latitude, vecS[stationnr-1].longitude);
 		}
 	}
 
