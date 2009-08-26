@@ -2,6 +2,8 @@
 
 PLUGINPATH	= ../lib
 
+COORDIN		= CH1903
+
 DEMSRC		= ARC
 DEMFILE  	= input/dischma.dem
 DEMFILE1 	= /home/thoems/Desktop/a3d/slfiotest/input/surface-grids/gotthard25.dem
@@ -29,7 +31,8 @@ SPECIALPTSFILE	= input/gotthard25.pts
 DASRC           = ARC
 DAPATH          = ../input/assimilation-grids
 
-OUTPUT          = ARC
+#OUTPUT          = ARC
+OUTPUT 		 = GRASS
 OUTPATH         = ../output/
 
 #TEST1=huhu
