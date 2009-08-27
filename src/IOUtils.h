@@ -201,9 +201,9 @@ namespace IOUtils {
 	template<> bool convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 
 	/**
-	* @brief Returns, with the requested type, the value associated to a key (template function). 
-	* @tparam T   [in] The type wanted for the return value (template type parameter). 
-	* @param properties   [in] A map containing all the parameters. 
+	* @brief Returns, with the requested type, the value associated to a key (template function).
+	* @tparam T   [in] The type wanted for the return value (template type parameter).
+	* @param properties   [in] A map containing all the parameters.
 	* @param key   [in] The key of the parameter to retrieve.
 	* @param t   [out] The value associated to the key, converted to the requested type
 	*/
@@ -211,7 +211,7 @@ namespace IOUtils {
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
-		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];  
+		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
 
 		if (value == "") {
 			throw UnknownValueException("No value for key " + key, AT);

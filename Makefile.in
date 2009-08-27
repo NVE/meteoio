@@ -148,6 +148,7 @@ METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/DEMObject_par.o \
 		$(SRCDIR)/IOExceptions_par.o \
 		$(SRCDIR)/IOUtils_par.o \
+		$(SRCDIR)/MapProj_par.o \
 		$(SRCDIR)/Laws.o \
 		$(SRCDIR)/libinterpol2D_par.o \
 		$(SRCDIR)/libinterpol1D_par.o \
@@ -258,28 +259,28 @@ $(LIBDIR)/libboschungio.so: $(PLUGINDIR)/BoschungIO.cc $(PLUGINDIR)/BoschungIO.h
 ifeq ($(BOSCHUNGIO),yes)
 	@echo **** Compiling Boschung plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(PLUGINDIR)/BoschungIO.o $(PLUGINDIR)/BoschungIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(PLUGINDIR)/BoschungIO.o $(LDFLAGS_SEQ) $(LDFLAGS) @XMLPP_LIBS@
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(PLUGINDIR)/BoschungIO.o $(LDFLAGS) @XMLPP_LIBS@
 endif
 
 $(LIBDIR)/libgeotopio.so:$(PLUGINDIR)/GeotopIO.cc $(PLUGINDIR)/GeotopIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(GEOTOPIO),yes)
 	@echo **** Compiling GeoTOP plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GeotopIO.o $(PLUGINDIR)/GeotopIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgeotopio.so -o $@ $(PLUGINDIR)/GeotopIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgeotopio.so -o $@ $(PLUGINDIR)/GeotopIO.o $(LDFLAGS)
 endif
 
 $(LIBDIR)/libarcio.so:$(PLUGINDIR)/ARCIO.cc $(PLUGINDIR)/ARCIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(ARCIO),yes)
 	@echo **** Compiling ARC file plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/ARCIO.o $(PLUGINDIR)/ARCIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libarcio.so -o $@ $(PLUGINDIR)/ARCIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libarcio.so -o $@ $(PLUGINDIR)/ARCIO.o $(LDFLAGS)
 endif
 
 $(LIBDIR)/libgrassio.so:$(PLUGINDIR)/GrassIO.cc $(PLUGINDIR)/GrassIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(GRASSIO),yes)
 	@echo **** Compiling GRASS file plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GrassIO.o $(PLUGINDIR)/GrassIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgrassio.so -o $@ $(PLUGINDIR)/GrassIO.o $(LDFLAGS_SEQ) $(LDFLAGS)
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgrassio.so -o $@ $(PLUGINDIR)/GrassIO.o $(LDFLAGS)
 endif
 
 $(LIBDIR)/libgsnio.so:$(PLUGINDIR)/GSNIO.cc $(PLUGINDIR)/GSNIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
@@ -287,14 +288,14 @@ ifeq ($(GSNIO),yes)
 	@echo **** Compiling GSN plugin
 	cd $(PLUGINDIR)/gsn; make
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @GSOAPPP_CFLAGS@ -c -o $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/GSNIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgsnio.so -o $@ $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/gsn/soapA3DWebServiceSoap12BindingProxy.o $(PLUGINDIR)/gsn/soapC.o $(LDFLAGS_SEQ) $(LDFLAGS) @GSOAPPP_LIBS@ 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgsnio.so -o $@ $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/gsn/soapA3DWebServiceSoap12BindingProxy.o $(PLUGINDIR)/gsn/soapC.o $(LDFLAGS) @GSOAPPP_LIBS@ 
 endif
 
 $(LIBDIR)/libimisio.so: $(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(IMISIO),yes)
 	@echo **** Compiling Imis plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/rdbms/public $(PLUGINDIR)/ImisIO.cc -c -o $(PLUGINDIR)/ImisIO.o
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS_SEQ) $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif
 
 $(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoiopopc.a $(LIBDIR)/libfilterpopc.a $(SRCDIR)/PackMeteoIO_par.o

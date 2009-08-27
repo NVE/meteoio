@@ -110,6 +110,15 @@ if test "x$use_arcio" == "xyes"; then AC_MSG_NOTICE([ARCIO enabled. No prerequis
 if test "$with_gsnio" == "yes"
 then
 	AC_MSG_NOTICE([GSNIO enabled. Checking for prerequisites...])
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, no) 
+	if test "$PKG_CONFIG" == "no"; then
+		echo "*** The pkg-config script could not be found. Make sure it is"
+		echo "*** in your path, or set the PKG_CONFIG environment variable"
+		echo "*** to the full path to pkg-config."
+		echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+		rm -f configure config.status
+		exit 1
+	fi
 	PKG_CHECK_MODULES(GSOAPPP, gsoap++ >= 2.0)
 	CPPFLAGS="$CPPFLAGS $GSOAPPP_CFLAGS"
 
