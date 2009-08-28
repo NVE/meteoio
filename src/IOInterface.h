@@ -33,6 +33,7 @@ class IOInterface : public PluginObject {
 	public:
 
 		IOInterface(void (*delObj)(void*));
+		virtual ~IOInterface();
 
 		/**
 		* @brief A virtual copy constructor used for cloning objects
