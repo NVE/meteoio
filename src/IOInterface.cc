@@ -2,3 +2,4 @@
 
 IOInterface::IOInterface(void (*delObj)(void*)) : PluginObject(delObj){}
 
+IOInterface::~IOInterface(){}
