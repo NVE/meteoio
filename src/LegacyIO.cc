@@ -31,7 +31,7 @@ void LegacyIO::GetGridSize(int &nx, int &ny, int &nz)
 	} else {
 		char dummy[MAX_STRING_LENGTH], fname[MAX_STRING_LENGTH];
 		FILE *fp;
-
+		
 		strcpy(fname,meteopathname);
 		strcat(fname,".dat");
 		/* Open the Input file */
@@ -39,17 +39,14 @@ void LegacyIO::GetGridSize(int &nx, int &ny, int &nz)
 			DEBUG("cannot open file %s",fname);
 			throw ERROR_INPUT_GRIDSIZE;
 		}
-
-		/* Read the dimensions */
-		do {
-			fscanf(fp," %s ",dummy);;
-		} while (strcmp(dummy,"nx") != 0);
 		
-		if (fscanf(fp," = %d, ny = %d, nz = %d",&nx,&ny,&nz)!=3) {
+		/* Read the dimensions */
+		for (int j=0; j<8; j++) fgets(dummy,MAX_STRING_LENGTH,fp);
+		if (fscanf(fp,"%d %d %d\n",&nx,&ny,&nz)!=3) {
 			fclose(fp);
 			throw ERROR_INPUT_GRIDSIZE; 
 		}
-
+		
 		dimx=nx;
 		dimy=ny;
 		dimz=nz;
@@ -149,108 +146,71 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 	/* Read the parameters */
 	/* Skip header and Read ubar */
 	do {
-		fscanf(fp," %s ",dummy);;
-	} while (strcmp(dummy,"u") != 0);
-
-	int iz,iy,ix,j;
-
-	/* Read u */
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].u);
-			}
-		}
-	}	
+		fscanf(fp," %s ",dummy);
+	}
+	while (strcmp(dummy,"ubar") != 0);
 	
+	int iz,iy,ix,j;
+	double num;
+	
+	/* Read ubar */
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].u);}
+	
+	/* Read vbar */
+	fgets(dummy,MAX_LINE_LENGTH,fp);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].v);}
+	/* Read wbar */
+	fgets(dummy,MAX_LINE_LENGTH,fp);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].w);}
+	/* Read tetbar */
+	fgets(dummy,MAX_LINE_LENGTH,fp);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].tet);}
+	/* Read pbar */
+	fgets(dummy,MAX_LINE_LENGTH,fp);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].p);}
+	/* Read u */
+	fgets(dummy,MAX_LINE_LENGTH,fp);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&num); nodes[j].u += num;
+	if (nodes[j].u == 0.) 
+		printf("\n Zero u at ix %d, iy %d, iz %d", ix, iy, iz);}
 	/* Read v */
 	fgets(dummy,MAX_LINE_LENGTH,fp);
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].v);
-			}
-		}
-	}
-				
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&num); nodes[j].v = -nodes[j].v - num;}
 	/* Read w */
 	fgets(dummy,MAX_LINE_LENGTH,fp);
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].w);
-			}
-		}
-	}
-
-	/* Read Potential Temperature */
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&num); nodes[j].w += num;}
+	/* Read tet */
 	fgets(dummy,MAX_LINE_LENGTH,fp);
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].tet);
-			}
-		}
-	}
-
-	/* Read Pressure */
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&num); nodes[j].tet += num;}
+	/* Read p */
 	fgets(dummy,MAX_LINE_LENGTH,fp);
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].p);
-			}
-		}
-	}	
-
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&num); nodes[j].p += num;}
+	/* Read Km, the eddy diffusivity */
+	fgets(dummy,MAX_LINE_LENGTH,fp);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].Km);}
+	/* Read lm, the mixing length */
+	fgets(dummy,MAX_LINE_LENGTH,fp);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix;  fscanf(fp," %16lf%*[\n]",&nodes[j].lm);}
 	/* Read TKE and see whether all had been read correctly */
-	do {
-		fscanf(fp," %s ",dummy);;
-	} while (strcmp(dummy,"tke") != 0);
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].e);
-			}
-		}
-	}
-			
-	if (strcmp(dummy,"tke") != 0) {
+	fscanf(fp," %s",dummy);
+	for (iz=0; iz<nz; iz++) for (iy=ny-1; iy>=0; iy--) for (ix=0; ix<nx; ix++) {
+		j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].e);}
+	if (strcmp(dummy,"tke") != 0){
 		DEBUG("Error occurred while reading ARPS data %s",dummy);
-		throw ERROR_INPUT_GRIDDATA;
-	}
-
-
-
-
-	/* Read Km, the horizontal eddy diffusivity */
-	fgets(dummy,MAX_LINE_LENGTH,fp);
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix; fscanf(fp," %16lf%*[\n]",&nodes[j].Km);
-			}
-		}
-	}
-
-	/* Read lm, the mixing length but in really here in Arps5 it is now the vertical diffusivity */
-	do {
-		fscanf(fp," %s ",dummy);;
-	} while (strcmp(dummy,"kmv") != 0);
+		throw ERROR_INPUT_GRIDDATA; }
 	
-	for (iz=0; iz<nz; iz++) {
-		for (iy=ny-1; iy>=0; iy--) {
-			for (ix=0; ix<nx; ix++) {
-				j = iz*nx*ny + iy*nx + ix;  fscanf(fp," %16lf%*[\n]",&nodes[j].lm);
-			}
-		}
-	}
-
-	if (strcmp(dummy,"kmv") != 0){
-		DEBUG("Error occurred while reading ARPS data %s",dummy);
-		throw ERROR_INPUT_GRIDDATA;
-	}
-
 	fclose(fp);
 
 #ifdef _POPC_ 
