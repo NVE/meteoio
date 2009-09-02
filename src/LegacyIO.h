@@ -84,7 +84,7 @@ typedef Array<int> CIntArray;
 class LegacyIO
 {
 	public:
-		LegacyIO(char *meteopath);
+		LegacyIO(const std::string &meteopath);
 		~LegacyIO();
 
 		void GetGridSize(int &nx, int &ny, int &nz);

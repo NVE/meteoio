@@ -5,9 +5,9 @@
 #endif
 
 
-LegacyIO::LegacyIO(char *meteopath)
+LegacyIO::LegacyIO(const std::string &meteopath)
 {
-	strcpy(meteopathname,meteopath);
+	strcpy(meteopathname,meteopath.c_str());
 	dimx=dimy=dimz=0;
 
 #ifdef _POPC_

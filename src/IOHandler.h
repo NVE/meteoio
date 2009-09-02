@@ -36,6 +36,8 @@ class IOHandler : public IOInterface {
 							  std::vector<STATION_DATASET>& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
+		void readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
+
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
 

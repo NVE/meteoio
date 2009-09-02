@@ -153,8 +153,10 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		try {
 			cfg.getValue("COORDIN", coordsys);
 			cfg.getValue("COORDPARAM", coordparam); 
-		} catch(std::exception& e){
+		} catch(std::exception& e) {
 			//problems while reading values for COORDIN or COORDPARAM
+			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
+			throw;
 		}
 		MapProj mymapproj(coordsys, coordparam);
 

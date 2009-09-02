@@ -8,13 +8,13 @@ using namespace std;
 
 void IOHandler::registerPlugins()
 {
-	mapPlugins["A3D"]		= IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
 	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungio.so", "BoschungIO", NULL, NULL);
-	mapPlugins["IMIS"]		= IOPlugin("libimisio.so", "ImisIO", NULL, NULL);
+	mapPlugins["IMIS"]	= IOPlugin("libimisio.so", "ImisIO", NULL, NULL);
 	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio.so", "GeotopIO", NULL, NULL);
-	mapPlugins["GSN"]		= IOPlugin("libgsnio.so", "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]		= IOPlugin("libarcio.so", "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]		= IOPlugin("libgrassio.so", "GrassIO", NULL, NULL);
+	mapPlugins["GSN"]	= IOPlugin("libgsnio.so", "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]	= IOPlugin("libarcio.so", "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]	= IOPlugin("libgrassio.so", "GrassIO", NULL, NULL);
 }
 
 #ifdef _POPC_
@@ -81,7 +81,7 @@ void IOHandler::loadPlugin(const string& libname, const string& classname, Dynam
 	string pluginpath = "";
 
 	try {
-		cfg.getValue("PLUGINPATH", pluginpath); 
+		cfg.getValue("PLUGINPATH", pluginpath);
 
 		//Which dynamic library needs to be loaded
 		cout << "\t" << "Trying to load " << libname << " ... ";
@@ -121,7 +121,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
 	}			
 	
 	if ((mapit->second).io == NULL)	
-		throw IOException("Requesting to read/write data with plugin for " + cfgvalue + ", but plugin is not loaded", AT);			
+		throw IOException("Requesting to read/write data with plugin for " + cfgvalue + ", but plugin is not loaded", AT);
 
 	return (mapit->second).io;
 }
@@ -142,6 +142,23 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 {
 	IOInterface *plugin = getPlugin("LANDUSESRC");
 	plugin->readLanduse(landuse_out);
+}
+
+void IOHandler::readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation)
+{
+	std::vector< METEO_DATASET > vecvecMeteo;
+	std::vector< STATION_DATASET > vecvecStation;
+
+	readMeteoData(date, date, vecvecMeteo, vecvecStation);
+
+	if(vecvecMeteo.size() != 1) {
+		cout << "number of timesteps: "<<vecvecMeteo.size()<<endl;
+		throw IOException("Wrong number of timesteps returned!!", AT);
+	}
+	for(unsigned int i=0; i<vecvecMeteo.size(); i++) {
+		vecMeteo = vecvecMeteo[1];
+		vecStation = vecvecStation[1];
+	}
 }
 
 void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
