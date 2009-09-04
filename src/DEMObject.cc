@@ -505,6 +505,7 @@ double DEMObject::getCurvature(const unsigned int& i, const unsigned int& j) {
 #include "marshal_meteoio.h"
 void DEMObject::Serialize(POPBuffer &buf, bool pack)
 {
+	DEBUG("Ser");
 	if (pack)
 	{
 		buf.Pack(&ncols,1);
@@ -520,8 +521,8 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&max_slope,1);
 		buf.Pack(&min_curvature,1);
 		buf.Pack(&max_curvature,1);
-		unsigned int x,y;
-		grid2D.size(x,y);
+		//unsigned int x,y;
+		//grid2D.size(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, azi, 0, FLAG_MARSHAL, NULL);

@@ -87,7 +87,7 @@ endif
 
 ####### DIRECTORIES
 TARGET		= meteoio
-TARGET_POPC	= meteoio_par
+#TARGET_POPC	= meteoio_par
 
 SRCDIR		= ./src
 PLUGINDIR	= ./src/plugins
@@ -190,7 +190,7 @@ help:
 	@echo -e "MeteoIO Makefile targets for \033[36m$(DEST)\033[0m:" 
 	@echo -e " \033[36mseq\033[0m"
 	@echo -e " \033[36mcreateA3DFiles\033[0m"
-	@echo -e " \033[36mpopc\033[0m"
+	@echo -e " \033[36mpar\033[0m"
 	@echo -e " \033[36minstall\033[0m"
 	@echo -e " \033[36mclean\033[0m"
 	@echo -e " \033[36mdistclean\033[0m"
@@ -208,11 +208,12 @@ build_dynamiclibs: $(LIBDIR)/libboschungio.so \
 			$(LIBDIR)/libgrassio.so 
 
 ############## POPC ##############
-par: meteoIO_lib_par meteoIO_module_par filter_lib_par
+par: $(LIBDIR)/libmeteoiopopc.a  build_staticlibs_par build_dynamiclibs_par meteoIO_module_par
 
-filter_lib_par: $(LIBDIR)/libfilterpopc.a
+build_staticlibs_par: $(LIBDIR)/libfilterpopc.a
 
-meteoIO_lib_par: $(LIBDIR)/libmeteoiopopc.a 
+build_dynamiclibs_par:  $(LIBDIR)/libarciopopc.so \
+			$(LIBDIR)/libgrassiopopc.so 
 
 meteoIO_module_par: $(LIBDIR)/meteoio.module
 ##############  END  ##############
@@ -254,6 +255,8 @@ $(LIBDIR)/libmeteoio.a: $(METEOIO_OBJ)
 $(LIBDIR)/libfilter.a: $(FILTER_OBJ)
 	ar -r $@ $(FILTER_OBJ)
 	ranlib $@
+
+# Dynamic libraries seq
 
 $(LIBDIR)/libboschungio.so: $(PLUGINDIR)/BoschungIO.cc $(PLUGINDIR)/BoschungIO.h $(LIBDIR)/libmeteoio.a $(LIBDIR)/libfilter.a
 ifeq ($(BOSCHUNGIO),yes)
@@ -298,6 +301,22 @@ ifeq ($(IMISIO),yes)
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
 endif
 
+# Dynamic libraries par
+$(LIBDIR)/libgrassiopopc.so:$(PLUGINDIR)/GrassIO.cc $(PLUGINDIR)/GrassIO.h $(LIBDIR)/libmeteoiopopc.a $(LIBDIR)/libfilterpopc.a
+ifeq ($(GRASSIO),yes)
+	@echo **** Compiling GRASS file plugin
+	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GrassIO.o $(PLUGINDIR)/GrassIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgrassio.so -o $@ $(PLUGINDIR)/GrassIO.o $(LDFLAGS_POPC) $(LDFLAGS)
+endif
+
+$(LIBDIR)/libarciopopc.so:$(PLUGINDIR)/ARCIO.cc $(PLUGINDIR)/ARCIO.h $(LIBDIR)/libmeteoiopopc.a $(LIBDIR)/libfilterpopc.a
+ifeq ($(ARCIO),yes)
+	@echo **** Compiling ARC file plugin
+	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/ARCIO.o $(PLUGINDIR)/ARCIO.cc 
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libarcio.so -o $@ $(PLUGINDIR)/ARCIO.o $(LDFLAGS_POPC) $(LDFLAGS)
+endif
+
+######
 $(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoiopopc.a $(LIBDIR)/libfilterpopc.a $(SRCDIR)/PackMeteoIO_par.o
 	$(POPCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_POPC)
 

@@ -101,6 +101,7 @@ void Grid3DObject::checkCoordinates()
 #include "marshal_meteoio.h"
 void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 {
+	DEBUG("Ser");
 	if (pack)
 	{
 		buf.Pack(&ncols,1);

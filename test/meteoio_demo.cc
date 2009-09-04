@@ -6,6 +6,11 @@ using namespace std;
 int main(int argc, char** argv) {
 	(void)argc;
 	Date_IO d1;
+	
+	if(argc<2){
+		printf("Error: not enough arguments !\n");
+		exit(-1);
+	}
 	convertString(d1,argv[1]);
 	
 	vector<MeteoData> vecMeteo;
@@ -18,13 +23,13 @@ int main(int argc, char** argv) {
 		ConfigReader cfg("io.ini");
 		raw_io = new IOHandler(cfg);
 		io = new BufferedIOHandler(*raw_io, cfg);
-	} catch (exception& e){
+	} catch (IOException& e){
 		cout << "Problem with IOHandler creation, cause: " << e.what() << endl;
 	}
 	
 	try {
 		io->readMeteoData(d1, vecMeteo, vecStation);
-	} catch (exception& e){
+	} catch (IOException& e){
 		cout << "Problem when reading data, cause: " << e.what() << endl;
 	}
 	

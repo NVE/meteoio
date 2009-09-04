@@ -107,6 +107,7 @@ const string StationData::toString() const
 #ifdef _POPC_
 void StationData::Serialize(POPBuffer &buf, bool pack)
 {
+	DEBUG("Ser");
 	if (pack){
 		buf.Pack(&altitude,1);
 		buf.Pack(&stationName, 1);

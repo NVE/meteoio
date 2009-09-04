@@ -297,6 +297,7 @@ void Date_IO::getRealJulianDate(double& julian_out) const
 #ifdef _POPC_
 void Date_IO::Serialize(POPBuffer &buf, bool pack)
 {
+	DEBUG("Ser");
 	if (pack){
 		buf.Pack(&julian,1);
 		buf.Pack(&year,1);

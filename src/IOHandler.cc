@@ -6,6 +6,18 @@
 
 using namespace std;
 
+#ifdef _POPC_
+void IOHandler::registerPlugins()
+{
+	mapPlugins["A3D"]		= IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungiopopc.so", "BoschungIO", NULL, NULL);
+	mapPlugins["IMIS"]		= IOPlugin("libimisiopopc.so", "ImisIO", NULL, NULL);
+	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopiopopc.so", "GeotopIO", NULL, NULL);
+	mapPlugins["GSN"]		= IOPlugin("libgsniopopc.so", "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]		= IOPlugin("libarciopopc.so", "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]		= IOPlugin("libgrassiopopc.so", "GrassIO", NULL, NULL);
+}
+#else
 void IOHandler::registerPlugins()
 {
 	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
@@ -16,6 +28,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["ARC"]	= IOPlugin("libarcio.so", "ARCIO", NULL, NULL);
 	mapPlugins["GRASS"]	= IOPlugin("libgrassio.so", "GrassIO", NULL, NULL);
 }
+#endif
 
 #ifdef _POPC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(cfg){
@@ -114,7 +127,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
 
 	mapit = mapPlugins.find(op_src);		
 	if (mapit == mapPlugins.end())
-		throw IOException(cfgvalue + "does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+		throw IOException(cfgvalue + " does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 	
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
@@ -134,8 +147,11 @@ void IOHandler::read2DGrid(Grid2DObject& _grid, const string& _filename)
 
 void IOHandler::readDEM(Grid2DObject& dem_out)
 {
+	printf("ici %s %d\n",__FILE__,__LINE__);
+
 	IOInterface *plugin = getPlugin("DEMSRC");
 	plugin->readDEM(dem_out);
+	printf("ici %s %d\n",__FILE__,__LINE__);
 }
 
 void IOHandler::readLanduse(Grid2DObject& landuse_out)

@@ -101,6 +101,7 @@ void marshal_map_str_str(POPBuffer &buf, std::map<string, string> &data_map, int
     buf.Pack(&n,1);
     for(std::map<string, string>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
     {
+	    DEBUG("it 1:%s 1:%s",(const char*)it->first.c_str(),(const char*)it->second.c_str());
 	buf.Pack(&(it->first),1);
 	buf.Pack(&(it->second),1);
     }
@@ -118,9 +119,18 @@ void marshal_map_str_str(POPBuffer &buf, std::map<string, string> &data_map, int
 	buf.UnPack(&key,1);
 	buf.UnPack(&value,1);
 	data_map[key] = value;
+	DEBUG("key %s value %s",(const char*)key.c_str(),(const char*)data_map[key].c_str());
     }
 
   }
+  int i=0;
+  for(std::map<std::string,std::string>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
+  {
+	  cout <<"pack="<<flag<< "("<<i<<") Who(key = first): " << it->first;
+	  cout << " Score(value = second): " << it->second << '\n';
+	  i++;
+  }
+
 }
 
 void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp)
@@ -214,11 +224,13 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
   if (flag & FLAG_MARSHAL)
     {
       //int dim[2];
-      unsigned int nx,ny;
+      unsigned int nx=88,ny=99;
       data.size(nx,ny);
-
+      printf("AAAA nx=%d \n",nx);
+      printf("AAAA ny=%d \n",ny);
       buf.Pack(&nx,1);
       buf.Pack(&ny,1);
+      
       //double **tmp=(double**)&data[0];//double **tmp=data;
     
       if (nx>0 && ny>0)
@@ -229,10 +241,11 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
     }
   else
     {
-    
       unsigned int nx,ny;//dim[2];
       buf.UnPack(&nx,1);
+      DEBUG("nx=%d ",nx);
       buf.UnPack(&ny,1);
+      DEBUG("ny=%d",ny);
       data.resize(nx,ny);
       //double **tmp=data;
     
