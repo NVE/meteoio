@@ -38,7 +38,7 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg);
 	#ifdef _POPC_
-		~BufferedIOHandler();
+		virtual ~BufferedIOHandler();
 	#else
 		~BufferedIOHandler() throw();
 	#endif

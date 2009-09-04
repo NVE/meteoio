@@ -123,9 +123,9 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 			if (dataexists) {//date_in is contained in buffer
 				index = seek(date_in, meteoBuffer[ii]);
 			}
-		} else {
+		} /*else {
 			cout << "[I] Found data for station " << stationName << " and date " << date_in.toString() << " in buffer" << endl;
-		}
+		}*/
     
 		// RESAMPLING
 		if ((index != BufferedIOHandler::npos) && (meteoBuffer[ii][index].date != date_in)) {

@@ -3,6 +3,14 @@
 using namespace oracle;
 using namespace oracle::occi;
 
+/**
+ * @class ImisIO 
+ * @brief The class with-in the data from the database are treated. The MeteoData and the StationData will be set in.
+ * This class also herited to IOInterface class which is abstract.
+ * @author Moustapha Mbengue
+ * @date 2009-05-12
+ */
+
 ImisIO::ImisIO(const string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	mbImis.clear();
@@ -14,40 +22,6 @@ ImisIO::ImisIO(void (*delObj)(void*), const string& filename) : IOInterface(delO
 ImisIO::~ImisIO() throw()
 {
 	cleanup();
-}
-
-void ImisIO::cleanup() throw()
-{
-	mbImis.clear();
-	vecStationName.clear();
-}
-
-void ImisIO::createBuffer()
-{
-	//Clear the buffers
-	mbImis.clear();
-	const unsigned int stations = vecStationName.size();
-
-	//Allocate one MeteoBuffer per station
-	for (unsigned int ii=0; ii<stations; ii++) {
-		mbImis.push_back(MeteoBuffer(IMIS_BUFF_SIZE));
-	}
-	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
-}
-
-ConfigReader ImisIO::getCfg()
-{
-	return cfg;
-}
-
-vector<string> ImisIO::getVecStationName()
-{
-	return vecStationName;
-}
-
-vector<MeteoBuffer> ImisIO::getMbImis()
-{
-	return mbImis;
 }
 
 void ImisIO::read2DGrid(Grid2DObject& grid_out, const string& parameter)
@@ -95,12 +69,22 @@ void ImisIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
 	throw IOException("Nothing implemented here", AT);
 }
 
+/**
+* @brief refer to void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
+*/
 void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo)
 {
 	vector<StationData> vecStation;
 	readMeteoData(date_in, vecMeteo, vecStation);
 }
 
+/**
+* @brief this method is used to get back meteo and station data for a given day
+* into the respective vectors MeteoData and StationData
+* @param date_in (Date_IO&) recording date
+* @param vecMeteo (vector \<MeteoData\>&) vector in which meteo data will be filled
+* @param vecStation (vector \<StationData\>&) vector in which station data will be filled
+*/
 void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
 {
 	vecMeteo.clear();
@@ -136,6 +120,13 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 
 }
 
+/**
+* @brief Puts the data that has been retrieved from the database into a MeteoBuffer
+* which contains the meteo data and the station data of each single station in the configfile.
+* @param meteo_in (vector \<vector \<string\>\>&) meteo data from the database.
+* @param station_in (vector \<string\>&) station data from the database.
+* @param mb (MeteoBuffer&) variable in which stationdata and meteodata are filled.
+*/
 void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb)
 {
 	MeteoData md;
@@ -176,6 +167,12 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	}
 }
 
+/**
+* @brief This is a private function. It gets back data from station2 which is a table of the database and fill them in a string vector
+* @param stat_abk : a string key of station2 
+* @param stao_nr : an integer key of station2
+* @param data2S : string vector in which data will be filled
+*/
 void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector<string>& data2S)
 {
 	const string userName = "slf";
@@ -238,6 +235,14 @@ void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector
 		
 }
 
+/**
+* @brief This is a private function. It gets back data from ams.v_imis which is a table of the database
+* and fill them in a vector of vector of string. It seems that each record is a string vector
+* @param stat_abk : a string key of ams.v_imis
+* @param stao_nr : an integer key of ams.v_imis
+* @param date_in : a vector of five(5) integer corresponding to the recording date
+* @param datatImis : a vector of vector of string in which data will be filled
+*/
 void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, vector<int> date_in, vector< vector<string> >& dataImis)
 {
 	const string userName = "slf";
@@ -313,6 +318,9 @@ void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, v
 	Environment::terminateEnvironment(env); // static OCCI function
 }
 
+/**
+* @brief Get back station's name from the configfile
+*/
 void ImisIO::getStationName()
 {
 	vecStationName.clear();
@@ -382,6 +390,49 @@ void ImisIO::resampleMbImis(MeteoData& meteo, StationData& station, const Date_I
 			}
 		}
 	}
+}
+
+/**
+* @brief ImisIO cleaner function
+*/
+void ImisIO::cleanup() throw()
+{
+	mbImis.clear();
+	vecStationName.clear();
+}
+
+void ImisIO::createBuffer()
+{
+	//Clear the buffers
+	mbImis.clear();
+	const unsigned int stations = vecStationName.size();
+
+	//Allocate one MeteoBuffer per station
+	for (unsigned int ii=0; ii<stations; ii++) {
+		mbImis.push_back(MeteoBuffer(IMIS_BUFF_SIZE));
+	}
+	cout << "[I] "<<AT<<": Created Buffer for " << stations << " stations" << endl;
+}
+
+/**
+* @brief Returns the ConfigFile
+*/
+ConfigReader ImisIO::getCfg()
+{
+	return cfg;
+}
+
+/**
+* @brief Returns vecStationName, a string vector in which StationName are saved
+*/
+vector<string> ImisIO::getVecStationName()
+{
+	return vecStationName;
+}
+
+vector<MeteoBuffer> ImisIO::getMbImis()
+{
+	return mbImis;
 }
 
 extern "C"

@@ -39,19 +39,19 @@ int main(int argc, char** argv) {
 		cout << "  Name: " << vecStation[ii].getStationName() << endl;
 		cout << "  RH: " << vecMeteo[ii].rh << endl;
 	}
-	
+
 	//And now, doing spatial interpolations
 	DEMObject dem;
 	io->readDEM(dem);
 	dem.update();
 	
-	//convert to local grid coordinates
-	/*dem.xllcorner = 0.;
+	//convert to local grid coordinates, an elegant way of dealing with multiple coordinates systems inputs
+	dem.xllcorner = 0.;
 	dem.yllcorner = 0.;
 	for (unsigned i = 0; i < vecMeteo.size() ; ++i) {
 		//setup reference station, convert coordinates to local grid
 		IOUtils::WGS84_to_local(dem.latitude, dem.longitude, vecStation[i].latitude, vecStation[i].longitude, vecStation[i].eastCoordinate, vecStation[i].northCoordinate);
-	}*/
+	}
 
 	Grid2DObject    p(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
 	Grid2DObject nswc(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);

@@ -162,18 +162,26 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 
 void IOHandler::readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation)
 {
-	std::vector< METEO_DATASET > vecvecMeteo;
-	std::vector< STATION_DATASET > vecvecStation;
+	vecMeteo.clear();
+	vecStation.clear();
+	
+	vector< vector<MeteoData> > meteoTmpBuffer;
+	vector< vector<StationData> > stationTmpBuffer;
+	readMeteoData(date, date, meteoTmpBuffer, stationTmpBuffer);
 
-	readMeteoData(date, date, vecvecMeteo, vecvecStation);
-
-	if(vecvecMeteo.size() != 1) {
-		cout << "number of timesteps: "<<vecvecMeteo.size()<<endl;
-		throw IOException("Wrong number of timesteps returned!!", AT);
+	unsigned int emptycounter = 0;
+	for (unsigned int ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
+		if ((meteoTmpBuffer[ii].size() > 0) && (stationTmpBuffer[ii].size() > 0)){
+			vecMeteo.push_back(meteoTmpBuffer[ii][0]);
+			vecStation.push_back(stationTmpBuffer[ii][0]);
+		} else {
+			emptycounter++;
+		}
 	}
-	for(unsigned int i=0; i<vecvecMeteo.size(); i++) {
-		vecMeteo = vecvecMeteo[1];
-		vecStation = vecvecStation[1];
+
+	if (emptycounter == meteoTmpBuffer.size()){
+		vecMeteo.clear();
+		vecStation.clear();
 	}
 }
 
