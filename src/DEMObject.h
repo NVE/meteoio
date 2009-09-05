@@ -56,7 +56,7 @@ class DEMObject: public Grid2DObject {
 
 #ifdef _POPC_
 	public:
-		void Serialize(POPBuffer &buf, bool pack);
+		virtual void Serialize(POPBuffer &buf, bool pack);
 #endif
 };
 

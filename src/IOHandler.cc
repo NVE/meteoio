@@ -145,13 +145,10 @@ void IOHandler::read2DGrid(Grid2DObject& _grid, const string& _filename)
 	plugin->read2DGrid(_grid, _filename);
 }
 
-void IOHandler::readDEM(Grid2DObject& dem_out)
+void IOHandler::readDEM(DEMObject& dem_out)
 {
-	printf("ici %s %d\n",__FILE__,__LINE__);
-
 	IOInterface *plugin = getPlugin("DEMSRC");
 	plugin->readDEM(dem_out);
-	printf("ici %s %d\n",__FILE__,__LINE__);
 }
 
 void IOHandler::readLanduse(Grid2DObject& landuse_out)

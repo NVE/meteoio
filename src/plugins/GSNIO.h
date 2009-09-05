@@ -30,7 +30,7 @@ class GSNIO : public IOInterface {
 							  const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
-		virtual void readDEM(Grid2DObject& dem_out);
+		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);

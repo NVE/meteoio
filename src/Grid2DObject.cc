@@ -110,7 +110,6 @@ void Grid2DObject::checkCoordinates()
 #include "marshal_meteoio.h"
 void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 {
-	DEBUG("Ser");
 	if (pack)
 	{
 		buf.Pack(&ncols,1);
@@ -121,7 +120,7 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&longitude,1);
 		buf.Pack(&cellsize,1);
 		unsigned int x,y;
-		DEBUG("ncols%d,nrows%d,xllcorner%d,yllcorner%d,celsize%d",ncols,nrows,xllcorner,yllcorner,cellsize);
+		//DEBUG("ncols%d,nrows%d,xllcorner%d,yllcorner%d,celsize%d",ncols,nrows,xllcorner,yllcorner,cellsize);
 		grid2D.size(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 	}
@@ -134,7 +133,7 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&latitude,1);
 		buf.UnPack(&longitude,1);
 		buf.UnPack(&cellsize,1);
-		DEBUG("ncols%d,nrows%d,xllcorner%d,yllcorner%d,celsize%d",ncols,nrows,xllcorner,yllcorner,cellsize);
+		//DEBUG("ncols%d,nrows%d,xllcorner%d,yllcorner%d,celsize%d",ncols,nrows,xllcorner,yllcorner,cellsize);
 		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
 	}

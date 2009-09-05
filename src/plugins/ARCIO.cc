@@ -127,7 +127,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 	cleanup();
 }
 
-void ARCIO::readDEM(Grid2DObject& dem_out)
+void ARCIO::readDEM(DEMObject& dem_out)
 {
 	string filename="";
 	cfg.getValue("DEMFILE", filename); // cout << tmp << endl;

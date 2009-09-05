@@ -33,7 +33,7 @@ class ImisIO : public IOInterface {
 				
 		virtual void read2DGrid(Grid2DObject& grid_out, const string& parameter="");
 		
-		virtual void readDEM(Grid2DObject& dem_out);
+		virtual void readDEM(DEMObject& dem_out);
 		
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		

@@ -17,14 +17,14 @@ parclass IOHandler {
 		classuid(1003);
 	public:
 		// virtual IOHandler* clone() const; // lwk : not used yet
-		IOHandler(const std::string& configfile) @{ power=100 ?: 50; };
+		IOHandler(const std::string& configfile)  @{ power=100 ?: 50; };
 		//IOHandler(const IOHandler&);
-		IOHandler(const ConfigReader&);
+		IOHandler(const ConfigReader&)  @{ power=100 ?: 50; };
 		~IOHandler();
 
 		virtual void read2DGrid([out]Grid2DObject& dem_out, const string& parameter="");
 
-		virtual void readDEM([out]Grid2DObject& dem_out);
+		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 
 		virtual void readMeteoData([in]const Date_IO& dateStart, [in]const Date_IO& dateEnd,

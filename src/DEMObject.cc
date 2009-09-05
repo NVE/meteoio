@@ -505,7 +505,6 @@ double DEMObject::getCurvature(const unsigned int& i, const unsigned int& j) {
 #include "marshal_meteoio.h"
 void DEMObject::Serialize(POPBuffer &buf, bool pack)
 {
-	DEBUG("Ser");
 	if (pack)
 	{
 		buf.Pack(&ncols,1);

@@ -67,7 +67,7 @@ class IOInterface : public PluginObject {
 		* @endcode
 		* @param dem_out A Grid2DObject that holds the DEM
 		*/
-		virtual void readDEM(Grid2DObject& dem_out) = 0;
+		virtual void readDEM(DEMObject& dem_out) = 0;
 
 		/**
 		* @brief Parse the landuse model into the Grid2DObject

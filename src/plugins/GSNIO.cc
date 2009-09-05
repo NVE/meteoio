@@ -57,7 +57,7 @@ void GSNIO::read2DGrid(Grid2DObject&, const string& filename)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::readDEM(Grid2DObject&)
+void GSNIO::readDEM(DEMObject&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

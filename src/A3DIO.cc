@@ -42,7 +42,7 @@ void A3DIO::read2DGrid(Grid2DObject&, const string&)
 	throw IOException("Nothing implemented here", AT);	
 }
 
-void A3DIO::readDEM(Grid2DObject& dem_out)
+void A3DIO::readDEM(DEMObject& dem_out)
 {
 	//Nothing so far
 	(void)dem_out;

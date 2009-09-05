@@ -32,7 +32,7 @@ void ImisIO::read2DGrid(Grid2DObject& grid_out, const string& parameter)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::readDEM(Grid2DObject& dem_out)
+void ImisIO::readDEM(DEMObject& dem_out)
 {
 	//Nothing so far
 	(void)dem_out;

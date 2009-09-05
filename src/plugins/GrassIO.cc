@@ -133,7 +133,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 	cleanup();
 }
 
-void GrassIO::readDEM(Grid2DObject& dem_out)
+void GrassIO::readDEM(DEMObject& dem_out)
 {
 	string filename="";
 	cfg.getValue("DEMFILE", filename); // cout << tmp << endl;

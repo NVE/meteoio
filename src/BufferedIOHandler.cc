@@ -3,10 +3,10 @@
 using namespace std;
 
 #ifdef _POPC_
-BufferedIOHandler::BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg) 
+BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
 	: iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids(), resample(true)
 #else
-BufferedIOHandler::BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg) 
+BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
 	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids(), resample(true)
 #endif
 {
@@ -36,7 +36,7 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const string& _file
 	_grid2Dobj = tmpgrid2D;
 }
 
-void BufferedIOHandler::readDEM(Grid2DObject& _grid2Dobj)
+void BufferedIOHandler::readDEM(DEMObject& _grid2Dobj)
 {
 	map<string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
 	if (it != mapBufferedGrids.end()) { //already in map
@@ -44,7 +44,7 @@ void BufferedIOHandler::readDEM(Grid2DObject& _grid2Dobj)
 		return;
 	}
 	
-	Grid2DObject tmpgrid2D;
+	DEMObject tmpgrid2D;
 	iohandler.readDEM(tmpgrid2D);
 	mapBufferedGrids["/:DEM"] = tmpgrid2D;
 	_grid2Dobj = tmpgrid2D;

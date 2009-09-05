@@ -14,7 +14,7 @@
 #ifdef _POPC_
 class Grid2DObject : POPBase {
 	public:
-		void Serialize(POPBuffer &buf, bool pack);
+		virtual void Serialize(POPBuffer &buf, bool pack);
 #else
 class Grid2DObject{
 #endif
@@ -95,5 +95,6 @@ class Grid2DObject{
 
 		void checkCoordinates();
 };
+#include "DEMObject.h"
 
 #endif

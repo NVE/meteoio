@@ -33,7 +33,7 @@ void GeotopIO::read2DGrid(Grid2DObject&, const string& filename)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GeotopIO::readDEM(Grid2DObject&)
+void GeotopIO::readDEM(DEMObject&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

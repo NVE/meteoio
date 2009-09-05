@@ -1,7 +1,13 @@
 #ifndef __BUFFEREDIOHANDLER_H__
 #define __BUFFEREDIOHANDLER_H__
 
-#include "IOInterface.h"
+#ifdef _POPC_
+#include "IOHandler.ph"
+#else
+//#include "IOInterface.h"
+#include "IOHandler.h"
+#endif
+
 #include "ConfigReader.h"
 #include "Meteo1DResampler.h"
 
@@ -30,17 +36,17 @@ class BufferedIOHandler : public IOInterface {
 		 *    
 		 * Example Usage:
 		 * @code
-		 * IOInterface *io1;
+		 * IOHandler *io1;
 		 * ConfigReader cfg("io.ini");
 		 * io1 = new A3DIO(cfg);
 		 * BufferedIOHandler bio(*io1, cfg);
 		 * @endcode
 		 */
-		BufferedIOHandler(IOInterface& _iohandler, const ConfigReader& _cfg);
+		BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg);
 	#ifdef _POPC_
 		virtual ~BufferedIOHandler();
 	#else
-		~BufferedIOHandler() throw();
+		virtual ~BufferedIOHandler() throw();
 	#endif
 
 		/**
@@ -102,7 +108,7 @@ class BufferedIOHandler : public IOInterface {
 		void enableResampling(const bool& _enable);
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
-		virtual void readDEM(Grid2DObject& dem_out);
+		virtual void readDEM(DEMObject& dem_out);
 		virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
@@ -121,7 +127,7 @@ class BufferedIOHandler : public IOInterface {
 		bool bufferData(const Date_IO& _date, const unsigned int& stationindex);
 		void bufferAllData(const Date_IO& _date);
 		
-		IOInterface& iohandler;
+		IOHandler& iohandler;
 		ConfigReader cfg;
 		std::vector< std::vector<MeteoData> > meteoBuffer;
 		std::vector< std::vector<StationData> > stationBuffer;

@@ -41,7 +41,7 @@ void BoschungIO::read2DGrid(Grid2DObject&, const string& filename)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::readDEM(Grid2DObject&)
+void BoschungIO::readDEM(DEMObject&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
