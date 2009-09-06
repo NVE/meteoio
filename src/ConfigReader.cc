@@ -2,6 +2,8 @@
 
 using namespace std;
 
+const unsigned int ConfigReader::nothrow = 666;
+
 ConfigReader::ConfigReader(const std::string& filename_in/*, const std::string& delimiter*/)
 {
 	//Check whether file exists and is accessible -> throw FileNotFound or FileNotAccessible Exception

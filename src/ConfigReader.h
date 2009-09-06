@@ -51,7 +51,7 @@ class ConfigReader {
 		* @param options indicating whether an exception should be raised, when key is not present
 		*/
 		template <class T> void getValue(const std::string& key, T& t, const unsigned int& options=0) const {
-			getValue(key, "GENERAL", t);
+			getValue(key, "GENERAL", t, options);
 		}
 
 		/**
@@ -86,7 +86,7 @@ class ConfigReader {
 		/** [Constant for lineType] The config line is of an unknown type (in fact, an invalid format) */
 		static const int CfgLineUnknown = 9;
 
-		static const unsigned int nothrow = 666;
+		static const unsigned int nothrow;
 
 	private:
 		void parseFile();

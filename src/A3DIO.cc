@@ -152,7 +152,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		string coordsys="", coordparam="";
 		try {
 			cfg.getValue("COORDIN", coordsys);
-			cfg.getValue("COORDPARAM", coordparam); 
+			cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
 		} catch(std::exception& e) {
 			//problems while reading values for COORDIN or COORDPARAM
 			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
@@ -517,7 +517,7 @@ void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& 
 	string coordsys="", coordparam="";
 	try {
 		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam); 
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 	}
