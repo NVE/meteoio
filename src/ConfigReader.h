@@ -11,11 +11,13 @@
 /**
  * @class ConfigReader
  * @brief A class that reads a key/value file. These files (typically named *.ini) have the following structure:
- * - line 1 contains the string "[Parameters]" (without the quotation marks)
- * - all following lines are either blank, comments or contain a "KEY = VALUE" assignment
- * - in this implementation each key is unique
- * - lines that don't have a delimiter in them are ignored
+ * - they consist of 0 or more explicitly indicated sections, which start with a sectionname enclosed in square brackets
+ *   e.g. [General] or [Filter]
+ * - within each section there are 0 or more key value pairs defined: KEY = VALUE 
+ * - in this implementation each key is unique within its section
  * - lines that start with a semicolon ';' or a hash sign '#' are ignored (regarded as comments)
+ * - empty lines are ignored
+ * - if there is no section name given in a file, the default section called "GENERAL" is assumed 
  *
  * @author Thomas Egger
  * @date   2008-11-30
@@ -36,18 +38,6 @@ class ConfigReader {
 		ConfigReader(const std::string& filename_in);
 
 		/**
-		* @brief Explicit copy constructor. It is required, because the private ifstream fin cannot be copied.
-		* @param configreader ConfigReader object to be copied
-		*/
-		ConfigReader(const ConfigReader& configreader);
-
-		/**
-		* @brief Default destructor. Closes the key/value file if it is open.
-		*/
-		~ConfigReader() throw(){};
-
-
-		/**
 		* @brief Returns the filename that the ConfigReader object was constructed with.
 		* @return std::string The absolute filename of the key/value file.
 		*/
@@ -56,23 +46,33 @@ class ConfigReader {
 
 		/**
 		* @brief Template function to retrieve a value of class T for a certain key
-		* @param key std::string representing a KEY in the key/value file
+		* @param key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
 		* @param t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
+		* @param options indicating whether an exception should be raised, when key is not present
 		*/
-		template <class T> void getValue(const std::string& key, T& t) const {
-			IOUtils::getValueForKey<T>(properties, key, t);
+		template <class T> void getValue(const std::string& key, T& t, const unsigned int& options=0) const {
+			getValue(key, "GENERAL", t);
 		}
 
-		/** 
-		* Read a line of a .ini config file
-		* @param fin   [in] The file input stream to read from.
-		* @param lineNb   [in] The line number of the file (used for user-friendly error messages).
-		* @param lineType   [out] Returns what sort of line it is (section, key/value, comment, eof).
-		* @param str1   [out] Returns a string: section name for section, key for key/value. 
-		* @param str2   [out] Returns a string: value for key/value, unset otherwise. 
-		* @return true if succesfully read, false if end-of-line or problems encountered
-		* 
+		/**
+		* @brief Template function to retrieve a value of class T for a certain key
+		* @param key std::string representing a KEY in the key/value file
+		* @param section std::string representing a section name; the key has to be part of this section
+		* @param t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
+		* @param options indicating whether an exception should be raised, when key is not present
 		*/
+		template <class T> void getValue(const std::string& key, const std::string& section, 
+								   T& t, 
+								   const unsigned int& options=0) const {
+			try {
+				IOUtils::getValueForKey<T>(properties, section + "::" + key, t);
+			} catch(std::exception& e){
+				if (options != ConfigReader::nothrow)
+					throw;
+			}
+		}
+
+		//LEGACY
 		static bool readConfigLine(std::istream& fin, int lineNb, int& lineType, string& str1, string& str2);
 
 		/** [Constant for lineType] The config line is the end of the file */
@@ -86,8 +86,11 @@ class ConfigReader {
 		/** [Constant for lineType] The config line is of an unknown type (in fact, an invalid format) */
 		static const int CfgLineUnknown = 9;
 
+		static const unsigned int nothrow = 666;
+
 	private:
 		void parseFile();
+		void parseLine(const unsigned int& linenr, std::string& line, std::string& section);
 
 		std::map<string, string> properties; //Save key value pairs
 		std::string filename; //Absolute filename of the key/value file

@@ -253,7 +253,13 @@ void IOUtils::trim(string& str)
 	}
 }
 
-bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map)
+void IOUtils::toUpper(std::string& str){
+	for(unsigned int t=0; t<str.length(); t++) {
+		str[t] = toupper(str[t]);
+	}
+}
+
+bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map, const std::string& keyprefix)
 {
 	//size_t pos = in_line.find(delimiter); //first occurence of '='
 
@@ -277,8 +283,9 @@ bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, m
 			return false;
 		}
 
-		out_map[key] = value;
+		out_map[keyprefix + key] = value;
 	} else {
+		return false;
 		//cerr << "line:" << in_line << "delimiter" << endl;
 	}
 

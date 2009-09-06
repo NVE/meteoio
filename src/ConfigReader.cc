@@ -2,66 +2,45 @@
 
 using namespace std;
 
-//CONSTRUCTORS
-#ifdef _POPC_
-ConfigReader::ConfigReader(const ConfigReader& configreader) : paroc_base(), properties(configreader.properties), filename(configreader.filename){}
-#else
-ConfigReader::ConfigReader(const ConfigReader& configreader) : properties(configreader.properties), filename(configreader.filename){}
-#endif
-
 ConfigReader::ConfigReader(const std::string& filename_in/*, const std::string& delimiter*/)
 {
 	//Check whether file exists and is accessible -> throw FileNotFound or FileNotAccessible Exception
-	//Read first line -> if not [Parameters] -> throw WrongFormatException
-	//Read Key Value Pairs and put them into map 
+	//Read Key Value Pairs and put them into map, depending on the section they are in
+	//If there is no section definition, the default section "General" is assumed
 	filename = filename_in;
 	parseFile();
-
-} // end ConfigReader::ConfigReader
+} 
 
 void ConfigReader::parseFile()
 {
 	std::ifstream fin; //Input file streams
-	int linenr = 0;
-
+	unsigned int linenr = 0;
+	std::string line="", section="GENERAL";
+	
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename,AT);
 	}
-
+  
 	//Check whether file exists
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}
-
+  
 	//Open file
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
 		throw FileAccessException(filename, AT);
 	}
 
-	try {
-		int lineType = ConfigReader::CfgLineComment /*dummy non-problematic initial value*/;
-		string str1, str2;
-		stringstream tmpStringStream;
+	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 	
-		//Read header, should be [Parameters]
-		ConfigReader::readConfigLine(fin, ++linenr, lineType, str1, str2);
-		if (lineType != ConfigReader::CfgLineSection || str1 != "Parameters") {
-			throw InvalidFormatException("Missing header [Parameters] in file " + filename, AT);    
-		}
-		//Go through file, save key value pairs
-		while (ConfigReader::readConfigLine(fin, ++linenr, lineType, str1, str2)) {
-			if (lineType == ConfigReader::CfgLineKeyValue) {
-				properties[str1] = str2;
-			} else if (lineType != ConfigReader::CfgLineComment) {
-				tmpStringStream << "Expected key-value pair at line "<<linenr<<".";
-				throw InvalidFormatException(tmpStringStream.str(), AT);
-			}
-		}
-
-		//done reading, so closing the file
+	try {
+		do {
+			getline(fin, line, eoln); //read complete line
+			parseLine(linenr++, line, section);
+		} while(!fin.eof());
 		fin.close();
-	} catch (...) {
+	} catch(std::exception& e){
 		if (fin.is_open()) {//close fin if open
 			fin.close();
 		}
@@ -69,81 +48,34 @@ void ConfigReader::parseFile()
 	}
 }
 
-bool ConfigReader::readConfigLine(std::istream& fin, int lineNb, int& lineType, string& str1, string& str2)
+void ConfigReader::parseLine(const unsigned int& linenr, std::string& line, std::string& section)
 {
-	string line="";
-	std::string::size_type pos = 0;
-	stringstream tmpStringStream;
-	bool isSuccess = false;
+	stringstream tmp;
 
-	str1 = "";
-	str2 = "";
-	if (! std::getline(fin, line)) {
-		lineType = CfgLineEOF;
-		//cout << "[D] readConfigLine lineNb="<<lineNb<<" lineType="<<lineType<<" str1='"<<str1<<"' str2='"<<str2<<"'."<<endl;
-		return isSuccess;
-	}
-	IOUtils::trim(line);
+	IOUtils::trim(line); //delete leading and trailing whitespace characters
+	if (line.length() == 0) //ignore empty lines
+		return;
+	
+	if ((line[0]=='#') || (line[0]==';')) //check whether line is a comment
+		return;
 
-	if (line[0] == ';' || line[0] == '#') {
-		// handle comment
-		lineType = CfgLineComment;
-		str1 = line;
-		isSuccess = true;
-
-	} else if (line[0] == '[') {
-		// handle sections
-		lineType = CfgLineSection;
-		pos = line.find_first_of(']');
-		if (pos != line.npos) {
-			str1 = line.substr(1, pos-1);
-			line = line.substr(pos+1);
-			IOUtils::trim(line);
-			if (line.length() > 0 && line[0] != ';' && line[0] != '#') {
-				tmpStringStream << "Invalid non-comment data at line "<<lineNb<<" after section ["<<str1<<"].";
-				throw InvalidFormatException(tmpStringStream.str(), AT);
-			}
-			isSuccess = true;
+	if (line[0] == '['){
+		size_t endpos = line.find_last_of(']');
+		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))){
+			tmp << linenr;
+			throw IOException("Section header corrupt in line " + tmp.str(), AT);
 		} else {
-			tmpStringStream << "Config section name at line "<<lineNb<<" not properly ended with ']'.";
-			throw InvalidFormatException(tmpStringStream.str(), AT);
+			section = line.substr(1,endpos-1);
+			IOUtils::toUpper(section);
+			return;
 		}
-
-	} else if (line.length() > 0) {
-		pos = line.find_first_of('=');
-		if (pos != line.npos) {
-			// handle key/value pair
-			lineType = CfgLineKeyValue;
-			str1 = line.substr(0, pos);
-			str2 = line.substr(pos + 1);
-			IOUtils::trim(str1);
-			IOUtils::trim(str2);
-			if (str1 == "") {
-				tmpStringStream << "Unallowed empty key at line "<<lineNb<<" of config file.";
-				throw InvalidFormatException(tmpStringStream.str(), AT);
-			}
-			if (str2 == "") {
-				tmpStringStream << "Unallowed empty value at line "<<lineNb<<" of config file.";
-				throw InvalidFormatException(tmpStringStream.str(), AT);
-			}
-			isSuccess = true;
-
-		} else {
-			// handle unknown
-			lineType = CfgLineUnknown;
-			str1 = line;
-			tmpStringStream << "Unexpected content at line "<<lineNb<<" of config file.";
-			throw InvalidFormatException(tmpStringStream.str(), AT);
-		}
-
-	} else {
-		// handle empty line
-		lineType = CfgLineComment;
-		isSuccess = true;
-
 	}
-	//cout << "[D] readConfigLine lineNb="<<lineNb<<" lineType="<<lineType<<" str1='"<<str1<<"' str2='"<<str2<<"'."<<endl;
-	return isSuccess;
+
+	//At this point line can only be a key value pair
+	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::")){
+		tmp << linenr;
+		throw InvalidFormatException("Error reading key value pair in " + filename + " line:" + tmp.str(), AT);    
+	}
 }
 
 //Return key/value filename

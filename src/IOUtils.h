@@ -11,6 +11,7 @@
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <cctype>
 
 #include "IOExceptions.h"
 #include "Date_IO.h"
@@ -150,10 +151,15 @@ namespace IOUtils {
 	* @param in_line (const string&) string to parse
 	* @param delimiter (const string&) delimiter to use for the parsing
 	* @param out_map (map\<string,string\>&) map after parsing
+	* @param keyprefix this string is prefixed before the key, defaults to no prefix: ""
 	* @return (bool) true when line is empty
 	*/
-	bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, std::map<std::string,std::string>& out_map);
+	bool readKeyValuePair(const std::string& in_line, 
+					  const std::string& delimiter, 
+					  std::map<std::string,std::string>& out_map,
+					  const std::string& keyprefix="");
 
+	void toUpper(std::string& str);
 	unsigned int readLineToVec(const std::string& line_in, std::vector<string>& vecString);
 	unsigned int readLineToVec(const std::string& line_in, std::vector<string>& vecString, const char& delim);
 	void readKeyValueHeader(std::map<std::string, std::string>& headermap, 
