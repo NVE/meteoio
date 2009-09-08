@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 	//And now, doing spatial interpolations
 	DEMObject dem;
 	io->readDEM(dem);
-	dem.update();
+	dem.update(DEMObject::CORR);
 	
 	//convert to local grid coordinates, an elegant way of dealing with multiple coordinates systems inputs
 	dem.xllcorner = 0.;

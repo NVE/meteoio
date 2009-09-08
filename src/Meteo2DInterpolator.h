@@ -22,7 +22,7 @@ class Meteo2DInterpolator {
 		/**
 		* @brief Constructor. It builds a vector of input data and metadata, merging meteo1D and meteo2D input files
 		*/
-		Meteo2DInterpolator(const DEMObject& dem, const std::vector<MeteoData>& vecData, const std::vector<StationData>& vecMeta);
+		Meteo2DInterpolator(const DEMObject& _dem, const std::vector<MeteoData>& vecData, const std::vector<StationData>& vecMeta);
 
 		/**
 		* @brief This function calls the interpolation class for each individual meteo parameter. 
@@ -40,7 +40,7 @@ class Meteo2DInterpolator {
 		void interpolateVW(Grid2DObject& vw);
 		void interpolateDW(Grid2DObject& dw);
 		void interpolateISWR(Grid2DObject& iswr);
-		//void interpolateEA(Grid2DObject& ea);
+		void interpolateLWR(Grid2DObject& lwr);
 
 		const DEMObject& dem;
 

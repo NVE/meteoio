@@ -97,8 +97,9 @@ DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsig
 * @brief Force the computation of the local slope, azimuth, normal vector and curvature.
 * It has to be called manually since it can require some time to compute. Without this call, 
 * the above mentionned parameters are NOT up to date.
+* @param algorithm (slope_type&) algorithm to use for computing slope, azimuth and normals
 */
-void DEMObject::update() {
+void DEMObject::update(const slope_type& algorithm) {
 //This method recomputes the attributes that are not read as parameters 
 //(such as slope, azimuth, normal vector)
 
@@ -111,8 +112,24 @@ void DEMObject::update() {
 	Nz.resize(ncols, nrows);
 
 	// Calculate the slope and the slope azimuth
-	CalculateAziSlopeCurve(0);
+	CalculateAziSlopeCurve(algorithm);
 	updateAllMinMax();
+}
+
+void DEMObject::update(const string& algorithm) {
+//This method recomputes the attributes that are not read as parameters 
+//(such as slope, azimuth, normal vector)
+	slope_type type;
+
+	if(algorithm.compare("HICK")==0) {
+		type=HICK;
+	} else if(algorithm.compare("CORRIPIO")==0) {
+		type=CORR;
+	} else {
+		throw InvalidArgumentException("Chosen slope algorithm " + algorithm + " not available", AT);
+	}
+	
+	update(type);
 }
 
 void DEMObject::updateAllMinMax() {
@@ -142,7 +159,7 @@ void DEMObject::updateAllMinMax() {
 	}
 }
 
-void DEMObject::CalculateAziSlopeCurve(const int& Hick) {
+void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 //****        DEFINITIONS           ****//
 // coordinate:                          //
@@ -173,10 +190,12 @@ void DEMObject::CalculateAziSlopeCurve(const int& Hick) {
 		
 				//calculate slope and normal vector's components using one of two algorithms 
 				//(knowing that Hick is the worst performing)
-				if ( Hick ) {
+				if(algorithm==HICK) {
 					CalculateHickNormal(i, j, dx_sum, dy_sum);
-				} else {
+				} else if(algorithm==CORR) {
 					CalculateCorripioNormal(i, j, dx_sum, dy_sum);
+				} else {
+					throw InvalidArgumentException("Chosen slope algorithm not available", AT);
 				}
 		
 				azi(i,j) = CalculateAzi(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));

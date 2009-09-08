@@ -4,8 +4,8 @@
 using namespace std;
 using namespace IOUtils;
 
-Meteo2DInterpolator::Meteo2DInterpolator(const DEMObject& dem_in, const vector<MeteoData>& vecData,
-					 const vector<StationData>& vecMeta) : dem(dem_in), SourcesData(vecData), SourcesMeta(vecMeta)
+Meteo2DInterpolator::Meteo2DInterpolator(const DEMObject& _dem, const vector<MeteoData>& vecData,
+					 const vector<StationData>& vecMeta) : dem(_dem), SourcesData(vecData), SourcesMeta(vecMeta)
 {
 	//check whether the size of the two vectors is equal
 	if (vecData.size() != vecMeta.size()) {
@@ -117,12 +117,6 @@ void Meteo2DInterpolator::interpolateTA(Grid2DObject& ta)
 		}
 	}
 
-	/*
-	int nx, ny;
-	ta.size(nx,ny);
-	std::cerr << "SourcesSelect.size()==" << vecSelectedStations.size() << "\nvecInput.size()==" << vecInput.size()
-	<< "\nta size: " << nx << " x " << ny << std::endl;
-	*/
 	printf("[i] interpolating TA using %d stations\n", (int)vecSelectedStations.size());
 	Interpol2D TA(Interpol2D::I_LAPSE_CST, Interpol2D::I_LAPSE_IDWK, vecInput, vecSelectedStations, dem);
 	TA.calculate(ta);
@@ -198,7 +192,6 @@ void Meteo2DInterpolator::interpolateISWR(Grid2DObject& iswr)
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
 		if(SourcesData[ii].iswr != nodata) {
-			//cout << SourcesData[ii].iswr << endl;
 			vecSelectedStations.push_back(SourcesMeta[ii]);
 			vecInput.push_back(SourcesData[ii].iswr);
 		}
@@ -209,22 +202,21 @@ void Meteo2DInterpolator::interpolateISWR(Grid2DObject& iswr)
 	ISWR.calculate(iswr);
 }
 
-/*void Meteo2DInterpolator::interpolateEA(Grid2DObject& ea)
+void Meteo2DInterpolator::interpolateLWR(Grid2DObject& lwr)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(SourcesData[ii].ea != nodata) {
-			//cout << SourcesData[ii].iswr << endl;
+		if(SourcesData[ii].lwr != nodata) {
 			vecSelectedStations.push_back(SourcesMeta[ii]);
-			vecInput.push_back(SourcesData[ii].ea);
+			vecInput.push_back(SourcesData[ii].lwr);
 		}
 	}
 
 	printf("[i] interpolating EA using %d stations\n", (int)vecSelectedStations.size());
-	Interpol2D EA(Interpol2D::I_CST, Interpol2D::I_IDWK, vecInput, vecSelectedStations, dem);
-	EA.calculate(ea);
-}*/
+	Interpol2D LWR(Interpol2D::I_CST, Interpol2D::I_IDWK, vecInput, vecSelectedStations, dem);
+	LWR.calculate(lwr);
+}
 

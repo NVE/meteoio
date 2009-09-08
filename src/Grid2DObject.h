@@ -14,6 +14,12 @@
 #ifdef _POPC_
 class Grid2DObject : POPBase {
 	public:
+		/**
+		* @brief Serialize method for POPC. Used to marshall data and send it from an object to another.
+		*
+		* @param buf pointer to the communication buffer
+		* @param pack indicates if the data is sent or received
+		*/
 		virtual void Serialize(POPBuffer &buf, bool pack);
 #else
 class Grid2DObject{
@@ -78,11 +84,14 @@ class Grid2DObject{
 			const double& cellsize, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
 		
 		/**
-		* @brief Serialize method for POPC. Used to marshall data and send it from an object to another.
-		*
-		* @param buf pointer to the communication buffer
-		* @param pack indicates if the data is sent or received
-		*/  
+		* @brief check if the current Grid2DObject has the same geolocalization attributes
+		* as another Grid2DObject. The grid coordinates (xllcorner & yllcorner) are NOT
+		* checked as these might be tweaked for convenience (like between input grid and local grid)
+		* @param target (Grid2DObject) grid to compare to
+		* @return (bool) true if same geolocalization
+		*/
+		bool isSameGeolocalization(const Grid2DObject& target);
+
 		Array2D<double> grid2D;
 		unsigned int ncols, nrows;
 		double xllcorner, yllcorner, cellsize;

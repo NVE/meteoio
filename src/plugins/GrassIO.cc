@@ -83,20 +83,14 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 			cfg.getValue("COORDPARAM", coordparam); 
 		} catch(std::exception& e){
 			//problems while reading values for COORDIN or COORDPARAM
+			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
+			throw;
 		}
 
 		//compute WGS coordinates (considered as the true reference)
-
-		//HACK: check how we can input coordinates as WGS84 directly.
-		//this HACK is a very cheap "extension" of the dem file format...
-		if(xllcorner<360. || yllcorner<360.) {
-			latitude = xllcorner;
-			longitude = yllcorner;
-		} else {
-			MapProj mymapproj(coordsys, coordparam);
-			mymapproj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
-		}
-    
+		MapProj mymapproj(coordsys, coordparam);
+		mymapproj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+		
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize);
 		

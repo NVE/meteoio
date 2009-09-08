@@ -21,6 +21,8 @@ class DEMObject: public Grid2DObject {
 		double min_altitude, max_altitude;
 		double min_slope, max_slope;
 		double min_curvature, max_curvature;
+
+		typedef enum SLOPE_TYPE {HICK, CORR} slope_type;
 		
 		DEMObject();
 		
@@ -40,10 +42,11 @@ class DEMObject: public Grid2DObject {
 				   const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
 				   const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
 		
-		void update(); //TODO: add arguments to choose slope algorithm, etc
+		void update(const string& algorithm);
+		void update(const slope_type& algorithm);
 
 	private:
-		void CalculateAziSlopeCurve(const int& Hick);
+		void CalculateAziSlopeCurve(const slope_type& algorithm);
 		double CalculateAzi(const double& Nx, const double& Ny, const double& Nz, const double& slope);
 		void CalculateHickNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum);
 		void CalculateCorripioNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum);

@@ -98,13 +98,23 @@ void Grid2DObject::checkCoordinates()
 		} else {
 			double tmp_lat, tmp_lon;
 			IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, tmp_lat, tmp_lon); //HACK: replace by WGS84_to_local
-			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
-				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for Grid3DObject", AT);
-			}
+			/*if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
+				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for Grid2DObject", AT);
+			}*/
 		}
 	}
 }
 
+bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)
+{
+	if( ncols==target.ncols && nrows==target.nrows &&
+		latitude==target.latitude && longitude==target.longitude &&
+		cellsize==target.cellsize) {
+		return true;
+	} else {
+		return false;
+	}
+}
 
 #ifdef _POPC_
 #include "marshal_meteoio.h"
