@@ -42,6 +42,11 @@ class GeotopIO : public IOInterface {
 		void read2DMeteo(const Date_IO&, vector<MeteoData>&, vector<StationData>&); ///<No buffering
 
 	private:
+		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
+					   const std::string& metafile);
+		void makeColumnMap(const std::vector<std::string>& tmpvec, 
+					    const std::vector<std::string>& vecColumnNames, 
+					    std::map<std::string, unsigned int>& mapHeader);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
 		ConfigReader cfg;

@@ -9,8 +9,7 @@ LANDUSESRC	= ARC
 LANDUSEFILE	= input/gotthard25.lus
 
 METEOSRC      	= GEOTOP
-NROFSTATIONS 	= 1
-METEOPATH     	= /home/thoems/Desktop/GeoTop/test1/meteo/
+METEOPATH     	= /home/thoems/Desktop/oldDesktop/GeoTop/test1/meteo/
 METEOPREFIX	= _meteo
 
 SPECIALPTSSRC	= ARC
