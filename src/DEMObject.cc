@@ -1,4 +1,5 @@
 #include <math.h>
+#include <limits>
 #include "DEMObject.h"
 #include "Grid2DObject.h"
 
@@ -13,9 +14,8 @@
 */
 DEMObject::DEMObject() : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	min_altitude = max_altitude = IOUtils::nodata;
-	min_slope = max_slope = IOUtils::nodata;
-	min_curvature = max_curvature = IOUtils::nodata;
+	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
+	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 }
 
 /**
@@ -35,9 +35,8 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	min_altitude = max_altitude = IOUtils::nodata;
-	min_slope = max_slope = IOUtils::nodata;
-	min_curvature = max_curvature = IOUtils::nodata;
+	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
+	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 }
 
 /**
@@ -58,9 +57,7 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	min_altitude = max_altitude = IOUtils::nodata;
-	min_slope = max_slope = IOUtils::nodata;
-	min_curvature = max_curvature = IOUtils::nodata;
+	updateAllMinMax();
 }
 
 /**
@@ -71,9 +68,7 @@ DEMObject::DEMObject(const Grid2DObject& _dem)
   : Grid2DObject(_dem.ncols, _dem.nrows, _dem.xllcorner, _dem.yllcorner, _dem.latitude, _dem.longitude, _dem.cellsize, _dem.grid2D), 
     slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	min_altitude = max_altitude = IOUtils::nodata;
-	min_slope = max_slope = IOUtils::nodata;
-	min_curvature = max_curvature = IOUtils::nodata;
+	updateAllMinMax();
 }
 
 /**
