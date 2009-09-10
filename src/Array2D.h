@@ -3,6 +3,8 @@
 
 #include <vector>
 #include "IOExceptions.h"
+#include "IOUtils.h"
+#include <limits>
 
 #define NOSAFECHECKS
 
@@ -51,6 +53,8 @@ template<class T> class Array2D {
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void size(unsigned int& nx, unsigned int& ny) const;
+		T getMin();
+		T getMax();
 
 		void clear();
 		T& operator ()(const unsigned int& x, const unsigned int& y);
@@ -155,6 +159,34 @@ template<class T> void Array2D<T>::size(unsigned int& anx, unsigned int& any) co
 template<class T> void Array2D<T>::clear() {
 	vecData.clear();
 	nx=ny=0;
+}
+
+template<class T> T Array2D<T>::getMin() {
+
+	T min = std::numeric_limits<T>::max();
+
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			const T val = vecData[ii*ny + jj];
+			if(val<min) min=val;
+		}
+	}
+	
+	return min;
+}
+
+template<class T> T Array2D<T>::getMax() {
+
+	T max = -std::numeric_limits<T>::max();
+
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			const T val = vecData[ii*ny + jj];
+			if(val>max) max=val;
+		}
+	}
+
+	return max;
 }
 
 #endif

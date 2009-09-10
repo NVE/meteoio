@@ -2,6 +2,7 @@
 #define ARRAY_H
 
 #include <vector>
+#include <limits>
 #include "IOExceptions.h"
 
 #define NOSAFECHECKS
@@ -25,6 +26,8 @@ template<class T> class Array {
 		void clear();
 		void insertAt(int index, T e);
 		void removeAt(unsigned int index);
+		T getMin();
+		T getMax();
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
@@ -89,6 +92,30 @@ template<class T> void Array<T>::removeAt(unsigned int index) {
 		vecData.erase(vecData.begin()+index);
 		arraySize--;
 	}
+}
+
+template<class T> T Array<T>::getMin() {
+
+	T min = std::numeric_limits<T>::max();
+
+	for (unsigned int ii=0; ii<arraySize; ii++) {
+		const T val = vecData[ii];
+		if(val<min) min=val;
+	}
+	
+	return min;
+}
+
+template<class T> T Array<T>::getMax() {
+
+	T max = -std::numeric_limits<T>::max();
+
+	for (unsigned int ii=0; ii<arraySize; ii++) {
+		const T val = vecData[ii];
+		if(val>max) max=val;
+	}
+
+	return max;
 }
 
 struct SPECIAL_PTS

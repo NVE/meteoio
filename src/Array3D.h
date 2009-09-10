@@ -1,8 +1,9 @@
 #ifndef ARRAY3D_H
 #define ARRAY3D_H
 
-#include "IOExceptions.h"
 #include <vector>
+#include <limits>
+#include "IOExceptions.h"
 
 #define NOSAFECHECKS
 
@@ -78,6 +79,8 @@ template<class T> class Array3D {
 		void resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init);
 		void size(unsigned int& _nx, unsigned int& _ny, unsigned int& _nz) const;
 		void clear();
+		T getMin();
+		T getMax();
 
 		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
 		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
@@ -188,6 +191,38 @@ template<class T> void Array3D<T>::size(unsigned int& _nx, unsigned int& _ny, un
 template<class T> void Array3D<T>::clear() {
 	vecData.clear();
 	nx = ny = nz = nxny = 0;
+}
+
+template<class T> T Array3D<T>::getMin() {
+
+	T min = std::numeric_limits<T>::max();
+
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for (unsigned int kk=0; kk<nx; kk++) {
+				const T val = vecData[ii + jj*nx + kk*nxny];
+				if(val<min) min=val;
+			}
+		}
+	}
+	
+	return min;
+}
+
+template<class T> T Array3D<T>::getMax() {
+
+	T max = -std::numeric_limits<T>::max();
+
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for (unsigned int kk=0; kk<nx; kk++) {
+				const T val = vecData[ii + jj*nx + kk*nxny];
+				if(val>max) max=val;
+			}
+		}
+	}
+
+	return max;
 }
 
 #endif

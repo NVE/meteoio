@@ -22,7 +22,10 @@ class DEMObject: public Grid2DObject {
 		double min_slope, max_slope;
 		double min_curvature, max_curvature;
 
-		typedef enum SLOPE_TYPE {HICK, CORR} slope_type;
+		typedef enum SLOPE_TYPE {
+			HICK, ///< maximum downhill slope method (Dunn and Hickey, 1998)
+			CORR ///< surface normal vector using the two triangle method (Corripio, 2002) and eight-neighbor algorithm (Horn, 1981) for border cells
+		} slope_type;
 		
 		DEMObject();
 		
@@ -44,6 +47,7 @@ class DEMObject: public Grid2DObject {
 		
 		void update(const string& algorithm);
 		void update(const slope_type& algorithm);
+		void updateAllMinMax();
 
 	private:
 		void CalculateAziSlopeCurve(const slope_type& algorithm);
@@ -55,7 +59,7 @@ class DEMObject: public Grid2DObject {
 		void CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j,double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3);
 		
 		double OppositeDir(const double& z1, const double& z2, const double& z);
-		void updateAllMinMax();
+		double safeGet(const long& i, const long& j);
 
 #ifdef _POPC_
 	public:

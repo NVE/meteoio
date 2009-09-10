@@ -1,7 +1,11 @@
 #include <math.h>
-#include <limits>
 #include "DEMObject.h"
 #include "Grid2DObject.h"
+
+/**
+* @file DEMObject.cc
+* @brief implementation of the DEMBoject class
+*/
 
 /**
 * @brief Default constructor.
@@ -16,13 +20,13 @@ DEMObject::DEMObject() : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny()
 
 /**
 * @brief Constructor that sets variables.
-* @param ncols_in (unsigned int) number of colums in the grid2D
-* @param nrows_in (unsigned int) number of rows in the grid2D
-* @param xllcorner_in (double) x-coordinate of lower left corner
-* @param yllcorner_in (double) y-coordinate of lower left corner
-* @param latitude_in (double) decimal latitude, can be IOUtils::nodata
-* @param longitude_in (double) decimal longitude, can be IOUtils::nodata
-* @param cellsize_in (double) value for cellsize in grid2D
+* @param _ncols (unsigned int) number of colums in the grid2D
+* @param _nrows (unsigned int) number of rows in the grid2D
+* @param _xllcorner (double) x-coordinate of lower left corner
+* @param _yllcorner (double) y-coordinate of lower left corner
+* @param _latitude (double) decimal latitude, can be IOUtils::nodata
+* @param _longitude (double) decimal longitude, can be IOUtils::nodata
+* @param _cellsize (double) value for cellsize in grid2D
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
@@ -38,14 +42,14 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 
 /**
 * @brief Constructor that sets variables.
-* @param ncols_in (unsigned int) number of colums in the grid2D
-* @param nrows_in (unsigned int) number of rows in the grid2D
-* @param xllcorner_in (double) x-coordinate of lower left corner
-* @param yllcorner_in (double) y-coordinate of lower left corner
-* @param latitude_in (double) decimal latitude, can be IOUtils::nodata
-* @param longitude_in (double) decimal longitude, can be IOUtils::nodata
-* @param cellsize_in (double) value for cellsize in grid2D
-* @param altitude_in (Array2D\<double\>&) grid2D of elevations
+* @param _ncols (unsigned int) number of colums in the grid2D
+* @param _nrows (unsigned int) number of rows in the grid2D
+* @param _xllcorner (double) x-coordinate of lower left corner
+* @param _yllcorner (double) y-coordinate of lower left corner
+* @param _latitude (double) decimal latitude, can be IOUtils::nodata
+* @param _longitude (double) decimal longitude, can be IOUtils::nodata
+* @param _cellsize (double) value for cellsize in grid2D
+* @param _altitude (Array2D\<double\>&) grid2D of elevations
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
@@ -61,7 +65,7 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 
 /**
 * @brief Constructor that sets variables from a Grid2DObject
-* @param dem_in (Grid2DObject&) grid contained in a Grid2DObject
+* @param _dem (Grid2DObject&) grid contained in a Grid2DObject
 */
 DEMObject::DEMObject(const Grid2DObject& _dem) 
   : Grid2DObject(_dem.ncols, _dem.nrows, _dem.xllcorner, _dem.yllcorner, _dem.latitude, _dem.longitude, _dem.cellsize, _dem.grid2D), 
@@ -74,10 +78,12 @@ DEMObject::DEMObject(const Grid2DObject& _dem)
 
 /**
 * @brief Constructor that sets variables from a subset of another DEMObject, 
-* given a starting column (first index being 0) and a number of columns
-* @param dem_in (DEMObject&) dem contained in a DEMDObject
-* @param start_col (unsigned int) starting column index
-* @param nb_cols (unsigned int) number of columns
+* given an origin (X,Y) (first index being 0) and a number of columns and rows
+* @param _dem (DEMObject&) dem contained in a DEMDObject
+* @param _nx (unsigned int&) X coordinate of the new origin
+* @param _ny (unsigned int&) Y coordinate of the new origin
+* @param _ncols (unsigned int&) number of columns for the subset dem
+* @param _nrows (unsigned int&) number of rows for the subset dem
 */
 DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsigned int& _ny, 
 				 const unsigned int& _ncols, const unsigned int& _nrows)
@@ -116,6 +122,18 @@ void DEMObject::update(const slope_type& algorithm) {
 	updateAllMinMax();
 }
 
+/**
+* @brief Force the computation of the local slope, azimuth, normal vector and curvature.
+* It has to be called manually since it can require some time to compute. Without this call, 
+* the above mentionned parameters are NOT up to date.
+* @param algorithm (const string&) algorithm to use for computing slope, azimuth and normals
+* it is either:
+* - HICK that uses the maximum downhill slope method (Dunn and Hickey, 1998)
+* - CORRIPIO that uses the surface normal vector using the two triangle method given in Corripio (2002)
+* and the eight-neighbor algorithm of Horn (1981) for border cells.
+* 
+* The azimuth is always computed using the Hodgson (1998) algorithm.
+*/
 void DEMObject::update(const string& algorithm) {
 //This method recomputes the attributes that are not read as parameters 
 //(such as slope, azimuth, normal vector)
@@ -132,31 +150,18 @@ void DEMObject::update(const string& algorithm) {
 	update(type);
 }
 
+/**
+* @brief Recomputes the min/max of altitude, slope and curvature
+* It return +/- std::numeric_limits\<double\>::max() for a given parameter if its grid was empty/undefined
+*/
 void DEMObject::updateAllMinMax() {
 //updates the min/max parameters of all 2D tables
-	min_altitude = min_slope = min_curvature = numeric_limits<double>::max();
-	max_altitude = max_slope = max_curvature = -numeric_limits<double>::max();
-
-	for ( unsigned int i = 0; i < ncols; i++ ) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			if(grid2D(i,j)>max_altitude) max_altitude = grid2D(i,j);
-			if(grid2D(i,j)<min_altitude) min_altitude = grid2D(i,j);
-		}
-	}
-	
-	for ( unsigned int i = 0; i < ncols; i++ ) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			if(slope(i,j)>max_slope) max_slope = slope(i,j);
-			if(slope(i,j)<min_slope) min_slope = slope(i,j);
-		}
-	}
-
-	for ( unsigned int i = 0; i < ncols; i++ ) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			if(curvature(i,j)>max_curvature) max_curvature = curvature(i,j);
-			if(curvature(i,j)<min_curvature) min_curvature = curvature(i,j);
-		}
-	}
+	min_altitude = grid2D.getMin();
+	max_altitude = grid2D.getMax();
+	min_slope = slope.getMin();
+	max_slope = slope.getMax();
+	min_curvature = curvature.getMin();
+	max_curvature = curvature.getMax();
 }
 
 void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
@@ -316,7 +321,7 @@ void DEMObject::CalculateSurfaceDeltas(const unsigned int& i, const unsigned int
 	else if ( i == 0 && j > 0 && j < nrows - 1 ) {
 		*dx1 = grid2D(i+1,j-1) - grid2D(i  ,j-1);
 		*dx2 = grid2D(i+1,j  ) - grid2D(i  ,j  ); 
-		*dx3 = grid2D(i+1,j+1) - grid2D(i  ,j+1);	 
+		*dx3 = grid2D(i+1,j+1) - grid2D(i  ,j+1);
 		*dy1 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
 		*dy2 = *dy1;
 		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j-1);
@@ -331,7 +336,7 @@ void DEMObject::CalculateSurfaceDeltas(const unsigned int& i, const unsigned int
 	}
 	else if ( i == ncols - 1 && j > 0 && j < nrows - 1 ) {
 		*dx1 = grid2D(i  ,j-1) - grid2D(i-1,j-1);
-		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  ); 
+		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  );
 		*dx3 = grid2D(i  ,j+1) - grid2D(i-1,j+1);
 		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j-1);
 		*dy2 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
@@ -357,7 +362,7 @@ void DEMObject::CalculateSurfaceDeltas(const unsigned int& i, const unsigned int
 	}
 	else if ( i == ncols - 1 && j == nrows - 1 ) {
 		*dx1 = grid2D(i  ,j-1) - grid2D(i-1,j-1);
-		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  ); 
+		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  );
 		*dx3 = *dx2;
 		*dy1 = grid2D(i-1,j  ) - grid2D(i-1,j-1);
 		*dy3 = grid2D(i  ,j  ) - grid2D(i  ,j-1);
@@ -374,8 +379,8 @@ void DEMObject::CalculateSurfaceDeltas(const unsigned int& i, const unsigned int
 	
 	//if ( j == 0 && i == ncols - 1 ) 
 	else {
-		*dx1 = grid2D(i  ,j  ) - grid2D(i-1,j  ); 
-		*dx2 = *dx1; 
+		*dx1 = grid2D(i  ,j  ) - grid2D(i-1,j  );
+		*dx2 = *dx1;
 		*dx3 = grid2D(i  ,j+1) - grid2D(i-1,j+1);
 		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j  );
 		*dy3 = grid2D(i  ,j+1) - grid2D(i  ,j  );
@@ -518,6 +523,21 @@ double DEMObject::getCurvature(const unsigned int& i, const unsigned int& j) {
 	// Return the curvature
 	const double sqrt2 = sqrt(2.);
 	return 0.25 * ( 0.5*(z-Zwe) + 0.5*(z-Zsn) + (0.5*(z-Zswne)/sqrt2) + (0.5*(z-Znwse)/sqrt2) );
+}
+
+double DEMObject::safeGet(const long& i, const long& j)
+{//this function would allow reading the value of *any* point, 
+//that is even for coordinates outside of the grid (where it woulod return nodata)
+//this is to make implementing the slope/curvature computation easier for edges, holes, etc
+
+	if(i<0 || i>=(long)ncols) {
+		return IOUtils::nodata;
+	}
+	if(j<0 || j>=(long)nrows) {
+		return IOUtils::nodata;
+	}
+	
+	return grid2D((unsigned)i, (unsigned)j);
 }
 
 #ifdef _POPC_
