@@ -1,0 +1,38 @@
+OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
+INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/src/plugins")
+
+IF(ARCIO)
+  ADD_LIBRARY(arcio ARCIO.cc)
+  SET_TARGET_PROPERTIES(arcio PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+ENDIF(ARCIO)
+
+IF(GRASSIO)
+  ADD_LIBRARY(grassio GrassIO.cc)
+  SET_TARGET_PROPERTIES(grassio PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+ENDIF(GRASSIO)
+
+IF(GEOTOPIO)
+  ADD_LIBRARY(geotopio GeotopIO.cc)
+  SET_TARGET_PROPERTIES(geotopio PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+ENDIF(GEOTOPIO)
+
+IF(GSNIO)
+  ADD_LIBRARY(gsnio GSNIO.cc)
+  target_link_libraries(gsnio ${GSOAPPP})
+  add_dependencies(gsnio wsdl2cpp gsnclient)
+  SET_TARGET_PROPERTIES(gsnio PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+ENDIF(GSNIO)
+
+IF(BOSCHUNGIO)
+  #find_path(XMLPP_INC "libxml++-2.6/libxml++/libxml++.h")
+  #find_library(XMLPP xml++-2.6)
+  find_package(LibXML++ REQUIRED)
+  include_directories(${LibXML++_INCLUDE_DIRS})
+  #include_directories("${XMLPP_INC}/libxml++-2.6")
+  ADD_LIBRARY(boschungio BoschungIO.cc)
+  target_link_libraries(boschungio ${LibXML++_LIBRARIES})
+  SET_TARGET_PROPERTIES(boschungio PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+ENDIF(BOSCHUNGIO)
+
+
+

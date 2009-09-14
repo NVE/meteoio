@@ -131,7 +131,8 @@ class UnknownValueException : public IOException {
  *
  * @author Florian Hof
  */
-class NoAvailableDataException : public IOException {
+class NoAvailableDataException : public IOException
+{
 	public:
 		NoAvailableDataException(const std::string& message="",
 						const std::string& position="") : IOException("NoAvailableDataException: " + message, position){}
@@ -140,7 +141,7 @@ class NoAvailableDataException : public IOException {
 // Define DEBUG an empty function for seq compilation
 #ifndef DEBUG
 #define DEBUG printdebug
-inline void printdebug(...) {};
+inline void printdebug(...) {}
 #endif
 
 #endif /*__IOException_H__*/

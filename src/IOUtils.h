@@ -228,6 +228,6 @@ namespace IOUtils {
 		}
 	}
   
-}; //end namespace IOUtils
+} //end namespace IOUtils
 
 #endif
