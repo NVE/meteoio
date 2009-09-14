@@ -29,6 +29,8 @@ endif(DEST STREQUAL "safe")
 if (DEST STREQUAL "grid")
   set(CMAKE_CXX_COMPILER "colorgcc" CACHE STRING 
     "Compiler set to colorgcc for the grid" FORCE)
+  set(CMAKE_CC_COMPILER "colorgcc" CACHE STRING 
+    "Compiler set to colorgcc for the grid" FORCE)
   set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG")
   set(ARCH  "-march=native")
   set(DEBUG "-g -O0 -DDEBUG")
@@ -36,6 +38,8 @@ endif(DEST STREQUAL "grid")
 
 if (DEST STREQUAL "zeus")
   set(CMAKE_CXX_COMPILER "g++" CACHE STRING 
+    "Compiler set to g++ for zeus" FORCE)
+  set(CMAKE_CC_COMPILER "gcc" CACHE STRING 
     "Compiler set to g++ for zeus" FORCE)
   set(OPTIM "-DNDEBUG")
   set(ARCH  "-march=x86-64")
