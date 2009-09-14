@@ -36,8 +36,10 @@ int main(int argc, char** argv) {
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++) {
 		cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << endl;
-		cout << "  Name: " << vecStation[ii].getStationName() << endl;
-		cout << "  RH: " << vecMeteo[ii].rh << endl;
+		cout << vecStation[ii].toString() << endl;
+		cout << vecMeteo[ii].toString() << endl;
+		//cout << "  Name: " << vecStation[ii].getStationName() << endl;
+		//cout << "  RH: " << vecMeteo[ii].rh << endl;
 	}
 
 	//And now, doing spatial interpolations
@@ -70,5 +72,9 @@ int main(int argc, char** argv) {
 	io->write2DGrid(rh, "output/rh.2d");
 	
 	cout << "Writing the Grids was successful" << endl;
+
+	delete io;
+	delete raw_io;
+
 	return 0;
 }

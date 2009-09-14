@@ -2,6 +2,8 @@
 
 PLUGINPATH	= ../lib
 
+COORDIN		= CH1903
+
 DEMSRC		= ARC
 DEMFILE  	= input/dischma.dem
 DEMFILE1 	= /home/thoems/Desktop/a3d/slfiotest/input/surface-grids/gotthard25.dem
