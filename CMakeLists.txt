@@ -9,6 +9,7 @@ ADD_SUBDIRECTORY(src/filter)
 
 # require proper c++
 set(CFLAGS "-Wall -ansi -pedantic -Wno-long-long")
+set(POPCC popcc)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "release" CACHE STRING
@@ -40,7 +41,7 @@ if (DEST STREQUAL "zeus")
   set(CMAKE_CXX_COMPILER "g++" CACHE STRING 
     "Compiler set to g++ for zeus" FORCE)
   set(CMAKE_CC_COMPILER "gcc" CACHE STRING 
-    "Compiler set to g++ for zeus" FORCE)
+    "Compiler set to gcc for zeus" FORCE)
   set(OPTIM "-DNDEBUG")
   set(ARCH  "-march=x86-64")
   set(DEBUG "-g -O0 -D__DEBUG")
@@ -62,18 +63,16 @@ set(IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
 set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
+add_custom_target(distclean make clean
+  COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake src/cmake_install.cmake src/filter/cmake_install.cmake src/plugins/cmake_install.cmake src/plugins/gsn/cmake_install.cmake
+  COMMAND cmake -E remove_directory CMakeFiles
+  COMMAND cmake -E remove_directory src/CMakeFiles
+  COMMAND cmake -E remove_directory src/filter/CMakeFiles
+  COMMAND cmake -E remove_directory src/plugins/gsn/CMakeFiles
+  COMMAND cmake -E remove_directory src/plugins/CMakeFiles)
 
 #some cmake specific things
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
   set(GSOAPPP NOTFOUND CACHE FORCE)
 endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
-
-if (XMLPP_INC AND NOT EXISTS ${XMLPP_INC})
-  set(XMLPP_INC NOTFOUND CACHE FORCE)
-endif(XMLPP_INC AND NOT EXISTS ${XMLPP_INC})
-
-if (XMLPP AND NOT EXISTS ${XMLPP})
-  set(XMLPP NOTFOUND CACHE FORCE)
-endif(XMLPP AND NOT EXISTS ${XMLPP})
-
 
