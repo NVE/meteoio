@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.6) 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
-PROJECT(meteoio CXX)
+PROJECT(meteoio CXX C)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(src/plugins)
 ADD_SUBDIRECTORY(src/plugins/gsn)
+ADD_SUBDIRECTORY(src/filter)
 
 # require proper c++
 ADD_DEFINITIONS("-Wall -ansi -pedantic -Wno-long-long")

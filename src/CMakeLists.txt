@@ -1,14 +1,8 @@
 #OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/src")
 
-# require proper c++
-ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
-# add debug definitions
-IF( CMAKE_BUILD_TYPE STREQUAL "debug")
- ADD_DEFINITIONS( "-g -DDEBUG" )
-ENDIF()
-
 SET(meteoio_sources 
+	Laws.c
   	A3DIO.cc
 	Date_IO.cc         
 	Grid2DObject.cc  
