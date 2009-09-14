@@ -8,7 +8,7 @@ ADD_SUBDIRECTORY(src/plugins/gsn)
 ADD_SUBDIRECTORY(src/filter)
 
 # require proper c++
-ADD_DEFINITIONS("-Wall -ansi -pedantic -Wno-long-long")
+set(CFLAGS "-Wall -ansi -pedantic -Wno-long-long")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "release" CACHE STRING
@@ -23,7 +23,7 @@ endif(NOT DEST)
 if (DEST STREQUAL "safe")
   set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG")
   set(ARCH  "-march=pentium3")
-  set(DEBUG "-g -O0 -DDEBUG")
+  set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "safe")
 
 if (DEST STREQUAL "grid")
@@ -33,7 +33,7 @@ if (DEST STREQUAL "grid")
     "Compiler set to colorgcc for the grid" FORCE)
   set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG")
   set(ARCH  "-march=native")
-  set(DEBUG "-g -O0 -DDEBUG")
+  set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "grid")
 
 if (DEST STREQUAL "zeus")
@@ -43,11 +43,11 @@ if (DEST STREQUAL "zeus")
     "Compiler set to g++ for zeus" FORCE)
   set(OPTIM "-DNDEBUG")
   set(ARCH  "-march=x86-64")
-  set(DEBUG "-g -O0 -DDEBUG")
+  set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "zeus")
 
-set(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM}")
-set(CMAKE_CXX_FLAGS_DEBUG "${DEBUG}")
+set(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM} ${CFLAGS}" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${CFLAGS}" CACHE STRING "" FORCE)
 
 message(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
