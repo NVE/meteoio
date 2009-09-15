@@ -71,6 +71,17 @@ add_custom_target(distclean make clean
   COMMAND cmake -E remove_directory src/plugins/gsn/CMakeFiles
   COMMAND cmake -E remove_directory src/plugins/CMakeFiles)
 
+
+#for the uninstall target
+CONFIGURE_FILE(
+  "${PROJECT_SOURCE_DIR}/tools/cmake/cmake_uninstall.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+  IMMEDIATE @ONLY)
+
+ADD_CUSTOM_TARGET(uninstall
+  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+
+
 #some cmake specific things
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
   set(GSOAPPP NOTFOUND CACHE FORCE)
