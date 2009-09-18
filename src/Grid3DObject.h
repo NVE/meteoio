@@ -79,6 +79,14 @@ class Grid3DObject{
 			const double& latitude, const double& longitude,
 			const double& cellsize, const Array3D<double>& grid3D_in);
 
+		/**
+		* @brief check if the current Grid3DObject has the same geolocalization attributes
+		* as another Grid3DObject. The grid coordinates (xllcorner & yllcorner) are NOT
+		* checked as these might be tweaked for convenience (like between input grid and local grid)
+		* @param target (Grid3DObject) grid to compare to
+		* @return (bool) true if same geolocalization
+		*/
+		bool isSameGeolocalization(const Grid3DObject& target);
 
 		Array3D<double> grid3D;
 		unsigned int ncols, nrows, ndepth;

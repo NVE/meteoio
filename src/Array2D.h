@@ -107,7 +107,7 @@ template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned
 	if ((_ncols == 0) || (_nrows == 0)) //the plane to copy has to make sense
 		throw IndexOutOfBoundsException("", AT);
 
-	resize(_ncols, _nrows); //create new Array3D object
+	resize(_ncols, _nrows); //create new Array2D object
 
 	//Copy by value subspace
 	for (unsigned int ii=0; ii<ny; ii++) { 

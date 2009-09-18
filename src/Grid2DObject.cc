@@ -108,7 +108,8 @@ void Grid2DObject::checkCoordinates()
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)
 {
 	if( ncols==target.ncols && nrows==target.nrows &&
-		latitude==target.latitude && longitude==target.longitude &&
+		IOUtils::checkEpsilonEquality(latitude, target.latitude, 1.e-4) && 
+		IOUtils::checkEpsilonEquality(longitude, target.longitude, 1.e-4) &&
 		cellsize==target.cellsize) {
 		return true;
 	} else {

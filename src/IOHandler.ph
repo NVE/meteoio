@@ -16,27 +16,22 @@ parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
 		classuid(1003);
 	public:
-		// virtual IOHandler* clone() const; // lwk : not used yet
 		IOHandler(const std::string& configfile)  @{ power=100 ?: 50; };
 		//IOHandler(const IOHandler&);
 		IOHandler(const ConfigReader&)  @{ power=100 ?: 50; };
 		~IOHandler();
 
+		//methods defined in the IOInterface class
 		virtual void read2DGrid([out]Grid2DObject& dem_out, const string& parameter="");
-
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
-
 		virtual void readMeteoData([in]const Date_IO& dateStart, [in]const Date_IO& dateEnd,
 			     			[proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
 						[proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
 						const unsigned& stationindex=IOUtils::npos);
-
 		void readMeteoData([in]const Date_IO& date, [proc=marshal_METEO_DATASET] METEO_DATASET& vecMeteo, [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
-
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_CSpecialPTSArray]CSpecialPTSArray& pts);
-
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const string& name);
 
 	private:

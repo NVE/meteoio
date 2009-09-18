@@ -96,6 +96,17 @@ void Grid3DObject::checkCoordinates()
 	}
 }
 
+bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
+{
+	if( ncols==target.ncols && nrows==target.nrows && ndepth==target.ndepth &&
+		IOUtils::checkEpsilonEquality(latitude, target.latitude, 1.e-4) && 
+		IOUtils::checkEpsilonEquality(longitude, target.longitude, 1.e-4) &&
+		cellsize==target.cellsize) {
+		return true;
+	} else {
+		return false;
+	}
+}
 
 #ifdef _POPC_
 #include "marshal_meteoio.h"
