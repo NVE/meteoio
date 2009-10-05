@@ -80,7 +80,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 		string coordsys="", coordparam="";
 		try {
 			cfg.getValue("COORDIN", coordsys);
-			cfg.getValue("COORDPARAM", coordparam); 
+			cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
 		} catch(std::exception& e){
 			//problems while reading values for COORDIN or COORDPARAM
 			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
