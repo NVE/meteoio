@@ -32,10 +32,10 @@ int main(){
 	ss1 << d1;
 	ss2 << d2;
 
-	meteodata_req.param1 = new LONG64(d1);
-	meteodata_req.param2 = new LONG64(d2);
+	meteodata_req.from = (LONG64)(d1);
+	meteodata_req.to = (LONG64)(d2);
 
-	cout << time(NULL) << "==" << d1 << "==" << meteodata_req.param1 <<endl;
+	cout << time(NULL) << "==" << d1 << "==" << meteodata_req.from <<endl;
 
 	cout << "TEST Webservice" << endl;
 
@@ -46,9 +46,9 @@ int main(){
 		for (unsigned int ii=0; ii<sensors.return_.size(); ii++){
 			cout << "Sensor " << ii << " Name: " << sensors.return_[ii] << endl;
 			//get Meta information
-			sensorloc_req.param0 = new std::string(sensors.return_[ii]);
-			sensorinfo_req.param0 = new std::string(sensors.return_[ii]);
-			meteodata_req.param0 = new std::string(sensors.return_[ii]);
+			sensorloc_req.sensor = new std::string(sensors.return_[ii]);
+			sensorinfo_req.sensor = new std::string(sensors.return_[ii]);
+			meteodata_req.sensor = new std::string(sensors.return_[ii]);
 
 			if (gsn.getSensorLocation(&sensorloc_req, &sensorloc) == SOAP_OK){
 				if (sensorloc.return_.size() == 3){
@@ -72,9 +72,9 @@ int main(){
 				cout << "NOT OK" << endl;
 			}
 
-			delete sensorloc_req.param0;
-			delete sensorinfo_req.param0;
-			delete meteodata_req.param0;
+			delete sensorloc_req.sensor;
+			delete sensorinfo_req.sensor;
+			delete meteodata_req.sensor;
 		}
 	}
 

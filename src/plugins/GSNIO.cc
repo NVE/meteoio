@@ -111,24 +111,27 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 	_ns1__getSensorLocation sensorloc_req;
 	_ns1__getSensorLocationResponse sensorloc;
 
-	sensorloc_req.param0 = &vecStationName[stationindex];
+	sensorloc_req.sensor = &vecStationName[stationindex];
 	
 	if (gsn.getSensorLocation(&sensorloc_req, &sensorloc) == SOAP_OK){
-		if (sensorloc.return_.size() != 3) throw IOException("Not enough SensorLocation data received ...", AT);
+		if (sensorloc.return_.size() != 4) throw IOException("Not enough SensorLocation data received ...", AT);
 
 		string *s0 = &sensorloc.return_[0]; //easier to type
 		string *s1 = &sensorloc.return_[1]; //easier to type
 		string *s2 = &sensorloc.return_[2]; //easier to type
+		string *s3 = &sensorloc.return_[3]; //easier to type
 		size_t sep0 = s0->find_first_of("=");
 		size_t sep1 = s1->find_first_of("=");
 		size_t sep2 = s2->find_first_of("=");
-		double latitude=IOUtils::nodata, longitude=IOUtils::nodata;
+		size_t sep3 = s3->find_first_of("=");
+		double latitude=IOUtils::nodata, longitude=IOUtils::nodata, altitude=IOUtils::nodata;
 		string name = s0->substr((sep0+1), (s0->size()-sep0-2));
 
 		convertStringToDouble(latitude, s1->substr((sep1+1), (s1->size()-sep1-2)), "Latitude");
 		convertStringToDouble(longitude, s2->substr((sep2+1), (s2->size()-sep2-2)), "Longitude");
+		convertStringToDouble(altitude, s3->substr((sep3+1), (s3->size()-sep3-2)), "Altitude");
 
-		sd.setStationData(IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, name, latitude, longitude);
+		sd.setStationData(IOUtils::nodata, IOUtils::nodata, altitude, name, latitude, longitude);
 	} else {
 		soap_print_fault(&gsn, stdout);
 		throw IOException("Error in communication with GSN",AT);
@@ -145,13 +148,20 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 
 	while (std::getline(ss, tmpstring, ';')){
 		stringstream data(tmpstring);
-		while (std::getline(data, tmpstring, ':')){
+		while (std::getline(data, tmpstring, '=')){
 			string key = tmpstring;
-			if (!(std::getline(data, tmpstring, ':')))
+			if (!(std::getline(data, tmpstring, '=')))
 				throw InvalidFormatException("",AT);
 
 			if (key == "LIGHT") convertStringToDouble(md.iswr, tmpstring, "ISWR");
 			else if (key == "TEMPERATURE") convertStringToDouble(md.ta, tmpstring, "Air Temperature");				
+			else if (key == "TIMED") {
+				tmpstring = tmpstring.substr(0,tmpstring.length()-3); //cut away the seconds
+				time_t measurementTime;
+				if (!IOUtils::convertString(measurementTime, tmpstring, std::dec))
+					throw ConversionFailedException("Conversion failed for value TIMED", AT);
+				md.date.setDate(measurementTime);
+			}
 		}
 	}
 }
@@ -168,7 +178,7 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 	_ns1__getMeteoDataResponse meteodata;
 	vector<string> vecString;
 
-	meteodata_req.param0 = &vecStationName[stationindex];
+	meteodata_req.sensor = &vecStationName[stationindex];
 	/*
 	  Date_IO dateStart1(time(NULL));
 	  dateStart1 -= Date_IO(0.013);
@@ -187,8 +197,8 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 	//cout << dateStart1 << "  " << dateEnd1 << endl;
 	//cout << dateStart1.getEpochTime() << "==" << l1 << endl; cout << dateEnd1.getEpochTime() << "==" << l2 << endl;
 	
-	meteodata_req.param1 = &l1;
-	meteodata_req.param2 = &l2;
+	meteodata_req.from = l1;
+	meteodata_req.to = l2;
 	
 	//cout << std::dec << meteodata_req.param1 << "\t" << meteodata_req.param2 << endl;
 
@@ -197,10 +207,7 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 		for (unsigned int jj=0; jj<meteodata.return_.size(); jj++){
 			MeteoData md;
 			parseString(meteodata.return_[jj], vecString, md);
-
-			//Educated guess for meteodata date TODO
-			Date_IO tmpdate(dateStart.getJulian() + jj*((dateEnd.getJulian()-dateStart.getJulian())/meteodata.return_.size()));
-			md.date = tmpdate;
+			convertUnits(md);
 
 			//cout << md.toString() << endl;
 			vecMeteo[stationindex].push_back(md);

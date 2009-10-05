@@ -5,7 +5,7 @@
             <xs:element name="getLatestMeteoData">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element minOccurs="0" name="param0" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="sensor" nillable="true" type="xs:string"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -19,8 +19,8 @@
             <xs:element name="getLatestMeteoDataMeasurement">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element minOccurs="0" name="param0" nillable="true" type="xs:string"/>
-                        <xs:element minOccurs="0" name="param1" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="sensor" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="measurement" nillable="true" type="xs:string"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -34,9 +34,9 @@
             <xs:element name="getMeteoData">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element minOccurs="0" name="param0" nillable="true" type="xs:string"/>
-                        <xs:element minOccurs="0" name="param1" type="xs:long"/>
-                        <xs:element minOccurs="0" name="param2" type="xs:long"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="sensor" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="from" type="xs:long"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="to" type="xs:long"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -50,10 +50,10 @@
             <xs:element name="getMeteoDataMeasurement">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element minOccurs="0" name="param0" nillable="true" type="xs:string"/>
-                        <xs:element minOccurs="0" name="param1" nillable="true" type="xs:string"/>
-                        <xs:element minOccurs="0" name="param2" type="xs:long"/>
-                        <xs:element minOccurs="0" name="param3" type="xs:long"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="sensor" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="measurement" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="from" type="xs:long"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="to" type="xs:long"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -67,7 +67,7 @@
             <xs:element name="getSensorInfo">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element minOccurs="0" name="param0" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="sensor" nillable="true" type="xs:string"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -81,7 +81,7 @@
             <xs:element name="getSensorLocation">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element minOccurs="0" name="param0" nillable="true" type="xs:string"/>
+                        <xs:element maxOccurs="1" minOccurs="1" name="sensor" nillable="true" type="xs:string"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
