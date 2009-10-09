@@ -130,7 +130,6 @@ const string MeteoData::toString() const
 #ifdef _POPC_
 void MeteoData::Serialize(POPBuffer &buf, bool pack)
 {
-	DEBUG("Ser");
 	if (pack){
 		date.Serialize(buf,true);
 		buf.Pack(&ta,1);

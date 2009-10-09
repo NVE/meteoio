@@ -112,7 +112,6 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 #include "marshal_meteoio.h"
 void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 {
-	DEBUG("Ser");
 	if (pack)
 	{
 		buf.Pack(&ncols,1);

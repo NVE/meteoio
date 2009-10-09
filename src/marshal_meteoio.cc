@@ -119,18 +119,9 @@ void marshal_map_str_str(POPBuffer &buf, std::map<string, string> &data_map, int
 			buf.UnPack(&key,1);
 			buf.UnPack(&value,1);
 			data_map[key] = value;
-//	DEBUG("key %s value %s",(const char*)key.c_str(),(const char*)data_map[key].c_str());
 		}
 
 	}
-	int i=0;
-	for(std::map<std::string,std::string>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
-	{
-		cout <<"pack="<<flag<< "("<<i<<") Who(key = first): " << it->first;
-		cout << " Score(value = second): " << it->second << '\n';
-		i++;
-	}
-
 }
 
 void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp)
