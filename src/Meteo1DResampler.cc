@@ -12,7 +12,7 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 	}
 
 	MeteoData newmd;
-	double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr; 
+	double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr; 
 
 	MeteoData& tmpmd1 = mbuffer_out.at(index_in);
 	MeteoData& tmpmd2 = mbuffer_out.at(index_in-1);
@@ -31,7 +31,7 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 		/*unsigned int rh_left=index_in-1, rh_right=index_in,
 		ta_left=index_in-1, ta_right=index_in,
 		vw_left=index_in-1, vw_right=index_in,
-		nswc_left=index_in-1, nswc_right=index_in;
+		hnw_left=index_in-1, hnw_right=index_in;
 		*/
 		//checkForRH(mbuffer_out, rh_left, rh_right);
 
@@ -78,10 +78,10 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 			lwr = Interpol1D::linearInterpolation(tmpmd2.lwr, tmpmd1.lwr, weight);
 		} 
 
-		if ((tmpmd1.nswc == nodata) || (tmpmd2.nswc == nodata)) {
-			nswc = nodata;
+		if ((tmpmd1.hnw == nodata) || (tmpmd2.hnw == nodata)) {
+			hnw = nodata;
 		} else {
-			nswc = Interpol1D::linearInterpolation(tmpmd2.nswc, tmpmd1.nswc, weight);
+			hnw = Interpol1D::linearInterpolation(tmpmd2.hnw, tmpmd1.hnw, weight);
 		} 
 
 		if ((tmpmd1.tsg == nodata) || (tmpmd2.tsg == nodata)) {
@@ -108,7 +108,7 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 			rswr = Interpol1D::linearInterpolation(tmpmd2.rswr, tmpmd1.rswr, weight);
 		}
 
-		newmd.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr); 
+		newmd.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr); 
 		newmd.setResampled(true);
 		mbuffer_out.insert(mbuffer_out.begin()+index_in, newmd);
 		sbuffer_out.insert(sbuffer_out.begin()+index_in, sbuffer_out[index_in]);
@@ -233,18 +233,18 @@ void Meteo1DResampler::seekIndices(MeteoBuffer&, const string&, unsigned int&, u
 		if ((mbuffer.getMeteoData(leftindex).tss == nodata)) {
 			leftindex == MeteoBuffer::npos;
 		}
-	} else if (parameter =="nswc") {
-		while ((rightindex < mbuffer.size()) && (mbuffer.getMeteoData(rightindex).nswc == nodata)) {
+	} else if (parameter =="hnw") {
+		while ((rightindex < mbuffer.size()) && (mbuffer.getMeteoData(rightindex).hnw == nodata)) {
 			rightindex++;
 		}
-		while ((leftindex >= 0) && (mbuffer.getMeteoData(rightindex).nswc == nodata)) {
+		while ((leftindex >= 0) && (mbuffer.getMeteoData(rightindex).hnw == nodata)) {
 			leftindex--;
 		}
 
-		if ((mbuffer.getMeteoData(rightindex).nswc == nodata)) {
+		if ((mbuffer.getMeteoData(rightindex).hnw == nodata)) {
 			rightindex == MeteoBuffer::npos;
 		}
-		if ((mbuffer.getMeteoData(leftindex).nswc == nodata)) {
+		if ((mbuffer.getMeteoData(leftindex).hnw == nodata)) {
 			leftindex == MeteoBuffer::npos;
 		}
 	}  else if (parameter =="hs") {

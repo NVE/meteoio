@@ -236,7 +236,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, string file
 
 	tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3]);
 
-	//Read rest of line with values ta, iswr, vw, rh, ea, nswc
+	//Read rest of line with values ta, iswr, vw, rh, ea, hnw
   
 	for (int ii=0; ii<6; ii++) { //go through the columns
 		if (!IOUtils::convertString(tmp_values[ii], tmpvec.at(ii+4), std::dec)) {
@@ -252,7 +252,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, string file
 
 /*
   Preamble: Files are in METEOFILE directory. 4 types of files: 
-  prec????.txt == nswc
+  prec????.txt == hnw
   rh????.txt == rh
   ta????.txt == ta
   wspd????.txt == vw
@@ -476,8 +476,8 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter,
 				tmpmd.date = tmp_date;
 
 				if (parameter == "nswc") {
-					if (!IOUtils::convertString(tmpmd.nswc, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For nswc value in " + filename + "  for date " + tmpmd.date.toString(), AT);
+					if (!IOUtils::convertString(tmpmd.hnw, tmpvec[ii], std::dec)) {
+						throw ConversionFailedException("For hnw value in " + filename + "  for date " + tmpmd.date.toString(), AT);
 					}
 	  
 				} else if (parameter == "rh") {

@@ -16,23 +16,23 @@ Meteo2DInterpolator::Meteo2DInterpolator(const DEMObject& _dem, const vector<Met
 
 //This function calls the interpolation class for each individual meteo parameter.
 //It also builds a list of valid data sources for the given parameter.
-void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta, 
+void Meteo2DInterpolator::interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2DObject& ta, 
 				      Grid2DObject& vw, Grid2DObject& p)
 {
 
 	interpolateP(p);
-	interpolateNSWC(nswc);
+	interpolateHNW(hnw);
 	interpolateTA(ta);
 	interpolateRH(rh,ta);
 	interpolateVW(vw);
 }
 
-void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta,
+void Meteo2DInterpolator::interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2DObject& ta,
 					Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/)
 {
 
 	interpolateP(p);
-	interpolateNSWC(nswc);
+	interpolateHNW(hnw);
 	interpolateTA(ta);
 	interpolateRH(rh,ta);
 	interpolateVW(vw);
@@ -40,23 +40,23 @@ void Meteo2DInterpolator::interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid
 	//interpolateEA(ea);
 }
 
-void Meteo2DInterpolator::interpolateNSWC(Grid2DObject& nswc)
+void Meteo2DInterpolator::interpolateHNW(Grid2DObject& hnw)
 {
 	vector<StationData> vecSelectedStations;
 	vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(SourcesData[ii].nswc != nodata) {
-			//cout << SourcesData[ii].nswc << endl;
+		if(SourcesData[ii].hnw != nodata) {
+			//cout << SourcesData[ii].hnw << endl;
 			vecSelectedStations.push_back(SourcesMeta[ii]);
-			vecInput.push_back(SourcesData[ii].nswc);
+			vecInput.push_back(SourcesData[ii].hnw);
 		}
 	}
 
-	printf("[i] interpolating NSWC using %d stations\n", (int)vecSelectedStations.size());
-	Interpol2D NSWC(Interpol2D::I_CST, Interpol2D::I_IDWK, vecInput, vecSelectedStations, dem);
-	NSWC.calculate(nswc);
+	printf("[i] interpolating HNW using %d stations\n", (int)vecSelectedStations.size());
+	Interpol2D HNW(Interpol2D::I_CST, Interpol2D::I_IDWK, vecInput, vecSelectedStations, dem);
+	HNW.calculate(hnw);
 }
 
 void Meteo2DInterpolator::interpolateRH(Grid2DObject& rh, Grid2DObject& ta)

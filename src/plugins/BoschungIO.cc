@@ -224,7 +224,7 @@ void BoschungIO::checkForMeteoFiles(const string& xmlpath, const string& station
 
 void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, MeteoData& md, StationData& sd)
 {
-	double ta=nodata, iswr=nodata, vw=nodata, dw=nodata, rh=nodata, lwr=nodata, nswc=nodata, tsg=nodata, tss=nodata, hs=nodata, rswr=nodata;
+	double ta=nodata, iswr=nodata, vw=nodata, dw=nodata, rh=nodata, lwr=nodata, hnw=nodata, tsg=nodata, tss=nodata, hs=nodata, rswr=nodata;
 	double longitude=nodata, latitude=nodata, altitude=nodata;
 
 	//Try to read xml file
@@ -267,15 +267,15 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 		string str_rh = xmlGetNodeContent(pNode, "rlf");
 		xmlParseStringToDouble(str_rh, rh, "rlf");
 
-		//nswc
+		//hnw
 		string str_ns = xmlGetNodeContent(pNode, "ns");
-		xmlParseStringToDouble(str_ns, nswc, "ns");
+		xmlParseStringToDouble(str_ns, hnw, "ns");
 
 		//sb = lwr
 		string str_sb = xmlGetNodeContent(pNode, "sb");
 		xmlParseStringToDouble(str_sb, lwr, "sb");
 
-		md.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr);
+		md.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr);
 		convertUnits(md);
     
 	} else {

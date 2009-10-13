@@ -28,13 +28,13 @@ class Meteo2DInterpolator {
 		* @brief This function calls the interpolation class for each individual meteo parameter. 
 		*        It also builds a list of valid data sources for the given parameter.
 		*/
-		void interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta, Grid2DObject& vw, Grid2DObject& p);
-		void interpolate(Grid2DObject& nswc, Grid2DObject& rh, Grid2DObject& ta,
+		void interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2DObject& ta, Grid2DObject& vw, Grid2DObject& p);
+		void interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2DObject& ta,
 				 Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/);
 
 	private:
 		void interpolateP(Grid2DObject& p);
-		void interpolateNSWC(Grid2DObject& nswc);
+		void interpolateHNW(Grid2DObject& hnw);
 		void interpolateTA(Grid2DObject& ta);
 		void interpolateRH(Grid2DObject& rh, Grid2DObject& ta);
 		void interpolateVW(Grid2DObject& vw);

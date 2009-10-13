@@ -38,7 +38,7 @@ class MeteoData {
 		* @param dw Wind DIRECTION in m s-1 (default nodata)
 		* @param rh RELATIVE HUMIDITY (default nodata)
 		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
-		* @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
+		* @param hnw Height new precipitations in kg m-2 (default nodata)
 		* @param tsg Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
 		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
 		* @param hs Snow height in cm (default nodata)
@@ -52,7 +52,7 @@ class MeteoData {
 		    const double& dw=nodata, 
 		    const double& rh=nodata, 
 		    const double& lwr=nodata, 
-		    const double& nswc=nodata,
+		    const double& hnw=nodata,
 		    const double& tsg=nodata,
 		    const double& tss=nodata, 
 		    const double& hs=nodata,
@@ -68,7 +68,7 @@ class MeteoData {
 		* @param dw Wind DIRECTION in m s-1 (default nodata)
 		* @param rh RELATIVE HUMIDITY (default nodata)
 		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
-		* @param nswc NEW SNOW WATER EQUIVALENT in kg m-2 (default nodata)
+		* @param hnw Height new precipitations in kg m-2 (default nodata)
 		* @param tsg Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
 		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
 		* @param hs Snow height in cm (default nodata)
@@ -82,7 +82,7 @@ class MeteoData {
 		    	const double& dw=nodata, 
 		    	const double& rh=nodata, 
 		    	const double& lwr=nodata, 
-		    	const double& nswc=nodata,
+		    	const double& hnw=nodata,
 		    	const double& tsg=nodata,
 		    	const double& tss=nodata, 
 			const double& hs=nodata,
@@ -105,7 +105,7 @@ class MeteoData {
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
 		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
-		double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr, p; //direct access allowed
+		double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr, p; //direct access allowed
 		Date_IO date;///<Date_IO/Time of the measurement
 
  private:

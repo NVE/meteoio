@@ -9,13 +9,13 @@ using namespace std;
 #ifdef _POPC_
 void IOHandler::registerPlugins()
 {
-	mapPlugins["A3D"]		= IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
 	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungiopopc.so", "BoschungIO", NULL, NULL);
-	mapPlugins["IMIS"]		= IOPlugin("libimisiopopc.so", "ImisIO", NULL, NULL);
+	mapPlugins["IMIS"]	= IOPlugin("libimisiopopc.so", "ImisIO", NULL, NULL);
 	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopiopopc.so", "GeotopIO", NULL, NULL);
-	mapPlugins["GSN"]		= IOPlugin("libgsniopopc.so", "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]		= IOPlugin("libarciopopc.so", "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]		= IOPlugin("libgrassiopopc.so", "GrassIO", NULL, NULL);
+	mapPlugins["GSN"]	= IOPlugin("libgsniopopc.so", "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]	= IOPlugin("libarciopopc.so", "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]	= IOPlugin("libgrassiopopc.so", "GrassIO", NULL, NULL);
 }
 #else
 void IOHandler::registerPlugins()
@@ -58,7 +58,7 @@ IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg
 IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfg)
 #endif
 {
-	registerPlugins();	
+	registerPlugins();
 }
 
 #ifdef _POPC_
@@ -112,7 +112,7 @@ void IOHandler::loadPlugin(const string& libname, const string& classname, Dynam
 			} else {
 				cout << "success" << endl;
 			}
-			}
+		}
 	} catch (exception& e) {
 		if (dynLibrary != NULL)
 		delete dynLibrary;
@@ -123,18 +123,19 @@ void IOHandler::loadPlugin(const string& libname, const string& classname, Dynam
 IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
 {
 	string op_src="";
-	cfg.getValue(cfgvalue, op_src); 
+	cfg.getValue(cfgvalue, op_src);
 
-	mapit = mapPlugins.find(op_src);		
+	mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
 		throw IOException(cfgvalue + " does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
 	
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
-	}			
+	}
 	
-	if ((mapit->second).io == NULL)	
+	if ((mapit->second).io == NULL) {
 		throw IOException("Requesting to read/write data with plugin for " + cfgvalue + ", but plugin is not loaded", AT);
+	}
 
 	return (mapit->second).io;
 }

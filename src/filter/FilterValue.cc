@@ -73,8 +73,8 @@ double MeteoData::* FilterValue::getMeasurePtr(const string& measureName)
 		return &MeteoData::rh;
 	} else if (measureName == "lwr") {
 		return &MeteoData::lwr;
-	} else if (measureName == "nswc") {
-		return &MeteoData::nswc;
+	} else if (measureName == "hnw") {
+		return &MeteoData::hnw;
 	} else if (measureName == "tsg") {
 		return &MeteoData::tsg;
 	} else if (measureName == "tss") {
@@ -85,7 +85,7 @@ double MeteoData::* FilterValue::getMeasurePtr(const string& measureName)
 		return &MeteoData::rswr;
 	} else {
 		throw InvalidArgumentException("parameter '"+c_measureName+"' has unexpected value "+measureName+
-		", expected are ta, iswr, vw, rh, lwr, nswc, ts0", AT);
+		", expected are ta, iswr, vw, rh, lwr, hnw, ts0", AT);
 	}
 }
 
