@@ -14,7 +14,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	}
 #ifdef _POPC_
 //	printf("IOException(%d): %s\n",Code(),msg.c_str());
-	Extra()=msg.c_str();
+	SetExtra(msg.c_str());
 #endif
 }
 
