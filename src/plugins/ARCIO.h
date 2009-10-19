@@ -12,8 +12,14 @@
 #include <sstream>
 #include <iostream>
 
-using namespace IOUtils;
 
+/**
+ * @class ARCIO
+ * @brief This class enables the access to 2D grids stored in ESRI ASCII (ARCGIS) format
+ *
+ * @author Thomas Egger
+ * @date   2009-08-28
+ */
 class ARCIO : public IOInterface {
 	public:
 		ARCIO(void (*delObj)(void*), const string& filename);

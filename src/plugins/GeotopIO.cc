@@ -142,7 +142,7 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 							 tmpdata[mapHeader["dw"]], 
 							 tmpdata[mapHeader["rh"]], 
 							 tmpdata[mapHeader["lwr"]], 
-							 tmpdata[mapHeader["nswc"]], 
+							 tmpdata[mapHeader["hnw"]], 
 							 IOUtils::nodata,
 							 IOUtils::nodata,
 							 IOUtils::nodata,
@@ -191,7 +191,7 @@ void GeotopIO::makeColumnMap(const std::vector<std::string>& tmpvec,
 	for (unsigned int ii=0; ii<vecColumnNames.size(); ii++){
 		string current="";
 		switch(ii){
-		case 0: mapHeader["nswc"] = tmpvec.size(); current="nswc"; break; 
+		case 0: mapHeader["hnw"] = tmpvec.size(); current="hnw"; break; 
 		case 1: mapHeader["vw"] = tmpvec.size(); current="vw"; break; 
 		case 2: mapHeader["dw"] = tmpvec.size(); current="dw"; break; 
 		case 3: mapHeader["rh"] = tmpvec.size(); current="rh"; break; 

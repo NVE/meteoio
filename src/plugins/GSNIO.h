@@ -14,7 +14,13 @@
 #include <iostream>
 #include <vector>
 
-
+/**
+ * @class GSNIO
+ * @brief This class enables the access to the GSN web service
+ *
+ * @author Thomas Egger
+ * @date   2009-09-25
+ */
 class GSNIO : public IOInterface {
 	public:
 		GSNIO(void (*delObj)(void*), const string& filename);

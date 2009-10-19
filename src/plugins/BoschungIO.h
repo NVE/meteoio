@@ -15,8 +15,14 @@
 #include "IOExceptions.h"
 #include "DynamicLibrary.h"
 
-using namespace IOUtils;
 
+/**
+ * @class BoschungIO
+ * @brief This class enables the access meteo data in Boschung's XML format
+ *
+ * @author Thomas Egger
+ * @date   2008-11-20
+ */
 class BoschungIO : public IOInterface {
 	public:
 		//virtual BoschungIO* clone() const;

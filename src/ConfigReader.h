@@ -18,6 +18,7 @@
  * - lines that start with a semicolon ';' or a hash sign '#' are ignored (regarded as comments)
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed 
+ * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
  *
  * @author Thomas Egger
  * @date   2008-11-30
@@ -32,35 +33,74 @@ class ConfigReader {
 #endif
 	public:
 		/**
-		* @brief Main constructor. The file is parsed and a key/value map object is internally created
-		* @param filename_in string representing the absolute filename of the key/value file
+		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
+		 * @param[in] filename_in string representing the absolute filename of the key/value file
 		*/
 		ConfigReader(const std::string& filename_in);
 
 		/**
-		* @brief Returns the filename that the ConfigReader object was constructed with.
-		* @return std::string The absolute filename of the key/value file.
-		*/
+		 * @brief Returns the filename that the ConfigReader object was constructed with.
+		 * @return std::string The absolute filename of the key/value file.
+		 */
 		std::string getFileName();
 
+		/**
+		 * @brief Template function to retrieve a vector of values of class T for a certain key
+		 * @code
+		 * algorithms = lsm linregres idw_kriging\n
+		 * MYNUMBERS = 17.87 19.89 -19.89 +7777.007
+		 * @endcode
+		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
+		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved
+		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 */
+		template <class T> void getValue(const std::string& key, 
+								   std::vector<T>& vecT, 
+								   const unsigned int& options=0) const {
+			getValue(key, "GENERAL", vecT, options);
+		}
+		
+		/**
+		 * @brief Template function to retrieve a vector of values of class T for a certain key
+		 * @code
+		 * algorithms = lsm linregres idw_kriging\n
+		 * MYNUMBERS = 17.87 19.89 -19.89 +7777.007
+		 * @endcode
+		 * @param[in] key std::string representing a KEY in the key/value file
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved 
+		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 */
+		template <class T> void getValue(const std::string& key, 
+								   const std::string& section, 
+								   vector<T>& vecT, 
+								   const unsigned int& options=0) const {
+			try {
+				vecT.clear();
+				IOUtils::getValueForKey<T>(properties, section + "::" + key, vecT);
+			} catch(std::exception& e){
+				if (options != ConfigReader::nothrow)
+					throw;
+			}
+		}
 
 		/**
-		* @brief Template function to retrieve a value of class T for a certain key
-		* @param key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
-		* @param t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
-		* @param options indicating whether an exception should be raised, when key is not present
-		*/
+		 * @brief Template function to retrieve a value of class T for a certain key
+		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
+		 * @param[out] t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
+		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 */
 		template <class T> void getValue(const std::string& key, T& t, const unsigned int& options=0) const {
 			getValue(key, "GENERAL", t, options);
 		}
 
 		/**
-		* @brief Template function to retrieve a value of class T for a certain key
-		* @param key std::string representing a KEY in the key/value file
-		* @param section std::string representing a section name; the key has to be part of this section
-		* @param t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
-		* @param options indicating whether an exception should be raised, when key is not present
-		*/
+		 * @brief Template function to retrieve a value of class T for a certain key
+		 * @param[in] key std::string representing a KEY in the key/value file
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[out] t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
+		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 */
 		template <class T> void getValue(const std::string& key, const std::string& section, 
 								   T& t, 
 								   const unsigned int& options=0) const {

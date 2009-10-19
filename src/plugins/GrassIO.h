@@ -12,6 +12,14 @@
 #include <iostream>
 #include <iomanip>
 
+
+/**
+ * @class GrassIO
+ * @brief This class enables the access to 2D grids stored in GRASS ASCII (e.g. JGrass) format
+ *
+ * @author Thomas Egger
+ * @date   2008-08-03
+ */
 class GrassIO : public IOInterface {
 	public:
 		GrassIO(void (*delObj)(void*), const string& filename);

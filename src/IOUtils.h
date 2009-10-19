@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cctype>
+#include <limits>
 
 #include "IOExceptions.h"
 #include "Date_IO.h"
@@ -185,8 +186,9 @@ namespace IOUtils {
 			return true;
 		} else {
 			std::istringstream iss(s);
+			iss.setf(ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 			iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
-		
 			if (iss.fail()) {
 				//Conversion failed
 				return false;
@@ -225,6 +227,38 @@ namespace IOUtils {
 
 		if(!convertString<T>(t, value, std::dec)) {
 			throw ConversionFailedException(value, AT);
+		}
+	}
+
+	/**
+	* @brief Returns, with the requested type, the value associated to a key (template function).
+	* @param T           [in] The type wanted for the return value (template type parameter).
+	* @param properties  [in] A map containing all the parameters.
+	* @param key         [in] The key of the parameter to retrieve.
+	* @param vecT        [out] The vector of values associated to the key, each value is converted to the requested type
+	*/
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
+								    const std::string& key, vector<T>& vecT) {
+		if (key == "") {
+			throw InvalidArgumentException("Empty key", AT);
+		}
+		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
+
+		if (value == "") {
+			throw UnknownValueException("No value for key " + key, AT);
+		}
+
+		//split value string 
+		std::vector<std::string> vecUnconvertedValues;
+		unsigned int counter = readLineToVec(value, vecUnconvertedValues);
+
+		for (unsigned int ii=0; ii<counter; ii++){
+			T myvar;
+			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec)){
+				throw ConversionFailedException(vecUnconvertedValues.at(ii), AT);
+			}
+			
+			vecT.push_back(myvar);
 		}
 	}
   

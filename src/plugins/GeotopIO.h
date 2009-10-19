@@ -12,8 +12,13 @@
 #include "IOExceptions.h"
 #include "DynamicLibrary.h"
 
-using namespace IOUtils;
-
+/**
+ * @class GeotopIO
+ * @brief This class enables the access meteo data in legacy Geotop format
+ *
+ * @author Thomas Egger
+ * @date   2009-07-02
+ */
 class GeotopIO : public IOInterface {
 	public:
 		//virtual GeotopIO* clone() const;
