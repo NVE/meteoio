@@ -149,8 +149,12 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 							 IOUtils::nodata,
 							 tmpdata[mapHeader["p"]]); 
 
-				vecMeteo[ii].push_back(md);
-				vecStation[ii].push_back(myStations[ii]);
+				if ((md.date >= dateStart) && (md.date <= dateEnd)){
+					vecMeteo[ii].push_back(md);
+					vecStation[ii].push_back(myStations[ii]);
+				} else {
+					cout << "Ignoring " << md.date.toString() << endl;
+				}
 			}
 		} catch(std::exception& e) {
 			cleanup();

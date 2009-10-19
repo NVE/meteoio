@@ -155,6 +155,16 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 
 			if (key == "LIGHT") convertStringToDouble(md.iswr, tmpstring, "ISWR");
 			else if (key == "TEMPERATURE") convertStringToDouble(md.ta, tmpstring, "Air Temperature");				
+			else if (key == "AIR_TEMP") convertStringToDouble(md.ta, tmpstring, "Air Temperature");				
+			else if (key == "WIND_SPEED") convertStringToDouble(md.vw, tmpstring, "Wind Velocity");				
+			else if (key == "SOLAR_RAD") {
+				convertStringToDouble(md.iswr, tmpstring, "solar_rad");				
+				convertStringToDouble(md.lwr, tmpstring, "solar_rad");				
+			}
+			else if (key == "AIR_HUMID") convertStringToDouble(md.rh, tmpstring, "air_humid");				
+			else if (key == "SOIL_TEMP_ECTM") convertStringToDouble(md.tss, tmpstring, "soil_temp_ectm");				
+			else if (key == "GROUND_TEMP_TNX") convertStringToDouble(md.tsg, tmpstring, "ground_temp_tnx");				
+			else if (key == "RAIN_METER") convertStringToDouble(md.nswc, tmpstring, "rain_meter");				
 			else if (key == "TIMED") {
 				tmpstring = tmpstring.substr(0,tmpstring.length()-3); //cut away the seconds
 				time_t measurementTime;
