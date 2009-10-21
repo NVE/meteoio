@@ -111,6 +111,21 @@ class ConfigReader {
 					throw;
 			}
 		}
+		
+
+		/**
+		 * @ brief Function that searches for a given string within the keys of section (default: GENERAL)
+		 *         it returns the number of matches (partial matches are considered) and writes all the keys
+		 *         into a vector<string> that is handed to the function as reference
+		 * @param[out] vecResult A vector that will hold all keys that partially match keystart
+		 * @param[in] keystart A string representing the beginning of a key to search for
+		 * @param[in] section A string defining which section to search through (default: GENERAL)
+		 * @code
+		 *  vector<string> myVec;
+		 *  unsigned int nrOfMatches = getKeys(myVec, "TA::", "Filters");
+		 * @endcode 
+		 */
+		unsigned int findKeys(vector<string>& vecResult, const std::string keystart, const std::string section="GENERAL");
 
 		//LEGACY
 		static bool readConfigLine(std::istream& fin, int lineNb, int& lineType, string& str1, string& str2);

@@ -86,6 +86,37 @@ std::string ConfigReader::getFileName()
 	return filename;
 }
 
+unsigned int ConfigReader::findKeys(vector<string>& vecResult, 
+							const std::string keystart, 
+							const std::string section)
+{
+	vecResult.clear();
+	string _section = section;
+	if (_section.length() == 0) //enforce the default section if user tries to give empty section string
+		_section = "GENERAL";
+
+	IOUtils::toUpper(_section);
+	string _keystart = _section + "::" + keystart;
+
+	//Loop through keys, look for substring match - push it into vecResult
+	map<string,string>::iterator it;
+	for (it=properties.begin(); it != properties.end(); it++){
+		string tmp = (*it).first;
+		tmp = tmp.substr(0,_keystart.length());
+
+		int matchcount = _keystart.compare(tmp);
+
+		if (matchcount == 0){ //perfect match
+			string tmp2 = it->first;
+			tmp2 = tmp2.substr(_section.length() + 2);
+			vecResult.push_back(tmp2);
+		}
+	}
+
+	return vecResult.size();
+}
+
+
 #ifdef _POPC_
 #include "marshal_meteoio.h"
 void ConfigReader::Serialize(POPBuffer &buf, bool pack)
