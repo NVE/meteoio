@@ -33,20 +33,20 @@ namespace IOUtils {
 	/**
 	* @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
 	* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
-	* @param lat_in Decimal Latitude 
-	* @param long_in Decimal Longitude
-	* @param east_out easting coordinate (Swiss system)
-	* @param north_out northing coordinate (Swiss system)
+	* @param[in] lat_in Decimal Latitude 
+	* @param[in] long_in Decimal Longitude
+	* @param[out] east_out easting coordinate (Swiss system)
+	* @param[out] north_out northing coordinate (Swiss system)
 	*/
 	void WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out);
 
 	/**
 	* @brief Coordinate conversion: from Swiss grid to WGS84 Lat/Long
 	* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
-	* @param east_in easting coordinate (Swiss system)
-	* @param north_in northing coordinate (Swiss system)
-	* @param lat_out Decimal Latitude 
-	* @param long_out Decimal Longitude
+	* @param[in] east_in easting coordinate (Swiss system)
+	* @param[in] north_in northing coordinate (Swiss system)
+	* @param[out] lat_out Decimal Latitude 
+	* @param[out] long_out Decimal Longitude
 	*/
 	void CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out);
 
@@ -131,7 +131,7 @@ namespace IOUtils {
 	*/
 	double normalizeBearing(double angle);
 
-	void readDirectory(const string& path, list<string>& dirlist, const string& pattern = "");
+	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern = "");
 
 	bool validFileName(const std::string& filename);
 
@@ -161,8 +161,8 @@ namespace IOUtils {
 					  const std::string& keyprefix="");
 
 	void toUpper(std::string& str);
-	unsigned int readLineToVec(const std::string& line_in, std::vector<string>& vecString);
-	unsigned int readLineToVec(const std::string& line_in, std::vector<string>& vecString, const char& delim);
+	unsigned int readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
+	unsigned int readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	void readKeyValueHeader(std::map<std::string, std::string>& headermap, 
 				    std::istream& bs,
 				    const unsigned int& linecount=1, 
@@ -211,9 +211,9 @@ namespace IOUtils {
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).
 	* @tparam T   [in] The type wanted for the return value (template type parameter).
-	* @param properties   [in] A map containing all the parameters.
-	* @param key   [in] The key of the parameter to retrieve.
-	* @param t   [out] The value associated to the key, converted to the requested type
+	* @param[in] properties   A map containing all the parameters.
+	* @param[in] key   The key of the parameter to retrieve.
+	* @param[out] t   The value associated to the key, converted to the requested type
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, const std::string& key, T& t) {
 		if (key == "") {
@@ -232,10 +232,10 @@ namespace IOUtils {
 
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).
-	* @param T           [in] The type wanted for the return value (template type parameter).
-	* @param properties  [in] A map containing all the parameters.
-	* @param key         [in] The key of the parameter to retrieve.
-	* @param vecT        [out] The vector of values associated to the key, each value is converted to the requested type
+	* @tparam T           [in] The type wanted for the return value (template type parameter).
+	* @param[in] properties  A map containing all the parameters.
+	* @param[in] key         The key of the parameter to retrieve.
+	* @param[out] vecT        The vector of values associated to the key, each value is converted to the requested type
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
 								    const std::string& key, vector<T>& vecT) {

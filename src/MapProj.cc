@@ -1,7 +1,5 @@
 #include "MapProj.h"
 
-using namespace std;
-
 void MapProj::initializeMaps()
 {
 	to_wgs84["CH1903"]   = &CH1903_to_WGS84;
@@ -9,14 +7,14 @@ void MapProj::initializeMaps()
 }
 
 
-MapProj::MapProj(const string& _coordinatesystem, const string& _parameters)
+MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _parameters)
 {
 	initializeMaps();
 	
 	//check whether there exists a tranformation for the given coordinatesystem
 	//init function pointers
-	map<std::string, convfunc>::iterator mapitTo;
-	map<std::string, convfunc>::iterator mapitFrom;
+	std::map<std::string, convfunc>::iterator mapitTo;
+	std::map<std::string, convfunc>::iterator mapitFrom;
 	mapitTo   = to_wgs84.find(_coordinatesystem);	
 	mapitFrom = from_wgs84.find(_coordinatesystem);	
 	

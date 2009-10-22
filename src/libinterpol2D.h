@@ -78,7 +78,7 @@ class Interpol2D {
 		
 		
 		void LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
-				const vector<double>& vecData_in, const vector<StationData>& vecStations_in);
+				const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in);
 		double IDWKriegingCore(const double& x, const double& y, 
 						   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations);
 		void IDWKrieging(Grid2DObject& T, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);

@@ -1,11 +1,8 @@
 #include "Meteo2DInterpolator.h"
 #include "DEMObject.h"
 
-using namespace std;
-using namespace IOUtils;
-
-Meteo2DInterpolator::Meteo2DInterpolator(const DEMObject& _dem, const vector<MeteoData>& vecData,
-					 const vector<StationData>& vecMeta) : dem(_dem), SourcesData(vecData), SourcesMeta(vecMeta)
+Meteo2DInterpolator::Meteo2DInterpolator(const DEMObject& _dem, const std::vector<MeteoData>& vecData,
+					 const std::vector<StationData>& vecMeta) : dem(_dem), SourcesData(vecData), SourcesMeta(vecMeta)
 {
 	//check whether the size of the two vectors is equal
 	if (vecData.size() != vecMeta.size()) {
@@ -42,8 +39,8 @@ void Meteo2DInterpolator::interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2
 
 void Meteo2DInterpolator::interpolateHNW(Grid2DObject& hnw)
 {
-	vector<StationData> vecSelectedStations;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
@@ -61,9 +58,9 @@ void Meteo2DInterpolator::interpolateHNW(Grid2DObject& hnw)
 
 void Meteo2DInterpolator::interpolateRH(Grid2DObject& rh, Grid2DObject& ta)
 {
-	vector<StationData> vecSelectedStations;
-	vector<double> vecExtraInput;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecExtraInput;
+	std::vector<double> vecInput;
 	const unsigned int datacount = SourcesData.size();
 	unsigned int rh_count=0;
 
@@ -105,8 +102,8 @@ void Meteo2DInterpolator::interpolateRH(Grid2DObject& rh, Grid2DObject& ta)
 
 void Meteo2DInterpolator::interpolateTA(Grid2DObject& ta)
 {
-	vector<StationData> vecSelectedStations;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
@@ -124,8 +121,8 @@ void Meteo2DInterpolator::interpolateTA(Grid2DObject& ta)
 
 void Meteo2DInterpolator::interpolateDW(Grid2DObject& dw)
 {
-	vector<StationData> vecSelectedStations;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
@@ -143,11 +140,11 @@ void Meteo2DInterpolator::interpolateDW(Grid2DObject& dw)
 void Meteo2DInterpolator::interpolateVW(Grid2DObject& vw)
 {	//HACK this is a quick and dirty fix for the wind interpolation...
 	//HACK we *really* need a better design for the interpolations...
-	vector<StationData> vecSelectedStations;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 	unsigned int countDataDir = 0;
-	vector<double> vecEmpty;
+	std::vector<double> vecEmpty;
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
 		if(SourcesData[ii].vw != nodata) {
@@ -176,8 +173,8 @@ void Meteo2DInterpolator::interpolateVW(Grid2DObject& vw)
 
 void Meteo2DInterpolator::interpolateP(Grid2DObject& p)
 {
-	vector<StationData> vecSelectedStations;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecInput;
 
 	printf("[i] interpolating P using %d stations\n", (int)vecSelectedStations.size());
 	Interpol2D P(Interpol2D::I_PRESS, Interpol2D::I_PRESS, vecInput, vecSelectedStations, dem);
@@ -186,8 +183,8 @@ void Meteo2DInterpolator::interpolateP(Grid2DObject& p)
 
 void Meteo2DInterpolator::interpolateISWR(Grid2DObject& iswr)
 {
-	vector<StationData> vecSelectedStations;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
@@ -204,8 +201,8 @@ void Meteo2DInterpolator::interpolateISWR(Grid2DObject& iswr)
 
 void Meteo2DInterpolator::interpolateLWR(Grid2DObject& lwr)
 {
-	vector<StationData> vecSelectedStations;
-	vector<double> vecInput;
+	std::vector<StationData> vecSelectedStations;
+	std::vector<double> vecInput;
 	unsigned int datacount = SourcesData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {

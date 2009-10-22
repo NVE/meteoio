@@ -1,10 +1,14 @@
 #ifdef _POPC_
-#include "IOHandler.ph"
+	#include "IOHandler.ph"
+	#ifdef DEBUG_ARITHM
+		#ifndef _GNU_SOURCE
+			#define _GNU_SOURCE
+		#endif
+		#include <fenv.h>
+	#endif
 #else
-#include "IOHandler.h"
+	#include "IOHandler.h"
 #endif
-
-using namespace std;
 
 #ifdef _POPC_
 void IOHandler::registerPlugins()
@@ -58,6 +62,9 @@ IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg
 IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfg)
 #endif
 {
+#if defined(_POPC_) && defined(DEBUG_ARITHM)
+	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW );
+#endif
 	registerPlugins();
 }
 
@@ -88,7 +95,7 @@ void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) thro
 	}
 }
 
-void IOHandler::loadPlugin(const string& libname, const string& classname, DynamicLibrary*& dynLibrary, IOInterface*& io)
+void IOHandler::loadPlugin(const std::string& libname, const std::string& classname, DynamicLibrary*& dynLibrary, IOInterface*& io)
 {
 	cout << "[i] " << AT << ": Loading dynamic plugin: " << libname << endl;
 	string pluginpath = "";
@@ -98,7 +105,7 @@ void IOHandler::loadPlugin(const string& libname, const string& classname, Dynam
 
 		//Which dynamic library needs to be loaded
 		cout << "\t" << "Trying to load " << libname << " ... ";
-		string filename = pluginpath + "/" + libname;
+		std::string filename = pluginpath + "/" + libname;
 		dynLibrary = DynamicLoader::loadObjectFile(filename);
 		
 		if(dynLibrary == NULL) {
@@ -122,7 +129,7 @@ void IOHandler::loadPlugin(const string& libname, const string& classname, Dynam
 
 IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
 {
-	string op_src="";
+	std::string op_src="";
 	cfg.getValue(cfgvalue, op_src);
 
 	mapit = mapPlugins.find(op_src);
@@ -140,7 +147,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
 	return (mapit->second).io;
 }
 
-void IOHandler::read2DGrid(Grid2DObject& _grid, const string& _filename)
+void IOHandler::read2DGrid(Grid2DObject& _grid, const std::string& _filename)
 {
 	IOInterface *plugin = getPlugin("GRID2DSRC");
 	plugin->read2DGrid(_grid, _filename);
@@ -163,8 +170,8 @@ void IOHandler::readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STAT
 	vecMeteo.clear();
 	vecStation.clear();
 	
-	vector< vector<MeteoData> > meteoTmpBuffer;
-	vector< vector<StationData> > stationTmpBuffer;
+	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
+	std::vector< std::vector<StationData> > stationTmpBuffer;
 	readMeteoData(date, date, meteoTmpBuffer, stationTmpBuffer);
 
 	unsigned int emptycounter = 0;
@@ -187,7 +194,7 @@ void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 						std::vector< std::vector<MeteoData> >& vecMeteo, 
 						std::vector< std::vector<StationData> >& vecStation,
 						const unsigned int& stationindex)
-{
+{//TODO: use METEO_DATASET and STATION_DATASET types
 	IOInterface *plugin = getPlugin("METEOSRC");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
@@ -203,7 +210,7 @@ void IOHandler::readSpecialPoints(CSpecialPTSArray& pts) {
 	plugin->readSpecialPoints(pts);
 }
 
-void IOHandler::write2DGrid(const Grid2DObject& grid_in, const string& name)
+void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
 	IOInterface *plugin = getPlugin("OUTPUT");
 	plugin->write2DGrid(grid_in, name);

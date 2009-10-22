@@ -7,8 +7,6 @@
 #include <string>
 #include "IOUtils.h"
 
-using namespace IOUtils;
-
 class Meteo1DResampler {
 
 	public:

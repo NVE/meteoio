@@ -24,7 +24,7 @@ class A3DIO : public IOInterface {
 		A3DIO(const ConfigReader&);
 		~A3DIO() throw();
 
-		virtual void read2DGrid(Grid2DObject& dem_out, const string& name="");
+		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& name="");
 
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
@@ -40,26 +40,26 @@ class A3DIO : public IOInterface {
 
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
 		void read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd, 
 					  std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 		void read2DMeteo(std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 
-		void constructMeteo2DFilenames(const Date_IO& _date, std::vector<string>& _filenames);
+		void constructMeteo2DFilenames(const Date_IO& _date, std::vector<std::string>& _filenames);
 		bool readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string filename);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
 		void read2DMeteoData(const std::string&, const std::string&, std::map<std::string,unsigned int>& hashStations, 
 						 std::vector< std::vector<MeteoData> >&, unsigned int& bufferindex);
-		void read2DMeteoHeader(const string& filename, std::map<std::string, unsigned int>& hashStations, 
+		void read2DMeteoHeader(const std::string& filename, std::map<std::string, unsigned int>& hashStations, 
 						   std::vector<StationData>&);
 		unsigned int getNrOfStations(std::vector<std::string>& filenames, 
 							    std::map<std::string, unsigned int>& hashStations);
 
 		ConfigReader cfg;
-		ifstream fin; //Input file streams
+		std::ifstream fin; //Input file streams
 };
 
 #endif

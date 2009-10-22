@@ -22,9 +22,9 @@ BufferedIOHandler::~BufferedIOHandler() throw()
 	//Nothing else so far
 }
 
-void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const string& _filename)
+void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const std::string& _filename)
 {
-	map<string, Grid2DObject>::iterator it = mapBufferedGrids.find(_filename);
+	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(_filename);
 	if (it != mapBufferedGrids.end()) { //already in map
 		_grid2Dobj = (*it).second; 
 		return;
@@ -38,7 +38,7 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const string& _file
 
 void BufferedIOHandler::readDEM(DEMObject& _grid2Dobj)
 {
-	map<string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
+	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
 	if (it != mapBufferedGrids.end()) { //already in map
 		_grid2Dobj = (*it).second; 
 		return;
@@ -52,7 +52,7 @@ void BufferedIOHandler::readDEM(DEMObject& _grid2Dobj)
 
 void BufferedIOHandler::readLanduse(Grid2DObject& _grid2Dobj)
 {
-	map<string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:LANDUSE");
+	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:LANDUSE");
 	if (it != mapBufferedGrids.end()) { //already in map
 		_grid2Dobj = (*it).second; 
 		return;
@@ -66,7 +66,7 @@ void BufferedIOHandler::readLanduse(Grid2DObject& _grid2Dobj)
 
 void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject& _grid2Dobj)
 {
-	map<string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + _date.toString());
+	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + _date.toString());
 	if (it != mapBufferedGrids.end()) { //already in map
 		_grid2Dobj = (*it).second; 
 		return;
@@ -78,13 +78,13 @@ void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject&
 	_grid2Dobj = tmpgrid2D;
 }
 
-void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, vector< vector<MeteoData> >& vecMeteo)
+void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	vector< vector<StationData> > vecStation;
+	std::vector< std::vector<StationData> > vecStation;
 	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
 }
 
-void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation){
+void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
 	/* For every station: 
 	 * 1) See whether data is already buffered
 	 * 2) Filter - not implemented yet
@@ -105,7 +105,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 		unsigned int index = BufferedIOHandler::npos;
 
 		StationData sd;
-		string stationName = "";
+		std::string stationName = "";
 		if (stationBuffer[ii].size() > 0){
 			stationName = stationBuffer[ii][0].stationName;
 			sd = stationBuffer[ii][0];
@@ -164,7 +164,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, vector<MeteoData>&
 	}	
 }
 
-void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
+void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
 {
 	//TODO: check whether there is something in the buffer!
 	//Try to rebuffer!
@@ -172,8 +172,8 @@ void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, vector<MeteoData>
 	vecMeteo.clear();
 	vecStation.clear();
 	
-	vector< vector<MeteoData> > meteoTmpBuffer;
-	vector< vector<StationData> > stationTmpBuffer;
+	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
+	std::vector< std::vector<StationData> > stationTmpBuffer;
 	readMeteoData(_date, (_date-Date_IO(1900,1,2)), meteoTmpBuffer, stationTmpBuffer);	
 
 	unsigned int emptycounter = 0;
@@ -243,7 +243,7 @@ void BufferedIOHandler::readSpecialPoints(CSpecialPTSArray& _cpa)
 	iohandler.readSpecialPoints(_cpa);
 }
 
-void BufferedIOHandler::write2DGrid(const Grid2DObject& _grid2Dobj, const string& _name)
+void BufferedIOHandler::write2DGrid(const Grid2DObject& _grid2Dobj, const std::string& _name)
 {
 	iohandler.write2DGrid(_grid2Dobj, _name);
 }
@@ -259,7 +259,7 @@ void BufferedIOHandler::clearBuffer(){
 	mapBufferedGrids.clear();
 }
 
-unsigned int BufferedIOHandler::seek(const Date_IO& date_in, vector<MeteoData>& vecM){ //TODO: binary search
+unsigned int BufferedIOHandler::seek(const Date_IO& date_in, std::vector<MeteoData>& vecM){ //TODO: binary search
 	//returns index of element, if element does not exist it returns closest index
 	//the element needs to be an exact hit or embedded between two measurments
 

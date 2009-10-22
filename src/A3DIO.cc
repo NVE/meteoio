@@ -36,7 +36,7 @@ void A3DIO::cleanup() throw()
 	}
 }
 
-void A3DIO::read2DGrid(Grid2DObject&, const string&)
+void A3DIO::read2DGrid(Grid2DObject&, const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);	
@@ -64,9 +64,9 @@ void A3DIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	throw IOException("Nothing implemented here", AT);	
 }
 
-void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, vector< vector<MeteoData> >& vecMeteo)
+void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	vector< vector<StationData> > vecStation;
+	std::vector< std::vector<StationData> > vecStation;
 	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
 }
 
@@ -112,14 +112,15 @@ void A3DIO::convertUnits(MeteoData& meteo)
 }
 
 void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd, 
-				    vector< vector<MeteoData> >& vecMeteo, vector< vector<StationData> >& vecStation)
+				std::vector< std::vector<MeteoData> >& vecMeteo, 
+				std::vector< std::vector<StationData> >& vecStation)
 {
 	double latitude=IOUtils::nodata, longitude=IOUtils::nodata, 
 		xcoord=IOUtils::nodata, ycoord=IOUtils::nodata, altitude=IOUtils::nodata;
-	string tmp="", line="";
+	std::string tmp="", line="";
 	Date_IO tmp_date;
-	vector<string> tmpvec;
-	map<string, string> header; // A map to save key value pairs of the file header
+	std::vector<std::string> tmpvec;
+	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 	MeteoData tmpdata;
 	StationData sd;
 	bool eofreached = false;
@@ -149,7 +150,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		IOUtils::getValueForKey(header, "Y_Coord", ycoord);
 		IOUtils::getValueForKey(header, "Altitude", altitude);
 
-		string coordsys="", coordparam="";
+		std::string coordsys="", coordparam="";
 		try {
 			cfg.getValue("COORDIN", coordsys);
 			cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
@@ -217,11 +218,11 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 	cleanup();
 }
 
-bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, string filename)
+bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string filename)
 {
 	Date_IO tmp_date;
 	int tmp_ymdh[4];
-	vector<string> tmpvec;
+	std::vector<std::string> tmpvec;
 	double tmp_values[6];
 
 	if (IOUtils::readLineToVec(line, tmpvec) != 10) {
@@ -260,12 +261,12 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, string file
   Remarks: The headers of the files may defer - for each unique 
   StationData one MeteoData and one StationData object will be created
 */
- void A3DIO::read2DMeteo(vector< vector<MeteoData> >& vecMeteo, vector< vector<StationData> >& vecStation)
+ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo, std::vector< std::vector<StationData> >& vecStation)
 {
 	
 	unsigned int stations=0, bufferindex=0;
-	map<string, unsigned int> hashStations = map<string, unsigned int>();
-	vector<string> filenames = vector<string>();
+	std::map<std::string, unsigned int> hashStations = std::map<std::string, unsigned int>();
+	std::vector<std::string> filenames = std::vector<std::string>();
 
 	//Requirement: meteo1D data must exist:
 	if ((vecMeteo.size() == 0) || (vecMeteo[0].size() == 0))
@@ -283,7 +284,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, string file
 		throw InvalidFormatException("No StationData found in 2D Meteo Files", AT); 
 	} 
 
-	vector<StationData> tmpvecS = vector<StationData>(stations); //stores unique stations
+	std::vector<StationData> tmpvecS = std::vector<StationData>(stations); //stores unique stations
 
 	try {
 		read2DMeteoHeader(filenames[0], hashStations, tmpvecS);
@@ -347,11 +348,11 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, string file
 	}
 }
 
-void A3DIO::constructMeteo2DFilenames(const Date_IO& date_in, vector<string>& filenames)
+void A3DIO::constructMeteo2DFilenames(const Date_IO& date_in, std::vector<std::string>& filenames)
 {
 	int year=0, dummy=0;
-	string tmp;
-	stringstream ss;
+	std::string tmp;
+	std::stringstream ss;
 
 	filenames.clear();
  
@@ -380,14 +381,14 @@ void A3DIO::constructMeteo2DFilenames(const Date_IO& date_in, vector<string>& fi
 }
 
 
-unsigned int A3DIO::getNrOfStations(vector<string>& filenames, map<string, unsigned int>& hashStations)
+unsigned int A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::map<std::string, unsigned int>& hashStations)
 {
-	vector<string> tmpvec;
-	string line_in="";
+	std::vector<std::string> tmpvec;
+	std::string line_in="";
   
 	for (unsigned int ii=0; ii<filenames.size(); ii++) {
 		//cout << *it << endl;
-		string filename = filenames[ii];
+		std::string filename = filenames[ii];
 
 		fin.clear();
 		fin.open (filename.c_str(), ifstream::in);
@@ -410,22 +411,22 @@ unsigned int A3DIO::getNrOfStations(vector<string>& filenames, map<string, unsig
 				if (tmp_int == 0) {
 					hashStations[tmpvec.at(ii)] = hashStations.size();
 				}
-			} 
+			}
 		}
-		cleanup();      
+		cleanup();
 	}  
   
 	return (hashStations.size());
 }
 
-void A3DIO::read2DMeteoData(const string& filename, const string& parameter, 
-					   map<string,unsigned int>& hashStations, 
-					   vector< vector<MeteoData> >& vecM, unsigned int& bufferindex)
+void A3DIO::read2DMeteoData(const std::string& filename, const std::string& parameter, 
+					std::map<std::string,unsigned int>& hashStations, 
+					std::vector< std::vector<MeteoData> >& vecM, unsigned int& bufferindex)
 {
 	
-	string line_in = "";
+	std::string line_in = "";
 	unsigned int columns;
-	vector<string> tmpvec, vec_names;
+	std::vector<std::string> tmpvec, vec_names;
 	Date_IO tmp_date;
 	int tmp_ymdh[4];
 
@@ -436,7 +437,7 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter,
 	}
 
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-    
+	
 	IOUtils::skipLines(fin, 4, eoln); //skip first 4 lines
 	getline(fin, line_in, eoln); //line containing UNIQUE station names
 	columns = IOUtils::readLineToVec(line_in, vec_names);
@@ -448,7 +449,7 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter,
 
 	do {
 		getline(fin, line_in, eoln); 
-		string tmpline = line_in;
+		std::string tmpline = line_in;
 		IOUtils::trim(tmpline);
 
 		if (tmpline=="") {
@@ -499,7 +500,7 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter,
 					}
 				}
 			}
-
+			
 			bufferindex++;
 		}
 	} while((tmp_date<lastMeteoData.date) && (!fin.eof()));
@@ -507,14 +508,15 @@ void A3DIO::read2DMeteoData(const string& filename, const string& parameter,
 	cleanup();
 }
 
-void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& hashStations, vector<StationData>& vecS)
+void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,unsigned int>& hashStations,
+				std::vector<StationData>& vecS)
 {
-	string line_in = "";
+	std::string line_in = "";
 	unsigned int columns = 0;
-	vector<string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
+	std::vector<std::string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
 
 	//Build MapProj object to convert easting/northing values to lat/long in WGS84
-	string coordsys="", coordparam="";
+	std::string coordsys="", coordparam="";
 	try {
 		cfg.getValue("COORDIN", coordsys);
 		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
@@ -575,9 +577,9 @@ void A3DIO::read2DMeteoHeader(const string& filename, map<string,unsigned int>& 
 
 void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
 {
-	string filename="", line_in="";
-	vector<string> tmpvec;
-	vector< pair<int,int> > mypts;
+	std::string filename="", line_in="";
+	std::vector<std::string> tmpvec;
+	std::vector< std::pair<int,int> > mypts;
 
 	cfg.getValue("SPECIALPTSFILE", filename); // cout << tmp << endl;
 	if (!IOUtils::fileExists(filename)) {
@@ -605,7 +607,7 @@ void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
 				throw ConversionFailedException("Conversion of a value failed in " + filename + " line: " + line_in, AT);        
 			}
 
-			pair<int,int> tmppair(x,y);
+			std::pair<int,int> tmppair(x,y);
 			mypts.push_back(tmppair);
 		}
 	}
@@ -620,7 +622,7 @@ void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
 	}
 }
 
-void A3DIO::write2DGrid(const Grid2DObject&, const string&)
+void A3DIO::write2DGrid(const Grid2DObject&, const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);	
@@ -633,7 +635,7 @@ void A3DIO::write2DGrid(const Grid2DObject&, const string&)
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const string& filename) {
+	void* loadObject(const std::string& classname, const std::string& filename) {
 		if(classname == "A3DIO") {
 			cerr << "Creating handle to " << classname << endl;
 			//return new A3DIO(deleteObject);

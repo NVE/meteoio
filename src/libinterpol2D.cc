@@ -20,17 +20,16 @@ const double Interpol2D::wind_yc = 0.42;
 * @brief Constructor. Sets private members for latter use
 * @param Isingle enum for the type of single data source interpolation strategy
 * @param Imultiple enum for the type of multiple data source interpolation strategy
-* @param sourcesData vector of source data
-* @param sourcesMeta vector of metadata about the sources
-* @param dem Digital Elevation Model object
+* @param vecData vector of source data
+* @param vecMeta vector of metadata about the sources
+* @param dem_in Digital Elevation Model object
 */
 Interpol2D::Interpol2D(interp_types Isingle, 
 		       interp_types Imultiple, 
-		       const vector<double>& vecData, 
-		       const vector<StationData>& vecMeta, 
+		       const std::vector<double>& vecData, 
+		       const std::vector<StationData>& vecMeta, 
 		       const DEMObject& dem_in) : dem(dem_in), InputMeta(vecMeta), inputData(vecData)
 {
-
 	single_type   = Isingle;
 	multiple_type = Imultiple;
 	
@@ -87,7 +86,7 @@ double Interpol2D::HorizontalDistance(const int& i, const int& j, const double& 
 * @param data_in (vector\<double\>) vector of data
 * @return (double) average of the vector
 */
-double Interpol2D::AvgSources(const vector<double>& data_in)
+double Interpol2D::AvgSources(const std::vector<double>& data_in)
 {
 	//This function computes the average of all the data sources
 	double avg=0;
@@ -103,7 +102,7 @@ double Interpol2D::AvgSources(const vector<double>& data_in)
 * @param vecStations_in (vector\<StationData\>) vector of StationData objects
 * @param vecElevations (vector\<double\>) vector of elevations (same order as the input)
 */
-void Interpol2D::BuildStationsElevations(const vector<StationData>& vecStations_in, vector<double>& vecElevations)
+void Interpol2D::BuildStationsElevations(const std::vector<StationData>& vecStations_in, std::vector<double>& vecElevations)
 {
 	//from a vector of stations meta data, builds a 1D array
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
@@ -122,7 +121,7 @@ void Interpol2D::BuildStationsElevations(const vector<StationData>& vecStations_
 * @param r (double) linear regression coefficient
 * @param ignore_index (const int) if positive, index of a point to exclude from the regression
 */
-void Interpol2D::LinRegressionCore(const vector<double>& X, const vector<double>& Y, double& a, double& b, double& r, const int ignore_index)
+void Interpol2D::LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, const int ignore_index)
 {
 	//finds the linear regression for points (x,y,z,Value)
 	//if ignore_index>=0, ignore given index (as a way to remopve a point from the interpolation)
@@ -168,7 +167,7 @@ void Interpol2D::LinRegressionCore(const vector<double>& X, const vector<double>
 * @param coeffs (vector\<double\>) a,b,r coefficients in a vector
 * @return (int) EXIT_SUCCESS or EXIT_FAILURE
 */
-int Interpol2D::LinRegression(const vector<double>& X, const vector<double>& Y, vector<double>& coeffs)
+int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, std::vector<double>& coeffs)
 {
 	//finds the linear regression for points (x,y,z,Value)
 	const double r_thres=0.7;
@@ -221,7 +220,7 @@ int Interpol2D::LinRegression(const vector<double>& X, const vector<double>& Y, 
 * @param coeffs (const vector\<double\>) coefficients to use for the projection (unused)
 * @return (double) reprojected value
 */
-double Interpol2D::ConstProject(const double& value, const double& altitude, const double& new_altitude, const vector<double>& coeffs)
+double Interpol2D::ConstProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
 {
 	(void) altitude;	//to avoid the compiler seeing them as unused
 	(void) new_altitude;
@@ -238,7 +237,7 @@ double Interpol2D::ConstProject(const double& value, const double& altitude, con
 * @param coeffs (const vector\<double\>) coefficients to use for the projection
 * @return (double) reprojected value
 */
-double Interpol2D::LinProject(const double& value, const double& altitude, const double& new_altitude, const vector<double>& coeffs)
+double Interpol2D::LinProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
 {
 	//linear lapse: coeffs must have been already computed
 	if (coeffs.size()<1) {
@@ -309,7 +308,7 @@ void Interpol2D::LapseConstFill(Grid2DObject& param_out, const DEMObject& topoHe
 }
 
 double Interpol2D::IDWKriegingCore(const double& x, const double& y, 
-				   const vector<double>& vecData_in, const vector<StationData>& vecStations)
+				   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
 	double parameter=0., norm=0., weight;
@@ -324,10 +323,10 @@ double Interpol2D::IDWKriegingCore(const double& x, const double& y,
 
 
 void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
-				const vector<double>& vecData_in, const vector<StationData>& vecStations_in)
+				const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in)
 {
 	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
-	vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
+	std::vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
 	
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
 		vecTref[i] = (this->*LapseRateProject)(vecData_in[i], vecStations_in[i].getAltitude(), ref_altitude, vecCoefficients);
@@ -345,7 +344,7 @@ void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 	}
 }
 
-void Interpol2D::IDWKrieging(Grid2DObject& T, const vector<double>& vecData_in, const vector<StationData>& vecStations)
+void Interpol2D::IDWKrieging(Grid2DObject& T, const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations)
 {
 	//multiple source stations: simple IDW Krieging
 	for (unsigned int i=0; i<T.ncols; i++) {
@@ -362,7 +361,7 @@ void Interpol2D::IDWKrieging(Grid2DObject& T, const vector<double>& vecData_in, 
 void Interpol2D::calculate(Grid2DObject& param_out)
 {
 	unsigned short int flag_ok=0;
-	vector<double> vecStationElevations;
+	std::vector<double> vecStationElevations;
 	
 	if (InputSize==0) {	//no data
 		if (single_type == I_PRESS) {
@@ -419,9 +418,9 @@ void Interpol2D::calculate(Grid2DObject& param_out)
 	}
 }
 
-void Interpol2D::calculate(Grid2DObject& param_out, const vector<double>& vecExtraData, Grid2DObject& extra_param_in) {
+void Interpol2D::calculate(Grid2DObject& param_out, const std::vector<double>& vecExtraData, Grid2DObject& extra_param_in) {
 	unsigned short int flag_ok=0;
-	vector<double> vecStationElevations;
+	std::vector<double> vecStationElevations;
 	
 	if (InputSize==0) { //no data
 		if (flag_ok==0) {
@@ -443,7 +442,7 @@ void Interpol2D::calculate(Grid2DObject& param_out, const vector<double>& vecExt
 				throw IOException("Requested output parameter and extra input parameter grids don't match!!", AT);
 			}
 			//here, RH->Td, interpolations, Td->RH
-			vector<double> vecTdStations(inputData.size(), 0.0); // init to 0.0
+			std::vector<double> vecTdStations(inputData.size(), 0.0); // init to 0.0
 
 			//Compute dew point temperatures at stations
 			for (unsigned int i=0; i<(unsigned int)inputData.size(); i++) {

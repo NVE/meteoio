@@ -27,6 +27,8 @@ GRASSIO		= @GRASSIO@
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
 
+debug_arithm	= -DDEBUG_ARITHM -g
+
 ifeq ($(DEST),safe)		#safe defaults
 	CC       = @CC@ -DGNU
 	CXX      = @CXX@
@@ -75,13 +77,13 @@ ifeq ($(DEST),zeus)		#for Zeus
 endif
 
 ifeq ($(MODE),debug)		#for debug
-	CFLAGS   = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
-	CCFLAGS  = $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
-	FFLAGS	 = $(MAKE_OPTIM) $(DEBUG) $(WARNING)
+	CFLAGS   = $(debug_arithm) $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
+	CCFLAGS  = $(debug_arithm) $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
+	FFLAGS	 = $(debug_arithm) $(MAKE_OPTIM) $(DEBUG) $(WARNING)
 else				#for release
-	CFLAGS   = $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
-	CCFLAGS  = $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
-	FFLAGS	 = $(MAKE_OPTIM) $(FFOPTIM) $(WARNING)
+	CFLAGS   = $(debug_arithm) $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
+	CCFLAGS  = $(debug_arithm) $(MAKE_OPTIM) $(ARCH) $(OPTIM) $(WARNING)
+	FFLAGS	 = $(debug_arithm) $(MAKE_OPTIM) $(FFOPTIM) $(WARNING)
 endif
 #CCFLAGS += -DSVNREV="\"$(SVNREV)\""
 

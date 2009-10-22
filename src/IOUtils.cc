@@ -239,9 +239,9 @@ void IOUtils::VincentyInverse(const double& lat_ref, const double& lon_ref, cons
 	//const double alpha2 = atan2( sinAlpha, -(sinU1*sin(sigma)-cosU1*cos(sigma)*cos(alpha1)) ); //reverse azimuth
 }
 
-void IOUtils::trim(string& str)
+void IOUtils::trim(std::string& str)
 {
-	const string whitespaces (" \t\f\v\n\r");
+	const std::string whitespaces (" \t\f\v\n\r");
 	size_t startpos = str.find_first_not_of(whitespaces); // Find the first character position after excluding leading blank spaces  
 	size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af  
 
@@ -259,11 +259,12 @@ void IOUtils::toUpper(std::string& str){
 	}
 }
 
-bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, map<string,string>& out_map, const std::string& keyprefix)
+bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& delimiter,
+				std::map<std::string,std::string>& out_map, const std::string& keyprefix)
 {
 	//size_t pos = in_line.find(delimiter); //first occurence of '='
 
-	size_t pos = string::npos;
+	size_t pos = std::string::npos;
 	if ((delimiter==" ") || (delimiter=="\t")) {
 		pos = in_line.find_first_of(" \t", 0);
 	} else {
@@ -271,9 +272,9 @@ bool IOUtils::readKeyValuePair(const string& in_line, const string& delimiter, m
 	}
 
 
-	if(pos != string::npos) { //ignore in_lines that are empty or without '='
-		string key = in_line.substr(0, pos);
-		string value = in_line.substr(pos + 1);
+	if(pos != std::string::npos) { //ignore in_lines that are empty or without '='
+		std::string key = in_line.substr(0, pos);
+		std::string value = in_line.substr(pos + 1);
 
 		IOUtils::trim(key);
 		IOUtils::trim(value);
@@ -313,7 +314,7 @@ bool IOUtils::validFileName(const std::string& filename)
 	return true;
 }
 
-void IOUtils::readKeyValueHeader(map<string,string>& headermap, 
+void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap, 
 				  std::istream& fin,
 				  const unsigned int& linecount, 
 				  const std::string& delimiter)
@@ -344,7 +345,7 @@ void IOUtils::readKeyValueHeader(map<string,string>& headermap,
 
 char IOUtils::getEoln(std::istream& fin)
 {
-	streambuf* pbuf;
+	std::streambuf* pbuf;
 	char tmp = '0';
 	int chars = 0;
 
@@ -378,7 +379,7 @@ char IOUtils::getEoln(std::istream& fin)
 
 void IOUtils::skipLines(std::istream& fin, unsigned int nbLines, char eoln)
 {
-	string dummy;
+	std::string dummy;
 	for (unsigned int ii=0; ii<nbLines; ii++) {
 		if(!getline(fin, dummy, eoln)) {
 			throw InvalidFormatException("Premature EOF while skipping lines", AT);
@@ -386,12 +387,12 @@ void IOUtils::skipLines(std::istream& fin, unsigned int nbLines, char eoln)
 	}
 }
 
-unsigned int IOUtils::readLineToVec(const string& line_in, vector<string>& vecString)
+unsigned int IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
 {
 	vecString.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
 
-	string tmp_string;
+	std::string tmp_string;
 	while (!iss.eof()) {
 		iss >> skipws >> tmp_string;
 
@@ -404,10 +405,10 @@ unsigned int IOUtils::readLineToVec(const string& line_in, vector<string>& vecSt
 	return vecString.size();
 }
 
-unsigned int IOUtils::readLineToVec(const string& line_in, vector<string>& vecString, const char& delim)
+unsigned int IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
 {
 	vecString.clear();
-	string tmp_string;
+	std::string tmp_string;
 	std::istringstream iss(line_in);
 
 	while (getline(iss, tmp_string, delim)){
@@ -418,7 +419,7 @@ unsigned int IOUtils::readLineToVec(const string& line_in, vector<string>& vecSt
 }
 
 
-void IOUtils::readDirectory(const string& path, list<string>& dirlist, const string& pattern)
+void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
 {
 	DIR *dp;
 	struct dirent *dirp;
@@ -445,9 +446,9 @@ void IOUtils::readDirectory(const string& path, list<string>& dirlist, const str
 
 const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-template<> bool IOUtils::convertString<string>(string& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
+template<> bool IOUtils::convertString<std::string>(std::string& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	string s = str; 
+	std::string s = str; 
 	trim(s); //delete trailing and leading whitespaces and tabs
 	if (s.size() == 0) {
 		t = "";
@@ -459,7 +460,7 @@ template<> bool IOUtils::convertString<string>(string& t, const std::string str,
 		if (iss.fail()) {//Conversion failed
 			return false;
 		}
-		string tmp="";
+		std::string tmp="";
 		getline(iss,  tmp); //get rest of line, if any
 		trim(tmp);
 		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
@@ -471,7 +472,7 @@ template<> bool IOUtils::convertString<string>(string& t, const std::string str,
 
 template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	string s = str; 
+	std::string s = str; 
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	if (toupper(s[0])=='T' || toupper(s[0])=='Y' ) {
@@ -490,7 +491,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std
 
 	std::string::size_type pos = s.find_first_not_of(ALPHANUM);
 	if (pos != string::npos) {
-		string tmp = s.substr(pos);
+		std::string tmp = s.substr(pos);
 		trim(tmp);
 		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
 			return false;
@@ -502,7 +503,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std
 
 template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	string s = str; 
+	std::string s = str; 
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	(void)f;
@@ -520,7 +521,7 @@ template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string st
 		return false;
 	}
 
-	string tmp(rest);
+	std::string tmp(rest);
 	trim(tmp);
 	if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
 		return false;

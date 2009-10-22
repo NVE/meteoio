@@ -12,7 +12,7 @@
 
 #include <map>
 
-typedef map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
+typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 /**
 * @file IOHandler.h
@@ -28,7 +28,7 @@ class IOHandler : public IOInterface {
 		~IOHandler() throw();
 
 		//methods defined in the IOInterface class
-		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
+		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
@@ -38,13 +38,13 @@ class IOHandler : public IOInterface {
 		void readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(CSpecialPTSArray& pts);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
-		string ascii_src;
-		string boschung_src;
-		string imis_src;
-		string geotop_src;
+		std::string ascii_src;
+		std::string boschung_src;
+		std::string imis_src;
+		std::string geotop_src;
 
 	private:
 		void loadDynamicPlugins();
@@ -55,7 +55,7 @@ class IOHandler : public IOInterface {
 		IOInterface *getPlugin(const std::string&);
 
 		ConfigReader cfg;
-		map<std::string, IOPlugin::IOPlugin> mapPlugins;
+		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;
 		PLUGIN_ITERATOR mapit;
 		A3DIO fileio;
 };

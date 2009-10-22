@@ -20,7 +20,6 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 	double weight = (date_in.getJulian() - tmpmd2.date.getJulian()) / (tmpmd1.date.getJulian() - tmpmd2.date.getJulian());
 	//cout << "WEIGHT" << weight << endl;
 
-
 	if (( tmpmd1.date > date_in) && (tmpmd2.date < date_in)) {
 		//cout << "[i]-- Resampling date " << date_in.toString()<< endl;
 		//cout << "[i]-- Resample date between " << tmpmd1.date.toString() << " and " << tmpmd2.date.toString() << endl;
@@ -119,7 +118,7 @@ void Meteo1DResampler::resample(const unsigned int& index_in, const Date_IO& dat
 
 }
 //void Meteo1DResampler::seekIndices(MeteoBuffer& mbuffer, const string& parameter, unsigned int& leftindex, unsigned int& rightindex){
-void Meteo1DResampler::seekIndices(MeteoBuffer&, const string&, unsigned int&, unsigned int&)
+void Meteo1DResampler::seekIndices(MeteoBuffer&, const std::string&, unsigned int&, unsigned int&)
 {
 	/*  if (parameter == "rh") {
 		while ((rightindex < mbuffer.size()) && (mbuffer.getMeteoData(rightindex).rh == nodata)) {
