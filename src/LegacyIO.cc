@@ -17,9 +17,6 @@ LegacyIO::LegacyIO(const std::string &meteopath)
 
 LegacyIO::~LegacyIO()
 {
-#ifdef _POPC_
-	printf("Total time for reading grid data: %g seconds\n", timer.Elapsed());
-#endif
 }
 
 void LegacyIO::GetGridSize(int &nx, int &ny, int &nz)
@@ -123,7 +120,6 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 		*cache_Hour=0;
 		return;
 	}
-	timer.Start();
 #endif
 	int nx, ny, nz;
 	GetGridSize(nx,ny,nz);
@@ -214,7 +210,6 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 	fclose(fp);
 
 #ifdef _POPC_ 
-	timer.Stop();
 	DEBUG("Read wind field for hour %s OK",hour);
 #endif
 }

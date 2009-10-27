@@ -157,6 +157,7 @@ void IOHandler::readDEM(DEMObject& dem_out)
 {
 	IOInterface *plugin = getPlugin("DEMSRC");
 	plugin->readDEM(dem_out);
+	dem_out.update();
 }
 
 void IOHandler::readLanduse(Grid2DObject& landuse_out)

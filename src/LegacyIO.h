@@ -52,8 +52,8 @@ typedef struct {
 	double v;
 	double w;
 
-	double slope; /* In wind direction [-PI/2,PI/2]*/
-	double sl;    /* General (maximum) slope angle */
+	double slope;	/* In wind direction [-PI/2,PI/2]*/
+	double sl;	/* General (maximum) slope angle */
 	double tet;
 	double p;
 	double Km;
@@ -61,9 +61,9 @@ typedef struct {
 	double wstar;
 	double e;
 	double c;
-	double azi;  /* Slope Azimut */
-	double sx;   /* x -component of normal on Surface element */
-	double sy;   /* y -component of normal on Surface element */
+	double azi;	/* Slope Azimut */
+	double sx;	/* x -component of normal on Surface element */
+	double sy;	/* y -component of normal on Surface element */
 } NODE;
 
 /*---------------------------------------------------------------+                                                                          
@@ -96,6 +96,5 @@ class LegacyIO
 		char meteopathname[MAX_STRING_LENGTH];
 		int dimx, dimy, dimz;
 };
-
 
 #endif

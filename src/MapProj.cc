@@ -1,9 +1,16 @@
 #include "MapProj.h"
+#include "IOUtils.h"
+
+#ifdef PROJ4
+	#include <proj_api.h>
+#endif
 
 void MapProj::initializeMaps()
 {
-	to_wgs84["CH1903"]   = &CH1903_to_WGS84;
-	from_wgs84["CH1903"] = &WGS84_to_CH1903;
+	to_wgs84["CH1903"]   = &MapProj::CH1903_to_WGS84;
+	from_wgs84["CH1903"] = &MapProj::WGS84_to_CH1903;
+	to_wgs84["PROJ4"]   = &MapProj::PROJ4_to_WGS84;
+	from_wgs84["PROJ4"] = &MapProj::WGS84_to_PROJ4;
 }
 
 
@@ -30,12 +37,12 @@ MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _param
 
 void MapProj::convert_to_WGS84(const double& easting, const double& northing, double& latitude, double& longitude)
 {
-	convToWGS84(easting, northing, latitude, longitude);
+	(this->*convToWGS84)(easting, northing, latitude, longitude);
 }
 
 void MapProj::convert_from_WGS84(const double& latitude, const double& longitude, double& easting, double& northing)
 {
-	convFromWGS84(latitude, longitude, easting, northing);
+	(this->*convFromWGS84)(latitude, longitude, easting, northing);
 }
 
 
@@ -96,4 +103,78 @@ void MapProj::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 		- 12.60		* y_p
 		- 22.64		* x_p;
 	*/
+}
+
+void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double& east_out, double& north_out)
+{
+#ifdef PROJ4
+	const string src_param="+proj=latlong +datum=WGS84";
+	projPJ pj_latlong, pj_dest;
+	//const double DEG_TO_RAD = PI/180.;
+	double x=long_in*DEG_TO_RAD, y=lat_in*DEG_TO_RAD;
+	
+	if ( !(pj_dest = pj_init_plus(coordparam.c_str())) ) {
+		pj_free(pj_dest);
+		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+coordparam, AT);
+	}
+	if ( !(pj_latlong = pj_init_plus(src_param.c_str())) ) {
+		pj_free(pj_latlong);
+		pj_free(pj_dest);
+		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+src_param, AT);
+	}
+
+	const int p = pj_transform(pj_latlong, pj_dest, 1, 1, &x, &y, NULL );
+	if(p!=0) {
+		pj_free(pj_latlong);
+		pj_free(pj_dest);
+		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
+	}
+	east_out = x;
+	north_out = y;
+	pj_free(pj_latlong);
+	pj_free(pj_dest);
+#else
+	(void)lat_in;
+	(void)long_in;
+	(void)east_out;
+	(void)north_out;
+	throw IOException("Not compiled with PROJ4 support", AT);
+#endif
+}
+
+void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out)
+{
+#ifdef PROJ4
+	const std::string dest_param="+proj=latlong +datum=WGS84";
+	projPJ pj_latlong, pj_src;
+	//const double RAD_TO_DEG = 180./PI;
+	double x=east_in, y=north_in;
+
+	if ( !(pj_src = pj_init_plus(coordparam.c_str())) ) {
+		pj_free(pj_src);
+		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+coordparam, AT);
+	}
+	if ( !(pj_latlong = pj_init_plus(dest_param.c_str())) ) {
+		pj_free(pj_latlong);
+		pj_free(pj_src);
+		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+dest_param, AT);
+	}
+
+	const int p = pj_transform(pj_src, pj_latlong, 1, 1, &x, &y, NULL );
+	if(p!=0) {
+		pj_free(pj_latlong);
+		pj_free(pj_src);
+		throw ConversionFailedException("PROJ4 conversion failed: "+p, AT);
+	}
+	long_out = x*RAD_TO_DEG;
+	lat_out = y*RAD_TO_DEG;
+	pj_free(pj_latlong);
+	pj_free(pj_src);
+#else
+	(void)east_in;
+	(void)north_in;
+	(void)lat_out;
+	(void)long_out;
+	throw IOException("Not compiled with PROJ4 support", AT);
+#endif
 }

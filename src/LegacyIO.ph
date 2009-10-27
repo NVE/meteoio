@@ -1,16 +1,13 @@
 #ifndef LEGACYIO_H
 #define LEGACYIO_H
 
-#include "timer.h"
 
-//#include "Alpine3D.h"
-//#include "DriftData.h"
-//#include "Snowpack.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "Array.h"
 #include "Array2D.h"
+
 
 #define ERROR_GRIDSIZE long(1)
 #define ERROR_STATION_INDEX long(2)
@@ -45,25 +42,25 @@
  | Nodes                                                         |                                                                          
  +---------------------------------------------------------------*/
 typedef struct {
-  double x;
-  double y;
-  double z;
-  double u;
-  double v;
-  double w;
+	double x;
+	double y;
+	double z;
+	double u;
+	double v;
+	double w;
 
-  double slope; /* In wind direction [-PI/2,PI/2]*/
-  double sl;    /* General (maximum) slope angle */
-  double tet;
-  double p;
-  double Km;
-  double lm;
-  double wstar;
-  double e;
-  double c;
-  double azi;  /* Slope Azimut */
-  double sx;   /* x -component of normal on Surface element */
-  double sy;   /* y -component of normal on Surface element */
+	double slope;	/* In wind direction [-PI/2,PI/2]*/
+	double sl;	/* General (maximum) slope angle */
+	double tet;
+	double p;
+	double Km;
+	double lm;
+	double wstar;
+	double e;
+	double c;
+	double azi;	/* Slope Azimut */
+	double sx;	/* x -component of normal on Surface element */
+	double sy;	/* y -component of normal on Surface element */
 } NODE;
 
 /*---------------------------------------------------------------+                                                                          
@@ -90,8 +87,7 @@ parclass LegacyIO
 		~LegacyIO();
 
 		void GetGridSize([out] int &nx, [out] int &ny, [out] int &nz);
-		void GetGridPoints([out, proc=marshal_CDoubleArray] CDoubleArray &x,[out, proc=marshal_CDoubleArray]  CDoubleArray &y,
-						[out, proc=marshal_CDoubleArray]  CDoubleArray &z);
+		void GetGridPoints([out, proc=marshal_CDoubleArray] CDoubleArray &x, [out, proc=marshal_CDoubleArray]  CDoubleArray &y, [out, proc=marshal_CDoubleArray]  CDoubleArray &z);
 		void GetGridData([out, proc=marshal_input_CNodeArray] CNodeArray &data, [in, proc=marshalstring, size=256] char *hour);
 
 		async void PrepareNextWindField([in, proc=marshalstring, size=256] char *hour);
@@ -99,15 +95,13 @@ parclass LegacyIO
 		classuid(1002);
 
 	private:
-		char demfilename[MAX_STRING_LENGTH];
 		char meteopathname[MAX_STRING_LENGTH];
 		int dimx, dimy, dimz;
-
-		//For caching data
+		
+		//For caching data: ONLY for POPC version
 		char cache_Hour[MAX_STRING_LENGTH];
 		CNodeArray cache_WindField;
 
-		Timer timer;
 };
 
 #endif

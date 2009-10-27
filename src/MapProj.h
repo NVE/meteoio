@@ -9,7 +9,9 @@
 #include <string>
 #include <map>
 
-typedef void(*convfunc)(const double&, const double&, double&, double&);
+class MapProj; //forward declaration
+
+typedef void(MapProj::*convfunc)(const double&, const double&, double&, double&);
 
 class MapProj {
  public:
@@ -27,7 +29,7 @@ class MapProj {
 	* @param east_out easting coordinate (Swiss system)
 	* @param north_out northing coordinate (Swiss system)
 	*/
-	static void WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out);
+	void WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out);
 
 	/**
 	* @brief Coordinate conversion: from Swiss grid to WGS84 Lat/Long
@@ -37,14 +39,29 @@ class MapProj {
 	* @param lat_out Decimal Latitude 
 	* @param long_out Decimal Longitude
 	*/
-	static void CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out);
+	void CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out);
+
+	/**
+	* @brief Coordinate conversion: from WGS84 Lat/Long to proj4 parameters
+	* @param lat_in Decimal Latitude 
+	* @param long_in Decimal Longitude
+	* @param east_out easting coordinate (target system)
+	* @param north_out northing coordinate (target system)
+	*/
+	void WGS84_to_PROJ4(const double& lat_in, const double& long_in, double& east_out, double& north_out);
+
+	/**
+	* @brief Coordinate conversion: from proj4 parameters to WGS84 Lat/Long
+	* @param east_in easting coordinate (Swiss system)
+	* @param north_in northing coordinate (Swiss system)
+	* @param lat_out Decimal Latitude 
+	* @param long_out Decimal Longitude
+	*/
+	void PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out);
 
 
  private:
 	void initializeMaps();
-	void convert_to_WGS84_Proj4(const double& easting, const double& northing, double& latitude, double& longitude);
-	void convert_from_WGS84_Proj4(const double& latitude, const double& longitude, double& easting, double& northing);
-
 
 	std::map<std::string, convfunc> to_wgs84;
 	std::map<std::string, convfunc> from_wgs84;

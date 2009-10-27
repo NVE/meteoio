@@ -89,7 +89,7 @@ void Grid2DObject::checkCoordinates()
 	//calculate/check coordinates if necessary
 	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
-			throw InvalidArgumentException("missing positional parameters (xll,yll) or (lat,long) for Grid3DObject", AT);
+			throw InvalidArgumentException("missing positional parameters (xll,yll) or (lat,long) for Grid2DObject", AT);
 		}
 		IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude); //HACK: replace by local_to_WGS84
 	} else {

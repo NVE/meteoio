@@ -24,6 +24,10 @@
 #define MIN(x,y)    (((x) < (y)) ? (x) : (y))
 #endif
 
+#ifndef PI
+	#define PI 3.141592653589
+#endif
+
 namespace IOUtils {
 
 	const double nodata = -999.0;	//HACK: we should define the same nodata everywhere...

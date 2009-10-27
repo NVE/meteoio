@@ -39,21 +39,21 @@ void A3DIO::cleanup() throw()
 void A3DIO::read2DGrid(Grid2DObject&, const std::string&)
 {
 	//Nothing so far
-	throw IOException("Nothing implemented here", AT);	
+	throw IOException("Nothing implemented here", AT);
 }
 
 void A3DIO::readDEM(DEMObject& dem_out)
 {
 	//Nothing so far
 	(void)dem_out;
-	throw IOException("Nothing implemented here", AT);	
+	throw IOException("Nothing implemented here", AT);
 }
 
 void A3DIO::readLanduse(Grid2DObject& landuse_out)
 {
 	//Nothing so far
 	(void)landuse_out;
-	throw IOException("Nothing implemented here", AT);	
+	throw IOException("Nothing implemented here", AT);
 }
 
 void A3DIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
@@ -61,7 +61,7 @@ void A3DIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	//Nothing so far
 	(void)date_in;
 	(void)da_out;
-	throw IOException("Nothing implemented here", AT);	
+	throw IOException("Nothing implemented here", AT);
 }
 
 void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
@@ -69,7 +69,6 @@ void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std:
 	std::vector< std::vector<StationData> > vecStation;
 	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
 }
-
 
 void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 					 std::vector< std::vector<MeteoData> >& vecMeteo, 

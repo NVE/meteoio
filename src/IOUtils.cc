@@ -1,9 +1,5 @@
 #include "IOUtils.h"
 
-#ifndef PI
-	#define PI 3.141592653589
-#endif
-
 bool IOUtils::checkEpsilonEquality(double val1, double val2, double epsilon)
 {
 	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {

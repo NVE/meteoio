@@ -7,6 +7,7 @@
 * @file DEMObject.cc
 * @brief implementation of the DEMBoject class
 */
+const DEMObject::slope_type DEMObject::dflt_algorithm = DEMObject::CORR;
 
 /**
 * @brief Default constructor.
@@ -49,26 +50,37 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 * @param _longitude (double) decimal longitude, can be IOUtils::nodata
 * @param _cellsize (double) value for cellsize in grid2D
 * @param _altitude (Array2D\<double\>&) grid2D of elevations
+* @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const Array2D<double>& _altitude)
+				const double& _cellsize, const Array2D<double>& _altitude,
+				const bool& _update)
 	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	updateAllMinMax();
+	if(_update==false) {
+		updateAllMinMax();
+	} else {
+		update(dflt_algorithm);
+	}
 }
 
 /**
 * @brief Constructor that sets variables from a Grid2DObject
 * @param _dem (Grid2DObject&) grid contained in a Grid2DObject
+* @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
 */
-DEMObject::DEMObject(const Grid2DObject& _dem) 
+DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update)
   : Grid2DObject(_dem.ncols, _dem.nrows, _dem.xllcorner, _dem.yllcorner, _dem.latitude, _dem.longitude, _dem.cellsize, _dem.grid2D), 
     slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	updateAllMinMax();
+	if(_update==false) {
+		updateAllMinMax();
+	} else {
+		update(dflt_algorithm);
+	}
 }
 
 /**
@@ -79,9 +91,10 @@ DEMObject::DEMObject(const Grid2DObject& _dem)
 * @param _ny (unsigned int&) Y coordinate of the new origin
 * @param _ncols (unsigned int&) number of columns for the subset dem
 * @param _nrows (unsigned int&) number of rows for the subset dem
+* @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
 */
 DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsigned int& _ny, 
-				 const unsigned int& _ncols, const unsigned int& _nrows)
+				 const unsigned int& _ncols, const unsigned int& _nrows, const bool& _update)
 	: Grid2DObject(_dem, _nx,_ny, _ncols,_nrows), slope(_dem.slope,_nx,_ny, _ncols,_nrows),
 	  azi(_dem.azi,_nx,_ny, _ncols,_nrows), curvature(_dem.curvature,_nx,_ny, _ncols,_nrows),
 	  Nx(_dem.Nx,_nx,_ny, _ncols,_nrows), Ny(_dem.Ny,_nx,_ny, _ncols,_nrows), Nz(_dem.Nz,_nx,_ny, _ncols,_nrows)
@@ -90,8 +103,11 @@ DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsig
 		throw InvalidArgumentException("requesting a subset of 0 columns or rows for DEMObject", AT);
 	}
 
-	//recompute the min/max
-	updateAllMinMax();
+	if(_update==false) {
+		updateAllMinMax();
+	} else {
+		update(dflt_algorithm);
+	}
 }
 
 /**
@@ -113,7 +129,11 @@ void DEMObject::update(const slope_type& algorithm) {
 	Nz.resize(ncols, nrows);
 
 	// Calculate the slope and the slope azimuth
-	CalculateAziSlopeCurve(algorithm);
+	if(algorithm==DFLT) {
+		CalculateAziSlopeCurve(dflt_algorithm);
+	} else {
+		CalculateAziSlopeCurve(algorithm);
+	}
 	updateAllMinMax();
 }
 
@@ -175,7 +195,7 @@ void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
 //**************************************//
 	double dx1, dx2, dx3, dy1, dy2, dy3;	// dxi = dz_i / dx_i and dyi = dz_i / dy_i
 	double dx_sum, dy_sum;		// sum of dxi resp. dyi
-		
+
 	for ( unsigned int i = 0; i < ncols; i++ ) {
 		for ( unsigned int j = 0; j < nrows; j++ ) {
 			if( grid2D(i,j) == IOUtils::nodata ) {
