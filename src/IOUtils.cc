@@ -1,5 +1,9 @@
 #include "IOUtils.h"
 
+#ifndef PI
+	#define PI 3.141592653589
+#endif
+
 bool IOUtils::checkEpsilonEquality(double val1, double val2, double epsilon)
 {
 	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {
@@ -22,7 +26,7 @@ double IOUtils::normalizeBearing(double angle)
 }
 
 void IOUtils::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out)
-{
+{//TODO: remove this method (it is already in MapProj)
 	//converts WGS84 coordinates (lat,long) to the Swiss coordinates. See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
 	//lat and long must be decimal (and they will be converted to seconds)
@@ -50,7 +54,7 @@ void IOUtils::WGS84_to_CH1903(const double& lat_in, const double& long_in, doubl
 }
 
 void IOUtils::CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out)
-{
+{//TODO: remove this method (it is already in MapProj)
 	//converts Swiss coordinates to WGS84 coordinates (lat,long). See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
 	//lat and long are decimal

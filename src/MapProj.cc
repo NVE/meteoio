@@ -1,5 +1,4 @@
 #include "MapProj.h"
-#include "IOUtils.h"
 
 #ifdef PROJ4
 	#include <proj_api.h>
@@ -110,7 +109,6 @@ void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double
 #ifdef PROJ4
 	const string src_param="+proj=latlong +datum=WGS84";
 	projPJ pj_latlong, pj_dest;
-	//const double DEG_TO_RAD = PI/180.;
 	double x=long_in*DEG_TO_RAD, y=lat_in*DEG_TO_RAD;
 	
 	if ( !(pj_dest = pj_init_plus(coordparam.c_str())) ) {
@@ -147,7 +145,6 @@ void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, doub
 #ifdef PROJ4
 	const std::string dest_param="+proj=latlong +datum=WGS84";
 	projPJ pj_latlong, pj_src;
-	//const double RAD_TO_DEG = 180./PI;
 	double x=east_in, y=north_in;
 
 	if ( !(pj_src = pj_init_plus(coordparam.c_str())) ) {

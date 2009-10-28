@@ -59,7 +59,7 @@ class MapProj {
 	*/
 	void PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out);
 
-
+	//TODO: add projection to/from local grid
  private:
 	void initializeMaps();
 

@@ -23,6 +23,8 @@ GSNIO		= @GSNIO@
 ARCIO		= @ARCIO@
 GRASSIO		= @GRASSIO@
 
+PROJ4		= no
+
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
@@ -107,6 +109,10 @@ LD_POPC	= -L$(LIBDIR) -lmeteoiopopc -lfilterpopc
 LDFLAGS_POPC	= $(LD_POPC)
 LDFLAGS		= $(LIBS) -rdynamic
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
+ifeq ($(PROJ4),yes)
+	PROJ4_STATIC =  /usr/lib/libproj.a
+	CCFLAGS += -DPROJ4
+endif
 
 ######## Sources, objects, headers
 METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
@@ -251,7 +257,7 @@ createA3DFiles: $(TOOLS_OBJ)
 
 $(LIBDIR)/libmeteoio.a: $(METEOIO_OBJ)
 	@echo **** Compiling libmeteoIO
-	ar -r $@ $(METEOIO_OBJ)
+	ar -r $@ $(METEOIO_OBJ) $(PROJ4_STATIC)
 	ranlib $@
 
 $(LIBDIR)/libfilter.a: $(FILTER_OBJ)
