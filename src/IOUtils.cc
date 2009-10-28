@@ -450,24 +450,9 @@ template<> bool IOUtils::convertString<std::string>(std::string& t, const std::s
 {
 	std::string s = str; 
 	trim(s); //delete trailing and leading whitespaces and tabs
-	if (s.size() == 0) {
-		t = "";
-		return true;
-	} else {
-		std::istringstream iss(s);
-		iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
-	
-		if (iss.fail()) {//Conversion failed
-			return false;
-		}
-		std::string tmp="";
-		getline(iss,  tmp); //get rest of line, if any
-		trim(tmp);
-		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
-			return false;
-		}
-		return true;
-	}
+
+	t = s;
+	return true;
 }
 
 template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
