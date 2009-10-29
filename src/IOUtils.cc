@@ -448,7 +448,7 @@ const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012
 
 template<> bool IOUtils::convertString<std::string>(std::string& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s = str; 
+	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	t = s;
@@ -457,7 +457,7 @@ template<> bool IOUtils::convertString<std::string>(std::string& t, const std::s
 
 template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s = str; 
+	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	if (toupper(s[0])=='T' || toupper(s[0])=='Y' ) {
@@ -488,7 +488,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std
 
 template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s = str; 
+	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	(void)f;

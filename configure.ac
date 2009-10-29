@@ -89,6 +89,8 @@ echo ""
 echo "================================="
 echo "=       ACTIVATED PLUGINS       ="
 echo "================================="
+AC_ARG_WITH(proj4,	[  --with-proj4	  enable proj4 geographic coordinates conversions (libproj required)])
+AC_SUBST(PROJ4,no)
 AC_ARG_WITH(boschungio, [  --with-boschungio	  enable BoschungIO (libxml++-2.6 required)])
 AC_SUBST(BOSCHUNGIO,no)
 AC_ARG_WITH(gsnio,      [  --with-gsnio	          enable GSNIO (gsoap++ required)])
@@ -106,6 +108,17 @@ AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
 if test "$with_geotopio" == "yes"; then AC_MSG_NOTICE([GeotopIO enabled. No prerequisites...]); fi
 if test "x$use_grassio" == "xyes"; then AC_MSG_NOTICE([GrassIO enabled. No prerequisites...]); fi
 if test "x$use_arcio" == "xyes"; then AC_MSG_NOTICE([ARCIO enabled. No prerequisites...]); fi
+
+if test "$with_proj4" == "yes"
+then
+	AC_MSG_NOTICE([PROJ4 enabled. Checking for prerequisites...])
+	AC_CHECK_HEADER([proj_api.h],,[AC_MSG_ERROR([Error, the proj_api.h header file is missing!])])
+	AC_CHECK_LIB(proj,main,,[AC_MSG_ERROR([Error, the proj4 library is missing!])])
+
+	AC_SUBST(PROJ4_CFLAGS)
+	AC_SUBST(PROJ4_LIBS)
+	AC_SUBST(PROJ4,yes)
+fi
 
 if test "$with_gsnio" == "yes"
 then

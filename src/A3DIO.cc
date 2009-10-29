@@ -91,7 +91,7 @@ void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	try {
 		read2DMeteo(vecMeteo, vecStation);
 	} catch(exception& e){
-		cerr << "[I] No meteo2d data found or error while reading it, using only Meteo1D data: " 
+		cerr << "[E] No meteo2d data found or error while reading it, using only Meteo1D data: " 
 			<< endl << "\t" << e.what() << endl;
 	}
 }

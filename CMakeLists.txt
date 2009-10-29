@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.6) 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
+set(CMAKE_C_COMPILER "colorgcc")
+set(CMAKE_CXX_COMPILER "colorgcc")
+
 PROJECT(meteoio CXX C)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(src/plugins)

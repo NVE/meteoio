@@ -17,6 +17,11 @@ Date_IO::Date_IO(const time_t& _time)
 	setDate(_time);
 }
 
+Date_IO::Date_IO(const Date_IO& _date_in)
+{
+	setDate(_date_in.getJulian());
+}
+
 void Date_IO::setDate(const double& julian_in)
 {
 	julian = julian_in;

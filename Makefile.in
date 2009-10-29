@@ -23,7 +23,7 @@ GSNIO		= @GSNIO@
 ARCIO		= @ARCIO@
 GRASSIO		= @GRASSIO@
 
-PROJ4		= no
+PROJ4		= @PROJ4@
 
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
@@ -110,7 +110,7 @@ LDFLAGS_POPC	= $(LD_POPC)
 LDFLAGS		= $(LIBS) -rdynamic
 INCLUDE		= -I$(SRCDIR) -I$(FILTERDIR)
 ifeq ($(PROJ4),yes)
-	PROJ4_STATIC =  /usr/lib/libproj.a
+	PROJ4_STATIC =  @PROJ4_LIBS@
 	CCFLAGS += -DPROJ4
 endif
 

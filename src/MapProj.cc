@@ -12,7 +12,6 @@ void MapProj::initializeMaps()
 	from_wgs84["PROJ4"] = &MapProj::WGS84_to_PROJ4;
 }
 
-
 MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _parameters)
 {
 	initializeMaps();
@@ -107,7 +106,7 @@ void MapProj::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double& east_out, double& north_out)
 {
 #ifdef PROJ4
-	const string src_param="+proj=latlong +datum=WGS84";
+	const string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
 	projPJ pj_latlong, pj_dest;
 	double x=long_in*DEG_TO_RAD, y=lat_in*DEG_TO_RAD;
 	
@@ -143,7 +142,7 @@ void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double
 void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out)
 {
 #ifdef PROJ4
-	const std::string dest_param="+proj=latlong +datum=WGS84";
+	const std::string dest_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
 	projPJ pj_latlong, pj_src;
 	double x=east_in, y=north_in;
 

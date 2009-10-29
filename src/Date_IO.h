@@ -42,6 +42,7 @@ class Date_IO {
 		///All values passed will be checked for plausibility 
 		Date_IO(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
 		Date_IO(const time_t&);
+		Date_IO(const Date_IO& _date_in);
 
 		void setDate(const double& julian_in);
 		void setDate(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
