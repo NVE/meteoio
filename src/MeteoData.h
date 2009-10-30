@@ -24,6 +24,12 @@ class MeteoData : POPBase {
 class MeteoData {
 #endif  
 	public:
+		enum Parameters {firstparam=0, 
+					  TA=firstparam, ISWR, VW, DW, RH, LWR, HNW, TSG, TSS, HS, RSWR, P, 
+					  lastparam=P};
+
+		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
+
 		/**
 		* @brief The default constructor initializing every double attribute to nodata and the Date_IO to julian==0.0
 		*/
@@ -106,10 +112,15 @@ class MeteoData {
 		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
 		double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr, p; //direct access allowed
-		Date_IO date;///<Date_IO/Time of the measurement
+		Date_IO date; ///<Date_IO/Time of the measurement
 
+		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
+		static std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
  private:
-		bool resampled; ///<set this to true if MeteoData is result of resampling
+		static const bool __init;    ///<helper variable to enable the init of static collection data
+		static bool initStaticData();///<initialize the static map meteoparamname 
+		bool resampled;              ///<set this to true if MeteoData is result of resampling
+		void initParameterMap();     ///<initializes the meteoparam map that allows sequential access to meteo parameters
 };
 
 typedef std::vector<MeteoData> METEO_DATASET;

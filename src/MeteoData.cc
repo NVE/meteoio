@@ -2,9 +2,55 @@
 
 using namespace std;
 
+const unsigned int MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
+map<unsigned int, string> MeteoData::meteoparamname;
+const bool MeteoData::__init = MeteoData::initStaticData();
+
+bool MeteoData::initStaticData()
+{
+	//This function should only be executed once for all MeteoData instances
+	//Associate unsigned int value and a string representation of a meteo parameter
+	meteoparamname[TA]   = "TA";
+	meteoparamname[ISWR] = "ISWR";
+	meteoparamname[VW]   = "VW";
+	meteoparamname[DW]   = "DW";
+	meteoparamname[RH]   = "RH";
+	meteoparamname[LWR]  = "LWR";
+	meteoparamname[HNW]  = "HNW";
+	meteoparamname[TSG]  = "TSG";
+	meteoparamname[TSS]  = "TSS";
+	meteoparamname[HS]   = "HS";
+	meteoparamname[RSWR] = "RSWR";
+	meteoparamname[P]    = "P";
+
+	return true;
+}
+
+void MeteoData::initParameterMap()
+{
+	//The following mapping needs to be done for every instance of MeteoData
+	meteoparam[TA]       = &ta;
+	meteoparam[ISWR]     = &iswr;
+	meteoparam[VW]       = &vw;
+	meteoparam[DW]       = &dw;
+	meteoparam[RH]       = &rh;
+	meteoparam[LWR]      = &lwr;
+	meteoparam[HNW]      = &hnw;
+	meteoparam[TSG]      = &tsg;
+	meteoparam[TSS]      = &tss;
+	meteoparam[HS]       = &hs;
+	meteoparam[RSWR]     = &rswr;
+	meteoparam[P]        = &p;
+
+	//Check for inconsistency between enum Parameters and the two maps meteoparam and meteoparamname
+	if ((meteoparam.size() != meteoparamname.size()) || (meteoparam.size() != MeteoData::nrOfParameters))
+		throw IOException("Inconsistency within class MeteoData: Check function initMaps()", AT);
+}
+
 MeteoData::MeteoData() : resampled(false)
 {
 	setMeteoData(Date_IO(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata);
+	initParameterMap();
 }
 
 MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
@@ -13,6 +59,7 @@ MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& 
 				 const double& tss_in, const double& hs_in, const double& rswr_in, const double& _p) : resampled(false)
 {
 	setMeteoData(date_in, ta_in, iswr_in, vw_in, dw_in, rh_in, lwr_in, hnw_in, tsg_in, tss_in, hs_in, rswr_in, _p);
+	initParameterMap();
 }
 
 void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, const double& vw_in,
@@ -159,9 +206,6 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&hs,1);
 		buf.UnPack(&rswr,1);
 	}
-
-  
-  
 }
 #endif
 
