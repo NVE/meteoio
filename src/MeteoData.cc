@@ -176,7 +176,7 @@ const string MeteoData::toString() const
 
 #ifdef _POPC_
 void MeteoData::Serialize(POPBuffer &buf, bool pack)
-{
+{//HACK TODO: adjust the serialize to the latest changes!! (call InitStaticData(), etc)
 	if (pack){
 		date.Serialize(buf,true);
 		buf.Pack(&ta,1);

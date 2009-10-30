@@ -112,7 +112,7 @@ template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned
 	//Copy by value subspace
 	for (unsigned int ii=0; ii<ny; ii++) { 
 		for (unsigned int jj=0; jj<nx; jj++) {
-			//Running through the vector in order of memory alignment
+			//Running through the vector in order of memory alignment HACK
 			operator()(jj,ii) = _array2D(_nx+jj, _ny+ii);
 		}
 	}

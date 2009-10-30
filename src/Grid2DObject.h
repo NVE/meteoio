@@ -53,6 +53,28 @@ class Grid2DObject{
 				   const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
 
 		/**
+		* @brief Converts WGS84 coordinates into grid coordinates (i,j)
+		* If any coordinate is outside of the grid, the matching coordinate is set to (unsigned)-1
+		* @note This computation is only precise to ~1 meter (in order to be faster). Please use 
+		* IOUtils::VincentyDistance for up to .5 mm precision.
+		* @param _latitude point latitude
+		* @param _longitude point longitude
+		* @param i matching X coordinate in the grid
+		* @param j matching Y coordinate in the grid
+		*/
+		void WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j);
+
+		/**
+		* @brief Converts grid coordinates (i,j) into WGS84 coordinates
+		* @note This computation uses IOUtils::VincentyDistance and therefore is up to .5 mm precise.
+		* @param _latitude point latitude
+		* @param _longitude point longitude
+		* @param i matching X coordinate in the grid
+		* @param j matching Y coordinate in the grid
+		*/
+		void grid_to_WGS84(const unsigned int& i, const unsigned int& j, double& _latitude, double& _longitude);
+
+		/**
 		* @brief Set all variables in one go.
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D

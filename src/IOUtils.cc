@@ -19,7 +19,7 @@ double IOUtils::pow2(const double val)
 }
 
 double IOUtils::normalizeBearing(double angle)
-{
+{//TODO: use fmod
 	if(angle<0.) angle = 360.0 + angle;
 	if(angle>360.) angle = angle - 360.;
 	return angle;
@@ -84,30 +84,59 @@ void IOUtils::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 	*/
 }
 
-void IOUtils::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing)
+void IOUtils::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const bool fast)
 {
-//	easting = VincentyDistance((lat_ref+lat)/2., lon_ref, (lat_ref+lat)/2., lon);
-//	northing = VincentyDistance(lat_ref, (lon_ref+lon)/2., lat, (lon_ref+lon)/2.);
-//	easting = cosineDistance((lat_ref+lat)/2., lon_ref, (lat_ref+lat)/2., lon);
-//	northing = cosineDistance(lat_ref, (lon_ref+lon)/2., lat, (lon_ref+lon)/2.);
 	double alpha;
 	const double to_rad = PI / 180.0;
-	const double distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
+	double distance;
+	if(fast==true) {
+		distance = cosineDistance(lat_ref, lon_ref, lat, lon, alpha);
+	} else {
+		distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
+	}
 	easting = -distance*sin(alpha*to_rad);
 	northing = distance*cos(alpha*to_rad);
 }
 
-void IOUtils::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon)
+void IOUtils::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const bool fast)
 {
 	const double to_deg = 180.0 / PI;
 	double bearing = atan2(northing, easting)*to_deg;
 	const double distance = sqrt( pow2(easting) + pow2(northing) );
 
 	bearing = normalizeBearing(bearing);
-	VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+	if(fast==true) {
+		cosineInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+	} else {
+		VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+	}
+}
+
+void IOUtils::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
+{
+	const double Rearth = 6371.e3;
+	const double to_rad = PI / 180.0;
+	const double to_deg = 180.0 / PI;
+	const double lat_ref_rad = lat_ref*to_rad;
+	const double bearing_rad = bearing*to_rad;
+
+	lat = asin( sin(lat_ref_rad)*cos(distance/Rearth) + 
+				cos(lat_ref_rad)*sin(distance/Rearth)*cos(bearing_rad) );
+	lon = lon_ref*to_rad + atan2( sin(bearing_rad)*sin(distance/Rearth)*cos(lat_ref_rad) , 
+					cos(distance/Rearth) - sin(lat_ref_rad)*sin(lat) );
+	lon = fmod(lon+PI, 2.*PI) - PI;
+
+	lat *= to_deg;
+	lon *= to_deg;
 }
 
 double IOUtils::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
+{
+	double alpha;
+	return cosineDistance(lat1, lon1, lat2, lon2, alpha);
+}
+
+double IOUtils::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
 	const double Rearth = 6371.e3;
 	const double to_rad = PI / 180.0;
@@ -115,6 +144,13 @@ double IOUtils::cosineDistance(const double& lat1, const double& lon1, const dou
 		sin(lat1*to_rad) * sin(lat2*to_rad) 
 		+ cos(lat1*to_rad) * cos(lat2*to_rad) * cos((lon2-lon1)*to_rad) 
 		) * Rearth;
+
+	alpha = atan2( sin((lon2-lon1)*to_rad)*cos(lat2*to_rad) , 
+			cos(lat1*to_rad)*sin(lat2*to_rad) - sin(lat1*to_rad)*cos(lat2*to_rad)*cos((lon2-lon1)*to_rad)
+ 		) / to_rad;
+	//we don't want compass bearing, but triggonometric angle
+	alpha = fmod((-alpha+360.), 360.);
+
 	return d;
 }
 

@@ -1,5 +1,6 @@
 #include "Grid2DObject.h"
 #include "IOUtils.h"
+#include <cmath>
 
 /*
  * Default constructor. 
@@ -38,8 +39,37 @@ Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _
 	: grid2D(_grid2Dobj.grid2D, _nx,_ny, _ncols,_nrows)
 {
 
-	setValues(_ncols, _nrows, (_grid2Dobj.xllcorner+_nx*_grid2Dobj.cellsize), (_grid2Dobj.yllcorner+_ny*_grid2Dobj.cellsize), 
-			IOUtils::nodata, IOUtils::nodata, _grid2Dobj.cellsize);
+	setValues(_ncols, _nrows, (_grid2Dobj.xllcorner+_nx*_grid2Dobj.cellsize),
+		(_grid2Dobj.yllcorner+_ny*_grid2Dobj.cellsize), 
+		IOUtils::nodata, IOUtils::nodata, _grid2Dobj.cellsize);
+}
+
+void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, double& _latitude, double& _longitude)
+{
+	const double easting = ((double)i+.5) * cellsize;
+	const double northing = ((double)j+.5) * cellsize;
+
+	IOUtils::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, true);
+}
+
+void Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j)
+{
+	double easting, northing;
+	IOUtils::WGS84_to_local(latitude, longitude, _latitude, _longitude, easting, northing, true);
+	
+	double x = floor(easting/cellsize);
+	double y = floor(northing/cellsize);
+	
+	if(x<0. || x>(double)ncols) {
+		i=-1;
+	} else {
+		i=(int)x;
+	}
+	if(y<0. || y>(double)nrows) {
+		j=-1;
+	} else {
+		j=(int)y;
+	}
 }
 
 void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,

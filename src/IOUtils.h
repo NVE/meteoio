@@ -58,8 +58,9 @@ namespace IOUtils {
 	* @param lon Decimal Longitude(const double&)
 	* @param easting easting coordinate in local grid (double&)
 	* @param northing northing coordinate in local grid (double&)
+	* @param fast use fast (but less precise) calculation? (optional)
 	*/
-	void WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing);
+	void WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const bool fast=false);
 
 	/**
 	* @brief Coordinate conversion: from local metric grid to WGS84 Lat/Long
@@ -69,30 +70,45 @@ namespace IOUtils {
 	* @param northing northing coordinate in local grid (double&)
 	* @param lat Decimal Latitude (double&)
 	* @param lon Decimal Longitude(double&)
+	* @param fast use fast (but less precise) calculation? (optional)
 	*/
-	void local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon);
+	void local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const bool fast=false);
 
 	/**
 	* @brief Spherical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
 	* See http://www.movable-type.co.uk/scripts/latlong.html for more
-	* @param lat1 Decimal Latitude (const double&)
-	* @param lon1 Decimal Longitude (const double&)
-	* @param lat2 Decimal Latitude (const double&)
-	* @param lon2 Decimal Longitude (const double&)
+	* @param[in] lat1 Decimal Latitude (const double&)
+	* @param[in] lon1 Decimal Longitude (const double&)
+	* @param[in] lat2 Decimal Latitude (const double&)
+	* @param[in] lon2 Decimal Longitude (const double&)
+	* @param[out] alpha average bearing
 	* @return distance (double)
 	*/
+	double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
 	double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2);
+
+	/**
+	* @brief Spherical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
+	* See http://www.movable-type.co.uk/scripts/latlong.html for more
+	* @param[in] lat_ref Decimal Latitude (const double&)
+	* @param[in] lon_ref Decimal Longitude (const double&)
+	* @param[in] distance Distance in meters (const double&)
+	* @param[in] bearing bearing in degrees, 0 being north (const double&)
+	* @param[out] lat Decimal latitude of target point (double&)
+	* @param[out] lon Decimal longitude of target point (double&)
+	*/
+	void cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
 
 	/**
 	* @brief Vincenty Distance calculation between points in WGS84 (decimal Lat/Long)
 	* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", 
 	* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, 
 	* see http://www.springerlink.com/content/y7108u6862473583 for more
-	* @param lat1 Decimal Latitude (const double&)
-	* @param lon1 Decimal Longitude (const double&)
-	* @param lat2 Decimal Latitude (const double&)
-	* @param lon2 Decimal Longitude (const double&)
-	* @param alpha average bearing (double&)
+	* @param[in] lat1 Decimal Latitude (const double&)
+	* @param[in] lon1 Decimal Longitude (const double&)
+	* @param[in] lat2 Decimal Latitude (const double&)
+	* @param[in] lon2 Decimal Longitude (const double&)
+	* @param[in] alpha average bearing (double&)
 	* @return distance (double)
 	*/
 	double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
@@ -104,12 +120,12 @@ namespace IOUtils {
 	* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", 
 	* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, 
 	* see http://www.springerlink.com/content/y7108u6862473583 for more
-	* @param lat_ref Decimal Latitude (const double&)
-	* @param lon_ref Decimal Longitude (const double&)
-	* @param distance Distance in meters (const double&)
-	* @param bearing bearing in degrees, 0 being north (const double&)
-	* @param lat Decimal latitude of target point (double&)
-	* @param lon Decimal longitude of target point (double&)
+	* @param[in] lat_ref Decimal Latitude (const double&)
+	* @param[in] lon_ref Decimal Longitude (const double&)
+	* @param[in] distance Distance in meters (const double&)
+	* @param[in] bearing bearing in degrees, 0 being north (const double&)
+	* @param[out] lat Decimal latitude of target point (double&)
+	* @param[out] lon Decimal longitude of target point (double&)
 	*/
 	void VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
 
