@@ -86,6 +86,8 @@ void IOUtils::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 
 void IOUtils::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const bool fast)
 {
+//HACK: always use COMPASS bearing
+//TODO: move all these methods to MapProj
 	double alpha;
 	const double to_rad = PI / 180.0;
 	double distance;
@@ -94,7 +96,7 @@ void IOUtils::WGS84_to_local(const double& lat_ref, const double& lon_ref, const
 	} else {
 		distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
 	}
-	easting = -distance*sin(alpha*to_rad);
+	easting = distance*sin(alpha*to_rad);
 	northing = distance*cos(alpha*to_rad);
 }
 
@@ -148,8 +150,7 @@ double IOUtils::cosineDistance(const double& lat1, const double& lon1, const dou
 	alpha = atan2( sin((lon2-lon1)*to_rad)*cos(lat2*to_rad) , 
 			cos(lat1*to_rad)*sin(lat2*to_rad) - sin(lat1*to_rad)*cos(lat2*to_rad)*cos((lon2-lon1)*to_rad)
  		) / to_rad;
-	//we don't want compass bearing, but triggonometric angle
-	alpha = fmod((-alpha+360.), 360.);
+	alpha = fmod((alpha+360.), 360.);
 
 	return d;
 }
@@ -214,14 +215,10 @@ double IOUtils::VincentyDistance(const double& lat1, const double& lon1, const d
 	//computation of the average forward bearing
 	double alpha1 = atan2(cos(U2)*sin(lambda), cos(U1)*sin(U2)-sin(U1)*cos(U2)*cos(lambda)) / to_rad; //forward azimuth
 	double alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda)) / to_rad; //reverse azimuth
-	//converting reverse azimuth back to normal azimuth
-	if(alpha2>180.) {
-		alpha2 = alpha2 - 180.;
-	} else {
-		alpha2 = 180. - alpha2;
-	}
-	alpha1 = normalizeBearing(alpha1);
-	alpha2 = normalizeBearing(alpha2);
+
+	//trying to get a normal compass bearing... TODO: make sure it works and understand why
+	alpha1 = fmod(-alpha1+360., 360.);
+	alpha2 = fmod(alpha2+180., 360.);
 
 	alpha = (alpha1+alpha2)/2.;
 	return s;
