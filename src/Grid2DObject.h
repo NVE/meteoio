@@ -61,8 +61,9 @@ class Grid2DObject{
 		* @param _longitude point longitude
 		* @param i matching X coordinate in the grid
 		* @param j matching Y coordinate in the grid
+		* @return EXIT_SUCESS or EXIT_FAILURE if the given point was outside the grid (sets (i,j) to closest values within the grid)
 		*/
-		void WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j);
+		int WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j);
 
 		/**
 		* @brief Converts grid coordinates (i,j) into WGS84 coordinates

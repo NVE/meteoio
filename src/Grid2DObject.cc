@@ -52,24 +52,37 @@ void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, d
 	IOUtils::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, true);
 }
 
-void Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j)
+int Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j)
 {
 	double easting, northing;
 	IOUtils::WGS84_to_local(latitude, longitude, _latitude, _longitude, easting, northing, true);
 	
 	double x = floor(easting/cellsize);
 	double y = floor(northing/cellsize);
+
+	int error_code=EXIT_SUCCESS;
 	
-	if(x<0. || x>(double)ncols) {
-		i=-1;
+	if(x<0.) {
+		i=0;
+		error_code=EXIT_FAILURE;
+	} else if(x>(double)ncols) {
+		i=ncols;
+		error_code=EXIT_FAILURE;
 	} else {
 		i=(int)x;
 	}
-	if(y<0. || y>(double)nrows) {
-		j=-1;
+	
+	if(y<0.) {
+		j=0;
+		error_code=EXIT_FAILURE;
+	} else if(y>(double)nrows) {
+		j=nrows;
+		error_code=EXIT_FAILURE;
 	} else {
 		j=(int)y;
 	}
+
+	return error_code;
 }
 
 void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
