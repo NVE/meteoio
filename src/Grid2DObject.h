@@ -3,6 +3,7 @@
 
 #include "Array2D.h"
 #include "IOExceptions.h"
+#include "MapProj.h"
 
 /**
  * @class Grid2DObject
@@ -33,12 +34,13 @@ class Grid2DObject{
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
-			const double& cellsize);
+			const double& cellsize/*, const MapProj& proj=Grid2DObject::NULL_proj*/);
 
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
-			const double& cellsize, const Array2D<double>& grid2D_in);
+			const double& cellsize, const Array2D<double>& grid2D_in/*,
+			const MapProj& proj=Grid2DObject::NULL_proj*/);
 
 		/**
 		* @brief constructs an object as a subset of another grid object
@@ -88,7 +90,8 @@ class Grid2DObject{
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
-			const double& cellsize);
+			const double& cellsize/*,
+			const MapProj& proj=Grid2DObject::NULL_proj*/);
 		/**
 		* @brief Set all variables in one go. Notably the member grid2D of type 
 		* Array2D\<double\> will be destroyed and recreated to size ncols x nrows.
@@ -104,7 +107,8 @@ class Grid2DObject{
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude,
-			const double& cellsize, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
+			const double& cellsize, const Array2D<double>& grid2D_in/*,
+			const MapProj& proj=Grid2DObject::NULL_proj*/); //TODO: const CArray would be better...
 		
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
@@ -121,12 +125,14 @@ class Grid2DObject{
 		double latitude, longitude;
 
  protected:
+		static const MapProj NULL_proj;
+
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude, const double& cellsize);
+			const double& latitude, const double& longitude, const double& cellsize/*,
+			const MapProj& proj=Grid2DObject::NULL_proj*/);
 
-		void checkCoordinates();
+		void checkCoordinates(const MapProj& proj);
 };
-#include "DEMObject.h"
 
 #endif

@@ -3,6 +3,9 @@
 #ifdef PROJ4
 	#include <proj_api.h>
 #endif
+#ifndef PI
+	#define PI 3.141592653589
+#endif
 
 void MapProj::initializeMaps()
 {
@@ -10,6 +13,12 @@ void MapProj::initializeMaps()
 	from_wgs84["CH1903"] = &MapProj::WGS84_to_CH1903;
 	to_wgs84["PROJ4"]   = &MapProj::PROJ4_to_WGS84;
 	from_wgs84["PROJ4"] = &MapProj::WGS84_to_PROJ4;
+}
+
+MapProj::MapProj()
+{
+	coordsystem = "NULL";
+	coordparam  = "NULL";
 }
 
 MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _parameters)
@@ -33,18 +42,25 @@ MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _param
 	coordparam  = _parameters;
 }
 
-void MapProj::convert_to_WGS84(const double& easting, const double& northing, double& latitude, double& longitude)
+void MapProj::convert_to_WGS84(const double& easting, const double& northing, double& latitude, double& longitude) const
 {
 	(this->*convToWGS84)(easting, northing, latitude, longitude);
 }
 
-void MapProj::convert_from_WGS84(const double& latitude, const double& longitude, double& easting, double& northing)
+void MapProj::convert_from_WGS84(const double& latitude, const double& longitude, double& easting, double& northing) const
 {
 	(this->*convFromWGS84)(latitude, longitude, easting, northing);
 }
 
+double MapProj::normalizeBearing(double angle)
+{//TODO: use fmod
+	if(angle<0.) angle = 360.0 + angle;
+	if(angle>360.) angle = angle - 360.;
+	return angle;
+}
 
-void MapProj::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out)
+
+void MapProj::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out) const
 {
 	//converts WGS84 coordinates (lat,long) to the Swiss coordinates. See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
@@ -72,7 +88,7 @@ void MapProj::WGS84_to_CH1903(const double& lat_in, const double& long_in, doubl
 	*/
 }
 
-void MapProj::CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out)
+void MapProj::CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const
 {
 	//converts Swiss coordinates to WGS84 coordinates (lat,long). See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
@@ -103,7 +119,7 @@ void MapProj::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 	*/
 }
 
-void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double& east_out, double& north_out)
+void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double& east_out, double& north_out) const
 {
 #ifdef PROJ4
 	const string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
@@ -139,7 +155,7 @@ void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double
 #endif
 }
 
-void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out)
+void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const
 {
 #ifdef PROJ4
 	const std::string dest_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
@@ -174,3 +190,206 @@ void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, doub
 	throw IOException("Not compiled with PROJ4 support", AT);
 #endif
 }
+
+void MapProj::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const bool fast)
+{
+//HACK: always use COMPASS bearing
+//TODO: move all these methods to MapProj
+	double alpha;
+	const double to_rad = PI / 180.0;
+	double distance;
+	if(fast==true) {
+		distance = cosineDistance(lat_ref, lon_ref, lat, lon, alpha);
+	} else {
+		distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
+	}
+	easting = distance*sin(alpha*to_rad);
+	northing = distance*cos(alpha*to_rad);
+}
+
+void MapProj::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const bool fast)
+{
+	const double to_deg = 180.0 / PI;
+	double bearing = atan2(northing, easting)*to_deg;
+	const double distance = sqrt( IOUtils::pow2(easting) + IOUtils::pow2(northing) );
+
+	bearing = normalizeBearing(bearing);
+	if(fast==true) {
+		cosineInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+	} else {
+		VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+	}
+}
+
+void MapProj::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
+{
+	const double Rearth = 6371.e3;
+	const double to_rad = PI / 180.0;
+	const double to_deg = 180.0 / PI;
+	const double lat_ref_rad = lat_ref*to_rad;
+	const double bearing_rad = bearing*to_rad;
+
+	lat = asin( sin(lat_ref_rad)*cos(distance/Rearth) + 
+				cos(lat_ref_rad)*sin(distance/Rearth)*cos(bearing_rad) );
+	lon = lon_ref*to_rad + atan2( sin(bearing_rad)*sin(distance/Rearth)*cos(lat_ref_rad) , 
+					cos(distance/Rearth) - sin(lat_ref_rad)*sin(lat) );
+	lon = fmod(lon+PI, 2.*PI) - PI;
+
+	lat *= to_deg;
+	lon *= to_deg;
+}
+
+double MapProj::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
+{
+	double alpha;
+	return cosineDistance(lat1, lon1, lat2, lon2, alpha);
+}
+
+double MapProj::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
+{
+	const double Rearth = 6371.e3;
+	const double to_rad = PI / 180.0;
+	const double d = acos( 
+		sin(lat1*to_rad) * sin(lat2*to_rad) 
+		+ cos(lat1*to_rad) * cos(lat2*to_rad) * cos((lon2-lon1)*to_rad) 
+		) * Rearth;
+
+	alpha = atan2( sin((lon2-lon1)*to_rad)*cos(lat2*to_rad) , 
+			cos(lat1*to_rad)*sin(lat2*to_rad) - sin(lat1*to_rad)*cos(lat2*to_rad)*cos((lon2-lon1)*to_rad)
+ 		) / to_rad;
+	alpha = fmod((alpha+360.), 360.);
+
+	return d;
+}
+
+double MapProj::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
+{
+	double alpha;
+	return VincentyDistance(lat1, lon1, lat2, lon2, alpha);
+}
+
+double MapProj::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
+{
+	const double thresh = 1.e-12;	//convergence absolute threshold
+	const int n_max = 100;		//maximum number of iterations
+	const double a = 6378137.;	//major ellipsoid semi-axis, value for wgs84
+	const double b = 6356752.3142;	//minor ellipsoid semi-axis, value for wgs84
+	const double f = (a - b) / a;	//ellispoid flattening
+	const double to_rad = PI / 180.0;
+	
+	const double L = (lon1 - lon2)*to_rad;
+	const double U1 = atan( (1.-f)*tan(lat1*to_rad) );
+	const double U2 = atan( (1.-f)*tan(lat2*to_rad) );
+
+	double lambda = L, lambda_p=0., delta_sigma;
+	double sin_sigma, cos_sigma, sigma, sin_alpha, cos_alpha2, cos_2sigma_m;
+	double C, u2, A, B, s;
+	int n=0;
+	do {
+		sin_sigma = sqrt( IOUtils::pow2(cos(U2)*sin(lambda)) + IOUtils::pow2(cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda)) );
+		if(sin_sigma==0.) {
+			//co-incident points
+			return 0.;
+		}
+		cos_sigma = sin(U1)*sin(U2) + cos(U1)*cos(U2)*cos(lambda);
+		sigma = atan2(sin_sigma,cos_sigma);
+		sin_alpha = cos(U1)*cos(U2)*sin(lambda) / sin_sigma;
+		cos_alpha2 = 1. - IOUtils::pow2(sin_alpha);
+		if(lat1==0. && lat2==0.) {
+			cos_2sigma_m = 0.;
+		} else {
+			cos_2sigma_m = cos_sigma - 2.*sin(U1)*sin(U2)/cos_alpha2;
+		}
+		C = f/16. * cos_alpha2*(4.+f*(4.-3.*cos_alpha2));
+		lambda_p = lambda;
+		lambda = L + (1.-C)*f*sin_alpha*( 
+			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*IOUtils::pow2(cos_2sigma_m)) ) 
+			);
+		n++;
+	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
+	
+	if(n>n_max) {
+		throw IOException("Distance calculation not converging", AT);
+	}
+	
+	u2 = cos_alpha2 * (a*a - b*b) / (b*b);
+	A = 1. + u2/16384. * ( 4096.+u2*(-768.+u2*(320.-175.*u2)) );
+	B = u2/1024. * ( 256.+u2*(-128.+u2*(74.-47.*u2)) );
+	delta_sigma = B*sin_sigma*( cos_2sigma_m+B/4.*( cos_sigma*(-1.+2.*IOUtils::pow2(cos_2sigma_m)) - B/6.*(cos_2sigma_m*(-3.+4.*IOUtils::pow2(sin_sigma))*(-3.+4.*IOUtils::pow2(cos_2sigma_m))) ) );
+
+	s = b*A*(sigma - delta_sigma);	//distance between the two points
+	
+	//computation of the average forward bearing
+	double alpha1 = atan2(cos(U2)*sin(lambda), cos(U1)*sin(U2)-sin(U1)*cos(U2)*cos(lambda)) / to_rad; //forward azimuth
+	double alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda)) / to_rad; //reverse azimuth
+
+	//trying to get a normal compass bearing... TODO: make sure it works and understand why
+	alpha1 = fmod(-alpha1+360., 360.);
+	alpha2 = fmod(alpha2+180., 360.);
+
+	alpha = (alpha1+alpha2)/2.;
+	return s;
+}
+
+void MapProj::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
+{
+	const double thresh = 1.e-12;	//convergence absolute threshold
+	const double a = 6378137.;	//major ellipsoid semi-axis, value for wgs84
+	const double b = 6356752.3142;	//minor ellipsoid semi-axis, value for wgs84
+	const double f = (a - b) / a;	//ellispoid flattening
+	const double to_rad = PI / 180.0;
+	const double to_deg = 180.0 / PI;
+
+	const double alpha1 = bearing*to_rad;
+	const double tanU1 = (1.-f)*tan(lat_ref*to_rad);
+	const double cosU1 = 1./sqrt(1.+IOUtils::pow2(tanU1));
+	const double sinU1 = tanU1*cosU1;
+	const double sigma1 = atan2(tanU1,cos(alpha1));
+	const double sinAlpha = cosU1*sin(alpha1);
+	const double cos2alpha = 1. - IOUtils::pow2(sinAlpha);
+	const double u2 = cos2alpha * (a*a - b*b) / (b*b);
+	const double A = 1. + u2/16384. * (4096. + u2*(-768.+u2*(320.-175.*u2)) );
+	const double B = u2/1024. * (256. + u2*(-128.+u2*(74.-47.*u2)));
+	
+	double sigma = distance / (b*A);
+	double sigma_p = 2.*PI;
+	double cos2sigma_m = cos( 2.*sigma1 + sigma ); //required to avoid uninitialized value
+
+	while (fabs(sigma - sigma_p) > thresh) {
+		cos2sigma_m = cos( 2.*sigma1 + sigma );
+		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * ( 
+			cos(sigma)*(-1.+2.*IOUtils::pow2(cos2sigma_m)) 
+			-B/6. * cos2sigma_m * (-3.+4.*IOUtils::pow2(sin(sigma))) * (-3.+4.*IOUtils::pow2(cos2sigma_m))
+			) );
+		sigma_p = sigma;
+		sigma = distance / (b*A) + delta_sigma;
+	}
+	
+	lat = atan2( sinU1*cos(sigma) + cosU1*cos(sigma)*cos(alpha1),
+		     (1.-f) * sqrt( IOUtils::pow2(sinAlpha) + IOUtils::pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
+		   );
+	const double lambda = atan2( sin(sigma)*sin(alpha1), cosU1*cos(sigma) - sinU1*sin(sigma)*cos(alpha1) );
+	const double C = f/16. * cos2alpha * (4.+f*(4.-3.*cos2alpha));
+	const double L = lambda - (1.-C) * f * sinAlpha * (
+				sigma + C * sin(sigma) * ( cos2sigma_m+C*cos(sigma) * (-1.+2.*IOUtils::pow2(cos2sigma_m)) )
+				);
+
+	lat = lat * to_deg;
+	lon = lon_ref + (L*to_deg);
+	//const double alpha2 = atan2( sinAlpha, -(sinU1*sin(sigma)-cosU1*cos(sigma)*cos(alpha1)) ); //reverse azimuth
+}
+
+bool MapProj::operator==(const MapProj& in) const
+{//we only compare on coordsystem/coordparam since the function pointers might be different 
+ //when comparing between different objects. Obviously, this assumes that the function pointers are
+ //always correctly initialized...
+
+	return ((coordsystem==in.coordsystem) && (coordparam==in.coordparam));
+}
+
+bool MapProj::operator!=(const MapProj& in) const
+{
+	return !(*this==in);
+}
+
+

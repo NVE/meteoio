@@ -1,5 +1,6 @@
 #include "Grid2DObject.h"
 #include "IOUtils.h"
+#include "MapProj.h"
 #include <cmath>
 
 /*
@@ -20,18 +21,20 @@ Grid2DObject::Grid2DObject() : grid2D()
 Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize) : grid2D(_ncols, _nrows, IOUtils::nodata)
+				const double& _cellsize/*, 
+				const MapProj& _proj*/) : grid2D(_ncols, _nrows, IOUtils::nodata)
 {
 	//set metadata, grid2D already successfully created
-	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
+	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize/*, _proj*/);
 }
 
 Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const Array2D<double>& _grid2D) : grid2D()
+				const double& _cellsize, const Array2D<double>& _grid2D/*, 
+				const MapProj& _proj*/) : grid2D()
 {
-	set(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _grid2D);
+	set(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _grid2D/*, _proj*/);
 }
 
 Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _nx, const unsigned int& _ny,
@@ -49,13 +52,13 @@ void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, d
 	const double easting = ((double)i+.5) * cellsize;
 	const double northing = ((double)j+.5) * cellsize;
 
-	IOUtils::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, true);
+	MapProj::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, true);
 }
 
 int Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j)
 {
 	double easting, northing;
-	IOUtils::WGS84_to_local(latitude, longitude, _latitude, _longitude, easting, northing, true);
+	MapProj::WGS84_to_local(latitude, longitude, _latitude, _longitude, easting, northing, true);
 	
 	double x = floor(easting/cellsize);
 	double y = floor(northing/cellsize);
@@ -88,16 +91,18 @@ int Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitud
 void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize)
+				const double& _cellsize/*, 
+				const MapProj& _proj*/)
 {
-	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
+	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize/*, _proj*/);
 	grid2D.resize(ncols, nrows, IOUtils::nodata);
 }
 
 void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const Array2D<double>& _grid2D)
+				const double& _cellsize, const Array2D<double>& _grid2D/*, 
+				const MapProj& _proj*/)
 {
 	//Test for equality in size: Only compatible Array2D<double> grids are permitted
 	unsigned int nx,ny;
@@ -106,7 +111,7 @@ void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 		throw IOException("Mismatch in size of Array2D<double> parameter _grid2D and size of Grid2DObject", AT);
 	}
 
-	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize);
+	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize/*, _proj*/);
 
 	//Copy by value, after destroying the old grid
 	grid2D = _grid2D;
@@ -114,7 +119,8 @@ void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 
 void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude, const double& _cellsize)
+				const double& _latitude, const double& _longitude, const double& _cellsize/*, 
+				const MapProj& proj*/)
 {
 	ncols = _ncols;
 	nrows = _nrows;
@@ -124,26 +130,29 @@ void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nr
 	latitude = _latitude;
 	longitude = _longitude;
 
-	checkCoordinates();
+	//const MapProj dummy;
+	//if(proj!=dummy) {
+	//	checkCoordinates(proj);
+	//}
 }
 
-void Grid2DObject::checkCoordinates()
+void Grid2DObject::checkCoordinates(const MapProj& proj)
 {
 	//calculate/check coordinates if necessary
 	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
 			throw InvalidArgumentException("missing positional parameters (xll,yll) or (lat,long) for Grid2DObject", AT);
 		}
-		IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude); //HACK: replace by local_to_WGS84
+		proj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
 	} else {
 		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
-			IOUtils::WGS84_to_CH1903(latitude, longitude, xllcorner, yllcorner);  //HACK: replace by WGS84_to_local
+			proj.convert_from_WGS84(latitude, longitude, xllcorner, yllcorner);
 		} else {
 			double tmp_lat, tmp_lon;
-			IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, tmp_lat, tmp_lon); //HACK: replace by WGS84_to_local
-			/*if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
+			proj.convert_to_WGS84(xllcorner, yllcorner, tmp_lat, tmp_lon);
+			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
 				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for Grid2DObject", AT);
-			}*/
+			}
 		}
 	}
 }

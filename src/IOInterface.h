@@ -4,6 +4,7 @@
 #include "StationData.h"
 #include "MeteoData.h"
 #include "Grid2DObject.h"
+#include "DEMObject.h"
 #include "Date_IO.h"
 #include "DynamicLibrary.h"
 #include "Array.h"

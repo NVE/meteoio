@@ -1,4 +1,5 @@
 #include "Grid3DObject.h"
+#include "MapProj.h"
 
 Grid3DObject::Grid3DObject() : grid3D() //using Array3D default constructor
 {
@@ -75,25 +76,28 @@ void Grid3DObject::setValues(const unsigned int& _ncols, const unsigned int& _nr
 	checkCoordinates();
 }
 
+//TODO: add WGS84_to_local methods to Grid3DObject (with/without terrain following coords
+
 void Grid3DObject::checkCoordinates()
 {
+	//HACK: do the same as for Grid2DObject
 	//calculate/check coordinates if necessary
-	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
+/*	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
 		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
 			throw InvalidArgumentException("missing positional parameters (xll,yll) or (lat,long) for Grid3DObject", AT);
 		}
-		IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude); //HACK: replace by local_to_WGS84
+		MapProj::CH1903_to_WGS84(xllcorner, yllcorner, latitude, longitude); //HACK: replace by local_to_WGS84
 	} else {
 		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
-			IOUtils::WGS84_to_CH1903(latitude, longitude, xllcorner, yllcorner);  //HACK: replace by WGS84_to_local
+			MapProj::WGS84_to_CH1903(latitude, longitude, xllcorner, yllcorner);  //HACK: replace by WGS84_to_local
 		} else {
 			double tmp_lat, tmp_lon;
-			IOUtils::CH1903_to_WGS84(xllcorner, yllcorner, tmp_lat, tmp_lon); //HACK: replace by WGS84_to_local
+			MapProj::CH1903_to_WGS84(xllcorner, yllcorner, tmp_lat, tmp_lon); //HACK: replace by WGS84_to_local
 			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
 				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for Grid3DObject", AT);
 			}
 		}
-	}
+	}*/
 }
 
 bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
