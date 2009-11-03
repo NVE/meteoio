@@ -178,6 +178,7 @@ const string MeteoData::toString() const
 void MeteoData::Serialize(POPBuffer &buf, bool pack)
 {//HACK TODO: adjust the serialize to the latest changes!! (call InitStaticData(), etc)
 	if (pack){
+		buf.Pack(&resampled,1);
 		date.Serialize(buf,true);
 		buf.Pack(&ta,1);
 		buf.Pack(&iswr,1);
@@ -192,6 +193,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&hs,1);
 		buf.Pack(&rswr,1);
 	}else{
+		buf.UnPack(&resampled,1);
 		date.Serialize(buf,false);
 		buf.UnPack(&ta,1);
 		buf.UnPack(&iswr,1);
@@ -205,6 +207,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&tss,1);
 		buf.UnPack(&hs,1);
 		buf.UnPack(&rswr,1);
+		initParameterMap();
 	}
 }
 #endif

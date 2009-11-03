@@ -52,13 +52,13 @@ void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, d
 	const double easting = ((double)i+.5) * cellsize;
 	const double northing = ((double)j+.5) * cellsize;
 
-	MapProj::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, true);
+	MapProj::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, MapProj::GEO_COSINE);
 }
 
 int Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j)
 {
 	double easting, northing;
-	MapProj::WGS84_to_local(latitude, longitude, _latitude, _longitude, easting, northing, true);
+	MapProj::WGS84_to_local(latitude, longitude, _latitude, _longitude, easting, northing, MapProj::GEO_COSINE);
 	
 	double x = floor(easting/cellsize);
 	double y = floor(northing/cellsize);

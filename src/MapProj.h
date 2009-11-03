@@ -13,21 +13,64 @@ class MapProj; //forward declaration
 
 typedef void(MapProj::*convfunc)(const double&, const double&, double&, double&) const;
 
+#ifdef _POPC_
+class MapProj : POPBase {
+	public:
+		void Serialize(POPBuffer &buf, bool pack);
+#else
 class MapProj {
+#endif
  public:
+	/**
+	* @enum GEO_DISTANCES
+	* keywords for selecting the algorithm for computing geodesic distances
+	*/
+	enum GEO_DISTANCES {
+		GEO_COSINE, ///< Spehrical law of cosine
+		GEO_VINCENTY ///< Vincenty ellispoid formula
+	};
+	
 	/**
 	* @brief Default constructor
 	* This constructor builds a dummy object that performs no conversions but can be used for comparison
 	* purpose. This is more or less the euqivalent of NULL for a pointer...
 	*/
 	MapProj();
+
+	/**
+	* @brief Regular constructor: usually, this is the constructor to use
+	* @param[in] coordinatesystem string identifying the coordinate system to use
+	* @param[in] parameters string giving some additional parameters for the projection (optional)
+	*/
 	MapProj(const std::string& coordinatesystem, const std::string& parameters="");
 
-	void convert_to_WGS84(const double& easting, const double& northing, double& latitude, double& longitude) const;
-	void convert_from_WGS84(const double& latitude, const double& longitude, double& easting, double& northing) const;
+	/**
+	* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+	* Such a projection defines easting and northing as the distance (in meters) to a reference point
+	* which coordinates have to be provided here.
+	* @param[in] _coordinatesystem ths string has to contain "LOCAL"
+	* @param[in] _lat_ref latitude of the reference point
+	* @param[in] _long_ref longitude of the reference point
+	*/
+	MapProj(const std::string& _coordinatesystem, const double& _lat_ref, const double& _long_ref);
 
-	bool operator==(const MapProj&) const; ///<Operator that tests for equality
-	bool operator!=(const MapProj&) const; ///<Operator that tests for inequality
+	/**
+	* @brief Method converting towards WGS84
+	* @param[in] easting easting of the coordinate to convert
+	* @param[in] northing northing of the coordinate to convert
+	* @param[out] latitude converted latitude
+	* @param[out] longitude converted longitude
+	*/
+	void convert_to_WGS84(const double& easting, const double& northing, double& latitude, double& longitude) const;
+
+	/**
+	* @brief Method converting towards WGS84
+	* @param[in] latitude latitude of the coordinate to convert
+	* @param[in] longitude longitude of the coordinate to convert
+	* @param[out] easting converted easting
+	* @param[out] northing converted northing
+	*/
+	void convert_from_WGS84(const double& latitude, const double& longitude, double& easting, double& northing) const;
 
 	/**
 	* @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
@@ -36,7 +79,7 @@ class MapProj {
 	* @param[in] long_in Decimal Longitude
 	* @param[out] east_out easting coordinate (Swiss system)
 	* @param[out] north_out northing coordinate (Swiss system)
-	*///HACK: static
+	*/
 	void WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out) const;
 
 	/**
@@ -46,7 +89,7 @@ class MapProj {
 	* @param[in] north_in northing coordinate (Swiss system)
 	* @param[out] lat_out Decimal Latitude 
 	* @param[out] long_out Decimal Longitude
-	*///HACK: static
+	*/
 	void CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const;
 
 	/**
@@ -68,6 +111,24 @@ class MapProj {
 	void PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const;
 
 	/**
+	* @brief Coordinate conversion: from WGS84 Lat/Long to local grid as given in coordparam
+	* @param lat_in Decimal Latitude 
+	* @param long_in Decimal Longitude
+	* @param east_out easting coordinate (target system)
+	* @param north_out northing coordinate (target system)
+	*/
+	void WGS84_to_local(const double& lat_in, const double& long_in, double& east_out, double& north_out) const;
+
+	/**
+	* @brief Coordinate conversion: from ocal grid as given in coordparam to WGS84 Lat/Long
+	* @param east_in easting coordinate (Swiss system)
+	* @param north_in northing coordinate (Swiss system)
+	* @param lat_out Decimal Latitude 
+	* @param long_out Decimal Longitude
+	*/
+	void local_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const;
+
+	/**
 	* @brief Coordinate conversion: from WGS84 Lat/Long to local metric grid
 	* @param lat_ref Decimal Latitude of origin (const double&)
 	* @param lon_ref Decimal Longitude of origin (const double&)
@@ -75,9 +136,9 @@ class MapProj {
 	* @param lon Decimal Longitude(const double&)
 	* @param easting easting coordinate in local grid (double&)
 	* @param northing northing coordinate in local grid (double&)
-	* @param fast use fast (but less precise) calculation? (optional)
+	* @param algo select the algorith to be used for distances calculations (optional, default=GEO_VINCENTY)
 	*/
-	static void WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const bool fast=false);
+	static void WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const enum GEO_DISTANCES algo=GEO_VINCENTY);
 
 	/**
 	* @brief Coordinate conversion: from local metric grid to WGS84 Lat/Long
@@ -87,9 +148,9 @@ class MapProj {
 	* @param northing northing coordinate in local grid (double&)
 	* @param lat Decimal Latitude (double&)
 	* @param lon Decimal Longitude(double&)
-	* @param fast use fast (but less precise) calculation? (optional)
+	* @param algo select the algorith to be used for distances calculations (optional, default=GEO_VINCENTY)
 	*/
-	static void local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const bool fast=false);
+	static void local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const enum GEO_DISTANCES algo=GEO_VINCENTY);
 
 	/**
 	* @brief Spherical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
@@ -146,8 +207,13 @@ class MapProj {
 	*/
 	static void VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
 
+	bool operator==(const MapProj&) const; ///<Operator that tests for equality
+	bool operator!=(const MapProj&) const; ///<Operator that tests for inequality
+
  private:
 	void initializeMaps();
+	void setFunctionPointers();
+	void parseLocalParameters(double& lat_ref, double& lon_ref) const;
 	static double normalizeBearing(double angle);
 
 	std::map<std::string, convfunc> to_wgs84;
@@ -155,6 +221,22 @@ class MapProj {
 	std::string coordsystem;
 	std::string coordparam;
 	convfunc convToWGS84, convFromWGS84;
+	double ref_latitude, ref_longitude;
+	
+	enum ELLIPSOIDS_NAMES {
+		E_WGS84,
+		E_GRS80,
+		E_AIRY,
+		E_INTL1924,
+		E_CLARKE1880,
+		E_GRS67
+	};
+	struct ELLIPSOID {
+		double a;
+		double b;
+	};
+	static const struct ELLIPSOID ellipsoids[];
+
 };
 
 #endif

@@ -7,12 +7,45 @@
 	#define PI 3.141592653589
 #endif
 
+const struct MapProj::ELLIPSOID MapProj::ellipsoids[] = {
+		{ 6378137.,	6356752.3142 }, //E_WGS84
+		{ 6378137.,	6356752.3141 }, //E_GRS80
+		{ 6377563.396,	6356256.909 }, //E_AIRY
+		{ 6378388.,	6356911.946 }, //E_INTL1924
+		{ 6378249.145,	6356514.86955 }, //E_CLARKE1880
+		{ 6378160.,	6356774.719 } //E_GRS67
+};
+
 void MapProj::initializeMaps()
 {
 	to_wgs84["CH1903"]   = &MapProj::CH1903_to_WGS84;
 	from_wgs84["CH1903"] = &MapProj::WGS84_to_CH1903;
 	to_wgs84["PROJ4"]   = &MapProj::PROJ4_to_WGS84;
 	from_wgs84["PROJ4"] = &MapProj::WGS84_to_PROJ4;
+	to_wgs84["LOCAL"]   = &MapProj::local_to_WGS84;
+	from_wgs84["LOCAL"] = &MapProj::WGS84_to_local;
+}
+
+void MapProj::setFunctionPointers()
+{
+	//check whether there exists a tranformation for the given coordinatesystem
+	//init function pointers
+	std::map<std::string, convfunc>::iterator mapitTo;
+	std::map<std::string, convfunc>::iterator mapitFrom;
+	mapitTo   = to_wgs84.find(coordsystem);	
+	mapitFrom = from_wgs84.find(coordsystem);	
+	
+	if ((mapitTo == to_wgs84.end()) || (mapitFrom == from_wgs84.end()))
+		throw IOException("No known conversions exist for coordinate system " + coordsystem, AT);
+	
+	convToWGS84   = mapitTo->second;
+	convFromWGS84 = mapitFrom->second;
+
+	if(coordsystem=="LOCAL") {
+		if(ref_latitude==IOUtils::nodata) {
+			parseLocalParameters(ref_latitude, ref_longitude);
+		}
+	}
 }
 
 MapProj::MapProj()
@@ -24,22 +57,26 @@ MapProj::MapProj()
 MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _parameters)
 {
 	initializeMaps();
-	
-	//check whether there exists a tranformation for the given coordinatesystem
-	//init function pointers
-	std::map<std::string, convfunc>::iterator mapitTo;
-	std::map<std::string, convfunc>::iterator mapitFrom;
-	mapitTo   = to_wgs84.find(_coordinatesystem);	
-	mapitFrom = from_wgs84.find(_coordinatesystem);	
-	
-	if ((mapitTo == to_wgs84.end()) || (mapitFrom == from_wgs84.end()))
-		throw IOException("No known conversions exist for coordinate system " + _coordinatesystem, AT);
-	
-	convToWGS84   = mapitTo->second;
-	convFromWGS84 = mapitFrom->second;
-
 	coordsystem = _coordinatesystem;
 	coordparam  = _parameters;
+	ref_latitude = ref_longitude = IOUtils::nodata;
+	setFunctionPointers();
+}
+
+MapProj::MapProj(const std::string& _coordinatesystem, const double& _lat_ref, const double& _long_ref)
+{
+	initializeMaps();
+	coordsystem = _coordinatesystem;
+	if(coordsystem!="LOCAL") {
+		throw InvalidArgumentException("Improperly using MapProj constructor that is ONLY suitable for LOCAL conversion", AT);
+	}
+	if(_lat_ref==IOUtils::nodata || _long_ref==IOUtils::nodata) {
+		throw InvalidArgumentException("For LOCAL projection, please provide both reference latitude and longitude!", AT);
+	}
+	ref_latitude = _lat_ref;
+	ref_longitude = _long_ref;
+	coordparam = "";
+	setFunctionPointers();
 }
 
 void MapProj::convert_to_WGS84(const double& easting, const double& northing, double& latitude, double& longitude) const
@@ -50,6 +87,15 @@ void MapProj::convert_to_WGS84(const double& easting, const double& northing, do
 void MapProj::convert_from_WGS84(const double& latitude, const double& longitude, double& easting, double& northing) const
 {
 	(this->*convFromWGS84)(latitude, longitude, easting, northing);
+}
+
+void MapProj::parseLocalParameters(double& lat_ref, double& lon_ref) const
+{//lat/lon for the reference point of local grid is read from projection parameter coordparam
+	if 	((sscanf(coordparam.c_str(), "%lf %lf", &lat_ref, &lon_ref) < 2) && 
+		(sscanf(coordparam.c_str(), "(%lf,%lf)", &lat_ref, &lon_ref) < 2) &&
+		(sscanf(coordparam.c_str(), "%lf/%lf", &lat_ref, &lon_ref) < 2)) {
+			throw InvalidFormatException("Can not parse given lat/lon: "+coordparam,AT);
+	}
 }
 
 double MapProj::normalizeBearing(double angle)
@@ -191,34 +237,55 @@ void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, doub
 #endif
 }
 
-void MapProj::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const bool fast)
+void MapProj::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const enum GEO_DISTANCES algo)
 {
-//HACK: always use COMPASS bearing
-//TODO: move all these methods to MapProj
 	double alpha;
 	const double to_rad = PI / 180.0;
 	double distance;
-	if(fast==true) {
-		distance = cosineDistance(lat_ref, lon_ref, lat, lon, alpha);
-	} else {
-		distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
+
+	switch(algo) {
+		case GEO_COSINE:
+			distance = cosineDistance(lat_ref, lon_ref, lat, lon, alpha);
+			break;
+		case GEO_VINCENTY:
+			distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
+			break;
+		default:
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 	}
+	
 	easting = distance*sin(alpha*to_rad);
 	northing = distance*cos(alpha*to_rad);
 }
 
-void MapProj::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const bool fast)
+void MapProj::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const enum GEO_DISTANCES algo)
 {
 	const double to_deg = 180.0 / PI;
 	double bearing = atan2(northing, easting)*to_deg;
 	const double distance = sqrt( IOUtils::pow2(easting) + IOUtils::pow2(northing) );
 
-	bearing = normalizeBearing(bearing);
-	if(fast==true) {
-		cosineInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
-	} else {
-		VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+	bearing = normalizeBearing(bearing); //TODO: are we really using compass bearing here?
+
+	switch(algo) {
+		case GEO_COSINE:
+			cosineInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+			break;
+		case GEO_VINCENTY:
+			VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+			break;
+		default:
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 	}
+}
+
+void MapProj::WGS84_to_local(const double& lat_in, const double& long_in, double& east_out, double& north_out) const
+{
+	WGS84_to_local(ref_latitude, ref_longitude, lat_in, long_in, east_out, north_out, GEO_COSINE);
+}
+
+void MapProj::local_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const
+{
+	local_to_WGS84(ref_latitude, ref_longitude, east_in, north_in, lat_out, long_out, GEO_COSINE);
 }
 
 void MapProj::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
@@ -272,8 +339,8 @@ double MapProj::VincentyDistance(const double& lat1, const double& lon1, const d
 {
 	const double thresh = 1.e-12;	//convergence absolute threshold
 	const int n_max = 100;		//maximum number of iterations
-	const double a = 6378137.;	//major ellipsoid semi-axis, value for wgs84
-	const double b = 6356752.3142;	//minor ellipsoid semi-axis, value for wgs84
+	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double f = (a - b) / a;	//ellispoid flattening
 	const double to_rad = PI / 180.0;
 	
@@ -392,4 +459,21 @@ bool MapProj::operator!=(const MapProj& in) const
 	return !(*this==in);
 }
 
-
+#ifdef _POPC_
+void MapProj::Serialize(POPBuffer &buf, bool pack)
+{
+	if (pack){
+		buf.Pack(&coordsystem, 1);
+		buf.Pack(&coordparam, 1);
+		buf.Pack(&ref_latitude, 1);
+		buf.Pack(&ref_longitude, 1);
+	}else{
+		buf.UnPack(&coordsystem, 1);
+		buf.UnPack(&coordparam, 1);
+		buf.UnPack(&ref_latitude, 1);
+		buf.UnPack(&ref_longitude, 1);
+		initializeMaps();
+		setFunctionPointers();
+	}
+}
+#endif
