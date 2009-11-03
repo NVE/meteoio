@@ -19,7 +19,6 @@
 #ifndef __METEOIO_H__
 #define __METEOIO_H__
 
-#include "Laws.h"
 #include "Array.h"
 #include "Array2D.h"
 #include "Array3D.h"

@@ -24,6 +24,13 @@
 #define MIN(x,y)    (((x) < (y)) ? (x) : (y))
 #endif
 
+#ifndef C_TO_K
+#define C_TO_K( T ) ( T + 273.15 )	  // Celsius to Kelvin
+#endif
+#ifndef K_TO_C
+#define K_TO_C( T ) ( T - 273.15 )	  // Kelvin to Celsius
+#endif
+
 namespace IOUtils {
 
 	const double nodata = -999.0;	//HACK: we should define the same nodata everywhere...

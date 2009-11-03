@@ -37,13 +37,6 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_LINE_LENGTH 6000
 
-
-/*---------------------------------------------------------------+                                                                          
- | Define Data Structures                                        |                                                                          
- +---------------------------------------------------------------*/
-/*---------------------------------------------------------------+                                                                          
- | Nodes                                                         |                                                                          
- +---------------------------------------------------------------*/
 typedef struct {
 	double x;
 	double y;
@@ -66,14 +59,11 @@ typedef struct {
 	double sy;	/* y -component of normal on Surface element */
 } NODE;
 
-/*---------------------------------------------------------------+                                                                          
- | Enumerate the slope shapes                                    |                                                                          
- +---------------------------------------------------------------*/
+//Enumerate the slope shapes
 enum {Flat, Luff, Lee, N_SLOPE};
 
 typedef Array<NODE> CNodeArray;
 
-//typedef Array<int[8]> CElementArray;                                                                                                     
 typedef Array2D<int> CElementArray;
 
 typedef Array<double> CDoubleArray;
@@ -89,8 +79,7 @@ class LegacyIO
 
 		void GetGridSize(int &nx, int &ny, int &nz);
 		void GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z);
-		void GetGridData(CNodeArray &data, char *hour);
-		void PrepareNextWindField(char *hour);
+		void GetGridData(CNodeArray &data, const std::string& hour);
 
 	private:
 		char meteopathname[MAX_STRING_LENGTH];

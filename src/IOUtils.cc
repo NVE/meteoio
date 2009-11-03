@@ -223,6 +223,7 @@ const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012
 
 template<> bool IOUtils::convertString<std::string>(std::string& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
 {
+	(void)f;
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
 

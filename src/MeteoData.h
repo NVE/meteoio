@@ -2,7 +2,6 @@
 #define __METEODATA_H__
 
 #include "Date_IO.h"
-#include "Laws.h"
 #include "IOUtils.h"
 #include <string>
 #include <sstream>

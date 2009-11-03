@@ -9,10 +9,6 @@ LegacyIO::LegacyIO(const std::string &meteopath)
 {
 	strcpy(meteopathname,meteopath.c_str());
 	dimx=dimy=dimz=0;
-
-#ifdef _POPC_
-	*cache_Hour=0;
-#endif
 }
 
 LegacyIO::~LegacyIO()
@@ -109,18 +105,8 @@ void LegacyIO::GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z )
 	fclose(fp);
 }
 
-
-void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
+void LegacyIO::GetGridData(CNodeArray &nodes, const std::string& hour)
 {
-#ifdef _POPC_ 
-	if (hour!=NULL && 0==strcmp(hour,cache_Hour) && cache_WindField.size()) {
-		DEBUG("GET WIND FIELD DATA FROM CACHE");
-		nodes=cache_WindField;
-		cache_WindField.clear();
-		*cache_Hour=0;
-		return;
-	}
-#endif
 	int nx, ny, nz;
 	GetGridSize(nx,ny,nz);
 
@@ -129,7 +115,7 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 	char dummy[MAX_LINE_LENGTH], fname[MAX_STRING_LENGTH];
 
 	strcpy(fname,meteopathname);
-	strcat(fname,hour);
+	strcat(fname,hour.c_str());
 	strcat(fname,".dat");
 
 	if ((fp=fopen(fname,"r")) == 0) {
@@ -210,23 +196,7 @@ void LegacyIO::GetGridData(CNodeArray &nodes, char *hour)
 	fclose(fp);
 
 #ifdef _POPC_ 
-	DEBUG("Read wind field for hour %s OK",hour);
+	DEBUG("Read wind field for hour %s OK",hour.c_str());
 #endif
 }
 
-void LegacyIO::PrepareNextWindField(char *hour)
-{
-#ifdef _POPC_
-	cache_WindField.clear();
-	try {
-		DEBUG("Read grid data (hour=%s) for caching",hour);
-		GetGridData(cache_WindField,hour);
-		strcpy(cache_Hour,hour);
-	}
-	catch (...) {
-		DEBUG("Can not read next wind field for caching");
-	}
-#else
-	(void)hour;
-#endif
-}

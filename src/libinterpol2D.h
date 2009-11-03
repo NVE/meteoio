@@ -9,6 +9,8 @@
 #include "DEMObject.h"
 
 #define MAX_INPUT_STATIONS 255
+#define GRAVITY	9.80665		     // (m s-2)
+#define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1)
 
 /**
  * @class Interpol2D
@@ -83,6 +85,9 @@ class Interpol2D {
 						   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations);
 		void IDWKrieging(Grid2DObject& T, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);
 		void SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW);
+		double RhtoDewPoint(double RH, double TA, const short int force_water);
+		double DewPointtoRh(double TD, double TA, const short int force_water);
+		double lw_AirPressure(const double altitude);
 
 	private:
 		//static members

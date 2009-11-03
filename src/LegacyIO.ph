@@ -34,13 +34,6 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_LINE_LENGTH 6000
 
-
-/*---------------------------------------------------------------+                                                                          
- | Define Data Structures                                        |                                                                          
- +---------------------------------------------------------------*/
-/*---------------------------------------------------------------+                                                                          
- | Nodes                                                         |                                                                          
- +---------------------------------------------------------------*/
 typedef struct {
 	double x;
 	double y;
@@ -63,14 +56,11 @@ typedef struct {
 	double sy;	/* y -component of normal on Surface element */
 } NODE;
 
-/*---------------------------------------------------------------+                                                                          
- | Enumerate the slope shapes                                    |                                                                          
- +---------------------------------------------------------------*/
+//Enumerate the slope shapes
 enum {Flat, Luff, Lee, N_SLOPE};
 
 typedef Array<NODE> CNodeArray;
 
-//typedef Array<int[8]> CElementArray;                                                                                                     
 typedef Array2D<int> CElementArray;
 
 typedef Array<double> CDoubleArray;
@@ -88,9 +78,7 @@ parclass LegacyIO
 
 		void GetGridSize([out] int &nx, [out] int &ny, [out] int &nz);
 		void GetGridPoints([out, proc=marshal_CDoubleArray] CDoubleArray &x, [out, proc=marshal_CDoubleArray]  CDoubleArray &y, [out, proc=marshal_CDoubleArray]  CDoubleArray &z);
-		void GetGridData([out, proc=marshal_input_CNodeArray] CNodeArray &data, [in, proc=marshalstring, size=256] char *hour);
-
-		async void PrepareNextWindField([in, proc=marshalstring, size=256] char *hour);
+		void GetGridData([out, proc=marshal_input_CNodeArray] CNodeArray &data, [in] const std::string& hour);
 
 		classuid(1002);
 

@@ -42,6 +42,8 @@ void MapProj::setFunctionPointers()
 	convFromWGS84 = mapitFrom->second;
 
 	if(coordsystem=="LOCAL") {
+		//if ref_latitude has not yet been set (ie: we have not come from the specific
+		//local constructor
 		if(ref_latitude==IOUtils::nodata) {
 			parseLocalParameters(ref_latitude, ref_longitude);
 		}
@@ -63,13 +65,11 @@ MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _param
 	setFunctionPointers();
 }
 
-MapProj::MapProj(const std::string& _coordinatesystem, const double& _lat_ref, const double& _long_ref)
+MapProj::MapProj(const double& _lat_ref, const double& _long_ref)
 {
 	initializeMaps();
-	coordsystem = _coordinatesystem;
-	if(coordsystem!="LOCAL") {
-		throw InvalidArgumentException("Improperly using MapProj constructor that is ONLY suitable for LOCAL conversion", AT);
-	}
+	coordsystem = std::string("LOCAL");
+	
 	if(_lat_ref==IOUtils::nodata || _long_ref==IOUtils::nodata) {
 		throw InvalidArgumentException("For LOCAL projection, please provide both reference latitude and longitude!", AT);
 	}

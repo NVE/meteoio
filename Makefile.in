@@ -130,7 +130,6 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/IOExceptions.o \
 		$(SRCDIR)/IOUtils.o \
 		$(SRCDIR)/MapProj.o \
-		$(SRCDIR)/Laws.o \
 		$(SRCDIR)/libinterpol2D.o \
 		$(SRCDIR)/libinterpol1D.o \
 		$(SRCDIR)/Meteo1DResampler.o \
@@ -157,7 +156,6 @@ METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/IOExceptions_par.o \
 		$(SRCDIR)/IOUtils_par.o \
 		$(SRCDIR)/MapProj_par.o \
-		$(SRCDIR)/Laws.o \
 		$(SRCDIR)/libinterpol2D_par.o \
 		$(SRCDIR)/libinterpol1D_par.o \
 		$(SRCDIR)/Meteo1DResampler_par.o \

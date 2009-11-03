@@ -6,7 +6,6 @@
 #include "Grid2DObject.h"
 #include "Date_IO.h"
 #include "IOExceptions.h"
-#include "Laws.h"	//HACK: this should be dealt with: we curently have 2 Laws (from SN and here)
 #include "libinterpol2D.h"
 #include "IOUtils.h"
 #include "DEMObject.h"
@@ -549,4 +548,112 @@ void Interpol2D::SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW)
 			}
 		}
 	}
+}
+
+double Interpol2D::RhtoDewPoint(double RH, double TA, const short int force_water)
+{
+	//Convert a Relative Humidity into a dew point temperature
+	//TA is in Kelvins, RH between 0 and 1, returns Td in Kelvins
+	TA = K_TO_C(TA);
+	double Es, E, Tdw, Tdi; //saturation and current water vapor pressure
+	const double Aw = 611.21, Bw = 17.502, Cw = 240.97;	//parameters for water
+	const double Ai = 611.15, Bi = 22.452, Ci = 272.55;	//parameters for ice
+	const double Tfreeze = 0.;			//freezing temperature
+	const double Tnucl = -16.0;			//nucleation temperature
+	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);		//distance to pure ice
+	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6);	//distance to pure water
+
+	//in order to avoid getting NaN if RH=0
+	RH += 0.0001;
+	if (TA >= Tfreeze || force_water==1) {//above freezing point, water
+		Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+		E = RH * Es;
+		Tdw = ( Cw * log(E / Aw) ) / ( Bw - log(E / Aw) );
+		return C_TO_K(Tdw);
+	}
+	if (TA < Tnucl) { //below nucleation, ice
+		Es = Ai * exp( (Bi * TA) / (Ci + TA) );
+		E = RH * Es;
+		Tdi = ( Ci * log(E / Ai) ) / ( Bi - log(E / Ai) );
+		return C_TO_K(Tdi);
+	}
+
+	//no clear state, we do a smooth interpolation between water and ice
+	Es = Ai * exp( (Bi*TA) / (Ci + TA) );
+	E = RH * Es;
+	Tdi = ( Ci * log(E / Ai) ) / ( Bi - log(E / Ai) );
+
+	Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+	E = RH * Es;
+	Tdw = ( Cw * log(E / Aw) ) / ( Bw - log(E / Aw) );
+
+	return C_TO_K( (di / (di + dw) * Tdi + dw / (di + dw) * Tdw) );
+}
+
+double Interpol2D::DewPointtoRh(double TD, double TA, const short int force_water)
+{
+	//Convert a dew point temperature into a Relative Humidity
+	//TA, TD are in Kelvins, RH is returned between 0 and 1
+	TA = K_TO_C(TA);
+	TD = K_TO_C(TD);
+	double Es, E, Rhi, Rhw, Rh;			//saturation and current water vapro pressure
+	const double Aw = 611.21, Bw = 17.502, Cw = 240.97;	//parameters for water
+	const double Ai = 611.15, Bi = 22.452, Ci = 272.55;	//parameters for ice
+	const double Tfreeze = 0.;			//freezing temperature
+	const double Tnucl = -16.0;			//nucleation temperature
+	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);		//distance to pure ice
+	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6);	//distance to pure water
+
+	if (TA >= Tfreeze || force_water==1) {
+		//above freezing point, water
+		Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+		E  = Aw * exp( (Bw * TD) / (Cw + TD) );
+		Rhw = (E / Es);
+		if (Rhw > 1.) {
+			return 1.;
+		} else {
+			return Rhw;
+		}
+	}
+	if (TA < Tnucl) {
+		//below nucleation, ice
+		Es = Ai * exp( (Bi * TA) / (Ci + TA) );
+		E  = Ai * exp( (Bi * TD) / (Ci + TD) );
+		Rhi = (E / Es);
+		if (Rhi > 1.) {
+			return 1.;
+		} else {
+			return Rhi;
+		}
+	}
+
+	//no clear state, we do a smooth interpolation between water and ice
+	Es = Ai * exp( (Bi * TA) / (Ci + TA) );
+	E  = Ai * exp( (Bi * TD) / (Ci + TD) );
+	Rhi = E / Es;
+
+	Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+	E  = Aw * exp( (Bw * TD) / (Cw + TD) );
+	Rhw = E / Es;
+
+	Rh = (di / (di + dw) * Rhi + dw / (di + dw) * Rhw);
+	if(Rh > 1.) {
+		return 1.;
+	} else {
+		return Rh;
+	}
+}
+
+double Interpol2D::lw_AirPressure(const double altitude)
+{
+	double p;
+	const double p0 = 101325.; 		// Air and standard pressure in Pa
+	const double lapse_rate = 0.0065;	// K m-1
+	const double sea_level_temp = 288.15;	// K
+	const double expo = GRAVITY / (lapse_rate * GAS_CONSTANT_AIR);
+	const double R0 = 6356766.0;		// Earth's radius in m
+	
+	p = p0 * pow( 1. - ( (lapse_rate * R0 * altitude) / (sea_level_temp * (R0 + altitude)) ), expo );
+	
+	return(p);
 }

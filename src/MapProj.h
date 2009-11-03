@@ -48,11 +48,10 @@ class MapProj {
 	* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
 	* Such a projection defines easting and northing as the distance (in meters) to a reference point
 	* which coordinates have to be provided here.
-	* @param[in] _coordinatesystem ths string has to contain "LOCAL"
 	* @param[in] _lat_ref latitude of the reference point
 	* @param[in] _long_ref longitude of the reference point
 	*/
-	MapProj(const std::string& _coordinatesystem, const double& _lat_ref, const double& _long_ref);
+	MapProj(const double& _lat_ref, const double& _long_ref);
 
 	/**
 	* @brief Method converting towards WGS84
