@@ -76,13 +76,14 @@ parclass LegacyIO
 		LegacyIO( [in] const std::string &meteopath);
 		~LegacyIO();
 
-		void GetGridSize([out] int &nx, [out] int &ny, [out] int &nz);
-		void GetGridPoints([out, proc=marshal_CDoubleArray] CDoubleArray &x, [out, proc=marshal_CDoubleArray]  CDoubleArray &y, [out, proc=marshal_CDoubleArray]  CDoubleArray &z);
+		void GetGridSize([in] const std::string& grid_name, [out] int &nx, [out] int &ny, [out] int &nz);
+		void GetGridPoints([in] const std::string& grid_name, [out, proc=marshal_CDoubleArray] CDoubleArray &x, [out, proc=marshal_CDoubleArray]  CDoubleArray &y, [out, proc=marshal_CDoubleArray]  CDoubleArray &z);
 		void GetGridData([out, proc=marshal_input_CNodeArray] CNodeArray &data, [in] const std::string& hour);
 
 		classuid(1002);
 
 	private:
+		void moveToMarker(FILE *fp, const std::string& file_name, const std::string& marker);
 		char meteopathname[MAX_STRING_LENGTH];
 		int dimx, dimy, dimz;
 		

@@ -57,6 +57,16 @@ typedef struct {
 	double azi;	/* Slope Azimut */
 	double sx;	/* x -component of normal on Surface element */
 	double sy;	/* y -component of normal on Surface element */
+	
+	double rh;		//subl	
+	double wnd;		//subl
+	double repRadius; //subl
+	double initMassChange; //subl
+	double initSubl;//subl
+	double subl;
+	/*double c_new;*/
+	double specHumidity;//subl
+	double iniSpecHum;
 } NODE;
 
 //Enumerate the slope shapes
@@ -77,12 +87,13 @@ class LegacyIO
 		LegacyIO(const std::string &meteopath);
 		~LegacyIO();
 
-		void GetGridSize(int &nx, int &ny, int &nz);
-		void GetGridPoints(CDoubleArray &x, CDoubleArray &y, CDoubleArray &z);
+		void GetGridSize(const std::string& grid_name, int &nx, int &ny, int &nz);
+		void GetGridPoints(const std::string& grid_name, CDoubleArray &x, CDoubleArray &y, CDoubleArray &z);
 		void GetGridData(CNodeArray &data, const std::string& hour);
 
 	private:
-		char meteopathname[MAX_STRING_LENGTH];
+		void moveToMarker(FILE *fp, const std::string& file_name, const std::string& marker);
+		std::string meteopathname;
 		int dimx, dimy, dimz;
 };
 
