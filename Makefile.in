@@ -226,7 +226,7 @@ meteoIO_module_par: $(LIBDIR)/meteoio.module
 
 clean:
 	rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(FILTERDIR)/*~ $(FILTERDIR)/*.o $(TOOLSDIR)/*.o $(PLUGINDIR)/*.o
-	cd $(PLUGINDIR)/gsn; make clean
+#	cd $(PLUGINDIR)/gsn; make clean
 
 distclean: clean
 	rm -f $(TOOLSDIR)/createA3DFiles

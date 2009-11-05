@@ -1,6 +1,7 @@
 #ifndef LEGACYIO_H
 #define LEGACYIO_H
 
+#include "timer.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -90,7 +91,8 @@ parclass LegacyIO
 		//For caching data: ONLY for POPC version
 		char cache_Hour[MAX_STRING_LENGTH];
 		CNodeArray cache_WindField;
-
+		
+		Timer timer;
 };
 
 #endif
