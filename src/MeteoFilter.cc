@@ -60,13 +60,14 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 		tasklist.push_back(tmpFilters1);
 		taskargs.push_back(parArgs);
 	}
-
+	/* //For debugging only:
 	for (unsigned int jj=0; jj<tasklist.size(); jj++){
 		cout << MeteoData::getParameterName(jj) << "::" << endl;
 		for (unsigned int ii=0; ii<tasklist[jj].size(); ii++){
 			cout << tasklist[jj][ii] << "  ARGS: " << taskargs[jj][ii].size() << endl;
 		}
 	}
+	*/
 }
 
 bool MeteoFilter::filterData(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
