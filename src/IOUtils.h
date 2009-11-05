@@ -1,6 +1,7 @@
 #ifndef __IOUTILS_H__
 #define __IOUTILS_H__
 
+
 #include <sstream>
 #include <string>
 #include <map>
@@ -8,6 +9,7 @@
 #include <list>
 #include <cstdlib>
 #include <iostream>
+#include <cstdio>
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>

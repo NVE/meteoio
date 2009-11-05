@@ -55,6 +55,16 @@ typedef struct {
 	double azi;	/* Slope Azimut */
 	double sx;	/* x -component of normal on Surface element */
 	double sy;	/* y -component of normal on Surface element */
+	
+	double rh;		//subl	
+	double wnd;		//subl
+	double repRadius; //subl
+	double initMassChange; //subl
+	double initSubl;//subl
+	double subl;
+	/*double c_new;*/
+	double specHumidity;//subl
+	double iniSpecHum;
 } NODE;
 
 //Enumerate the slope shapes
@@ -85,12 +95,12 @@ parclass LegacyIO
 
 	private:
 		void moveToMarker(FILE *fp, const std::string& file_name, const std::string& marker);
-		char meteopathname[MAX_STRING_LENGTH];
+		std::string meteopathname;
 		int dimx, dimy, dimz;
 		
 		//For caching data: ONLY for POPC version
-		char cache_Hour[MAX_STRING_LENGTH];
-		CNodeArray cache_WindField;
+//		char cache_Hour[MAX_STRING_LENGTH];
+//		CNodeArray cache_WindField;
 		
 		Timer timer;
 };

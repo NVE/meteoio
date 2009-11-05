@@ -10,7 +10,7 @@
 
 #include "marshal_meteoio.h"
 
-typedef map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
+typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
@@ -22,23 +22,23 @@ parclass IOHandler {
 		~IOHandler();
 
 		//methods defined in the IOInterface class
-		virtual void read2DGrid([out]Grid2DObject& dem_out, const string& parameter="");
+		virtual void read2DGrid([out]Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 		virtual void readMeteoData([in]const Date_IO& dateStart, [in]const Date_IO& dateEnd,
-			     			[proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
-						[proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
-						const unsigned& stationindex=IOUtils::npos);
+			[proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
+			[proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
+				const unsigned& stationindex=IOUtils::npos);
 		void readMeteoData([in]const Date_IO& date, [proc=marshal_METEO_DATASET] METEO_DATASET& vecMeteo, [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_CSpecialPTSArray]CSpecialPTSArray& pts);
-		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const string& name);
+		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
 
 	private:
-		string ascii_src;
-		string boschung_src;
-		string imis_src;
-		string geotop_src;
+		std::string ascii_src;
+		std::string boschung_src;
+		std::string imis_src;
+		std::string geotop_src;
 
 	private:
 		void loadDynamicPlugins();
@@ -49,7 +49,7 @@ parclass IOHandler {
 		IOInterface *getPlugin(const std::string&);
 
 		ConfigReader cfg;
-		map<std::string, IOPlugin::IOPlugin> mapPlugins;
+		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;
 		PLUGIN_ITERATOR mapit;
 		A3DIO fileio;
 };
