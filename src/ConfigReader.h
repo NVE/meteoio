@@ -78,7 +78,9 @@ class ConfigReader {
 								   const unsigned int& options=0) const {
 			try {
 				vecT.clear();
-				IOUtils::getValueForKey<T>(properties, section + "::" + key, vecT);
+				std::string _section = section;
+				IOUtils::toUpper(_section);
+				IOUtils::getValueForKey<T>(properties, _section + "::" + key, vecT);
 			} catch(std::exception& e){
 				if (options != ConfigReader::nothrow)
 					throw;
@@ -106,7 +108,9 @@ class ConfigReader {
 								   T& t, 
 								   const unsigned int& options=0) const {
 			try {
-				IOUtils::getValueForKey<T>(properties, section + "::" + key, t);
+				std::string _section = section;
+				IOUtils::toUpper(_section);
+				IOUtils::getValueForKey<T>(properties, _section + "::" + key, t);
 			} catch(std::exception& e){
 				if (options != ConfigReader::nothrow)
 					throw;

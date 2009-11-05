@@ -7,7 +7,6 @@
 #include "ConfigReader.h"
 #include "IOExceptions.h"
 #include "IOUtils.h"
-#include "MeteoBuffer.h"
 
 #include <string>
 #include <vector>

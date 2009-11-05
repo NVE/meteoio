@@ -8,10 +8,9 @@ PROJECT(meteoio CXX C)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(src/plugins)
 ADD_SUBDIRECTORY(src/plugins/gsn)
-ADD_SUBDIRECTORY(src/filter)
 
 # require proper c++
-set(CFLAGS "-Wall -ansi -pedantic -Wno-long-long")
+set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long")
 set(POPCC popcc)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -67,10 +66,9 @@ set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_custom_target(distclean make clean
-  COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake src/cmake_install.cmake src/filter/cmake_install.cmake src/plugins/cmake_install.cmake src/plugins/gsn/cmake_install.cmake
+  COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake src/cmake_install.cmake src/plugins/cmake_install.cmake src/plugins/gsn/cmake_install.cmake
   COMMAND cmake -E remove_directory CMakeFiles
   COMMAND cmake -E remove_directory src/CMakeFiles
-  COMMAND cmake -E remove_directory src/filter/CMakeFiles
   COMMAND cmake -E remove_directory src/plugins/gsn/CMakeFiles
   COMMAND cmake -E remove_directory src/plugins/CMakeFiles)
 

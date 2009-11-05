@@ -4,10 +4,10 @@ using namespace std;
 
 #ifdef _POPC_
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	: iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids(), resample(true)
+	: iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
 #else
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids(), resample(true)
+	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
 #endif
 {
 	//Nothing else so far
@@ -87,11 +87,11 @@ void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& d
 void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
 	/* For every station: 
 	 * 1) See whether data is already buffered
-	 * 2) Filter - not implemented yet
-	 * 3) Resample if necessary
-	 * 4) Filter resampled value
-	 * 5) Return the values
+	 * 2) Filter - includes resampling
+	 * 3) Return the values
 	 */
+
+	MeteoFilter mf(cfg);
 
 	vecMeteo.clear();
 	vecStation.clear();
@@ -100,15 +100,15 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 		bufferAllData(date_in);
 	}
 
-	//loop through all meteo buffers
+	//loop through all meteo buffers, there is one for every station
 	for (unsigned int ii=0; ii<meteoBuffer.size(); ii++) {
 		unsigned int index = BufferedIOHandler::npos;
 
-		StationData sd;
+		StationData tmpsd;
 		std::string stationName = "";
 		if (stationBuffer[ii].size() > 0){
 			stationName = stationBuffer[ii][0].stationName;
-			sd = stationBuffer[ii][0];
+			tmpsd = stationBuffer[ii][0];
 		}
 
 		if (meteoBuffer[ii].size() > 0) {//check whether meteo data for the date exists in buffer
@@ -126,25 +126,20 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 		} /*else {
 			cout << "[I] Found data for station " << stationName << " and date " << date_in.toString() << " in buffer" << endl;
 		}*/
-    
-		// RESAMPLING
-		if ((index != BufferedIOHandler::npos) && (meteoBuffer[ii][index].date != date_in)) {
-			if (resample){
-				cerr << "[I] Resampling required for date: " << date_in.toString() << endl;
-				
-				Meteo1DResampler mresampler;
-				mresampler.resample(index, date_in, meteoBuffer[ii], stationBuffer[ii]);
-			} else {
-				//insert a nodata touple
-				meteoBuffer[ii].insert(meteoBuffer[ii].begin()+index, MeteoData());
-				meteoBuffer[ii][index].date = date_in; //set correct date
-				stationBuffer[ii].insert(stationBuffer[ii].begin()+index, sd);
-			}
-		}
-    
+
+		//APPLY FILTERS
+		MeteoData md; StationData sd;
 		if (index != BufferedIOHandler::npos) {
-			vecMeteo.push_back(meteoBuffer[ii][index]);
-			vecStation.push_back(stationBuffer[ii][index]);
+			vector<MeteoData> mBuffer;
+			std::vector<StationData> sBuffer;
+			mf.filterData(meteoBuffer[ii], stationBuffer[ii], index, date_in, md, sd);
+		}
+
+		if (index != BufferedIOHandler::npos) {
+			//vecMeteo.push_back(meteoBuffer[ii][index]);
+			//vecStation.push_back(stationBuffer[ii][index]);
+			vecMeteo.push_back(md);
+			vecStation.push_back(sd);
 		} else {
 			cout << "[I] Buffering data for Station " << stationName << " at date " 
 				<< date_in.toString() << " failed" << endl;
@@ -246,11 +241,6 @@ void BufferedIOHandler::readSpecialPoints(CSpecialPTSArray& _cpa)
 void BufferedIOHandler::write2DGrid(const Grid2DObject& _grid2Dobj, const std::string& _name)
 {
 	iohandler.write2DGrid(_grid2Dobj, _name);
-}
-
-void BufferedIOHandler::enableResampling(const bool& _resample)
-{
-	resample = _resample;
 }
 
 void BufferedIOHandler::clearBuffer(){

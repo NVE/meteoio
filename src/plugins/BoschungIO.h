@@ -4,8 +4,6 @@
 #include "IOInterface.h"
 #include "ConfigReader.h"
 #include "IOUtils.h"
-#include "MeteoBuffer.h"
-#include "Meteo1DResampler.h"
 
 #include <string>
 #include <sstream>

@@ -15,8 +15,6 @@
 #include "DynamicLibrary.h"
 #include "MeteoData.h"
 #include "StationData.h"
-#include "MeteoBuffer.h"
-#include "Meteo1DResampler.h"
 #include "IOExceptions.h"
 
 #define IMIS_BUFF_SIZE 5000

@@ -2,7 +2,8 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/src")
 
 SET(meteoio_sources 
-	Laws.c
+	MeteoFilter.cc
+	FilterAlgorithms.cc
   	A3DIO.cc
 	Date_IO.cc         
 	Grid2DObject.cc  
@@ -15,14 +16,12 @@ SET(meteoio_sources
 	Grid3DObject.cc  
 	IOInterface.cc  
 	libinterpol1D.cc  
-	MeteoBuffer.cc          
 	StationData.cc
 	ConfigReader.cc       
 	DynamicLibrary.cc  
 	IOExceptions.cc  
 	IOUtils.cc
 	libinterpol2D.cc  
-	Meteo1DResampler.cc  
 	MeteoData.cc
 )
 

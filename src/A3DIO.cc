@@ -182,7 +182,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		do {
 			getline(fin, line, eoln); //read complete line
 			eofreached = readMeteoDataLine(line, tmpdata, tmp);
-			tmpdata.cleanData();
+			//tmpdata.cleanData();
 			convertUnits(tmpdata);
 
 		} while((tmpdata.date < dateStart) && (!eofreached));
@@ -204,7 +204,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 			getline(fin, line, eoln); //read complete line
 			eofreached = readMeteoDataLine(line, tmpdata, tmp);
-			tmpdata.cleanData();
+			//tmpdata.cleanData();
 			convertUnits(tmpdata);
 		}
 		//cout << "Size of buffer: " << vecMeteo[0].size() << "   " << tmp_date.toString() << endl;
@@ -341,7 +341,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	//clean data and convert the units
 	for (unsigned int ii=1; ii<vecMeteo.size(); ii++) { //loop over all stations except 1D Meteo
 		for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++){ //Meteo1D data already cleaned
-			vecMeteo[ii][jj].cleanData();
+			//vecMeteo[ii][jj].cleanData();
 			convertUnits(vecMeteo[ii][jj]);
 		}
 	}

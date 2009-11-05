@@ -14,7 +14,7 @@ IF(GSNIO)
 
   add_executable(gsnclient test.cc soapA3DWebServiceSoap12BindingProxy.cpp soapC.cpp)
 
-  target_link_libraries(gsnclient ${GSOAPPP})
+  target_link_libraries(gsnclient ${GSOAPPP} stdc++)
   add_dependencies(gsnclient wsdl2cpp)
 
 ENDIF(GSNIO)

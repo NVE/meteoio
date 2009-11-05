@@ -2,6 +2,9 @@
 
 using namespace std;
 
+/************************************************************
+ * static section                                           *
+ ************************************************************/
 const unsigned int MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
 map<unsigned int, string> MeteoData::meteoparamname;
 const bool MeteoData::__init = MeteoData::initStaticData();
@@ -25,6 +28,18 @@ bool MeteoData::initStaticData()
 
 	return true;
 }
+
+const string& MeteoData::getParameterName(const unsigned int& parindex)
+{
+	if (parindex >= MeteoData::nrOfParameters)
+		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
+
+	return MeteoData::meteoparamname[parindex];
+}
+
+/************************************************************
+ * non-static section                                       *
+ ************************************************************/
 
 void MeteoData::initParameterMap()
 {
@@ -62,6 +77,29 @@ MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& 
 	initParameterMap();
 }
 
+MeteoData::MeteoData(const MeteoData& md)
+{
+	*this = md;
+}
+
+MeteoData& MeteoData::operator=(const MeteoData& rhs)
+{
+	if (this == &rhs) //Test self assignment
+		return *this;
+
+	date = rhs.date;
+	resampled = rhs.resampled;
+
+	initParameterMap();
+
+	std::map<unsigned int, double*>::const_iterator it;
+	for (it=rhs.meteoparam.begin(); it!=rhs.meteoparam.end(); it++){
+		*meteoparam[it->first] = *(it->second);
+	}
+
+	return *this;
+}
+
 void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, const double& vw_in,
 					    const double& dw_in, const double& rh_in, const double& lwr_in, const double& hnw_in,
 					    const double& tsg_in, const double& tss_in, const double& hs_in, const double& rswr_in, 
@@ -92,6 +130,7 @@ void MeteoData::setResampled(const bool& _resampled)
 	resampled = _resampled;
 }
 
+/*
 void MeteoData::Check_min_max(double& param, const double low_hard, const double low_soft, const double high_soft, const double high_hard)
 {
 	//This is the embryo of what would become the filtering library...
@@ -134,18 +173,19 @@ void MeteoData::cleanData()
 	Check_min_max(hs, -5., 0., 350., 350.);
 	
 	Check_min_max(rswr, -50., 0., 2000., 2000.);
-
 }
+*/
 
 bool MeteoData::operator==(const MeteoData& in) const
 {
-	return ((date==in.date) && (ta==in.ta) 
-			&& (iswr==in.iswr) && (vw==in.vw) 
-			&& (rh==in.rh) && (lwr==in.lwr) 
-			&& (dw==in.dw) && (tss==in.tss)
-			&& (hnw==in.hnw) && (tsg==in.tsg)
-			&& (hs==in.hs) && (rswr==in.rswr) 
-			&& (p==in.p));
+	//An object is equal if the date is equal and all meteo parameters are equal
+	bool eval = (date==in.date);
+
+	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
+		eval &= (param(ii) == in.param(ii));
+	}
+
+	return eval;
 }
 
 bool MeteoData::operator!=(const MeteoData& in) const
@@ -153,23 +193,37 @@ bool MeteoData::operator!=(const MeteoData& in) const
 	return !(*this==in);
 }
 
+double& MeteoData::param(const unsigned int& parindex)
+{
+#ifndef NOSAFECHECKS
+	if (parindex >= MeteoData::nrOfParameters)
+		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
+#endif	
+	return *(meteoparam[parindex]);
+}
+
+const double& MeteoData::param(const unsigned int& parindex) const
+{
+	std::map<unsigned int, double*>::const_iterator it;
+	it = meteoparam.find(parindex);
+
+#ifndef NOSAFECHECKS
+	if (it == meteoparam.end())
+		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
+#endif
+	return *(it->second);
+}
+
 const string MeteoData::toString() const
 {
 	stringstream tmpstr;
 
-	tmpstr << setprecision(10) << "Date_IO: " << date.toString() << endl 
-				   << setw(6) << "ta: " << setw(15) << ta << endl
-				   << setw(6) << "iswr: " << setw(15) << iswr << endl
-				   << setw(6) << "vw: " << setw(15) << vw  << endl
-				   << setw(6) << "dw: " << setw(15) << dw  << endl
-				   << setw(6) << "rh: " << setw(15) << rh << endl
-				   << setw(6) << "lwr: " << setw(15) << lwr << endl
-				   << setw(6) << "hnw: " << setw(15) << hnw << endl
-				   << setw(6) << "tsg: " << setw(15) << tsg << endl
-				   << setw(6) << "tss: " << setw(15) << tss << endl
-				   << setw(6) << "hs: " << setw(15) << hs << endl
-				   << setw(6) << "rswr: " << setw(15) << rswr << endl
-				   << setw(6) << "p: " << setw(15) << p << endl;
+	tmpstr << setprecision(10) << "Date_IO: " << date.toString() << endl; 
+
+	std::map<unsigned int, double*>::const_iterator it1;
+	for (it1=meteoparam.begin(); it1 != meteoparam.end(); it1++){
+		tmpstr << setw(7) << MeteoData::getParameterName(it1->first) << ":" << setw(15) << *it1->second << endl;
+	}	
 
 	return tmpstr.str();
 }

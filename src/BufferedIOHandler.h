@@ -9,8 +9,7 @@
 #endif
 
 #include "ConfigReader.h"
-#include "Meteo1DResampler.h"
-
+#include "MeteoFilter.h"
 #include <map>
 #include <vector>
 #include <string>
@@ -101,12 +100,6 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		void clearBuffer();
 
-		/**
-		 * @brief Turn on/off resampling. It is turned on by default
-		 * @param _enable true turns on resampling, false turns it off
-		 */
-		void enableResampling(const bool& _enable);
-
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out);
@@ -132,6 +125,5 @@ class BufferedIOHandler : public IOInterface {
 		std::vector< std::vector<MeteoData> > meteoBuffer;
 		std::vector< std::vector<StationData> > stationBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
-		bool resample;
 };
 #endif

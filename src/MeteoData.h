@@ -30,9 +30,16 @@ class MeteoData {
 		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 
 		/**
-		* @brief The default constructor initializing every double attribute to nodata and the Date_IO to julian==0.0
-		*/
+		 * @brief The default constructor initializing every double attribute to nodata and the Date_IO to julian==0.0
+		 */
 		MeteoData(void);
+
+		/**
+		 * @brief The copy constructor is required because of the pointers that are stored int mapparam
+		 */
+		MeteoData(const MeteoData&);
+
+		MeteoData& operator=(const MeteoData&);
 
 		/**
 		* @brief A constructor that takes one to eight arguments
@@ -94,28 +101,27 @@ class MeteoData {
 			const double& rswr=nodata,
 		     const double& p=nodata);
 
-		/**
-		* @brief Check data for plausibility and set fishy data to MeteoData::nodata
-		*/
-		void cleanData();
-
 		bool isResampled();
 		void setResampled(const bool&);
 
-		const std::string toString(void) const;
+		double& param(const unsigned int& parindex);
+		const double& param(const unsigned int& parindex) const;
+		static const std::string& getParameterName(const unsigned int& parindex);
 
-		void Check_min_max(double& param, const double low_hard, const double low_soft, const double high_soft, const double high_hard);
+		const std::string toString(void) const;
 
 		//Comparison operators
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
 		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
+
 		double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr, p; //direct access allowed
 		Date_IO date; ///<Date_IO/Time of the measurement
 
+
+ private:
 		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
 		static std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
- private:
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname 
 		bool resampled;              ///<set this to true if MeteoData is result of resampling
