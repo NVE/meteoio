@@ -76,7 +76,7 @@ bool FilterAlgorithms::ResamplingFilter(const vector<MeteoData>& vecM, const vec
 {
 	(void)vecM; (void)vecS; (void)pos; (void)_vecArgs;
 	if ((vecFilteredM.size()==1) &&(date==vecFilteredM[0].date)){//Nothing to do
-		return true;
+		return false; //Interpretation: filter not applied
 	} else if ((vecFilteredM.size() < 2) || (vecFilteredM.size() > 3)){
 		throw IOException("Not enough data to do resampling or index out of bounds", AT);
 	} else if (vecFilteredM.size()==2){

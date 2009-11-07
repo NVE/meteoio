@@ -3,8 +3,7 @@
 using namespace std;
 
 MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
-	//Set up all the filters for each parameter
-	//Init tasklist
+
 	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
 		vector<string> tmpFilters1;
 		vector<string> tmpFilters2;
@@ -90,19 +89,24 @@ bool MeteoFilter::filterData(const vector<MeteoData>& vecM, const vector<Station
 	}
 
 	for (unsigned int ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
+		//cout << "For parameter: " << MeteoData::getParameterName(ii) << endl;
 		for (unsigned int jj=0; jj<tasklist[ii].size(); jj++){ //For eack activated filter
 			//Call the appropriate filter function
-			FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM,vecS,pos,date,taskargs.at(ii).at(jj),ii,vecFilteredM,vecFilteredS);
+			//cout << "\tExecuting: " << tasklist[ii][jj] << endl;
+			if (!FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, vecS, pos, date,
+																    taskargs.at(ii).at(jj),
+																    ii, vecFilteredM, vecFilteredS))
+				break; //if one of the filters returns false, then stop filtering for this parameter
 		}
 	}
 
-	if (vecFilteredM.size()==1){
+	if (vecFilteredM.size()==1){ //no resampling was required
 		md = vecFilteredM[0];
 		sd = vecFilteredS[0];		
-	} else if (vecFilteredM.size()==3){
+	} else if (vecFilteredM.size()==3){ //resampling required and successfully executed
 		md = vecFilteredM[1];
 		sd = vecFilteredS[1];		
-	} else {
+	} else { //Resampling was disabled, return a nodata data set
 		md = MeteoData(date);
 		sd = vecS.at(pos);
 	}
@@ -112,7 +116,10 @@ bool MeteoFilter::filterData(const vector<MeteoData>& vecM, const vector<Station
 
 unsigned int MeteoFilter::getFiltersForParameter(const string& parname, vector<string>& vecFilters)
 {
-	//get the vectors and associate them with the correct algorithms
+	/* 
+	 * This function retrieves the filter sequence for parameter 'parname' 
+	 * by querying the ConfigReader object
+	 */
 	vector<string> vecKeys;
 	string tmp;
 	cfg.findKeys(vecKeys, parname+"::filter", "Filters");
@@ -127,6 +134,9 @@ unsigned int MeteoFilter::getFiltersForParameter(const string& parname, vector<s
 
 unsigned int MeteoFilter::getArgumentsForFilter(const string& keyname, vector<string>& vecArguments)
 {
+	/*
+	 * Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
+	 */
 	cfg.getValue(keyname, "Filters", vecArguments, ConfigReader::nothrow);
 	return vecArguments.size();
 }

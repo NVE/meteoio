@@ -13,7 +13,7 @@
 
 /**
  * @class MeteoFilter
- * @brief 
+ * @brief A class that can filter (i.e. clean, resample, ...) MeteoData objects
  * @author Thomas Egger
  * @date   2009-11-01
  */
@@ -21,10 +21,32 @@ class MeteoFilter {
 	public:
 
 		/**
-		* @brief The default constructor 
+		* @brief 	The default constructor
+		* Set up all the filters for each parameter
+		* Init tasklist: a vector that holds one vector<string> for each parameter,
+		*                representing the sequence of filters that will be executed
+		*                for the respective parameter
+		*                e.g. tasklist for TA: min_max, resample, min_max
+		* taskargs:      a vector that holds the respective arguments for the filters 
+		*                listed in tasklist
+		*
+		* Important: the filtering occurs in two passes:
+		* Pass 1   : all filters specified are executed, resampling (if required) is the last filter applied
+		* Pass 2   : all filters, that only perform checks are reapplied to the resampled values
+		* @param[in] _cfg ConfigReader object that holds the MeteoFilter configuration in the [Filters] section
 		*/
 		MeteoFilter(const ConfigReader& _cfg);
 
+		/**
+		 * @brief A function that executes all the filters that have been setup in the constructor
+		 * @param[in] vecM The raw sequence of MeteoData objects for a given station
+		 * @param[in] vecS The meta data for the MeteoData objects in vecM
+		 * @param[in] pos  An index pointing to the requested MeteoData object within vecM 
+		 *                 (or to the first MeteoData object in vecM that has a date after parameter date)
+		 * @param[in] date The requested date for a MeteoData object
+		 * @param[out] md The MeteoData object to be returned
+		 * @param[out] sd The associated StationData object for md
+		 */
 		bool filterData(const std::vector<MeteoData>& vecM, 
 					 const std::vector<StationData>& vecS, 
 					 const unsigned int& pos, const Date_IO& date,

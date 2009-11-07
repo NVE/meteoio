@@ -35,12 +35,6 @@ parclass IOHandler {
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
 
 	private:
-		std::string ascii_src;
-		std::string boschung_src;
-		std::string imis_src;
-		std::string geotop_src;
-
-	private:
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname, 
 					 DynamicLibrary*& dynLibrary, IOInterface*& io);

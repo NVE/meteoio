@@ -13,24 +13,38 @@
 #ifdef _POPC_
 void IOHandler::registerPlugins()
 {
+#if defined(WIN32)
+	const string libsuffix = ".dll";
+#elif defined(APPLE)
+	const string libsuffix = ".dynlib";
+#else
+	const string libsuffix = ".so";
+#endif 
 	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
-	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungiopopc.so", "BoschungIO", NULL, NULL);
-	mapPlugins["IMIS"]	= IOPlugin("libimisiopopc.so", "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopiopopc.so", "GeotopIO", NULL, NULL);
-	mapPlugins["GSN"]	= IOPlugin("libgsniopopc.so", "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]	= IOPlugin("libarciopopc.so", "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]	= IOPlugin("libgrassiopopc.so", "GrassIO", NULL, NULL);
+	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungiopopc"+libsuffix, "BoschungIO", NULL, NULL);
+	mapPlugins["IMIS"]	= IOPlugin("libimisiopopc"+libsuffix, "ImisIO", NULL, NULL);
+	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopiopopc"+libsuffix, "GeotopIO", NULL, NULL);
+	mapPlugins["GSN"]	= IOPlugin("libgsniopopc"+libsuffix, "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]	= IOPlugin("libarciopopc"+libsuffix, "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]	= IOPlugin("libgrassiopopc"+libsuffix, "GrassIO", NULL, NULL);
 }
 #else
 void IOHandler::registerPlugins()
 {
+#if defined(WIN32)
+	const string libsuffix = ".dll";
+#elif defined(APPLE)
+	const string libsuffix = ".dynlib";
+#else
+	const string libsuffix = ".so";
+#endif 
 	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
-	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungio.so", "BoschungIO", NULL, NULL);
-	mapPlugins["IMIS"]	= IOPlugin("libimisio.so", "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio.so", "GeotopIO", NULL, NULL);
-	mapPlugins["GSN"]	= IOPlugin("libgsnio.so", "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]	= IOPlugin("libarcio.so", "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]	= IOPlugin("libgrassio.so", "GrassIO", NULL, NULL);
+	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungio"+libsuffix, "BoschungIO", NULL, NULL);
+	mapPlugins["IMIS"]	= IOPlugin("libimisio"+libsuffix, "ImisIO", NULL, NULL);
+	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio"+libsuffix, "GeotopIO", NULL, NULL);
+	mapPlugins["GSN"]	= IOPlugin("libgsnio"+libsuffix, "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]	= IOPlugin("libarcio"+libsuffix, "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+libsuffix, "GrassIO", NULL, NULL);
 }
 #endif
 

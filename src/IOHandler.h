@@ -41,12 +41,6 @@ class IOHandler : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
-		std::string ascii_src;
-		std::string boschung_src;
-		std::string imis_src;
-		std::string geotop_src;
-
-	private:
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname, 
 					 DynamicLibrary*& dynLibrary, IOInterface*& io);
