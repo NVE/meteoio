@@ -42,6 +42,7 @@ class A3DIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
+		static const double plugin_nodata; //plugin specific nodata value, e.g. -9999
 		void read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd, 
 					  std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 		void read2DMeteo(std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering

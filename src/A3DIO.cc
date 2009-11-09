@@ -2,6 +2,8 @@
 
 using namespace std;
 
+const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
+
 //A3DIO::A3DIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}
 
 //Main constructor
@@ -98,14 +100,20 @@ void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 void A3DIO::convertUnits(MeteoData& meteo)
 {
+	for(unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
+		//loop through all meteo params and check whether they're nodata values
+		if (meteo.param(ii)==plugin_nodata)
+			meteo.param(ii) = IOUtils::nodata;
+	}
+
 	//converts C to Kelvin, converts RH to [0,1]
-	if(meteo.ta!=nodata) {
+	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
-	if(meteo.tsg!=nodata) {
+	if(meteo.tsg!=IOUtils::nodata) {
 		meteo.tsg=C_TO_K(meteo.tsg);
 	}
-	if(meteo.rh!=nodata) {
+	if(meteo.rh!=IOUtils::nodata) {
 		meteo.rh /= 100.;
 	}
 }

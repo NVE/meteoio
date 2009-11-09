@@ -7,10 +7,10 @@ ADD_SUBDIRECTORY(src/plugins)
 ADD_SUBDIRECTORY(src/plugins/gsn)
 
 FIND_PROGRAM(COLORGCC_EXECUTABLE colorgcc)
-IF(COLORGCC_EXECUTABLE)
-  set(CMAKE_C_COMPILER "colorgcc" CACHE STRING "Compiler set to colorgcc" FORCE)
-  set(CMAKE_CXX_COMPILER "colorgcc" CACHE STRING "Compiler set to colorgcc" FORCE)
-ENDIF(COLORGCC_EXECUTABLE)
+#IF(COLORGCC_EXECUTABLE)
+#  set(CMAKE_C_COMPILER "colorgcc" CACHE STRING "Compiler set to colorgcc" FORCE)
+#  set(CMAKE_CXX_COMPILER "colorgcc" CACHE STRING "Compiler set to colorgcc" FORCE)
+#ENDIF(COLORGCC_EXECUTABLE)
 
 #platform specific
 IF(UNIX)
