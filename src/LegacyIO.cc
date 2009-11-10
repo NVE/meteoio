@@ -99,7 +99,7 @@ void LegacyIO::GetGridPoints(const std::string& grid_name, CDoubleArray &x, CDou
 
 void LegacyIO::GetGridData(CNodeArray &nodes, const std::string& hour)
 {
-	std::string file_name = meteopathname + hour + ".dat";
+	std::string file_name = meteopathname + hour + ".asc";
 	FILE *fp;
 
 	int nx, ny, nz;
@@ -115,21 +115,21 @@ void LegacyIO::GetGridData(CNodeArray &nodes, const std::string& hour)
 	
 	/* Read u */
 	moveToMarker(fp, file_name, "u");
-	for (int iz=0; iz<nz; iz++) for (int iy=ny-1; iy>=0; iy--) for (int ix=0; ix<nx; ix++) {
+	for (int iz=0; iz<nz; iz++) for (int iy=0; iy<ny; iy++) for (int ix=0; ix<nx; ix++) {
 		const int j = iz*nx*ny + iy*nx + ix;
 		fscanf(fp," %16lf%*[\n]",&nodes[j].u);
 	}
 	
 	/* Read v */
 	moveToMarker(fp, file_name, "v");
-	for (int iz=0; iz<nz; iz++) for (int iy=ny-1; iy>=0; iy--) for (int ix=0; ix<nx; ix++) {
+	for (int iz=0; iz<nz; iz++) for (int iy=0; iy<ny; iy++) for (int ix=0; ix<nx; ix++) {
 		const int j = iz*nx*ny + iy*nx + ix;
 		fscanf(fp," %16lf%*[\n]",&nodes[j].v);
 	}
 	
 	/* Read w */
 	moveToMarker(fp, file_name, "w");
-	for (int iz=0; iz<nz; iz++) for (int iy=ny-1; iy>=0; iy--) for (int ix=0; ix<nx; ix++) {
+	for (int iz=0; iz<nz; iz++) for (int iy=0; iy<ny; iy++) for (int ix=0; ix<nx; ix++) {
 		const int j = iz*nx*ny + iy*nx + ix;
 		fscanf(fp," %16lf%*[\n]",&nodes[j].w);
 	}
