@@ -4,10 +4,10 @@ using namespace std;
 
 #ifdef _POPC_
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	: iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
+	: iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
 #else
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
+	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
 #endif
 {
 	//Nothing else so far
@@ -91,8 +91,6 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 	 * 3) Return the values
 	 */
 
-	MeteoFilter mf(cfg);
-
 	vecMeteo.clear();
 	vecStation.clear();
 
@@ -132,7 +130,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 		if (index != BufferedIOHandler::npos) {
 			vector<MeteoData> mBuffer;
 			std::vector<StationData> sBuffer;
-			mf.filterData(meteoBuffer[ii], stationBuffer[ii], index, date_in, md, sd);
+			meteoFilter.filterData(meteoBuffer[ii], stationBuffer[ii], index, date_in, md, sd);
 		}
 
 		if (index != BufferedIOHandler::npos) {

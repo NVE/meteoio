@@ -122,6 +122,7 @@ class BufferedIOHandler : public IOInterface {
 		
 		IOHandler& iohandler;
 		ConfigReader cfg;
+		MeteoFilter meteoFilter;
 		std::vector< std::vector<MeteoData> > meteoBuffer;
 		std::vector< std::vector<StationData> > stationBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
