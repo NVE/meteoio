@@ -105,7 +105,9 @@ void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) thro
 		}
 
 		// Close the dynamic library
+#ifndef _POPC_ //this line causes a segfault in the parallel version for unknown reasons, lwk
 		delete dynLibrary;
+#endif
 	}
 }
 

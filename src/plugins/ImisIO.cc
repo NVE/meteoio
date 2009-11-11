@@ -367,8 +367,8 @@ void ImisIO::setMbImis(Date_IO date_in, const string& stationName, MeteoBuffer& 
 	getStation2Data(name, stao, *data2s);
 	getImisData(name, stao, date_io, *data_imis);
 	createData(*data_imis, *data2s, buffer);
-	free(data2s);
-	free(data_imis);
+	delete(data2s);
+	delete(data_imis);
 }
 
 void ImisIO::resampleMbImis(MeteoData& meteo, StationData& station, const Date_IO& date_in, MeteoBuffer& mb)
