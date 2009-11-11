@@ -1,15 +1,13 @@
 #include "MeteoFilter.h"
 
-using namespace std;
-
 MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 
 	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
-		vector<string> tmpFilters1;
-		vector<string> tmpFilters2;
-		vector< vector<string> > parArgs; //Arguments for each filter
+		std::vector<std::string> tmpFilters1;
+		std::vector<std::string> tmpFilters2;
+		std::vector< std::vector<std::string> > parArgs; //Arguments for each filter
 
-		const string& parname = MeteoData::getParameterName(ii); //Current parameter name
+		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
 
 		unsigned int nrOfFilters = getFiltersForParameter(parname, tmpFilters2);
 
@@ -18,8 +16,8 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 
 			for (unsigned int ll=0; ll<nrOfFilters; ll++){
 				//Get the arguments for the specific filter from the cfg object
-				vector<string> filterArgs;
-				stringstream tmp;
+				std::vector<std::string> filterArgs;
+				std::stringstream tmp;
 				tmp << parname << "::arg" << (ll+1);
 				getArgumentsForFilter(tmp.str(), filterArgs); //Read arguments
 				//cout << "ARGSEARCH: " << tmp.str() << "  found arguments: " << argnum << endl;
@@ -40,9 +38,9 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 
 			//At the end of pass one of the filters, the resampling filter is added, unless disabled
 			if (kk==0){
-				string resamplingarg="";
+				std::string resamplingarg="";
 				cfg.getValue(parname+"::resample", "Filters", resamplingarg, ConfigReader::nothrow);
-				vector<string> filterArgs;
+				std::vector<std::string> filterArgs;
 				getArgumentsForFilter(parname+"::resample", filterArgs); //Read arguments
 				if (resamplingarg != "no"){
 					tmpFilters1.push_back("resample");
@@ -69,13 +67,13 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 	*/
 }
 
-bool MeteoFilter::filterData(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
+bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 					    const unsigned int& pos, const Date_IO& date,
 					    MeteoData& md, StationData& sd)
 {
 	//No need to operate on the raw data, a copy of relevant data will be stored in these vectors:
-	vector<MeteoData> vecFilteredM;   
-	vector<StationData> vecFilteredS;
+	std::vector<MeteoData> vecFilteredM;   
+	std::vector<StationData> vecFilteredS;
 
 	if (vecM.at(pos).date == date){ //No resampling required, all other filters may apply
 		vecFilteredM.push_back(vecM[pos]);
@@ -114,14 +112,14 @@ bool MeteoFilter::filterData(const vector<MeteoData>& vecM, const vector<Station
 	return true;
 }
 
-unsigned int MeteoFilter::getFiltersForParameter(const string& parname, vector<string>& vecFilters)
+unsigned int MeteoFilter::getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters)
 {
 	/* 
 	 * This function retrieves the filter sequence for parameter 'parname' 
 	 * by querying the ConfigReader object
 	 */
-	vector<string> vecKeys;
-	string tmp;
+	std::vector<std::string> vecKeys;
+	std::string tmp;
 	cfg.findKeys(vecKeys, parname+"::filter", "Filters");
 
 	for (unsigned int ii=0; ii<vecKeys.size(); ii++){
@@ -132,7 +130,7 @@ unsigned int MeteoFilter::getFiltersForParameter(const string& parname, vector<s
 	return vecFilters.size();
 }
 
-unsigned int MeteoFilter::getArgumentsForFilter(const string& keyname, vector<string>& vecArguments)
+unsigned int MeteoFilter::getArgumentsForFilter(const std::string& keyname, std::vector<std::string>& vecArguments)
 {
 	/*
 	 * Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'

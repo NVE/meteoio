@@ -40,6 +40,12 @@ AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_STAT
 AC_CHECK_FUNCS([floor pow sqrt cos sin tan atan atan2])
 
+AC_CHECK_PROG([POPCC], [popcc], [yes], [no])
+if test "$POPCC" == "no"
+then
+	AC_MSG_NOTICE([Pop-C++ not found, you won't be able to use the parallel version])
+fi
+
 echo
 echo "================================="
 echo "=         USER OPTIONS          ="

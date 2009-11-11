@@ -23,7 +23,7 @@ class MeteoFilter {
 		/**
 		* @brief 	The default constructor
 		* Set up all the filters for each parameter
-		* Init tasklist: a vector that holds one vector<string> for each parameter,
+		* Init tasklist: a vector that holds one vector\<string\> for each parameter,
 		*                representing the sequence of filters that will be executed
 		*                for the respective parameter
 		*                e.g. tasklist for TA: min_max, resample, min_max

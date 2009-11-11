@@ -24,29 +24,31 @@ class FilterAlgorithms {
 
 		static const FilterProperties& filterProperties(const std::string& filtername);
 
-		static void parseFilterArguments(const string& filtername, const vector<string>& vecArgs_in,
-								   const unsigned int& minArgs, const unsigned int& maxArgs, 
-								   bool& isSoft, vector<double>& vecArgs_out);
-		static bool RateFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-						   const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
-						   const unsigned int& paramindex,
-						   vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS);
-		static bool ResamplingFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-							    const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
-							    const unsigned int& paramindex,
-							    vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS);
-		static bool MinMaxFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-							const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
-							const unsigned int& paramindex,
-							vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS);
-		static bool MinValueFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-							  const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
-							  const unsigned int& paramindex,
-							  vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS);
-		static bool MaxValueFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-							  const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
-							  const unsigned int& paramindex,
-							  vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS);
+		static void parseFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
+					const unsigned int& minArgs, const unsigned int& maxArgs, 
+					bool& isSoft, std::vector<double>& vecArgs_out);
+
+		//Available filters
+		static bool RateFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
+		static bool ResamplingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
+		static bool MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
+		static bool MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
+		static bool MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
 
  	private:
 		static std::map<std::string, FilterProperties> filterMap;

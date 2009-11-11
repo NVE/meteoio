@@ -206,10 +206,10 @@ void IOHandler::readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STAT
 }
 
 void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
-						std::vector< std::vector<MeteoData> >& vecMeteo, 
-						std::vector< std::vector<StationData> >& vecStation,
-						const unsigned int& stationindex)
-{//TODO: use METEO_DATASET and STATION_DATASET types
+						std::vector<METEO_DATASET>& vecMeteo, 
+						std::vector<STATION_DATASET>& vecStation, 
+						const unsigned& stationindex)
+{
 	IOInterface *plugin = getPlugin("METEOSRC");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }

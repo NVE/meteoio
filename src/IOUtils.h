@@ -35,7 +35,7 @@
 
 namespace IOUtils {
 
-	const double nodata = -999.0;	//HACK: we should define the same nodata everywhere...
+	const double nodata = -999.0;	///<This is the internal nodata value
 	const unsigned int unodata = (unsigned int)-1;
 	const unsigned int npos    = (unsigned int)-1;
 

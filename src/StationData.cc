@@ -43,7 +43,6 @@ void StationData::getStationData(double& easting_out, double& northing_out,
 //Comparison operator
 bool StationData::operator==(const StationData& in) const
 {
-	
 	//latitude, longitude, eastCoordinate and northCoordinate are checked for equality in an epsilon environment
 	
 	const double earth_radius = 6371e3;				//in meters
@@ -56,7 +55,6 @@ bool StationData::operator==(const StationData& in) const
 		&& IOUtils::checkEpsilonEquality(eastCoordinate, in.eastCoordinate, grid_epsilon) 
 		&& IOUtils::checkEpsilonEquality(northCoordinate, in.northCoordinate, grid_epsilon)
 		&& (altitude == in.altitude));
-	// && (stationName == in.stationName)); //HACK: stationName not part of check, since it is not always read (example: meteo1d meteo2d files)
 }
 
 bool StationData::operator!=(const StationData& in) const{

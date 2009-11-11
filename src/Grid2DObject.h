@@ -112,7 +112,7 @@ class Grid2DObject{
 		
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
-		* as another Grid2DObject. The grid coordinates (xllcorner & yllcorner) are NOT
+		* as another Grid2DObject (as well as same cells). The grid coordinates (xllcorner & yllcorner) are NOT
 		* checked as these might be tweaked for convenience (like between input grid and local grid)
 		* @param target (Grid2DObject) grid to compare to
 		* @return (bool) true if same geolocalization

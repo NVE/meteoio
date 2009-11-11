@@ -3,7 +3,7 @@
 
 #include "Array3D.h"
 #include "IOExceptions.h"
-#include "IOUtils.h"
+#include "MapProj.h"
 
 /**
  * @class Grid3DObject
@@ -99,7 +99,7 @@ class Grid3DObject{
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude, const double& cellsize);
 
-		void checkCoordinates();
+		void checkCoordinates(const MapProj& proj);
 };
 
 #endif

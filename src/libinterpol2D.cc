@@ -1,6 +1,9 @@
 //This is the two 2D meteo interpolation library.
 #include <cmath>
 #include <vector>
+#include <iomanip>
+#include <assert.h>
+
 #include "StationData.h"
 #include "MeteoData.h"
 #include "Grid2DObject.h"
@@ -173,10 +176,10 @@ int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<do
 	double a,b,r;
 	
 	if ((unsigned int)X.size()==2) {
-		printf("[W] only two points for linear regression!\n"); //HACK
+		cout << "[W] only two points for linear regression!" << endl;
 	}
 	if((unsigned int)X.size()<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
-		printf("Not enough data point for linear regression!\n"); //HACK
+		cerr << "[E] Not enough data point for linear regression!" << endl;
 		coeffs[1]=0.;
 		coeffs[2]=X[1];
 		coeffs[3]=1.;
@@ -197,7 +200,7 @@ int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<do
 	}
 	//check if r is reasonnable
 	if (fabs(coeffs[3])<r_thres) {
-		printf("Poor regression coefficient: %g\n",coeffs[3]); //HACK
+		cout << "[W] Poor regression coefficient: " << std::setprecision(4) << coeffs[3] << endl;
 		//for (unsigned int i=0; i<X.size(); i++){
 		// printf("%g %g\n",X[i],Y[i]);
 		// }
@@ -267,7 +270,7 @@ void Interpol2D::StdPressureFill(Grid2DObject& param, const DEMObject& topoHeigh
 }
 
 /**
-* @brief Grid filling function: 
+* @brief Grid filling function:
 * This implementation fills the grid with a constant value
 * @param param (Array2D\<double\>) 2D array to fill
 * @param value (double) value to put in the grid
@@ -437,7 +440,7 @@ void Interpol2D::calculate(Grid2DObject& param_out, const std::vector<double>& v
 	if (InputSize>1) {
 		//multiple data sources
 		if (multiple_type==I_RH) {
-			if(param_out.ncols!=extra_param_in.ncols || param_out.nrows!=extra_param_in.nrows) { //TODO: check ALL metadata, it should be done by Grid2DObject
+			if(!param_out.isSameGeolocalization(extra_param_in)) {
 				throw IOException("Requested output parameter and extra input parameter grids don't match!!", AT);
 			}
 			//here, RH->Td, interpolations, Td->RH
@@ -463,7 +466,7 @@ void Interpol2D::calculate(Grid2DObject& param_out, const std::vector<double>& v
 			
 			flag_ok=1;
 		} else if (multiple_type==I_VW) {
-			if(param_out.ncols!=extra_param_in.ncols || param_out.nrows!=extra_param_in.nrows) { //TODO: check ALL metadata, it should be done by Grid2DObject
+			if(!param_out.isSameGeolocalization(extra_param_in)) {
 				throw IOException("Requested output parameter and extra input parameter grids don't match!!", AT);
 			}
 			//Krieging
@@ -565,6 +568,7 @@ double Interpol2D::RhtoDewPoint(double RH, double TA, const short int force_wate
 
 	//in order to avoid getting NaN if RH=0
 	RH += 0.0001;
+	assert(RH>0.);
 	if (TA >= Tfreeze || force_water==1) {//above freezing point, water
 		Es = Aw * exp( (Bw * TA) / (Cw + TA) );
 		E = RH * Es;

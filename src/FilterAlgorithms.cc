@@ -1,7 +1,5 @@
 #include "FilterAlgorithms.h"
 
-using namespace std;
-
 std::map<std::string, FilterProperties> FilterAlgorithms::filterMap;
 const bool FilterAlgorithms::__init = FilterAlgorithms::initStaticData();
 
@@ -16,9 +14,9 @@ bool FilterAlgorithms::initStaticData()
 	return true;
 }
 
-const FilterProperties& FilterAlgorithms::filterProperties(const string& filtername)
+const FilterProperties& FilterAlgorithms::filterProperties(const std::string& filtername)
 {
-	std::map<string, FilterProperties>::const_iterator it;
+	std::map<std::string, FilterProperties>::const_iterator it;
 	it = filterMap.find(filtername);
 
 	if (it==filterMap.end())
@@ -32,15 +30,15 @@ const FilterProperties& FilterAlgorithms::filterProperties(const string& filtern
  * The following functions are implementations of different filter algorithms *
  ******************************************************************************/
 
-bool FilterAlgorithms::RateFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-						    const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
+bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+						    const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
 						    const unsigned int& paramindex,
-						    vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS)
+						    std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
 	(void)date; (void)vecS; (void)vecFilteredS;
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
-	vector<double> vecArgs; 
+	std::vector<double> vecArgs; 
 	parseFilterArguments("rate", _vecArgs, 1, 1, isSoft, vecArgs);
 	
 	Date_IO deltatime(vecArgs[0]/1440.0);
@@ -69,10 +67,10 @@ bool FilterAlgorithms::RateFilter(const vector<MeteoData>& vecM, const vector<St
 	return true;
 }
 
-bool FilterAlgorithms::ResamplingFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-							const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
+bool FilterAlgorithms::ResamplingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+							const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
 							const unsigned int& paramindex,
-							vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS)
+							std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
 	(void)vecM; (void)vecS; (void)pos; (void)_vecArgs;
 	if ((vecFilteredM.size()==1) &&(date==vecFilteredM[0].date)){//Nothing to do
@@ -106,15 +104,15 @@ bool FilterAlgorithms::ResamplingFilter(const vector<MeteoData>& vecM, const vec
 	return true;
 }
 
-bool FilterAlgorithms::MinMaxFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-						 const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
+bool FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+						 const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
 						 const unsigned int& paramindex,
-						 vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS)
+						 std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
 	(void)vecM; (void)vecS; (void)pos; (void)date; (void)vecFilteredS;
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
-	vector<double> vecArgs; 
+	std::vector<double> vecArgs; 
 	parseFilterArguments("min_max", _vecArgs, 2, 2, isSoft, vecArgs);
 
 	sort(vecArgs.begin(), vecArgs.end());
@@ -140,15 +138,15 @@ bool FilterAlgorithms::MinMaxFilter(const vector<MeteoData>& vecM, const vector<
 	return true;
 }
 
-bool FilterAlgorithms::MinValueFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-						   const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
+bool FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
 						   const unsigned int& paramindex,
-						   vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS)
+						   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
 	(void)vecM; (void)vecS; (void)pos; (void)date; (void)vecFilteredS;
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
-	vector<double> vecArgs; 
+	std::vector<double> vecArgs; 
 	parseFilterArguments("min", _vecArgs, 1, 1, isSoft, vecArgs);
 
 	//Run actual MinValue filter over all relevant meteo data
@@ -164,15 +162,15 @@ bool FilterAlgorithms::MinValueFilter(const vector<MeteoData>& vecM, const vecto
 	return true;
 }
 
-bool FilterAlgorithms::MaxValueFilter(const vector<MeteoData>& vecM, const vector<StationData>& vecS, 
-						   const unsigned int& pos, const Date_IO& date, const vector<string>& _vecArgs,
+bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
 						   const unsigned int& paramindex,
-						   vector<MeteoData>& vecFilteredM, vector<StationData>& vecFilteredS)
+						   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
 	(void)vecM; (void)vecS; (void)pos; (void)date; (void)vecFilteredS;
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
-	vector<double> vecArgs; 
+	std::vector<double> vecArgs; 
 	parseFilterArguments("max", _vecArgs, 1, 1, isSoft, vecArgs);
 
 	//Run actual MaxValue filter over all relevant meteo data
@@ -188,9 +186,9 @@ bool FilterAlgorithms::MaxValueFilter(const vector<MeteoData>& vecM, const vecto
 	return true;
 }
 
-void FilterAlgorithms::parseFilterArguments(const string& filtername, const vector<string>& vecArgs_in,
+void FilterAlgorithms::parseFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
 							    const unsigned int& minArgs, const unsigned int& maxArgs, 
-							    bool& isSoft, vector<double>& vecArgs_out)
+							    bool& isSoft, std::vector<double>& vecArgs_out)
 {
 	isSoft = false;
 	unsigned int argindex = 0;
@@ -210,7 +208,7 @@ void FilterAlgorithms::parseFilterArguments(const string& filtername, const vect
 		if ((vecArgs_out.size() < minArgs) || (vecArgs_out.size() > maxArgs))
 			throw InvalidArgumentException("Wrong number of arguments for filter " + filtername, AT);
 	} catch(std::exception& e){
-		cerr << "[E] While processing arguments for filter " << filtername << endl;
+		std::cerr << "[E] While processing arguments for filter " << filtername << std::endl;
 		throw;
 	}
 }

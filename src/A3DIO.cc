@@ -102,7 +102,7 @@ void A3DIO::convertUnits(MeteoData& meteo)
 {
 	for(unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
 		//loop through all meteo params and check whether they're nodata values
-		if (meteo.param(ii)==plugin_nodata)
+		if (meteo.param(ii)<=plugin_nodata)
 			meteo.param(ii) = IOUtils::nodata;
 	}
 

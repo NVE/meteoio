@@ -85,7 +85,12 @@ class StationData {
 		const std::string toString(void) const;
 
 		//Comparison operators
-		bool operator==(const StationData&) const; ///<Operator that tests for equality
+		/**
+		* @brief Equality %operator
+		* check all parameters but the station name
+		* @return true or false
+		*/
+		bool operator==(const StationData&) const;
 		bool operator!=(const StationData&) const; ///<Operator that tests for inequality
 
 	public:

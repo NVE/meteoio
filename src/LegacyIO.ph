@@ -77,7 +77,7 @@ typedef Array<double> CDoubleArray;
 
 typedef Array<int> CIntArray;
 
-// marshal_slfio must be included after the structures'definitions
+// marshal_meteoio must be included after the structures'definitions
 #include "marshal_meteoio.h"
 
 parclass LegacyIO
@@ -96,10 +96,6 @@ parclass LegacyIO
 		void moveToMarker(FILE *fp, const std::string& file_name, const std::string& marker);
 		std::string meteopathname;
 		int dimx, dimy, dimz;
-		
-		//For caching data: ONLY for POPC version
-//		char cache_Hour[MAX_STRING_LENGTH];
-//		CNodeArray cache_WindField;
 
 };
 

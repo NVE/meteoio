@@ -121,7 +121,7 @@ class ConfigReader {
 		/**
 		 * @brief Function that searches for a given string within the keys of section (default: GENERAL)
 		 *         it returns the number of matches (partial matches are considered) and writes all the keys
-		 *         into a vector<string> that is handed to the function as reference
+		 *         into a vector\<string\> that is handed to the function as reference
 		 * @param[out] vecResult A vector that will hold all keys that partially match keystart
 		 * @param[in] keystart A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
