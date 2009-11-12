@@ -146,7 +146,102 @@
 
 /**
  * @page examples Examples
+ * Here is a simple exmaple showing how to get some meteorological data into the MeteoData and StationData vectors.
+ * \code 
+ * #include <iostream>
+ * #include "MeteoIO.h"
+ * 
+ * int main(int argc, char** argv) {
+ * 	(void)argc;
+ * 	Date_IO d1;
+ * 	std::vector<MeteoData> vecMeteo;
+ * 	std::vector<StationData> vecStation;
+ * 
+ * 	IOHandler *raw_io = NULL;
+ * 	BufferedIOHandler *io = NULL;
+ * 
+ * 	try {
+ * 		ConfigReader cfg("io.ini");
+ * 		raw_io = new IOHandler(cfg);
+ * 		io = new BufferedIOHandler(*raw_io, cfg);
+ * 	} catch (IOException& e){
+ * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
+ * 	}
+ * 	
+ * 	try {
+ * 		convertString(d1,argv[1]);
+ * 		io->readMeteoData(d1, vecMeteo, vecStation);
+ * 	} catch (IOException& e){
+ * 		std::cout << "Problem when reading data, cause: " << e.what() << std::endl;
+ * 	}
+ * 	
+ * 	//writing some data out in order to prove that it really worked!
+ * 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
+ * 		std::cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << std::endl;
+ * 		std::cout << vecStation[ii].toString() << std::endl;
+ * 		std::cout << vecMeteo[ii].toString() << std::endl;
+ * 	}
+ * 
+ * 	delete io;
+ * 	delete raw_io;
+ * 
+ * 	return 0;
+ * }
+ * \endcode
  *
+ * Now, we can also read a Digital Elevation Model, extract a sub set as defined by some geographical coordinates and distances and write it back to disk:
+ * \code
+ * #include "MeteoIO.h"
+ * 
+ * int main(void) {
+ * 	const double lat1=46.1592, lon1=8.12993;
+ * 	const double dist_x=700, dist_y=1200;
+ * 	DEMObject dem;
+ * 	IOHandler *raw_io = NULL;
+ * 	int i,j;
+ * 	
+ * 	try {
+ * 		ConfigReader cfg("io.ini");
+ * 		raw_io = new IOHandler(cfg);
+ * 	} catch (IOException& e){
+ * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
+ * 	}
+ * 	raw_io->readDEM(dem);
+ * 	dem.WGS84_to_grid(lat1, lon1, i,j);
+ * 
+ * 	const int ncols = (int)ceil(dist_x/dem.cellsize);
+ * 	const int nrows = (int)ceil(dist_y/dem.cellsize);
+ * 
+ * 	DEMObject sub_dem(dem, i, j, ncols, nrows);
+ * 	io->write2DGrid(sub_dem,"sub_dem.dem");
+ * 
+ * 	return 0;
+ * }
+ * \endcode
+ * 
+ * The next example shows how to compute and output spatial interpolations using previously read meteorological data and DEM.
+ * \code
+ * void spatial_interpolations(IOHandler& io, DEMObject& dem, std::vector<MeteoData>& vecMeteo, 
+ * 		std::vector<StationData>& vecStation);
+ * {
+ * 	Grid2DObject    p(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+ * 	Grid2DObject hnw(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+ * 	Grid2DObject   vw(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+ * 	Grid2DObject   rh(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+ * 	Grid2DObject   ta(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+ * 	Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
+ * 
+ * 	mi.interpolate(hnw, rh, ta, vw, p);
+ * 	
+ * 	std::cout << "Writing the Grids to *.2d files" << std::endl;
+ * 	io->write2DGrid(ta, "output/ta.2d");
+ * 	io->write2DGrid(p, "output/p.2d");
+ * 	io->write2DGrid(vw, "output/vw.2d");
+ * 	io->write2DGrid(nswc, "output/nswc.2d");
+ * 	io->write2DGrid(rh, "output/rh.2d");
+ * 	
+ * }
+ * \endcode
  */
 
 #endif
