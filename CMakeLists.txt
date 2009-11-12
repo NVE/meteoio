@@ -97,6 +97,7 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
+ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/src/config.dox)
 
 #some cmake specific things
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
