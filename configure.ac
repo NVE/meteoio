@@ -4,6 +4,14 @@
 AC_PREREQ([2.6])
 AC_INIT(meteoio, 0.1, bavay@slf.ch)
 
+m4_include(m4/ax_cflags_warn_all.m4)
+m4_include(m4/m4_ax_cflags_gcc_option.m4)
+m4_include(m4/m4_ax_compiler_vendor.m4)
+m4_include(m4/pkg.m4)
+#m4_include(m4/m4_ax_check_compiler_flags.m4)
+#m4_include(m4/m4_ax_gcc_x86_cpuid.m4)
+#m4_include(m4/m4_ax_gcc_archflag.m4)
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
@@ -18,6 +26,37 @@ fi
 
 #AC_PROG_LIBTOOL
 AC_LANG(C++)
+
+#testing GCC flags, assuming that c and c++ compilers are the same
+AX_CFLAGS_WARN_ALL(WARNING)
+AC_SUBST(WARNING)
+AC_ARG_WITH(gcc-arch, [AC_HELP_STRING([--with-gcc-arch=<arch>], [use architecture <arch> for gcc -march/-mtune, instead of guessing])], GCC_ARCH=$withval, GCC_ARCH=yes)
+if test "x$GCC_ARCH" != xyes
+then
+		ARCH="-march=$GCC_ARCH"
+fi
+
+AX_COMPILER_VENDOR
+if test "$ax_cv_cxx_compiler_vendor" == "gnu"
+then
+	AC_MSG_NOTICE([Checking specific GNU flags])
+	AX_CFLAGS_GCC_OPTION(-Wextra, EXTRA_WARN)
+	AC_SUBST(EXTRA_WARN)
+
+	if test "x$GCC_ARCH" = xyes
+	then
+		AX_CFLAGS_GCC_OPTION(-march=native, ARCH)
+	fi
+
+	AX_CFLAGS_GCC_OPTION(-fomit-frame-pointer, OPTIM)
+	AX_CFLAGS_GCC_OPTION(-O3, OPTIM)
+	AC_SUBST(OPTIM)
+
+	AX_CXXFLAGS_GCC_OPTION(-combine, MAKE_OPTIM)
+	AX_CXXFLAGS_GCC_OPTION(-pipe, MAKE_OPTIM)
+	AC_SUBST(MAKE_OPTIM)
+fi
+AC_SUBST(ARCH)
 
 # Checks for libraries.
 AC_CHECK_LIB([dl], [main],,[AC_MSG_ERROR([Error, the dl library is missing!])])
@@ -38,7 +77,6 @@ AC_C_CONST
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_STAT
-AC_CHECK_FUNCS([floor pow sqrt cos sin tan atan atan2])
 
 AC_CHECK_PROG([POPCC], [popcc], [yes], [no])
 if test "$POPCC" == "no"
@@ -60,32 +98,6 @@ else
 fi
 
 AC_MSG_NOTICE([Compiling for mode '$MODE'])
-
-###################### DESTINATION #######################
-AC_ARG_WITH(destination, [  --with-destination=ARG  where ARG is either 'safe' (default), 'grid' or 'zeus'])
-AC_SUBST(DEST,safe)
-
-if test "$with_destination" == "safe" 
-then
-   AC_SUBST(DEST,safe)
-elif test "$with_destination" == "grid" 
-then 
-   AC_SUBST(DEST,grid)
-elif test "$with_destination" == "zeus" 
-then 
-   AC_SUBST(DEST,zeus)
-elif test "$with_destination" == "yes" 
-then
-   AC_MSG_ERROR([Please specify a valid  ssh -L3690:svn.slf.local:3690 montblanc
-argument for --with-destination=ARG option])
-elif test "$with_destination" == "" 
-then
-   true
-else
-   AC_MSG_ERROR([Unknown ARG in --with-destination=ARG])
-fi
-
-AC_MSG_NOTICE([Compiling for destination '$DEST'])
 
 ######################## PLUGINS ##########################
 CPPFLAGSOLD="$CPPFLAGS"
@@ -173,6 +185,7 @@ fi
 
 if test "$with_imisio" == "yes"
 then
+	#use AX_LIB_ORACLE_OCI?
 	echo ""
 	AC_MSG_NOTICE([IMISIO enabled. Checking for prerequisites...])
 	CPPFLAGS="$CPPFLAGS -I$ORACLE_HOME/include"
@@ -184,6 +197,8 @@ fi
 
 AC_SUBST(CPPFLAGS, $CPPFLAGSOLD)
 AC_SUBST(LDFLAGS,$LDFLAGSOLD)
+AC_SUBST(prefix)
+AC_SUBST(execprefix)
 
 echo 
 AC_OUTPUT(Makefile)

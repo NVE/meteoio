@@ -4,14 +4,8 @@
 #Destination system: either zeus, grid or safe
 
 #Prefix: 	@prefix@
-#C compiler: 	@CC@
-#C++ compiler: 	@CXX@
-#libxml++ libs: 	@XMLPP_LIBS@
 
 ####### USER CONFIGURATION
-#Destination system: either zeus, grid or safe
-DEST 	= @DEST@
-
 # build mode: release or debug
 MODE	 = @MODE@
 
@@ -22,61 +16,23 @@ GEOTOPIO	= @GEOTOPIO@
 GSNIO		= @GSNIO@
 ARCIO		= @ARCIO@
 GRASSIO		= @GRASSIO@
-
 PROJ4		= @PROJ4@
 
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
 
-debug_arithm	= -DDEBUG_ARITHM -g
+CC		= @CC@ -DGNU
+CXX		= @CXX@
+LINKER		= @CXX@ -DGNU
+POPCC		= popcc
 
-ifeq ($(DEST),safe)		#safe defaults
-	CC       = @CC@ -DGNU
-	CXX      = @CXX@
-	FF	 = gfortran
-	LINKER   = @CXX@ -DGNU
-	POPCC   = popcc
-	ARCH     = -march=pentium3
-	OPTIM    = -fomit-frame-pointer -O3
-	FFOPTIM  = $(OPTIM) $(ARCH)
-	FFEXTRA  = $(FFOPTIM)
-	#MAKE_OPTIM = -pipe
-	DEBUG    = -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr 
-	WARNING  = -Wall #-Weffc++ #-pedantic-errors #-Werror
-endif
-ifeq ($(DEST),grid)		#for grid
-	CC	 = colorgcc
-	CXX	 = colorgcc
-	FF	 = gfortran
-	LINKER   = g++ -DGNU
-	POPCC   = popcc
-	ARCH     = -march=native #-mmmx -msse -msse2 -mfpmath=sse -malign-double
-	OPTIM    = -fomit-frame-pointer -O3 #-fdata-sections
-	FFOPTIM  = $(OPTIM) - $(ARCH)
-	FFEXTRA  = $(FFOPTIM) #-fno-second-underscore
-	MAKE_OPTIM = -combine -pipe
-	DEBUG    = -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr 
-	WARNING  = -Wall -Wextra #-Weffc++ #-pedantic-errors #-Werror
-endif
-ifeq ($(DEST),zeus)		#for Zeus
-	CC       = gcc -DGNU
-        #CC      = pathcc -DGNU
-        CXX      = g++
-        #CXX     = pathcc -DGNU
-        FF       = pathf90 -DGNU
-        LINKER   = g++
-        POPCC   = popcc
-        ARCH     = -march=x86-64 #-mmmx -msse -msse2 -m3dnow -mfpmath=sse #-malign-double
-        #ARCH     = -march=opteron -mmmx -msse -msse2 -m3dnow
-        OPTIM    = #-fomit-frame-pointer #-O3 -fdata-sections
-        #OPTIM   = -O2 -Wstrict-aliasing #-fno-strict-aliasing
-        FFOPTIM  = $(OPTIM) -march=opteron #-m3dnow -m64 -mmmx -msse -msse2 -ffast-stdlib 
-        FFEXTRA  = -fno-second-underscore $(FFOPTIM)
-	MAKE_OPTIM = -pipe
-	DEBUG    = -g -O0 -D__DEBUG
-	WARNING  = -Wall
-endif
+DEBUG		= -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr
+debug_arithm	= -DDEBUG_ARITHM -g
+WARNING		= @WARNING@ @EXTRA_WARN@ #-Weffc++ #-pedantic-errors #-Werror
+ARCH		= @ARCH@
+OPTIM		= @OPTIM@
+MAKE_OPTIM	= @MAKE_OPTIM@
 
 ifeq ($(MODE),debug)		#for debug
 	CFLAGS   = $(debug_arithm) $(MAKE_OPTIM) $(ARCH) $(DEBUG) $(WARNING)
@@ -89,18 +45,19 @@ else				#for release
 endif
 #CCFLAGS += -DSVNREV="\"$(SVNREV)\""
 
+#################################################
+# END USER OPTIONS
+#################################################
+
 ####### DIRECTORIES
 TARGET		= meteoio
 #TARGET_POPC	= meteoio_par
-
 SRCDIR		= ./src
 PLUGINDIR	= ./src/plugins
 LIBDIR		= ./lib
 TOOLSDIR	= ./tools
-
-#################################################
-# END USER OPTIONS
-#################################################
+export prefix		= @prefix@
+export exec_prefix	= @exec_prefix@
 
 LIBS		= -lc -ldl -lm -lstdc++
 LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoio 
@@ -167,10 +124,10 @@ TOOLS_OBJ =	$(TOOLSDIR)/createA3DFiles.o
 ####### Build rules SEQ
 
 all: seq 
-	@echo -e "*** MeteoIO compiled for \033[36m$(DEST)\033[0m"
+	@echo -e "*** MeteoIO compiled as \033[36m$(MODE)\033[0m"
 
 help:
-	@echo -e "MeteoIO Makefile targets for \033[36m$(DEST)\033[0m:" 
+	@echo -e "MeteoIO Makefile targets:" 
 	@echo -e " \033[36mseq\033[0m"
 	@echo -e " \033[36mcreateA3DFiles\033[0m"
 	@echo -e " \033[36mpar\033[0m"
@@ -207,6 +164,12 @@ distclean: clean
 
 install:
 	@echo **** Installing MeteoIO
+	mkdir -p @includedir@/meteoio
+	cp src/*.h @includedir@/meteoio
+	mkdir -p @libdir@/meteoio
+	cp lib/*.a @libdir@/meteoio
+	cp lib/*.module @libdir@/meteoio #BUG!!
+	cp lib/*.so @libdir@/meteoio
 
 documentation:
 	doxygen $(SRCDIR)/config.dox
