@@ -84,11 +84,7 @@
  */
 
 //Plugins overview given in IOHandler.cc
-
- /**
- * @page filters Filters overview
- *
- */
+//Filters overview given in FilterAlgorithms.cc
 
  /**
  * @page dev_plugins Plugins developer's guide

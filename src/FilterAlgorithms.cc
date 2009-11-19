@@ -1,5 +1,24 @@
 #include "FilterAlgorithms.h"
 
+ /**
+ * @page filters Filters overview
+ * The filtering infrastructure is described in FilterAlgorithms (for its API). The goal of this page is to give an overview of the available filters and their usage.
+ * 
+ * @section filters_modes Modes of operation
+ * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
+ *
+ * @section filters_available Available filters
+ * The filters that are currently available are the following:
+ * - rate: calculates the derivative at the current point and reject the point if the derivative is above a given threshold.
+ * - min_max: filter all values outside of the interval [min, max], soft operation supported
+ * - min: filter out all values less than the given parameter, soft operation supported
+ * - max: filter out all values greater than the given parameter, soft operation supported
+ *
+ * A few data transformations are also supported besides filtering:
+ * - resample: resamples (if necessary) the data so that if a required time stamp is between two data points, an interpolated value will be returned (instead of nodata).
+ * - accumulation: accumulates the data on a given period. A practical use is to return hourly precipitations from a sensor measuring precipitation on a 10 minutes interval.
+ */
+
 std::map<std::string, FilterProperties> FilterAlgorithms::filterMap;
 const bool FilterAlgorithms::__init = FilterAlgorithms::initStaticData();
 

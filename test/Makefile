@@ -1,32 +1,38 @@
-CC=g++ -DGNU
-A3DROOT=../..
-CFLAGS=-Wall -Wextra
+CC      =g++ -DGNU
+CFLAGS  = -Wall -Wextra
+DEBUG   = -g -O0 -DDEBUG -ggdb
 POPCC   = popcc
+METEOIODIR = ../src
 
-METEOIODIR	= ../src
-FILTERDIR	= $(METEOIODIR)/filter
+LIBS      = -rdynamic -lstdc++ -ldl -L../lib -lmeteoio
+LIBS_POPC = -L../lib -lstdc++ -lmeteoiopopc
 
-vpath    %.h     $(METEOIODIR) $(FILTERDIR) ./
-vpath    %.c     $(METEOIODIR) $(FILTERDIR) ./
-vpath    %.cc    $(METEOIODIR) $(FILTERDIR) ./
+INCLUDE=-I. -I$(METEOIODIR)
+INCLUDE_POPC=-I. -I$(METEOIODIR)
 
-LIBS      =-rdynamic -lstdc++ -ldl -L../lib -lmeteoio -lfilter
-LIBS_POPC=-L../ -L../lib -L$(A3DROOT)/snowpack -L$(A3DROOT)/common -lstdc++ -lcommonpopc -lfilterpopc -lmeteoiopopc -lsnowpackpopc
-
-DEBUG = -g -O0 -DDEBUG -ggdb
-INCLUDE=-I. -I$(METEOIODIR) -I$(FILTERDIR)
-
-INCLUDE_POPC=-I. -I$(METEOIODIR) -I$(FILTERDIR) -I$(A3DROOT)/snowpack/ -I$(A3DROOT)/snowpack/snowpack_core/ -I$(A3DROOT)/common/ $(shell pkg-config --cflags libxml++-2.6) -I$(A3DROOT)/snowdrift
-
-seq: meteoio_demo
-
-demo: meteoio_demo
-
+#####################
+#	RULES
+#####################
 .cc.o: $*.cc $*.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE)
 
 %.o: %.cc
 	$(CC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE)
+
+%_par.o : %.cc
+	$(POPCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_POPC) -o $@
+
+ %.stub.o : %.ph
+	$(POPCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_POPC) -o $@
+
+#####################
+#	TARGETS
+#####################
+seq: meteoio_demo
+
+demo: meteoio_demo
+
+par: meteoio_demo.popc
 
 testDate: testDate.o ../lib/libmeteoio.a
 	cd ../; make
@@ -38,9 +44,11 @@ testMeteo: MeteoData.o Date.o testMeteo.o slfutils.o makeLib
 testStation: StationData.o testStation.o
 	g++ -o testStation StationData.o testStation.o
 
-#testFile: testFile.o makeLib
 meteoio_demo: meteoio_demo.o
 	$(CC) $(DEBUG) -o $@ meteoio_demo.o ${LIBS}
+
+meteoio_demo.popc: meteoio_demo_par.o 
+	$(POPCC) $(DEBUG) -o $@ meteoio_demo_par.o ${LIBS_POPC}
 
 testThomas: testThomas.o ../lib/libmeteoio.a
 	cd ../; make 	
@@ -52,17 +60,6 @@ sensorscope: sensorscope.o ../lib/libmeteoio.a
 testConfigReader: main.o ConfigReader.o slfutils.o slfexceptions.o
 	$(CC) -o $@ main.o ConfigReader.o slfutils.o slfexceptions.o
 
-par: meteoio_demo.popc
-
-%_par.o : %.cc
-	$(POPCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_POPC) -o $@
-
- %.stub.o : %.ph
-	$(POPCC) $(DEBUG) $(CFLAGS) -c $< $(INCLUDE_POPC) -o $@
-
-meteoio_demo.popc: meteoio_demo_par.o 
-	$(POPCC) $(DEBUG) -o $@ meteoio_demo_par.o ${LIBS_POPC}
-
 clean:
-	rm -rf *~ *.o libslfio.a main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.popc *.out testArray sensorscope
+	rm -rf *~ *.o main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.popc *.out testArray sensorscope
 
