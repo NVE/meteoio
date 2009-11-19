@@ -1,5 +1,38 @@
 #include "GSNIO.h"
 
+/**
+ * @page gsn GSN
+ * @section gsn_format Format
+ * This plugin reads meteorological data from GSN (Global Sensor Network, see <a href="http://sourceforge.net/apps/trac/gsn/"> GSN home page</a>) as a web service. It therefore requires GSoap.
+ * @subsection gsn_fields Field mapping
+ * The following GSN fields are read from GSN and mapped to MeteoData attributes:
+ * - TIMED mapped to date
+ * - LIGHT mapped to iswr
+ * - TEMPERATURE or AIR_TEMP mapped to ta
+ * - WIND_SPEED mapped to wv
+ * - SOLAR_RAD mapped to iswr and lwr //HACK: THIS IS A BUG!!
+ * - AIR_HUMID mapped to rh
+ * - SOIL_TEMP_ECTM mapped to tss
+ * - GROUND_TEMP_TNX mapped to tsg
+ * - RAIN_METER mapped to hnw
+ *
+ * @section gsn_units Units
+ * The units are assumed to be the following:
+ * - temperatures in celsius
+ * - relative humidity in %
+ * - wind speed in m/s
+ * - precipitations in mm/h
+ * - radiation in W/m²
+ *
+ * @section gsn_keywords Keywords
+ * This plugin uses the following keywords:
+ * - PROXY: 
+ * - PROXYPORT: 
+ * - PROXYUSER:
+ * - PROXYPASS:
+ */
+
+
 using namespace std;
 
 GSNIO::GSNIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){

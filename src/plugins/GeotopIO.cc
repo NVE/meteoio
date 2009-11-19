@@ -1,5 +1,24 @@
 #include "GeotopIO.h"
 
+/**
+ * @page geotop GEOTOP
+ * @section geotop_format Format
+ * This plugin reads Legacy Geotop meteorological input data.
+ *
+ * @section geotop_units Units
+ * The units are assumed to be the following:
+ * - temperatures in celsius
+ * - relative humidity in %
+ * - wind speed in m/s
+ * - precipitations in mm/h
+ * - radiation in W/m²
+ *
+ * @section geotop_keywords Keywords
+ * This plugin uses the following keywords:
+ * - METEOPATH: string containing the path to the meteorological files
+ * - METEOPREFIX: file name prefix for meteorological files
+ */
+
 using namespace std;
 
 GeotopIO::GeotopIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}

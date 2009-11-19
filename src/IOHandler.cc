@@ -10,6 +10,22 @@
 	#include "IOHandler.h"
 #endif
 
+ /**
+ * @page plugins Plugins overview
+ * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are loaded on demand (and also compiled only if requested at compile time). A plugin can therefore fail to load (for example if it does not exist) at run time. 
+ *
+ * @section available_plugins Available plugins
+ * So far the following children have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
+ * - \subpage a3d "A3D" for reading original Alpine3D meteo files (no extra requirements)
+ * - \subpage boschung "BOSCHUNG" for reading Boshung xml meteo files (requires libxml)
+ * - \subpage imis "IMIS" for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
+ * - \subpage geotop "GEOTOP" for reading original GeoTop meteo files (no extra requirements)
+ * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
+ * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
+ * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
+ * 
+ */
+
 #ifdef _POPC_
 void IOHandler::registerPlugins()
 {

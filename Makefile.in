@@ -155,21 +155,22 @@ meteoIO_module_par: $(LIBDIR)/meteoio.module
 ##############  END  ##############
 
 clean:
-	rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(TOOLSDIR)/*.o $(PLUGINDIR)/*.o
+	-rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(TOOLSDIR)/*.o $(PLUGINDIR)/*.o
 #	cd $(PLUGINDIR)/gsn; make clean
 
 distclean: clean
-	rm -f $(TOOLSDIR)/createA3DFiles
-	rm -f $(LIBDIR)/*.a $(LIBDIR)/*.so $(LIBDIR)/*.module
+	-rm -f $(TOOLSDIR)/createA3DFiles
+	-rm -f $(LIBDIR)/*.a $(LIBDIR)/*.so $(LIBDIR)/*.module
 
+.PHONY: install
 install:
 	@echo **** Installing MeteoIO
 	mkdir -p @includedir@/meteoio
-	cp src/*.h @includedir@/meteoio
 	mkdir -p @libdir@/meteoio
-	cp lib/*.a @libdir@/meteoio
-	cp lib/*.module @libdir@/meteoio #BUG!!
-	cp lib/*.so @libdir@/meteoio
+	cp src/*.h @includedir@/meteoio
+	-cp lib/*.a @libdir@/meteoio
+	-cp lib/*.so @libdir@/meteoio
+	-cp lib/*.module @libdir@/meteoio #BUG!!
 
 documentation:
 	doxygen $(SRCDIR)/config.dox

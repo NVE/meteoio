@@ -15,16 +15,7 @@
 /**
  * @class IOInterface
  * @brief An abstract class representing the IO Layer of the software Alpine3D. For each type of IO (File, DB, Webservice, etc)
- * a derived class is to be created that holds the specific implementation of the purely virtual member funtions. So far 
- * the following children have been implemented (by keyword for the io.ini key/value config file):
- * - A3D for reading original Alpine3D meteo files (no extra requirements)
- * - BOSCHUNG for reading Boshung xml meteo files (requires libxml)
- * - IMIS for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
- * - GEOTOP for reading original GeoTop meteo files (no extra requirements)
- * - GSN for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
- * - ARC for reading ESRI/ARC DEM files (no extra requirements)
- * - GRASS for reading Grass DEM files (no extra requirements)
- * 
+ * a derived class is to be created that holds the specific implementation of the purely virtual member funtions. 
  * The IOHandler class is a wrapper class that is able to deal with all above implementations of the IOInterface abstract base class.
  *
  * @author Thomas Egger

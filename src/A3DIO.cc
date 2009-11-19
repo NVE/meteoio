@@ -1,6 +1,38 @@
 #include "A3DIO.h"
 
-using namespace std;
+/**
+ * @page a3d A3D
+ * @section a3d_format Format
+ * This plugin reads legacy Alpine3D meteorological input files. It reads the meteo1d.txt file that contains, as measured at one unique location, the following fields: 
+ * - air temperature in field ta
+ * - incoming short wave radiation in field iswr
+ * - wind velocity in field vw
+ * - relative humidity in field rh
+ * - incoming long wave radiation in field ea
+ * - precipitations in field nswc
+ * 
+ * and optionally a list of stations with their measurements (meteo2d files) for the following parameters (with YYYY being the 4-digits year):
+ * - precipitations (file named precYYYY.txt)
+ * - relative humidity (file named rhumYYYY.txt)
+ * - air temperature (file named tairYYYY.txt)
+ * - wind speed (file named wspdYYYY.txt)
+ * - and optionnally wind direction (file named wdirYYYY.txt)
+ *
+ * @section a3d_units Units
+ * The units are assumed to be the following:
+ * - temperatures in celsius
+ * - relative humidity in %
+ * - wind speed in m/s
+ * - precipitations in mm/h
+ * - radiation in W/m²
+ *
+ * @section a3d_keywords Keywords
+ * This plugin uses the following keywords:
+ * - METEOPATH: string containing the path to the meteorological files (ie: where to find meteo1d.txt and meteo2d files)
+ * - COORDIN: input coordinate system (see MapProj)
+ * - COORDPARAM: extra input coordinates parameters (see MapProj)
+ * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
+ */
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 

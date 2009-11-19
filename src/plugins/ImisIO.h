@@ -45,6 +45,10 @@ class ImisIO : public IOInterface {
 		
 	  	virtual void readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation);
 		
+		/*virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+							  std::vector< std::vector<StationData> >& vecStation,
+							  const unsigned int& stationindex=IOUtils::npos);*/
 		
 	private:
 		void createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);

@@ -1,5 +1,22 @@
 #include "GrassIO.h"
 
+/**
+ * @page grass GRASS
+ * @section grass_format Format
+ * This is for reading grid data in the JGRASS GIS format(see http://jgrass.wiki.software.bz.it/jgrass/JGrass_Wiki) 
+ *
+ * @section grass_units Units
+ * The distances are assumed to be in meters.
+ *
+ * @section grass_keywords Keywords
+ * This plugin uses the following keywords:
+ * - COORDIN: input coordinate system (see MapProj)
+ * - COORDPARAM: extra input coordinates parameters (see MapProj)
+ * - DEMFILE: for reading the data as a DEMObject
+ * - LANDUSE: for interpreting the data as landuse codes
+ * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
+ */
+
 using namespace std;
 
 GrassIO::GrassIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}
@@ -143,15 +160,15 @@ void GrassIO::readLanduse(Grid2DObject& landuse_out)
 
 void GrassIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
-	int yyyy, mm, dd, hh;
-	date_in.getDate(yyyy, mm, dd, hh);
+	int yyyy, MM, dd, hh, mm;
+	date_in.getDate(yyyy, MM, dd, hh, mm);
 	string filepath="";
 
 	cfg.getValue("DAPATH", filepath); // cout << tmp << endl;
   
 	stringstream ss;
 	ss.fill('0');
-	ss << filepath << "/" << setw(4) << yyyy << setw(2) << mm << setw(2) <<  dd << setw(2) <<  hh << ".sca";
+	ss << filepath << "/" << setw(4) << yyyy << setw(2) << MM << setw(2) <<  dd << setw(2) <<  hh << setw(2) <<  mm <<".sca";
 
 	read2DGrid(da_out, ss.str());
 }

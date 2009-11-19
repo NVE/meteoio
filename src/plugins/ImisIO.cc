@@ -4,6 +4,25 @@ using namespace oracle;
 using namespace oracle::occi;
 
 /**
+ * @page imis IMIS
+ * @section imis_format Format
+ * This plugin reads data directly from the IMIS network database (Oracle database). It retrieves standard IMIS data as well as ENETZ data for the precipitations.
+ *
+ * @section imis_units Units
+ * The units are assumed to be the following:
+ * - temperatures in celsius
+ * - relative humidity in %
+ * - wind speed in m/s
+ * - precipitations in mm/h
+ * - radiation in W/m²
+ *
+ * @section imis_keywords Keywords
+ * This plugin uses the following keywords:
+ * - NROFSTATIONS: total number of stations listed for use
+ * - STATION#: station code for the given number #
+ */
+
+/**
  * @class ImisIO 
  * @brief The class with-in the data from the database are treated. The MeteoData and the StationData will be set in.
  * This class also herited to IOInterface class which is abstract.
@@ -87,7 +106,37 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo)
 */
 void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, vector<StationData>& vecStation)
 {
-	vecMeteo.clear();
+	if (vecStationName.size() == 0)
+		readStationNames(); //reads station names into vector<string> vecStationName
+
+	if (vecStationName.size() == 0) //if there are no stations -> return
+		return;
+
+	unsigned int indexStart=0, indexEnd=vecStationName.size();
+
+	//The following part decides whether all the stations are rebuffered or just one station
+	if (stationindex == IOUtils::npos){
+		vecMeteo.clear();
+		vecStation.clear();
+
+		vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), vector<MeteoData>());
+		vecStation.insert(vecStation.begin(), vecStationName.size(), vector<StationData>());
+	} else {
+		if ((stationindex < vecMeteo.size()) && (stationindex < vecStation.size())){
+			indexStart = stationindex;
+			indexEnd   = stationindex+1;
+		} else {
+			throw IndexOutOfBoundsException("You tried to access a stationindex in readMeteoData that is out of bounds", AT);
+		}
+	}
+
+	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+		StationData sd;
+		readStationMetaData(sd, ii);
+
+		readData(dateStart, dateEnd, vecMeteo, vecStation, sd, ii);
+	}
+/*	vecMeteo.clear();
 	vecStation.clear();
 	
 	if (mbImis.size() == 0) {
@@ -116,7 +165,7 @@ void ImisIO::readMeteoData(const Date_IO& date_in, vector<MeteoData>& vecMeteo, 
 
 	if (vecMeteo.size() == 0) {//No data found
 		throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
-	}
+	}*/
 
 }
 
@@ -146,9 +195,10 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 	CH1903_to_WGS84(east, north, lat, lon);
 	sd.setStationData(east, north, alt, sName, lat, lon);
 	
-	double ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr;
+	double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr;
 	const unsigned int size = meteo_in.size();
 	for (unsigned int i=0; i<size; i++) {
+		//loop over the stations
 		convertString(tmpDate, meteo_in[i][0], dec);
 		convertString(ta, meteo_in[i][1], dec);
 		convertString(iswr, meteo_in[i][2], dec);
@@ -156,12 +206,12 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 		convertString(dw, meteo_in[i][4], dec);
 		convertString(rh, meteo_in[i][5], dec);
 		convertString(lwr, meteo_in[i][5], dec);
-		convertString(nswc, meteo_in[i][7], dec);
+		convertString(hnw, meteo_in[i][7], dec);
 		convertString(tsg, meteo_in[i][8], dec);
 		convertString(tss, meteo_in[i][9], dec);
 		convertString(hs, meteo_in[i][10], dec);
 		convertString(rswr, meteo_in[i][11], dec);
-		md.setMeteoData(tmpDate, ta, iswr, vw, dw, rh, lwr, nswc, tsg, tss, hs, rswr);
+		md.setMeteoData(tmpDate, ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr);
 		
 		mb.put(md, sd);
 	}
@@ -173,7 +223,7 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 * @param stao_nr : an integer key of station2
 * @param data2S : string vector in which data will be filled
 */
-void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector<string>& data2S)
+void ImisIO::getStationData(const string stat_abk, unsigned int stao_nr, vector<string>& data2S)
 {
 	const string userName = "slf";
 	const string password = "sdb+4u";
@@ -232,7 +282,7 @@ void ImisIO::getStation2Data(const string stat_abk, unsigned int stao_nr, vector
 		env->terminateConnection(conn);
 	}
 	Environment::terminateEnvironment(env); // static OCCI function
-		
+	
 }
 
 /**

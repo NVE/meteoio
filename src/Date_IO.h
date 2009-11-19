@@ -31,13 +31,17 @@ class Date_IO : POPBase {
 class Date_IO {
 #endif  
 	public:
-		typedef enum {ISO, NUM} FORMATS;
+		typedef enum {
+			ISO, ///< ISO 8601 extended format combined date: YYYY-MM-DDTHH:mm:SS (fields might be dropped, in the least to the most significant order)
+			NUM ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
+		} FORMATS;
 		static const int daysLeapYear[];
 		static const int daysNonLeapYear[];
 		static const long offset;
 
 		///Note that constructing an Date_IO object without any parameter results 
 		///in constructing Date_IO(0.0) which in its current expression results in a date of 1900/1/1 00:00:00
+		//TODO: use modified julian date instead (ie: 0=1858-11-17T00:00:00)
 		Date_IO(const double& julian_in=0.0);
 		///All values passed will be checked for plausibility 
 		Date_IO(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
