@@ -26,6 +26,7 @@ bool FilterAlgorithms::initStaticData()
 {
 	filterMap["rate"]     = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::RateFilter);
 	filterMap["resample"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::ResamplingFilter);
+	filterMap["median_avg"]  = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAvgFilter);
 	filterMap["min_max"]  = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinMaxFilter);
 	filterMap["min"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinValueFilter);
 	filterMap["max"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MaxValueFilter);
@@ -44,6 +45,33 @@ const FilterProperties& FilterAlgorithms::filterProperties(const std::string& fi
 	return it->second;
 }
 
+void FilterAlgorithms::parseFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
+							    const unsigned int& minArgs, const unsigned int& maxArgs, 
+							    bool& isSoft, std::vector<double>& vecArgs_out)
+{
+	isSoft = false;
+	unsigned int argindex = 0;
+	vecArgs_out.clear(); 
+	double tmp;
+
+	//Test for softness
+	if (vecArgs_in.size() > 0)
+		if (vecArgs_in[0] == "soft"){ isSoft = true; argindex=1;}
+
+	try {
+		for (unsigned int ii=argindex; ii<vecArgs_in.size(); ii++){
+			IOUtils::convertString(tmp, vecArgs_in[ii]);
+			vecArgs_out.push_back(tmp);
+		}
+
+		if ((vecArgs_out.size() < minArgs) || (vecArgs_out.size() > maxArgs))
+			throw InvalidArgumentException("Wrong number of arguments for filter " + filtername, AT);
+	} catch(std::exception& e){
+		std::cerr << "[E] While processing arguments for filter " << filtername << std::endl;
+		throw;
+	}
+}
+
 
 /******************************************************************************
  * The following functions are implementations of different filter algorithms *
@@ -60,7 +88,7 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 	std::vector<double> vecArgs; 
 	parseFilterArguments("rate", _vecArgs, 1, 1, isSoft, vecArgs);
 	
-	Date_IO deltatime(vecArgs[0]/1440.0);
+	Date_IO deltatime(vecArgs[0]/1440.0); //making a julian date out of the argument given in minutes
 
 	unsigned int startposition = pos;
 	for (unsigned int ii=vecFilteredM.size()-1; ii>0; ii--){
@@ -205,29 +233,83 @@ bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const 
 	return true;
 }
 
-void FilterAlgorithms::parseFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
-							    const unsigned int& minArgs, const unsigned int& maxArgs, 
-							    bool& isSoft, std::vector<double>& vecArgs_out)
+bool FilterAlgorithms::MedianAvgFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& paramindex,
+				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
-	isSoft = false;
-	unsigned int argindex = 0;
-	vecArgs_out.clear(); 
-	double tmp;
+	(void)vecS; (void)date; (void)vecFilteredS;
+	//Remarks:
+	//1) nodata values are not considered when calculating the median
+	//2) if there is a even number of window elements the arithmetic mean is used to calculate the median
+	//3) isSoft is ignored
+	//4) Two arguments expected (both have to be fullfilled for the filter to start operating): 
+	//   1. minimal number of points in window
+	//   2. minimal time interval spanning the window
+	bool isSoft = false;
+	std::vector<double> vecArgs; 
+	parseFilterArguments("median_avg", _vecArgs, 2, 2, isSoft, vecArgs);
 
-	//Test for softness
-	if (vecArgs_in.size() > 0)
-		if (vecArgs_in[0] == "soft"){ isSoft = true; argindex=1;}
+	if (vecArgs[0] < 1) //the window size has to be at least 1
+		throw InvalidArgumentException("Parameter 1 for median_avg filter cannot be < 1", AT);
+	if (vecArgs[1] < 0) //the time window has to be at least 0 minutes
+		throw InvalidArgumentException("Parameter 2 for median_avg filter cannot be < 0", AT);
 
-	try {
-		for (unsigned int ii=argindex; ii<vecArgs_in.size(); ii++){
-			IOUtils::convertString(tmp, vecArgs_in[ii]);
-			vecArgs_out.push_back(tmp);
-		}
+	//Deal with first parameter: minimal number of data points
+	unsigned int windowSize = (unsigned int)vecArgs[0];
+	unsigned int increment = (unsigned int)(windowSize/2);
+	if (increment > 0) increment--;
+	unsigned int startposition = pos + increment;
 
-		if ((vecArgs_out.size() < minArgs) || (vecArgs_out.size() > maxArgs))
-			throw InvalidArgumentException("Wrong number of arguments for filter " + filtername, AT);
-	} catch(std::exception& e){
-		std::cerr << "[E] While processing arguments for filter " << filtername << std::endl;
-		throw;
+	if (startposition > (vecM.size()-1))
+		startposition = (vecM.size()-1);
+
+	unsigned int endposition = 0;
+	if (startposition < (windowSize-1)){
+		return false; //not enough data points available
+	} else {
+		endposition = startposition - (windowSize - 1);
 	}
+
+	//Now deal with the second argument: the time window
+	Date_IO deltatime(vecArgs[1]/1440.0); //making a julian date out of the argument given in minutes	
+	while(deltatime > (vecM[startposition].date - vecM[endposition].date)){
+		if (endposition > 0) endposition--;
+		else return false; //time window not big enough
+	} 
+	
+	Date_IO gap(vecM[startposition].date - vecM[endposition].date);
+	//cout << "The final gap is " << gap.toString() << endl;
+
+	//Run actual median_avg filter over all relevant meteo data
+	vector<double> vecWindow;
+	//cout << "Start: " << startposition << "  End: " << endposition << endl;
+	for (unsigned int ii=startposition; ii>=endposition; ii--){
+		const double& tmp = vecM[ii].param(paramindex);
+		if (tmp != IOUtils::nodata) vecWindow.push_back(tmp);
+
+		//cout << ii << ": pushed at vecM[" <<  ii << "] " << vecM[ii].date << " : " << tmp << endl;
+	}
+
+	//Calculate median
+	double median=IOUtils::nodata;
+	unsigned int vecSize = vecWindow.size();
+	unsigned int middle = (unsigned int)(vecSize/2);
+	sort(vecWindow.begin(), vecWindow.end());
+
+	if (vecSize == 0){
+		return false; //only nodata values detected or other problem
+	} else if ((vecSize % 2) == 1){ //uneven
+		median = vecWindow.at(middle);
+	} else { //use arithmetic mean of element n/2 and n/2-1
+		median = Interpol1D::linearInterpolation(vecWindow.at(middle-1), vecWindow.at(middle), 0.5);
+	}
+
+	//cout << "Median value: " << median << endl;
+	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+		vecFilteredM[ii].param(paramindex) = median;
+	}
+
+	return true;
 }
+

@@ -49,6 +49,10 @@ class FilterAlgorithms {
 					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
+		static bool MedianAvgFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
 
  	private:
 		static std::map<std::string, FilterProperties> filterMap;
