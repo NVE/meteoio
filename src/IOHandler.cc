@@ -133,11 +133,13 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 	string pluginpath = "";
 
 	try {
-		cfg.getValue("PLUGINPATH", pluginpath);
+		cfg.getValue("PLUGINPATH", pluginpath, ConfigReader::nothrow);
+		if (pluginpath != "")
+			pluginpath += "/";
 
 		//Which dynamic library needs to be loaded
 		cout << "\t" << "Trying to load " << libname << " ... ";
-		std::string filename = pluginpath + "/" + libname;
+		std::string filename = pluginpath + libname;
 		dynLibrary = DynamicLoader::loadObjectFile(filename);
 		
 		if(dynLibrary == NULL) {
