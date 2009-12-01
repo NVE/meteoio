@@ -3,7 +3,49 @@
 /**
  * @page arc ARC
  * @section arc_format Format
- * This is for reading grid data in the ARC-GIS format, or more properly, ESRI ascii grid format (see http://en.wikipedia.org/wiki/ESRI_grid) 
+ * This is for reading grid data in the ARC-GIS format, or more properly, ESRI ascii grid format (see http://en.wikipedia.org/wiki/ESRI_grid). The landuse codes have the format 1LLDC where:
+ * - LL is the land use code as given in the table given below
+ * - D is the soil depth
+ * - C is the field capacity
+ *
+ * <center><table border="0">
+ * <tr><td>
+ * <table border="1">
+ * <tr><th>land use (vegetation)</th><th>Prevah land use classes</th></tr>
+ * <tr><td>01</td><td>water</td></tr>
+ * <tr><td>02</td><td>settlement</td></tr>
+ * <tr><td>03</td><td>coniferous forest</td></tr>
+ * <tr><td>04</td><td>decidous forest</td></tr>
+ * <tr><td>05</td><td>mixed forest</td></tr>
+ * <tr><td>06</td><td>cereals</td></tr>
+ * <tr><td>07</td><td>pasture</td></tr>
+ * <tr><td>08</td><td>bush</td></tr>
+ * <tr><td>09</td><td>undefined</td></tr>
+ * <tr><td>10</td><td>undefined</td></tr>
+ * <tr><td>11</td><td>road</td></tr>
+ * <tr><td>12</td><td>undefined</td></tr>
+ * <tr><td>13</td><td>firn</td></tr>
+ * <tr><td>14</td><td>bare ice</td></tr>
+ * <tr><td>15</td><td>rock</td></tr>
+ * </table></td><td><table border="1">
+ * <tr><th>land use (vegetation)</th><th>Prevah land use classes</th></tr>
+ * <tr><td>16</td><td>undefined</td></tr>
+ * <tr><td>17</td><td>undefined</td></tr>
+ * <tr><td>18</td><td>fruit</td></tr>
+ * <tr><td>19</td><td>vegetables</td></tr>
+ * <tr><td>20</td><td>wheat</td></tr>
+ * <tr><td>21</td><td>alpine vegetation</td></tr>
+ * <tr><td>22</td><td>wetlands</td></tr>
+ * <tr><td>23</td><td>rough pasture</td></tr>
+ * <tr><td>24</td><td>subalpine meadow</td></tr>
+ * <tr><td>25</td><td>alpine meadow</td></tr>
+ * <tr><td>26</td><td>bare soil vegetation</td></tr>
+ * <tr><td>27</td><td>free</td></tr>
+ * <tr><td>28</td><td>corn</td></tr>
+ * <tr><td>29</td><td>grapes</td></tr>
+ * <tr><td>30-99</td><td>undefined</td></tr>
+ * </table></td></tr>
+ * </table></center>
  *
  * @section arc_units Units
  * The distances are assumed to be in meters.
