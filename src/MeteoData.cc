@@ -130,52 +130,6 @@ void MeteoData::setResampled(const bool& _resampled)
 	resampled = _resampled;
 }
 
-/*
-void MeteoData::Check_min_max(double& param, const double low_hard, const double low_soft, const double high_soft, const double high_hard)
-{
-	//This is the embryo of what would become the filtering library...
-	//HACK: TODO: have the limits being passed as parameters from a config file
-	//(so the user could adjust them to his context and units!)
-	if(param<=nodata || param<=low_hard || param>=high_hard) {
-		param=nodata;
-	} else {
-		if(param<=low_soft) {
-			param=low_soft;
-		} else if(param>=high_soft) {
-			param=high_soft;
-		}
-	}
-}
-
-void MeteoData::cleanData()
-{
-	//HACK: TODO: have the limits being passed as parameters from a config file
-	//HACK TODO: get rid of this method (as well as Check_min_max) and replace it by calls to the filters
-
-	Check_min_max(ta, -50., -50., 50., 50.);
-
-	Check_min_max(iswr, -50., 0., 2000., 2000.);
-
-	Check_min_max(vw, -60., -60., 60., 60.);
-
-	Check_min_max(dw, -180., -180., 180., 180.);
-
-	Check_min_max(rh, -50., 0., 100., 150.);
-
-	Check_min_max(hnw, -5., 0., 100., 100.);
-
-	Check_min_max(tsg, -70., -70., 70., 70.);
-
-	Check_min_max(tss, -70., -70., 70., 70.);
-
-	Check_min_max(lwr, -50., 0., 2000., 2000.);
-	
-	Check_min_max(hs, -5., 0., 350., 350.);
-	
-	Check_min_max(rswr, -50., 0., 2000., 2000.);
-}
-*/
-
 bool MeteoData::operator==(const MeteoData& in) const
 {
 	//An object is equal if the date is equal and all meteo parameters are equal
@@ -230,7 +184,7 @@ const string MeteoData::toString() const
 
 #ifdef _POPC_
 void MeteoData::Serialize(POPBuffer &buf, bool pack)
-{//HACK TODO: adjust the serialize to the latest changes!! (call InitStaticData(), etc)
+{
 	if (pack){
 		buf.Pack(&resampled,1);
 		date.Serialize(buf,true);
@@ -240,7 +194,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&dw,1);
 		buf.Pack(&rh,1);
 		buf.Pack(&lwr,1);
-    //buf.Pack(&ea,1);
+		//buf.Pack(&ea,1);
 		buf.Pack(&hnw,1);
 		buf.Pack(&tsg,1);
 		buf.Pack(&tss,1);
@@ -255,7 +209,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&dw,1);
 		buf.UnPack(&rh,1);
 		buf.UnPack(&lwr,1);
-    //buf.UnPack(&ea,1);
+		//buf.UnPack(&ea,1);
 		buf.UnPack(&hnw,1);
 		buf.UnPack(&tsg,1);
 		buf.UnPack(&tss,1);

@@ -168,9 +168,10 @@ install:
 	mkdir -p @includedir@/meteoio
 	mkdir -p @libdir@/meteoio
 	cp src/*.h @includedir@/meteoio
+	cp src/*.ph @includedir@/meteoio
 	-cp lib/*.a @libdir@/meteoio
 	-cp lib/*.so @libdir@/meteoio
-	-cp lib/*.module @libdir@/meteoio #BUG!!
+	-cp lib/*.module @libdir@/meteoio
 
 documentation:
 	doxygen $(SRCDIR)/config.dox

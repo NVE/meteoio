@@ -16,7 +16,7 @@
  * @author Thomas Egger
  */
 #ifdef _POPC_
-class IOException :  public POPException, public std::exception {
+class IOException : public POPException {
 #else
 class IOException : public std::exception {
 #endif
