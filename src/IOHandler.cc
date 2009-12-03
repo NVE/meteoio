@@ -26,43 +26,28 @@
  * 
  */
 
-#ifdef _POPC_
 void IOHandler::registerPlugins()
 {
 #if defined(WIN32)
-	const string libsuffix = ".dll";
+	const std::string libsuffix = ".dll";
 #elif defined(APPLE)
-	const string libsuffix = ".dynlib";
+	const std::string libsuffix = ".dynlib";
 #else
-	const string libsuffix = ".so";
-#endif 
-	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
-	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungiopopc"+libsuffix, "BoschungIO", NULL, NULL);
-	mapPlugins["IMIS"]	= IOPlugin("libimisiopopc"+libsuffix, "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopiopopc"+libsuffix, "GeotopIO", NULL, NULL);
-	mapPlugins["GSN"]	= IOPlugin("libgsniopopc"+libsuffix, "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]	= IOPlugin("libarciopopc"+libsuffix, "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]	= IOPlugin("libgrassiopopc"+libsuffix, "GrassIO", NULL, NULL);
-}
-#else
-void IOHandler::registerPlugins()
-{
-#if defined(WIN32)
-	const string libsuffix = ".dll";
-#elif defined(APPLE)
-	const string libsuffix = ".dynlib";
-#else
-	const string libsuffix = ".so";
-#endif 
-	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
-	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungio"+libsuffix, "BoschungIO", NULL, NULL);
-	mapPlugins["IMIS"]	= IOPlugin("libimisio"+libsuffix, "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio"+libsuffix, "GeotopIO", NULL, NULL);
-	mapPlugins["GSN"]	= IOPlugin("libgsnio"+libsuffix, "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]	= IOPlugin("libarcio"+libsuffix, "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+libsuffix, "GrassIO", NULL, NULL);
-}
+	const std::string libsuffix = ".so";
 #endif
+#ifdef _POPC_
+	const std::string popc_extra = "popc";
+#else
+	const std::string popc_extra = "";
+#endif
+	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungio"+popc_extra+libsuffix, "BoschungIO", NULL, NULL);
+	mapPlugins["IMIS"]	= IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
+	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
+	mapPlugins["GSN"]	= IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]	= IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
+}
 
 #ifdef _POPC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(cfg){

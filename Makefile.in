@@ -147,6 +147,7 @@ build_dynamiclibs: $(LIBDIR)/libboschungio.so \
 
 ############## POPC ##############
 par: $(LIBDIR)/libmeteoiopopc.a  build_dynamiclibs_par meteoIO_module_par
+	@echo -e "*** MeteoIO-Popc+ compiled as \033[36m$(MODE)\033[0m"
 
 build_dynamiclibs_par:  $(LIBDIR)/libarciopopc.so \
 			$(LIBDIR)/libgrassiopopc.so 

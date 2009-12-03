@@ -77,7 +77,11 @@ MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& 
 	initParameterMap();
 }
 
+#ifdef _POPC_
+MeteoData::MeteoData(const MeteoData& md) : paroc_base()
+#else
 MeteoData::MeteoData(const MeteoData& md)
+#endif
 {
 	*this = md;
 }

@@ -17,7 +17,11 @@ Date_IO::Date_IO(const time_t& _time)
 	setDate(_time);
 }
 
+#ifdef _POPC_
+Date_IO::Date_IO(const Date_IO& _date_in) : paroc_base()
+#else
 Date_IO::Date_IO(const Date_IO& _date_in)
+#endif
 {
 	setDate(_date_in.getJulian());
 }

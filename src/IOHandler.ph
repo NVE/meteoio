@@ -16,9 +16,9 @@ parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
 		classuid(1003);
 	public:
-		IOHandler(const std::string& configfile)  @{od.url("localhost");}; // @{ power=100 ?: 50; };
-		//IOHandler(const IOHandler&);
-		IOHandler(const ConfigReader&)  @{ power=100 ?: 50; };
+		IOHandler(const std::string& configfile) @{od.url("localhost");}; // @{ power=100 ?: 50; };
+		//IOHandler(const IOHandler&) @{od.url("localhost");};
+		IOHandler(const ConfigReader&) @{od.url("localhost");}; //@{ power=100 ?: 50; };
 		~IOHandler();
 
 		//methods defined in the IOInterface class
