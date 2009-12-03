@@ -83,7 +83,7 @@ typedef Array<int> CIntArray;
 parclass LegacyIO
 {
 	public:
-		LegacyIO( [in] const std::string &meteopath);
+		LegacyIO( [in] const std::string &meteopath) @{od.url("localhost");};
 		~LegacyIO();
 
 		void GetGridSize([in] const std::string& grid_name, [out] int &nx, [out] int &ny, [out] int &nz);
