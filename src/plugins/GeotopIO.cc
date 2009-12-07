@@ -169,10 +169,12 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 							 tmpdata[mapHeader["p"]]); 
 
 				if ((md.date >= dateStart) && (md.date <= dateEnd)){
+					convertUnits(md);
 					vecMeteo[ii].push_back(md);
 					vecStation[ii].push_back(myStations[ii]);
 				} else {
-					cout << "Ignoring " << md.date.toString() << endl;
+					//cout << "Ignoring " << md.date.toString() << "  date.Start = " << dateStart.toString()
+					//	<< "  date.End = " << dateEnd.toString() << endl;
 				}
 			}
 		} catch(std::exception& e) {
@@ -187,26 +189,23 @@ void GeotopIO::makeColumnMap(const std::vector<std::string>& tmpvec,
 					    const std::vector<std::string>& vecColumnNames, 
 					    map<string, unsigned int>& mapHeader)
 {
-
 	/*
 	  #1 Precipitation intensity (mm/h)
 	  #2 Wind speed (m/s)
 	  #3 Direction from which wind comes from (degree from North, clockwise)
 	  #4 Relative humidity (%)
 	  #5 Air temperature (C)
-	  #6 Lapse rate (C/m in upward direction)
-	  #7 Air pressure (mbar)
-	  #8 Global shortwave radiation (W/m2)
-	  #9 Direct shortwave radiation (W/m2)
-	  #10 Diffuse shortwave radiation (W/m2)
+	  #6 Air pressure (mbar)
+	  #7 Global shortwave radiation (W/m2)
+	  #8 Direct shortwave radiation (W/m2)
+	  #9 Diffuse shortwave radiation (W/m2)
+	  #10 Cloudiness transmissivity
 	  #11 Cloudiness (fraction from 0 to 1)
-	  #12 Incoming shortwave radiation (W/m2)
-	  #13 Incoming longwave radiation (W/m2)
-	  #14 Outgoing shortwave radiation (W/m2)
-	  #15 Outgoing longwave radiation (W/m2)
-	  #16 Sensible heat flux (W/m2)
-	  #17 Latent heat flux (W/m2)
+	  #12 Incoming longwave radiation (W/m2)
+	  #13 Net shortwave radiation (W/m2)
+	  #14 Temperature of the soil surface (for Dirichlet conditions)
 	*/
+
 	for (unsigned int ii=0; ii<vecColumnNames.size(); ii++){
 		string current="";
 		switch(ii){
@@ -215,22 +214,19 @@ void GeotopIO::makeColumnMap(const std::vector<std::string>& tmpvec,
 		case 2: mapHeader["dw"] = tmpvec.size(); current="dw"; break; 
 		case 3: mapHeader["rh"] = tmpvec.size(); current="rh"; break; 
 		case 4: mapHeader["ta"] = tmpvec.size(); current="ta"; break; 
-		case 5: mapHeader["lr"] = tmpvec.size(); current="lr"; break; 
-		case 6: mapHeader["p"] = tmpvec.size(); current="p"; break; 
-		case 7: mapHeader["gswr"] = tmpvec.size(); current="gswr"; break; 
-		case 8: mapHeader["dirswr"] = tmpvec.size(); current="dirswr"; break; 
-		case 9: mapHeader["diffswr"] = tmpvec.size(); current="diffswr"; break; 
-		case 10: mapHeader["cloud"] = tmpvec.size(); current="cloud"; break; 
-		case 11: mapHeader["iswr"] = tmpvec.size(); current="iswr"; break; 
-		case 12: mapHeader["lwr"] = tmpvec.size(); current="lwr"; break; 
-		case 13: mapHeader["oswr"] = tmpvec.size(); current="oswr"; break; 
-		case 14: mapHeader["olwr"] = tmpvec.size(); current="olwr"; break; 
-		case 15: mapHeader["shf"] = tmpvec.size(); current="shf"; break; 
-		case 16: mapHeader["lhf"] = tmpvec.size(); current="lhf"; break; 
-		default: throw IOException("GEOtopIO can only deal with 16 meteo parameters", AT); break;
+		case 5: mapHeader["p"] = tmpvec.size(); current="p"; break; 
+		case 6: mapHeader["iswr"] = tmpvec.size(); current="iswr"; break; 
+		case 7: mapHeader["dirswr"] = tmpvec.size(); current="dirswr"; break; 
+		case 8: mapHeader["diffswr"] = tmpvec.size(); current="diffswr"; break; 
+		case 9: mapHeader["cloudt"] = tmpvec.size(); current="cloudt"; break; 
+		case 10: mapHeader["cloudi"] = tmpvec.size(); current="cloudi"; break; 
+		case 11: mapHeader["lwr"] = tmpvec.size(); current="lwr"; break; 
+		case 12: mapHeader["nswr"] = tmpvec.size(); current="nswr"; break; 
+		case 13: mapHeader["tsup"] = tmpvec.size(); current="tsup"; break; 
+		default: throw IOException("GEOtopIO can only deal with 14 meteo parameters", AT); break;
 		}
 			
-
+		//Go through the columns and seek out which parameter corresponds with which column
 		for (unsigned int jj=1; jj<tmpvec.size(); jj++){
 			if (tmpvec[jj].length() >= vecColumnNames[ii].length())
 				if (vecColumnNames[ii] == tmpvec[jj].substr(0, vecColumnNames[ii].length()))

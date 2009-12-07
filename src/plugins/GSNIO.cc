@@ -187,16 +187,17 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 				throw InvalidFormatException("",AT);
 
 			if (key == "LIGHT") convertStringToDouble(md.iswr, tmpstring, "ISWR");
-			else if (key == "TEMPERATURE") convertStringToDouble(md.ta, tmpstring, "Air Temperature");				
-			else if (key == "AIR_TEMP") convertStringToDouble(md.ta, tmpstring, "Air Temperature");				
+			//else if (key == "TEMPERATURE") convertStringToDouble(md.ta, tmpstring, "Air Temperature");		
+			else if (key == "AIR_TEMP") convertStringToDouble(md.ta, tmpstring, "Air Temperature");
 			else if (key == "WIND_SPEED") convertStringToDouble(md.vw, tmpstring, "Wind Velocity");				
+			else if (key == "WIND_DIRECTION") convertStringToDouble(md.dw, tmpstring, "Wind Velocity");
 			else if (key == "SOLAR_RAD") {
 				convertStringToDouble(md.iswr, tmpstring, "solar_rad");				
 				convertStringToDouble(md.lwr, tmpstring, "solar_rad");				
 			}
 			else if (key == "AIR_HUMID") convertStringToDouble(md.rh, tmpstring, "air_humid");				
-			else if (key == "SOIL_TEMP_ECTM") convertStringToDouble(md.tss, tmpstring, "soil_temp_ectm");				
-			else if (key == "GROUND_TEMP_TNX") convertStringToDouble(md.tsg, tmpstring, "ground_temp_tnx");				
+			else if (key == "SOIL_TEMP_ECTM") convertStringToDouble(md.tss, tmpstring, "soil_temp_ectm");
+			else if (key == "GROUND_TEMP_TNX") convertStringToDouble(md.tsg, tmpstring, "ground_temp_tnx");
 			else if (key == "RAIN_METER") convertStringToDouble(md.hnw, tmpstring, "rain_meter");				
 			else if (key == "TIMED") {
 				tmpstring = tmpstring.substr(0,tmpstring.length()-3); //cut away the seconds
@@ -265,15 +266,39 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 void GSNIO::readStationNames()
 {
 	vecStationName.clear();
-	_ns1__getSensorsResponse sensors;
-	if (gsn.getSensors(&sensors) == SOAP_OK){
-		for (unsigned int ii=0; ii<sensors.return_.size(); ii++){
-			//cout << "[d] Sensor " << ii << " Name: " << sensors.return_[ii] << endl;
-			vecStationName.push_back(sensors.return_[ii]);
+
+	//Read in the StationNames
+	string xmlpath="", str_stations="";
+	int stations=0;
+
+	cfg.getValue("NROFSTATIONS", str_stations, ConfigReader::nothrow);
+
+	if (str_stations != ""){
+		if (!IOUtils::convertString(stations, str_stations, std::dec))
+			throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
+		
+		for (int ii=0; ii<stations; ii++) {
+			stringstream tmp_stream;
+			string stationname="", tmp_file="";
+			Date_IO tmp_date(0.0);
+			
+			tmp_stream << (ii+1); //needed to construct key name
+			cfg.getValue(string("STATION"+tmp_stream.str()), stationname);
+			cout << "\tRead io.ini stationname: '" << stationname << "'" << endl;
+			vecStationName.push_back(stationname);
+		}    
+	} else { //just take all GSN stations available
+		_ns1__getSensorsResponse sensors;
+		if (gsn.getSensors(&sensors) == SOAP_OK){
+			for (unsigned int ii=0; ii<sensors.return_.size(); ii++){
+				//cout << "[d] Sensor " << ii << " Name: " << sensors.return_[ii] << endl;
+				cout << "\tRead GSN stationname: '" << sensors.return_[ii] << "'" << endl;
+				vecStationName.push_back(sensors.return_[ii]);
+			}
+		} else {
+			soap_print_fault(&gsn, stderr);
+			throw IOException("Error in communication with GSN",AT);
 		}
-	} else {
-		soap_print_fault(&gsn, stderr);
-		throw IOException("Error in communication with GSN",AT);
 	}
 }
 
