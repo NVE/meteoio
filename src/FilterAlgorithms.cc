@@ -90,15 +90,17 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 	
 	Date_IO deltatime(vecArgs[0]/1440.0); //making a julian date out of the argument given in minutes
 
-	unsigned int startposition = pos;
-	for (unsigned int ii=vecFilteredM.size()-1; ii>0; ii--){
+	int startposition = pos;
+	for (int ii=vecFilteredM.size()-1; ii>=0; ii--){
 		unsigned int mypos = startposition;
-		
+
 		double sum = 0.0;
-		while((vecM[mypos].date + deltatime) >= vecM[startposition].date){
+		while((vecM[mypos].date + deltatime) > vecM[startposition].date){
 			const double& val = vecM[mypos].param(paramindex);
 			if (val != IOUtils::nodata)
 				sum += vecM[mypos].param(paramindex);
+
+			//cout << vecM[mypos].date << " HNW:" << vecM[mypos].param(paramindex) << "  SUM:" << sum << endl;		
 
 			if (mypos>0) mypos--;
 			else break;

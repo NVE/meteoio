@@ -93,8 +93,10 @@ bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 			//cout << "\tExecuting: " << tasklist[ii][jj] << endl;
 			if (!FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, vecS, pos, date,
 																    taskargs.at(ii).at(jj),
-																    ii, vecFilteredM, vecFilteredS))
-				break; //if one of the filters returns false, then stop filtering for this parameter
+																    ii, vecFilteredM, vecFilteredS)){
+				//break; //if one of the filters returns false, then stop filtering for this parameter
+				;
+			}
 		}
 	}
 
