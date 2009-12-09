@@ -1,0 +1,14 @@
+Begin3
+Title:          MeteoIO
+Version:        0.9
+Entered-date:   
+Description:    Meteorological Input/Output library: it covers data retrieval, data filtering, data transformations and spatial interpolations.
+Keywords:       meteorological data access filtering spatial interpolation
+Author:         point of contact Mathias Bavay <bavay@slf.ch> 
+Maintained-by:  Mathias Bavay <bavay@slf.ch> 
+Primary-site:	http://slfsmm.indefero.net/p/meteoio/    
+Home-page:      http://slfsmm.indefero.net/p/meteoio/
+Original-site:  
+Platforms:       Linux and other Unices, Windows, OsX
+Copying-policy: GNU Lesser Public License
+End

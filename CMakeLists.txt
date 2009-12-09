@@ -81,13 +81,21 @@ set(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
+#for the install target
+FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include)
+FILE(GLOB solibs "${PROJECT_SOURCE_DIR}/lib/*.so")
+FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a")
+FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
+INSTALL(FILES ${solibs} ${alibs} ${modules} DESTINATION lib)
+
 add_custom_target(distclean make clean
   COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake src/cmake_install.cmake src/plugins/cmake_install.cmake src/plugins/gsn/cmake_install.cmake
   COMMAND cmake -E remove_directory CMakeFiles
   COMMAND cmake -E remove_directory src/CMakeFiles
   COMMAND cmake -E remove_directory src/plugins/gsn/CMakeFiles
   COMMAND cmake -E remove_directory src/plugins/CMakeFiles)
-
 
 #for the uninstall target
 CONFIGURE_FILE(
