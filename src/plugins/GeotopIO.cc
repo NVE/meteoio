@@ -1,3 +1,20 @@
+/***********************************************************************************/
+/*  Copyright 2009 EPFL                                                            */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "GeotopIO.h"
 
 /**
@@ -187,7 +204,7 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 void GeotopIO::makeColumnMap(const std::vector<std::string>& tmpvec, 
 					    const std::vector<std::string>& vecColumnNames, 
-					    map<string, unsigned int>& mapHeader)
+					    std::map<std::string, unsigned int>& mapHeader)
 {
 	/*
 	  #1 Precipitation intensity (mm/h)
@@ -235,7 +252,7 @@ void GeotopIO::makeColumnMap(const std::vector<std::string>& tmpvec,
 	}
 }
 
-void GeotopIO::readMetaData(vector<StationData>& vecStation, vector<std::string>& vecColumnNames,
+void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
 					   const std::string& metafile)
 {
 	string line="";

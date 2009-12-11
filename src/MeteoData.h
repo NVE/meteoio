@@ -40,6 +40,7 @@ class MeteoData : POPBase {
 class MeteoData {
 #endif  
 	public:
+		///this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0, 
 					  TA=firstparam, ISWR, VW, DW, RH, LWR, HNW, TSG, TSS, HS, RSWR, P, 
 					  lastparam=P};
@@ -61,15 +62,15 @@ class MeteoData {
 		/**
 		* @brief A constructor that takes one to eight arguments
 		* @param date_in A Date_IO object representing the time of the measurement
-		* @param ta AIR TEMPERATURE in CELSIUS (default nodata)
-		* @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
-		* @param vw Wind VELOCITY in m s-1 (default nodata)
-		* @param dw Wind DIRECTION in m s-1 (default nodata)
-		* @param rh RELATIVE HUMIDITY (default nodata)
-		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
-		* @param hnw Height new precipitations in kg m-2 (default nodata)
-		* @param tsg Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
-		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
+		* @param ta Air temperature in Kelvin (default nodata)
+		* @param iswr Incoming shortwave radiation in W m-2 (default nodata)
+		* @param vw Wind velocity in m s-1 (default nodata)
+		* @param dw Wind direction in degrees (default nodata)
+		* @param rh Relative humidity between 0 and 1 (default nodata)
+		* @param lwr Long wave radiation in W m-2 (default nodata)
+		* @param hnw Precipitations in mm h-1 (default nodata)
+		* @param tsg Soil or snow bottom temperature in Kelvin (default nodata)
+		* @param tss Soil or snow surface temperature in Kelvin (default nodata)
 		* @param hs Snow height in cm (default nodata)
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
 		* @param p Atmospheric pressure in Pa (default nodata)
@@ -91,15 +92,15 @@ class MeteoData {
 		/**
 		* @brief General setter function, requires one to eight arguments
 		* @param date_in A Date_IO object representing the time of the measurement
-		* @param ta AIR TEMPERATURE in CELSIUS (default nodata)
-		* @param iswr Incoming SHORTWAVE radiation in W m-2 (default nodata)
-		* @param vw Wind VELOCITY in m s-1 (default nodata)
-		* @param dw Wind DIRECTION in m s-1 (default nodata)
-		* @param rh RELATIVE HUMIDITY (default nodata)
-		* @param lwr LONG WAVE radiation in W m-2 (default nodata)
-		* @param hnw Height new precipitations in kg m-2 (default nodata)
-		* @param tsg Soil or snow bottom TEMPERATURE in CELSIUS (default nodata)
-		* @param tss Soil or snow surface TEMPERATURE in CELSIUS (default nodata)
+		* @param ta Air temperature in Kelvin (default nodata)
+		* @param iswr Incoming shortwave radiation in W m-2 (default nodata)
+		* @param vw Wind velocity in m s-1 (default nodata)
+		* @param dw Wind direction in degrees (default nodata)
+		* @param rh Relative humidity between 0 and 1 (default nodata)
+		* @param lwr Long wave radiation in W m-2 (default nodata)
+		* @param hnw Precipitations in mm h-1 (default nodata)
+		* @param tsg Soil or snow bottom temperature in Kelvin (default nodata)
+		* @param tss Soil or snow surface temperature in Kelvin (default nodata)
 		* @param hs Snow height in cm (default nodata)
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
 		* @param p Atmospheric pressure in Pa (default nodata)
@@ -131,9 +132,20 @@ class MeteoData {
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
 		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
-
-		double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr, p; //direct access allowed
-		Date_IO date; ///<Date_IO/Time of the measurement
+		//direct access allowed
+		Date_IO date; ///<Timestamp of the measurement
+		double ta; ///<Air temperature in Kelvin
+		double vw; ///<Wind velocity in m s-1
+		double dw; ///<Wind direction in degrees
+		double rh; ///<Relative humidity between 0 and 1
+		double hnw; ///<Precipitations in mm h-1
+		double iswr; ///<Incoming shortwave radiation in W m-2
+		double rswr; ///<Reflected Short Wave Radiation in W m-2
+		double lwr; ///<Long wave radiation in W m-2
+		double tsg; ///<Soil or snow bottom temperature in Kelvin
+		double tss; ///<Soil or snow surface temperature in Kelvin
+		double hs; ///<Snow height in cm
+		double p;  ///<Atmospheric pressure in Pa
 
 
  private:

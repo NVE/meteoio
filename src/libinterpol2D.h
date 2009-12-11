@@ -41,11 +41,7 @@
  
 class Interpol2D {
 	public:
-		/**
-		* @enum INTERP_TYPES
-		* keywords for selecting the spatial interpolation algorithm
-		*/
-		//available methods for single source and multiple sources interpolations
+		///Keywords for selecting the spatial interpolation algorithm among the available methods for single source and multiple sources interpolations
 		typedef enum INTERP_TYPES {
 			I_PRESS, ///< standard air pressure interpolation
 			I_RH, ///< relative humidity interpolation
@@ -55,6 +51,7 @@ class Interpol2D {
 			I_LAPSE_CST, ///< constant fill with an elevation lapse rate
 			I_LAPSE_IDWK ///< Inverse Distance Weighting with an elevation lapse rate fill
 		} interp_types;
+		///Keywords for selecting the regression algorithm to use
 		typedef enum REG_TYPES {
 			R_CST, ///< no elevation dependence (ie: constant)
 			R_LIN ///< linear elevation dependence

@@ -48,6 +48,7 @@ class Date_IO : POPBase {
 class Date_IO {
 #endif  
 	public:
+		///Keywords for selecting the date formats
 		typedef enum {
 			ISO, ///< ISO 8601 extended format combined date: YYYY-MM-DDTHH:mm:SS (fields might be dropped, in the least to the most significant order)
 			NUM ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)

@@ -1,3 +1,20 @@
+/***********************************************************************************/
+/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include <math.h>
 #include <limits>
 #include "DEMObject.h"
@@ -146,6 +163,7 @@ void DEMObject::update(const slope_type& algorithm) {
 * - HICK that uses the maximum downhill slope method (Dunn and Hickey, 1998)
 * - CORRIPIO that uses the surface normal vector using the two triangle method given in Corripio (2002)
 * and the eight-neighbor algorithm of Horn (1981) for border cells.
+* - CARDINAL uses CORRIPIO but discretizes the resulting azimuth to 8 cardinal directions and the slope is rounded to the nearest degree. Curvature and normals are left untouched.
 * 
 * The azimuth is always computed using the Hodgson (1998) algorithm.
 */
@@ -158,6 +176,8 @@ void DEMObject::update(const string& algorithm) {
 		type=HICK;
 	} else if(algorithm.compare("CORRIPIO")==0) {
 		type=CORR;
+	} else if(algorithm.compare("CARDINAL")==0) {
+		type=CARD;
 	} else {
 		throw InvalidArgumentException("Chosen slope algorithm " + algorithm + " not available", AT);
 	}
@@ -214,12 +234,18 @@ void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
 					CalculateHickNormal(i, j, dx_sum, dy_sum);
 				} else if(algorithm==CORR) {
 					CalculateCorripioNormal(i, j, dx_sum, dy_sum);
+				} else if(algorithm==CARD) {
+					CalculateCorripioNormal(i, j, dx_sum, dy_sum);
 				} else {
 					throw InvalidArgumentException("Chosen slope algorithm not available", AT);
 				}
 		
 				azi(i,j) = CalculateAzi(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
 				curvature(i,j) = getCurvature(i,j);
+				if(algorithm==CARD) {
+					azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
+					slope(i,j) = floor( slope(i,j)+0.5 );
+				}
 			}
 		}
 	}

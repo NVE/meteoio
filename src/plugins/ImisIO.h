@@ -106,7 +106,7 @@ class ImisIO : public IOInterface {
 		 */
 		void createBuffer();
 		
-		void getStation2Data(const string stat_abk, unsigned int stao_nr, vector<string>& data2S);
+		void getStation2Data(const std::string stat_abk, unsigned int stao_nr, std::vector<std::string>& data2S);
 		
 		void getImisData(const string &stat_abk, const unsigned int &stao_nr, vector<int> date_in, vector< vector<string> >& dataImis);
 		

@@ -38,12 +38,9 @@ class MapProj : POPBase {
 class MapProj {
 #endif
  public:
-	/**
-	* @enum GEO_DISTANCES
-	* keywords for selecting the algorithm for computing geodesic distances
-	*/
+	///Keywords for selecting the algorithm for computing geodesic distances
 	enum GEO_DISTANCES {
-		GEO_COSINE, ///< Spehrical law of cosine
+		GEO_COSINE, ///< Spherical law of cosine
 		GEO_VINCENTY ///< Vincenty ellispoid formula
 	};
 	
@@ -239,13 +236,14 @@ class MapProj {
 	convfunc convToWGS84, convFromWGS84;
 	double ref_latitude, ref_longitude;
 	
+	///Keywords for selecting an ellipsoid to use
 	enum ELLIPSOIDS_NAMES {
-		E_WGS84,
-		E_GRS80,
-		E_AIRY,
-		E_INTL1924,
-		E_CLARKE1880,
-		E_GRS67
+		E_WGS84, ///<Globally useable WGS84 ellipsoid
+		E_GRS80, ///<GRS80 ellispoid, equivalent to WGS84 but used by America and Australia
+		E_AIRY, ///<Airy ellispoid, good fit for the UK
+		E_INTL1924, ///<International 1924 ellispoid, good for most of Europe
+		E_CLARKE1880, ///<Clarke 1880, good for Africa
+		E_GRS67 ///<GRS67 ellispoid, good for South America
 	};
 	struct ELLIPSOID {
 		double a;

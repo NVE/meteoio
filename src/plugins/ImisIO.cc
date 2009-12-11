@@ -1,3 +1,20 @@
+/***********************************************************************************/
+/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include "ImisIO.h"
 
 using namespace oracle;
@@ -223,7 +240,7 @@ void ImisIO::createData(vector< vector<string> >& meteo_in, vector<string>& stat
 * @param stao_nr : an integer key of station2
 * @param data2S : string vector in which data will be filled
 */
-void ImisIO::getStationData(const string stat_abk, unsigned int stao_nr, vector<string>& data2S)
+void ImisIO::getStation2Data(const std::string stat_abk, unsigned int stao_nr, std::vector<std::string>& data2S)
 {
 	const string userName = "slf";
 	const string password = "sdb+4u";

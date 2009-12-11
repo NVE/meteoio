@@ -39,10 +39,12 @@ class DEMObject: public Grid2DObject {
 		double min_slope, max_slope;
 		double min_curvature, max_curvature;
 
+		///Keywords for slope computation algorithm
 		typedef enum SLOPE_TYPE {
 			DFLT, ///< whatever algorithm that has been defined as default
 			HICK, ///< maximum downhill slope method (Dunn and Hickey, 1998)
-			CORR ///< surface normal vector using the two triangle method (Corripio, 2002) and eight-neighbor algorithm (Horn, 1981) for border cells
+			CORR, ///< surface normal vector using the two triangle method (Corripio, 2002) and eight-neighbor algorithm (Horn, 1981) for border cells
+			CARD ///< discretized azimuth directions (angles for N, NE, etc) and slope rounded to nearest integer
 		} slope_type;
 		
 		DEMObject();
