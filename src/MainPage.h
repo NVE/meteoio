@@ -35,8 +35,8 @@
  * -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  * -# \subpage plugins "Available plugins" and usage
  * -# \subpage filters "Available filters" and usage
- * -# \subpage dev_plugins "Plugins" developer's guide
- * -# \subpage dev_filters "Filters" developer's guide
+ * -# \subpage dev_plugins "Plugin" developer's guide
+ * -# \subpage dev_filters "Filter" developer's guide
  * -# \subpage examples "Examples"
  */
 
@@ -104,13 +104,92 @@
 //Filters overview given in FilterAlgorithms.cc
 
  /**
- * @page dev_plugins Plugins developer's guide
+ * @page dev_plugins Plugin developer's guide
  *
  */
 
  /**
- * @page dev_filters Filters developer's guide
+ * @page dev_filters Filter developer's guide
  *
+ * In order to add a new filter to the already existing set of filters the developer only needs to edit
+ * the class FilterAlgorithms. It is important to understand that the filter operate on a "per parameter" basis.
+ * This means that a filter might be executed for the parameter TA and another one for the parameter HNW, so the filter
+ * algorithm only has to deal with a generic filtering method based on double values.
+ *
+ * To implement a new filter two steps are necessary:
+ *
+ * -# Registering the filter within the function FilterAlgorithms::initStaticData(), by simply adding a line that 
+ *    resembles:
+ *    @code 
+ *    filterMap["filtername"]=FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::ImplementedFilter);
+ *    @endcode
+ *    Where the filtername can be freely chosen (although it has to be unique) and the parameters to FilterProperties
+ *    are (in this order) a boolean stating whether this filter is only a check or whether it changes data,
+ *    an unsigned integer stating how many points are minimally needed for this filter to be executed, a Date_IO object
+ *    marking the minimal period that data supplied to this filter needs to span and finally a function pointer 
+ *    pointing towards the actual implementation of the filter.
+ * -# Implementation of the filter, a static function which always has the following interface and returns a boolean:
+ *    @code
+ *    bool FilterAlgorithms::FilterName(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+ *			  const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+ *			  const unsigned int& paramindex,
+ *			  std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
+ *    @endcode
+ *    vecM and vecS represent the raw data as it is read through the readMeteoData functions of the MeteoIO plugins.
+ *    the unsigned integer pos is the index of either the elements within vecM and vecS that represents the data 
+ *    data for the given Date_IO object called date, or if there is no exact match possible then pos is the index of 
+ *    the first tuple with a date greater (that is newer) than the date requested (in this case a resampling will have
+ *    to interpolate the data for the date requested). paramindex is the MeteoData parameter that this filter shall be
+ *    run upon (see MeteoData for the enumeration of parameters - e.g. TA(=0), HNW(=6), ISWR(=1)). The two vectors
+ *    vecFilteredM and vecFilteredS correspond and they hold the filtered data. Typically they hold one or two elements
+ *    depending on whether resampling is required or not. In case resampling is not required they only hold one value
+ *    each representing the exact date requested. Changes on the vecFilteredM and vecFilteredS vectors will be 
+ *    propagated back to the BufferedIOHandler and thus to the user. If the filter has to alter data it may do so only
+ *    on these two vectors. Typically filters that perform checks only (e.g. check whether values are within certain 
+ *    bounds), need not look at anything but the data in these vectors, whereas filters that have more complicated 
+ *    schemes of operation (like accumulation or resampling) might take into account the "raw" data as accessible 
+ *    through vecM and vecS. Helper functions that parse the arguments to the filters through a ConfigReader obejct
+ *    are available.
+ *
+ *
+ * Here an example implementation of the MaximumFilter, which checks whether a value is greater then an argument
+ * supplied to the filter and if so changes the value either to IOUtils::nodata (normal operation) or to the 
+ * maximum value supplied in the argument (soft mode of operation). An example section in the io.ini file supplied
+ * to the ConfigReader could look like this:
+ * @code
+ * [Filters]
+ * TA::filter1 = max
+ * TA::arg1    = soft 280
+ * @endcode
+ * Which has the following interpretation: Apply filter max (max-value-filter) to the parameter TA (air temperature)
+ * in case that a value is greater than 280 degrees Kelvin change that value to 280.
+ *
+ * Now for the actual implementation of the filter:
+ * @code
+ * bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+ *	         const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+ *		    const unsigned int& paramindex,
+ *		    std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
+ * {
+ *      (void)vecM; (void)vecS; (void)pos; (void)date; (void)vecFilteredS;
+ *      //parse arguments and check whether they are valid
+ *      bool isSoft = false;
+ *      std::vector<double> vecArgs; 
+ *      parseFilterArguments("max", _vecArgs, 1, 1, isSoft, vecArgs);
+ *
+ *      //Run actual MaxValue filter over all relevant meteo data
+ *      for(unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+ *      double& value = vecFilteredM[ii].param(paramindex);
+ *      if (value == IOUtils::nodata) continue;
+ *        if (value>vecArgs[0]){
+ *        	if (isSoft) value=vecArgs[0];
+ *        	else value=IOUtils::nodata;				
+ *        }
+ *      }
+ *
+ *      return true;
+ * }
+ * @endcode
  */
 
 /**
