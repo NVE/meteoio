@@ -23,10 +23,12 @@ else
 fi
 
 #source files for SNOWPACK
-src_files="src/*.cc src/*.h src/*.ph src/*.c src/config.dox Makefile src/filter/*.cc src/filter/*.h"
+plugins_src="src/plugins/*.cc src/plugins/*.h src/plugins/gsn/*.wsdl src/plugins/gsn/*.h"
+src_files="${plugins_src} src/*.cc src/*.h src/*.ph src/config.dox configure configure.ac autogen.sh Makefile.in meteoio.lsm"
+doc_files="doc/examples/*.cc doc/examples/*.ini doc/html/*"
 test_files="test/*.cc test/Makefile"
 tools_files="tools/*.cc"
-others=""
+others="${doc_files}"
 
 MeteoIO_root="."
 
