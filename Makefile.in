@@ -66,6 +66,7 @@ LDFLAGS_POPC	= $(LD_POPC)
 LDFLAGS		= $(LIBS) -rdynamic
 INCLUDE		= -I$(SRCDIR)
 ifeq ($(PROJ4),yes)
+#warning: this is a bug on architectures other than ix386: one can not mix PIC and PDC code
 	PROJ4_STATIC =  @PROJ4_LIBS@
 	CCFLAGS += -DPROJ4
 endif
@@ -183,18 +184,23 @@ createA3DFiles: $(TOOLS_OBJ)
 ####### Compile
 
 .cc.o: $*.cc $*.h
-	$(CXX) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+	$(CXX) $(CCFLAGS) -fPIC -c $< $(INCLUDE) -o $@
 
 %_par.o : %.cc
-	$(POPCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+	$(POPCC) $(CCFLAGS) -fPIC -c $< $(INCLUDE) -o $@
 
 %.stub.o : %.ph
-	$(POPCC) $(CCFLAGS) -c $< $(INCLUDE) -o $@
+	$(POPCC) $(CCFLAGS) -fPIC -c $< $(INCLUDE) -o $@
 
 
 $(LIBDIR)/libmeteoio.a: $(METEOIO_OBJ)
-	@echo **** Compiling libmeteoIO
+	@echo -e **** Compiling libmeteoIO
 	ar -r $@ $(METEOIO_OBJ) $(PROJ4_STATIC)
+	ranlib $@
+
+$(LIBDIR)/libmeteoiopopc.a:  $(METEOIO_OBJ_POPC)
+	@echo -e **** Compiling libmeteoIOpopc
+	ar -r $@ $(METEOIO_OBJ_POPC) $(PROJ4_STATIC)
 	ranlib $@
 
 # Dynamic libraries seq
@@ -260,8 +266,3 @@ endif
 ######
 $(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoiopopc.a $(SRCDIR)/PackMeteoIO_par.o
 	$(POPCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_POPC)
-
-$(LIBDIR)/libmeteoiopopc.a:  $(METEOIO_OBJ_POPC)
-	ar -r $@ $(METEOIO_OBJ_POPC)
-	ranlib $@
-
