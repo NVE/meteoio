@@ -34,7 +34,7 @@ const struct MapProj::ELLIPSOID MapProj::ellipsoids[] = {
 };
 
 void MapProj::initializeMaps()
-{
+{	//Please don't forget to mirror the keywords here in the documentation in MapProj.h!!
 	to_wgs84["CH1903"]   = &MapProj::CH1903_to_WGS84;
 	from_wgs84["CH1903"] = &MapProj::WGS84_to_CH1903;
 	to_wgs84["PROJ4"]   = &MapProj::PROJ4_to_WGS84;

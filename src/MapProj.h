@@ -52,9 +52,15 @@ class MapProj {
 	MapProj();
 
 	/**
+	* \anchor mapproj_types
 	* @brief Regular constructor: usually, this is the constructor to use
 	* @param[in] coordinatesystem string identifying the coordinate system to use
 	* @param[in] parameters string giving some additional parameters for the projection (optional)
+	* 
+	* The coordinate system can be any of the following:
+	* - CH1903 for coordinates in the Swiss Grid
+	* - PROJ4 for coordinate conversion relying on the Proj4 library
+	* - LOCAL for local coordinate system (from reference point)
 	*/
 	MapProj(const std::string& coordinatesystem, const std::string& parameters="");
 
