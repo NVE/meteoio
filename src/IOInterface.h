@@ -30,6 +30,40 @@
 #include <vector>
 
 /**
+ * @page dev_plugins Plugins developement guide
+ * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. This means that plugins should follow some common rules, which are described in this guide.
+ *
+ * @section plugins_implementation Plugins implementation
+ * Each plugin must inherit the class IOInterface and implement all or part of its interface (at least for public methods). The plugins are then free to implement the private methods that they see fit. Because the interface described in IOInterface is quite generic, some methods might not be relevant for a given plugin. In such a case, the plugin should throw an exception as illustrated in the example below:
+ * @code
+ * void MyPlugin::read2DGrid(Grid2DObject&, const std::string&)
+ * {
+ * 	//Nothing so far
+ * 	throw IOException("Nothing implemented here", AT);
+ * }
+ * @endcode
+ * 
+ * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units)
+ * 
+ * Various classes from MeteoIO can prove convenient for use by plugins: for example the MapProj class should be used for geographic coordinates conversions, while the ConfigReader class should be used for getting configuration information from the user's configuration file. Please do NOT implement your own version of this kind of feature in your plugin but exclusively rely on the matching classes of MeteoIO, extending them if necessary.
+ * Some example implementation can be found in ARCIO or A3DIO.
+ * 
+ * @section plugins_registration Plugins registration
+ * Once a plugin has been written, it must be "registered" so that it is known by the rest of the library. This is done in IOHandler::registerPlugins by adding a plugin key (that will be used by the user in the configuration file when he wants to use the said plugin), the name of the dynamic library that the plugin is bunddled in, the name of its implementation class, [TODO: HELP, THOMAS!!]
+ * 
+ * Finally, the build system has to be updated so that it offers the plugin to be build: a local file (in the plugin subdirectory) has to be edited so that the plugin is really built, then the toplevel file has to be modified so the user can choose to build the plugin if he wishes. Please keep in mind that all plugins should be optional (ie: they should not prevent the build of MeteoIO without them).
+ *
+ * @section plugins_documentation Plugins documentation
+ * It is the responsibility of the plugin developer to properly document his plugin. The documentation should be placed as doxygen comments in the implementation file, following the example of A3DIO.cc: a subpage nammed after the plugin should be created (and referenced in MainPage.h) with at least the following sections:
+ * - format, for describing the data format
+ * - units, expressing what the input units should be
+ * - keywords, listing (with a brief description) the keywords that are recognized by the plugin for its configuration
+ * 
+ * The internal documentation of the plugin can remain as normal C++ comments (since they are addressed to the maintainer of the plugin).
+ */
+
+
+/**
  * @class IOInterface
  * @brief An abstract class representing the IO Layer of the software Alpine3D. For each type of IO (File, DB, Webservice, etc)
  * a derived class is to be created that holds the specific implementation of the purely virtual member funtions. 
