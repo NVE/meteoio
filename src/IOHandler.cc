@@ -49,7 +49,7 @@ void IOHandler::registerPlugins()
 #if defined(WIN32)
 	const std::string libsuffix = ".dll";
 #elif defined(APPLE)
-	const std::string libsuffix = ".dynlib";
+	const std::string libsuffix = ".dylib";
 #else
 	const std::string libsuffix = ".so";
 #endif
