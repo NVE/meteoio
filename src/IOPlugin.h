@@ -35,7 +35,7 @@
 class IOPlugin {
 	public:
 		std::string libname; ///< A string representing the file to be loaded, e.g. "libgeotopio.so", can be empty
-		std::string classname; ///< A short name for the plugin (unique!), e.g. "A3DIO", "GSNIO"
+		std::string classname; ///< Classname of the object to be loaded from that dynamic library (e.g. "A3DIO")
 		IOInterface *io; ///< The pointer to the actual dynamically loaded instance of IOInterface
 		DynamicLibrary *dynLibrary; ///< The pointer to the opened dynamic library
 		
@@ -43,7 +43,7 @@ class IOPlugin {
 		 * @brief The main constructor for the IOPlugin class
 		 *
 		 * @param _s1 A std::string representing the file to be opened (or "" if plugin is statically linked)
-		 * @param _s2 A std::string to identify the plugin uniquely (should be something like "A3DIO")
+		 * @param _s2 A std::string that is the classname of the object to be loaded (e.g. "A3DIO", "GSNIO")
 		 * @param p1  A pointer to the loaded object of type IOInterface (or NULL)
 		 * @param p2  A pointer to the loaded dynamic library (or NULL)
 		 */

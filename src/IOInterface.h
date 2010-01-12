@@ -49,7 +49,7 @@
  * Some example implementation can be found in ARCIO or A3DIO.
  * 
  * @section plugins_registration Plugins registration
- * Once a plugin has been written, it must be "registered" so that it is known by the rest of the library. This is done in IOHandler::registerPlugins by adding a plugin key (that will be used by the user in the configuration file when he wants to use the said plugin), the name of the dynamic library that the plugin is bunddled in, the name of its implementation class, [TODO: HELP, THOMAS!!]
+ * Once a plugin has been written, it must be "registered" so that it is known by the rest of the library. This is done in IOHandler::registerPlugins by adding a plugin key (that will be used by the user in the configuration file when he wants to use the said plugin), the name of the dynamic library that the plugin is bunddled in, the name of its implementation class, a pointer to the implementation class (use NULL and it will be properly initialized), and a pointer to the dynamicl library (again, set as NULL and the proper initialization will take place). For more information, see the IOPlugin class.
  * 
  * Finally, the build system has to be updated so that it offers the plugin to be build: a local file (in the plugin subdirectory) has to be edited so that the plugin is really built, then the toplevel file has to be modified so the user can choose to build the plugin if he wishes. Please keep in mind that all plugins should be optional (ie: they should not prevent the build of MeteoIO without them).
  *
