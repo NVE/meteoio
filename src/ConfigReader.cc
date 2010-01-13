@@ -21,16 +21,47 @@ using namespace std;
 
 const unsigned int ConfigReader::nothrow = 666;
 
-ConfigReader::ConfigReader(const std::string& filename_in/*, const std::string& delimiter*/)
+//Constructors
+ConfigReader::ConfigReader()
 {
-	//Check whether file exists and is accessible -> throw FileNotFound or FileNotAccessible Exception
-	//Read Key Value Pairs and put them into map, depending on the section they are in
-	//If there is no section definition, the default section "General" is assumed
-	filename = filename_in;
-	parseFile();
-} 
+	//nothing is even put in the property map, the user will have to fill it by himself
+}
 
-void ConfigReader::parseFile()
+ConfigReader::ConfigReader(const std::string& filename_in)
+{
+	addFile(filename_in);
+}
+
+
+//Populating the property map
+void ConfigReader::addFile(const std::string& filename_in)
+{
+	sourcename = filename_in;
+	parseFile(filename_in);
+}
+
+void ConfigReader::addCmdLine(const std::string& cmd_line)
+{
+	sourcename = string("Command line");
+	parseCmdLine(cmd_line);
+}
+
+void ConfigReader::addKey(const std::string& key, const std::string& value)
+{
+	std::string section="GENERAL", line=key+string("=")+value;
+
+	parseLine((unsigned int)0, line, section);
+}
+
+
+//Parsing
+void ConfigReader::parseCmdLine(const std::string& cmd_line)
+{
+	(void)cmd_line;
+	throw IOException("Nothing implemented here", AT);
+}
+
+void ConfigReader::parseFile(const std::string& filename)
 {
 	std::ifstream fin; //Input file streams
 	unsigned int linenr = 0;
@@ -93,14 +124,14 @@ void ConfigReader::parseLine(const unsigned int& linenr, std::string& line, std:
 	//At this point line can only be a key value pair
 	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::")){
 		tmp << linenr;
-		throw InvalidFormatException("Error reading key value pair in " + filename + " line:" + tmp.str(), AT);    
+		throw InvalidFormatException("Error reading key value pair in " + sourcename + " line:" + tmp.str(), AT);    
 	}
 }
 
 //Return key/value filename
-std::string ConfigReader::getFileName()
+std::string ConfigReader::getSourceName()
 {
-	return filename;
+	return sourcename;
 }
 
 unsigned int ConfigReader::findKeys(vector<string>& vecResult, 
@@ -140,12 +171,12 @@ void ConfigReader::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack)
 	{
-		buf.Pack(&filename,1);
+		buf.Pack(&sourcename,1);
 		marshal_map_str_str(buf, properties, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
-		buf.UnPack(&filename,1);
+		buf.UnPack(&sourcename,1);
 		marshal_map_str_str(buf, properties, 0, !FLAG_MARSHAL, NULL);
 	}
 }

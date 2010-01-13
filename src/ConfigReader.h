@@ -45,11 +45,15 @@
 class ConfigReader : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);
-		ConfigReader(){};
 #else
 class ConfigReader {
 #endif
 	public:
+		/**
+		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object
+		*/
+		ConfigReader();
+
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
 		 * @param[in] filename_in string representing the absolute filename of the key/value file
@@ -57,10 +61,29 @@ class ConfigReader {
 		ConfigReader(const std::string& filename_in);
 
 		/**
+		 * @brief Add the content of a file to the internal key/value map object
+		 * @param[in] filename_in string representing the absolute filename of the key/value file
+		*/
+		void addFile(const std::string& filename_in);
+
+		/**
+		 * @brief Add the content of the given command line to the internal key/value map object
+		 * @param[in] cmd_line string representing the command line to be parsed for key/value pairs or switches
+		*/
+		void addCmdLine(const std::string& cmd_line);
+
+		/**
+		 * @brief Add a specific key/value pair to the internal key/value map object
+		 * @param[in] key string representing the key to be added
+		 * @param[in] value string representing the matching value to be added
+		*/
+		void addKey(const std::string& key, const std::string& value);
+
+		/**
 		 * @brief Returns the filename that the ConfigReader object was constructed with.
 		 * @return std::string The absolute filename of the key/value file.
 		 */
-		std::string getFileName();
+		std::string getSourceName();
 
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key
@@ -150,7 +173,7 @@ class ConfigReader {
 		unsigned int findKeys(vector<string>& vecResult, const std::string keystart, const std::string section="GENERAL");
 
 		//LEGACY
-		static bool readConfigLine(std::istream& fin, int lineNb, int& lineType, string& str1, string& str2);
+		static bool readConfigLine(std::istream& fin, int lineNb, int& lineType, std::string& str1, std::string& str2);
 
 		/** [Constant for lineType] The config line is the end of the file */
 		static const int CfgLineEOF = 0;
@@ -166,11 +189,12 @@ class ConfigReader {
 		static const unsigned int nothrow;
 
 	private:
-		void parseFile();
+		void parseCmdLine(const std::string& cmd_line);
+		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::string& line, std::string& section);
 
-		std::map<string, string> properties; //Save key value pairs
-		std::string filename; //Absolute filename of the key/value file
+		std::map<std::string, std::string> properties; //Save key value pairs
+		std::string sourcename; //description of the data source for the key/value pair
 
 }; //end class definition ConfigReader
 

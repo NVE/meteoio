@@ -148,7 +148,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		if(dynLibrary == NULL) {
 			cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << DynamicLoader::getErrorMessage() << endl;
 		} else {
-			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg.getFileName()));
+			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg.getSourceName()));
 
 			if(io == NULL) {
 				cout << "failed" << endl;
@@ -159,7 +159,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		}
 	} catch (exception& e) {
 		if (dynLibrary != NULL)
-		delete dynLibrary;
+			delete dynLibrary;
 		cerr << "\t" << e.what() << endl;
 	}
 }
@@ -171,7 +171,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
 
 	mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
-		throw IOException(cfgvalue + " does not seem to be valid descriptor in file " + cfg.getFileName(), AT);
+		throw IOException(cfgvalue + " does not seem to be valid descriptor in file " + cfg.getSourceName(), AT);
 	
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
