@@ -21,7 +21,7 @@
 #include <cmath>
 
 /*
- * Default constructor. 
+ * Default constructor.
  * grid2D attribute is initialized by Array2D default constructor.
  */
 Grid2DObject::Grid2DObject() : grid2D()

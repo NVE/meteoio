@@ -48,9 +48,14 @@ void ConfigReader::addCmdLine(const std::string& cmd_line)
 
 void ConfigReader::addKey(const std::string& key, const std::string& value)
 {
-	std::string section="GENERAL", line=key+string("=")+value;
+	std::string section="GENERAL";
+	addKey(key, section, value);
+}
 
-	parseLine((unsigned int)0, line, section);
+void ConfigReader::addKey(const std::string& key, const std::string& section, const std::string& value)
+{
+	std::string line=key+string("=")+value;
+	this->properties[section + "::" + key] = value;
 }
 
 

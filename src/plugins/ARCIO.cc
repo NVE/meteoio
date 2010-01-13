@@ -280,6 +280,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
 	cleanup();
 }
 
+#ifndef _METEOIO_JNI
 extern "C"
 {
 	void deleteObject(void* obj) {
@@ -295,3 +296,4 @@ extern "C"
 		return NULL;
 	}
 }
+#endif

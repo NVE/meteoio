@@ -15,6 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef _POPC_
+
 #include "marshal_meteoio.h"
 
 void marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag, POPMemspool *temp)
@@ -446,3 +448,4 @@ void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int f
 	}
 }
 
+#endif

@@ -15,6 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef _POPC_
+
 #ifndef MARSHAL_METEOIO_H
 #define MARSHAL_METEOIO_H
 
@@ -54,5 +56,7 @@ void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize,
 void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_Grid2DObject(POPBuffer &buf, vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp);
+
+#endif
 
 #endif

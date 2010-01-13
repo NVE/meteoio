@@ -359,6 +359,7 @@ void GeotopIO::convertUnits(MeteoData& meteo)
 	}
 }
 
+#ifndef _METEOIO_JNI
 extern "C"
 {
 	void deleteObject(void* obj) {
@@ -374,3 +375,4 @@ extern "C"
 		return NULL;
 	}
 }
+#endif

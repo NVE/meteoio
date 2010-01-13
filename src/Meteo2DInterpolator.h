@@ -49,7 +49,7 @@ class Meteo2DInterpolator {
 		void interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2DObject& ta,
 				 Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/);
 
-	private:
+		//These methods are exposed until we offer a better API for requesting spatial interpolations
 		void interpolateP(Grid2DObject& p);
 		void interpolateHNW(Grid2DObject& hnw);
 		void interpolateTA(Grid2DObject& ta);
@@ -59,8 +59,8 @@ class Meteo2DInterpolator {
 		void interpolateISWR(Grid2DObject& iswr);
 		void interpolateLWR(Grid2DObject& lwr);
 
+	private:
 		const DEMObject& dem;
-
 		std::vector<MeteoData> SourcesData;
 		std::vector<StationData> SourcesMeta;
 };
