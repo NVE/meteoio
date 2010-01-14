@@ -502,6 +502,7 @@ vector<MeteoBuffer> ImisIO::getMbImis()
 	return mbImis;
 }
 
+#ifndef _METEOIO_JNI
 extern "C"
 {
 	//using namespace MeteoIO;
@@ -518,3 +519,4 @@ extern "C"
 		return NULL;
 	}
 }
+#endif
