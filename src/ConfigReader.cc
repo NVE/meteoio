@@ -141,7 +141,7 @@ std::string ConfigReader::getSourceName()
 
 unsigned int ConfigReader::findKeys(vector<string>& vecResult, 
 							const std::string keystart, 
-							const std::string section)
+							const std::string section) const
 {
 	vecResult.clear();
 	string _section = section;
@@ -152,7 +152,7 @@ unsigned int ConfigReader::findKeys(vector<string>& vecResult,
 	string _keystart = _section + "::" + keystart;
 
 	//Loop through keys, look for substring match - push it into vecResult
-	map<string,string>::iterator it;
+	map<string,string>::const_iterator it;
 	for (it=properties.begin(); it != properties.end(); it++){
 		string tmp = (*it).first;
 		tmp = tmp.substr(0,_keystart.length());

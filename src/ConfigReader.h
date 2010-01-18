@@ -178,7 +178,8 @@ class ConfigReader {
 		 *  unsigned int nrOfMatches = getKeys(myVec, "TA::", "Filters");
 		 * @endcode
 		 */
-		unsigned int findKeys(vector<string>& vecResult, const std::string keystart, const std::string section="GENERAL");
+		unsigned int findKeys(vector<string>& vecResult, 
+						  const std::string keystart, const std::string section="GENERAL") const;
 
 		//LEGACY
 		static bool readConfigLine(std::istream& fin, int lineNb, int& lineType, std::string& str1, std::string& str2);

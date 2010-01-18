@@ -15,6 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifndef __METEO2DINTERPOLATOR_H__
 #define __METEO2DINTERPOLATOR_H__
 
@@ -27,28 +28,45 @@
 #include "DEMObject.h"
 
 #include <vector>
+#include <map>
 
 /**
  * @class Meteo2DInterpolator
- * @brief A class to spatially interpolate Alpine3D's meteo parameters
- * @author Mathias Bavay
- * @date   2009-01-20
+ * @brief A class to spatially interpolate meteo parameters
+ *
+ * @author Mathias Bavay and Thomas Egger
+ * @date   2010-01-14
  */
 class Meteo2DInterpolator {
-	public:
+ 	public:
 		/**
-		* @brief Constructor. It builds a vector of input data and metadata, merging meteo1D and meteo2D input files
+		* @brief Constructor.
 		*/
-		Meteo2DInterpolator(const DEMObject& _dem, const std::vector<MeteoData>& vecData, const std::vector<StationData>& vecMeta);
+		Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObject& _dem, 
+						const std::vector<MeteoData>& _vecData, const std::vector<StationData>& _vecMeta);
+
 
 		/**
-		* @brief This function calls the interpolation class for each individual meteo parameter. 
-		*        It also builds a list of valid data sources for the given parameter.
-		*/
-		void interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2DObject& ta, Grid2DObject& vw, Grid2DObject& p);
-		void interpolate(Grid2DObject& hnw, Grid2DObject& rh, Grid2DObject& ta,
-				 Grid2DObject& vw, Grid2DObject& p, Grid2DObject& iswr/*, Grid2DObject& ea*/);
+		 * @brief A generic function that can interpolate for any given MeteoData member variable
+		 * 
+		 * @param meteoparam Any MeteoData member variable as specified in the 
+		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
+		 * @param result A Grid2DObject that will be filled with the interpolated data
+		 */
+		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result);
 
+	private:
+		const ConfigReader& cfg; ///< Reference to ConfigReader object, initialized during construction
+		const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction
+		const std::vector<MeteoData>& vecData;  ///< Reference to a vec of MeteoData, initialized during construction
+		const std::vector<StationData>& vecMeta;///< Reference to a vec of StationData, initialized during construction
+		
+		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
+
+		unsigned int getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);
+		unsigned int getArgumentsForAlgorithm(const std::string& keyname, std::vector<std::string>& vecArguments);
+
+		/*LEGACY*/
 		//These methods are exposed until we offer a better API for requesting spatial interpolations
 		void interpolateP(Grid2DObject& p);
 		void interpolateHNW(Grid2DObject& hnw);
@@ -58,11 +76,6 @@ class Meteo2DInterpolator {
 		void interpolateDW(Grid2DObject& dw);
 		void interpolateISWR(Grid2DObject& iswr);
 		void interpolateLWR(Grid2DObject& lwr);
-
-	private:
-		const DEMObject& dem;
-		std::vector<MeteoData> SourcesData;
-		std::vector<StationData> SourcesMeta;
 };
 
 #endif

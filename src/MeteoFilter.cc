@@ -18,8 +18,13 @@
 #include "MeteoFilter.h"
 
 MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
-
-	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
+	/*
+	 * By reading the ConfigReader object build up a list of user configured filters
+	 * for each MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
+	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
+	 * for configuration of filters within the ConfigReader object.
+	 */
+	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpFilters1;
 		std::vector<std::string> tmpFilters2;
 		std::vector< std::vector<std::string> > parArgs; //Arguments for each filter
