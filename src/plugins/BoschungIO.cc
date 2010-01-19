@@ -288,8 +288,8 @@ void BoschungIO::xmlExtractData(const string& filename, const Date_IO& date_in, 
 		xmlParseStringToDouble(str_rh, rh, "rlf");
 
 		//hnw
-		string str_ns = xmlGetNodeContent(pNode, "ns");
-		xmlParseStringToDouble(str_ns, hnw, "ns");
+		string str_ns = xmlGetNodeContent(pNode, "ni");
+		xmlParseStringToDouble(str_ns, hnw, "ni");
 
 		//sb = lwr
 		string str_sb = xmlGetNodeContent(pNode, "sb");

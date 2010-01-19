@@ -297,7 +297,11 @@ void Interpol2D::ConstFill(Grid2DObject& param, const double& value)
 	//fills a data table with constant values
 	for (unsigned int i=0; i<param.ncols; i++) {
 		for (unsigned int j=0; j<param.nrows; j++) {
-			param.grid2D(i,j) = value;	//should we here write nodata when it is nodata in dem?
+			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
+				param.grid2D(i,j) = value;
+			} else {
+				param_out.grid2D(i,j) = IOUtils::nodata;
+			}
 		}
 	}
 }
@@ -340,7 +344,6 @@ double Interpol2D::IDWKriegingCore(const double& x, const double& y,
 	return (parameter/norm);	//normalization
 }
 
-
 void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 				const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in)
 {
@@ -367,8 +370,12 @@ void Interpol2D::IDWKrieging(Grid2DObject& T, const std::vector<double>& vecData
 {
 	//multiple source stations: simple IDW Krieging
 	for (unsigned int i=0; i<T.ncols; i++) {
-		for(unsigned int j=0; j<T.nrows; j++) {	//should we write nodata when dem=nodata?
-			T.grid2D(i,j) = IDWKriegingCore((dem.xllcorner+i*dem.cellsize), (dem.yllcorner+j*dem.cellsize), vecData_in, vecStations);
+		for(unsigned int j=0; j<T.nrows; j++) {
+			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
+				T.grid2D(i,j) = IDWKriegingCore((dem.xllcorner+i*dem.cellsize), (dem.yllcorner+j*dem.cellsize), vecData_in, vecStations);
+			} else {
+				T.grid2D(i,j) = IOUtils::nodata;
+			}
 		}
 	}
 }
