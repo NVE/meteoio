@@ -6,6 +6,9 @@
  */
 
 
+#ifndef _Included_JNative
+#define _Included_JNative
+
 #if  defined(_METEOIO_JNI) ||  defined(_METEOIO_JNA)
 
 #include "plugins/ARCIO.h"
@@ -18,39 +21,28 @@
 #include "DEMObject.h"
 
 
-IOInterface* getIOInterface(const std::string cDemFile,const std::string demCoordSystem,const std::string interfaceType);
-
-DEMObject loadFullDEM(IOInterface* );
-
-DEMObject loadSubDEM(IOInterface* , const std::string ,
-		const double , const double , const double , const double );
-
-
 void loadMeteoAndStationData(double* cMetadata, double* cData,
 		const int nbStation,const int nbDataPerStation,
 		const std::string algorithm,const std::string metaCoordinateSystem,
-		std::vector<StationData>* vecStation, std::vector<MeteoData>* vecMeteo);
+		std::vector<StationData>* vecStation,
+		 std::vector<double>* vecData, std::vector<double>* vecExtraData);
 
 void processInterpolation(const std::string algorithm, Grid2DObject&  p, const  DEMObject& dem,
-		std::vector<StationData>* vecStation, std::vector<MeteoData>* vecMeteo);
+		std::vector<StationData>* vecStation,
+		std::vector<double>* vecData, std::vector<double>* vecExtraData);
 
 void fulfillDoubleArray(const Grid2DObject&  p, const std::string& cellOrder,
 		double* dest);
 
 
-#endif
+#endif // defined(_METEOIO_JNI) ||  defined(_METEOIO_JNA)
 
 
 #ifdef _METEOIO_JNA
 
-
 /**
  *
  * Originally, these methods are dedicated to be called from JAVA with JNA framework.
- *
- *
- *
- *
  *
  *
  */
@@ -63,4 +55,7 @@ double* executeInterpolationSubDem
 double* executeInterpolation
 (char*, char*, char*, char*, double*, int, double*, int, char*, char*);
 
-#endif
+
+#endif //_METEOIO_JNA
+
+#endif//_Included_JNative

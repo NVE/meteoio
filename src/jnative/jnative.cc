@@ -8,75 +8,18 @@
 
 #if  defined(_METEOIO_JNI) ||  defined(_METEOIO_JNA)
 
-#include "plugins/ARCIO.h"
-//#include "plugins/BoschungIO.h"
-#include "plugins/GeotopIO.h"
-#include "plugins/GrassIO.h"
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "Meteo2DInterpolator.h"
+#include "jnative.h"
+#include "DEMLoader.h"
 #include "DEMObject.h"
+#include "libinterpol2D.h"
 
+#include <time.h>
 
-IOInterface* getIOInterface(const std::string cDemFile,
-		const std::string cDemCoordSystem, const std::string interfaceType){
-
-	IOInterface *io = NULL;
-	try {
-		ConfigReader cfg;
-		cfg.addKey("DEMFILE", cDemFile);
-		cfg.addKey("COORDIN", cDemCoordSystem);
-		cfg.addKey("COORDPARAM","");
-		if(interfaceType == "ARCIO")
-			io = new ARCIO(cfg);
-		//else if(interfaceType ==  "BoschungIO" ): io = new BoschungIO(cfg);
-		else if(interfaceType == "GeotopIO" )
-			io = new GeotopIO(cfg);
-		else if(interfaceType == "GrassIO" )
-			io = new GrassIO(cfg);
-		else
-			io = new ARCIO(cfg); //default IOinterface
-	}catch (IOException& e){
-		std::cout << "Problem with ARCIO creation, cause: " << e.what() << std::endl;
-		//error
-		return NULL ;
-	}
-	return io;
-}
-
-DEMObject loadSubDEM(IOInterface* io, const std::string cDemCoordSystem,
-		const double demXll, const double demYll, const double demXur, const double demYur){
-	//reading initial dem
-	DEMObject dem;
-	io->readDEM(dem);
-	if (dem.ncols<1 || dem.ncols<2  )
-		return dem;
-
-	//compute WGS coordinates (considered as the true reference)
-	double latll, longll, latur, longur;
-	MapProj mymapproj( cDemCoordSystem, "");
-	mymapproj.convert_to_WGS84(demXll, demYll, latll, longll);
-	mymapproj.convert_to_WGS84(demXur, demYur, latur, longur);
-	//retrieving grid coordinates of a real world point
-	unsigned int i0,j0,i1,j1;
-	dem.WGS84_to_grid(latll, longll, i0,j0);
-	dem.WGS84_to_grid(latur, longur, i1,j1);
-	//extracting a sub-dem
-	DEMObject sub_dem(dem, i0, j0, i1-i0+1, j0-j1+1);
-	return sub_dem;
-}
-
-DEMObject loadFullDEM(IOInterface* io){
-	//reading initial dem
-	DEMObject dem;
-	io->readDEM(dem);
-	return dem;
-}
 
 void loadMeteoAndStationData(double* cMetadata, double* cData,
 		const int nbStation, const int nbDataPerStation,
 		const std::string algorithm, const std::string metaCoordinateSystem,
-		std::vector<StationData>* vecStation, std::vector<MeteoData>* vecMeteo){
+		std::vector<StationData>* vecStation, std::vector<double>* vecData, std::vector<double>* vecExtraData){
 
 	Date_IO date_in;
 	for (int i = 0; i < nbStation; i++){
@@ -99,75 +42,95 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 				altitude, "",latitude, longitude);
 		vecStation->push_back(station);
 
-		if(algorithm =="P" ) {
-			MeteoData meteoData(date_in,nodata,nodata,nodata,nodata,nodata,nodata,nodata,nodata,nodata,nodata,nodata,cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
+		if(algorithm =="P" )
+			vecData->push_back(cData[nbDataPerStation*i]);
+		else if(algorithm == "HNW" )
+			vecData->push_back(cData[nbDataPerStation*i]);
+		else if(algorithm =="TA" )
+			vecData->push_back(cData[nbDataPerStation*i]);
+		else if(algorithm =="RH" ){
+			vecData->push_back(cData[nbDataPerStation*i]);
+			if (nbDataPerStation>1)
+				vecExtraData->push_back(cData[nbDataPerStation*i+1]);
 		}
-		else if(algorithm == "HNW" ){
-			MeteoData meteoData(date_in,nodata,nodata,nodata,nodata,nodata,nodata,cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
+		else if(algorithm =="VW" ){
+			vecData->push_back(cData[nbDataPerStation*i]);
+			if (nbDataPerStation>1)
+				vecExtraData->push_back(cData[nbDataPerStation*i+1]);
 		}
-		else if(algorithm =="TA" ) {
-			MeteoData meteoData(date_in,cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
-		}
-		else if(algorithm =="RH" ){ //Air temperature is defined before RH, so if both are delivered, TA comes first
-			MeteoData meteoData(date_in,(nbDataPerStation>1)?cData[nbDataPerStation*i]:nodata,nodata,nodata,nodata,(nbDataPerStation>1)?cData[nbDataPerStation*i+1]:cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
-		}
-		else if(algorithm =="VW" ){//DW optional ?
-			MeteoData meteoData(date_in,nodata,nodata,cData[nbDataPerStation*i],(nbDataPerStation>1)?cData[nbDataPerStation*i+1]:nodata);
-			vecMeteo->push_back(meteoData);
-		}
-		else if(algorithm =="DW" ){
-			MeteoData meteoData(date_in,nodata,nodata,nodata,cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
-		}
-		else if(algorithm =="ISWR" ){
-			MeteoData meteoData(date_in,nodata,cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
-		}
-		else if(algorithm =="LWR" ){
-			MeteoData meteoData(date_in,nodata,nodata,nodata,nodata,nodata,cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
-		}
-		else{//TA
-			MeteoData meteoData(date_in,cData[nbDataPerStation*i]);
-			vecMeteo->push_back(meteoData);
-		}
+		else if(algorithm =="DW" )
+			vecData->push_back(cData[nbDataPerStation*i]);
+		else if(algorithm =="ISWR" )
+			vecData->push_back(cData[nbDataPerStation*i]);
+		else if(algorithm =="LWR" )
+			vecData->push_back(cData[nbDataPerStation*i]);
+		else//TA
+			vecData->push_back(cData[nbDataPerStation*i]);
 	}
 }
 
-void processInterpolation(const  std::string algorithm,Grid2DObject&  p, const  DEMObject& dem,
-		std::vector<StationData>* vecStation, std::vector<MeteoData>* vecMeteo){
+void processInterpolation(const  std::string algorithm,
+		Grid2DObject&  p, const  DEMObject& dem,
+		std::vector<StationData>* vecStation,
+		std::vector<double>* vecData,
+		std::vector<double>* vecExtraData){
 
 	std::cout << "processInterpolation "  << algorithm<< "*"  << vecStation->size() <<  std::endl;
-	Meteo2DInterpolator mi(dem, *vecMeteo, *vecStation);
-	if(algorithm =="P")
-		mi.interpolateP(p);
-	else if(algorithm =="HNW" )
-		mi.interpolateHNW(p);
-	else if(algorithm =="TA" )
-		mi.interpolateTA(p);
-	else if(algorithm =="RH" ) {
-		Grid2DObject  ta(dem.ncols, dem.nrows,
-				dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
-		mi.interpolateRH(p,ta);
+
+	if(algorithm =="P"){
+		Interpol2D P(Interpol2D::I_PRESS, Interpol2D::I_PRESS, *vecData, *vecStation, dem);
+		P.calculate(p);
 	}
-	else if(algorithm =="VW" )
-		mi.interpolateVW(p);
-	else if(algorithm =="DW" )
-		mi.interpolateDW(p);
-	else if(algorithm =="ISWR" )
-		mi.interpolateISWR(p);
-	else if(algorithm =="LWR")
-		mi.interpolateLWR(p);
-	else 	mi.interpolateTA(p);
+	else if(algorithm =="HNW" ){
+		Interpol2D HNW(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
+		HNW.calculate(p);
+	}
+	else if(algorithm =="TA" ){
+		Interpol2D TA(Interpol2D::I_LAPSE_CST, Interpol2D::I_LAPSE_IDWK, *vecData, *vecStation, dem);
+		TA.calculate(p);
+	}
+	else if(algorithm =="RH" ) {
+		Grid2DObject ta(p, 0, 0, p.ncols, p.nrows);
+		Interpol2D TA(Interpol2D::I_LAPSE_CST, Interpol2D::I_LAPSE_IDWK, *vecExtraData, *vecStation, dem);
+		TA.calculate(ta);
+		Interpol2D RH(Interpol2D::I_CST, Interpol2D::I_RH, *vecData, *vecStation, dem);
+		RH.calculate(p, *vecExtraData, ta);
+	}
+	else if(algorithm =="VW" ){
+		if( vecExtraData->size() > 0) { //extraData is DW
+			std::vector<double> vecEmpty;
+			Grid2DObject dw(p, 0, 0, p.ncols, p.nrows);
+			Interpol2D DW(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecExtraData, *vecStation, dem);
+			DW.calculate(dw);
+			Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, *vecData, *vecStation, dem);
+			VW.calculate(p, vecEmpty, dw);
+		} else {
+			Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_LAPSE_IDWK, *vecData, *vecStation, dem);
+			VW.calculate(p);
+		}
+	}
+	else if(algorithm =="DW" ){
+		Interpol2D DW(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
+		DW.calculate(p);
+	}
+	else if(algorithm =="ISWR" ){
+		Interpol2D ISWR(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
+		ISWR.calculate(p);
+	}
+	else if(algorithm =="LWR"){
+		Interpol2D LWR(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
+		LWR.calculate(p);
+	}
+	else {
+		Interpol2D TA(Interpol2D::I_LAPSE_CST, Interpol2D::I_LAPSE_IDWK, *vecData, *vecStation, dem);
+		TA.calculate(p);
+	}
 }
 
 
 
-void fulfillDoubleArray(const Grid2DObject&  p, const std::string& cellOrder,
+void fulfillDoubleArray(const Grid2DObject&  p,
+		const std::string& cellOrder,
 		double* dest){
 
 	dest[0] = 1.;//code for success
@@ -223,42 +186,59 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 		  double* metadata, int nbStation,
 		  double* data, int nbDataPerStation, char* metaCoordSystem, char* cellOrder){
 
+	clock_t tmpStart;
+	clock_t tmpEnd;
 
-	IOInterface* io = getIOInterface(demFile, demCoordSystem, iointerface);
-	if(io==NULL)
-		return makeError(-1.);
-
-	//reading initial dem
-	DEMObject dem = (demXll > -1 && demYrt> -1)?
-			loadSubDEM(io,demCoordSystem,  demXll, demYll, demXrt, demYrt) :
-			loadFullDEM(io);
+	//get dem
+	tmpStart = clock(); //start
+	const DEMObject& dem = (demXll > -1 && demYrt> -1)?
+			DEMLoader::loadSubDEM(demFile, demCoordSystem, iointerface, demXll, demYll, demXrt, demYrt) :
+				DEMLoader::loadFullDEM(demFile, demCoordSystem, iointerface);
 	if (dem.ncols<1 || dem.ncols<2  ){
 		std::cout << "Problem with DEM creation : "  << std::endl;
 		//error
 		return makeError(-2.);
 	}
+	tmpEnd = clock(); //end
+	double msDemLoading = (tmpEnd - tmpStart)/1000.0;
 
 
 	//Create MeteoData and StationData vectors
-	std::vector<MeteoData> vecMeteo;
+	tmpStart = clock(); //start
+	std::vector<double> vecData;
+	std::vector<double> vecExtraData;
 	std::vector<StationData> vecStation;
 	//initialize MeteoData and StationData vectors
 	loadMeteoAndStationData(metadata, data, nbStation, nbDataPerStation, algorithm,
-			metaCoordSystem, &vecStation, &vecMeteo);
+			metaCoordSystem, &vecStation, &vecData, &vecExtraData);
+	tmpEnd = clock(); //end
+	double msDataLoading = (tmpEnd - tmpStart)/1000.0;
 
 
+	//Interpolation
+	tmpStart = clock(); //start
 	Grid2DObject  p(dem.ncols, dem.nrows,
 			dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
-	processInterpolation(algorithm, p, dem, &vecStation, &vecMeteo);
+	processInterpolation(algorithm, p, dem, &vecStation, &vecData, &vecExtraData);
 
 	//PS. the array allocated here should be automatically deleted (and memory freed) when the
 	//Java mapped object (com.sun.jna.ptr.DoubleByReference here) is "Garbage Collected"
 	double* out = (double*) malloc( (6 + p.nrows*p.ncols)* sizeof(double));
 	//copy the interpolation result into a double array
 	fulfillDoubleArray( p, cellOrder, out);
+	tmpEnd = clock(); //end
+	double msInterpolation = (tmpEnd - tmpStart)/1000.0;
 
-	delete io;
-	vecMeteo.clear();
+	std::cout << " - time to load DEM : "  << msDemLoading << std::endl;
+	std::cout << " - time to load Data : "  << msDataLoading << std::endl;
+	std::cout << " - time to interpolate: "  << msInterpolation << std::endl;
+	//put the different process in the result
+	out[3] = msDemLoading;
+	out[4] = msDataLoading;
+	out[5] = msInterpolation;
+
+	vecData.clear();
+	vecExtraData.clear();
 	vecStation.clear();
 	return out;
 }

@@ -9,10 +9,13 @@
 
 #include <jni.h>
 #include "jnative.h"
-#include "IOInterface.h"
 #include "Grid2DObject.h"
 #include "DEMObject.h"
+#include "DEMLoader.h"
 #include "ch_slf_gin_jnative_MeteoIOJNIInterface.h"
+
+#include <stdlib.h>
+#include <time.h>
 
 
 jdoubleArray jMakeError (JNIEnv *env, float errorCode){
@@ -55,40 +58,60 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	const char * cMetaCoordSystem = env->GetStringUTFChars(jMetaCoordSystem,0);
 	const char * cCellOrder = env->GetStringUTFChars(jcellOrder,0);
 
-	IOInterface* io = getIOInterface(cDemFile, cDemCoordSystem, cIOInterface);
-	if(io==NULL)
-		return jMakeError(env, -1.f);
+	clock_t tmpStart;
+	clock_t tmpEnd;
 
-	//reading initial dem
-	DEMObject dem = (demXll > -1 && demYrt> -1)?
-			loadSubDEM(io,cDemCoordSystem,  demXll, demYll, demXrt, demYrt) :
-			loadFullDEM(io);
+	tmpStart = clock(); //start
+	//get dem
+	const DEMObject& dem = (demXll > -1 && demYrt> -1)?
+			DEMLoader::loadSubDEM(cDemFile, cDemCoordSystem, cIOInterface, demXll, demYll, demXrt, demYrt) :
+				DEMLoader::loadFullDEM(cDemFile, cDemCoordSystem, cIOInterface);
 	if (dem.nrows<1 || dem.ncols<2  ){
 		std::cout << "Problem with DEM creation : "  << std::endl;
 		//error
 		return jMakeError(env, -2.f);
 	}
+	tmpEnd = clock(); //end
+	double msDemLoading = (tmpEnd - tmpStart)/1000.0;
 
 
 	//Create MeteoData and StationData vectors
+	tmpStart = clock(); //start
 	int nbStation = (int)env->GetArrayLength(jMetadata)/3;
 	int nbDataPerStation = (int)env->GetArrayLength(jData)/nbStation;
     jboolean isCopyMetadata;
     jboolean isCopyData;
 	double *cMetadata = env->GetDoubleArrayElements(jMetadata,&isCopyMetadata);
 	double *cData = env->GetDoubleArrayElements(jData,&isCopyData);
-	std::vector<MeteoData> vecMeteo;
+	std::vector<double> vecData;
+	std::vector<double> vecExtraData;
 	std::vector<StationData> vecStation;
 	//initialize MeteoData and StationData vectors
 	loadMeteoAndStationData(cMetadata, cData, nbStation, nbDataPerStation, cAlgorithm,
-			cMetaCoordSystem, &vecStation, &vecMeteo);
+			cMetaCoordSystem, &vecStation, &vecData, &vecExtraData);
+	tmpEnd = clock(); //end
+	double msDataLoading = (tmpEnd - tmpStart)/1000.0;
 
-
+	//Interpolation
+	tmpStart = clock(); //start
 	Grid2DObject  p(dem.ncols, dem.nrows,
 			dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
-	processInterpolation(cAlgorithm, p, dem, &vecStation, &vecMeteo);
+	processInterpolation(cAlgorithm, p, dem, &vecStation, &vecData, &vecExtraData);
 	//copy the interpolation result into a jdoubleArray
 	jdoubleArray out = convert_JNIArray(env, p, cCellOrder);
+	tmpEnd = clock(); //end
+	double msInterpolation = (tmpEnd - tmpStart)/1000.0;
+
+	//put the different process in the result
+	double* times = (double*) malloc( 3* sizeof(double));
+	times[0] = msDemLoading;
+	times[1] = msDataLoading;
+	times[2] = msInterpolation;
+	env->SetDoubleArrayRegion(out, 3, 3, times);
+	free(times);
+	std::cout << " - time to load DEM : "  << msDemLoading << std::endl;
+	std::cout << " - time to load Data : "  << msDataLoading << std::endl;
+	std::cout << " - time to interpolate: "  << msInterpolation << std::endl;
 
 	//release cMetadata
 	if (isCopyMetadata == JNI_TRUE)
@@ -96,15 +119,14 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	//release cData
 	if (isCopyData == JNI_TRUE)
 		env->ReleaseDoubleArrayElements(jData, cData, JNI_ABORT);
-	delete io;
-
     env->ReleaseStringUTFChars(jDemFile, cDemFile);
     env->ReleaseStringUTFChars(jDemCoordSystem, cDemCoordSystem);
     env->ReleaseStringUTFChars(jIOinterface, cIOInterface);
     env->ReleaseStringUTFChars(jAlgorithm, cAlgorithm);
     env->ReleaseStringUTFChars(jMetaCoordSystem, cMetaCoordSystem);
     env->ReleaseStringUTFChars(jcellOrder, cCellOrder);
-	vecMeteo.clear();
+    vecData.clear();
+	vecExtraData.clear();
 	vecStation.clear();
 	return out;
 }
