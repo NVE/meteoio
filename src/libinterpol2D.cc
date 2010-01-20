@@ -290,9 +290,10 @@ void Interpol2D::StdPressureFill(Grid2DObject& param, const DEMObject& topoHeigh
 * @brief Grid filling function:
 * This implementation fills the grid with a constant value
 * @param param (Array2D\<double\>) 2D array to fill
+* @param topoHeight (DEMObject) array of elevations (dem). This is needed in order to know if a point is "nodata"
 * @param value (double) value to put in the grid
 */
-void Interpol2D::ConstFill(Grid2DObject& param, const double& value)
+void Interpol2D::ConstFill(Grid2DObject& param, const DEMObject& topoHeight, const double& value)
 {
 	//fills a data table with constant values
 	for (unsigned int i=0; i<param.ncols; i++) {
@@ -300,7 +301,7 @@ void Interpol2D::ConstFill(Grid2DObject& param, const double& value)
 			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
 				param.grid2D(i,j) = value;
 			} else {
-				param_out.grid2D(i,j) = IOUtils::nodata;
+				param.grid2D(i,j) = IOUtils::nodata;
 			}
 		}
 	}
@@ -366,7 +367,7 @@ void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 	}
 }
 
-void Interpol2D::IDWKrieging(Grid2DObject& T, const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations)
+void Interpol2D::IDWKrieging(Grid2DObject& T, const DEMObject& topoHeight, const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations)
 {
 	//multiple source stations: simple IDW Krieging
 	for (unsigned int i=0; i<T.ncols; i++) {
@@ -402,7 +403,7 @@ void Interpol2D::calculate(Grid2DObject& param_out)
 	
 	if (InputSize==1) { //single data source
 		if (single_type==I_CST) {
-			ConstFill(param_out, inputData[0]);
+			ConstFill(param_out, dem, inputData[0]);
 			flag_ok=1;
 	
 		} else if (single_type==I_LAPSE_CST) {
@@ -419,10 +420,10 @@ void Interpol2D::calculate(Grid2DObject& param_out)
 	
 	if (InputSize>1) { //multiple data sources
 		if (multiple_type==I_CST) {
-			ConstFill(param_out, AvgSources(inputData));
+			ConstFill(param_out, dem, AvgSources(inputData));
 			flag_ok=1;
 		} else if (multiple_type==I_IDWK) {
-			IDWKrieging(param_out, inputData, InputMeta);
+			IDWKrieging(param_out, dem, inputData, InputMeta);
 			flag_ok=1;
 		} else if (multiple_type==I_LAPSE_CST) {
 			BuildStationsElevations(InputMeta, vecStationElevations);

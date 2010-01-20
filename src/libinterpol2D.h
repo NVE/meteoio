@@ -89,7 +89,7 @@ class Interpol2D {
 		
 		//filling functions
 		void StdPressureFill(Grid2DObject& param, const DEMObject& topoHeight);
-		void ConstFill(Grid2DObject& param, const double& value);
+		void ConstFill(Grid2DObject& param, const DEMObject& topoHeight, const double& value);
 		void LapseConstFill(Grid2DObject& param_out, const DEMObject& topoHeight, const double& value, const double& altitude);
 		
 		
@@ -97,7 +97,7 @@ class Interpol2D {
 				const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in);
 		double IDWKriegingCore(const double& x, const double& y, 
 						   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations);
-		void IDWKrieging(Grid2DObject& T, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);
+		void IDWKrieging(Grid2DObject& T, const DEMObject& topoHeight, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);
 		void SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW);
 		double RhtoDewPoint(double RH, double TA, const short int force_water);
 		double DewPointtoRh(double TD, double TA, const short int force_water);
