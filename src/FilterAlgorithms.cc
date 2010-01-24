@@ -43,7 +43,8 @@ bool FilterAlgorithms::initStaticData()
 {
 	filterMap["rate"]     = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::RateFilter);
 	filterMap["resample"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::ResamplingFilter);
-	filterMap["median_avg"]  = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAvgFilter);
+	filterMap["median_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAvgFilter);
+	filterMap["mean_avg"]  = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MeanAvgFilter);
 	filterMap["min_max"]  = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinMaxFilter);
 	filterMap["min"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinValueFilter);
 	filterMap["max"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MaxValueFilter);
@@ -87,6 +88,29 @@ void FilterAlgorithms::parseFilterArguments(const std::string& filtername, const
 		std::cerr << "[E] While processing arguments for filter " << filtername << std::endl;
 		throw;
 	}
+}
+
+void FilterAlgorithms::parseWindowFilterArguments(const std::string& filtername, 
+										const std::vector<std::string>& vecArgs_in,
+										const unsigned int& minArgs, const unsigned int& maxArgs, 
+										bool& isSoft, string& windowposition, vector<double>& vecArgs_out)
+{
+	vector<string> vecArgs_new;
+	bool alreadyDefined = false;
+
+	for (unsigned int ii=0; ii<vecArgs_in.size(); ii++){
+		//Check for "left", "right" or "center" keywords
+		if ((vecArgs_in[ii] == "center") || (vecArgs_in[ii] == "left") || (vecArgs_in[ii] == "right")){
+			if (alreadyDefined) 
+				throw InvalidArgumentException("Invalid or redefined arguments for filter " + filtername, AT);
+			windowposition = vecArgs_in[ii];
+			alreadyDefined = true;
+		} else {
+			vecArgs_new.push_back(vecArgs_in[ii]);
+		}
+	}
+
+	parseFilterArguments(filtername, vecArgs_new, minArgs, maxArgs, isSoft, vecArgs_out);
 }
 
 
@@ -257,58 +281,21 @@ bool FilterAlgorithms::MedianAvgFilter(const std::vector<MeteoData>& vecM, const
 				   const unsigned int& paramindex,
 				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
-	(void)vecS; (void)date; (void)vecFilteredS;
+	(void)vecS; (void)vecFilteredS;
 	//Remarks:
 	//1) nodata values are not considered when calculating the median
-	//2) if there is a even number of window elements the arithmetic mean is used to calculate the median
-	//3) isSoft is ignored
-	//4) Two arguments expected (both have to be fullfilled for the filter to start operating): 
+	//2) if there is an even number of window elements the arithmetic mean is used to calculate the median
+	//3) Two arguments expected (both have to be fullfilled for the filter to start operating): 
 	//   1. minimal number of points in window
 	//   2. minimal time interval spanning the window
-	bool isSoft = false;
-	std::vector<double> vecArgs; 
-	parseFilterArguments("median_avg", _vecArgs, 2, 2, isSoft, vecArgs);
+	//4) the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window
+	//   position
+	//5) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
+	//  
 
-	if (vecArgs[0] < 1) //the window size has to be at least 1
-		throw InvalidArgumentException("Parameter 1 for median_avg filter cannot be < 1", AT);
-	if (vecArgs[1] < 0) //the time window has to be at least 0 minutes
-		throw InvalidArgumentException("Parameter 2 for median_avg filter cannot be < 0", AT);
-
-	//Deal with first parameter: minimal number of data points
-	unsigned int windowSize = (unsigned int)vecArgs[0];
-	unsigned int increment = (unsigned int)(windowSize/2);
-	if (increment > 0) increment--;
-	unsigned int startposition = pos + increment;
-
-	if (startposition > (vecM.size()-1))
-		startposition = (vecM.size()-1);
-
-	unsigned int endposition = 0;
-	if (startposition < (windowSize-1)){
-		return false; //not enough data points available
-	} else {
-		endposition = startposition - (windowSize - 1);
-	}
-
-	//Now deal with the second argument: the time window
-	Date_IO deltatime(vecArgs[1]/1440.0); //making a julian date out of the argument given in minutes	
-	while(deltatime > (vecM[startposition].date - vecM[endposition].date)){
-		if (endposition > 0) endposition--;
-		else return false; //time window not big enough
-	} 
-	
-	Date_IO gap(vecM[startposition].date - vecM[endposition].date);
-	//cout << "The final gap is " << gap.toString() << endl;
-
-	//Run actual median_avg filter over all relevant meteo data
 	vector<double> vecWindow;
-	//cout << "Start: " << startposition << "  End: " << endposition << endl;
-	for (unsigned int ii=startposition; ii>=endposition; ii--){
-		const double& tmp = vecM[ii].param(paramindex);
-		if (tmp != IOUtils::nodata) vecWindow.push_back(tmp);
-
-		//cout << ii << ": pushed at vecM[" <<  ii << "] " << vecM[ii].date << " : " << tmp << endl;
-	}
+	if (!getWindowData("median_avg", vecM, pos, date, _vecArgs, paramindex, vecWindow))
+		return false; //Not enough data to meet user configuration
 
 	//Calculate median
 	double median=IOUtils::nodata;
@@ -327,6 +314,145 @@ bool FilterAlgorithms::MedianAvgFilter(const std::vector<MeteoData>& vecM, const
 	//cout << "Median value: " << median << endl;
 	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
 		vecFilteredM[ii].param(paramindex) = median;
+	}
+
+	return true;
+}
+
+bool FilterAlgorithms::MeanAvgFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& paramindex,
+				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
+{
+	(void)vecS; (void)vecFilteredS;
+	//Remarks:
+	//1) nodata values are not considered when calculating the median
+	//2) Two arguments expected (both have to be fullfilled for the filter to start operating): 
+	//   1. minimal number of points in window
+	//   2. minimal time interval spanning the window
+	//3) the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window
+	//   position
+	//4) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
+	//  
+	vector<double> vecWindow;
+	if (!getWindowData("median_avg", vecM, pos, date, _vecArgs, paramindex, vecWindow))
+		return false; //Not enough data to meet user configuration
+
+	//Calculate mean
+	double mean = IOUtils::nodata;
+	unsigned int vecSize = vecWindow.size();
+
+	if (vecSize == 0){
+		return false; //only nodata values detected or other problem
+	} else {
+		double sum = 0.0;
+		for (unsigned int ii=0; ii<vecSize; ii++){
+			sum += vecWindow[ii];
+		}
+		mean = sum/vecSize;
+	}
+
+	//cout << "Mean value: " << mean << endl;
+	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+		vecFilteredM[ii].param(paramindex) = mean;
+	}
+
+	return true;
+}
+
+
+bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM, 
+				   const unsigned int& pos, 
+				   const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& paramindex, vector<double>& vecWindow)
+{
+	vecWindow.clear();
+	bool isSoft = false;
+	std::string windowposition = "center"; //the default is a centered window
+	std::vector<double> vecArgs; 
+	parseWindowFilterArguments(filtername, _vecArgs, 2, 2, isSoft, windowposition, vecArgs);
+
+	if (vecArgs[0] < 1) //the window size has to be at least 1
+		throw InvalidArgumentException("Number of data points in window of " +filtername+ " filter cannot be < 1", AT);
+	if (vecArgs[1] < 0) //the time window has to be at least 0 minutes
+		throw InvalidArgumentException("Time span of window for filter " +filtername+ " cannot be < 0 minutes", AT);
+
+	//Deal with first parameter: minimal number of data points
+	unsigned int windowSize = (unsigned int)vecArgs[0];
+	unsigned int increment = 0;
+	if (windowposition=="right"){ 
+		increment = (unsigned int)windowSize - 1; //window reaches to the right
+		if ((date != vecM[pos].date) && (increment>0)) increment--;
+	} else if (windowposition=="left") {
+		increment = 0;                        //window reaches to the left
+	} else {
+		increment = (unsigned int)(windowSize/2);                   //window is centered
+		if (increment>0) increment--; //reason: the element at pos might be of greater date
+	}
+
+	unsigned int startposition = pos + increment;
+
+	if (startposition > (vecM.size()-1)){
+		if (!isSoft) return false; //if "soft" is not defined then there have to be enough data elements to the right
+		startposition = (vecM.size()-1);
+	}
+
+	unsigned int endposition = 0;
+	if (startposition < (windowSize-1)){
+		return false; //not enough data points available
+	} else {
+		endposition = startposition - (windowSize - 1);
+	}
+
+	//Now deal with the second argument: the time window
+	Date_IO deltatime(vecArgs[1]/1440.0); //making a julian date out of the argument given in minutes	
+	while(deltatime > (vecM[startposition].date - vecM[endposition].date)){
+		//The time window is too small, so let's try enlargening it
+		if ((windowposition == "right") && (!isSoft)){ //only expand to the right
+			if (startposition<(vecM.size()-1)) startposition++;
+			else return false; //time window not big enough
+		} else if ((windowposition == "right") && (isSoft)){
+			if (startposition<(vecM.size()-1)) startposition++;
+			else if (endposition > 0) endposition--;
+			else return false; //time window not big enough
+		} else if ((windowposition == "left") && (!isSoft)){ //only expand to the left
+			if (endposition > 0) endposition--;
+			else return false; //time window not big enough
+		} else if ((windowposition == "left") && (isSoft)){
+			if (endposition > 0) endposition--;
+			else if (startposition<(vecM.size()-1)) startposition++;
+			else return false; //time window not big enough
+		} else if ((windowposition == "center") && (!isSoft)){ //expand to left and right (equally)
+			if ((endposition+startposition)%2 == 0) { //try to alternate when broadening window
+				if (endposition > 0) endposition--;
+				else return false; //time window not big enough
+			} else {
+				if (startposition<(vecM.size()-1)) startposition++;
+				else return false; //time window not big enough
+			}			
+		} else if ((windowposition == "center") && (isSoft)){ //expand to left and right (whereever possible)
+			if ((endposition+startposition)%2 == 0) { //try to alternate when broadening window
+				if (endposition > 0) endposition--;
+				else if (startposition<(vecM.size()-1)) startposition++;
+				else return false; //time window not big enough
+			} else {
+				if (startposition<(vecM.size()-1)) startposition++;
+				else if (endposition > 0) endposition--;
+				else return false; //time window not big enough
+			}			
+		}
+	} 
+	
+	//Date_IO gap(vecM[startposition].date - vecM[endposition].date);
+	//cout << "The final gap is " << gap.toString() << "  windowposition: " << windowposition << endl;
+
+	//Push all relevant data elements into the vector vecWindow
+	//cout << "Start: " << startposition << "  End: " << endposition << endl;
+	for (unsigned int ii=startposition; ii>=endposition; ii--){
+		const double& tmp = vecM[ii].param(paramindex);
+		if (tmp != IOUtils::nodata) vecWindow.push_back(tmp);
+
+		//cout << ii << ": pushed at vecM[" <<  ii << "] " << vecM[ii].date << " : " << tmp << endl;
 	}
 
 	return true;
