@@ -70,20 +70,26 @@ class DEMObject: public Grid2DObject {
 		void update(const string& algorithm);
 		void update(const slope_type& algorithm=DFLT);
 		void updateAllMinMax();
+		void printFailures();
 
 	private:
 		void CalculateAziSlopeCurve(const slope_type& algorithm);
-		double CalculateAzi(const double& Nx, const double& Ny, const double& Nz, const double& slope);
-		void CalculateHickNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum);
-		void CalculateCorripioNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum);
-		double getCurvature(const unsigned int& i, const unsigned int& j);
-	
-		void CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j,double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3);
-		
-		double OppositeDir(const double& z1, const double& z2, const double& z);
-		double safeGet(const long& i, const long& j);
+		double CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope);
+		void CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
+		void CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
+		double getCurvature(double A[4][4]);
+
+		double steepestGradient(double A[4][4]);
+		double lineGradient(const double& A1, const double& A2, const double& A3);
+		double fillMissingGradient(const double& delta1, const double& delta2);
+		void surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]);
+		double avgHeight(const double& z1, const double &z2, const double& z3);
+		void getNeighbours(const unsigned int i, const unsigned int j, double A[4][4]);
+		double safeGet(const int i, const int j);
 
 		static const slope_type dflt_algorithm;
+		unsigned int slope_failures; ///<contains the number of points that have an elevation but no slope
+		unsigned int curvature_failures; ///<contains the number of points that have an elevation but no curvature
 
 #ifdef _POPC_
 	public:

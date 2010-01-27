@@ -34,6 +34,7 @@ DEMObject::DEMObject() : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny()
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
+	slope_failures = curvature_failures = 0;
 }
 
 /**
@@ -55,6 +56,7 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
+	slope_failures = curvature_failures = 0;
 }
 
 /**
@@ -77,6 +79,7 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
+	slope_failures = curvature_failures = 0;
 	if(_update==false) {
 		updateAllMinMax();
 	} else {
@@ -93,6 +96,7 @@ DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update)
   : Grid2DObject(_dem.ncols, _dem.nrows, _dem.xllcorner, _dem.yllcorner, _dem.latitude, _dem.longitude, _dem.cellsize, _dem.grid2D), 
     slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
+	slope_failures = curvature_failures = 0;
 	if(_update==false) {
 		updateAllMinMax();
 	} else {
@@ -120,6 +124,7 @@ DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsig
 		throw InvalidArgumentException("requesting a subset of 0 columns or rows for DEMObject", AT);
 	}
 
+	slope_failures = curvature_failures = 0;
 	if(_update==false) {
 		updateAllMinMax();
 	} else {
@@ -199,64 +204,104 @@ void DEMObject::updateAllMinMax() {
 	max_curvature = curvature.getMax();
 }
 
-void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
-//This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
-//****        DEFINITIONS           ****//
-// coordinate:                          //
-//     x (m) asc from west to east      //
-//     y (m) asc from south to north    //
-//     z (m) elevation                  //
-//                                      //
-// index:                               //
-//     [0][0]        lower left corner  //
-//     [0][ny-1]     upper left corner  //
-//     [nx-1][0]     lower right corner //
-//     [nx-1][ny-1]  upper right corner //
-//**************************************//
-	double dx1, dx2, dx3, dy1, dy2, dy3;	// dxi = dz_i / dx_i and dyi = dz_i / dy_i
-	double dx_sum, dy_sum;		// sum of dxi resp. dyi
+/**
+* @brief Prints the list of points that have an elevation different than nodata but no slope or curvature
+* Such points can happen if they are surrounded by enough points whose elevation is nodata
+*/
+void DEMObject::printFailures() {
+	bool header=true;
 
 	for ( unsigned int i = 0; i < ncols; i++ ) {
 		for ( unsigned int j = 0; j < nrows; j++ ) {
-			if( grid2D(i,j) == IOUtils::nodata ) {
-				Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
-				azi(i,j) = IOUtils::nodata;
-				curvature(i,j) = IOUtils::nodata;
-			} else {
-				// principal axis twice to emphasize height difference in that direction
-				CalculateSurfaceDeltas(i, j, &dx1, &dx2, &dx3, &dy1, &dy2, &dy3);
-				dx_sum = (dx1 + 2.*dx2 + dx3) * 0.25;
-				dy_sum = (dy1 + 2.*dy2 + dy3) * 0.25;
-		
-				//calculate slope and normal vector's components using one of two algorithms 
-				//(knowing that Hick is the worst performing)
-				if(algorithm==HICK) {
-					CalculateHickNormal(i, j, dx_sum, dy_sum);
-				} else if(algorithm==CORR) {
-					CalculateCorripioNormal(i, j, dx_sum, dy_sum);
-				} else if(algorithm==CARD) {
-					CalculateCorripioNormal(i, j, dx_sum, dy_sum);
-				} else {
-					throw InvalidArgumentException("Chosen slope algorithm not available", AT);
+			if(((slope(i,j)==IOUtils::nodata) || (curvature(i,j)==IOUtils::nodata)) && (grid2D(i,j)!=IOUtils::nodata)) {
+				if(header==true) {
+					std::cout << "[i] DEM slope/curvature could not be computed at the following points \n";
+					std::cout << "[i]\tGrid Point\tElevation\tSlope\tCurvature\n";
+					header=false;
 				}
-		
-				azi(i,j) = CalculateAzi(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
-				curvature(i,j) = getCurvature(i,j);
-				if(algorithm==CARD) {
-					azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
-					slope(i,j) = floor( slope(i,j)+0.5 );
+				std::cout << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" << slope(i,j) << "\t" << curvature(i,j) << "\n";
+			}
+		}
+	}
+	if(header==false) {
+		std::cout << endl;
+	}
+}
+
+void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
+//This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
+	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
+
+	slope_failures = curvature_failures = 0;
+	if(algorithm==HICK) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if( grid2D(i,j) == IOUtils::nodata ) {
+					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
+					azi(i,j) = IOUtils::nodata;
+					curvature(i,j) = IOUtils::nodata;
+				} else {
+					getNeighbours(i, j, A);
+					CalculateHick(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
+					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
+					curvature(i,j) = getCurvature(A);
 				}
 			}
 		}
+	} else if(algorithm==CORR) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if( grid2D(i,j) == IOUtils::nodata ) {
+					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
+					azi(i,j) = IOUtils::nodata;
+					curvature(i,j) = IOUtils::nodata;
+				} else {
+					getNeighbours(i, j, A);
+					CalculateCorripio(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
+					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
+					curvature(i,j) = getCurvature(A);
+				}
+			}
+		}
+	} else if(algorithm==CARD) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if( grid2D(i,j) == IOUtils::nodata ) {
+					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
+					azi(i,j) = IOUtils::nodata;
+					curvature(i,j) = IOUtils::nodata;
+				} else {
+					getNeighbours(i, j, A);
+					CalculateCorripio(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
+					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
+					curvature(i,j) = getCurvature(A);
+					if(azi(i,j)!=IOUtils::nodata)
+						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
+					if(slope(i,j)!=IOUtils::nodata)
+						slope(i,j) = floor( slope(i,j)+0.5 );
+				}
+			}
+		}
+	} else {
+		throw InvalidArgumentException("Chosen slope algorithm not available", AT);
+	}
+
+	//Inform the user is some points have unexpectidly not been computed
+	//(ie: there was an altitude but some parameters could not be computed)
+	if(slope_failures>0 || curvature_failures>0) {
+		std::cout << "[W] DEMObject: " << slope_failures << " point(s) have an elevation but no slope, " << curvature_failures << " point(s) have an elevation but no curvature." << std::endl;
 	}
 
 } // end of CalculateAziSlope
 
-double DEMObject::CalculateAzi(const double& Nx, const double& Ny, const double& Nz, const double& slope) {
+double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope) {
 //Calculates the aspect at a given point knowing its normal vector and slope
 //(direction of the normal pointing out of the surface, clockwise from north)
 //This azimuth calculation is similar to Hodgson (1998)
-	const double N_norm = sqrt( Nx*Nx + Ny*Ny + Nz*Nz );
+
+	if(Nx==IOUtils::nodata || Ny==IOUtils::nodata || Nz==IOUtils::nodata || slope==IOUtils::nodata) {
+		return IOUtils::nodata;
+	}
 
 	if ( slope > 0. ) { //there is some slope
 		if ( Nx == 0. ) { //no E-W slope, so it is purely N-S
@@ -266,6 +311,7 @@ double DEMObject::CalculateAzi(const double& Nx, const double& Ny, const double&
 				return (0.);	  // north facing
 			}
 		} else { //there is a E-W slope
+			const double N_norm = sqrt( Nx*Nx + Ny*Ny + Nz*Nz );
 			if ( Nx > 0. ) {
 				return (M_PI * 0.5 - atan( (Ny/N_norm) / (Nx/N_norm) ));
 			} else {
@@ -278,303 +324,228 @@ double DEMObject::CalculateAzi(const double& Nx, const double& Ny, const double&
 }
 
 
-void DEMObject::CalculateHickNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum) {
+void DEMObject::CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
 //This calculates the surface normal vector using the steepest slope method:
 //the steepest slope found in the eight cells surrounding (i,j) is given to be the slope in (i,j)
 //Beware, sudden steps could happen
 //The supposedly better maximum downhill slope method (Dunn and Hickey, 1998)
-	double smax=0.;			//maximum slope of all neighboring slopes
-	double dmax;			//largest flat distance of a grid cell
-	const double sqrt2=sqrt(2.);	//the weight of the 4 corner cells is increased by sqrt(2)
-	int k,l;
+	const double smax = steepestGradient(A); //steepest local gradient
 
-	for ( k = -1; k < 2; k++ ) {
-		for ( l= -1; l < 2; l++ ) {
-			if ( k == 0 || l == 0 ) dmax = cellsize;
-			else dmax = cellsize * sqrt2;
+	if(smax==IOUtils::nodata) {
+		slope = IOUtils::nodata;
+		Nx = IOUtils::nodata;
+		Ny = IOUtils::nodata;
+		Nz = IOUtils::nodata;
+		slope_failures++;
+	} else {
+		slope = atan( smax );
 
-			//this could be done using the dx1, dx2, dx3... 
-			smax = MAX( smax,fabs( grid2D(i,j) - 
-					grid2D(MIN( ncols-1,MAX( 0,i+k ) ), MIN( nrows-1,MAX( 0,j+l ) )) ) / dmax );
+		//Nx and Ny: x and y components of the normal pointing OUT of the surface
+		if ( smax > 0. ) { //ie: there is some slope
+			double dx_sum, dy_sum;
+			surfaceGradient(dx_sum, dy_sum, A);
+			if(dx_sum==IOUtils::nodata || dy_sum==IOUtils::nodata) {
+				Nx = IOUtils::nodata;
+				Ny = IOUtils::nodata;
+				Nz = IOUtils::nodata;
+				slope_failures++;
+			} else {
+				Nx = -1.0 * dx_sum / (2. * cellsize);	//Nx=-dz/dx
+				Ny = -1.0 * dy_sum / (2. * cellsize);	//Ny=-dz/dy
+				Nz = 1.;				//Nz=1 (normalized by definition of Nx and Ny)
+			}
+		} else { //ie: there is no slope
+			Nx = 0.;
+			Ny = 0.;
+			Nz = 1.;
 		}
 	}
-	
-	slope(i,j) = atan( smax );
-
-	//Nx and Ny: x and y components of the normal pointing OUT of the surface
-	if ( smax > 0. ) { //ie: there is some slope
-		Nx(i,j) = -1.0 * dx_sum / (2. * cellsize);	//Nx=-dz/dx
-		Ny(i,j) = -1.0 * dy_sum / (2. * cellsize);	//Ny=-dz/dy
-		Nz(i,j) = 1.;				//Nz=1 (normalized by definition of Nx and Ny)
-	} else { //ie: there is no slope
-		Nx(i,j) = 0.;
-		Ny(i,j) = 0.;
-		Nz(i,j) = 1.;
-	}
 }
 
-void DEMObject::CalculateCorripioNormal(const unsigned int& i, const unsigned int& j, const double& dx_sum, const double& dy_sum) {
+void DEMObject::CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
 //This calculates the surface normal vector using the two triangle method given in Corripio (2002)
-	//TODO: proper handling of nodata in dem
-	if ( i > 0 && i < ncols - 1 && j > 0 && j < nrows - 1 ) { // for not border grid cells
+	if ( A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata) {
 		// See Corripio (2002), knowing that here we normalize the result (divided by Nz=cellsize*cellsize)
-		Nx(i,j) = (0.5 * ((grid2D(i,j) - grid2D(i+1,j) + grid2D(i,j+1) - grid2D(i+1,j+1) ))) / cellsize;
-		Ny(i,j) = (0.5 * ((grid2D(i,j) + grid2D(i+1,j) - grid2D(i,j+1) - grid2D(i+1,j+1) ))) / cellsize;
-		Nz(i,j) = 1.;
-	} else { // for border grid cells
-		// eight-neighbor algorithm of Horn (1981) 
-		// normal vector n (not normalized!) from the slopes in x and y direction: "n=(1,0,mx)x(0,1,my)"
-		// the conventional friendly neighbor method
-		Nx(i,j) = -1.0 * dx_sum / (2. * cellsize);
-		Ny(i,j) = -1.0 * dy_sum / (2. * cellsize);
-		Nz(i,j) = 1.;
-	}
-
-	//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
-	//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-	slope(i,j) = atan( sqrt( (Nx(i,j))*(Nx(i,j)) + (Ny(i,j))*(Ny(i,j)) ) );
-		
-	if ( slope(i,j) == 0. ) {
-		Nx(i,j) = 0.;
-		Ny(i,j) = 0.;
-		Nz(i,j) = 1.;
+		Nx = (0.5 * (A[2][2] - A[2][3] + A[1][2] - A[1][3]) ) / cellsize;
+		Ny = (0.5 * (A[2][2] + A[2][3] - A[1][2] - A[1][3]) ) / cellsize;
+		Nz = 1.;
+		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
+		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) );
+	} else {
+		// eight-neighbor algorithm of Horn (1981)
+		CalculateHick(A, slope, Nx, Ny, Nz);
 	}
 }
 
-void DEMObject::CalculateSurfaceDeltas(const unsigned int& i, const unsigned int& j, double *dx1, double *dx2, double *dx3, double *dy1, double *dy2, double *dy3) {
-//Compute the deltaZ for a given cell (i,j) accross its eight surrounding cells
-// gradient estimation method of Horn (1981)
-//TODO: proper handling of nodata in dem
-//instead, fill a 3*3 grid with the proper values (taking nodata and borders into account) and compute dx, dy and diags from there...
-	if ( i > 0 && i < ncols - 1 && j > 0 && j < nrows - 1 ) { //away from the borders
-		// (*dx1+*dx2+*dx3) is an approximation of dz/*dx 
-		*dx1 = grid2D(i+1,j-1) - grid2D(i-1,j-1);
-		*dx2 = grid2D(i+1,j  ) - grid2D(i-1,j  );
-		*dx3 = grid2D(i+1,j+1) - grid2D(i-1,j+1);
-		
-		// (*dy1+*dy2+*dy3) is an approximation of dz/*dy
-		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j-1);
-		*dy2 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
-		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j-1);
-	}
+double DEMObject::getCurvature(double A[4][4]) {
+//This methode computes the curvature of a specific cell
+	if(A[2][2]!=IOUtils::nodata) {
+		const double Zwe   = avgHeight(A[2][1], A[2][2], A[2][3]);
+		const double Zsn   = avgHeight(A[1][2], A[2][2], A[3][2]);
+		const double Zswne = avgHeight(A[3][1], A[2][2], A[1][3]);
+		const double Znwse = avgHeight(A[1][1], A[2][2], A[3][3]);
 
-	//borders
-	else if ( i == 0 && j > 0 && j < nrows - 1 ) {
-		*dx1 = grid2D(i+1,j-1) - grid2D(i  ,j-1);
-		*dx2 = grid2D(i+1,j  ) - grid2D(i  ,j  ); 
-		*dx3 = grid2D(i+1,j+1) - grid2D(i  ,j+1);
-		*dy1 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
-		*dy2 = *dy1;
-		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j-1);
-	}
-	else if ( j == 0 && i > 0 && i < ncols - 1 ) {
-		*dx1 = grid2D(i+1,j  ) - grid2D(i-1,j  );
-		*dx2 = *dx1;
-		*dx3 = grid2D(i+1,j+1) - grid2D(i-1,j+1);
-		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j  );
-		*dy2 = grid2D(i  ,j+1) - grid2D(i  ,j  );
-		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j  );
-	}
-	else if ( i == ncols - 1 && j > 0 && j < nrows - 1 ) {
-		*dx1 = grid2D(i  ,j-1) - grid2D(i-1,j-1);
-		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  );
-		*dx3 = grid2D(i  ,j+1) - grid2D(i-1,j+1);
-		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j-1);
-		*dy2 = grid2D(i  ,j+1) - grid2D(i  ,j-1);
-		*dy3 = *dy2;
-	}
-	else if ( j == nrows - 1 && i > 0 && i < ncols - 1 ) {
-		*dx1 = grid2D(i+1,j-1) - grid2D(i-1,j-1);
-		*dx2 = grid2D(i+1,j  ) - grid2D(i-1,j  );
-		*dx3 = *dx2;
-		*dy1 = grid2D(i-1,j  ) - grid2D(i-1,j-1);
-		*dy2 = grid2D(i  ,j  ) - grid2D(i  ,j-1);
-		*dy3 = grid2D(i+1,j  ) - grid2D(i+1,j-1);
-	}
+		const double sqrt2 = sqrt(2.);
+		double sum=0.;
+		unsigned int count=0;
 
-	// four edges
-	else if ( i == 0 && j == 0 ) {
-		*dx2 = grid2D(i+1,j  ) - grid2D(i  ,j  );
-		*dx1 = *dx2;
-		*dx3 = grid2D(i+1,j+1) - grid2D(i  ,j+1);
-		*dy1 = grid2D(i  ,j+1) - grid2D(i  ,j  );
-		*dy2 = *dy1;
-		*dy3 = grid2D(i+1,j+1) - grid2D(i+1,j  );
+		if(Zwe!=IOUtils::nodata) {
+			sum += 0.5*(A[2][2]-Zwe);
+			count++;
+		}
+		if(Zsn!=IOUtils::nodata) {
+			sum += 0.5*(A[2][2]-Zsn);
+			count++;
+		}
+		if(Zswne!=IOUtils::nodata) {
+			sum += 0.5*(A[2][2]-Zswne)/sqrt2;
+			count++;
+		}
+		if(Znwse!=IOUtils::nodata) {
+			sum += 0.5*(A[2][2]-Znwse)/sqrt2;
+			count++;
+		}
+
+		if(count != 0.) return 1./count * sum;
 	}
-	else if ( i == ncols - 1 && j == nrows - 1 ) {
-		*dx1 = grid2D(i  ,j-1) - grid2D(i-1,j-1);
-		*dx2 = grid2D(i  ,j  ) - grid2D(i-1,j  );
-		*dx3 = *dx2;
-		*dy1 = grid2D(i-1,j  ) - grid2D(i-1,j-1);
-		*dy3 = grid2D(i  ,j  ) - grid2D(i  ,j-1);
-		*dy2 = *dy3;
-	}
-	else if ( i == 0 && j == nrows - 1 ) {
-		*dx1 = grid2D(i+1,j-1) - grid2D(i  ,j-1);
-		*dx2 = grid2D(i+1,j  ) - grid2D(i  ,j  );
-		*dx3 = *dx2;
-		*dy1 = grid2D(i  ,j  ) - grid2D(i  ,j-1);
-		*dy2 = *dy1;
-		*dy3 = grid2D(i+1,j  ) - grid2D(i+1,j-1);
-	}
-	
-	//if ( j == 0 && i == ncols - 1 ) 
-	else {
-		*dx1 = grid2D(i  ,j  ) - grid2D(i-1,j  );
-		*dx2 = *dx1;
-		*dx3 = grid2D(i  ,j+1) - grid2D(i-1,j+1);
-		*dy1 = grid2D(i-1,j+1) - grid2D(i-1,j  );
-		*dy3 = grid2D(i  ,j+1) - grid2D(i  ,j  );
-		*dy2 = *dy3;
-	}
-}
-	
-double DEMObject::OppositeDir(const double& z1, const double& z2, const double& z) {
-//This method chooses the right topographic height to make the calcul
-//and returns the sum of the opposites
-	if ( z1 != 0. && z2 != 0.) {
-		return z1 + z2;
-	}
-	// If the two values equals 0, is taken as if the landscape was flat
-	else if ( z1 == 0. && z2 == 0. ) {
-		return z * 2.;
-	}
-	else if ( z1 == 0. ) {
-		return z2 + z;
-	}
-	// if ( z2 == 0 )
-	else {
-		return z1 + z;
-	}
+	curvature_failures++;
+	return IOUtils::nodata;
 }
 
-double DEMObject::getCurvature(const unsigned int& i, const unsigned int& j) {
-//This methode computes and returns the curvature of a specific cell
+double DEMObject::steepestGradient(double A[4][4]) {
+//best effort to calculate the local steepest gradient
+	double smax=-1.;		//maximum slope of all neighboring slopes
+	const double sqrt2=sqrt(2.);	//the weight of the 4 corner cells is increased by sqrt(2)
 
-	// Declaration
-	double Zn, Zs, Ze, Zw;
-	double Zne, Znw, Zse, Zsw;	
-	double Zwe, Zsn, Zswne, Znwse;
-
-	//center of the grid
-	if ( i > 0 && i < ncols - 1 && j > 0 && j < nrows - 1 ){
-		Zs  = grid2D(i  , j+1);
-		Ze  = grid2D(i+1, j  );
-		Zse = grid2D(i+1, j+1);
-		Znw = grid2D(i-1, j-1);
-		Zsw = grid2D(i-1, j+1);
-		Zw  = grid2D(i-1, j  );
-		Zne = grid2D(i+1, j-1);
-		Zn  = grid2D(i  , j-1);
-	}
-	
-	// Four edges 
-	else if ( i == 0 && j == 0 ){
-		Zs  = grid2D(i  , j+1);		
-		Ze  = grid2D(i+1, j);
-		Zse = grid2D(i+1, j+1);
-		Znw = 0.;
-		Zsw = 0.;
-		Zw  = 0.;
-		Zne = 0.;		
-		Zn  = 0.;
-	} 
-	else if ( i == ncols-1 && j == 0 ){
-		Zs  = grid2D(i  , j+1);
-		Ze  = 0.;
-		Zse = 0.;
-		Znw = 0.;
-		Zsw = grid2D(i-1, j+1);
-		Zw  = grid2D(i-1, j);
-		Zne = 0.;
-		Zn  = 0.;
-	} 
-	else if ( i == 0 && j == nrows-1 ){
-		Zs  = 0.;
-		Ze  = grid2D(i+1, j  );
-		Zse = 0.;
-		Znw = 0.;
-		Zsw = 0.;
-		Zw  = 0.;
-		Zne = grid2D(i+1, j-1);
-		Zn  = grid2D(i  , j-1);
-	} 
-	else if ( i == ncols-1 && j == nrows-1 ){
-		Zs  = 0.;
-		Ze  = 0.;
-		Zse = 0.;
-		Znw = grid2D(i-1, j-1);
-		Zsw = 0.;
-		Zw  = grid2D(i-1, j  );
-		Zne = 0.;
-		Zn  = grid2D(i  , j-1);
-	} 
-
-	// Borders
-	else if ( i > 0 && i < ncols-1 && j == 0 ) {
-		Zs  = grid2D(i  , j+1);
-		Ze  = grid2D(i+1, j  );
-		Zse = grid2D(i+1, j+1);
-		Znw = 0.;
-		Zsw = grid2D(i-1, j+1);
-		Zw  = grid2D(i-1, j  );
-		Zne = 0.;
-		Zn  = 0.;		
-	} 
-	else if ( i == 0 && j > 0 && j < nrows-1 ) {
-		Zs  = grid2D(i  , j+1);
-		Ze  = grid2D(i+1, j  );
-		Zse = grid2D(i+1, j+1);
-		Znw = 0.;
-		Zsw = 0.;
-		Zw  = 0.;
-		Zne = grid2D(i+1, j-1);
-		Zn  = grid2D(i  , j-1);
-	} 
-	else if ( i > 0 && i < ncols-1 && j == nrows-1 ){
-		Zs  = 0.;
-		Ze  = grid2D(i+1, j  );
-		Zse = 0.;
-		Znw = grid2D(i-1, j-1);
-		Zsw = 0.;
-		Zw  = grid2D(i-1, j  );
-		Zne = grid2D(i+1, j-1);
-		Zn  = grid2D(i  , j-1);
-	
-	}
-	// if(i == ncols-1 && j > 0 && j < nrows-1) 
-	else {
-		Zs  = grid2D(i  , j+1);
-		Ze  = 0.;
-		Zse = 0.;
-		Znw = grid2D(i-1, j-1);
-		Zsw = grid2D(i-1, j+1);
-		Zw  = grid2D(i-1, j  );
-		Zne = 0.;
-		Zn  = grid2D(i  , j-1);
+	if(A[2][2]!=IOUtils::nodata) {
+		if(A[1][1]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[1][1])/(cellsize*sqrt2) );
+		if(A[1][2]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[1][2])/(cellsize) );
+		if(A[1][3]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[1][3])/(cellsize*sqrt2) );
+		if(A[2][1]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[2][1])/(cellsize) );
+		if(A[2][3]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[2][3])/(cellsize) );
+		if(A[3][1]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[3][1])/(cellsize*sqrt2) );
+		if(A[3][2]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[3][2])/(cellsize) );
+		if(A[3][3]!=IOUtils::nodata)
+			smax = MAX( smax, fabs(A[2][2] - A[3][3])/(cellsize*sqrt2) );
 	}
 
-	// Calculate the opposite direction W-E, N-S, SW-NE, SE-NW
-	double z = grid2D(i, j);
-	Zwe   = 0.5 * OppositeDir(Zw, Ze, z);
-	Zsn   = 0.5 * OppositeDir(Zs, Zn, z);
-	Zswne = 0.5 * OppositeDir(Zsw, Zne, z);
-	Znwse = 0.5 * OppositeDir(Znw, Zse, z);
-	
-	// Return the curvature
-	const double sqrt2 = sqrt(2.);
-	return 0.25 * ( 0.5*(z-Zwe) + 0.5*(z-Zsn) + (0.5*(z-Zswne)/sqrt2) + (0.5*(z-Znwse)/sqrt2) );
+	if(smax<0.)
+		return IOUtils::nodata;
+	return smax;
 }
 
-double DEMObject::safeGet(const long& i, const long& j)
+double DEMObject::lineGradient(const double& A1, const double& A2, const double& A3) {
+//best effort to calculate the local gradient
+	double delta = IOUtils::nodata;
+
+	if(A3!=IOUtils::nodata && A1!=IOUtils::nodata) {
+		delta = A3 - A1;
+	} else {
+		if(A2!=IOUtils::nodata) {
+			if(A3!=IOUtils::nodata) 
+				delta = (A3 - A2) * 2.;
+			if(A1!=IOUtils::nodata) 
+				delta = (A2 - A1) * 2.;
+		}
+	}
+
+	return delta;
+}
+
+double DEMObject::fillMissingGradient(const double& delta1, const double& delta2) {
+//If a gradient could not be computed, try to fill it with some neighboring value
+	double dx = IOUtils::nodata;
+
+	if(delta1!=IOUtils::nodata && delta2!=IOUtils::nodata) {
+		dx = 0.5 * (delta1+delta2);
+	} else {
+		if(delta1!=IOUtils::nodata) dx = delta1;
+		if(delta2!=IOUtils::nodata) dx = delta2;
+	}
+
+	return dx;
+}
+
+void DEMObject::surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]) {
+//Compute the gradient for a given cell (i,j) accross its eight surrounding cells (Horn, 1981)
+	double dx1, dx2, dx3;
+	double dy1, dy2, dy3;
+
+	//general calculation
+	dx1 = lineGradient(A[3][1], A[3][2], A[3][3]);
+	dx2 = lineGradient(A[2][1], A[2][2], A[2][3]);
+	dx3 = lineGradient(A[1][1], A[1][2], A[1][3]);
+
+	dy1 = lineGradient(A[3][1], A[2][1], A[1][1]);
+	dy2 = lineGradient(A[3][2], A[2][2], A[1][2]);
+	dy3 = lineGradient(A[3][3], A[2][3], A[1][3]);
+
+	//now trying to fill whatever could not be filled...
+	if(dx1==IOUtils::nodata) dx1 = fillMissingGradient(dx2, dx3);
+	if(dx2==IOUtils::nodata) dx2 = fillMissingGradient(dx1, dx3);
+	if(dx3==IOUtils::nodata) dx3 = fillMissingGradient(dx1, dx2);
+	if(dy1==IOUtils::nodata) dy1 = fillMissingGradient(dy2, dy3);
+	if(dy2==IOUtils::nodata) dy2 = fillMissingGradient(dy1, dy3);
+	if(dy3==IOUtils::nodata) dy3 = fillMissingGradient(dy1, dy2);
+
+	if(dx1!=IOUtils::nodata && dy1!=IOUtils::nodata) {
+		// principal axis twice to emphasize height difference in that direction
+		dx_sum = (dx1 + 2.*dx2 + dx3) * 0.25;
+		dy_sum = (dy1 + 2.*dy2 + dy3) * 0.25;
+	} else {
+		//if dx1==nodata, this also means that dx2==nodata and dx3==nodata
+		//(otherwise, dx1 would have received a copy of either dx2 or dx3)
+		dx_sum = IOUtils::nodata;
+		dy_sum = IOUtils::nodata;
+	}
+}
+
+double DEMObject::avgHeight(const double& z1, const double &z2, const double& z3) {
+//this safely computes the average height accross a vector
+
+	if(z1!=IOUtils::nodata && z3!=IOUtils::nodata) {
+		return 0.5*(z1+z3);
+	}
+	if(z1!=IOUtils::nodata && z2!=IOUtils::nodata) {
+		return 0.5*(z1+z2);
+	}
+	if(z3!=IOUtils::nodata && z2!=IOUtils::nodata) {
+		return 0.5*(z3+z2);
+	}
+
+	return IOUtils::nodata;
+}
+
+void DEMObject::getNeighbours(const unsigned int i, const unsigned int j, double A[4][4]) {
+//this fills a 3x3 table containing the neighbouring values
+		A[1][1] = safeGet(i-1, j+1);
+		A[1][2] = safeGet(i, j+1);
+		A[1][3] = safeGet(i+1, j+1);
+		A[2][1] = safeGet(i-1, j);
+		A[2][2] = safeGet(i, j);
+		A[2][3] = safeGet(i+1, j);
+		A[3][1] = safeGet(i-1, j-1);
+		A[3][2] = safeGet(i, j-1);
+		A[3][3] = safeGet(i+1, j-1);
+}
+
+double DEMObject::safeGet(const int i, const int j)
 {//this function would allow reading the value of *any* point, 
-//that is even for coordinates outside of the grid (where it woulod return nodata)
+//that is, even for coordinates outside of the grid (where it would return nodata)
 //this is to make implementing the slope/curvature computation easier for edges, holes, etc
 
-	if(i<0 || i>=(long)ncols) {
+	if(i<0 || i>=(signed)ncols) {
 		return IOUtils::nodata;
 	}
-	if(j<0 || j>=(long)nrows) {
+	if(j<0 || j>=(signed)nrows) {
 		return IOUtils::nodata;
 	}
 	
@@ -600,6 +571,8 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&max_slope,1);
 		buf.Pack(&min_curvature,1);
 		buf.Pack(&max_curvature,1);
+		buf.Pack(&slope_failures,1);
+		buf.Pack(&curvature_failures,1);
 		//unsigned int x,y;
 		//grid2D.size(x,y);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
@@ -625,6 +598,8 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&max_slope,1);
 		buf.UnPack(&min_curvature,1);
 		buf.UnPack(&max_curvature,1);
+		buf.UnPack(&slope_failures,1);
+		buf.UnPack(&curvature_failures,1);
 		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
 		slope.clear();
 		azi.clear();

@@ -514,65 +514,64 @@ void Interpol2D::SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW)
 {
 //This method computes the speed of the wind and returns a table in 2D with this values
 //This Wind interpolation is similar to Liston and Elder (2006)
-	double speed;			// Wind speed (m s-1)
-	double dir;			// Wind direction
-	double u;			// Zonal component u (m s-1)
-	double v;			// Meridional component v (m s-1)
-	double beta;			// Terrain slope
-	double azi;			// Topographic slope azimuth
-	double curvature;		// Topographic curvature
-	double slopeDir;		// Slope in the direction of the wind
-	double Ww;			// Wind weighting
-	double Od;			// Diverting factor
+	double speed;		// Wind speed (m s-1)
+	double dir;		// Wind direction
+	double u;		// Zonal component u (m s-1)
+	double v;		// Meridional component v (m s-1)
+	double beta;		// Terrain slope
+	double azi;		// Topographic slope azimuth
+	double curvature;	// Topographic curvature
+	double slopeDir;	// Slope in the direction of the wind
+	double Ww;		// Wind weighting
+	double Od;		// Diverting factor
 	
-	// For each cell
 	for (unsigned int i=0;i<VW.ncols-1;i++) {
 		for (unsigned int j=0;j<VW.nrows-1;j++){
-			// Get data
+			// Get input data
 			speed = VW.grid2D(i,j);
-			dir = DW.grid2D(i,j) * ((M_PI) / 180.);		
-
-			//Speed and direction converted to zonal et meridional
-			//components 
-			u = (-1.) * (speed * sin(dir));
-			v = (-1.) * (speed * cos(dir));
-
-			// Converted back to speed and direction
-			speed = sqrt(u*u + v*v);
-			dir = (1.5 * M_PI) - atan(v/u);
-			
-			// Get the slope of this cell
+			dir = DW.grid2D(i,j);
 			beta = dem.slope(i, j);
-			
-			// Get the slope azimuth of this cell
 			azi = dem.azi(i, j);
-			
-			// Get the curvature of this cell
 			curvature = dem.curvature(i, j);
 
-			//normalize curvature and beta. 
-			//Note: it should be slopeDir instead of beta, but beta is more efficient
-			//to compute (only once for each dem) and it should not be that different...
-			beta = (beta - dem.min_slope)/(dem.max_slope - dem.min_slope) - 0.5;
-			curvature = (curvature - dem.min_curvature)/(dem.max_curvature - dem.min_curvature) - 0.5;
+			if(speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
+				VW.grid2D(i, j) = IOUtils::nodata;
+				DW.grid2D(i, j) = IOUtils::nodata;
+			} else {
+				//convert direction to rad
+				dir *= ((M_PI) / 180.);
+				//Speed and direction converted to zonal et meridional
+				//components 
+				u = (-1.) * (speed * sin(dir));
+				v = (-1.) * (speed * cos(dir));
 
-			// Calculate the slope in the direction of the wind
-			slopeDir = beta * cos(dir - azi);
-	
-			// Calculate the wind weighting factor
-			Ww = 1. + wind_ys * slopeDir + wind_yc * curvature;
+				// Converted back to speed and direction
+				speed = sqrt(u*u + v*v);
+				dir = (1.5 * M_PI) - atan(v/u);
 
-			// Calculate the terrain-modified wind speed
-			VW.grid2D(i, j) = Ww * speed;
+				//normalize curvature and beta. 
+				//Note: it should be slopeDir instead of beta, but beta is more efficient
+				//to compute (only once for each dem) and it should not be that different...
+				beta = (beta - dem.min_slope)/(dem.max_slope - dem.min_slope) - 0.5;
+				curvature = (curvature - dem.min_curvature)/(dem.max_curvature - dem.min_curvature) - 0.5;
 
-			// Modify the wind direction by a diverting factor
-			Od = -0.5 * slopeDir * sin(2.*(azi - dir));
+				// Calculate the slope in the direction of the wind
+				slopeDir = beta * cos(dir - azi);
+		
+				// Calculate the wind weighting factor
+				Ww = 1. + wind_ys * slopeDir + wind_yc * curvature;
 
-			// Add this factor to the wind direction and
-			// transform this in degrees
-			DW.grid2D(i, j) = (dir + Od) * (180. / (M_PI));
-			if( DW.grid2D(i, j)>360. ) {
-				DW.grid2D(i, j) -= 360.;
+				// Modify the wind direction by a diverting factor
+				Od = -0.5 * slopeDir * sin(2.*(azi - dir));
+
+				// Calculate the terrain-modified wind speed
+				VW.grid2D(i, j) = Ww * speed;
+
+				// Add the diverting factor to the wind direction and convert to degrees
+				DW.grid2D(i, j) = (dir + Od) * (180. / (M_PI));
+				if( DW.grid2D(i, j)>360. ) {
+					DW.grid2D(i, j) -= 360.;
+				}
 			}
 		}
 	}
