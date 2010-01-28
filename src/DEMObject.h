@@ -42,40 +42,43 @@ class DEMObject: public Grid2DObject {
 		///Keywords for slope computation algorithm
 		typedef enum SLOPE_TYPE {
 			DFLT, ///< whatever algorithm that has been defined as default
+			FLEM, ///< four nearest neighbours (Fleming and Hoffer, 1979)
 			HICK, ///< maximum downhill slope method (Dunn and Hickey, 1998)
 			CORR, ///< surface normal vector using the two triangle method (Corripio, 2002) and eight-neighbor algorithm (Horn, 1981) for border cells
 			CARD ///< discretized azimuth directions (angles for N, NE, etc) and slope rounded to nearest integer
 		} slope_type;
 		
-		DEMObject();
+		DEMObject(const slope_type& _algorithm=DFLT);
 		
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
 			const double& xllcorner_in, const double& yllcorner_in,
 			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in);
+			const double& cellsize_in, const slope_type& _algorithm=DFLT);
 	
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
 			const double& xllcorner_in, const double& yllcorner_in,
 			const double& latitude_in, const double& longitude_in,
 			const double& cellsize_in, const Array2D<double>& altitude_in, 
-			const bool& _update=true);
+			const bool& _update=true, const slope_type& _algorithm=DFLT);
 		
-		DEMObject(const Grid2DObject& dem_in, const bool& _update=true);
+		DEMObject(const Grid2DObject& dem_in, const bool& _update=true, const slope_type& _algorithm=DFLT);
 
 		DEMObject (const DEMObject& _dem,
 				const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
 				const unsigned int& _ncols, const unsigned int& _nrows, //dimensions of the sub-plane
-				const bool& _update=true);
-		
+				const bool& _update=true, const slope_type& _algorithm=DFLT);
+
+		void setDefaultAlgorithm(const slope_type& _algorithm);
 		void update(const string& algorithm);
 		void update(const slope_type& algorithm=DFLT);
 		void updateAllMinMax();
 		void printFailures();
 
 	private:
-		void CalculateAziSlopeCurve(const slope_type& algorithm);
+		void CalculateAziSlopeCurve(slope_type algorithm);
 		double CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope);
 		void CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
+		void CalculateFleming(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		void CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		double getCurvature(double A[4][4]);
 
@@ -87,7 +90,7 @@ class DEMObject: public Grid2DObject {
 		void getNeighbours(const unsigned int i, const unsigned int j, double A[4][4]);
 		double safeGet(const int i, const int j);
 
-		static const slope_type dflt_algorithm;
+		slope_type dflt_algorithm;
 		unsigned int slope_failures; ///<contains the number of points that have an elevation but no slope
 		unsigned int curvature_failures; ///<contains the number of points that have an elevation but no curvature
 

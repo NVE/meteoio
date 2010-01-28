@@ -24,17 +24,18 @@
 * @file DEMObject.cc
 * @brief implementation of the DEMBoject class
 */
-const DEMObject::slope_type DEMObject::dflt_algorithm = DEMObject::CORR;
 
 /**
 * @brief Default constructor.
 * Initializes all variables to 0, except lat/long which are initialized to IOUtils::nodata
+* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject() : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz()
+DEMObject::DEMObject(const slope_type& _algorithm) : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 	slope_failures = curvature_failures = 0;
+	setDefaultAlgorithm(_algorithm);
 }
 
 /**
@@ -46,17 +47,19 @@ DEMObject::DEMObject() : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny()
 * @param _latitude (double) decimal latitude, can be IOUtils::nodata
 * @param _longitude (double) decimal longitude, can be IOUtils::nodata
 * @param _cellsize (double) value for cellsize in grid2D
+* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
-				const double& _cellsize)
+				const double& _cellsize, const slope_type& _algorithm)
 	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 	slope_failures = curvature_failures = 0;
+	setDefaultAlgorithm(_algorithm);
 }
 
 /**
@@ -70,20 +73,22 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 * @param _cellsize (double) value for cellsize in grid2D
 * @param _altitude (Array2D\<double\>&) grid2D of elevations
 * @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _xllcorner, const double& _yllcorner,
 				const double& _latitude, const double& _longitude,
 				const double& _cellsize, const Array2D<double>& _altitude,
-				const bool& _update)
+				const bool& _update, const slope_type& _algorithm)
 	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
+	setDefaultAlgorithm(_algorithm);
 	if(_update==false) {
 		updateAllMinMax();
 	} else {
-		update(dflt_algorithm);
+		update(_algorithm);
 	}
 }
 
@@ -91,16 +96,18 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 * @brief Constructor that sets variables from a Grid2DObject
 * @param _dem (Grid2DObject&) grid contained in a Grid2DObject
 * @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update)
+DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update, const slope_type& _algorithm)
   : Grid2DObject(_dem.ncols, _dem.nrows, _dem.xllcorner, _dem.yllcorner, _dem.latitude, _dem.longitude, _dem.cellsize, _dem.grid2D), 
     slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
+	setDefaultAlgorithm(_algorithm);
 	if(_update==false) {
 		updateAllMinMax();
 	} else {
-		update(dflt_algorithm);
+		update(_algorithm);
 	}
 }
 
@@ -113,9 +120,10 @@ DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update)
 * @param _ncols (unsigned int&) number of columns for the subset dem
 * @param _nrows (unsigned int&) number of rows for the subset dem
 * @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsigned int& _ny, 
-				 const unsigned int& _ncols, const unsigned int& _nrows, const bool& _update)
+				 const unsigned int& _ncols, const unsigned int& _nrows, const bool& _update, const slope_type& _algorithm)
 	: Grid2DObject(_dem, _nx,_ny, _ncols,_nrows), slope(_dem.slope,_nx,_ny, _ncols,_nrows),
 	  azi(_dem.azi,_nx,_ny, _ncols,_nrows), curvature(_dem.curvature,_nx,_ny, _ncols,_nrows),
 	  Nx(_dem.Nx,_nx,_ny, _ncols,_nrows), Ny(_dem.Ny,_nx,_ny, _ncols,_nrows), Nz(_dem.Nz,_nx,_ny, _ncols,_nrows)
@@ -125,10 +133,11 @@ DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsig
 	}
 
 	slope_failures = curvature_failures = 0;
+	setDefaultAlgorithm(_algorithm);
 	if(_update==false) {
 		updateAllMinMax();
 	} else {
-		update(dflt_algorithm);
+		update(_algorithm);
 	}
 }
 
@@ -150,12 +159,7 @@ void DEMObject::update(const slope_type& algorithm) {
 	Ny.resize(ncols, nrows);
 	Nz.resize(ncols, nrows);
 
-	// Calculate the slope and the slope azimuth
-	if(algorithm==DFLT) {
-		CalculateAziSlopeCurve(dflt_algorithm);
-	} else {
-		CalculateAziSlopeCurve(algorithm);
-	}
+	CalculateAziSlopeCurve(algorithm);
 	updateAllMinMax();
 }
 
@@ -183,11 +187,26 @@ void DEMObject::update(const string& algorithm) {
 		type=CORR;
 	} else if(algorithm.compare("CARDINAL")==0) {
 		type=CARD;
+	} else if(algorithm.compare("DEFAULT")==0) {
+		type=DFLT;
 	} else {
 		throw InvalidArgumentException("Chosen slope algorithm " + algorithm + " not available", AT);
 	}
 	
 	update(type);
+}
+
+/**
+* @brief Sets the default slope calculation algorithm
+* @param _algorithm specify the default algorithm to use for slope computation
+*/
+void DEMObject::setDefaultAlgorithm(const slope_type& _algorithm) {
+//This method MUST be called by each constructor!
+	if(_algorithm==DFLT) {
+		dflt_algorithm = CORR;
+	} else {
+		dflt_algorithm = _algorithm;
+	}
 }
 
 /**
@@ -228,9 +247,13 @@ void DEMObject::printFailures() {
 	}
 }
 
-void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
+void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
+
+	if(algorithm==DFLT) {
+		algorithm = dflt_algorithm;
+	}
 
 	slope_failures = curvature_failures = 0;
 	if(algorithm==HICK) {
@@ -258,6 +281,21 @@ void DEMObject::CalculateAziSlopeCurve(const slope_type& algorithm) {
 				} else {
 					getNeighbours(i, j, A);
 					CalculateCorripio(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
+					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
+					curvature(i,j) = getCurvature(A);
+				}
+			}
+		}
+	} else if(algorithm==FLEM) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if( grid2D(i,j) == IOUtils::nodata ) {
+					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
+					azi(i,j) = IOUtils::nodata;
+					curvature(i,j) = IOUtils::nodata;
+				} else {
+					getNeighbours(i, j, A);
+					CalculateFleming(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
 					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
 					curvature(i,j) = getCurvature(A);
 				}
@@ -359,6 +397,19 @@ void DEMObject::CalculateHick(double A[4][4], double& slope, double& Nx, double&
 			Ny = 0.;
 			Nz = 1.;
 		}
+	}
+}
+
+void DEMObject::CalculateFleming(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
+//This calculates the surface normal vector using method by Fleming and Hoffer (1979)
+
+	if(A[2][1]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata && A[3][2]!=IOUtils::nodata && A[1][2]!=IOUtils::nodata) {
+		Nx = 0.5 * (A[2][1] - A[2][3]) / cellsize;
+		Ny = 0.5 * (A[3][2] - A[1][2]) / cellsize;
+		Nz = 1.;
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) );
+	} else {
+		CalculateHick(A, slope, Nx, Ny, Nz);
 	}
 }
 
