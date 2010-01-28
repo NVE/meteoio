@@ -286,3 +286,26 @@ void Meteo2DInterpolator::interpolateLWR(Grid2DObject& lwr)
 	LWR.calculate(lwr);
 }
 
+#ifdef _POPC_
+#include "marshal_meteoio.h"
+void Meteo2DInterpolator::Serialize(POPBuffer &buf, bool pack)
+{
+//TODO: check this serialization!! It seems dubious that it would work at all...
+	if (pack)
+	{
+		//buf.Pack(&cfg,1);
+		/*buf.Pack(&dem,1);
+		marshal_METEO_DATASET(buf, vecData, 0, FLAG_MARSHAL, NULL);
+		marshal_STATION_DATASET(buf, vecMeta, 0, FLAG_MARSHAL, NULL);*/
+		marshal_map_str_vecstr(buf, mapAlgorithms, 0, FLAG_MARSHAL, NULL);
+	}
+	else
+	{
+		//buf.UnPack(&cfg,1);
+		/*buf.UnPack(&dem,1);
+		marshal_METEO_DATASET(buf, vecData, 0, !FLAG_MARSHAL, NULL);
+		marshal_STATION_DATASET(buf, vecMeta, 0, !FLAG_MARSHAL, NULL);*/
+		marshal_map_str_vecstr(buf, mapAlgorithms, 0, !FLAG_MARSHAL, NULL);
+	}
+}
+#endif

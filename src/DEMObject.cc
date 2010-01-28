@@ -626,6 +626,7 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&curvature_failures,1);
 		//unsigned int x,y;
 		//grid2D.size(x,y);
+		marshal_slope_type(buf, dflt_algorithm, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, azi, 0, FLAG_MARSHAL, NULL);
@@ -658,6 +659,7 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		Nx.clear();
 		Ny.clear();
 		Nz.clear();
+		marshal_slope_type(buf, dflt_algorithm, 0, !FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, slope, 0, !FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, azi, 0, !FLAG_MARSHAL, NULL);

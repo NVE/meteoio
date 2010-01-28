@@ -21,6 +21,7 @@
 #define MARSHAL_METEOIO_H
 
 #include "Grid2DObject.h"
+#include "DEMObject.h"
 #include "StationData.h"
 #include "MeteoData.h"
 #include <vector>
@@ -28,8 +29,11 @@
 
 typedef Array2D<double> TYPE_DOUBLE2D;
 typedef Array2D<int> TYPE_INT2D;
+typedef std::vector<std::string> STR_VECTOR;
 
 void marshal_uint(POPBuffer &buf,unsigned int &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp);
 
@@ -49,7 +53,11 @@ void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int
 
 void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_map_str_str(POPBuffer &buf, std::map<string, string> &data_map, int maxsize, int flag, POPMemspool *temp);
+void marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_map_str_str(POPBuffer &buf, std::map<std::string, std::string> &data_map, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &data_map, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp);
 

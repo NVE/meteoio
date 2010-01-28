@@ -37,7 +37,13 @@
  * @author Mathias Bavay and Thomas Egger
  * @date   2010-01-14
  */
+#ifdef _POPC_
+class Meteo2DInterpolator : POPBase {
+	public:
+		void Serialize(POPBuffer &buf, bool pack);
+#else
 class Meteo2DInterpolator {
+#endif
  	public:
 		/**
 		* @brief Constructor.

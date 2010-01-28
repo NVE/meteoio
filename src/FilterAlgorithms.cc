@@ -91,11 +91,11 @@ void FilterAlgorithms::parseFilterArguments(const std::string& filtername, const
 }
 
 void FilterAlgorithms::parseWindowFilterArguments(const std::string& filtername, 
-										const std::vector<std::string>& vecArgs_in,
-										const unsigned int& minArgs, const unsigned int& maxArgs, 
-										bool& isSoft, string& windowposition, vector<double>& vecArgs_out)
+							const std::vector<std::string>& vecArgs_in,
+							const unsigned int& minArgs, const unsigned int& maxArgs,
+							bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out)
 {
-	vector<string> vecArgs_new;
+	std::vector<std::string> vecArgs_new;
 	bool alreadyDefined = false;
 
 	for (unsigned int ii=0; ii<vecArgs_in.size(); ii++){

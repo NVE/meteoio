@@ -38,7 +38,7 @@ class MeteoData : POPBase {
 		void Serialize(POPBuffer &buf, bool pack);
 #else
 class MeteoData {
-#endif  
+#endif
 	public:
 		///this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0, 

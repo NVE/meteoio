@@ -23,16 +23,27 @@ void marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag, POP
 {
 	(void)maxsize;
 	(void)*temp;
-	if (flag & FLAG_MARSHAL)
-	{
+	if (flag & FLAG_MARSHAL) {
 		int n=(int)data;
 		buf.Pack(&n,1);
-	}
-	else
-	{
+	} else {
 		int n;
 		buf.UnPack(&n,1);
 		data=(unsigned int)n;
+	}
+}
+
+void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		int n=(int)data;
+		buf.Pack(&n,1);
+	} else {
+		int n;
+		buf.UnPack(&n,1);
+		data=(DEMObject::slope_type)n;
 	}
 }
 
@@ -40,14 +51,11 @@ void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize
 {
 	(void)maxsize;
 	(void)*temp;
-	if (flag & FLAG_MARSHAL)
-	{
+	if (flag & FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
 		if (n) buf.Pack((int *)((SPECIAL_PTS *)&data[0]), 2*n);
-	}
-	else
-	{
+	} else {
 		int n;
 
 		buf.UnPack(&n,1);
@@ -60,22 +68,17 @@ void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int
 {
 	(void)maxsize;
 	(void)*temp;
-	if(flag&FLAG_MARSHAL)
-	{
+	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			data[i].Serialize(buf,true);
 		}
-	}
-	else
-	{
+	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();  
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			MeteoData obj;
 			obj.Serialize(buf,false);
 			data.push_back(obj);
@@ -85,24 +88,17 @@ void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int
 
 void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
 {
-	(void)maxsize;
-	(void)*temp;
-	if(flag&FLAG_MARSHAL)
-	{
+	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			marshal_METEO_DATASET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
 		}
-	}
-	else
-	{
+	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();  
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			METEO_DATASET obj;
 			marshal_METEO_DATASET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
 			data.push_back(obj);
@@ -110,36 +106,75 @@ void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &da
 	}
 }
 
-void marshal_map_str_str(POPBuffer &buf, std::map<string, string> &data_map, int maxsize, int flag, POPMemspool *temp)
+void marshal_map_str_str(POPBuffer &buf, std::map<std::string, std::string> &data_map, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
-	if(flag&FLAG_MARSHAL)
-	{
+	if(flag&FLAG_MARSHAL) {
 		int n=data_map.size();
 		buf.Pack(&n,1);
-		for(std::map<string, string>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
-		{
-//	    DEBUG("it 1:%s 1:%s",(const char*)it->first.c_str(),(const char*)it->second.c_str());
+		for(std::map<std::string, std::string>::const_iterator it = data_map.begin(); it != data_map.end(); ++it) {
 			buf.Pack(&(it->first),1);
 			buf.Pack(&(it->second),1);
 		}
 
-	}
-	else
-	{
+	} else {
 		int n=0;
 		std::string key;
 		std::string value;
 		buf.UnPack(&n,1);
 		data_map.clear();
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			buf.UnPack(&key,1);
 			buf.UnPack(&value,1);
 			data_map[key] = value;
 		}
+	}
+}
 
+void marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if(flag&FLAG_MARSHAL) {
+		int n=data.size();
+		buf.Pack(&n,1);
+		for (int jj=0; jj<n; jj++) {
+			buf.Pack(&(data[jj]),1);
+		}
+	} else {
+		int n=0;
+		std::string value;
+		buf.UnPack(&n,1);
+		data.clear();
+		for(int jj=0;jj<n;jj++) {
+			buf.UnPack(&value,1);
+			data.push_back(value);
+		}
+	}
+}
+
+void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &data_map, int maxsize, int flag, POPMemspool *temp)
+{
+	if(flag&FLAG_MARSHAL) {
+		int n=data_map.size();
+		buf.Pack(&n,1);
+		for(std::map<std::string, STR_VECTOR>::const_iterator it = data_map.begin(); it != data_map.end(); ++it) {
+			buf.Pack(&(it->first),1);
+			STR_VECTOR tmp_strvec = it->second;
+			marshal_vecstr(buf, tmp_strvec, maxsize, FLAG_MARSHAL, temp);
+		}
+	} else {
+		int n=0;
+		std::string key;
+		std::vector<std::string> value;
+		buf.UnPack(&n,1);
+		data_map.clear();
+		for(int i=0;i<n;i++) {
+			buf.UnPack(&key,1);
+			marshal_vecstr(buf, value, maxsize, !FLAG_MARSHAL, temp);
+			data_map[key] = value;
+		}
 	}
 }
 
@@ -147,22 +182,17 @@ void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize,
 {
 	(void)maxsize;
 	(void)*temp;
-	if(flag&FLAG_MARSHAL)
-	{
+	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			data[i].Serialize(buf,true);
 		}
-	}
-	else
-	{
+	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			StationData obj;
 			obj.Serialize(buf,false);
 			data.push_back(obj);
@@ -172,24 +202,17 @@ void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize,
 
 void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
 {
-	(void)maxsize;
-	(void)*temp;
-	if(flag&FLAG_MARSHAL)
-	{
+	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			marshal_STATION_DATASET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
 		}
-	}
-	else
-	{
+	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			STATION_DATASET obj;
 			marshal_STATION_DATASET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
 			data.push_back(obj);
@@ -197,27 +220,22 @@ void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET>
 	}
 }
 
-void marshal_vector_Grid2DObject(POPBuffer &buf, vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
 	assert(false); /* This line is here to check if the method is used*/
-	if(flag&FLAG_MARSHAL)
-	{
+	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			data[i].Serialize(buf,true);
 		}
-	}
-	else
-	{
+	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();
-		for(int i=0;i<n;i++)
-		{
+		for(int i=0;i<n;i++) {
 			Grid2DObject obj; 
       //buf.UnPack(&obj,1);
 			obj.Serialize(buf,false);
@@ -231,37 +249,23 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
 {
 	(void)maxsize;
 	(void)*temp;
-	if (flag & FLAG_MARSHAL)
-	{
-      //int dim[2];
+	if (flag & FLAG_MARSHAL) {
 		unsigned int nx,ny;
 		data.size(nx,ny);
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
-      
-      //double **tmp=(double**)&data[0];//double **tmp=data;
-    
-		if (nx>0 && ny>0)
-		{
-          //for (int i=0;i<nx;i++,tmp++) buf.Pack(*tmp,ny);
-			for (unsigned int i=0;i<nx;i++) buf.Pack(&data[i][0],ny);
+		if (nx>0 && ny>0) {
+			for (unsigned int i=0;i<nx;i++) buf.Pack(&data(i,0),ny);
 		}
-	}
-	else
-	{
-		unsigned int nx,ny;//dim[2];
+	} else {
+		unsigned int nx,ny;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
-      //data.resize(nx,ny);
-      //double **tmp=data;
-    
-		if (nx>0 && ny>0)
-		{
+		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-	  //for (int i=0;i<nx;i++,tmp++) buf.UnPack(*tmp,ny); 
-			for (unsigned int i=0;i<nx;i++) buf.UnPack(&data[i][0],ny); 
-		}
-		else data.clear();
+			for (unsigned int i=0;i<nx;i++) buf.UnPack(&data(i,0),ny);
+		} else
+			data.clear();
 	}
 }
 
@@ -269,33 +273,25 @@ void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, 
 {
 	(void)maxsize;
 	(void)*temp;
-	if (flag & FLAG_MARSHAL)
-	{
+	if (flag & FLAG_MARSHAL) {
 		unsigned int dim[2];
 		data.size(dim[0],dim[1]);
 		buf.Pack(dim,2);
 		unsigned int nx=dim[0];
 		unsigned int ny=dim[1];
-      // int **tmp=&data[0];
-		if (nx>0 && ny>0)
-		{
-	  // for (int i=0;i<nx;i++,tmp++) buf.Pack(*tmp,ny); 
-			for (unsigned int i=0;i<nx;i++) buf.Pack(&data[i][0],ny); 
+		if (nx>0 && ny>0) {
+			for (unsigned int i=0;i<nx;i++) buf.Pack(&data(i,0),ny);
 		}
-	}
-	else
-	{
+	} else {
 		unsigned int dim[2];
 		buf.UnPack(dim,2);
 		unsigned int nx=dim[0];
 		unsigned int ny=dim[1];
-      //int **tmp=&data[0];
-		if (nx>0 && ny>0)
-		{
+		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-	  //for (int i=0;i<nx;i++,tmp++) buf.UnPack(*tmp,ny); 
-			for (unsigned int i=0;i<nx;i++) buf.UnPack(&data[i][0],ny); 
-		}else data.clear();
+			for (unsigned int i=0;i<nx;i++) buf.UnPack(&data(i,0),ny);
+		} else
+			data.clear();
 	}
 }
 
@@ -304,20 +300,18 @@ void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int fl
 	(void)maxsize;
 	(void)*temp;
 	assert(false); /* This line is here to check if the method is used*/
-	if (flag & FLAG_MARSHAL)
-	{
+	if (flag & FLAG_MARSHAL) {
 		unsigned int n=data.size();
 		buf.Pack(&n,1);
 		if (n) buf.Pack((double *)&data[0],n);
-	}
-	else
-	{
+	} else {
 		unsigned int n;
 		buf.UnPack(&n,1);
-		if (n){
+		if (n) {
 			buf.UnPack((double *)&data[0],n);
 			data.resize(n);
-		}else data.clear();
+		} else
+			data.clear();
 	}
 
 }
@@ -327,24 +321,20 @@ void marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, P
 	(void)maxsize;
 	(void)*temp;
 	assert(false); /* This line is here to check if the method is used*/
-	if (flag & FLAG_MARSHAL)
-	{
+	if (flag & FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		if (n)
-		{
+		if (n) {
 			buf.Pack((double *)((NODE *)&data[0]),n*(sizeof(NODE)/sizeof(double)));
 		}
-	}
-	else
-	{
+	} else {
 		int n;
 		buf.UnPack(&n,1);
-		if (n)
-		{
+		if (n) {
 			data.resize(n);
 			buf.UnPack((double *)((NODE *)&data[0]),n*(sizeof(NODE)/sizeof(double)));
-		}else data.clear();
+		} else
+			data.clear();
 	}
 }
 
@@ -353,13 +343,11 @@ void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int 
 	(void)maxsize;
 	(void)*temp;
 	assert(false); /* This line is here to check if the method is used*/
-	if (flag & FLAG_MARSHAL)
-	{
+	if (flag & FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
 		NODE *tmp=&data[0];
-		for (int i=0;i<n;i++,tmp++)
-		{
+		for (int i=0;i<n;i++,tmp++) {
 			buf.Pack(&(tmp->u),1);
 			buf.Pack(&(tmp->v),1);
 			buf.Pack(&(tmp->w),1);
@@ -374,9 +362,7 @@ void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int 
 			buf.Pack(&(tmp->wstar),1);
 			buf.Pack(&(tmp->e),1);
 		}
-	}
-	else
-	{
+	} else {
 		int n;
 		buf.UnPack(&n,1);
 		if(n>0)
@@ -384,8 +370,7 @@ void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int 
 		else
 			data.clear();
 		NODE *tmp=&data[0];
-		for (int i=0;i<n;i++,tmp++)
-		{
+		for (int i=0;i<n;i++,tmp++) {
 			buf.UnPack(&(tmp->u),1);
 			buf.UnPack(&(tmp->v),1);
 			buf.UnPack(&(tmp->w),1);
@@ -408,13 +393,11 @@ void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int f
 	(void)maxsize;
 	(void)*temp;
 	assert(false); /* This line is here to check if the method is used*/
-	if (flag & FLAG_MARSHAL)
-	{
+	if (flag & FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
 		NODE *tmp=&data[0];
-		for (int i=0;i<n;i++,tmp++)
-		{
+		for (int i=0;i<n;i++,tmp++) {
 			buf.Pack(&(tmp->u),1);
 			buf.Pack(&(tmp->v),1);
 			buf.Pack(&(tmp->w),1);
@@ -424,9 +407,7 @@ void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int f
 			buf.Pack(&(tmp->lm),1);
 			buf.Pack(&(tmp->e),1);
 		}
-	}
-	else
-	{
+	} else {
 		int n;
 		buf.UnPack(&n,1);
 		if(n>0)
@@ -434,8 +415,7 @@ void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int f
 		else
 			data.clear();
 		NODE *tmp=&data[0];
-		for (int i=0;i<n;i++,tmp++)
-		{
+		for (int i=0;i<n;i++,tmp++) {
 			buf.UnPack(&(tmp->u),1);
 			buf.UnPack(&(tmp->v),1);
 			buf.UnPack(&(tmp->w),1);
