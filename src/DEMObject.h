@@ -73,6 +73,7 @@ class DEMObject: public Grid2DObject {
 		void update(const slope_type& algorithm=DFLT);
 		void updateAllMinMax();
 		void printFailures();
+		void sanitize();
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);

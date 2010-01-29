@@ -247,6 +247,28 @@ void DEMObject::printFailures() {
 	}
 }
 
+/**
+* @brief Clean up the DEM Object
+* When computing the slope and curvature, it is possible to get points where the elevation is known
+* but where no slope/azimuth/normals/curvature could be computed. This method sets the elevation to nodata for such points,
+* so that latter use of the DEM would be simpler (simply test the elevation in order to know if the point can be used
+* and it guarantees that all other informations are available).If the slope/azimuth/normals/curvature tables were manually updated, this method will NOT perform any work (it requires the count of slopes/curvature failures to be greater than zero)
+*
+* IMPORTANT: calling this method DOES change the table of elevations!
+*/
+void DEMObject::sanitize() {
+
+	if(slope_failures>0 || curvature_failures>0) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if(((slope(i,j)==IOUtils::nodata) || (curvature(i,j)==IOUtils::nodata)) && (grid2D(i,j)!=IOUtils::nodata)) {
+					grid2D(i,j) = IOUtils::nodata;
+				}
+			}
+		}
+	}
+}
+
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
