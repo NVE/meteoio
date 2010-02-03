@@ -47,20 +47,20 @@ void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize
 	}
 }
 
-void marshal_CSpecialPTSArray(POPBuffer &buf,CSpecialPTSArray &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_POINTSArray(POPBuffer &buf,POINTSArray &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		if (n) buf.Pack((int *)((SPECIAL_PTS *)&data[0]), 2*n);
+		if (n) buf.Pack((int *)((POINT *)&data[0]), 2*n);
 	} else {
 		int n;
 
 		buf.UnPack(&n,1);
 		data.resize(n);
-		if (n) buf.UnPack((int *)((SPECIAL_PTS *)&data[0]), 2*n);
+		if (n) buf.UnPack((int *)((POINT *)&data[0]), 2*n);
 	}
 }
 

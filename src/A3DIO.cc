@@ -631,7 +631,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	cleanup();
 }
 
-void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
+void A3DIO::readSpecialPoints(POINTSArray& pts)
 {
 	std::string filename="", line_in="";
 	std::vector<std::string> tmpvec;
@@ -669,7 +669,7 @@ void A3DIO::readSpecialPoints(CSpecialPTSArray& pts)
 	}
 	cleanup();
 
-	//Now put everything into that legacy struct CSpecialPTSArray
+	//Now put everything into that legacy struct POINTSArray
 	pts.resize(mypts.size());
 
 	for (unsigned int jj=0; jj<mypts.size(); jj++) {

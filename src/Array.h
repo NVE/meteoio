@@ -135,12 +135,12 @@ template<class T> T Array<T>::getMax() {
 	return max;
 }
 
-struct SPECIAL_PTS
+struct POINT
 {
   unsigned int ix;
   unsigned int iy;
 };
 
-typedef Array<SPECIAL_PTS> CSpecialPTSArray;
+typedef Array<POINT> POINTSArray;
 
 #endif

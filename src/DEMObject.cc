@@ -19,6 +19,7 @@
 #include <limits>
 #include "DEMObject.h"
 #include "Grid2DObject.h"
+#include "Array.h"
 
 /**
 * @file DEMObject.cc
@@ -257,12 +258,135 @@ void DEMObject::printFailures() {
 * IMPORTANT: calling this method DOES change the table of elevations!
 */
 void DEMObject::sanitize() {
-
 	if(slope_failures>0 || curvature_failures>0) {
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			for ( unsigned int j = 0; j < nrows; j++ ) {
 				if(((slope(i,j)==IOUtils::nodata) || (curvature(i,j)==IOUtils::nodata)) && (grid2D(i,j)!=IOUtils::nodata)) {
 					grid2D(i,j) = IOUtils::nodata;
+				}
+			}
+		}
+	}
+}
+
+/**
+* @brief Computes the horizontal distance between two points in a metric grid
+* @param xcoord1 east coordinate of the first point
+* @param ycoord1 north coordinate of the first point
+* @param xcoord2 east coordinate of the second point
+* @param ycoord2 north coordinate of the second point
+* @return horizontal distance in meters
+*
+*/
+double DEMObject::horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2)
+{
+	return sqrt( pow2(xcoord2-xcoord1) + pow2(ycoord2-ycoord1) );
+}
+
+
+/**
+* @brief Returns the distance *following the terrain* between two coordinates
+* @param xcoord1 east coordinate of the first point
+* @param ycoord1 north coordinate of the first point
+* @param xcoord2 east coordinate of the second point
+* @param ycoord2 north coordinate of the second point
+* @return distance following the terrain in meters
+*
+*/
+double DEMObject::terrainDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2) {
+	std::vector<POINT> vec_points;
+	double distance=0.;
+	unsigned int last_point=0; //point 0 is always the starting point
+
+	getPointsBetween(xcoord1, ycoord1, xcoord2, ycoord2, vec_points);
+	if(vec_points.size()<=1) {
+		return 0.;
+	}
+
+	for(unsigned int ii=1; ii<vec_points.size(); ii++) {
+		const int ix1=vec_points[last_point].ix;
+		const int iy1=vec_points[last_point].iy;
+		const int ix2=vec_points[ii].ix;
+		const int iy2=vec_points[ii].iy;
+
+		if(grid2D(ix2,iy2)!=IOUtils::nodata) {
+			if(grid2D(ix1,iy1)!=IOUtils::nodata) {
+				//distance += sqrt( pow2((ix2-ix1)*cellsize) + pow2((iy2-iy1)*cellsize) + pow2(grid2D(ix2,iy2)-grid2D(ix1,iy1)) );
+				const double z1=grid2D(ix1,iy1);
+				const double z2=grid2D(ix2,iy2);
+				const double tmpx=pow2((double)(ix2-ix1)*cellsize);
+				const double tmpy=pow2((double)(iy2-iy1)*cellsize);
+				const double tmpz=pow2(z2-z1);
+				distance += sqrt( tmpx + tmpy + tmpz );
+			}
+			last_point = ii;
+		}
+	}
+
+	return distance;
+}
+
+/**
+* @brief Returns a list of grid points that are on the straight line between two coordinates
+* @param xcoord1 east coordinate of the first point
+* @param ycoord1 north coordinate of the first point
+* @param xcoord2 east coordinate of the second point
+* @param ycoord2 north coordinate of the second point
+* @param vec_points vector of points that are in between
+*
+*/
+void DEMObject::getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, vector<POINT>& vec_points) {
+
+	if(xcoord1>xcoord2) {
+		//we want xcoord1<xcoord2, so we swap the two points
+		const double tmpx = xcoord1, tmpy= ycoord1;
+		xcoord1 = xcoord2; ycoord1 = ycoord2;
+		xcoord2 = tmpx, ycoord2 = tmpy;
+	}
+
+	//extension of the line segment (pts1, pts2) along the X axis
+	const int ix1 = (int)floor( (xcoord1-xllcorner)/cellsize );
+	const int iy1 = (int)floor( (ycoord1-yllcorner)/cellsize );
+	const int ix2 = (int)floor( (xcoord2-xllcorner)/cellsize );
+	const int iy2 = (int)floor( (ycoord2-yllcorner)/cellsize );
+
+	if(ix1==ix2) {
+		//special case of vertical alignement
+		for(int iy=MIN(iy1,iy2); iy<=MAX(iy1,iy2); iy++) {
+			POINT pts;
+			pts.ix = ix1;
+			pts.iy = iy;
+			vec_points.push_back(pts);
+		}
+	} else {
+		//normal case
+		//equation of the line between the two points
+		const double a = ((double)(iy2-iy1)) / ((double)(ix2-ix1));
+		const double b = (double)iy1 - a * (double)ix1;
+
+		for(int ix=ix1; ix<=ix2; ix++) {
+			//extension of the line segment (ix, ix+1) along the Y axis
+			int y1 = (int)floor( a*(double)ix+b );
+			//const int y2 = MIN( (int)floor( a*((double)ix+1)+b ) , iy2);
+			int y2 = (int)floor( a*((double)ix+1)+b );
+			if(ix==ix2 && y1==iy2) {
+				//we don't want to overshoot when reaching the target cell
+				y2 = y1;
+			}
+
+			if(y1>y2) {
+				//we want y1<y2, so we swap the two coordinates
+				const double ytemp=y1;
+				y1=y2; y2=ytemp;
+			}
+
+			for(int iy=y1; iy<=y2; iy++) {
+				POINT pts;
+				pts.ix = ix;
+				pts.iy = iy;
+				//make sure we only return points within the dem
+				if(ix>0 && ix<(signed)ncols && iy>0 && iy<(signed)nrows) {
+					vec_points.push_back(pts);
 				}
 			}
 		}
@@ -332,8 +456,9 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 					curvature(i,j) = IOUtils::nodata;
 				} else {
 					getNeighbours(i, j, A);
-					CalculateCorripio(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
+					CalculateHick(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
 					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
+					//TODO: instead of PI for flat, get nodata and process it by an extra algorithm
 					curvature(i,j) = getCurvature(A);
 					if(azi(i,j)!=IOUtils::nodata)
 						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);

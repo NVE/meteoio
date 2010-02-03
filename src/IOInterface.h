@@ -174,9 +174,9 @@ class IOInterface : public PluginObject {
 		/**
 		* @brief Read a list of points by their grid coordinates
 		* This allows for example to get a list of points where to produce more detailed outputs.
-		* @param pts (CSpecialPTSArray) A vector of points coordinates
+		* @param pts (POINTSArray) A vector of points coordinates
 		*/
-		virtual void readSpecialPoints(CSpecialPTSArray& pts) = 0;
+		virtual void readSpecialPoints(POINTSArray& pts) = 0;
 
 		/**
 		* @brief Write a Grid2DObject

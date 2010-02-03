@@ -58,7 +58,7 @@ class GeotopIO : public IOInterface {
 							  const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
-		virtual void readSpecialPoints(CSpecialPTSArray& pts);
+		virtual void readSpecialPoints(POINTSArray& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name);
 		void read2DMeteo(const Date_IO&, vector<MeteoData>&, vector<StationData>&); ///<No buffering

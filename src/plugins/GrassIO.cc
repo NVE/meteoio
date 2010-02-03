@@ -199,7 +199,7 @@ void GrassIO::readMeteoData(const Date_IO&, const Date_IO&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GrassIO::readSpecialPoints(CSpecialPTSArray&)
+void GrassIO::readSpecialPoints(POINTSArray&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

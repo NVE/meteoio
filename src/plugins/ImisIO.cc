@@ -90,7 +90,7 @@ void ImisIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::readSpecialPoints(CSpecialPTSArray& pts)
+void ImisIO::readSpecialPoints(POINTSArray& pts)
 {
 	//Nothing so far
 	(void)pts;

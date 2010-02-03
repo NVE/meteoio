@@ -20,6 +20,7 @@
 
 #include "Array2D.h"
 #include "Grid2DObject.h"
+#include "Array.h"
 #include "IOUtils.h"
 
 /**
@@ -74,6 +75,9 @@ class DEMObject: public Grid2DObject {
 		void updateAllMinMax();
 		void printFailures();
 		void sanitize();
+		double horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
+		double terrainDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
+		void getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, vector<POINT>& vec_points);
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);

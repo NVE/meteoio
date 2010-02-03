@@ -41,7 +41,7 @@
  
 class Interpol2D {
 	public:
-		///Keywords for selecting the spatial interpolation algorithm among the available methods for single source and multiple sources interpolations
+		///Keywords for selecting the spatial interpolation algorithm among the available methods for single source and multiple sources interpolations. More details about some of these algorithms can be found in "A Meteorological Distribution System for Hight-Resolution Terrestrial Modeling (MicroMet)", Liston and Alder, 2006.
 		typedef enum INTERP_TYPES {
 			I_PRESS, ///< standard air pressure interpolation
 			I_RH, ///< relative humidity interpolation

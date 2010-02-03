@@ -248,7 +248,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& d
 	}
 }
 
-void BufferedIOHandler::readSpecialPoints(CSpecialPTSArray& _cpa)
+void BufferedIOHandler::readSpecialPoints(POINTSArray& _cpa)
 {
 	iohandler.readSpecialPoints(_cpa);
 }

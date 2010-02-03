@@ -48,7 +48,7 @@ parclass IOHandler {
 				const unsigned& stationindex=IOUtils::npos);
 		void readMeteoData([in]const Date_IO& date, [proc=marshal_METEO_DATASET] METEO_DATASET& vecMeteo, [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
 		virtual void readAssimilationData([in] const Date_IO&,[out] Grid2DObject& da_out);
-		virtual void readSpecialPoints([out,proc=marshal_CSpecialPTSArray]CSpecialPTSArray& pts);
+		virtual void readSpecialPoints([out,proc=marshal_POINTSArray]POINTSArray& pts);
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
 
 	private:
