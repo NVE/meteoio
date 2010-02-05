@@ -31,6 +31,16 @@ double IOUtils::pow2(const double val)
 	return (val*val);
 }
 
+double IOUtils::pow3(const double val)
+{
+	return (val*val*val);
+}
+
+double IOUtils::pow4(const double val)
+{
+	return (val*val*val*val);
+}
+
 void IOUtils::trim(std::string& str)
 {
 	const std::string whitespaces (" \t\f\v\n\r");

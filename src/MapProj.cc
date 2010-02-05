@@ -37,6 +37,8 @@ void MapProj::initializeMaps()
 {	//Please don't forget to mirror the keywords here in the documentation in MapProj.h!!
 	to_wgs84["CH1903"]   = &MapProj::CH1903_to_WGS84;
 	from_wgs84["CH1903"] = &MapProj::WGS84_to_CH1903;
+	to_wgs84["UTM"]   = &MapProj::UTM_to_WGS84;
+	from_wgs84["UTM"] = &MapProj::WGS84_to_UTM;
 	to_wgs84["PROJ4"]   = &MapProj::PROJ4_to_WGS84;
 	from_wgs84["PROJ4"] = &MapProj::WGS84_to_PROJ4;
 	to_wgs84["LOCAL"]   = &MapProj::local_to_WGS84;
@@ -96,34 +98,26 @@ MapProj::MapProj(const double& _lat_ref, const double& _long_ref)
 	setFunctionPointers();
 }
 
-void MapProj::convert_to_WGS84(const double& easting, const double& northing, double& latitude, double& longitude) const
+void MapProj::convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const
 {
 	(this->*convToWGS84)(easting, northing, latitude, longitude);
 }
 
-void MapProj::convert_from_WGS84(const double& latitude, const double& longitude, double& easting, double& northing) const
+void MapProj::convert_from_WGS84(double latitude, double longitude, double& easting, double& northing) const
 {
 	(this->*convFromWGS84)(latitude, longitude, easting, northing);
 }
 
-void MapProj::parseLocalParameters(double& lat_ref, double& lon_ref) const
+void MapProj::parseLocalParameters(double& lat, double& lon) const
 {//lat/lon for the reference point of local grid is read from projection parameter coordparam
-	if 	((sscanf(coordparam.c_str(), "%lf %lf", &lat_ref, &lon_ref) < 2) && 
-		(sscanf(coordparam.c_str(), "(%lf,%lf)", &lat_ref, &lon_ref) < 2) &&
-		(sscanf(coordparam.c_str(), "%lf/%lf", &lat_ref, &lon_ref) < 2)) {
+	if 	((sscanf(coordparam.c_str(), "%lf %lf", &lat, &lon) < 2) &&
+		(sscanf(coordparam.c_str(), "(%lf,%lf)", &lat, &lon) < 2) &&
+		(sscanf(coordparam.c_str(), "%lf/%lf", &lat, &lon) < 2)) {
 			throw InvalidFormatException("Can not parse given lat/lon: "+coordparam,AT);
 	}
 }
 
-double MapProj::normalizeBearing(double angle)
-{//TODO: use fmod
-	if(angle<0.) angle = 360.0 + angle;
-	if(angle>360.) angle = angle - 360.;
-	return angle;
-}
-
-
-void MapProj::WGS84_to_CH1903(const double& lat_in, const double& long_in, double& east_out, double& north_out) const
+void MapProj::WGS84_to_CH1903(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	//converts WGS84 coordinates (lat,long) to the Swiss coordinates. See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
@@ -151,7 +145,7 @@ void MapProj::WGS84_to_CH1903(const double& lat_in, const double& long_in, doubl
 	*/
 }
 
-void MapProj::CH1903_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const
+void MapProj::CH1903_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 	//converts Swiss coordinates to WGS84 coordinates (lat,long). See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
@@ -182,7 +176,160 @@ void MapProj::CH1903_to_WGS84(const double& east_in, const double& north_in, dou
 	*/
 }
 
-void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double& east_out, double& north_out) const
+int MapProj::getUTMZone(const double latitude, const double longitude, std::string& zone_out) const
+{//This routine determines the correct UTM letter designator for the given latitude
+//UTM limits its coverage to [80S , 84N], outside of this, returns Z for the zone
+
+	//computing zone number, assuming longitude in [-180. ; 180[
+	int ZoneNumber = int((longitude + 180.)/6.) + 1;
+
+	// Special zones for Scandinavia
+	if( latitude >= 72.0 && latitude < 84.0 ) {
+		if(      longitude >= 0.0  && longitude <  9.0 ) ZoneNumber = 31;
+		else if( longitude >= 9.0  && longitude < 21.0 ) ZoneNumber = 33;
+		else if( longitude >= 21.0 && longitude < 33.0 ) ZoneNumber = 35;
+		else if( longitude >= 33.0 && longitude < 42.0 ) ZoneNumber = 37;
+	 }
+	if( latitude >= 56.0 && latitude < 64.0 && longitude >= 3.0 && longitude < 12.0 ) {
+		ZoneNumber = 32;
+	}
+
+	//getting zone letter
+	char zoneLetter = 'Z';
+	if     ((84 >= latitude) && (latitude >= 72)) zoneLetter = 'X';
+	else if((72 > latitude) && (latitude >= 64)) zoneLetter = 'W';
+	else if((64 > latitude) && (latitude >= 56)) zoneLetter = 'V';
+	else if((56 > latitude) && (latitude >= 48)) zoneLetter = 'U';
+	else if((48 > latitude) && (latitude >= 40)) zoneLetter = 'T';
+	else if((40 > latitude) && (latitude >= 32)) zoneLetter = 'S';
+	else if((32 > latitude) && (latitude >= 24)) zoneLetter = 'R';
+	else if((24 > latitude) && (latitude >= 16)) zoneLetter = 'Q';
+	else if((16 > latitude) && (latitude >= 8)) zoneLetter = 'P';
+	else if(( 8 > latitude) && (latitude >= 0)) zoneLetter = 'N';
+	else if(( 0 > latitude) && (latitude >= -8)) zoneLetter = 'M';
+	else if((-8 > latitude) && (latitude >= -16)) zoneLetter = 'L';
+	else if((-16 > latitude) && (latitude >= -24)) zoneLetter = 'K';
+	else if((-24 > latitude) && (latitude >= -32)) zoneLetter = 'J';
+	else if((-32 > latitude) && (latitude >= -40)) zoneLetter = 'H';
+	else if((-40 > latitude) && (latitude >= -48)) zoneLetter = 'G';
+	else if((-48 > latitude) && (latitude >= -56)) zoneLetter = 'F';
+	else if((-56 > latitude) && (latitude >= -64)) zoneLetter = 'E';
+	else if((-64 > latitude) && (latitude >= -72)) zoneLetter = 'D';
+	else if((-72 > latitude) && (latitude >= -80)) zoneLetter = 'C';
+
+	std::stringstream zone;
+	zone << ZoneNumber << zoneLetter;
+	zone_out = zone.str();
+
+	return ZoneNumber;
+}
+
+void MapProj::WGS84_to_UTM(double lat_in, double long_in, double& east_out, double& north_out) const
+{//converts WGS84 coordinates (lat,long) to UTM coordinates.
+//See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
+//also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
+//also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
+	//Geometric constants
+	const double to_rad = PI / 180.0;
+	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	const double eP2 = e2 / (1.-e2);	//second ellispoid eccentricity, squared (=(a²-b²)/b²)
+	const double k0 = 0.9996;	//scale factor for the projection
+
+	//getting posistion parameters
+	std::string zone;
+	long_in = fmod(long_in+360.+180., 360.) - 180.; //normalized to [-180. ; 180.[
+	const double Long = long_in * to_rad;
+	const double Lat = lat_in * to_rad;
+	const int zoneNumber = getUTMZone(lat_in, long_in, zone);
+	const double long0 = (double)((zoneNumber - 1)*6 - 180 + 3) * to_rad; //+3 puts origin in middle of zone
+
+	//Geometrical parameters
+	const double nu = a / sqrt(1.-e2*pow2(sin(Lat))); //radius of curvature of the earth perpendicular to the meridian plane
+	const double p = (Long-long0);
+
+	//calculating first the coefficients of the series, then the Meridional Arc M itself
+	const double n = (a-b)/(a+b);
+	const double n2=n*n, n3=n*n*n, n4=n*n*n*n, n5=n*n*n*n*n, n6=n*n*n*n*n*n;
+	const double A = a           * (1. - n + 5./4.*(n2 - n3) + 81./64.*(n4 - n5));
+	const double B = (3./2.*a)   * (n - n2 + 7./8.*(n3 - n4) + 55./64.*(n5 - n6));
+	const double C = (15./16.*a) * (n2 - n3 + 3./4.*(n4 - n5));
+	const double D = (35./48.*a) * (n3 - n4 + 11./16.*(n5 - n6));
+	//const double E = (315./512.*a) * (n4 - n5); //correctrion of ~0.03mm
+	const double M = A*Lat - B*sin(2.*Lat) + C*sin(4.*Lat) - D*sin(6.*Lat) /*+ E*sin(8.*Lat)*/;
+
+	//calculating the coefficients for the series
+	const double K1 = M*k0;
+	const double K2 = 1./4.*k0*nu*sin(2.*Lat);
+	const double K3 = (k0*nu*sin(Lat)*pow3(cos(Lat))*1./24.) * (5. - pow2(tan(Lat)) + 9.*eP2*pow2(cos(Lat)) + 4.*eP2*eP2*pow4(cos(Lat)));
+	const double K4 = k0*nu*cos(Lat);
+	const double K5 = (k0*nu*pow3(cos(Lat))*1./6.) * (1. - pow2(tan(Lat)) + eP2*pow2(cos(Lat)));
+
+	north_out = K1 + K2*p*p + K3*p*p*p*p;
+	east_out = K4*p + K5*p*p*p + 500000.0;
+
+	if(Lat < 0)
+		north_out += 10000000.0; //offset for southern hemisphere
+}
+
+void MapProj::UTM_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
+{//converts UTM coordinates to WGS84 coordinates (lat,long).
+//See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
+//also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
+//also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
+	//Geometric constants
+	const double to_deg = 180.0 / PI;
+	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	const double eP2 = e2 / (1.-e2);	//second ellispoid eccentricity, squared (=(a²-b²)/b²)
+	const double k0 = 0.9996;		//scale factor for the projection
+
+	//UTM Zone information
+	char zoneLetter;
+	int zoneNumber;
+	if 	((sscanf(coordparam.c_str(), "%d%c", &zoneNumber, &zoneLetter) < 2) &&
+		(sscanf(coordparam.c_str(), "%d %c)", &zoneNumber, &zoneLetter) < 2)) {
+			throw InvalidFormatException("Can not parse given UTM zone: "+coordparam,AT);
+	}
+	if(zoneLetter<='N') {
+		north_in -= 10000000.0; //offset used for southern hemisphere
+	}
+	east_in -= 500000.0; //longitude offset: x coordinate is relative to central meridian
+	const int long0 = (zoneNumber - 1)*6 - 180 + 3;  //+3 puts origin in middle of zone; HACK: this does not account for the Scandinavian irregular zones
+
+	//calculating footprint latitude fp
+	const double arc = north_in/k0; //Meridional arc
+	const double mu = arc / (a*(1.-e2/4.-3.*e2*e2/64.-5.*e2*e2*e2/256.));
+	const double e1 = (1.-b/a) / (1.+b/a); //simplification of [1 - (1 - e2)1/2]/[1 + (1 - e2)1/2]
+	const double J1 = (3./2.*e1 - 27./32.*e1*e1*e1);
+	const double J2 = (21./16.*e1*e1 - 55./32.*e1*e1*e1*e1);
+	const double J3 = (151./96.*e1*e1*e1);
+	const double J4 = (1097./512.*e1*e1*e1*e1);
+	const double fp = mu + J1*sin(2.*mu) + J2*sin(4.*mu) + J3*sin(6.*mu) + J4*sin(8.*mu);
+
+	//calculating the parameters
+	const double C1 = eP2 * pow2(cos(fp));
+	const double T1 = pow2( tan(fp) );
+	const double R1 = a*(1.-e2) / pow((1.-e2*pow2(sin(fp))), 1.5);
+	const double N1 = a / sqrt(1.-e2*pow2(sin(fp)));
+	const double D = east_in / (N1*k0);
+
+	//calculating the coefficients of the series for latitude and longitude
+	const double Q1 = N1*tan(fp)/R1;
+	const double Q2 = 0.5*D*D;
+	const double Q3 = (5. + 3.*T1 + 10.*C1 - 4.*C1*C1 - 9.*eP2) * 1./24.*D*D*D*D;
+	const double Q4 = (61. + 90.*T1 + 298.*C1 + 45.*T1*T1 - 3.*C1*C1 - 252.*eP2) * 1./720.*D*D*D*D*D*D;
+	const double Q5 = D;
+	const double Q6 = (1. + 2.*T1 + C1) * 1./6.*D*D*D;
+	const double Q7 = (5. - 2.*C1 + 28.*T1 - 3.*C1*C1 + 8.*eP2 + 24.*T1*T1) * 1./120.*D*D*D*D*D;
+
+	lat_out = (fp - Q1 * (Q2 - Q3 + Q4))*to_deg;
+	long_out = long0 + ((Q5 - Q6 + Q7)/cos(fp))*to_deg;
+}
+
+void MapProj::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 #ifdef PROJ4
 	const string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
@@ -218,7 +365,7 @@ void MapProj::WGS84_to_PROJ4(const double& lat_in, const double& long_in, double
 #endif
 }
 
-void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const
+void MapProj::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 #ifdef PROJ4
 	const std::string dest_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
@@ -254,7 +401,7 @@ void MapProj::PROJ4_to_WGS84(const double& east_in, const double& north_in, doub
 #endif
 }
 
-void MapProj::WGS84_to_local(const double& lat_ref, const double& lon_ref, const double& lat, const double& lon, double& easting, double& northing, const enum GEO_DISTANCES algo)
+void MapProj::WGS84_to_local(double lat_ref, double lon_ref, const double& lat, const double& lon, double& easting, double& northing, const enum GEO_DISTANCES algo)
 {
 	double alpha;
 	const double to_rad = PI / 180.0;
@@ -275,13 +422,11 @@ void MapProj::WGS84_to_local(const double& lat_ref, const double& lon_ref, const
 	northing = distance*cos(alpha*to_rad);
 }
 
-void MapProj::local_to_WGS84(const double& lat_ref, const double& lon_ref, const double& easting, const double& northing, double& lat, double& lon, const enum GEO_DISTANCES algo)
+void MapProj::local_to_WGS84(double lat_ref, double lon_ref, const double& easting, const double& northing, double& lat, double& lon, const enum GEO_DISTANCES algo)
 {
 	const double to_deg = 180.0 / PI;
-	double bearing = atan2(northing, easting)*to_deg;
 	const double distance = sqrt( IOUtils::pow2(easting) + IOUtils::pow2(northing) );
-
-	bearing = normalizeBearing(bearing); //TODO: are we really using compass bearing here?
+	const double bearing = fmod( atan2(easting, northing)*to_deg+360. , 360.);
 
 	switch(algo) {
 		case GEO_COSINE:
@@ -295,12 +440,12 @@ void MapProj::local_to_WGS84(const double& lat_ref, const double& lon_ref, const
 	}
 }
 
-void MapProj::WGS84_to_local(const double& lat_in, const double& long_in, double& east_out, double& north_out) const
+void MapProj::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	WGS84_to_local(ref_latitude, ref_longitude, lat_in, long_in, east_out, north_out, GEO_COSINE);
 }
 
-void MapProj::local_to_WGS84(const double& east_in, const double& north_in, double& lat_out, double& long_out) const
+void MapProj::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 	local_to_WGS84(ref_latitude, ref_longitude, east_in, north_in, lat_out, long_out, GEO_COSINE);
 }
@@ -405,32 +550,33 @@ double MapProj::VincentyDistance(const double& lat1, const double& lon1, const d
 	
 	//computation of the average forward bearing
 	double alpha1 = atan2(cos(U2)*sin(lambda), cos(U1)*sin(U2)-sin(U1)*cos(U2)*cos(lambda)) / to_rad; //forward azimuth
-	double alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda)) / to_rad; //reverse azimuth
+	//double alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda)) / to_rad; //reverse azimuth
 
 	//trying to get a normal compass bearing... TODO: make sure it works and understand why
 	alpha1 = fmod(-alpha1+360., 360.);
-	alpha2 = fmod(alpha2+180., 360.);
+	//alpha2 = fmod(alpha2+180., 360.);
 
-	alpha = (alpha1+alpha2)/2.;
+	//we only keep the forward bearing, otherwise the reverse projection will not produce the initial point
+	alpha = alpha1;
 	return s;
 }
 
 void MapProj::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
-{
+{//well, actually this is the DIRECT Vincenty formula
 	const double thresh = 1.e-12;	//convergence absolute threshold
-	const double a = 6378137.;	//major ellipsoid semi-axis, value for wgs84
-	const double b = 6356752.3142;	//minor ellipsoid semi-axis, value for wgs84
+	const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis, value for wgs84
 	const double f = (a - b) / a;	//ellispoid flattening
 	const double to_rad = PI / 180.0;
 	const double to_deg = 180.0 / PI;
 
 	const double alpha1 = bearing*to_rad;
 	const double tanU1 = (1.-f)*tan(lat_ref*to_rad);
-	const double cosU1 = 1./sqrt(1.+IOUtils::pow2(tanU1));
+	const double cosU1 = 1./sqrt(1.+tanU1*tanU1);
 	const double sinU1 = tanU1*cosU1;
 	const double sigma1 = atan2(tanU1,cos(alpha1));
 	const double sinAlpha = cosU1*sin(alpha1);
-	const double cos2alpha = 1. - IOUtils::pow2(sinAlpha);
+	const double cos2alpha = 1. - sinAlpha*sinAlpha;
 	const double u2 = cos2alpha * (a*a - b*b) / (b*b);
 	const double A = 1. + u2/16384. * (4096. + u2*(-768.+u2*(320.-175.*u2)) );
 	const double B = u2/1024. * (256. + u2*(-128.+u2*(74.-47.*u2)));
@@ -442,20 +588,20 @@ void MapProj::VincentyInverse(const double& lat_ref, const double& lon_ref, cons
 	while (fabs(sigma - sigma_p) > thresh) {
 		cos2sigma_m = cos( 2.*sigma1 + sigma );
 		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * ( 
-			cos(sigma)*(-1.+2.*IOUtils::pow2(cos2sigma_m)) 
-			-B/6. * cos2sigma_m * (-3.+4.*IOUtils::pow2(sin(sigma))) * (-3.+4.*IOUtils::pow2(cos2sigma_m))
+			cos(sigma)*(-1.+2.*cos2sigma_m*cos2sigma_m) 
+			-B/6. * cos2sigma_m * (-3.+4.*pow2(sin(sigma))) * (-3.+4.*cos2sigma_m*cos2sigma_m)
 			) );
 		sigma_p = sigma;
 		sigma = distance / (b*A) + delta_sigma;
 	}
 	
-	lat = atan2( sinU1*cos(sigma) + cosU1*cos(sigma)*cos(alpha1),
-		     (1.-f) * sqrt( IOUtils::pow2(sinAlpha) + IOUtils::pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
+	lat = atan2( sinU1*cos(sigma) + cosU1*sin(sigma)*cos(alpha1),
+		     (1.-f) * sqrt( sinAlpha*sinAlpha + pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
 		   );
 	const double lambda = atan2( sin(sigma)*sin(alpha1), cosU1*cos(sigma) - sinU1*sin(sigma)*cos(alpha1) );
 	const double C = f/16. * cos2alpha * (4.+f*(4.-3.*cos2alpha));
 	const double L = lambda - (1.-C) * f * sinAlpha * (
-				sigma + C * sin(sigma) * ( cos2sigma_m+C*cos(sigma) * (-1.+2.*IOUtils::pow2(cos2sigma_m)) )
+				sigma + C * sin(sigma) * ( cos2sigma_m+C*cos(sigma) * (-1.+2.*cos2sigma_m*cos2sigma_m) )
 				);
 
 	lat = lat * to_deg;

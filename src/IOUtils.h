@@ -66,6 +66,8 @@ namespace IOUtils {
 	bool checkEpsilonEquality(double val1, double val2, double epsilon);
 
 	double pow2(const double val);
+	double pow3(const double val);
+	double pow4(const double val);
 
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern = "");
 
