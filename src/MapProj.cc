@@ -64,7 +64,7 @@ void MapProj::setFunctionPointers()
 		//if ref_latitude has not yet been set (ie: we have not come from the specific
 		//local constructor
 		if(ref_latitude==IOUtils::nodata) {
-			parseLocalParameters(ref_latitude, ref_longitude);
+			parseLatLon(coordparam, ref_latitude, ref_longitude);
 		}
 	}
 }
@@ -108,14 +108,98 @@ void MapProj::convert_from_WGS84(double latitude, double longitude, double& east
 	(this->*convFromWGS84)(latitude, longitude, easting, northing);
 }
 
-void MapProj::parseLocalParameters(double& lat, double& lon) const
-{//lat/lon for the reference point of local grid is read from projection parameter coordparam
-	if 	((sscanf(coordparam.c_str(), "%lf %lf", &lat, &lon) < 2) &&
-		(sscanf(coordparam.c_str(), "(%lf,%lf)", &lat, &lon) < 2) &&
-		(sscanf(coordparam.c_str(), "%lf/%lf", &lat, &lon) < 2)) {
-			throw InvalidFormatException("Can not parse given lat/lon: "+coordparam,AT);
+/**
+* @brief Parse a latitude or longitude
+* It can be formatted as any of the following examples:
+* - 46° 48' 03" (with or without spaces, decimal or integer numbers)
+* - 46d 48' 03" (with or without spaces, decimal or integer numbers)
+* - 46 48' 03" (with spaces, decimal or integer numbers)
+* - 46° 48.02'(with or without spaces, decimal or integer numbers)
+* - 46d 48.02'(with or without spaces, decimal or integer numbers)
+* - 46 48.02'(with spaces, decimal or integer numbers)
+* - 46.802°
+* - 46.802d
+* - 46.802
+* @param[in] dms string containing the coordinate
+* @return coordinate in decimal
+*/
+double MapProj::dms_to_decimal(const std::string& dms) {
+	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata, decimal=IOUtils::nodata;
+
+	if 	((sscanf(dms.c_str(), "%lf°%lf'%lf\"", &d, &m ,&s) < 3) &&
+		(sscanf(dms.c_str(), "%lf° %lf' %lf\"", &d, &m ,&s) < 3) &&
+		(sscanf(dms.c_str(), "%lfd%lf'%lf\"", &d, &m ,&s) < 3) &&
+		(sscanf(dms.c_str(), "%lfd %lf' %lf\"", &d, &m ,&s) < 3) &&
+		(sscanf(dms.c_str(), "%lf %lf' %lf\"", &d, &m ,&s) < 3) &&
+		(sscanf(dms.c_str(), "%lf° %lf'", &d, &m) < 2) &&
+		(sscanf(dms.c_str(), "%lf°%lf'", &d, &m) < 2) &&
+		(sscanf(dms.c_str(), "%lfd %lf'", &d, &m) < 2) &&
+		(sscanf(dms.c_str(), "%lfd%lf'", &d, &m) < 2) &&
+		(sscanf(dms.c_str(), "%lf %lf'", &d, &m) < 2) &&
+		(sscanf(dms.c_str(), "%lf°", &d) < 1) &&
+		(sscanf(dms.c_str(), "%lfd", &d) < 1) &&
+		(sscanf(dms.c_str(), "%lf", &d) < 1)) {
+			throw InvalidFormatException("Can not parse given latitude or longitude: "+dms,AT);
 	}
+
+	decimal = d;
+	if(m!=IOUtils::nodata) {
+		decimal += m/60.;
+	}
+	if(s!=IOUtils::nodata) {
+		decimal += s/3600.;
+	}
+
+	return decimal;
 }
+
+/**
+* @brief Parse a latitude-longitude pair
+* It can be formatted as any of the following examples:
+* - lat lon (without any spaces in the latitude or longitude string)
+* - lat/lon
+* - (lat;lon)
+* - (lat,lon)
+* @param[in] coordinates string containing the coordinates
+* @param[out] lat parsed latitude
+* @param[out] lon parsed longitude
+*/
+void MapProj::parseLatLon(const std::string& coordinates, double&
+lat, double& lon) {
+	char lat_str[32]="";
+	char lon_str[32]="";
+
+	if(coordinates.size()>(32+32)) {
+		throw InvalidFormatException("Given lat/lon string is too long! ",AT);
+	}
+
+	if 	((sscanf(coordinates.c_str(), "%[0-9.,°d'\"] %[0-9.,°d'\"]", lat_str, lon_str) < 2) &&
+		(sscanf(coordinates.c_str(), "%[0-9.,°d'\" ]/%[0-9.,°d'\" ]", lat_str, lon_str) < 2) &&
+		(sscanf(coordinates.c_str(), "(%[0-9.,°d'\" ];%[0-9.,°d'\" ])", lat_str, lon_str) < 2) &&
+		(sscanf(coordinates.c_str(), "(%[0-9.°d'\" ],%[0-9.°d'\" ])", lat_str, lon_str) < 2)) {
+			throw InvalidFormatException("Can not parse given lat/lon: "+coordinates,AT);
+	}
+
+	lat = dms_to_decimal(string(lat_str));
+	lon = dms_to_decimal(string(lon_str));
+}
+
+/**
+* @brief Converts a decimal latitude or longitude to degrees, minutes, seconds
+* It formats its arguments as in the following example: 46°48'03"
+* @param[in] decimal decimal coordinate to convert
+* @return string containing the formatted coordinate
+*/
+std::string MapProj::decimal_to_dms(const double& decimal) {
+	std::stringstream dms;
+	int d = (int)floor(decimal);
+	int m = (int)floor( (decimal - (double)d)*60. );
+	int s = (int)floor( decimal - (double)d - (double)m/60. );
+
+	dms << d << "°" << m << "'" << s << "\"";
+	return dms.str();
+}
+
 
 void MapProj::WGS84_to_CH1903(double lat_in, double long_in, double& east_out, double& north_out) const
 {

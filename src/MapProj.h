@@ -74,6 +74,11 @@ class MapProj {
 	*/
 	MapProj(const double& _lat_ref, const double& _long_ref);
 
+	//their doxygen comments are in the .cc
+	static double dms_to_decimal(const std::string& dms);
+	static void parseLatLon(const std::string& coordinates, double& lat, double& lon);
+	static std::string decimal_to_dms(const double& decimal);
+
 	/**
 	* @brief Method converting towards WGS84
 	* @param[in] easting easting of the coordinate to convert
@@ -253,7 +258,6 @@ class MapProj {
  private:
 	void initializeMaps();
 	void setFunctionPointers();
-	void parseLocalParameters(double& lat, double& lon) const;
 	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
 
 	std::map<std::string, convfunc> to_wgs84;
