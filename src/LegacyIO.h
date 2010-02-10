@@ -65,6 +65,7 @@ typedef struct {
 	double slope;	/* In wind direction [-PI/2,PI/2]*/
 	double sl;	/* General (maximum) slope angle */
 	double tet;
+	double iniTet;
 	double p;
 	double Km;
 	double lm;
@@ -83,7 +84,9 @@ typedef struct {
 	double subl;
 	/*double c_new;*/
 	double specHumidity;//subl
-	double iniSpecHum;
+	double iniSpecHum; //subl
+	double fraction; //subl
+	
 } NODE;
 
 //Enumerate the slope shapes
