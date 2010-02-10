@@ -56,6 +56,11 @@ namespace IOUtils {
 	const unsigned int unodata = (unsigned int)-1;
 	const unsigned int npos    = (unsigned int)-1;
 
+	typedef enum NODATA_HANLDING {
+		RAW_NODATA, ///< no special handling of nodata
+		PARSE_NODATA ///< process nodata as "no data"
+	} nodata_handling;
+
 	/**
 	* @brief Check whether two values are equal regarding a certain epsilon environment (within certain radius of each other)
 	* @param val1

@@ -18,6 +18,7 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
+#include "IOUtils.h"
 #include <vector>
 #include <limits>
 #include "IOExceptions.h"
@@ -43,8 +44,25 @@ template<class T> class Array {
 		void clear();
 		void insertAt(int index, T e);
 		void removeAt(unsigned int index);
-		T getMin();
-		T getMax();
+		/**
+		* @brief returns the minimum value contained in the grid
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @return minimum value
+		*/
+		T getMin(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief returns the maximum value contained in the grid
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @return maximum value
+		*/
+		T getMax(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief returns the mean value contained in the grid
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @return mean value
+		*/
+		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
@@ -111,28 +129,76 @@ template<class T> void Array<T>::removeAt(unsigned int index) {
 	}
 }
 
-template<class T> T Array<T>::getMin() {
+template<class T> T Array<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {
 
 	T min = std::numeric_limits<T>::max();
 
-	for (unsigned int ii=0; ii<arraySize; ii++) {
-		const T val = vecData[ii];
-		if(val<min) min=val;
+	if(flag_nodata==IOUtils::RAW_NODATA) {
+		for (unsigned int ii=0; ii<arraySize; ii++) {
+			const T val = vecData[ii];
+			if(val<min) min=val;
+		}
+		return min;
+	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		for (unsigned int ii=0; ii<arraySize; ii++) {
+			const T val = vecData[ii];
+			if(val!=IOUtils::nodata && val<min) min=val;
+		}
+		if(min!=std::numeric_limits<T>::max()) return min;
+		else return (T)IOUtils::nodata;
+	} else {
+		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
-	
-	return min;
 }
 
-template<class T> T Array<T>::getMax() {
+template<class T> T Array<T>::getMax(const IOUtils::nodata_handling flag_nodata) const {
 
 	T max = -std::numeric_limits<T>::max();
 
-	for (unsigned int ii=0; ii<arraySize; ii++) {
-		const T val = vecData[ii];
-		if(val>max) max=val;
+	if(flag_nodata==IOUtils::RAW_NODATA) {
+		for (unsigned int ii=0; ii<arraySize; ii++) {
+			const T val = vecData[ii];
+			if(val>max) max=val;
+		}
+		return max;
+	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		for (unsigned int ii=0; ii<arraySize; ii++) {
+			const T val = vecData[ii];
+			if(val!=IOUtils::nodata && val>max) max=val;
+		}
+		if(max!=-std::numeric_limits<T>::max()) return max;
+		else return (T)IOUtils::nodata;
+	} else {
+		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
+}
 
-	return max;
+template<class T> T Array<T>::getMean(const IOUtils::nodata_handling flag_nodata) const {
+
+	T mean = 0;
+
+	if(flag_nodata==IOUtils::RAW_NODATA) {
+		for (unsigned int ii=0; ii<arraySize; ii++) {
+			const T val = vecData[ii];
+			mean += val;
+		}
+		const unsigned int count = arraySize;
+		if(count>0) return mean/(T)(count);
+		else return (T)0;
+	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		unsigned int count = 0;
+		for (unsigned int ii=0; ii<arraySize; ii++) {
+			const T val = vecData[ii];
+			if(val!=IOUtils::nodata) {
+				mean += val;
+				count++;
+			}
+		}
+		if(count>0) return mean/(T)(count);
+		else return (T)IOUtils::nodata;
+	} else {
+		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
+	}
 }
 
 struct POINT

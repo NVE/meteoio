@@ -216,17 +216,18 @@ void DEMObject::setDefaultAlgorithm(const slope_type& _algorithm) {
 */
 void DEMObject::updateAllMinMax() {
 //updates the min/max parameters of all 2D tables
-	min_altitude = grid2D.getMin();
-	max_altitude = grid2D.getMax();
-	min_slope = slope.getMin();
-	max_slope = slope.getMax();
-	min_curvature = curvature.getMin();
-	max_curvature = curvature.getMax();
+	min_altitude = grid2D.getMin(IOUtils::PARSE_NODATA);
+	max_altitude = grid2D.getMax(IOUtils::PARSE_NODATA);
+	min_slope = slope.getMin(IOUtils::PARSE_NODATA);
+	max_slope = slope.getMax(IOUtils::PARSE_NODATA);
+	min_curvature = curvature.getMin(IOUtils::PARSE_NODATA);
+	max_curvature = curvature.getMax(IOUtils::PARSE_NODATA);
 }
 
 /**
 * @brief Prints the list of points that have an elevation different than nodata but no slope or curvature
-* Such points can happen if they are surrounded by enough points whose elevation is nodata
+* Such points can happen if they are surrounded by too many points whose elevation is nodata
+* If no such points exist, it prints nothing.
 */
 void DEMObject::printFailures() {
 	bool header=true;

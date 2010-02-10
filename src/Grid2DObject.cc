@@ -66,7 +66,7 @@ Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _
 
 void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, double& _latitude, double& _longitude)
 {
-	const double easting = ((double)i+.5) * cellsize;
+	const double easting = ((double)i+.5) * cellsize; //HACK: is the coordinate the center of the cell?
 	const double northing = ((double)j+.5) * cellsize;
 
 	MapProj::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, MapProj::GEO_COSINE);

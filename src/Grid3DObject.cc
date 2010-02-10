@@ -121,7 +121,7 @@ void Grid3DObject::checkCoordinates(const MapProj& proj)
 }
 
 bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
-{
+{//HACK: altitude is missing!!
 	if( ncols==target.ncols && nrows==target.nrows && ndepth==target.ndepth &&
 		IOUtils::checkEpsilonEquality(latitude, target.latitude, 1.e-4) && 
 		IOUtils::checkEpsilonEquality(longitude, target.longitude, 1.e-4) &&
