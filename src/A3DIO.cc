@@ -331,9 +331,13 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	//1D and 2D data must correspond, that means that if there is 1D data
 	//for a certain date (e.g. 1.1.2006) then 2D data must exist (prec2006.txt etc), 
 	//otherwise throw FileNotFoundException
-	constructMeteo2DFilenames(vecMeteo[0][0].date, filenames);
+	Date_IO startDate(vecMeteo[0][0].date);
+	Date_IO endDate(vecMeteo[0][vecMeteo[0].size()-1].date);
 
+	constructMeteo2DFilenames(startDate, endDate, filenames);//get all files for all years
 	stations = getNrOfStations(filenames, hashStations);
+
+	constructMeteo2DFilenames(startDate, startDate, filenames);//get filenames for current year
 	cerr << "[I] Number of 2D meteo stations: " << stations << endl;
 
 	if (stations < 1) {
@@ -380,7 +384,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 
 			if (bufferindex < (vecMeteo[0].size())) { //number of 1D meteo data
 				//construct new filenames for the continued buffering
-				constructMeteo2DFilenames(vecMeteo[0][bufferindex].date, filenames);
+				constructMeteo2DFilenames(vecMeteo[0][bufferindex].date, vecMeteo[0][bufferindex].date, filenames);
 			}
 		} while(bufferindex < (vecMeteo[0].size()));
 	} catch(...) {
@@ -404,33 +408,38 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	}
 }
 
-void A3DIO::constructMeteo2DFilenames(const Date_IO& date_in, std::vector<std::string>& filenames)
+void A3DIO::constructMeteo2DFilenames(const Date_IO& startDate, const Date_IO& endDate, vector<string>& filenames)
 {
-	int year=0, dummy=0;
+	int startyear=0, endyear=0, dummy=0;
 	std::string tmp;
-	std::stringstream ss;
 
 	filenames.clear();
  
-	date_in.getDate(year, dummy, dummy);
-	ss << year;
-
+	startDate.getDate(startyear, dummy, dummy);
+	endDate.getDate(endyear, dummy, dummy);
 	cfg.getValue("METEOPATH", tmp); 
 
-	string precFilename = tmp + "/prec" + ss.str() + ".txt";
-	string rhFilename = tmp + "/rhum" + ss.str() + ".txt";
-	string taFilename = tmp + "/tair" + ss.str() + ".txt";
-	string wspdFilename = tmp + "/wspd" + ss.str() + ".txt";
-	string wdirFilename = tmp + "/wdir" + ss.str() + ".txt";
+	for (int yyyy = startyear; yyyy<=endyear; yyyy++){
+		std::stringstream ss;
+		ss << yyyy;
 
-	filenames.push_back(precFilename);
-	filenames.push_back(rhFilename);
-	filenames.push_back(taFilename);
-	filenames.push_back(wspdFilename);
-	filenames.push_back(wdirFilename);
+		string precFilename = tmp + "/prec" + ss.str() + ".txt";
+		string rhFilename = tmp + "/rhum" + ss.str() + ".txt";
+		string taFilename = tmp + "/tair" + ss.str() + ".txt";
+		string wspdFilename = tmp + "/wspd" + ss.str() + ".txt";
+		string wdirFilename = tmp + "/wdir" + ss.str() + ".txt";
+
+		filenames.push_back(precFilename);
+		filenames.push_back(rhFilename);
+		filenames.push_back(taFilename);
+		filenames.push_back(wspdFilename);
+		
+		if (IOUtils::fileExists(wdirFilename)) //keeping wdir optional
+			filenames.push_back(wdirFilename);
+	}
 
 	for (unsigned int ii=0; ii<filenames.size(); ii++) {
-		if (!IOUtils::fileExists(filenames[ii]) && ii<4) { //for keeping dw optional
+		if (!IOUtils::fileExists(filenames[ii])) {
 			throw FileNotFoundException(filenames[ii], AT);
 		}
 	}
@@ -448,12 +457,7 @@ unsigned int A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::ma
 
 		fin.clear();
 		fin.open (filename.c_str(), ifstream::in);
-		if (fin.fail()) {
-			if(ii==4) { //for keeping dw optional
-				return (hashStations.size());
-			}
-			throw FileAccessException(filename, AT);
-		}
+		if (fin.fail()) throw FileAccessException(filename, AT);
   
 		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
@@ -465,6 +469,7 @@ unsigned int A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::ma
 			for (unsigned int ii=4; ii<cols; ii++) {
 				unsigned int tmp_int = hashStations.count(tmpvec.at(ii));
 				if (tmp_int == 0) {
+					//cout << "Found station: " << tmpvec.at(ii) << endl;
 					hashStations[tmpvec.at(ii)] = hashStations.size();
 				}
 			}

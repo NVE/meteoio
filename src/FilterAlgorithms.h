@@ -72,14 +72,13 @@ class FilterAlgorithms {
 		 *          configured as "soft" and the centricity of the window is right then in the case, that there
 		 *          is not enough data on the right, data will be added to the window from the left.
 		 *
-		 *@code
-		 *          Valid examples for the io.ini file:
+		 * @code
+		 * Valid examples for the io.ini file:
 		 *          TA::filter1 = median_avg
 		 *          TA::arg1    = soft left 1 300 (300 minutes time span for the left leaning window)
 		 *          RH::filter1 = median_avg
 		 *          RH::arg1    = 10 100          (strictly centered window spanning 100 minutes and at least 10 points)
-		 *@endcode
-		 *
+		 * @endcode
 		 */
 		static bool MedianAvgFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
@@ -95,14 +94,13 @@ class FilterAlgorithms {
 		 *          configured as "soft" and the centricity of the window is right then in the case, that there
 		 *          is not enough data on the right, data will be added to the window from the left.
 		 *
-		 *@code
-		 *          Valid examples for the io.ini file:
+		 * @code
+		 * Valid examples for the io.ini file:
 		 *          TA::filter1 = mean_avg
 		 *          TA::arg1    = soft left 1 300 (300 minutes time span for the left leaning window)
 		 *          RH::filter1 = mean_avg
 		 *          RH::arg1    = 10 100          (strictly centered window spanning 100 minutes and at least 10 points)
-		 *@endcode
-		 *
+		 * @endcode
 		 */
 		static bool MeanAvgFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
