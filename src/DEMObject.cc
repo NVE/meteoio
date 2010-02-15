@@ -377,7 +377,7 @@ void DEMObject::getPointsBetween(double xcoord1, double ycoord1, double xcoord2,
 
 			if(y1>y2) {
 				//we want y1<y2, so we swap the two coordinates
-				const double ytemp=y1;
+				const int ytemp=y1;
 				y1=y2; y2=ytemp;
 			}
 

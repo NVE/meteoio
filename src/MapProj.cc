@@ -69,12 +69,29 @@ void MapProj::setFunctionPointers()
 	}
 }
 
+/**
+* @brief Default constructor
+* This constructor builds a dummy object that performs no conversions but can be used for comparison
+* purpose. This is more or less the euqivalent of NULL for a pointer...
+*/
 MapProj::MapProj()
 {
 	coordsystem = "NULL";
 	coordparam  = "NULL";
 }
 
+/**
+* \anchor mapproj_types
+* @brief Regular constructor: usually, this is the constructor to use
+* @param[in] _coordinatesystem string identifying the coordinate system to use
+* @param[in] _parameters string giving some additional parameters for the projection (optional)
+*
+* The coordinate system can be any of the following:
+* - CH1903 for coordinates in the Swiss Grid
+* - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T)
+* - PROJ4 for coordinate conversion relying on the Proj4 library
+* - LOCAL for local coordinate system (from reference point)
+*/
 MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _parameters)
 {
 	initializeMaps();
@@ -84,6 +101,13 @@ MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _param
 	setFunctionPointers();
 }
 
+/**
+* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+* Such a projection defines easting and northing as the distance (in meters) to a reference point
+* which coordinates have to be provided here.
+* @param[in] _lat_ref latitude of the reference point
+* @param[in] _long_ref longitude of the reference point
+*/
 MapProj::MapProj(const double& _lat_ref, const double& _long_ref)
 {
 	initializeMaps();
@@ -98,11 +122,25 @@ MapProj::MapProj(const double& _lat_ref, const double& _long_ref)
 	setFunctionPointers();
 }
 
+/**
+* @brief Method converting towards WGS84
+* @param[in] easting easting of the coordinate to convert
+* @param[in] northing northing of the coordinate to convert
+* @param[out] latitude converted latitude
+* @param[out] longitude converted longitude
+*/
 void MapProj::convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const
 {
 	(this->*convToWGS84)(easting, northing, latitude, longitude);
 }
 
+/**
+* @brief Method converting towards WGS84
+* @param[in] latitude latitude of the coordinate to convert
+* @param[in] longitude longitude of the coordinate to convert
+* @param[out] easting converted easting
+* @param[out] northing converted northing
+*/
 void MapProj::convert_from_WGS84(double latitude, double longitude, double& easting, double& northing) const
 {
 	(this->*convFromWGS84)(latitude, longitude, easting, northing);
@@ -200,7 +238,14 @@ std::string MapProj::decimal_to_dms(const double& decimal) {
 	return dms.str();
 }
 
-
+/**
+* @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
+* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
+* @param[in] lat_in Decimal Latitude
+* @param[in] long_in Decimal Longitude
+* @param[out] east_out easting coordinate (Swiss system)
+* @param[out] north_out northing coordinate (Swiss system)
+*/
 void MapProj::WGS84_to_CH1903(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	//converts WGS84 coordinates (lat,long) to the Swiss coordinates. See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
@@ -229,6 +274,14 @@ void MapProj::WGS84_to_CH1903(double lat_in, double long_in, double& east_out, d
 	*/
 }
 
+/**
+* @brief Coordinate conversion: from Swiss grid to WGS84 Lat/Long
+* See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
+* @param[in] east_in easting coordinate (Swiss system)
+* @param[in] north_in northing coordinate (Swiss system)
+* @param[out] lat_out Decimal Latitude
+* @param[out] long_out Decimal Longitude
+*/
 void MapProj::CH1903_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 	//converts Swiss coordinates to WGS84 coordinates (lat,long). See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
@@ -308,6 +361,14 @@ int MapProj::getUTMZone(const double latitude, const double longitude, std::stri
 	return ZoneNumber;
 }
 
+/**
+* @brief Coordinate conversion: from WGS84 Lat/Long to UTM grid
+* See http://www.oc.nps.edu/oc2902w/maps/utmups.pdf for more.
+* @param[in] lat_in Decimal Latitude
+* @param[in] long_in Decimal Longitude
+* @param[out] east_out easting coordinate (Swiss system)
+* @param[out] north_out northing coordinate (Swiss system)
+*/
 void MapProj::WGS84_to_UTM(double lat_in, double long_in, double& east_out, double& north_out) const
 {//converts WGS84 coordinates (lat,long) to UTM coordinates.
 //See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
@@ -357,6 +418,14 @@ void MapProj::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doub
 		north_out += 10000000.0; //offset for southern hemisphere
 }
 
+/**
+* @brief Coordinate conversion: from UTM grid to WGS84 Lat/Long
+* See http://www.oc.nps.edu/oc2902w/maps/utmups.pdf for more.
+* @param[in] east_in easting coordinate (UTM)
+* @param[in] north_in northing coordinate (UTM)
+* @param[out] lat_out Decimal Latitude
+* @param[out] long_out Decimal Longitude
+*/
 void MapProj::UTM_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {//converts UTM coordinates to WGS84 coordinates (lat,long).
 //See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
@@ -413,6 +482,13 @@ void MapProj::UTM_to_WGS84(double east_in, double north_in, double& lat_out, dou
 	long_out = long0 + ((Q5 - Q6 + Q7)/cos(fp))*to_deg;
 }
 
+/**
+* @brief Coordinate conversion: from WGS84 Lat/Long to proj4 parameters
+* @param lat_in Decimal Latitude
+* @param long_in Decimal Longitude
+* @param east_out easting coordinate (target system)
+* @param north_out northing coordinate (target system)
+*/
 void MapProj::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 #ifdef PROJ4
@@ -449,6 +525,13 @@ void MapProj::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, do
 #endif
 }
 
+/**
+* @brief Coordinate conversion: from proj4 parameters to WGS84 Lat/Long
+* @param east_in easting coordinate (Swiss system)
+* @param north_in northing coordinate (Swiss system)
+* @param lat_out Decimal Latitude
+* @param long_out Decimal Longitude
+*/
 void MapProj::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 #ifdef PROJ4
@@ -485,6 +568,16 @@ void MapProj::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, d
 #endif
 }
 
+/**
+* @brief Coordinate conversion: from WGS84 Lat/Long to local metric grid
+* @param lat_ref Decimal Latitude of origin (const double&)
+* @param lon_ref Decimal Longitude of origin (const double&)
+* @param lat Decimal Latitude (const double&)
+* @param lon Decimal Longitude(const double&)
+* @param easting easting coordinate in local grid (double&)
+* @param northing northing coordinate in local grid (double&)
+* @param algo select the algorith to be used for distances calculations (optional, default=GEO_VINCENTY)
+*/
 void MapProj::WGS84_to_local(double lat_ref, double lon_ref, const double& lat, const double& lon, double& easting, double& northing, const enum GEO_DISTANCES algo)
 {
 	double alpha;
@@ -506,6 +599,17 @@ void MapProj::WGS84_to_local(double lat_ref, double lon_ref, const double& lat, 
 	northing = distance*cos(alpha*to_rad);
 }
 
+
+/**
+* @brief Coordinate conversion: from local metric grid to WGS84 Lat/Long
+* @param lat_ref Decimal Latitude of origin (const double&)
+* @param lon_ref Decimal Longitude of origin (const double&)
+* @param easting easting coordinate in local grid (double&)
+* @param northing northing coordinate in local grid (double&)
+* @param lat Decimal Latitude (double&)
+* @param lon Decimal Longitude(double&)
+* @param algo select the algorith to be used for distances calculations (optional, default=GEO_VINCENTY)
+*/
 void MapProj::local_to_WGS84(double lat_ref, double lon_ref, const double& easting, const double& northing, double& lat, double& lon, const enum GEO_DISTANCES algo)
 {
 	const double to_deg = 180.0 / PI;
@@ -524,16 +628,41 @@ void MapProj::local_to_WGS84(double lat_ref, double lon_ref, const double& easti
 	}
 }
 
+/**
+* @brief Coordinate conversion: from WGS84 Lat/Long to local grid as given in coordparam
+* @param lat_in Decimal Latitude
+* @param long_in Decimal Longitude
+* @param east_out easting coordinate (target system)
+* @param north_out northing coordinate (target system)
+*/
 void MapProj::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	WGS84_to_local(ref_latitude, ref_longitude, lat_in, long_in, east_out, north_out, GEO_COSINE);
 }
 
+
+/**
+* @brief Coordinate conversion: from local grid as given in coordparam to WGS84 Lat/Long
+* @param east_in easting coordinate (Swiss system)
+* @param north_in northing coordinate (Swiss system)
+* @param lat_out Decimal Latitude
+* @param long_out Decimal Longitude
+*/
 void MapProj::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 	local_to_WGS84(ref_latitude, ref_longitude, east_in, north_in, lat_out, long_out, GEO_COSINE);
 }
 
+/**
+* @brief Spherical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
+* See http://www.movable-type.co.uk/scripts/latlong.html for more
+* @param[in] lat_ref Decimal Latitude (const double&)
+* @param[in] lon_ref Decimal Longitude (const double&)
+* @param[in] distance Distance in meters (const double&)
+* @param[in] bearing bearing in degrees, 0 being north (const double&)
+* @param[out] lat Decimal latitude of target point (double&)
+* @param[out] lon Decimal longitude of target point (double&)
+*/
 void MapProj::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
 {
 	const double Rearth = 6371.e3;
@@ -552,12 +681,23 @@ void MapProj::cosineInverse(const double& lat_ref, const double& lon_ref, const 
 	lon *= to_deg;
 }
 
+
 double MapProj::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
 {
 	double alpha;
 	return cosineDistance(lat1, lon1, lat2, lon2, alpha);
 }
 
+/**
+* @brief Spherical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
+* See http://www.movable-type.co.uk/scripts/latlong.html for more
+* @param[in] lat1 Decimal Latitude (const double&)
+* @param[in] lon1 Decimal Longitude (const double&)
+* @param[in] lat2 Decimal Latitude (const double&)
+* @param[in] lon2 Decimal Longitude (const double&)
+* @param[out] alpha average bearing
+* @return distance (double)
+*/
 double MapProj::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
 	const double Rearth = 6371.e3;
@@ -575,12 +715,25 @@ double MapProj::cosineDistance(const double& lat1, const double& lon1, const dou
 	return d;
 }
 
+
 double MapProj::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
 {
 	double alpha;
 	return VincentyDistance(lat1, lon1, lat2, lon2, alpha);
 }
 
+/**
+* @brief Vincenty Distance calculation between points in WGS84 (decimal Lat/Long)
+* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems",
+* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599,
+* see http://www.springerlink.com/content/y7108u6862473583 for more
+* @param[in] lat1 Decimal Latitude (const double&)
+* @param[in] lon1 Decimal Longitude (const double&)
+* @param[in] lat2 Decimal Latitude (const double&)
+* @param[in] lon2 Decimal Longitude (const double&)
+* @param[in] alpha average bearing (double&)
+* @return distance (double)
+*/
 double MapProj::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
 	const double thresh = 1.e-12;	//convergence absolute threshold
@@ -645,6 +798,19 @@ double MapProj::VincentyDistance(const double& lat1, const double& lon1, const d
 	return s;
 }
 
+/**
+* @brief Vincenty Inverse calculation giving WGS84 (decimal Lat/Long) position
+* given a start location (lat,lon) a distance and a bearing
+* See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems",
+* Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599,
+* see http://www.springerlink.com/content/y7108u6862473583 for more
+* @param[in] lat_ref Decimal Latitude (const double&)
+* @param[in] lon_ref Decimal Longitude (const double&)
+* @param[in] distance Distance in meters (const double&)
+* @param[in] bearing bearing in degrees, 0 being north (const double&)
+* @param[out] lat Decimal latitude of target point (double&)
+* @param[out] lon Decimal longitude of target point (double&)
+*/
 void MapProj::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
 {//well, actually this is the DIRECT Vincenty formula
 	const double thresh = 1.e-12;	//convergence absolute threshold

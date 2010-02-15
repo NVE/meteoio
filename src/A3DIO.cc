@@ -408,7 +408,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	}
 }
 
-void A3DIO::constructMeteo2DFilenames(const Date_IO& startDate, const Date_IO& endDate, vector<string>& filenames)
+void A3DIO::constructMeteo2DFilenames(const Date_IO& startDate, const Date_IO& endDate, std::vector<std::string>& filenames)
 {
 	int startyear=0, endyear=0, dummy=0;
 	std::string tmp;
