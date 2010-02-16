@@ -24,6 +24,7 @@
 #include "DEMObject.h"
 #include "StationData.h"
 #include "MeteoData.h"
+#include "Coords.h"
 #include <vector>
 #include "LegacyIO.ph"
 
@@ -34,6 +35,8 @@ typedef std::vector<std::string> STR_VECTOR;
 void marshal_uint(POPBuffer &buf,unsigned int &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp);
 

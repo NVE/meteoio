@@ -27,8 +27,8 @@
  *
  * @section grass_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDIN: input coordinate system (see MapProj)
- * - COORDPARAM: extra input coordinates parameters (see MapProj)
+ * - COORDIN: input coordinate system (see Coords)
+ * - COORDPARAM: extra input coordinates parameters (see Coords)
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
@@ -122,8 +122,10 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 		}
 
 		//compute WGS coordinates (considered as the true reference)
-		MapProj mymapproj(coordsys, coordparam);
-		mymapproj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+		Coords coordinate(coordsys, coordparam);
+		coordinate.setXY(xllcorner, yllcorner);
+		latitude = coordinate.getLat();
+		longitude = coordinate.getLon();
 		
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize);

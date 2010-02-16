@@ -17,7 +17,7 @@
 */
 #include "Grid2DObject.h"
 #include "IOUtils.h"
-#include "MapProj.h"
+#include "Coords.h"
 #include <cmath>
 
 /*
@@ -65,17 +65,24 @@ Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _
 }
 
 void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, double& _latitude, double& _longitude)
-{
+{//HACK: redo these method correctly using the Coords object
 	const double easting = ((double)i+.5) * cellsize; //HACK: is the coordinate the center of the cell?
 	const double northing = ((double)j+.5) * cellsize;
 
-	MapProj::local_to_WGS84(latitude, longitude, easting, northing, _latitude, _longitude, MapProj::GEO_COSINE);
+	Coords coordinate(latitude, longitude); //TODO: add the distance algo as default param -> MapProj::GEO_COSINE
+	coordinate.setXY(easting, northing);
+	_latitude = coordinate.getLat();
+	_longitude = coordinate.getLon();
+	
 }
 
 int Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j)
 {
 	double easting, northing;
-	MapProj::WGS84_to_local(latitude, longitude, _latitude, _longitude, easting, northing, MapProj::GEO_COSINE);
+	Coords coordinate(latitude, longitude); //TODO: add the distance algo as default param -> MapProj::GEO_COSINE
+	coordinate.setLatLon(_latitude, _longitude);
+	easting = coordinate.getEasting();
+	northing = coordinate.getNorthing();
 	
 	double x = floor(easting/cellsize);
 	double y = floor(northing/cellsize);
@@ -151,27 +158,6 @@ void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nr
 	//if(proj!=dummy) {
 	//	checkCoordinates(proj);
 	//}
-}
-
-void Grid2DObject::checkCoordinates(const MapProj& proj)
-{
-	//calculate/check coordinates if necessary
-	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
-		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
-			throw InvalidArgumentException("missing positional parameters (xll,yll) or (lat,long) for Grid2DObject", AT);
-		}
-		proj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
-	} else {
-		if(xllcorner==IOUtils::nodata || yllcorner==IOUtils::nodata) {
-			proj.convert_from_WGS84(latitude, longitude, xllcorner, yllcorner);
-		} else {
-			double tmp_lat, tmp_lon;
-			proj.convert_to_WGS84(xllcorner, yllcorner, tmp_lat, tmp_lon);
-			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
-				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for Grid2DObject", AT);
-			}
-		}
-	}
 }
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)

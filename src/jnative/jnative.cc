@@ -31,8 +31,10 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 			continue;
 		double latitude, longitude;
 		if (metaCoordinateSystem != "WGS84"){
-			MapProj mymapproj(metaCoordinateSystem, "");
-			mymapproj.convert_to_WGS84(xllcorner, yllcorner, latitude, longitude);
+			Coords coordinate(metaCoordinateSystem, "");
+			coordinate.setXY(xllcorner, yllcorner);
+			latitude = coordinate.getLat();
+			longitude = coordinate.getLon();
 		}
 		else{
 			latitude = yllcorner;

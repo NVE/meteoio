@@ -9,7 +9,7 @@ SET(meteoio_sources
 	Grid2DObject.cc  
 	IOHandler.cc    
 	LegacyIO.cc       
-	MapProj.cc           
+	Coords.cc
 	Meteo2DInterpolator.cc  
 	BufferedIOHandler.cc  
 	DEMObject.cc       

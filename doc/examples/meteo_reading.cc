@@ -7,7 +7,7 @@
 int main(int argc, char** argv) {
 	(void)argc;
 
-	Date_IO d1;
+	//Date_IO d1;
 	std::vector<MeteoData> vecMeteo;
 	std::vector<StationData> vecStation;
 
@@ -18,16 +18,10 @@ int main(int argc, char** argv) {
 	raw_io = new IOHandler(cfg);
 	io = new BufferedIOHandler(*raw_io, cfg);
 	
-	convertString(d1,argv[1]);
+	//convertString(d1,argv[1]);
+	Date_IO d1(2006, 01, 04, 23); //2005-12-12T24 fails while 2005-12-12T23 works (ie: remains in the same buffer)
 	io->readMeteoData(d1, vecMeteo, vecStation);
 	
-	//writing some data out in order to prove that it really worked!
-	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
-		std::cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << std::endl;
-		std::cout << vecStation[ii].toString() << std::endl;
-		std::cout << vecMeteo[ii].ta << std::endl;
-	}
-
 	delete io;
 	delete raw_io;
 

@@ -95,9 +95,13 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 				io->readDEM(dem);
 				//compute WGS coordinates (considered as the true reference)
 				double latll, longll, latur, longur;
-				MapProj mymapproj( cDemCoordSystem, "");
-				mymapproj.convert_to_WGS84(demXll, demYll, latll, longll);
-				mymapproj.convert_to_WGS84(demXur, demYur, latur, longur);
+				Coords coordinate( cDemCoordSystem, "");
+				coordinate.setXY(demXll, demYll);
+				latll = coordinate.getLat();
+				longll = coordinate.getLon();
+				coordinate.setXY(demXur, demYur);
+				latur = coordinate.getLat();
+				longur = coordinate.getLon();
 				//retrieving grid coordinates of a real world point
 				unsigned int i0,j0,i1,j1;
 				dem.WGS84_to_grid(latll, longll, i0,j0);

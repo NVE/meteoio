@@ -20,7 +20,7 @@
 
 #include "Array2D.h"
 #include "IOExceptions.h"
-#include "MapProj.h"
+#include "Coords.h"
 
 /**
  * @class Grid2DObject
@@ -142,14 +142,12 @@ class Grid2DObject{
 		double latitude, longitude;
 
  protected:
-		static const MapProj NULL_proj;
+		//static const Coords NULL_proj; //HACK
 
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,
 			const double& xllcorner, const double& yllcorner,
 			const double& latitude, const double& longitude, const double& cellsize/*,
 			const MapProj& proj=Grid2DObject::NULL_proj*/);
-
-		void checkCoordinates(const MapProj& proj);
 };
 
 #endif

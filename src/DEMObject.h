@@ -30,7 +30,7 @@
  * @author Gaël Rosset - Mathias Bavay
  * @date   2009-07-20
  */
-class DEMObject: public Grid2DObject {
+class DEMObject : public Grid2DObject {
 	public:
 		Array2D<double> slope;
 		Array2D<double> azi;

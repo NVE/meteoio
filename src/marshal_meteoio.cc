@@ -47,6 +47,20 @@ void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize
 	}
 }
 
+void marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		int n=(int)data;
+		buf.Pack(&n,1);
+	} else {
+		int n;
+		buf.UnPack(&n,1);
+		data=(Coords::geo_distances)n;
+	}
+}
+
 void marshal_POINTSArray(POPBuffer &buf,POINTSArray &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;

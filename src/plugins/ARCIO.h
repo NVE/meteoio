@@ -21,7 +21,7 @@
 #include "IOInterface.h"
 #include "ConfigReader.h"
 #include "IOUtils.h"
-#include "MapProj.h"
+#include "Coords.h"
 #include "IOExceptions.h"
 #include "DynamicLibrary.h"
 

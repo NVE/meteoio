@@ -1,6 +1,6 @@
 CC      = g++ -DGNU
 CFLAGS  = -Wall -Wextra
-DEBUG   = -g -O0 -DDEBUG -ggdb
+DEBUG   = -g #-O3 # -DDEBUG -ggdb
 METEOIODIR = ../../src
 
 LIBS      = -rdynamic -lstdc++ -ldl -L../../lib -lmeteoio
@@ -20,15 +20,16 @@ INCLUDE_POPC=-I. -I$(METEOIODIR)
 #####################
 #	TARGETS
 #####################
-all: meteo_reading dem_reading
+all: meteo_reading dem_reading coordinates
 
 meteo_reading: meteo_reading.o
 	$(CC) $(DEBUG) -o $@ meteo_reading.o ${LIBS}
 
 dem_reading: dem_reading.o
 	$(CC) $(DEBUG) -o $@ dem_reading.o ${LIBS}
-
+coordinates: coordinates.o
+	$(CC) $(DEBUG) -o $@ coordinates.o ${LIBS}
 
 clean:
-	rm -rf *~ *.o  *.out meteo_reading dem_reading
+	rm -rf *~ *.o  *.out meteo_reading dem_reading coordinates
 

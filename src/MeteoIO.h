@@ -30,7 +30,7 @@
 #include "Date_IO.h"
 #include "DynamicLibrary.h"
 #include "BufferedIOHandler.h"
-#include "MapProj.h"
+#include "Coords.h"
 
 #include "IOInterface.h"
 #ifdef _POPC_

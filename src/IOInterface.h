@@ -45,7 +45,7 @@
  * 
  * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units)
  * 
- * Various classes from MeteoIO can prove convenient for use by plugins: for example the MapProj class should be used for geographic coordinates conversions, while the ConfigReader class should be used for getting configuration information from the user's configuration file. Please do NOT implement your own version of this kind of feature in your plugin but exclusively rely on the matching classes of MeteoIO, extending them if necessary.
+ * Various classes from MeteoIO can prove convenient for use by plugins: for example the Coords class should be used for geographic coordinates conversions, while the ConfigReader class should be used for getting configuration information from the user's configuration file. Please do NOT implement your own version of this kind of feature in your plugin but exclusively rely on the matching classes of MeteoIO, extending them if necessary.
  * Some example implementation can be found in ARCIO or A3DIO.
  * 
  * @section plugins_registration Plugins registration

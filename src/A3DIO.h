@@ -20,7 +20,7 @@
 
 #include "IOInterface.h"
 
-#include "MapProj.h"
+#include "Coords.h"
 #include "ConfigReader.h"
 #include "IOExceptions.h"
 #include "IOUtils.h"

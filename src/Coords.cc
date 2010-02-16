@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "MapProj.h"
+#include "Coords.h"
 
 #ifdef PROJ4
 	#include <proj_api.h>
@@ -24,7 +24,7 @@
 	#define PI 3.141592653589
 #endif
 
-const struct MapProj::ELLIPSOID MapProj::ellipsoids[] = {
+const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
 		{ 6378137.,	6356752.3142 }, //E_WGS84
 		{ 6378137.,	6356752.3141 }, //E_GRS80
 		{ 6377563.396,	6356256.909 }, //E_AIRY
@@ -33,40 +33,16 @@ const struct MapProj::ELLIPSOID MapProj::ellipsoids[] = {
 		{ 6378160.,	6356774.719 } //E_GRS67
 };
 
-void MapProj::initializeMaps()
-{	//Please don't forget to mirror the keywords here in the documentation in MapProj.h!!
-	to_wgs84["CH1903"]   = &MapProj::CH1903_to_WGS84;
-	from_wgs84["CH1903"] = &MapProj::WGS84_to_CH1903;
-	to_wgs84["UTM"]   = &MapProj::UTM_to_WGS84;
-	from_wgs84["UTM"] = &MapProj::WGS84_to_UTM;
-	to_wgs84["PROJ4"]   = &MapProj::PROJ4_to_WGS84;
-	from_wgs84["PROJ4"] = &MapProj::WGS84_to_PROJ4;
-	to_wgs84["LOCAL"]   = &MapProj::local_to_WGS84;
-	from_wgs84["LOCAL"] = &MapProj::WGS84_to_local;
+bool Coords::operator==(Coords& in)
+{//check that two Coords objects represent the same location
+	const bool comparison = ( checkEpsilonEquality(getLat(), in.getLat(), 1.e-4) &&
+				checkEpsilonEquality(getLon(), in.getLon(), 1.e-4) );
+	return comparison;
 }
 
-void MapProj::setFunctionPointers()
+bool Coords::operator!=(Coords& in)
 {
-	//check whether there exists a tranformation for the given coordinatesystem
-	//init function pointers
-	std::map<std::string, convfunc>::iterator mapitTo;
-	std::map<std::string, convfunc>::iterator mapitFrom;
-	mapitTo   = to_wgs84.find(coordsystem);	
-	mapitFrom = from_wgs84.find(coordsystem);	
-	
-	if ((mapitTo == to_wgs84.end()) || (mapitFrom == from_wgs84.end()))
-		throw IOException("No known conversions exist for coordinate system " + coordsystem, AT);
-	
-	convToWGS84   = mapitTo->second;
-	convFromWGS84 = mapitFrom->second;
-
-	if(coordsystem=="LOCAL") {
-		//if ref_latitude has not yet been set (ie: we have not come from the specific
-		//local constructor
-		if(ref_latitude==IOUtils::nodata) {
-			parseLatLon(coordparam, ref_latitude, ref_longitude);
-		}
-	}
+	return !(*this==in);
 }
 
 /**
@@ -74,14 +50,16 @@ void MapProj::setFunctionPointers()
 * This constructor builds a dummy object that performs no conversions but can be used for comparison
 * purpose. This is more or less the euqivalent of NULL for a pointer...
 */
-MapProj::MapProj()
+Coords::Coords()
 {
 	coordsystem = "NULL";
-	coordparam  = "NULL";
+	coordparam = "NULL";
+	initializeMaps();
+	setDefaultValues();
 }
 
 /**
-* \anchor mapproj_types
+* \anchor Coordinate_types
 * @brief Regular constructor: usually, this is the constructor to use
 * @param[in] _coordinatesystem string identifying the coordinate system to use
 * @param[in] _parameters string giving some additional parameters for the projection (optional)
@@ -92,13 +70,11 @@ MapProj::MapProj()
 * - PROJ4 for coordinate conversion relying on the Proj4 library
 * - LOCAL for local coordinate system (from reference point)
 */
-MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _parameters)
+Coords::Coords(const std::string& _coordinatesystem, const std::string& _parameters)
 {
+	setDefaultValues();
 	initializeMaps();
-	coordsystem = _coordinatesystem;
-	coordparam  = _parameters;
-	ref_latitude = ref_longitude = IOUtils::nodata;
-	setFunctionPointers();
+	setProj(_coordinatesystem, _parameters);
 }
 
 /**
@@ -108,20 +84,162 @@ MapProj::MapProj(const std::string& _coordinatesystem, const std::string& _param
 * @param[in] _lat_ref latitude of the reference point
 * @param[in] _long_ref longitude of the reference point
 */
-MapProj::MapProj(const double& _lat_ref, const double& _long_ref)
+Coords::Coords(const double& _lat_ref, const double& _long_ref)
 {
+	setDefaultValues();
+	setLocalRef(_lat_ref, _long_ref);
 	initializeMaps();
-	coordsystem = std::string("LOCAL");
-	
-	if(_lat_ref==IOUtils::nodata || _long_ref==IOUtils::nodata) {
-		throw InvalidArgumentException("For LOCAL projection, please provide both reference latitude and longitude!", AT);
-	}
-	ref_latitude = _lat_ref;
-	ref_longitude = _long_ref;
-	coordparam = "";
-	setFunctionPointers();
+	setProj("LOCAL", "");
 }
 
+double Coords::getEasting() {
+	if(refresh_xy==true) {
+		if((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata)) {
+			InvalidArgumentException("missing positional parameters (easting,northing) or (lat,long) for coordinate", AT);
+		}
+		convert_from_WGS84(latitude, longitude, easting, northing);
+		refresh_xy=false;
+	}
+	return easting;
+}
+
+double Coords::getNorthing() {
+	if(refresh_xy==true) {
+		if((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata)) {
+			InvalidArgumentException("missing positional parameters (easting,northing) or (lat,long) for coordinate", AT);
+		}
+		convert_from_WGS84(latitude, longitude, easting, northing);
+		refresh_xy=false;
+	}
+	return northing;
+}
+
+double Coords::getLat() {
+	if(refresh_latlon==true) {
+		if((easting==IOUtils::nodata) || (northing==IOUtils::nodata)) {
+			InvalidArgumentException("missing positional parameters (easting,northing) or (lat,long) for coordinate", AT);
+		}
+		convert_to_WGS84(easting, northing, latitude, longitude);
+		refresh_latlon=false;
+	}
+	return latitude;
+}
+
+double Coords::getLon() {
+	if(refresh_latlon==true) {
+		if((easting==IOUtils::nodata) || (northing==IOUtils::nodata)) {
+			InvalidArgumentException("missing positional parameters (easting,northing) or (lat,long) for coordinate", AT);
+		}
+		convert_to_WGS84(easting, northing, latitude, longitude);
+		refresh_latlon=false;
+	}
+	return longitude;
+}
+
+void Coords::setLatLon(const double _latitude, const double _longitude) {
+	latitude = _latitude;
+	longitude = _longitude;
+	refresh_latlon = false;
+	refresh_xy = true;
+}
+
+void Coords::setXY(const double _easting, const double _northing) {
+	easting = _easting;
+	northing = _northing;
+	refresh_latlon = true;
+	refresh_xy = false;
+}
+
+void Coords::setProj(const std::string& _coordinatesystem, const std::string& _parameters) {
+	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
+	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system
+	if((refresh_latlon = true) && (latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
+		getLat(); //refreshes both lat and lon
+	}
+
+	coordsystem = _coordinatesystem;
+	coordparam  = _parameters;
+	setFunctionPointers();
+
+	//We consider lat/long as the reference. This means that if thex have a value, it will NOT be recomputed
+	if((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata)) {
+		//latitude and longitude were not already known, so they will have to be recomputed
+		refresh_latlon = true;
+		if((easting==IOUtils::nodata) || (northing==IOUtils::nodata)) {
+			refresh_xy = true;
+		} else {
+			refresh_xy = false;
+		}
+	} else {
+		//known latitude and longitude, so they are kept as reference
+		refresh_latlon = false;
+		refresh_xy = true;
+	}
+}
+
+void Coords::setLocalRef(const double _ref_latitude, const double _ref_longitude) {
+	if(_ref_latitude==IOUtils::nodata || _ref_longitude==IOUtils::nodata) {
+		throw InvalidArgumentException("For LOCAL projection, please provide both reference latitude and longitude!", AT);
+	}
+	ref_latitude = _ref_latitude;
+	ref_longitude = _ref_longitude;
+	refresh_xy = true;
+}
+
+void Coords::setLocalRef(const std::string _coordparam) {
+	coordparam = _coordparam;
+	parseLatLon(coordparam, ref_latitude, ref_longitude);
+	refresh_xy = true;
+}
+
+void Coords::setDistances(const geo_distances _algo) {
+	distance_algo = _algo;
+	refresh_xy = true;
+}
+
+/**
+* @brief Check consistency of coordinates
+* When both latitude/longitude and easting/northing are given, there is
+* a risk of inconsistency between these two sets of coordinates. 
+* This method checks that enough information is available (ie: at least one set 
+* of coordinates is present) and if more than one is present, that it is consistent (within 5 meters)
+* It throws and exception if something is not right.
+*/
+void Coords::check()
+{
+	//calculate/check coordinates if necessary
+	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
+		if(easting==IOUtils::nodata || northing==IOUtils::nodata) {
+			throw InvalidArgumentException("missing positional parameters (easting,northing) or (lat,long) for coordinate", AT);
+		}
+		refresh_latlon = true;
+		refresh_xy = false;
+	} else {
+		if(easting==IOUtils::nodata || northing==IOUtils::nodata) {
+			refresh_latlon = false;
+			refresh_xy = true;
+		} else {
+			double tmp_lat, tmp_lon;
+			convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
+			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
+				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for coordinate", AT);
+			}
+		}
+	}
+}
+
+/**
+* @brief Calculate the distance between two points
+* @param destination destination coordinate
+* @return distance in meters
+*/
+double Coords::distance(Coords& destination) {
+	double dist, bearing;
+	distance(destination, dist, bearing);
+	return dist;
+}
+
+/////////////////////////////////////////////////////private methods
 /**
 * @brief Method converting towards WGS84
 * @param[in] easting easting of the coordinate to convert
@@ -129,7 +247,7 @@ MapProj::MapProj(const double& _lat_ref, const double& _long_ref)
 * @param[out] latitude converted latitude
 * @param[out] longitude converted longitude
 */
-void MapProj::convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const
+void Coords::convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const
 {
 	(this->*convToWGS84)(easting, northing, latitude, longitude);
 }
@@ -141,7 +259,7 @@ void MapProj::convert_to_WGS84(double easting, double northing, double& latitude
 * @param[out] easting converted easting
 * @param[out] northing converted northing
 */
-void MapProj::convert_from_WGS84(double latitude, double longitude, double& easting, double& northing) const
+void Coords::convert_from_WGS84(double latitude, double longitude, double& easting, double& northing) const
 {
 	(this->*convFromWGS84)(latitude, longitude, easting, northing);
 }
@@ -161,7 +279,7 @@ void MapProj::convert_from_WGS84(double latitude, double longitude, double& east
 * @param[in] dms string containing the coordinate
 * @return coordinate in decimal
 */
-double MapProj::dms_to_decimal(const std::string& dms) {
+double Coords::dms_to_decimal(const std::string& dms) {
 	double d=IOUtils::nodata, m=IOUtils::nodata, s=IOUtils::nodata, decimal=IOUtils::nodata;
 
 	if 	((sscanf(dms.c_str(), "%lf°%lf'%lf\"", &d, &m ,&s) < 3) &&
@@ -202,7 +320,7 @@ double MapProj::dms_to_decimal(const std::string& dms) {
 * @param[out] lat parsed latitude
 * @param[out] lon parsed longitude
 */
-void MapProj::parseLatLon(const std::string& coordinates, double&
+void Coords::parseLatLon(const std::string& coordinates, double&
 lat, double& lon) {
 	char lat_str[32]="";
 	char lon_str[32]="";
@@ -211,10 +329,10 @@ lat, double& lon) {
 		throw InvalidFormatException("Given lat/lon string is too long! ",AT);
 	}
 
-	if 	((sscanf(coordinates.c_str(), "%[0-9.,°d'\"] %[0-9.,°d'\"]", lat_str, lon_str) < 2) &&
-		(sscanf(coordinates.c_str(), "%[0-9.,°d'\" ]/%[0-9.,°d'\" ]", lat_str, lon_str) < 2) &&
-		(sscanf(coordinates.c_str(), "(%[0-9.,°d'\" ];%[0-9.,°d'\" ])", lat_str, lon_str) < 2) &&
-		(sscanf(coordinates.c_str(), "(%[0-9.°d'\" ],%[0-9.°d'\" ])", lat_str, lon_str) < 2)) {
+	if 	((sscanf(coordinates.c_str(), "%[0-9.,°d'\"-] %[0-9.,°d'\"-]", lat_str, lon_str) < 2) &&
+		(sscanf(coordinates.c_str(), "%[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]", lat_str, lon_str) < 2) &&
+		(sscanf(coordinates.c_str(), "(%[0-9.,°d'\"- ];%[0-9.,°d'\"- ])", lat_str, lon_str) < 2) &&
+		(sscanf(coordinates.c_str(), "(%[0-9.°d'\"- ],%[0-9.°d'\"- ])", lat_str, lon_str) < 2)) {
 			throw InvalidFormatException("Can not parse given lat/lon: "+coordinates,AT);
 	}
 
@@ -228,11 +346,11 @@ lat, double& lon) {
 * @param[in] decimal decimal coordinate to convert
 * @return string containing the formatted coordinate
 */
-std::string MapProj::decimal_to_dms(const double& decimal) {
+std::string Coords::decimal_to_dms(const double& decimal) {
 	std::stringstream dms;
-	int d = (int)floor(decimal);
-	int m = (int)floor( (decimal - (double)d)*60. );
-	int s = (int)floor( decimal - (double)d - (double)m/60. );
+	const int d = (int)floor(decimal);
+	const int m = (int)floor( (decimal - (double)d)*60. );
+	const int s = (int)floor( decimal - (double)d - (double)m/60. );
 
 	dms << d << "°" << m << "'" << s << "\"";
 	return dms.str();
@@ -246,7 +364,7 @@ std::string MapProj::decimal_to_dms(const double& decimal) {
 * @param[out] east_out easting coordinate (Swiss system)
 * @param[out] north_out northing coordinate (Swiss system)
 */
-void MapProj::WGS84_to_CH1903(double lat_in, double long_in, double& east_out, double& north_out) const
+void Coords::WGS84_to_CH1903(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	//converts WGS84 coordinates (lat,long) to the Swiss coordinates. See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
@@ -282,7 +400,7 @@ void MapProj::WGS84_to_CH1903(double lat_in, double long_in, double& east_out, d
 * @param[out] lat_out Decimal Latitude
 * @param[out] long_out Decimal Longitude
 */
-void MapProj::CH1903_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
+void Coords::CH1903_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 	//converts Swiss coordinates to WGS84 coordinates (lat,long). See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf
 	//The elevation is supposed to be above sea level, so it does not require any conversion
@@ -313,7 +431,7 @@ void MapProj::CH1903_to_WGS84(double east_in, double north_in, double& lat_out, 
 	*/
 }
 
-int MapProj::getUTMZone(const double latitude, const double longitude, std::string& zone_out) const
+int Coords::getUTMZone(const double latitude, const double longitude, std::string& zone_out) const
 {//This routine determines the correct UTM letter designator for the given latitude
 //UTM limits its coverage to [80S , 84N], outside of this, returns Z for the zone
 
@@ -369,7 +487,7 @@ int MapProj::getUTMZone(const double latitude, const double longitude, std::stri
 * @param[out] east_out easting coordinate (Swiss system)
 * @param[out] north_out northing coordinate (Swiss system)
 */
-void MapProj::WGS84_to_UTM(double lat_in, double long_in, double& east_out, double& north_out) const
+void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, double& north_out) const
 {//converts WGS84 coordinates (lat,long) to UTM coordinates.
 //See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
@@ -401,8 +519,8 @@ void MapProj::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doub
 	const double B = (3./2.*a)   * (n - n2 + 7./8.*(n3 - n4) + 55./64.*(n5 - n6));
 	const double C = (15./16.*a) * (n2 - n3 + 3./4.*(n4 - n5));
 	const double D = (35./48.*a) * (n3 - n4 + 11./16.*(n5 - n6));
-	//const double E = (315./512.*a) * (n4 - n5); //correctrion of ~0.03mm
-	const double M = A*Lat - B*sin(2.*Lat) + C*sin(4.*Lat) - D*sin(6.*Lat) /*+ E*sin(8.*Lat)*/;
+	const double E = (315./512.*a) * (n4 - n5); //correctrion of ~0.03mm
+	const double M = A*Lat - B*sin(2.*Lat) + C*sin(4.*Lat) - D*sin(6.*Lat) + E*sin(8.*Lat);
 
 	//calculating the coefficients for the series
 	const double K1 = M*k0;
@@ -426,7 +544,7 @@ void MapProj::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doub
 * @param[out] lat_out Decimal Latitude
 * @param[out] long_out Decimal Longitude
 */
-void MapProj::UTM_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
+void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {//converts UTM coordinates to WGS84 coordinates (lat,long).
 //See USGS Bulletin 1532 or http://earth-info.nga.mil/GandG/publications/tm8358.2/TM8358_2.pdf
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
@@ -489,7 +607,7 @@ void MapProj::UTM_to_WGS84(double east_in, double north_in, double& lat_out, dou
 * @param east_out easting coordinate (target system)
 * @param north_out northing coordinate (target system)
 */
-void MapProj::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const
+void Coords::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 #ifdef PROJ4
 	const string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
@@ -532,7 +650,7 @@ void MapProj::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, do
 * @param lat_out Decimal Latitude
 * @param long_out Decimal Longitude
 */
-void MapProj::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
+void Coords::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 #ifdef PROJ4
 	const std::string dest_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
@@ -568,60 +686,13 @@ void MapProj::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, d
 #endif
 }
 
-/**
-* @brief Coordinate conversion: from WGS84 Lat/Long to local metric grid
-* @param lat_ref Decimal Latitude of origin (const double&)
-* @param lon_ref Decimal Longitude of origin (const double&)
-* @param lat Decimal Latitude (const double&)
-* @param lon Decimal Longitude(const double&)
-* @param easting easting coordinate in local grid (double&)
-* @param northing northing coordinate in local grid (double&)
-* @param algo select the algorith to be used for distances calculations (optional, default=GEO_VINCENTY)
-*/
-void MapProj::WGS84_to_local(double lat_ref, double lon_ref, const double& lat, const double& lon, double& easting, double& northing, const enum GEO_DISTANCES algo)
-{
-	double alpha;
-	const double to_rad = PI / 180.0;
-	double distance;
-
-	switch(algo) {
+void Coords::distance(Coords& destination, double& distance, double& bearing) {
+	switch(distance_algo) {
 		case GEO_COSINE:
-			distance = cosineDistance(lat_ref, lon_ref, lat, lon, alpha);
+			distance = cosineDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
 			break;
 		case GEO_VINCENTY:
-			distance = VincentyDistance(lat_ref, lon_ref, lat, lon, alpha);
-			break;
-		default:
-			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
-	}
-	
-	easting = distance*sin(alpha*to_rad);
-	northing = distance*cos(alpha*to_rad);
-}
-
-
-/**
-* @brief Coordinate conversion: from local metric grid to WGS84 Lat/Long
-* @param lat_ref Decimal Latitude of origin (const double&)
-* @param lon_ref Decimal Longitude of origin (const double&)
-* @param easting easting coordinate in local grid (double&)
-* @param northing northing coordinate in local grid (double&)
-* @param lat Decimal Latitude (double&)
-* @param lon Decimal Longitude(double&)
-* @param algo select the algorith to be used for distances calculations (optional, default=GEO_VINCENTY)
-*/
-void MapProj::local_to_WGS84(double lat_ref, double lon_ref, const double& easting, const double& northing, double& lat, double& lon, const enum GEO_DISTANCES algo)
-{
-	const double to_deg = 180.0 / PI;
-	const double distance = sqrt( IOUtils::pow2(easting) + IOUtils::pow2(northing) );
-	const double bearing = fmod( atan2(easting, northing)*to_deg+360. , 360.);
-
-	switch(algo) {
-		case GEO_COSINE:
-			cosineInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
-			break;
-		case GEO_VINCENTY:
-			VincentyInverse(lat_ref, lon_ref, distance, bearing, lat, lon);
+			distance = VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
 			break;
 		default:
 			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
@@ -635,9 +706,29 @@ void MapProj::local_to_WGS84(double lat_ref, double lon_ref, const double& easti
 * @param east_out easting coordinate (target system)
 * @param north_out northing coordinate (target system)
 */
-void MapProj::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
+void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
-	WGS84_to_local(ref_latitude, ref_longitude, lat_in, long_in, east_out, north_out, GEO_COSINE);
+	double alpha;
+	const double to_rad = PI / 180.0;
+	double distance;
+
+	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
+		throw InvalidArgumentException("No reference coordinate provided for LOCAL projection", AT);
+	}
+
+	switch(distance_algo) {
+		case GEO_COSINE:
+			distance = cosineDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
+			break;
+		case GEO_VINCENTY:
+			distance = VincentyDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
+			break;
+		default:
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+	}
+	
+	east_out = distance*sin(alpha*to_rad);
+	north_out = distance*cos(alpha*to_rad);
 }
 
 
@@ -648,9 +739,26 @@ void MapProj::WGS84_to_local(double lat_in, double long_in, double& east_out, do
 * @param lat_out Decimal Latitude
 * @param long_out Decimal Longitude
 */
-void MapProj::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
+void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
-	local_to_WGS84(ref_latitude, ref_longitude, east_in, north_in, lat_out, long_out, GEO_COSINE);
+	const double to_deg = 180.0 / PI;
+	const double distance = sqrt( IOUtils::pow2(east_in) + IOUtils::pow2(north_in) );
+	const double bearing = fmod( atan2(east_in, north_in)*to_deg+360. , 360.);
+
+	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
+		throw InvalidArgumentException("No reference coordinate provided for LOCAL projection", AT);
+	}
+
+	switch(distance_algo) {
+		case GEO_COSINE:
+			cosineInverse(ref_latitude, ref_longitude, distance, bearing, lat_out, long_out);
+			break;
+		case GEO_VINCENTY:
+			VincentyInverse(ref_latitude, ref_longitude, distance, bearing, lat_out, long_out);
+			break;
+		default:
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+	}
 }
 
 /**
@@ -663,7 +771,7 @@ void MapProj::local_to_WGS84(double east_in, double north_in, double& lat_out, d
 * @param[out] lat Decimal latitude of target point (double&)
 * @param[out] lon Decimal longitude of target point (double&)
 */
-void MapProj::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
+void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const
 {
 	const double Rearth = 6371.e3;
 	const double to_rad = PI / 180.0;
@@ -681,13 +789,6 @@ void MapProj::cosineInverse(const double& lat_ref, const double& lon_ref, const 
 	lon *= to_deg;
 }
 
-
-double MapProj::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
-{
-	double alpha;
-	return cosineDistance(lat1, lon1, lat2, lon2, alpha);
-}
-
 /**
 * @brief Spherical law of cosine Distance calculation between points in WGS84 (decimal Lat/Long)
 * See http://www.movable-type.co.uk/scripts/latlong.html for more
@@ -698,7 +799,7 @@ double MapProj::cosineDistance(const double& lat1, const double& lon1, const dou
 * @param[out] alpha average bearing
 * @return distance (double)
 */
-double MapProj::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
+double Coords::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const
 {
 	const double Rearth = 6371.e3;
 	const double to_rad = PI / 180.0;
@@ -715,13 +816,6 @@ double MapProj::cosineDistance(const double& lat1, const double& lon1, const dou
 	return d;
 }
 
-
-double MapProj::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2)
-{
-	double alpha;
-	return VincentyDistance(lat1, lon1, lat2, lon2, alpha);
-}
-
 /**
 * @brief Vincenty Distance calculation between points in WGS84 (decimal Lat/Long)
 * See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems",
@@ -734,7 +828,7 @@ double MapProj::VincentyDistance(const double& lat1, const double& lon1, const d
 * @param[in] alpha average bearing (double&)
 * @return distance (double)
 */
-double MapProj::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
+double Coords::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const
 {
 	const double thresh = 1.e-12;	//convergence absolute threshold
 	const int n_max = 100;		//maximum number of iterations
@@ -811,7 +905,7 @@ double MapProj::VincentyDistance(const double& lat1, const double& lon1, const d
 * @param[out] lat Decimal latitude of target point (double&)
 * @param[out] lon Decimal longitude of target point (double&)
 */
-void MapProj::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
+void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const
 {//well, actually this is the DIRECT Vincenty formula
 	const double thresh = 1.e-12;	//convergence absolute threshold
 	const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
@@ -859,32 +953,74 @@ void MapProj::VincentyInverse(const double& lat_ref, const double& lon_ref, cons
 	//const double alpha2 = atan2( sinAlpha, -(sinU1*sin(sigma)-cosU1*cos(sigma)*cos(alpha1)) ); //reverse azimuth
 }
 
-bool MapProj::operator==(const MapProj& in) const
-{//we only compare on coordsystem/coordparam since the function pointers might be different 
- //when comparing between different objects. Obviously, this assumes that the function pointers are
- //always correctly initialized...
-
-	return ((coordsystem==in.coordsystem) && (coordparam==in.coordparam));
+void Coords::initializeMaps() {
+//Please don't forget to mirror the keywords here in the documentation in Coords.h!!
+	to_wgs84["CH1903"]   = &Coords::CH1903_to_WGS84;
+	from_wgs84["CH1903"] = &Coords::WGS84_to_CH1903;
+	to_wgs84["UTM"]   = &Coords::UTM_to_WGS84;
+	from_wgs84["UTM"] = &Coords::WGS84_to_UTM;
+	to_wgs84["PROJ4"]   = &Coords::PROJ4_to_WGS84;
+	from_wgs84["PROJ4"] = &Coords::WGS84_to_PROJ4;
+	to_wgs84["LOCAL"]   = &Coords::local_to_WGS84;
+	from_wgs84["LOCAL"] = &Coords::WGS84_to_local;
 }
 
-bool MapProj::operator!=(const MapProj& in) const
-{
-	return !(*this==in);
+void Coords::setFunctionPointers() {
+	//check whether there exists a tranformation for the given coordinatesystem
+	//init function pointers
+	std::map<std::string, convfunc>::iterator mapitTo;
+	std::map<std::string, convfunc>::iterator mapitFrom;
+	mapitTo   = to_wgs84.find(coordsystem);	
+	mapitFrom = from_wgs84.find(coordsystem);	
+	
+	if ((mapitTo == to_wgs84.end()) || (mapitFrom == from_wgs84.end()))
+		throw IOException("No known conversions exist for coordinate system " + coordsystem, AT);
+	
+	convToWGS84   = mapitTo->second;
+	convFromWGS84 = mapitFrom->second;
+
+	if(coordsystem=="LOCAL" && coordparam!="") {
+		parseLatLon(coordparam, ref_latitude, ref_longitude);
+	}
+}
+
+void Coords::setDefaultValues() {
+//sets safe defaults for all internal variables (except function pointers and maps)
+	latitude = longitude = IOUtils::nodata;
+	easting = northing = IOUtils::nodata;
+	ref_latitude = ref_longitude = IOUtils::nodata;
+	distance_algo = GEO_COSINE;
+	refresh_latlon = refresh_xy = IOUtils::nodata;
 }
 
 #ifdef _POPC_
-void MapProj::Serialize(POPBuffer &buf, bool pack)
+#include "marshal_meteoio.h"
+void Coords::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack){
 		buf.Pack(&coordsystem, 1);
 		buf.Pack(&coordparam, 1);
 		buf.Pack(&ref_latitude, 1);
 		buf.Pack(&ref_longitude, 1);
+		buf.Pack(&latitude, 1);
+		buf.Pack(&longitude, 1);
+		buf.Pack(&easting, 1);
+		buf.Pack(&northing, 1);
+		marshal_geo_distances(buf, distance_algo, 0, FLAG_MARSHAL, NULL);
+		buf.Pack(&refresh_latlon, 1);
+		buf.Pack(&refresh_xy, 1);
 	}else{
 		buf.UnPack(&coordsystem, 1);
 		buf.UnPack(&coordparam, 1);
 		buf.UnPack(&ref_latitude, 1);
 		buf.UnPack(&ref_longitude, 1);
+		buf.UnPack(&latitude, 1);
+		buf.UnPack(&longitude, 1);
+		buf.UnPack(&easting, 1);
+		buf.UnPack(&northing, 1);
+		marshal_geo_distances(buf, distance_algo, 0, !FLAG_MARSHAL, NULL);
+		buf.UnPack(&refresh_latlon, 1);
+		buf.UnPack(&refresh_xy, 1);
 		initializeMaps();
 		setFunctionPointers();
 	}

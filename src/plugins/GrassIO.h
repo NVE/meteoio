@@ -22,7 +22,7 @@
 #include "ConfigReader.h"
 #include "IOUtils.h"
 #include "IOExceptions.h"
-#include "MapProj.h"
+#include "Coords.h"
 
 #include <string>
 #include <sstream>

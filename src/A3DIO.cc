@@ -46,8 +46,8 @@
  * @section a3d_keywords Keywords
  * This plugin uses the following keywords:
  * - METEOPATH: string containing the path to the meteorological files (ie: where to find meteo1d.txt and meteo2d files)
- * - COORDIN: input coordinate system (see MapProj)
- * - COORDPARAM: extra input coordinates parameters (see MapProj)
+ * - COORDIN: input coordinate system (see Coords)
+ * - COORDPARAM: extra input coordinates parameters (see Coords)
  * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
  */
 
@@ -215,21 +215,18 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
 			throw;
 		}
-		MapProj mymapproj(coordsys, coordparam);
 
-		//calculate coordinates if necessary
-		if(latitude==IOUtils::nodata || longitude==IOUtils::nodata) {
-			if(xcoord==IOUtils::nodata || ycoord==IOUtils::nodata) {
-				throw InvalidFormatException("Too many nodata values for coordinates conversion in file " + tmp, AT);
-			}
-			mymapproj.convert_to_WGS84(xcoord, ycoord, latitude, longitude);
-		} else if(xcoord!=IOUtils::nodata || ycoord!=IOUtils::nodata) {
-			double tmp_lat, tmp_lon;
-			mymapproj.convert_to_WGS84(xcoord, ycoord, tmp_lat, tmp_lon);
-			if(!checkEpsilonEquality(latitude, tmp_lat, 1.e-4) || !checkEpsilonEquality(longitude, tmp_lon, 1.e-4)) {
-				throw InvalidArgumentException("Latitude/longitude and Xcoord/Ycoord don't match in header of file " + tmp, AT);
-			}
+		//compute/check WGS coordinates (considered as the true reference)
+		Coords coordinate(coordsys, coordparam);
+		coordinate.setXY(xcoord, ycoord);
+		coordinate.setLatLon(latitude, longitude);
+		try {
+			coordinate.check();
+		} catch(...) {
+			std::cerr << "[E] Error in geographic coordinates in file " << tmp << "trapped at " << AT << endl;
+			throw;
 		}
+
 		sd.setStationData(xcoord, ycoord, altitude, "", latitude, longitude);
 
 		//Read one line, construct Date_IO object and see whether date is greater or equal than the date_in object
@@ -576,7 +573,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	unsigned int columns = 0;
 	std::vector<std::string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
 
-	//Build MapProj object to convert easting/northing values to lat/long in WGS84
+	//Build Coords object to convert easting/northing values to lat/long in WGS84
 	std::string coordsys="", coordparam="";
 	try {
 		cfg.getValue("COORDIN", coordsys);
@@ -584,7 +581,6 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 	}
-	MapProj mymapproj(coordsys, coordparam);
 
 	fin.clear();
 	fin.open (filename.c_str(), ifstream::in);
@@ -624,12 +620,15 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 			throw ConversionFailedException("Conversion of station description failed in " + filename, AT);  
 		}
 
+		Coords coordinate(coordsys, coordparam);
 		//calculate coordinates if necessary
 		if(vecS[stationnr-1].latitude==IOUtils::nodata || vecS[stationnr-1].longitude==IOUtils::nodata) {
 			if(vecS[stationnr-1].eastCoordinate==IOUtils::nodata || vecS[stationnr-1].northCoordinate==IOUtils::nodata) {
 				throw InvalidFormatException("Too many nodata values for coordinates conversion in file " + filename, AT);
 			}
-			mymapproj.convert_to_WGS84(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate, vecS[stationnr-1].latitude, vecS[stationnr-1].longitude);
+			coordinate.setXY(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate);
+			vecS[stationnr-1].latitude = coordinate.getLat();
+			vecS[stationnr-1].longitude = coordinate.getLon();
 		}
 	}
 
