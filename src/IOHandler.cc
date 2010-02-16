@@ -132,8 +132,8 @@ void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) thro
 
 void IOHandler::loadPlugin(const std::string& libname, const std::string& classname, DynamicLibrary*& dynLibrary, IOInterface*& io)
 {
-	cout << "[i] " << AT << ": Loading dynamic plugin: " << libname << endl;
-	string pluginpath = "";
+	std::cout << "[i] " << AT << ": Loading dynamic plugin: " << libname << std::endl;
+	std::string pluginpath = "";
 
 	try {
 		cfg.getValue("PLUGINPATH", pluginpath, ConfigReader::nothrow);
@@ -141,26 +141,26 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 			pluginpath += "/";
 
 		//Which dynamic library needs to be loaded
-		cout << "\t" << "Trying to load " << libname << " ... ";
+		std::cout << "\t" << "Trying to load " << libname << " ... ";
 		std::string filename = pluginpath + libname;
 		dynLibrary = DynamicLoader::loadObjectFile(filename);
 		
 		if(dynLibrary == NULL) {
-			cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << DynamicLoader::getErrorMessage() << endl;
+			std::cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << DynamicLoader::getErrorMessage() << std::endl;
 		} else {
 			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg.getSourceName()));
 
 			if(io == NULL) {
-				cout << "failed" << endl;
+				std::cout << "failed" << std::endl;
 				//delete dynLibrary; This causes a segfault !!
 			} else {
-				cout << "success" << endl;
+				std::cout << "success" << std::endl;
 			}
 		}
-	} catch (exception& e) {
+	} catch (std::exception& e) {
 		if (dynLibrary != NULL)
 			delete dynLibrary;
-		cerr << "\t" << e.what() << endl;
+		std::cerr << "\t" << e.what() << std::endl;
 	}
 }
 

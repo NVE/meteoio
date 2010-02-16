@@ -48,7 +48,7 @@ void IOUtils::trim(std::string& str)
 	size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	// if all spaces or empty return an empty string
-	if(( string::npos == startpos ) || ( string::npos == endpos)) {
+	if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
 		str = "";
 	} else {
 		str = str.substr( startpos, endpos-startpos+1 );
@@ -135,7 +135,7 @@ void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 			bool result = IOUtils::readKeyValuePair(line, delimiter, headermap);
 
 			if (!result) { //  means if ((key == "") || (value==""))
-				stringstream out;
+				std::stringstream out;
 				out << "Invalid key value pair in line: " << linenr << " of header";
 				throw IOException(out.str(), AT);
 			}
@@ -196,7 +196,7 @@ unsigned int IOUtils::readLineToVec(const std::string& line_in, std::vector<std:
 
 	std::string tmp_string;
 	while (!iss.eof()) {
-		iss >> skipws >> tmp_string;
+		iss >> std::skipws >> tmp_string;
 
 		if (tmp_string != "") {
 			vecString.push_back(tmp_string);
@@ -231,12 +231,12 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 	}
 
 	while ((dirp = readdir(dp)) != NULL) {
-		string tmp = string(dirp->d_name);
+		std::string tmp = std::string(dirp->d_name);
 		if (pattern=="") {
 			dirlist.push_back(tmp);
 		} else {
 			size_t pos = tmp.find(pattern);
-			if (pos!=string::npos) {
+			if (pos!=std::string::npos) {
 				dirlist.push_back(tmp);
 			}
 		}
@@ -278,7 +278,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std
 	}
 
 	std::string::size_type pos = s.find_first_not_of(ALPHANUM);
-	if (pos != string::npos) {
+	if (pos != std::string::npos) {
 		std::string tmp = s.substr(pos);
 		trim(tmp);
 		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid

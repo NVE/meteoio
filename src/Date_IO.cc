@@ -78,6 +78,11 @@ bool Date_IO::operator==(const Date_IO& indate) const
 	  && (indate.minute==minute));*/
 }
 
+bool Date_IO::operator!=(const Date_IO& indate) const
+{
+	return !(*this==indate);
+}
+
 bool Date_IO::operator<(const Date_IO& indate) const
 {
 	if (*this == indate) {
@@ -85,6 +90,31 @@ bool Date_IO::operator<(const Date_IO& indate) const
 	}
 
 	return (julian < indate.julian);
+}
+
+bool Date_IO::operator<=(const Date_IO& indate) const
+{
+	if (*this == indate) {
+		return true;
+	}
+	return (julian <= indate.julian);
+}
+
+bool Date_IO::operator>(const Date_IO& indate) const
+{
+	if (*this == indate) {
+		return false;
+	}
+
+	return (julian > indate.julian);
+}
+
+bool Date_IO::operator>=(const Date_IO& indate) const
+{
+	if (*this == indate) {
+		return true;
+	}
+	return (julian >= indate.julian);
 }
 
 const Date_IO Date_IO::operator+(const Date_IO& indate) const

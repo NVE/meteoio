@@ -19,13 +19,14 @@
 #ifndef __METEO2DINTERPOLATOR_H__
 #define __METEO2DINTERPOLATOR_H__
 
-#include "Grid2DObject.h"
 #include "libinterpol2D.h"
 #include "MeteoData.h"
 #include "StationData.h"
 #include "IOUtils.h"
 #include "IOExceptions.h"
 #include "DEMObject.h"
+#include "Grid2DObject.h"
+#include "ConfigReader.h"
 
 #include <vector>
 #include <map>
@@ -49,7 +50,8 @@ class Meteo2DInterpolator {
 		* @brief Constructor.
 		*/
 		Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObject& _dem, 
-						const std::vector<MeteoData>& _vecData, const std::vector<StationData>& _vecMeta);
+						const std::vector<MeteoData>& _vecData, 
+						const std::vector<StationData>& _vecMeta);
 
 
 		/**

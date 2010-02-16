@@ -129,7 +129,7 @@ namespace IOUtils {
 			return true;
 		} else {
 			std::istringstream iss(s);
-			iss.setf(ios::fixed);
+			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
 			iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
 			if (iss.fail()) {
@@ -181,7 +181,7 @@ namespace IOUtils {
 	* @param[out] vecT        The vector of values associated to the key, each value is converted to the requested type
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
-								    const std::string& key, vector<T>& vecT) {
+								    const std::string& key, std::vector<T>& vecT) {
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}

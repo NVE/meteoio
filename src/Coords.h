@@ -18,11 +18,8 @@
 #ifndef __COORDS_H__
 #define __COORDS_H__
 
-#include "StationData.h"
-#include "MeteoData.h"
-#include "ConfigReader.h"
 #include "IOExceptions.h"
-
+#include "IOUtils.h"
 #include <string>
 #include <map>
 
@@ -50,18 +47,20 @@ class Coords {
 	Coords(const double& _lat_ref, const double& _long_ref);
 
 	//Operators
-	bool operator==(Coords&); ///<Operator that tests for equality
-	bool operator!=(Coords&); ///<Operator that tests for inequality
+	Coords& operator=(const Coords&); ///<Assignement operator
+	bool operator==(const Coords&) const; ///<Operator that tests for equality
+	bool operator!=(const Coords&) const; ///<Operator that tests for inequality
 
 	//Getter methods
-	double getEasting();
-	double getNorthing();
-	double getLat();
-	double getLon();
+	double getEasting() const;
+	double getNorthing() const;
+	double getLat() const;
+	double getLon() const;
+	double getAltitude() const;
 
 	//Setter methods
-	void setLatLon(const double _latitude, const double _longitude);
-	void setXY(const double _easting, const double _northing);
+	void setLatLon(const double _latitude, const double _longitude, const double _altitude=IOUtils::nodata, const bool _update=true);
+	void setXY(const double _easting, const double _northing, const double _altitude=IOUtils::nodata, const bool _update=true);
 	void setProj(const std::string& _coordinatesystem, const std::string& _parameters);
 	void setLocalRef(const double _ref_latitude, const double _ref_longitude);
 	void setLocalRef(const std::string _coordparam);
@@ -86,9 +85,10 @@ class Coords {
 	void UTM_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 	void WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
-
 	void WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
+	void WGS84_to_NULL(double lat_in, double long_in, double& east_out, double& north_out) const;
+	void NULL_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 
 	//Distances calculations
 	void distance(Coords& destination, double& distance, double& bearing);
@@ -104,9 +104,9 @@ class Coords {
 	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
 
  private:
+	double altitude;
 	double latitude, longitude;
 	double easting, northing;
-	bool refresh_latlon, refresh_xy;
 
 	std::map<std::string, convfunc> to_wgs84;
 	std::map<std::string, convfunc> from_wgs84;

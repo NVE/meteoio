@@ -24,7 +24,6 @@
 #include <sstream>
 #include <iomanip>
 
-using namespace IOUtils;
 /**
  * @class MeteoData
  * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date_IO object)
@@ -76,18 +75,18 @@ class MeteoData {
 		* @param p Atmospheric pressure in Pa (default nodata)
 		*/
 		MeteoData(const Date_IO& date_in, 
-		    const double& ta=nodata, 
-		    const double& iswr=nodata, 
-		    const double& vw=nodata, 
-		    const double& dw=nodata, 
-		    const double& rh=nodata, 
-		    const double& lwr=nodata, 
-		    const double& hnw=nodata,
-		    const double& tsg=nodata,
-		    const double& tss=nodata, 
-		    const double& hs=nodata,
-		    const double& rswr=nodata,
-		    const double& p=nodata);
+		    const double& ta=IOUtils::nodata, 
+		    const double& iswr=IOUtils::nodata, 
+		    const double& vw=IOUtils::nodata, 
+		    const double& dw=IOUtils::nodata, 
+		    const double& rh=IOUtils::nodata, 
+		    const double& lwr=IOUtils::nodata, 
+		    const double& hnw=IOUtils::nodata,
+		    const double& tsg=IOUtils::nodata,
+		    const double& tss=IOUtils::nodata, 
+		    const double& hs=IOUtils::nodata,
+		    const double& rswr=IOUtils::nodata,
+		    const double& p=IOUtils::nodata);
 
 		/**
 		* @brief General setter function, requires one to eight arguments
@@ -106,18 +105,18 @@ class MeteoData {
 		* @param p Atmospheric pressure in Pa (default nodata)
 		*/
 		void setMeteoData(const Date_IO& date_in, 
-		    	const double& ta=nodata, 
-		    	const double& iswr=nodata, 
-		    	const double& vw=nodata, 
-		    	const double& dw=nodata, 
-		    	const double& rh=nodata, 
-		    	const double& lwr=nodata, 
-		    	const double& hnw=nodata,
-		    	const double& tsg=nodata,
-		    	const double& tss=nodata, 
-			const double& hs=nodata,
-			const double& rswr=nodata,
-		     const double& p=nodata);
+		    	const double& ta=IOUtils::nodata, 
+		    	const double& iswr=IOUtils::nodata, 
+		    	const double& vw=IOUtils::nodata, 
+		    	const double& dw=IOUtils::nodata, 
+		    	const double& rh=IOUtils::nodata, 
+		    	const double& lwr=IOUtils::nodata, 
+		    	const double& hnw=IOUtils::nodata,
+		    	const double& tsg=IOUtils::nodata,
+		    	const double& tss=IOUtils::nodata, 
+			const double& hs=IOUtils::nodata,
+			const double& rswr=IOUtils::nodata,
+		     const double& p=IOUtils::nodata);
 
 		bool isResampled();
 		void setResampled(const bool&);

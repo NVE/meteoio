@@ -17,125 +17,66 @@
 */
 #include "StationData.h"
 
-using namespace std;
-
 //Default constructor initializing every double attribute to nodata and strings to  ""
 StationData::StationData()
 {
-	setStationData(nodata, nodata, nodata, "", nodata, nodata);
+	Coords _position;
+	setStationData(_position, "");
 }
 
-StationData::StationData(const double& x_in, const double& y_in, 
-			 const double& alt_in, const std::string& name_in,
-			 const double& lat_in, const double& long_in)
+StationData::StationData(const Coords& _position, const std::string& name_in)
 {
-	setStationData(x_in, y_in, alt_in, name_in, lat_in, long_in);
+	setStationData(_position, name_in);
 }
 
-void StationData::setStationData(const double& easting_in, const double& northing_in, 
-				 const double& alt_in, const std::string& name_in,
-				 const double& lat_in, const double& long_in)
+void StationData::setStationData(const Coords& _position, const std::string& name_in)
 {
-	altitude = alt_in;
+	position = _position;
 	stationName = name_in;
-	eastCoordinate = easting_in;
-	northCoordinate = northing_in;
-	longitude = long_in;
-	latitude = lat_in;
 }
 
-void StationData::getStationData(double& easting_out, double& northing_out, 
-				 double& alt_out, std::string& name_out,
-				 double& lat_out, double& long_out) const
-{
-	easting_out = eastCoordinate;
-	northing_out = northCoordinate;
-	alt_out = altitude;
+void StationData::getStationData(Coords& position_out, std::string& name_out) {
+	position_out = position;
 	name_out = stationName;
-	lat_out = latitude;
-	long_out = longitude;
 }
 
 
 //Comparison operator
-bool StationData::operator==(const StationData& in) const
-{
-	//latitude, longitude, eastCoordinate and northCoordinate are checked for equality in an epsilon environment
-	
-	const double earth_radius = 6371e3;				//in meters
-	const double grid_epsilon = 5.;				//in meters
-	const double long_epsilon = grid_epsilon / earth_radius;	//in degrees. small angle, so sin(x)=x
-	const double lat_epsilon = long_epsilon/2.;			//in degrees. Since long is for 360deg and lat only 180, then epsilonj is 1/2
-
-	return (IOUtils::checkEpsilonEquality(longitude, in.longitude, long_epsilon)
-		&& IOUtils::checkEpsilonEquality(latitude, in.latitude, lat_epsilon) 
-		&& IOUtils::checkEpsilonEquality(eastCoordinate, in.eastCoordinate, grid_epsilon) 
-		&& IOUtils::checkEpsilonEquality(northCoordinate, in.northCoordinate, grid_epsilon)
-		&& (altitude == in.altitude));
+bool StationData::operator==(const StationData& in) const {
+	return ( (position == in.position)
+		&& (stationName == in.stationName));
 }
 
-bool StationData::operator!=(const StationData& in) const{
+bool StationData::operator!=(const StationData& in) const {
   return !(*this==in);
 }
 
 //Specific Getter Functions for StationData
-double StationData::getLatitude() const{
-	return latitude;
-}
-
-double StationData::getLongitude() const
-{
-	return longitude;
-}
-
-double StationData::getEasting() const
-{ 
-	return eastCoordinate;
-}
-
-double StationData::getNorthing() const
-{ 
-	return northCoordinate;
-}
-
-double StationData::getAltitude() const
-{
-	return altitude;
-}
-
-string StationData::getStationName() const
-{ 
+std::string StationData::getStationName() const {
 	return stationName;
 }
 
 
-const string StationData::toString() const
+const std::string StationData::toString() const
 {
-	stringstream tmpstr;
+	std::stringstream tmpstr;
 
-	tmpstr << setprecision(10)
-	 	<< "Longitude: " << setw(15) << longitude << setw(10) << "  Latitude: " << setw(15) << latitude << "  Altitude: " << altitude << endl
-	 	<< "Easting:   " << setw(15) << eastCoordinate << setw(10) << "  Northing: " << setw(15) << northCoordinate << "  Name:     " << 			stationName;
+	tmpstr << std::setprecision(10)
+	 	<< "Longitude: " << std::setw(15) << position.getLon() << std::setw(10) << "  Latitude: " << std::setw(15) << position.getLat() << "  Altitude: " << position.getAltitude() << std::endl
+	 	<< "Easting:   " << std::setw(15) << position.getEasting() << std::setw(10) << "  Northing: " << std::setw(15) << position.getNorthing() << "  Name:     " << stationName;
 
 	return tmpstr.str();
 }
 #ifdef _POPC_
+#include "marshal_meteoio.h"
 void StationData::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack){
-		buf.Pack(&altitude,1);
+		marshal_Coords(buf, position, 0, FLAG_MARSHAL, NULL);
 		buf.Pack(&stationName, 1);
-		buf.Pack(&eastCoordinate,1);
-		buf.Pack(&northCoordinate,1);
-		buf.Pack(&longitude,1);
-		buf.Pack(&latitude,1);
 	}else{
-		buf.UnPack(&altitude,1);
+		marshal_Coords(buf, position, 0, !FLAG_MARSHAL, NULL);
 		buf.UnPack(&stationName, 1);
-		buf.UnPack(&eastCoordinate,1);
-		buf.UnPack(&northCoordinate,1);
-		buf.UnPack(&longitude,1);
-		buf.UnPack(&latitude,1);
 	}
 }
 #endif

@@ -39,14 +39,14 @@
  */
 class GrassIO : public IOInterface {
 	public:
-		GrassIO(void (*delObj)(void*), const string& filename);
+		GrassIO(void (*delObj)(void*), const std::string& filename);
 
 		GrassIO(const std::string& configfile);
 		GrassIO(const GrassIO&);
 		GrassIO(const ConfigReader&);
 		~GrassIO() throw();
 
-		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
+		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
@@ -58,13 +58,13 @@ class GrassIO : public IOInterface {
 
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(POINTSArray& pts);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& filename);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
 	private:
 		void cleanup() throw();
 		ConfigReader cfg;
-		ifstream fin; //Input file streams
-		ofstream fout;//Output file streams
+		std::ifstream fin; //Input file streams
+		std::ofstream fout;//Output file streams
 };
 
 #endif

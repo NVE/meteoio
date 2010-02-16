@@ -119,7 +119,7 @@ class FilterAlgorithms {
 		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
 						const unsigned int& pos,
 						const Date_IO& date, const std::vector<std::string>& _vecArgs,
-						const unsigned int& paramindex, vector<double>& vecWindow);
+						const unsigned int& paramindex, std::vector<double>& vecWindow);
 		static std::map<std::string, FilterProperties> filterMap;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map filterMap

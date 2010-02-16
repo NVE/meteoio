@@ -42,7 +42,7 @@ void ConfigReader::addFile(const std::string& filename_in)
 
 void ConfigReader::addCmdLine(const std::string& cmd_line)
 {
-	sourcename = string("Command line");
+	sourcename = std::string("Command line");
 	parseCmdLine(cmd_line);
 }
 
@@ -139,7 +139,7 @@ std::string ConfigReader::getSourceName()
 	return sourcename;
 }
 
-unsigned int ConfigReader::findKeys(vector<string>& vecResult, 
+unsigned int ConfigReader::findKeys(std::vector<std::string>& vecResult, 
 							const std::string keystart, 
 							const std::string section) const
 {

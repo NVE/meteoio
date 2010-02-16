@@ -28,9 +28,8 @@
 #include <ctime>
 #include "IOExceptions.h"
 
-using namespace std; 
 ///Using the following namespace for the comparison operator overloading
-using namespace rel_ops; 
+//using namespace rel_ops; 
 
 /**
  * @class Date_IO
@@ -88,7 +87,7 @@ class Date_IO {
 
 		///The toString representation outputs the date in the form of "[double]julian_date yyyy/mm/dd hh:mm"
 		const std::string toString(void) const;
-		friend ostream& operator<<(ostream& os, const Date_IO& date);
+		friend std::ostream& operator<<(std::ostream& os, const Date_IO& date);
 
 		const std::string toString(FORMATS type) const;
 
@@ -99,7 +98,11 @@ class Date_IO {
 		///Can be used to subtract an interval from an existing Date_IO object
 		Date_IO& operator-=(const Date_IO&);
 		bool operator==(const Date_IO&) const;
+		bool operator!=(const Date_IO&) const;
 		bool operator<(const Date_IO&) const;
+		bool operator<=(const Date_IO&) const;
+		bool operator>(const Date_IO&) const;
+		bool operator>=(const Date_IO&) const;
 
 		const Date_IO operator+(const Date_IO&) const;
 		const Date_IO operator-(const Date_IO&) const;

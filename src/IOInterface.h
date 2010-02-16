@@ -97,7 +97,7 @@ class IOInterface : public PluginObject {
 		* @param grid_out A Grid2DObject instance 
 		* @param parameter A std::string representing some information for the function on what grid to retrieve
 		*/ 
-		virtual void read2DGrid(Grid2DObject& grid_out, const string& parameter="") = 0;
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="") = 0;
 
 		/**
 		* @brief Parse the DEM (Digital Elevation Model) into the Grid2DObject
@@ -183,7 +183,7 @@ class IOInterface : public PluginObject {
 		* @param grid_in (Grid2DObject) The grid to write
 		* @param name (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
 		*/
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name="") = 0;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name="") = 0;
 };
 
 #endif

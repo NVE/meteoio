@@ -122,7 +122,7 @@ class ConfigReader {
 		 */
 		template <class T> void getValue(const std::string& key, 
 								   const std::string& section, 
-								   vector<T>& vecT, 
+								   std::vector<T>& vecT, 
 								   const unsigned int& options=0) const {
 			try {
 				vecT.clear();
@@ -178,7 +178,7 @@ class ConfigReader {
 		 *  unsigned int nrOfMatches = getKeys(myVec, "TA::", "Filters");
 		 * @endcode
 		 */
-		unsigned int findKeys(vector<string>& vecResult, 
+		unsigned int findKeys(std::vector<std::string>& vecResult, 
 						  const std::string keystart, const std::string section="GENERAL") const;
 
 		//LEGACY

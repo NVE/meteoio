@@ -177,7 +177,7 @@ void DEMObject::update(const slope_type& algorithm) {
 * 
 * The azimuth is always computed using the Hodgson (1998) algorithm.
 */
-void DEMObject::update(const string& algorithm) {
+void DEMObject::update(const std::string& algorithm) {
 //This method recomputes the attributes that are not read as parameters 
 //(such as slope, azimuth, normal vector)
 	slope_type type;
@@ -245,7 +245,7 @@ void DEMObject::printFailures() {
 		}
 	}
 	if(header==false) {
-		std::cout << endl;
+		std::cout << std::endl;
 	}
 }
 
@@ -281,7 +281,7 @@ void DEMObject::sanitize() {
 */
 double DEMObject::horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2)
 {
-	return sqrt( pow2(xcoord2-xcoord1) + pow2(ycoord2-ycoord1) );
+	return sqrt( IOUtils::pow2(xcoord2-xcoord1) + IOUtils::pow2(ycoord2-ycoord1) );
 }
 
 
@@ -315,9 +315,9 @@ double DEMObject::terrainDistance(const double& xcoord1, const double& ycoord1, 
 				//distance += sqrt( pow2((ix2-ix1)*cellsize) + pow2((iy2-iy1)*cellsize) + pow2(grid2D(ix2,iy2)-grid2D(ix1,iy1)) );
 				const double z1=grid2D(ix1,iy1);
 				const double z2=grid2D(ix2,iy2);
-				const double tmpx=pow2((double)(ix2-ix1)*cellsize);
-				const double tmpy=pow2((double)(iy2-iy1)*cellsize);
-				const double tmpz=pow2(z2-z1);
+				const double tmpx=IOUtils::pow2((double)(ix2-ix1)*cellsize);
+				const double tmpy=IOUtils::pow2((double)(iy2-iy1)*cellsize);
+				const double tmpz=IOUtils::pow2(z2-z1);
 				distance += sqrt( tmpx + tmpy + tmpz );
 			}
 			last_point = ii;
@@ -336,7 +336,7 @@ double DEMObject::terrainDistance(const double& xcoord1, const double& ycoord1, 
 * @param vec_points vector of points that are in between
 *
 */
-void DEMObject::getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, vector<POINT>& vec_points) {
+void DEMObject::getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, std::vector<POINT>& vec_points) {
 
 	if(xcoord1>xcoord2) {
 		//we want xcoord1<xcoord2, so we swap the two points

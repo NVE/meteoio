@@ -192,6 +192,16 @@ void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &d
 	}
 }
 
+void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMemspool *temp) {
+	(void)maxsize;
+	(void)*temp;
+	if(flag&FLAG_MARSHAL) {
+		data.Serialize(buf,true);
+	} else {
+		data.Serialize(buf,false);
+	}
+}
+
 void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;

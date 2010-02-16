@@ -141,9 +141,9 @@ void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	//note: they have to be entirely corresponding (for every date)
 	try {
 		read2DMeteo(vecMeteo, vecStation);
-	} catch(exception& e){
-		cerr << "[E] No meteo2d data found or error while reading it, using only Meteo1D data: " 
-			<< endl << "\t" << e.what() << endl;
+	} catch(std::exception& e){
+		std::cerr << "[E] No meteo2d data found or error while reading it, using only Meteo1D data: " 
+			<< std::endl << "\t" << e.what() << std::endl;
 	}
 }
 
@@ -189,7 +189,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 	}
 
 	fin.clear();
-	fin.open (tmp.c_str(), ifstream::in);
+	fin.open (tmp.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		throw FileAccessException(tmp,AT);
 	}
@@ -212,22 +212,22 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 			cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
 		} catch(std::exception& e) {
 			//problems while reading values for COORDIN or COORDPARAM
-			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
+			std::cerr << "[E] reading configuration file: " << "\t" << e.what() << std::endl;
 			throw;
 		}
 
 		//compute/check WGS coordinates (considered as the true reference)
-		Coords coordinate(coordsys, coordparam);
-		coordinate.setXY(xcoord, ycoord);
-		coordinate.setLatLon(latitude, longitude);
+		Coords location(coordsys, coordparam);
+		location.setXY(xcoord, ycoord);
+		location.setLatLon(latitude, longitude);
 		try {
-			coordinate.check();
+			location.check();
 		} catch(...) {
-			std::cerr << "[E] Error in geographic coordinates in file " << tmp << "trapped at " << AT << endl;
+			std::cerr << "[E] Error in geographic coordinates in file " << tmp << "trapped at " << AT << std::endl;
 			throw;
 		}
 
-		sd.setStationData(xcoord, ycoord, altitude, "", latitude, longitude);
+		sd.setStationData(location, "");
 
 		//Read one line, construct Date_IO object and see whether date is greater or equal than the date_in object
 		IOUtils::skipLines(fin, 1, eoln); //skip rest of line
@@ -242,13 +242,13 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		} while((tmpdata.date < dateStart) && (!eofreached));
 
 		if ((dateEnd < dateStart) && (!eofreached)){ //Special case
-			vecMeteo.push_back( vector<MeteoData>() );
-			vecStation.push_back( vector<StationData>() );
+			vecMeteo.push_back( std::vector<MeteoData>() );
+			vecStation.push_back( std::vector<StationData>() );
 			vecMeteo[0].push_back(tmpdata);
 			vecStation[0].push_back(sd);
 		} else if ((tmpdata.date <= dateEnd)  && (!eofreached)) {
-			vecMeteo.push_back( vector<MeteoData>() );
-			vecStation.push_back( vector<StationData>() );
+			vecMeteo.push_back( std::vector<MeteoData>() );
+			vecStation.push_back( std::vector<StationData>() );
 		}
 
 		while ((tmpdata.date <= dateEnd)  && (!eofreached)) {
@@ -263,7 +263,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		}
 		//cout << "Size of buffer: " << vecMeteo[0].size() << "   " << tmp_date.toString() << endl;
 	} catch(...) {
-		cout << "[e] " << AT << ": "<< endl;
+		std::cout << "[e] " << AT << ": "<< std::endl;
 		cleanup();
 		throw;
 	}
@@ -298,7 +298,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 		}
 	}
       
-	tmpdata.setMeteoData(tmp_date, tmp_values[0], tmp_values[1], tmp_values[2], nodata, tmp_values[3], tmp_values[4], tmp_values[5], nodata, nodata, nodata);
+	tmpdata.setMeteoData(tmp_date, tmp_values[0], tmp_values[1], tmp_values[2], IOUtils::nodata, tmp_values[3], tmp_values[4], tmp_values[5], IOUtils::nodata, IOUtils::nodata, IOUtils::nodata);
 	
 	return false;
 }
@@ -335,7 +335,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	stations = getNrOfStations(filenames, hashStations);
 
 	constructMeteo2DFilenames(startDate, startDate, filenames);//get filenames for current year
-	cerr << "[I] Number of 2D meteo stations: " << stations << endl;
+	std::cerr << "[I] Number of 2D meteo stations: " << stations << std::endl;
 
 	if (stations < 1) {
 		throw InvalidFormatException("No StationData found in 2D Meteo Files", AT); 
@@ -354,8 +354,8 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 
 		//init vecStation with proper StationData, vecMeteo with nodata
 		for (unsigned int jj=0; jj<tmpvecS.size(); jj++){
-			vecMeteo.push_back( vector<MeteoData>() );
-			vecStation.push_back( vector<StationData>() );
+			vecMeteo.push_back( std::vector<MeteoData>() );
+			vecStation.push_back( std::vector<StationData>() );
 			for (unsigned int ii=0; ii<vecMeteo[0].size(); ii++){
 				//NOTE: there needs to be the same amount of 1D and 2D data
 				vecStation[jj+1].push_back(tmpvecS[jj]);
@@ -420,11 +420,11 @@ void A3DIO::constructMeteo2DFilenames(const Date_IO& startDate, const Date_IO& e
 		std::stringstream ss;
 		ss << yyyy;
 
-		string precFilename = tmp + "/prec" + ss.str() + ".txt";
-		string rhFilename = tmp + "/rhum" + ss.str() + ".txt";
-		string taFilename = tmp + "/tair" + ss.str() + ".txt";
-		string wspdFilename = tmp + "/wspd" + ss.str() + ".txt";
-		string wdirFilename = tmp + "/wdir" + ss.str() + ".txt";
+		std::string precFilename = tmp + "/prec" + ss.str() + ".txt";
+		std::string rhFilename = tmp + "/rhum" + ss.str() + ".txt";
+		std::string taFilename = tmp + "/tair" + ss.str() + ".txt";
+		std::string wspdFilename = tmp + "/wspd" + ss.str() + ".txt";
+		std::string wdirFilename = tmp + "/wdir" + ss.str() + ".txt";
 
 		filenames.push_back(precFilename);
 		filenames.push_back(rhFilename);
@@ -453,7 +453,7 @@ unsigned int A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::ma
 		std::string filename = filenames[ii];
 
 		fin.clear();
-		fin.open (filename.c_str(), ifstream::in);
+		fin.open (filename.c_str(), std::ifstream::in);
 		if (fin.fail()) throw FileAccessException(filename, AT);
   
 		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -489,7 +489,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 	int tmp_ymdh[4];
 
 	fin.clear();
-	fin.open (filename.c_str(), ifstream::in);
+	fin.open (filename.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		throw FileAccessException(filename, AT);
 	}
@@ -583,7 +583,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	}
 
 	fin.clear();
-	fin.open (filename.c_str(), ifstream::in);
+	fin.open (filename.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		throw FileAccessException(filename, AT);
 	}
@@ -612,23 +612,23 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	}
 
 	for (unsigned int ii=4; ii<columns; ii++) {
-		unsigned int stationnr = hashStations[vec_names.at(ii)]; 
-		if ((!IOUtils::convertString(vecS.at(stationnr-1).altitude, vec_altitude.at(ii), std::dec))
-		    || (!IOUtils::convertString(vecS.at(stationnr-1).eastCoordinate, vec_xcoord.at(ii), std::dec))
-		    || (!IOUtils::convertString(vecS.at(stationnr-1).northCoordinate, vec_ycoord.at(ii), std::dec))
-		    || (!IOUtils::convertString(vecS.at(stationnr-1).stationName, vec_names.at(ii), std::dec))) {
+		unsigned int stationnr = hashStations[vec_names.at(ii)];
+		double altitude, easting, northing, stationName;
+		if ((!IOUtils::convertString(altitude, vec_altitude.at(ii), std::dec))
+		    || (!IOUtils::convertString(easting, vec_xcoord.at(ii), std::dec))
+		    || (!IOUtils::convertString(northing, vec_ycoord.at(ii), std::dec))
+		    || (!IOUtils::convertString(stationName, vec_names.at(ii), std::dec))) {
 			throw ConversionFailedException("Conversion of station description failed in " + filename, AT);  
 		}
 
-		Coords coordinate(coordsys, coordparam);
-		//calculate coordinates if necessary
-		if(vecS[stationnr-1].latitude==IOUtils::nodata || vecS[stationnr-1].longitude==IOUtils::nodata) {
-			if(vecS[stationnr-1].eastCoordinate==IOUtils::nodata || vecS[stationnr-1].northCoordinate==IOUtils::nodata) {
-				throw InvalidFormatException("Too many nodata values for coordinates conversion in file " + filename, AT);
-			}
-			coordinate.setXY(vecS[stationnr-1].eastCoordinate, vecS[stationnr-1].northCoordinate);
-			vecS[stationnr-1].latitude = coordinate.getLat();
-			vecS[stationnr-1].longitude = coordinate.getLon();
+		vecS[stationnr-1].stationName = stationName;
+		vecS[stationnr-1].position.setProj(coordsys, coordparam);
+		vecS[stationnr-1].position.setXY(easting, northing, altitude, false);
+		//calculate/check coordinates if necessary
+		try {
+			vecS[stationnr-1].position.check();
+		} catch (...) {
+			std::cerr << "[E] Too many nodata values for coordinates conversion in file " << filename << " at " << AT << std::endl;
 		}
 	}
 
@@ -647,7 +647,7 @@ void A3DIO::readSpecialPoints(POINTSArray& pts)
 	}
 
 	fin.clear();
-	fin.open (filename.c_str(), ifstream::in);
+	fin.open (filename.c_str(), std::ifstream::in);
 	if (fin.fail()) {
 		throw FileAccessException(filename,AT);
 	}

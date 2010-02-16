@@ -36,7 +36,7 @@
 
 using namespace std;
 
-GrassIO::GrassIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}
+GrassIO::GrassIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){}
 
 GrassIO::GrassIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
@@ -63,7 +63,7 @@ void GrassIO::cleanup() throw()
 	}
 }
 
-void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
+void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
 
 	int _nx, _ny;
@@ -71,8 +71,8 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
 	double north, east, south, west, latitude, longitude;
 	double tmp_val, xllcorner, yllcorner, cellsize;
 	vector<string> tmpvec;
-	string line="";
-	map<string, string> header; // A map to save key value pairs of the file header
+	std::string line="";
+	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename, AT);
@@ -207,7 +207,7 @@ void GrassIO::readSpecialPoints(POINTSArray&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GrassIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
+void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {  
 	fout.open(name.c_str());
 	if (fout.fail()) {
@@ -217,12 +217,12 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
 	fout << setprecision(6) << fixed;
 
 	try {
-		fout << "north:" << (grid_in.yllcorner+grid_in.cellsize*grid_in.nrows) << endl;    
-		fout << "south:" << grid_in.yllcorner << endl;    
-		fout << "east:"  << (grid_in.xllcorner+grid_in.cellsize*grid_in.ncols)  << endl;
-		fout << "west:"  << grid_in.xllcorner << endl;
-		fout << "rows:"  << grid_in.nrows << endl;
-		fout << "cols:"  << grid_in.ncols << endl;
+		fout << "north:" << (grid_in.yllcorner+grid_in.cellsize*grid_in.nrows) << std::endl;
+		fout << "south:" << grid_in.yllcorner << std::endl;    
+		fout << "east:"  << (grid_in.xllcorner+grid_in.cellsize*grid_in.ncols)  << std::endl;
+		fout << "west:"  << grid_in.xllcorner << std::endl;
+		fout << "rows:"  << grid_in.nrows << std::endl;
+		fout << "cols:"  << grid_in.ncols << std::endl;
 
 		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 			unsigned int ll = 0;
@@ -240,10 +240,10 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
 			} else {
 				fout << grid_in.grid2D(ll, kk);
 			}
-			fout << endl;
+			fout << std::endl;
 		}
 	} catch(std::exception& e) {
-		cout << "[E] " << AT << ": " << e.what() << endl;
+		std::cout << "[E] " << AT << ": " << e.what() << std::endl;
 		cleanup();
 		throw;
 	}

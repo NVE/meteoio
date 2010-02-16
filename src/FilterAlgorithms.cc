@@ -293,7 +293,7 @@ bool FilterAlgorithms::MedianAvgFilter(const std::vector<MeteoData>& vecM, const
 	//5) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
 	//  
 
-	vector<double> vecWindow;
+	std::vector<double> vecWindow;
 	if (!getWindowData("median_avg", vecM, pos, date, _vecArgs, paramindex, vecWindow))
 		return false; //Not enough data to meet user configuration
 
@@ -334,7 +334,7 @@ bool FilterAlgorithms::MeanAvgFilter(const std::vector<MeteoData>& vecM, const s
 	//   position
 	//4) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
 	//  
-	vector<double> vecWindow;
+	std::vector<double> vecWindow;
 	if (!getWindowData("median_avg", vecM, pos, date, _vecArgs, paramindex, vecWindow))
 		return false; //Not enough data to meet user configuration
 
@@ -364,7 +364,7 @@ bool FilterAlgorithms::MeanAvgFilter(const std::vector<MeteoData>& vecM, const s
 bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM, 
 				   const unsigned int& pos, 
 				   const Date_IO& date, const std::vector<std::string>& _vecArgs,
-				   const unsigned int& paramindex, vector<double>& vecWindow)
+				   const unsigned int& paramindex, std::vector<double>& vecWindow)
 {
 	vecWindow.clear();
 	bool isSoft = false;

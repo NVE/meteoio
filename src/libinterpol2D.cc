@@ -125,7 +125,7 @@ void Interpol2D::BuildStationsElevations(const std::vector<StationData>& vecStat
 {
 	//from a vector of stations meta data, builds a 1D array
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
-		vecElevations.push_back(vecStations_in[i].getAltitude());
+		vecElevations.push_back(vecStations_in[i].position.getAltitude());
 	}
 }
 
@@ -193,10 +193,10 @@ int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<do
 	double a,b,r;
 	
 	if ((unsigned int)X.size()==2) {
-		cout << "[W] only two points for linear regression!" << endl;
+		std::cout << "[W] only two points for linear regression!" << std::endl;
 	}
 	if((unsigned int)X.size()<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
-		cerr << "[E] Not enough data point for linear regression!" << endl;
+		std::cerr << "[E] Not enough data point for linear regression!" << std::endl;
 		coeffs[1]=0.;
 		coeffs[2]=X[1];
 		coeffs[3]=1.;
@@ -217,7 +217,7 @@ int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<do
 	}
 	//check if r is reasonnable
 	if (fabs(coeffs[3])<r_thres) {
-		cout << "[W] Poor regression coefficient: " << std::setprecision(4) << coeffs[3] << endl;
+		std::cout << "[W] Poor regression coefficient: " << std::setprecision(4) << coeffs[3] << std::endl;
 		//for (unsigned int i=0; i<X.size(); i++){
 		// printf("%g %g\n",X[i],Y[i]);
 		// }
@@ -338,7 +338,7 @@ double Interpol2D::IDWKriegingCore(const double& x, const double& y,
 	double parameter=0., norm=0., weight;
 	
 	for (unsigned int i=0; i<(unsigned int)vecStations.size(); i++) {
-		weight=1./(HorizontalDistance(x, y, vecStations[i].getEasting(), vecStations[i].getNorthing()) + 1e-6);
+		weight=1./(HorizontalDistance(x, y, vecStations[i].position.getEasting(), vecStations[i].position.getNorthing()) + 1e-6);
 		parameter += weight*vecData_in[i];
 		norm += weight;
 	}
@@ -352,7 +352,7 @@ void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 	std::vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
 	
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
-		vecTref[i] = (this->*LapseRateProject)(vecData_in[i], vecStations_in[i].getAltitude(), ref_altitude, vecCoefficients);
+		vecTref[i] = (this->*LapseRateProject)(vecData_in[i], vecStations_in[i].position.getAltitude(), ref_altitude, vecCoefficients);
 	}
 	
 	for (unsigned int i=0; i<T.ncols; i++) {
@@ -409,7 +409,7 @@ void Interpol2D::calculate(Grid2DObject& param_out)
 		} else if (single_type==I_LAPSE_CST) {
 			vecCoefficients[1] = dflt_temperature_lapse_rate;//HACK, it should depend on a user given value!
 			LapseRateProject = &Interpol2D::LinProject;
-			LapseConstFill(param_out, dem, inputData[0], InputMeta[0].getAltitude());
+			LapseConstFill(param_out, dem, inputData[0], InputMeta[0].position.getAltitude());
 			flag_ok=1;
 		}
 	

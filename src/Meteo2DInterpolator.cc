@@ -35,7 +35,7 @@ Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObje
 		unsigned int nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
 
 		for (unsigned int jj=0; jj<nrOfAlgorithms; jj++){
-			cout << parname<<" "<<jj<<": " << tmpAlgorithms[jj] << endl;
+			std::cout << parname<<" "<<jj<<": " << tmpAlgorithms[jj] << std::endl;
 		}
 
 		if (nrOfAlgorithms > 0)
@@ -113,7 +113,7 @@ void Meteo2DInterpolator::interpolateHNW(Grid2DObject& hnw)
 	unsigned int datacount = vecData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(vecData[ii].hnw != nodata) {
+		if(vecData[ii].hnw != IOUtils::nodata) {
 			//cout << vecData[ii].hnw << endl;
 			vecSelectedStations.push_back(vecMeta[ii]);
 			vecInput.push_back(vecData[ii].hnw);
@@ -134,10 +134,10 @@ void Meteo2DInterpolator::interpolateRH(Grid2DObject& rh, Grid2DObject& ta)
 	unsigned int rh_count=0;
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(vecData[ii].rh != nodata) {
+		if(vecData[ii].rh != IOUtils::nodata) {
 			//cout << vecData[ii].rh << endl;
 			rh_count++;
-			if(vecData[ii].ta != nodata) {
+			if(vecData[ii].ta != IOUtils::nodata) {
 				vecSelectedStations.push_back(vecMeta[ii]);
 				vecInput.push_back(vecData[ii].rh);
 				vecExtraInput.push_back(vecData[ii].ta);
@@ -156,7 +156,7 @@ void Meteo2DInterpolator::interpolateRH(Grid2DObject& rh, Grid2DObject& ta)
 		vecInput.clear();
 		vecExtraInput.clear();
 		for (unsigned int ii=0; ii<datacount; ii++) {
-			if(vecData[ii].rh != nodata) {
+			if(vecData[ii].rh != IOUtils::nodata) {
 				//cout << vecData[ii].rh << endl;
 				vecSelectedStations.push_back(vecMeta[ii]);
 				vecInput.push_back(vecData[ii].rh);
@@ -176,7 +176,7 @@ void Meteo2DInterpolator::interpolateTA(Grid2DObject& ta)
 	unsigned int datacount = vecData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(vecData[ii].ta != nodata) {
+		if(vecData[ii].ta != IOUtils::nodata) {
 			//cout << vecData[ii].ta << endl;
 			vecSelectedStations.push_back(vecMeta[ii]);
 			vecInput.push_back(vecData[ii].ta);
@@ -195,7 +195,7 @@ void Meteo2DInterpolator::interpolateDW(Grid2DObject& dw)
 	unsigned int datacount = vecData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(vecData[ii].dw != nodata) {
+		if(vecData[ii].dw != IOUtils::nodata) {
 			vecSelectedStations.push_back(vecMeta[ii]);
 			vecInput.push_back(vecData[ii].dw);
 		}
@@ -216,11 +216,11 @@ void Meteo2DInterpolator::interpolateVW(Grid2DObject& vw)
 	std::vector<double> vecEmpty;
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(vecData[ii].vw != nodata) {
+		if(vecData[ii].vw != IOUtils::nodata) {
 			vecSelectedStations.push_back(vecMeta[ii]);
 			vecInput.push_back(vecData[ii].vw);
 		}
-		if(vecData[ii].dw != nodata) {
+		if(vecData[ii].dw != IOUtils::nodata) {
 			countDataDir++;
 		}
 	}
@@ -257,7 +257,7 @@ void Meteo2DInterpolator::interpolateISWR(Grid2DObject& iswr)
 	unsigned int datacount = vecData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(vecData[ii].iswr != nodata) {
+		if(vecData[ii].iswr != IOUtils::nodata) {
 			vecSelectedStations.push_back(vecMeta[ii]);
 			vecInput.push_back(vecData[ii].iswr);
 		}
@@ -275,7 +275,7 @@ void Meteo2DInterpolator::interpolateLWR(Grid2DObject& lwr)
 	unsigned int datacount = vecData.size();
 
 	for (unsigned int ii=0; ii<datacount; ii++) {
-		if(vecData[ii].lwr != nodata) {
+		if(vecData[ii].lwr != IOUtils::nodata) {
 			vecSelectedStations.push_back(vecMeta[ii]);
 			vecInput.push_back(vecData[ii].lwr);
 		}

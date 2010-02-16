@@ -78,7 +78,7 @@
 
 using namespace std;
 
-ARCIO::ARCIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}
+ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){}
 
 ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
@@ -105,7 +105,7 @@ void ARCIO::cleanup() throw()
 	}
 }
 
-void ARCIO::read2DGrid(Grid2DObject& grid_out, const string& filename)
+void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
 
 	int i_ncols, i_nrows;
@@ -243,7 +243,7 @@ void ARCIO::readSpecialPoints(POINTSArray&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::write2DGrid(const Grid2DObject& grid_in, const string& name)
+void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {  
 	//uncomment if no overwriting should be allowed
 	/* 

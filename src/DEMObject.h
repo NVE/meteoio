@@ -70,14 +70,14 @@ class DEMObject : public Grid2DObject {
 				const bool& _update=true, const slope_type& _algorithm=DFLT);
 
 		void setDefaultAlgorithm(const slope_type& _algorithm);
-		void update(const string& algorithm);
+		void update(const std::string& algorithm);
 		void update(const slope_type& algorithm=DFLT);
 		void updateAllMinMax();
 		void printFailures();
 		void sanitize();
 		double horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
 		double terrainDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
-		void getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, vector<POINT>& vec_points);
+		void getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, std::vector<POINT>& vec_points);
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);

@@ -81,7 +81,7 @@ void MeteoData::initParameterMap()
 
 MeteoData::MeteoData() : resampled(false)
 {
-	setMeteoData(Date_IO(0.0), nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata, nodata);
+	setMeteoData(Date_IO(0.0), IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata);
 	initParameterMap();
 }
 
