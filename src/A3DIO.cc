@@ -149,11 +149,7 @@ void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 void A3DIO::convertUnits(MeteoData& meteo)
 {
-	for(unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
-		//loop through all meteo params and check whether they're nodata values
-		if (meteo.param(ii)<=plugin_nodata)
-			meteo.param(ii) = IOUtils::nodata;
-	}
+	meteo.standardizeNodata(plugin_nodata);
 
 	//converts C to Kelvin, converts RH to [0,1]
 	if(meteo.ta!=IOUtils::nodata) {
@@ -206,20 +202,11 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		IOUtils::getValueForKey(header, "Y_Coord", ycoord);
 		IOUtils::getValueForKey(header, "Altitude", altitude);
 
-		std::string coordsys="", coordparam="";
-		try {
-			cfg.getValue("COORDIN", coordsys);
-			cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
-		} catch(std::exception& e) {
-			//problems while reading values for COORDIN or COORDPARAM
-			std::cerr << "[E] reading configuration file: " << "\t" << e.what() << std::endl;
-			throw;
-		}
-
-		//compute/check WGS coordinates (considered as the true reference)
-		Coords location(coordsys, coordparam);
-		location.setXY(xcoord, ycoord);
-		location.setLatLon(latitude, longitude);
+		//HACK!! FIXME!! we need to transfer the plugin nodata for the checks!!!!
+		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
+		Coords location(cfg);
+		location.setXY(xcoord, ycoord, false);
+		location.setLatLon(latitude, longitude, false);
 		try {
 			location.check();
 		} catch(...) {
@@ -573,15 +560,6 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	unsigned int columns = 0;
 	std::vector<std::string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
 
-	//Build Coords object to convert easting/northing values to lat/long in WGS84
-	std::string coordsys="", coordparam="";
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-	}
-
 	fin.clear();
 	fin.open (filename.c_str(), std::ifstream::in);
 	if (fin.fail()) {
@@ -611,6 +589,9 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 		throw InvalidFormatException("Column count doesn't match from line to line in " + filename, AT);
 	}
 
+	//Build Coords object to convert easting/northing values to lat/long in WGS84
+	Coords coordinate(cfg);
+
 	for (unsigned int ii=4; ii<columns; ii++) {
 		unsigned int stationnr = hashStations[vec_names.at(ii)];
 		double altitude, easting, northing, stationName;
@@ -620,16 +601,9 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 		    || (!IOUtils::convertString(stationName, vec_names.at(ii), std::dec))) {
 			throw ConversionFailedException("Conversion of station description failed in " + filename, AT);  
 		}
-
+		coordinate.setXY(easting, northing, altitude);
 		vecS[stationnr-1].stationName = stationName;
-		vecS[stationnr-1].position.setProj(coordsys, coordparam);
-		vecS[stationnr-1].position.setXY(easting, northing, altitude, false);
-		//calculate/check coordinates if necessary
-		try {
-			vecS[stationnr-1].position.check();
-		} catch (...) {
-			std::cerr << "[E] Too many nodata values for coordinates conversion in file " << filename << " at " << AT << std::endl;
-		}
+		vecS[stationnr-1].position = coordinate;
 	}
 
 	cleanup();

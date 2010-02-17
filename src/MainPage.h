@@ -243,21 +243,23 @@
  * #include "MeteoIO.h"
  * 
  * int main(void) {
- * 	const double lat1=46.1592, lon1=8.12993;
  * 	const double dist_x=700, dist_y=1200;
  * 	DEMObject dem;
  * 	IOHandler *raw_io = NULL;
+ *	ConfigReader *cfg = NULL;
  * 	int i,j;
  * 	
  * 	try {
- * 		ConfigReader cfg("io.ini");
+ * 		cfg = new ConfigReader("io.ini");
  * 		raw_io = new IOHandler(cfg);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
  * 	raw_io->readDEM(dem);
- * 	dem.WGS84_to_grid(lat1, lon1, i,j);
- * 
+ *	Coords point(*cfg);
+ *	point.setLatLon(46.1592, 8.12993);
+ *	dem.WGS84_to_grid(point, i,j);
+ *
  * 	const int ncols = (int)ceil(dist_x/dem.cellsize);
  * 	const int nrows = (int)ceil(dist_y/dem.cellsize);
  * 

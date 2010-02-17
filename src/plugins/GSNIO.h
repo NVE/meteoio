@@ -40,7 +40,7 @@
  */
 class GSNIO : public IOInterface {
 	public:
-		GSNIO(void (*delObj)(void*), const string& filename);
+		GSNIO(void (*delObj)(void*), const std::string& filename);
 
 		GSNIO(const std::string& configfile);
 		GSNIO(const GSNIO&);
@@ -52,12 +52,12 @@ class GSNIO : public IOInterface {
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
+		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(POINTSArray& pts);
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
 		void parseString(const std::string& _string, std::vector<std::string>& vecString, MeteoData& md);
@@ -71,9 +71,10 @@ class GSNIO : public IOInterface {
 
 		A3DWebServiceSoap12BindingProxy gsn;
 		ConfigReader cfg;
-		vector<string> vecStationName;
+		std::vector<std::string> vecStationName;
 		std::string hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                              ///< Variable for proxy configuration
+		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 
 #endif

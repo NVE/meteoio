@@ -121,6 +121,8 @@ class MeteoData {
 		bool isResampled();
 		void setResampled(const bool&);
 
+		void standardizeNodata(const double& plugin_nodata);
+
 		double& param(const unsigned int& parindex);
 		const double& param(const unsigned int& parindex) const;
 		static const std::string& getParameterName(const unsigned int& parindex);

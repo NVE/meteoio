@@ -28,64 +28,55 @@ Grid2DObject::Grid2DObject() : grid2D()
 {
 	ncols = 0;
 	nrows = 0;
-	xllcorner = 0.0;
-	yllcorner = 0.0;
-	latitude = IOUtils::nodata;
-	longitude = IOUtils::nodata;
 	cellsize = 0.0;
 }
 
 Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude,
-				const double& _cellsize/*, 
-				const MapProj& _proj*/) : grid2D(_ncols, _nrows, IOUtils::nodata)
+				const double& _cellsize, const Coords& _llcorner) : grid2D(_ncols, _nrows, IOUtils::nodata)
 {
 	//set metadata, grid2D already successfully created
-	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize/*, _proj*/);
+	setValues(_ncols, _nrows, _cellsize, _llcorner);
 }
 
 Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const Array2D<double>& _grid2D/*, 
-				const MapProj& _proj*/) : grid2D()
+				const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _grid2D) : grid2D()
 {
-	set(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _grid2D/*, _proj*/);
+	set(_ncols, _nrows, _cellsize, _llcorner, _grid2D);
 }
 
 Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _nx, const unsigned int& _ny,
 				const unsigned int& _ncols, const unsigned int& _nrows) 
 	: grid2D(_grid2Dobj.grid2D, _nx,_ny, _ncols,_nrows)
 {
+	setValues(_ncols, _nrows, _grid2Dobj.cellsize);
 
-	setValues(_ncols, _nrows, (_grid2Dobj.xllcorner+_nx*_grid2Dobj.cellsize),
-		(_grid2Dobj.yllcorner+_ny*_grid2Dobj.cellsize), 
-		IOUtils::nodata, IOUtils::nodata, _grid2Dobj.cellsize);
+	//we take the previous corner (so we use the same projection parameters)
+	//and we shift it by the correct X and Y distance
+	llcorner = _grid2Dobj.llcorner;
+	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
+		llcorner.setXY( llcorner.getEasting()+_nx*_grid2Dobj.cellsize,
+				llcorner.getNorthing()+_ny*_grid2Dobj.cellsize);
+	}
 }
 
-void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, double& _latitude, double& _longitude)
-{//HACK: redo these method correctly using the Coords object
-	const double easting = ((double)i+.5) * cellsize; //HACK: is the coordinate the center of the cell?
-	const double northing = ((double)j+.5) * cellsize;
-
-	Coords coordinate(latitude, longitude); //TODO: add the distance algo as default param -> MapProj::GEO_COSINE
-	coordinate.setXY(easting, northing);
-	_latitude = coordinate.getLat();
-	_longitude = coordinate.getLon();
-	
-}
-
-int Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j)
+void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, Coords& point)
 {
-	double easting, northing;
-	Coords coordinate(latitude, longitude); //TODO: add the distance algo as default param -> MapProj::GEO_COSINE
-	coordinate.setLatLon(_latitude, _longitude);
-	easting = coordinate.getEasting();
-	northing = coordinate.getNorthing();
-	
-	double x = floor(easting/cellsize);
-	double y = floor(northing/cellsize);
+	const double easting = ((double)i) * cellsize; //The coordinate the ll corner of the cell
+	const double northing = ((double)j) * cellsize;
+
+	if(point.isSameProj(llcorner)==false) {
+		point.copyProj(llcorner);
+	}
+	point.setXY(easting, northing);
+}
+
+int Grid2DObject::WGS84_to_grid(Coords point, unsigned int& i, unsigned int& j)
+{
+	if(point.isSameProj(llcorner)==false) {
+		point.copyProj(llcorner);
+	}
+	double x = floor( (point.getEasting()-llcorner.getEasting()) / cellsize );
+	double y = floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize );
 
 	int error_code=EXIT_SUCCESS;
 	
@@ -113,20 +104,14 @@ int Grid2DObject::WGS84_to_grid(const double& _latitude, const double& _longitud
 }
 
 void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude,
-				const double& _cellsize/*, 
-				const MapProj& _proj*/)
+			const double& _cellsize, const Coords& _llcorner)
 {
-	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize/*, _proj*/);
+	setValues(_ncols, _nrows, _cellsize, _llcorner);
 	grid2D.resize(ncols, nrows, IOUtils::nodata);
 }
 
 void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const Array2D<double>& _grid2D/*, 
-				const MapProj& _proj*/)
+			const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _grid2D)
 {
 	//Test for equality in size: Only compatible Array2D<double> grids are permitted
 	unsigned int nx,ny;
@@ -135,36 +120,31 @@ void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 		throw IOException("Mismatch in size of Array2D<double> parameter _grid2D and size of Grid2DObject", AT);
 	}
 
-	setValues(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize/*, _proj*/);
+	setValues(_ncols, _nrows, _cellsize, _llcorner);
 
 	//Copy by value, after destroying the old grid
 	grid2D = _grid2D;
 }
 
 void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude, const double& _cellsize/*, 
-				const MapProj& proj*/)
+				const double& _cellsize)
 {
 	ncols = _ncols;
 	nrows = _nrows;
 	cellsize = _cellsize;
-	xllcorner = _xllcorner;
-	yllcorner = _yllcorner;
-	latitude = _latitude;
-	longitude = _longitude;
+}
 
-	//const MapProj dummy;
-	//if(proj!=dummy) {
-	//	checkCoordinates(proj);
-	//}
+void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _cellsize, const Coords& _llcorner)
+{
+	setValues(_ncols, _nrows, _cellsize);
+	llcorner = _llcorner;
 }
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)
 {
 	if( ncols==target.ncols && nrows==target.nrows &&
-		IOUtils::checkEpsilonEquality(latitude, target.latitude, 1.e-4) && 
-		IOUtils::checkEpsilonEquality(longitude, target.longitude, 1.e-4) &&
+		llcorner==target.llcorner &&
 		cellsize==target.cellsize) {
 		return true;
 	} else {
@@ -180,26 +160,16 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 	{
 		buf.Pack(&ncols,1);
 		buf.Pack(&nrows,1);
-		buf.Pack(&xllcorner,1);
-		buf.Pack(&yllcorner,1);
-		buf.Pack(&latitude,1);
-		buf.Pack(&longitude,1);
 		buf.Pack(&cellsize,1);
-		unsigned int x,y;
-		//DEBUG("ncols%d,nrows%d,xllcorner%d,yllcorner%d,celsize%d",ncols,nrows,xllcorner,yllcorner,cellsize);
-		grid2D.size(x,y);
+		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
 		buf.UnPack(&ncols,1);
 		buf.UnPack(&nrows,1);
-		buf.UnPack(&xllcorner,1);
-		buf.UnPack(&yllcorner,1);
-		buf.UnPack(&latitude,1);
-		buf.UnPack(&longitude,1);
 		buf.UnPack(&cellsize,1);
-		//DEBUG("ncols%d,nrows%d,xllcorner%d,yllcorner%d,celsize%d",ncols,nrows,xllcorner,yllcorner,cellsize);
+		marshal_Coords(buf, llcorner, 0, !FLAG_MARSHAL, NULL);
 		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
 	}

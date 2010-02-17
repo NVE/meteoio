@@ -56,10 +56,11 @@
  * THE SOFTWARE IN THIS PRODUCT WAS IN PART PROVIDED BY GENIVIA INC AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 using namespace std;
 
-GSNIO::GSNIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){
+GSNIO::GSNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){
 	initGSNConnection();
 }
 
@@ -107,7 +108,7 @@ void GSNIO::initGSNConnection(){
 	} catch(std::exception& e){}
 }
 
-void GSNIO::read2DGrid(Grid2DObject&, const string& filename)
+void GSNIO::read2DGrid(Grid2DObject&, const std::string& filename)
 {
 	//Nothing so far
 	(void)filename;
@@ -173,22 +174,24 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 	if (gsn.getSensorLocation(&sensorloc_req, &sensorloc) == SOAP_OK){
 		if (sensorloc.return_.size() != 4) throw IOException("Not enough SensorLocation data received ...", AT);
 
-		string *s0 = &sensorloc.return_[0]; //easier to type
-		string *s1 = &sensorloc.return_[1]; //easier to type
-		string *s2 = &sensorloc.return_[2]; //easier to type
-		string *s3 = &sensorloc.return_[3]; //easier to type
-		size_t sep0 = s0->find_first_of("=");
-		size_t sep1 = s1->find_first_of("=");
-		size_t sep2 = s2->find_first_of("=");
-		size_t sep3 = s3->find_first_of("=");
+		const std::string *s0 = &sensorloc.return_[0]; //easier to type
+		const std::string *s1 = &sensorloc.return_[1]; //easier to type
+		const std::string *s2 = &sensorloc.return_[2]; //easier to type
+		const std::string *s3 = &sensorloc.return_[3]; //easier to type
+		const size_t sep0 = s0->find_first_of("=");
+		const size_t sep1 = s1->find_first_of("=");
+		const size_t sep2 = s2->find_first_of("=");
+		const size_t sep3 = s3->find_first_of("=");
 		double latitude=IOUtils::nodata, longitude=IOUtils::nodata, altitude=IOUtils::nodata;
-		string name = s0->substr((sep0+1), (s0->size()-sep0-2));
+		const std::string name = s0->substr((sep0+1), (s0->size()-sep0-2));
 
 		convertStringToDouble(latitude, s1->substr((sep1+1), (s1->size()-sep1-2)), "Latitude");
 		convertStringToDouble(longitude, s2->substr((sep2+1), (s2->size()-sep2-2)), "Longitude");
 		convertStringToDouble(altitude, s3->substr((sep3+1), (s3->size()-sep3-2)), "Altitude");
 
-		sd.setStationData(IOUtils::nodata, IOUtils::nodata, altitude, name, latitude, longitude);
+		Coords coordinate(cfg);
+		coordinate.setLatLon(latitude, longitude, altitude);
+		sd.setStationData(coordinate, name);
 	} else {
 		soap_print_fault(&gsn, stdout);
 		throw IOException("Error in communication with GSN",AT);
@@ -200,11 +203,11 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 
 	//cout << _string << endl;
 	
-	stringstream ss(_string);
-	string tmpstring;
+	std::stringstream ss(_string);
+	std::string tmpstring;
 
 	while (std::getline(ss, tmpstring, ';')){
-		stringstream data(tmpstring);
+		std::stringstream data(tmpstring);
 		while (std::getline(data, tmpstring, '=')){
 			string key = tmpstring;
 			if (!(std::getline(data, tmpstring, '=')))
@@ -234,6 +237,7 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 	}
 }
 
+//TODO: this should be done by IOUtils!!
 void GSNIO::convertStringToDouble(double& d, const std::string& _string, const std::string& _parname){
 	if (!IOUtils::convertString(d, _string, std::dec))
 		throw ConversionFailedException("Conversion failed for value " + _parname, AT);
@@ -244,7 +248,7 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 {
 	_ns1__getMeteoData meteodata_req;
 	_ns1__getMeteoDataResponse meteodata;
-	vector<string> vecString;
+	std::vector<std::string> vecString;
 
 	meteodata_req.sensor = &vecStationName[stationindex];
 	/*
@@ -338,7 +342,7 @@ void GSNIO::readSpecialPoints(POINTSArray&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::write2DGrid(const Grid2DObject&, const string& name)
+void GSNIO::write2DGrid(const Grid2DObject&, const std::string& name)
 {
 	//Nothing so far
 	(void)name;
@@ -347,28 +351,22 @@ void GSNIO::write2DGrid(const Grid2DObject&, const string& name)
 
 void GSNIO::convertUnits(MeteoData& meteo)
 {
+	meteo.standardizeNodata(plugin_nodata);
+
 	//converts C to Kelvin, converts lwr to ea, converts RH to [0,1]
-	if(meteo.ta==nodata) {
-		meteo.ta=nodata;
-	} else {
+	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
 	
-	if(meteo.tsg==nodata) {
-		meteo.tsg=nodata;
-	} else {
+	if(meteo.tsg!=IOUtils::nodata) {
 		meteo.tsg=C_TO_K(meteo.tss);
 	}
 	
-	if(meteo.tss==nodata) {
-		meteo.tss=nodata;
-	} else {
+	if(meteo.tss!=IOUtils::nodata) {
 		meteo.tss=C_TO_K(meteo.tss);
 	}
 
-	if(meteo.rh==nodata) {
-		meteo.rh=nodata;
-	} else {
+	if(meteo.rh!=IOUtils::nodata) {
 		meteo.rh /= 100.;
 	}
 }
@@ -379,7 +377,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
   
-	void* loadObject(const string& classname, const string& filename) {
+	void* loadObject(const std::string& classname, const std::string& filename) {
 		if(classname == "GSNIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new GSNIO(deleteObject, filename);

@@ -43,18 +43,13 @@ DEMObject::DEMObject(const slope_type& _algorithm) : Grid2DObject(), slope(), az
 * @brief Constructor that sets variables.
 * @param _ncols (unsigned int) number of colums in the grid2D
 * @param _nrows (unsigned int) number of rows in the grid2D
-* @param _xllcorner (double) x-coordinate of lower left corner
-* @param _yllcorner (double) y-coordinate of lower left corner
-* @param _latitude (double) decimal latitude, can be IOUtils::nodata
-* @param _longitude (double) decimal longitude, can be IOUtils::nodata
 * @param _cellsize (double) value for cellsize in grid2D
+* @param _llcorner lower lower corner point
 * @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const slope_type& _algorithm)
-	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize),
+				const double& _cellsize, const Coords& _llcorner, const slope_type& _algorithm)
+	: Grid2DObject(_ncols, _nrows, _cellsize, _llcorner),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
@@ -67,21 +62,16 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 * @brief Constructor that sets variables.
 * @param _ncols (unsigned int) number of colums in the grid2D
 * @param _nrows (unsigned int) number of rows in the grid2D
-* @param _xllcorner (double) x-coordinate of lower left corner
-* @param _yllcorner (double) y-coordinate of lower left corner
-* @param _latitude (double) decimal latitude, can be IOUtils::nodata
-* @param _longitude (double) decimal longitude, can be IOUtils::nodata
 * @param _cellsize (double) value for cellsize in grid2D
+* @param _llcorner lower lower corner point
 * @param _altitude (Array2D\<double\>&) grid2D of elevations
 * @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
 * @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _xllcorner, const double& _yllcorner,
-				const double& _latitude, const double& _longitude,
-				const double& _cellsize, const Array2D<double>& _altitude,
+				const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _altitude,
 				const bool& _update, const slope_type& _algorithm)
-	: Grid2DObject(_ncols, _nrows, _xllcorner, _yllcorner, _latitude, _longitude, _cellsize, _altitude),
+	: Grid2DObject(_ncols, _nrows, _cellsize, _llcorner, _altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
@@ -100,7 +90,7 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 * @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update, const slope_type& _algorithm)
-  : Grid2DObject(_dem.ncols, _dem.nrows, _dem.xllcorner, _dem.yllcorner, _dem.latitude, _dem.longitude, _dem.cellsize, _dem.grid2D), 
+  : Grid2DObject(_dem.ncols, _dem.nrows, _dem.cellsize, _dem.llcorner, _dem.grid2D),
     slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
@@ -284,22 +274,37 @@ double DEMObject::horizontalDistance(const double& xcoord1, const double& ycoord
 	return sqrt( IOUtils::pow2(xcoord2-xcoord1) + IOUtils::pow2(ycoord2-ycoord1) );
 }
 
+/**
+* @brief Computes the horizontal distance between two points in a metric grid
+* @param point1 first point (ie: origin)
+* @param point2 second point (ie: destination)
+* @return horizontal distance in meters
+*
+*/
+double DEMObject::horizontalDistance(Coords point1, const Coords& point2)
+{
+	if(point1.isSameProj(point2)==false) {
+		point1.copyProj(point2);
+	}
+	return horizontalDistance(point1.getEasting(), point1.getNorthing(),
+			point2.getEasting(), point2.getNorthing() );
+}
+
 
 /**
 * @brief Returns the distance *following the terrain* between two coordinates
-* @param xcoord1 east coordinate of the first point
-* @param ycoord1 north coordinate of the first point
-* @param xcoord2 east coordinate of the second point
-* @param ycoord2 north coordinate of the second point
+* @param point1 first point (ie: origin)
+* @param point2 second point (ie: destination)
 * @return distance following the terrain in meters
 *
 */
-double DEMObject::terrainDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2) {
+double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
 	std::vector<POINT> vec_points;
 	double distance=0.;
 	unsigned int last_point=0; //point 0 is always the starting point
 
-	getPointsBetween(xcoord1, ycoord1, xcoord2, ycoord2, vec_points);
+	//Checking that both points use the same projection is done in getPointsBetween()
+	getPointsBetween(point1, point2, vec_points);
 	if(vec_points.size()<=1) {
 		return 0.;
 	}
@@ -329,27 +334,29 @@ double DEMObject::terrainDistance(const double& xcoord1, const double& ycoord1, 
 
 /**
 * @brief Returns a list of grid points that are on the straight line between two coordinates
-* @param xcoord1 east coordinate of the first point
-* @param ycoord1 north coordinate of the first point
-* @param xcoord2 east coordinate of the second point
-* @param ycoord2 north coordinate of the second point
+* @param point1 first point (ie: origin)
+* @param point2 second point (ie: destination)
 * @param vec_points vector of points that are in between
 *
 */
-void DEMObject::getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, std::vector<POINT>& vec_points) {
+void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<POINT>& vec_points) {
 
-	if(xcoord1>xcoord2) {
+	if(point1.isSameProj(point2)==false) {
+		point1.copyProj(point2);
+	}
+
+	if(point1.getEasting() > point2.getEasting()) {
 		//we want xcoord1<xcoord2, so we swap the two points
-		const double tmpx = xcoord1, tmpy= ycoord1;
-		xcoord1 = xcoord2; ycoord1 = ycoord2;
-		xcoord2 = tmpx, ycoord2 = tmpy;
+		const Coords tmp = point1;
+		point1 = point2;
+		point2 = tmp;
 	}
 
 	//extension of the line segment (pts1, pts2) along the X axis
-	const int ix1 = (int)floor( (xcoord1-xllcorner)/cellsize );
-	const int iy1 = (int)floor( (ycoord1-yllcorner)/cellsize );
-	const int ix2 = (int)floor( (xcoord2-xllcorner)/cellsize );
-	const int iy2 = (int)floor( (ycoord2-yllcorner)/cellsize );
+	const int ix1 = (int)floor( (point1.getEasting() - llcorner.getEasting())/cellsize );
+	const int iy1 = (int)floor( (point1.getNorthing() - llcorner.getNorthing())/cellsize );
+	const int ix2 = (int)floor( (point2.getEasting() - llcorner.getEasting())/cellsize );
+	const int iy2 = (int)floor( (point2.getNorthing() - llcorner.getNorthing())/cellsize );
 
 	if(ix1==ix2) {
 		//special case of vertical alignement
@@ -759,11 +766,8 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 	{
 		buf.Pack(&ncols,1);
 		buf.Pack(&nrows,1);
-		buf.Pack(&xllcorner,1);
-		buf.Pack(&yllcorner,1);
-		buf.Pack(&latitude,1);
-		buf.Pack(&longitude,1);
 		buf.Pack(&cellsize,1);
+		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
 		buf.Pack(&min_altitude,1);
 		buf.Pack(&max_altitude,1);
 		buf.Pack(&min_slope,1);
@@ -772,8 +776,6 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&max_curvature,1);
 		buf.Pack(&slope_failures,1);
 		buf.Pack(&curvature_failures,1);
-		//unsigned int x,y;
-		//grid2D.size(x,y);
 		marshal_slope_type(buf, dflt_algorithm, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 		marshal_TYPE_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);
@@ -787,11 +789,8 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 	{
 		buf.UnPack(&ncols,1);
 		buf.UnPack(&nrows,1);
-		buf.UnPack(&xllcorner,1);
-		buf.UnPack(&yllcorner,1);
-		buf.UnPack(&latitude,1);
-		buf.UnPack(&longitude,1);
 		buf.UnPack(&cellsize,1);
+		marshal_Coords(buf, llcorner, 0, !FLAG_MARSHAL, NULL);
 		buf.UnPack(&min_altitude,1);
 		buf.UnPack(&max_altitude,1);
 		buf.UnPack(&min_slope,1);

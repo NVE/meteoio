@@ -52,14 +52,10 @@ class DEMObject : public Grid2DObject {
 		DEMObject(const slope_type& _algorithm=DFLT);
 		
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& xllcorner_in, const double& yllcorner_in,
-			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in, const slope_type& _algorithm=DFLT);
+			const double& cellsize_in, const Coords& llcorner_in, const slope_type& _algorithm=DFLT);
 	
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& xllcorner_in, const double& yllcorner_in,
-			const double& latitude_in, const double& longitude_in,
-			const double& cellsize_in, const Array2D<double>& altitude_in, 
+			const double& cellsize_in, const Coords& llcorner_in, const Array2D<double>& altitude_in,
 			const bool& _update=true, const slope_type& _algorithm=DFLT);
 		
 		DEMObject(const Grid2DObject& dem_in, const bool& _update=true, const slope_type& _algorithm=DFLT);
@@ -76,8 +72,9 @@ class DEMObject : public Grid2DObject {
 		void printFailures();
 		void sanitize();
 		double horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
-		double terrainDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
-		void getPointsBetween(double xcoord1, double ycoord1, double xcoord2, double ycoord2, std::vector<POINT>& vec_points);
+		double horizontalDistance(Coords point1, const Coords& point2);
+		double terrainDistance(Coords point1, const Coords& point2);
+		void getPointsBetween(Coords point1, Coords point2, std::vector<POINT>& vec_points);
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);

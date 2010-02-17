@@ -20,6 +20,7 @@
 
 #include "IOExceptions.h"
 #include "IOUtils.h"
+#include "ConfigReader.h"
 #include <string>
 #include <map>
 
@@ -44,6 +45,7 @@ class Coords {
 	//Constructors
 	Coords();
 	Coords(const std::string& coordinatesystem, const std::string& parameters="");
+	Coords(const ConfigReader& cfg);
 	Coords(const double& _lat_ref, const double& _long_ref);
 
 	//Operators
@@ -57,21 +59,24 @@ class Coords {
 	double getLat() const;
 	double getLon() const;
 	double getAltitude() const;
+	std::string printLatLon() const;
 
 	//Setter methods
 	void setLatLon(const double _latitude, const double _longitude, const double _altitude=IOUtils::nodata, const bool _update=true);
+	void setLatLon(const std::string& _coordinates, const double _altitude=IOUtils::nodata, const bool _update=true);
 	void setXY(const double _easting, const double _northing, const double _altitude=IOUtils::nodata, const bool _update=true);
-	void setProj(const std::string& _coordinatesystem, const std::string& _parameters);
+	void setProj(const std::string& _coordinatesystem, const std::string& _parameters="");
 	void setLocalRef(const double _ref_latitude, const double _ref_longitude);
 	void setLocalRef(const std::string _coordparam);
 	void setDistances(const geo_distances _algo);
 
 	void check();
-	double distance(Coords& destination);
+	double distance(const Coords& destination) const;
+	bool isSameProj(const Coords& target) const;
+	void copyProj(const Coords& target, const bool _update=true);
 
 	//Static helper methods
 	static double dms_to_decimal(const std::string& dms);
-	static void parseLatLon(const std::string& coordinates, double& lat, double& lon);
 	static std::string decimal_to_dms(const double& decimal);
 
  private:
@@ -91,7 +96,7 @@ class Coords {
 	void NULL_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 
 	//Distances calculations
-	void distance(Coords& destination, double& distance, double& bearing);
+	void distance(const Coords& destination, double& distance, double& bearing) const;
 	double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const;
 	void cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const;
 	double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const;
@@ -102,6 +107,7 @@ class Coords {
 	void initializeMaps();
 	void setFunctionPointers();
 	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
+	void parseLatLon(const std::string& coordinates, double& lat, double& lon) const;
 
  private:
 	double altitude;

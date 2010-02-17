@@ -20,7 +20,7 @@
 
 #include "Array2D.h"
 #include "IOExceptions.h"
-//#include "Coords.h"
+#include "Coords.h"
 
 /**
  * @class Grid2DObject
@@ -49,15 +49,10 @@ class Grid2DObject{
 		*/
 		Grid2DObject();
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize/*, const MapProj& proj=Grid2DObject::NULL_proj*/);
+			const double& cellsize, const Coords& _llcorner);
 
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const Array2D<double>& grid2D_in/*,
-			const MapProj& proj=Grid2DObject::NULL_proj*/);
+			const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in);
 
 		/**
 		* @brief constructs an object as a subset of another grid object
@@ -76,56 +71,42 @@ class Grid2DObject{
 		* If any coordinate is outside of the grid, the matching coordinate is set to (unsigned)-1
 		* @note This computation is only precise to ~1 meter (in order to be faster). Please use 
 		* IOUtils::VincentyDistance for up to .5 mm precision.
-		* @param _latitude point latitude
-		* @param _longitude point longitude
+		* @param point coordinate to convert
 		* @param i matching X coordinate in the grid
 		* @param j matching Y coordinate in the grid
 		* @return EXIT_SUCESS or EXIT_FAILURE if the given point was outside the grid (sets (i,j) to closest values within the grid)
 		*/
-		int WGS84_to_grid(const double& _latitude, const double& _longitude, unsigned int& i, unsigned int& j);
+		int WGS84_to_grid(Coords point, unsigned int& i, unsigned int& j);
 
 		/**
 		* @brief Converts grid coordinates (i,j) into WGS84 coordinates
 		* @note This computation uses IOUtils::VincentyDistance and therefore is up to .5 mm precise.
-		* @param _latitude point latitude
-		* @param _longitude point longitude
 		* @param i matching X coordinate in the grid
 		* @param j matching Y coordinate in the grid
+		* @param point converted coordinate
 		*/
-		void grid_to_WGS84(const unsigned int& i, const unsigned int& j, double& _latitude, double& _longitude);
+		void grid_to_WGS84(const unsigned int& i, const unsigned int& j, Coords& point);
 
 		/**
 		* @brief Set all variables in one go.
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
-		* @param xllcorner (double) x-coordinate of lower left corner
-		* @param yllcorner (double) y-coordinate of lower left corner
-		* @param latitude (double) decimal latitude
-		* @param longitude (double) decimal longitude
 		* @param cellsize (double) value for cellsize in grid2D
+		* @param _llcorner lower lower corner point
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize/*,
-			const MapProj& proj=Grid2DObject::NULL_proj*/);
+			const double& cellsize, const Coords& _llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid2D of type 
 		* Array2D\<double\> will be destroyed and recreated to size ncols x nrows.
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
-		* @param xllcorner (double) x-coordinate of lower left corner
-		* @param yllcorner (double) y-coordinate of lower left corner
-		* @param latitude (double) decimal latitude
-		* @param longitude (double) decimal longitude
 		* @param cellsize (double) value for cellsize in grid2D
+		* @param _llcorner lower lower corner point
 		* @param grid2D_in (CArray\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const Array2D<double>& grid2D_in/*,
-			const MapProj& proj=Grid2DObject::NULL_proj*/); //TODO: const CArray would be better...
+			const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
 		
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
@@ -138,16 +119,15 @@ class Grid2DObject{
 
 		Array2D<double> grid2D;
 		unsigned int ncols, nrows;
-		double xllcorner, yllcorner, cellsize;
-		double latitude, longitude;
+		//double xllcorner, yllcorner, cellsize, latitude, longitude;
+		double cellsize;
+		Coords llcorner;
 
  protected:
-		//static const Coords NULL_proj; //HACK
-
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude, const double& cellsize/*,
-			const MapProj& proj=Grid2DObject::NULL_proj*/);
+				const double& cellsize, const Coords& _llcorner);
+		void setValues(const unsigned int& _ncols, const unsigned int& _nrows,
+				const double& _cellsize);
 };
 
 #endif

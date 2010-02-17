@@ -28,5 +28,9 @@ int main(int argc, char** argv) {
 	//we print the (lat,long) and (x,y) coordinates once more to check that they still match what we had a the begining
 	printf("Lat/long to CH1903\n\t(%g , %g) -> (%g , %g)\n", point1.getLat(), point1.getLon(), point1.getEasting(), point1.getNorthing());
 
+	//A nice finishing touch: we print nicely formatted lat/lon
+	cout << "Pretty printing\n";
+	cout << "\t(" << point1.getLat() << " , " << point1.getLon() << ") = " << point1.printLatLon() << endl;
+
 	return 0;
 }

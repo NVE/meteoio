@@ -35,8 +35,13 @@ const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
 		{ 6378160.,	6356774.719 } //E_GRS67
 };
 
-bool Coords::operator==(const Coords& in) const
-{//check that two Coords objects represent the same location
+/**
+* @brief Equality operator that checks that lat/lon match
+* @param[in] in Coord object to compare to
+* @return true or false
+*/
+bool Coords::operator==(const Coords& in) const {
+//check that two Coords objects represent the same location
 	const double earth_radius = 6371e3; //in meters
 	const double grid_epsilon = 5.; //in meters
 	const double long_epsilon = grid_epsilon / earth_radius; //in degrees. small angle, so sin(x)=x
@@ -47,8 +52,12 @@ bool Coords::operator==(const Coords& in) const
 	return comparison;
 }
 
-bool Coords::operator!=(const Coords& in) const
-{
+/**
+* @brief Inequality operator that checks that lat/lon don't match
+* @param[in] in Coord object to compare to
+* @return true or false
+*/
+bool Coords::operator!=(const Coords& in) const {
 	return !(*this==in);
 }
 
@@ -75,30 +84,44 @@ Coords& Coords::operator=(const Coords& source) {
 * This constructor builds a dummy object that performs no conversions but can be used for comparison
 * purpose. This is more or less the equivalent of NULL for a pointer...
 */
-Coords::Coords()
-{
+Coords::Coords() {
 	initializeMaps();
 	setDefaultValues();
 	setProj("NULL", "NULL");
 }
 
 /**
-* \anchor Coordinate_types
 * @brief Regular constructor: usually, this is the constructor to use
 * @param[in] _coordinatesystem string identifying the coordinate system to use
 * @param[in] _parameters string giving some additional parameters for the projection (optional)
 *
-* The coordinate system can be any of the following:
-* - CH1903 for coordinates in the Swiss Grid
-* - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T)
-* - PROJ4 for coordinate conversion relying on the Proj4 library
-* - LOCAL for local coordinate system (from reference point)
+* See setProj() for a full description of these strings
 */
-Coords::Coords(const std::string& _coordinatesystem, const std::string& _parameters)
-{
+Coords::Coords(const std::string& _coordinatesystem, const std::string& _parameters) {
 	setDefaultValues();
 	initializeMaps();
 	setProj(_coordinatesystem, _parameters);
+}
+
+/**
+* @brief Use the parameters included in a ConfigReader for setting the projection up
+* @param[in] cfg ConfigReader containing the necessary parameters for initializing
+* the projection
+*/
+Coords::Coords(const ConfigReader& cfg) {
+	std::string coordsys="", coordparam="";
+
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e) {
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
+	setDefaultValues();
+	initializeMaps();
+	setProj(coordsys, coordparam);
 }
 
 /**
@@ -116,26 +139,67 @@ Coords::Coords(const double& _lat_ref, const double& _long_ref)
 	setProj("LOCAL", "");
 }
 
+/**
+* @brief Returns the East coordinate in the configured projection system
+* @return easting
+*/
 double Coords::getEasting() const {
 	return easting;
 }
 
+/**
+* @brief Returns the North coordinate in the configured projection system
+* @return northing
+*/
 double Coords::getNorthing() const {
 	return northing;
 }
 
+/**
+* @brief Returns the Latitude in the configured projection system
+* @return latitude
+*/
 double Coords::getLat() const {
 	return latitude;
 }
 
+/**
+* @brief Returns the Latitude in the configured projection system
+* @return longitude
+*/
 double Coords::getLon() const {
 	return longitude;
 }
 
+/**
+* @brief Returns the Altitude. This is currently independent of the configured projection system
+* @return altitude
+*/
 double Coords::getAltitude() const {
 	return altitude;
 }
 
+/**
+* @brief Print a nicely formatted lat/lon in degrees, minutes, seconds
+* @return lat/lon
+*/
+std::string Coords::printLatLon() const {
+	std::stringstream dms;
+	dms << "(" << decimal_to_dms(latitude) << " , " << decimal_to_dms(longitude) << ")";
+
+	return dms.str();
+}
+
+/**
+* @brief Set latitude and longitude
+* The automatic update of the easting/northing can be turned off so that
+* both lat/lon and east/north coordinates can be provided in order to thereafter check the
+* coordinates by calling check().
+* @param[in] _latitude latitude to set
+* @param[in] _longitude longitude to set
+* @param[in] _altitude altitude to set (optional)
+* @param[in] _update should the easting/northing be updated? (default=true)
+*/
 void Coords::setLatLon(const double _latitude, const double _longitude, const double _altitude, const bool _update) {
 	latitude = _latitude;
 	longitude = _longitude;
@@ -147,6 +211,31 @@ void Coords::setLatLon(const double _latitude, const double _longitude, const do
 	}
 }
 
+/**
+* @brief Set latitude and longitude
+* The automatic update of the easting/northing can be turned off so that
+* both lat/lon and east/north coordinates can be provided in order to thereafter check the
+* coordinates by calling check().
+* @param[in] _coordinates string containing the lat/lon to read
+* @param[in] _altitude altitude to set (optional)
+* @param[in] _update should the easting/northing be updated? (default=true)
+*/
+void Coords::setLatLon(const std::string& _coordinates, const double _altitude, const bool _update) {
+	double lat, lon;
+	parseLatLon(_coordinates, lat, lon);
+	setLatLon(lat, lon, _altitude, _update);
+}
+
+/**
+* @brief Set easting and northing
+* The automatic update of the latitude/longitude can be turned off so that
+* both lat/lon and east/north coordinates can be provided in order to thereafter check the
+* coordinates by calling check().
+* @param[in] _easting easting to set
+* @param[in] _northing northing to set
+* @param[in] _altitude altitude to set (optional)
+* @param[in] _update should the easting/northing be updated? (default=true)
+*/
 void Coords::setXY(const double _easting, const double _northing, const double _altitude, const bool _update) {
 	easting = _easting;
 	northing = _northing;
@@ -158,11 +247,23 @@ void Coords::setXY(const double _easting, const double _northing, const double _
 	}
 }
 
+/**
+* \anchor Coordinate_types
+* @brief Set projection to use
+* This projection will be used for converting between lat/lon and East/North
+* @param[in] _coordinatesystem string identifying the coordinate system to use
+* @param[in] _parameters string giving some additional parameters for the projection (optional)
+* 
+* The coordinate system can be any of the following:
+* - CH1903 for coordinates in the Swiss Grid
+* - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T)
+* - PROJ4 for coordinate conversion relying on the Proj4 library
+* - LOCAL for local coordinate system (from reference point)
+*/
 void Coords::setProj(const std::string& _coordinatesystem, const std::string& _parameters) {
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
 	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system
-	if(coordsystem!="NULL") {
-		//the convert method will check for nodata
+	if(coordsystem!="NULL" && (latitude==IOUtils::nodata) || (longitude==IOUtils::nodata) ) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 
@@ -170,10 +271,18 @@ void Coords::setProj(const std::string& _coordinatesystem, const std::string& _p
 	coordparam  = _parameters;
 	setFunctionPointers();
 
-	//since lat/long is our reference, we refresh x,y
-	convert_from_WGS84(latitude, longitude, easting, northing);
+	//since lat/long is our reference, we refresh x,y (only if lat/lon exist)
+	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+		convert_from_WGS84(latitude, longitude, easting, northing);
+	}
 }
 
+/**
+* @brief Set the local projection reference coordinates
+* This projection will be used for converting between lat/lon and East/North
+* @param[in] _ref_latitude latitude of the local origin
+* @param[in] _ref_longitude longitude of the local origin
+*/
 void Coords::setLocalRef(const double _ref_latitude, const double _ref_longitude) {
 	if(_ref_latitude==IOUtils::nodata || _ref_longitude==IOUtils::nodata) {
 		throw InvalidArgumentException("For LOCAL projection, please provide both reference latitude and longitude!", AT);
@@ -185,6 +294,11 @@ void Coords::setLocalRef(const double _ref_latitude, const double _ref_longitude
 	}
 }
 
+/**
+* @brief Set the local projection reference coordinates
+* This projection will be used for converting between lat/lon and East/North
+* @param[in] _coordparam string containing the (lat,lon) of the local origin
+*/
 void Coords::setLocalRef(const std::string _coordparam) {
 	coordparam = _coordparam;
 	parseLatLon(coordparam, ref_latitude, ref_longitude);
@@ -193,6 +307,11 @@ void Coords::setLocalRef(const std::string _coordparam) {
 	}
 }
 
+/**
+* @brief Set the algorithm to use to compute distances
+* Various algorithm exist that offer various precision/complexity tradeoffs.
+* @param[in] _algo enum giving the algorithm to be used (see documentation for geo_distances)
+*/
 void Coords::setDistances(const geo_distances _algo) {
 	distance_algo = _algo;
 	if(coordsystem=="LOCAL") {
@@ -244,10 +363,49 @@ void Coords::check()
 * @param destination destination coordinate
 * @return distance in meters
 */
-double Coords::distance(Coords& destination) {
+double Coords::distance(const Coords& destination) const {
 	double dist, bearing;
 	distance(destination, dist, bearing);
 	return dist;
+}
+
+/**
+* @brief Check if two Coords object are using the same projection
+* @param target coordinate to compare to
+* @return true or false
+*/
+bool Coords::isSameProj(const Coords& target) const {
+	if(coordsystem=="LOCAL") {
+		return ( target.coordsystem=="LOCAL" && ref_latitude==target.ref_latitude && ref_longitude==target.ref_longitude );
+	} else {
+		return ( coordsystem==target.coordsystem && coordparam==target.coordparam );
+	}
+}
+
+/**
+* @brief Copy the projection parameters of another Coords object
+* @param source source object to copy the projection from
+* @param _update should the necessary coordinates be updated? (default=true)
+*/
+void Coords::copyProj(const Coords& source, const bool _update) {
+	if(coordsystem=="LOCAL") {
+		coordsystem="LOCAL";
+		coordparam=source.coordparam;
+		ref_latitude=source.ref_latitude;
+		ref_longitude=source.ref_longitude;
+	} else {
+		coordsystem=source.coordsystem;
+		coordparam=source.coordparam;
+	}
+	setFunctionPointers();
+
+	if(_update==true) {
+		if((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
+			convert_from_WGS84(latitude, longitude, easting, northing);
+		} else {
+			convert_to_WGS84(easting, northing, latitude, longitude);
+		}
+	}
 }
 
 /////////////////////////////////////////////////////private methods
@@ -342,7 +500,7 @@ double Coords::dms_to_decimal(const std::string& dms) {
 * @param[out] lon parsed longitude
 */
 void Coords::parseLatLon(const std::string& coordinates, double&
-lat, double& lon) {
+lat, double& lon) const {
 	char lat_str[32]="";
 	char lon_str[32]="";
 
@@ -631,7 +789,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 void Coords::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 #ifdef PROJ4
-	const string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
+	const std::string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
 	projPJ pj_latlong, pj_dest;
 	double x=long_in*DEG_TO_RAD, y=lat_in*DEG_TO_RAD;
 	
@@ -707,7 +865,7 @@ void Coords::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, do
 #endif
 }
 
-void Coords::distance(Coords& destination, double& distance, double& bearing) {
+void Coords::distance(const Coords& destination, double& distance, double& bearing) const {
 	switch(distance_algo) {
 		case GEO_COSINE:
 			distance = cosineDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);

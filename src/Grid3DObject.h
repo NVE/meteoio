@@ -53,30 +53,21 @@ class Grid3DObject{
 				   const unsigned int& _nwidth, const unsigned int& _nheight, const unsigned int& _ndepth);
 
 		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize);
+				const double& cellsize, const Coords& _llcorner);
 
 		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const Array3D<double>& grid3D);
+			const double& cellsize, const Coords& _llcorner, const Array3D<double>& grid3D);
 
 		/**
 		* @brief Set all variables in one go.
 		* @param ncols (unsigned int&) number of colums in the grid3D (1st dimension)
 		* @param nrows (unsigned int&) number of rows in the grid3D (2nd dimension)
 		* @param depth (unsigned int&) number of depth in the grid3D (3rd dimension)
-		* @param xllcorner (double&) x-coordinate of lower left corner
-		* @param yllcorner (double&) y-coordinate of lower left corner
-		* @param latitude (double&) decimal latitude
-		* @param longitude (double&) decimal longitude
 		* @param cellsize (double&) value for cellsize in grid3D
+		* @param _llcorner lower left corner coordinates
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& depth,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize);
+			const double& cellsize, const Coords& _llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double> 
 		* will be destroyed and recreated to size ncols x nrows.
@@ -84,17 +75,12 @@ class Grid3DObject{
 		* @param ncols (unsigned int&) number of colums in the grid3D
 		* @param nrows (unsigned int&) number of rows in the grid3D
 		* @param ndepth (unsigned int&) number of depth in the grid3D (3rd dimension)
-		* @param xllcorner (double&) x-coordinate of lower left corner
-		* @param yllcorner (double&) y-coordinate of lower left corner
-		* @param latitude (double&) decimal latitude
-		* @param longitude (double&) decimal longitude
 		* @param cellsize (double&) value for cellsize in grid3D
+		* @param _llcorner lower left corner coordinates
 		* @param grid3D_in (Array\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude,
-			const double& cellsize, const Array3D<double>& grid3D_in);
+			const double& cellsize, const Coords& _llcorner, const Array3D<double>& grid3D_in);
 
 		/**
 		* @brief check if the current Grid3DObject has the same geolocalization attributes
@@ -107,16 +93,18 @@ class Grid3DObject{
 
 		Array3D<double> grid3D;
 		unsigned int ncols, nrows, ndepth;
-		double xllcorner, yllcorner, cellsize;
-		double latitude, longitude;
+		double cellsize;
+		Coords llcorner;
+		//NOTE: the altitude is understood as above sea level,
+		//that is we curently don't support altitude as above the local ground
 		//std::vector<double> thickness;
 
  protected:
 		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
-			const double& xllcorner, const double& yllcorner,
-			const double& latitude, const double& longitude, const double& cellsize);
+			const double& cellsize);
+		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
+			const double& cellsize, const Coords& _llcorner);
 
-// 		void checkCoordinates(const MapProj& proj);
 };
 
 #endif

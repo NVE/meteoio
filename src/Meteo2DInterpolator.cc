@@ -57,7 +57,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 	} else if (meteoparam == MeteoData::TA){
 		interpolateTA(result);
 	} else if (meteoparam == MeteoData::RH){
-		Grid2DObject ta(result.ncols, result.nrows, result.xllcorner, result.yllcorner, result.latitude, result.longitude, result.cellsize);
+		Grid2DObject ta(result.ncols, result.nrows, result.cellsize, result.llcorner);
 		interpolateTA(ta);
 		interpolateRH(result, ta);
 	} else if (meteoparam == MeteoData::VW){

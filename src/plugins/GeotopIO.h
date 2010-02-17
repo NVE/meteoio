@@ -40,14 +40,14 @@ class GeotopIO : public IOInterface {
 	public:
 		//virtual GeotopIO* clone() const;
 
-		GeotopIO(void (*delObj)(void*), const string& filename);
+		GeotopIO(void (*delObj)(void*), const std::string& filename);
 
 		GeotopIO(const std::string& configfile);
 		GeotopIO(const GeotopIO&);
 		GeotopIO(const ConfigReader&);
 		~GeotopIO() throw();
 
-		virtual void read2DGrid(Grid2DObject& dem_out, const string& parameter="");
+		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
@@ -60,8 +60,8 @@ class GeotopIO : public IOInterface {
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(POINTSArray& pts);
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name);
-		void read2DMeteo(const Date_IO&, vector<MeteoData>&, vector<StationData>&); ///<No buffering
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
+		void read2DMeteo(const Date_IO&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
 
 	private:
 		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
@@ -72,7 +72,8 @@ class GeotopIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
 		ConfigReader cfg;
-		ifstream fin; //Input file streams
+		std::ifstream fin; //Input file streams
+		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 
 #endif

@@ -94,8 +94,8 @@ double Interpol2D::HorizontalDistance(const int& i, const int& j, const double& 
 	//This function computes the horizontal distance between two points
 	//coordinates are given in a square, metric grid system
 	//for grid points toward real coordinates
-	const double X1 = (dem.xllcorner+i*dem.cellsize);
-	const double Y1 = (dem.yllcorner+j*dem.cellsize);
+	const double X1 = (dem.llcorner.getEasting()+i*dem.cellsize);
+	const double Y1 = (dem.llcorner.getNorthing()+j*dem.cellsize);
 	
 	return sqrt( (X1-X2)*(X1-X2) + (Y1-Y2)*(Y1-Y2) );
 }
@@ -354,11 +354,13 @@ void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
 		vecTref[i] = (this->*LapseRateProject)(vecData_in[i], vecStations_in[i].position.getAltitude(), ref_altitude, vecCoefficients);
 	}
-	
+
+	const double xllcorner = topoHeight.llcorner.getEasting();
+	const double yllcorner = topoHeight.llcorner.getNorthing();
 	for (unsigned int i=0; i<T.ncols; i++) {
 		for (unsigned int j=0; j<T.nrows; j++) {
 			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
-				T.grid2D(i,j) = IDWKriegingCore((topoHeight.xllcorner+i*topoHeight.cellsize), (topoHeight.yllcorner+j*topoHeight.cellsize),vecTref, vecStations_in);
+				T.grid2D(i,j) = IDWKriegingCore((xllcorner+i*topoHeight.cellsize), (yllcorner+j*topoHeight.cellsize), vecTref, vecStations_in);
 				T.grid2D(i,j) = (this->*LapseRateProject)(T.grid2D(i,j), ref_altitude, topoHeight.grid2D(i,j), vecCoefficients);
 			} else {
 				T.grid2D(i,j) = IOUtils::nodata;
@@ -370,10 +372,12 @@ void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 void Interpol2D::IDWKrieging(Grid2DObject& T, const DEMObject& topoHeight, const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations)
 {
 	//multiple source stations: simple IDW Krieging
+	const double xllcorner = topoHeight.llcorner.getEasting();
+	const double yllcorner = topoHeight.llcorner.getNorthing();
 	for (unsigned int i=0; i<T.ncols; i++) {
 		for(unsigned int j=0; j<T.nrows; j++) {
 			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
-				T.grid2D(i,j) = IDWKriegingCore((dem.xllcorner+i*dem.cellsize), (dem.yllcorner+j*dem.cellsize), vecData_in, vecStations);
+				T.grid2D(i,j) = IDWKriegingCore((xllcorner+i*dem.cellsize), (yllcorner+j*dem.cellsize), vecData_in, vecStations);
 			} else {
 				T.grid2D(i,j) = IOUtils::nodata;
 			}

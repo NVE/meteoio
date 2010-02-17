@@ -293,6 +293,36 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
 	}
 }
 
+void marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		unsigned int nx,ny,nz;
+		data.size(nx,ny,nz);
+		buf.Pack(&nx,1);
+		buf.Pack(&ny,1);
+		buf.Pack(&nz,1);
+		if (nx>0 && ny>0 && nz>0) {
+			for (unsigned int i=0;i<nx;i++) {
+				for (unsigned int j=0;j<ny;j++) buf.Pack(&data(i,j,0),nz);
+			}
+		}
+	} else {
+		unsigned int nx,ny,nz;
+		buf.UnPack(&nx,1);
+		buf.UnPack(&ny,1);
+		buf.UnPack(&nz,1);
+		if (nx>0 && ny>0 && nz>0) {
+			data.resize(nx,ny,nz);
+			for (unsigned int i=0;i<nx;i++) {
+				for (unsigned int j=0;j<ny;j++) buf.UnPack(&data(i,j,0),nz);
+			}
+		} else
+			data.clear();
+	}
+}
+
 void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;

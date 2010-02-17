@@ -68,7 +68,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 	int _nx, _ny;
 	unsigned int ncols, nrows;
-	double north, east, south, west, latitude, longitude;
+	double north, east, south, west;
 	double tmp_val, xllcorner, yllcorner, cellsize;
 	vector<string> tmpvec;
 	std::string line="";
@@ -124,11 +124,9 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		//compute WGS coordinates (considered as the true reference)
 		Coords coordinate(coordsys, coordparam);
 		coordinate.setXY(xllcorner, yllcorner);
-		latitude = coordinate.getLat();
-		longitude = coordinate.getLon();
 		
 		//Initialize the 2D grid
-		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize);
+		grid_out.set(ncols, nrows, cellsize, coordinate);
 		
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
@@ -217,10 +215,10 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	fout << setprecision(6) << fixed;
 
 	try {
-		fout << "north:" << (grid_in.yllcorner+grid_in.cellsize*grid_in.nrows) << std::endl;
-		fout << "south:" << grid_in.yllcorner << std::endl;    
-		fout << "east:"  << (grid_in.xllcorner+grid_in.cellsize*grid_in.ncols)  << std::endl;
-		fout << "west:"  << grid_in.xllcorner << std::endl;
+		fout << "north:" << (grid_in.llcorner.getNorthing()+grid_in.cellsize*grid_in.nrows) << std::endl;
+		fout << "south:" << grid_in.llcorner.getNorthing() << std::endl;
+		fout << "east:"  << (grid_in.llcorner.getEasting()+grid_in.cellsize*grid_in.ncols)  << std::endl;
+		fout << "west:"  << grid_in.llcorner.getEasting() << std::endl;
 		fout << "rows:"  << grid_in.nrows << std::endl;
 		fout << "cols:"  << grid_in.ncols << std::endl;
 

@@ -21,6 +21,7 @@
 #define MARSHAL_METEOIO_H
 
 #include "Grid2DObject.h"
+#include "Grid3DObject.h"
 #include "DEMObject.h"
 #include "StationData.h"
 #include "MeteoData.h"
@@ -29,6 +30,7 @@
 #include "LegacyIO.ph"
 
 typedef Array2D<double> TYPE_DOUBLE2D;
+typedef Array3D<double> TYPE_DOUBLE3D;
 typedef Array2D<int> TYPE_INT2D;
 typedef std::vector<std::string> STR_VECTOR;
 
@@ -39,6 +41,8 @@ void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize
 void marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp);
+
+void marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp);
 
 void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp);
 

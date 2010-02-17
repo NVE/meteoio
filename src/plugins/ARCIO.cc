@@ -111,7 +111,6 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	int i_ncols, i_nrows;
 	unsigned int ncols, nrows;
 	double xllcorner, yllcorner, cellsize, nodata;
-	double latitude, longitude;
 	double tmp_val;
 	vector<string> tmpvec;
 	string line="";
@@ -151,24 +150,12 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		ncols = (unsigned int)i_ncols;
 		nrows = (unsigned int)i_nrows;
 
-		string coordsys="", coordparam="";
-		try {
-			cfg.getValue("COORDIN", coordsys);
-			cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-		} catch(std::exception& e){
-			//problems while reading values for COORDIN or COORDPARAM
-			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
-			throw;
-		}
-		
-		//compute WGS coordinates (considered as the true reference)
-		Coords coordinate(coordsys, coordparam);
-		coordinate.setXY(xllcorner, yllcorner);
-		latitude = coordinate.getLat();
-		longitude = coordinate.getLon();
+		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
+		Coords location(cfg);
+		location.setXY(xllcorner, yllcorner);
 		
 		//Initialize the 2D grid
-		grid_out.set(ncols, nrows, xllcorner, yllcorner, latitude, longitude, cellsize);
+		grid_out.set(ncols, nrows, cellsize, location);
 		
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
@@ -262,8 +249,8 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	try {
 		fout << "ncols \t\t" << grid_in.ncols << endl;
 		fout << "nrows \t\t" << grid_in.nrows << endl;
-		fout << "xllcorner \t" << grid_in.xllcorner << endl;
-		fout << "yllcorner \t" << grid_in.yllcorner << endl;    
+		fout << "xllcorner \t" << grid_in.llcorner.getEasting() << endl;
+		fout << "yllcorner \t" << grid_in.llcorner.getNorthing() << endl;
 		fout << "cellsize \t" << grid_in.cellsize << endl;
 		fout << "NODATA_value \t" << (int)(IOUtils::nodata) << endl;
 

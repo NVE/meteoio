@@ -140,6 +140,17 @@ void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const 
 	rswr = rswr_in;
 	p=_p;
 }
+/**
+* @brief Standardize nodata values
+* The plugin-specific nodata values are replaced by MeteoIO's internal nodata value
+*/
+void MeteoData::standardizeNodata(const double& plugin_nodata) {
+	for(unsigned int ii=0; ii<nrOfParameters; ii++){
+		//loop through all meteo params and check whether they're nodata values
+		if (param(ii)<=plugin_nodata)
+			param(ii) = IOUtils::nodata;
+	}
+}
 
 bool MeteoData::isResampled()
 {
