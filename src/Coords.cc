@@ -104,27 +104,6 @@ Coords::Coords(const std::string& _coordinatesystem, const std::string& _paramet
 }
 
 /**
-* @brief Use the parameters included in a ConfigReader for setting the projection up
-* @param[in] cfg ConfigReader containing the necessary parameters for initializing
-* the projection
-*/
-Coords::Coords(const ConfigReader& cfg) {
-	std::string coordsys="", coordparam="";
-
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e) {
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
-	setDefaultValues();
-	initializeMaps();
-	setProj(coordsys, coordparam);
-}
-
-/**
 * @brief Local projection onstructor: this constructor is only suitable for building a local projection.
 * Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
@@ -255,10 +234,10 @@ void Coords::setXY(const double _easting, const double _northing, const double _
 * @param[in] _parameters string giving some additional parameters for the projection (optional)
 * 
 * The coordinate system can be any of the following:
-* - CH1903 for coordinates in the Swiss Grid
-* - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T)
-* - PROJ4 for coordinate conversion relying on the Proj4 library
-* - LOCAL for local coordinate system (from reference point)
+* - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
+* - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
+* - PROJ4 for coordinate conversion relying on the Proj4 library [ref: http://trac.osgeo.org/proj/]
+* - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
 */
 void Coords::setProj(const std::string& _coordinatesystem, const std::string& _parameters) {
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference

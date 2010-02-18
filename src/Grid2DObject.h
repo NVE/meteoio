@@ -92,7 +92,7 @@ class Grid2DObject{
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
 		* @param cellsize (double) value for cellsize in grid2D
-		* @param _llcorner lower lower corner point
+		* @param _llcorner lower left corner point
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& cellsize, const Coords& _llcorner);
@@ -102,7 +102,7 @@ class Grid2DObject{
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
 		* @param cellsize (double) value for cellsize in grid2D
-		* @param _llcorner lower lower corner point
+		* @param _llcorner lower left corner point
 		* @param grid2D_in (CArray\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
@@ -117,11 +117,11 @@ class Grid2DObject{
 		*/
 		bool isSameGeolocalization(const Grid2DObject& target);
 
-		Array2D<double> grid2D;
-		unsigned int ncols, nrows;
-		//double xllcorner, yllcorner, cellsize, latitude, longitude;
-		double cellsize;
-		Coords llcorner;
+		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
+		unsigned int ncols; ///<number of columns in the grid
+		unsigned int nrows; ///<number of rows in the grid
+		double cellsize; ///<dimension in meters of a cell (considered to be square)
+		Coords llcorner; ///<lower left corner of the grid
 
  protected:
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,

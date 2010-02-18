@@ -175,7 +175,7 @@ then
 	CPPFLAGS="$CPPFLAGS $XMLPP_CFLAGS"
 
 	AC_CHECK_HEADER([libxml++/libxml++.h],,[AC_MSG_ERROR([Error, the libxml++.h header file is missing!])])
-	AC_CHECK_LIB(xml2, xmlParseFile,,[AC_MSG_ERROR([Error, the xml++ library is missing!])])
+	#AC_CHECK_LIB(xml2, xmlParseFile,,[AC_MSG_ERROR([Error, the xml++ library is missing!])])
 
 	AC_SUBST(XMLPP_CFLAGS)
  	AC_SUBST(XMLPP_LIBS)

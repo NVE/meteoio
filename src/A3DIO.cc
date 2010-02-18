@@ -170,6 +170,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 	double latitude=IOUtils::nodata, longitude=IOUtils::nodata, 
 		xcoord=IOUtils::nodata, ycoord=IOUtils::nodata, altitude=IOUtils::nodata;
 	std::string tmp="", line="";
+	std::string coordsys, coordparam;
 	Date_IO tmp_date;
 	std::vector<std::string> tmpvec;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
@@ -179,6 +180,8 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 	cfg.getValue("METEOPATH", tmp); 
 	tmp += "/meteo1d.txt";
+	cfg.getValue("COORDIN", coordsys);
+	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	if (!IOUtils::fileExists(tmp)) {
 		throw FileNotFoundException(tmp, AT);
@@ -202,15 +205,21 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		IOUtils::getValueForKey(header, "Y_Coord", ycoord);
 		IOUtils::getValueForKey(header, "Altitude", altitude);
 
-		//HACK!! FIXME!! we need to transfer the plugin nodata for the checks!!!!
+		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
+		latitude = IOUtils::standardizeNodata(latitude, plugin_nodata);
+		longitude = IOUtils::standardizeNodata(longitude, plugin_nodata);
+		altitude = IOUtils::standardizeNodata(altitude, plugin_nodata);
+		xcoord = IOUtils::standardizeNodata(xcoord, plugin_nodata);
+		ycoord = IOUtils::standardizeNodata(ycoord, plugin_nodata);
+
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
-		Coords location(cfg);
+		Coords location(coordsys, coordparam);
 		location.setXY(xcoord, ycoord, false);
 		location.setLatLon(latitude, longitude, false);
 		try {
 			location.check();
 		} catch(...) {
-			std::cerr << "[E] Error in geographic coordinates in file " << tmp << "trapped at " << AT << std::endl;
+			std::cerr << "[E] Error in geographic coordinates in file " << tmp << " trapped at " << AT << std::endl;
 			throw;
 		}
 
@@ -250,7 +259,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		}
 		//cout << "Size of buffer: " << vecMeteo[0].size() << "   " << tmp_date.toString() << endl;
 	} catch(...) {
-		std::cout << "[e] " << AT << ": "<< std::endl;
+		std::cout << "[E] " << AT << ": "<< std::endl;
 		cleanup();
 		throw;
 	}
@@ -557,8 +566,12 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 				std::vector<StationData>& vecS)
 {
 	std::string line_in = "";
+	std::string coordsys, coordparam;
 	unsigned int columns = 0;
 	std::vector<std::string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
+
+	cfg.getValue("COORDIN", coordsys);
+	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	fin.clear();
 	fin.open (filename.c_str(), std::ifstream::in);
@@ -590,7 +603,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	}
 
 	//Build Coords object to convert easting/northing values to lat/long in WGS84
-	Coords coordinate(cfg);
+	Coords coordinate(coordsys, coordparam);
 
 	for (unsigned int ii=4; ii<columns; ii++) {
 		unsigned int stationnr = hashStations[vec_names.at(ii)];

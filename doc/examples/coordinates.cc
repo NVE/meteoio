@@ -2,9 +2,7 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
-	(void)argc;
-
+int main() {
 	//we create one point in the CH1903 coordinate system
 	//and we attribute it a set of coordinates (this is the Laret lake in Davos)
 	Coords point1("CH1903","");

@@ -110,11 +110,15 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 	int i_ncols, i_nrows;
 	unsigned int ncols, nrows;
-	double xllcorner, yllcorner, cellsize, nodata;
+	double xllcorner, yllcorner, cellsize, plugin_nodata;
 	double tmp_val;
-	vector<string> tmpvec;
-	string line="";
-	map<string, string> header; // A map to save key value pairs of the file header
+	std::vector<std::string> tmpvec;
+	std::string line="";
+	std::string coordsys, coordparam;
+	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
+
+	cfg.getValue("COORDIN", coordsys);
+	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename, AT);
@@ -139,7 +143,14 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		IOUtils::getValueForKey(header, "xllcorner", xllcorner);
 		IOUtils::getValueForKey(header, "yllcorner", yllcorner);
 		IOUtils::getValueForKey(header, "cellsize", cellsize);
-		IOUtils::getValueForKey(header, "NODATA_value", nodata);
+		IOUtils::getValueForKey(header, "NODATA_value", plugin_nodata);
+
+		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
+		i_ncols = IOUtils::standardizeNodata(i_ncols, plugin_nodata);
+		i_nrows = IOUtils::standardizeNodata(i_nrows, plugin_nodata);
+		xllcorner = IOUtils::standardizeNodata(xllcorner, plugin_nodata);
+		yllcorner = IOUtils::standardizeNodata(yllcorner, plugin_nodata);
+		cellsize = IOUtils::standardizeNodata(cellsize, plugin_nodata);
 
 		if ((i_ncols==0) || (i_nrows==0)) {
 			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
@@ -151,7 +162,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		nrows = (unsigned int)i_nrows;
 
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
-		Coords location(cfg);
+		Coords location(coordsys, coordparam);
 		location.setXY(xllcorner, yllcorner);
 		
 		//Initialize the 2D grid
@@ -171,7 +182,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
 				}
 				
-				if(tmp_val<=nodata) {
+				if(tmp_val<=plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
 					grid_out.grid2D(ll, kk) = IOUtils::nodata;
 				} else {

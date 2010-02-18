@@ -38,14 +38,13 @@ class Coords {
  public:
 	///Keywords for selecting the algorithm for computing geodesic distances
 	typedef enum GEO_DISTANCES {
-		GEO_COSINE, ///< Spherical law of cosine
-		GEO_VINCENTY ///< Vincenty ellispoid formula
+		GEO_COSINE, ///< Spherical law of cosine (See http://www.movable-type.co.uk/scripts/latlong.html)
+		GEO_VINCENTY ///< Vincenty ellispoid formula (See T. Vincenty, "Closed formulas for the direct and reverse geodetic problems", Journal of Geodesy, 51, 3, 1977, DOI:10.1007/BF02521599, or http://www.springerlink.com/content/y7108u6862473583 for more)
 	} geo_distances;
 
 	//Constructors
 	Coords();
 	Coords(const std::string& coordinatesystem, const std::string& parameters="");
-	Coords(const ConfigReader& cfg);
 	Coords(const double& _lat_ref, const double& _long_ref);
 
 	//Operators
@@ -110,16 +109,18 @@ class Coords {
 	void parseLatLon(const std::string& coordinates, double& lat, double& lon) const;
 
  private:
-	double altitude;
-	double latitude, longitude;
-	double easting, northing;
+	double altitude; ///<altitude of the point (the altitude is currently NOT dependant on the projection)
+	double latitude; ///<latitude of the point
+	double longitude; ///<longitude of the point
+	double easting; ///<east coordinate of the point in a cartesian grid
+	double northing; ///<north coordinate of the point in a cartesian grid
+	double ref_latitude, ref_longitude;
 
 	std::map<std::string, convfunc> to_wgs84;
 	std::map<std::string, convfunc> from_wgs84;
 	std::string coordsystem;
 	std::string coordparam;
 	convfunc convToWGS84, convFromWGS84;
-	double ref_latitude, ref_longitude;
 	geo_distances distance_algo;
 	
 	///Keywords for selecting an ellipsoid to use

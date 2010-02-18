@@ -130,8 +130,10 @@ class ConfigReader {
 				IOUtils::toUpper(_section);
 				IOUtils::getValueForKey<T>(properties, _section + "::" + key, vecT);
 			} catch(std::exception& e){
-				if (options != ConfigReader::nothrow)
+				if (options != ConfigReader::nothrow) {
+					std::cerr << "[E] Error for ConfigReader of " << sourcename << std::endl;
 					throw;
+				}
 			}
 		}
 
@@ -160,8 +162,10 @@ class ConfigReader {
 				IOUtils::toUpper(_section);
 				IOUtils::getValueForKey<T>(properties, _section + "::" + key, t);
 			} catch(std::exception& e){
-				if (options != ConfigReader::nothrow)
+				if (options != ConfigReader::nothrow) {
+					std::cerr << "[E] Error for ConfigReader of " << sourcename << std::endl;
 					throw;
+				}
 			}
 		}
 		

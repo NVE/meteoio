@@ -258,7 +258,11 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 					   const std::string& metafile)
 {
 	std::string line="";
+	std::string coordsys, coordparam;
 	std::vector<std::string> tmpvec;
+
+	cfg.getValue("COORDIN", coordsys);
+	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	if (!IOUtils::validFileName(metafile)) {
 		throw InvalidFileNameException(metafile, AT);
@@ -276,7 +280,7 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 	try {
-		Coords coordinate(cfg);
+		Coords coordinate(coordsys, coordparam);
 		while (!fin.eof()){
 			getline(fin, line, eoln); //read complete line of data
 
@@ -293,6 +297,13 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 							if (!IOUtils::convertString(tmpdata.at(jj), tmpvec.at(jj), std::dec))
 								throw InvalidFormatException(metafile + ": " + line, AT);
 						}
+						//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
+						tmpdata[0] = IOUtils::standardizeNodata(tmpdata[0], plugin_nodata);
+						tmpdata[1] = IOUtils::standardizeNodata(tmpdata[1], plugin_nodata);
+						tmpdata[2] = IOUtils::standardizeNodata(tmpdata[2], plugin_nodata);
+						tmpdata[3] = IOUtils::standardizeNodata(tmpdata[3], plugin_nodata);
+						tmpdata[4] = IOUtils::standardizeNodata(tmpdata[4], plugin_nodata);
+
 						coordinate.setLatLon(tmpdata[2], tmpdata[3], tmpdata[4], false);
 						coordinate.setXY(tmpdata[0], tmpdata[1], false);
 						try {

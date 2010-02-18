@@ -27,6 +27,7 @@
 #include "MeteoData.h"
 #include "Coords.h"
 #include <vector>
+#include <string>
 #include "LegacyIO.ph"
 
 typedef Array2D<double> TYPE_DOUBLE2D;

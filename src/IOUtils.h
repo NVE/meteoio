@@ -53,6 +53,7 @@
 namespace IOUtils {
 
 	const double nodata = -999.0;	///<This is the internal nodata value
+	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = (unsigned int)-1;
 	const unsigned int npos    = (unsigned int)-1;
 
@@ -118,7 +119,7 @@ namespace IOUtils {
 	* @param t   [out] The value converted to the requested type. 
 	* @param str   [in] The input string to convert; trailling whitespaces are ignored, 
 	*              comment after non-string values are allowed, but multiple values are not allowed. 
-	* @param f   [in] The radix for reading numbers, such as std::dec or std::oct; default is std::dec. 
+	* @param f   [in] The radix for reading numbers, such as std::dec or std::oct; default is std::dec.
 	* @return true if everything went fine, false otherwise
 	*/
 	template <class T> bool convertString(T& t, const std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
@@ -158,7 +159,8 @@ namespace IOUtils {
 	* @param[in] key   The key of the parameter to retrieve.
 	* @param[out] t   The value associated to the key, converted to the requested type
 	*/
-	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, const std::string& key, T& t) {
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
+						const std::string& key, T& t) {
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
@@ -181,7 +183,7 @@ namespace IOUtils {
 	* @param[out] vecT        The vector of values associated to the key, each value is converted to the requested type
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
-								    const std::string& key, std::vector<T>& vecT) {
+							const std::string& key, std::vector<T>& vecT) {
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
@@ -200,11 +202,22 @@ namespace IOUtils {
 			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec)){
 				throw ConversionFailedException(vecUnconvertedValues.at(ii), AT);
 			}
-			
 			vecT.push_back(myvar);
 		}
 	}
-  
+
+	/**
+	* @brief Standardize a given value to use MeteoIO's internal nodata value (if applicable)
+	* @tparam T           [in] The type wanted for the return value (template type parameter).
+	* @param[in] value  the value to check/convert
+	* @param[in] plugin_nodata plugin-specific nodata value
+	* @return checked/converted value
+	*/
+	template <class T> T standardizeNodata(const T& value, const double& plugin_nodata) {
+		if(value==plugin_nodata) return static_cast<T> (nodata);
+		else return value;
+	}
+
 } //end namespace IOUtils
 
 #endif

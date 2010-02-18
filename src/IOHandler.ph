@@ -24,6 +24,7 @@
 #include "IOPlugin.h"
 
 #include <map>
+#include <string>
 
 #include "marshal_meteoio.h"
 

@@ -74,6 +74,7 @@ class GSNIO : public IOInterface {
 		std::vector<std::string> vecStationName;
 		std::string hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                              ///< Variable for proxy configuration
+		std::string coordsys, coordparam;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 

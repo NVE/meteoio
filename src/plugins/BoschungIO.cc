@@ -248,6 +248,11 @@ void BoschungIO::xmlExtractData(const std::string& filename, const Date_IO& date
 	double tss=IOUtils::nodata, hs=IOUtils::nodata, rswr=IOUtils::nodata;
 	double longitude=IOUtils::nodata, latitude=IOUtils::nodata, altitude=IOUtils::nodata;
 
+	std::string coordsys, coordparam;
+
+	cfg.getValue("COORDIN", coordsys);
+	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+
 	//Try to read xml file
 	xmlpp::DomParser parser;
 	//parser.set_validate(); provide DTD to check syntax
@@ -267,8 +272,13 @@ void BoschungIO::xmlExtractData(const std::string& filename, const Date_IO& date
 		xmlParseStringToDouble(str_lati, latitude, "stationsLat");
 		xmlParseStringToDouble(str_alti, altitude, "stationsAlt");
 
+		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
+		latitude = IOUtils::standardizeNodata(latitude, plugin_nodata);
+		longitude = IOUtils::standardizeNodata(longitude, plugin_nodata);
+		altitude = IOUtils::standardizeNodata(altitude, plugin_nodata);
+
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
-		Coords location(cfg);
+		Coords location(coordsys, coordparam);
 		location.setLatLon(latitude, longitude, altitude);
 		sd.setStationData(location, stationName);
 

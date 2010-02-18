@@ -83,6 +83,9 @@ void GSNIO::initGSNConnection(){
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
 
+	cfg.getValue("COORDIN", coordsys);
+	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+
 	/*
 	 * Trying to read proxy settings: 
 	 * - Firstly the hostname and port (both have to be provided).
@@ -189,7 +192,12 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 		convertStringToDouble(longitude, s2->substr((sep2+1), (s2->size()-sep2-2)), "Longitude");
 		convertStringToDouble(altitude, s3->substr((sep3+1), (s3->size()-sep3-2)), "Altitude");
 
-		Coords coordinate(cfg);
+		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
+		latitude = IOUtils::standardizeNodata(latitude, plugin_nodata);
+		longitude = IOUtils::standardizeNodata(longitude, plugin_nodata);
+		altitude = IOUtils::standardizeNodata(altitude, plugin_nodata);
+
+		Coords coordinate(coordsys, coordparam);
 		coordinate.setLatLon(latitude, longitude, altitude);
 		sd.setStationData(coordinate, name);
 	} else {
@@ -312,7 +320,7 @@ void GSNIO::readStationNames()
 			
 			tmp_stream << (ii+1); //needed to construct key name
 			cfg.getValue(string("STATION"+tmp_stream.str()), stationname);
-			cout << "\tRead io.ini stationname: '" << stationname << "'" << endl;
+			std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
 			vecStationName.push_back(stationname);
 		}    
 	} else { //just take all GSN stations available
@@ -320,7 +328,7 @@ void GSNIO::readStationNames()
 		if (gsn.getSensors(&sensors) == SOAP_OK){
 			for (unsigned int ii=0; ii<sensors.return_.size(); ii++){
 				//cout << "[d] Sensor " << ii << " Name: " << sensors.return_[ii] << endl;
-				cout << "\tRead GSN stationname: '" << sensors.return_[ii] << "'" << endl;
+				std::cout << "\tRead GSN stationname: '" << sensors.return_[ii] << "'" << std::endl;
 				vecStationName.push_back(sensors.return_[ii]);
 			}
 		} else {

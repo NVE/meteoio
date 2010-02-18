@@ -34,6 +34,8 @@
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
+const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
+
 using namespace std;
 
 GrassIO::GrassIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){}
@@ -99,6 +101,14 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		IOUtils::getValueForKey(header, "south", south);
 		IOUtils::getValueForKey(header, "west",  west);
 
+		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
+		_nx = IOUtils::standardizeNodata(_nx, plugin_nodata);
+		_ny = IOUtils::standardizeNodata(_ny, plugin_nodata);
+		north = IOUtils::standardizeNodata(north, plugin_nodata);
+		east = IOUtils::standardizeNodata(east, plugin_nodata);
+		south = IOUtils::standardizeNodata(south, plugin_nodata);
+		west = IOUtils::standardizeNodata(west, plugin_nodata);
+
 		if ((_nx==0) || (_ny==0)) {
 			throw IOException("Number of rows or columns in 2D Grid given is zero, in file: " + filename, AT);
 		}
@@ -111,15 +121,9 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		yllcorner = south;
 		cellsize = (east - west) / (double)ncols;
 
-		string coordsys="", coordparam="";
-		try {
-			cfg.getValue("COORDIN", coordsys);
-			cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow); 
-		} catch(std::exception& e){
-			//problems while reading values for COORDIN or COORDPARAM
-			cerr << "[E] reading configuration file: " << "\t" << e.what() << endl;
-			throw;
-		}
+		std::string coordsys="", coordparam="";
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 		//compute WGS coordinates (considered as the true reference)
 		Coords coordinate(coordsys, coordparam);
@@ -139,14 +143,14 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 			
 			for (unsigned int ll=0; ll < ncols; ll++){
 				if (tmpvec[ll] == "*"){
-					tmp_val = IOUtils::nodata;
+					tmp_val = plugin_nodata;
 				} else {
 					if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
 						throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
 					}
 				}
 				
-				if(tmp_val <= IOUtils::nodata) {
+				if(tmp_val <= plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
 					grid_out.grid2D(ll, kk) = IOUtils::nodata;
 				} else {
