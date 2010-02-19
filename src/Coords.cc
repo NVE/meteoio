@@ -42,14 +42,16 @@ const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
 */
 bool Coords::operator==(const Coords& in) const {
 //check that two Coords objects represent the same location
-	const double earth_radius = 6371e3; //in meters
-	const double grid_epsilon = 5.; //in meters
-	const double long_epsilon = grid_epsilon / earth_radius; //in degrees. small angle, so sin(x)=x
-	const double lat_epsilon = long_epsilon/2.; //in degrees. Since long is for 360deg and lat only 180
 
-	const bool comparison = ( IOUtils::checkEpsilonEquality(getLat(), in.getLat(), lat_epsilon) &&
-				IOUtils::checkEpsilonEquality(getLon(), in.getLon(), long_epsilon) );
-	return comparison;
+	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata || easting==IOUtils::nodata || northing==IOUtils::nodata) {
+		//only available information is grid indices
+		const bool comparison = ( grid_i==in.grid_i && grid_j==in.grid_j && grid_k==in.grid_k );
+		return comparison;
+	} else {
+		const bool comparison = ( IOUtils::checkEpsilonEquality(getLat(), in.getLat(), IOUtils::lat_epsilon) &&
+				IOUtils::checkEpsilonEquality(getLon(), in.getLon(), IOUtils::lon_epsilon) );
+		return comparison;
+	}
 }
 
 /**
@@ -73,6 +75,9 @@ Coords& Coords::operator=(const Coords& source) {
 		distance_algo = source.distance_algo;
 		coordsystem = source.coordsystem;
 		coordparam = source.coordparam;
+		grid_i = source.grid_i;
+		grid_j = source.grid_j;
+		grid_k = source.grid_k;
 		initializeMaps();
 		setFunctionPointers();
 	}
@@ -159,6 +164,30 @@ double Coords::getAltitude() const {
 }
 
 /**
+* @brief Returns the grid index along the X axis
+* @return grid index i
+*/
+int Coords::getGridI() const {
+	return grid_i;
+}
+
+/**
+* @brief Returns the grid index along the Y axis
+* @return grid index j
+*/
+int Coords::getGridJ() const {
+	return grid_j;
+}
+
+/**
+* @brief Returns the grid index along the Z axis
+* @return grid index k
+*/
+int Coords::getGridK() const {
+	return grid_k;
+}
+
+/**
 * @brief Print a nicely formatted lat/lon in degrees, minutes, seconds
 * @return lat/lon
 */
@@ -167,27 +196,6 @@ std::string Coords::printLatLon() const {
 	dms << "(" << decimal_to_dms(latitude) << " , " << decimal_to_dms(longitude) << ")";
 
 	return dms.str();
-}
-
-/**
-* @brief Set latitude and longitude
-* The automatic update of the easting/northing can be turned off so that
-* both lat/lon and east/north coordinates can be provided in order to thereafter check the
-* coordinates by calling check().
-* @param[in] _latitude latitude to set
-* @param[in] _longitude longitude to set
-* @param[in] _altitude altitude to set (optional)
-* @param[in] _update should the easting/northing be updated? (default=true)
-*/
-void Coords::setLatLon(const double _latitude, const double _longitude, const double _altitude, const bool _update) {
-	latitude = _latitude;
-	longitude = _longitude;
-	if(_altitude!=IOUtils::nodata) {
-		altitude = _altitude;
-	}
-	if(coordsystem!="NULL" && _update==true) {
-		convert_from_WGS84(latitude, longitude, easting, northing);
-	}
 }
 
 /**
@@ -206,13 +214,35 @@ void Coords::setLatLon(const std::string& _coordinates, const double _altitude, 
 }
 
 /**
+* @brief Set latitude and longitude
+* The automatic update of the easting/northing can be turned off so that
+* both lat/lon and east/north coordinates can be provided in order to thereafter check the
+* coordinates by calling check().
+* @param[in] _latitude latitude to set
+* @param[in] _longitude longitude to set
+* @param[in] _altitude altitude to set
+* @param[in] _update should the easting/northing be updated? (default=true)
+*/
+void Coords::setLatLon(const double _latitude, const double _longitude, const double _altitude, const bool _update) {
+	latitude = _latitude;
+	longitude = _longitude;
+	if(_altitude!=IOUtils::nodata) {
+		altitude = _altitude;
+	}
+	if(coordsystem!="NULL" && _update==true) {
+		convert_from_WGS84(latitude, longitude, easting, northing);
+	}
+	grid_i = grid_j = grid_k = IOUtils::inodata;
+}
+
+/**
 * @brief Set easting and northing
 * The automatic update of the latitude/longitude can be turned off so that
 * both lat/lon and east/north coordinates can be provided in order to thereafter check the
 * coordinates by calling check().
 * @param[in] _easting easting to set
 * @param[in] _northing northing to set
-* @param[in] _altitude altitude to set (optional)
+* @param[in] _altitude altitude to set
 * @param[in] _update should the easting/northing be updated? (default=true)
 */
 void Coords::setXY(const double _easting, const double _northing, const double _altitude, const bool _update) {
@@ -223,6 +253,39 @@ void Coords::setXY(const double _easting, const double _northing, const double _
 	}
 	if(coordsystem!="NULL" && _update==true) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
+	}
+	grid_i = grid_j = grid_k = IOUtils::inodata;
+}
+
+/**
+* @brief Set grid indices
+* This index represent the position in a cartesian grid. It can not be automatically matched with
+* a set of geographic coordinates because it needs the information about the said grid.
+* Therefore, the coordinate object needs to be given to a grid object that will either set (i,j) or
+* (lat,lon)/(easting,northing) as well as the grid's matching altitude if it is not already set.
+* Any subsequent change of either (lat,lon) or (easting,northing) will reset these indexes to IOUtils::inodata.
+* By default, setting (i,j) will invalidate (ie: delete) ALL geographic coordinates for the object (since we can not
+* convert from grid indices to/from geographic coordinates in the current object by lack of information).
+* Finally, the given indices are <b>NOT checked for validity</b>: such check must be done
+* by calling Grid2DObject::gridify or Grid3DObject::gridify .
+*
+* @note To make it short: <b>use this method with caution!!</b>
+* @param[in] _grid_i grid index along the X direction
+* @param[in] _grid_j grid index along the Y direction
+* @param[in] _grid_k grid index along the Z direction
+* @param[in] _invalidate should the geographic coordinates be invalidated? (default=true, this flag should be false ONLY when calling from Grid2/3DObject)
+*/
+void Coords::setGridIndex(const int _grid_i, const int _grid_j, const int _grid_k, const bool _invalidate) {
+//HACK TODO make grid_i,j,k friends of Grid2/3DObject -> remove _invalidate and ALWAYS invalidate
+	grid_i = _grid_i;
+	grid_j = _grid_j;
+	grid_k = _grid_k;
+	if(_invalidate==true) {
+		latitude = IOUtils::nodata;
+		longitude = IOUtils::nodata;
+		easting = IOUtils::nodata;
+		northing = IOUtils::nodata;
+		altitude = IOUtils::nodata;
 	}
 }
 
@@ -325,12 +388,7 @@ void Coords::check()
 			double tmp_lat, tmp_lon;
 			convert_to_WGS84(easting, northing, tmp_lat, tmp_lon);
 
-			const double earth_radius = 6371e3; //in meters
-			const double grid_epsilon = 5.; //in meters
-			const double long_epsilon = grid_epsilon / earth_radius; //in degrees. small angle, so sin(x)=x
-			const double lat_epsilon = long_epsilon/2.; //in degrees. Since long is for 360deg and lat only 180
-
-			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, long_epsilon)) {
+			if(!IOUtils::checkEpsilonEquality(latitude, tmp_lat, IOUtils::lat_epsilon) || !IOUtils::checkEpsilonEquality(longitude, tmp_lon, IOUtils::lon_epsilon)) {
 				throw InvalidArgumentException("Latitude/longitude and xllcorner/yllcorner don't match for coordinate", AT);
 			}
 		}
@@ -1158,11 +1216,17 @@ void Coords::setFunctionPointers() {
 	}
 }
 
-void Coords::setDefaultValues() {
+void Coords::clearCoordinates() {
 //sets safe defaults for all internal variables (except function pointers and maps)
 	latitude = longitude = IOUtils::nodata;
 	altitude = IOUtils::nodata;
 	easting = northing = IOUtils::nodata;
+	grid_i = grid_j = grid_k = IOUtils::inodata;
+}
+
+void Coords::setDefaultValues() {
+//sets safe defaults for all internal variables (except function pointers and maps)
+	clearCoordinates();
 	ref_latitude = ref_longitude = IOUtils::nodata;
 	distance_algo = GEO_COSINE;
 }
@@ -1181,6 +1245,9 @@ void Coords::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&altitude, 1);
 		buf.Pack(&easting, 1);
 		buf.Pack(&northing, 1);
+		buf.Pack(&grid_i, 1);
+		buf.Pack(&grid_j, 1);
+		buf.Pack(&grid_k, 1);
 		marshal_geo_distances(buf, distance_algo, 0, FLAG_MARSHAL, NULL);
 	}else{
 		buf.UnPack(&coordsystem, 1);
@@ -1192,6 +1259,9 @@ void Coords::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&altitude, 1);
 		buf.UnPack(&easting, 1);
 		buf.UnPack(&northing, 1);
+		buf.UnPack(&grid_i, 1);
+		buf.UnPack(&grid_j, 1);
+		buf.UnPack(&grid_k, 1);
 		marshal_geo_distances(buf, distance_algo, 0, !FLAG_MARSHAL, NULL);
 		initializeMaps();
 		setFunctionPointers();

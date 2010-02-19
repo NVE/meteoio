@@ -305,7 +305,7 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 						tmpdata[4] = IOUtils::standardizeNodata(tmpdata[4], plugin_nodata);
 
 						coordinate.setLatLon(tmpdata[2], tmpdata[3], tmpdata[4], false);
-						coordinate.setXY(tmpdata[0], tmpdata[1], false);
+						coordinate.setXY(tmpdata[0], tmpdata[1], tmpdata[4], false);
 						try {
 							coordinate.check();
 						} catch(...) {

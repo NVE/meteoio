@@ -6,7 +6,7 @@ int main() {
 	//we create one point in the CH1903 coordinate system
 	//and we attribute it a set of coordinates (this is the Laret lake in Davos)
 	Coords point1("CH1903","");
-	point1.setXY(785425. , 191124.);
+	point1.setXY(785425. , 191124., 1400.);
 
 	//First, we check the matching lat/long
 	printf("CH1903 to Lat/long\n");

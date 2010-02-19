@@ -55,51 +55,112 @@ Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _
 	llcorner = _grid2Dobj.llcorner;
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
 		llcorner.setXY( llcorner.getEasting()+_nx*_grid2Dobj.cellsize,
-				llcorner.getNorthing()+_ny*_grid2Dobj.cellsize);
+				llcorner.getNorthing()+_ny*_grid2Dobj.cellsize, IOUtils::nodata);
 	}
 }
 
-void Grid2DObject::grid_to_WGS84(const unsigned int& i, const unsigned int& j, Coords& point)
-{
-	const double easting = ((double)i) * cellsize; //The coordinate the ll corner of the cell
-	const double northing = ((double)j) * cellsize;
+bool Grid2DObject::gridify(std::vector<Coords>& vec_points) const {
+	bool status=true;
 
-	if(point.isSameProj(llcorner)==false) {
-		point.copyProj(llcorner);
+	std::vector<Coords>::iterator v_Itr = vec_points.begin();
+	while ( v_Itr != vec_points.end() ) {
+		if( gridify(*v_Itr)==false ) {
+			v_Itr = vec_points.erase(v_Itr);
+			status=false;
+		} else {
+			v_Itr++;
+		}
 	}
-	point.setXY(easting, northing);
+
+	return status;
 }
 
-int Grid2DObject::WGS84_to_grid(Coords point, unsigned int& i, unsigned int& j)
-{
-	if(point.isSameProj(llcorner)==false) {
-		point.copyProj(llcorner);
+bool Grid2DObject::gridify(Coords& point) const {
+	if(point.getGridI()==IOUtils::inodata || point.getGridJ()==IOUtils::inodata) {
+		//we need to compute (i,j)
+		return( WGS84_to_grid(point) );
+	} else {
+		//we need to compute (easting,northing) and (lat,lon) 
+		return( grid_to_WGS84(point) );
 	}
-	double x = floor( (point.getEasting()-llcorner.getEasting()) / cellsize );
-	double y = floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize );
+}
 
-	int error_code=EXIT_SUCCESS;
-	
-	if(x<0.) {
+bool Grid2DObject::grid_to_WGS84(Coords& point) const {
+	if(point.getGridI()>(signed)ncols || point.getGridJ()>(signed)nrows) {
+		//the point is outside the grid, we reset the indices to the closest values
+		//still fitting in the grid and return an error
+		int i=point.getGridI(), j=point.getGridJ();
+		if(i<0) i=0;
+		if(j<0) j=0;
+		if(i>(signed)ncols) i=ncols;
+		if(j>(signed)nrows) j=nrows;
+		point.setGridIndex(i, j, IOUtils::inodata, false);
+		return false;
+	}
+	if(point.getGridI()==IOUtils::inodata || point.getGridJ()==IOUtils::inodata) {
+		//the point is invalid (outside the grid or contains nodata)
+		return false;
+	}
+
+	//easting and northing in the grid's projection
+	const double easting = ((double)point.getGridI()) * cellsize + llcorner.getEasting();
+	const double northing = ((double)point.getGridJ()) * cellsize + llcorner.getNorthing();
+
+	if(point.isSameProj(llcorner)==true) {
+		//same projection between the grid and the point -> precise, simple and efficient arithmetics
+		point.setXY(easting, northing, IOUtils::nodata);
+	} else {
+		//projections are different, so we have to do an intermediate step...
+		Coords tmp_proj;
+		tmp_proj.copyProj(point); //making a copy of the original projection
+		point.copyProj(llcorner); //taking the grid's projection
+		point.setXY(easting, northing, IOUtils::nodata);
+		point.copyProj(tmp_proj); //back to the original projection -> reproject the coordinates
+	}
+	return true;
+}
+
+bool Grid2DObject::WGS84_to_grid(Coords& point) const {
+	if(point.getLat()==IOUtils::nodata || point.getLon()==IOUtils::nodata) {
+			//if the point is invalid, there is nothing we can do
+			return false;
+	}
+
+	bool error_code=true;
+	int i,j;
+
+	if(point.isSameProj(llcorner)==true) {
+		//same projection between the grid and the point -> precise, simple and efficient arithmetics
+		i = (int)floor( (point.getEasting()-llcorner.getEasting()) / cellsize );
+		j = (int)floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize );
+	} else {
+		//projections are different, so we have to do an intermediate step...
+		Coords tmp_point(point);
+		tmp_point.copyProj(llcorner); //getting the east/north coordinates in the grid's projection
+		i = (int)floor( (tmp_point.getEasting()-llcorner.getEasting()) / cellsize );
+		j = (int)floor( (tmp_point.getNorthing()-llcorner.getNorthing()) / cellsize );
+	}
+
+	//checking that the calculated indices fit in the grid2D
+	//and giving them the closest value within the grid if not.
+	if(i<0) {
 		i=0;
-		error_code=EXIT_FAILURE;
-	} else if(x>(double)ncols) {
-		i=ncols;
-		error_code=EXIT_FAILURE;
-	} else {
-		i=(int)x;
+		error_code=false;
 	}
-	
-	if(y<0.) {
+	if(i>(signed)ncols) {
+		i=ncols;
+		error_code=false;
+	}
+	if(j<0) {
 		j=0;
-		error_code=EXIT_FAILURE;
-	} else if(y>(double)nrows) {
+		error_code=false;
+	}
+	if(j>(signed)nrows) {
 		j=nrows;
-		error_code=EXIT_FAILURE;
-	} else {
-		j=(int)y;
+		error_code=false;
 	}
 
+	point.setGridIndex(i, j, IOUtils::unodata, false);
 	return error_code;
 }
 

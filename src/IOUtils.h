@@ -51,11 +51,16 @@
 #endif
 
 namespace IOUtils {
-
-	const double nodata = -999.0;	///<This is the internal nodata value
+	const double nodata = -999.0; ///<This is the internal nodata value
 	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = (unsigned int)-1;
+	const int inodata = -999;
 	const unsigned int npos    = (unsigned int)-1;
+
+	const double earth_radius = 6371e3; ///<Earth radius in meters
+	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
+	const double lon_epsilon = grid_epsilon / earth_radius; ///<in degrees. Small angle for longitudes, so sin(x)=x
+	const double lat_epsilon = lon_epsilon/2.; ///<in degrees. Small angle for latitudes. Since for longitudes it is for 360deg, it has to be 180deg for latitudes
 
 	typedef enum NODATA_HANLDING {
 		RAW_NODATA, ///< no special handling of nodata

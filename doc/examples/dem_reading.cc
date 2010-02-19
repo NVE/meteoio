@@ -5,7 +5,6 @@
 int main(void) {
 	DEMObject dem;
 	IOHandler *io = NULL;
-	unsigned int i,j;
 	
 	try {
 		ConfigReader cfg("io.ini");
@@ -26,16 +25,16 @@ int main(void) {
 	//retrieving grid coordinates of a real world point
 	Coords point;
 	point.copyProj(dem.llcorner); //we use the same projection parameters as the DEM
-	point.setLatLon(46.1592, 8.12993);
-	dem.WGS84_to_grid(point, i,j);
+	point.setLatLon(46.1592, 8.12993, IOUtils::nodata);
+	dem.gridify(point);
 
 	//computing grid distances from real world distances
-	const double dist_x=700., dist_y=1200.;
+	const double dist_x=7000., dist_y=12000.;
 	const unsigned int ncols = (unsigned int)ceil(dist_x/dem.cellsize);
 	const unsigned int nrows = (unsigned int)ceil(dist_y/dem.cellsize);
 
 	//extracting a sub-dem starting at the given coordinates and extending a given distance along x and along y
-	DEMObject sub_dem(dem, i, j, ncols, nrows);
+	DEMObject sub_dem(dem, point.getGridI(), point.getGridJ(), ncols, nrows);
 
 	//writing the sub-dem out
 	io->write2DGrid(sub_dem,"sub_dem.dem");

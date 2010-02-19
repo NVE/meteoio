@@ -163,7 +163,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
 		Coords location(coordsys, coordparam);
-		location.setXY(xllcorner, yllcorner);
+		location.setXY(xllcorner, yllcorner, IOUtils::nodata);
 		
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, cellsize, location);

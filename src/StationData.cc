@@ -20,8 +20,7 @@
 //Default constructor initializing every double attribute to nodata and strings to  ""
 StationData::StationData()
 {
-	Coords _position;
-	setStationData(_position, "");
+	stationName = "";
 }
 
 StationData::StationData(const Coords& _position, const std::string& name_in)
@@ -62,7 +61,7 @@ const std::string StationData::toString() const
 	std::stringstream tmpstr;
 
 	tmpstr << std::setprecision(10)
-	 	<< "Longitude: " << std::setw(15) << position.getLon() << std::setw(10) << "  Latitude: " << std::setw(15) << position.getLat() << "  Altitude: " << position.getAltitude() << std::endl
+	 	<< "WGS84 position:   " << position.printLatLon() << std::endl
 	 	<< "Easting:   " << std::setw(15) << position.getEasting() << std::setw(10) << "  Northing: " << std::setw(15) << position.getNorthing() << "  Name:     " << stationName;
 
 	return tmpstr.str();

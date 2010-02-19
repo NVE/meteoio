@@ -127,7 +127,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 		//compute WGS coordinates (considered as the true reference)
 		Coords coordinate(coordsys, coordparam);
-		coordinate.setXY(xllcorner, yllcorner);
+		coordinate.setXY(xllcorner, yllcorner, IOUtils::nodata);
 		
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, cellsize, coordinate);

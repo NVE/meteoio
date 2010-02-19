@@ -35,7 +35,8 @@ Grid3DObject::Grid3DObject(const Grid3DObject& _grid3Dobj,
 	llcorner = _grid3Dobj.llcorner;
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
 		llcorner.setXY( llcorner.getEasting()+_nx*_grid3Dobj.cellsize,
-				llcorner.getNorthing()+_ny*_grid3Dobj.cellsize);
+				llcorner.getNorthing()+_ny*_grid3Dobj.cellsize,
+				llcorner.getAltitude()+_nz*_grid3Dobj.cellsize );
 	}
 }
 
@@ -49,6 +50,124 @@ Grid3DObject::Grid3DObject(const unsigned int& _ncols, const unsigned int& _nrow
 					  const double& _cellsize, const Coords& _llcorner, const Array3D<double>& _grid3D) : grid3D()
 {
 	set(_ncols, _nrows, _ndepth, _cellsize, _llcorner, _grid3D);
+}
+
+bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const {
+	bool status=true;
+
+	std::vector<Coords>::iterator v_Itr = vec_points.begin();
+	while ( v_Itr != vec_points.end() ) {
+		if( gridify(*v_Itr)==false ) {
+			v_Itr = vec_points.erase(v_Itr);
+			status=false;
+		} else {
+			v_Itr++;
+		}
+	}
+
+	return status;
+}
+
+bool Grid3DObject::gridify(Coords& point) const {
+	if(point.getGridI()==IOUtils::inodata || point.getGridJ()==IOUtils::inodata || point.getGridK()==IOUtils::inodata) {
+		//we need to compute (i,j,k)
+		return( WGS84_to_grid(point) );
+	} else {
+		//we need to compute (easting,northing) and (lat,lon) and altitude
+		return( grid_to_WGS84(point) );
+	}
+}
+
+bool Grid3DObject::grid_to_WGS84(Coords& point) const {
+	if(point.getGridI()>(signed)ncols || point.getGridJ()>(signed)nrows || point.getGridK()>(signed)ndepth) {
+		//the point is outside the grid, we reset the indices to the closest values
+		//still fitting in the grid and return an error
+		int i=point.getGridI(), j=point.getGridJ(), k=point.getGridK();
+		if(i<0) i=0;
+		if(j<0) j=0;
+		if(k<0) k=0;
+		if(i>(signed)ncols) i=ncols;
+		if(j>(signed)nrows) j=nrows;
+		if(k>(signed)ndepth) k=ndepth;
+		point.setGridIndex(i, j, k, false);
+		return false;
+	}
+	if(point.getGridI()==IOUtils::inodata || point.getGridJ()==IOUtils::inodata || point.getGridK()==IOUtils::inodata) {
+		//the point is invalid (outside the grid or contains nodata)
+		return false;
+	}
+
+	//easting and northing in the grid's projection
+	const double easting = ((double)point.getGridI()) * cellsize + llcorner.getEasting();
+	const double northing = ((double)point.getGridJ()) * cellsize + llcorner.getNorthing();
+	const double altitude = ((double)point.getGridK()) * cellsize + llcorner.getAltitude();
+
+	if(point.isSameProj(llcorner)==true) {
+		//same projection between the grid and the point -> precise, simple and efficient arithmetics
+		point.setXY(easting, northing, altitude);
+	} else {
+		//projections are different, so we have to do an intermediate step...
+		Coords tmp_proj;
+		tmp_proj.copyProj(point); //making a copy of the original projection
+		point.copyProj(llcorner); //taking the grid's projection
+		point.setXY(easting, northing, altitude);
+		point.copyProj(tmp_proj); //back to the original projection -> reproject the coordinates
+	}
+	return true;
+}
+
+bool Grid3DObject::WGS84_to_grid(Coords point) const {
+	if(point.getLat()==IOUtils::nodata || point.getLon()==IOUtils::nodata || point.getAltitude()==IOUtils::nodata) {
+			//if the point is invalid, there is nothing we can do
+			return false;
+	}
+
+	bool error_code=true;
+	int i,j,k;
+
+	if(point.isSameProj(llcorner)==true) {
+		//same projection between the grid and the point -> precise, simple and efficient arithmetics
+		i = (int)floor( (point.getEasting()-llcorner.getEasting()) / cellsize );
+		j = (int)floor( (point.getNorthing()-llcorner.getNorthing()) / cellsize );
+		k = (int)floor( (point.getAltitude()-llcorner.getAltitude()) / cellsize );
+	} else {
+		//projections are different, so we have to do an intermediate step...
+		Coords tmp_point(point);
+		tmp_point.copyProj(llcorner); //getting the east/north coordinates in the grid's projection
+		i = (int)floor( (tmp_point.getEasting()-llcorner.getEasting()) / cellsize );
+		j = (int)floor( (tmp_point.getNorthing()-llcorner.getNorthing()) / cellsize );
+		k = (int)floor( (point.getAltitude()-llcorner.getAltitude()) / cellsize );
+	}
+
+	//checking that the calculated indices fit in the grid2D
+	//and giving them the closest value within the grid if not.
+	if(i<0) {
+		i=0;
+		error_code=false;
+	}
+	if(i>(signed)ncols) {
+		i=ncols;
+		error_code=false;
+	}
+	if(j<0) {
+		j=0;
+		error_code=false;
+	}
+	if(j>(signed)nrows) {
+		j=nrows;
+		error_code=false;
+	}
+	if(k<0) {
+		k=0;
+		error_code=false;
+	}
+	if(k>(signed)ndepth) {
+		k=ndepth;
+		error_code=false;
+	}
+
+	point.setGridIndex(i, j, k, false);
+	return error_code;
 }
 
 void Grid3DObject::set(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth,

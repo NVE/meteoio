@@ -25,7 +25,6 @@
 #include <map>
 
 class Coords; //forward declaration
-
 typedef void(Coords::*convfunc)(double, double, double&, double&) const;
 
 #ifdef _POPC_
@@ -58,12 +57,16 @@ class Coords {
 	double getLat() const;
 	double getLon() const;
 	double getAltitude() const;
+	int getGridI() const;
+	int getGridJ() const;
+	int getGridK() const;
 	std::string printLatLon() const;
 
 	//Setter methods
-	void setLatLon(const double _latitude, const double _longitude, const double _altitude=IOUtils::nodata, const bool _update=true);
-	void setLatLon(const std::string& _coordinates, const double _altitude=IOUtils::nodata, const bool _update=true);
-	void setXY(const double _easting, const double _northing, const double _altitude=IOUtils::nodata, const bool _update=true);
+	void setLatLon(const double _latitude, const double _longitude, const double _altitude, const bool _update=true);
+	void setLatLon(const std::string& _coordinates, const double _altitude, const bool _update=true);
+	void setXY(const double _easting, const double _northing, const double _altitude, const bool _update=true);
+	void setGridIndex(const int _grid_i, const int _grid_j, const int _grid_k, const bool _invalidate=true);
 	void setProj(const std::string& _coordinatesystem, const std::string& _parameters="");
 	void setLocalRef(const double _ref_latitude, const double _ref_longitude);
 	void setLocalRef(const std::string _coordparam);
@@ -102,6 +105,7 @@ class Coords {
 	void VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const;
 
  private:
+	void clearCoordinates();
 	void setDefaultValues();
 	void initializeMaps();
 	void setFunctionPointers();
@@ -114,6 +118,9 @@ class Coords {
 	double longitude; ///<longitude of the point
 	double easting; ///<east coordinate of the point in a cartesian grid
 	double northing; ///<north coordinate of the point in a cartesian grid
+	int grid_i; ///<grid index i (please notice that this index is NOT automatically regenerated NOR checked)
+	int grid_j; ///<grid index j (please notice that this index is NOT automatically regenerated NOR checked)
+	int grid_k; ///<grid index k (please notice that this index is NOT automatically regenerated NOR checked)
 	double ref_latitude, ref_longitude;
 
 	std::map<std::string, convfunc> to_wgs84;

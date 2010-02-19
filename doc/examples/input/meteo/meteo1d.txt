@@ -1,5 +1,5 @@
-Latitude= -999
-Longitude= -999
+Latitude= -9999
+Longitude= -9999
 X_Coord= 626800
 Y_Coord= 092460
 Altitude= 3130

@@ -31,7 +31,6 @@
  * @author Thomas Egger
  * @date   2008-11-29
  */
-//HACK: this class could be fully replaced by Coords if we add a name to Coords...
 #ifdef _POPC_
 class StationData :POPBase {
 	public:
@@ -85,6 +84,7 @@ class StationData {
 	public:
 		Coords position;
 		std::string stationName; ///<Name of the Station
+		//for Snowpack and other (1D) applications: add slope, aspect, horizon, etc
 };
 
 typedef std::vector<StationData> STATION_DATASET;

@@ -83,6 +83,26 @@ class Grid3DObject{
 			const double& cellsize, const Coords& _llcorner, const Array3D<double>& grid3D_in);
 
 		/**
+		* @brief Compute the positional parameters that are not already known
+		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* grid indices. This method will calculate the missing ones (so that (i,j,k) match with (lat,lon,alt)
+		* and (east,north,alt).
+		* @param point coordinate to convert
+		* @return false if the given point was invalid or outside the grid (sets (i,j) to closest values within the grid)
+		*/
+		bool gridify(Coords& point) const;
+
+		/**
+		* @brief Compute the positional parameters that are not already known
+		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
+		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
+		* @param vec_points vector containing the coordinates to convert
+		* @return false if invalid or external points had to be removed
+		*/
+		bool gridify(std::vector<Coords>& vec_points) const;
+
+		/**
 		* @brief check if the current Grid3DObject has the same geolocalization attributes
 		* as another Grid3DObject. The grid coordinates (xllcorner & yllcorner) are NOT
 		* checked as these might be tweaked for convenience (like between input grid and local grid)
@@ -105,6 +125,19 @@ class Grid3DObject{
 		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
 			const double& cellsize, const Coords& _llcorner);
 
+		/**
+		* @brief Converts WGS84 coordinates into grid coordinates (i,j)
+		* @param point coordinate to convert
+		* @return false if the given point was outside the grid (sets (i,j) to closest values within the grid)
+		*/
+		bool WGS84_to_grid(Coords point) const;
+
+		/**
+		* @brief Converts grid coordinates (i,j) into WGS84 coordinates
+		* @param point coordinate to convert
+		* @return false if the given point was invalid (outside the grid or nodata and if possible sets (i,j) to closest values within the grid)
+		*/
+		bool grid_to_WGS84(Coords& point) const;
 };
 
 #endif

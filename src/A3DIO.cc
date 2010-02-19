@@ -214,8 +214,8 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
 		Coords location(coordsys, coordparam);
-		location.setXY(xcoord, ycoord, false);
-		location.setLatLon(latitude, longitude, false);
+		location.setXY(xcoord, ycoord, altitude, false);
+		location.setLatLon(latitude, longitude, altitude, false);
 		try {
 			location.check();
 		} catch(...) {
@@ -607,7 +607,8 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 
 	for (unsigned int ii=4; ii<columns; ii++) {
 		unsigned int stationnr = hashStations[vec_names.at(ii)];
-		double altitude, easting, northing, stationName;
+		double altitude, easting, northing;
+		std::string stationName;
 		if ((!IOUtils::convertString(altitude, vec_altitude.at(ii), std::dec))
 		    || (!IOUtils::convertString(easting, vec_xcoord.at(ii), std::dec))
 		    || (!IOUtils::convertString(northing, vec_ycoord.at(ii), std::dec))

@@ -67,25 +67,24 @@ class Grid2DObject{
 				   const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
 
 		/**
-		* @brief Converts WGS84 coordinates into grid coordinates (i,j)
-		* If any coordinate is outside of the grid, the matching coordinate is set to (unsigned)-1
-		* @note This computation is only precise to ~1 meter (in order to be faster). Please use 
-		* IOUtils::VincentyDistance for up to .5 mm precision.
+		* @brief Compute the positional parameters that are not already known
+		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
+		* and (east,north)).
 		* @param point coordinate to convert
-		* @param i matching X coordinate in the grid
-		* @param j matching Y coordinate in the grid
-		* @return EXIT_SUCESS or EXIT_FAILURE if the given point was outside the grid (sets (i,j) to closest values within the grid)
+		* @return false if the given point was invalid or outside the grid (sets (i,j) to closest values within the grid)
 		*/
-		int WGS84_to_grid(Coords point, unsigned int& i, unsigned int& j);
+		bool gridify(Coords& point) const;
 
 		/**
-		* @brief Converts grid coordinates (i,j) into WGS84 coordinates
-		* @note This computation uses IOUtils::VincentyDistance and therefore is up to .5 mm precise.
-		* @param i matching X coordinate in the grid
-		* @param j matching Y coordinate in the grid
-		* @param point converted coordinate
+		* @brief Compute the positional parameters that are not already known
+		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
+		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
+		* @param vec_points vector containing the coordinates to convert
+		* @return false if invalid or external points had to be removed
 		*/
-		void grid_to_WGS84(const unsigned int& i, const unsigned int& j, Coords& point);
+		bool gridify(std::vector<Coords>& vec_points) const;
 
 		/**
 		* @brief Set all variables in one go.
@@ -128,6 +127,20 @@ class Grid2DObject{
 				const double& cellsize, const Coords& _llcorner);
 		void setValues(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _cellsize);
+
+		/**
+		* @brief Converts WGS84 coordinates into grid coordinates (i,j)
+		* @param point coordinate to convert
+		* @return false if the given point was outside the grid (sets (i,j) to closest values within the grid)
+		*/
+		bool WGS84_to_grid(Coords& point) const;
+
+		/**
+		* @brief Converts grid coordinates (i,j) into WGS84 coordinates
+		* @param point coordinate to convert
+		* @return false if the given point was invalid (outside the grid or nodata and if possible sets (i,j) to closest values within the grid)
+		*/
+		bool grid_to_WGS84(Coords& point) const;
 };
 
 #endif
