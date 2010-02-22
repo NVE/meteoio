@@ -317,3 +317,20 @@ template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string st
 
 	return true;
 }
+
+template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
+{
+	std::string s = str;
+	trim(s); //delete trailing and leading whitespaces and tabs
+
+	(void)f;
+	double lat, lon;
+	try {
+		Coords::parseLatLon(s,lat, lon);
+	} catch(IOException &e) {
+		return false;
+	}
+	t.setLatLon(lat, lon, nodata);
+
+	return true;
+}

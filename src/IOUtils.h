@@ -35,6 +35,8 @@
 
 #include "IOExceptions.h"
 #include "Date_IO.h"
+#include "Coords.h"
+class Coords;
 
 #ifndef MAX
 #define MAX(x,y)    (((x) < (y)) ? (y) : (x))
@@ -156,6 +158,7 @@ namespace IOUtils {
 	template<> bool convertString<std::string>(std::string& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<Coords>(Coords& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
 
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).

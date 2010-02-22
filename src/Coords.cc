@@ -188,6 +188,22 @@ int Coords::getGridK() const {
 }
 
 /**
+* @brief Returns the projection parameters
+* @param[out] proj_type projection type
+* @param[out] proj_args optional arguments
+*/
+void Coords::getProj(std::string& proj_type, std::string& proj_args) const {
+	proj_type = coordsystem;
+	if(coordsystem=="LOCAL") {
+		std::stringstream dms;
+		dms << "(" << decimal_to_dms(ref_latitude) << " , " << decimal_to_dms(ref_longitude) << ")";
+		proj_args=dms.str();
+	} else {
+		proj_args = coordparam;
+	}
+}
+
+/**
 * @brief Print a nicely formatted lat/lon in degrees, minutes, seconds
 * @return lat/lon
 */
@@ -425,22 +441,25 @@ bool Coords::isSameProj(const Coords& target) const {
 * @param _update should the necessary coordinates be updated? (default=true)
 */
 void Coords::copyProj(const Coords& source, const bool _update) {
-	if(coordsystem=="LOCAL") {
-		coordsystem="LOCAL";
-		coordparam=source.coordparam;
-		ref_latitude=source.ref_latitude;
-		ref_longitude=source.ref_longitude;
-	} else {
-		coordsystem=source.coordsystem;
-		coordparam=source.coordparam;
-	}
-	setFunctionPointers();
-
-	if(_update==true) {
-		if((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
-			convert_from_WGS84(latitude, longitude, easting, northing);
+	if(!isSameProj(source)) {
+		//we only do a copy if we are not already using the same projection
+		if(source.coordsystem=="LOCAL") {
+			coordsystem="LOCAL";
+			coordparam=source.coordparam;
+			ref_latitude=source.ref_latitude;
+			ref_longitude=source.ref_longitude;
 		} else {
-			convert_to_WGS84(easting, northing, latitude, longitude);
+			coordsystem=source.coordsystem;
+			coordparam=source.coordparam;
+		}
+		setFunctionPointers();
+
+		if(_update==true) {
+			if((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
+				convert_from_WGS84(latitude, longitude, easting, northing);
+			} else {
+				convert_to_WGS84(easting, northing, latitude, longitude);
+			}
 		}
 	}
 }
@@ -537,7 +556,7 @@ double Coords::dms_to_decimal(const std::string& dms) {
 * @param[out] lon parsed longitude
 */
 void Coords::parseLatLon(const std::string& coordinates, double&
-lat, double& lon) const {
+lat, double& lon) {
 	char lat_str[32]="";
 	char lon_str[32]="";
 
@@ -903,15 +922,24 @@ void Coords::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, do
 }
 
 void Coords::distance(const Coords& destination, double& distance, double& bearing) const {
-	switch(distance_algo) {
-		case GEO_COSINE:
-			distance = cosineDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
-			break;
-		case GEO_VINCENTY:
-			distance = VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
-			break;
-		default:
-			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+//HACK: this is the 2D distance, it does not work in 3D!!
+	if(isSameProj(destination)) {
+		//we can use simple cartesian grid arithmetic
+		const double to_deg = 180.0 / PI;
+		distance = sqrt( IOUtils::pow2(easting - destination.getEasting()) + IOUtils::pow2(northing - destination.getNorthing()) );
+		bearing = atan2( northing - destination.getNorthing() , easting - destination.getEasting() );
+		bearing = fmod( bearing*to_deg+360. , 360. );
+	} else {
+		switch(distance_algo) {
+			case GEO_COSINE:
+				distance = cosineDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
+				break;
+			case GEO_VINCENTY:
+				distance = VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
+				break;
+			default:
+				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+		}
 	}
 }
 

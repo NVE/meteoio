@@ -70,7 +70,7 @@ class Grid2DObject{
 		* @brief Compute the positional parameters that are not already known
 		* This means that the Coords::point object that is given either contains geographic coordinates or 
 		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
-		* and (east,north)).
+		* and (east,north)). If the given point had a "NULL" projection, it will be set to the grid's.
 		* @param point coordinate to convert
 		* @return false if the given point was invalid or outside the grid (sets (i,j) to closest values within the grid)
 		*/
@@ -81,6 +81,7 @@ class Grid2DObject{
 		* This means that the Coords::point object that is given either contains geographic coordinates or 
 		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
 		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
+		* If the given point had a "NULL" projection, it will be set to the grid's.
 		* @param vec_points vector containing the coordinates to convert
 		* @return false if invalid or external points had to be removed
 		*/

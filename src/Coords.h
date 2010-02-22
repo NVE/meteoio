@@ -20,7 +20,6 @@
 
 #include "IOExceptions.h"
 #include "IOUtils.h"
-#include "ConfigReader.h"
 #include <string>
 #include <map>
 
@@ -60,6 +59,7 @@ class Coords {
 	int getGridI() const;
 	int getGridJ() const;
 	int getGridK() const;
+	void getProj(std::string& proj_type, std::string& proj_args) const;
 	std::string printLatLon() const;
 
 	//Setter methods
@@ -75,11 +75,12 @@ class Coords {
 	void check();
 	double distance(const Coords& destination) const;
 	bool isSameProj(const Coords& target) const;
-	void copyProj(const Coords& target, const bool _update=true);
+	void copyProj(const Coords& source, const bool _update=true);
 
 	//Static helper methods
 	static double dms_to_decimal(const std::string& dms);
 	static std::string decimal_to_dms(const double& decimal);
+	static void parseLatLon(const std::string& coordinates, double& lat, double& lon);
 
  private:
 	//Coordinates conversions
@@ -110,7 +111,6 @@ class Coords {
 	void initializeMaps();
 	void setFunctionPointers();
 	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
-	void parseLatLon(const std::string& coordinates, double& lat, double& lon) const;
 
  private:
 	double altitude; ///<altitude of the point (the altitude is currently NOT dependant on the projection)

@@ -45,11 +45,22 @@ Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObje
 	//check whether the size of the two vectors is equal
 	if (vecData.size() != vecMeta.size())
 		throw IOException("Size of vector<MeteoData> and vector<StationData> are no equal", AT);
-}
 
+	//check that the stations are using the same projection as the dem
+	for (unsigned int i=0; i<(unsigned int)vecMeta.size(); i++) {
+		if(!vecMeta[i].position.isSameProj(dem.llcorner)) {
+			throw IOException("Some stations are not using the same geographic projection as the DEM", AT);
+		}
+	}
+}
 
 void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result)
 {
+	//check that the output grid is using the same projection as the dem
+	if(!result.llcorner.isSameProj(dem.llcorner)) {
+		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
+	}
+
 	if (meteoparam == MeteoData::P){
 		interpolateP(result);
 	} else if (meteoparam == MeteoData::HNW){

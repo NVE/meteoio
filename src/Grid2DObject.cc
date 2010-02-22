@@ -76,20 +76,33 @@ bool Grid2DObject::gridify(std::vector<Coords>& vec_points) const {
 }
 
 bool Grid2DObject::gridify(Coords& point) const {
-	if(point.getGridI()==IOUtils::inodata || point.getGridJ()==IOUtils::inodata) {
-		//we need to compute (i,j)
-		return( WGS84_to_grid(point) );
-	} else {
+	std::string proj_type, proj_args;
+	point.getProj(proj_type, proj_args);
+	if(proj_type=="NULL") {
+		//if the projection was "NULL", we set it to the grid's
+		point.copyProj(llcorner);
+	}
+
+	if(point.getGridI()!=IOUtils::inodata && point.getGridJ()!=IOUtils::inodata) {
 		//we need to compute (easting,northing) and (lat,lon) 
 		return( grid_to_WGS84(point) );
+	} else {
+		//we need to compute (i,j)
+		return( WGS84_to_grid(point) );
 	}
 }
 
 bool Grid2DObject::grid_to_WGS84(Coords& point) const {
-	if(point.getGridI()>(signed)ncols || point.getGridJ()>(signed)nrows) {
+	int i=point.getGridI(), j=point.getGridJ();
+
+	if(i==IOUtils::inodata || j==IOUtils::inodata) {
+		//the point is invalid (outside the grid or contains nodata)
+		return false;
+	}
+
+	if(i>(signed)ncols || i<0 || j>(signed)nrows || j<0) {
 		//the point is outside the grid, we reset the indices to the closest values
 		//still fitting in the grid and return an error
-		int i=point.getGridI(), j=point.getGridJ();
 		if(i<0) i=0;
 		if(j<0) j=0;
 		if(i>(signed)ncols) i=ncols;
@@ -97,14 +110,10 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 		point.setGridIndex(i, j, IOUtils::inodata, false);
 		return false;
 	}
-	if(point.getGridI()==IOUtils::inodata || point.getGridJ()==IOUtils::inodata) {
-		//the point is invalid (outside the grid or contains nodata)
-		return false;
-	}
 
 	//easting and northing in the grid's projection
-	const double easting = ((double)point.getGridI()) * cellsize + llcorner.getEasting();
-	const double northing = ((double)point.getGridJ()) * cellsize + llcorner.getNorthing();
+	const double easting = ((double)i) * cellsize + llcorner.getEasting();
+	const double northing = ((double)j) * cellsize + llcorner.getNorthing();
 
 	if(point.isSameProj(llcorner)==true) {
 		//same projection between the grid and the point -> precise, simple and efficient arithmetics
