@@ -623,7 +623,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	cleanup();
 }
 
-void A3DIO::readSpecialPoints(POINTSArray& pts)
+void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 {
 	std::string filename="", line_in="";
 	std::vector<std::string> tmpvec;
@@ -661,12 +661,11 @@ void A3DIO::readSpecialPoints(POINTSArray& pts)
 	}
 	cleanup();
 
-	//Now put everything into that legacy struct POINTSArray
-	pts.resize(mypts.size());
-
+	//Now put everything into the output vector TODO: don't do any intermediate steps... copy directly into vector!
+	Coords tmp_pts;
 	for (unsigned int jj=0; jj<mypts.size(); jj++) {
-		pts[jj].ix = mypts.at(jj).first;
-		pts[jj].iy = mypts.at(jj).second;
+		tmp_pts.setGridIndex(mypts.at(jj).first, mypts.at(jj).second, IOUtils::nodata, false);
+		pts.push_back(tmp_pts);
 	}
 }
 

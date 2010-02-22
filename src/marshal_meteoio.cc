@@ -61,20 +61,25 @@ void marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxs
 	}
 }
 
-void marshal_POINTSArray(POPBuffer &buf,POINTSArray &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
-		if (n) buf.Pack((int *)((POINT *)&data[0]), 2*n);
+		for(int i=0;i<n;i++) {
+			marshal_Coords(buf, data[i], maxsize, FLAG_MARSHAL, temp);
+		}
 	} else {
-		int n;
-
+		int n=0;
 		buf.UnPack(&n,1);
-		data.resize(n);
-		if (n) buf.UnPack((int *)((POINT *)&data[0]), 2*n);
+		data.clear();
+		for(int i=0;i<n;i++) {
+			Coords obj;
+			marshal_Coords(buf, obj, maxsize, !FLAG_MARSHAL, temp);
+			data.push_back(obj);
+		}
 	}
 }
 
@@ -111,7 +116,7 @@ void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &da
 	} else {
 		int n=0;
 		buf.UnPack(&n,1);
-		data.clear();  
+		data.clear();
 		for(int i=0;i<n;i++) {
 			METEO_DATASET obj;
 			marshal_METEO_DATASET(buf, obj, maxsize, !FLAG_MARSHAL, temp);

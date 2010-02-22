@@ -56,7 +56,7 @@ class GSNIO : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
-		virtual void readSpecialPoints(POINTSArray& pts);
+		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:

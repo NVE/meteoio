@@ -54,7 +54,7 @@ class ImisIO : public IOInterface {
 		
 		virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out);
 		
-		virtual void readSpecialPoints(POINTSArray& pts);
+		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		
 		virtual void write2DGrid(const Grid2DObject& grid_in, const string& name="");
 		

@@ -43,6 +43,11 @@ class Grid2DObject : POPBase {
 class Grid2DObject{
 #endif
 	public:
+		typedef struct GRID_POINT {
+			unsigned int ix; ///<grid index along X
+			unsigned int iy; ///<grid index along Y
+		} grid_point;
+
 		/**
 		* @brief Default constructor.
 		* Initializes all variables to 0, except lat/long which are initialized to IOUtils::nodata

@@ -299,7 +299,7 @@ double DEMObject::horizontalDistance(Coords point1, const Coords& point2)
 *
 */
 double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
-	std::vector<POINT> vec_points;
+	std::vector<GRID_POINT> vec_points;
 	double distance=0.;
 	unsigned int last_point=0; //point 0 is always the starting point
 
@@ -339,7 +339,7 @@ double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
 * @param vec_points vector of points that are in between
 *
 */
-void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<POINT>& vec_points) {
+void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT>& vec_points) {
 
 	if(point1.isSameProj(point2)==false) {
 		point1.copyProj(point2);
@@ -361,7 +361,7 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<POINT
 	if(ix1==ix2) {
 		//special case of vertical alignement
 		for(int iy=MIN(iy1,iy2); iy<=MAX(iy1,iy2); iy++) {
-			POINT pts;
+			GRID_POINT pts;
 			pts.ix = ix1;
 			pts.iy = iy;
 			vec_points.push_back(pts);
@@ -389,7 +389,7 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<POINT
 			}
 
 			for(int iy=y1; iy<=y2; iy++) {
-				POINT pts;
+				GRID_POINT pts;
 				pts.ix = ix;
 				pts.iy = iy;
 				//make sure we only return points within the dem

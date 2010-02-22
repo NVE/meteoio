@@ -57,7 +57,7 @@ class GrassIO : public IOInterface {
 							  const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
-		virtual void readSpecialPoints(POINTSArray& pts);
+		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
 	private:

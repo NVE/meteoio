@@ -243,7 +243,7 @@ void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_ou
 	plugin->readAssimilationData(date_in, da_out);
 }
 
-void IOHandler::readSpecialPoints(POINTSArray& pts) {
+void IOHandler::readSpecialPoints(std::vector<Coords>& pts) {
 	IOInterface *plugin = getPlugin("SPECIALPTSSRC");
 	plugin->readSpecialPoints(pts);
 }

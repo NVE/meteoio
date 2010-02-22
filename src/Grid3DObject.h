@@ -37,6 +37,12 @@ class Grid3DObject : POPBase {
 class Grid3DObject{
 #endif  
 	public:
+		typedef struct GRID_POINT {
+			unsigned int ix; ///<grid index along X
+			unsigned int iy; ///<grid index along Y
+			unsigned int iz; ///<grid index along Z
+		} grid_point;
+
 		/**
 		* Default constructor.
 		* Initializes all variables to 0, except nodata, which is initialized to -9999.0

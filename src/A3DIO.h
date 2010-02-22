@@ -54,7 +54,7 @@ class A3DIO : public IOInterface {
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void readSpecialPoints(POINTSArray& pts);
+		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 

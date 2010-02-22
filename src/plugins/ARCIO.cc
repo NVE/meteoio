@@ -235,7 +235,7 @@ void ARCIO::readMeteoData(const Date_IO& /*dateStart*/, const Date_IO& /*dateEnd
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::readSpecialPoints(POINTSArray&)
+void ARCIO::readSpecialPoints(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

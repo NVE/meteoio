@@ -449,7 +449,7 @@ void BoschungIO::readAssimilationData(const Date_IO&, Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void BoschungIO::readSpecialPoints(POINTSArray&)
+void BoschungIO::readSpecialPoints(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

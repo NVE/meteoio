@@ -54,7 +54,7 @@ class IOHandler : public IOInterface {
 						const unsigned& stationindex=IOUtils::npos);
 		void readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
-		virtual void readSpecialPoints(POINTSArray& pts);
+		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:

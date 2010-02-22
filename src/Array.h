@@ -201,12 +201,4 @@ template<class T> T Array<T>::getMean(const IOUtils::nodata_handling flag_nodata
 	}
 }
 
-struct POINT
-{
-  unsigned int ix;
-  unsigned int iy;
-};
-
-typedef Array<POINT> POINTSArray;
-
 #endif
