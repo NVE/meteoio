@@ -47,13 +47,36 @@ using namespace oracle::occi;
  * @date 2009-05-12
  */
 
+void ImisIO::getProjectionParameters() {
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
+}
+
+ImisIO::ImisIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename)
+{
+	getProjectionParameters();
+}
+
 ImisIO::ImisIO(const string& configfile) : IOInterface(NULL), cfg(configfile)
 {
+	getProjectionParameters();
 	mbImis.clear();
 	vecStationName.clear();
 }
 
-ImisIO::ImisIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}
+ImisIO::ImisIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+{
+	getProjectionParameters();
+	mbImis.clear();
+	vecStationName.clear();
+}
 
 ImisIO::~ImisIO() throw()
 {

@@ -60,7 +60,7 @@ const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 using namespace std;
 
-GSNIO::GSNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){
+void GSNIO::getProjectionParameters() {
 	//get projection parameters
 	try {
 		cfg.getValue("COORDIN", coordsys);
@@ -70,34 +70,22 @@ GSNIO::GSNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(d
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
 		throw;
 	}
+}
+
+GSNIO::GSNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){
+	getProjectionParameters();
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
+	getProjectionParameters();
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
+	getProjectionParameters();
 	initGSNConnection();
 }
 

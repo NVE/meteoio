@@ -71,6 +71,8 @@ class GeotopIO : public IOInterface {
 					    std::map<std::string, unsigned int>& mapHeader);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
+		void getProjectionParameters();
+
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

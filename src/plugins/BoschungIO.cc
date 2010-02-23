@@ -22,10 +22,7 @@
 
 const double BoschungIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-BoschungIO::BoschungIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){}
-
-BoschungIO::BoschungIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
+void BoschungIO::getProjectionParameters() {
 	//get projection parameters
 	try {
 		cfg.getValue("COORDIN", coordsys);
@@ -37,17 +34,19 @@ BoschungIO::BoschungIO(const std::string& configfile) : IOInterface(NULL), cfg(c
 	}
 }
 
+BoschungIO::BoschungIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+{
+	getProjectionParameters();
+}
+
+BoschungIO::BoschungIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+{
+	getProjectionParameters();
+}
+
 BoschungIO::BoschungIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
+	getProjectionParameters();
 }
 
 BoschungIO::~BoschungIO() throw()

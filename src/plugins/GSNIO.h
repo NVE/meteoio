@@ -68,6 +68,7 @@ class GSNIO : public IOInterface {
 		void readStationMetaData(StationData& sd, const unsigned int& stationindex);
 		void readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
 				    std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex);
+		void getProjectionParameters();
 
 		A3DWebServiceSoap12BindingProxy gsn;
 		ConfigReader cfg;

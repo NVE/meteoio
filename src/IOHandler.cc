@@ -68,9 +68,9 @@ void IOHandler::registerPlugins()
 }
 
 #ifdef _POPC_
-IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(cfg){
+IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile){
 #else
-IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(cfg)
+IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile)
 {
 #endif
 	registerPlugins();
@@ -78,11 +78,11 @@ IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(con
 
 //Copy constructor
 #ifdef _POPC_
-//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(cfg), boschungio(cfg), imisio(cfg){
+//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(aio.cfg), boschungio(aio.cfg), imisio(aio.cfg){
 	//Nothing else so far
 //}
 #else
-IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fileio(cfg)
+IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fileio(aio.cfg)
 {
 	//Nothing else so far
 	//TODO: Deal with the IOInterface* pointers, e.g. boschungio
@@ -90,9 +90,9 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 #endif
 
 #ifdef _POPC_
-IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfg)
+IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfgreader)
 #else
-IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfg)
+IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader)
 #endif
 {
 #if defined(_POPC_) && defined(DEBUG_ARITHM)

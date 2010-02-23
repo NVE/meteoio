@@ -69,6 +69,7 @@ class BoschungIO : public IOInterface {
 					 std::vector< std::vector<MeteoData> >& vecMeteo, 
 					 std::vector< std::vector<StationData> >& vecStation, 
 					 const unsigned int& stationnr);
+		void getProjectionParameters();
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams

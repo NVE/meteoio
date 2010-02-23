@@ -74,7 +74,7 @@ class A3DIO : public IOInterface {
 						   std::vector<StationData>&);
 		unsigned int getNrOfStations(std::vector<std::string>& filenames, 
 							    std::map<std::string, unsigned int>& hashStations);
-
+		void getProjectionParameters();
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		std::string coordsys, coordparam; //projection parameters

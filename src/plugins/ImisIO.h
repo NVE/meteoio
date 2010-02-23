@@ -41,8 +41,9 @@ using namespace IOUtils;
 
 class ImisIO : public IOInterface {
 	public:
-		ImisIO(const string& configfile);
 		ImisIO(void (*delObj)(void*), const string& filename);
+		ImisIO(const string& configfile);
+		ImisIO(const ConfigReader& cfgreader);
 		//ImisIO(const ImisIO&);
 		virtual ~ImisIO() throw();
 				
@@ -69,15 +70,13 @@ class ImisIO : public IOInterface {
 		
 	private:
 		void createData(vector< vector<string> >& meteo_in, vector<string>& station_in, MeteoBuffer& mb);
-
 		void cleanup() throw();
-			
 		void getStationName();
-		
+		void getProjectionParameters();
+
 		ConfigReader getCfg();
-		
+		std::string coordsys, coordparam; //projection parameters
 		vector<string> getVecStationName();
-		
 		/**
 		 * @brief Returns mbImis
 		 */

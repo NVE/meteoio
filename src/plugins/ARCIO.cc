@@ -78,10 +78,7 @@
 
 using namespace std;
 
-ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){}
-
-ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
+void ARCIO::getProjectionParameters() {
 	//get projection parameters
 	try {
 		cfg.getValue("COORDIN", coordsys);
@@ -93,17 +90,19 @@ ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 	}
 }
 
+ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+{
+	getProjectionParameters();
+}
+
+ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+{
+	getProjectionParameters();
+}
+
 ARCIO::ARCIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
+	getProjectionParameters();
 }
 
 ARCIO::~ARCIO() throw()
@@ -123,7 +122,6 @@ void ARCIO::cleanup() throw()
 
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 {
-
 	int i_ncols, i_nrows;
 	unsigned int ncols, nrows;
 	double xllcorner, yllcorner, cellsize, plugin_nodata;

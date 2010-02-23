@@ -53,11 +53,7 @@
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
-//A3DIO::A3DIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename){}
-
-//Main constructor
-A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
+void A3DIO::getProjectionParameters() {
 	//get projection parameters
 	try {
 		cfg.getValue("COORDIN", coordsys);
@@ -67,25 +63,28 @@ A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
 		throw;
 	}
+}
+
+//A3DIO::A3DIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename)
+// {
+// 	getProjectionParameters();
+// }
+
+//Main constructor
+A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+{
+	getProjectionParameters();
 }
 
 //Copy constructor
 A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
 {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
+	getProjectionParameters();
 }
 
 A3DIO::A3DIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//Nothing else so far
+	getProjectionParameters();
 }
 
 A3DIO::~A3DIO() throw()

@@ -40,10 +40,7 @@ const double GeotopIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 using namespace std;
 
-GeotopIO::GeotopIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){}
-
-GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
+void GeotopIO::getProjectionParameters() {
 	//get projection parameters
 	try {
 		cfg.getValue("COORDIN", coordsys);
@@ -55,17 +52,19 @@ GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(confi
 	}
 }
 
+GeotopIO::GeotopIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+{
+	getProjectionParameters();
+}
+
+GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+{
+	getProjectionParameters();
+}
+
 GeotopIO::GeotopIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
+	getProjectionParameters();
 }
 
 GeotopIO::~GeotopIO() throw()

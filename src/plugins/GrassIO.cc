@@ -38,10 +38,7 @@ const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 using namespace std;
 
-GrassIO::GrassIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){}
-
-GrassIO::GrassIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
+void GrassIO::getProjectionParameters() {
 	//get projection parameters
 	try {
 		cfg.getValue("COORDIN", coordsys);
@@ -53,17 +50,19 @@ GrassIO::GrassIO(const std::string& configfile) : IOInterface(NULL), cfg(configf
 	}
 }
 
+GrassIO::GrassIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+{
+	getProjectionParameters();
+}
+
+GrassIO::GrassIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+{
+	getProjectionParameters();
+}
+
 GrassIO::GrassIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
+	getProjectionParameters();
 }
 
 GrassIO::~GrassIO() throw()

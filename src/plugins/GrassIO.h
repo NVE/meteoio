@@ -62,6 +62,8 @@ class GrassIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
+		void getProjectionParameters();
+
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
