@@ -61,16 +61,43 @@ const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 using namespace std;
 
 GSNIO::GSNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 	initGSNConnection();
 }
 
@@ -82,9 +109,6 @@ void GSNIO::initGSNConnection(){
 
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
-
-	cfg.getValue("COORDIN", coordsys);
-	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	/*
 	 * Trying to read proxy settings: 

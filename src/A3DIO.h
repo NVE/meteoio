@@ -77,6 +77,7 @@ class A3DIO : public IOInterface {
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
+		std::string coordsys, coordparam; //projection parameters
 };
 
 #endif

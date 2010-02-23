@@ -66,6 +66,7 @@ class GrassIO : public IOInterface {
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		static const double plugin_nodata;
+		std::string coordsys, coordparam; //projection parameters
 };
 
 #endif

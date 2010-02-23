@@ -74,6 +74,7 @@ class GeotopIO : public IOInterface {
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		std::string coordsys, coordparam; //projection parameters
 };
 
 #endif

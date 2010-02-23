@@ -42,12 +42,28 @@ GrassIO::GrassIO(void (*delObj)(void*), const std::string& filename) : IOInterfa
 
 GrassIO::GrassIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 GrassIO::GrassIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 GrassIO::~GrassIO() throw()
@@ -120,10 +136,6 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		xllcorner = west;
 		yllcorner = south;
 		cellsize = (east - west) / (double)ncols;
-
-		std::string coordsys="", coordparam="";
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 		//compute WGS coordinates (considered as the true reference)
 		Coords coordinate(coordsys, coordparam);
@@ -216,13 +228,18 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		throw FileAccessException(name, AT);
 	}
 
+	Coords llcorner=grid_in.llcorner;
+	//we want to make sure that we are using the provided projection parameters
+	//so that we output is done in the same system as the inputs
+	llcorner.setProj(coordsys, coordparam);
+
 	fout << setprecision(6) << fixed;
 
 	try {
-		fout << "north:" << (grid_in.llcorner.getNorthing()+grid_in.cellsize*grid_in.nrows) << std::endl;
-		fout << "south:" << grid_in.llcorner.getNorthing() << std::endl;
-		fout << "east:"  << (grid_in.llcorner.getEasting()+grid_in.cellsize*grid_in.ncols)  << std::endl;
-		fout << "west:"  << grid_in.llcorner.getEasting() << std::endl;
+		fout << "north:" << (llcorner.getNorthing()+grid_in.cellsize*grid_in.nrows) << std::endl;
+		fout << "south:" << llcorner.getNorthing() << std::endl;
+		fout << "east:"  << (llcorner.getEasting()+grid_in.cellsize*grid_in.ncols)  << std::endl;
+		fout << "west:"  << llcorner.getEasting() << std::endl;
 		fout << "rows:"  << grid_in.nrows << std::endl;
 		fout << "cols:"  << grid_in.ncols << std::endl;
 

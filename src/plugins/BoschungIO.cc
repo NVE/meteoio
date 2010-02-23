@@ -26,17 +26,28 @@ BoschungIO::BoschungIO(void (*delObj)(void*), const std::string& filename) : IOI
 
 BoschungIO::BoschungIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
-
-//Copy constructor
-//BoschungIO::BoschungIO(const BoschungIO& bio) : cfg(bio.cfg){
-//  createBuffer();
-//}
 
 BoschungIO::BoschungIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 BoschungIO::~BoschungIO() throw()
@@ -247,11 +258,6 @@ void BoschungIO::xmlExtractData(const std::string& filename, const Date_IO& date
 	double rh=IOUtils::nodata, lwr=IOUtils::nodata, hnw=IOUtils::nodata, tsg=IOUtils::nodata;
 	double tss=IOUtils::nodata, hs=IOUtils::nodata, rswr=IOUtils::nodata;
 	double longitude=IOUtils::nodata, latitude=IOUtils::nodata, altitude=IOUtils::nodata;
-
-	std::string coordsys, coordparam;
-
-	cfg.getValue("COORDIN", coordsys);
-	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	//Try to read xml file
 	xmlpp::DomParser parser;

@@ -74,6 +74,7 @@ class BoschungIO : public IOInterface {
 		std::ifstream fin; //Input file streams
 		std::vector<std::string> vecStationName;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		std::string coordsys, coordparam; //projection parameters
 };
 
 #endif

@@ -58,13 +58,29 @@ const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 //Main constructor
 A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 //Copy constructor
 A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 A3DIO::A3DIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -170,7 +186,6 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 	double latitude=IOUtils::nodata, longitude=IOUtils::nodata, 
 		xcoord=IOUtils::nodata, ycoord=IOUtils::nodata, altitude=IOUtils::nodata;
 	std::string tmp="", line="";
-	std::string coordsys, coordparam;
 	Date_IO tmp_date;
 	std::vector<std::string> tmpvec;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
@@ -180,8 +195,6 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 
 	cfg.getValue("METEOPATH", tmp); 
 	tmp += "/meteo1d.txt";
-	cfg.getValue("COORDIN", coordsys);
-	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	if (!IOUtils::fileExists(tmp)) {
 		throw FileNotFoundException(tmp, AT);
@@ -566,12 +579,8 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 				std::vector<StationData>& vecS)
 {
 	std::string line_in = "";
-	std::string coordsys, coordparam;
 	unsigned int columns = 0;
 	std::vector<std::string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
-
-	cfg.getValue("COORDIN", coordsys);
-	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	fin.clear();
 	fin.open (filename.c_str(), std::ifstream::in);
@@ -648,11 +657,11 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 		if (IOUtils::readLineToVec(line_in, tmpvec)==2) { //Try to convert
 			int x, y;
 			if (!IOUtils::convertString(x, tmpvec.at(0), std::dec)) {
-				throw ConversionFailedException("Conversion of a value failed in " + filename + " line: " + line_in, AT);        
+				throw ConversionFailedException("Conversion of a value failed in " + filename + " line: " + line_in, AT);
 			}
 
 			if (!IOUtils::convertString(y, tmpvec.at(1), std::dec)) {
-				throw ConversionFailedException("Conversion of a value failed in " + filename + " line: " + line_in, AT);        
+				throw ConversionFailedException("Conversion of a value failed in " + filename + " line: " + line_in, AT);
 			}
 
 			std::pair<int,int> tmppair(x,y);
@@ -664,7 +673,7 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 	//Now put everything into the output vector TODO: don't do any intermediate steps... copy directly into vector!
 	Coords tmp_pts;
 	for (unsigned int jj=0; jj<mypts.size(); jj++) {
-		tmp_pts.setGridIndex(mypts.at(jj).first, mypts.at(jj).second, IOUtils::nodata, false);
+		tmp_pts.setGridIndex(mypts.at(jj).first, mypts.at(jj).second, IOUtils::inodata, false);
 		pts.push_back(tmp_pts);
 	}
 }

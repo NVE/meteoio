@@ -82,12 +82,28 @@ ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(d
 
 ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 ARCIO::ARCIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 ARCIO::~ARCIO() throw()
@@ -114,11 +130,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	double tmp_val;
 	std::vector<std::string> tmpvec;
 	std::string line="";
-	std::string coordsys, coordparam;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
-
-	cfg.getValue("COORDIN", coordsys);
-	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename, AT);
@@ -132,9 +144,9 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	if (fin.fail()) {
 		throw FileAccessException(filename, AT);
 	}
-  
+	
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-   
+	
 	//Go through file, save key value pairs
 	try {
 		IOUtils::readKeyValueHeader(header, fin, 6, " ");
@@ -242,13 +254,18 @@ void ARCIO::readSpecialPoints(std::vector<Coords>&)
 }
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
-{  
+{
 	//uncomment if no overwriting should be allowed
 	/* 
 	 if (IOUtils::fileExists(name)) {
 	   throw IOException("File " + name + " already exists!", AT);
 	 }
 	*/
+
+	Coords llcorner=grid_in.llcorner;
+	//we want to make sure that we are using the provided projection parameters
+	//so that we output is done in the same system as the inputs
+	llcorner.setProj(coordsys, coordparam);
 
 	fout.open(name.c_str());
 	if (fout.fail()) {
@@ -260,8 +277,8 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	try {
 		fout << "ncols \t\t" << grid_in.ncols << endl;
 		fout << "nrows \t\t" << grid_in.nrows << endl;
-		fout << "xllcorner \t" << grid_in.llcorner.getEasting() << endl;
-		fout << "yllcorner \t" << grid_in.llcorner.getNorthing() << endl;
+		fout << "xllcorner \t" << llcorner.getEasting() << endl;
+		fout << "yllcorner \t" << llcorner.getNorthing() << endl;
 		fout << "cellsize \t" << grid_in.cellsize << endl;
 		fout << "NODATA_value \t" << (int)(IOUtils::nodata) << endl;
 

@@ -44,12 +44,28 @@ GeotopIO::GeotopIO(void (*delObj)(void*), const std::string& filename) : IOInter
 
 GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 GeotopIO::GeotopIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	//Nothing else so far
+	//get projection parameters
+	try {
+		cfg.getValue("COORDIN", coordsys);
+		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+	} catch(std::exception& e){
+		//problems while reading values for COORDIN or COORDPARAM
+		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
+		throw;
+	}
 }
 
 GeotopIO::~GeotopIO() throw()
@@ -258,11 +274,7 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 					   const std::string& metafile)
 {
 	std::string line="";
-	std::string coordsys, coordparam;
 	std::vector<std::string> tmpvec;
-
-	cfg.getValue("COORDIN", coordsys);
-	cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
 
 	if (!IOUtils::validFileName(metafile)) {
 		throw InvalidFileNameException(metafile, AT);
