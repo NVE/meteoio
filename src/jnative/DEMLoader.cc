@@ -93,21 +93,20 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 				DEMObject dem;
 				//read file ...
 				io->readDEM(dem);
-				//compute WGS coordinates (considered as the true reference)
-				double latll, longll, latur, longur;
-				Coords coordinate( cDemCoordSystem, "");
-				coordinate.setXY(demXll, demYll);
-				latll = coordinate.getLat();
-				longll = coordinate.getLon();
-				coordinate.setXY(demXur, demYur);
-				latur = coordinate.getLat();
-				longur = coordinate.getLon();
-				//retrieving grid coordinates of a real world point
-				unsigned int i0,j0,i1,j1;
-				dem.WGS84_to_grid(latll, longll, i0,j0);
-				dem.WGS84_to_grid(latur, longur, i1,j1);
-				//extracting a sub-dem
-				DEMObject sub_dem(dem, i0, j0, i1-i0+1, j0-j1+1);
+
+				//set the two opposing corners
+				Coords llcorner(cDemCoordSystem, "");
+				llcorner.setXY(demXll, demYll);
+				dem.gridify(llcorner);
+
+				Coords urcorner(cDemCoordSystem, "");
+				urcorner.setXY(demXur, demYur);
+				dem.gridify(urcorner);
+
+				//extract a sub-dem
+				DEMObject sub_dem(dem, llcorner.getGridI(), llcorner.getGridJ(),
+						urcorner.getGridI(),-llcorner.getGridI()+1,
+						urcorner.getGridJ() -llcorner.getGridJ()+1);
 
 				demMap.insert(demPairType(s, sub_dem));// critical operation
 				std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;

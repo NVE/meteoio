@@ -11,8 +11,7 @@
 #include "IOInterface.h"
 #include "Grid2DObject.h"
 #include "DEMObject.h"
-#include "Grid2DObject.h"
-#include "DEMObject.h"
+#include "Coords.h"
 
 
 typedef std::map<std::string, DEMObject>  demMapType;

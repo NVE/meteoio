@@ -22,26 +22,18 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 		std::vector<StationData>* vecStation, std::vector<double>* vecData, std::vector<double>* vecExtraData){
 
 	Date_IO date_in;
-	for (int i = 0; i < nbStation; i++){
+	Coords position(metaCoordinateSystem, "");
 
-		double xllcorner = cMetadata[3*i];
-		double yllcorner = cMetadata[3*i+1];
-		double altitude = cMetadata[3*i+2];
+	for (int i = 0; i < nbStation; i++) {
+		const double latitude = cMetadata[3*i];
+		const double longitude = cMetadata[3*i+1];
+		const double altitude = cMetadata[3*i+2];
+
 		if (altitude<-5000 )
 			continue;
-		double latitude, longitude;
-		if (metaCoordinateSystem != "WGS84"){
-			Coords coordinate(metaCoordinateSystem, "");
-			coordinate.setXY(xllcorner, yllcorner);
-			latitude = coordinate.getLat();
-			longitude = coordinate.getLon();
-		}
-		else{
-			latitude = yllcorner;
-			longitude = xllcorner;
-		}
-		StationData station(xllcorner, yllcorner,
-				altitude, "",latitude, longitude);
+
+		position.setXY(latitude, longitude, altitude);
+		StationData station(position, "");
 		vecStation->push_back(station);
 
 		if(algorithm =="P" )
@@ -148,19 +140,19 @@ void fulfillDoubleArray(const Grid2DObject&  p,
 				dest[6+kk*p.ncols + ll] = p.grid2D(ll, kk);
 			}
 	else if(cellOrder == "urll" ){
-		for (unsigned int kk = p.nrows-1; kk >=0; kk--)
-			for (unsigned int ll=p.ncols -1; ll >=0; ll--)
-				dest[6+kk*p.ncols + ll] = p.grid2D(ll, kk);
+		for (int kk = (signed)p.nrows-1; kk >=0; kk--)
+			for (int ll=(signed)p.ncols -1; ll >=0; ll--)
+				dest[6+(unsigned)kk*p.ncols + (unsigned)ll] = p.grid2D(ll, (unsigned)kk);
 			}
 	else if(cellOrder == "lrul" ){
-		for (unsigned int kk = 0; kk < p.nrows; kk++)
-			for (unsigned int ll=p.ncols -1; ll >=0; ll--)
-				dest[6+kk*p.ncols + ll] = p.grid2D(ll, kk);
+		for (int kk = 0; kk < (signed)p.nrows; kk++)
+			for (int ll=(signed)p.ncols -1; ll >=0; ll--)
+				dest[6+(unsigned)kk*p.ncols + (unsigned)ll] = p.grid2D((unsigned)ll, (unsigned)kk);
 			}
 	else if(cellOrder == "ullr"){
-		for (unsigned int kk = p.nrows-1; kk >=0; kk--)
+		for (int kk = (signed)p.nrows-1; kk >=0; kk--)
 			for (unsigned int ll=0; ll < p.ncols; ll++)
-				dest[6+kk*p.ncols + ll] = p.grid2D(ll, kk);
+				dest[6+(unsigned)kk*p.ncols + ll] = p.grid2D(ll, (unsigned)kk);
 			}
 	else{
 		for (unsigned int kk = 0; kk < p.nrows; kk++)
@@ -219,8 +211,7 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 
 	//Interpolation
 	tmpStart = clock(); //start
-	Grid2DObject  p(dem.ncols, dem.nrows,
-			dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	processInterpolation(algorithm, p, dem, &vecStation, &vecData, &vecExtraData);
 
 	//PS. the array allocated here should be automatically deleted (and memory freed) when the

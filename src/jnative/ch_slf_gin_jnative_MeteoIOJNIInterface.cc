@@ -94,8 +94,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 
 	//Interpolation
 	tmpStart = clock(); //start
-	Grid2DObject  p(dem.ncols, dem.nrows,
-			dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	processInterpolation(cAlgorithm, p, dem, &vecStation, &vecData, &vecExtraData);
 	//copy the interpolation result into a jdoubleArray
 	jdoubleArray out = convert_JNIArray(env, p, cCellOrder);

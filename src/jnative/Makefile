@@ -26,7 +26,7 @@ METEOIO_ROOT	= ../../
 LIBDIR		= $(METEOIO_ROOT)/lib
 SRCDIR		= $(METEOIO_ROOT)/src
 JAVAHOME	= ${JAVA_HOME}
-JNI_INCLUDE	= -I$(JAVAHOME)/include -I$(JAVAHOME)/include/win32
+JNI_INCLUDE	= -I$(JAVAHOME)/include -I$(JAVAHOME)/include/win32 -I$(JAVAHOME)/include/linux
 
 LIBS		= -lmeteoio
 LDFLAGS		= -L$(LIBDIR) $(LIBS) -shared -Xlinker --add-stdcall-alias
@@ -36,6 +36,13 @@ INCLUDE		= -I$(SRCDIR) $(JNI_INCLUDE)
 METEOIO_JNI_OBJ = 	ch_slf_gin_jnative_MeteoIOJNIInterface.o \
 			jnative.o
 
+#generic rules
+.cc.o: $*.cc $*.h
+	$(CXX) $(CCFLAGS) -fPIC -c $< $(INCLUDE) -o $@
+
+
 #TARGETS
 all: $(METEOIO_JNI_OBJ)
 
+clean:
+	-rm *.o
