@@ -42,10 +42,11 @@ class DEMObject : public Grid2DObject {
 		///Keywords for slope computation algorithm
 		typedef enum SLOPE_TYPE {
 			DFLT, ///< whatever algorithm that has been defined as default
-			FLEM, ///< four nearest neighbours (Fleming and Hoffer, 1979)
+			FLEM, ///< four nearest neighbors (Fleming and Hoffer, 1979). It seems to be the same as (Zevenbergen and Thorne, 1987)
 			HICK, ///< maximum downhill slope method (Dunn and Hickey, 1998)
+			HORN, ///< eight neighbor algorithm (Horn, 1981) as used by ArcGIS. It seems to be the same as (Corripio, 2002) but for border cells.
 			CORR, ///< surface normal vector using the two triangle method (Corripio, 2002) and eight-neighbor algorithm (Horn, 1981) for border cells
-			CARD ///< discretized azimuth directions (angles for N, NE, etc) and slope rounded to nearest integer
+			D8 ///< discretized azimuth directions (angles for N, NE, etc) and slope rounded to nearest integer
 		} slope_type;
 		
 		DEMObject(const slope_type& _algorithm=DFLT);
@@ -77,9 +78,10 @@ class DEMObject : public Grid2DObject {
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);
-		double CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope);
+		double CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope, const double no_slope=M_PI);
 		void CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		void CalculateFleming(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
+		void CalculateHorn(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		void CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		double getCurvature(double A[4][4]);
 

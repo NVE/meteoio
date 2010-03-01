@@ -161,9 +161,10 @@ void DEMObject::update(const slope_type& algorithm) {
 * @param algorithm (const string&) algorithm to use for computing slope, azimuth and normals
 * it is either:
 * - HICK that uses the maximum downhill slope method (Dunn and Hickey, 1998)
+* - FLEMING uses a 4 neighbors algorithm (Fleming and Hoffer, 1979)
 * - CORRIPIO that uses the surface normal vector using the two triangle method given in Corripio (2002)
 * and the eight-neighbor algorithm of Horn (1981) for border cells.
-* - CARDINAL uses CORRIPIO but discretizes the resulting azimuth to 8 cardinal directions and the slope is rounded to the nearest degree. Curvature and normals are left untouched.
+* - D8 uses CORRIPIO but discretizes the resulting azimuth to 8 cardinal directions and the slope is rounded to the nearest degree. Curvature and normals are left untouched.
 * 
 * The azimuth is always computed using the Hodgson (1998) algorithm.
 */
@@ -174,10 +175,14 @@ void DEMObject::update(const std::string& algorithm) {
 
 	if(algorithm.compare("HICK")==0) {
 		type=HICK;
+	} else if(algorithm.compare("FLEMING")==0) {
+		type=FLEM;
+	} else if(algorithm.compare("HORN")==0) {
+		type=HORN;
 	} else if(algorithm.compare("CORRIPIO")==0) {
 		type=CORR;
-	} else if(algorithm.compare("CARDINAL")==0) {
-		type=CARD;
+	} else if(algorithm.compare("D8")==0) {
+		type=D8;
 	} else if(algorithm.compare("DEFAULT")==0) {
 		type=DFLT;
 	} else {
@@ -425,6 +430,21 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 				}
 			}
 		}
+	} else if(algorithm==HORN) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if( grid2D(i,j) == IOUtils::nodata ) {
+					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
+					azi(i,j) = IOUtils::nodata;
+					curvature(i,j) = IOUtils::nodata;
+				} else {
+					getNeighbours(i, j, A);
+					CalculateHorn(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
+					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
+					curvature(i,j) = getCurvature(A);
+				}
+			}
+		}
 	} else if(algorithm==CORR) {
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			for ( unsigned int j = 0; j < nrows; j++ ) {
@@ -455,7 +475,7 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 				}
 			}
 		}
-	} else if(algorithm==CARD) {
+	} else if(algorithm==D8) {
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			for ( unsigned int j = 0; j < nrows; j++ ) {
 				if( grid2D(i,j) == IOUtils::nodata ) {
@@ -465,8 +485,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 				} else {
 					getNeighbours(i, j, A);
 					CalculateHick(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
-					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
-					//TODO: instead of PI for flat, get nodata and process it by an extra algorithm
+					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j), IOUtils::nodata);
+					//TODO: process flats by an extra algorithm
 					curvature(i,j) = getCurvature(A);
 					if(azi(i,j)!=IOUtils::nodata)
 						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
@@ -487,10 +507,11 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 
 } // end of CalculateAziSlope
 
-double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope) {
+double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope, const double no_slope) {
 //Calculates the aspect at a given point knowing its normal vector and slope
 //(direction of the normal pointing out of the surface, clockwise from north)
 //This azimuth calculation is similar to Hodgson (1998)
+//local_nodata is the value that we want to give to the aspect of points that don't have a slope
 
 	if(Nx==IOUtils::nodata || Ny==IOUtils::nodata || Nz==IOUtils::nodata || slope==IOUtils::nodata) {
 		return IOUtils::nodata;
@@ -512,16 +533,15 @@ double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const doub
 			}
 		}
 	} else { // if slope = 0
-		return (M_PI);          // undefined or plain surface
+		return (no_slope);          // undefined or plain surface
 	}
 }
 
 
 void DEMObject::CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
-//This calculates the surface normal vector using the steepest slope method:
+//This calculates the surface normal vector using the steepest slope method (Dunn and Hickey, 1998):
 //the steepest slope found in the eight cells surrounding (i,j) is given to be the slope in (i,j)
 //Beware, sudden steps could happen
-//The supposedly better maximum downhill slope method (Dunn and Hickey, 1998)
 	const double smax = steepestGradient(A); //steepest local gradient
 
 	if(smax==IOUtils::nodata) {
@@ -568,6 +588,25 @@ void DEMObject::CalculateFleming(double A[4][4], double& slope, double& Nx, doub
 	}
 }
 
+void DEMObject::CalculateHorn(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
+//This calculates the slope using the two eight neighbors method given in Horn (1981)
+//This is also the algorithm used by ArcGIS
+	if ( A[1][1]!=IOUtils::nodata && A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata &&
+	     A[2][1]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata &&
+	     A[3][1]!=IOUtils::nodata && A[3][2]!=IOUtils::nodata && A[3][3]!=IOUtils::nodata) {
+		Nx = ((A[3][3]+2.*A[2][3]+A[1][3]) - (A[3][1]+2.*A[2][1]+A[1][1])) / (8.*cellsize);
+		Ny = ((A[1][3]+2.*A[1][2]+A[1][1]) - (A[3][3]+2.*A[3][2]+A[3][1])) / (8.*cellsize);
+		Nz = 1.;
+
+		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
+		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) );
+	} else {
+		//steepest slope method (Dunn and Hickey, 1998)
+		CalculateHick(A, slope, Nx, Ny, Nz);
+	}
+}
+
 void DEMObject::CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
 //This calculates the surface normal vector using the two triangle method given in Corripio (2002)
 	if ( A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata) {
@@ -579,7 +618,7 @@ void DEMObject::CalculateCorripio(double A[4][4], double& slope, double& Nx, dou
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
 		slope = atan( sqrt(Nx*Nx+Ny*Ny) );
 	} else {
-		// eight-neighbor algorithm of Horn (1981)
+		//steepest slope method (Dunn and Hickey, 1998)
 		CalculateHick(A, slope, Nx, Ny, Nz);
 	}
 }
@@ -731,7 +770,7 @@ double DEMObject::avgHeight(const double& z1, const double &z2, const double& z3
 }
 
 void DEMObject::getNeighbours(const unsigned int i, const unsigned int j, double A[4][4]) {
-//this fills a 3x3 table containing the neighbouring values
+//this fills a 3x3 table containing the neighboring values
 		A[1][1] = safeGet(i-1, j+1);
 		A[1][2] = safeGet(i, j+1);
 		A[1][3] = safeGet(i+1, j+1);
