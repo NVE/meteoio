@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 		printf("Error: not enough arguments !\n");
 		exit(-1);
 	}
-	convertString(d1,argv[1]);
+	IOUtils::convertString(d1,std::string(argv[1]));
 	
 	vector<MeteoData> vecMeteo;
 	vector<StationData> vecStation;

@@ -17,7 +17,7 @@
 */
 #include "IOUtils.h"
 
-bool IOUtils::checkEpsilonEquality(double val1, double val2, double epsilon)
+bool IOUtils::checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon)
 {
 	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {
 		return true;
@@ -26,17 +26,17 @@ bool IOUtils::checkEpsilonEquality(double val1, double val2, double epsilon)
 	return false;
 }
 
-double IOUtils::pow2(const double val)
+double IOUtils::pow2(const double& val)
 {
 	return (val*val);
 }
 
-double IOUtils::pow3(const double val)
+double IOUtils::pow3(const double& val)
 {
 	return (val*val*val);
 }
 
-double IOUtils::pow4(const double val)
+double IOUtils::pow4(const double& val)
 {
 	return (val*val*val*val);
 }
@@ -179,7 +179,7 @@ char IOUtils::getEoln(std::istream& fin)
 	return '\n';
 }
 
-void IOUtils::skipLines(std::istream& fin, unsigned int nbLines, char eoln)
+void IOUtils::skipLines(std::istream& fin, const unsigned int& nbLines, const char& eoln)
 {
 	std::string dummy;
 	for (unsigned int ii=0; ii<nbLines; ii++) {
@@ -248,7 +248,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 
 const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-template<> bool IOUtils::convertString<std::string>(std::string& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
+template<> bool IOUtils::convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
 	std::string s = str;
@@ -258,7 +258,7 @@ template<> bool IOUtils::convertString<std::string>(std::string& t, const std::s
 	return true;
 }
 
-template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
+template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -289,7 +289,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string str, std
 	return true;
 }
 
-template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
+template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -318,7 +318,7 @@ template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string st
 	return true;
 }
 
-template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string str, std::ios_base& (*f)(std::ios_base&))
+template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs

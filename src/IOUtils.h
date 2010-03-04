@@ -76,11 +76,11 @@ namespace IOUtils {
 	* @param epsilon is a radius around val1
 	* @return true if val2 is within the radius around val1, false otherwise.
 	*/
-	bool checkEpsilonEquality(double val1, double val2, double epsilon);
+	bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon);
 
-	double pow2(const double val);
-	double pow3(const double val);
-	double pow4(const double val);
+	double pow2(const double& val);
+	double pow3(const double& val);
+	double pow4(const double& val);
 
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern = "");
 
@@ -96,7 +96,7 @@ namespace IOUtils {
 
 	char getEoln(std::istream& fin);
 
-	void skipLines(std::istream& fin, unsigned int nbLines, char eoln='\n');
+	void skipLines(std::istream& fin, const unsigned int& nbLines, const char& eoln='\n');
 
 	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
@@ -129,7 +129,7 @@ namespace IOUtils {
 	* @param f   [in] The radix for reading numbers, such as std::dec or std::oct; default is std::dec.
 	* @return true if everything went fine, false otherwise
 	*/
-	template <class T> bool convertString(T& t, const std::string str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
+	template <class T> bool convertString(T& t, const std::string& str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
 		std::string s = str; 
 		trim(s); //delete trailing and leading whitespaces and tabs
 		if (s.size() == 0) {
@@ -155,10 +155,10 @@ namespace IOUtils {
 		}
 	}
 	// fully specialized template functions (implementation must not be in header)
-	template<> bool convertString<std::string>(std::string& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<bool>(bool& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<Date_IO>(Date_IO& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<Coords>(Coords& t, const std::string str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<Date_IO>(Date_IO& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).
