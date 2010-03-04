@@ -12,7 +12,7 @@ IF(GSNIO)
   SET_SOURCE_FILES_PROPERTIES(soapC.cpp PROPERTIES GENERATED TRUE)
   SET_SOURCE_FILES_PROPERTIES(soapA3DWebServiceSoap12BindingProxy.cpp PROPERTIES GENERATED TRUE)
 
-  add_executable(gsnclient soapA3DWebServiceSoap12BindingProxy.cpp soapC.cpp)
+  add_executable(gsnclient gsnclient.cc soapA3DWebServiceSoap12BindingProxy.cpp soapC.cpp)
 
   target_link_libraries(gsnclient ${GSOAPPP} stdc++)
   add_dependencies(gsnclient wsdl2cpp)
