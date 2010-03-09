@@ -20,11 +20,12 @@ int main(){
 
 	//_ns1__getSensorInfoResponse sensorinfo;
 
-	gsn.proxy_host = "77.244.247.231"; // IP or domain
+	/*
+	gsn.proxy_host = "77.244.247.232"; // IP or domain
 	gsn.proxy_port = 3128;
-	gsn.proxy_userid = "thoemsi";
-	gsn.proxy_passwd = "poiuz11"; 
-
+	gsn.proxy_userid = "username";
+	gsn.proxy_passwd = "secret"; 
+	*/
 	double d1 = 1249550075500.0;
 	double d2 = 1258887378500.0;
 
@@ -39,10 +40,12 @@ int main(){
 
 	cout << "TEST Webservice" << endl;
 
-	unsigned int nrofstations=0;
-
 	if (gsn.getSensors(&sensors) == SOAP_OK){
-		cout << sensors.return_.size() << endl;
+		cout << "Number of sensors accessible thorugh GSN: " << sensors.return_.size() << endl;
+		for (unsigned int ii=0; ii<sensors.return_.size(); ii++){
+			cout << "\tSensor " << ii << " Name: " << sensors.return_[ii] << endl;
+		}
+
 		for (unsigned int ii=0; ii<sensors.return_.size(); ii++){
 			cout << "Sensor " << ii << " Name: " << sensors.return_[ii] << endl;
 			//get Meta information

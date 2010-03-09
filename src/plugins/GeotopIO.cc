@@ -320,7 +320,7 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 						try {
 							coordinate.check();
 						} catch(...) {
-							std::cerr << "[E] Error in geographic coordinates in file " << metafile << "trapped at " << AT << std::endl;
+							std::cerr << "[E] Error in geographic coordinates in file " << metafile << " trapped at " << AT << std::endl;
 							throw;
 						}
 						vecStation.push_back( StationData(coordinate, "") );
