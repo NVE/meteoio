@@ -9,8 +9,7 @@
 
 #include <jni.h>
 #include "jnative.h"
-#include "Grid2DObject.h"
-#include "DEMObject.h"
+#include "MeteoIO.h"
 #include "DEMLoader.h"
 #include "ch_slf_gin_jnative_MeteoIOJNIInterface.h"
 
@@ -72,34 +71,47 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 		return jMakeError(env, -2.f);
 	}
 	tmpEnd = clock(); //end
-	double msDemLoading = (tmpEnd - tmpStart)/1000.0;
+	const double msDemLoading = (tmpEnd - tmpStart)/1000.0;
 
 
 	//Create MeteoData and StationData vectors
 	tmpStart = clock(); //start
-	int nbStation = (int)env->GetArrayLength(jMetadata)/3;
-	int nbDataPerStation = (int)env->GetArrayLength(jData)/nbStation;
-    jboolean isCopyMetadata;
-    jboolean isCopyData;
+	const int nbStation = (int)env->GetArrayLength(jMetadata)/3;
+	const int nbDataPerStation = (int)env->GetArrayLength(jData)/nbStation;
+	jboolean isCopyMetadata;
+	jboolean isCopyData;
 	double *cMetadata = env->GetDoubleArrayElements(jMetadata,&isCopyMetadata);
 	double *cData = env->GetDoubleArrayElements(jData,&isCopyData);
-	std::vector<double> vecData;
-	std::vector<double> vecExtraData;
+	std::vector<MeteoData> vecData;
 	std::vector<StationData> vecStation;
+	enum MeteoData::Parameters interpolation_type;
 	//initialize MeteoData and StationData vectors
 	loadMeteoAndStationData(cMetadata, cData, nbStation, nbDataPerStation, cAlgorithm,
-			cMetaCoordSystem, &vecStation, &vecData, &vecExtraData);
+		cMetaCoordSystem, vecStation, vecData, interpolation_type);
 	tmpEnd = clock(); //end
-	double msDataLoading = (tmpEnd - tmpStart)/1000.0;
+	const double msDataLoading = (tmpEnd - tmpStart)/1000.0;
 
 	//Interpolation
 	tmpStart = clock(); //start
 	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
-	processInterpolation(cAlgorithm, p, dem, &vecStation, &vecData, &vecExtraData);
+	bool success = true;
+	try {
+		ConfigReader cfg; //This should be given as parameter to executeInterpolationSubDem
+		Meteo2DInterpolator mi(cfg, dem, vecData, vecStation);
+		mi.interpolate(interpolation_type, p);
+	}
+	catch(IOException e){
+		std::cout << "Interpolation failed : " << e.what() << std::endl;
+		success = false;
+	}
+	catch(...){
+		std::cout << "Interpolation failed for some reason ?!? " <<  std::endl;
+		success = false;
+	}
 	//copy the interpolation result into a jdoubleArray
 	jdoubleArray out = convert_JNIArray(env, p, cCellOrder);
 	tmpEnd = clock(); //end
-	double msInterpolation = (tmpEnd - tmpStart)/1000.0;
+	const double msInterpolation = (tmpEnd - tmpStart)/1000.0;
 
 	//put the different process in the result
 	double* times = (double*) malloc( 3* sizeof(double));
@@ -118,14 +130,13 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	//release cData
 	if (isCopyData == JNI_TRUE)
 		env->ReleaseDoubleArrayElements(jData, cData, JNI_ABORT);
-    env->ReleaseStringUTFChars(jDemFile, cDemFile);
-    env->ReleaseStringUTFChars(jDemCoordSystem, cDemCoordSystem);
-    env->ReleaseStringUTFChars(jIOinterface, cIOInterface);
-    env->ReleaseStringUTFChars(jAlgorithm, cAlgorithm);
-    env->ReleaseStringUTFChars(jMetaCoordSystem, cMetaCoordSystem);
-    env->ReleaseStringUTFChars(jcellOrder, cCellOrder);
-    vecData.clear();
-	vecExtraData.clear();
+	env->ReleaseStringUTFChars(jDemFile, cDemFile);
+	env->ReleaseStringUTFChars(jDemCoordSystem, cDemCoordSystem);
+	env->ReleaseStringUTFChars(jIOinterface, cIOInterface);
+	env->ReleaseStringUTFChars(jAlgorithm, cAlgorithm);
+	env->ReleaseStringUTFChars(jMetaCoordSystem, cMetaCoordSystem);
+	env->ReleaseStringUTFChars(jcellOrder, cCellOrder);
+	vecData.clear();
 	vecStation.clear();
 	return out;
 }

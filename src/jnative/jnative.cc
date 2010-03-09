@@ -10,18 +10,21 @@
 
 #include "jnative.h"
 #include "DEMLoader.h"
-#include "DEMObject.h"
-#include "libinterpol2D.h"
+#include "MeteoIO.h"
 
 #include <time.h>
-
+const double nodata=-999.;
 
 void loadMeteoAndStationData(double* cMetadata, double* cData,
 		const int nbStation, const int nbDataPerStation,
-		const std::string algorithm, const std::string metaCoordinateSystem,
-		std::vector<StationData>* vecStation, std::vector<double>* vecData, std::vector<double>* vecExtraData){
+		const std::string& algorithm,
+		const std::string metaCoordinateSystem,
+		std::vector<StationData>& vecStation, std::vector<MeteoData>& vecData,
+		enum MeteoData::Parameters& interpolation_type){
 
-	Date_IO date_in;
+	std::cout << "loadMeteoAndStationData "  << algorithm << "*"  << nbStation <<  std::endl;
+
+	const Date_IO date_in;
 	Coords position(metaCoordinateSystem, "");
 
 	for (int i = 0; i < nbStation; i++) {
@@ -29,99 +32,49 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 		const double longitude = cMetadata[3*i+1];
 		const double altitude = cMetadata[3*i+2];
 
-		if (altitude<-5000 )
-			continue;
-
+		//building StationData
+		if (altitude<nodata ) continue;
 		position.setXY(latitude, longitude, altitude);
-		StationData station(position, "");
-		vecStation->push_back(station);
+		const StationData station(position, "");
+		vecStation.push_back(station);
 
-		if(algorithm =="P" )
-			vecData->push_back(cData[nbDataPerStation*i]);
-		else if(algorithm == "HNW" )
-			vecData->push_back(cData[nbDataPerStation*i]);
-		else if(algorithm =="TA" )
-			vecData->push_back(cData[nbDataPerStation*i]);
-		else if(algorithm =="RH" ){
-			vecData->push_back(cData[nbDataPerStation*i]);
-			if (nbDataPerStation>1)
-				vecExtraData->push_back(cData[nbDataPerStation*i+1]);
-		}
-		else if(algorithm =="VW" ){
-			vecData->push_back(cData[nbDataPerStation*i]);
-			if (nbDataPerStation>1)
-				vecExtraData->push_back(cData[nbDataPerStation*i+1]);
-		}
-		else if(algorithm =="DW" )
-			vecData->push_back(cData[nbDataPerStation*i]);
-		else if(algorithm =="ISWR" )
-			vecData->push_back(cData[nbDataPerStation*i]);
-		else if(algorithm =="LWR" )
-			vecData->push_back(cData[nbDataPerStation*i]);
-		else//TA
-			vecData->push_back(cData[nbDataPerStation*i]);
-	}
-}
-
-void processInterpolation(const  std::string algorithm,
-		Grid2DObject&  p, const  DEMObject& dem,
-		std::vector<StationData>* vecStation,
-		std::vector<double>* vecData,
-		std::vector<double>* vecExtraData){
-
-	std::cout << "processInterpolation "  << algorithm<< "*"  << vecStation->size() <<  std::endl;
-
-	if(algorithm =="P"){
-		Interpol2D P(Interpol2D::I_PRESS, Interpol2D::I_PRESS, *vecData, *vecStation, dem);
-		P.calculate(p);
-	}
-	else if(algorithm =="HNW" ){
-		Interpol2D HNW(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
-		HNW.calculate(p);
-	}
-	else if(algorithm =="TA" ){
-		Interpol2D TA(Interpol2D::I_LAPSE_CST, Interpol2D::I_LAPSE_IDWK, *vecData, *vecStation, dem);
-		TA.calculate(p);
-	}
-	else if(algorithm =="RH" ) {
-		Grid2DObject ta(p, 0, 0, p.ncols, p.nrows);
-		Interpol2D TA(Interpol2D::I_LAPSE_CST, Interpol2D::I_LAPSE_IDWK, *vecExtraData, *vecStation, dem);
-		TA.calculate(ta);
-		Interpol2D RH(Interpol2D::I_CST, Interpol2D::I_RH, *vecData, *vecStation, dem);
-		RH.calculate(p, *vecExtraData, ta);
-	}
-	else if(algorithm =="VW" ){
-		if( vecExtraData->size() > 0) { //extraData is DW
-			std::vector<double> vecEmpty;
-			Grid2DObject dw(p, 0, 0, p.ncols, p.nrows);
-			Interpol2D DW(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecExtraData, *vecStation, dem);
-			DW.calculate(dw);
-			Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_VW, *vecData, *vecStation, dem);
-			VW.calculate(p, vecEmpty, dw);
+		//building MeteoData
+		double p=IOUtils::nodata, hnw=IOUtils::nodata, ta=IOUtils::nodata, rh=IOUtils::nodata;
+		double vw=IOUtils::nodata, dw=IOUtils::nodata, iswr=IOUtils::nodata, lwr=IOUtils::nodata;
+		double tsg=IOUtils::nodata, tss=IOUtils::nodata, hs=IOUtils::nodata, rswr=IOUtils::nodata;
+		if(algorithm =="P"){
+			interpolation_type=MeteoData::P;
+			p=cData[nbDataPerStation*i];
+		} else if(algorithm =="HNW" ){
+			interpolation_type=MeteoData::HNW;
+			hnw=cData[nbDataPerStation*i];
+		} else if(algorithm =="TA" ){
+			interpolation_type=MeteoData::TA;
+			ta=cData[nbDataPerStation*i];
+		} else if(algorithm =="RH" ) {
+			interpolation_type=MeteoData::RH;
+			rh=cData[nbDataPerStation*i];
+			if (nbDataPerStation>1) ta=cData[nbDataPerStation*i+1];
+		} else if(algorithm =="VW" ){
+			interpolation_type=MeteoData::VW;
+			vw=cData[nbDataPerStation*i];
+			if (nbDataPerStation>1) dw=cData[nbDataPerStation*i+1];
+		} else if(algorithm =="DW" ){
+			interpolation_type=MeteoData::DW;
+			dw=cData[nbDataPerStation*i];
+		} else if(algorithm =="ISWR" ){
+			interpolation_type=MeteoData::ISWR;
+			iswr=cData[nbDataPerStation*i];
+		} else if(algorithm =="LWR"){
+			interpolation_type=MeteoData::LWR;
+			lwr=cData[nbDataPerStation*i];
 		} else {
-			Interpol2D VW(Interpol2D::I_CST, Interpol2D::I_LAPSE_IDWK, *vecData, *vecStation, dem);
-			VW.calculate(p);
+			throw InvalidArgumentException("Invalid interpolation algorithm selected!", AT);
 		}
-	}
-	else if(algorithm =="DW" ){
-		Interpol2D DW(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
-		DW.calculate(p);
-	}
-	else if(algorithm =="ISWR" ){
-		Interpol2D ISWR(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
-		ISWR.calculate(p);
-	}
-	else if(algorithm =="LWR"){
-		Interpol2D LWR(Interpol2D::I_CST, Interpol2D::I_IDWK, *vecData, *vecStation, dem);
-		LWR.calculate(p);
-	}
-	else {
-		Interpol2D TA(Interpol2D::I_LAPSE_CST, Interpol2D::I_LAPSE_IDWK, *vecData, *vecStation, dem);
-		TA.calculate(p);
+		const MeteoData meteo(date_in, ta, iswr,vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr, p);
+		vecData.push_back(meteo);
 	}
 }
-
-
 
 void fulfillDoubleArray(const Grid2DObject&  p,
 		const std::string& cellOrder,
@@ -194,27 +147,29 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 		return makeError(-2.);
 	}
 	tmpEnd = clock(); //end
-	double msDemLoading = (tmpEnd - tmpStart)/1000.0;
+	const double msDemLoading = (tmpEnd - tmpStart)/1000.0;
 
 
 	//Create MeteoData and StationData vectors
 	tmpStart = clock(); //start
-	std::vector<double> vecData;
-	std::vector<double> vecExtraData;
+	std::vector<MeteoData> vecData;
 	std::vector<StationData> vecStation;
+	enum MeteoData::Parameters interpolation_type;
 	//initialize MeteoData and StationData vectors
-	loadMeteoAndStationData(metadata, data, nbStation, nbDataPerStation, algorithm,
-			metaCoordSystem, &vecStation, &vecData, &vecExtraData);
+	loadMeteoAndStationData(metadata, data, nbStation, nbDataPerStation, algorithm, 
+		metaCoordSystem, vecStation, vecData, interpolation_type);
 	tmpEnd = clock(); //end
-	double msDataLoading = (tmpEnd - tmpStart)/1000.0;
+	const double msDataLoading = (tmpEnd - tmpStart)/1000.0;
 
 
 	//Interpolation
 	tmpStart = clock(); //start
 	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	bool success = true;
-	try{
-		processInterpolation(algorithm, p, dem, &vecStation, &vecData, &vecExtraData);
+	try {
+		ConfigReader cfg; //This should be given as parameter to executeInterpolationSubDem
+		Meteo2DInterpolator mi(cfg, dem, vecData, vecStation);
+		mi.interpolate(interpolation_type, p);
 	}
 	catch(IOException e){
 		std::cout << "Interpolation failed : " << e.exception() << std::endl;
@@ -238,8 +193,9 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 		out[1] = 0;
 		out[2] = 0;
 	}
+
 	tmpEnd = clock(); //end
-	double msInterpolation = (tmpEnd - tmpStart)/1000.0;
+	const double msInterpolation = (tmpEnd - tmpStart)/1000.0;
 
 	std::cout << " - time to load DEM : "  << msDemLoading << std::endl;
 	std::cout << " - time to load Data : "  << msDataLoading << std::endl;
@@ -250,7 +206,6 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 	out[5] = msInterpolation;
 
 	vecData.clear();
-	vecExtraData.clear();
 	vecStation.clear();
 	return out;
 }

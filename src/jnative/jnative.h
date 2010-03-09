@@ -11,25 +11,15 @@
 
 #if  defined(_METEOIO_JNI) ||  defined(_METEOIO_JNA)
 
-#include "plugins/ARCIO.h"
-//#include "plugins/BoschungIO.h"
-#include "plugins/GeotopIO.h"
-//#include "plugins/GSNIO.h"
-#include "plugins/GrassIO.h"
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "DEMObject.h"
+#include "MeteoIO.h"
 
 
 void loadMeteoAndStationData(double* cMetadata, double* cData,
-		const int nbStation,const int nbDataPerStation,
-		const std::string algorithm,const std::string metaCoordinateSystem,
-		std::vector<StationData>* vecStation,
-		 std::vector<double>* vecData, std::vector<double>* vecExtraData);
-
-void processInterpolation(const std::string algorithm, Grid2DObject&  p, const  DEMObject& dem,
-		std::vector<StationData>* vecStation,
-		std::vector<double>* vecData, std::vector<double>* vecExtraData);
+		const int nbStation, const int nbDataPerStation,
+		const std::string& algorithm,
+		const std::string metaCoordinateSystem,
+		std::vector<StationData>& vecStation, std::vector<MeteoData>& vecData,
+		enum MeteoData::Parameters& interpolation_type);
 
 void fulfillDoubleArray(const Grid2DObject&  p, const std::string& cellOrder,
 		double* dest);
