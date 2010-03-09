@@ -212,13 +212,32 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 	//Interpolation
 	tmpStart = clock(); //start
 	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
-	processInterpolation(algorithm, p, dem, &vecStation, &vecData, &vecExtraData);
+	bool success = true;
+	try{
+		processInterpolation(algorithm, p, dem, &vecStation, &vecData, &vecExtraData);
+	}
+	catch(IOException e){
+		std::cout << "Interpolation failed : " << e.exception() << std::endl;
+		success = false;
+	}
+	catch(...){
+		std::cout << "Interpolation failed for some reason ?!? " <<  std::endl;
+		success = false;
+	}
 
 	//PS. the array allocated here should be automatically deleted (and memory freed) when the
 	//Java mapped object (com.sun.jna.ptr.DoubleByReference here) is "Garbage Collected"
-	double* out = (double*) malloc( (6 + p.nrows*p.ncols)* sizeof(double));
+	double* out = (success)?
+			(double*) malloc( (6 + p.nrows*p.ncols)* sizeof(double)):
+			(double*) malloc( 6 * sizeof(double));
 	//copy the interpolation result into a double array
-	fulfillDoubleArray( p, cellOrder, out);
+	if (success)
+		fulfillDoubleArray( p, cellOrder, out);
+	else{
+		out[0] = -1.;//code for failing
+		out[1] = 0;
+		out[2] = 0;
+	}
 	tmpEnd = clock(); //end
 	double msInterpolation = (tmpEnd - tmpStart)/1000.0;
 
