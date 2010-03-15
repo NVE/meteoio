@@ -36,6 +36,8 @@
  * - accumulation: accumulates the data on a given period. A practical use is to return hourly precipitations from a sensor measuring precipitation on a 10 minutes interval.
  */
 
+#define PI 3.141592653589
+
 std::map<std::string, FilterProperties> FilterAlgorithms::filterMap;
 const bool FilterAlgorithms::__init = FilterAlgorithms::initStaticData();
 
@@ -44,7 +46,8 @@ bool FilterAlgorithms::initStaticData()
 	filterMap["rate"]     = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::RateFilter);
 	filterMap["resample"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::ResamplingFilter);
 	filterMap["median_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAvgFilter);
-	filterMap["mean_avg"]  = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MeanAvgFilter);
+	filterMap["mean_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MeanAvgFilter);
+	filterMap["wind_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::WindAvgFilter);
 	filterMap["min_max"]  = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinMaxFilter);
 	filterMap["min"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinValueFilter);
 	filterMap["max"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MaxValueFilter);
@@ -360,6 +363,56 @@ bool FilterAlgorithms::MeanAvgFilter(const std::vector<MeteoData>& vecM, const s
 	return true;
 }
 
+bool FilterAlgorithms::WindAvgFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& paramindex,
+				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
+{
+	(void)vecS; (void)vecFilteredS; (void)paramindex;
+	//Remarks:
+	//1) nodata values are not considered when calculating the mean
+	//2) Two arguments expected (both have to be fullfilled for the filter to start operating): 
+	//   1. minimal number of points in window
+	//   2. minimal time interval spanning the window
+	//3) the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window
+	//   position
+	//4) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
+	//  
+	std::vector<double> vecWindowVW, vecWindowDW;
+	if (!getWindowData("wind_avg", vecM, pos, date, _vecArgs, MeteoData::VW, vecWindowVW))
+		return false; //Not enough data to meet user configuration
+
+	if (!getWindowData("wind_avg", vecM, pos, date, _vecArgs, MeteoData::DW, vecWindowDW))
+		return false; //Not enough data to meet user configuration
+
+	//Calculate mean
+	double meanspeed     = IOUtils::nodata;
+	double meandirection = IOUtils::nodata;
+	unsigned int vecSize = vecWindowVW.size();
+
+	if (vecSize == 0){
+		return false; //only nodata values detected or other problem
+	} else {
+		//calculate ve and vn
+		double ve=0.0, vn=0.0;
+		for (unsigned int ii=0; ii<vecSize; ii++){
+			ve += vecWindowVW[ii] * sin(vecWindowDW[ii] * PI / 180); //turn into radians
+			vn += vecWindowVW[ii] * cos(vecWindowDW[ii] * PI / 180); //turn into radians
+		}
+		ve = (-1.0)*ve/vecSize;
+		vn = (-1.0)*vn/vecSize;
+
+		meanspeed = sqrt(ve*ve + vn*vn);
+		meandirection = atan2(ve,vn) * 180 / PI + 180; // turn into degrees [0;360)
+	}
+
+	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+		vecFilteredM[ii].param(MeteoData::VW) = meanspeed;
+		vecFilteredM[ii].param(MeteoData::DW) = meandirection;
+	}
+
+	return true;
+}
 
 bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM, 
 				   const unsigned int& pos, 

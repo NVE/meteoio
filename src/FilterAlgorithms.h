@@ -28,6 +28,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cmath>
 #include <map>
 
 /**
@@ -59,6 +60,10 @@ class FilterAlgorithms {
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
+		static bool WindAvgFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
