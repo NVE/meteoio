@@ -126,22 +126,32 @@ class BufferedIOHandler : public IOInterface {
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+							   const std::vector< std::vector<StationData> >& vecStation,
+							   const std::string& name="");
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
 
-		static const unsigned int npos = (unsigned int)-1;             ///<npos is the out-of-range value
+		static const unsigned int npos = (unsigned int)-1; ///<npos is the out-of-range value
 
 	private:
 		unsigned int seek(const Date_IO& date_in, std::vector<MeteoData>& vecM);
 		bool bufferData(const Date_IO& _date, const unsigned int& stationindex);
 		void bufferAllData(const Date_IO& _date);
+		void setBufferProperties();
 		
 		IOHandler& iohandler;
 		ConfigReader cfg;
 		MeteoFilter meteoFilter;
+		
+		bool always_rebuffer;
+		Date_IO bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date
+
 		std::vector< std::vector<MeteoData> > meteoBuffer;
 		std::vector< std::vector<StationData> > stationBuffer;
+		std::vector< Date_IO > startDateBuffer;
+		std::vector< Date_IO > endDateBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 };
 #endif

@@ -21,13 +21,13 @@ using namespace std;
 
 #ifdef _POPC_
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	: iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
+	: iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
 #else
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	: IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), mapBufferedGrids()
+	  : IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
 #endif
 {
-	//Nothing else so far
+	setBufferProperties();
 }
 
 #ifdef _POPC_
@@ -36,7 +36,7 @@ BufferedIOHandler::~BufferedIOHandler()
 BufferedIOHandler::~BufferedIOHandler() throw()
 #endif
 {
-	//Nothing else so far
+	setBufferProperties();
 }
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const std::string& _filename)
@@ -95,10 +95,46 @@ void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject&
 	_grid2Dobj = tmpgrid2D;
 }
 
+void BufferedIOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+							    const std::vector< std::vector<StationData> >& vecStation,
+							    const std::string& name)
+{
+	iohandler.writeMeteoData(vecMeteo, vecStation, name);
+}
+
 void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	std::vector< std::vector<StationData> > vecStation;
 	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
+}
+
+void BufferedIOHandler::setBufferProperties()
+{
+	string bufferstrategy;
+	vector<string> bufferperiod;
+	cfg.getValue("BUFFERSTRATEGY", bufferstrategy, ConfigReader::nothrow);
+	cfg.getValue("BUFFERPERIOD", bufferperiod, ConfigReader::nothrow);
+
+	if (bufferperiod.size() != 2){
+		bufferbefore = Date_IO(2.0);  //minus 2 days
+		bufferafter = Date_IO(20.0);  //plus 20 days
+	} else {
+		double before=0.0, after=0.0;
+		if (!IOUtils::convertString(before, bufferperiod[0], std::dec) || 
+		    !IOUtils::convertString(after, bufferperiod[1], std::dec))
+			throw ConversionFailedException("Key BUFFERPERIOD has invalid values", AT);
+		
+		if ((before<0) || (after<0))
+			throw ConversionFailedException("Key BUFFERPERIOD has invalid values", AT);
+
+		bufferbefore = Date_IO(before); 
+		bufferafter  = Date_IO(after);
+	}
+
+	//buffer strategy
+	always_rebuffer = true;
+	if (bufferstrategy == "newinterval")
+		always_rebuffer = false;
 }
 
 void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
@@ -131,16 +167,24 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 		}
 
 		if (index == BufferedIOHandler::npos) { //not in buffer
-			cout << "[I] Station " << ii << "(" << stationName 
-				<< ") data for date " << date_in.toString() << " not in buffer ..." << endl;
-
-			bool dataexists = bufferData(date_in, ii);
-			if (dataexists) {//date_in is contained in buffer
-				index = seek(date_in, meteoBuffer[ii]);
+			//Check buffering strategy
+			bool rebuffer = false;
+			if ((startDateBuffer.at(ii) > date_in) || (endDateBuffer.at(ii) < date_in)){
+				rebuffer = true;
+			} else { 
+				if (always_rebuffer) rebuffer = true;
 			}
-		} /*else {
-			cout << "[I] Found data for station " << stationName << " and date " << date_in.toString() << " in buffer" << endl;
-		}*/
+
+			if (rebuffer){
+				cout << "[I] Station " << ii << "(" << stationName 
+					<< ") data for date " << date_in.toString() << " not in buffer ..." << endl;
+				
+				bool dataexists = bufferData(date_in, ii);
+				if (dataexists) {//date_in is contained in buffer
+					index = seek(date_in, meteoBuffer[ii]);
+				}
+			}
+		}
 
 		//APPLY FILTERS
 		MeteoData md; StationData sd;
@@ -161,7 +205,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 			vecMeteo.push_back(MeteoData());
 			vecMeteo[ii].date = date_in; //set correct date
 
-			vecStation.push_back(StationData());
+			vecStation.push_back(sd);
 		}
 	}
 
@@ -203,18 +247,26 @@ void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, std::vector<Meteo
 }
 
 void BufferedIOHandler::bufferAllData(const Date_IO& _date){
-	Date_IO fromDate = _date - (Date_IO(1900,1,5));  //minus 5 days
-	Date_IO toDate   = _date + (Date_IO(1900,1,20)); //plus 20 days
+	Date_IO fromDate = _date - bufferbefore;
+	Date_IO toDate   = _date + bufferafter;
 
 	readMeteoData(fromDate, toDate, meteoBuffer, stationBuffer);
+
+	for (unsigned int ii=0; ii<meteoBuffer.size(); ii++){
+		//set the start and the end date of the interval requested for each station
+		startDateBuffer.push_back(fromDate);
+		endDateBuffer.push_back(toDate);
+	}
 }
 
 bool BufferedIOHandler::bufferData(const Date_IO& _date, const unsigned int& stationindex)
 {
-	Date_IO fromDate = _date - (Date_IO(1900,1,5));  //minus 5 days
-	Date_IO toDate   = _date + (Date_IO(1900,1,20)); //plus 20 days
+	Date_IO fromDate = _date - bufferbefore;
+	Date_IO toDate   = _date + bufferafter;
 
 	readMeteoData(fromDate, toDate, meteoBuffer, stationBuffer, stationindex);
+	startDateBuffer.at(stationindex) = fromDate;
+	endDateBuffer.at(stationindex) = toDate;
 
 	if (meteoBuffer.size() == 0) {
 		return false;
@@ -261,6 +313,8 @@ void BufferedIOHandler::write2DGrid(const Grid2DObject& _grid2Dobj, const std::s
 void BufferedIOHandler::clearBuffer(){
 	meteoBuffer.clear();
 	stationBuffer.clear();
+	startDateBuffer.clear();
+	endDateBuffer.clear();
 	mapBufferedGrids.clear();
 }
 
