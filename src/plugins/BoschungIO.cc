@@ -83,6 +83,14 @@ void BoschungIO::readLanduse(Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
+void BoschungIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
+					    const std::vector< std::vector<StationData> >&,
+					    const std::string&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
 void BoschungIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,

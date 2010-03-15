@@ -26,6 +26,13 @@ int main(){
 	gsn.proxy_userid = "username";
 	gsn.proxy_passwd = "secret"; 
 	*/
+
+	//LONG64 d1(dateStart.getEpochTime());
+	//LONG64 d2(dateEnd.getEpochTime());
+
+	//d1*=1000; //GSN is using ms, not seconds
+	//d2*=1000; //GSN is using ms, not seconds
+
 	double d1 = 1249550075500.0;
 	double d2 = 1258887378500.0;
 

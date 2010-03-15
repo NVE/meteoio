@@ -130,6 +130,14 @@ void A3DIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	throw IOException("Nothing implemented here", AT);
 }
 
+void A3DIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
+					  const std::vector< std::vector<StationData> >&,
+					  const std::string&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
 void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	std::vector< std::vector<StationData> > vecStation;

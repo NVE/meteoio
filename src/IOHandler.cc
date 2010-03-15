@@ -237,6 +237,14 @@ void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
 
+void IOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+						 const std::vector< std::vector<StationData> >& vecStation,
+						 const std::string& name)
+{
+	IOInterface *plugin = getPlugin("METEODEST");
+	plugin->writeMeteoData(vecMeteo, vecStation, name);
+}
+
 void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
 	IOInterface *plugin = getPlugin("DASRC");

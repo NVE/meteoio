@@ -52,6 +52,10 @@ class GSNIO : public IOInterface {
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+							   const std::vector< std::vector<StationData> >& vecStation,
+							   const std::string& name="");
+
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);

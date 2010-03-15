@@ -56,6 +56,10 @@ class GrassIO : public IOInterface {
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+							   const std::vector< std::vector<StationData> >& vecStation,
+							   const std::string& name="");
+
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);

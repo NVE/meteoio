@@ -18,16 +18,11 @@
 #ifndef __GEOTOPIO_H__
 #define __GEOTOPIO_H__
 
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "IOUtils.h"
+#include "MeteoIO.h"
 
 #include <string>
 #include <sstream>
 #include <iostream>
-
-#include "IOExceptions.h"
-#include "DynamicLibrary.h"
 
 /**
  * @class GeotopIO
@@ -57,6 +52,10 @@ class GeotopIO : public IOInterface {
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+							   const std::vector< std::vector<StationData> >& vecStation,
+							   const std::string& name="");
+
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
@@ -64,17 +63,21 @@ class GeotopIO : public IOInterface {
 		void read2DMeteo(const Date_IO&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
 
 	private:
+		void initParamNames(std::map<std::string, unsigned int>& mapParam);
 		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
 					   const std::string& metafile);
 		void makeColumnMap(const std::vector<std::string>& tmpvec, 
 					    const std::vector<std::string>& vecColumnNames, 
 					    std::map<std::string, unsigned int>& mapHeader);
 		void convertUnits(MeteoData& meteo);
+		void convertUnitsBack(MeteoData& meteo);
 		void cleanup() throw();
 		void getProjectionParameters();
+		void parseDate(const std::string& datestring, const std::string& fileandline, Date_IO& _date);
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
+		std::ofstream fout; //Output file streams
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordsys, coordparam; //projection parameters
 };

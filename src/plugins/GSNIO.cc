@@ -105,8 +105,10 @@ void GSNIO::initGSNConnection(){
 	 * - parameters not set will be set to ""
 	 */
 	try {
-		cfg.getValue("PROXY", hostname); 
-		cfg.getValue("PROXYPORT", port); 
+		cfg.getValue("PROXY", hostname, ConfigReader::nothrow); 
+		if (hostname == "") return;
+		cfg.getValue("PROXYPORT", port, ConfigReader::nothrow); 
+		if (port == "") return;
 
 		if (!IOUtils::convertString(proxyport, port, std::dec))
 			throw ConversionFailedException("", AT);
@@ -120,7 +122,7 @@ void GSNIO::initGSNConnection(){
 		gsn.proxy_userid = userid.c_str();
 		cfg.getValue("PROXYPASS", passwd); 
 		gsn.proxy_passwd = passwd.c_str(); 
-	} catch(std::exception& e){}
+	} catch(...){}
 }
 
 void GSNIO::read2DGrid(Grid2DObject&, const std::string& filename)
@@ -137,6 +139,14 @@ void GSNIO::readDEM(DEMObject&)
 }
 
 void GSNIO::readLanduse(Grid2DObject&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
+					  const std::vector< std::vector<StationData> >&,
+					  const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -234,18 +244,17 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 				throw InvalidFormatException("",AT);
 
 			if (key == "LIGHT") convertStringToDouble(md.iswr, tmpstring, "ISWR");
-			//else if (key == "TEMPERATURE") convertStringToDouble(md.ta, tmpstring, "Air Temperature");		
 			else if (key == "AIR_TEMP") convertStringToDouble(md.ta, tmpstring, "Air Temperature");
-			else if (key == "WIND_SPEED") convertStringToDouble(md.vw, tmpstring, "Wind Velocity");				
+			else if (key == "WIND_SPEED") convertStringToDouble(md.vw, tmpstring, "Wind Velocity");
 			else if (key == "WIND_DIRECTION") convertStringToDouble(md.dw, tmpstring, "Wind Velocity");
 			else if (key == "SOLAR_RAD") {
 				convertStringToDouble(md.iswr, tmpstring, "solar_rad");				
-				convertStringToDouble(md.lwr, tmpstring, "solar_rad");				
+				//convertStringToDouble(md.lwr, tmpstring, "solar_rad");				
 			}
-			else if (key == "AIR_HUMID") convertStringToDouble(md.rh, tmpstring, "air_humid");				
+			else if (key == "AIR_HUMID") convertStringToDouble(md.rh, tmpstring, "air_humid");
 			else if (key == "SOIL_TEMP_ECTM") convertStringToDouble(md.tss, tmpstring, "soil_temp_ectm");
 			else if (key == "GROUND_TEMP_TNX") convertStringToDouble(md.tsg, tmpstring, "ground_temp_tnx");
-			else if (key == "RAIN_METER") convertStringToDouble(md.hnw, tmpstring, "rain_meter");				
+			else if (key == "RAIN_METER") convertStringToDouble(md.hnw, tmpstring, "rain_meter");
 			else if (key == "TIMED") {
 				tmpstring = tmpstring.substr(0,tmpstring.length()-3); //cut away the seconds
 				time_t measurementTime;
@@ -379,7 +388,7 @@ void GSNIO::convertUnits(MeteoData& meteo)
 	}
 	
 	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tss);
+		meteo.tsg=C_TO_K(meteo.tsg);
 	}
 	
 	if(meteo.tss!=IOUtils::nodata) {

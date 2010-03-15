@@ -157,6 +157,35 @@ class IOInterface : public PluginObject {
 							  const unsigned int& stationindex=IOUtils::npos) = 0;
 
 		/**
+		* @brief Write vecMeteo and vecStation time series of objects to a certain destination
+		*
+		* Example Usage:
+		* Configure the io.ini to use a certain plugin for the output:
+		* @code
+		* METEODEST     = GEOTOP
+		* METEODESTPATH = /tmp
+		* METEODESTSEQ  = Iprec SWglobal
+		* @endcode
+		* An example implementation (reading and writing):
+		* @code
+		* vector< vector<MeteoData> > vecMeteo;      //empty vector
+		* vector< vector<StationData> > vecStation;  //empty vector
+		* Date_IO d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date_IO d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* IOHandler io1("io.ini");
+		* io1.readMeteoData(d1, d2, vecMeteo, vecStation);
+		* io1.writeMeteoData(vecMeteo, vecStation)
+		* @endcode
+		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
+		* @param vecStation  A vector of vector<StationData> objects to be filled with data
+		* @param name        (optional string) Identifier usefull for the output plugin (it could become part 
+		*                    of a file name, a db table, etc) 
+		*/
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+							   const std::vector< std::vector<StationData> >& vecStation,
+							   const std::string& name="") = 0;
+
+		/**
 		* @brief Parse the assimilation data into a Grid2DObject for a certain date represented by the Date_IO object
 		*    
 		* Example Usage:
