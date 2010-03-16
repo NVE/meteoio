@@ -36,6 +36,8 @@
  * - accumulation: accumulates the data on a given period. A practical use is to return hourly precipitations from a sensor measuring precipitation on a 10 minutes interval.
  */
 
+using namespace std;
+
 #define PI 3.141592653589
 
 std::map<std::string, FilterProperties> FilterAlgorithms::filterMap;
@@ -379,11 +381,19 @@ bool FilterAlgorithms::WindAvgFilter(const std::vector<MeteoData>& vecM, const s
 	//4) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
 	//  
 	std::vector<double> vecWindowVW, vecWindowDW;
-	if (!getWindowData("wind_avg", vecM, pos, date, _vecArgs, MeteoData::VW, vecWindowVW))
+	std::vector<Date_IO> vecDateVW, vecDateDW;
+	if (!getWindowData("wind_avg", vecM, pos, date, _vecArgs, MeteoData::VW, vecWindowVW, &vecDateVW))
 		return false; //Not enough data to meet user configuration
 
-	if (!getWindowData("wind_avg", vecM, pos, date, _vecArgs, MeteoData::DW, vecWindowDW))
+	if (!getWindowData("wind_avg", vecM, pos, date, _vecArgs, MeteoData::DW, vecWindowDW, &vecDateDW))
 		return false; //Not enough data to meet user configuration
+
+	if (vecWindowVW.size() != vecWindowDW.size()) //same amount of data points necessary
+		return false;
+
+	for (unsigned int ii=0; ii<vecDateVW.size(); ii++){ //The VW and DW data points have to correlate
+		if (vecDateVW[ii] != vecDateDW[ii]) return false;
+	}
 
 	//Calculate mean
 	double meanspeed     = IOUtils::nodata;
@@ -417,7 +427,8 @@ bool FilterAlgorithms::WindAvgFilter(const std::vector<MeteoData>& vecM, const s
 bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM, 
 				   const unsigned int& pos, 
 				   const Date_IO& date, const std::vector<std::string>& _vecArgs,
-				   const unsigned int& paramindex, std::vector<double>& vecWindow)
+				   const unsigned int& paramindex, std::vector<double>& vecWindow, 
+				   std::vector<Date_IO> *vecDate)
 {
 	vecWindow.clear();
 	bool isSoft = false;
@@ -503,8 +514,11 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 	//cout << "Start: " << startposition << "  End: " << endposition << endl;
 	for (unsigned int ii=startposition; ii>=endposition; ii--){
 		const double& tmp = vecM[ii].param(paramindex);
-		if (tmp != IOUtils::nodata) vecWindow.push_back(tmp);
-
+		if (tmp != IOUtils::nodata) {
+			vecWindow.push_back(tmp);
+			if (vecDate != NULL) (*vecDate).push_back(vecM[ii].date);
+		}
+		
 		//cout << ii << ": pushed at vecM[" <<  ii << "] " << vecM[ii].date << " : " << tmp << endl;
 	}
 
