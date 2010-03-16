@@ -119,7 +119,7 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 {
 	string path=""; 
 	vector<string> vecSequence;
-	vector<int> ymdhm = vector<int>(4);
+	vector<int> ymdhm = vector<int>(5);
 	map<string, unsigned int> mapParam;
 	initParamNames(mapParam);
 	cfg.getValue("METEODESTPATH", path);
