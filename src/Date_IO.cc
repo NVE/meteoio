@@ -272,7 +272,7 @@ const string Date_IO::toString(FORMATS type) const
 			<< setw(2) << setfill('0') << month << "-"
 			<< setw(2) << setfill('0') << day << "T" 
 			<< setw(2) << setfill('0') << hour << ":"
-			<< setw(2) << setfill('0') << minute << ":" ;
+			<< setw(2) << setfill('0') << minute;
 	} else if(type==NUM) {
 			tmpstr 
 			<< setw(4) << setfill('0') << year

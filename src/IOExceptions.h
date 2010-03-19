@@ -21,6 +21,11 @@
 #include <exception>
 #include <string>
 #include <iostream>
+#include <stdlib.h>
+
+#ifdef LINUX
+#include <execinfo.h> //needed for the backtracing of the stack
+#endif
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -35,7 +40,7 @@
 #ifdef _POPC_
 class IOException : public POPException {
 #else
-class IOException : public std::exception {
+	class IOException : public std::exception {
 #endif
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
