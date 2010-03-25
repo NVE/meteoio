@@ -110,6 +110,11 @@ void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& d
 
 void BufferedIOHandler::setBufferProperties()
 {
+	always_rebuffer = true;
+	bufferbefore = Date_IO(2.0);  //minus 2 days
+	bufferafter = Date_IO(20.0);  //plus 20 days
+
+	/*
 	string bufferstrategy;
 	vector<string> bufferperiod;
 	cfg.getValue("BUFFERSTRATEGY", bufferstrategy, ConfigReader::nothrow);
@@ -135,6 +140,7 @@ void BufferedIOHandler::setBufferProperties()
 	always_rebuffer = true;
 	if (bufferstrategy == "newinterval")
 		always_rebuffer = false;
+	*/
 }
 
 void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
@@ -286,6 +292,16 @@ bool BufferedIOHandler::bufferData(const Date_IO& _date, const unsigned int& sta
 	return true;
 }
 
+void BufferedIOHandler::bufferAlways(const bool& bufferalways)
+{
+	always_rebuffer = bufferalways;
+}
+
+void BufferedIOHandler::setBufferDuration(const Date_IO& _beforeDate, const Date_IO& _afterDate)
+{
+	bufferbefore = _beforeDate; 
+	bufferafter  = _afterDate;
+}
 
 void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							   std::vector< std::vector<MeteoData> >& vecMeteo, 

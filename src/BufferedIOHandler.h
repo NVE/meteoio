@@ -39,6 +39,8 @@
  * @author Thomas Egger
  * @date   2009-07-25
  */
+class MeteoFilter;
+
 #ifdef _POPC_
 class BufferedIOHandler {
 #else
@@ -132,6 +134,8 @@ class BufferedIOHandler : public IOInterface {
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
+		void bufferAlways(const bool& bufferalways);
+		void setBufferDuration(const Date_IO& _bufferbefore, const Date_IO& _bufferafter);
 
 		static const unsigned int npos = (unsigned int)-1; ///<npos is the out-of-range value
 
