@@ -81,8 +81,8 @@ using namespace std;
 void ARCIO::getProjectionParameters() {
 	//get projection parameters
 	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+		cfg.getValue("COORDSYS", "INPUT", coordsys);
+		cfg.getValue("COORDPARAM", "INPUT", coordparam, ConfigReader::nothrow);
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
@@ -210,14 +210,14 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 void ARCIO::readDEM(DEMObject& dem_out)
 {
 	string filename="";
-	cfg.getValue("DEMFILE", filename);
+	cfg.getValue("DEMFILE", "INPUT", filename);
 	read2DGrid(dem_out, filename);
 }
 
 void ARCIO::readLanduse(Grid2DObject& landuse_out)
 {
 	string filename="";
-	cfg.getValue("LANDUSEFILE", filename); // cout << tmp << endl;
+	cfg.getValue("LANDUSEFILE", "INPUT", filename); // cout << tmp << endl;
 	read2DGrid(landuse_out, filename);
 }
 
@@ -227,7 +227,7 @@ void ARCIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	date_in.getDate(yyyy, MM, dd, hh, mm);
 	string filepath="";
 
-	cfg.getValue("DAPATH", filepath); // cout << tmp << endl;
+	cfg.getValue("DAPATH", "INPUT", filepath); // cout << tmp << endl;
   
 	stringstream ss;
 	ss.fill('0');

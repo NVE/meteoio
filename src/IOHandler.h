@@ -66,7 +66,7 @@ class IOHandler : public IOInterface {
 					 DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
 		void registerPlugins();
-		IOInterface *getPlugin(const std::string&);
+		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
 		ConfigReader cfg;
 		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;

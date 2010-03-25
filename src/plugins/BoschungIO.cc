@@ -25,8 +25,8 @@ const double BoschungIO::plugin_nodata = -999.0; //plugin specific nodata value
 void BoschungIO::getProjectionParameters() {
 	//get projection parameters
 	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+		cfg.getValue("COORDSYS", "INPUT", coordsys);
+		cfg.getValue("COORDPARAM", "INPUT", coordparam, ConfigReader::nothrow);
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
@@ -131,7 +131,7 @@ void BoschungIO::readStationNames()
 	std::string xmlpath="", str_stations="";
 	int stations=0;
 
-	cfg.getValue("NROFSTATIONS", str_stations);
+	cfg.getValue("NROFSTATIONS", "INPUT", str_stations);
 
 	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
 		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
@@ -143,7 +143,7 @@ void BoschungIO::readStationNames()
 		Date_IO tmp_date(0.0);
 		
 		tmp_stream << (ii+1); //needed to construct key name
-		cfg.getValue(std::string("STATION"+tmp_stream.str()), stationname);
+		cfg.getValue(std::string("STATION"+tmp_stream.str()), "INPUT", stationname);
 
 		vecStationName.push_back(stationname);
 	}
@@ -156,7 +156,7 @@ void BoschungIO::getFiles(const std::string& stationname, const Date_IO& start_d
 	Date_IO tmp_date;
 	std::string xmlpath="";
 
-	cfg.getValue("XMLPATH", xmlpath);
+	cfg.getValue("XMLPATH", "INPUT", xmlpath);
 	vecFiles.clear();
 	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + ".xml");
 
@@ -424,8 +424,8 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, std::vector<MeteoData>& vec
 	std::string xmlpath="", str_stations="";
 	int stations=0;
 
-	cfg.getValue("NROFSTATIONS", str_stations);
-	cfg.getValue("XMLPATH", xmlpath);
+	cfg.getValue("NROFSTATIONS", "INPUT", str_stations);
+	cfg.getValue("XMLPATH", "INPUT", xmlpath);
 
 	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
 		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
@@ -439,7 +439,7 @@ void BoschungIO::read2DMeteo(const Date_IO& date_in, std::vector<MeteoData>& vec
 		StationData sd;
     
 		tmp_stream << (ii+1); //needed to construct key name
-		cfg.getValue(std::string("STATION"+tmp_stream.str()), stationname);
+		cfg.getValue(std::string("STATION"+tmp_stream.str()), "INPUT", stationname);
 
 		checkForMeteoFiles(xmlpath, stationname, date_in, tmp_file, tmp_date);
 		//Check whether file was found

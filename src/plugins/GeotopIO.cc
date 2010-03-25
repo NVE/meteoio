@@ -43,8 +43,8 @@ using namespace std;
 void GeotopIO::getProjectionParameters() {
 	//get projection parameters
 	try {
-		cfg.getValue("COORDIN", coordsys);
-		cfg.getValue("COORDPARAM", coordparam, ConfigReader::nothrow);
+		cfg.getValue("COORDSYS", "INPUT", coordsys);
+		cfg.getValue("COORDPARAM", "INPUT", coordparam, ConfigReader::nothrow);
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
@@ -122,8 +122,8 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	vector<int> ymdhm = vector<int>(5);
 	map<string, unsigned int> mapParam;
 	initParamNames(mapParam);
-	cfg.getValue("METEODESTPATH", path);
-	cfg.getValue("METEODESTSEQ", vecSequence);
+	cfg.getValue("METEOPATH", "INPUT", path);
+	cfg.getValue("METEOSEQ", "INPUT", vecSequence);
 
 	//Check whether vecSequence is valid, that is the keys are part of mapParam
 	for (unsigned int ii=0; ii<vecSequence.size(); ii++){
@@ -207,8 +207,8 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	vecMeteo.clear();
 	vecStation.clear();
 
-	cfg.getValue("METEOPATH", path); 
-	cfg.getValue("METEOPREFIX", prefix);
+	cfg.getValue("METEOPATH", "INPUT", path); 
+	cfg.getValue("METEOPREFIX", "INPUT", prefix);
 
 	vector<StationData> myStations;
 	/*

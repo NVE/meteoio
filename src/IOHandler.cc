@@ -164,21 +164,21 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 	}
 }
 
-IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
+IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection)
 {
 	std::string op_src="";
-	cfg.getValue(cfgvalue, op_src);
+	cfg.getValue(cfgkey, cfgsection, op_src);
 
 	mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
-		throw IOException(cfgvalue + " does not seem to be valid descriptor in file " + cfg.getSourceName(), AT);
+		throw IOException(cfgkey + " does not seem to be valid descriptor in file " + cfg.getSourceName(), AT);
 	
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
 	}
 	
 	if ((mapit->second).io == NULL) {
-		throw IOException("Requesting to read/write data with plugin for " + cfgvalue + ", but plugin is not loaded", AT);
+		throw IOException("Requesting to read/write data with plugin for " + cfgkey + ", but plugin is not loaded", AT);
 	}
 
 	return (mapit->second).io;
@@ -186,20 +186,20 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgvalue)
 
 void IOHandler::read2DGrid(Grid2DObject& _grid, const std::string& _filename)
 {
-	IOInterface *plugin = getPlugin("GRID2DSRC");
+	IOInterface *plugin = getPlugin("GRID2D", "INPUT");
 	plugin->read2DGrid(_grid, _filename);
 }
 
 void IOHandler::readDEM(DEMObject& dem_out)
 {
-	IOInterface *plugin = getPlugin("DEMSRC");
+	IOInterface *plugin = getPlugin("DEM", "INPUT");
 	plugin->readDEM(dem_out);
 	dem_out.update();
 }
 
 void IOHandler::readLanduse(Grid2DObject& landuse_out)
 {
-	IOInterface *plugin = getPlugin("LANDUSESRC");
+	IOInterface *plugin = getPlugin("LANDUSE", "INPUT");
 	plugin->readLanduse(landuse_out);
 }
 
@@ -233,7 +233,7 @@ void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 						std::vector<STATION_DATASET>& vecStation, 
 						const unsigned& stationindex)
 {
-	IOInterface *plugin = getPlugin("METEOSRC");
+	IOInterface *plugin = getPlugin("METEO", "INPUT");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
 
@@ -241,24 +241,24 @@ void IOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecM
 						 const std::vector< std::vector<StationData> >& vecStation,
 						 const std::string& name)
 {
-	IOInterface *plugin = getPlugin("METEODEST");
+	IOInterface *plugin = getPlugin("METEO", "OUTPUT");
 	plugin->writeMeteoData(vecMeteo, vecStation, name);
 }
 
 void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
-	IOInterface *plugin = getPlugin("DASRC");
+	IOInterface *plugin = getPlugin("DA", "INPUT");
 	plugin->readAssimilationData(date_in, da_out);
 }
 
 void IOHandler::readSpecialPoints(std::vector<Coords>& pts) {
-	IOInterface *plugin = getPlugin("SPECIALPTSSRC");
+	IOInterface *plugin = getPlugin("SPECIALPTS", "INPUT");
 	plugin->readSpecialPoints(pts);
 }
 
 void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	IOInterface *plugin = getPlugin("OUTPUT");
+	IOInterface *plugin = getPlugin("GRID2D", "OUTPUT");
 	plugin->write2DGrid(grid_in, name);
 }
 
