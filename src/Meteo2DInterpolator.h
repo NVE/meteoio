@@ -19,15 +19,10 @@
 #ifndef __METEO2DINTERPOLATOR_H__
 #define __METEO2DINTERPOLATOR_H__
 
+#include "MeteoIO.h"
 #include "libinterpol2D.h"
-#include "MeteoData.h"
-#include "StationData.h"
-#include "IOUtils.h"
-#include "IOExceptions.h"
-#include "DEMObject.h"
-#include "Grid2DObject.h"
-#include "ConfigReader.h"
 
+#include <memory>
 #include <vector>
 #include <map>
 
@@ -50,8 +45,8 @@ class Meteo2DInterpolator {
 		* @brief Constructor.
 		*/
 		Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObject& _dem, 
-						const std::vector<MeteoData>& _vecData, 
-						const std::vector<StationData>& _vecMeta);
+						const std::vector<MeteoData>& _vecMeteo, 
+						const std::vector<StationData>& _vecStation);
 
 
 		/**
@@ -61,29 +56,32 @@ class Meteo2DInterpolator {
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
 		 */
-		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result);
+		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const;
 
 	private:
 		const ConfigReader& cfg; ///< Reference to ConfigReader object, initialized during construction
 		const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction
-		const std::vector<MeteoData>& vecData;  ///< Reference to a vec of MeteoData, initialized during construction
-		const std::vector<StationData>& vecMeta;///< Reference to a vec of StationData, initialized during construction
+		const std::vector<MeteoData>& vecMeteo;  ///< Reference to a vec of MeteoData, initialized during construction
+		const std::vector<StationData>& vecStation;///< Reference to a vec of StationData, initialized during construction
 		
 		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
 
 		unsigned int getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);
-		unsigned int getArgumentsForAlgorithm(const std::string& keyname, std::vector<std::string>& vecArguments);
+		unsigned int getArgumentsForAlgorithm(const MeteoData::Parameters& param, 
+									   const std::string& algorithm, 
+									   std::vector<std::string>& vecArgs) const;
 
 		/*LEGACY*/
-		//These methods are exposed until we offer a better API for requesting spatial interpolations
-		void interpolateP(Grid2DObject& p);
-		void interpolateHNW(Grid2DObject& hnw);
-		void interpolateTA(Grid2DObject& ta);
-		void interpolateRH(Grid2DObject& rh, Grid2DObject& ta);
-		void interpolateVW(Grid2DObject& vw);
-		void interpolateDW(Grid2DObject& dw);
-		void interpolateISWR(Grid2DObject& iswr);
-		void interpolateLWR(Grid2DObject& lwr);
+		/*These methods are exposed until we offer a better API for requesting spatial interpolations
+		void interpolateP(Grid2DObject& p) const;
+		void interpolateHNW(Grid2DObject& hnw) const;
+		void interpolateTA(Grid2DObject& ta) const;
+		void interpolateRH(Grid2DObject& rh, Grid2DObject& ta) const;
+		void interpolateVW(Grid2DObject& vw) const;
+		void interpolateDW(Grid2DObject& dw) const;
+		void interpolateISWR(Grid2DObject& iswr) const;
+		void interpolateLWR(Grid2DObject& lwr) const;
+		*/
 };
 
 #endif

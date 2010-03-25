@@ -30,6 +30,8 @@
 #include "IOUtils.h"
 #include "DEMObject.h"
 
+using namespace std;
+
 
 const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
 const double Interpol2D::wind_ys = 0.58;
@@ -65,6 +67,20 @@ Interpol2D::Interpol2D(interp_types Isingle,
 
 }
 
+double Interpol2D::getReferenceAltitude(const DEMObject& dem)
+{
+	double ref_altitude = 1500.;
+
+	if(dem.min_altitude!=IOUtils::nodata && dem.max_altitude!=IOUtils::nodata) {
+		//we use the median elevation as the reference elevation for reprojections
+		ref_altitude = 0.5 * (dem.min_altitude+dem.max_altitude); 
+	} else {
+		//since there is nothing else that we can do, we use an arbitrary elevation
+		ref_altitude = 1500.;
+	}
+	return ref_altitude;
+}
+
 //Usefull functions
 /**
 * @brief Computes the horizontal distance between points, given by coordinates in a geographic grid
@@ -89,7 +105,7 @@ double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const 
 * @param Y2 (const double) second point's Y coordinate
 * @return (double) distance in m
 */
-double Interpol2D::HorizontalDistance(const int& i, const int& j, const double& X2, const double& Y2)
+double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const int& j, const double& X2, const double& Y2)
 {
 	//This function computes the horizontal distance between two points
 	//coordinates are given in a square, metric grid system
@@ -239,11 +255,8 @@ int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<do
 * @param coeffs (const vector\<double\>) coefficients to use for the projection (unused)
 * @return (double) reprojected value
 */
-double Interpol2D::ConstProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
+double Interpol2D::ConstProject(const double& value, const double&, const double&, const std::vector<double>&)
 {
-	(void) altitude;	//to avoid the compiler seeing them as unused
-	(void) new_altitude;
-	(void) coeffs;
 	return value;
 }
 
@@ -269,39 +282,42 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 /**
 * @brief Grid filling function: 
 * This implementation builds a standard air pressure as a function of the elevation
-* @param param (Grid2DObject) 2D array to fill
-* @param topoHeight (DEMObject) array of elevations (dem)
+* @param _dem (DEMObject) array of elevations (dem)
+* @param grid (Grid2DObject) 2D array to fill
 */
-void Interpol2D::StdPressureFill(Grid2DObject& param, const DEMObject& topoHeight) {
+void Interpol2D::stdPressureGrid2DFill(const DEMObject& _dem, Grid2DObject& grid) {
+	grid.set(_dem.ncols, _dem.nrows, _dem.cellsize, _dem.llcorner);
+
 	//provide each point with an altitude dependant pressure... it is worth what it is...
-	for (unsigned int i=0; i<param.ncols; i++) {
-		for (unsigned int j=0; j<param.nrows; j++) {
-			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
-				param.grid2D(i,j) = lw_AirPressure(topoHeight.grid2D(i,j));
+	for (unsigned int i=0; i<grid.ncols; i++) {
+		for (unsigned int j=0; j<grid.nrows; j++) {
+			if (_dem.grid2D(i,j)!=IOUtils::nodata) {
+				grid.grid2D(i,j) = lw_AirPressure(_dem.grid2D(i,j));
 			} else {
-				param.grid2D(i,j) = IOUtils::nodata;
+				grid.grid2D(i,j) = IOUtils::nodata;
 			}
 		}
 	}
-	//TODO: deal with the case when param.ncols != topoHeight.ncols, etc
 }
 
 /**
 * @brief Grid filling function:
 * This implementation fills the grid with a constant value
-* @param param (Array2D\<double\>) 2D array to fill
-* @param topoHeight (DEMObject) array of elevations (dem). This is needed in order to know if a point is "nodata"
-* @param value (double) value to put in the grid
+* @param _value (double) value to put in the grid
+* @param _dem (DEMObject) array of elevations (dem). This is needed in order to know if a point is "nodata"
+* @param grid (Array2D\<double\>) 2D array to fill
 */
-void Interpol2D::ConstFill(Grid2DObject& param, const DEMObject& topoHeight, const double& value)
+void Interpol2D::constantGrid2DFill(const double& _value, const DEMObject& _dem, Grid2DObject& grid)
 {
+	grid.set(_dem.ncols, _dem.nrows, _dem.cellsize, _dem.llcorner);
+
 	//fills a data table with constant values
-	for (unsigned int i=0; i<param.ncols; i++) {
-		for (unsigned int j=0; j<param.nrows; j++) {
-			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
-				param.grid2D(i,j) = value;
+	for (unsigned int i=0; i<grid.ncols; i++) {
+		for (unsigned int j=0; j<grid.nrows; j++) {
+			if (_dem.grid2D(i,j)!=IOUtils::nodata) {
+				grid.grid2D(i,j) = _value;
 			} else {
-				param.grid2D(i,j) = IOUtils::nodata;
+				grid.grid2D(i,j) = IOUtils::nodata;
 			}
 		}
 	}
@@ -316,14 +332,18 @@ void Interpol2D::ConstFill(Grid2DObject& param, const DEMObject& topoHeight, con
 * @param value (double) value to put in the grid
 * @param altitude (double) altitude of the "value"
 */
-void Interpol2D::LapseConstFill(Grid2DObject& param_out, const DEMObject& topoHeight, const double& value, const double& altitude)
+void Interpol2D::constantLapseGrid2DFill(const double& value, const double& altitude, 
+								 const DEMObject& _dem, const std::vector<double>& vecCoefficients, 
+								 const LapseRateProjectPtr& funcptr, Grid2DObject& param_out)
 {
+	param_out.set(_dem.ncols, _dem.nrows, _dem.cellsize, _dem.llcorner);
+
 	//fills a data table with constant values and then reprojects it to the DEM's elevation from a given altitude
 	//the laspe rate parameters must have been set before
 	for (unsigned int i=0; i<param_out.ncols; i++) {
 		for (unsigned int j=0; j<param_out.nrows; j++) {
-			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
-				param_out.grid2D(i,j) = (this->*LapseRateProject)(value, altitude,topoHeight.grid2D(i,j), vecCoefficients);
+			if (_dem.grid2D(i,j)!=IOUtils::nodata) {
+				param_out.grid2D(i,j) = funcptr(value, altitude, _dem.grid2D(i,j), vecCoefficients);
 			} else {
 				param_out.grid2D(i,j) = IOUtils::nodata;
 			}
@@ -331,8 +351,8 @@ void Interpol2D::LapseConstFill(Grid2DObject& param_out, const DEMObject& topoHe
 	}
 }
 
-double Interpol2D::IDWKriegingCore(const double& x, const double& y, 
-				   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations)
+double Interpol2D::IDWKriegingCore(const double& x, const double& y,const std::vector<double>& vecData_in, 
+							const std::vector<StationData>& vecStations)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
 	double parameter=0., norm=0., weight;
@@ -345,14 +365,19 @@ double Interpol2D::IDWKriegingCore(const double& x, const double& y,
 	return (parameter/norm);	//normalization
 }
 
-void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
-				const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in)
+void Interpol2D::LapseIDWKrieging(const DEMObject& topoHeight, const LapseRateProjectPtr& funcptr,
+						    const std::vector<double>& vecCoefficients, 
+						    const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in, 
+						    Grid2DObject& T)
 {
+	T.set(topoHeight.ncols, topoHeight.nrows, topoHeight.cellsize, topoHeight.llcorner);
+
 	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
 	std::vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
 	
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
-		vecTref[i] = (this->*LapseRateProject)(vecData_in[i], vecStations_in[i].position.getAltitude(), ref_altitude, vecCoefficients);
+		vecTref[i] = funcptr(vecData_in[i], vecStations_in[i].position.getAltitude(), 
+						 getReferenceAltitude(topoHeight), vecCoefficients);
 	}
 
 	const double xllcorner = topoHeight.llcorner.getEasting();
@@ -360,8 +385,9 @@ void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 	for (unsigned int i=0; i<T.ncols; i++) {
 		for (unsigned int j=0; j<T.nrows; j++) {
 			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
-				T.grid2D(i,j) = IDWKriegingCore((xllcorner+i*topoHeight.cellsize), (yllcorner+j*topoHeight.cellsize), vecTref, vecStations_in);
-				T.grid2D(i,j) = (this->*LapseRateProject)(T.grid2D(i,j), ref_altitude, topoHeight.grid2D(i,j), vecCoefficients);
+				T.grid2D(i,j) = IDWKriegingCore((xllcorner+i*topoHeight.cellsize), 
+										  (yllcorner+j*topoHeight.cellsize), vecTref, vecStations_in);
+				T.grid2D(i,j) = funcptr(T.grid2D(i,j), getReferenceAltitude(topoHeight), topoHeight.grid2D(i,j), vecCoefficients);
 			} else {
 				T.grid2D(i,j) = IOUtils::nodata;
 			}
@@ -369,15 +395,19 @@ void Interpol2D::LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
 	}
 }
 
-void Interpol2D::IDWKrieging(Grid2DObject& T, const DEMObject& topoHeight, const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations)
+void Interpol2D::IDWKrieging(const DEMObject& topoHeight, 
+					    const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations, 
+					    Grid2DObject& T)
 {
+	T.set(topoHeight.ncols, topoHeight.nrows, topoHeight.cellsize, topoHeight.llcorner);
+
 	//multiple source stations: simple IDW Krieging
 	const double xllcorner = topoHeight.llcorner.getEasting();
 	const double yllcorner = topoHeight.llcorner.getNorthing();
 	for (unsigned int i=0; i<T.ncols; i++) {
 		for(unsigned int j=0; j<T.nrows; j++) {
 			if (topoHeight.grid2D(i,j)!=IOUtils::nodata) {
-				T.grid2D(i,j) = IDWKriegingCore((xllcorner+i*dem.cellsize), (yllcorner+j*dem.cellsize), vecData_in, vecStations);
+				T.grid2D(i,j) = IDWKriegingCore((xllcorner+i*topoHeight.cellsize), (yllcorner+j*topoHeight.cellsize), vecData_in, vecStations);
 			} else {
 				T.grid2D(i,j) = IOUtils::nodata;
 			}
@@ -396,7 +426,7 @@ void Interpol2D::calculate(Grid2DObject& param_out)
 	
 	if (InputSize==0) {	//no data
 		if (single_type == I_PRESS) {
-			StdPressureFill(param_out, dem);
+			stdPressureGrid2DFill(dem, param_out);
 			flag_ok=1;
 		}
 	
@@ -407,13 +437,17 @@ void Interpol2D::calculate(Grid2DObject& param_out)
 	
 	if (InputSize==1) { //single data source
 		if (single_type==I_CST) {
-			ConstFill(param_out, dem, inputData[0]);
+			constantGrid2DFill(inputData[0], dem, param_out);
 			flag_ok=1;
 	
 		} else if (single_type==I_LAPSE_CST) {
+			std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
+			vecCoefficients.resize(4, 0.0); //Coefficients 0-3 TODO!! make it more dynamic!
 			vecCoefficients[1] = dflt_temperature_lapse_rate;//HACK, it should depend on a user given value!
-			LapseRateProject = &Interpol2D::LinProject;
-			LapseConstFill(param_out, dem, inputData[0], InputMeta[0].position.getAltitude());
+			//LapseRateProject = &Interpol2D::LinProject;
+
+			Interpol2D::constantLapseGrid2DFill(inputData[0], InputMeta[0].position.getAltitude(), dem, 
+							    vecCoefficients, &Interpol2D::LinProject, param_out);
 			flag_ok=1;
 		}
 	
@@ -424,22 +458,28 @@ void Interpol2D::calculate(Grid2DObject& param_out)
 	
 	if (InputSize>1) { //multiple data sources
 		if (multiple_type==I_CST) {
-			ConstFill(param_out, dem, AvgSources(inputData));
+			constantGrid2DFill(AvgSources(inputData), dem, param_out);
 			flag_ok=1;
 		} else if (multiple_type==I_IDWK) {
-			IDWKrieging(param_out, dem, inputData, InputMeta);
+			IDWKrieging(dem, inputData, InputMeta, param_out);
 			flag_ok=1;
 		} else if (multiple_type==I_LAPSE_CST) {
 			BuildStationsElevations(InputMeta, vecStationElevations);
+			std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
+			vecCoefficients.resize(4, 0.0); //Coefficients 0-3 TODO!! make it more dynamic!
 			vecCoefficients[1] = dflt_temperature_lapse_rate;//HACK, it should depend on a user given value!
-			LapseRateProject = &Interpol2D::ConstProject;
-			LapseConstFill(param_out, dem, AvgSources(inputData), AvgSources(vecStationElevations));
+			//LapseRateProject = &Interpol2D::ConstProject;
+			constantLapseGrid2DFill(AvgSources(inputData), AvgSources(vecStationElevations), dem, 
+							    vecCoefficients, &Interpol2D::ConstProject, param_out);
 			flag_ok=1;
 		} else if (multiple_type==I_LAPSE_IDWK) {
+			std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
+			vecCoefficients.resize(4, 0.0); //Coefficients 0-3 TODO!! make it more dynamic!
+
 			BuildStationsElevations(InputMeta, vecStationElevations);
 			LinRegression(vecStationElevations, inputData, vecCoefficients);
 			LapseRateProject = &Interpol2D::LinProject;
-			LapseIDWKrieging(param_out, dem, inputData, InputMeta);
+			LapseIDWKrieging(dem, &Interpol2D::LinProject, vecCoefficients, inputData, InputMeta, param_out);
 			flag_ok=1;
 		}
 
@@ -481,10 +521,13 @@ void Interpol2D::calculate(Grid2DObject& param_out, const std::vector<double>& v
 			}
 			
 			//Krieging on Td
+			std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
+			vecCoefficients.resize(4, 0.0); //Coefficients 0-3 TODO!! make it more dynamic!
+
 			BuildStationsElevations(InputMeta, vecStationElevations);
 			LinRegression(vecStationElevations, vecTdStations, vecCoefficients);
 			LapseRateProject = &Interpol2D::LinProject;
-			LapseIDWKrieging(param_out, dem, vecTdStations, InputMeta);
+			LapseIDWKrieging(dem, &Interpol2D::LinProject, vecCoefficients, vecTdStations, InputMeta, param_out);
 
 			//Recompute Rh from the interpolated td
 			for (unsigned int i=0;i<param_out.ncols;i++) {
@@ -499,12 +542,15 @@ void Interpol2D::calculate(Grid2DObject& param_out, const std::vector<double>& v
 				throw IOException("Requested output parameter and extra input parameter grids don't match!!", AT);
 			}
 			//Krieging
+			std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
+			vecCoefficients.resize(4, 0.0); //Coefficients 0-3 TODO!! make it more dynamic!
+
 			BuildStationsElevations(InputMeta, vecStationElevations);
 			LinRegression(vecStationElevations, inputData, vecCoefficients);
 			LapseRateProject = &Interpol2D::LinProject;
-			LapseIDWKrieging(param_out, dem, inputData, InputMeta);
-			SimpleDEMWindInterpolate(param_out, extra_param_in);//HACK: extra_param_in is DW, how do we bring it out?
+			LapseIDWKrieging(dem, &Interpol2D::LinProject, vecCoefficients, inputData, InputMeta, param_out);
 			
+			SimpleDEMWindInterpolate(dem, param_out, extra_param_in);//HACK: extra_param_in is DW, how do we bring it out?
 			flag_ok=1;
 		}
 
@@ -514,10 +560,16 @@ void Interpol2D::calculate(Grid2DObject& param_out, const std::vector<double>& v
 	}
 }
 
-void Interpol2D::SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW)
+void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW)
 {
-//This method computes the speed of the wind and returns a table in 2D with this values
-//This Wind interpolation is similar to Liston and Elder (2006)
+
+
+	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(dem))){
+		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
+	}
+
+	//This method computes the speed of the wind and returns a table in 2D with this values
+	//This Wind interpolation is similar to Liston and Elder (2006)
 	double speed;		// Wind speed (m s-1)
 	double dir;		// Wind direction
 	double u;		// Zonal component u (m s-1)
@@ -581,7 +633,7 @@ void Interpol2D::SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW)
 	}
 }
 
-double Interpol2D::RhtoDewPoint(double RH, double TA, const short int force_water)
+double Interpol2D::RhtoDewPoint(double RH, double TA, const short int& force_water)
 {
 	//Convert a Relative Humidity into a dew point temperature
 	//TA is in Kelvins, RH between 0 and 1, returns Td in Kelvins
@@ -622,7 +674,7 @@ double Interpol2D::RhtoDewPoint(double RH, double TA, const short int force_wate
 	return C_TO_K( (di / (di + dw) * Tdi + dw / (di + dw) * Tdw) );
 }
 
-double Interpol2D::DewPointtoRh(double TD, double TA, const short int force_water)
+double Interpol2D::DewPointtoRh(double TD, double TA, const short int& force_water)
 {
 	//Convert a dew point temperature into a Relative Humidity
 	//TA, TD are in Kelvins, RH is returned between 0 and 1
@@ -676,7 +728,7 @@ double Interpol2D::DewPointtoRh(double TD, double TA, const short int force_wate
 	}
 }
 
-double Interpol2D::lw_AirPressure(const double altitude)
+double Interpol2D::lw_AirPressure(const double& altitude)
 {
 	double p;
 	const double p0 = 101325.; 		// Air and standard pressure in Pa

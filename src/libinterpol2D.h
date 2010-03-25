@@ -38,6 +38,10 @@
  * @author Mathias Bavay
  * @date   2009-01-20
  */
+
+class Interpol2D;
+typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude, 
+							   const double& new_altitude, const std::vector<double>& coeffs); 
  
 class Interpol2D {
 	public:
@@ -66,46 +70,65 @@ class Interpol2D {
 		void calculate(Grid2DObject& param_out);
 		void calculate(Grid2DObject& param_out, const std::vector<double>& vecExtraStations, Grid2DObject& extra_param_in);
 
+		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);		
+		static int LinRegression(const std::vector<double>& data_in, const std::vector<double>& elevations, std::vector<double>& coeffs);
+
+		static double getReferenceAltitude(const DEMObject& dem);
+
+		static void constantGrid2DFill(const double& value, const DEMObject& topoHeight, Grid2DObject& param);
+		static void stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& param);
+		static double lw_AirPressure(const double& altitude);
+		static double RhtoDewPoint(double RH, double TA, const short int& force_water);
+		static double DewPointtoRh(double TD, double TA, const short int& force_water);
+		static void constantLapseGrid2DFill(const double& value, const double& altitude, 
+									 const DEMObject& topoHeight, const std::vector<double>& vecCoefficients, 
+									 const LapseRateProjectPtr& ptr, Grid2DObject& param_out);
+
+		static double IDWKriegingCore(const double& x, const double& y,
+								const std::vector<double>& vecData_in, 
+								const std::vector<StationData>& vecStations);
+		static void LapseIDWKrieging(const DEMObject& topoHeight, const LapseRateProjectPtr& funcptr,
+							    const std::vector<double>& vecCoefficients, 
+							    const std::vector<double>& vecData_in, 
+							    const std::vector<StationData>& vecStations_in,
+							    Grid2DObject& T);
+		static void IDWKrieging(const DEMObject& topoHeight, 
+						    const std::vector<double>& data_in, const std::vector<StationData>& vecStations,
+						    Grid2DObject& grid);
+
+		//projections functions
+		static double ConstProject(const double& val, const double& alt, const double& new_alt, 
+							  const std::vector<double>& coeffs);
+		static double LinProject(const double& value, const double& altitude, const double& new_altitude, 
+							const std::vector<double>& coeffs);
+
+		//some consts
+		const static double dflt_temperature_lapse_rate;///<default lapse rate for temperature(elevation)
+
 	private:
 		//generic functions
-		double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
-		double HorizontalDistance(const int& i, const int& j, const double& X2, const double& Y2);
-		double AvgSources(const std::vector<double>& data_in);
-		void BuildStationsElevations(const std::vector<StationData>& vecStations_in, std::vector<double>& vecElevations);
+		static double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
+		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j, 
+								   const double& X2, const double& Y2);
+		static double AvgSources(const std::vector<double>& data_in);
+		static void BuildStationsElevations(const std::vector<StationData>& vecStations_in, std::vector<double>& vecElevations);
 		
 		//regressions
-		void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, const int ignore_index);
-		int LinRegression(const std::vector<double>& data_in, const std::vector<double>& elevations, std::vector<double>& coeffs);
+		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, const int ignore_index);
 		
-		//projections functions
-		double ConstProject(const double& val, const double& alt, const double& new_alt, const std::vector<double>& coeffs);
-		double LinProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs);
+		
 		
 		///Member function pointer
-		double (Interpol2D::*LapseRateProject)(const double& value, 
+		LapseRateProjectPtr LapseRateProject;
+		/*double (*LapseRateProject)(const double& value, 
 							const double& altitude, 
 							const double& new_altitude, 
 							const std::vector<double>& coeffs); 
-		
-		//filling functions
-		void StdPressureFill(Grid2DObject& param, const DEMObject& topoHeight);
-		void ConstFill(Grid2DObject& param, const DEMObject& topoHeight, const double& value);
-		void LapseConstFill(Grid2DObject& param_out, const DEMObject& topoHeight, const double& value, const double& altitude);
-		
-		
-		void LapseIDWKrieging(Grid2DObject& T, const DEMObject& topoHeight,
-				const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in);
-		double IDWKriegingCore(const double& x, const double& y, 
-						   const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations);
-		void IDWKrieging(Grid2DObject& T, const DEMObject& topoHeight, const std::vector<double>& data_in, const std::vector<StationData>& vecStations);
-		void SimpleDEMWindInterpolate(Grid2DObject& VW, Grid2DObject& DW);
-		double RhtoDewPoint(double RH, double TA, const short int force_water);
-		double DewPointtoRh(double TD, double TA, const short int force_water);
-		double lw_AirPressure(const double altitude);
+		*/
+
 
 	private:
 		//static members
-		const static double dflt_temperature_lapse_rate;///default lapse rate for temperature(elevation)
 		const static double wind_ys;			///coefficient for wind dependency on slope
 		const static double wind_yc;			///coefficient for wind dependency on curvature
 

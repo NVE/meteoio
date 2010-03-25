@@ -32,3 +32,15 @@ double Interpol1D::linearInterpolation(const double& d1, const double& d2, const
 }
 
 
+double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
+{
+	if (vecData.size() == 0)
+		throw NoAvailableDataException("Trying to calculate an arithmetic mean with no data points", AT);
+
+	double sum = 0.0;
+	for (unsigned int ii=0; ii<vecData.size(); ii++){
+		sum += vecData[ii];
+	}
+
+	return (sum/(double)vecData.size());
+}

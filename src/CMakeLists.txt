@@ -2,6 +2,7 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/src")
 
 SET(meteoio_sources 
+	InterpolationAlgorithms.cc
 	MeteoFilter.cc
 	FilterAlgorithms.cc
   	A3DIO.cc

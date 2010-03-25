@@ -31,13 +31,14 @@
 #include "DynamicLibrary.h"
 #include "BufferedIOHandler.h"
 #include "Coords.h"
-
+#include "InterpolationAlgorithms.h"
+#include "Meteo2DInterpolator.h"
 #include "IOInterface.h"
+
 #ifdef _POPC_
 #include "IOHandler.ph"
 #else
 #include "IOHandler.h"
 #endif
-#include "Meteo2DInterpolator.h"
 
 #endif
