@@ -40,6 +40,19 @@ IF(GSNIO)
   SET(MYPLUGINS ${MYPLUGINS} gsnio)
 ENDIF(GSNIO)
 
+IF(IMISIO)
+  find_path(ORACLE_INC "occi.h")
+  find_library(ORACLE_LIB1 occi clntsh)
+  find_library(ORACLE_LIB2 clntsh)
+  ADD_LIBRARY(imisio ImisIO.cc)
+  TARGET_LINK_LIBRARIES(imisio ${ORACLE_LIB1} ${ORACLE_LIB2} ${PROJECT_NAME})
+  INCLUDE_DIRECTORIES(${ORACLE_INC})
+  SET_TARGET_PROPERTIES(imisio PROPERTIES 
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib
+    VERSION 0.1.0 SOVERSION 0.1.0)
+  SET(MYPLUGINS ${MYPLUGINS} imisio)
+ENDIF(IMISIO)
+
 IF(BOSCHUNGIO)
   #find_path(XMLPP_INC "libxml++-2.6/libxml++/libxml++.h")
   #find_library(XMLPP xml++-2.6)
