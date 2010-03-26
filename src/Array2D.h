@@ -94,7 +94,16 @@ template<class T> class Array2D {
 		T& operator ()(const unsigned int& x, const unsigned int& y);
 		const T operator ()(const unsigned int& x, const unsigned int& y) const;
 		Array2DProxy<T> operator[](const unsigned int& i);
+		
+		Array2D<T>& operator+=(const T& rhs);
+		const Array2D<T> operator+(const T& rhs);
+		Array2D<T>& operator+=(const Array2D<T>& rhs);
+		const Array2D<T> operator+(const Array2D<T>& rhs);
 
+		Array2D<T>& operator*=(const T& rhs);
+		const Array2D<T> operator*(const T& rhs);
+		Array2D<T>& operator*=(const Array2D<T>& rhs);
+		const Array2D<T> operator*(const Array2D<T>& rhs);
 	protected:
 		std::vector<T> vecData;
 		unsigned int nx;
@@ -277,6 +286,95 @@ template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_noda
 	} else {
 		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
+}
+
+template<class T> Array2D<T>& Array2D<T>::operator+=(const Array2D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny))
+		throw IOException("Trying to add two Array2D objects with different dimensions", AT);
+
+	//Add to every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) += rhs(ii,jj);
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator+(const Array2D<T>& rhs)
+{
+	Array2D<T> result = *this; //make a copy
+	result += rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array2D<T>& Array2D<T>::operator*=(const Array2D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny))
+		throw IOException("Trying to add two Array2D objects with different dimensions", AT);
+
+	//Add to every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) *= rhs(ii,jj);
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator*(const Array2D<T>& rhs)
+{
+	Array2D<T> result = *this; //make a copy
+	result *= rhs; //already implemented
+
+	return result;
+}
+
+
+template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
+{
+	//Add to every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) += rhs;
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator+(const T& rhs)
+{
+	Array2D<T> result = *this;
+	result += rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
+{
+	//Add to every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) *= rhs;
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator*(const T& rhs)
+{
+	Array2D<T> result = *this;
+	result *= rhs; //already implemented
+
+	return result;
 }
 
 #endif
