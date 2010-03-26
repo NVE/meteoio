@@ -104,6 +104,7 @@ template<class T> class Array2D {
 		const Array2D<T> operator*(const T& rhs);
 		Array2D<T>& operator*=(const Array2D<T>& rhs);
 		const Array2D<T> operator*(const Array2D<T>& rhs);
+
 	protected:
 		std::vector<T> vecData;
 		unsigned int nx;
@@ -312,6 +313,26 @@ template<class T> const Array2D<T> Array2D<T>::operator+(const Array2D<T>& rhs)
 	return result;
 }
 
+template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
+{
+	//Add to every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) += rhs;
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator+(const T& rhs)
+{
+	Array2D<T> result = *this;
+	result += rhs; //already implemented
+
+	return result;
+}
+
 template<class T> Array2D<T>& Array2D<T>::operator*=(const Array2D<T>& rhs)
 {
 	//They have to have equal size
@@ -336,27 +357,6 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const Array2D<T>& rhs)
 	return result;
 }
 
-
-template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
-{
-	//Add to every single member of the Array2D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			operator()(ii,jj) += rhs;
-		}
-	}	
-
-	return *this;
-}
-
-template<class T> const Array2D<T> Array2D<T>::operator+(const T& rhs)
-{
-	Array2D<T> result = *this;
-	result += rhs; //already implemented
-
-	return result;
-}
-
 template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
 {
 	//Add to every single member of the Array2D<T>
@@ -376,5 +376,6 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const T& rhs)
 
 	return result;
 }
+
 
 #endif
