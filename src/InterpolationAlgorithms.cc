@@ -20,7 +20,7 @@ bool AlgorithmFactory::initStaticData()
 	setAlgorithms.insert("IDW");       // Inverse Distance Weighting fill
 	setAlgorithms.insert("IDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill
 	setAlgorithms.insert("RH");        // relative humidity interpolation
-	setAlgorithms.insert("WIND");      // wind velocity interpolation (using a heuristic terrain effect)
+	setAlgorithms.insert("WIND_CURV"); // wind velocity interpolation (using a heuristic terrain effect)
 
 	return true;
 }
@@ -51,7 +51,7 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const string& _algoname,
 		return new IDWLapseAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs);
 	} else if (algoname == "RH"){
 		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs);
-	} else if (algoname == "WIND"){
+	} else if (algoname == "WIND_CURV"){
 		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
@@ -115,7 +115,7 @@ double ConstAlgorithm::getQualityRating(const MeteoData::Parameters& param)
 }
 
 
-bool ConstAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+void ConstAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
 {
 	//get a vector of all the relevant data
 	vector<double> vecData;
@@ -123,12 +123,10 @@ bool ConstAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject&
 
 	//check how many data points there are (not including nodata)
 	if (counter == 0)
-		return false;
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	//run algorithm
 	Interpol2D::constantGrid2DFill(Interpol1D::arithmeticMean(vecData), dem, grid);
-
-	return true;
 }
 
 
@@ -147,12 +145,10 @@ double StandardPressureAlgorithm::getQualityRating(const MeteoData::Parameters& 
 	return 0.3;
 }
 
-bool StandardPressureAlgorithm::calculate(const MeteoData::Parameters&, Grid2DObject& grid)
+void StandardPressureAlgorithm::calculate(const MeteoData::Parameters&, Grid2DObject& grid)
 {
 	//run algorithm
 	Interpol2D::stdPressureGrid2DFill(dem, grid);
-
-	return true;
 }
 
 
@@ -173,7 +169,7 @@ double ConstLapseRateAlgorithm::getQualityRating(const MeteoData::Parameters& pa
 	return 0.2;
 }
 
-bool ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+void ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
 {		
 	vector<double> vecAltitudes, vecData;
 	vector<StationData> vecMeta;
@@ -183,7 +179,7 @@ bool ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid
 	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;	
 
 	if ((vecAltitudes.size() == 0) || (nrOfMeasurments == 0))
-		return false;
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	double avgAltitudes = Interpol1D::arithmeticMean(vecAltitudes);
 	double avgData = Interpol1D::arithmeticMean(vecData);
@@ -206,8 +202,6 @@ bool ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid
 
 	//run algorithm
 	Interpol2D::constantLapseGrid2DFill(avgData, avgAltitudes, dem, vecCoefficients, funcptr, grid);
-
-	return true;
 }
 
 
@@ -228,19 +222,17 @@ double IDWAlgorithm::getQualityRating(const MeteoData::Parameters& param)
 	return 0.2;
 }
 
-bool IDWAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+void IDWAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
 {		
 	vector<double> vecData;
 	vector<StationData> vecMeta;
 	unsigned int nrOfMeasurments = getData(param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0)
-		return false;
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	//run algorithm
 	Interpol2D::IDWKrieging(dem, vecData, vecMeta, grid);
-
-	return true;
 }
 
 double IDWLapseAlgorithm::getQualityRating(const MeteoData::Parameters& param)
@@ -255,7 +247,7 @@ double IDWLapseAlgorithm::getQualityRating(const MeteoData::Parameters& param)
 	return 0.7;
 }
 
-bool IDWLapseAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+void IDWLapseAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
 {		
 	vector<double> vecAltitudes, vecData;
 	vector<StationData> vecMeta;
@@ -263,7 +255,7 @@ bool IDWLapseAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObje
 	getStationAltitudes(vecMeta, vecAltitudes);
 
 	if (nrOfMeasurments == 0)
-		return false;
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	//Set regression coefficients
 	std::vector<double> vecCoefficients;
@@ -272,8 +264,6 @@ bool IDWLapseAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObje
 	//run algorithm
 	Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
 	Interpol2D::LapseIDWKrieging(dem, &Interpol2D::LinProject, vecCoefficients, vecData, vecMeta, grid);
-
-	return true;
 }
 
 double RHAlgorithm::getQualityRating(const MeteoData::Parameters& param)
@@ -301,11 +291,11 @@ double RHAlgorithm::getQualityRating(const MeteoData::Parameters& param)
 	return 0.8;
 }
 
-bool RHAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+void RHAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
 {		
 	//This algorithm is only valid for RH
 	if (param != MeteoData::RH)
-		return 0.0;
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	vector<double> vecAltitudes, vecDataTA, vecDataRH;
 	vector<StationData> vecMeta;
@@ -321,7 +311,7 @@ bool RHAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& gr
 	getStationAltitudes(vecMeta, vecAltitudes);
 
 	if (vecDataTA.size() == 0) //No matching data
-		return false;
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject ta;
 	mi.interpolate(MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
@@ -348,8 +338,6 @@ bool RHAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& gr
 			grid.grid2D(ii,jj) = Interpol2D::DewPointtoRh(grid.grid2D(ii,jj), ta.grid2D(ii,jj), 1);
 		}
 	}
-
-	return true;
 }
 
 double SimpleWindInterpolationAlgorithm::getQualityRating(const MeteoData::Parameters& param)
@@ -375,11 +363,11 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const MeteoData::Param
 	return 1.0;
 }
 
-bool SimpleWindInterpolationAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+void SimpleWindInterpolationAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
 {		
 	//This algorithm is only valid for VW
 	if (param != MeteoData::VW)
-		return 0.0;
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	vector<double> vecAltitudes, vecDataVW, vecDataDW;
 	vector<StationData> vecMeta;
@@ -394,7 +382,8 @@ bool SimpleWindInterpolationAlgorithm::calculate(const MeteoData::Parameters& pa
 
 	getStationAltitudes(vecMeta, vecAltitudes);
 
-	if( vecDataDW.size() == 0) return false;
+	if( vecDataDW.size() == 0) 
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject dw;
 	mi.interpolate(MeteoData::DW, dw); //get DW interpolation from call back to Meteo2DInterpolator
@@ -406,7 +395,5 @@ bool SimpleWindInterpolationAlgorithm::calculate(const MeteoData::Parameters& pa
 	Interpol2D::LinRegression(vecAltitudes, vecDataVW, vecCoefficients);
 	Interpol2D::LapseIDWKrieging(dem, &Interpol2D::LinProject, vecCoefficients, vecDataVW, vecMeta, grid);
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
-
-	return true;
 }
 

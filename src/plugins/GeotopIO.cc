@@ -140,7 +140,7 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	for (unsigned int ii=0; ii<vecStation.size(); ii++){
 		if (vecStation.at(ii).size()>0){
 			const Coords& coord = vecStation.at(ii).at(0).position;
-			fout.precision(8);
+			fout.precision(12);
 			fout << coord.getEasting() << "\t" << coord.getNorthing() << "\t"
 				<< coord.getLat()<< "\t" << coord.getLon() << "\t" << coord.getAltitude() << "\t"
 				<< plugin_nodata << "\t" << plugin_nodata << "\t" << plugin_nodata << "\t" 

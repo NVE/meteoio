@@ -94,9 +94,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 			throw IOException("No interpolation algorithm with quality rating >0 found", AT);
 		} 
 		
-		if (!bestalgorithm->calculate(meteoparam, result)){
-			throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(meteoparam), AT);
-		}
+		bestalgorithm->calculate(meteoparam, result);
 	} else {
 		//Some default message, that interpolation for this parameter needs configuration
 		throw IOException("You need to configure the interpolation algorithms for parameter " + 
