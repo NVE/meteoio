@@ -71,17 +71,6 @@ class Meteo2DInterpolator {
 									   const std::string& algorithm, 
 									   std::vector<std::string>& vecArgs) const;
 
-		/*LEGACY*/
-		/*These methods are exposed until we offer a better API for requesting spatial interpolations
-		void interpolateP(Grid2DObject& p) const;
-		void interpolateHNW(Grid2DObject& hnw) const;
-		void interpolateTA(Grid2DObject& ta) const;
-		void interpolateRH(Grid2DObject& rh, Grid2DObject& ta) const;
-		void interpolateVW(Grid2DObject& vw) const;
-		void interpolateDW(Grid2DObject& dw) const;
-		void interpolateISWR(Grid2DObject& iswr) const;
-		void interpolateLWR(Grid2DObject& lwr) const;
-		*/
 };
 
 #endif

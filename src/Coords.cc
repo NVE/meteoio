@@ -321,7 +321,7 @@ void Coords::setGridIndex(const int _grid_i, const int _grid_j, const int _grid_
 void Coords::setProj(const std::string& _coordinatesystem, const std::string& _parameters) {
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
 	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system
-	if(coordsystem!="NULL" && (latitude==IOUtils::nodata) || (longitude==IOUtils::nodata) ) {
+	if ((coordsystem != "NULL") && ((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata))) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 

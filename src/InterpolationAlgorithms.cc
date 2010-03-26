@@ -7,14 +7,21 @@ const bool AlgorithmFactory::__init = AlgorithmFactory::initStaticData();
 
 bool AlgorithmFactory::initStaticData()
 {
-	setAlgorithms.insert("CST");
-	setAlgorithms.insert("STD_PRESS");
-	setAlgorithms.insert("CST_LAPSE");
-	setAlgorithms.insert("IDW");
-	setAlgorithms.insert("IDW_LAPSE");
-	setAlgorithms.insert("RH");
-	setAlgorithms.insert("WIND");
-	
+	/* 
+	 * Keywords for selecting the spatial interpolation algorithm among the 
+	 * available methods for single source and multiple sources interpolations. 
+	 * More details about some of these algorithms can be found in "A Meteorological 
+	 * Distribution System for Hight-Resolution Terrestrial Modeling (MicroMet)", Liston and Alder, 2006.
+	 */
+
+	setAlgorithms.insert("CST");       // constant fill
+	setAlgorithms.insert("STD_PRESS"); // standard air pressure interpolation
+	setAlgorithms.insert("CST_LAPSE"); // constant fill with an elevation lapse rate
+	setAlgorithms.insert("IDW");       // Inverse Distance Weighting fill
+	setAlgorithms.insert("IDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill
+	setAlgorithms.insert("RH");        // relative humidity interpolation
+	setAlgorithms.insert("WIND");      // wind velocity interpolation (using a heuristic terrain effect)
+
 	return true;
 }
 

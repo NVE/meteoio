@@ -39,39 +39,20 @@
  * @date   2009-01-20
  */
 
-class Interpol2D;
 typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude, 
 							   const double& new_altitude, const std::vector<double>& coeffs); 
  
 class Interpol2D {
 	public:
-		///Keywords for selecting the spatial interpolation algorithm among the available methods for single source and multiple sources interpolations. More details about some of these algorithms can be found in "A Meteorological Distribution System for Hight-Resolution Terrestrial Modeling (MicroMet)", Liston and Alder, 2006.
-		typedef enum INTERP_TYPES {
-			I_PRESS, ///< standard air pressure interpolation
-			I_RH, ///< relative humidity interpolation
-			I_VW, ///< wind velocity interpolation (using a heuristic terrain effect)
-			I_CST, ///< constant fill
-			I_IDWK, ///< Inverse Distance Weighting fill
-			I_LAPSE_CST, ///< constant fill with an elevation lapse rate
-			I_LAPSE_IDWK ///< Inverse Distance Weighting with an elevation lapse rate fill
-		} interp_types;
 		///Keywords for selecting the regression algorithm to use
 		typedef enum REG_TYPES {
 			R_CST, ///< no elevation dependence (ie: constant)
 			R_LIN ///< linear elevation dependence
 		} reg_types;
 		
-		Interpol2D(interp_types Isingle, 
-			interp_types Imultiple, 
-			const std::vector<double>& sourcesData, 
-			const std::vector<StationData>& sourcesMeta, 
-	    	const DEMObject& dem);
-		
-		void calculate(Grid2DObject& param_out);
-		void calculate(Grid2DObject& param_out, const std::vector<double>& vecExtraStations, Grid2DObject& extra_param_in);
-
 		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);		
-		static int LinRegression(const std::vector<double>& data_in, const std::vector<double>& elevations, std::vector<double>& coeffs);
+		static int LinRegression(const std::vector<double>& data_in, 
+							const std::vector<double>& elevations, std::vector<double>& coeffs);
 
 		static double getReferenceAltitude(const DEMObject& dem);
 
@@ -110,39 +91,15 @@ class Interpol2D {
 		static double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
 		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j, 
 								   const double& X2, const double& Y2);
-		static double AvgSources(const std::vector<double>& data_in);
-		static void BuildStationsElevations(const std::vector<StationData>& vecStations_in, std::vector<double>& vecElevations);
 		
 		//regressions
-		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, const int ignore_index);
-		
-		
-		
-		///Member function pointer
-		LapseRateProjectPtr LapseRateProject;
-		/*double (*LapseRateProject)(const double& value, 
-							const double& altitude, 
-							const double& new_altitude, 
-							const std::vector<double>& coeffs); 
-		*/
-
+		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, 
+								double& a, double& b, double& r, const int ignore_index);
 
 	private:
 		//static members
 		const static double wind_ys;			///coefficient for wind dependency on slope
 		const static double wind_yc;			///coefficient for wind dependency on curvature
-
-		double ref_altitude;				///elevation to use for common elevation reprojection
-		
-		interp_types single_type, multiple_type;	//interpolations choices for single and multiple sources
-		//reg_types reg_type;				//choice of regression methods
-		
-		unsigned int InputSize;
-		
-		std::vector<double> vecCoefficients;		///<Regression coefficients 0-3
-		const DEMObject& dem;				///<Reference to be initialized in the constructor
-		const std::vector<StationData>& InputMeta;	///<Reference to be initialized in the constructor
-		const std::vector<double>& inputData;		///<Reference to be initialized in the constructor
 };
 
 #endif
