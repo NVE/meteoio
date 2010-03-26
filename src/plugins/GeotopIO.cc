@@ -122,8 +122,8 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	vector<int> ymdhm = vector<int>(5);
 	map<string, unsigned int> mapParam;
 	initParamNames(mapParam);
-	cfg.getValue("METEOPATH", "INPUT", path);
-	cfg.getValue("METEOSEQ", "INPUT", vecSequence);
+	cfg.getValue("METEOPATH", "OUTPUT", path);
+	cfg.getValue("METEOSEQ", "OUTPUT", vecSequence);
 
 	//Check whether vecSequence is valid, that is the keys are part of mapParam
 	for (unsigned int ii=0; ii<vecSequence.size(); ii++){
