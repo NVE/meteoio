@@ -34,7 +34,7 @@
  * @section available_plugins Available plugins
  * So far the following children have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
  * - \subpage a3d "A3D" for reading original Alpine3D meteo files (no extra requirements)
- * - \subpage boschung "BOSCHUNG" for reading Boshung xml meteo files (requires libxml)
+ * - \subpage borma "BORMA" for reading Borma xml meteo files (requires libxml)
  * - \subpage imis "IMIS" for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
  * - \subpage geotop "GEOTOP" for reading original GeoTop meteo files (no extra requirements)
  * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
@@ -59,7 +59,7 @@ void IOHandler::registerPlugins()
 	const std::string popc_extra = "";
 #endif
 	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
-	mapPlugins["BOSCHUNG"]	= IOPlugin("libboschungio"+popc_extra+libsuffix, "BoschungIO", NULL, NULL);
+	mapPlugins["BORMA"]	= IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
 	mapPlugins["IMIS"]	= IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
 	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
 	mapPlugins["GSN"]	= IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
@@ -78,14 +78,14 @@ IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(con
 
 //Copy constructor
 #ifdef _POPC_
-//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(aio.cfg), boschungio(aio.cfg), imisio(aio.cfg){
+//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(aio.cfg), bormaio(aio.cfg), imisio(aio.cfg){
 	//Nothing else so far
 //}
 #else
 IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fileio(aio.cfg)
 {
 	//Nothing else so far
-	//TODO: Deal with the IOInterface* pointers, e.g. boschungio
+	//TODO: Deal with the IOInterface* pointers, e.g. bormaio
 }
 #endif
 

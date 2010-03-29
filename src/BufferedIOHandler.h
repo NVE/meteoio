@@ -49,7 +49,7 @@ class BufferedIOHandler : public IOInterface {
 	public:
 	
 		/**
-		 * @brief The constructor accepts an already initialized child of IOInterface (e.g. A3DIO, BoschungIO, ImisIO)
+		 * @brief The constructor accepts an already initialized child of IOInterface (e.g. A3DIO, BormaIO, ImisIO)
 		 *        and a ConfigReader object
 		 *    
 		 * Example Usage:

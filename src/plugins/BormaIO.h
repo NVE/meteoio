@@ -1,5 +1,22 @@
-#ifndef __BOSCHUNGIO_H__
-#define __BOSCHUNGIO_H__
+/***********************************************************************************/
+/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#ifndef __BORMAIO_H__
+#define __BORMAIO_H__
 
 #include "IOInterface.h"
 #include "ConfigReader.h"
@@ -15,22 +32,22 @@
 
 
 /**
- * @class BoschungIO
- * @brief This class enables the access meteo data in Boschung's XML format
+ * @class BormaIO
+ * @brief This class enables the access meteo data in Borma's XML format
  *
  * @author Thomas Egger
  * @date   2008-11-20
  */
-class BoschungIO : public IOInterface {
+class BormaIO : public IOInterface {
 	public:
-		//virtual BoschungIO* clone() const;
+		//virtual BormaIO* clone() const;
 
-		BoschungIO(void (*delObj)(void*), const std::string& filename);
+		BormaIO(void (*delObj)(void*), const std::string& filename);
 
-		BoschungIO(const std::string& configfile);
-		BoschungIO(const BoschungIO&);
-		BoschungIO(const ConfigReader&);
-		~BoschungIO() throw();
+		BormaIO(const std::string& configfile);
+		BormaIO(const BormaIO&);
+		BormaIO(const ConfigReader&);
+		~BormaIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 

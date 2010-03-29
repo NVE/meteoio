@@ -675,7 +675,7 @@ LIBOBJS
 POPCC
 MODE
 PROJ4
-BOSCHUNGIO
+BORMAIO
 GSNIO
 IMISIO
 GEOTOPIO
@@ -1288,7 +1288,7 @@ Optional Packages:
   --with-gcc-arch=<arch>  use architecture <arch> for gcc -march/-mtune,
                           instead of guessing
   --with-proj4	  enable proj4 geographic coordinates conversions (libproj required)
-  --with-boschungio	  enable BoschungIO (libxml++-2.6 required)
+  --with-bormaio	  enable BormaIO (libxml++-2.6 required)
   --with-gsnio	          enable GSNIO (gsoap++ required)
   --with-imisio           enable IMISIO ($ORACLE_HOME needs to be set)
   --with-geotopio         enable GeotopIO
@@ -5835,12 +5835,12 @@ fi
 PROJ4=no
 
 
-# Check whether --with-boschungio was given.
-if test "${with_boschungio+set}" = set; then
-  withval=$with_boschungio;
+# Check whether --with-bormaio was given.
+if test "${with_bormaio+set}" = set; then
+  withval=$with_bormaio;
 fi
 
-BOSCHUNGIO=no
+BORMAIO=no
 
 
 # Check whether --with-gsnio was given.
@@ -6409,10 +6409,10 @@ fi
 
 fi
 
-if test "$with_boschungio" == "yes"
+if test "$with_bormaio" == "yes"
 then
-	{ echo "$as_me:$LINENO: BoschungIO enabled. Checking for prerequisites..." >&5
-echo "$as_me: BoschungIO enabled. Checking for prerequisites..." >&6;}
+	{ echo "$as_me:$LINENO: BormaIO enabled. Checking for prerequisites..." >&5
+echo "$as_me: BormaIO enabled. Checking for prerequisites..." >&6;}
 	# Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -6719,7 +6719,7 @@ fi
 
 
 
-	BOSCHUNGIO=yes
+	BORMAIO=yes
 
 fi
 
@@ -7642,7 +7642,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 POPCC!$POPCC$ac_delim
 MODE!$MODE$ac_delim
 PROJ4!$PROJ4$ac_delim
-BOSCHUNGIO!$BOSCHUNGIO$ac_delim
+BORMAIO!$BORMAIO$ac_delim
 GSNIO!$GSNIO$ac_delim
 IMISIO!$IMISIO$ac_delim
 GEOTOPIO!$GEOTOPIO$ac_delim

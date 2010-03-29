@@ -10,7 +10,7 @@
 MODE	 = @MODE@
 
 # plugins to build (yes/no)
-BOSCHUNGIO 	= @BOSCHUNGIO@
+BORMAIO 	= @BORMAIO@
 IMISIO		= @IMISIO@
 GEOTOPIO	= @GEOTOPIO@
 GSNIO		= @GSNIO@
@@ -139,7 +139,7 @@ help:
 
 seq: $(LIBDIR)/libmeteoio.a build_dynamiclibs
 
-build_dynamiclibs: $(LIBDIR)/libboschungio.so \
+build_dynamiclibs: $(LIBDIR)/libbormaio.so \
 			$(LIBDIR)/libimisio.so \
 			$(LIBDIR)/libgeotopio.so \
 			$(LIBDIR)/libgsnio.so \
@@ -205,11 +205,11 @@ $(LIBDIR)/libmeteoiopopc.a:  $(METEOIO_OBJ_POPC)
 
 # Dynamic libraries seq
 
-$(LIBDIR)/libboschungio.so: $(PLUGINDIR)/BoschungIO.cc $(PLUGINDIR)/BoschungIO.h $(LIBDIR)/libmeteoio.a
-ifeq ($(BOSCHUNGIO),yes)
-	@echo **** Compiling Boschung plugin
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(PLUGINDIR)/BoschungIO.o $(PLUGINDIR)/BoschungIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libboschungio.so -o $@ $(PLUGINDIR)/BoschungIO.o $(LDFLAGS) @XMLPP_LIBS@
+$(LIBDIR)/libbormaio.so: $(PLUGINDIR)/BormaIO.cc $(PLUGINDIR)/BormaIO.h $(LIBDIR)/libmeteoio.a
+ifeq ($(BORMAIO),yes)
+	@echo **** Compiling Borma plugin
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @XMLPP_CFLAGS@ -c -o $(PLUGINDIR)/BormaIO.o $(PLUGINDIR)/BormaIO.cc
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libbormaio.so -o $@ $(PLUGINDIR)/BormaIO.o $(LDFLAGS) @XMLPP_LIBS@
 endif
 
 $(LIBDIR)/libgeotopio.so:$(PLUGINDIR)/GeotopIO.cc $(PLUGINDIR)/GeotopIO.h $(LIBDIR)/libmeteoio.a

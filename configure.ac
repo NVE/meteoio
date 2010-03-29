@@ -109,8 +109,8 @@ echo "=       ACTIVATED PLUGINS       ="
 echo "================================="
 AC_ARG_WITH(proj4,	[  --with-proj4	  enable proj4 geographic coordinates conversions (libproj required)])
 AC_SUBST(PROJ4,no)
-AC_ARG_WITH(boschungio, [  --with-boschungio	  enable BoschungIO (libxml++-2.6 required)])
-AC_SUBST(BOSCHUNGIO,no)
+AC_ARG_WITH(bormaio, [  --with-bormaio	  enable BormaIO (libxml++-2.6 required)])
+AC_SUBST(BORMAIO,no)
 AC_ARG_WITH(gsnio,      [  --with-gsnio	          enable GSNIO (gsoap++ required)])
 AC_SUBST(GSNIO,no)
 AC_ARG_WITH(imisio,	[  --with-imisio           enable IMISIO ($ORACLE_HOME needs to be set)])
@@ -159,9 +159,9 @@ then
 	AC_SUBST(GSNIO,yes)	
 fi
 
-if test "$with_boschungio" == "yes"
+if test "$with_bormaio" == "yes"
 then
-	AC_MSG_NOTICE([BoschungIO enabled. Checking for prerequisites...])
+	AC_MSG_NOTICE([BormaIO enabled. Checking for prerequisites...])
 	AC_PATH_PROG(PKG_CONFIG, pkg-config, no) 
 	if test "$PKG_CONFIG" == "no"; then
 		echo "*** The pkg-config script could not be found. Make sure it is"
@@ -180,7 +180,7 @@ then
 	AC_SUBST(XMLPP_CFLAGS)
  	AC_SUBST(XMLPP_LIBS)
 
-	AC_SUBST(BOSCHUNGIO,yes)
+	AC_SUBST(BORMAIO,yes)
 fi
 
 if test "$with_imisio" == "yes"

@@ -9,7 +9,7 @@
 #include "DEMLoader.h"
 #include "ConfigReader.h"
 #include "plugins/ARCIO.h"
-//#include "plugins/BoschungIO.h"
+//#include "plugins/BormaIO.h"
 #include "plugins/GeotopIO.h"
 #include "plugins/GrassIO.h"
 #include "IOInterface.h"
@@ -43,7 +43,7 @@ IOInterface* DEMLoader::generateIOInterface(
 		cfg.addKey("COORDPARAM","");
 		if(cInterfaceType == "ARCIO")
 			io = new ARCIO(cfg);
-		//else if(cInterfaceType ==  "BoschungIO" ): io = new BoschungIO(cfg);
+		//else if(cInterfaceType ==  "BormaIO" ): io = new BormaIO(cfg);
 		else if(cInterfaceType == "GeotopIO" )
 			io = new GeotopIO(cfg);
 		else if(cInterfaceType == "GrassIO" )
