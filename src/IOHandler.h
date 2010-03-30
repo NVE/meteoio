@@ -52,9 +52,15 @@ class IOHandler : public IOInterface {
 						std::vector<METEO_DATASET>& vecMeteo, 
 						std::vector<STATION_DATASET>& vecStation,
 						const unsigned& stationindex=IOUtils::npos);
+#ifndef _POPC_
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
+#else
+		virtual void writeMeteoData(std::vector< std::vector<MeteoData> > vecMeteo, 
+							   std::vector< std::vector<StationData> > vecStation,
+							   const std::string& name="");
+#endif
 		void readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);

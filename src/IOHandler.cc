@@ -61,7 +61,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
 	mapPlugins["BORMA"]	= IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
 	mapPlugins["IMIS"]	= IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
+	mapPlugins["GEOTOP"]= IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
 	mapPlugins["GSN"]	= IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
 	mapPlugins["ARC"]	= IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
 	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
@@ -236,10 +236,15 @@ void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	IOInterface *plugin = getPlugin("METEO", "INPUT");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
-
+#ifdef _POPC_
+void IOHandler::writeMeteoData(std::vector< std::vector<MeteoData> > vecMeteo, 
+						 std::vector< std::vector<StationData> > vecStation,
+						 const std::string& name)
+#else 
 void IOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 						 const std::vector< std::vector<StationData> >& vecStation,
 						 const std::string& name)
+#endif
 {
 	IOInterface *plugin = getPlugin("METEO", "OUTPUT");
 	plugin->writeMeteoData(vecMeteo, vecStation, name);
