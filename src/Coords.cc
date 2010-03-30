@@ -666,46 +666,50 @@ void Coords::CH1903_to_WGS84(double east_in, double north_in, double& lat_out, d
 	*/
 }
 
-int Coords::getUTMZone(const double latitude, const double longitude, std::string& zone_out) const
+int Coords::getUTMZone(const double _latitude, const double _longitude, std::string& zone_out) const
 {//This routine determines the correct UTM letter designator for the given latitude
-//UTM limits its coverage to [80S , 84N], outside of this, returns Z for the zone
+//UTM limits its coverage to [80S , 84N], outside of this, returns Y/Z/A/B for the zone
 
 	//computing zone number, assuming longitude in [-180. ; 180[
-	int ZoneNumber = int((longitude + 180.)/6.) + 1;
+	int ZoneNumber = int((_longitude + 180.)/6.) + 1;
 
 	// Special zones for Scandinavia
-	if( latitude >= 72.0 && latitude < 84.0 ) {
-		if(      longitude >= 0.0  && longitude <  9.0 ) ZoneNumber = 31;
-		else if( longitude >= 9.0  && longitude < 21.0 ) ZoneNumber = 33;
-		else if( longitude >= 21.0 && longitude < 33.0 ) ZoneNumber = 35;
-		else if( longitude >= 33.0 && longitude < 42.0 ) ZoneNumber = 37;
+	if( _latitude >= 72.0 && _latitude < 84.0 ) {
+		if(      _longitude >= 0.0  && _longitude <  9.0 ) ZoneNumber = 31;
+		else if( _longitude >= 9.0  && _longitude < 21.0 ) ZoneNumber = 33;
+		else if( _longitude >= 21.0 && _longitude < 33.0 ) ZoneNumber = 35;
+		else if( _longitude >= 33.0 && _longitude < 42.0 ) ZoneNumber = 37;
 	 }
-	if( latitude >= 56.0 && latitude < 64.0 && longitude >= 3.0 && longitude < 12.0 ) {
+	if( latitude >= 56.0 && _latitude < 64.0 && _longitude >= 3.0 && _longitude < 12.0 ) {
 		ZoneNumber = 32;
 	}
 
 	//getting zone letter
-	char zoneLetter = 'Z';
-	if     ((84 >= latitude) && (latitude >= 72)) zoneLetter = 'X';
-	else if((72 > latitude) && (latitude >= 64)) zoneLetter = 'W';
-	else if((64 > latitude) && (latitude >= 56)) zoneLetter = 'V';
-	else if((56 > latitude) && (latitude >= 48)) zoneLetter = 'U';
-	else if((48 > latitude) && (latitude >= 40)) zoneLetter = 'T';
-	else if((40 > latitude) && (latitude >= 32)) zoneLetter = 'S';
-	else if((32 > latitude) && (latitude >= 24)) zoneLetter = 'R';
-	else if((24 > latitude) && (latitude >= 16)) zoneLetter = 'Q';
-	else if((16 > latitude) && (latitude >= 8)) zoneLetter = 'P';
-	else if(( 8 > latitude) && (latitude >= 0)) zoneLetter = 'N';
-	else if(( 0 > latitude) && (latitude >= -8)) zoneLetter = 'M';
-	else if((-8 > latitude) && (latitude >= -16)) zoneLetter = 'L';
-	else if((-16 > latitude) && (latitude >= -24)) zoneLetter = 'K';
-	else if((-24 > latitude) && (latitude >= -32)) zoneLetter = 'J';
-	else if((-32 > latitude) && (latitude >= -40)) zoneLetter = 'H';
-	else if((-40 > latitude) && (latitude >= -48)) zoneLetter = 'G';
-	else if((-48 > latitude) && (latitude >= -56)) zoneLetter = 'F';
-	else if((-56 > latitude) && (latitude >= -64)) zoneLetter = 'E';
-	else if((-64 > latitude) && (latitude >= -72)) zoneLetter = 'D';
-	else if((-72 > latitude) && (latitude >= -80)) zoneLetter = 'C';
+	char zoneLetter='Z';
+	if     ((0 >= _longitude) && (_latitude >  84)) zoneLetter = 'Y';
+	else if((0 <  _longitude) && (_latitude >  84)) zoneLetter = 'Z';
+	else if((84 >= _latitude) && (_latitude >= 72)) zoneLetter = 'X';
+	else if((72 > _latitude) && (_latitude >= 64)) zoneLetter = 'W';
+	else if((64 > _latitude) && (_latitude >= 56)) zoneLetter = 'V';
+	else if((56 > _latitude) && (_latitude >= 48)) zoneLetter = 'U';
+	else if((48 > _latitude) && (_latitude >= 40)) zoneLetter = 'T';
+	else if((40 > _latitude) && (_latitude >= 32)) zoneLetter = 'S';
+	else if((32 > _latitude) && (_latitude >= 24)) zoneLetter = 'R';
+	else if((24 > _latitude) && (_latitude >= 16)) zoneLetter = 'Q';
+	else if((16 > _latitude) && (_latitude >= 8)) zoneLetter = 'P';
+	else if(( 8 > _latitude) && (_latitude >= 0)) zoneLetter = 'N';
+	else if(( 0 > _latitude) && (_latitude >= -8)) zoneLetter = 'M';
+	else if((-8 > _latitude) && (_latitude >= -16)) zoneLetter = 'L';
+	else if((-16 > _latitude) && (_latitude >= -24)) zoneLetter = 'K';
+	else if((-24 > _latitude) && (_latitude >= -32)) zoneLetter = 'J';
+	else if((-32 > _latitude) && (_latitude >= -40)) zoneLetter = 'H';
+	else if((-40 > _latitude) && (_latitude >= -48)) zoneLetter = 'G';
+	else if((-48 > _latitude) && (_latitude >= -56)) zoneLetter = 'F';
+	else if((-56 > _latitude) && (_latitude >= -64)) zoneLetter = 'E';
+	else if((-64 > _latitude) && (_latitude >= -72)) zoneLetter = 'D';
+	else if((-72 > _latitude) && (_latitude >= -80)) zoneLetter = 'C';
+	else if((0 >= _longitude) && (latitude <= -80)) zoneLetter = 'A';
+	else if((0 <  _longitude) && (latitude <= -80)) zoneLetter = 'B';
 
 	std::stringstream zone;
 	zone << ZoneNumber << zoneLetter;
@@ -793,17 +797,25 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	const double k0 = 0.9996;		//scale factor for the projection
 
 	//UTM Zone information
-	char zoneLetter;
 	int zoneNumber;
+	char zoneLetter;
 	if 	((sscanf(coordparam.c_str(), "%d%c", &zoneNumber, &zoneLetter) < 2) &&
 		(sscanf(coordparam.c_str(), "%d %c)", &zoneNumber, &zoneLetter) < 2)) {
 			throw InvalidFormatException("Can not parse given UTM zone: "+coordparam,AT);
 	}
+	zoneLetter = toupper(zoneLetter); //just in case... (sorry for the pun!)
+	if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
+			//Special zones for the poles: we should NOT use UTM in these regions!
+			throw InvalidFormatException("Invalid UTM zone: "+coordparam+" (trying to use UTM in polar regions)",AT);
+	}
+
+	//set reference parameters: central meridian of the zone, true northing and easting
+	//please note that the special zones still use the reference meridian as given by their zone number (ie: even if it might not be central anymore)
+	const int long0 = (zoneNumber - 1)*6 - 180 + 3;  //+3 puts origin in "middle" of zone as required for the projection meridian (might not be the middle for special zones)
 	if(zoneLetter<='N') {
 		north_in -= 10000000.0; //offset used for southern hemisphere
 	}
 	east_in -= 500000.0; //longitude offset: x coordinate is relative to central meridian
-	const int long0 = (zoneNumber - 1)*6 - 180 + 3;  //+3 puts origin in middle of zone; HACK: this does not account for the Scandinavian irregular zones
 
 	//calculating footprint latitude fp
 	const double arc = north_in/k0; //Meridional arc
@@ -832,7 +844,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	const double Q7 = (5. - 2.*C1 + 28.*T1 - 3.*C1*C1 + 8.*eP2 + 24.*T1*T1) * 1./120.*D*D*D*D*D;
 
 	lat_out = (fp - Q1 * (Q2 - Q3 + Q4))*to_deg;
-	long_out = long0 + ((Q5 - Q6 + Q7)/cos(fp))*to_deg;
+	long_out = (double)long0 + ((Q5 - Q6 + Q7)/cos(fp))*to_deg;
 }
 
 /**
