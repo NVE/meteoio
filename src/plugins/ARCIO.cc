@@ -20,7 +20,16 @@
 /**
  * @page arc ARC
  * @section arc_format Format
- * This is for reading grid data in the ARC-GIS format, or more properly, ESRI ascii grid format (see http://en.wikipedia.org/wiki/ESRI_grid). The landuse codes have the format 1LLDC where:
+ * This is for reading grid data in the ARC-GIS format, or more properly, ESRI ascii grid format (see http://en.wikipedia.org/wiki/ESRI_grid). We consider the following specification (in the absence of an official specification):
+ * - a single space character is used as field spearator
+ * - the header data is right aligned to the 23rd column
+ * - float header data has 3 digits precision
+ * - all grid data is written as INT (so data is rounded if necessary)
+ * 
+ * These specifications should reflect commonly accepted practise.
+ *
+ * @section lus_format Land Use Format
+ * The landuse codes are coming from PREVAH and have the format 1LLDC where:
  * - LL is the land use code as given in the table given below
  * - D is the soil depth
  * - C is the field capacity
@@ -281,16 +290,16 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	fout << fixed << showpoint << setprecision(6);
 
 	try {
-		fout << "ncols \t\t" << grid_in.ncols << endl;
-		fout << "nrows \t\t" << grid_in.nrows << endl;
-		fout << "xllcorner \t" << llcorner.getEasting() << endl;
-		fout << "yllcorner \t" << llcorner.getNorthing() << endl;
-		fout << "cellsize \t" << grid_in.cellsize << endl;
-		fout << "NODATA_value \t" << (int)(IOUtils::nodata) << endl;
+		fout << "ncols " << setw(23-6) << grid_in.ncols << endl;
+		fout << "nrows " << setw(23-6) << grid_in.nrows << endl;
+		fout << "xllcorner " << setw(23-10) << setprecision(3) << llcorner.getEasting() << endl;
+		fout << "yllcorner " << setw(23-10) << setprecision(3) << llcorner.getNorthing() << endl;
+		fout << "cellsize " << setw(23-9) << setprecision(3) << grid_in.cellsize << endl;
+		fout << "NODATA_value " << (int)(IOUtils::nodata) << endl;
 
 		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 			for (unsigned int ll=0; ll < grid_in.ncols; ll++){
-				fout << grid_in.grid2D(ll, kk) << "\t";
+				fout << (int)round(grid_in.grid2D(ll, kk)) << " ";
 			}
 			fout << endl;
 		}
