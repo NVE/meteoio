@@ -78,6 +78,8 @@ class BufferedIOHandler : public IOInterface {
 		 * @param vecStation A vector of StationData objects to be filled with meta data
 		 */
 		void getNextMeteoData(const Date_IO& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+
+		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
 		
 		/**
 		 * @brief See BufferedIOHandler::readMeteoData(const Date& date_in, 

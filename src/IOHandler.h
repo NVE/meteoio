@@ -48,6 +48,7 @@ class IOHandler : public IOInterface {
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
+		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 						std::vector<METEO_DATASET>& vecMeteo, 
 						std::vector<STATION_DATASET>& vecStation,

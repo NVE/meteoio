@@ -203,6 +203,12 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 	plugin->readLanduse(landuse_out);
 }
 
+void IOHandler::readStationData(const Date_IO& date, std::vector<StationData>& vecStation)
+{
+	IOInterface *plugin = getPlugin("STATION", "INPUT");
+	plugin->readStationData(date, vecStation);
+}
+
 void IOHandler::readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation)
 {
 	vecMeteo.clear();

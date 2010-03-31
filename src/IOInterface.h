@@ -125,6 +125,20 @@ class IOInterface : public PluginObject {
 		*/
 		virtual void readLanduse(Grid2DObject& landuse_out) = 0;
 
+		/**
+		* @brief Fill vecStation with StationData objects for a certain date of interest  
+		*
+		* Example Usage:
+		* @code
+		* vector<StationData> vecStation;  //empty vector
+		* Date_IO d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* IOHandler io1("io.ini");
+		* io1.readStationData(d1, vecStation);
+		* @endcode
+		* @param date A Date_IO object representing the date for which the meta data is to be fetched
+		* @param vecStation  A vector of StationData objects to be filled with meta data
+		*/
+		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation) = 0;
 
 		/**
 		* @brief Fill vecMeteo and vecStation with a time series of objects  

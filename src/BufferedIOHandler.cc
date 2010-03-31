@@ -95,6 +95,11 @@ void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject&
 	_grid2Dobj = tmpgrid2D;
 }
 
+void BufferedIOHandler::readStationData(const Date_IO& date, std::vector<StationData>& vecStation)
+{
+	iohandler.readStationData(date, vecStation);
+}
+
 void BufferedIOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 							    const std::vector< std::vector<StationData> >& vecStation,
 							    const std::string& name)

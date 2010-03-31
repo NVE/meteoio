@@ -194,6 +194,19 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	}
 }
 
+void GeotopIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation)
+{
+	std::string path="", prefix="";
+	std::vector<std::string> tmpvec, vecColumnNames;
+
+	vecStation.clear();
+
+	cfg.getValue("METEOPATH", "INPUT", path); 
+	cfg.getValue("METEOPREFIX", "INPUT", prefix);
+
+	readMetaData(vecStation, vecColumnNames, path + "/" + prefix + ".txt");
+}
+
 void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,

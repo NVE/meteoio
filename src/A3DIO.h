@@ -46,6 +46,8 @@ class A3DIO : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 
+		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
+
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo);
 

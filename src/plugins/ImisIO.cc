@@ -125,6 +125,15 @@ void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
+void ImisIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation)
+{
+	vecStation.clear();
+
+	if (vecMyStation.size() == 0)
+		readStationMetaData(); //reads all the station meta data into the vecMyStation
+
+	vecStation = vecMyStation;
+}
 
 void ImisIO::readStationMetaData()
 {

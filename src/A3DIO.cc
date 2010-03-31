@@ -138,6 +138,12 @@ void A3DIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
+void A3DIO::readStationData(const Date_IO&, std::vector<StationData>&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
 void A3DIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	std::vector< std::vector<StationData> > vecStation;

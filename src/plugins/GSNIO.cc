@@ -152,6 +152,21 @@ void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
+void GSNIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation)
+{
+	vecStation.clear();
+
+	if (vecStationName.size() == 0)
+		readStationNames(); //reads station names into vector<string> vecStationName
+
+	for (unsigned int ii=0; ii<vecStationName.size(); ii++){ //loop through stations
+		StationData sd;
+		readStationMetaData(sd, ii);
+
+		vecStation.push_back(sd);
+	}
+}
+
 void GSNIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
