@@ -43,6 +43,8 @@ parclass IOHandler {
 		virtual void read2DGrid([out]Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
+		virtual void readStationData([in]const Date_IO& date, 
+			     	[proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
 		virtual void writeMeteoData([in,proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET> vecMeteo,
 			     [in,proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET> vecStation,
 			     [in]const std::string& name);
