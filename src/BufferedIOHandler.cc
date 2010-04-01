@@ -100,9 +100,15 @@ void BufferedIOHandler::readStationData(const Date_IO& date, std::vector<Station
 	iohandler.readStationData(date, vecStation);
 }
 
-void BufferedIOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+#ifdef _POPC_
+void BufferedIOHandler::writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
+							    std::vector< std::vector<StationData> >& vecStation,
+							    const std::string& name)
+#else 
+void BufferedIOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 							    const std::vector< std::vector<StationData> >& vecStation,
 							    const std::string& name)
+#endif
 {
 	iohandler.writeMeteoData(vecMeteo, vecStation, name);
 }
@@ -309,7 +315,7 @@ void BufferedIOHandler::setBufferDuration(const Date_IO& _beforeDate, const Date
 }
 
 void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
-							   std::vector< std::vector<MeteoData> >& vecMeteo, 
+							   std::vector< std::vector<MeteoData> >& vecMeteo,
 							   std::vector< std::vector<StationData> >& vecStation,
 							   const unsigned int& stationindex)
 	

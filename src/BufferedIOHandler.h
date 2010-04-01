@@ -130,10 +130,15 @@ class BufferedIOHandler : public IOInterface {
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
+#ifdef _POPC_
+		virtual void writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
+							   std::vector< std::vector<StationData> >& vecStation,
+							   const std::string& name="");
+#else
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
-
+#endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
 		void bufferAlways(const bool& bufferalways);

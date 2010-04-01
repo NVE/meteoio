@@ -243,9 +243,9 @@ void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
 #ifdef _POPC_
-void IOHandler::writeMeteoData(std::vector< std::vector<MeteoData> > vecMeteo, 
-						 std::vector< std::vector<StationData> > vecStation,
-						 const std::string& name)
+void IOHandler::writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
+			     std::vector< std::vector<StationData> >& vecStation,
+			     const std::string& name)
 #else 
 void IOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
 						 const std::vector< std::vector<StationData> >& vecStation,
