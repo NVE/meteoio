@@ -43,6 +43,8 @@ class Grid3DObject{
 			unsigned int iz; ///<grid index along Z
 		} grid_point;
 
+		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
+
 		/**
 		* Default constructor.
 		* Initializes all variables to 0, except nodata, which is initialized to -9999.0

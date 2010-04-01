@@ -22,12 +22,13 @@
 #error
 #endif
 
+#include <map>
+#include <string>
+
 #include "IOInterface.h"
 #include "A3DIO.h"
 #include "IOExceptions.h"
 #include "IOPlugin.h"
-
-#include <map>
 
 typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
@@ -49,19 +50,14 @@ class IOHandler : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+
+		virtual void writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
+							   const std::vector<STATION_DATASET>& vecStation,
+							   const std::string& name="");
+		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 						std::vector<METEO_DATASET>& vecMeteo, 
 						std::vector<STATION_DATASET>& vecStation,
 						const unsigned& stationindex=IOUtils::npos);
-#ifndef _POPC_
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::vector< std::vector<StationData> >& vecStation,
-							   const std::string& name="");
-#else
-		virtual void writeMeteoData(std::vector< std::vector<MeteoData> > vecMeteo, 
-							   std::vector< std::vector<StationData> > vecStation,
-							   const std::string& name="");
-#endif
 		void readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);

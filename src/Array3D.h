@@ -121,6 +121,28 @@ template<class T> class Array3D {
 		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
 		Array3DProxy<T> operator[](const unsigned int& i);
 
+		Array3D<T>& operator =(const Array3D<T>&);
+		
+		Array3D<T>& operator+=(const T& rhs);
+		const Array3D<T> operator+(const T& rhs);
+		Array3D<T>& operator+=(const Array3D<T>& rhs);
+		const Array3D<T> operator+(const Array3D<T>& rhs);
+
+		Array3D<T>& operator-=(const T& rhs);
+		const Array3D<T> operator-(const T& rhs);
+		Array3D<T>& operator-=(const Array3D<T>& rhs);
+		const Array3D<T> operator-(const Array3D<T>& rhs);
+
+		Array3D<T>& operator*=(const T& rhs);
+		const Array3D<T> operator*(const T& rhs);
+		Array3D<T>& operator*=(const Array3D<T>& rhs);
+		const Array3D<T> operator*(const Array3D<T>& rhs);
+
+		Array3D<T>& operator/=(const T& rhs);
+		const Array3D<T> operator/(const T& rhs);
+		Array3D<T>& operator/=(const Array3D<T>& rhs);
+		const Array3D<T> operator/(const Array3D<T>& rhs);
+
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
 		unsigned int nx;
@@ -323,5 +345,210 @@ template<class T> T Array3D<T>::getMean(const IOUtils::nodata_handling flag_noda
 		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
+
+//arithmetic operators
+template<class T> Array3D<T>& Array3D<T>::operator=(const Array3D<T>& source) {
+	if(this != &source) {
+		nx = source.nx;
+		ny = source.ny;
+		nz = source.nz;
+		nxny = source.nxny;
+		vecData = source.vecData;
+	}
+	return *this;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator+=(const Array3D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
+		throw IOException("Trying to add two Array3D objects with different dimensions", AT);
+
+	//Add to every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) += rhs(ii,jj,kk);
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator+(const Array3D<T>& rhs)
+{
+	Array3D<T> result = *this; //make a copy
+	result += rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator+=(const T& rhs)
+{
+	//Add to every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) += rhs;
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator+(const T& rhs)
+{
+	Array3D<T> result = *this;
+	result += rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator-=(const Array3D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
+		throw IOException("Trying to substract two Array3D objects with different dimensions", AT);
+
+	//Substract to every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) -= rhs(ii,jj,kk);
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator-(const Array3D<T>& rhs)
+{
+	Array3D<T> result = *this; //make a copy
+	result -= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator-=(const T& rhs)
+{
+	//Substract to every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) -= rhs;
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator-(const T& rhs)
+{
+	Array3D<T> result = *this;
+	result -= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator*=(const Array3D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
+		throw IOException("Trying to multiply two Array3D objects with different dimensions", AT);
+
+	//Multiply every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) *= rhs(ii,jj,kk);
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator*(const Array3D<T>& rhs)
+{
+	Array3D<T> result = *this; //make a copy
+	result *= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator*=(const T& rhs)
+{
+	//Multiply every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) *= rhs;
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator*(const T& rhs)
+{
+	Array3D<T> result = *this;
+	result *= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator/=(const Array3D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
+		throw IOException("Trying to divide two Array3D objects with different dimensions", AT);
+
+	//Divide every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) /= rhs(ii,jj,kk);
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator/(const Array3D<T>& rhs)
+{
+	Array3D<T> result = *this; //make a copy
+	result /= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator/=(const T& rhs)
+{
+	//Divide every single member of the Array3D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) /= rhs;
+			}
+		}
+	}
+
+	return *this;
+}
+
+template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
+{
+	Array3D<T> result = *this;
+	result /= rhs; //already implemented
+
+	return result;
+}
+
 
 #endif

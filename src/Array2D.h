@@ -94,16 +94,28 @@ template<class T> class Array2D {
 		T& operator ()(const unsigned int& x, const unsigned int& y);
 		const T operator ()(const unsigned int& x, const unsigned int& y) const;
 		Array2DProxy<T> operator[](const unsigned int& i);
+
+		Array2D<T>& operator =(const Array2D<T>&);
 		
 		Array2D<T>& operator+=(const T& rhs);
 		const Array2D<T> operator+(const T& rhs);
 		Array2D<T>& operator+=(const Array2D<T>& rhs);
 		const Array2D<T> operator+(const Array2D<T>& rhs);
 
+		Array2D<T>& operator-=(const T& rhs);
+		const Array2D<T> operator-(const T& rhs);
+		Array2D<T>& operator-=(const Array2D<T>& rhs);
+		const Array2D<T> operator-(const Array2D<T>& rhs);
+
 		Array2D<T>& operator*=(const T& rhs);
 		const Array2D<T> operator*(const T& rhs);
 		Array2D<T>& operator*=(const Array2D<T>& rhs);
 		const Array2D<T> operator*(const Array2D<T>& rhs);
+
+		Array2D<T>& operator/=(const T& rhs);
+		const Array2D<T> operator/(const T& rhs);
+		Array2D<T>& operator/=(const Array2D<T>& rhs);
+		const Array2D<T> operator/(const Array2D<T>& rhs);
 
 	protected:
 		std::vector<T> vecData;
@@ -136,7 +148,6 @@ template<class T> const T Array2D<T>::operator()(const unsigned int& x, const un
 template<class T> Array2DProxy<T> Array2D<T>::operator[](const unsigned int& i) {
 	return Array2DProxy<T>(*this, i); 
 }
-
 
 template<class T> Array2D<T>::Array2D() {
 	nx = ny = 0;
@@ -289,6 +300,16 @@ template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_noda
 	}
 }
 
+//arithmetic operators
+template<class T> Array2D<T>& Array2D<T>::operator=(const Array2D<T>& source) {
+	if(this != &source) {
+		nx = source.nx;
+		ny = source.ny;
+		vecData = source.vecData;
+	}
+	return *this;
+}
+
 template<class T> Array2D<T>& Array2D<T>::operator+=(const Array2D<T>& rhs)
 {
 	//They have to have equal size
@@ -333,11 +354,55 @@ template<class T> const Array2D<T> Array2D<T>::operator+(const T& rhs)
 	return result;
 }
 
+template<class T> Array2D<T>& Array2D<T>::operator-=(const Array2D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny))
+		throw IOException("Trying to substract two Array2D objects with different dimensions", AT);
+
+	//Substract to every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) -= rhs(ii,jj);
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator-(const Array2D<T>& rhs)
+{
+	Array2D<T> result = *this; //make a copy
+	result -= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array2D<T>& Array2D<T>::operator-=(const T& rhs)
+{
+	//Substract to every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) -= rhs;
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator-(const T& rhs)
+{
+	Array2D<T> result = *this;
+	result -= rhs; //already implemented
+
+	return result;
+}
+
 template<class T> Array2D<T>& Array2D<T>::operator*=(const Array2D<T>& rhs)
 {
 	//They have to have equal size
 	if ((rhs.nx != nx) || (rhs.ny != ny))
-		throw IOException("Trying to add two Array2D objects with different dimensions", AT);
+		throw IOException("Trying to multiply two Array2D objects with different dimensions", AT);
 
 	//Add to every single member of the Array2D<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
@@ -377,5 +442,48 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const T& rhs)
 	return result;
 }
 
+template<class T> Array2D<T>& Array2D<T>::operator/=(const Array2D<T>& rhs)
+{
+	//They have to have equal size
+	if ((rhs.nx != nx) || (rhs.ny != ny))
+		throw IOException("Trying to divide two Array2D objects with different dimensions", AT);
+
+	//Divide every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) /= rhs(ii,jj);
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator/(const Array2D<T>& rhs)
+{
+	Array2D<T> result = *this; //make a copy
+	result /= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> Array2D<T>& Array2D<T>::operator/=(const T& rhs)
+{
+	//Divide every single member of the Array2D<T>
+	for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) /= rhs;
+		}
+	}	
+
+	return *this;
+}
+
+template<class T> const Array2D<T> Array2D<T>::operator/(const T& rhs)
+{
+	Array2D<T> result = *this;
+	result /= rhs; //already implemented
+
+	return result;
+}
 
 #endif

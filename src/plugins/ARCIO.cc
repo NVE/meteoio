@@ -24,7 +24,7 @@
  * - a single space character is used as field spearator
  * - the header data is right aligned to the 23rd column
  * - float header data has 3 digits precision
- * - all grid data is written as INT (so data is rounded if necessary)
+ * - all grid data is written as float (which might cause some trouble for some softwares)
  * 
  * These specifications should reflect commonly accepted practise.
  *
@@ -305,7 +305,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 
 		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 			for (unsigned int ll=0; ll < grid_in.ncols; ll++){
-				fout << (int)round(grid_in.grid2D(ll, kk)) << " ";
+				fout << grid_in.grid2D(ll, kk) << " ";
 			}
 			fout << endl;
 		}

@@ -20,6 +20,17 @@
 #include "Coords.h"
 #include <cmath>
 
+Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
+	if(this != &source) {
+		grid2D = source.grid2D;
+		ncols = source.ncols;
+		nrows = source.nrows;
+		cellsize = source.cellsize;
+		llcorner = source.llcorner;
+	}
+	return *this;
+}
+
 /*
  * Default constructor.
  * grid2D attribute is initialized by Array2D default constructor.

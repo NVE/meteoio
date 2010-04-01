@@ -40,13 +40,15 @@ class Grid2DObject : POPBase {
 		*/
 		virtual void Serialize(POPBuffer &buf, bool pack);
 #else
-class Grid2DObject{
+class Grid2DObject {
 #endif
 	public:
 		typedef struct GRID_POINT {
 			unsigned int ix; ///<grid index along X
 			unsigned int iy; ///<grid index along Y
 		} grid_point;
+
+		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
 
 		/**
 		* @brief Default constructor.

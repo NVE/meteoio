@@ -17,6 +17,18 @@
 */
 #include "Grid3DObject.h"
 
+Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
+	if(this != &source) {
+		grid3D = source.grid3D;
+		ncols = source.ncols;
+		nrows = source.nrows;
+		ndepth = source.ndepth;
+		cellsize = source.cellsize;
+		llcorner = source.llcorner;
+	}
+	return *this;
+}
+
 Grid3DObject::Grid3DObject() : grid3D() //using Array3D default constructor
 {
 	ncols = nrows = ndepth = 0;
