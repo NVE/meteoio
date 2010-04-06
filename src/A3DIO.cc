@@ -46,7 +46,7 @@
  * @section a3d_keywords Keywords
  * This plugin uses the following keywords:
  * - METEOPATH: string containing the path to the meteorological files (ie: where to find meteo1d.txt and meteo2d files)
- * - COORDIN: input coordinate system (see Coords)
+ * - COORDSYS: input coordinate system (see Coords)
  * - COORDPARAM: extra input coordinates parameters (see Coords)
  * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
  */
@@ -56,8 +56,8 @@ const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 void A3DIO::getProjectionParameters() {
 	//get projection parameters
 	try {
-		cfg.getValue("COORDSYS", "INPUT", coordsys);
-		cfg.getValue("COORDPARAM", "INPUT", coordparam, ConfigReader::nothrow);
+		cfg.getValue("COORDSYS", "Input", coordsys);
+		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
@@ -206,7 +206,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 	StationData sd;
 	bool eofreached = false;
 
-	cfg.getValue("METEOPATH", "INPUT", tmp); 
+	cfg.getValue("METEOPATH", "Input", tmp);
 	tmp += "/meteo1d.txt";
 
 	if (!IOUtils::fileExists(tmp)) {
@@ -436,7 +436,7 @@ void A3DIO::constructMeteo2DFilenames(const Date_IO& startDate, const Date_IO& e
  
 	startDate.getDate(startyear, dummy, dummy);
 	endDate.getDate(endyear, dummy, dummy);
-	cfg.getValue("METEOPATH", "INPUT", tmp); 
+	cfg.getValue("METEOPATH", "Input", tmp);
 
 	for (int yyyy = startyear; yyyy<=endyear; yyyy++){
 		std::stringstream ss;
@@ -651,7 +651,7 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 	std::vector<std::string> tmpvec;
 	std::vector< std::pair<int,int> > mypts;
 
-	cfg.getValue("SPECIALPTSFILE", "INPUT", filename); // cout << tmp << endl;
+	cfg.getValue("SPECIALPTSFILE", "Input", filename); // cout << tmp << endl;
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}

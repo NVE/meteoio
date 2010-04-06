@@ -32,6 +32,8 @@
  *
  * @section geotop_keywords Keywords
  * This plugin uses the following keywords:
+ * - COORDSYS: input coordinate system (see Coords)
+ * - COORDPARAM: extra input coordinates parameters (see Coords)
  * - METEOPATH: string containing the path to the meteorological files
  * - METEOPREFIX: file name prefix for meteorological files
  */
@@ -43,8 +45,8 @@ using namespace std;
 void GeotopIO::getProjectionParameters() {
 	//get projection parameters
 	try {
-		cfg.getValue("COORDSYS", "INPUT", coordsys);
-		cfg.getValue("COORDPARAM", "INPUT", coordparam, ConfigReader::nothrow);
+		cfg.getValue("COORDSYS", "Input", coordsys);
+		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
@@ -122,8 +124,8 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	vector<int> ymdhm = vector<int>(5);
 	map<string, unsigned int> mapParam;
 	initParamNames(mapParam);
-	cfg.getValue("METEOPATH", "OUTPUT", path);
-	cfg.getValue("METEOSEQ", "OUTPUT", vecSequence);
+	cfg.getValue("METEOPATH", "Output", path);
+	cfg.getValue("METEOSEQ", "Output", vecSequence);
 
 	//Check whether vecSequence is valid, that is the keys are part of mapParam
 	for (unsigned int ii=0; ii<vecSequence.size(); ii++){
@@ -201,8 +203,8 @@ void GeotopIO::readStationData(const Date_IO&, std::vector<StationData>& vecStat
 
 	vecStation.clear();
 
-	cfg.getValue("METEOPATH", "INPUT", path); 
-	cfg.getValue("METEOPREFIX", "INPUT", prefix);
+	cfg.getValue("METEOPATH", "Input", path);
+	cfg.getValue("METEOPREFIX", "Input", prefix);
 
 	readMetaData(vecStation, vecColumnNames, path + "/" + prefix + ".txt");
 }
@@ -220,8 +222,8 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	vecMeteo.clear();
 	vecStation.clear();
 
-	cfg.getValue("METEOPATH", "INPUT", path); 
-	cfg.getValue("METEOPREFIX", "INPUT", prefix);
+	cfg.getValue("METEOPATH", "Input", path);
+	cfg.getValue("METEOPREFIX", "Input", prefix);
 
 	vector<StationData> myStations;
 	/*

@@ -43,6 +43,8 @@
  *
  * @section gsn_keywords Keywords
  * This plugin uses the following keywords:
+ * - COORDSYS: input coordinate system (see Coords)
+ * - COORDPARAM: extra input coordinates parameters (see Coords)
  * - PROXY: 
  * - PROXYPORT: 
  * - PROXYUSER:
@@ -63,8 +65,8 @@ using namespace std;
 void GSNIO::getProjectionParameters() {
 	//get projection parameters
 	try {
-		cfg.getValue("COORDSYS", "INPUT", coordsys);
-		cfg.getValue("COORDPARAM", "INPUT", coordparam, ConfigReader::nothrow);
+		cfg.getValue("COORDSYS", "Input", coordsys);
+		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
@@ -343,7 +345,7 @@ void GSNIO::readStationNames()
 	string xmlpath="", str_stations="";
 	int stations=0;
 
-	cfg.getValue("NROFSTATIONS", "INPUT", str_stations, ConfigReader::nothrow);
+	cfg.getValue("NROFSTATIONS", "Input", str_stations, ConfigReader::nothrow);
 
 	if (str_stations != ""){
 		if (!IOUtils::convertString(stations, str_stations, std::dec))
@@ -355,7 +357,7 @@ void GSNIO::readStationNames()
 			Date_IO tmp_date(0.0);
 			
 			tmp_stream << (ii+1); //needed to construct key name
-			cfg.getValue(string("STATION"+tmp_stream.str()), "INPUT", stationname);
+			cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
 			std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
 			vecStationName.push_back(stationname);
 		}    

@@ -92,6 +92,7 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/libinterpol2D.o \
 		$(SRCDIR)/libinterpol1D.o \
 		$(SRCDIR)/Meteo2DInterpolator.o \
+		$(SRCDIR)/InterpolationAlgorithms.o \
 		$(SRCDIR)/LegacyIO.o 
 
 METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
@@ -117,6 +118,7 @@ METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/libinterpol2D_par.o \
 		$(SRCDIR)/libinterpol1D_par.o \
 		$(SRCDIR)/Meteo2DInterpolator_par.o \
+		$(SRCDIR)/InterpolationAlgorithms_par.o \
 		$(SRCDIR)/DynamicLibrary_par.o \
 		$(SRCDIR)/marshal_meteoio_par.o 
 

@@ -186,26 +186,26 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 void IOHandler::read2DGrid(Grid2DObject& _grid, const std::string& _filename)
 {
-	IOInterface *plugin = getPlugin("GRID2D", "INPUT");
+	IOInterface *plugin = getPlugin("GRID2D", "Input");
 	plugin->read2DGrid(_grid, _filename);
 }
 
 void IOHandler::readDEM(DEMObject& dem_out)
 {
-	IOInterface *plugin = getPlugin("DEM", "INPUT");
+	IOInterface *plugin = getPlugin("DEM", "Input");
 	plugin->readDEM(dem_out);
 	dem_out.update();
 }
 
 void IOHandler::readLanduse(Grid2DObject& landuse_out)
 {
-	IOInterface *plugin = getPlugin("LANDUSE", "INPUT");
+	IOInterface *plugin = getPlugin("LANDUSE", "Input");
 	plugin->readLanduse(landuse_out);
 }
 
 void IOHandler::readStationData(const Date_IO& date, std::vector<StationData>& vecStation)
 {
-	IOInterface *plugin = getPlugin("STATION", "INPUT");
+	IOInterface *plugin = getPlugin("STATION", "Input");
 	plugin->readStationData(date, vecStation);
 }
 
@@ -239,7 +239,7 @@ void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 						std::vector<STATION_DATASET>& vecStation, 
 						const unsigned& stationindex)
 {
-	IOInterface *plugin = getPlugin("METEO", "INPUT");
+	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
 #ifdef _POPC_
@@ -252,24 +252,24 @@ void IOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecM
 						 const std::string& name)
 #endif
 {
-	IOInterface *plugin = getPlugin("METEO", "OUTPUT");
+	IOInterface *plugin = getPlugin("METEO", "Output");
 	plugin->writeMeteoData(vecMeteo, vecStation, name);
 }
 
 void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 {
-	IOInterface *plugin = getPlugin("DA", "INPUT");
+	IOInterface *plugin = getPlugin("DA", "Input");
 	plugin->readAssimilationData(date_in, da_out);
 }
 
 void IOHandler::readSpecialPoints(std::vector<Coords>& pts) {
-	IOInterface *plugin = getPlugin("SPECIALPTS", "INPUT");
+	IOInterface *plugin = getPlugin("SPECIALPTS", "Input");
 	plugin->readSpecialPoints(pts);
 }
 
 void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	IOInterface *plugin = getPlugin("GRID2D", "OUTPUT");
+	IOInterface *plugin = getPlugin("GRID2D", "Output");
 	plugin->write2DGrid(grid_in, name);
 }
 

@@ -78,7 +78,7 @@
  *
  * @section arc_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDIN: input coordinate system (see Coordinate)
+ * - COORDSYS: input coordinate system (see Coordinate)
  * - COORDPARAM: extra input coordinates parameters (see Coordinate)
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
@@ -90,8 +90,8 @@ using namespace std;
 void ARCIO::getProjectionParameters() {
 	//get projection parameters
 	try {
-		cfg.getValue("COORDSYS", "INPUT", coordsys);
-		cfg.getValue("COORDPARAM", "INPUT", coordparam, ConfigReader::nothrow);
+		cfg.getValue("COORDSYS", "Input", coordsys);
+		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
 	} catch(std::exception& e){
 		//problems while reading values for COORDIN or COORDPARAM
 		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
@@ -219,14 +219,14 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 void ARCIO::readDEM(DEMObject& dem_out)
 {
 	string filename="";
-	cfg.getValue("DEMFILE", "INPUT", filename);
+	cfg.getValue("DEMFILE", "Input", filename);
 	read2DGrid(dem_out, filename);
 }
 
 void ARCIO::readLanduse(Grid2DObject& landuse_out)
 {
 	string filename="";
-	cfg.getValue("LANDUSEFILE", "INPUT", filename); // cout << tmp << endl;
+	cfg.getValue("LANDUSEFILE", "Input", filename); // cout << tmp << endl;
 	read2DGrid(landuse_out, filename);
 }
 
@@ -236,7 +236,7 @@ void ARCIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	date_in.getDate(yyyy, MM, dd, hh, mm);
 	string filepath="";
 
-	cfg.getValue("DAPATH", "INPUT", filepath); // cout << tmp << endl;
+	cfg.getValue("DAPATH", "Input", filepath); // cout << tmp << endl;
   
 	stringstream ss;
 	ss.fill('0');
