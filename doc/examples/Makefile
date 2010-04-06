@@ -24,12 +24,13 @@ all: meteo_reading dem_reading coordinates
 
 meteo_reading: meteo_reading.o
 	$(CC) $(DEBUG) -o $@ meteo_reading.o ${LIBS}
-
 dem_reading: dem_reading.o
 	$(CC) $(DEBUG) -o $@ dem_reading.o ${LIBS}
 coordinates: coordinates.o
 	$(CC) $(DEBUG) -o $@ coordinates.o ${LIBS}
+2D_interpolations: 2D_interpolations.o
+	$(CC) $(DEBUG) -o $@ 2D_interpolations.o ${LIBS}
 
 clean:
-	rm -rf *~ *.o  *.out meteo_reading dem_reading coordinates
+	rm -rf *~ *.o  *.out meteo_reading dem_reading coordinates 2D_interpolations
 
