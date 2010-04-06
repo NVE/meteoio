@@ -31,17 +31,17 @@ Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObje
 	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
 	 * for configuration of interpolation algorithms within the ConfigReader object.
 	 */
-	cout << "In Meteo2DInterpolator constructor" << endl;
+	//cout << "In Meteo2DInterpolator constructor" << endl;
 	for (unsigned int ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpAlgorithms;
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
 		unsigned int nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
 
-		cout << "Looking for interpoltions algorithms valid for: " << parname << endl;
+		//cout << "Looking for interpoltions algorithms valid for: " << parname << endl;
 
-		for (unsigned int jj=0; jj<nrOfAlgorithms; jj++){
+		/*for (unsigned int jj=0; jj<nrOfAlgorithms; jj++){
 			cout << parname<<" "<<jj<<": " << tmpAlgorithms[jj] << endl;
-		}
+		}*/
 
 		if (nrOfAlgorithms > 0)
 			mapAlgorithms[parname] = tmpAlgorithms;
@@ -66,7 +66,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
 	
 	if (it != mapAlgorithms.end()){
-		cout << "Algorithms to be used for parameter " << MeteoData::getParameterName(meteoparam) << ":" << endl;
+		//cout << "Algorithms to be used for parameter " << MeteoData::getParameterName(meteoparam) << ":" << endl;
 
 		double maxQualityRating = 0.0;
 		auto_ptr<InterpolationAlgorithm> bestalgorithm(NULL);
@@ -85,7 +85,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
 			}
 
-			cout << "\t" << it->second.at(ii) << "  rating:" << rating << endl;
+			//cout << "\t" << it->second.at(ii) << "  rating:" << rating << endl;
 		}
 
 		//finally execute the algorithm with the best quality rating or throw an exception

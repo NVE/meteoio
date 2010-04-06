@@ -191,7 +191,7 @@ void ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid
 	std::vector<double> vecCoefficients;
 	vecCoefficients.resize(4, 0.0);
 
-	//Get the argument for the filter: the default temperature lapse rate, otherwise use predefined
+	//Get the argument for the algorithm: the default temperature lapse rate, otherwise use predefined
 	if (vecArgs.size() < 1){
 		vecCoefficients[1] = Interpol2D::dflt_temperature_lapse_rate;
 	} else if (vecArgs.size() == 1){

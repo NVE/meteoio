@@ -168,7 +168,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 		bufferAllData(date_in);
 	}
 
-	//loop through all meteo buffers, there is one for every station
+	//loop through all meteo buffers, there is one for each station
 	for (unsigned int ii=0; ii<meteoBuffer.size(); ii++) {
 		unsigned int index = BufferedIOHandler::npos;
 
