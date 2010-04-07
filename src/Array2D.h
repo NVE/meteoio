@@ -89,6 +89,11 @@ template<class T> class Array2D {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief print to the screen the content of the array (usefull for debugging)
+		* The array is bound by "<array2d>" and "</array2d>" on separate lines
+		*/
+		void print() const;
 
 		void clear();
 		T& operator ()(const unsigned int& x, const unsigned int& y);
@@ -216,6 +221,17 @@ template<class T> void Array2D<T>::clear() {
 	nx=ny=0;
 }
 
+template<class T> void Array2D<T>::print() const {
+	std::cout << "<array2d>\n";
+	for(unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			std::cout << operator()(ii,jj) << " ";
+		}
+		std::cout << "\n";
+	}
+	std::cout << "</array2d>" << std::endl;
+}
+
 template<class T> T Array2D<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {
 
 	T min = std::numeric_limits<T>::max();
@@ -223,7 +239,7 @@ template<class T> T Array2D<T>::getMin(const IOUtils::nodata_handling flag_nodat
 	if(flag_nodata==IOUtils::RAW_NODATA) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			for (unsigned int jj=0; jj<ny; jj++) {
-				const T val = vecData[ii*ny + jj];
+				const T val = operator()(ii,jj);
 				if(val<min) min=val;
 			}
 		}
@@ -231,7 +247,7 @@ template<class T> T Array2D<T>::getMin(const IOUtils::nodata_handling flag_nodat
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			for (unsigned int jj=0; jj<ny; jj++) {
-				const T val = vecData[ii*ny + jj];
+				const T val = operator()(ii,jj);
 				if(val!=IOUtils::nodata && val<min) min=val;
 			}
 		}
@@ -249,7 +265,7 @@ template<class T> T Array2D<T>::getMax(const IOUtils::nodata_handling flag_nodat
 	if(flag_nodata==IOUtils::RAW_NODATA) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			for (unsigned int jj=0; jj<ny; jj++) {
-				const T val = vecData[ii*ny + jj];
+				const T val = operator()(ii,jj);
 				if(val>max) max=val;
 			}
 		}
@@ -257,7 +273,7 @@ template<class T> T Array2D<T>::getMax(const IOUtils::nodata_handling flag_nodat
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			for (unsigned int jj=0; jj<ny; jj++) {
-				const T val = vecData[ii*ny + jj];
+				const T val = operator()(ii,jj);
 				if(val!=IOUtils::nodata && val>max) max=val;
 			}
 		}
@@ -275,7 +291,7 @@ template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_noda
 	if(flag_nodata==IOUtils::RAW_NODATA) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			for (unsigned int jj=0; jj<ny; jj++) {
-				const T val = vecData[ii*ny + jj];
+				const T val = operator()(ii,jj);
 				mean += val;
 			}
 		}
@@ -286,7 +302,7 @@ template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_noda
 		unsigned int count = 0;
 		for (unsigned int ii=0; ii<nx; ii++) {
 			for (unsigned int jj=0; jj<ny; jj++) {
-				const T val = vecData[ii*ny + jj];
+				const T val = operator()(ii,jj);
 				if(val!=IOUtils::nodata) {
 					mean += val;
 					count++;

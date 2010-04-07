@@ -102,8 +102,8 @@ void Interpol2D::LinRegressionCore(const std::vector<double>& X, const std::vect
 {
 	//finds the linear regression for points (x,y,z,Value)
 	//if ignore_index>=0, ignore given index (as a way to remopve a point from the interpolation)
-	double x_avg=0, y_avg=0;
-	double sx=0, sy=0, sxy=0;
+	double x_avg=0., y_avg=0.;
+	double sx=0., sy=0., sxy=0.;
 	const int imax = (int)X.size();
 
 	//computing x_avg and y_avg
@@ -131,9 +131,15 @@ void Interpol2D::LinRegressionCore(const std::vector<double>& X, const std::vect
 	}
 
 	//computing the regression line
-	a = sxy / sx;			//a
-	b = y_avg - a*x_avg;		//b
-	r = sxy / sqrt(sx*sy);		//r
+	a = sxy / sx;          //pbl if X=cst & Y!=cst
+	b = y_avg - a*x_avg;   //pbl if X=cst & Y!=cst
+	if(sy==0) {
+		//horizontal line: all y's are equals
+		r = 1.;
+	} else {
+		//any other line
+		r = sxy / sqrt(sx*sy);
+	}
 }
 
 /**
@@ -311,10 +317,9 @@ void Interpol2D::LapseIDWKrieging(const DEMObject& topoHeight, const LapseRatePr
 						    const std::vector<double>& vecCoefficients, 
 						    const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in, 
 						    Grid2DObject& T)
-{
-	T.set(topoHeight.ncols, topoHeight.nrows, topoHeight.cellsize, topoHeight.llcorner);
+{	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
 
-	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
+	T.set(topoHeight.ncols, topoHeight.nrows, topoHeight.cellsize, topoHeight.llcorner);
 	std::vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
 	
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {

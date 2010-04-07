@@ -61,13 +61,11 @@ Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObje
 
 void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const
 {
-
 	//Show algorithms to be used for this parameter
 	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
 	
 	if (it != mapAlgorithms.end()){
 		//cout << "Algorithms to be used for parameter " << MeteoData::getParameterName(meteoparam) << ":" << endl;
-
 		double maxQualityRating = 0.0;
 		auto_ptr<InterpolationAlgorithm> bestalgorithm(NULL);
 		vector<string> vecArgs;
@@ -78,11 +76,12 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 			
 			//Get the configured algorithm
 			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, dem, 
-																	    vecMeteo, vecStation, vecArgs)); 
-			//Get the quality rating and compare to already quality ratings
-			double rating = algorithm->getQualityRating(meteoparam);
+			                                            vecMeteo, vecStation, vecArgs));
+			//Get the quality rating and compare to previously computed quality ratings
+			const double rating = algorithm->getQualityRating(meteoparam);
 			if ((rating != 0.0) && (rating > maxQualityRating)){
 				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
+				maxQualityRating = rating;
 			}
 
 			//cout << "\t" << it->second.at(ii) << "  rating:" << rating << endl;
@@ -92,8 +91,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 		if (bestalgorithm.get() == NULL) {
 			//result.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 			throw IOException("No interpolation algorithm with quality rating >0 found", AT);
-		} 
-		
+		}
 		bestalgorithm->calculate(meteoparam, result);
 	} else {
 		//Some default message, that interpolation for this parameter needs configuration

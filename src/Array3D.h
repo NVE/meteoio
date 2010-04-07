@@ -116,6 +116,11 @@ template<class T> class Array3D {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief print to the screen the content of the array (usefull for debugging)
+		* The array is bound by "<array3d>" and "</array3d>" on separate lines
+		*/
+		void print() const;
 
 		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
 		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
@@ -248,6 +253,20 @@ template<class T> void Array3D<T>::size(unsigned int& _nx, unsigned int& _ny, un
 template<class T> void Array3D<T>::clear() {
 	vecData.clear();
 	nx = ny = nz = nxny = 0;
+}
+
+template<class T> void Array3D<T>::print() const {
+	std::cout << "<array3d>\n";
+	for (unsigned int kk=0; kk<nx; kk++) {
+		std::cout << "depth[" << kk << "]\n";
+		for(unsigned int ii=0; ii<nx; ii++) {
+			for (unsigned int jj=0; jj<ny; jj++) {
+				std::cout << operator()(ii,jj,kk) << " ";
+			}
+			std::cout << "\n";
+		}
+	}
+	std::cout << "</array3d>" << std::endl;
 }
 
 template<class T> T Array3D<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {

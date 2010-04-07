@@ -215,6 +215,19 @@ std::string Coords::printLatLon() const {
 }
 
 /**
+* @brief Print the content of the Coords object (usefull for debugging)
+* The Coords is bound by "<Coords>" and "</Coords>" on separate lines
+*/
+void Coords::print() const {
+	std::cout << "<Coords>\n";
+	std::cout << "Lat/Long\t" << printLatLon() << "\n";
+	std::cout << "Y/Ycoords\t" << getEasting() << " " << getNorthing() << "\n";
+	std::cout << "I/Jindices\t" << getGridI() << " " << getGridJ() << "\n";
+	std::cout << "Projection\t" << coordsystem << " " << coordparam << "\n";
+	std::cout << "</Coords>" << std::endl;
+}
+
+/**
 * @brief Set latitude and longitude
 * The automatic update of the easting/northing can be turned off so that
 * both lat/lon and east/north coordinates can be provided in order to thereafter check the

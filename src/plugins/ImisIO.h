@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2009, 2010 WSL Institute for Snow and Avalanche Research   SLF-DAVOS */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -36,9 +36,6 @@
 
 #define IMIS_BUFF_SIZE 5000
 
-using namespace std;
-using namespace IOUtils;
-
 class ImisIO : public IOInterface {
 	public:
 		ImisIO(void (*delObj)(void*), const std::string& filename);
@@ -55,13 +52,13 @@ class ImisIO : public IOInterface {
 
 		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  std::vector< std::vector<StationData> >& vecStation,
-							  const unsigned int& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           std::vector< std::vector<StationData> >& vecStation,
+		                           const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::vector< std::vector<StationData> >& vecStation,
-							   const std::string& name="");
+		                            const std::vector< std::vector<StationData> >& vecStation,
+		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
@@ -72,11 +69,12 @@ class ImisIO : public IOInterface {
 		void cleanup() throw();
 		void getProjectionParameters();
 		void getStation2Data(const std::string stat_abk, unsigned int stao_nr, std::vector<std::string>& data2S);
-		void getImisData(const string &stat_abk, const unsigned int &stao_nr, 
-					  const vector<int>& datestart, const vector<int>& dateend, vector< vector<string> >& dataImis);
+		void getImisData(const std::string &stat_abk, const unsigned int &stao_nr, 
+		                 const std::vector<int>& datestart, const std::vector<int>& dateend,
+		                 std::vector< std::vector<std::string> >& dataImis);
 		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);		
 		void readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
-				    std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex);
+		              std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex);
 		void readStationNames(std::vector<std::string>& vecStationName);
 		void parseStationName(const std::string& stationName, std::string& stName, unsigned int& stNumber);
 		void readStationMetaData();
@@ -84,7 +82,7 @@ class ImisIO : public IOInterface {
 
 		ConfigReader cfg;
 		std::string coordsys, coordparam; //projection parameters
-		vector<StationData> vecMyStation;
+		std::vector<StationData> vecMyStation;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 

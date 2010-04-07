@@ -119,6 +119,12 @@ class Grid3DObject{
 		*/
 		bool isSameGeolocalization(const Grid3DObject& target);
 
+		/**
+		* @brief print to the screen the content of the Grid3DObject (usefull for debugging)
+		* The Grid3DObject is bound by "<Grid3DObject>" and "</Grid3DObject>" on separate lines
+		*/
+		void print() const;
+
 		Array3D<double> grid3D;
 		unsigned int ncols, nrows, ndepth;
 		double cellsize;

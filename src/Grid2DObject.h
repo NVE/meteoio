@@ -124,6 +124,12 @@ class Grid2DObject {
 		*/
 		bool isSameGeolocalization(const Grid2DObject& target);
 
+		/**
+		* @brief print to the screen the content of the Grid2DObject (usefull for debugging)
+		* The Grid2DObject is bound by "<Grid2DObject>" and "</Grid2DObject>" on separate lines
+		*/
+		void print() const;
+
 		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
 		unsigned int ncols; ///<number of columns in the grid
 		unsigned int nrows; ///<number of rows in the grid

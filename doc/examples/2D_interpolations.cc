@@ -28,11 +28,11 @@ int main(int argc, char** argv) {
 
 	//performing spatial interpolations
 	Meteo2DInterpolator mi(cfg, dem, vecMeteo, vecStation);
-	Grid2DObject ta;
-	mi.interpolate(MeteoData::TA, ta);
+	Grid2DObject param;
+	mi.interpolate(MeteoData::RH, param);
 
 	//writing out the spatial interpolation
-	io->write2DGrid(ta,"ta.asc");
+	io->write2DGrid(param,"rh.asc");
 
 	delete io;
 	delete raw_io;

@@ -61,6 +61,7 @@ class Coords {
 	int getGridK() const;
 	void getProj(std::string& proj_type, std::string& proj_args) const;
 	std::string printLatLon() const;
+	void print() const;
 
 	//Setter methods
 	void setLatLon(const double _latitude, const double _longitude, const double _altitude, const bool _update=true);

@@ -233,6 +233,15 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)
 	}
 }
 
+void Grid2DObject::print() const
+{
+	std::cout << "<Grid2DObject>\n";
+	llcorner.print();
+	std::cout << ncols << " x " << nrows << " @ " << cellsize << "m\n";
+	grid2D.print();
+	std::cout << "</Grid2DObject>" << std::endl;
+}
+
 #ifdef _POPC_
 #include "marshal_meteoio.h"
 void Grid2DObject::Serialize(POPBuffer &buf, bool pack)

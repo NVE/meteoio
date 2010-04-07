@@ -46,7 +46,7 @@ bool MeteoData::initStaticData()
 	return true;
 }
 
-const string& MeteoData::getParameterName(const unsigned int& parindex)
+const std::string& MeteoData::getParameterName(const unsigned int& parindex)
 {
 	if (parindex >= MeteoData::nrOfParameters)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);

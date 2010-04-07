@@ -64,6 +64,11 @@ template<class T> class Array {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief print to the screen the content of the array (usefull for debugging)
+		* The array is bound by "<array1d>" and "</array1d>" on separate lines
+		*/
+		void print() const;
 
 		Array<T>& operator =(const Array<T>&);
 		
@@ -150,6 +155,14 @@ template<class T> const T Array<T>::operator [](const unsigned int& index) const
 template<class T> void Array<T>::clear() {
 	vecData.clear();
 	nx = 0;
+}
+
+template<class T> void Array<T>::print() const {
+	std::cout << "<array1d>\n";
+	for(unsigned int ii=0; ii<nx; ii++) {
+		std::cout << operator()(ii) << " ";
+	}
+	std::cout << "\n</array1d>" << std::endl;
 }
 
 template<class T> void Array<T>::insertAt(const int& index, T e) {
