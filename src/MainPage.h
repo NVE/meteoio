@@ -35,8 +35,8 @@
  * -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  * -# \subpage plugins "Available plugins" and usage
  * -# \subpage filters "Available filters" and usage
- * -# \subpage dev_plugins "Plugin" developer's guide
- * -# \subpage dev_filters "Filter" developer's guide
+ * -# \subpage dev_plugins How to write a "Plugin"
+ * -# \subpage dev_filters How to write a "Filter"
  * -# \subpage examples "Examples"
  */
 
@@ -102,11 +102,7 @@
 
 //Plugins overview given in IOHandler.cc
 //Filters overview given in FilterAlgorithms.cc
-
- /**
- * @page dev_plugins Plugin developer's guide
- *
- */
+//Plugin development given in IOInterface.h
 
  /**
  * @page dev_filters Filter developer's guide

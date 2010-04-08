@@ -63,12 +63,12 @@ void ImisIO::getProjectionParameters() {
 	}
 }
 
-ImisIO::ImisIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename)
+ImisIO::ImisIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
 	getProjectionParameters();
 }
 
-ImisIO::ImisIO(const string& configfile) : IOInterface(NULL), cfg(configfile)
+ImisIO::ImisIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	getProjectionParameters();
 }
@@ -83,7 +83,7 @@ ImisIO::~ImisIO() throw()
 	cleanup();
 }
 
-void ImisIO::read2DGrid(Grid2DObject&, const string&)
+void ImisIO::read2DGrid(Grid2DObject&, const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -113,15 +113,15 @@ void ImisIO::readSpecialPoints(std::vector<Coords>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::write2DGrid(const Grid2DObject&, const string&)
+void ImisIO::write2DGrid(const Grid2DObject&, const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
 void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
-					   const std::vector< std::vector<StationData> >&,
-					   const std::string&)
+                            const std::vector< std::vector<StationData> >&,
+                            const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -170,7 +170,7 @@ void ImisIO::readStationMetaData()
 	}
 }
 
-void ImisIO::parseStationName(const string& stationName, string& stName, unsigned int& stNumber)
+void ImisIO::parseStationName(const std::string& stationName, std::string& stName, unsigned int& stNumber)
 {		
 	stName    = stationName.substr(0, stationName.length()-1);
 	string stNum  = stationName.substr(stationName.length()-1, 1);
@@ -179,7 +179,7 @@ void ImisIO::parseStationName(const string& stationName, string& stName, unsigne
 		throw ConversionFailedException("Error while converting station number", AT);
 }
 
-void ImisIO::readStationNames(vector<string>& vecStationName)
+void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 {
 	vecStationName.clear();
 
@@ -209,9 +209,9 @@ void ImisIO::readStationNames(vector<string>& vecStationName)
 
 
 void ImisIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
-					  std::vector< std::vector<MeteoData> >& vecMeteo, 
-					  std::vector< std::vector<StationData> >& vecStation,
-					  const unsigned int& stationindex)
+                           std::vector< std::vector<MeteoData> >& vecMeteo,
+                           std::vector< std::vector<StationData> >& vecStation,
+                           const unsigned int& stationindex)
 {
 	if (vecMyStation.size() == 0)
 		readStationMetaData(); //reads all the station meta data into the vecMyStation
@@ -243,7 +243,7 @@ void ImisIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 }
 
 void ImisIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
-				 std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
+                      std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
 {
 	vecMeteo.at(stationindex).clear();
 	vecStation.at(stationindex).clear();
@@ -279,7 +279,7 @@ void ImisIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vec
 * @param station_in (vector \<string\>&) station data from the database.
 * @param mb (MeteoBuffer&) variable in which stationdata and meteodata are filled.
 */
-void ImisIO::parseDataSet(const vector<string>& meteo_in, MeteoData& md)
+void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md)
 {
 	Date_IO tmpDate;
 	double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr;
@@ -376,8 +376,9 @@ void ImisIO::getStation2Data(const std::string stat_abk, unsigned int stao_nr, s
 * @param date_in : a vector of five(5) integer corresponding to the recording date
 * @param datatImis : a vector of vector of string in which data will be filled
 */
-void ImisIO::getImisData (const string &stat_abk, const unsigned int &stao_nr, 
-					 const vector<int>& datestart, const vector<int>& dateend, vector< vector<string> >& dataImis)
+void ImisIO::getImisData (const std::string &stat_abk, const unsigned int &stao_nr, 
+                          const std::vector<int>& datestart, const std::vector<int>& dateend,
+                          std::vector< std::vector<std::string> >& dataImis)
 {
 	const string userName = "slf";
 	const string password = "SDB+4u";

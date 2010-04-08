@@ -64,7 +64,7 @@ class AlgorithmFactory {
 		static InterpolationAlgorithm* getAlgorithm(const std::string& _algoname, 
                                                             const Meteo2DInterpolator& _mi,
 		                                            const DEMObject& _dem,
-		                                             const std::vector<MeteoData>& _vecMeteo,
+		                                            const std::vector<MeteoData>& _vecMeteo,
 		                                            const std::vector<StationData>& _vecStation,
 		                                            const std::vector<std::string>& _vecArgs);
 

@@ -15,7 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-//This is the two 2D meteo interpolation library.
+/**
+ * @file libinterpol2D.h
+ * This is the two 2D meteo interpolation statistical library.
+ */
 #ifndef INTERPOL2D_H
 #define INTERPOL2D_H
 
@@ -32,15 +35,15 @@
 /**
  * @class Interpol2D
  * @brief A class to perform 2D spatial interpolations.
- * Each parameter to be interpolated declares which interpolation method to use
- * for single and multiple data sources. Then the class computes the interpolation for each 2D grid point,
+ * Each parameter to be interpolated declares which interpolation method to use. 
+ * Then the class computes the interpolation for each 2D grid point,
  * combining the inputs provided by the available data sources.
  * @author Mathias Bavay
  * @date   2009-01-20
  */
 
 typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude, 
-							   const double& new_altitude, const std::vector<double>& coeffs); 
+                                      const double& new_altitude, const std::vector<double>& coeffs);
  
 class Interpol2D {
 	public:
@@ -50,56 +53,54 @@ class Interpol2D {
 			R_LIN ///< linear elevation dependence
 		} reg_types;
 		
-		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);		
+		static void stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid);
+		static void constantGrid2DFill(const double& value, const DEMObject& dem, Grid2DObject& grid);
+		static void constantLapseGrid2DFill(const double& value, const double& altitude, 
+                                                    const DEMObject& dem, const std::vector<double>& vecCoefficients,
+                                                    const LapseRateProjectPtr& funcptr, Grid2DObject& grid);
+		static void LapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
+                                     const DEMObject& dem, const std::vector<double>& vecCoefficients,
+                                     const LapseRateProjectPtr& funcptr,
+                                     Grid2DObject& grid);
+		static void IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
+                                const DEMObject& dem, Grid2DObject& grid);
+		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);
+
+		//projections functions
+		static double ConstProject(const double& value, const double& altitude, const double& new_altitude,
+		                           const std::vector<double>& coeffs);
+		static double LinProject(const double& value, const double& altitude, const double& new_altitude, 
+		                         const std::vector<double>& coeffs);
+
 		static int LinRegression(const std::vector<double>& data_in, 
-							const std::vector<double>& elevations, std::vector<double>& coeffs);
+		                         const std::vector<double>& elevations, std::vector<double>& coeffs);
 
-		static double getReferenceAltitude(const DEMObject& dem);
-
-		static void constantGrid2DFill(const double& value, const DEMObject& topoHeight, Grid2DObject& param);
-		static void stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& param);
+		//these should be in the libphysicslaws, that still has to be created...!
 		static double lw_AirPressure(const double& altitude);
 		static double RhtoDewPoint(double RH, double TA, const short int& force_water);
 		static double DewPointtoRh(double TD, double TA, const short int& force_water);
-		static void constantLapseGrid2DFill(const double& value, const double& altitude, 
-									 const DEMObject& topoHeight, const std::vector<double>& vecCoefficients, 
-									 const LapseRateProjectPtr& ptr, Grid2DObject& param_out);
-
-		static double IDWKriegingCore(const double& x, const double& y,
-								const std::vector<double>& vecData_in, 
-								const std::vector<StationData>& vecStations);
-		static void LapseIDWKrieging(const DEMObject& topoHeight, const LapseRateProjectPtr& funcptr,
-							    const std::vector<double>& vecCoefficients, 
-							    const std::vector<double>& vecData_in, 
-							    const std::vector<StationData>& vecStations_in,
-							    Grid2DObject& T);
-		static void IDWKrieging(const DEMObject& topoHeight, 
-						    const std::vector<double>& data_in, const std::vector<StationData>& vecStations,
-						    Grid2DObject& grid);
-
-		//projections functions
-		static double ConstProject(const double& val, const double& alt, const double& new_alt, 
-							  const std::vector<double>& coeffs);
-		static double LinProject(const double& value, const double& altitude, const double& new_altitude, 
-							const std::vector<double>& coeffs);
 
 		//some consts
-		const static double dflt_temperature_lapse_rate;///<default lapse rate for temperature(elevation)
+		const static double dflt_temperature_lapse_rate; ///<default lapse rate for temperature(elevation)
 
 	private:
 		//generic functions
 		static double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
 		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j, 
-								   const double& X2, const double& Y2);
+		                                 const double& X2, const double& Y2);
+		static double getReferenceAltitude(const DEMObject& dem);
 		
-		//regressions
+		//core methods
 		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, 
-								double& a, double& b, double& r, const int ignore_index);
+		                              double& a, double& b, double& r, const int ignore_index);
+		static double IDWCore(const double& x, const double& y,
+		                      const std::vector<double>& vecData_in,
+		                      const std::vector<StationData>& vecStations_in);
 
 	private:
 		//static members
-		const static double wind_ys;			///coefficient for wind dependency on slope
-		const static double wind_yc;			///coefficient for wind dependency on curvature
+		const static double wind_ys; ///coefficient for wind dependency on slope
+		const static double wind_yc; ///coefficient for wind dependency on curvature
 };
 
 #endif

@@ -130,7 +130,8 @@ unsigned int Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& p
 }
 
 unsigned int Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Parameters& param, 
-											    const string& algorithm, vector<string>& vecArgs) const
+                                                           const std::string& algorithm,
+                                                           std::vector<std::string>& vecArgs) const
 {
 	vecArgs.clear();
 	string keyname = MeteoData::getParameterName(param) +"::"+ algorithm;		

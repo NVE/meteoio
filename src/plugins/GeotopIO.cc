@@ -103,7 +103,7 @@ void GeotopIO::readLanduse(Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GeotopIO::initParamNames(map<string, unsigned int>& mapParam)
+void GeotopIO::initParamNames(std::map<std::string, unsigned int>& mapParam)
 {
 	mapParam["Iprec"] = MeteoData::HNW;
 	mapParam["WindS"] = MeteoData::VW;
@@ -320,7 +320,7 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	}
 }
 
-void GeotopIO::parseDate(const string& datestring, const string& fileandline, Date_IO& date)
+void GeotopIO::parseDate(const std::string& datestring, const std::string& fileandline, Date_IO& date)
 {
 	/*
 	 * In order to be more flexible with the date parsing in GEOtop meteo files,

@@ -34,6 +34,9 @@
  * A few data transformations are also supported besides filtering:
  * - resample: resamples (if necessary) the data so that if a required time stamp is between two data points, an interpolated value will be returned (instead of nodata).
  * - accumulation: accumulates the data on a given period. A practical use is to return hourly precipitations from a sensor measuring precipitation on a 10 minutes interval.
+ * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgFilter
+ * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgFilter
+ * - wind_avg: vector average over a given window
  */
 
 using namespace std;
