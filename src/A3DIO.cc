@@ -51,6 +51,8 @@
  * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
  */
 
+using namespace std;
+
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
 void A3DIO::getProjectionParameters() {
@@ -624,6 +626,20 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 		throw InvalidFormatException("Column count doesn't match from line to line in " + filename, AT);
 	}
 
+	cleanup();
+
+	//Check for duplicate station names within one file ... station names need to be unique!
+	vector<string> vec_dup = vec_names;
+	for (unsigned int ii=0; ii<vec_names.size(); ii++){
+		const string& tmp = vec_names[ii];
+		for (unsigned int jj=0; jj<vec_dup.size(); jj++){
+			if (jj != ii){
+				if (vec_dup[jj] == tmp)
+					throw IOException("Duplicate station names detected in " + filename, AT);
+			}
+		}
+	}
+
 	//Build Coords object to convert easting/northing values to lat/long in WGS84
 	Coords coordinate(coordsys, coordparam);
 
@@ -641,8 +657,6 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 		vecS[stationnr-1].stationName = stationName;
 		vecS[stationnr-1].position = coordinate;
 	}
-
-	cleanup();
 }
 
 void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
