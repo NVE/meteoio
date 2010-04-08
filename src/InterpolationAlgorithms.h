@@ -41,6 +41,7 @@ class InterpolationAlgorithm {
 			if (vecMeteo.size() != vecStation.size())
 				throw InvalidArgumentException("The two data and metadata vectors don't match in size!", AT);
 		}
+		virtual ~InterpolationAlgorithm() {}
 		virtual double getQualityRating(const MeteoData::Parameters& param) = 0;
 		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid) = 0;
  	protected:

@@ -248,7 +248,7 @@ long Date_IO::getJulianDay(const int& inyear, const int& inmonth, const int& ind
 }
 
 const string Date_IO::toString() const
-{
+{//HACK: this method should be removed
 	stringstream tmpstr;
 	tmpstr << setprecision(10) << julian << "  " << year << "/" << month << "/" << day << " " 
 		  << setw(2) << setfill('0') << hour << ":" 
@@ -280,6 +280,14 @@ const string Date_IO::toString(FORMATS type) const
 			<< setw(2) << setfill('0') << day
 			<< setw(2) << setfill('0') << hour
 			<< setw(2) << setfill('0') << minute ;
+	} else if(type==FULL) {
+			tmpstr 
+			<< setw(4) << setfill('0') << year << "-"
+			<< setw(2) << setfill('0') << month << "-"
+			<< setw(2) << setfill('0') << day << "T" 
+			<< setw(2) << setfill('0') << hour << ":"
+			<< setw(2) << setfill('0') << minute << " ("
+			<< setprecision(10) << julian << ")" ;
 	} else {
 		throw InvalidArgumentException("Wrong date conversion format requested", AT);
 	}

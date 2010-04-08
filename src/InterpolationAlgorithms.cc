@@ -318,7 +318,7 @@ double RHAlgorithm::getQualityRating(const MeteoData::Parameters& param)
 
 	if (vecDataTA.size() == 0)
 		return 0.0;
-	if( ( nrOfMeasurments<(int)(0.5*vecDataRH.size()) ) || ( nrOfMeasurments<2 ) )
+	if( ( nrOfMeasurments<(unsigned int)(0.5*vecDataRH.size()) ) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;
@@ -396,7 +396,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const MeteoData::Param
 	
 	if (vecDataVW.size() == 0)
 		return 0.0;
-	if( ( nrOfMeasurments<(int)(0.5*vecDataVW.size()) ) || ( nrOfMeasurments<2 ) )
+	if( ( nrOfMeasurments<(unsigned int)(0.5*vecDataVW.size()) ) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;

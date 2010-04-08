@@ -50,6 +50,7 @@ class Date_IO {
 		///Keywords for selecting the date formats
 		typedef enum {
 			ISO, ///< ISO 8601 extended format combined date: YYYY-MM-DDTHH:mm:SS (fields might be dropped, in the least to the most significant order)
+			FULL, ///< ISO 8601 followed by the julian date (in parenthesis)
 			NUM ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
 		} FORMATS;
 		static const int daysLeapYear[];
