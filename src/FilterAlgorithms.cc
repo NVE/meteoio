@@ -433,7 +433,6 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 				   const unsigned int& paramindex, std::vector<double>& vecWindow, 
 				   std::vector<Date_IO> *vecDate)
 {
-	cout << "FilterWindow: " << pos << endl;
 	vecWindow.clear();
 	bool isSoft = false;
 	std::string windowposition = "center"; //the default is a centered window
