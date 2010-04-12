@@ -433,6 +433,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 				   const unsigned int& paramindex, std::vector<double>& vecWindow, 
 				   std::vector<Date_IO> *vecDate)
 {
+	cout << "FilterWindow: " << pos << endl;
 	vecWindow.clear();
 	bool isSoft = false;
 	std::string windowposition = "center"; //the default is a centered window
@@ -515,14 +516,13 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 
 	//Push all relevant data elements into the vector vecWindow
 	//cout << "Start: " << startposition << "  End: " << endposition << endl;
-	for (unsigned int ii=startposition; ii>=endposition; ii--){
+	for (unsigned int ii=startposition+1; (ii--) > endposition; ){		
 		const double& tmp = vecM[ii].param(paramindex);
 		if (tmp != IOUtils::nodata) {
 			vecWindow.push_back(tmp);
 			if (vecDate != NULL) (*vecDate).push_back(vecM[ii].date);
 		}
-		
-		//cout << ii << ": pushed at vecM[" <<  ii << "] " << vecM[ii].date << " : " << tmp << endl;
+		//cout << ii << ": pushed at vecM[" <<  ii << "] " << " : "  << endl;
 	}
 
 	return true;
