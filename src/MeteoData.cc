@@ -35,7 +35,7 @@ bool MeteoData::initStaticData()
 	meteoparamname[VW]   = "VW";
 	meteoparamname[DW]   = "DW";
 	meteoparamname[RH]   = "RH";
-	meteoparamname[LWR]  = "LWR";
+	meteoparamname[ILWR] = "ILWR";
 	meteoparamname[HNW]  = "HNW";
 	meteoparamname[TSG]  = "TSG";
 	meteoparamname[TSS]  = "TSS";
@@ -66,7 +66,7 @@ void MeteoData::initParameterMap()
 	meteoparam[VW]       = &vw;
 	meteoparam[DW]       = &dw;
 	meteoparam[RH]       = &rh;
-	meteoparam[LWR]      = &lwr;
+	meteoparam[ILWR]     = &ilwr;
 	meteoparam[HNW]      = &hnw;
 	meteoparam[TSG]      = &tsg;
 	meteoparam[TSS]      = &tss;
@@ -87,10 +87,10 @@ MeteoData::MeteoData() : resampled(false)
 
 MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
 				 const double& vw_in, const double& dw_in, const double& rh_in,
-				 const double& lwr_in, const double& hnw_in, const double& tsg_in, 
+				 const double& ilwr_in, const double& hnw_in, const double& tsg_in, 
 				 const double& tss_in, const double& hs_in, const double& rswr_in, const double& _p) : resampled(false)
 {
-	setMeteoData(date_in, ta_in, iswr_in, vw_in, dw_in, rh_in, lwr_in, hnw_in, tsg_in, tss_in, hs_in, rswr_in, _p);
+	setMeteoData(date_in, ta_in, iswr_in, vw_in, dw_in, rh_in, ilwr_in, hnw_in, tsg_in, tss_in, hs_in, rswr_in, _p);
 	initParameterMap();
 }
 
@@ -122,7 +122,7 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 }
 
 void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, const double& vw_in,
-					    const double& dw_in, const double& rh_in, const double& lwr_in, const double& hnw_in,
+					    const double& dw_in, const double& rh_in, const double& ilwr_in, const double& hnw_in,
 					    const double& tsg_in, const double& tss_in, const double& hs_in, const double& rswr_in, 
 					    const double& _p)
 {
@@ -132,7 +132,7 @@ void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const 
 	vw = vw_in;
 	dw = dw_in;
 	rh = rh_in;
-	lwr = lwr_in;
+	ilwr = ilwr_in;
 	hnw = hnw_in;
 	tsg = tsg_in;
 	tss = tss_in;
@@ -227,7 +227,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&vw,1);
 		buf.Pack(&dw,1);
 		buf.Pack(&rh,1);
-		buf.Pack(&lwr,1);
+		buf.Pack(&ilwr,1);
 		//buf.Pack(&ea,1);
 		buf.Pack(&hnw,1);
 		buf.Pack(&tsg,1);
@@ -242,7 +242,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&vw,1);
 		buf.UnPack(&dw,1);
 		buf.UnPack(&rh,1);
-		buf.UnPack(&lwr,1);
+		buf.UnPack(&ilwr,1);
 		//buf.UnPack(&ea,1);
 		buf.UnPack(&hnw,1);
 		buf.UnPack(&tsg,1);

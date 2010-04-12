@@ -282,7 +282,7 @@ void ImisIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vec
 void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md)
 {
 	Date_IO tmpDate;
-	double ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr;
+	double ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr;
 
 	convertString(tmpDate, meteo_in.at(0), dec);
 	convertString(ta,      meteo_in.at(1), dec);
@@ -290,14 +290,14 @@ void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& m
 	convertString(vw,      meteo_in.at(3), dec);
 	convertString(dw,      meteo_in.at(4), dec);
 	convertString(rh,      meteo_in.at(5), dec);
-	convertString(lwr,     meteo_in.at(6), dec);
+	convertString(ilwr,     meteo_in.at(6), dec);
 	convertString(hnw,     meteo_in.at(7), dec);
 	convertString(tsg,     meteo_in.at(8), dec);
 	convertString(tss,     meteo_in.at(9), dec);
 	convertString(hs,      meteo_in.at(10), dec);
 	convertString(rswr,    meteo_in.at(11), dec);
 	
-	md.setMeteoData(tmpDate, ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr);
+	md.setMeteoData(tmpDate, ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr);
 }
 
 /**
@@ -453,7 +453,7 @@ void ImisIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts lwr to ea, converts RH to [0,1]
+	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}

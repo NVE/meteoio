@@ -40,7 +40,7 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 
 		//building MeteoData
 		double p=IOUtils::nodata, hnw=IOUtils::nodata, ta=IOUtils::nodata, rh=IOUtils::nodata;
-		double vw=IOUtils::nodata, dw=IOUtils::nodata, iswr=IOUtils::nodata, lwr=IOUtils::nodata;
+		double vw=IOUtils::nodata, dw=IOUtils::nodata, iswr=IOUtils::nodata, ilwr=IOUtils::nodata;
 		double tsg=IOUtils::nodata, tss=IOUtils::nodata, hs=IOUtils::nodata, rswr=IOUtils::nodata;
 		if(algorithm =="P"){
 			interpolation_type=MeteoData::P;
@@ -65,13 +65,13 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 		} else if(algorithm =="ISWR" ){
 			interpolation_type=MeteoData::ISWR;
 			iswr=cData[nbDataPerStation*i];
-		} else if(algorithm =="LWR"){
-			interpolation_type=MeteoData::LWR;
-			lwr=cData[nbDataPerStation*i];
+		} else if(algorithm =="ILWR"){
+			interpolation_type=MeteoData::ILWR;
+			ilwr=cData[nbDataPerStation*i];
 		} else {
 			throw InvalidArgumentException("Invalid interpolation algorithm selected!", AT);
 		}
-		const MeteoData meteo(date_in, ta, iswr,vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr, p);
+		const MeteoData meteo(date_in, ta, iswr,vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr, p);
 		vecData.push_back(meteo);
 	}
 }

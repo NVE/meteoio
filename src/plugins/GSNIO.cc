@@ -27,7 +27,7 @@
  * - LIGHT mapped to iswr
  * - TEMPERATURE or AIR_TEMP mapped to ta
  * - WIND_SPEED mapped to wv
- * - SOLAR_RAD mapped to iswr and lwr //HACK: THIS IS A BUG!!
+ * - SOLAR_RAD mapped to iswr and ilwr //HACK: THIS IS A BUG!!
  * - AIR_HUMID mapped to rh
  * - SOIL_TEMP_ECTM mapped to tss
  * - GROUND_TEMP_TNX mapped to tsg
@@ -266,7 +266,7 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 			else if (key == "WIND_DIRECTION") convertStringToDouble(md.dw, tmpstring, "Wind Velocity");
 			else if (key == "SOLAR_RAD") {
 				convertStringToDouble(md.iswr, tmpstring, "solar_rad");				
-				//convertStringToDouble(md.lwr, tmpstring, "solar_rad");				
+				//convertStringToDouble(md.ilwr, tmpstring, "solar_rad");				
 			}
 			else if (key == "AIR_HUMID") convertStringToDouble(md.rh, tmpstring, "air_humid");
 			else if (key == "SOIL_TEMP_ECTM") convertStringToDouble(md.tss, tmpstring, "soil_temp_ectm");
@@ -398,7 +398,7 @@ void GSNIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts lwr to ea, converts RH to [0,1]
+	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}

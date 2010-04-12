@@ -28,7 +28,7 @@ bool AlgorithmFactory::initStaticData()
 	 * Keywords for selecting the spatial interpolation algorithm among the 
 	 * available methods for single source and multiple sources interpolations. 
 	 * More details about some of these algorithms can be found in "A Meteorological 
-	 * Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Alder, 2006.
+	 * Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, 2006.
 	 */
 
 	setAlgorithms.insert("CST");       // constant fill

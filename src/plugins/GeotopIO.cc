@@ -298,7 +298,7 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 						tmpdata[mapHeader["vw"]], 
 						tmpdata[mapHeader["dw"]], 
 						tmpdata[mapHeader["rh"]], 
-						tmpdata[mapHeader["lwr"]], 
+						tmpdata[mapHeader["ilwr"]], 
 						tmpdata[mapHeader["hnw"]], 
 						IOUtils::nodata,
 						IOUtils::nodata,
@@ -392,7 +392,7 @@ void GeotopIO::makeColumnMap(const std::vector<std::string>& tmpvec,
 		case 8: mapHeader["diffswr"] = tmpvec.size(); current="diffswr"; break; 
 		case 9: mapHeader["cloudt"] = tmpvec.size(); current="cloudt"; break; 
 		case 10: mapHeader["cloudi"] = tmpvec.size(); current="cloudi"; break; 
-		case 11: mapHeader["lwr"] = tmpvec.size(); current="lwr"; break; 
+		case 11: mapHeader["ilwr"] = tmpvec.size(); current="ilwr"; break; 
 		case 12: mapHeader["nswr"] = tmpvec.size(); current="nswr"; break; 
 		case 13: mapHeader["tsup"] = tmpvec.size(); current="tsup"; break; 
 		default: throw IOException("GEOtopIO can only deal with 14 meteo parameters", AT); break;
@@ -526,7 +526,7 @@ void GeotopIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts lwr to ea, converts RH to [0,1]
+	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}

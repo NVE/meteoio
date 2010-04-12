@@ -35,6 +35,7 @@
  * -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  * -# \subpage plugins "Available plugins" and usage
  * -# \subpage filters "Available filters" and usage
+ * -# \subpage interpol2d "Available spatial interpolations" and usage
  * -# \subpage dev_plugins How to write a "Plugin"
  * -# \subpage dev_filters How to write a "Filter"
  * -# \subpage examples "Examples"

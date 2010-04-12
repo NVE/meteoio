@@ -39,10 +39,21 @@ class MeteoData : POPBase {
 class MeteoData {
 #endif
 	public:
-		///this enum provides indexed access to meteorological fields
+		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0, 
-					  TA=firstparam, ISWR, VW, DW, RH, LWR, HNW, TSG, TSS, HS, RSWR, P, 
-					  lastparam=P};
+					TA=firstparam, ///< Air temperature
+					RH, ///< Relative humidity
+					VW, ///< Wind velocity
+					DW, ///< Wind direction
+					ISWR, ///< Incoming short wave radiation
+					RSWR, ///< Reflected short wave radiation
+					ILWR, ///< Incoming long wave radiation
+					HS, ///< Snow height
+					HNW, ///< New water equivalent height
+					TSG, ///< Temperature ground surface
+					TSS, ///< Temperature snow surface
+					P, ///< Air pressure
+					lastparam=P};
 
 		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 
@@ -66,7 +77,7 @@ class MeteoData {
 		* @param vw Wind velocity in m s-1 (default nodata)
 		* @param dw Wind direction in degrees (default nodata)
 		* @param rh Relative humidity between 0 and 1 (default nodata)
-		* @param lwr Long wave radiation in W m-2 (default nodata)
+		* @param ilwr Long wave radiation in W m-2 (default nodata)
 		* @param hnw Precipitations in mm h-1 (default nodata)
 		* @param tsg Soil or snow bottom temperature in Kelvin (default nodata)
 		* @param tss Soil or snow surface temperature in Kelvin (default nodata)
@@ -80,7 +91,7 @@ class MeteoData {
 		    const double& vw=IOUtils::nodata, 
 		    const double& dw=IOUtils::nodata, 
 		    const double& rh=IOUtils::nodata, 
-		    const double& lwr=IOUtils::nodata, 
+		    const double& ilwr=IOUtils::nodata, 
 		    const double& hnw=IOUtils::nodata,
 		    const double& tsg=IOUtils::nodata,
 		    const double& tss=IOUtils::nodata, 
@@ -96,7 +107,7 @@ class MeteoData {
 		* @param vw Wind velocity in m s-1 (default nodata)
 		* @param dw Wind direction in degrees (default nodata)
 		* @param rh Relative humidity between 0 and 1 (default nodata)
-		* @param lwr Long wave radiation in W m-2 (default nodata)
+		* @param ilwr Long wave radiation in W m-2 (default nodata)
 		* @param hnw Precipitations in mm h-1 (default nodata)
 		* @param tsg Soil or snow bottom temperature in Kelvin (default nodata)
 		* @param tss Soil or snow surface temperature in Kelvin (default nodata)
@@ -110,7 +121,7 @@ class MeteoData {
 		    	const double& vw=IOUtils::nodata, 
 		    	const double& dw=IOUtils::nodata, 
 		    	const double& rh=IOUtils::nodata, 
-		    	const double& lwr=IOUtils::nodata, 
+		    	const double& ilwr=IOUtils::nodata, 
 		    	const double& hnw=IOUtils::nodata,
 		    	const double& tsg=IOUtils::nodata,
 		    	const double& tss=IOUtils::nodata, 
@@ -142,7 +153,7 @@ class MeteoData {
 		double hnw; ///<Precipitations in mm h-1
 		double iswr; ///<Incoming shortwave radiation in W m-2
 		double rswr; ///<Reflected Short Wave Radiation in W m-2
-		double lwr; ///<Long wave radiation in W m-2
+		double ilwr; ///<Incoming Long wave radiation in W m-2
 		double tsg; ///<Soil or snow bottom temperature in Kelvin
 		double tss; ///<Soil or snow surface temperature in Kelvin
 		double hs; ///<Snow height in cm

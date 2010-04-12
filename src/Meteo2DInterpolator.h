@@ -28,7 +28,7 @@
 
 /**
  * @class Meteo2DInterpolator
- * @brief A class to spatially interpolate meteo parameters
+ * @brief A class to spatially interpolate meteo parameters. For more, see \ref interpol2d
  *
  * @author Mathias Bavay and Thomas Egger
  * @date   2010-01-14

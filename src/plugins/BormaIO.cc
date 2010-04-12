@@ -286,7 +286,7 @@ void BormaIO::checkForMeteoFiles(const std::string& xmlpath, const std::string& 
 void BormaIO::xmlExtractData(const std::string& filename, const Date_IO& date_in, MeteoData& md, StationData& sd)
 {
 	double ta=IOUtils::nodata, iswr=IOUtils::nodata, vw=IOUtils::nodata, dw=IOUtils::nodata;
-	double rh=IOUtils::nodata, lwr=IOUtils::nodata, hnw=IOUtils::nodata, tsg=IOUtils::nodata;
+	double rh=IOUtils::nodata, ilwr=IOUtils::nodata, hnw=IOUtils::nodata, tsg=IOUtils::nodata;
 	double tss=IOUtils::nodata, hs=IOUtils::nodata, rswr=IOUtils::nodata;
 	double longitude=IOUtils::nodata, latitude=IOUtils::nodata, altitude=IOUtils::nodata;
 
@@ -339,11 +339,11 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date_IO& date_in
 		const std::string str_ns = xmlGetNodeContent(pNode, "ni");
 		xmlParseStringToDouble(str_ns, hnw, "ni");
 
-		//sb = lwr
+		//sb = ilwr
 		const std::string str_sb = xmlGetNodeContent(pNode, "sb");
-		xmlParseStringToDouble(str_sb, lwr, "sb");
+		xmlParseStringToDouble(str_sb, ilwr, "sb");
 
-		md.setMeteoData(date_in, ta, iswr, vw, dw, rh, lwr, hnw, tsg, tss, hs, rswr);
+		md.setMeteoData(date_in, ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr);
 		convertUnits(md);
 		
 	} else {
@@ -503,7 +503,7 @@ void BormaIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts lwr to ea, converts RH to [0,1]
+	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
