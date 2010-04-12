@@ -1,6 +1,10 @@
 OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/src/plugins")
 
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
 IF(DEST STREQUAL "par")
   SET(CMAKE_CXX_OUTPUT_EXTENSION "_par.o")
   SET(ARCIONAME arcio_par)
@@ -23,11 +27,6 @@ ELSE(DEST)
   SET(BORMAIONAME bormaio)
 #  SET(SHAREDNAME ${PROJECT_NAME})
 ENDIF(DEST STREQUAL "par")
-
-if(COMMAND cmake_policy)
-  cmake_policy(SET CMP0003 NEW)
-endif(COMMAND cmake_policy)
-
 
 IF(ARCIO)
   ADD_LIBRARY(${ARCIONAME} ARCIO.cc)

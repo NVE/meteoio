@@ -1,3 +1,8 @@
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+
 IF(GSNIO)
   find_program(WSDL2H wsdl2h)
   find_program(SOAPCPP2 soapcpp2)
