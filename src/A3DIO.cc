@@ -285,7 +285,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 			//tmpdata.cleanData();
 			convertUnits(tmpdata);
 		}
-		//cout << "Size of buffer: " << vecMeteo[0].size() << "   " << tmp_date.toString() << endl;
+		//cout << "Size of buffer: " << vecMeteo[0].size() << "   " << tmp_date << endl;
 	} catch(...) {
 		std::cout << "[E] " << AT << ": "<< std::endl;
 		cleanup();
@@ -304,7 +304,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 
 	if (IOUtils::readLineToVec(line, tmpvec) != 10) {
 		return true;
-		//throw InvalidFormatException("Premature End of Line or no data for date " + date_in.toString() + " found in File " + filename, AT);
+		//throw InvalidFormatException("Premature End of Line or no data for date " + date_in + " found in File " + filename, AT);
 	}
       
 	for (int ii=0; ii<4; ii++) {
@@ -539,8 +539,9 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 		}
 
 		if (IOUtils::readLineToVec(line_in, tmpvec)!=columns) { //Every station has to have its own column
-			throw InvalidFormatException("Premature End of Line or no data for date " + vecM[0][bufferindex].date.toString() 
-								    + " found in File " + filename, AT);
+			throw InvalidFormatException("Premature End of Line or no data for date " 
+			                             + vecM[0][bufferindex].date.toString(Date_IO::FULL) + " found in File " 
+			                             + filename, AT);
 		}
     
 		for (int ii=0; ii<4; ii++) {
@@ -560,25 +561,25 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 
 				if (parameter == "nswc") {
 					if (!IOUtils::convertString(tmpmd.hnw, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For hnw value in " + filename + "  for date " + tmpmd.date.toString(), AT);
+						throw ConversionFailedException("For hnw value in " + filename + "  for date " + tmpmd.date.toString(Date_IO::FULL), AT);
 					}
 	  
 				} else if (parameter == "rh") {
 					if (!IOUtils::convertString(tmpmd.rh, tmpvec[ii], std::dec)) {
-						throw ConversionFailedException("For rh value in " + filename + "  for date " + tmpmd.date.toString(), AT);
+						throw ConversionFailedException("For rh value in " + filename + "  for date " + tmpmd.date.toString(Date_IO::FULL), AT);
 					}
 	  
 				} else if (parameter == "ta") {
 					if (!IOUtils::convertString(tmpmd.ta, tmpvec[ii], std::dec)) 
-						throw ConversionFailedException("For ta value in " + filename + "  for date " + tmpmd.date.toString(), AT);
+						throw ConversionFailedException("For ta value in " + filename + "  for date " + tmpmd.date.toString(Date_IO::FULL), AT);
     
 				} else if (parameter == "vw") {
 					if (!IOUtils::convertString(tmpmd.vw, tmpvec[ii], std::dec)) { 
-						throw ConversionFailedException("For vw value in " + filename + "  for date " + tmpmd.date.toString(), AT);
+						throw ConversionFailedException("For vw value in " + filename + "  for date " + tmpmd.date.toString(Date_IO::FULL), AT);
 					}
 				} else if (parameter == "dw") {
 					if (!IOUtils::convertString(tmpmd.dw, tmpvec[ii], std::dec)) { 
-						throw ConversionFailedException("For dw value in " + filename + "  for date " + tmpmd.date.toString(), AT);
+						throw ConversionFailedException("For dw value in " + filename + "  for date " + tmpmd.date.toString(Date_IO::FULL), AT);
 					}
 				}
 			}

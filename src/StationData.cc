@@ -55,17 +55,15 @@ std::string StationData::getStationName() const {
 	return stationName;
 }
 
+std::ostream& operator<<(std::ostream& os, const StationData& station) {
+	
+	os << "<station>\n";
+	os << std::setprecision(10) << station.position << "  Name:     " << station.stationName << "\n";
+	os << "</station>\n";
 
-const std::string StationData::toString() const
-{
-	std::stringstream tmpstr;
-
-	tmpstr << std::setprecision(10)
-	 	<< "WGS84 position:   " << position.printLatLon() << std::endl
-	 	<< "Easting:   " << std::setw(15) << position.getEasting() << std::setw(10) << "  Northing: " << std::setw(15) << position.getNorthing() << "  Name:     " << stationName;
-
-	return tmpstr.str();
+	return os;
 }
+
 #ifdef _POPC_
 #include "marshal_meteoio.h"
 void StationData::Serialize(POPBuffer &buf, bool pack)

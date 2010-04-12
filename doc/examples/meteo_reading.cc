@@ -24,8 +24,8 @@ int main(int argc, char** argv) {
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
 		std::cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << std::endl;
-		std::cout << vecStation[ii].toString() << std::endl;
-		std::cout << "Air temperature: " << vecMeteo[ii].ta << std::endl;
+		std::cout << vecStation[ii] << std::endl;
+		std::cout << vecMeteo[ii] << std::endl;
 	}
 
 	delete io;

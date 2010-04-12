@@ -21,6 +21,7 @@
 #include "IOUtils.h"
 #include <vector>
 #include <limits>
+#include <iostream>
 #include "IOExceptions.h"
 
 #define NOSAFECHECKS
@@ -35,11 +36,6 @@
 template<class T> class Array {
 	public:
 		Array(const unsigned int& asize=0);
-
-		T& operator [](const unsigned int& index);
-		const T operator [](const unsigned int& index) const;
-		T& operator ()(const unsigned int& index);
-		const T operator ()(const unsigned int& index) const;
 
 		unsigned int size();
 		void resize(const unsigned int& asize);
@@ -64,11 +60,12 @@ template<class T> class Array {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
-		/**
-		* @brief print to the screen the content of the array (usefull for debugging)
-		* The array is bound by "<array1d>" and "</array1d>" on separate lines
-		*/
-		void print() const;
+
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array<P>& array);
+		T& operator [](const unsigned int& index);
+		const T operator [](const unsigned int& index) const;
+		T& operator ()(const unsigned int& index);
+		const T operator ()(const unsigned int& index) const;
 
 		Array<T>& operator =(const Array<T>&);
 		
@@ -157,12 +154,13 @@ template<class T> void Array<T>::clear() {
 	nx = 0;
 }
 
-template<class T> void Array<T>::print() const {
-	std::cout << "<array1d>\n";
-	for(unsigned int ii=0; ii<nx; ii++) {
-		std::cout << operator()(ii) << " ";
+template<class T> std::ostream& operator<<(std::ostream& os, const Array<T>& array) {
+	os << "<array1d>\n";
+	for(unsigned int ii=0; ii<array.nx; ii++) {
+		os << array(ii) << " ";
 	}
-	std::cout << "\n</array1d>" << std::endl;
+	os << "\n</array1d>\n";
+	return os;
 }
 
 template<class T> void Array<T>::insertAt(const int& index, T e) {

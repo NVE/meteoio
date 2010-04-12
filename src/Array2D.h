@@ -22,6 +22,7 @@
 #include "IOExceptions.h"
 #include "IOUtils.h"
 #include <limits>
+#include <iostream>
 
 #define NOSAFECHECKS
 
@@ -89,11 +90,8 @@ template<class T> class Array2D {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
-		/**
-		* @brief print to the screen the content of the array (usefull for debugging)
-		* The array is bound by "<array2d>" and "</array2d>" on separate lines
-		*/
-		void print() const;
+
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
 
 		void clear();
 		T& operator ()(const unsigned int& x, const unsigned int& y);
@@ -221,15 +219,16 @@ template<class T> void Array2D<T>::clear() {
 	nx=ny=0;
 }
 
-template<class T> void Array2D<T>::print() const {
-	std::cout << "<array2d>\n";
-	for(unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			std::cout << operator()(ii,jj) << " ";
+template<class T> std::ostream& operator<<(std::ostream& os, const Array2D<T>& array) {
+	os << "<array2d>\n";
+	for(unsigned int ii=0; ii<array.nx; ii++) {
+		for (unsigned int jj=0; jj<array.ny; jj++) {
+			os << array(ii,jj) << " ";
 		}
-		std::cout << "\n";
+		os << "\n";
 	}
-	std::cout << "</array2d>" << std::endl;
+	os << "</array2d>\n";
+	return os;
 }
 
 template<class T> T Array2D<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {

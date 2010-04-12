@@ -275,7 +275,7 @@ void Interpol2D::constantGrid2DFill(const double& value, const DEMObject& dem, G
 
 /**
 * @brief Grid filling function: 
-* This implementation fills a flat grid with a constant value and then reproject it to the terrain's elevation.
+* This implementation fills a flat grid with a constant value and then reprojects it to the terrain's elevation.
 * for example, the air temperature measured at one point at 1500m would be given as value, the 1500m as altitude and the dem would allow to reproject this temperature on the full DEM using the detrending function provided as pointer (with its previously calculated coefficients).
 * @param value value to put in the grid
 * @param altitude altitude of the "value"

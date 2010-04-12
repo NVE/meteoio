@@ -70,7 +70,7 @@ class StationData {
 		*/
 		void getStationData(Coords& _position, std::string& name_in);
 
-		const std::string toString(void) const;
+		friend std::ostream& operator<<(std::ostream& os, const StationData& station);
 
 		//Comparison operators
 		/**

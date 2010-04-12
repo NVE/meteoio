@@ -83,7 +83,7 @@ void BufferedIOHandler::readLanduse(Grid2DObject& _grid2Dobj)
 
 void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject& _grid2Dobj)
 {
-	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + _date.toString());
+	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + _date.toString(Date_IO::FULL));
 	if (it != mapBufferedGrids.end()) { //already in map
 		_grid2Dobj = (*it).second; 
 		return;
@@ -91,7 +91,7 @@ void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject&
 	
 	Grid2DObject tmpgrid2D;
 	iohandler.readAssimilationData(_date, tmpgrid2D);
-	mapBufferedGrids["/:ASSIMILATIONDATA" + _date.toString()] = tmpgrid2D;
+	mapBufferedGrids["/:ASSIMILATIONDATA" + _date.toString(Date_IO::FULL)] = tmpgrid2D;
 	_grid2Dobj = tmpgrid2D;
 }
 
@@ -194,7 +194,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 
 			if (rebuffer){
 				cout << "[I] Station " << ii << "(" << stationName 
-					<< ") data for date " << date_in.toString() << " not in buffer ..." << endl;
+					<< ") data for date " << date_in.toString(Date_IO::FULL) << " not in buffer ..." << endl;
 				
 				bool dataexists = bufferData(date_in, ii);
 				if (dataexists) {//date_in is contained in buffer
@@ -218,7 +218,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 			vecStation.push_back(sd);
 		} else {
 			cout << "[I] Buffering data for Station " << stationName << " at date " 
-				<< date_in.toString() << " failed" << endl;
+				<< date_in.toString(Date_IO::FULL) << " failed" << endl;
 			vecMeteo.push_back(MeteoData());
 			vecMeteo[ii].date = date_in; //set correct date
 
@@ -231,7 +231,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 		vecMeteo[0].date = date_in; //set correct date
 
 		vecStation.push_back(StationData());
-		//throw IOException("[E] No data for any station for date " + date_in.toString() + " found", AT);
+		//throw IOException("[E] No data for any station for date " + date_in.toString(Date_IO::FULL) + " found", AT);
 	}	
 }
 
@@ -370,7 +370,6 @@ unsigned int BufferedIOHandler::seek(const Date_IO& date_in, std::vector<MeteoDa
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
 	while ((ii < vecM.size())) {
-		//cerr << "in search loop" << vecM[ii].date.toString() << endl;
 		if ((vecM[ii].date >= date_in) && (vecM[ii-1].date < date_in)) {
 			return ii;
 		}

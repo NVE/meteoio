@@ -238,13 +238,14 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 	}
 }
 
-void Grid3DObject::print() const
+std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
 {
-	std::cout << "<Grid3DObject>\n";
-	llcorner.print();
-	std::cout << ncols << " x " << nrows  << " x " << ndepth << " @ " << cellsize << "m\n";
-	grid3D.print();
-	std::cout << "</Grid3DObject>" << std::endl;
+	os << "<Grid3DObject>\n";
+	os << grid.llcorner;
+	os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepth << " @ " << grid.cellsize << "m\n";
+	os << grid.grid3D;
+	os << "</Grid3DObject>\n";
+	return os;
 }
 
 #ifdef _POPC_

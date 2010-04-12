@@ -17,6 +17,7 @@
 */
 #ifndef __GRID2DOBJECT_H__
 #define __GRID2DOBJECT_H__
+#include <iostream>
 
 #include "Array2D.h"
 #include "IOExceptions.h"
@@ -49,6 +50,7 @@ class Grid2DObject {
 		} grid_point;
 
 		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
+		friend std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid);
 
 		/**
 		* @brief Default constructor.
@@ -123,12 +125,6 @@ class Grid2DObject {
 		* @return (bool) true if same geolocalization
 		*/
 		bool isSameGeolocalization(const Grid2DObject& target);
-
-		/**
-		* @brief print to the screen the content of the Grid2DObject (usefull for debugging)
-		* The Grid2DObject is bound by "<Grid2DObject>" and "</Grid2DObject>" on separate lines
-		*/
-		void print() const;
 
 		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
 		unsigned int ncols; ///<number of columns in the grid

@@ -277,7 +277,6 @@ void BormaIO::checkForMeteoFiles(const std::string& xmlpath, const std::string& 
 		if (validFilename(*it)) {
 			filename_out = *it;
 			stringToDate_IO(filename_out, date_out);
-			//cout << tmp_file << "  " << tmp_date.toString() << endl;
 		}
     
 		it++;
@@ -470,7 +469,7 @@ void BormaIO::read2DMeteo(const Date_IO& date_in, std::vector<MeteoData>& vecMet
 		//Check whether file was found
 		if (tmp_date<date_in) {
 			throw FileNotFoundException("No XML file in path '" + xmlpath 
-								   + "' found for date " + date_in.toString() + " for station " + stationname, AT);
+								   + "' found for date " + date_in.toString(Date_IO::ISO) + " for station " + stationname, AT);
 		}
 
 		//Read in data from XML File

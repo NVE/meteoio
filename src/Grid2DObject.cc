@@ -233,13 +233,14 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)
 	}
 }
 
-void Grid2DObject::print() const
+std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
 {
-	std::cout << "<Grid2DObject>\n";
-	llcorner.print();
-	std::cout << ncols << " x " << nrows << " @ " << cellsize << "m\n";
-	grid2D.print();
-	std::cout << "</Grid2DObject>" << std::endl;
+	os << "<Grid2DObject>\n";
+	os << grid.llcorner;
+	os << grid.ncols << " x " << grid.nrows << " @ " << grid.cellsize << "m\n";
+	os << grid.grid2D;
+	os << "</Grid2DObject>\n";
+	return os;
 }
 
 #ifdef _POPC_

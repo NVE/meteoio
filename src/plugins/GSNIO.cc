@@ -327,7 +327,6 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 			parseString(meteodata.return_[jj], vecString, md);
 			convertUnits(md);
 
-			//cout << md.toString() << endl;
 			vecMeteo[stationindex].push_back(md);
 			vecStation[stationindex].push_back(sd);
 		}

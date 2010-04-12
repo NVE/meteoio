@@ -511,7 +511,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 	} 
 	
 	//Date_IO gap(vecM[startposition].date - vecM[endposition].date);
-	//cout << "The final gap is " << gap.toString() << "  windowposition: " << windowposition << endl;
+	//cout << "The final gap is " << gap << "  windowposition: " << windowposition << endl;
 
 	//Push all relevant data elements into the vector vecWindow
 	//cout << "Start: " << startposition << "  End: " << endposition << endl;

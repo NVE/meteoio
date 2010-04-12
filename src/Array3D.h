@@ -21,6 +21,7 @@
 #include "IOUtils.h"
 #include <vector>
 #include <limits>
+#include <iostream>
 #include "IOExceptions.h"
 
 #define NOSAFECHECKS
@@ -116,12 +117,8 @@ template<class T> class Array3D {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
-		/**
-		* @brief print to the screen the content of the array (usefull for debugging)
-		* The array is bound by "<array3d>" and "</array3d>" on separate lines
-		*/
-		void print() const;
 
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array3D<P>& array);
 		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
 		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
 		Array3DProxy<T> operator[](const unsigned int& i);
@@ -255,18 +252,19 @@ template<class T> void Array3D<T>::clear() {
 	nx = ny = nz = nxny = 0;
 }
 
-template<class T> void Array3D<T>::print() const {
-	std::cout << "<array3d>\n";
-	for (unsigned int kk=0; kk<nx; kk++) {
-		std::cout << "depth[" << kk << "]\n";
-		for(unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
-				std::cout << operator()(ii,jj,kk) << " ";
+template<class T> std::ostream& operator<<(std::ostream& os, const Array3D<T>& array) {
+	os << "<array3d>\n";
+	for (unsigned int kk=0; kk<array.nz; kk++) {
+		os << "depth[" << kk << "]\n";
+		for(unsigned int ii=0; ii<array.nx; ii++) {
+			for (unsigned int jj=0; jj<array.ny; jj++) {
+				os << array(ii,jj,kk) << " ";
 			}
-			std::cout << "\n";
+			os << "\n";
 		}
 	}
-	std::cout << "</array3d>" << std::endl;
+	os << "</array3d>\n";
+	return os;
 }
 
 template<class T> T Array3D<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {

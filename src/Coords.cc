@@ -85,6 +85,21 @@ Coords& Coords::operator=(const Coords& source) {
 }
 
 /**
+* @brief Print the content of the Coords object (usefull for debugging)
+* The Coords is bound by "<Coords>" and "</Coords>" on separate lines
+*/
+std::ostream& operator<<(std::ostream &os, const Coords& coord)
+{
+	os << "<Coords>\n";
+	os << "Lat/Long\t" << coord.printLatLon() << "\n";
+	os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
+	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
+	os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
+	os << "</Coords>\n";
+	return os;
+}
+
+/**
 * @brief Default constructor
 * This constructor builds a dummy object that performs no conversions but can be used for comparison
 * purpose. This is more or less the equivalent of NULL for a pointer...
@@ -212,19 +227,6 @@ std::string Coords::printLatLon() const {
 	dms << "(" << decimal_to_dms(latitude) << " , " << decimal_to_dms(longitude) << ")";
 
 	return dms.str();
-}
-
-/**
-* @brief Print the content of the Coords object (usefull for debugging)
-* The Coords is bound by "<Coords>" and "</Coords>" on separate lines
-*/
-void Coords::print() const {
-	std::cout << "<Coords>\n";
-	std::cout << "Lat/Long\t" << printLatLon() << "\n";
-	std::cout << "Y/Ycoords\t" << getEasting() << " " << getNorthing() << "\n";
-	std::cout << "I/Jindices\t" << getGridI() << " " << getGridJ() << "\n";
-	std::cout << "Projection\t" << coordsystem << " " << coordparam << "\n";
-	std::cout << "</Coords>" << std::endl;
 }
 
 /**

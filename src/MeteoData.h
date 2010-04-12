@@ -127,7 +127,7 @@ class MeteoData {
 		const double& param(const unsigned int& parindex) const;
 		static const std::string& getParameterName(const unsigned int& parindex);
 
-		const std::string toString(void) const;
+		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 
 		//Comparison operators
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality

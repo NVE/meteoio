@@ -247,18 +247,11 @@ long Date_IO::getJulianDay(const int& inyear, const int& inmonth, const int& ind
 	return julday;
 }
 
-const string Date_IO::toString() const
-{//HACK: this method should be removed
-	stringstream tmpstr;
-	tmpstr << setprecision(10) << julian << "  " << year << "/" << month << "/" << day << " " 
-		  << setw(2) << setfill('0') << hour << ":" 
-		  << setw(2) << setfill('0') << minute;
-	return tmpstr.str();
-}
-
-ostream& operator<<(ostream &os, const Date_IO &date)
+std::ostream& operator<<(std::ostream &os, const Date_IO &date)
 {
-	os<<date.toString();
+	os << "<date>\n";
+	os << date.toString(Date_IO::FULL) << "\n";
+	os << "</date>\n";
 	return os;
 }
 

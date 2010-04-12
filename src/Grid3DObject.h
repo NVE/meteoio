@@ -17,6 +17,7 @@
 */
 #ifndef __GRID3DOBJECT_H__
 #define __GRID3DOBJECT_H__
+#include <iostream>
 
 #include "Array3D.h"
 #include "IOExceptions.h"
@@ -44,6 +45,7 @@ class Grid3DObject{
 		} grid_point;
 
 		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
+		friend std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid);
 
 		/**
 		* Default constructor.
@@ -118,12 +120,6 @@ class Grid3DObject{
 		* @return (bool) true if same geolocalization
 		*/
 		bool isSameGeolocalization(const Grid3DObject& target);
-
-		/**
-		* @brief print to the screen the content of the Grid3DObject (usefull for debugging)
-		* The Grid3DObject is bound by "<Grid3DObject>" and "</Grid3DObject>" on separate lines
-		*/
-		void print() const;
 
 		Array3D<double> grid3D;
 		unsigned int ncols, nrows, ndepth;

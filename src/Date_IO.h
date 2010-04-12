@@ -86,8 +86,6 @@ class Date_IO {
 		///Since at SLF julian dates are always treated with an offset, this function provides a way to deal with real julian dates
 		void getRealJulianDate(double& julian_out) const;
 
-		///The toString representation outputs the date in the form of "[double]julian_date yyyy/mm/dd hh:mm"
-		const std::string toString(void) const;
 		friend std::ostream& operator<<(std::ostream& os, const Date_IO& date);
 
 		const std::string toString(FORMATS type) const;
