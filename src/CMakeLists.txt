@@ -49,12 +49,12 @@ if (DEST STREQUAL "par")
 
   ADD_CUSTOM_COMMAND(
     OUTPUT "${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o"
-    COMMAND popcc -o ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -c ${PROJECT_SOURCE_DIR}/src/PackMeteoIO.cc
+    COMMAND popcc -o ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -c ${PROJECT_SOURCE_DIR}/src/PackMeteoIO.cc -fPIC -I ${PROJECT_SOURCE_DIR}/src -g -combine -pipe -march=native -fomit-frame-pointer -O3 -Wall  -Wextra
     DEPENDS ${STATICNAME}
     )
   ADD_CUSTOM_COMMAND(
     OUTPUT ${PROJECT_SOURCE_DIR}/lib/meteoio.module
-    COMMAND popcc "${CMAKE_CXX_FLAGS_RELEASE}" -object -parocld=g++ -o "${PROJECT_SOURCE_DIR}/lib/meteoio.module" -lmeteoiopopc -rdynamic -lc -ldl -lm -lstdc++
+    COMMAND popcc -object -parocld=c++ -o ${PROJECT_SOURCE_DIR}/lib/meteoio.module ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -lmeteoiopopc -rdynamic -lc -ldl -lm -lstdc++
     DEPENDS ${STATICNAME} ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o
     )
 
