@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.4) 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
-PROJECT(meteoio CXX C)
+PROJECT(meteoio)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(src/plugins)
 ADD_SUBDIRECTORY(src/plugins/gsn)
@@ -12,10 +12,15 @@ FIND_PROGRAM(COLORGCC_EXECUTABLE colorgcc)
 #  set(CMAKE_CXX_COMPILER "colorgcc" CACHE STRING "Compiler set to colorgcc" FORCE)
 #ENDIF(COLORGCC_EXECUTABLE)
 
+# require proper c++
+set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long")
+set(POPCC popcc)
+
 #platform specific
 IF(UNIX)
   IF(APPLE)
     set(PLATFORM "-DAPPLE")
+    set(CFLAGS "-Wall -Wextra -Wno-long-long")
   ELSE(APPLE)
     set(PLATFORM "-DLINUX")
   ENDIF(APPLE)
@@ -24,11 +29,6 @@ ELSE(UNIX)
     set(PLATFORM "-DWIN32 -U__STRICT_ANSI__")
   ENDIF(WIN32)
 ENDIF(UNIX)
-
-
-# require proper c++
-set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long")
-set(POPCC popcc)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "release" CACHE STRING
@@ -40,27 +40,25 @@ if(NOT DEST)
   set(DEST "safe" CACHE STRING "Choose safe, zeus or grid" FORCE)
 endif(NOT DEST)
 
+if (DEST STREQUAL "par")
+  set(CFLAGS "-Wall -Wextra -Wno-long-long")
+  set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG" CACHE STRING "" FORCE)
+  set(DEBUG "-g -O0 -D__DEBUG" CACHE STRING "" FORCE)
+endif(DEST STREQUAL "par")
+
 if (DEST STREQUAL "safe")
   set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG")
   set(ARCH  "-march=pentium3")
   set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "safe")
 
-if (DEST STREQUAL "grid")
-  set(CMAKE_CXX_COMPILER "colorgcc" CACHE STRING 
-    "Compiler set to colorgcc for the grid" FORCE)
-  set(CMAKE_CC_COMPILER "colorgcc" CACHE STRING 
-    "Compiler set to colorgcc for the grid" FORCE)
-  set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG")
-  set(ARCH  "-march=native")
-  set(DEBUG "-g -O0 -D__DEBUG")
-endif(DEST STREQUAL "grid")
+IF(DEST STREQUAL "grid")
+  SET(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG")
+  SET(ARCH  "-march=native")
+  SET(DEBUG "-g -O0 -D__DEBUG")
+ENDIF(DEST STREQUAL "grid")
 
 if (DEST STREQUAL "zeus")
-  set(CMAKE_CXX_COMPILER "g++" CACHE STRING 
-    "Compiler set to g++ for zeus" FORCE)
-  set(CMAKE_CC_COMPILER "gcc" CACHE STRING 
-    "Compiler set to gcc for zeus" FORCE)
   set(OPTIM "-DNDEBUG")
   set(ARCH  "-march=x86-64")
   set(DEBUG "-g -O0 -D__DEBUG")
