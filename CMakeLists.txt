@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.4) 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
+# Version of library
+SET(VERSION_MAJOR 0 CACHE INTERNAL "")
+SET(VERSION_MINOR 1 CACHE INTERNAL "")
+SET(VERSION_PATCH 0 CACHE INTERNAL "")
+
 PROJECT(meteoio)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(src/plugins)
@@ -37,7 +42,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 if(NOT DEST)
-  set(DEST "safe" CACHE STRING "Choose safe, zeus or grid" FORCE)
+  set(DEST "safe" CACHE STRING "Choose safe, par (with popcc),zeus or grid" FORCE)
 endif(NOT DEST)
 
 if (DEST STREQUAL "par")
@@ -112,4 +117,3 @@ ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/src/config.dox)
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
   set(GSOAPPP NOTFOUND CACHE FORCE)
 endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
-

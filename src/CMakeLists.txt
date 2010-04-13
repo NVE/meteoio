@@ -1,6 +1,19 @@
 #OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/src")
 
+IF(PROJ4)
+  FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
+  FIND_LIBRARY(LIBPROJ proj)
+  INCLUDE_DIRECTORIES(${LIBPROJ_INCLUDE_DIR})
+
+  if (DEST STREQUAL "par")
+    TARGET_LINK_LIBRARIES(${STATICNAME} ${LIBPROJ})
+  else(DEST)
+    TARGET_LINK_LIBRARIES(${SHAREDNAME} ${LIBPROJ})
+  endif(DEST STREQUAL "par")
+  ADD_DEFINITIONS(-DPROJ4)
+ENDIF(PROJ4)
+
 SET(meteoio_sources 
 	InterpolationAlgorithms.cc
 	MeteoFilter.cc
@@ -46,7 +59,6 @@ if (DEST STREQUAL "par")
   CMAKE_FORCE_C_COMPILER(popcc POPCC)
   CMAKE_FORCE_CXX_COMPILER(popcc POPCC)
 
-
   ADD_CUSTOM_COMMAND(
     OUTPUT "${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o"
     COMMAND popcc -o ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -c ${PROJECT_SOURCE_DIR}/src/PackMeteoIO.cc -fPIC -I ${PROJECT_SOURCE_DIR}/src -g -combine -pipe -march=native -fomit-frame-pointer -O3 -Wall  -Wextra
@@ -54,15 +66,11 @@ if (DEST STREQUAL "par")
     )
   ADD_CUSTOM_COMMAND(
     OUTPUT ${PROJECT_SOURCE_DIR}/lib/meteoio.module
-    COMMAND popcc -object -parocld=c++ -o ${PROJECT_SOURCE_DIR}/lib/meteoio.module ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -lmeteoiopopc -rdynamic -lc -ldl -lm -lstdc++
+    COMMAND popcc -object -parocld=c++ -o ${PROJECT_SOURCE_DIR}/lib/meteoio.module ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -L${PROJECT_SOURCE_DIR}/lib -lmeteoiopopc -rdynamic -lc -ldl -lm -lstdc++ ${LIBPROJ}
     DEPENDS ${STATICNAME} ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o
     )
 
   ADD_CUSTOM_TARGET(weidstuff ALL DEPENDS ${PROJECT_SOURCE_DIR}/lib/meteoio.module)
-
-  #$(LIBDIR)/meteoio.module: $(LIBDIR)/libmeteoiopopc.a $(SRCDIR)/PackMeteoIO_par.o
-  #$(POPCC) $(CCFLAGS) -object -parocld=$(LINKER) -o $@ $(SRCDIR)/PackMeteoIO_par.o $(LDFLAGS) $(LDFLAGS_POPC)
-
 
 ELSE(DEST)
   set(STATICNAME ${PROJECT_NAME}_STATIC)
@@ -74,8 +82,8 @@ ELSE(DEST)
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib
     ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib
     CLEAN_DIRECT_OUTPUT 1
-    VERSION 0.1.0
-    SOVERSION 0.1.0
+    VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+    SOVERSION ${VERSION_MAJOR}
     )
 
   INSTALL(TARGETS ${SHAREDNAME}
@@ -91,8 +99,6 @@ SET_TARGET_PROPERTIES(${STATICNAME} PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib
   CLEAN_DIRECT_OUTPUT 1
   OUTPUT_NAME ${STATICLIBNAME}
-  VERSION 0.1.0
-  SOVERSION 0.1.0
   )
 
 #install targets:
@@ -102,23 +108,12 @@ INSTALL(TARGETS ${STATICNAME}
   ARCHIVE DESTINATION lib
   )
 
-IF(PROJ4)
-  FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
-  FIND_LIBRARY(LIBPROJ proj)
-  INCLUDE_DIRECTORIES(${LIBPROJ_INCLUDE_DIR})
-
-  if (DEST STREQUAL "par")
-    TARGET_LINK_LIBRARIES(${STATICNAME} ${LIBPROJ})
-  else(DEST)
-    TARGET_LINK_LIBRARIES(${SHAREDNAME} ${LIBPROJ})
-  endif(DEST STREQUAL "par")
-  ADD_DEFINITIONS(-DPROJ4)
-ENDIF(PROJ4)
-
 if (DEST STREQUAL "par")
   FILE(GLOB files "${PROJECT_SOURCE_DIR}/src/*.h ${PROJECT_SOURCE_DIR}/src/*.ph")
+  FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*module")
 else(DEST)
   FILE(GLOB files "${PROJECT_SOURCE_DIR}/src/*.h")
 endif(DEST STREQUAL "par")
 
 INSTALL(FILES ${files} DESTINATION include)
+INSTALL(FILES ${modules} DESTINATION lib)
