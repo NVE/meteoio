@@ -19,6 +19,7 @@
 
 const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
 
+using namespace std;
 using namespace oracle;
 using namespace oracle::occi;
 
@@ -159,9 +160,9 @@ void ImisIO::readStationMetaData()
 			throw IOException("Could not read enough meta data", AT);
 
 		double east, north, alt;
-		if ((!convertString(east, resultset.at(1), std::dec))
-		    || (!convertString(north, resultset.at(2), std::dec))
-		    || (!convertString(alt, resultset.at(3), std::dec)))
+		if ((!IOUtils::convertString(east, resultset.at(1), std::dec))
+		    || (!IOUtils::convertString(north, resultset.at(2), std::dec))
+		    || (!IOUtils::convertString(alt, resultset.at(3), std::dec)))
 			throw ConversionFailedException("Error while converting station coordinate from Imis DB", AT);
 
 		Coords myCoord(coordsys, coordparam);
@@ -175,7 +176,7 @@ void ImisIO::parseStationName(const std::string& stationName, std::string& stNam
 	stName    = stationName.substr(0, stationName.length()-1);
 	string stNum  = stationName.substr(stationName.length()-1, 1);
 
-	if (!convertString(stNumber, stNum))
+	if (!IOUtils::convertString(stNumber, stNum))
 		throw ConversionFailedException("Error while converting station number", AT);
 }
 
@@ -284,18 +285,18 @@ void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& m
 	Date_IO tmpDate;
 	double ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr;
 
-	convertString(tmpDate, meteo_in.at(0), dec);
-	convertString(ta,      meteo_in.at(1), dec);
-	convertString(iswr,    meteo_in.at(2), dec);
-	convertString(vw,      meteo_in.at(3), dec);
-	convertString(dw,      meteo_in.at(4), dec);
-	convertString(rh,      meteo_in.at(5), dec);
-	convertString(ilwr,     meteo_in.at(6), dec);
-	convertString(hnw,     meteo_in.at(7), dec);
-	convertString(tsg,     meteo_in.at(8), dec);
-	convertString(tss,     meteo_in.at(9), dec);
-	convertString(hs,      meteo_in.at(10), dec);
-	convertString(rswr,    meteo_in.at(11), dec);
+	IOUtils::convertString(tmpDate, meteo_in.at(0), dec);
+	IOUtils::convertString(ta,      meteo_in.at(1), dec);
+	IOUtils::convertString(iswr,    meteo_in.at(2), dec);
+	IOUtils::convertString(vw,      meteo_in.at(3), dec);
+	IOUtils::convertString(dw,      meteo_in.at(4), dec);
+	IOUtils::convertString(rh,      meteo_in.at(5), dec);
+	IOUtils::convertString(ilwr,     meteo_in.at(6), dec);
+	IOUtils::convertString(hnw,     meteo_in.at(7), dec);
+	IOUtils::convertString(tsg,     meteo_in.at(8), dec);
+	IOUtils::convertString(tss,     meteo_in.at(9), dec);
+	IOUtils::convertString(hs,      meteo_in.at(10), dec);
+	IOUtils::convertString(rswr,    meteo_in.at(11), dec);
 	
 	md.setMeteoData(tmpDate, ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr);
 }

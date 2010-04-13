@@ -124,34 +124,6 @@ void BufferedIOHandler::setBufferProperties()
 	always_rebuffer = true;
 	bufferbefore = Date_IO(2.0);  //minus 2 days
 	bufferafter = Date_IO(20.0);  //plus 20 days
-
-	/*
-	string bufferstrategy;
-	vector<string> bufferperiod;
-	cfg.getValue("BUFFERSTRATEGY", bufferstrategy, ConfigReader::nothrow);
-	cfg.getValue("BUFFERPERIOD", bufferperiod, ConfigReader::nothrow);
-
-	if (bufferperiod.size() != 2){
-		bufferbefore = Date_IO(2.0);  //minus 2 days
-		bufferafter = Date_IO(20.0);  //plus 20 days
-	} else {
-		double before=0.0, after=0.0;
-		if (!IOUtils::convertString(before, bufferperiod[0], std::dec) || 
-		    !IOUtils::convertString(after, bufferperiod[1], std::dec))
-			throw ConversionFailedException("Key BUFFERPERIOD has invalid values", AT);
-		
-		if ((before<0) || (after<0))
-			throw ConversionFailedException("Key BUFFERPERIOD has invalid values", AT);
-
-		bufferbefore = Date_IO(before); 
-		bufferafter  = Date_IO(after);
-	}
-
-	//buffer strategy
-	always_rebuffer = true;
-	if (bufferstrategy == "newinterval")
-		always_rebuffer = false;
-	*/
 }
 
 void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
@@ -193,8 +165,8 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 			}
 
 			if (rebuffer){
-				cout << "[I] Station " << ii << "(" << stationName 
-					<< ") data for date " << date_in.toString(Date_IO::FULL) << " not in buffer ..." << endl;
+				//cout << "[I] Station " << ii << "(" << stationName 
+				//	<< ") data for date " << date_in.toString(Date_IO::FULL) << " not in buffer ..." << endl;
 				
 				bool dataexists = bufferData(date_in, ii);
 				if (dataexists) {//date_in is contained in buffer
@@ -217,8 +189,8 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 			vecMeteo.push_back(md);
 			vecStation.push_back(sd);
 		} else {
-			cout << "[I] Buffering data for Station " << stationName << " at date " 
-				<< date_in.toString(Date_IO::FULL) << " failed" << endl;
+			cout << "[I] Failed in retrieving data for station " << stationName << " at date " 
+				<< date_in.toString(Date_IO::FULL) << ": returning generic NODATA dataset" << endl;
 			vecMeteo.push_back(MeteoData());
 			vecMeteo[ii].date = date_in; //set correct date
 
