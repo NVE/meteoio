@@ -334,3 +334,12 @@ template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str
 
 	return true;
 }
+
+
+void IOUtils::getProjectionParameters(const ConfigReader& cfg, std::string& coordin, std::string& coordinparam, 
+							   std::string& coordout, std::string& coordoutparam) {
+	cfg.getValue("COORDSYS", "Input", coordin);
+	cfg.getValue("COORDPARAM", "Input", coordinparam, ConfigReader::nothrow);
+	cfg.getValue("COORDSYS", "Output", coordout, ConfigReader::nothrow);
+	cfg.getValue("COORDPARAM", "Output", coordoutparam, ConfigReader::nothrow);
+}

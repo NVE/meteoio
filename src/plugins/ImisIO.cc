@@ -38,8 +38,10 @@ using namespace oracle::occi;
  *
  * @section imis_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coords)
- * - COORDPARAM: extra input coordinates parameters (see Coords)
+ * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
  * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station code for the given number #
  */
@@ -52,31 +54,19 @@ using namespace oracle::occi;
  * @date 2009-05-12
  */
 
-void ImisIO::getProjectionParameters() {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDSYS", "Input", coordsys);
-		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDSYS or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
-}
-
 ImisIO::ImisIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 ImisIO::ImisIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 ImisIO::ImisIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 ImisIO::~ImisIO() throw()
@@ -165,7 +155,7 @@ void ImisIO::readStationMetaData()
 		    || (!IOUtils::convertString(alt, resultset.at(3), std::dec)))
 			throw ConversionFailedException("Error while converting station coordinate from Imis DB", AT);
 
-		Coords myCoord(coordsys, coordparam);
+		Coords myCoord(coordin, coordinparam);
 		myCoord.setXY(east, north, alt);
 		vecMyStation.push_back(StationData(myCoord, stationName));
 	}

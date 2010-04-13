@@ -73,14 +73,13 @@ class GeotopIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		void cleanup() throw();
-		void getProjectionParameters();
 		void parseDate(const std::string& datestring, const std::string& fileandline, Date_IO& _date);
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordsys, coordparam; //projection parameters
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 
 #endif

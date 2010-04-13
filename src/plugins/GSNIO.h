@@ -73,7 +73,6 @@ class GSNIO : public IOInterface {
 		void readStationMetaData(StationData& sd, const unsigned int& stationindex);
 		void readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
 				    std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex);
-		void getProjectionParameters();
 
 		A3DWebServiceSoap12BindingProxy gsn;
 		ConfigReader cfg;
@@ -81,7 +80,7 @@ class GSNIO : public IOInterface {
 		std::string hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                              ///< Variable for proxy configuration
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordsys, coordparam; //projection parameters
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 
 #endif

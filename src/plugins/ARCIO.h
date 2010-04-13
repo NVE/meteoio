@@ -65,11 +65,10 @@ class ARCIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
-		void getProjectionParameters();
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams$
-		std::string coordsys, coordparam; //projection parameters
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 
 #endif

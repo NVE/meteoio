@@ -27,8 +27,10 @@
  *
  * @section grass_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coords)
- * - COORDPARAM: extra input coordinates parameters (see Coords)
+ * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
@@ -38,31 +40,20 @@ const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 using namespace std;
 
-void GrassIO::getProjectionParameters() {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDSYS", "Input", coordsys);
-		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
-}
 
 GrassIO::GrassIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 GrassIO::GrassIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 GrassIO::GrassIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 GrassIO::~GrassIO() throw()
@@ -137,7 +128,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		cellsize = (east - west) / (double)ncols;
 
 		//compute WGS coordinates (considered as the true reference)
-		Coords coordinate(coordsys, coordparam);
+		Coords coordinate(coordin, coordinparam);
 		coordinate.setXY(xllcorner, yllcorner, IOUtils::nodata);
 		
 		//Initialize the 2D grid
@@ -244,7 +235,7 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	Coords llcorner=grid_in.llcorner;
 	//we want to make sure that we are using the provided projection parameters
 	//so that we output is done in the same system as the inputs
-	llcorner.setProj(coordsys, coordparam);
+	llcorner.setProj(coordin, coordinparam);
 
 	fout << setprecision(6) << fixed;
 

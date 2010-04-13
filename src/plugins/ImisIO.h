@@ -67,7 +67,6 @@ class ImisIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
-		void getProjectionParameters();
 		void getStation2Data(const std::string stat_abk, unsigned int stao_nr, std::vector<std::string>& data2S);
 		void getImisData(const std::string &stat_abk, const unsigned int &stao_nr, 
 		                 const std::vector<int>& datestart, const std::vector<int>& dateend,
@@ -81,7 +80,7 @@ class ImisIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 
 		ConfigReader cfg;
-		std::string coordsys, coordparam; //projection parameters
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecMyStation;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };

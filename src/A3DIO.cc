@@ -46,26 +46,16 @@
  * @section a3d_keywords Keywords
  * This plugin uses the following keywords:
  * - METEOPATH: string containing the path to the meteorological files (ie: where to find meteo1d.txt and meteo2d files)
- * - COORDSYS: input coordinate system (see Coords)
- * - COORDPARAM: extra input coordinates parameters (see Coords)
+ * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
  * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
  */
 
 using namespace std;
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
-
-void A3DIO::getProjectionParameters() {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDSYS", "Input", coordsys);
-		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
-}
 
 //A3DIO::A3DIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename)
 // {
@@ -75,18 +65,18 @@ void A3DIO::getProjectionParameters() {
 //Main constructor
 A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 //Copy constructor
 A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 A3DIO::A3DIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 A3DIO::~A3DIO() throw()
@@ -241,7 +231,7 @@ void A3DIO::read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd,
 		ycoord = IOUtils::standardizeNodata(ycoord, plugin_nodata);
 
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
-		Coords location(coordsys, coordparam);
+		Coords location(coordin, coordinparam);
 		location.setXY(xcoord, ycoord, altitude, false);
 		location.setLatLon(latitude, longitude, altitude, false);
 		try {
@@ -642,7 +632,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	}
 
 	//Build Coords object to convert easting/northing values to lat/long in WGS84
-	Coords coordinate(coordsys, coordparam);
+	Coords coordinate(coordin, coordinparam);
 
 	for (unsigned int ii=4; ii<columns; ii++) {
 		unsigned int stationnr = hashStations[vec_names.at(ii)];

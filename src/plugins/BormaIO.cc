@@ -32,8 +32,10 @@
  *
  * @section borma_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coords)
- * - COORDPARAM: extra input coordinates parameters (see Coords)
+ * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
  * - XMLPATH: string containing the path to the xml files
  * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station id for the given number #
@@ -41,31 +43,19 @@
 
 const double BormaIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-void BormaIO::getProjectionParameters() {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDSYS", "Input", coordsys);
-		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
-}
-
 BormaIO::BormaIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 BormaIO::BormaIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 BormaIO::BormaIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
 BormaIO::~BormaIO() throw()
@@ -315,7 +305,7 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date_IO& date_in
 		altitude = IOUtils::standardizeNodata(altitude, plugin_nodata);
 
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
-		Coords location(coordsys, coordparam);
+		Coords location(coordin, coordinparam);
 		location.setLatLon(latitude, longitude, altitude);
 		sd.setStationData(location, stationName);
 

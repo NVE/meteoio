@@ -91,13 +91,12 @@ class BormaIO : public IOInterface {
 					 std::vector< std::vector<MeteoData> >& vecMeteo, 
 					 std::vector< std::vector<StationData> >& vecStation, 
 					 const unsigned int& stationnr);
-		void getProjectionParameters();
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		std::vector<std::string> vecStationName;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordsys, coordparam; //projection parameters
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 
 #endif

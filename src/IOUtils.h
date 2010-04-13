@@ -36,7 +36,10 @@
 #include "IOExceptions.h"
 #include "Date_IO.h"
 #include "Coords.h"
+#include "ConfigReader.h"
+
 class Coords;
+class ConfigReader;
 
 #ifndef MAX
 #define MAX(x,y)    (((x) < (y)) ? (y) : (x))
@@ -225,6 +228,18 @@ namespace IOUtils {
 		if(value==plugin_nodata) return static_cast<T> (nodata);
 		else return value;
 	}
+
+	/**
+	* @brief A function that parses a ConfigReader object for COORSYS, COORDPARAM keywords in [Input] and [Output]
+	*        section and sets the respective strings to the values of those keywords
+	* @param[in] cfg  A ConfigReader object
+	* @param[out] coordin The coordinate system to be used for input data
+	* @param[out] coordinparam The coordinate system parameters to be used for output data
+	* @param[out] coordout The coordinate system to be used for output data
+	* @param[out] coordoutparam The coordinate system parameters to be used for output data
+	*/
+	void getProjectionParameters(const ConfigReader& cfg, std::string& coordin, std::string& coordinparam, 
+						    std::string& coordout, std::string& coordoutparam);
 
 } //end namespace IOUtils
 

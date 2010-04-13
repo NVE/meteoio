@@ -43,12 +43,14 @@
  *
  * @section gsn_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coords)
- * - COORDPARAM: extra input coordinates parameters (see Coords)
- * - PROXY: 
- * - PROXYPORT: 
- * - PROXYUSER:
- * - PROXYPASS:
+ * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
+ * - PROXY: an IP address or a resolveable hostname
+ * - PROXYPORT: the port the proxy is listening on
+ * - PROXYUSER: (if necessary) a proxy username
+ * - PROXYPASS: (if necessary) a proxy password
  *
  * @section license Licensing
  * This software is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -62,32 +64,20 @@ const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 using namespace std;
 
-void GSNIO::getProjectionParameters() {
-	//get projection parameters
-	try {
-		cfg.getValue("COORDSYS", "Input", coordsys);
-		cfg.getValue("COORDPARAM", "Input", coordparam, ConfigReader::nothrow);
-	} catch(std::exception& e){
-		//problems while reading values for COORDIN or COORDPARAM
-		std::cerr << "[E] " << AT << ": reading configuration file: " << "\t" << e.what() << std::endl;
-		throw;
-	}
-}
-
 GSNIO::GSNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	getProjectionParameters();
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
 }
 
@@ -236,7 +226,7 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 		longitude = IOUtils::standardizeNodata(longitude, plugin_nodata);
 		altitude = IOUtils::standardizeNodata(altitude, plugin_nodata);
 
-		Coords coordinate(coordsys, coordparam);
+		Coords coordinate(coordin, coordinparam);
 		coordinate.setLatLon(latitude, longitude, altitude);
 		sd.setStationData(coordinate, name);
 	} else {

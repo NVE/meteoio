@@ -26,6 +26,14 @@
 #include <string>
 #include <map>
 
+namespace IOUtils {
+	void toUpper(std::string& str);
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
+								    const std::string& key, T& t);
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
+								    const std::string& key, std::vector<T>& vecT);
+}
+
 /**
  * @class ConfigReader
  * @brief A class that reads a key/value file. These files (typically named *.ini) have the following structure:

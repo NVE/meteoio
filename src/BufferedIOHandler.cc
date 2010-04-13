@@ -189,8 +189,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 			vecMeteo.push_back(md);
 			vecStation.push_back(sd);
 		} else {
-			cout << "[I] Failed in retrieving data for station " << stationName << " at date " 
-				<< date_in.toString(Date_IO::FULL) << ": returning generic NODATA dataset" << endl;
+			cout << "[I] No data found for station " << stationName << " at date " << date_in << endl;
 			vecMeteo.push_back(MeteoData());
 			vecMeteo[ii].date = date_in; //set correct date
 
