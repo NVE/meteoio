@@ -32,20 +32,22 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * Using the vectors of MeteoData and StationData as filled by the IOInterface::readMeteoData call
  * as well as a grid of elevations (DEM, stored as a DEMObject), it is possible to get spatially
  * interpolated parameters. 
- * 
- * Each parameter to be interpolated has to declare which interpolation method to use. Then the class computes
+ *
+ * First, an interpolation method has to be selected for each variable which needs interpolation. Then the class computes
  * the interpolation for each 2D grid point, combining the inputs provided by the available data sources.
  * Any parameter of MeteoData can be interpolated, using the names given by \ref meteoparam. One has to keep
  * in mind that the interpolations are time-independent: each interpolation is done at a given time step and no
- * memory of (eventual) previous time steps is kept. This means that all parameters that are automatically calculated
- * get recalculated anew for each time step.
+ * memory of (eventual) previous time steps is kept. This means that all parameters and variables that are
+ * automatically calculated get recalculated anew for each time step.
  *
  * @section practical Practical use
  * Practically, the user
  * has to specify in his configuration file (typically io.ini), for each parameter to be interpolated, which
  * spatial interpolations algorithms should be considered. This is provided as a space separated list of keywords
  * (one per interpolation algorithm). Please notice that some algorithms may require extra arguments.
- * Then, each algorithm will be evaluated (through the use of its rating method) and receive a grade (that might depend on the number of available data, the quality of the data, etc). The algorithm from the user selected list that receives the higher score will be used for the given interpolation.
+ * Then, each algorithm will be evaluated (through the use of its rating method) and receive a grade (that might
+ * depend on the number of available data, the quality of the data, etc). The algorithm that receives the higher
+ * score within the user list, will be used for interpolating the selected variable.
  *
  * @section keywords Available algorithms
  * The keywords defining the algorithms are the following:
@@ -198,8 +200,8 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 /**
  * @class ConstLapseRateAlgorithm
  * @brief Constant filling with elevation lapse rate interpolation algorithm.
- * The grid is filled with the average of the inputs for this parameter and each pixel is reprojected to its
- * real elevation (assuming that the average value occured at the average of the elevations). The lapse rate has
+ * Assuming that average values occured at the average of the elevations, the grid is filled with average values
+ * reprojected to real grid elevation according to a user specified lapse rate. The lapse rate has
  * to be provided as an extra argument, otherwise the standard -0.0065 K/m is used (which only makes sense for temperatures)
  */
 class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
@@ -219,7 +221,8 @@ class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
  * @class IDWAlgorithm
  * @brief Inverse Distance Weighting interpolation algorithm.
  * Each cell receives the weighted average of the whole data set with weights being 1/r²
- * (r being the distance of the current cell to the contributing station) and renormalized.
+ * (r being the distance of the current cell to the contributing station) and renormalized
+ * (so that the sum of the weights is equal to 1.0).
  */
 class IDWAlgorithm : public InterpolationAlgorithm {
 	public:
@@ -237,8 +240,9 @@ class IDWAlgorithm : public InterpolationAlgorithm {
 /**
  * @class IDWLapseAlgorithm
  * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
- * The input data is projected to a common elevation and spatially interpolated using an Inverse Distance
- * Weighting interpolation algorithm (see IDWAlgorithm). Then, each grid cell is reprojected to its real elevation.
+ * The input data is projected to a reference elevation and spatially interpolated using an Inverse Distance
+ * Weighting interpolation algorithm (see IDWAlgorithm). Then, each value is reprojected to the real
+ * elevation of the relative cell.
  */
 class IDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
@@ -258,7 +262,7 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
  * @brief Relative humidity interpolation algorithm.
  * This is an implementation of the method described in (Liston & Elder, 2006): for each input point, the dew
  * point temperature is calculated. Then, the dew point temperatures are spatially interpolated using IDWLapseAlgorithm.
- * Finally, each local dew point temperature is converted to a local relative humidity.
+ * Finally, each local dew point temperature is converted back to a local relative humidity.
  *
  * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for dew
  * point to RH conversion)
@@ -281,8 +285,9 @@ class RHAlgorithm : public InterpolationAlgorithm {
  * @brief Curvature/slope influenced  wind interpolation algorithm.
  * This is an implementation of the method described in (Liston & Elder, 2006): the wind speed and direction are
  * spatially interpolated using IDWLapseAlgorithm for the wind speed and using the user defined wind direction
- * interpolation algorithm. Then, the wind speed and direction fields are altered by coefficients calculated 
- * from the local curvature and slope (as taken from the DEM, see DEMObject).
+ * interpolation algorithm. Then, the wind speed and direction fields are altered by wind weighting factors
+ * and wind diverting factors (respectively) calculated from the local curvature and slope
+ * (as taken from the DEM, see DEMObject).
  */
 class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 	public:
