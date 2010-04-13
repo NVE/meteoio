@@ -136,8 +136,8 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 
 	if (vecArgs[0] < 1) //the window size has to be at least 1
 		throw InvalidArgumentException("Number of data points in window of " +filtername+ " filter cannot be < 1", AT);
-	if (vecArgs[1] < 0) //the time window has to be at least 0 minutes
-		throw InvalidArgumentException("Time span of window for filter " +filtername+ " cannot be < 0 minutes", AT);
+	if (vecArgs[1] < 0) //the time window has to be at least 0 seconds
+		throw InvalidArgumentException("Time span of window for filter " +filtername+ " cannot be < 0 seconds", AT);
 
 	//Deal with first parameter: minimal number of data points
 	unsigned int windowSize = (unsigned int)vecArgs[0];
@@ -167,7 +167,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 	}
 
 	//Now deal with the second argument: the time window
-	Date_IO deltatime(vecArgs[1]/1440.0); //making a julian date out of the argument given in minutes	
+	Date_IO deltatime(vecArgs[1]/(24.*3600.)); //making a julian date out of the argument given in seconds
 	while(deltatime > (vecM[startposition].date - vecM[endposition].date)){
 		//The time window is too small, so let's try enlargening it
 		if ((windowposition == "right") && (!isSoft)){ //only expand to the right
@@ -231,7 +231,11 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 /**
  * @brief Rate of change filter
  * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point. Remarks:
- * - the maximum permissible rate of change has to be provided as an argument
+ * - the maximum permissible rate of change (per seconds) has to be provided as an argument
+ * @code
+ * TA::filter1	= rate
+ * TA::arg1	= 0.01
+ * @endcode
  */
 bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
 						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
@@ -245,17 +249,40 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 	std::vector<double> vecArgs; 
 	parseFilterArguments("rate", _vecArgs, 1, 1, isSoft, vecArgs);
 
-	//Run actual MinValue filter over all relevant meteo data
-/*	for(unsigned int ii=0; ii<vecFilteredM.size(); ii++){
-		double& value = vecFilteredM[ii].param(paramindex);
-		if (value == IOUtils::nodata) continue;
-		if (value<vecArgs[0]){
-			if (isSoft) value=vecArgs[0];
-			else value=IOUtils::nodata;				
+	//Run actual Rate filter over all relevant meteo data
+	if(vecFilteredM.size()>1) {
+		//the request time step is NOT part of the data, it will have to be resampled
+		const double prev_value = vecM[pos-vecFilteredM.size()].param(paramindex);
+		const double prev_time = vecM[pos-vecFilteredM.size()].date.getJulian()*24.*3600.; //in seconds
+
+		for(unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+			double& value = vecFilteredM[ii].param(paramindex);
+			const double curr_value = vecFilteredM[ii].param(paramindex);
+			const double curr_time = vecFilteredM[ii].date.getJulian()*24.*3600.; //in seconds
+			const double local_rate = abs((curr_value-prev_value)/(curr_time-prev_time));
+
+			if( local_rate > vecArgs[0] ) {
+				value = IOUtils::nodata;
+			}
 		}
-	}*/
-	//HACK: does NOTHING
-	throw IOException("Nothing implemented here", AT);
+	} else {
+		//the request time step is part of the data
+		if(pos>1) { //if we are at the start of the data set, we can not apply the filter...
+			double& value = vecFilteredM[1].param(paramindex);
+			const double curr_value = vecM[pos].param(paramindex);
+			const double curr_time = vecM[pos].date.getJulian()*24.*3600.; //in seconds
+			const double prev_value = vecM[pos-1].param(paramindex);
+			const double prev_time = vecM[pos-1].date.getJulian()*24.*3600.; //in seconds
+			const double local_rate = abs((curr_value-prev_value)/(curr_time-prev_time));
+
+			if( local_rate > vecArgs[0] ) {
+				value = IOUtils::nodata;
+			}
+		} else {
+			//the filter can not be applied
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -263,9 +290,13 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 /**
  * @brief Min/Max range filter
  * Reject all values greater than the max or smaller than the min. Remarks:
- * - two arguments have to be provided, min and max
+ * - two arguments have to be provided, min and max (in SI)
  * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
  * the maximum permissible value and all data smaller than the min would be assigned the minimum permissible value
+ * @code
+ * TA::filter1	= min_max
+ * TA::arg1	= 230 330
+ * @endcode
  */
 bool FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 						 const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
@@ -304,9 +335,13 @@ bool FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const st
 /**
  * @brief Min range filter
  * Reject all values smaller than the min. Remarks:
- * - the minimum permissible value has to be provided has an argument
+ * - the minimum permissible value has to be provided has an argument (in SI)
  * - the keyword "soft" maybe added, in such a case all data smaller than the min would be assigned
  * the minimum permissible value
+ * @code
+ * TA::filter1	= min
+ * TA::arg1	= 230
+ * @endcode
  */
 bool FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
@@ -335,9 +370,13 @@ bool FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const 
 /**
  * @brief Max range filter
  * Reject all values greater than the max. Remarks:
- * - the maximum permissible value has to be provided has an argument
+ * - the maximum permissible value has to be provided has an argument (in SI)
  * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
  * the maximum permissible value
+ * @code
+ * TA::filter1	= max
+ * TA::arg1	= 330
+ * @endcode
  */
 bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
@@ -368,7 +407,11 @@ bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const 
  * The input data is accumulated over a given time interval (given as filter argument, in minutes).
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
  * hourly precipitation measurements. Remarks:
- * - the accumulation period has to be provided as an argument
+ * - the accumulation period has to be provided as an argument (in seconds)
+ * @code
+ * TA::filter1	= accumulate
+ * TA::arg1	= 3600
+ * @endcode
  */
 bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
 						    const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
@@ -379,9 +422,9 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
 	std::vector<double> vecArgs; 
-	parseFilterArguments("rate", _vecArgs, 1, 1, isSoft, vecArgs);
+	parseFilterArguments("accumulate", _vecArgs, 1, 1, isSoft, vecArgs);
 	
-	Date_IO deltatime(vecArgs[0]/1440.0); //making a julian date out of the argument given in minutes
+	Date_IO deltatime(vecArgs[0]/(24.*3600.)); //making a julian date out of the argument given in seconds
 
 	int startposition = pos;
 	for (int ii=vecFilteredM.size()-1; ii>=0; ii--){
@@ -458,16 +501,16 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
  * - if there is an even number of window elements the arithmetic mean of the two central elements is used to calculate the median
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
  *   - minimal number of points in window
- *   - minimal time interval spanning the window (in minutes)
+ *   - minimal time interval spanning the window (in seconds)
  * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position
  * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
  *
  * @code
  * Valid examples for the io.ini file:
  *          TA::filter1 = median_avg
- *          TA::arg1    = soft left 1 300 (300 minutes time span for the left leaning window)
+ *          TA::arg1    = soft left 1 1800  (1800 seconds time span for the left leaning window)
  *          RH::filter1 = median_avg
- *          RH::arg1    = 10 100          (strictly centered window spanning 100 minutes and at least 10 points)
+ *          RH::arg1    = 10 600            (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  */
 bool FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
@@ -519,16 +562,16 @@ bool FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, cons
  * - nodata values are excluded from the mean
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
  *   - minimal number of points in window
- *   - minimal time interval spanning the window (in minutes)
+ *   - minimal time interval spanning the window (in seconds)
  * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position
  * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
  *
  * @code
  * Valid examples for the io.ini file:
  *          TA::filter1 = mean_avg
- *          TA::arg1    = soft left 1 300 (300 minutes time span for the left leaning window)
+ *          TA::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
  *          RH::filter1 = mean_avg
- *          RH::arg1    = 10 100          (strictly centered window spanning 100 minutes and at least 10 points)
+ *          RH::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  */
 bool FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
@@ -579,9 +622,16 @@ bool FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
  * - nodata values are excluded from the mean
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
  *   - minimal number of points in window
- *   - minimal time interval spanning the window (in minutes)
+ *   - minimal time interval spanning the window (in seconds)
  * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position
  * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
+ * @code
+ * Valid examples for the io.ini file:
+ *          TA::filter1 = wind_avg
+ *          TA::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
+ *          RH::filter1 = wind_avg
+ *          RH::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
+ * @endcode
  */
 bool FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
 				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
