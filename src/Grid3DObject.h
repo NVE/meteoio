@@ -38,11 +38,11 @@ class Grid3DObject : POPBase {
 class Grid3DObject{
 #endif  
 	public:
-		typedef struct GRID_POINT {
+		typedef struct GRID_POINT_3D { //TODO: this potentially conflicts with the definition in Grid2DObject
 			unsigned int ix; ///<grid index along X
 			unsigned int iy; ///<grid index along Y
 			unsigned int iz; ///<grid index along Z
-		} grid_point;
+		} grid_point_3d;
 
 		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
 		friend std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid);

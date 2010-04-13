@@ -44,10 +44,10 @@ class Grid2DObject : POPBase {
 class Grid2DObject {
 #endif
 	public:
-		typedef struct GRID_POINT {
+		typedef struct GRID_POINT_2D {
 			unsigned int ix; ///<grid index along X
 			unsigned int iy; ///<grid index along Y
-		} grid_point;
+		} grid_point_2d;
 
 		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
 		friend std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid);

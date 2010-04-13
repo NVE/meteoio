@@ -74,7 +74,7 @@ class DEMObject : public Grid2DObject {
 		double horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
 		double horizontalDistance(Coords point1, const Coords& point2);
 		double terrainDistance(Coords point1, const Coords& point2);
-		void getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT>& vec_points);
+		void getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT_2D>& vec_points);
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);

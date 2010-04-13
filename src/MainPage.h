@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2009-2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -33,12 +33,15 @@
  *
  * @section table_of_content Table of content
  * -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
- * -# \subpage plugins "Available plugins" and usage
- * -# \subpage filters "Available filters" and usage
- * -# \subpage interpol2d "Available spatial interpolations" and usage
- * -# \subpage dev_plugins How to write a "Plugin"
- * -# \subpage dev_filters How to write a "Filter"
- * -# \subpage examples "Examples"
+ * -# End User documentation
+ *    -# \subpage plugins "Available plugins" and usage
+ *    -# \subpage filters "Available filters" and usage
+ *    -# \subpage interpol2d "Available spatial interpolations" and usage
+ * -# Programing using MeteoIO
+ *    -# \subpage examples "Usage examples"
+ * -# Expanding MeteoIO
+ *    -# How to \subpage dev_plugins "write a Plugin"
+ *    -# How to \subpage dev_filters "write a Filter"
  */
 
  /**
@@ -224,8 +227,8 @@
  * 	//writing some data out in order to prove that it really worked!
  * 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
  * 		std::cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << std::endl;
- * 		std::cout << vecStation[ii].toString() << std::endl;
- * 		std::cout << vecMeteo[ii].toString() << std::endl;
+ * 		std::cout << vecStation[ii] << std::endl;
+ * 		std::cout << vecMeteo[ii] << std::endl;
  * 	}
  * 
  * 	delete io;
@@ -272,22 +275,14 @@
  * void spatial_interpolations(IOHandler& io, DEMObject& dem, std::vector<MeteoData>& vecMeteo, 
  * 		std::vector<StationData>& vecStation);
  * {
- * 	Grid2DObject    p(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
- * 	Grid2DObject hnw(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
- * 	Grid2DObject   vw(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
- * 	Grid2DObject   rh(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
- * 	Grid2DObject   ta(dem.ncols, dem.nrows, dem.xllcorner, dem.yllcorner, dem.latitude, dem.longitude, dem.cellsize);
+ * 	Grid2DObject ta;
  * 	Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
  * 
- * 	mi.interpolate(hnw, rh, ta, vw, p);
+ * 	mi.interpolate(MeteoData::TA, ta);
  * 	
- * 	std::cout << "Writing the Grids to *.2d files" << std::endl;
- * 	io->write2DGrid(ta, "output/ta.2d");
- * 	io->write2DGrid(p, "output/p.2d");
- * 	io->write2DGrid(vw, "output/vw.2d");
- * 	io->write2DGrid(nswc, "output/nswc.2d");
- * 	io->write2DGrid(rh, "output/rh.2d");
- * 	
+ * 	std::cout << "Writing the Grids to files" << std::endl;
+ * 	io->write2DGrid(ta, "ta_2d.asc");
+ *
  * }
  * \endcode
  */

@@ -33,9 +33,9 @@
  *
  * A few data transformations are also supported besides filtering:
  * - accumulation: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
- * - resample: linear data ressampling, FilterAlgorithms::LinResamplingProcess
- * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgFilter
- * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgFilter
+ * - resample: linear data resampling, FilterAlgorithms::LinResamplingProcess
+ * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgProcess
+ * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess
  * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
  */
 
@@ -410,7 +410,7 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 }
 
 /**
- * @brief Linear Data ressampling
+ * @brief Linear Data resampling
  * If a point is requested that is in between two input data points, the requested value is automatically calculated using
  * a linear interpolation.
  */
