@@ -17,6 +17,8 @@
 */
 #include "MeteoFilter.h"
 
+using namespace std;
+
 MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 	/*
 	 * By reading the ConfigReader object build up a list of user configured filters
