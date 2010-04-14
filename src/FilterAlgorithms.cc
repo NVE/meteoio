@@ -32,7 +32,7 @@
  * - max: maximum check filter, see FilterAlgorithms::MaxValueFilter
  *
  * A few data transformations are also supported besides filtering:
- * - accumulation: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
+ * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
  * - resample: linear data resampling, FilterAlgorithms::LinResamplingProcess
  * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgProcess
  * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess

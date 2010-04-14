@@ -32,16 +32,91 @@
  * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>.
  *
  * @section table_of_content Table of content
- * -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  * -# End User documentation
+ *    -# \subpage general "General concepts"
  *    -# \subpage plugins "Available plugins" and usage
  *    -# \subpage filters "Available filters" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  * -# Programing using MeteoIO
+ *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  *    -# \subpage examples "Usage examples"
  * -# Expanding MeteoIO
  *    -# How to \subpage dev_plugins "write a Plugin"
  *    -# How to \subpage dev_filters "write a Filter"
+ */
+
+ /**
+ * @page general General concepts
+ * Since MeteoIO is a library, you, as an end user, will have a limited direct exposure to it: the library is called by the program that you are using, not directly by yourself. You will basically have to set some parameters in a configuration file that defines how MeteoIO has to behave. This configuration file is often named "io.ini" and follows the INI file format standard (see http://en.wikipedia.org/wiki/INI_file). In order to understand how this file is structured, let us first have a look at the general structure of MeteoIO and afterward the structure of this configuration file and where to find the available configuration parameters.
+ *
+ * @section MeteoIO_structure General MeteoIO structure
+ * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules:
+ * - a set of plugins for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
+ * - a set of filters and processing elements for applying transformations to the data (for example, a filter might remove all data that is out of range)
+ * - a set of spatial interpolation algorithms (for example, such an algorithm might perform Inverse DIstance Weighting for filling a grid with spatially interpolated data)
+ *
+ * Moreover, a few assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort of coordinates) and very often you will also need to provide a Digital Elevation Model. Therefore, you will also notice a few extra modules that come to play on the visible side:
+ * - a module to deal with Digital Elevation Models. Such module will, for example, interpret a grid of data as a grid of elevations and compute a grid of slopes.
+ * - a module to deal with coordinate systems. Such module will require you to define which coordinate system are your data in and transparently handle potential coordinate conversions in the program that you are using.
+ * - a module to deal with... configuration files. The program that you are using might be using this module for other configuration files.
+ *
+ * @section Config Configuration file
+ * @subsection Config_syntax Configuration file syntax
+ * The configuration inputs/outputs file is divided in sections. Each section name is enclosed in brackets.
+ * @code
+ * [My_section]
+ * bla bla bla
+ * @endcode
+ *
+ * Within each section, you might have comments and/or key/value pairs. The comments start with a "#" or a ";" sign and run until the end of the line. A whole line might be commented out, or only a fraction of it. A key/value pair is a keyword, followed by a "=" sign, followed by the value to associate with this key.
+ * @code
+ * #This is a commented out line
+ * PI = 3.14159   #key/value pair and a comment
+ * @endcode
+ *
+ * A valid value can be an integer, a float, or string, a list of keywords, a mixed list of keywords and numbers...
+ * @code
+ * TA::algorithms = IDW_LAPSE CST_LAPSE
+ * @endcode
+ *
+ * @subsection Config_structure Configuration file structure
+ * MeteoIO imposes a minimum structure to the configuration file: It must contain the [General], [Input] and [Output] sections. If any filter is to be used, a [Filters] section has to be present and if any spatial interpolation is to be used, an [Interpolations2D] section has to be present. A minimal set of keys has to be there, an potentially a number of optional keys. Moreover, the program that you are using might also impose you some specific keys or sections.
+ * The keys and their location in the configuration file (ie: to which section they belong) depends on the module that is actually using them. The optional keys depend on the specific options handled by each specific module (or plugin, or algorithm). Therefore, we can draw the following skeleton:
+ * @code
+ * [General]
+ * PLUGINPATH	= ../../lib	#optional, if not provided the plugins will be search in the normal library path
+ * 
+ * [Input]
+ * COORDSYS	= CH1903	#mandatory: which coordinate system is used for the geographic coordinates
+ * COORDPARAM	= -999		#extra arguments for the chosen coordinate system (often, none)
+ * 
+ * DEM		= ARC		#plugin to use for reading DEM information
+ * #this might be followed by any number of arguments that are specific to this plugin
+ * 
+ * METEO	= A3D		#plugin to use for reading meteorological data
+ * #this might be followed by any number of arguments that are specific to this plugin
+ * 
+ * [Output]
+ * COORDSYS	= CH1903
+ * COORDPARAM	= -999
+ * 
+ * GRID2D	= ARC		#plugin to use for writing 2D grids
+ * 
+ * [Filters]
+ * TA::filter1	= min_max	#first filter to use on the parameter TA
+ * TA::arg1	= 230 330	#arguments for this first filter
+ * TA::filter2	= rate		#second filter to use (in chronological order)
+ * TA::arg2	= 0.01		#arguments for this second filter
+ * #add any extra filter that you want to use. They will be applied serially
+ * 
+ * [Interpolations2D]
+ * TA::algorithms = IDW_LAPSE CST_LAPSE	#list of algorithms to consider for use for spatially interpolating parameter TA
+ * TA::cst_lapse = -0.008 		#parameter for a specific interpolation algorithm for parameter TA
+ *
+ * @endcode
+ *
+ * @subsection Finding_docs Where to find the proper documentation
+ * As can be seen from the previous example, each plugin, each filter or each interpolation algorithm might have its own parameters. Therefore, this is the documentation of each specific plugin/filter/algorithm that has to be used in order to figure out what can be configured when it (see the next sections in the welcome page).
  */
 
  /**
