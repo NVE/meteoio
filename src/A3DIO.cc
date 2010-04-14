@@ -358,12 +358,8 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	std::vector<StationData> tmpvecS = std::vector<StationData>(stations); //stores unique stations
 
 	try {
-		read2DMeteoHeader(filenames[0], hashStations, tmpvecS);
-		read2DMeteoHeader(filenames[1], hashStations, tmpvecS);
-		read2DMeteoHeader(filenames[2], hashStations, tmpvecS);
-		read2DMeteoHeader(filenames[3], hashStations, tmpvecS);
-		if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
-			read2DMeteoHeader(filenames[4], hashStations, tmpvecS);
+		for (unsigned int ii=0; ii<filenames.size(); ii++){
+			read2DMeteoHeader(filenames[ii], hashStations, tmpvecS);
 		}
 
 		//init vecStation with proper StationData, vecMeteo with nodata
@@ -387,9 +383,9 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 			bufferindex = currentindex;
 			read2DMeteoData(filenames[3], "vw", hashStations, vecMeteo, bufferindex);
 			
-			if(IOUtils::fileExists(filenames[4])) { //for keeping dw optional
+			if(filenames.size() == 5) { //for keeping dw optional
 				bufferindex = currentindex;
-				read2DMeteoData(filenames[4], "dw", hashStations, vecMeteo, bufferindex);
+				read2DMeteoData(filenames.at(4), "dw", hashStations, vecMeteo, bufferindex);
 			}
 			//cerr << "bufferindex: " << bufferindex << "  Expected size()" << vecMeteo[0].size() << endl;
 
