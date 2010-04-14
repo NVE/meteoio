@@ -131,7 +131,8 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	fout << "1: double matrix meteo_station{" << vecStation.size() << ",13}" << endl; 
 	for (unsigned int ii=0; ii<vecStation.size(); ii++){
 		if (vecStation.at(ii).size()>0){
-			const Coords& coord = vecStation.at(ii).at(0).position;
+			Coords coord = vecStation.at(ii).at(0).position;
+			coord.setProj(coordout, coordoutparam); //Setting the output projection
 			fout.precision(12);
 			fout << coord.getEasting() << "\t" << coord.getNorthing() << "\t"
 				<< coord.getLat()<< "\t" << coord.getLon() << "\t" << coord.getAltitude() << "\t"
@@ -188,8 +189,8 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 
 void GeotopIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation)
 {
-	std::string path="", prefix="";
-	std::vector<std::string> tmpvec, vecColumnNames;
+	string path="", prefix="";
+	vector<string> tmpvec, vecColumnNames;
 
 	vecStation.clear();
 
@@ -205,8 +206,8 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 							  const unsigned int& stationindex)
 {
 
-	std::vector<std::string> tmpvec, vecColumnNames;
-	std::string line="", filename="", path="", prefix="";
+	vector<std::string> tmpvec, vecColumnNames;
+	string line="", filename="", path="", prefix="";
 
 	(void)stationindex;
 	vecMeteo.clear();
@@ -228,7 +229,7 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 		vecMeteo.push_back( vector<MeteoData>() );
 		vecStation.push_back( vector<StationData>() );
 
-		std::stringstream ss;
+		stringstream ss;
 		ss.fill('0');
 		ss << path << "/" << prefix << setw(4) << (ii+1) << ".txt";
 
@@ -402,6 +403,7 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 {
 	std::string line="";
 	std::vector<std::string> tmpvec;
+	unsigned int stationNumber = 1; //Since the stations don't have a name, they will be numbered
 
 	if (!IOUtils::validFileName(metafile)) {
 		throw InvalidFileNameException(metafile, AT);
@@ -451,7 +453,12 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 							std::cerr << "[E] Error in geographic coordinates in file " << metafile << " trapped at " << AT << std::endl;
 							throw;
 						}
-						vecStation.push_back( StationData(coordinate, "") );
+
+						stringstream ss;
+						ss << "Station_" << stationNumber;
+						vecStation.push_back( StationData(coordinate, ss.str()) );
+
+						stationNumber++; //Stationnames are simply a sequence of ascending numbers
 					}
 					IOUtils::trim(line);
 				} while ((line.substr(0,2) != "/*") && (line!="") && (!fin.eof()));

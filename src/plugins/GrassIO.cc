@@ -235,7 +235,7 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	Coords llcorner=grid_in.llcorner;
 	//we want to make sure that we are using the provided projection parameters
 	//so that we output is done in the same system as the inputs
-	llcorner.setProj(coordin, coordinparam);
+	llcorner.setProj(coordout, coordoutparam);
 
 	fout << setprecision(6) << fixed;
 

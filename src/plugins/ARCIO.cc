@@ -266,22 +266,15 @@ void ARCIO::readSpecialPoints(std::vector<Coords>&)
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
-	//uncomment if no overwriting should be allowed
-	/* 
-	 if (IOUtils::fileExists(name)) {
-	   throw IOException("File " + name + " already exists!", AT);
-	 }
-	*/
+	fout.open(name.c_str());
+	if (fout.fail()) {
+		throw FileAccessException(name, AT);
+	}
 
 	Coords llcorner=grid_in.llcorner;
 	//we want to make sure that we are using the provided projection parameters
 	//so that we output is done in the same system as the inputs
 	llcorner.setProj(coordout, coordoutparam);
-
-	fout.open(name.c_str());
-	if (fout.fail()) {
-		throw FileAccessException(name, AT);
-	}
 	
 	fout << fixed << showpoint << setprecision(6);
 
