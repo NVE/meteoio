@@ -35,6 +35,7 @@
  * -# End User documentation
  *    -# \subpage general "General concepts"
  *    -# \subpage plugins "Available plugins" and usage
+ *    -# \subpage coords "Available coordinate systems" and usage
  *    -# \subpage filters "Available filters" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  * -# Programing using MeteoIO
@@ -98,8 +99,7 @@
  * 
  * [Output]
  * COORDSYS	= CH1903
- * COORDPARAM	= -999
- * 
+ *
  * GRID2D	= ARC		#plugin to use for writing 2D grids
  * 
  * [Filters]

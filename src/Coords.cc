@@ -26,6 +26,41 @@
 
 using namespace IOUtils;
 
+ /**
+ * @page coords Available coordinate systems
+ * Geographic coordinates will be transparently and automatically converted to lat/lon and any other coordinate system that
+ * the client program uses. However, in order to do so, the input coordinate system must be specified. In order to output
+ * geolocalized data, the desired coordinate system must also be specified for the outputs (in the output section).
+ * This is done through the use of the COORDIN and COORDPARAM keys (see the documentation for each plugin).
+ * 
+ * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
+ * (that becomes part of MeteoIO) or through the use of an external library, Proj4 [ref: http://trac.osgeo.org/proj/].
+ * The current internal implementations are the following (given by their keyword):
+ * - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
+ * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
+ * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
+ * 
+ * Such an example of use is the following:
+ * @code
+ * COORDSYS	= UTM
+ * COORDPARAM	= 31T
+ * @endcode
+ *
+ * On the other hand, when using the Proj4 library for handling the coordinate conversion, the proj4 conversion
+ * string must be specified in the parameters. For example (for UTM zone 10 coordinates):
+ * @code
+ * COORDSYS	= PROJ4
+ * COORDPARAM	= +proj=utm +ellps=WGS84 +zone=10
+ * @endcode
+ * It is also possible to use EPSG codes (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
+ * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system):
+ * @code
+ * COORDSYS	= PROJ4
+ * COORDPARAM	= +init=epsg:21781
+ * @endcode
+ * 
+ */
+
 const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
 		{ 6378137.,	6356752.3142 }, //E_WGS84
 		{ 6378137.,	6356752.3141 }, //E_GRS80

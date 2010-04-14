@@ -27,6 +27,17 @@
 class Coords; //forward declaration
 typedef void(Coords::*convfunc)(double, double, double&, double&) const;
 
+/**
+ * @class Coords
+ * @brief A class to handle geographic coordinate systems.
+ * This class offers an easy way to transparently convert between various coordinate systems. For any
+ * given object, as soon as a latitude/longitude can be computed/read, it will be used as a reference.
+ * This means that every subsequent change of projection system or read will be the conversion of this
+ * reference lat/lon position (until a new "set" is called). See Coords::setProj for the supported coordinate systems.
+ * @author Mathias Bavay
+ * @date   2009-01-20
+*/
+
 #ifdef _POPC_
 class Coords : POPBase {
 	public:
