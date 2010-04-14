@@ -340,7 +340,11 @@ void Coords::setProj(const std::string& _coordinatesystem, const std::string& _p
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 
-	coordsystem = _coordinatesystem;
+	if(_coordinatesystem == "") {
+		coordsystem = std::string("NULL");
+	} else {
+		coordsystem = _coordinatesystem;
+	}
 	coordparam  = _parameters;
 	setFunctionPointers();
 
