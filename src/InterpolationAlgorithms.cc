@@ -210,7 +210,7 @@ void ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid
 	double avgData = Interpol1D::arithmeticMean(vecData);
 
 	if (vecData.size() == 1)
-		funcptr = &Interpol2D::ConstProject;
+		funcptr = &Interpol2D::LinProject;
 
 	//Set regression coefficients
 	std::vector<double> vecCoefficients;
