@@ -253,12 +253,12 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 	if(vecFilteredM.size()>1) {
 		//the request time step is NOT part of the data, it will have to be resampled
 		const double prev_value = vecM[pos-vecFilteredM.size()].param(paramindex);
-		const double prev_time = vecM[pos-vecFilteredM.size()].date.getJulian()*24.*3600.; //in seconds
+		const double prev_time = vecM[pos-vecFilteredM.size()].date.getJulianDate()*24.*3600.; //in seconds
 
 		for(unsigned int ii=0; ii<vecFilteredM.size(); ii++){
 			double& value = vecFilteredM[ii].param(paramindex);
 			const double curr_value = vecFilteredM[ii].param(paramindex);
-			const double curr_time = vecFilteredM[ii].date.getJulian()*24.*3600.; //in seconds
+			const double curr_time = vecFilteredM[ii].date.getJulianDate()*24.*3600.; //in seconds
 			const double local_rate = abs((curr_value-prev_value)/(curr_time-prev_time));
 
 			if( local_rate > vecArgs[0] ) {
@@ -270,9 +270,9 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 		if(pos>1) { //if we are at the start of the data set, we can not apply the filter...
 			double& value = vecFilteredM[1].param(paramindex);
 			const double curr_value = vecM[pos].param(paramindex);
-			const double curr_time = vecM[pos].date.getJulian()*24.*3600.; //in seconds
+			const double curr_time = vecM[pos].date.getJulianDate()*24.*3600.; //in seconds
 			const double prev_value = vecM[pos-1].param(paramindex);
-			const double prev_time = vecM[pos-1].date.getJulian()*24.*3600.; //in seconds
+			const double prev_time = vecM[pos-1].date.getJulianDate()*24.*3600.; //in seconds
 			const double local_rate = abs((curr_value-prev_value)/(curr_time-prev_time));
 
 			if( local_rate > vecArgs[0] ) {
@@ -480,7 +480,7 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 	MeteoData& resampledmd  = vecFilteredM[1];
 	const MeteoData& tmpmd2 = vecFilteredM[2];
 
-	double weight = (date.getJulian() - tmpmd1.date.getJulian()) / (tmpmd2.date.getJulian() - tmpmd1.date.getJulian());
+	double weight = (date.getJulianDate() - tmpmd1.date.getJulianDate()) / (tmpmd2.date.getJulianDate() - tmpmd1.date.getJulianDate());
 
 	const double& val1 = tmpmd1.param(paramindex);
 	const double& val2 = tmpmd2.param(paramindex);

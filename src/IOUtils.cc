@@ -302,7 +302,7 @@ template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string& s
 	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
 		t.setDate(year, month, day, hour, minute);
 	} else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
-		t.setDate(year, month, day);
+		t.setDate(year, month, day, 0, 0);
 	} else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
 		t = Date_IO( ((double)hour)/24. + ((double)minute)/24./60. );
 	} else {

@@ -189,13 +189,12 @@ void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 	for (unsigned int ii=0; ii<stations; ii++) {
 		stringstream tmp_stream;
 		string stationname="", tmp_file="";
-		Date_IO tmp_date(0.0);
 		
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
 		std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
 		vecStationName.push_back(stationname);
-	}    
+	}
 }
 
 
@@ -281,7 +280,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& m
 	IOUtils::convertString(vw,      meteo_in.at(3), dec);
 	IOUtils::convertString(dw,      meteo_in.at(4), dec);
 	IOUtils::convertString(rh,      meteo_in.at(5), dec);
-	IOUtils::convertString(ilwr,     meteo_in.at(6), dec);
+	IOUtils::convertString(ilwr,    meteo_in.at(6), dec);
 	IOUtils::convertString(hnw,     meteo_in.at(7), dec);
 	IOUtils::convertString(tsg,     meteo_in.at(8), dec);
 	IOUtils::convertString(tss,     meteo_in.at(9), dec);

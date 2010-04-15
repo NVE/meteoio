@@ -155,7 +155,6 @@ void BormaIO::readStationNames()
 	for (int ii=0; ii<stations; ii++) {
 		std::stringstream tmp_stream;
 		std::string stationname="", tmp_file="";
-		Date_IO tmp_date(0.0);
 		
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(std::string("STATION"+tmp_stream.str()), "Input", stationname);

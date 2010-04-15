@@ -55,43 +55,46 @@ class Date_IO {
 		} FORMATS;
 		static const int daysLeapYear[];
 		static const int daysNonLeapYear[];
-		static const long offset;
+		static const double DST_shift;
+		static const float MJD_offset;
+		static const float Unix_offset;
+		static const float Excel_offset;
 
 		///Note that constructing an Date_IO object without any parameter results 
-		///in constructing Date_IO(0.0) which in its current expression results in a date of 1900/1/1 00:00:00
-		//TODO: use modified julian date instead (ie: 0=1858-11-17T00:00:00)
-		Date_IO(const double& julian_in=0.0);
+		///in constructing Date_IO(0.0) which in its current expression results in a date of -4713-01-01T12:00
+		Date_IO();
+		Date_IO(const double& julian_in, const double& _timezone=0.0, const bool& _dst=false);
 		///All values passed will be checked for plausibility 
-		Date_IO(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
-		Date_IO(const time_t&);
+		Date_IO(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=0.0, const bool& _dst=false);
+		Date_IO(const time_t&, const double& _timezone=0.0, const bool& _dst=false);
 		Date_IO(const Date_IO& _date_in);
 
-		void setDate(const double& julian_in);
-		void setDate(const int& year, const int& month, const int& day=1, const int& hour=0, const int& minute=0);
-		void setDate(const time_t& _time);
+		void setTimeZone(const double& _timezone, const bool& _dst);
+		void setDate(const double& julian_in, const double& _timezone=0.0, const bool& _dst=false);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=0.0, const bool& _dst=false);
+		void setDate(const time_t& _time, const double& _timezone=0.0, const bool& _dst=false);
+		void setModifiedJulianDate(const double& julian_in, const double& _timezone=0.0, const bool& _dst=false);
+		void setUnixDate(const time_t& _time, const double& _timezone=0.0, const bool& _dst=false);
+		void setExcelDate(const double julian_in, const double& _timezone=0.0, const bool& _dst=false);
 
-		double getJulian() const;
+		double getTimeZone() const;
+		bool getDST() const;
+		double getJulianDate(const bool& gmt=false) const;
+		double getModifiedJulianDate(const bool& gmt=false) const;
+		double getTruncatedJulianDate(const bool& gmt=false) const;
+		time_t getUnixDate(const bool& gmt=false) const;
+		double getExcelDate(const bool& gmt=false) const;
 
-		void getDate(double& julian_out) const;
-		void getDate(int& year, int& month, int& day) const;
-		void getDate(int& year, int& month, int& day, int& hour) const;
-		void getDate(int& year, int& month, int& day, int& hour, int& minute) const;
-		int getYear() const;
+		void getDate(double& julian_out, const bool& gmt=false) const;
+		void getDate(int& year, int& month, int& day, const bool& gmt=false) const;
+		void getDate(int& year, int& month, int& day, int& hour, const bool& gmt=false) const;
+		void getDate(int& year, int& month, int& day, int& hour, int& minute, const bool& gmt=false) const;
+		int getYear(const bool& gmt=false) const;
 
-		//Dealing with epoch time (seconds since 00:00:00 on January 1 (UTC))
-		time_t getEpochTime() const;
-
-		///Since at SLF julian dates are always treated with an offset, this function provides a way to deal with real julian dates
-		void setRealJulianDate(const double& julian_in);
-		///Since at SLF julian dates are always treated with an offset, this function provides a way to deal with real julian dates
-		void getRealJulianDate(double& julian_out) const;
-
-		friend std::ostream& operator<<(std::ostream& os, const Date_IO& date);
-
-		const std::string toString(FORMATS type) const;
+		const std::string toString(FORMATS type, const bool& gmt=false) const;
 
 		//Operator Prototypes
-		///Can be used to add an interval to an existing Date_IO object. 
+		///Can be used to add an interval to an existing Date_IO object.
 		///Construct a Date_IO object representing the interval e.g. Date_IO(1.0) for 1 day and add that to another Date_IO object.
 		Date_IO& operator+=(const Date_IO&);
 		///Can be used to subtract an interval from an existing Date_IO object
@@ -106,15 +109,21 @@ class Date_IO {
 		const Date_IO operator+(const Date_IO&) const;
 		const Date_IO operator-(const Date_IO&) const;
 
+		friend std::ostream& operator<<(std::ostream& os, const Date_IO& date);
+
 	private:
-		void calculateJulianDate(void);
-		void calculateValues(void);
-		long getJulianDay(const int&, const int&, const int&) const;
+		double localToGMT(const double& _julian)const;
+		double GMTToLocal(const double& _gmt_julian) const;
+		double calculateJulianDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute) const;
+		void calculateValues(const double& julian, int& _year, int& _month, int& _day, int& _hour, int& _minute) const;
+		long getJulianDayNumber(const int&, const int&, const int&) const;
 		bool isLeapYear(const int&) const;
 		void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
 
-		double julian, realjulian;
-		int year, month, day, hour, minute;
+		double timezone;
+		bool dst;
+		double gmt_julian;
+		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
 };
 
 

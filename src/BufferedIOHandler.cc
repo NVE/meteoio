@@ -217,7 +217,7 @@ void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, std::vector<Meteo
 	
 	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
 	std::vector< std::vector<StationData> > stationTmpBuffer;
-	readMeteoData(_date, (_date-Date_IO(1900,1,2)), meteoTmpBuffer, stationTmpBuffer);	
+	readMeteoData(_date, (_date-Date_IO(1900,1,2,0,0)), meteoTmpBuffer, stationTmpBuffer);	
 
 	unsigned int emptycounter = 0;
 	for (unsigned int ii=0; ii<meteoTmpBuffer.size(); ii++){//stations

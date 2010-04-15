@@ -296,8 +296,8 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 	  LONG64 l2(dateEnd1.getEpochTime());
 	*/
 
-	LONG64 l1(dateStart.getEpochTime());
-	LONG64 l2(dateEnd.getEpochTime());
+	LONG64 l1(dateStart.getUnixDate());
+	LONG64 l2(dateEnd.getUnixDate());
 
 	l1*=1000; //GSN is using ms, not seconds
 	l2*=1000; //GSN is using ms, not seconds
@@ -343,13 +343,12 @@ void GSNIO::readStationNames()
 		for (int ii=0; ii<stations; ii++) {
 			stringstream tmp_stream;
 			string stationname="", tmp_file="";
-			Date_IO tmp_date(0.0);
 			
 			tmp_stream << (ii+1); //needed to construct key name
 			cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
 			std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
 			vecStationName.push_back(stationname);
-		}    
+		}
 	} else { //just take all GSN stations available
 		_ns1__getSensorsResponse sensors;
 		if (gsn.getSensors(&sensors) == SOAP_OK){
