@@ -29,15 +29,29 @@
 #include "IOExceptions.h"
 
 ///Using the following namespace for the comparison operator overloading
-//using namespace rel_ops; 
+//using namespace rel_ops;
 
 /**
  * @class Date_IO
- * @brief  A relatively basic class designed to represent julian dates and to provide basic conversions into yyyy/mm/dd/hh/mm representations
+ * @brief  A class to handle timestamps.
+ * This class handles conversion between different time display formats (ISO, numeric) as well as different
+ * time representation (julian date, modified julian date, etc). It also handles time zones as well as
+ * simple Daylight Saving Time (DST). Internally, the date is stored as true julian date in GMT.
+ * The maximal precision is 1 minute (that can be easily brought to 1 seconds if
+ * it would appear necessary/useful).
+ * 
+ * Please keep in mind that using DST for monitoring data is usually a bad idea...
  *
- * The maximal precision as implemented is 1 minute.
- *
- * @author Thomas Egger
+ * Please see Date_IO::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
+ * the various date representation definitions. The following data representation are currently supported:
+ * - julian date, see Date_IO::getJulianDate
+ * - modified julian date, see Date_IO::getModifiedJulianDate
+ * - truncated julian date, see Date_IO::getTruncatedJulianDate
+ * - Unix date, see Date_IO::getUnixDate
+ * - Excel date, see Date_IO::getExcelDate
+ * 
+ * @author Mathias Bavay
+ * @date 2010-04-15
  */
 #ifdef _POPC_
 class Date_IO : POPBase {
@@ -59,23 +73,21 @@ class Date_IO {
 		static const float MJD_offset;
 		static const float Unix_offset;
 		static const float Excel_offset;
+		static const double Undefined;
 
-		///Note that constructing an Date_IO object without any parameter results 
-		///in constructing Date_IO(0.0) which in its current expression results in a date of -4713-01-01T12:00
 		Date_IO();
-		Date_IO(const double& julian_in, const double& _timezone=0.0, const bool& _dst=false);
-		///All values passed will be checked for plausibility 
-		Date_IO(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=0.0, const bool& _dst=false);
-		Date_IO(const time_t&, const double& _timezone=0.0, const bool& _dst=false);
+		Date_IO(const double& julian_in, const double& _timezone=Undefined, const bool& _dst=false);
+		Date_IO(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=Undefined, const bool& _dst=false);
+		Date_IO(const time_t&, const double& _timezone=Undefined, const bool& _dst=false);
 		Date_IO(const Date_IO& _date_in);
 
 		void setTimeZone(const double& _timezone, const bool& _dst);
-		void setDate(const double& julian_in, const double& _timezone=0.0, const bool& _dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=0.0, const bool& _dst=false);
-		void setDate(const time_t& _time, const double& _timezone=0.0, const bool& _dst=false);
-		void setModifiedJulianDate(const double& julian_in, const double& _timezone=0.0, const bool& _dst=false);
-		void setUnixDate(const time_t& _time, const double& _timezone=0.0, const bool& _dst=false);
-		void setExcelDate(const double julian_in, const double& _timezone=0.0, const bool& _dst=false);
+		void setDate(const double& julian_in, const double& _timezone=Undefined, const bool& _dst=false);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=Undefined, const bool& _dst=false);
+		void setDate(const time_t& _time, const double& _timezone=Undefined, const bool& _dst=false);
+		void setModifiedJulianDate(const double& julian_in, const double& _timezone=Undefined, const bool& _dst=false);
+		void setUnixDate(const time_t& _time, const double& _timezone=Undefined, const bool& _dst=false);
+		void setExcelDate(const double excel_in, const double& _timezone=Undefined, const bool& _dst=false);
 
 		double getTimeZone() const;
 		bool getDST() const;

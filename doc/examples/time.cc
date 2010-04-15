@@ -8,10 +8,20 @@ int main(int argc, char** argv) {
 
 	Date_IO d1;
 	IOUtils::convertString(d1,argv[1]);
+	std::cout << "In timezone GMT+0:\n";
 	std::cout << d1 << std::endl;
 
-	std::cout << "Now in timezone GMT+1:\n";
+	std::cout << "In timezone GMT+1:\n";
 	d1.setTimeZone(+1.,false);
+	std::cout << d1 << std::endl;
+
+	std::cout << "Same, directly read in timezone GMT+1:\n";
+	d1.setTimeZone(+1.,false);
+	IOUtils::convertString(d1,argv[1]);
+	std::cout << d1 << std::endl;
+
+	std::cout << "And swapped back to timezone GMT+0:\n";
+	d1.setTimeZone(0.,false);
 	std::cout << d1 << std::endl;
 	
 	return 0;
