@@ -241,6 +241,14 @@ namespace IOUtils {
 	void getProjectionParameters(const ConfigReader& cfg, std::string& coordin, std::string& coordinparam, 
 						    std::string& coordout, std::string& coordoutparam);
 
+	/**
+	* @brief A function that parses a ConfigReader object for the TZ keyword and returns the timezone
+	* @param[in] cfg  A ConfigReader object
+	* @param[out] tz_in value to be used for the input timezone
+	* @param[out] tz_out value to be used for the output timezone
+	*/
+	void getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, double& tz_out);
+
 } //end namespace IOUtils
 
 #endif

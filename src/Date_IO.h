@@ -36,11 +36,15 @@
  * @brief  A class to handle timestamps.
  * This class handles conversion between different time display formats (ISO, numeric) as well as different
  * time representation (julian date, modified julian date, etc). It also handles time zones as well as
- * simple Daylight Saving Time (DST). Internally, the date is stored as true julian date in GMT.
- * The maximal precision is 1 minute (that can be easily brought to 1 seconds if
- * it would appear necessary/useful).
+ * very basic Daylight Saving Time (DST). Since the activation dates of DST are political and not technical,
+ * it can not be automatically calculated. Therefore, it has to be provided by the caller: when the dst flag 
+ * is set, the dst time shift is automatically applied. When the dst flag ceases to be set, the dst time shift
+ * is no longer applied. This is very crude, but please keep in mind that using DST for monitoring data is
+ * usually a bad idea...
  * 
- * Please keep in mind that using DST for monitoring data is usually a bad idea...
+ * Internally, the date is stored as true julian date in GMT.
+ * The maximal precision is 1 minute (that can be easily brought to 1 seconds if
+ * it would appear necessary/useful, with the limitation that leap seconds are currently not handled).
  *
  * Please see Date_IO::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
  * the various date representation definitions. The following data representation are currently supported:
@@ -102,6 +106,9 @@ class Date_IO {
 		void getDate(int& year, int& month, int& day, int& hour, const bool& gmt=false) const;
 		void getDate(int& year, int& month, int& day, int& hour, int& minute, const bool& gmt=false) const;
 		int getYear(const bool& gmt=false) const;
+
+		int getJulianDayNumber() const;
+		bool isLeapYear() const;
 
 		const std::string toString(FORMATS type, const bool& gmt=false) const;
 

@@ -404,6 +404,38 @@ void Date_IO::getDate(int& year_out, int& month_out, int& day_out, int& hour_out
 	}
 }
 
+/**
+* @brief Return year, month, day.
+* Return the day of the year index for the current Date_IO object
+* @return julian day number
+*/
+int Date_IO::getJulianDayNumber() const {
+	//this is quite inefficient... we might want to deal with leap years with their rule + days arrays instead
+	int local_year, local_month, local_day, local_hour, local_minute;
+	getDate(local_year, local_month, local_day, local_hour, local_minute);
+
+	return (getJulianDayNumber(local_year, local_month, local_day));
+}
+
+/**
+* @brief Return true if the current year is a leap year
+* @return true if the current year is a leap year
+*/
+bool Date_IO::isLeapYear() const {
+	//this is quite inefficient... we might want to deal with leap years with their rule instead
+	int local_year, local_month, local_day, local_hour, local_minute;
+	getDate(local_year, local_month, local_day, local_hour, local_minute);
+
+	return (isLeapYear(local_year));
+
+	/*
+	if( ((local_year%4 == 0) && (local_year%100 != 0)) || (local_year%400 == 0) ) {
+		return true;
+	} else {
+		return false;
+	}
+	*/
+}
 
 // OPERATORS
 Date_IO& Date_IO::operator+=(const Date_IO& indate) {
@@ -575,11 +607,11 @@ void Date_IO::calculateValues(const double& _julian, int& _year, int& _month, in
 	_hour = (int) round((((double)1440.0)*frac-(double)_minute)/(double)60.0);
 }
 
-bool Date_IO::isLeapYear(const int& iYear) const
+bool Date_IO::isLeapYear(const int& _year) const
 {
 	long jd1, jd2;
-	jd1 = getJulianDayNumber( iYear, 2, 28 );
-	jd2 = getJulianDayNumber( iYear, 3, 1 );
+	jd1 = getJulianDayNumber( _year, 2, 28 );
+	jd2 = getJulianDayNumber( _year, 3, 1 );
 	return ( (jd2-jd1) > 1 );
 }
 
@@ -602,7 +634,7 @@ long Date_IO::getJulianDayNumber(const int& _year, const int& _month, const int&
 	return jdn;
 }
 
-void Date_IO::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const{
+void Date_IO::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const {
 	if ((in_year < -4713) || (in_year >3000)
 	    || (in_month < 1) || (in_month > 12) 
 	    || (in_day < 1) || ((in_day > daysNonLeapYear[in_month-1]) && !isLeapYear(in_year)) 

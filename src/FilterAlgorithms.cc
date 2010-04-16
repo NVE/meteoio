@@ -30,7 +30,8 @@
  * - min_max: range check filter, see FilterAlgorithms::MinMaxFilter
  * - min: minimum check filter, see FilterAlgorithms::MinValueFilter
  * - max: maximum check filter, see FilterAlgorithms::MaxValueFilter
- *
+ * - mad: median absolute deviation, see FilterAlgorithms::MedianAbsoluteDeviationFilter
+ * 
  * A few data transformations are also supported besides filtering:
  * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
  * - resample: linear data resampling, FilterAlgorithms::LinResamplingProcess
@@ -48,10 +49,11 @@ const bool FilterAlgorithms::__init = FilterAlgorithms::initStaticData();
 
 bool FilterAlgorithms::initStaticData()
 {
-	filterMap["rate"]     = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::RateFilter);
+	filterMap["rate"]     = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::RateFilter);
 	filterMap["min_max"]  = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinMaxFilter);
 	filterMap["min"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinValueFilter);
 	filterMap["max"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MaxValueFilter);
+	filterMap["mad"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAbsoluteDeviationFilter);
 	filterMap["accumulate"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::AccumulateProcess);
 	filterMap["resample"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::LinResamplingProcess);
 	filterMap["median_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAvgProcess);
@@ -403,6 +405,75 @@ bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const 
 
 	return true;
 }
+
+/**
+ * @brief Median Absolute Deviation.
+ * Values outside of median ± 3 σ_MAD are rejected. The σ_MAD is calculated as follow:\n
+ * <center>\f$ \sigma_{MAD} = K \cdot \mathop{median_i} \left( \left| X_i - \mathop{median_j} ( X_j ) \right| \right) \f$ with \f$ K = \Phi^{-1}; \Phi = 0.6745 \f$ </center>\n
+ * See http://en.wikipedia.org/wiki/Median_absolute_deviation
+ * for more information about the Mean Absolute Deviation.
+ * @code
+ * Valid examples for the io.ini file:
+ *          TA::filter1 = mad
+ *          TA::arg1    = soft left 1 1800  (1800 seconds time span for the left leaning window)
+ *          RH::filter1 = mad
+ *          RH::arg1    = 10 600            (strictly centered window spanning 600 seconds and at least 10 points)
+ * @endcode
+ */
+bool FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
+				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& paramindex,
+				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
+{
+	(void)vecS; (void)vecFilteredS;
+
+	std::vector<double> vecWindow;
+	if (!getWindowData("mad", vecM, pos, date, _vecArgs, paramindex, vecWindow))
+		return false; //Not enough data to meet user configuration
+
+	//Calculate median
+	double median=IOUtils::nodata;
+	unsigned int vecSize = vecWindow.size();
+	unsigned int middle = (unsigned int)(vecSize/2);
+	sort(vecWindow.begin(), vecWindow.end());
+
+	if (vecSize == 0){
+		return false; //only nodata values detected or other problem
+	} else if ((vecSize % 2) == 1){ //uneven
+		median = vecWindow.at(middle);
+	} else { //use arithmetic mean of element n/2 and n/2-1
+		median = Interpol1D::linearInterpolation(vecWindow.at(middle-1), vecWindow.at(middle), 0.5);
+	}
+
+	//Calculate vector of deviations and write each value back into the vecWindow
+	for(unsigned int ii=0; ii<vecWindow.size(); ii++){
+		vecWindow[ii] = abs(vecWindow[ii] - median);
+	}
+
+	//Calculate the median of the deviations
+	double mad = IOUtils::nodata;
+	const double K = 1. / 0.6745;
+	sort(vecWindow.begin(), vecWindow.end());
+	if (vecSize == 0){
+		return false; //only nodata values detected or other problem
+	} else if ((vecSize % 2) == 1){ //uneven
+		mad = vecWindow.at(middle);
+	} else { //use arithmetic mean of element n/2 and n/2-1
+		mad = Interpol1D::linearInterpolation(vecWindow.at(middle-1), vecWindow.at(middle), 0.5);
+	}
+	mad *= K;
+
+	//cout << "Median value: " << median << endl;
+	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+		double& value = vecFilteredM[ii].param(paramindex);
+		if( (value>(median+3.*mad)) || (value<(median-3.*mad)) ) {
+			value = IOUtils::nodata;
+		}
+	}
+
+	return true;
+}
+
 
 /**
  * @brief Accumulation over a user given period

@@ -343,3 +343,8 @@ void IOUtils::getProjectionParameters(const ConfigReader& cfg, std::string& coor
 	cfg.getValue("COORDSYS", "Output", coordout, ConfigReader::nothrow);
 	cfg.getValue("COORDPARAM", "Output", coordoutparam, ConfigReader::nothrow);
 }
+
+void IOUtils::getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, double& tz_out) {
+	cfg.getValue("TZ", "Input", tz_in, ConfigReader::nothrow);
+	cfg.getValue("TZ", "Output", tz_out, ConfigReader::nothrow);
+}
