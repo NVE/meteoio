@@ -28,7 +28,7 @@ const float Date_IO::MJD_offset = 2400000.5; ///<offset between julian date and 
 const float Date_IO::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
 const float Date_IO::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 
-const double Date_IO::Undefined = -999.;
+const double Date_IO::undefined = -999.;
 
 // CONSTUCTORS
 /**
@@ -37,7 +37,7 @@ const double Date_IO::Undefined = -999.;
 Date_IO::Date_IO() {
 	timezone = 0;
 	dst = false;
-	setDate(0., Undefined, false);
+	setDate(0., undefined, false);
 }
 
 /**
@@ -125,7 +125,7 @@ void Date_IO::setTimeZone(const double& _timezone, const bool& _dst) {
 void Date_IO::setDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
 {
 	plausibilityCheck(_year, _month, _day, _hour, _minute);
-	if(_timezone!=Undefined) {
+	if(_timezone!=undefined) {
 		setTimeZone(_timezone, _dst);
 	}
 
@@ -156,7 +156,7 @@ void Date_IO::setDate(const int& _year, const int& _month, const int& _day, cons
 * @param _dst is it DST? (default: no)
 */
 void Date_IO::setDate(const double& julian_in, const double& _timezone, const bool& _dst) {
-	if(_timezone!=Undefined) {
+	if(_timezone!=undefined) {
 		setTimeZone(_timezone, _dst);
 	}
 	gmt_julian = localToGMT(julian_in);
@@ -202,6 +202,7 @@ void Date_IO::setUnixDate(const time_t& _time, const double& _timezone, const bo
 * @param _dst is it DST? (default: no)
 */
 void Date_IO::setExcelDate(const double excel_in, const double& _timezone, const bool& _dst) {
+	//TODO: handle date < 1900-01-00 and date before 1900-03-01
 	const double _julian = excel_in + Excel_offset;
 	setDate(_julian, _timezone, _dst);
 }

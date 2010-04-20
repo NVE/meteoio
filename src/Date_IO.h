@@ -77,21 +77,20 @@ class Date_IO {
 		static const float MJD_offset;
 		static const float Unix_offset;
 		static const float Excel_offset;
-		static const double Undefined;
 
 		Date_IO();
-		Date_IO(const double& julian_in, const double& _timezone=Undefined, const bool& _dst=false);
-		Date_IO(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=Undefined, const bool& _dst=false);
-		Date_IO(const time_t&, const double& _timezone=Undefined, const bool& _dst=false);
+		Date_IO(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
+		Date_IO(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=undefined, const bool& _dst=false);
+		Date_IO(const time_t&, const double& _timezone=undefined, const bool& _dst=false);
 		Date_IO(const Date_IO& _date_in);
 
 		void setTimeZone(const double& _timezone, const bool& _dst);
-		void setDate(const double& julian_in, const double& _timezone=Undefined, const bool& _dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=Undefined, const bool& _dst=false);
-		void setDate(const time_t& _time, const double& _timezone=Undefined, const bool& _dst=false);
-		void setModifiedJulianDate(const double& julian_in, const double& _timezone=Undefined, const bool& _dst=false);
-		void setUnixDate(const time_t& _time, const double& _timezone=Undefined, const bool& _dst=false);
-		void setExcelDate(const double excel_in, const double& _timezone=Undefined, const bool& _dst=false);
+		void setDate(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=undefined, const bool& _dst=false);
+		void setDate(const time_t& _time, const double& _timezone=undefined, const bool& _dst=false);
+		void setModifiedJulianDate(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
+		void setUnixDate(const time_t& _time, const double& _timezone=undefined, const bool& _dst=false);
+		void setExcelDate(const double excel_in, const double& _timezone=undefined, const bool& _dst=false);
 
 		double getTimeZone() const;
 		bool getDST() const;
@@ -143,6 +142,7 @@ class Date_IO {
 		bool dst;
 		double gmt_julian;
 		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
+		static const double undefined;
 };
 
 

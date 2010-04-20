@@ -231,7 +231,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
  ******************************************************************************/
 
 /**
- * @brief Rate of change filter
+ * @brief Rate of change filter. 
  * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point. Remarks:
  * - the maximum permissible rate of change (per seconds) has to be provided as an argument
  * @code
@@ -292,7 +292,7 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 }
 
 /**
- * @brief Min/Max range filter
+ * @brief Min/Max range filter. 
  * Reject all values greater than the max or smaller than the min. Remarks:
  * - two arguments have to be provided, min and max (in SI)
  * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
@@ -337,7 +337,7 @@ bool FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const st
 }
 
 /**
- * @brief Min range filter
+ * @brief Min range filter. 
  * Reject all values smaller than the min. Remarks:
  * - the minimum permissible value has to be provided has an argument (in SI)
  * - the keyword "soft" maybe added, in such a case all data smaller than the min would be assigned
@@ -372,7 +372,7 @@ bool FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const 
 }
 
 /**
- * @brief Max range filter
+ * @brief Max range filter. 
  * Reject all values greater than the max. Remarks:
  * - the maximum permissible value has to be provided has an argument (in SI)
  * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
@@ -476,14 +476,14 @@ bool FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 
 
 /**
- * @brief Accumulation over a user given period
+ * @brief Accumulation over a user given period. 
  * The input data is accumulated over a given time interval (given as filter argument, in minutes).
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
  * hourly precipitation measurements. Remarks:
  * - the accumulation period has to be provided as an argument (in seconds)
  * @code
- * TA::filter1	= accumulate
- * TA::arg1	= 3600
+ * HNW::filter1	= accumulate
+ * HNW::arg1	= 3600
  * @endcode
  */
 bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
@@ -526,7 +526,7 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 }
 
 /**
- * @brief Linear Data resampling
+ * @brief Linear Data resampling. 
  * If a point is requested that is in between two input data points, the requested value is automatically calculated using
  * a linear interpolation.
  */
@@ -568,7 +568,7 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 }
 
 /**
- * @brief Median averaging
+ * @brief Median averaging. 
  * The median average filter returns the median value of all values within a user given time window. Remarks:
  * - nodata values are excluded from the median
  * - if there is an even number of window elements the arithmetic mean of the two central elements is used to calculate the median
@@ -630,7 +630,7 @@ bool FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, cons
 }
 
 /**
- * @brief Mean averaging
+ * @brief Mean averaging. 
  * The mean average filter returns the mean value of all values within a user given time window. Remarks:
  * - nodata values are excluded from the mean
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
@@ -689,7 +689,7 @@ bool FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
 }
 
 /**
- * @brief Wind vector averaging
+ * @brief Wind vector averaging. 
  * This calculates the vector average over a user given time period. Each wind vector within this period
  * is added and the final sum is normalized by the number of vectors that have been added. A few more important information:
  * - nodata values are excluded from the mean
@@ -700,10 +700,10 @@ bool FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
  * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
  * @code
  * Valid examples for the io.ini file:
- *          TA::filter1 = wind_avg
- *          TA::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
- *          RH::filter1 = wind_avg
- *          RH::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
+ *          VW::filter1 = wind_avg
+ *          VW::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
+ *          VW::filter1 = wind_avg
+ *          VW::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  */
 bool FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
@@ -747,14 +747,14 @@ bool FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const 
 		//calculate ve and vn
 		double ve=0.0, vn=0.0;
 		for (unsigned int ii=0; ii<vecSize; ii++){
-			ve += vecWindowVW[ii] * sin(vecWindowDW[ii] * PI / 180); //turn into radians
-			vn += vecWindowVW[ii] * cos(vecWindowDW[ii] * PI / 180); //turn into radians
+			ve += vecWindowVW[ii] * sin(vecWindowDW[ii] * PI / 180.); //turn into radians
+			vn += vecWindowVW[ii] * cos(vecWindowDW[ii] * PI / 180.); //turn into radians
 		}
-		ve = (-1.0)*ve/vecSize;
-		vn = (-1.0)*vn/vecSize;
+		ve /= vecSize;
+		vn /= vecSize;
 
 		meanspeed = sqrt(ve*ve + vn*vn);
-		meandirection = atan2(ve,vn) * 180 / PI + 180; // turn into degrees [0;360)
+		meandirection = fmod( atan2(ve,vn) * 180. / PI + 360. , 360.); // turn into degrees [0;360)
 	}
 
 	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
