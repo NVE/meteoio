@@ -33,8 +33,10 @@ int main(){
 	//d1*=1000; //GSN is using ms, not seconds
 	//d2*=1000; //GSN is using ms, not seconds
 
-	double d1 = 1249550075500.0;
-	double d2 = 1258887378500.0;
+	//double d1 = 1249550075500.0;
+	double d1 = 1246406400000.0;
+	//double d2 = 1258887378500.0;
+	double d2 = 1246579200000.0;
 
 	stringstream ss1, ss2;
 	ss1 << d1;

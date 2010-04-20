@@ -302,8 +302,8 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 	l1*=1000; //GSN is using ms, not seconds
 	l2*=1000; //GSN is using ms, not seconds
 
-	//cout << dateStart1 << "  " << dateEnd1 << endl;
-	//cout << dateStart1.getEpochTime() << "==" << l1 << endl; cout << dateEnd1.getEpochTime() << "==" << l2 << endl;
+	//cout << dateStart << "  " << dateEnd << endl;
+	//cout << dateStart.getUnixDate() << "==" << l1 << endl; cout << dateEnd.getUnixDate() << "==" << l2 << endl;
 	
 	meteodata_req.from = l1;
 	meteodata_req.to = l2;
