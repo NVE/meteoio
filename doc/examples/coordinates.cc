@@ -1,6 +1,7 @@
 #include "MeteoIO.h"
 
 using namespace std;
+using namespace mio; //The MeteoIO namespace is called mio
 
 int main() {
 	//we create one point in the CH1903 coordinate system

@@ -1,12 +1,14 @@
 #include <iostream>
 #include "MeteoIO.h"
 
+using namespace mio;
+
 //This is the a basic example of time manipulation
 //provide date as ISO formatted, for example 2008-12-01T15:35:00
 int main(int argc, char** argv) {
 	(void)argc;
 
-	Date_IO d1;
+	Date d1;
 	IOUtils::convertString(d1,argv[1]);
 	std::cout << "In timezone GMT+0:\n";
 	std::cout << d1 << std::endl;

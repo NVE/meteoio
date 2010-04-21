@@ -1,5 +1,7 @@
 #include "MeteoIO.h"
 
+using namespace mio; //The MeteoIO namespace is called mio
+
 //This is a basic example of using as dem: the dem is read, the grid coordinates of a point given by its (lat,long) are retrieved
 //and a sub-dem is extracted starting at these coordinates and extending dist_x and dist_y and written out.
 int main(void) {

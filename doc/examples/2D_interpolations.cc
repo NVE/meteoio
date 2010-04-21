@@ -1,13 +1,15 @@
 #include <iostream>
 #include "MeteoIO.h"
 
+using namespace mio; //The MeteoIO namespace is called mio
+
 //This is the a basic example of spatial interpolations. It does not check any exceptions, it only tries to be as c-like as possible
 //provide date as ISO formatted, for example 2008-12-01T15:35:00 and 
 //it will retrieve and interpolate the data for this date according to the io.ini configuration file
 int main(int argc, char** argv) {
 	(void)argc;
 
-	Date_IO d1;
+	Date d1;
 	std::vector<MeteoData> vecMeteo;
 	std::vector<StationData> vecStation;
 
