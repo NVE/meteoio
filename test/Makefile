@@ -4,7 +4,7 @@ DEBUG   = -g -O0 -DDEBUG -ggdb
 POPCC   = popcc
 METEOIODIR = ../src
 
-LIBS      = -rdynamic -lstdc++ -ldl -L../lib -lmeteoio
+LIBS      = -rdynamic -lstdc++ -ldl -lmeteoio
 LIBS_POPC = -L../lib -lstdc++ -lmeteoiopopc
 
 INCLUDE=-I. -I$(METEOIODIR)
@@ -34,12 +34,11 @@ demo: meteoio_demo
 
 par: meteoio_demo.popc
 
-testDate: testDate.o ../lib/libmeteoio.a
-	cd ../; make
+testDate: testDate.o 
 	g++ -o testDate testDate.o $(LIBS)
 
-testMeteo: MeteoData.o Date.o testMeteo.o slfutils.o makeLib
-	g++ -o testMeteo testMeteo.o MeteoData.o Date.o slfutils.o $(LIBS)
+testMeteo: testMeteo.o 
+	g++ -o testMeteo testMeteo.o $(LIBS)
 
 testStation: StationData.o testStation.o
 	g++ -o testStation StationData.o testStation.o
@@ -54,12 +53,18 @@ testThomas: testThomas.o ../lib/libmeteoio.a
 	cd ../; make 	
 	$(CC) $(DEBUG) -rdynamic -o $@ testThomas.o ${LIBS} 
 
+testwriting: testwriting.o
+	$(CC) $(DEBUG) -o $@ testwriting.o ${LIBS}
+
 sensorscope: sensorscope.o ../lib/libmeteoio.a
 	$(CC) $(DEBUG) -rdynamic -o $@ sensorscope.o ${LIBS} 
 
 testConfigReader: main.o ConfigReader.o slfutils.o slfexceptions.o
 	$(CC) -o $@ main.o ConfigReader.o slfutils.o slfexceptions.o
 
+hnw_interpolate: hnw_interpolate.o
+	$(CC) $(DEBUG) -o $@ hnw_interpolate.o ${LIBS}
+
 clean:
-	rm -rf *~ *.o main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.popc *.out testArray sensorscope
+	rm -rf *~ *.o main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.popc *.out testArray sensorscope testwriting
 

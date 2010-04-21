@@ -2,12 +2,13 @@
 #include "MeteoIO.h"
 
 using namespace std;
+using namespace mio;
 
 int main(int argc, char** argv) {
 	//provide date as ISO formatted, for example 2008-12-01T15:35:00
 	//please look in the online documentation for more code examples!!
 	(void)argc;
-	Date_IO d1;
+	Date d1;
 	
 	if(argc<2){
 		printf("Error: not enough arguments !\n");
@@ -38,8 +39,8 @@ int main(int argc, char** argv) {
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++) {
 		cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << endl;
-		cout << vecStation[ii].toString() << endl;
-		cout << vecMeteo[ii].toString() << endl;
+		cout << vecStation[ii] << endl;
+		cout << vecMeteo[ii] << endl;
 	}
 
 	delete io;
