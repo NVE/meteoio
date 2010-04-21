@@ -141,6 +141,8 @@ class BufferedIOHandler : public IOInterface {
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
+		//HACK: please do NOT use these methods, they will be replaced/changed/tweaked asap
+		//These methods should be considered experimental and NOT stable (from an API point of view)
 		void bufferAlways(const bool& bufferalways);
 		void setBufferDuration(const Date_IO& _bufferbefore, const Date_IO& _bufferafter);
 
