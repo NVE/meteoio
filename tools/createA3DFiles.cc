@@ -313,8 +313,8 @@ int main(int argc, char *argv[])
 		cout<<"Two (2) date are needed in this format : YYYY-MM-DDTHH:mm:ss" <<endl;
 		exit(1);
 	} else {
-		Date_IO d1;
-		Date_IO d2;
+		Date d1;
+		Date d2;
 		convertString(d1,string(argv[1]));
 		convertString(d2,string(argv[2]));
 	
