@@ -37,6 +37,8 @@
  * @author Thomas Egger
  * @date   2009-11-03
  */
+namespace mio {
+
 class FilterAlgorithms {
 	public:
 
@@ -44,43 +46,43 @@ class FilterAlgorithms {
 
 		//Available filters
 		static bool RateFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool LinResamplingProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 		static bool WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-					const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
 
@@ -94,12 +96,13 @@ class FilterAlgorithms {
 
 		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
 						const unsigned int& pos,
-						const Date_IO& date, const std::vector<std::string>& _vecArgs,
+						const Date& date, const std::vector<std::string>& _vecArgs,
 						const unsigned int& paramindex, std::vector<double>& vecWindow,
-						std::vector<Date_IO> *vecDate = NULL);
+						std::vector<Date> *vecDate = NULL);
 		static std::map<std::string, FilterProperties> filterMap;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map filterMap
 };
+} //end namespace
 
 #endif

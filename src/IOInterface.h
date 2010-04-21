@@ -22,7 +22,7 @@
 #include "MeteoData.h"
 #include "Grid2DObject.h"
 #include "DEMObject.h"
-#include "Date_IO.h"
+#include "Date.h"
 #include "DynamicLibrary.h"
 #include "Array.h"
 #include "Array2D.h"
@@ -72,6 +72,8 @@
  * @author Thomas Egger
  * @date   2009-01-08
  */
+namespace mio {
+
 class IOInterface : public PluginObject {
 	public:
 
@@ -131,14 +133,14 @@ class IOInterface : public PluginObject {
 		* Example Usage:
 		* @code
 		* vector<StationData> vecStation;  //empty vector
-		* Date_IO d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
 		* IOHandler io1("io.ini");
 		* io1.readStationData(d1, vecStation);
 		* @endcode
-		* @param date A Date_IO object representing the date for which the meta data is to be fetched
+		* @param date A Date object representing the date for which the meta data is to be fetched
 		* @param vecStation  A vector of StationData objects to be filled with meta data
 		*/
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation) = 0;
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) = 0;
 
 		/**
 		* @brief Fill vecMeteo and vecStation with a time series of objects  
@@ -154,18 +156,18 @@ class IOInterface : public PluginObject {
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
 		* vector< vector<StationData> > vecStation;  //empty vector
-		* Date_IO d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date_IO d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
 		* IOHandler io1("io.ini");
 		* io1.readMeteoData(d1, d2, vecMeteo, vecStation);
 		* @endcode
-		* @param dateStart   A Date_IO object representing the beginning of an interval (inclusive)
-		* @param dateEnd     A Date_IO object representing the end of an interval (inclusive)
+		* @param dateStart   A Date object representing the beginning of an interval (inclusive)
+		* @param dateEnd     A Date object representing the end of an interval (inclusive)
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
 		* @param vecStation  A vector of vector<StationData> objects to be filled with data
 		* @param stationindex (optional) update only the station given by this index
 		*/
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos) = 0;
@@ -184,8 +186,8 @@ class IOInterface : public PluginObject {
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
 		* vector< vector<StationData> > vecStation;  //empty vector
-		* Date_IO d1(2008,06,21,11,00);       //21.6.2008 11:00
-		* Date_IO d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
 		* IOHandler io1("io.ini");
 		* io1.readMeteoData(d1, d2, vecMeteo, vecStation);
 		* io1.writeMeteoData(vecMeteo, vecStation)
@@ -200,19 +202,19 @@ class IOInterface : public PluginObject {
 							   const std::string& name="") = 0;
 
 		/**
-		* @brief Parse the assimilation data into a Grid2DObject for a certain date represented by the Date_IO object
+		* @brief Parse the assimilation data into a Grid2DObject for a certain date represented by the Date object
 		*    
 		* Example Usage:
 		* @code
 		* Grid2DObject adata;
-		* Date_IO d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
 		* IOHandler io1("io.ini");
 		* io1.readAssimilationData(d1, adata);
 		* @endcode
-		* @param date_in A Date_IO object representing the date of the assimilation data
+		* @param date_in A Date object representing the date of the assimilation data
 		* @param da_out  A Grid2DObject that holds the assimilation data for every grid point
 		*/
-		virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out) = 0;
+		virtual void readAssimilationData(const Date& date_in, Grid2DObject& da_out) = 0;
 
 		/**
 		* @brief Read a list of points by their grid coordinates
@@ -228,5 +230,6 @@ class IOInterface : public PluginObject {
 		*/
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name="") = 0;
 };
+} //end namespace
 
 #endif

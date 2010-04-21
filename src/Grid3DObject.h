@@ -30,6 +30,8 @@
  * @author Thomas Egger
  * @date   2009-07-20
  */
+namespace mio {
+
 #ifdef _POPC_
 class Grid3DObject : POPBase {
 	public:
@@ -149,5 +151,6 @@ class Grid3DObject{
 		*/
 		bool grid_to_WGS84(Coords& point) const;
 };
+} //end namespace
 
 #endif

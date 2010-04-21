@@ -18,6 +18,7 @@
 #include "BufferedIOHandler.h"
 
 using namespace std;
+using namespace mio;
 
 #ifdef _POPC_
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
@@ -81,9 +82,9 @@ void BufferedIOHandler::readLanduse(Grid2DObject& _grid2Dobj)
 	_grid2Dobj = tmpgrid2D;
 }
 
-void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject& _grid2Dobj)
+void BufferedIOHandler::readAssimilationData(const Date& _date, Grid2DObject& _grid2Dobj)
 {
-	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + _date.toString(Date_IO::FULL));
+	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + _date.toString(Date::FULL));
 	if (it != mapBufferedGrids.end()) { //already in map
 		_grid2Dobj = (*it).second; 
 		return;
@@ -91,11 +92,11 @@ void BufferedIOHandler::readAssimilationData(const Date_IO& _date, Grid2DObject&
 	
 	Grid2DObject tmpgrid2D;
 	iohandler.readAssimilationData(_date, tmpgrid2D);
-	mapBufferedGrids["/:ASSIMILATIONDATA" + _date.toString(Date_IO::FULL)] = tmpgrid2D;
+	mapBufferedGrids["/:ASSIMILATIONDATA" + _date.toString(Date::FULL)] = tmpgrid2D;
 	_grid2Dobj = tmpgrid2D;
 }
 
-void BufferedIOHandler::readStationData(const Date_IO& date, std::vector<StationData>& vecStation)
+void BufferedIOHandler::readStationData(const Date& date, std::vector<StationData>& vecStation)
 {
 	iohandler.readStationData(date, vecStation);
 }
@@ -113,7 +114,7 @@ void BufferedIOHandler::writeMeteoData(const std::vector< std::vector<MeteoData>
 	iohandler.writeMeteoData(vecMeteo, vecStation, name);
 }
 
-void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
+void BufferedIOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	std::vector< std::vector<StationData> > vecStation;
 	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
@@ -122,11 +123,11 @@ void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& d
 void BufferedIOHandler::setBufferProperties()
 {
 	always_rebuffer = true;
-	bufferbefore = Date_IO(2.0);  //minus 2 days
-	bufferafter = Date_IO(20.0);  //plus 20 days
+	bufferbefore = Date(2.0);  //minus 2 days
+	bufferafter = Date(20.0);  //plus 20 days
 }
 
-void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
+void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
 	/* For every station: 
 	 * 1) See whether data is already buffered
 	 * 2) Filter - includes resampling
@@ -166,7 +167,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 
 			if (rebuffer){
 				//cout << "[I] Station " << ii << "(" << stationName 
-				//	<< ") data for date " << date_in.toString(Date_IO::FULL) << " not in buffer ..." << endl;
+				//	<< ") data for date " << date_in.toString(Date::FULL) << " not in buffer ..." << endl;
 				
 				bool dataexists = bufferData(date_in, ii);
 				if (dataexists) {//date_in is contained in buffer
@@ -189,7 +190,7 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 			vecMeteo.push_back(md);
 			vecStation.push_back(sd);
 		} else {
-			cout << "[I] No data found for station " << stationName << " at date " << date_in.toString(Date_IO::FULL) 
+			cout << "[I] No data found for station " << stationName << " at date " << date_in.toString(Date::FULL) 
 				<< endl;
 			vecMeteo.push_back(MeteoData());
 			vecMeteo[ii].date = date_in; //set correct date
@@ -203,11 +204,11 @@ void BufferedIOHandler::readMeteoData(const Date_IO& date_in, std::vector<MeteoD
 		vecMeteo[0].date = date_in; //set correct date
 
 		vecStation.push_back(StationData());
-		//throw IOException("[E] No data for any station for date " + date_in.toString(Date_IO::FULL) + " found", AT);
+		//throw IOException("[E] No data for any station for date " + date_in.toString(Date::FULL) + " found", AT);
 	}	
 }
 
-void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
+void BufferedIOHandler::getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
 {
 	//TODO: check whether there is something in the buffer!
 	//Try to rebuffer!
@@ -217,7 +218,7 @@ void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, std::vector<Meteo
 	
 	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
 	std::vector< std::vector<StationData> > stationTmpBuffer;
-	readMeteoData(_date, (_date-Date_IO(1900,1,2,0,0)), meteoTmpBuffer, stationTmpBuffer);	
+	readMeteoData(_date, (_date-Date(1900,1,2,0,0)), meteoTmpBuffer, stationTmpBuffer);	
 
 	unsigned int emptycounter = 0;
 	for (unsigned int ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
@@ -235,9 +236,9 @@ void BufferedIOHandler::getNextMeteoData(const Date_IO& _date, std::vector<Meteo
 	}
 }
 
-void BufferedIOHandler::bufferAllData(const Date_IO& _date){
-	Date_IO fromDate = _date - bufferbefore;
-	Date_IO toDate   = _date + bufferafter;
+void BufferedIOHandler::bufferAllData(const Date& _date){
+	Date fromDate = _date - bufferbefore;
+	Date toDate   = _date + bufferafter;
 
 	readMeteoData(fromDate, toDate, meteoBuffer, stationBuffer);
 
@@ -248,10 +249,10 @@ void BufferedIOHandler::bufferAllData(const Date_IO& _date){
 	}
 }
 
-bool BufferedIOHandler::bufferData(const Date_IO& _date, const unsigned int& stationindex)
+bool BufferedIOHandler::bufferData(const Date& _date, const unsigned int& stationindex)
 {
-	Date_IO fromDate = _date - bufferbefore;
-	Date_IO toDate   = _date + bufferafter;
+	Date fromDate = _date - bufferbefore;
+	Date toDate   = _date + bufferafter;
 
 	readMeteoData(fromDate, toDate, meteoBuffer, stationBuffer, stationindex);
 	startDateBuffer.at(stationindex) = fromDate;
@@ -271,7 +272,7 @@ bool BufferedIOHandler::bufferData(const Date_IO& _date, const unsigned int& sta
 		return false;
 	}
 
-	//If we reach this point: Date_IO is definitely covered
+	//If we reach this point: Date is definitely covered
 	return true;
 }
 
@@ -280,13 +281,13 @@ void BufferedIOHandler::bufferAlways(const bool& bufferalways)
 	always_rebuffer = bufferalways;
 }
 
-void BufferedIOHandler::setBufferDuration(const Date_IO& _beforeDate, const Date_IO& _afterDate)
+void BufferedIOHandler::setBufferDuration(const Date& _beforeDate, const Date& _afterDate)
 {
 	bufferbefore = _beforeDate; 
 	bufferafter  = _afterDate;
 }
 
-void BufferedIOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+void BufferedIOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							   std::vector< std::vector<MeteoData> >& vecMeteo,
 							   std::vector< std::vector<StationData> >& vecStation,
 							   const unsigned int& stationindex)
@@ -317,7 +318,7 @@ void BufferedIOHandler::clearBuffer(){
 	mapBufferedGrids.clear();
 }
 
-unsigned int BufferedIOHandler::seek(const Date_IO& date_in, std::vector<MeteoData>& vecM){ //TODO: binary search
+unsigned int BufferedIOHandler::seek(const Date& date_in, std::vector<MeteoData>& vecM){ //TODO: binary search
 	//returns index of element, if element does not exist it returns closest index
 	//the element needs to be an exact hit or embedded between two measurments
 

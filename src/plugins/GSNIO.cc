@@ -60,9 +60,10 @@
  * THE SOFTWARE IN THIS PRODUCT WAS IN PART PROVIDED BY GENIVIA INC AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
-
 using namespace std;
+using namespace mio;
+
+const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 GSNIO::GSNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename){
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -144,7 +145,7 @@ void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation)
+void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 
@@ -159,7 +160,7 @@ void GSNIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation
 	}
 }
 
-void GSNIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex)
@@ -279,7 +280,7 @@ void GSNIO::convertStringToDouble(double& d, const std::string& _string, const s
 		throw ConversionFailedException("Conversion failed for value " + _parname, AT);
 }
 
-void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
+void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
 				 std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex)
 {
 	_ns1__getMeteoData meteodata_req;
@@ -288,9 +289,9 @@ void GSNIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vect
 
 	meteodata_req.sensor = &vecStationName[stationindex];
 	/*
-	  Date_IO dateStart1(time(NULL));
-	  dateStart1 -= Date_IO(0.013);
-	  Date_IO dateEnd1(time(NULL));
+	  Date dateStart1(time(NULL));
+	  dateStart1 -= Date(0.013);
+	  Date dateEnd1(time(NULL));
 
 	  LONG64 l1(dateStart1.getEpochTime());
 	  LONG64 l2(dateEnd1.getEpochTime());
@@ -364,7 +365,7 @@ void GSNIO::readStationNames()
 	}
 }
 
-void GSNIO::readAssimilationData(const Date_IO&, Grid2DObject&)
+void GSNIO::readAssimilationData(const Date&, Grid2DObject&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

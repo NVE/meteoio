@@ -38,6 +38,8 @@
  * @author Thomas Egger
  * @date   2008-11-20
  */
+namespace mio {
+
 class BormaIO : public IOInterface {
 	public:
 		//virtual BormaIO* clone() const;
@@ -54,8 +56,8 @@ class BormaIO : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
@@ -64,30 +66,30 @@ class BormaIO : public IOInterface {
 							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 
-		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
-		void read2DMeteo(const Date_IO&, std::vector<MeteoData>&); ///< No buffering
-		void read2DMeteo(const Date_IO&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
+		void read2DMeteo(const Date&, std::vector<MeteoData>&); ///< No buffering
+		void read2DMeteo(const Date&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
 
 	private:
 		void convertUnits(MeteoData& meteo);
-		void checkForMeteoFiles(const std::string& xmlpath, const std::string& stationname, const Date_IO& date_in,
-						    std::string& filename_out, Date_IO& date_out);
+		void checkForMeteoFiles(const std::string& xmlpath, const std::string& stationname, const Date& date_in,
+						    std::string& filename_out, Date& date_out);
 		void xmlParseStringToDouble(const std::string& str_in, double& d_out, const std::string& parname);
 		std::string xmlGetNodeContent(xmlpp::Node* pNode, const std::string& nodename);
-		void xmlExtractData(const std::string& filename, const Date_IO& date_in, MeteoData& md, StationData& sd);
+		void xmlExtractData(const std::string& filename, const Date& date_in, MeteoData& md, StationData& sd);
 		std::string xmlGetNodeName(xmlpp::Node* pNode);
 		xmlpp::Node* xmlGetNode(xmlpp::Node* parentNode, const std::string& nodename);
-		void stringToDate_IO(const std::string& tmp, Date_IO& date_out) const;
+		void stringToDate(const std::string& tmp, Date& date_out) const;
 		bool validFilename(const std::string& tmp) const;
 		void cleanup() throw();
-		void getFiles(const std::string& stationsname, const Date_IO& start_date, const Date_IO& end_date,
-				std::vector<std::string>& vecFiles, std::vector<Date_IO>& vecDate_IO);
+		void getFiles(const std::string& stationsname, const Date& start_date, const Date& end_date,
+				std::vector<std::string>& vecFiles, std::vector<Date>& vecDate);
 		void readStationNames(void);
-		bool bufferData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		bool bufferData(const Date& dateStart, const Date& dateEnd, 
 					 std::vector< std::vector<MeteoData> >& vecMeteo, 
 					 std::vector< std::vector<StationData> >& vecStation, 
 					 const unsigned int& stationnr);
@@ -98,5 +100,7 @@ class BormaIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
+
+} //end namespace mio
 
 #endif

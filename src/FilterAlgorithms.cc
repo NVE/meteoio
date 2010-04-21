@@ -41,6 +41,7 @@
  */
 
 using namespace std;
+using namespace mio;
 
 #define PI 3.141592653589
 
@@ -49,16 +50,16 @@ const bool FilterAlgorithms::__init = FilterAlgorithms::initStaticData();
 
 bool FilterAlgorithms::initStaticData()
 {
-	filterMap["rate"]     = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::RateFilter);
-	filterMap["min_max"]  = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinMaxFilter);
-	filterMap["min"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MinValueFilter);
-	filterMap["max"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MaxValueFilter);
-	filterMap["mad"]      = FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAbsoluteDeviationFilter);
-	filterMap["accumulate"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::AccumulateProcess);
-	filterMap["resample"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::LinResamplingProcess);
-	filterMap["median_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MedianAvgProcess);
-	filterMap["mean_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::MeanAvgProcess);
-	filterMap["wind_avg"] = FilterProperties(false, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::WindAvgProcess);
+	filterMap["rate"]     = FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::RateFilter);
+	filterMap["min_max"]  = FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::MinMaxFilter);
+	filterMap["min"]      = FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::MinValueFilter);
+	filterMap["max"]      = FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::MaxValueFilter);
+	filterMap["mad"]      = FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::MedianAbsoluteDeviationFilter);
+	filterMap["accumulate"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::AccumulateProcess);
+	filterMap["resample"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::LinResamplingProcess);
+	filterMap["median_avg"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::MedianAvgProcess);
+	filterMap["mean_avg"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::MeanAvgProcess);
+	filterMap["wind_avg"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::WindAvgProcess);
 
 	return true;
 }
@@ -126,9 +127,9 @@ void FilterAlgorithms::parseWindowFilterArguments(const std::string& filtername,
 
 bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM, 
                                      const unsigned int& pos,
-                                     const Date_IO& date, const std::vector<std::string>& _vecArgs,
+                                     const Date& date, const std::vector<std::string>& _vecArgs,
                                      const unsigned int& paramindex, std::vector<double>& vecWindow,
-                                     std::vector<Date_IO> *vecDate)
+                                     std::vector<Date> *vecDate)
 {
 	vecWindow.clear();
 	bool isSoft = false;
@@ -169,7 +170,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 	}
 
 	//Now deal with the second argument: the time window
-	Date_IO deltatime(vecArgs[1]/(24.*3600.)); //making a julian date out of the argument given in seconds
+	Date deltatime(vecArgs[1]/(24.*3600.)); //making a julian date out of the argument given in seconds
 	while(deltatime > (vecM[startposition].date - vecM[endposition].date)){
 		//The time window is too small, so let's try enlargening it
 		if ((windowposition == "right") && (!isSoft)){ //only expand to the right
@@ -207,7 +208,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 		}
 	}
 	
-	//Date_IO gap(vecM[startposition].date - vecM[endposition].date);
+	//Date gap(vecM[startposition].date - vecM[endposition].date);
 	//cout << "The final gap is " << gap << "  windowposition: " << windowposition << endl;
 
 	//Push all relevant data elements into the vector vecWindow
@@ -240,7 +241,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
  * @endcode
  */
 bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+						   const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 						   const unsigned int& paramindex,
 						   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -303,7 +304,7 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
  * @endcode
  */
 bool FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-						 const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+						 const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 						 const unsigned int& paramindex,
 						 std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -348,7 +349,7 @@ bool FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const st
  * @endcode
  */
 bool FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+						   const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 						   const unsigned int& paramindex,
 						   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -383,7 +384,7 @@ bool FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const 
  * @endcode
  */
 bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-						   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+						   const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 						   const unsigned int& paramindex,
 						   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -421,7 +422,7 @@ bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const 
  * @endcode
  */
 bool FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 				   const unsigned int& paramindex,
 				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -487,7 +488,7 @@ bool FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
  * @endcode
  */
 bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-						    const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+						    const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 						    const unsigned int& paramindex,
 						    std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -497,7 +498,7 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 	std::vector<double> vecArgs; 
 	parseFilterArguments("accumulate", _vecArgs, 1, 1, isSoft, vecArgs);
 	
-	Date_IO deltatime(vecArgs[0]/(24.*3600.)); //making a julian date out of the argument given in seconds
+	Date deltatime(vecArgs[0]/(24.*3600.)); //making a julian date out of the argument given in seconds
 
 	int startposition = pos;
 	for (int ii=vecFilteredM.size()-1; ii>=0; ii--){
@@ -531,7 +532,7 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
  * a linear interpolation.
  */
 bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-							const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+							const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 							const unsigned int& paramindex,
 							std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -587,7 +588,7 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
  * @endcode
  */
 bool FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 				   const unsigned int& paramindex,
 				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -648,7 +649,7 @@ bool FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, cons
  * @endcode
  */
 bool FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 				   const unsigned int& paramindex,
 				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -707,7 +708,7 @@ bool FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
  * @endcode
  */
 bool FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-				   const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+				   const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 				   const unsigned int& paramindex,
 				   std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
@@ -722,7 +723,7 @@ bool FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const 
 	//4) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
 	//  
 	std::vector<double> vecWindowVW, vecWindowDW;
-	std::vector<Date_IO> vecDateVW, vecDateDW;
+	std::vector<Date> vecDateVW, vecDateDW;
 	if (!getWindowData("wind_avg", vecM, pos, date, _vecArgs, MeteoData::VW, vecWindowVW, &vecDateVW))
 		return false; //Not enough data to meet user configuration
 

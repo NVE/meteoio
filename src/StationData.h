@@ -31,6 +31,8 @@
  * @author Thomas Egger
  * @date   2008-11-29
  */
+namespace mio {
+
 #ifdef _POPC_
 class StationData :POPBase {
 	public:
@@ -88,5 +90,7 @@ class StationData {
 };
 
 typedef std::vector<StationData> STATION_DATASET;
+
+} //end namespace
 
 #endif

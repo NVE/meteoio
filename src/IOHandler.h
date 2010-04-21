@@ -30,6 +30,8 @@
 #include "IOExceptions.h"
 #include "IOPlugin.h"
 
+namespace mio {
+
 typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 /**
@@ -49,17 +51,17 @@ class IOHandler : public IOInterface {
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 
 		virtual void writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
 							   const std::vector<STATION_DATASET>& vecStation,
 							   const std::string& name="");
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 						std::vector<METEO_DATASET>& vecMeteo, 
 						std::vector<STATION_DATASET>& vecStation,
 						const unsigned& stationindex=IOUtils::npos);
-		void readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
-		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+		void readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
@@ -76,5 +78,7 @@ class IOHandler : public IOInterface {
 		PLUGIN_ITERATOR mapit;
 		A3DIO fileio;
 };
+
+} //end namespace mio
 
 #endif

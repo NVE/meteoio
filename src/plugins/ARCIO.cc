@@ -88,6 +88,7 @@
  */
 
 using namespace std;
+using namespace mio;
 
 ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
@@ -220,7 +221,7 @@ void ARCIO::readLanduse(Grid2DObject& landuse_out)
 	read2DGrid(landuse_out, filename);
 }
 
-void ARCIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
+void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
 	int yyyy, MM, dd, hh, mm;
 	date_in.getDate(yyyy, MM, dd, hh, mm);
@@ -235,13 +236,13 @@ void ARCIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	read2DGrid(da_out, ss.str());
 }
 
-void ARCIO::readStationData(const Date_IO&, std::vector<StationData>&)
+void ARCIO::readStationData(const Date&, std::vector<StationData>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::readMeteoData(const Date_IO&, const Date_IO&, 
+void ARCIO::readMeteoData(const Date&, const Date&, 
 					 std::vector< std::vector<MeteoData> >&, 
 					 std::vector< std::vector<StationData> >&,
 					 const unsigned int&)

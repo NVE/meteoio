@@ -31,6 +31,9 @@
  * @author Thomas Egger
  * @date   2009-07-02
  */
+
+namespace mio {
+
 class GeotopIO : public IOInterface {
 	public:
 		//virtual GeotopIO* clone() const;
@@ -47,8 +50,8 @@ class GeotopIO : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
@@ -57,11 +60,11 @@ class GeotopIO : public IOInterface {
 							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 
-		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
-		void read2DMeteo(const Date_IO&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
+		void read2DMeteo(const Date&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
 
 	private:
 		void initParamNames(std::map<std::string, unsigned int>& mapParam);
@@ -73,7 +76,7 @@ class GeotopIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		void cleanup() throw();
-		void parseDate(const std::string& datestring, const std::string& fileandline, Date_IO& _date);
+		void parseDate(const std::string& datestring, const std::string& fileandline, Date& _date);
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
@@ -81,5 +84,7 @@ class GeotopIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
+
+} //end namespace
 
 #endif

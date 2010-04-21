@@ -18,6 +18,7 @@
 #include "ConfigReader.h"
 
 using namespace std;
+using namespace mio;
 
 const unsigned int ConfigReader::nothrow = 666;
 

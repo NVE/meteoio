@@ -34,12 +34,9 @@
 #include <limits>
 
 #include "IOExceptions.h"
-#include "Date_IO.h"
+#include "Date.h"
 #include "Coords.h"
 #include "ConfigReader.h"
-
-class Coords;
-class ConfigReader;
 
 #ifndef MAX
 #define MAX(x,y)    (((x) < (y)) ? (y) : (x))
@@ -54,6 +51,11 @@ class ConfigReader;
 #ifndef K_TO_C
 #define K_TO_C( T ) ( T - 273.15 )	  // Kelvin to Celsius
 #endif
+
+namespace mio {
+
+class Coords;
+class ConfigReader;
 
 namespace IOUtils {
 	const double nodata = -999.0; ///<This is the internal nodata value
@@ -160,7 +162,7 @@ namespace IOUtils {
 	// fully specialized template functions (implementation must not be in header)
 	template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<Date_IO>(Date_IO& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<Date>(Date& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 
 	/**
@@ -250,5 +252,6 @@ namespace IOUtils {
 	void getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, double& tz_out);
 
 } //end namespace IOUtils
+} //end namespace mio
 
 #endif

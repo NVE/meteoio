@@ -24,14 +24,14 @@
 #include "StationData.h"
 #include "MeteoData.h"
 #include "Grid2DObject.h"
-#include "Date_IO.h"
+#include "Date.h"
 #include "IOExceptions.h"
 #include "libinterpol2D.h"
 #include "IOUtils.h"
 #include "DEMObject.h"
 
 using namespace std;
-
+using namespace mio;
 
 const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
 const double Interpol2D::wind_ys = 0.58;

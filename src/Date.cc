@@ -15,26 +15,27 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "Date_IO.h"
+#include "Date.h"
 
-//const long Date_IO::offset = 2415021;	///snowpack offset
+//const long Date::offset = 2415021;	///snowpack offset
 
 using namespace std;
+using namespace mio;
 
-const int Date_IO::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
-const int Date_IO::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
-const double Date_IO::DST_shift = 1.0; //in hours
-const float Date_IO::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
-const float Date_IO::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
-const float Date_IO::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
+const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
+const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+const double Date::DST_shift = 1.0; //in hours
+const float Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
+const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
+const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 
-const double Date_IO::undefined = -999.;
+const double Date::undefined = -999.;
 
 // CONSTUCTORS
 /**
 * @brief Default constructor: timezone is set to GMT without DST, julian date is set to 0 (meaning -4713-01-01T12:00)
 */
-Date_IO::Date_IO() {
+Date::Date() {
 	timezone = 0;
 	dst = false;
 	setDate(0., undefined, false);
@@ -46,7 +47,7 @@ Date_IO::Date_IO() {
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-Date_IO::Date_IO(const double& julian_in, const double& _timezone, const bool& _dst) {
+Date::Date(const double& julian_in, const double& _timezone, const bool& _dst) {
 	timezone = 0;
 	dst = false;
 	setDate(julian_in, _timezone, _dst);
@@ -58,7 +59,7 @@ Date_IO::Date_IO(const double& julian_in, const double& _timezone, const bool& _
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-Date_IO::Date_IO(const time_t& _time, const double& _timezone, const bool& _dst) {
+Date::Date(const time_t& _time, const double& _timezone, const bool& _dst) {
 	timezone = 0;
 	dst = false;
 	setDate(_time, _timezone, _dst);
@@ -66,12 +67,12 @@ Date_IO::Date_IO(const time_t& _time, const double& _timezone, const bool& _dst)
 //HACK: is it needed? Why paroc_base instead of POPC??
 /**
 * @brief Copy constructor.
-* @param _date_in Date_IO object to copy
+* @param _date_in Date object to copy
 */
 #ifdef _POPC_
-Date_IO::Date_IO(const Date_IO& _date_in) : paroc_base()
+Date::Date(const Date& _date_in) : paroc_base()
 #else
-Date_IO::Date_IO(const Date_IO& _date_in)
+Date::Date(const Date& _date_in)
 #endif
 {
 	setDate(_date_in.getJulianDate(), _date_in.getTimeZone(), _date_in.getDST());
@@ -88,7 +89,7 @@ Date_IO::Date_IO(const Date_IO& _date_in)
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-Date_IO::Date_IO(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
+Date::Date(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
 {
 	timezone = 0;
 	dst = false;
@@ -101,7 +102,7 @@ Date_IO::Date_IO(const int& _year, const int& _month, const int& _day, const int
 * @param _timezone timezone as an offset to GMT (in hours)
 * @param _dst is it DST?
 */
-void Date_IO::setTimeZone(const double& _timezone, const bool& _dst) {
+void Date::setTimeZone(const double& _timezone, const bool& _dst) {
 //please keep in mind that timezone might be fractional (ie: 15 minutes, etc)
 	if(abs(_timezone) > 12) {
 		throw InvalidArgumentException("[E] Time zone can NOT be greater than +/-12!!", AT);
@@ -122,7 +123,7 @@ void Date_IO::setTimeZone(const double& _timezone, const bool& _dst) {
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-void Date_IO::setDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
+void Date::setDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
 {
 	plausibilityCheck(_year, _month, _day, _hour, _minute);
 	if(_timezone!=undefined) {
@@ -155,7 +156,7 @@ void Date_IO::setDate(const int& _year, const int& _month, const int& _day, cons
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-void Date_IO::setDate(const double& julian_in, const double& _timezone, const bool& _dst) {
+void Date::setDate(const double& julian_in, const double& _timezone, const bool& _dst) {
 	if(_timezone!=undefined) {
 		setTimeZone(_timezone, _dst);
 	}
@@ -169,7 +170,7 @@ void Date_IO::setDate(const double& julian_in, const double& _timezone, const bo
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-void Date_IO::setDate(const time_t& _time, const double& _timezone, const bool& _dst) {
+void Date::setDate(const time_t& _time, const double& _timezone, const bool& _dst) {
 	setUnixDate(_time, _timezone, _dst);
 }
 
@@ -179,7 +180,7 @@ void Date_IO::setDate(const time_t& _time, const double& _timezone, const bool& 
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-void Date_IO::setModifiedJulianDate(const double& julian_in, const double& _timezone, const bool& _dst) {
+void Date::setModifiedJulianDate(const double& julian_in, const double& _timezone, const bool& _dst) {
 	const double _julian = julian_in + MJD_offset;
 	setDate(_julian, _timezone, _dst);
 }
@@ -190,7 +191,7 @@ void Date_IO::setModifiedJulianDate(const double& julian_in, const double& _time
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-void Date_IO::setUnixDate(const time_t& _time, const double& _timezone, const bool& _dst) {
+void Date::setUnixDate(const time_t& _time, const double& _timezone, const bool& _dst) {
 	const double _julian = (double)(_time)/(24.*60.*60.) + Unix_offset;
 	setDate(_julian, _timezone, _dst);
 }
@@ -201,7 +202,7 @@ void Date_IO::setUnixDate(const time_t& _time, const double& _timezone, const bo
 * @param _timezone timezone as an offset to GMT (in hours, optional)
 * @param _dst is it DST? (default: no)
 */
-void Date_IO::setExcelDate(const double excel_in, const double& _timezone, const bool& _dst) {
+void Date::setExcelDate(const double excel_in, const double& _timezone, const bool& _dst) {
 	//TODO: handle date < 1900-01-00 and date before 1900-03-01
 	const double _julian = excel_in + Excel_offset;
 	setDate(_julian, _timezone, _dst);
@@ -212,7 +213,7 @@ void Date_IO::setExcelDate(const double excel_in, const double& _timezone, const
 * @brief Returns timezone.
 * @return timezone as an offset to GMT
 */
-double Date_IO::getTimeZone() const {
+double Date::getTimeZone() const {
 	return timezone;
 }
 
@@ -220,7 +221,7 @@ double Date_IO::getTimeZone() const {
 * @brief Returns Daylight Saving Time flag.
 * @return dst enabled?
 */
-bool Date_IO::getDST() const {
+bool Date::getDST() const {
 	return dst;
 }
 
@@ -230,7 +231,7 @@ bool Date_IO::getDST() const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return julian date in the current timezone / in GMT depending on the gmt parameter
 */
-double Date_IO::getJulianDate(const bool& gmt) const {
+double Date::getJulianDate(const bool& gmt) const {
 	if(gmt) {
 		return gmt_julian;
 	} else {
@@ -246,7 +247,7 @@ double Date_IO::getJulianDate(const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return modified julian date in the current timezone / in GMT depending on the gmt parameter
 */
-double Date_IO::getModifiedJulianDate(const bool& gmt) const {
+double Date::getModifiedJulianDate(const bool& gmt) const {
 	if(gmt) {
 		return (gmt_julian - MJD_offset);
 	} else {
@@ -263,7 +264,7 @@ double Date_IO::getModifiedJulianDate(const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return truncated julian date in the current timezone / in GMT depending on the gmt parameter
 */
-double Date_IO::getTruncatedJulianDate(const bool& gmt) const {
+double Date::getTruncatedJulianDate(const bool& gmt) const {
 	if(gmt) {
 		return (fmod( (gmt_julian - 0.5), 10000. ));
 	} else {
@@ -280,7 +281,7 @@ double Date_IO::getTruncatedJulianDate(const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return Unix time in the current timezone / in GMT depending on the gmt parameter
 */
-time_t Date_IO::getUnixDate(const bool& gmt) const {
+time_t Date::getUnixDate(const bool& gmt) const {
 	if (gmt_julian < Unix_offset)
 			throw IOException("Dates before 1970 cannot be displayed in Unix epoch time", AT);
 
@@ -300,7 +301,7 @@ time_t Date_IO::getUnixDate(const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return Excel date in the current timezone / in GMT depending on the gmt parameter
 */
-double Date_IO::getExcelDate(const bool& gmt) const {
+double Date::getExcelDate(const bool& gmt) const {
 	if (gmt_julian < Excel_offset)
 		throw IOException("Dates before 1900 cannot be converted to Excel date", AT);
 
@@ -318,7 +319,7 @@ double Date_IO::getExcelDate(const bool& gmt) const {
 * @param julian_out julian date (in local time zone or GMT depending on the gmt flag)
 * @param gmt convert returned value to GMT? (default: false)
 */
-void Date_IO::getDate(double& julian_out, const bool& gmt) const {
+void Date::getDate(double& julian_out, const bool& gmt) const {
 	if(gmt) {
 		julian_out = gmt_julian;
 	} else {
@@ -332,7 +333,7 @@ void Date_IO::getDate(double& julian_out, const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return year
 */
-int Date_IO::getYear(const bool& gmt) const {
+int Date::getYear(const bool& gmt) const {
 	if(gmt) {
 		return gmt_year;
 	} else {
@@ -350,7 +351,7 @@ int Date_IO::getYear(const bool& gmt) const {
 * @param day_out
 * @param gmt convert returned value to GMT? (default: false)
 */
-void Date_IO::getDate(int& year_out, int& month_out, int& day_out, const bool& gmt) const {
+void Date::getDate(int& year_out, int& month_out, int& day_out, const bool& gmt) const {
 	if(gmt) {
 		year_out = gmt_year;
 		month_out = gmt_month;
@@ -370,7 +371,7 @@ void Date_IO::getDate(int& year_out, int& month_out, int& day_out, const bool& g
 * @param hour_out
 * @param gmt convert returned value to GMT? (default: false)
 */
-void Date_IO::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, const bool& gmt) const {
+void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, const bool& gmt) const {
 	if(gmt) {
 		year_out = gmt_year;
 		month_out = gmt_month;
@@ -392,7 +393,7 @@ void Date_IO::getDate(int& year_out, int& month_out, int& day_out, int& hour_out
 * @param minute_out
 * @param gmt convert returned value to GMT? (default: false)
 */
-void Date_IO::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, int& minute_out, const bool& gmt) const {
+void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, int& minute_out, const bool& gmt) const {
 	if(gmt) {
 		year_out = gmt_year;
 		month_out = gmt_month;
@@ -407,10 +408,10 @@ void Date_IO::getDate(int& year_out, int& month_out, int& day_out, int& hour_out
 
 /**
 * @brief Return year, month, day.
-* Return the day of the year index for the current Date_IO object
+* Return the day of the year index for the current Date object
 * @return julian day number
 */
-int Date_IO::getJulianDayNumber() const {
+int Date::getJulianDayNumber() const {
 	//this is quite inefficient... we might want to deal with leap years with their rule + days arrays instead
 	int local_year, local_month, local_day, local_hour, local_minute;
 	getDate(local_year, local_month, local_day, local_hour, local_minute);
@@ -422,7 +423,7 @@ int Date_IO::getJulianDayNumber() const {
 * @brief Return true if the current year is a leap year
 * @return true if the current year is a leap year
 */
-bool Date_IO::isLeapYear() const {
+bool Date::isLeapYear() const {
 	//this is quite inefficient... we might want to deal with leap years with their rule instead
 	int local_year, local_month, local_day, local_hour, local_minute;
 	getDate(local_year, local_month, local_day, local_hour, local_minute);
@@ -439,28 +440,28 @@ bool Date_IO::isLeapYear() const {
 }
 
 // OPERATORS
-Date_IO& Date_IO::operator+=(const Date_IO& indate) {
+Date& Date::operator+=(const Date& indate) {
 	gmt_julian += indate.gmt_julian;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
 
-Date_IO& Date_IO::operator-=(const Date_IO& indate) {
+Date& Date::operator-=(const Date& indate) {
 	gmt_julian -= indate.gmt_julian;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
 
-bool Date_IO::operator==(const Date_IO& indate) const { 
+bool Date::operator==(const Date& indate) const { 
 	const double epsilon=1./(24.*3600.); //that is, 1 second in units of days
 	return( fabs(indate.gmt_julian - gmt_julian) < epsilon );
 }
 
-bool Date_IO::operator!=(const Date_IO& indate) const {
+bool Date::operator!=(const Date& indate) const {
 	return !(*this==indate);
 }
 
-bool Date_IO::operator<(const Date_IO& indate) const {
+bool Date::operator<(const Date& indate) const {
 	if (*this == indate) {
 		return false;
 	}
@@ -468,14 +469,14 @@ bool Date_IO::operator<(const Date_IO& indate) const {
 	return (gmt_julian < indate.gmt_julian);
 }
 
-bool Date_IO::operator<=(const Date_IO& indate) const {
+bool Date::operator<=(const Date& indate) const {
 	if (*this == indate) {
 		return true;
 	}
 	return (gmt_julian <= indate.gmt_julian);
 }
 
-bool Date_IO::operator>(const Date_IO& indate) const {
+bool Date::operator>(const Date& indate) const {
 	if (*this == indate) {
 		return false;
 	}
@@ -483,48 +484,50 @@ bool Date_IO::operator>(const Date_IO& indate) const {
 	return (gmt_julian > indate.gmt_julian);
 }
 
-bool Date_IO::operator>=(const Date_IO& indate) const {
+bool Date::operator>=(const Date& indate) const {
 	if (*this == indate) {
 		return true;
 	}
 	return (gmt_julian >= indate.gmt_julian);
 }
 
-const Date_IO Date_IO::operator+(const Date_IO& indate) const {
-	Date_IO tmp(gmt_julian + indate.gmt_julian);
+const Date Date::operator+(const Date& indate) const {
+	Date tmp(gmt_julian + indate.gmt_julian);
 	return tmp;
 }
 
-const Date_IO Date_IO::operator-(const Date_IO& indate) const {
-	Date_IO tmp(gmt_julian - indate.gmt_julian);
+const Date Date::operator-(const Date& indate) const {
+	Date tmp(gmt_julian - indate.gmt_julian);
 	return tmp;
 }
 
-std::ostream& operator<<(std::ostream &os, const Date_IO &date) {
-	os << "<date>\n";
-	os << date.toString(Date_IO::ISO) << "\n";
-	os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\n";
-	os << "DST=" << date.dst << "\n";
-	os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
-	os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
-	os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
-	try {
-		os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
-	} catch (...) {}
-	try {
-		os << "Excel:\t\t\t" << date.getExcelDate() << "\n";
-	} catch (...) {}
-	os << "</date>\n";
-	return os;
+namespace mio {
+	std::ostream& operator<<(std::ostream &os, const Date &date) {
+		os << "<date>\n";
+		os << date.toString(Date::ISO) << "\n";
+		os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\n";
+		os << "DST=" << date.dst << "\n";
+		os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
+		os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
+		os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
+		try {
+			os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
+		} catch (...) {}
+		try {
+			os << "Excel:\t\t\t" << date.getExcelDate() << "\n";
+		} catch (...) {}
+		os << "</date>\n";
+		return os;
+	}
 }
 
 /**
 * @brief Return a nicely formated string.
-* @param type select the formating to apply (see the definition of Date_IO::FORMATS)
+* @param type select the formating to apply (see the definition of Date::FORMATS)
 * @param gmt convert returned value to GMT? (default: false)
 * @return formatted time in a string
 */
-const string Date_IO::toString(FORMATS type, const bool& gmt) const
+const string Date::toString(FORMATS type, const bool& gmt) const
 {//the date are displayed in LOCAL timezone (more user friendly)
 	int year_out, month_out, day_out, hour_out, minute_out;
 	double julian_out;
@@ -572,7 +575,7 @@ const string Date_IO::toString(FORMATS type, const bool& gmt) const
 }
 
 // PRIVATE METHODS
-double Date_IO::calculateJulianDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute) const
+double Date::calculateJulianDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute) const
 {
 	const long julday = getJulianDayNumber(_year, _month, _day);
 	const double frac = (_hour-12.)/24. + _minute/(24.*60.); //the julian date reference is at 12:00
@@ -580,7 +583,7 @@ double Date_IO::calculateJulianDate(const int& _year, const int& _month, const i
 	return (((double)julday) + frac);
 }
 
-void Date_IO::calculateValues(const double& _julian, int& _year, int& _month, int& _day, int& _hour, int& _minute) const
+void Date::calculateValues(const double& _julian, int& _year, int& _month, int& _day, int& _hour, int& _minute) const
 { //given a julian day, calculate the year, month, day, hours and minutes
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097 
 	long t1;
@@ -608,7 +611,7 @@ void Date_IO::calculateValues(const double& _julian, int& _year, int& _month, in
 	_hour = (int) round((((double)1440.0)*frac-(double)_minute)/(double)60.0);
 }
 
-bool Date_IO::isLeapYear(const int& _year) const
+bool Date::isLeapYear(const int& _year) const
 {
 	long jd1, jd2;
 	jd1 = getJulianDayNumber( _year, 2, 28 );
@@ -616,7 +619,7 @@ bool Date_IO::isLeapYear(const int& _year) const
 	return ( (jd2-jd1) > 1 );
 }
 
-long Date_IO::getJulianDayNumber(const int& _year, const int& _month, const int& _day) const
+long Date::getJulianDayNumber(const int& _year, const int& _month, const int& _day) const
 { //given year, month, day, calculate the matching julian day
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097 
 	const long lmonth = (long) _month, lday = (long) _day;
@@ -635,22 +638,22 @@ long Date_IO::getJulianDayNumber(const int& _year, const int& _month, const int&
 	return jdn;
 }
 
-void Date_IO::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const {
+void Date::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const {
 	if ((in_year < -4713) || (in_year >3000)
 	    || (in_month < 1) || (in_month > 12) 
 	    || (in_day < 1) || ((in_day > daysNonLeapYear[in_month-1]) && !isLeapYear(in_year)) 
 	    || ((in_day > daysLeapYear[in_month-1]) && isLeapYear(in_year)) 
 	    || (in_hour < 0) || (in_hour > 24) 
 	    || (in_minute < 0) || (in_minute > 59)) {
-		throw IOException("InvalidDate_IOFormat", AT);
+		throw IOException("InvalidDateFormat", AT);
 	}
 
 	if ((in_hour == 24) && (in_minute != 0)) {
-		throw IOException("InvalidDate_IOFormat", AT);
+		throw IOException("InvalidDateFormat", AT);
 	}
 }
 
-double Date_IO::localToGMT(const double& _julian) const {
+double Date::localToGMT(const double& _julian) const {
 	if(dst) {
 		return (_julian - timezone/24. - DST_shift/24.);
 	} else {
@@ -658,7 +661,7 @@ double Date_IO::localToGMT(const double& _julian) const {
 	}
 }
 
-double Date_IO::GMTToLocal(const double& _gmt_julian) const {
+double Date::GMTToLocal(const double& _gmt_julian) const {
 	if(dst) {
 		return (_gmt_julian + timezone/24. + DST_shift/24.);
 	} else {
@@ -667,7 +670,7 @@ double Date_IO::GMTToLocal(const double& _gmt_julian) const {
 }
 
 #ifdef _POPC_
-void Date_IO::Serialize(POPBuffer &buf, bool pack)
+void Date::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack) {
 		buf.Pack(&timezone,1);

@@ -17,11 +17,12 @@
 */
 #include "ImisIO.h"
 
-const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
-
 using namespace std;
+using namespace mio;
 using namespace oracle;
 using namespace oracle::occi;
+
+const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 /**
  * @page imis IMIS
@@ -92,7 +93,7 @@ void ImisIO::readLanduse(Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::readAssimilationData(const Date_IO&, Grid2DObject&)
+void ImisIO::readAssimilationData(const Date&, Grid2DObject&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -118,7 +119,7 @@ void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation)
+void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 
@@ -198,7 +199,7 @@ void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 }
 
 
-void ImisIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, 
                            std::vector< std::vector<MeteoData> >& vecMeteo,
                            std::vector< std::vector<StationData> >& vecStation,
                            const unsigned int& stationindex)
@@ -232,7 +233,7 @@ void ImisIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	}
 }
 
-void ImisIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
+void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
                       std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
 {
 	vecMeteo.at(stationindex).clear();
@@ -271,7 +272,7 @@ void ImisIO::readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vec
 */
 void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md)
 {
-	Date_IO tmpDate;
+	Date tmpDate;
 	double ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr;
 
 	IOUtils::convertString(tmpDate, meteo_in.at(0), dec);
@@ -394,8 +395,8 @@ void ImisIO::getImisData (const std::string &stat_abk, const unsigned int &stao_
 			try {
 				stmt = conn->createStatement("select to_char(datum, 'YYYY-MM-DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2 and DATUM >=: 3 and DATUM <=: 4 and rownum<=4800");
 				// construct the oracle specific Date object: year, month, day, hour, minutes
-				Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]); 
-				Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]); 
+				occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]); 
+				occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]); 
 				stmt->setString(1, stat_abk); // set 1st variable's value
 				stmt->setInt(2, stao_nr); // set 2nd variable's value
 				stmt->setDate(3, begindate); // set 3rd variable's value

@@ -167,7 +167,7 @@
  * 
  *
  * @section date_sec Dates handling
- * Dates should be constructed as a Date_IO object. Then, it is easy to built a new date from a julian date, from an ISO formatted date string, from a date split in fields or from a UNIX date (number of seconds since epoch). Then the various representation of the date can be retrieved, the date arithmetics can be done (for example, get the date that is 1 year, 3 months, 15 hours after 2008-12-01T11:54:00) as well as comparisons. The date printing can be controlled by keywords.
+ * Dates should be constructed as a Date object. Then, it is easy to built a new date from a julian date, from an ISO formatted date string, from a date split in fields or from a UNIX date (number of seconds since epoch). Then the various representation of the date can be retrieved, the date arithmetics can be done (for example, get the date that is 1 year, 3 months, 15 hours after 2008-12-01T11:54:00) as well as comparisons. The date printing can be controlled by keywords.
  * 
  *
  * @section exceptions_sec Exceptions
@@ -196,23 +196,23 @@
  * -# Registering the filter within the function FilterAlgorithms::initStaticData(), by simply adding a line that 
  *    resembles:
  *    @code 
- *    filterMap["filtername"]=FilterProperties(true, (unsigned int)1, Date_IO(0.0), &FilterAlgorithms::ImplementedFilter);
+ *    filterMap["filtername"]=FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::ImplementedFilter);
  *    @endcode
  *    Where the filtername can be freely chosen (although it has to be unique) and the parameters to FilterProperties
  *    are (in this order) a boolean stating whether this filter is only a check or whether it changes data,
- *    an unsigned integer stating how many points are minimally needed for this filter to be executed, a Date_IO object
+ *    an unsigned integer stating how many points are minimally needed for this filter to be executed, a Date object
  *    marking the minimal period that data supplied to this filter needs to span and finally a function pointer 
  *    pointing towards the actual implementation of the filter.
  * -# Implementation of the filter, a static function which always has the following interface and returns a boolean:
  *    @code
  *    bool FilterAlgorithms::FilterName(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
- *			  const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+ *			  const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
  *			  const unsigned int& paramindex,
  *			  std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
  *    @endcode
  *    vecM and vecS represent the raw data as it is read through the readMeteoData functions of the MeteoIO plugins.
  *    the unsigned integer pos is the index of either the elements within vecM and vecS that represents the data 
- *    data for the given Date_IO object called date, or if there is no exact match possible then pos is the index of 
+ *    data for the given Date object called date, or if there is no exact match possible then pos is the index of 
  *    the first tuple with a date greater (that is newer) than the date requested (in this case a resampling will have
  *    to interpolate the data for the date requested). paramindex is the MeteoData parameter that this filter shall be
  *    run upon (see MeteoData for the enumeration of parameters - e.g. TA(=0), HNW(=6), ISWR(=1)). The two vectors
@@ -242,7 +242,7 @@
  * Now for the actual implementation of the filter:
  * @code
  * bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
- *	         const unsigned int& pos, const Date_IO& date, const std::vector<std::string>& _vecArgs,
+ *	         const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
  *		    const unsigned int& paramindex,
  *		    std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
  * {
@@ -277,7 +277,7 @@
  * int main(int argc, char** argv) {
  * 	(void)argc;
  * 	//provide date as ISO formatted, for example 2008-12-01T15:35:00
- * 	Date_IO d1;
+ * 	Date d1;
  * 	std::vector<MeteoData> vecMeteo;
  * 	std::vector<StationData> vecStation;
  * 

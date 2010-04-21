@@ -17,6 +17,8 @@
 */
 #include "IOUtils.h"
 
+namespace mio {
+
 bool IOUtils::checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon)
 {
 	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {
@@ -289,7 +291,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, st
 	return true;
 }
 
-template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool IOUtils::convertString<Date>(Date& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -304,7 +306,7 @@ template<> bool IOUtils::convertString<Date_IO>(Date_IO& t, const std::string& s
 	} else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
 		t.setDate(year, month, day, 0, 0);
 	} else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
-		t = Date_IO( ((double)hour)/24. + ((double)minute)/24./60. );
+		t = Date( ((double)hour)/24. + ((double)minute)/24./60. );
 	} else {
 		return false;
 	}
@@ -348,3 +350,5 @@ void IOUtils::getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, doub
 	cfg.getValue("TZ", "Input", tz_in, ConfigReader::nothrow);
 	cfg.getValue("TZ", "Output", tz_out, ConfigReader::nothrow);
 }
+
+} //end namespace mio

@@ -24,7 +24,9 @@
 	#define PI 3.141592653589
 #endif
 
-using namespace IOUtils;
+using namespace std;
+using namespace mio;
+using namespace mio::IOUtils;
 
  /**
  * @page coords Available coordinate systems
@@ -123,15 +125,17 @@ Coords& Coords::operator=(const Coords& source) {
 * @brief Print the content of the Coords object (usefull for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
-std::ostream& operator<<(std::ostream &os, const Coords& coord)
-{
-	os << "<Coords>\n";
-	os << "Lat/Long\t" << coord.printLatLon() << "\n";
-	os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
-	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
-	os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
-	os << "</Coords>\n";
-	return os;
+namespace mio {
+	std::ostream& operator<<(std::ostream &os, const Coords& coord)
+	{
+		os << "<Coords>\n";
+		os << "Lat/Long\t" << coord.printLatLon() << "\n";
+		os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
+		os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
+		os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
+		os << "</Coords>\n";
+		return os;
+	}
 }
 
 /**

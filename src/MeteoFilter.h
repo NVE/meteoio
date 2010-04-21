@@ -34,6 +34,8 @@
  * @author Thomas Egger
  * @date   2009-11-01
  */
+namespace mio {
+
 class MeteoFilter {
 	public:
 
@@ -66,7 +68,7 @@ class MeteoFilter {
 		 */
 		bool filterData(const std::vector<MeteoData>& vecM, 
 					 const std::vector<StationData>& vecS, 
-					 const unsigned int& pos, const Date_IO& date,
+					 const unsigned int& pos, const Date& date,
 					 MeteoData& md, StationData& sd);
 
 
@@ -78,5 +80,6 @@ class MeteoFilter {
 		std::vector< std::vector<std::string> > tasklist;
 		std::vector< std::vector< std::vector<std::string> > > taskargs;
 };
+} //end namespace
 
 #endif

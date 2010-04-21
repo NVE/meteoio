@@ -37,6 +37,8 @@
  *
  * @author Thomas Egger
  */
+namespace mio {
+
 #ifdef _POPC_
 class IOException : public POPException {
 #else
@@ -159,6 +161,7 @@ class NoAvailableDataException : public IOException
 		NoAvailableDataException(const std::string& message="",
 						const std::string& position="") : IOException("NoAvailableDataException: " + message, position){}
 };
+} //end namespace
 
 // Define DEBUG an empty function for seq compilation
 #ifndef DEBUG
@@ -167,3 +170,5 @@ inline void printdebug(...) {}
 #endif
 
 #endif /*__IOException_H__*/
+
+

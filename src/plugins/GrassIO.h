@@ -37,6 +37,9 @@
  * @author Thomas Egger
  * @date   2008-08-03
  */
+
+namespace mio {
+
 class GrassIO : public IOInterface {
 	public:
 		GrassIO(void (*delObj)(void*), const std::string& filename);
@@ -51,8 +54,8 @@ class GrassIO : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
@@ -61,7 +64,7 @@ class GrassIO : public IOInterface {
 							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 
-		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
@@ -74,5 +77,7 @@ class GrassIO : public IOInterface {
 		static const double plugin_nodata;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
+
+} //end namespace mio
 
 #endif

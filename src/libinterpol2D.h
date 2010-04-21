@@ -44,6 +44,8 @@
 
 typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude, 
                                       const double& new_altitude, const std::vector<double>& coeffs);
+
+namespace mio {
  
 class Interpol2D {
 	public:
@@ -102,5 +104,6 @@ class Interpol2D {
 		const static double wind_ys; ///coefficient for wind dependency on slope
 		const static double wind_yc; ///coefficient for wind dependency on curvature
 };
+} //end namespace
 
 #endif

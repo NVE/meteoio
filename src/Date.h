@@ -32,7 +32,7 @@
 //using namespace rel_ops;
 
 /**
- * @class Date_IO
+ * @class Date
  * @brief  A class to handle timestamps.
  * This class handles conversion between different time display formats (ISO, numeric) as well as different
  * time representation (julian date, modified julian date, etc). It also handles time zones as well as
@@ -46,23 +46,25 @@
  * The maximal precision is 1 minute (that can be easily brought to 1 seconds if
  * it would appear necessary/useful, with the limitation that leap seconds are currently not handled).
  *
- * Please see Date_IO::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
+ * Please see Date::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
  * the various date representation definitions. The following data representation are currently supported:
- * - julian date, see Date_IO::getJulianDate
- * - modified julian date, see Date_IO::getModifiedJulianDate
- * - truncated julian date, see Date_IO::getTruncatedJulianDate
- * - Unix date, see Date_IO::getUnixDate
- * - Excel date, see Date_IO::getExcelDate
+ * - julian date, see Date::getJulianDate
+ * - modified julian date, see Date::getModifiedJulianDate
+ * - truncated julian date, see Date::getTruncatedJulianDate
+ * - Unix date, see Date::getUnixDate
+ * - Excel date, see Date::getExcelDate
  * 
  * @author Mathias Bavay
  * @date 2010-04-15
  */
+namespace mio {
+
 #ifdef _POPC_
-class Date_IO : POPBase {
+class Date : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);
 #else
-class Date_IO {
+class Date {
 #endif  
 	public:
 		///Keywords for selecting the date formats
@@ -78,11 +80,11 @@ class Date_IO {
 		static const float Unix_offset;
 		static const float Excel_offset;
 
-		Date_IO();
-		Date_IO(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
-		Date_IO(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=undefined, const bool& _dst=false);
-		Date_IO(const time_t&, const double& _timezone=undefined, const bool& _dst=false);
-		Date_IO(const Date_IO& _date_in);
+		Date();
+		Date(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=undefined, const bool& _dst=false);
+		Date(const time_t&, const double& _timezone=undefined, const bool& _dst=false);
+		Date(const Date& _date_in);
 
 		void setTimeZone(const double& _timezone, const bool& _dst);
 		void setDate(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
@@ -111,23 +113,23 @@ class Date_IO {
 
 		const std::string toString(FORMATS type, const bool& gmt=false) const;
 
+		friend std::ostream& operator<<(std::ostream& os, const Date& date);
+
 		//Operator Prototypes
-		///Can be used to add an interval to an existing Date_IO object.
-		///Construct a Date_IO object representing the interval e.g. Date_IO(1.0) for 1 day and add that to another Date_IO object.
-		Date_IO& operator+=(const Date_IO&);
-		///Can be used to subtract an interval from an existing Date_IO object
-		Date_IO& operator-=(const Date_IO&);
-		bool operator==(const Date_IO&) const;
-		bool operator!=(const Date_IO&) const;
-		bool operator<(const Date_IO&) const;
-		bool operator<=(const Date_IO&) const;
-		bool operator>(const Date_IO&) const;
-		bool operator>=(const Date_IO&) const;
+		///Can be used to add an interval to an existing Date object.
+		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.
+		Date& operator+=(const Date&);
+		///Can be used to subtract an interval from an existing Date object
+		Date& operator-=(const Date&);
+		bool operator==(const Date&) const;
+		bool operator!=(const Date&) const;
+		bool operator<(const Date&) const;
+		bool operator<=(const Date&) const;
+		bool operator>(const Date&) const;
+		bool operator>=(const Date&) const;
 
-		const Date_IO operator+(const Date_IO&) const;
-		const Date_IO operator-(const Date_IO&) const;
-
-		friend std::ostream& operator<<(std::ostream& os, const Date_IO& date);
+		const Date operator+(const Date&) const;
+		const Date operator-(const Date&) const;
 
 	private:
 		double localToGMT(const double& _julian)const;
@@ -144,6 +146,6 @@ class Date_IO {
 		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
 		static const double undefined;
 };
-
+} //end namespace
 
 #endif

@@ -13,7 +13,7 @@ SET(meteoio_sources
 	MeteoFilter.cc
 	FilterAlgorithms.cc
   	A3DIO.cc
-	Date_IO.cc         
+	Date.cc         
 	Grid2DObject.cc  
 	IOHandler.cc    
 	LegacyIO.cc       

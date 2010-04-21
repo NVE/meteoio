@@ -40,6 +40,8 @@
  * @author Thomas Egger
  * @date   2009-03-10
  */
+namespace mio {
+
 class PluginObject {
 	private:
 		// Callback function that should be called to delete dynamic object
@@ -113,5 +115,6 @@ class DynamicLoader {
 		//Return last error message of dynamic link libraries
 		static std::string getErrorMessage();
 };
+} //end namespace
 
 #endif

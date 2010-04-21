@@ -36,10 +36,10 @@
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
-const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
-
 using namespace std;
+using namespace mio;
 
+const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 GrassIO::GrassIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
@@ -181,7 +181,7 @@ void GrassIO::readLanduse(Grid2DObject& landuse_out)
 	read2DGrid(landuse_out, filename);
 }
 
-void GrassIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
+void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
 	int yyyy, MM, dd, hh, mm;
 	date_in.getDate(yyyy, MM, dd, hh, mm);
@@ -196,13 +196,13 @@ void GrassIO::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
 	read2DGrid(da_out, ss.str());
 }
 
-void GrassIO::readStationData(const Date_IO&, std::vector<StationData>&)
+void GrassIO::readStationData(const Date&, std::vector<StationData>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GrassIO::readMeteoData(const Date_IO&, const Date_IO&, 
+void GrassIO::readMeteoData(const Date&, const Date&, 
 					 std::vector< std::vector<MeteoData> >&, 
 					 std::vector< std::vector<StationData> >&,
 					 const unsigned int&)

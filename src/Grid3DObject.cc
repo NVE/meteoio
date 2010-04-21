@@ -17,6 +17,9 @@
 */
 #include "Grid3DObject.h"
 
+using namespace std;
+using namespace mio;
+
 Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
 	if(this != &source) {
 		grid3D = source.grid3D;
@@ -238,14 +241,16 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 	}
 }
 
-std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
-{
-	os << "<Grid3DObject>\n";
-	os << grid.llcorner;
-	os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepth << " @ " << grid.cellsize << "m\n";
-	os << grid.grid3D;
-	os << "</Grid3DObject>\n";
-	return os;
+namespace mio {
+	std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
+	{
+		os << "<Grid3DObject>\n";
+		os << grid.llcorner;
+		os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepth << " @ " << grid.cellsize << "m\n";
+		os << grid.grid3D;
+		os << "</Grid3DObject>\n";
+		return os;
+	}
 }
 
 #ifdef _POPC_

@@ -17,6 +17,8 @@
 */
 #include "DynamicLibrary.h"
 
+using namespace mio;
+
 #ifdef WIN32
 DynamicLibrary::DynamicLibrary(HINSTANCE objFile) : _objFile(objFile){}
 #else

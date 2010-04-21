@@ -18,7 +18,7 @@
 #ifndef __METEODATA_H__
 #define __METEODATA_H__
 
-#include "Date_IO.h"
+#include "Date.h"
 #include "IOUtils.h"
 #include <string>
 #include <sstream>
@@ -26,11 +26,13 @@
 
 /**
  * @class MeteoData
- * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date_IO object)
+ * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date object)
  *
  * @author Thomas Egger
  * @date   2008-12-05
  */
+namespace mio {
+
 #ifdef _POPC_
 class MeteoData : POPBase {
 	public:
@@ -58,7 +60,7 @@ class MeteoData {
 		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 
 		/**
-		 * @brief The default constructor initializing every double attribute to nodata and the Date_IO to julian==0.0
+		 * @brief The default constructor initializing every double attribute to nodata and the Date to julian==0.0
 		 */
 		MeteoData(void);
 
@@ -71,7 +73,7 @@ class MeteoData {
 
 		/**
 		* @brief A constructor that takes one to eight arguments
-		* @param date_in A Date_IO object representing the time of the measurement
+		* @param date_in A Date object representing the time of the measurement
 		* @param ta Air temperature in Kelvin (default nodata)
 		* @param iswr Incoming shortwave radiation in W m-2 (default nodata)
 		* @param vw Wind velocity in m s-1 (default nodata)
@@ -85,7 +87,7 @@ class MeteoData {
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
 		* @param p Atmospheric pressure in Pa (default nodata)
 		*/
-		MeteoData(const Date_IO& date_in, 
+		MeteoData(const Date& date_in, 
 		    const double& ta=IOUtils::nodata, 
 		    const double& iswr=IOUtils::nodata, 
 		    const double& vw=IOUtils::nodata, 
@@ -101,7 +103,7 @@ class MeteoData {
 
 		/**
 		* @brief General setter function, requires one to eight arguments
-		* @param date_in A Date_IO object representing the time of the measurement
+		* @param date_in A Date object representing the time of the measurement
 		* @param ta Air temperature in Kelvin (default nodata)
 		* @param iswr Incoming shortwave radiation in W m-2 (default nodata)
 		* @param vw Wind velocity in m s-1 (default nodata)
@@ -115,7 +117,7 @@ class MeteoData {
 		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
 		* @param p Atmospheric pressure in Pa (default nodata)
 		*/
-		void setMeteoData(const Date_IO& date_in, 
+		void setMeteoData(const Date& date_in, 
 		    	const double& ta=IOUtils::nodata, 
 		    	const double& iswr=IOUtils::nodata, 
 		    	const double& vw=IOUtils::nodata, 
@@ -145,7 +147,7 @@ class MeteoData {
 		bool operator!=(const MeteoData&) const; ///<Operator that tests for inequality
 
 		//direct access allowed
-		Date_IO date; ///<Timestamp of the measurement
+		Date date; ///<Timestamp of the measurement
 		double ta; ///<Air temperature in Kelvin
 		double vw; ///<Wind velocity in m s-1
 		double dw; ///<Wind direction in degrees
@@ -170,5 +172,7 @@ class MeteoData {
 };
 
 typedef std::vector<MeteoData> METEO_DATASET;
+
+} //end namespace
 
 #endif

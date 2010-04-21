@@ -29,6 +29,8 @@
 #include <vector>
 #include <map>
 
+namespace mio {
+
 class A3DIO : public IOInterface {
 	public:
 		//virtual A3DIO* clone() const;
@@ -44,14 +46,14 @@ class A3DIO : public IOInterface {
 
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
-		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo);
 
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
@@ -66,11 +68,11 @@ class A3DIO : public IOInterface {
 
 	private:
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -9999
-		void read1DMeteo(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		void read1DMeteo(const Date& dateStart, const Date& dateEnd, 
 					  std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 		void read2DMeteo(std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 
-		void constructMeteo2DFilenames(const Date_IO& _startDate, const Date_IO& _endDate, std::vector<std::string>& _filenames);
+		void constructMeteo2DFilenames(const Date& _startDate, const Date& _endDate, std::vector<std::string>& _filenames);
 		bool readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string filename);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
@@ -85,5 +87,6 @@ class A3DIO : public IOInterface {
 		std::ifstream fin; //Input file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
+} //end namespace
 
 #endif

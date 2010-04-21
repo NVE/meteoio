@@ -25,6 +25,8 @@
 #include <string>
 #include <set>
 
+namespace mio {
+
 class Meteo2DInterpolator; // forward declaration, cyclic header include
 
 /**
@@ -301,5 +303,7 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const MeteoData::Parameters& param);
 		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
 };
+
+} //end namespace mio
 
 #endif

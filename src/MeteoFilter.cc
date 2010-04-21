@@ -18,6 +18,7 @@
 #include "MeteoFilter.h"
 
 using namespace std;
+using namespace mio;
 
 MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 	/*
@@ -92,7 +93,7 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 }
 
 bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-					    const unsigned int& pos, const Date_IO& date,
+					    const unsigned int& pos, const Date& date,
 					    MeteoData& md, StationData& sd)
 {
 	//No need to operate on the raw data, a copy of relevant data will be stored in these vectors:

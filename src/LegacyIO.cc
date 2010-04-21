@@ -21,6 +21,8 @@
 #include "LegacyIO.h"
 #endif
 
+using namespace std;
+using namespace mio;
 
 LegacyIO::LegacyIO(const std::string &meteopath)
 {

@@ -32,6 +32,8 @@
  * @author Thomas Egger
  * @date   2009-08-11
  */
+namespace mio {
+
 class IOPlugin {
 	public:
 		std::string libname; ///< A string representing the file to be loaded, e.g. "libgeotopio.so", can be empty
@@ -50,5 +52,6 @@ class IOPlugin {
 		IOPlugin(std::string _s1, std::string _s2, IOInterface *p1, DynamicLibrary *p2) : libname(_s1), classname(_s2), io(p1), dynLibrary(p2){}
 		IOPlugin() : libname(""), classname(""), io(NULL), dynLibrary(NULL){}
 };
+} //end namespace
 
 #endif

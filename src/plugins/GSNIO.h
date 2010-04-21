@@ -38,6 +38,9 @@
  * @author Thomas Egger
  * @date   2009-09-25
  */
+
+namespace mio {
+
 class GSNIO : public IOInterface {
 	public:
 		GSNIO(void (*delObj)(void*), const std::string& filename);
@@ -47,8 +50,8 @@ class GSNIO : public IOInterface {
 		GSNIO(const ConfigReader&);
 		~GSNIO() throw();
 
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
@@ -60,7 +63,7 @@ class GSNIO : public IOInterface {
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
-		virtual void readAssimilationData(const Date_IO&, Grid2DObject& da_out);
+		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
@@ -71,7 +74,7 @@ class GSNIO : public IOInterface {
 		void initGSNConnection();
 		void readStationNames();
 		void readStationMetaData(StationData& sd, const unsigned int& stationindex);
-		void readData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
+		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
 				    std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex);
 
 		A3DWebServiceSoap12BindingProxy gsn;
@@ -82,5 +85,7 @@ class GSNIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
+
+} //end namespace mio
 
 #endif

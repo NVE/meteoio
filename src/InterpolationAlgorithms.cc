@@ -18,6 +18,7 @@
 #include "InterpolationAlgorithms.h"
 
 using namespace std;
+using namespace mio;
 
 std::set<std::string> AlgorithmFactory::setAlgorithms;
 const bool AlgorithmFactory::__init = AlgorithmFactory::initStaticData();

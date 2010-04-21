@@ -24,7 +24,7 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 
 	std::cout << "loadMeteoAndStationData "  << algorithm << "*"  << nbStation <<  std::endl;
 
-	const Date_IO date_in;
+	const Date date_in;
 	Coords position(metaCoordinateSystem, "");
 
 	for (int i = 0; i < nbStation; i++) {

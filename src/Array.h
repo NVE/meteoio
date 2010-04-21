@@ -33,6 +33,8 @@
  * @author Thomas Egger
  * @date   2009-05-02
  */
+namespace mio {
+
 template<class T> class Array {
 	public:
 		Array(const unsigned int& asize=0);
@@ -423,5 +425,6 @@ template<class T> const Array<T> Array<T>::operator/(const T& rhs)
 	return result;
 }
 
+} //end namespace mio
 
 #endif

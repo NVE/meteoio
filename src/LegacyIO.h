@@ -54,6 +54,8 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_LINE_LENGTH 6000
 
+namespace mio {
+
 typedef struct {
 	double x;
 	double y;
@@ -100,7 +102,6 @@ typedef Array<double> CDoubleArray;
 
 typedef Array<int> CIntArray;
 
-
 class LegacyIO
 {
 	public:
@@ -116,5 +117,6 @@ class LegacyIO
 		std::string meteopathname;
 		int dimx, dimy, dimz;
 };
+} //end namespace
 
 #endif

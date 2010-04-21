@@ -44,6 +44,9 @@
  * 
  */
 
+using namespace std;
+using namespace mio;
+
 void IOHandler::registerPlugins()
 {
 #if defined(WIN32)
@@ -203,13 +206,13 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 	plugin->readLanduse(landuse_out);
 }
 
-void IOHandler::readStationData(const Date_IO& date, std::vector<StationData>& vecStation)
+void IOHandler::readStationData(const Date& date, std::vector<StationData>& vecStation)
 {
 	IOInterface *plugin = getPlugin("STATION", "Input");
 	plugin->readStationData(date, vecStation);
 }
 
-void IOHandler::readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation)
+void IOHandler::readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation)
 {
 	vecMeteo.clear();
 	vecStation.clear();
@@ -234,7 +237,7 @@ void IOHandler::readMeteoData(const Date_IO& date, METEO_DATASET& vecMeteo, STAT
 	}
 }
 
-void IOHandler::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd, 
 						std::vector<METEO_DATASET>& vecMeteo, 
 						std::vector<STATION_DATASET>& vecStation, 
 						const unsigned& stationindex)
@@ -256,7 +259,7 @@ void IOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecM
 	plugin->writeMeteoData(vecMeteo, vecStation, name);
 }
 
-void IOHandler::readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out)
+void IOHandler::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
 	IOInterface *plugin = getPlugin("DA", "Input");
 	plugin->readAssimilationData(date_in, da_out);

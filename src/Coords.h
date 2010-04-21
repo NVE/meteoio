@@ -24,6 +24,8 @@
 #include <iostream>
 #include <map>
 
+namespace mio {
+
 class Coords; //forward declaration
 typedef void(Coords::*convfunc)(double, double, double&, double&) const;
 
@@ -73,6 +75,7 @@ class Coords {
 	int getGridK() const;
 	void getProj(std::string& proj_type, std::string& proj_args) const;
 	std::string printLatLon() const;
+
 	friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
 
 	//Setter methods
@@ -158,5 +161,6 @@ class Coords {
 	};
 	static const struct ELLIPSOID ellipsoids[];
 };
+} //end namespace
 
 #endif

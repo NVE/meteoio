@@ -22,11 +22,13 @@
 #include <cmath>
 #include <vector>
 
+namespace mio {
+
 class Interpol1D {
  	public:
   		static double linearInterpolation(const double& d1, const double& d2, const double& weight=1.0);
 		static double arithmeticMean(const std::vector<double>& vecData);
 };
-
+} //end namespace
 
 #endif

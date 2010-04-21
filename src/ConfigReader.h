@@ -26,14 +26,6 @@
 #include <string>
 #include <map>
 
-namespace IOUtils {
-	void toUpper(std::string& str);
-	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-								    const std::string& key, T& t);
-	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
-								    const std::string& key, std::vector<T>& vecT);
-}
-
 /**
  * @class ConfigReader
  * @brief A class that reads a key/value file. These files (typically named *.ini) have the following structure:
@@ -49,6 +41,16 @@ namespace IOUtils {
  * @author Thomas Egger
  * @date   2008-11-30
  */
+namespace mio {
+
+namespace IOUtils {
+	void toUpper(std::string& str);
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
+								    const std::string& key, T& t);
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
+								    const std::string& key, std::vector<T>& vecT);
+}
+
 #ifdef _POPC_
 class ConfigReader : POPBase {
 	public:
@@ -193,20 +195,6 @@ class ConfigReader {
 		unsigned int findKeys(std::vector<std::string>& vecResult, 
 						  const std::string keystart, const std::string section="GENERAL") const;
 
-		//LEGACY
-		static bool readConfigLine(std::istream& fin, int lineNb, int& lineType, std::string& str1, std::string& str2);
-
-		/** [Constant for lineType] The config line is the end of the file */
-		static const int CfgLineEOF = 0;
-		/** [Constant for lineType] The config line is a comment (or a blank line) */
-		static const int CfgLineComment = 1;
-		/** [Constant for lineType] The config line is the start of a section */
-		static const int CfgLineSection = 2;
-		/** [Constant for lineType] The config line is a key-value pair */
-		static const int CfgLineKeyValue = 3;
-		/** [Constant for lineType] The config line is of an unknown type (in fact, an invalid format) */
-		static const int CfgLineUnknown = 9;
-
 		static const unsigned int nothrow;
 
 	private:
@@ -218,5 +206,7 @@ class ConfigReader {
 		std::string sourcename; //description of the data source for the key/value pair
 
 }; //end class definition ConfigReader
+
+} //end namespace mio
 
 #endif

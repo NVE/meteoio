@@ -33,6 +33,8 @@
  * @author Mathias Bavay and Thomas Egger
  * @date   2010-01-14
  */
+namespace mio {
+
 #ifdef _POPC_
 class Meteo2DInterpolator : POPBase {
 	public:
@@ -72,5 +74,6 @@ class Meteo2DInterpolator {
 									   std::vector<std::string>& vecArgs) const;
 
 };
+} //end namespace
 
 #endif

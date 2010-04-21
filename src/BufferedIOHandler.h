@@ -39,6 +39,8 @@
  * @author Thomas Egger
  * @date   2009-07-25
  */
+namespace mio {
+
 class MeteoFilter;
 
 #ifdef _POPC_
@@ -77,16 +79,16 @@ class BufferedIOHandler : public IOInterface {
 		 * @param vecMeteo   A vector of MeteoData objects to be filled with data
 		 * @param vecStation A vector of StationData objects to be filled with meta data
 		 */
-		void getNextMeteoData(const Date_IO& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 
-		virtual void readStationData(const Date_IO& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		
 		/**
 		 * @brief See BufferedIOHandler::readMeteoData(const Date& date_in, 
 		 *                                             vector<MeteoData>& vecMeteo, 
 		 *                                             vector<StationData>& vecStation).
 		 */
-		void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
+		void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		/**
 		 * @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets 
@@ -114,7 +116,7 @@ class BufferedIOHandler : public IOInterface {
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
 		 * @param vecStation  A vector of StationData objects to be filled with data
 		 */
-		void readMeteoData(const Date_IO& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		void readMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 
 		/**
 		 * @brief Clear all buffers in BufferedIOHandler and hence force rebuffering
@@ -123,10 +125,10 @@ class BufferedIOHandler : public IOInterface {
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
-		virtual void readAssimilationData(const Date_IO& date_in, Grid2DObject& da_out);
+		virtual void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
-		virtual void readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
@@ -144,14 +146,14 @@ class BufferedIOHandler : public IOInterface {
 		//HACK: please do NOT use these methods, they will be replaced/changed/tweaked asap
 		//These methods should be considered experimental and NOT stable (from an API point of view)
 		void bufferAlways(const bool& bufferalways);
-		void setBufferDuration(const Date_IO& _bufferbefore, const Date_IO& _bufferafter);
+		void setBufferDuration(const Date& _bufferbefore, const Date& _bufferafter);
 
 		static const unsigned int npos = (unsigned int)-1; ///<npos is the out-of-range value
 
 	private:
-		unsigned int seek(const Date_IO& date_in, std::vector<MeteoData>& vecM);
-		bool bufferData(const Date_IO& _date, const unsigned int& stationindex);
-		void bufferAllData(const Date_IO& _date);
+		unsigned int seek(const Date& date_in, std::vector<MeteoData>& vecM);
+		bool bufferData(const Date& _date, const unsigned int& stationindex);
+		void bufferAllData(const Date& _date);
 		void setBufferProperties();
 		
 		IOHandler& iohandler;
@@ -159,12 +161,13 @@ class BufferedIOHandler : public IOInterface {
 		MeteoFilter meteoFilter;
 		
 		bool always_rebuffer;
-		Date_IO bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date
+		Date bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date
 
 		std::vector< std::vector<MeteoData> > meteoBuffer;
 		std::vector< std::vector<StationData> > stationBuffer;
-		std::vector< Date_IO > startDateBuffer;
-		std::vector< Date_IO > endDateBuffer;
+		std::vector< Date > startDateBuffer;
+		std::vector< Date > endDateBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 };
+} //end namespace
 #endif

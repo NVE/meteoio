@@ -18,6 +18,7 @@
 #include "libinterpol1D.h"
 
 using namespace std;
+using namespace mio;
 
 double Interpol1D::linearInterpolation(const double& d1, const double& d2, const double& weight)
 {

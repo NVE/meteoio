@@ -40,9 +40,10 @@
  * - METEOPREFIX: file name prefix for meteorological files
  */
 
-const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
-
 using namespace std;
+using namespace mio;
+
+const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
 GeotopIO::GeotopIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
@@ -187,7 +188,7 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	}
 }
 
-void GeotopIO::readStationData(const Date_IO&, std::vector<StationData>& vecStation)
+void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	string path="", prefix="";
 	vector<string> tmpvec, vecColumnNames;
@@ -200,7 +201,7 @@ void GeotopIO::readStationData(const Date_IO&, std::vector<StationData>& vecStat
 	readMetaData(vecStation, vecColumnNames, path + "/" + prefix + ".txt");
 }
 
-void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd, 
+void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex)
@@ -311,7 +312,7 @@ void GeotopIO::readMeteoData(const Date_IO& dateStart, const Date_IO& dateEnd,
 	}
 }
 
-void GeotopIO::parseDate(const std::string& datestring, const std::string& fileandline, Date_IO& date)
+void GeotopIO::parseDate(const std::string& datestring, const std::string& fileandline, Date& date)
 {
 	/*
 	 * In order to be more flexible with the date parsing in GEOtop meteo files,
@@ -480,7 +481,7 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 	cleanup();
 }
 
-void GeotopIO::readAssimilationData(const Date_IO&, Grid2DObject&)
+void GeotopIO::readAssimilationData(const Date&, Grid2DObject&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

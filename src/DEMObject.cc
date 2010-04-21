@@ -31,6 +31,10 @@
 * Initializes all variables to 0, except lat/long which are initialized to IOUtils::nodata
 * @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
+
+using namespace std;
+using namespace mio;
+
 DEMObject::DEMObject(const slope_type& _algorithm) : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();

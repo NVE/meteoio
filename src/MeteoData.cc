@@ -18,6 +18,7 @@
 #include "MeteoData.h"
 
 using namespace std;
+using namespace mio;
 
 /************************************************************
  * static section                                           *
@@ -81,11 +82,11 @@ void MeteoData::initParameterMap()
 
 MeteoData::MeteoData() : resampled(false)
 {
-	setMeteoData(Date_IO(0.0), IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata);
+	setMeteoData(Date(0.0), IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata);
 	initParameterMap();
 }
 
-MeteoData::MeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, 
+MeteoData::MeteoData(const Date& date_in, const double& ta_in, const double& iswr_in, 
 				 const double& vw_in, const double& dw_in, const double& rh_in,
 				 const double& ilwr_in, const double& hnw_in, const double& tsg_in, 
 				 const double& tss_in, const double& hs_in, const double& rswr_in, const double& _p) : resampled(false)
@@ -121,7 +122,7 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 	return *this;
 }
 
-void MeteoData::setMeteoData(const Date_IO& date_in, const double& ta_in, const double& iswr_in, const double& vw_in,
+void MeteoData::setMeteoData(const Date& date_in, const double& ta_in, const double& iswr_in, const double& vw_in,
 					    const double& dw_in, const double& rh_in, const double& ilwr_in, const double& hnw_in,
 					    const double& tsg_in, const double& tss_in, const double& hs_in, const double& rswr_in, 
 					    const double& _p)
@@ -200,20 +201,22 @@ const double& MeteoData::param(const unsigned int& parindex) const
 	return *(it->second);
 }
 
-std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
-
-	os << "<meteo>\n";
-	os << data.date;
-
-	std::map<unsigned int, double*>::const_iterator it1;
-	for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){
-		if( (*it1->second) != IOUtils::nodata ) {
-			os << setw(7) << MeteoData::getParameterName(it1->first) << ":" << setw(15) << *it1->second << "\n";
+namespace mio {
+	std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
+		
+		os << "<meteo>\n";
+		os << data.date;
+		
+		std::map<unsigned int, double*>::const_iterator it1;
+		for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){
+			if( (*it1->second) != IOUtils::nodata ) {
+				os << setw(7) << MeteoData::getParameterName(it1->first) << ":" << setw(15) << *it1->second << "\n";
+			}
 		}
+		os << "</meteo>\n";
+		
+		return os;
 	}
-	os << "</meteo>\n";
-
-	return os;
 }
 
 #ifdef _POPC_

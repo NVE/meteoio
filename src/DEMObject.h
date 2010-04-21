@@ -29,6 +29,8 @@
  * @author Gaël Rosset - Mathias Bavay
  * @date   2009-07-20
  */
+namespace mio {
+
 class DEMObject : public Grid2DObject {
 	public:
 		Array2D<double> slope;
@@ -102,5 +104,6 @@ class DEMObject : public Grid2DObject {
 		virtual void Serialize(POPBuffer &buf, bool pack);
 #endif
 };
+} //end namespace
 
 #endif

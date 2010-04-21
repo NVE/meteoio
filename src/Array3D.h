@@ -26,6 +26,8 @@
 
 #define NOSAFECHECKS
 
+namespace mio {
+
 template <class T> class Array3D;
 template <class T> class Array3DProxy2;
 
@@ -152,7 +154,6 @@ template<class T> class Array3D {
 		unsigned int nz;
 		unsigned int nxny; //nx times ny
 };
-
 
 template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) {
 #ifndef NOSAFECHECKS
@@ -567,5 +568,6 @@ template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
 	return result;
 }
 
+} //end namespace mio
 
 #endif
