@@ -312,9 +312,15 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 			throw InvalidFormatException(filename + ": " + line, AT);
 		}
 	}
-      
-	tmpdata.setMeteoData(tmp_date, tmp_values[0], tmp_values[1], tmp_values[2], IOUtils::nodata, tmp_values[3], tmp_values[4], tmp_values[5], IOUtils::nodata, IOUtils::nodata, IOUtils::nodata);
-	
+     
+	tmpdata.setDate(tmp_date);
+	tmpdata.setData(MeteoData::TA, tmp_values[0]);
+	tmpdata.setData(MeteoData::ISWR, tmp_values[1]);
+	tmpdata.setData(MeteoData::VW, tmp_values[2]);
+	tmpdata.setData(MeteoData::RH, tmp_values[3]);
+	tmpdata.setData(MeteoData::ILWR, tmp_values[4]);
+	tmpdata.setData(MeteoData::HNW, tmp_values[5]);
+ 	
 	return false;
 }
 

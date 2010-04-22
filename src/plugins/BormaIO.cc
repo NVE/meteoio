@@ -335,7 +335,19 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		const std::string str_sb = xmlGetNodeContent(pNode, "sb");
 		xmlParseStringToDouble(str_sb, ilwr, "sb");
 
-		md.setMeteoData(date_in, ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr);
+		md.setDate(date_in);
+		md.setData(MeteoData::TA, ta);
+		md.setData(MeteoData::ISWR, iswr);
+		md.setData(MeteoData::VW, vw);
+		md.setData(MeteoData::DW, dw);
+		md.setData(MeteoData::RH, rh);
+		md.setData(MeteoData::ILWR, ilwr);
+		md.setData(MeteoData::HNW, hnw);
+		md.setData(MeteoData::TSG, tsg);
+		md.setData(MeteoData::TSS, tss);
+		md.setData(MeteoData::HS, hs);
+		md.setData(MeteoData::RSWR, rswr);
+
 		convertUnits(md);
 		
 	} else {

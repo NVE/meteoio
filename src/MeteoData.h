@@ -72,64 +72,23 @@ class MeteoData {
 		MeteoData& operator=(const MeteoData&);
 
 		/**
-		* @brief A constructor that takes one to eight arguments
+		* @brief A constructor that sets the measurment time
 		* @param date_in A Date object representing the time of the measurement
-		* @param ta Air temperature in Kelvin (default nodata)
-		* @param iswr Incoming shortwave radiation in W m-2 (default nodata)
-		* @param vw Wind velocity in m s-1 (default nodata)
-		* @param dw Wind direction in degrees (default nodata)
-		* @param rh Relative humidity between 0 and 1 (default nodata)
-		* @param ilwr Long wave radiation in W m-2 (default nodata)
-		* @param hnw Precipitations in mm h-1 (default nodata)
-		* @param tsg Soil or snow bottom temperature in Kelvin (default nodata)
-		* @param tss Soil or snow surface temperature in Kelvin (default nodata)
-		* @param hs Snow height in cm (default nodata)
-		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
-		* @param p Atmospheric pressure in Pa (default nodata)
 		*/
-		MeteoData(const Date& date_in, 
-		    const double& ta=IOUtils::nodata, 
-		    const double& iswr=IOUtils::nodata, 
-		    const double& vw=IOUtils::nodata, 
-		    const double& dw=IOUtils::nodata, 
-		    const double& rh=IOUtils::nodata, 
-		    const double& ilwr=IOUtils::nodata, 
-		    const double& hnw=IOUtils::nodata,
-		    const double& tsg=IOUtils::nodata,
-		    const double& tss=IOUtils::nodata, 
-		    const double& hs=IOUtils::nodata,
-		    const double& rswr=IOUtils::nodata,
-		    const double& p=IOUtils::nodata);
+		MeteoData(const Date& _date);
 
 		/**
 		* @brief General setter function, requires one to eight arguments
-		* @param date_in A Date object representing the time of the measurement
-		* @param ta Air temperature in Kelvin (default nodata)
-		* @param iswr Incoming shortwave radiation in W m-2 (default nodata)
-		* @param vw Wind velocity in m s-1 (default nodata)
-		* @param dw Wind direction in degrees (default nodata)
-		* @param rh Relative humidity between 0 and 1 (default nodata)
-		* @param ilwr Long wave radiation in W m-2 (default nodata)
-		* @param hnw Precipitations in mm h-1 (default nodata)
-		* @param tsg Soil or snow bottom temperature in Kelvin (default nodata)
-		* @param tss Soil or snow surface temperature in Kelvin (default nodata)
-		* @param hs Snow height in cm (default nodata)
-		* @param rswr Reflected Short Wave Radiation in W m-2 (default nodata)
-		* @param p Atmospheric pressure in Pa (default nodata)
+		* @param param One element out of the Parameters enum, e.g. MeteoData::TA
+		* @param value A double value to be assigned to the respective variable denoted in the first argument
 		*/
-		void setMeteoData(const Date& date_in, 
-		    	const double& ta=IOUtils::nodata, 
-		    	const double& iswr=IOUtils::nodata, 
-		    	const double& vw=IOUtils::nodata, 
-		    	const double& dw=IOUtils::nodata, 
-		    	const double& rh=IOUtils::nodata, 
-		    	const double& ilwr=IOUtils::nodata, 
-		    	const double& hnw=IOUtils::nodata,
-		    	const double& tsg=IOUtils::nodata,
-		    	const double& tss=IOUtils::nodata, 
-			const double& hs=IOUtils::nodata,
-			const double& rswr=IOUtils::nodata,
-		     const double& p=IOUtils::nodata);
+		void setData(const MeteoData::Parameters& param, const double& value);
+
+		/**
+		* @brief A setter function for the measurement date
+		* @param _date A Date object representing the time of the measurement
+		*/
+		void setDate(const Date& _date);
 
 		bool isResampled();
 		void setResampled(const bool&);
@@ -163,6 +122,7 @@ class MeteoData {
 
 
  private:
+		void initAllParameters();
 		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
 		static std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
 		static const bool __init;    ///<helper variable to enable the init of static collection data

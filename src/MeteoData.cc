@@ -80,19 +80,16 @@ void MeteoData::initParameterMap()
 		throw IOException("Inconsistency within class MeteoData: Check function initMaps()", AT);
 }
 
-MeteoData::MeteoData() : resampled(false)
+MeteoData::MeteoData() : date(0.0), resampled(false)
 {
-	setMeteoData(Date(0.0), IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata, IOUtils::nodata);
-	initParameterMap();
+	initParameterMap(); //must be first statement
+	initAllParameters();
 }
 
-MeteoData::MeteoData(const Date& date_in, const double& ta_in, const double& iswr_in, 
-				 const double& vw_in, const double& dw_in, const double& rh_in,
-				 const double& ilwr_in, const double& hnw_in, const double& tsg_in, 
-				 const double& tss_in, const double& hs_in, const double& rswr_in, const double& _p) : resampled(false)
+MeteoData::MeteoData(const Date& date_in) : date(date_in), resampled(false)
 {
-	setMeteoData(date_in, ta_in, iswr_in, vw_in, dw_in, rh_in, ilwr_in, hnw_in, tsg_in, tss_in, hs_in, rswr_in, _p);
-	initParameterMap();
+	initParameterMap(); //must be first statement
+	initAllParameters();
 }
 
 #ifdef _POPC_
@@ -122,25 +119,16 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 	return *this;
 }
 
-void MeteoData::setMeteoData(const Date& date_in, const double& ta_in, const double& iswr_in, const double& vw_in,
-					    const double& dw_in, const double& rh_in, const double& ilwr_in, const double& hnw_in,
-					    const double& tsg_in, const double& tss_in, const double& hs_in, const double& rswr_in, 
-					    const double& _p)
+void MeteoData::setDate(const Date& _date)
 {
-	date = date_in;
-	ta = ta_in;
-	iswr = iswr_in;
-	vw = vw_in;
-	dw = dw_in;
-	rh = rh_in;
-	ilwr = ilwr_in;
-	hnw = hnw_in;
-	tsg = tsg_in;
-	tss = tss_in;
-	hs = hs_in;
-	rswr = rswr_in;
-	p=_p;
+	date = _date;
 }
+
+void MeteoData::setData(const MeteoData::Parameters& param, const double& value)
+{
+	*meteoparam[param] = value;
+}
+
 /**
 * @brief Standardize nodata values
 * The plugin-specific nodata values are replaced by MeteoIO's internal nodata value
@@ -216,6 +204,14 @@ namespace mio {
 		os << "</meteo>\n";
 		
 		return os;
+	}
+}
+
+void MeteoData::initAllParameters()
+{
+	std::map<unsigned int, double*>::iterator it;
+	for (it=meteoparam.begin(); it!=meteoparam.end(); it++){
+		*meteoparam[it->first] = IOUtils::nodata;
 	}
 }
 

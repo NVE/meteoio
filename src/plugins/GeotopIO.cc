@@ -284,19 +284,14 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				}
 				tmpdata[ncols] = IOUtils::nodata;
 
-				md.setMeteoData(md.date, 
-						tmpdata[mapHeader["ta"]], 
-						tmpdata[mapHeader["iswr"]], 
-						tmpdata[mapHeader["vw"]], 
-						tmpdata[mapHeader["dw"]], 
-						tmpdata[mapHeader["rh"]], 
-						tmpdata[mapHeader["ilwr"]], 
-						tmpdata[mapHeader["hnw"]], 
-						IOUtils::nodata,
-						IOUtils::nodata,
-						IOUtils::nodata,
-						IOUtils::nodata,
-						tmpdata[mapHeader["p"]]); 
+				md.setData(MeteoData::TA, tmpdata[mapHeader["ta"]]);
+				md.setData(MeteoData::ISWR, tmpdata[mapHeader["iswr"]]);
+				md.setData(MeteoData::VW, tmpdata[mapHeader["vw"]]);
+				md.setData(MeteoData::DW, tmpdata[mapHeader["dw"]]);
+				md.setData(MeteoData::RH, tmpdata[mapHeader["rh"]]);
+				md.setData(MeteoData::ILWR, tmpdata[mapHeader["ilwr"]]);
+				md.setData(MeteoData::HNW, tmpdata[mapHeader["hnw"]]);
+				md.setData(MeteoData::P, tmpdata[mapHeader["p"]]);
 
 				if ((md.date >= dateStart) && (md.date <= dateEnd)){
 					convertUnits(md);

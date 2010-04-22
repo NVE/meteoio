@@ -288,7 +288,18 @@ void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& m
 	IOUtils::convertString(hs,      meteo_in.at(10), dec);
 	IOUtils::convertString(rswr,    meteo_in.at(11), dec);
 	
-	md.setMeteoData(tmpDate, ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr);
+	md.setDate(tmpDate);
+	md.setData(MeteoData::TA, ta);
+	md.setData(MeteoData::ISWR, iswr);
+	md.setData(MeteoData::VW, vw);
+	md.setData(MeteoData::DW, dw);
+	md.setData(MeteoData::RH, rh);
+	md.setData(MeteoData::ILWR, ilwr);
+	md.setData(MeteoData::HNW, hnw);
+	md.setData(MeteoData::TSG, tsg);
+	md.setData(MeteoData::TSS, tss);
+	md.setData(MeteoData::HS, hs);
+	md.setData(MeteoData::RSWR, rswr);
 }
 
 /**
