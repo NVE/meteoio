@@ -19,6 +19,8 @@
 
 #include "marshal_meteoio.h"
 
+using namespace mio;
+
 void marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;

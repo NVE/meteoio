@@ -30,6 +30,8 @@
 #include <string>
 #include "LegacyIO.ph"
 
+namespace mio {
+
 typedef Array2D<double> TYPE_DOUBLE2D;
 typedef Array3D<double> TYPE_DOUBLE3D;
 typedef Array2D<int> TYPE_INT2D;
@@ -74,6 +76,8 @@ void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize,
 void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp);
+
+} //end namespace
 
 #endif
 

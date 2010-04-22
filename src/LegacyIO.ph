@@ -51,6 +51,8 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_LINE_LENGTH 6000
 
+namespace mio {
+
 typedef struct {
 	double x;
 	double y;
@@ -118,5 +120,6 @@ parclass LegacyIO
 		int dimx, dimy, dimz;
 
 };
+} //end namespace
 
 #endif

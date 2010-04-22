@@ -26,6 +26,8 @@
 #include "IOPlugin.h"
 #include "marshal_meteoio.h"
 
+namespace mio {
+
 typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 /**
@@ -74,5 +76,6 @@ parclass IOHandler {
 		PLUGIN_ITERATOR mapit;
 		A3DIO fileio;
 };
+} //end namespace
 
 #endif

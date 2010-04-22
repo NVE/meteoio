@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __DATE_IO_H__
-#define __DATE_IO_H__
+#ifndef __DATE_H__
+#define __DATE_H__
 
 #include <string>
 #include <sstream>
