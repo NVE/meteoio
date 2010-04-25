@@ -253,7 +253,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	getImisData(stationName, stationNumber, datestart, dateend, vecResult);
 
 	MeteoData tmpmd;
-	for (unsigned int ii=0; ii<vecResult.size(); ii++){		
+	for (unsigned int ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
 
@@ -287,7 +287,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& m
 	IOUtils::convertString(tss,     meteo_in.at(9), dec);
 	IOUtils::convertString(hs,      meteo_in.at(10), dec);
 	IOUtils::convertString(rswr,    meteo_in.at(11), dec);
-	
+
 	md.setDate(tmpDate);
 	md.setData(MeteoData::TA, ta);
 	md.setData(MeteoData::ISWR, iswr);
@@ -461,7 +461,7 @@ void ImisIO::convertUnits(MeteoData& meteo)
 	}
 	
 	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tss);
+		meteo.tsg=C_TO_K(meteo.tsg);
 	}
 	
 	if(meteo.tss!=IOUtils::nodata) {
