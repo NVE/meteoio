@@ -311,7 +311,7 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		location.setLatLon(latitude, longitude, altitude);
 		sd.setStationData(location, stationName);
 
-		//Air temperature
+		//lt = ta
 		const std::string str_lt = xmlGetNodeContent(pNode, "lt");
 		xmlParseStringToDouble(str_lt, ta, "lt");
 
@@ -323,17 +323,25 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		const std::string str_vw = xmlGetNodeContent(pNode, "wgm");
 		xmlParseStringToDouble(str_vw, vw, "wgm");
 
-		//Relative humidity
+		//rlf = rh
 		const std::string str_rh = xmlGetNodeContent(pNode, "rlf");
 		xmlParseStringToDouble(str_rh, rh, "rlf");
 
-		//hnw
+		//ni = hnw //TODO: not sure that this field really contains what we want...
 		const std::string str_ns = xmlGetNodeContent(pNode, "ni");
 		xmlParseStringToDouble(str_ns, hnw, "ni");
 
 		//sb = ilwr
 		const std::string str_sb = xmlGetNodeContent(pNode, "sb");
 		xmlParseStringToDouble(str_sb, ilwr, "sb");
+
+		//fbt = tss
+		const std::string str_fbt = xmlGetNodeContent(pNode, "fbt");
+		xmlParseStringToDouble(str_fbt, tss, "fbt");
+
+		//sh = hs
+		const std::string str_sh = xmlGetNodeContent(pNode, "sh");
+		xmlParseStringToDouble(str_sh, hs, "sh");
 
 		md.setDate(date_in);
 		md.setData(MeteoData::TA, ta);
