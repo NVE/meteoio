@@ -14,6 +14,7 @@ BORMAIO 	= @BORMAIO@
 IMISIO		= @IMISIO@
 GEOTOPIO	= @GEOTOPIO@
 GSNIO		= @GSNIO@
+SNIO		= @SNIO@
 ARCIO		= @ARCIO@
 GRASSIO		= @GRASSIO@
 PROJ4		= @PROJ4@
@@ -145,6 +146,7 @@ build_dynamiclibs: $(LIBDIR)/libbormaio.so \
 			$(LIBDIR)/libimisio.so \
 			$(LIBDIR)/libgeotopio.so \
 			$(LIBDIR)/libgsnio.so \
+			$(LIBDIR)/libsnio.so \
 			$(LIBDIR)/libarcio.so \
 			$(LIBDIR)/libgrassio.so 
 
@@ -219,6 +221,13 @@ ifeq ($(GEOTOPIO),yes)
 	@echo **** Compiling GeoTOP plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GeotopIO.o $(PLUGINDIR)/GeotopIO.cc 
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgeotopio.so -o $@ $(PLUGINDIR)/GeotopIO.o $(LDFLAGS)
+endif
+
+$(LIBDIR)/libsnio.so:$(PLUGINDIR)/SNIO.cc $(PLUGINDIR)/SNIO.h $(LIBDIR)/libmeteoio.a
+ifeq ($(SNIO),yes)
+	@echo **** Compiling SNOWPACK plugin
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/SNIO.o $(PLUGINDIR)/SNIO.cc
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libsnio.so -o $@ $(PLUGINDIR)/SNIO.o $(LDFLAGS)
 endif
 
 $(LIBDIR)/libarcio.so:$(PLUGINDIR)/ARCIO.cc $(PLUGINDIR)/ARCIO.h $(LIBDIR)/libmeteoio.a

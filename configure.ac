@@ -119,6 +119,8 @@ AC_ARG_WITH(geotopio,	[  --with-geotopio         enable GeotopIO ], [use_geotopi
 AC_SUBST(GEOTOPIO,$use_geotopio)
 AC_ARG_WITH(arcio,	[  --without-arcio         disable ARCIO plugin (default: enabled)], [use_arcio=$withval], [use_arcio=yes])
 AC_SUBST(ARCIO,$use_arcio)
+AC_ARG_WITH(snio,	[  --without-snio         disable SNIO plugin (default: enabled)], [use_snio=$withval], [use_snio=yes])
+AC_SUBST(SNIO,$use_snio)
 AC_ARG_WITH(grassio,	[  --without-grassio         disable GrassIO plugin (default: enabled)], [use_grassio=$withval], [use_grassio=yes])
 AC_SUBST(GRASSIO,$use_grassio)
 AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
@@ -126,6 +128,7 @@ AC_ARG_VAR(ORACLE_HOME, [The home of your Oracle client installation])
 if test "$with_geotopio" == "yes"; then AC_MSG_NOTICE([GeotopIO enabled. No prerequisites...]); fi
 if test "x$use_grassio" == "xyes"; then AC_MSG_NOTICE([GrassIO enabled. No prerequisites...]); fi
 if test "x$use_arcio" == "xyes"; then AC_MSG_NOTICE([ARCIO enabled. No prerequisites...]); fi
+if test "x$use_snio" == "xyes"; then AC_MSG_NOTICE([SNIO enabled. No prerequisites...]); fi
 
 if test "$with_proj4" == "yes"
 then

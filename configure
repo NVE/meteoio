@@ -680,6 +680,7 @@ GSNIO
 IMISIO
 GEOTOPIO
 ARCIO
+SNIO
 GRASSIO
 ORACLE_HOME
 PROJ4_CFLAGS
@@ -1293,6 +1294,7 @@ Optional Packages:
   --with-imisio           enable IMISIO ($ORACLE_HOME needs to be set)
   --with-geotopio         enable GeotopIO
   --without-arcio         disable ARCIO plugin (default: enabled)
+  --without-snio         disable SNIO plugin (default: enabled)
   --without-grassio         disable GrassIO plugin (default: enabled)
 
 Some influential environment variables:
@@ -5879,6 +5881,16 @@ fi
 ARCIO=$use_arcio
 
 
+# Check whether --with-snio was given.
+if test "${with_snio+set}" = set; then
+  withval=$with_snio; use_snio=$withval
+else
+  use_snio=yes
+fi
+
+SNIO=$use_snio
+
+
 # Check whether --with-grassio was given.
 if test "${with_grassio+set}" = set; then
   withval=$with_grassio; use_grassio=$withval
@@ -5896,6 +5908,8 @@ if test "x$use_grassio" == "xyes"; then { echo "$as_me:$LINENO: GrassIO enabled.
 echo "$as_me: GrassIO enabled. No prerequisites..." >&6;}; fi
 if test "x$use_arcio" == "xyes"; then { echo "$as_me:$LINENO: ARCIO enabled. No prerequisites..." >&5
 echo "$as_me: ARCIO enabled. No prerequisites..." >&6;}; fi
+if test "x$use_snio" == "xyes"; then { echo "$as_me:$LINENO: SNIO enabled. No prerequisites..." >&5
+echo "$as_me: SNIO enabled. No prerequisites..." >&6;}; fi
 
 if test "$with_proj4" == "yes"
 then
@@ -7647,6 +7661,7 @@ GSNIO!$GSNIO$ac_delim
 IMISIO!$IMISIO$ac_delim
 GEOTOPIO!$GEOTOPIO$ac_delim
 ARCIO!$ARCIO$ac_delim
+SNIO!$SNIO$ac_delim
 GRASSIO!$GRASSIO$ac_delim
 ORACLE_HOME!$ORACLE_HOME$ac_delim
 PROJ4_CFLAGS!$PROJ4_CFLAGS$ac_delim
@@ -7660,7 +7675,7 @@ execprefix!$execprefix$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 78; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

@@ -37,6 +37,7 @@
  * - \subpage borma "BORMA" for reading Borma xml meteo files (requires libxml)
  * - \subpage imis "IMIS" for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
  * - \subpage geotop "GEOTOP" for reading original GeoTop meteo files (no extra requirements)
+ * - \subpage snowpack "SNOWPACK" for reading original SNOWPACK meteo files (no extra requirements)
  * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
  * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
@@ -64,7 +65,8 @@ void IOHandler::registerPlugins()
 	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
 	mapPlugins["BORMA"]	= IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
 	mapPlugins["IMIS"]	= IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]= IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
+	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
+	mapPlugins["SNOWPACK"]	= IOPlugin("libsnio"+popc_extra+libsuffix, "SNIO", NULL, NULL);
 	mapPlugins["GSN"]	= IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
 	mapPlugins["ARC"]	= IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
 	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
@@ -174,7 +176,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 	mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
-		throw IOException(cfgkey + " does not seem to be valid descriptor in file " + cfg.getSourceName(), AT);
+		throw IOException(cfgkey + " does not seem to be valid plugin in file " + cfg.getSourceName(), AT);
 	
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
