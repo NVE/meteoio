@@ -32,6 +32,8 @@
  */
 namespace mio {
 
+class Grid2DObjetctDummy {}; //HACK for POPC
+
 #ifdef _POPC_
 class Grid2DObject : POPBase {
 	public:

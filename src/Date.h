@@ -59,6 +59,8 @@
  */
 namespace mio {
 
+class DateDummy {}; //HACK for POPC
+
 #ifdef _POPC_
 class Date : POPBase {
 	public:

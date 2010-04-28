@@ -51,7 +51,7 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_LINE_LENGTH 6000
 
-namespace mio {
+using namespace mio; //HACK for POPC: it should be in the namespace!
 
 typedef struct {
 	double x;
@@ -120,6 +120,5 @@ parclass LegacyIO
 		int dimx, dimy, dimz;
 
 };
-} //end namespace
 
 #endif

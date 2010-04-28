@@ -31,6 +31,8 @@
  */
 namespace mio {
 
+class DEMObjectDummy {}; //HACK for POPC
+
 class DEMObject : public Grid2DObject {
 	public:
 		Array2D<double> slope;
