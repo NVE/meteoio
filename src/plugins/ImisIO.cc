@@ -61,7 +61,7 @@ const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_
  * @class ImisIO 
  * @brief The class with-in the data from the database are treated. The MeteoData and the StationData will be set in.
  * This class also herited to IOInterface class which is abstract.
- * @author Moustapha Mbengue
+ * @author Moustapha Mbengue and Thomas Egger
  * @date 2009-05-12
  */
 
@@ -139,6 +139,10 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation = vecMyStation;
 }
 
+/**
+ * @brief A meta function that extracts all station names from the ConfigReader, 
+ *        parses them and retrieves all meta data from the IMIS database
+ */
 void ImisIO::readStationMetaData()
 {
 	vector<string> vecStationName;
@@ -150,7 +154,7 @@ void ImisIO::readStationMetaData()
 		string stName = "", stationNumber = "";
 		vector<string> resultset;
 
-		//the stationName consists of the STAT_ABK and the STAO_NR
+		//the stationName consists of the STAT_ABK and the STAO_NR, e.g. "KLO2" consists of "KLO" and "2"
 		parseStationName(stationName, stName, stationNumber);
 
 		//Now connect to the database and retrieve the meta data - this only needs to be done once per instance
@@ -171,12 +175,22 @@ void ImisIO::readStationMetaData()
 	}
 }
 
+/**
+ * @brief This function breaks up the station name into two components (a string and a number e.g. KLO2 -> "KLO","2")
+ * @param stationName The full name of the station (e.g. "KLO2") 
+ * @param stName      The string part of the name  (e.g. "KLO")
+ * @param stNumber    The integer part of the name (e.g. "2")
+ */
 void ImisIO::parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber)
 {		
 	stName    = stationName.substr(0, stationName.length()-1); //The station name: e.g. KLO
 	stNumber  = stationName.substr(stationName.length()-1, 1); //The station number: e.g. 2
 }
 
+/**
+ * @brief This function extracts all info about the stations that are to be used from global ConfigReader object
+ * @param vecStationName A vector that will hold all relevant stations as std::strings
+ */
 void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 {
 	vecStationName.clear();
@@ -239,7 +253,14 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-//Read meteo and station data for one specific station
+/**
+ * @brief A meta function to read meteo data for one specific station (specified by the stationindex)
+ * @param dateStart    The beginning of the interval to retrieve data for
+ * @param dateEnd      The end of the interval to retrieve data for
+ * @param vecMeteo     The vector that will hold all MeteoData for each station
+ * @param vecStation   The vector that will hold all StationData for each station
+ * @param stationindex The index of the station as specified in the ConfigReader
+ */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
                       std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
 {
