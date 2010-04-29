@@ -24,6 +24,16 @@ using namespace oracle::occi;
 
 const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
 
+const string ImisIO::oracleUserName = "slf";
+const string ImisIO::oraclePassword = "SDB+4u";
+const string ImisIO::oracleDBName   = "sdbo";
+
+const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24:MI') as datum, avg(ta) as ta, avg(iswr) as iswr, avg(vw) as vw, avg(dw) as dw, avg(rh) as rh, avg(lwr) as lwr, avg(hnw) as hnw, avg(tsg) as tsg, avg(tss) as tss, avg(hs) as hs, avg(rswr) as rswr from ams.v_amsio WHERE stat_abk=:1 and stao_nr=:2 and datum>=:3 and datum<=:4 and rownum<=4800 group by datum order by datum asc";
+
+	//"select to_char(datum,'YYYY-MM-DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2 and DATUM >=: 3 and DATUM <=: 4 and rownum<=4800";
+
+const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_h from station2.standort WHERE stat_abk =: 1 AND stao_nr =: 2";
+
 /**
  * @page imis IMIS
  * @section imis_format Format
@@ -137,15 +147,14 @@ void ImisIO::readStationMetaData()
 	for (unsigned int ii=0; ii<vecStationName.size(); ii++){
 
 		const string& stationName = vecStationName.at(ii);
-		string stName = "";
-		unsigned int stationNumber = 0;
+		string stName = "", stationNumber = "";
 		vector<string> resultset;
 
 		//the stationName consists of the STAT_ABK and the STAO_NR
 		parseStationName(stationName, stName, stationNumber);
 
 		//Now connect to the database and retrieve the meta data - this only needs to be done once per instance
-		getStation2Data(stName, stationNumber, resultset);
+		getStationData(stName, stationNumber, resultset);
 
 		if (resultset.size() < 4)
 			throw IOException("Could not read enough meta data", AT);
@@ -162,13 +171,10 @@ void ImisIO::readStationMetaData()
 	}
 }
 
-void ImisIO::parseStationName(const std::string& stationName, std::string& stName, unsigned int& stNumber)
+void ImisIO::parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber)
 {		
-	stName    = stationName.substr(0, stationName.length()-1);
-	string stNum  = stationName.substr(stationName.length()-1, 1);
-
-	if (!IOUtils::convertString(stNumber, stNum))
-		throw ConversionFailedException("Error while converting station number", AT);
+	stName    = stationName.substr(0, stationName.length()-1); //The station name: e.g. KLO
+	stNumber  = stationName.substr(stationName.length()-1, 1); //The station number: e.g. 2
 }
 
 void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
@@ -233,14 +239,14 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
+//Read meteo and station data for one specific station
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
                       std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
 {
 	vecMeteo.at(stationindex).clear();
 	vecStation.at(stationindex).clear();
 
-	unsigned int stationNumber;
-	string stationName;
+	string stationName="", stationNumber="";
 	vector< vector<string> > vecResult;
 	vector<int> datestart = vector<int>(5);
 	vector<int> dateend   = vector<int>(5);
@@ -264,97 +270,64 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 }
 
 /**
-* @brief Puts the data that has been retrieved from the database into a MeteoBuffer
-* which contains the meteo data and the station data of each single station in the configfile.
-* @param meteo_in (vector \<vector \<string\>\>&) meteo data from the database.
-* @param station_in (vector \<string\>&) station data from the database.
-* @param mb (MeteoBuffer&) variable in which stationdata and meteodata are filled.
-*/
-void ImisIO::parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md)
+ * @brief Puts the data that has been retrieved from the database into a MeteoData object
+ * @param _meteo a row of meteo data from the database (note: order important, matches SQL query)
+ * @param md     the object to copy the data to 
+ */
+void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
 {
-	Date tmpDate;
-	double ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr;
-
-	IOUtils::convertString(tmpDate, meteo_in.at(0), dec);
-	IOUtils::convertString(ta,      meteo_in.at(1), dec);
-	IOUtils::convertString(iswr,    meteo_in.at(2), dec);
-	IOUtils::convertString(vw,      meteo_in.at(3), dec);
-	IOUtils::convertString(dw,      meteo_in.at(4), dec);
-	IOUtils::convertString(rh,      meteo_in.at(5), dec);
-	IOUtils::convertString(ilwr,    meteo_in.at(6), dec);
-	IOUtils::convertString(hnw,     meteo_in.at(7), dec);
-	IOUtils::convertString(tsg,     meteo_in.at(8), dec);
-	IOUtils::convertString(tss,     meteo_in.at(9), dec);
-	IOUtils::convertString(hs,      meteo_in.at(10), dec);
-	IOUtils::convertString(rswr,    meteo_in.at(11), dec);
-
-	md.setDate(tmpDate);
-	md.setData(MeteoData::TA, ta);
-	md.setData(MeteoData::ISWR, iswr);
-	md.setData(MeteoData::VW, vw);
-	md.setData(MeteoData::DW, dw);
-	md.setData(MeteoData::RH, rh);
-	md.setData(MeteoData::ILWR, ilwr);
-	md.setData(MeteoData::HNW, hnw);
-	md.setData(MeteoData::TSG, tsg);
-	md.setData(MeteoData::TSS, tss);
-	md.setData(MeteoData::HS, hs);
-	md.setData(MeteoData::RSWR, rswr);
+	IOUtils::convertString(md.date, _meteo.at(0), dec);
+	IOUtils::convertString(md.param(MeteoData::TA),   _meteo.at(1),  dec);
+	IOUtils::convertString(md.param(MeteoData::ISWR), _meteo.at(2),  dec);
+	IOUtils::convertString(md.param(MeteoData::VW),   _meteo.at(3),  dec);
+	IOUtils::convertString(md.param(MeteoData::DW),   _meteo.at(4),  dec);
+	IOUtils::convertString(md.param(MeteoData::RH),   _meteo.at(5),  dec);
+	IOUtils::convertString(md.param(MeteoData::ILWR), _meteo.at(6),  dec);
+	IOUtils::convertString(md.param(MeteoData::HNW),  _meteo.at(7),  dec);
+	IOUtils::convertString(md.param(MeteoData::TSG),  _meteo.at(8),  dec);
+	IOUtils::convertString(md.param(MeteoData::TSS),  _meteo.at(9),  dec);
+	IOUtils::convertString(md.param(MeteoData::HS),   _meteo.at(10), dec);
+	IOUtils::convertString(md.param(MeteoData::RSWR), _meteo.at(11), dec);
 }
 
 /**
-* @brief This is a private function. It gets back data from station2 which is a table of the database and fill them in a string vector
-* @param stat_abk : a string key of station2 
-* @param stao_nr : an integer key of station2
-* @param data2S : string vector in which data will be filled
-*/
-void ImisIO::getStation2Data(const std::string stat_abk, unsigned int stao_nr, std::vector<std::string>& data2S)
+ * @brief This function gets back data from table station2 and fills vector with station data
+ * @param stat_abk :      a string key of table station2 
+ * @param stao_nr :       a string key of table station2
+ * @param vecStationData: string vector in which data will be filled
+ */
+void ImisIO::getStationData(const string& stat_abk, const string& stao_nr, std::vector<std::string>& vecStationData)
 {
-	const string userName = "slf";
-	const string password = "SDB+4u";
-	const string dbName = "sdbo";
-	unsigned int timeOut = 0, seconds = 60;
+	unsigned int timeOut = 0, seconds = 60;	
+	Environment *env = NULL;
 
-	Environment *env = Environment::createEnvironment();// static OCCI function
-	{
-		Connection *conn;
-		Statement *stmt;
-		ResultSet *rs;
+	vecStationData.clear();
+
+	try {
+		Connection *conn = NULL;
+		Statement *stmt = NULL;
+		ResultSet *rs = NULL;
+
+		env = Environment::createEnvironment();// static OCCI function
+
 		while (timeOut != 3) {
 			timeOut = 0;
-			try {
-				conn = env->createConnection(userName, password, dbName);
-				timeOut++;
-			} catch (SQLException &connex) {
-				cout <<"getStation2Data : Connection failed, please verify if userName, password and dbName are correct........"<< endl;
-				cout << connex.getMessage();
-				exit(1);
-			}
-			try {
-				stmt = conn->createStatement("select stao_name,stao_x,stao_y,stao_h from station2.standort                              								where STAT_ABK =: 1 AND STAO_NR =: 2");
-				stmt->setString(1, stat_abk); // set 1st variable's value
-				stmt->setInt(2, stao_nr); // set 2nd variable's value 		
-				rs = stmt->executeQuery(); // execute the statement stmt
-				timeOut++;
-			} catch (SQLException &stmtex) {
-				cout <<"getStation2Data : Statement failed, please verify if it is correctly written............"<< endl;
-				cout << stmtex.getMessage();
-				exit(1);
-			}
-			try {			
-				while (rs->next() == true) {
-					for (int i=0; i<4; i++) {
-						data2S.push_back(rs->getString(i+1));
-					}
+
+			conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
+			timeOut++;
+			stmt = conn->createStatement(sqlQueryStationData);
+			stmt->setString(1, stat_abk); // set 1st variable's value
+			stmt->setString(2, stao_nr);  // set 2nd variable's value 		
+			rs = stmt->executeQuery();    // execute the statement stmt
+			timeOut++;
+
+			while (rs->next() == true) {
+				for (unsigned int ii=0; ii<4; ii++) {
+					vecStationData.push_back(rs->getString(ii+1));
 				}
-				timeOut++;
-			} catch (SQLException &rsex) {
-				cout <<"getStation2Data : ResultSet manipulation failed, please verify if there is no mistake............."<< endl;
-				cout << rsex.getMessage();
-				exit(1);
-			}catch (exception &cppex) { // C++ exception
-				cout<< "Error "<< cppex.what()<<endl;
 			}
+			timeOut++;
+
 			if (timeOut != 3 && seconds <= 27*60) {
 				sleep(seconds);
 				seconds *= 3;
@@ -365,78 +338,68 @@ void ImisIO::getStation2Data(const std::string stat_abk, unsigned int stao_nr, s
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		env->terminateConnection(conn);
+
+		Environment::terminateEnvironment(env); // static OCCI function
+	} catch (exception& e){
+		Environment::terminateEnvironment(env); // static OCCI function
+		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
-	Environment::terminateEnvironment(env); // static OCCI function
-	
 }
 
 /**
-* @brief This is a private function. It gets back data from ams.v_imis which is a table of the database
-* and fill them in a vector of vector of string. It seems that each record is a string vector
-* @param stat_abk : a string key of ams.v_imis
-* @param stao_nr : an integer key of ams.v_imis
-* @param date_in : a vector of five(5) integer corresponding to the recording date
-* @param datatImis : a vector of vector of string in which data will be filled
-*/
-void ImisIO::getImisData (const std::string &stat_abk, const unsigned int &stao_nr, 
+ * @brief This is a private function. It gets back data from ams.v_imis which is a table of the database
+ * and fill them in a vector of vector of string. Each record returned is a string vector.
+ * @param stat_abk :     a string key of ams.v_imis
+ * @param stao_nr :      a string key of ams.v_imis
+ * @param datestart :    a vector of five(5) integer corresponding to the recording date
+ * @param dateend :      a vector of five(5) integer corresponding to the recording date
+ * @param vecMeteoData : a vector of vector of string in which data will be filled
+ */
+void ImisIO::getImisData (const string& stat_abk, const string& stao_nr, 
                           const std::vector<int>& datestart, const std::vector<int>& dateend,
-                          std::vector< std::vector<std::string> >& dataImis)
+                          std::vector< std::vector<std::string> >& vecMeteoData)
 {
-	const string userName = "slf";
-	const string password = "SDB+4u";
-	const string dbName = "sdbo";
-	vector<string> vec;
+	Environment *env = NULL;
 	unsigned int timeOut = 0, seconds = 60;
 
-	Environment *env = Environment::createEnvironment();// static OCCI function
-	{
-		Connection *conn;
-		Statement *stmt;
-		ResultSet *rs;
+	vecMeteoData.clear();
+
+	try {
+		env = Environment::createEnvironment();// static OCCI function
+		Connection *conn = NULL;
+		Statement *stmt = NULL;
+		ResultSet *rs = NULL;
+
 		while (timeOut != 3) {
 			timeOut = 0;
-			try {
-				conn = env->createConnection(userName, password, dbName);
-				timeOut++;
-			} catch (SQLException &connex) {
-				cout <<"getImisData : Connection failed, please verify if userName, password and dbName are correct........."<< endl;
-				cout << connex.getMessage();
-				exit(1);
-			}
-			try {
-				stmt = conn->createStatement("select to_char(datum, 'YYYY-MM-DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2 and DATUM >=: 3 and DATUM <=: 4 and rownum<=4800");
-				// construct the oracle specific Date object: year, month, day, hour, minutes
-				occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]); 
-				occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]); 
-				stmt->setString(1, stat_abk); // set 1st variable's value
-				stmt->setInt(2, stao_nr); // set 2nd variable's value
-				stmt->setDate(3, begindate); // set 3rd variable's value
-				stmt->setDate(4, enddate); // set 4th variable's value
+			
+			conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
+			timeOut++;
+			
+			stmt = conn->createStatement(sqlQueryMeteoData);
 
-				rs = stmt->executeQuery(); // execute the statement stmt
-				timeOut++;
-			} catch (SQLException &stmtex) {
-				cout <<"getImisData : Statement failed, please verify if it is correctly written............"<< endl;
-				cout << stmtex.getMessage();
-				exit(1);
-			}
-			try {		
-				rs->setMaxColumnSize(7,22);
-				while (rs->next() == true) {
-					vec.clear();
-					for (int i=1; i<=12; i++) { // 12 columns 
-						vec.push_back(rs->getString(i));
-					}
-					dataImis.push_back(vec);
+			// construct the oracle specific Date object: year, month, day, hour, minutes
+			occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]); 
+			occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]); 
+			stmt->setString(1, stat_abk); // set 1st variable's value (station name)
+			stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
+			stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
+			stmt->setDate(4, enddate);    // set 4th variable's value (enddate)
+			
+			rs = stmt->executeQuery(); // execute the statement stmt
+			timeOut++;
+
+			rs->setMaxColumnSize(7,22);
+			vector<string> vecTmpMeteoData;
+			while (rs->next() == true) {
+				vecTmpMeteoData.clear();
+				for (unsigned int ii=1; ii<=12; ii++) { // 12 columns 
+					vecTmpMeteoData.push_back(rs->getString(ii));
 				}
-				timeOut++;
-			} catch (SQLException &rsex) {
-				cout <<"getImisData : ResultSet manipulation failed, please verify if there is no mistake............."<< endl;
-				cout << rsex.getMessage();
-				exit(1);
-			} catch (exception &cppex) { // C++ exception
-				cout<< "Error "<< cppex.what()<<endl;
+				vecMeteoData.push_back(vecTmpMeteoData);
 			}
+			timeOut++;
+
 			if (timeOut != 3 && seconds <= 27*60) {
 				sleep(seconds);
 				seconds *= 3;
@@ -447,8 +410,11 @@ void ImisIO::getImisData (const std::string &stat_abk, const unsigned int &stao_
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		env->terminateConnection(conn);
+		Environment::terminateEnvironment(env); // static OCCI function
+	} catch (exception& e){
+		Environment::terminateEnvironment(env); // static OCCI function
+		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
-	Environment::terminateEnvironment(env); // static OCCI function
 }
 
 void ImisIO::convertUnits(MeteoData& meteo)

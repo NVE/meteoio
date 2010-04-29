@@ -69,15 +69,15 @@ class ImisIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
-		void getStation2Data(const std::string stat_abk, unsigned int stao_nr, std::vector<std::string>& data2S);
-		void getImisData(const std::string &stat_abk, const unsigned int &stao_nr, 
+		void getStationData(const std::string& stat_abk, const std::string& stao_nr, std::vector<std::string>& data2S);
+		void getImisData(const std::string& stat_abk, const std::string& stao_nr, 
 		                 const std::vector<int>& datestart, const std::vector<int>& dateend,
 		                 std::vector< std::vector<std::string> >& dataImis);
 		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);		
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
 		              std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex);
 		void readStationNames(std::vector<std::string>& vecStationName);
-		void parseStationName(const std::string& stationName, std::string& stName, unsigned int& stNumber);
+		void parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber);
 		void readStationMetaData();
 		void convertUnits(MeteoData& meteo);
 
@@ -85,6 +85,11 @@ class ImisIO : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecMyStation;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		static const std::string sqlQueryMeteoData;
+		static const std::string sqlQueryStationData;
+		static const std::string oracleUserName;
+		static const std::string oraclePassword;
+		static const std::string oracleDBName;
 };
 
 } //end namespace mio
