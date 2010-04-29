@@ -205,9 +205,12 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 		}
 
 		//LWR
-		if(ilwr==IOUtils::nodata)
+		if(ilwr==IOUtils::nodata) {
 			failure_count++;
-		fout << setw(4) << setprecision(0) << Meteo[ii].ilwr << " ";
+			fout << setw(4) << setprecision(1) << "0.0" << " ";
+		} else {
+			fout << setw(4) << setprecision(0) << Meteo[ii].ilwr << " ";
+		}
 
 		//TSS, TSG (only required for Dirichlet)
 		if(tsg==IOUtils::nodata) {
