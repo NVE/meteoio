@@ -24,10 +24,6 @@ using namespace oracle::occi;
 
 const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-const string ImisIO::oracleUserName = "slf";
-const string ImisIO::oraclePassword = "SDB+4u";
-const string ImisIO::oracleDBName   = "sdbo";
-
 const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24:MI') as datum, avg(ta) as ta, avg(iswr) as iswr, avg(vw) as vw, avg(dw) as dw, avg(rh) as rh, avg(lwr) as lwr, avg(hnw) as hnw, avg(tsg) as tsg, avg(tss) as tss, avg(hs) as hs, avg(rswr) as rswr from ams.v_amsio WHERE stat_abk=:1 and stao_nr=:2 and datum>=:3 and datum<=:4 and rownum<=4800 group by datum order by datum asc";
 
 	//"select to_char(datum,'YYYY-MM-DD HH24:MI') as datum,ta,iswr,vw,dw,rh,lwr,nswc,tsg,tss,hs,rswr from ams.v_amsio where STAT_ABK =: 1 AND STAO_NR =: 2 and DATUM >=: 3 and DATUM <=: 4 and rownum<=4800";
@@ -37,7 +33,7 @@ const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_
 /**
  * @page imis IMIS
  * @section imis_format Format
- * This plugin reads data directly from the IMIS network database (Oracle database). It retrieves standard IMIS data as well as ENETZ data for the precipitations.
+ * This plugin reads data directly from the IMIS network database (Oracle database). It retrieves standard IMIS data as well as ENETZ and ANETZ data.
  *
  * @section imis_units Units
  * The units are assumed to be the following:
@@ -53,6 +49,9 @@ const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_
  * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
+ * - DBNAME: name of the database to use (exemple: sdbo)
+ * - DBUSER: user name to use when connecting to the database
+ * - DBPASS: password to use when connecting to the database
  * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station code for the given number #
  */
@@ -65,19 +64,32 @@ const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_
  * @date 2009-05-12
  */
 
+void ImisIO::getDBParameters()
+{
+	cfg.getValue("DBNAME", "Input", oracleDBName_in);
+	cfg.getValue("DBUSER", "Input", oracleUserName_in);
+	cfg.getValue("DBPASS", "Input", oraclePassword_in);
+	/*cfg.getValue("DBNAME", "Output", oracleDBName_out);
+	cfg.getValue("DBUSER", "Output", oracleUserName_out);
+	cfg.getValue("DBPASS", "Output", oraclePassword_out);*/
+}
+
 ImisIO::ImisIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getDBParameters();
 }
 
 ImisIO::ImisIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getDBParameters();
 }
 
 ImisIO::ImisIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getDBParameters();
 }
 
 ImisIO::~ImisIO() throw()
@@ -317,7 +329,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
  * @param stao_nr :       a string key of table station2
  * @param vecStationData: string vector in which data will be filled
  */
-void ImisIO::getStationData(const string& stat_abk, const string& stao_nr, std::vector<std::string>& vecStationData)
+void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao_nr, std::vector<std::string>& vecStationData)
 {
 	Environment *env = NULL;
 	vecStationData.clear();
@@ -328,7 +340,7 @@ void ImisIO::getStationData(const string& stat_abk, const string& stao_nr, std::
 		ResultSet *rs = NULL;
 
 		env = Environment::createEnvironment();// static OCCI function
-		conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
+		conn = env->createConnection(oracleUserName_in, oraclePassword_in, oracleDBName_in);
 
 		stmt = conn->createStatement(sqlQueryStationData);
 		stmt->setString(1, stat_abk); // set 1st variable's value
@@ -361,7 +373,7 @@ void ImisIO::getStationData(const string& stat_abk, const string& stao_nr, std::
  * @param dateend :      a vector of five(5) integer corresponding to the recording date
  * @param vecMeteoData : a vector of vector of string in which data will be filled
  */
-void ImisIO::getImisData (const string& stat_abk, const string& stao_nr, 
+void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_nr, 
                           const std::vector<int>& datestart, const std::vector<int>& dateend,
                           std::vector< std::vector<std::string> >& vecMeteoData)
 {
@@ -374,7 +386,7 @@ void ImisIO::getImisData (const string& stat_abk, const string& stao_nr,
 		Statement *stmt = NULL;
 		ResultSet *rs = NULL;
 
-		conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
+		conn = env->createConnection(oracleUserName_in, oraclePassword_in, oracleDBName_in);
 		stmt = conn->createStatement(sqlQueryMeteoData);
 		
 		// construct the oracle specific Date object: year, month, day, hour, minutes

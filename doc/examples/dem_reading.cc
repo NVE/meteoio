@@ -6,16 +6,11 @@ using namespace mio; //The MeteoIO namespace is called mio
 //and a sub-dem is extracted starting at these coordinates and extending dist_x and dist_y and written out.
 int main(void) {
 	DEMObject dem;
-	IOHandler *io = NULL;
-	
-	try {
-		ConfigReader cfg("io.ini");
-		io = new IOHandler(cfg);
-	} catch (IOException& e){
-		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
-	}
+	ConfigReader cfg("io.ini");
+	IOHandler io(cfg);
+
 	//reading dem
-	io->readDEM(dem);
+	io.readDEM(dem);
 
 	//writing some statistics about this dem
 	//dem.grid2D.getMin() scans the DEM grid to get the min, while dem.min_altitude is cached and therefore very cheap
@@ -39,7 +34,7 @@ int main(void) {
 	DEMObject sub_dem(dem, point.getGridI(), point.getGridJ(), ncols, nrows);
 
 	//writing the sub-dem out
-	io->write2DGrid(sub_dem,"sub_dem.dem");
+	io.write2DGrid(sub_dem,"sub_dem.dem");
 
 	return 0;
 }

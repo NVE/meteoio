@@ -32,7 +32,7 @@
  * - METEOPATH: path to the output directory
  *
  */
-//HACK: to do!!
+
 using namespace std;
 using namespace mio;
 
@@ -171,40 +171,43 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 		//TA, RH, VW, DW
 		if(ta==IOUtils::nodata) {
 			failure_count++;
-			fout << setw(6) << setprecision(2) << ta << " ";
+			fout << setw(6) << setprecision(0) << ta << " ";
 		} else
 			fout << setw(6) << setprecision(2) << K_TO_C(Meteo[ii].ta) << " ";
 		if(rh==IOUtils::nodata) {
 			failure_count++;
-			fout << setw(5) << setprecision(1) << rh << " ";
+			fout << setw(5) << setprecision(0) << rh << " ";
 		} else
 			fout << setw(5) << setprecision(1) << rh * 100. << " ";
-		if(vw==IOUtils::nodata)
+		if(vw==IOUtils::nodata) {
 			failure_count++;
-		fout << setw(4) << setprecision(1) << vw << " ";
+			fout << setw(4) << setprecision(0) << vw << " ";
+		} else {
+			fout << setw(4) << setprecision(1) << vw << " ";
+		}
 		if(dw==IOUtils::nodata)
 			failure_count++;
-		fout << setw(3) << setprecision(0) << dw << " ";
+		fout << setw(4) << setprecision(0) << dw << " ";
 		
 		//ISWR, RSWR
 		if(iswr==IOUtils::nodata && rswr==IOUtils::nodata) {
 			failure_count++;
-			fout << setw(3) << setprecision(0) << iswr << " " << setprecision(0) << rswr << " ";
+			fout << setw(4) << setprecision(0) << iswr << " " << setprecision(0) << rswr << " ";
 		} else {
 			if(iswr==IOUtils::nodata)
-				fout << setw(3) << setprecision(1) << "0.0" << " ";
+				fout << setw(4) << setprecision(1) << "0.0" << " ";
 			else
-				fout << setw(3) << setprecision(0) << iswr << " ";
+				fout << setw(4) << setprecision(0) << iswr << " ";
 			if(rswr==IOUtils::nodata)
-				fout << setw(3) << setprecision(1) << "0.0" << " ";
+				fout << setw(4) << setprecision(1) << "0.0" << " ";
 			else
-				fout << setw(3) << setprecision(0) << rswr << " ";
+				fout << setw(4) << setprecision(0) << rswr << " ";
 		}
 
 		//LWR
 		if(ilwr==IOUtils::nodata)
 			failure_count++;
-		fout << setw(3) << setprecision(0) << Meteo[ii].ilwr << " ";
+		fout << setw(4) << setprecision(0) << Meteo[ii].ilwr << " ";
 
 		//TSS, TSG (only required for Dirichlet)
 		if(tsg==IOUtils::nodata) {

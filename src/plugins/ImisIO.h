@@ -69,6 +69,7 @@ class ImisIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
+		void getDBParameters();
 		void getStationData(const std::string& stat_abk, const std::string& stao_nr, std::vector<std::string>& data2S);
 		void getImisData(const std::string& stat_abk, const std::string& stao_nr, 
 		                 const std::vector<int>& datestart, const std::vector<int>& dateend,
@@ -87,9 +88,12 @@ class ImisIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string sqlQueryMeteoData;
 		static const std::string sqlQueryStationData;
-		static const std::string oracleUserName;
-		static const std::string oraclePassword;
-		static const std::string oracleDBName;
+		std::string oracleUserName_in;
+		std::string oraclePassword_in;
+		std::string oracleDBName_in;
+		/*std::string oracleUserName_out;
+		std::string oraclePassword_out;
+		std::string oracleDBName_out;*/
 };
 
 } //end namespace mio

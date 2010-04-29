@@ -41,7 +41,6 @@
  * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
  * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
- * - \subpage arps "ARPS" for reading ARPS grid files (no extra requirements)
  * 
  */
 
@@ -248,13 +247,13 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
 }
 #ifdef _POPC_
-void IOHandler::writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
-			     std::vector< std::vector<StationData> >& vecStation,
-			     const std::string& name)
+void IOHandler::writeMeteoData(std::vector<METEO_DATASET>& vecMeteo,
+                               std::vector<STATION_DATASET>& vecStation,
+                               std::string& name)
 #else 
-void IOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-						 const std::vector< std::vector<StationData> >& vecStation,
-						 const std::string& name)
+void IOHandler::writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
+                               const std::vector<STATION_DATASET>& vecStation,
+                               const std::string& name)
 #endif
 {
 	IOInterface *plugin = getPlugin("METEO", "Output");
