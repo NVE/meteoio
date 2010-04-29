@@ -298,9 +298,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
  */
 void ImisIO::getStationData(const string& stat_abk, const string& stao_nr, std::vector<std::string>& vecStationData)
 {
-	unsigned int timeOut = 0, seconds = 60;	
 	Environment *env = NULL;
-
 	vecStationData.clear();
 
 	try {
@@ -309,32 +307,19 @@ void ImisIO::getStationData(const string& stat_abk, const string& stao_nr, std::
 		ResultSet *rs = NULL;
 
 		env = Environment::createEnvironment();// static OCCI function
+		conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
 
-		while (timeOut != 3) {
-			timeOut = 0;
+		stmt = conn->createStatement(sqlQueryStationData);
+		stmt->setString(1, stat_abk); // set 1st variable's value
+		stmt->setString(2, stao_nr);  // set 2nd variable's value 		
+		rs = stmt->executeQuery();    // execute the statement stmt
 
-			conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
-			timeOut++;
-			stmt = conn->createStatement(sqlQueryStationData);
-			stmt->setString(1, stat_abk); // set 1st variable's value
-			stmt->setString(2, stao_nr);  // set 2nd variable's value 		
-			rs = stmt->executeQuery();    // execute the statement stmt
-			timeOut++;
-
-			while (rs->next() == true) {
-				for (unsigned int ii=0; ii<4; ii++) {
-					vecStationData.push_back(rs->getString(ii+1));
-				}
+		while (rs->next() == true) {
+			for (unsigned int ii=0; ii<4; ii++) {
+				vecStationData.push_back(rs->getString(ii+1));
 			}
-			timeOut++;
+		}
 
-			if (timeOut != 3 && seconds <= 27*60) {
-				sleep(seconds);
-				seconds *= 3;
-			} else if (seconds > 27*60) {
-				break;
-			}	
-		}   	   
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		env->terminateConnection(conn);
@@ -360,8 +345,6 @@ void ImisIO::getImisData (const string& stat_abk, const string& stao_nr,
                           std::vector< std::vector<std::string> >& vecMeteoData)
 {
 	Environment *env = NULL;
-	unsigned int timeOut = 0, seconds = 60;
-
 	vecMeteoData.clear();
 
 	try {
@@ -370,43 +353,29 @@ void ImisIO::getImisData (const string& stat_abk, const string& stao_nr,
 		Statement *stmt = NULL;
 		ResultSet *rs = NULL;
 
-		while (timeOut != 3) {
-			timeOut = 0;
+		conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
+		stmt = conn->createStatement(sqlQueryMeteoData);
+		
+		// construct the oracle specific Date object: year, month, day, hour, minutes
+		occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]); 
+		occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]); 
+		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
+		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
+		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
+		stmt->setDate(4, enddate);    // set 4th variable's value (enddate)
 			
-			conn = env->createConnection(oracleUserName, oraclePassword, oracleDBName);
-			timeOut++;
-			
-			stmt = conn->createStatement(sqlQueryMeteoData);
+		rs = stmt->executeQuery(); // execute the statement stmt
 
-			// construct the oracle specific Date object: year, month, day, hour, minutes
-			occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]); 
-			occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]); 
-			stmt->setString(1, stat_abk); // set 1st variable's value (station name)
-			stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
-			stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
-			stmt->setDate(4, enddate);    // set 4th variable's value (enddate)
-			
-			rs = stmt->executeQuery(); // execute the statement stmt
-			timeOut++;
-
-			rs->setMaxColumnSize(7,22);
-			vector<string> vecTmpMeteoData;
-			while (rs->next() == true) {
-				vecTmpMeteoData.clear();
-				for (unsigned int ii=1; ii<=12; ii++) { // 12 columns 
-					vecTmpMeteoData.push_back(rs->getString(ii));
-				}
-				vecMeteoData.push_back(vecTmpMeteoData);
+		rs->setMaxColumnSize(7,22);
+		vector<string> vecTmpMeteoData;
+		while (rs->next() == true) {
+			vecTmpMeteoData.clear();
+			for (unsigned int ii=1; ii<=12; ii++) { // 12 columns 
+				vecTmpMeteoData.push_back(rs->getString(ii));
 			}
-			timeOut++;
-
-			if (timeOut != 3 && seconds <= 27*60) {
-				sleep(seconds);
-				seconds *= 3;
-			} else if (seconds > 27*60) {
-				break;
-			}
-		}   	   
+			vecMeteoData.push_back(vecTmpMeteoData);
+		}
+		
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		env->terminateConnection(conn);
