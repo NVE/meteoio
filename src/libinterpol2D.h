@@ -32,6 +32,8 @@
 #define GRAVITY	9.80665		     // (m s-2)
 #define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1)
 
+namespace mio {
+
 /**
  * @class Interpol2D
  * @brief A class to perform 2D spatial interpolations.
@@ -44,8 +46,6 @@
 
 typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude, 
                                       const double& new_altitude, const std::vector<double>& coeffs);
-
-namespace mio {
  
 class Interpol2D {
 	public:

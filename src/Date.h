@@ -31,6 +31,8 @@
 ///Using the following namespace for the comparison operator overloading
 //using namespace rel_ops;
 
+namespace mio {
+
 /**
  * @class Date
  * @brief  A class to handle timestamps.
@@ -57,11 +59,10 @@
  * @author Mathias Bavay
  * @date 2010-04-15
  */
-namespace mio {
-
-class DateDummy {}; //HACK for POPC
 
 #ifdef _POPC_
+class DateDummy {}; //HACK for POPC
+
 class Date : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);

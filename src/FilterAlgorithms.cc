@@ -26,18 +26,18 @@
  *
  * @section filters_available Available filters
  * The filters that are currently available are the following:
- * - rate: rate of change filter, see FilterAlgorithms::RateFilter
- * - min_max: range check filter, see FilterAlgorithms::MinMaxFilter
- * - min: minimum check filter, see FilterAlgorithms::MinValueFilter
- * - max: maximum check filter, see FilterAlgorithms::MaxValueFilter
- * - mad: median absolute deviation, see FilterAlgorithms::MedianAbsoluteDeviationFilter
+ * - rate: rate of change filter, see mio::FilterAlgorithms::RateFilter
+ * - min_max: range check filter, see mio::FilterAlgorithms::MinMaxFilter
+ * - min: minimum check filter, see mio::FilterAlgorithms::MinValueFilter
+ * - max: maximum check filter, see mio::FilterAlgorithms::MaxValueFilter
+ * - mad: median absolute deviation, see mio::FilterAlgorithms::MedianAbsoluteDeviationFilter
  * 
  * A few data transformations are also supported besides filtering:
- * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
- * - resample: linear data resampling, FilterAlgorithms::LinResamplingProcess
- * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgProcess
- * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess
- * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
+ * - accumulate: data accumulates over a given period, see mio::FilterAlgorithms::AccumulateProcess
+ * - resample: linear data resampling, mio::FilterAlgorithms::LinResamplingProcess
+ * - median_avg: running median average over a given window, see mio::FilterAlgorithms::MedianAvgProcess
+ * - mean_avg: running mean average over a given window, see mio::FilterAlgorithms::MeanAvgProcess
+ * - wind_avg: vector average over a given window, see mio::FilterAlgorithms::WindAvgProcess
  */
 
 using namespace std;

@@ -26,6 +26,9 @@
 #include <string>
 #include <map>
 
+namespace mio {
+
+
 /**
  * @class ConfigReader
  * @brief A class that reads a key/value file. These files (typically named *.ini) have the following structure:
@@ -41,7 +44,6 @@
  * @author Thomas Egger
  * @date   2008-11-30
  */
-namespace mio {
 
 namespace IOUtils {
 	void toUpper(std::string& str);

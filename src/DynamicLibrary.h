@@ -32,6 +32,9 @@
 #include <cstdlib>
 #endif
 
+namespace mio {
+
+
 /**
  * @class PluginObject
  * @brief The PluginObject is an interface for all dynamically loadable Objects, its main task is to register a callback destructor function
@@ -40,8 +43,6 @@
  * @author Thomas Egger
  * @date   2009-03-10
  */
-namespace mio {
-
 class PluginObject {
 	private:
 		// Callback function that should be called to delete dynamic object

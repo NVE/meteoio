@@ -26,6 +26,8 @@
 #include <vector>
 #include <map>
 
+namespace mio {
+
 /**
  * @class Meteo2DInterpolator
  * @brief A class to spatially interpolate meteo parameters. For more, see \ref interpol2d
@@ -33,7 +35,6 @@
  * @author Mathias Bavay and Thomas Egger
  * @date   2010-01-14
  */
-namespace mio {
 
 #ifdef _POPC_
 class Meteo2DInterpolator : POPBase {

@@ -36,7 +36,7 @@ typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 /**
 * @file IOHandler.h
-* The is the class implementing the interface as defined by the IOInterface class.
+* The is the class implementing the interface as defined by the mio::IOInterface class.
 * This class is responsible for loading the necessary plugins and getting the data through them.
 */
 

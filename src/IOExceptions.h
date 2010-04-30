@@ -31,13 +31,14 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define AT __FILE__ ":" TOSTRING(__LINE__)
 
+namespace mio {
+
 /**
  * @class IOException
  * @brief The basic exception class adjusted for the needs of SLF software
  *
  * @author Thomas Egger
  */
-namespace mio {
 
 #ifdef _POPC_
 class IOException : public POPException {

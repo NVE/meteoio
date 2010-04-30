@@ -24,6 +24,8 @@
 #include <sstream>
 #include <iomanip>
 
+namespace mio {
+
 /**
  * @class MeteoData
  * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date object)
@@ -31,7 +33,6 @@
  * @author Thomas Egger
  * @date   2008-12-05
  */
-namespace mio {
 
 #ifdef _POPC_
 class MeteoData : POPBase {

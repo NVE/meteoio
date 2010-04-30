@@ -24,6 +24,8 @@
 #include <sstream>
 #include <iomanip>
 
+namespace mio {
+
 /**
  * @class StationData
  * @brief A class to represent meteo stations with attributes like longitude, latitude, etc.
@@ -31,7 +33,6 @@
  * @author Thomas Egger
  * @date   2008-11-29
  */
-namespace mio {
 
 #ifdef _POPC_
 class StationData :POPBase {

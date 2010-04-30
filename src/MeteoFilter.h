@@ -28,13 +28,14 @@
 #include <string>
 #include <vector>
 
+namespace mio {
+
 /**
  * @class MeteoFilter
  * @brief A class that can filter (i.e. clean, resample, ...) MeteoData objects
  * @author Thomas Egger
  * @date   2009-11-01
  */
-namespace mio {
 
 class MeteoFilter {
 	public:

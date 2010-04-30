@@ -38,7 +38,6 @@ namespace mio {
  * @author Mathias Bavay
  * @date   2009-12-04
  */
-
 class SNIO : public IOInterface {
 	public:
 		SNIO(void (*delObj)(void*), const std::string& filename);

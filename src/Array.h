@@ -25,6 +25,7 @@
 #include "IOExceptions.h"
 
 #define NOSAFECHECKS
+namespace mio {
 
 /**
  * @class Array
@@ -33,7 +34,6 @@
  * @author Thomas Egger
  * @date   2009-05-02
  */
-namespace mio {
 
 template<class T> class Array {
 	public:

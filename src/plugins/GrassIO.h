@@ -29,6 +29,7 @@
 #include <iostream>
 #include <iomanip>
 
+namespace mio {
 
 /**
  * @class GrassIO
@@ -37,9 +38,6 @@
  * @author Thomas Egger
  * @date   2008-08-03
  */
-
-namespace mio {
-
 class GrassIO : public IOInterface {
 	public:
 		GrassIO(void (*delObj)(void*), const std::string& filename);

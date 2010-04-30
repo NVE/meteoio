@@ -21,6 +21,8 @@
 #include "DynamicLibrary.h"
 #include "IOInterface.h"
 
+namespace mio {
+
 /**
  * @class IOPlugin
  * @brief A helper class representing a MeteoIO plugin in the context of the dynamic loading as implemented in class 
@@ -32,8 +34,6 @@
  * @author Thomas Egger
  * @date   2009-08-11
  */
-namespace mio {
-
 class IOPlugin {
 	public:
 		std::string libname; ///< A string representing the file to be loaded, e.g. "libgeotopio.so", can be empty

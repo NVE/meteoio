@@ -23,6 +23,8 @@
 #include "IOExceptions.h"
 #include "Coords.h"
 
+namespace mio {
+
 /**
  * @class Grid2DObject
  * @brief A class to represent 2D Grids. Typical application as DEM or Landuse Model.
@@ -30,11 +32,10 @@
  * @author Thomas Egger
  * @date   2008-12-20
  */
-namespace mio {
-
-class Grid2DObjetctDummy {}; //HACK for POPC
 
 #ifdef _POPC_
+class Grid2DObjetctDummy {}; //HACK for POPC
+
 class Grid2DObject : POPBase {
 	public:
 		/**

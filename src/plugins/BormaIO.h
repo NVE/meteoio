@@ -30,6 +30,7 @@
 #include "IOExceptions.h"
 #include "DynamicLibrary.h"
 
+namespace mio {
 
 /**
  * @class BormaIO
@@ -38,7 +39,6 @@
  * @author Thomas Egger
  * @date   2008-11-20
  */
-namespace mio {
 
 class BormaIO : public IOInterface {
 	public:

@@ -23,6 +23,8 @@
 #include "IOExceptions.h"
 #include "Coords.h"
 
+namespace mio {
+
 /**
  * @class Grid3DObject
  * @brief A class to represent 3D Grids. Typical application: wind field
@@ -30,11 +32,10 @@
  * @author Thomas Egger
  * @date   2009-07-20
  */
-namespace mio {
-
-class Grid3DObjetctDummy {}; //HACK for POPC
 
 #ifdef _POPC_
+class Grid3DObjetctDummy {}; //HACK for POPC
+
 class Grid3DObject : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);

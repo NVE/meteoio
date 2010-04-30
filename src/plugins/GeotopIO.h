@@ -24,6 +24,8 @@
 #include <sstream>
 #include <iostream>
 
+namespace mio {
+
 /**
  * @class GeotopIO
  * @brief This class enables the access meteo data in legacy Geotop format
@@ -31,9 +33,6 @@
  * @author Thomas Egger
  * @date   2009-07-02
  */
-
-namespace mio {
-
 class GeotopIO : public IOInterface {
 	public:
 		//virtual GeotopIO* clone() const;

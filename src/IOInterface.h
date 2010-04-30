@@ -29,6 +29,8 @@
 
 #include <vector>
 
+namespace mio {
+
 /**
  * @page dev_plugins Plugins developement guide
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. This means that plugins should follow some common rules, which are described in this guide.
@@ -62,7 +64,6 @@
  * The internal documentation of the plugin can remain as normal C++ comments (since they are addressed to the maintainer of the plugin).
  */
 
-
 /**
  * @class IOInterface
  * @brief An abstract class representing the IO Layer of the software Alpine3D. For each type of IO (File, DB, Webservice, etc)
@@ -72,8 +73,6 @@
  * @author Thomas Egger
  * @date   2009-01-08
  */
-namespace mio {
-
 class IOInterface : public PluginObject {
 	public:
 

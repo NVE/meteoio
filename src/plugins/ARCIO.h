@@ -29,6 +29,7 @@
 #include <sstream>
 #include <iostream>
 
+namespace mio {
 
 /**
  * @class ARCIO
@@ -37,7 +38,6 @@
  * @author Thomas Egger
  * @date   2009-08-28
  */
-namespace mio {
 
 class ARCIO : public IOInterface {
 	public:

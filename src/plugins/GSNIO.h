@@ -31,6 +31,8 @@
 #include <iostream>
 #include <vector>
 
+namespace mio {
+
 /**
  * @class GSNIO
  * @brief This class enables the access to the GSN web service
@@ -38,9 +40,6 @@
  * @author Thomas Egger
  * @date   2009-09-25
  */
-
-namespace mio {
-
 class GSNIO : public IOInterface {
 	public:
 		GSNIO(void (*delObj)(void*), const std::string& filename);

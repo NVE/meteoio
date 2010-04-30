@@ -23,7 +23,11 @@
  * This is for reading grid data in the SNOWPACK meteo format (HACK: read implementation still missing)
  *
  * @section snowpack_units Units
- * The distances are assumed to be in meters.
+* - temperatures in celsius
+ * - relative humidity in %
+ * - wind speed in m/s
+ * - precipitations in mm/h
+ * - radiation in W/m²
  *
  * @section snowpack_keywords Keywords
  * This plugin uses the following keywords:
@@ -236,9 +240,9 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 			else
 				fout << setw(5) << setprecision(2) << hnw << " ";
 			if(hs==IOUtils::nodata)
-				fout << setw(5) << setprecision(1) << "0.0" << " ";
+				fout << setw(5) << setprecision(1) << "0.0";
 			else
-				fout << setw(5) << setprecision(3) << hs / 100. << " ";
+				fout << setw(5) << setprecision(3) << hs / 100.;
 		}
 
 		//we don't write any snow depth temperatures.

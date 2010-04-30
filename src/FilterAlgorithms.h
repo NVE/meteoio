@@ -31,14 +31,14 @@
 #include <cmath>
 #include <map>
 
+namespace mio {
+
 /**
  * @class FilterAlgorithms
  * @brief 
  * @author Thomas Egger
  * @date   2009-11-03
  */
-namespace mio {
-
 class FilterAlgorithms {
 	public:
 

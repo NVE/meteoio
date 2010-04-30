@@ -31,6 +31,8 @@
 #include <vector>
 #include <string>
 
+namespace mio {
+
 /**
  * @class BufferedIOHandler
  * @brief This class serves as a wrapper around all children of IOInterface. It internally handles 
@@ -39,7 +41,6 @@
  * @author Thomas Egger
  * @date   2009-07-25
  */
-namespace mio {
 
 class MeteoFilter;
 
