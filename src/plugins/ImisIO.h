@@ -38,6 +38,13 @@
 
 namespace mio {
 
+/**
+ * @class ImisIO
+ * @brief The class with-in the data from the database are treated. The MeteoData and the StationData will be set in.
+ * This class also herited to IOInterface class which is abstract.
+ * @author Moustapha Mbengue and Thomas Egger
+ * @date 2009-05-12
+ */
 class ImisIO : public IOInterface {
 	public:
 		ImisIO(void (*delObj)(void*), const std::string& filename);
@@ -53,12 +60,12 @@ class ImisIO : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
 		                           std::vector< std::vector<StationData> >& vecStation,
 		                           const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::vector< std::vector<StationData> >& vecStation,
 		                            const std::string& name="");
 
@@ -71,11 +78,11 @@ class ImisIO : public IOInterface {
 		void cleanup() throw();
 		void getDBParameters();
 		void getStationData(const std::string& stat_abk, const std::string& stao_nr, std::vector<std::string>& data2S);
-		void getImisData(const std::string& stat_abk, const std::string& stao_nr, 
+		void getImisData(const std::string& stat_abk, const std::string& stao_nr,
 		                 const std::vector<int>& datestart, const std::vector<int>& dateend,
 		                 std::vector< std::vector<std::string> >& dataImis);
-		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);		
-		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
+		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);
+		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex);
 		void readStationNames(std::vector<std::string>& vecStationName);
 		void parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber);

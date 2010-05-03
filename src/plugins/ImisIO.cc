@@ -56,14 +56,6 @@ const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_
  * - STATION#: station code for the given number #
  */
 
-/**
- * @class ImisIO 
- * @brief The class with-in the data from the database are treated. The MeteoData and the StationData will be set in.
- * This class also herited to IOInterface class which is abstract.
- * @author Moustapha Mbengue and Thomas Egger
- * @date 2009-05-12
- */
-
 void ImisIO::getDBParameters()
 {
 	cfg.getValue("DBNAME", "Input", oracleDBName_in);
@@ -133,7 +125,7 @@ void ImisIO::write2DGrid(const Grid2DObject&, const std::string&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
+void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
                             const std::vector< std::vector<StationData> >&,
                             const std::string&)
 {
@@ -152,7 +144,7 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 }
 
 /**
- * @brief A meta function that extracts all station names from the ConfigReader, 
+ * @brief A meta function that extracts all station names from the ConfigReader,
  *        parses them and retrieves all meta data from the IMIS database
  */
 void ImisIO::readStationMetaData()
@@ -189,12 +181,12 @@ void ImisIO::readStationMetaData()
 
 /**
  * @brief This function breaks up the station name into two components (a string and a number e.g. KLO2 -> "KLO","2")
- * @param stationName The full name of the station (e.g. "KLO2") 
+ * @param stationName The full name of the station (e.g. "KLO2")
  * @param stName      The string part of the name  (e.g. "KLO")
  * @param stNumber    The integer part of the name (e.g. "2")
  */
 void ImisIO::parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber)
-{		
+{
 	stName    = stationName.substr(0, stationName.length()-1); //The station name: e.g. KLO
 	stNumber  = stationName.substr(stationName.length()-1, 1); //The station number: e.g. 2
 }
@@ -218,11 +210,11 @@ void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 
 	if (!IOUtils::convertString(stations, str_stations, std::dec))
 		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
-		
+
 	for (unsigned int ii=0; ii<stations; ii++) {
 		stringstream tmp_stream;
 		string stationname="", tmp_file="";
-		
+
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
 		std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
@@ -231,7 +223,7 @@ void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 }
 
 
-void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, 
+void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<MeteoData> >& vecMeteo,
                            std::vector< std::vector<StationData> >& vecStation,
                            const unsigned int& stationindex)
@@ -273,7 +265,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
  * @param vecStation   The vector that will hold all StationData for each station
  * @param stationindex The index of the station as specified in the ConfigReader
  */
-void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
+void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                       std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
 {
 	vecMeteo.at(stationindex).clear();
@@ -305,7 +297,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 /**
  * @brief Puts the data that has been retrieved from the database into a MeteoData object
  * @param _meteo a row of meteo data from the database (note: order important, matches SQL query)
- * @param md     the object to copy the data to 
+ * @param md     the object to copy the data to
  */
 void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
 {
@@ -325,7 +317,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
 
 /**
  * @brief This function gets back data from table station2 and fills vector with station data
- * @param stat_abk :      a string key of table station2 
+ * @param stat_abk :      a string key of table station2
  * @param stao_nr :       a string key of table station2
  * @param vecStationData: string vector in which data will be filled
  */
@@ -344,7 +336,7 @@ void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 
 		stmt = conn->createStatement(sqlQueryStationData);
 		stmt->setString(1, stat_abk); // set 1st variable's value
-		stmt->setString(2, stao_nr);  // set 2nd variable's value 		
+		stmt->setString(2, stao_nr);  // set 2nd variable's value
 		rs = stmt->executeQuery();    // execute the statement stmt
 
 		while (rs->next() == true) {
@@ -373,7 +365,7 @@ void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
  * @param dateend :      a vector of five(5) integer corresponding to the recording date
  * @param vecMeteoData : a vector of vector of string in which data will be filled
  */
-void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_nr, 
+void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_nr,
                           const std::vector<int>& datestart, const std::vector<int>& dateend,
                           std::vector< std::vector<std::string> >& vecMeteoData)
 {
@@ -388,27 +380,27 @@ void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_n
 
 		conn = env->createConnection(oracleUserName_in, oraclePassword_in, oracleDBName_in);
 		stmt = conn->createStatement(sqlQueryMeteoData);
-		
+
 		// construct the oracle specific Date object: year, month, day, hour, minutes
-		occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]); 
-		occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]); 
+		occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
+		occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
 		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
 		stmt->setDate(4, enddate);    // set 4th variable's value (enddate)
-			
+
 		rs = stmt->executeQuery(); // execute the statement stmt
 
 		rs->setMaxColumnSize(7,22);
 		vector<string> vecTmpMeteoData;
 		while (rs->next() == true) {
 			vecTmpMeteoData.clear();
-			for (unsigned int ii=1; ii<=12; ii++) { // 12 columns 
+			for (unsigned int ii=1; ii<=12; ii++) { // 12 columns
 				vecTmpMeteoData.push_back(rs->getString(ii));
 			}
 			vecMeteoData.push_back(vecTmpMeteoData);
 		}
-		
+
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		env->terminateConnection(conn);
@@ -427,11 +419,11 @@ void ImisIO::convertUnits(MeteoData& meteo)
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
-	
+
 	if(meteo.tsg!=IOUtils::nodata) {
 		meteo.tsg=C_TO_K(meteo.tsg);
 	}
-	
+
 	if(meteo.tss!=IOUtils::nodata) {
 		meteo.tss=C_TO_K(meteo.tss);
 	}
@@ -452,7 +444,7 @@ extern "C"
 	void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
-	
+
 	void* loadObject(const string& classname, const string& filename) {
 		if(classname == "ImisIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;

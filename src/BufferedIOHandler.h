@@ -35,8 +35,9 @@ namespace mio {
 
 /**
  * @class BufferedIOHandler
- * @brief This class serves as a wrapper around all children of IOInterface. It internally handles 
- *        the buffering of the data and introduces a few convenient functions to access meteo data 
+ * @brief This class is the class to use for buffered I/O operations. It is responsible for transparently loading the plugins
+ * and transparently buffering the data. It follows the interface defined by the IOInterface class with the addition of
+ * a few convenience methods.
  *
  * @author Thomas Egger
  * @date   2009-07-25
@@ -50,11 +51,11 @@ class BufferedIOHandler {
 class BufferedIOHandler : public IOInterface {
 #endif
 	public:
-	
+
 		/**
 		 * @brief The constructor accepts an already initialized child of IOInterface (e.g. A3DIO, BormaIO, ImisIO)
 		 *        and a ConfigReader object
-		 *    
+		 *
 		 * Example Usage:
 		 * @code
 		 * IOHandler *io1;
@@ -71,8 +72,8 @@ class BufferedIOHandler : public IOInterface {
 	#endif
 
 		/**
-		 * @brief The function returns the next MeteoData object for each station with a 
-		 *        date >= to the parameter _date. vecMeteo and vecStation will be empty if there 
+		 * @brief The function returns the next MeteoData object for each station with a
+		 *        date >= to the parameter _date. vecMeteo and vecStation will be empty if there
 		 *        is no MeteoData to be found.
 		 *        NOTE: only the real measured data is looked at: no resampled values are taken into account
 		 *
@@ -83,29 +84,29 @@ class BufferedIOHandler : public IOInterface {
 		void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-		
+
 		/**
-		 * @brief See BufferedIOHandler::readMeteoData(const Date& date_in, 
-		 *                                             vector<MeteoData>& vecMeteo, 
+		 * @brief See BufferedIOHandler::readMeteoData(const Date& date_in,
+		 *                                             vector<MeteoData>& vecMeteo,
 		 *                                             vector<StationData>& vecStation).
 		 */
 		void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		/**
-		 * @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets 
+		 * @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets
 		 * corresponding to the time indicated by the Date object.
-		 * Matching rule: Find first data set for every station which has an event time (measurement time) 
-		 * that is greater (newer) or equal to the time represented by the Date object parameter. The 
-		 * vector<StationData> object holds multiple StationData objects representing meta information 
+		 * Matching rule: Find first data set for every station which has an event time (measurement time)
+		 * that is greater (newer) or equal to the time represented by the Date object parameter. The
+		 * vector<StationData> object holds multiple StationData objects representing meta information
 		 * about the meteo stations that recorded the meteo data.
 		 *
-		 * NOTE: 
+		 * NOTE:
 		 * - vecMeteo and vecStation will contain nodata objects if an exact time match is impossible
-		 *   and resampling is turned off. If resampling is turned on a resampled value is returned 
+		 *   and resampling is turned off. If resampling is turned on a resampled value is returned
 		 *   if resampling is possible (enough measurements), otherwise nodata objects will be returned
 		 * - is there is absolutely no data to be found, and hence not even station data, vecMeteo and vecStation
 		 *   will be filled with only one nodata obejct of MeteoData and StationData respectively
-		 *    
+		 *
 		 * Example Usage:
 		 * @code
 		 * vector<MeteoData> vecMeteo;      //empty vector
@@ -129,8 +130,8 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
+							  std::vector< std::vector<MeteoData> >& vecMeteo,
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 #ifdef _POPC_
@@ -138,7 +139,7 @@ class BufferedIOHandler : public IOInterface {
 							   std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 #else
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 #endif
@@ -156,11 +157,11 @@ class BufferedIOHandler : public IOInterface {
 		bool bufferData(const Date& _date, const unsigned int& stationindex);
 		void bufferAllData(const Date& _date);
 		void setBufferProperties();
-		
+
 		IOHandler& iohandler;
 		ConfigReader cfg;
 		MeteoFilter meteoFilter;
-		
+
 		bool always_rebuffer;
 		Date bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date
 

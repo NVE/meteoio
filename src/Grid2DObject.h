@@ -49,6 +49,7 @@ class Grid2DObject : POPBase {
 class Grid2DObject {
 #endif
 	public:
+		///structure to contain the grid coordinates of a point in a 2D grid
 		typedef struct GRID_POINT_2D {
 			unsigned int ix; ///<grid index along X
 			unsigned int iy; ///<grid index along Y
@@ -82,7 +83,7 @@ class Grid2DObject {
 
 		/**
 		* @brief Compute the positional parameters that are not already known
-		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* This means that the Coords::point object that is given either contains geographic coordinates or
 		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
 		* and (east,north)). If the given point had a "NULL" projection, it will be set to the grid's.
 		* @param point coordinate to convert
@@ -92,7 +93,7 @@ class Grid2DObject {
 
 		/**
 		* @brief Compute the positional parameters that are not already known
-		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* This means that the Coords::point object that is given either contains geographic coordinates or
 		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
 		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
 		* If the given point had a "NULL" projection, it will be set to the grid's.
@@ -111,7 +112,7 @@ class Grid2DObject {
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& cellsize, const Coords& _llcorner);
 		/**
-		* @brief Set all variables in one go. Notably the member grid2D of type 
+		* @brief Set all variables in one go. Notably the member grid2D of type
 		* Array2D\<double\> will be destroyed and recreated to size ncols x nrows.
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
@@ -121,7 +122,7 @@ class Grid2DObject {
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 			const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
-		
+
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
 		* as another Grid2DObject (as well as same cells). The grid coordinates (xllcorner & yllcorner) are NOT

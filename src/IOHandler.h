@@ -36,10 +36,14 @@ typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 /**
 * @file IOHandler.h
-* The is the class implementing the interface as defined by the mio::IOInterface class.
-* This class is responsible for loading the necessary plugins and getting the data through them.
 */
 
+/**
+* @class IOHandler
+* @brief This class is the class to use for raw I/O operations. It is responsible for transparently loading the plugins
+* and it follows the interface defined by the IOInterface class with the addition of
+* a few convenience methods.
+*/
 class IOHandler : public IOInterface {
 	public:
 		IOHandler(const std::string& configfile);
@@ -57,7 +61,7 @@ class IOHandler : public IOInterface {
 							   const std::vector<STATION_DATASET>& vecStation,
 							   const std::string& name="");
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-						std::vector<METEO_DATASET>& vecMeteo, 
+						std::vector<METEO_DATASET>& vecMeteo,
 						std::vector<STATION_DATASET>& vecStation,
 						const unsigned& stationindex=IOUtils::npos);
 		void readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
@@ -67,7 +71,7 @@ class IOHandler : public IOInterface {
 
 	private:
 		void loadDynamicPlugins();
-		void loadPlugin(const std::string& libname, const std::string& classname, 
+		void loadPlugin(const std::string& libname, const std::string& classname,
 					 DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
 		void registerPlugins();

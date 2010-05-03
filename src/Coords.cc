@@ -20,13 +20,9 @@
 #ifdef PROJ4
 	#include <proj_api.h>
 #endif
-#ifndef PI
-	#define PI 3.141592653589
-#endif
 
 using namespace std;
 using namespace mio;
-using namespace mio::IOUtils;
 
  /**
  * @page coords Available coordinate systems
@@ -34,14 +30,14 @@ using namespace mio::IOUtils;
  * the client program uses. However, in order to do so, the input coordinate system must be specified. In order to output
  * geolocalized data, the desired coordinate system must also be specified for the outputs (in the output section).
  * This is done through the use of the COORDIN and COORDPARAM keys (see the documentation for each plugin).
- * 
+ *
  * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
  * (that becomes part of MeteoIO) or through the use of an external library, Proj4 [ref: http://trac.osgeo.org/proj/].
  * The current internal implementations are the following (given by their keyword):
  * - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
  * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
  * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
- * 
+ *
  * Such an example of use is the following:
  * @code
  * COORDSYS	= UTM
@@ -60,16 +56,16 @@ using namespace mio::IOUtils;
  * COORDSYS	= PROJ4
  * COORDPARAM	= +init=epsg:21781
  * @endcode
- * 
+ *
  */
 
-const struct mio::Coords::ELLIPSOID Coords::ellipsoids[] = {
-		{ 6378137.,	6356752.3142 }, ///< E_WGS84
-		{ 6378137.,	6356752.3141 }, ///< E_GRS80
-		{ 6377563.396,	6356256.909 }, ///< E_AIRY
-		{ 6378388.,	6356911.946 }, ///< E_INTL1924
-		{ 6378249.145,	6356514.86955 }, ///< E_CLARKE1880
-		{ 6378160.,	6356774.719 } ///< E_GRS67
+const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
+	{ 6378137.,	6356752.3142 }, ///< E_WGS84
+	{ 6378137.,	6356752.3141 }, ///< E_GRS80
+	{ 6377563.396,	6356256.909 }, ///< E_AIRY
+	{ 6378388.,	6356911.946 }, ///< E_INTL1924
+	{ 6378249.145,	6356514.86955 }, ///< E_CLARKE1880
+	{ 6378160.,	6356774.719 } ///< E_GRS67
 };
 
 /**
@@ -121,11 +117,11 @@ Coords& Coords::operator=(const Coords& source) {
 	return *this;
 }
 
+namespace mio {
 /**
 * @brief Print the content of the Coords object (usefull for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
-namespace mio {
 	std::ostream& operator<<(std::ostream &os, const Coords& coord)
 	{
 		os << "<Coords>\n";
@@ -365,7 +361,7 @@ void Coords::setGridIndex(const int _grid_i, const int _grid_j, const int _grid_
 * This projection will be used for converting between lat/lon and East/North
 * @param[in] _coordinatesystem string identifying the coordinate system to use
 * @param[in] _parameters string giving some additional parameters for the projection (optional)
-* 
+*
 * The coordinate system can be any of the following:
 * - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
 * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
@@ -438,8 +434,8 @@ void Coords::setDistances(const geo_distances _algo) {
 /**
 * @brief Check consistency of coordinates
 * When both latitude/longitude and easting/northing are given, there is
-* a risk of inconsistency between these two sets of coordinates. 
-* This method checks that enough information is available (ie: at least one set 
+* a risk of inconsistency between these two sets of coordinates.
+* This method checks that enough information is available (ie: at least one set
 * of coordinates is present) and if more than one is present, that it is consistent (within 5 meters)
 * It throws and exception if something is not right.
 */
@@ -790,7 +786,7 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
 //also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
 	//Geometric constants
-	const double to_rad = PI / 180.0;
+	const double to_rad = M_PI / 180.0;
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
@@ -806,7 +802,7 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 	const double long0 = (double)((zoneNumber - 1)*6 - 180 + 3) * to_rad; //+3 puts origin in middle of zone
 
 	//Geometrical parameters
-	const double nu = a / sqrt(1.-e2*pow2(sin(Lat))); //radius of curvature of the earth perpendicular to the meridian plane
+	const double nu = a / sqrt(1.-e2*IOUtils::pow2(sin(Lat))); //radius of curvature of the earth perpendicular to the meridian plane
 	const double p = (Long-long0);
 
 	//calculating first the coefficients of the series, then the Meridional Arc M itself
@@ -822,9 +818,9 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 	//calculating the coefficients for the series
 	const double K1 = M*k0;
 	const double K2 = 1./4.*k0*nu*sin(2.*Lat);
-	const double K3 = (k0*nu*sin(Lat)*pow3(cos(Lat))*1./24.) * (5. - pow2(tan(Lat)) + 9.*eP2*pow2(cos(Lat)) + 4.*eP2*eP2*pow4(cos(Lat)));
+	const double K3 = (k0*nu*sin(Lat)*IOUtils::pow3(cos(Lat))*1./24.) * (5. - IOUtils::pow2(tan(Lat)) + 9.*eP2*IOUtils::pow2(cos(Lat)) + 4.*eP2*eP2*IOUtils::pow4(cos(Lat)));
 	const double K4 = k0*nu*cos(Lat);
-	const double K5 = (k0*nu*pow3(cos(Lat))*1./6.) * (1. - pow2(tan(Lat)) + eP2*pow2(cos(Lat)));
+	const double K5 = (k0*nu*IOUtils::pow3(cos(Lat))*1./6.) * (1. - IOUtils::pow2(tan(Lat)) + eP2*IOUtils::pow2(cos(Lat)));
 
 	north_out = K1 + K2*p*p + K3*p*p*p*p;
 	east_out = K4*p + K5*p*p*p + 500000.0;
@@ -847,7 +843,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
 //also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
 	//Geometric constants
-	const double to_deg = 180.0 / PI;
+	const double to_deg = 180.0 / M_PI;
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
@@ -886,10 +882,10 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	const double fp = mu + J1*sin(2.*mu) + J2*sin(4.*mu) + J3*sin(6.*mu) + J4*sin(8.*mu);
 
 	//calculating the parameters
-	const double C1 = eP2 * pow2(cos(fp));
-	const double T1 = pow2( tan(fp) );
-	const double R1 = a*(1.-e2) / pow((1.-e2*pow2(sin(fp))), 1.5);
-	const double N1 = a / sqrt(1.-e2*pow2(sin(fp)));
+	const double C1 = eP2 * IOUtils::pow2(cos(fp));
+	const double T1 = IOUtils::pow2( tan(fp) );
+	const double R1 = a*(1.-e2) / pow((1.-e2*IOUtils::pow2(sin(fp))), 1.5);
+	const double N1 = a / sqrt(1.-e2*IOUtils::pow2(sin(fp)));
 	const double D = east_in / (N1*k0);
 
 	//calculating the coefficients of the series for latitude and longitude
@@ -918,7 +914,7 @@ void Coords::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, dou
 	const std::string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
 	projPJ pj_latlong, pj_dest;
 	double x=long_in*DEG_TO_RAD, y=lat_in*DEG_TO_RAD;
-	
+
 	if ( !(pj_dest = pj_init_plus(coordparam.c_str())) ) {
 		pj_free(pj_dest);
 		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+coordparam, AT);
@@ -995,7 +991,7 @@ void Coords::distance(const Coords& destination, double& distance, double& beari
 //HACK: this is the 2D distance, it does not work in 3D!!
 	if(isSameProj(destination)) {
 		//we can use simple cartesian grid arithmetic
-		const double to_deg = 180.0 / PI;
+		const double to_deg = 180.0 / M_PI;
 		distance = sqrt( IOUtils::pow2(easting - destination.getEasting()) + IOUtils::pow2(northing - destination.getNorthing()) );
 		bearing = atan2( northing - destination.getNorthing() , easting - destination.getEasting() );
 		bearing = fmod( bearing*to_deg+360. , 360. );
@@ -1023,7 +1019,7 @@ void Coords::distance(const Coords& destination, double& distance, double& beari
 void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	double alpha;
-	const double to_rad = PI / 180.0;
+	const double to_rad = M_PI / 180.0;
 	double distance;
 
 	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
@@ -1041,7 +1037,7 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 			default:
 				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 		}
-		
+
 		east_out = distance*sin(alpha*to_rad);
 		north_out = distance*cos(alpha*to_rad);
 	}
@@ -1057,7 +1053,7 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 */
 void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
-	const double to_deg = 180.0 / PI;
+	const double to_deg = 180.0 / M_PI;
 	const double distance = sqrt( IOUtils::pow2(east_in) + IOUtils::pow2(north_in) );
 	const double bearing = fmod( atan2(east_in, north_in)*to_deg+360. , 360.);
 
@@ -1102,16 +1098,16 @@ void Coords::WGS84_to_NULL(double /*lat_in*/, double /*long_in*/, double& /*east
 void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const
 {
 	const double Rearth = 6371.e3;
-	const double to_rad = PI / 180.0;
-	const double to_deg = 180.0 / PI;
+	const double to_rad = M_PI / 180.0;
+	const double to_deg = 180.0 / M_PI;
 	const double lat_ref_rad = lat_ref*to_rad;
 	const double bearing_rad = bearing*to_rad;
 
-	lat = asin( sin(lat_ref_rad)*cos(distance/Rearth) + 
+	lat = asin( sin(lat_ref_rad)*cos(distance/Rearth) +
 				cos(lat_ref_rad)*sin(distance/Rearth)*cos(bearing_rad) );
-	lon = lon_ref*to_rad + atan2( sin(bearing_rad)*sin(distance/Rearth)*cos(lat_ref_rad) , 
+	lon = lon_ref*to_rad + atan2( sin(bearing_rad)*sin(distance/Rearth)*cos(lat_ref_rad) ,
 					cos(distance/Rearth) - sin(lat_ref_rad)*sin(lat) );
-	lon = fmod(lon+PI, 2.*PI) - PI;
+	lon = fmod(lon+M_PI, 2.*M_PI) - M_PI;
 
 	lat *= to_deg;
 	lon *= to_deg;
@@ -1130,13 +1126,13 @@ void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const d
 double Coords::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const
 {
 	const double Rearth = 6371.e3;
-	const double to_rad = PI / 180.0;
-	const double d = acos( 
-		sin(lat1*to_rad) * sin(lat2*to_rad) 
-		+ cos(lat1*to_rad) * cos(lat2*to_rad) * cos((lon2-lon1)*to_rad) 
+	const double to_rad = M_PI / 180.0;
+	const double d = acos(
+		sin(lat1*to_rad) * sin(lat2*to_rad)
+		+ cos(lat1*to_rad) * cos(lat2*to_rad) * cos((lon2-lon1)*to_rad)
 		) * Rearth;
 
-	alpha = atan2( sin((lon2-lon1)*to_rad)*cos(lat2*to_rad) , 
+	alpha = atan2( sin((lon2-lon1)*to_rad)*cos(lat2*to_rad) ,
 			cos(lat1*to_rad)*sin(lat2*to_rad) - sin(lat1*to_rad)*cos(lat2*to_rad)*cos((lon2-lon1)*to_rad)
  		) / to_rad;
 	alpha = fmod((alpha+360.), 360.);
@@ -1163,8 +1159,8 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double f = (a - b) / a;	//ellispoid flattening
-	const double to_rad = PI / 180.0;
-	
+	const double to_rad = M_PI / 180.0;
+
 	const double L = (lon1 - lon2)*to_rad;
 	const double U1 = atan( (1.-f)*tan(lat1*to_rad) );
 	const double U2 = atan( (1.-f)*tan(lat2*to_rad) );
@@ -1190,23 +1186,23 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 		}
 		C = f/16. * cos_alpha2*(4.+f*(4.-3.*cos_alpha2));
 		lambda_p = lambda;
-		lambda = L + (1.-C)*f*sin_alpha*( 
-			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*IOUtils::pow2(cos_2sigma_m)) ) 
+		lambda = L + (1.-C)*f*sin_alpha*(
+			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*IOUtils::pow2(cos_2sigma_m)) )
 			);
 		n++;
 	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
-	
+
 	if(n>n_max) {
 		throw IOException("Distance calculation not converging", AT);
 	}
-	
+
 	u2 = cos_alpha2 * (a*a - b*b) / (b*b);
 	A = 1. + u2/16384. * ( 4096.+u2*(-768.+u2*(320.-175.*u2)) );
 	B = u2/1024. * ( 256.+u2*(-128.+u2*(74.-47.*u2)) );
 	delta_sigma = B*sin_sigma*( cos_2sigma_m+B/4.*( cos_sigma*(-1.+2.*IOUtils::pow2(cos_2sigma_m)) - B/6.*(cos_2sigma_m*(-3.+4.*IOUtils::pow2(sin_sigma))*(-3.+4.*IOUtils::pow2(cos_2sigma_m))) ) );
 
 	s = b*A*(sigma - delta_sigma);	//distance between the two points
-	
+
 	//computation of the average forward bearing
 	double alpha1 = atan2(cos(U2)*sin(lambda), cos(U1)*sin(U2)-sin(U1)*cos(U2)*cos(lambda)) / to_rad; //forward azimuth
 	//double alpha2 = atan2(cos(U1)*sin(lambda), sin(U1)*cos(U2)-cos(U1)*sin(U2)*cos(lambda)) / to_rad; //reverse azimuth
@@ -1239,8 +1235,8 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 	const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis, value for wgs84
 	const double f = (a - b) / a;	//ellispoid flattening
-	const double to_rad = PI / 180.0;
-	const double to_deg = 180.0 / PI;
+	const double to_rad = M_PI / 180.0;
+	const double to_deg = 180.0 / M_PI;
 
 	const double alpha1 = bearing*to_rad;
 	const double tanU1 = (1.-f)*tan(lat_ref*to_rad);
@@ -1252,23 +1248,23 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 	const double u2 = cos2alpha * (a*a - b*b) / (b*b);
 	const double A = 1. + u2/16384. * (4096. + u2*(-768.+u2*(320.-175.*u2)) );
 	const double B = u2/1024. * (256. + u2*(-128.+u2*(74.-47.*u2)));
-	
+
 	double sigma = distance / (b*A);
-	double sigma_p = 2.*PI;
+	double sigma_p = 2.*M_PI;
 	double cos2sigma_m = cos( 2.*sigma1 + sigma ); //required to avoid uninitialized value
 
 	while (fabs(sigma - sigma_p) > thresh) {
 		cos2sigma_m = cos( 2.*sigma1 + sigma );
-		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * ( 
-			cos(sigma)*(-1.+2.*cos2sigma_m*cos2sigma_m) 
-			-B/6. * cos2sigma_m * (-3.+4.*pow2(sin(sigma))) * (-3.+4.*cos2sigma_m*cos2sigma_m)
+		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * (
+			cos(sigma)*(-1.+2.*cos2sigma_m*cos2sigma_m)
+			-B/6. * cos2sigma_m * (-3.+4.*IOUtils::pow2(sin(sigma))) * (-3.+4.*cos2sigma_m*cos2sigma_m)
 			) );
 		sigma_p = sigma;
 		sigma = distance / (b*A) + delta_sigma;
 	}
-	
+
 	lat = atan2( sinU1*cos(sigma) + cosU1*sin(sigma)*cos(alpha1),
-		     (1.-f) * sqrt( sinAlpha*sinAlpha + pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
+		     (1.-f) * sqrt( sinAlpha*sinAlpha + IOUtils::pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
 		   );
 	const double lambda = atan2( sin(sigma)*sin(alpha1), cosU1*cos(sigma) - sinU1*sin(sigma)*cos(alpha1) );
 	const double C = f/16. * cos2alpha * (4.+f*(4.-3.*cos2alpha));
@@ -1300,12 +1296,12 @@ void Coords::setFunctionPointers() {
 	//init function pointers
 	std::map<std::string, convfunc>::iterator mapitTo;
 	std::map<std::string, convfunc>::iterator mapitFrom;
-	mapitTo   = to_wgs84.find(coordsystem);	
-	mapitFrom = from_wgs84.find(coordsystem);	
-	
+	mapitTo   = to_wgs84.find(coordsystem);
+	mapitFrom = from_wgs84.find(coordsystem);
+
 	if ((mapitTo == to_wgs84.end()) || (mapitFrom == from_wgs84.end()))
 		throw IOException("No known conversions exist for coordinate system " + coordsystem, AT);
-	
+
 	convToWGS84   = mapitTo->second;
 	convFromWGS84 = mapitFrom->second;
 

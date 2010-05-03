@@ -23,6 +23,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <cmath>
 
 namespace mio {
 
@@ -145,7 +146,7 @@ class Coords {
 	std::string coordparam;
 	convfunc convToWGS84, convFromWGS84;
 	geo_distances distance_algo;
-	
+
 	///Keywords for selecting an ellipsoid to use
 	enum ELLIPSOIDS_NAMES {
 		E_WGS84, ///<Globally useable WGS84 ellipsoid
