@@ -269,6 +269,7 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 				if (!IOUtils::convertString(measurementTime, tmpstring, std::dec))
 					throw ConversionFailedException("Conversion failed for value TIMED", AT);
 				md.date.setDate(measurementTime);
+				md.date += Date(1.0/12.0); //Add two hours
 			}
 		}
 	}
