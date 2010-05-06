@@ -17,6 +17,10 @@
 */
 #include "BormaIO.h"
 
+using namespace std;
+using namespace mio;
+
+namespace mio {
 /**
  * @page borma BORMA
  * @section borma_format Format
@@ -32,17 +36,15 @@
  *
  * @section borma_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
- * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
+ * - COORDSYS: input coordinate system (see Coords) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - XMLPATH: string containing the path to the xml files
  * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station id for the given number #
  */
-
-using namespace std;
-using namespace mio;
+}
 
 const double BormaIO::plugin_nodata = -999.0; //plugin specific nodata value
 
@@ -110,7 +112,7 @@ void BormaIO::readStationData(const Date&, std::vector<StationData>&)
 }
 
 void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+							  std::vector< std::vector<MeteoData> >& vecMeteo,
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex)
 {
@@ -123,7 +125,7 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (stationindex == IOUtils::npos){
 		vecMeteo.clear();
 		vecStation.clear();
-		
+
 		vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>());
 		vecStation.insert(vecStation.begin(), vecStationName.size(), std::vector<StationData>());
 	} else {
@@ -154,11 +156,11 @@ void BormaIO::readStationNames()
 	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
 		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
 	}
-  
+
 	for (int ii=0; ii<stations; ii++) {
 		std::stringstream tmp_stream;
 		std::string stationname="", tmp_file="";
-		
+
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(std::string("STATION"+tmp_stream.str()), "Input", stationname);
 
@@ -181,7 +183,7 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 	dirlist.sort();
 
 	//Check date in every filename
-	std::list<std::string>::iterator it = dirlist.begin(); 
+	std::list<std::string>::iterator it = dirlist.begin();
 
 	if (start_date > end_date){ //Special case return first data >= dateStart
 		while ((it != dirlist.end())) {
@@ -196,12 +198,12 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 					return;
 				}
 			}
-			
+
 			it++;
 		}
 		return;
 	}
-	
+
 	while ((it != dirlist.end()) && (tmp_date < end_date)) {
 		//check validity of filename
 		if (validFilename(*it)) {
@@ -219,8 +221,8 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 }
 
 bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
-					   std::vector< std::vector<MeteoData> >& vecMeteo, 
-					   std::vector< std::vector<StationData> >& vecStation, 
+					   std::vector< std::vector<MeteoData> >& vecMeteo,
+					   std::vector< std::vector<StationData> >& vecStation,
 					   const unsigned int& stationnr)
 {
 	std::vector<std::string> vecFiles;
@@ -262,17 +264,17 @@ void BormaIO::checkForMeteoFiles(const std::string& xmlpath, const std::string& 
 	dirlist.sort();
 
 	//Check date in every filename
-	std::list<std::string>::iterator it = dirlist.begin(); 
-  
+	std::list<std::string>::iterator it = dirlist.begin();
+
 	while ((it != dirlist.end()) && (date_out < date_in)) {
 		//check validity of filename
 		if (validFilename(*it)) {
 			filename_out = *it;
 			stringToDate(filename_out, date_out);
 		}
-    
+
 		it++;
-	}  
+	}
 }
 
 void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, MeteoData& md, StationData& sd)
@@ -357,7 +359,7 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		md.setData(MeteoData::RSWR, rswr);
 
 		convertUnits(md);
-		
+
 	} else {
 		throw IOException("Error parsing XML", AT);
 	}
@@ -375,7 +377,7 @@ void BormaIO::xmlParseStringToDouble(const std::string& str_in, double& d_out, c
 std::string BormaIO::xmlGetNodeContent(xmlpp::Node* pNode, const std::string& nodename)
 {
 	xmlpp::Node* tmpNode= xmlGetNode(pNode, nodename);
-  
+
 	if (tmpNode!=NULL) {
 		xmlpp::Node* tmpNode2= xmlGetNode(tmpNode, "text"); //Try to retrieve text content
 		if (tmpNode2!=NULL) {
@@ -428,10 +430,10 @@ void BormaIO::stringToDate(const std::string& instr, Date& date_out) const
 
 	IOUtils::convertString(tmp[0], year, std::dec);
 	IOUtils::convertString(tmp[1], month, std::dec);
-	IOUtils::convertString(tmp[2], day, std::dec); 
+	IOUtils::convertString(tmp[2], day, std::dec);
 	IOUtils::convertString(tmp[3], hour, std::dec);
 	IOUtils::convertString(tmp[4], minute, std::dec);
-  
+
 	date_out.setDate(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]);
 }
 
@@ -441,7 +443,7 @@ bool BormaIO::validFilename(const std::string& tmp) const
 	if (pos!=10) {
 		return false;
 	}
-  
+
 	return true;
 }
 
@@ -466,30 +468,30 @@ void BormaIO::read2DMeteo(const Date& date_in, std::vector<MeteoData>& vecMeteo,
 	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
 		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
 	}
-  
+
 	for (int ii=0; ii<stations; ii++) {
 		std::stringstream tmp_stream;
 		std::string stationname="", tmp_file="";
 		Date tmp_date(0.0);
 		MeteoData md;
 		StationData sd;
-    
+
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(std::string("STATION"+tmp_stream.str()), "Input", stationname);
 
 		checkForMeteoFiles(xmlpath, stationname, date_in, tmp_file, tmp_date);
 		//Check whether file was found
 		if (tmp_date<date_in) {
-			throw FileNotFoundException("No XML file in path '" + xmlpath 
+			throw FileNotFoundException("No XML file in path '" + xmlpath
 								   + "' found for date " + date_in.toString(Date::ISO) + " for station " + stationname, AT);
 		}
 
 		//Read in data from XML File
 		xmlExtractData(xmlpath+"/"+tmp_file, tmp_date, md, sd);
-    
+
 		vecMeteo.push_back(md);
 		vecStation.push_back(sd);
-	}  
+	}
 }
 
 void BormaIO::readAssimilationData(const Date&, Grid2DObject&)
@@ -519,11 +521,11 @@ void BormaIO::convertUnits(MeteoData& meteo)
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
-	
+
 	if(meteo.tsg!=IOUtils::nodata) {
 		meteo.tsg=C_TO_K(meteo.tss);
 	}
-	
+
 	if(meteo.tss!=IOUtils::nodata) {
 		meteo.tss=C_TO_K(meteo.tss);
 	}
@@ -539,7 +541,7 @@ extern "C"
 	void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
-  
+
 	void* loadObject(const std::string& classname, const std::string& filename) {
 		if(classname == "BormaIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;

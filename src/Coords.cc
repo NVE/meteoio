@@ -24,6 +24,7 @@
 using namespace std;
 using namespace mio;
 
+namespace mio {
  /**
  * @page coords Available coordinate systems
  * Geographic coordinates will be transparently and automatically converted to lat/lon and any other coordinate system that
@@ -58,6 +59,7 @@ using namespace mio;
  * @endcode
  *
  */
+}
 
 const struct mio::Coords::ELLIPSOID mio::Coords::ellipsoids[] = {
 	{ 6378137.,	6356752.3142 }, ///< E_WGS84
@@ -356,12 +358,12 @@ void Coords::setGridIndex(const int _grid_i, const int _grid_j, const int _grid_
 }
 
 /**
-* \anchor Coordinate_types
 * @brief Set projection to use
 * This projection will be used for converting between lat/lon and East/North
 * @param[in] _coordinatesystem string identifying the coordinate system to use
 * @param[in] _parameters string giving some additional parameters for the projection (optional)
 *
+*  \anchor Coordinate_types
 * The coordinate system can be any of the following:
 * - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
 * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]

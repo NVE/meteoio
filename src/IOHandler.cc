@@ -27,9 +27,10 @@
 	#include "IOHandler.h"
 #endif
 
+namespace mio {
  /**
  * @page plugins Plugins overview
- * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are loaded on demand (and also compiled only if requested at compile time). A plugin can therefore fail to load (for example if it does not exist) at run time. 
+ * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are loaded on demand (and also compiled only if requested at compile time). A plugin can therefore fail to load (for example if it does not exist) at run time.
  *
  * @section available_plugins Available plugins
  * So far the following children have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
@@ -41,8 +42,9 @@
  * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
  * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
- * 
+ *
  */
+}
 
 using namespace std;
 using namespace mio;
@@ -148,7 +150,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		std::cout << "\t" << "Trying to load " << libname << " ... ";
 		std::string filename = pluginpath + libname;
 		dynLibrary = DynamicLoader::loadObjectFile(filename);
-		
+
 		if(dynLibrary == NULL) {
 			std::cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << DynamicLoader::getErrorMessage() << std::endl;
 		} else {
@@ -176,11 +178,11 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
 		throw IOException(cfgkey + " does not seem to be valid plugin in file " + cfg.getSourceName(), AT);
-	
+
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
 	}
-	
+
 	if ((mapit->second).io == NULL) {
 		throw IOException("Requesting to read/write data with plugin for " + cfgkey + ", but plugin is not loaded", AT);
 	}
@@ -217,7 +219,7 @@ void IOHandler::readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION
 {
 	vecMeteo.clear();
 	vecStation.clear();
-	
+
 	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
 	std::vector< std::vector<StationData> > stationTmpBuffer;
 	readMeteoData(date, date, meteoTmpBuffer, stationTmpBuffer);
@@ -238,9 +240,9 @@ void IOHandler::readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION
 	}
 }
 
-void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd, 
-						std::vector<METEO_DATASET>& vecMeteo, 
-						std::vector<STATION_DATASET>& vecStation, 
+void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
+						std::vector<METEO_DATASET>& vecMeteo,
+						std::vector<STATION_DATASET>& vecStation,
 						const unsigned& stationindex)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
@@ -250,7 +252,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 void IOHandler::writeMeteoData(std::vector<METEO_DATASET>& vecMeteo,
                                std::vector<STATION_DATASET>& vecStation,
                                std::string& name)
-#else 
+#else
 void IOHandler::writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
                                const std::vector<STATION_DATASET>& vecStation,
                                const std::string& name)

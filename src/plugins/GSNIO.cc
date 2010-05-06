@@ -17,6 +17,10 @@
 */
 #include "GSNIO.h"
 
+using namespace std;
+using namespace mio;
+
+namespace mio {
 /**
  * @page gsn GSN
  * @section gsn_format Format
@@ -27,7 +31,8 @@
  * - LIGHT mapped to iswr
  * - TEMPERATURE or AIR_TEMP mapped to ta
  * - WIND_SPEED mapped to wv
- * - SOLAR_RAD mapped to iswr and ilwr //HACK: THIS IS A BUG!!
+ * - SOLAR_RAD mapped to iswr
+ * - currently, nothing feeds ilwr //HACK: THIS IS A BUG!!
  * - AIR_HUMID mapped to rh
  * - SOIL_TEMP_ECTM mapped to tss
  * - GROUND_TEMP_TNX mapped to tsg
@@ -43,10 +48,10 @@
  *
  * @section gsn_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
- * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
+ * - COORDSYS: input coordinate system (see Coords) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - PROXY: an IP address or a resolveable hostname
  * - PROXYPORT: the port the proxy is listening on
  * - PROXYUSER: (if necessary) a proxy username
@@ -54,14 +59,12 @@
  *
  * @section license Licensing
  * This software is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * 
+ *
  * Part of the software embedded in this product is gSOAP software.
  * Portions created by gSOAP are Copyright (C) 2001-2009 Robert A. van Engelen, Genivia inc. All Rights Reserved.
  * THE SOFTWARE IN THIS PRODUCT WAS IN PART PROVIDED BY GENIVIA INC AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-using namespace std;
-using namespace mio;
+}
 
 const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
@@ -92,29 +95,29 @@ void GSNIO::initGSNConnection(){
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
 
 	/*
-	 * Trying to read proxy settings: 
+	 * Trying to read proxy settings:
 	 * - Firstly the hostname and port (both have to be provided).
 	 * - If this succeeds then the username and password will be read
 	 * - parameters not set will be set to ""
 	 */
 	try {
-		cfg.getValue("PROXY", hostname, ConfigReader::nothrow); 
+		cfg.getValue("PROXY", hostname, ConfigReader::nothrow);
 		if (hostname == "") return;
-		cfg.getValue("PROXYPORT", port, ConfigReader::nothrow); 
+		cfg.getValue("PROXYPORT", port, ConfigReader::nothrow);
 		if (port == "") return;
 
 		if (!IOUtils::convertString(proxyport, port, std::dec))
 			throw ConversionFailedException("", AT);
-		if (proxyport < 1) 
+		if (proxyport < 1)
 			throw IOException("",AT);
 
 		gsn.proxy_host = hostname.c_str();
 		gsn.proxy_port = proxyport;
 
-		cfg.getValue("PROXYUSER", userid); 
+		cfg.getValue("PROXYUSER", userid);
 		gsn.proxy_userid = userid.c_str();
-		cfg.getValue("PROXYPASS", passwd); 
-		gsn.proxy_passwd = passwd.c_str(); 
+		cfg.getValue("PROXYPASS", passwd);
+		gsn.proxy_passwd = passwd.c_str();
 	} catch(...){}
 }
 
@@ -137,7 +140,7 @@ void GSNIO::readLanduse(Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
+void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 					  const std::vector< std::vector<StationData> >&,
 					  const std::string&)
 {
@@ -160,8 +163,8 @@ void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	}
 }
 
-void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
+void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
+							  std::vector< std::vector<MeteoData> >& vecMeteo,
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex)
 {
@@ -203,7 +206,7 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 	_ns1__getSensorLocationResponse sensorloc;
 
 	sensorloc_req.sensor = &vecStationName[stationindex];
-	
+
 	if (gsn.getSensorLocation(&sensorloc_req, &sensorloc) == SOAP_OK){
 		if (sensorloc.return_.size() != 4) throw IOException("Not enough SensorLocation data received ...", AT);
 
@@ -240,7 +243,7 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 	vecString.clear();
 
 	//cout << _string << endl;
-	
+
 	std::stringstream ss(_string);
 	std::string tmpstring;
 
@@ -256,8 +259,8 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 			else if (key == "WIND_SPEED") convertStringToDouble(md.vw, tmpstring, "Wind Velocity");
 			else if (key == "WIND_DIRECTION") convertStringToDouble(md.dw, tmpstring, "Wind Velocity");
 			else if (key == "SOLAR_RAD") {
-				convertStringToDouble(md.iswr, tmpstring, "solar_rad");				
-				//convertStringToDouble(md.ilwr, tmpstring, "solar_rad");				
+				convertStringToDouble(md.iswr, tmpstring, "solar_rad");
+				//convertStringToDouble(md.ilwr, tmpstring, "solar_rad");
 			}
 			else if (key == "AIR_HUMID") convertStringToDouble(md.rh, tmpstring, "air_humid");
 			else if (key == "SOIL_TEMP_ECTM") convertStringToDouble(md.tss, tmpstring, "soil_temp_ectm");
@@ -281,7 +284,7 @@ void GSNIO::convertStringToDouble(double& d, const std::string& _string, const s
 		throw ConversionFailedException("Conversion failed for value " + _parname, AT);
 }
 
-void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
+void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 				 std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex)
 {
 	_ns1__getMeteoData meteodata_req;
@@ -306,10 +309,10 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< st
 
 	//cout << dateStart << "  " << dateEnd << endl;
 	//cout << dateStart.getUnixDate() << "==" << l1 << endl; cout << dateEnd.getUnixDate() << "==" << l2 << endl;
-	
+
 	meteodata_req.from = l1;
 	meteodata_req.to = l2;
-	
+
 	//cout << std::dec << meteodata_req.param1 << "\t" << meteodata_req.param2 << endl;
 
 	if (gsn.getMeteoData(&meteodata_req, &meteodata) == SOAP_OK){
@@ -341,11 +344,11 @@ void GSNIO::readStationNames()
 	if (str_stations != ""){
 		if (!IOUtils::convertString(stations, str_stations, std::dec))
 			throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
-		
+
 		for (int ii=0; ii<stations; ii++) {
 			stringstream tmp_stream;
 			string stationname="", tmp_file="";
-			
+
 			tmp_stream << (ii+1); //needed to construct key name
 			cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
 			std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
@@ -393,11 +396,11 @@ void GSNIO::convertUnits(MeteoData& meteo)
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
-	
+
 	if(meteo.tsg!=IOUtils::nodata) {
 		meteo.tsg=C_TO_K(meteo.tsg);
 	}
-	
+
 	if(meteo.tss!=IOUtils::nodata) {
 		meteo.tss=C_TO_K(meteo.tss);
 	}
@@ -412,7 +415,7 @@ extern "C"
 	void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
-  
+
 	void* loadObject(const std::string& classname, const std::string& filename) {
 		if(classname == "GSNIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;

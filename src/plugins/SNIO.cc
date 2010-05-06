@@ -17,6 +17,10 @@
 */
 #include "SNIO.h"
 
+using namespace std;
+using namespace mio;
+
+namespace mio {
 /**
  * @page snowpack SNIO
  * @section snowpack_format Format
@@ -31,14 +35,12 @@
  *
  * @section snowpack_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDIN: input coordinate system (see Coordinate)
- * - COORDPARAM: extra input coordinates parameters (see Coordinate)
+ * - COORDIN: input coordinate system (see Coords)
+ * - COORDPARAM: extra input coordinates parameters (see Coords)
  * - METEOPATH: path to the output directory
  *
  */
-
-using namespace std;
-using namespace mio;
+}
 
 const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = 0.0; //plugin specific nodata value
@@ -104,7 +106,7 @@ void SNIO::readStationData(const Date& /*date*/, std::vector<StationData>& /*vec
 }
 
 void SNIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-					 std::vector< std::vector<MeteoData> >& /*vecMeteo*/, 
+					 std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
 					 std::vector< std::vector<StationData> >& /*vecStation*/,
 					 const unsigned int& /*stationindex*/)
 {
@@ -192,7 +194,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 		if(dw==IOUtils::nodata)
 			failure_count++;
 		fout << setw(4) << setprecision(0) << dw << " ";
-		
+
 		//ISWR, RSWR
 		if(iswr==IOUtils::nodata && rswr==IOUtils::nodata) {
 			failure_count++;
@@ -278,7 +280,7 @@ extern "C"
 	void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
-  
+
 	void* loadObject(const string& classname, const string& filename) {
 		if(classname == "SNIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;

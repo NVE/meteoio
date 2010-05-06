@@ -17,27 +17,29 @@
 */
 #include "GrassIO.h"
 
+using namespace std;
+using namespace mio;
+
+namespace mio {
 /**
  * @page grass GRASS
  * @section grass_format Format
- * This is for reading grid data in the JGRASS GIS format(see http://jgrass.wiki.software.bz.it/jgrass/JGrass_Wiki) 
+ * This is for reading grid data in the JGRASS GIS format(see http://jgrass.wiki.software.bz.it/jgrass/JGrass_Wiki)
  *
  * @section grass_units Units
  * The distances are assumed to be in meters.
  *
  * @section grass_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
- * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
+ * - COORDSYS: input coordinate system (see Coords) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
-
-using namespace std;
-using namespace mio;
+}
 
 const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
@@ -88,15 +90,15 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}
-  
+
 	fin.clear();
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
 		throw FileAccessException(filename, AT);
 	}
-  
+
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-   
+
 	//Go through file, save key value pairs
 	try {
 		IOUtils::readKeyValueHeader(header, fin, 6, ":");
@@ -130,10 +132,10 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		//compute WGS coordinates (considered as the true reference)
 		Coords coordinate(coordin, coordinparam);
 		coordinate.setXY(xllcorner, yllcorner, IOUtils::nodata);
-		
+
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, cellsize, coordinate);
-		
+
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln); //read complete line
@@ -142,7 +144,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
 				throw InvalidFormatException("Premature End " + filename, AT);
 			}
-			
+
 			for (unsigned int ll=0; ll < ncols; ll++){
 				if (tmpvec[ll] == "*"){
 					tmp_val = plugin_nodata;
@@ -151,7 +153,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 						throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
 					}
 				}
-				
+
 				if(tmp_val <= plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
 					grid_out.grid2D(ll, kk) = IOUtils::nodata;
@@ -188,7 +190,7 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	string filepath="";
 
 	cfg.getValue("DAPATH", "Input", filepath); // cout << tmp << endl;
-  
+
 	stringstream ss;
 	ss.fill('0');
 	ss << filepath << "/" << setw(4) << yyyy << setw(2) << MM << setw(2) <<  dd << setw(2) <<  hh << setw(2) <<  mm <<".sca";
@@ -202,8 +204,8 @@ void GrassIO::readStationData(const Date&, std::vector<StationData>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GrassIO::readMeteoData(const Date&, const Date&, 
-					 std::vector< std::vector<MeteoData> >&, 
+void GrassIO::readMeteoData(const Date&, const Date&,
+					 std::vector< std::vector<MeteoData> >&,
 					 std::vector< std::vector<StationData> >&,
 					 const unsigned int&)
 {
@@ -211,7 +213,7 @@ void GrassIO::readMeteoData(const Date&, const Date&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GrassIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
+void GrassIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 					    const std::vector< std::vector<StationData> >&,
 					    const std::string&)
 {
@@ -226,7 +228,7 @@ void GrassIO::readSpecialPoints(std::vector<Coords>&)
 }
 
 void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
-{  
+{
 	fout.open(name.c_str());
 	if (fout.fail()) {
 		throw FileAccessException(name, AT);
@@ -280,7 +282,7 @@ extern "C"
 	void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
-  
+
 	void* loadObject(const string& classname, const string& filename) {
 		if(classname == "GrassIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;

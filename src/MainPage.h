@@ -280,22 +280,22 @@ namespace mio {
  * 	(void)argc;
  * 	//provide date as ISO formatted, for example 2008-12-01T15:35:00
  * 	Date d1;
- * 	std::vector<MeteoData> vecMeteo;
- * 	std::vector<StationData> vecStation;
+ * 	std::vector<mio::MeteoData> vecMeteo;
+ * 	std::vector<mio::StationData> vecStation;
  *
- * 	IOHandler *raw_io = NULL;
- * 	BufferedIOHandler *io = NULL;
+ * 	mio::IOHandler *raw_io = NULL;
+ * 	mio::BufferedIOHandler *io = NULL;
  *
  * 	try {
- * 		ConfigReader cfg("io.ini");
- * 		raw_io = new IOHandler(cfg);
- * 		io = new BufferedIOHandler(*raw_io, cfg);
+ * 		mio::ConfigReader cfg("io.ini");
+ * 		raw_io = new mio::IOHandler(cfg);
+ * 		io = new mio::BufferedIOHandler(*raw_io, cfg);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
  *
  * 	try {
- * 		convertString(d1,argv[1]);
+ * 		mio::convertString(d1,argv[1]);
  * 		io->readMeteoData(d1, vecMeteo, vecStation);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem when reading data, cause: " << e.what() << std::endl;
@@ -321,26 +321,26 @@ namespace mio {
  *
  * int main(void) {
  * 	const double dist_x=700, dist_y=1200;
- * 	DEMObject dem;
- * 	IOHandler *raw_io = NULL;
- *	ConfigReader *cfg = NULL;
+ * 	mio::DEMObject dem;
+ * 	mio::IOHandler *raw_io = NULL;
+ *	mio::ConfigReader *cfg = NULL;
  * 	int i,j;
  *
  * 	try {
- * 		cfg = new ConfigReader("io.ini");
- * 		raw_io = new IOHandler(cfg);
+ * 		cfg = new mio::ConfigReader("io.ini");
+ * 		raw_io = new mio::IOHandler(cfg);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
  * 	raw_io->readDEM(dem);
- *	Coords point(*cfg);
+ *	mio::Coords point(*cfg);
  *	point.setLatLon(46.1592, 8.12993);
  *	dem.WGS84_to_grid(point, i,j);
  *
  * 	const int ncols = (int)ceil(dist_x/dem.cellsize);
  * 	const int nrows = (int)ceil(dist_y/dem.cellsize);
  *
- * 	DEMObject sub_dem(dem, i, j, ncols, nrows);
+ * 	mio::DEMObject sub_dem(dem, i, j, ncols, nrows);
  * 	io->write2DGrid(sub_dem,"sub_dem.dem");
  *
  * 	return 0;
@@ -349,13 +349,13 @@ namespace mio {
  *
  * The next example shows how to compute and output spatial interpolations using previously read meteorological data and DEM.
  * \code
- * void spatial_interpolations(IOHandler& io, DEMObject& dem, std::vector<MeteoData>& vecMeteo,
- * 		std::vector<StationData>& vecStation);
+ * void spatial_interpolations(mio::IOHandler& io, mio::DEMObject& dem, std::vector<mio::MeteoData>& vecMeteo,
+ * 		std::vector<mio::StationData>& vecStation);
  * {
- * 	Grid2DObject ta;
- * 	Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
+ * 	mio::Grid2DObject ta;
+ * 	mio::Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
  *
- * 	mi.interpolate(MeteoData::TA, ta);
+ * 	mi.interpolate(mio::MeteoData::TA, ta);
  *
  * 	std::cout << "Writing the Grids to files" << std::endl;
  * 	io->write2DGrid(ta, "ta_2d.asc");

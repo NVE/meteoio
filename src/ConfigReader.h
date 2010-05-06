@@ -31,14 +31,14 @@ namespace mio {
 
 /**
  * @class ConfigReader
- * @brief A class that reads a key/value file. These files (typically named *.ini) have the following structure:
+ * @brief A class that reads a key/value file. These files (typically named *.ini) follow the INI file format standard (see http://en.wikipedia.org/wiki/INI_file) and have the following structure:
  * - they consist of 0 or more explicitly indicated sections, which start with a sectionname enclosed in square brackets
  *   e.g. [General] or [Filter]
- * - within each section there are 0 or more key value pairs defined: KEY = VALUE 
+ * - within each section there are 0 or more key value pairs defined: KEY = VALUE
  * - in this implementation each key is unique within its section
  * - lines that start with a semicolon ';' or a hash sign '#' are ignored (regarded as comments)
  * - empty lines are ignored
- * - if there is no section name given in a file, the default section called "GENERAL" is assumed 
+ * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
  *
  * @author Thomas Egger
@@ -49,7 +49,7 @@ namespace IOUtils {
 	void toUpper(std::string& str);
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 								    const std::string& key, T& t);
-	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 								    const std::string& key, std::vector<T>& vecT);
 }
 
@@ -115,12 +115,12 @@ class ConfigReader {
 		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved
 		 * @param[in] options indicating whether an exception should be raised, when key is not present
 		 */
-		template <class T> void getValue(const std::string& key, 
-								   std::vector<T>& vecT, 
+		template <class T> void getValue(const std::string& key,
+								   std::vector<T>& vecT,
 								   const unsigned int& options=0) const {
 			getValue(key, "GENERAL", vecT, options);
 		}
-		
+
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key
 		 * @code
@@ -129,12 +129,12 @@ class ConfigReader {
 		 * @endcode
 		 * @param[in] key std::string representing a KEY in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
-		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved 
+		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved
 		 * @param[in] options indicating whether an exception should be raised, when key is not present
 		 */
-		template <class T> void getValue(const std::string& key, 
-								   const std::string& section, 
-								   std::vector<T>& vecT, 
+		template <class T> void getValue(const std::string& key,
+								   const std::string& section,
+								   std::vector<T>& vecT,
 								   const unsigned int& options=0) const {
 			try {
 				vecT.clear();
@@ -166,8 +166,8 @@ class ConfigReader {
 		 * @param[out] t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
 		 * @param[in] options indicating whether an exception should be raised, when key is not present
 		 */
-		template <class T> void getValue(const std::string& key, const std::string& section, 
-								   T& t, 
+		template <class T> void getValue(const std::string& key, const std::string& section,
+								   T& t,
 								   const unsigned int& options=0) const {
 			try {
 				std::string _section = section;
@@ -180,7 +180,7 @@ class ConfigReader {
 				}
 			}
 		}
-		
+
 
 		/**
 		 * @brief Function that searches for a given string within the keys of section (default: GENERAL)
@@ -194,7 +194,7 @@ class ConfigReader {
 		 *  unsigned int nrOfMatches = getKeys(myVec, "TA::", "Filters");
 		 * @endcode
 		 */
-		unsigned int findKeys(std::vector<std::string>& vecResult, 
+		unsigned int findKeys(std::vector<std::string>& vecResult,
 						  const std::string keystart, const std::string section="GENERAL") const;
 
 		static const unsigned int nothrow;

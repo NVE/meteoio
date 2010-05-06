@@ -17,6 +17,10 @@
 */
 #include "ARCIO.h"
 
+using namespace std;
+using namespace mio;
+
+namespace mio {
 /**
  * @page arc ARC
  * @section arc_format Format
@@ -25,7 +29,7 @@
  * - the header data is right aligned to the 23rd column
  * - float header data has 3 digits precision
  * - all grid data is written as float (which might cause some trouble for some softwares)
- * 
+ *
  * These specifications should reflect commonly accepted practise.
  *
  * @section lus_format Land Use Format
@@ -78,17 +82,15 @@
  *
  * @section arc_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
- * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
+ * - COORDSYS: input coordinate system (see Coords) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
-
-using namespace std;
-using namespace mio;
+}
 
 ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
@@ -136,15 +138,15 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}
-  
+
 	fin.clear();
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
 		throw FileAccessException(filename, AT);
 	}
-	
+
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-	
+
 	//Go through file, save key value pairs
 	try {
 		IOUtils::readKeyValueHeader(header, fin, 6, " ");
@@ -174,10 +176,10 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
 		Coords location(coordin, coordinparam);
 		location.setXY(xllcorner, yllcorner, IOUtils::nodata);
-		
+
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, cellsize, location);
-		
+
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln); //read complete line
@@ -186,12 +188,12 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
 				throw InvalidFormatException("Premature End " + filename, AT);
 			}
-			
+
 			for (unsigned int ll=0; ll < ncols; ll++){
 				if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
 					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
 				}
-				
+
 				if(tmp_val<=plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
 					grid_out.grid2D(ll, kk) = IOUtils::nodata;
@@ -228,7 +230,7 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	string filepath="";
 
 	cfg.getValue("DAPATH", "Input", filepath); // cout << tmp << endl;
-  
+
 	stringstream ss;
 	ss.fill('0');
 	ss << filepath << "/" << setw(4) << yyyy << setw(2) << MM << setw(2) <<  dd << setw(2) <<  hh <<  setw(2) <<  mm << ".sca";
@@ -242,8 +244,8 @@ void ARCIO::readStationData(const Date&, std::vector<StationData>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::readMeteoData(const Date&, const Date&, 
-					 std::vector< std::vector<MeteoData> >&, 
+void ARCIO::readMeteoData(const Date&, const Date&,
+					 std::vector< std::vector<MeteoData> >&,
 					 std::vector< std::vector<StationData> >&,
 					 const unsigned int&)
 {
@@ -251,7 +253,7 @@ void ARCIO::readMeteoData(const Date&, const Date&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, 
+void ARCIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 					  const std::vector< std::vector<StationData> >&,
 					  const std::string&)
 {
@@ -276,7 +278,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	//we want to make sure that we are using the provided projection parameters
 	//so that we output is done in the same system as the inputs
 	llcorner.setProj(coordout, coordoutparam);
-	
+
 	fout << fixed << showpoint << setprecision(6);
 
 	try {
@@ -308,7 +310,7 @@ extern "C"
 	void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
-  
+
 	void* loadObject(const string& classname, const string& filename) {
 		if(classname == "ARCIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;

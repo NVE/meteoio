@@ -30,6 +30,7 @@ const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24
 
 const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_h from station2.standort WHERE stat_abk =: 1 AND stao_nr =: 2";
 
+namespace mio {
 /**
  * @page imis IMIS
  * @section imis_format Format
@@ -45,16 +46,17 @@ const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_
  *
  * @section imis_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coordinate) specified in the [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coordinate) specified in the [Input] section
- * - COORDSYS: output coordinate system (see Coordinate) specified in the [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coordinate) specified in the [Output] section
+ * - COORDSYS: input coordinate system (see Coords) specified in the [Input] section
+ * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
+ * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
+ * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - DBNAME: name of the database to use (exemple: sdbo)
  * - DBUSER: user name to use when connecting to the database
  * - DBPASS: password to use when connecting to the database
  * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station code for the given number #
  */
+}
 
 void ImisIO::getDBParameters()
 {
