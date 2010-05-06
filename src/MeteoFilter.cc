@@ -100,6 +100,16 @@ bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 	std::vector<MeteoData> vecFilteredM;   
 	std::vector<StationData> vecFilteredS;
 
+
+	for (int ii=(int)pos-5; ii<=(int)pos+4; ii++){
+		if ((ii>=0) && (ii<(int)vecM.size())){
+			vecFilteredM.push_back(vecM.at(ii));
+			vecFilteredS.push_back(vecS.at(ii));
+			//cout << "Added " << vecM[ii].date.toString(Date::ISO) << endl;
+		}
+	}
+
+	/*
 	if (vecM.at(pos).date == date){ //No resampling required, all other filters may apply
 		vecFilteredM.push_back(vecM[pos]);
 		vecFilteredS.push_back(vecS.at(pos));
@@ -110,7 +120,10 @@ bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 		vecFilteredM.push_back(vecM.at(pos));
 		vecFilteredS.push_back(vecS.at(pos));
 	}
+	*/
 
+
+	
 	for (unsigned int ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
 		//cout << "For parameter: " << MeteoData::getParameterName(ii) << endl;
 		for (unsigned int jj=0; jj<tasklist[ii].size(); jj++){ //For eack activated filter
@@ -128,12 +141,23 @@ bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 	if (vecFilteredM.size()==1){ //no resampling was required
 		md = vecFilteredM[0];
 		sd = vecFilteredS[0];		
-	} else if (vecFilteredM.size()==3){ //resampling required and successfully executed
-		md = vecFilteredM[1];
-		sd = vecFilteredS[1];		
-	} else { //Resampling was disabled, return a nodata data set
-		md = MeteoData(date);
-		sd = vecS.at(pos);
+	} else {
+	  //Two options, either the date is in the buffer vecFilteredM, then return it or not, then return nodata
+	  unsigned int pos = vecFilteredM.size() + 1;
+	  for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+	    if (date == vecFilteredM[ii].date){
+	      pos = ii;
+	      break;
+	    }
+	  }
+
+	  if (pos < vecFilteredM.size()){
+	    md = vecFilteredM[pos];
+	    sd = vecFilteredS[pos];
+	  } else {
+	    md = MeteoData(date);
+	    sd = vecS.at(pos);	    
+	  }
 	}
 
 	return true;

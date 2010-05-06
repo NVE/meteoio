@@ -500,8 +500,17 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 	
 	Date deltatime(vecArgs[0]/(24.*3600.)); //making a julian date out of the argument given in seconds
 
+	unsigned int index = vecFilteredM.size();
+	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+	  if (vecFilteredM[ii].date >= date)
+	    index = ii;
+	}
+
+	if (index >= vecFilteredM.size())
+	  return false;
+
 	int startposition = pos;
-	for (int ii=vecFilteredM.size()-1; ii>=0; ii--){
+	for (int ii=index; (ii>=((int)index-1) && (ii>=0)); ii--){
 		unsigned int mypos = startposition;
 
 		double sum = 0.0;
@@ -510,7 +519,7 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 			if (val != IOUtils::nodata)
 				sum += vecM[mypos].param(paramindex);
 
-			//cout << vecM[mypos].date << " HNW:" << vecM[mypos].param(paramindex) << "  SUM:" << sum << endl;		
+			//cout << vecM[mypos].date.toString(Date::ISO) << " HNW:" << vecM[mypos].param(paramindex) << "  SUM:" << sum << endl;		
 
 			if (mypos>0) mypos--;
 			else break;
@@ -537,28 +546,66 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 							std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
 	(void)vecM; (void)vecS; (void)pos; (void)_vecArgs;
+	int indexBefore=-1, indexExact=-1, indexAfter=-1;
+
 	if ((vecFilteredM.size()==1) &&(date==vecFilteredM[0].date)){//Nothing to do
 		return false; //Interpretation: filter not applied
-	} else if ((vecFilteredM.size() < 2) || (vecFilteredM.size() > 3)){
-		throw IOException("Not enough data to do resampling or index out of bounds", AT);
-	} else if (vecFilteredM.size()==2){
-		//add another element
-		MeteoData newmd;
-		newmd.date = date;
-		newmd.setResampled(true);
-		vecFilteredM.insert(vecFilteredM.begin() + 1, newmd);
-		vecFilteredS.insert(vecFilteredS.begin() + 1, vecFilteredS[0]);
+	} else if (vecFilteredM.size() == 0){
+		throw IOException("Not enough data to do resampling ...", AT);
+	} else if (vecFilteredM.size()>=2){
+		//check whether there is already an element with the correct date in vecFilteredM
+		for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+			if (vecFilteredM.at(ii).date < date){
+				indexBefore = (int)ii;
+			} else if (vecFilteredM.at(ii).date == date){
+				indexExact = (int)ii;
+			} else if (vecFilteredM.at(ii).date > date){
+				indexAfter = (int)ii;
+			}
+		}
+
+		if ((indexExact == -1) && (indexAfter>0)){ //no MeteoData object with the correct date present
+			MeteoData newmd(date);
+			newmd.setResampled(true);
+
+			vecFilteredM.insert(vecFilteredM.begin() + indexAfter, newmd);
+			vecFilteredS.insert(vecFilteredS.begin() + indexAfter, vecFilteredS[0]);
+			indexExact = indexAfter;
+			indexAfter++;
+		} else if (((indexExact != -1) && (indexAfter == -1)) || ((indexExact != -1) && (indexBefore == -1))){
+		  return false; //No resampling possible, for lack of a right/left element
+		} else if (indexExact != -1){
+		  if (vecFilteredM[indexExact].param(paramindex) != IOUtils::nodata)
+		    return false;
+		}
 	}
 
-	const MeteoData& tmpmd1 = vecFilteredM[0];
-	MeteoData& resampledmd  = vecFilteredM[1];
-	const MeteoData& tmpmd2 = vecFilteredM[2];
+	//Now find two points within the vecFilteredM (before and aft, that are not IOUtils::nodata)
+	//If that condition cannot be met, simply add nodata for the resampled value
+	
+	for (unsigned int ii=indexBefore+1; (ii--) > 0; ){
+		if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
+			indexBefore=ii;
+			break;
+		}
+	}		
+
+	for (unsigned int ii=indexAfter; ii<vecFilteredM.size(); ii++){
+		if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
+			indexAfter = ii;
+			break;
+		}
+	}
+
+	MeteoData& resampledmd  = vecFilteredM.at((unsigned int) indexExact);
+	const MeteoData& tmpmd1 = vecFilteredM.at((unsigned int) indexBefore);
+	const MeteoData& tmpmd2 = vecFilteredM.at((unsigned int) indexAfter);
 
 	double weight = (date.getJulianDate() - tmpmd1.date.getJulianDate()) / (tmpmd2.date.getJulianDate() - tmpmd1.date.getJulianDate());
 
 	const double& val1 = tmpmd1.param(paramindex);
 	const double& val2 = tmpmd2.param(paramindex);
-	
+
 	if ((val1 == IOUtils::nodata) || (val2 == IOUtils::nodata)){
 		resampledmd.param(paramindex) = IOUtils::nodata;
 	} else {
