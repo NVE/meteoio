@@ -269,8 +269,8 @@ bool FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 			}
 		}
 	} else {
-		const double tmp = vecFilteredM.size();
-		std::cout << tmp << std::endl;
+		//const double tmp = vecFilteredM.size();
+		//std::cout << tmp << std::endl;
 		//the request time step is part of the data
 		if(pos>1) { //if we are at the start of the data set, we can not apply the filter...
 			double& value = vecFilteredM[0].param(paramindex);

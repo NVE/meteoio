@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.4)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 # Version of library
-SET(VERSION_MAJOR 0 CACHE INTERNAL "")
-SET(VERSION_MINOR 1 CACHE INTERNAL "")
+SET(VERSION_MAJOR 1 CACHE INTERNAL "")
+SET(VERSION_MINOR 0 CACHE INTERNAL "")
 SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 PROJECT(meteoio)
@@ -18,8 +18,14 @@ FIND_PROGRAM(COLORGCC_EXECUTABLE colorgcc)
 #ENDIF(COLORGCC_EXECUTABLE)
 
 # require proper c++
-set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long")
-set(POPCC popcc)
+set(DEBUG_ARITHM ON CACHE BOOL "Use the debug flags -DDEBUG_ARITHM to catch arithmetic exceptions")
+IF(DEBUG_ARITHM)
+  set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long -DDEBUG_ARITHM")
+ELSE(DEBUG_ARITHM)
+  set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long")
+ENDIF(DEBUG_ARITHM)
+
+SET(POPCC popcc)
 
 #platform specific
 IF(UNIX)
