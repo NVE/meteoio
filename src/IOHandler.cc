@@ -209,7 +209,7 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 
 void IOHandler::readStationData(const Date& date, std::vector<StationData>& vecStation)
 {
-	IOInterface *plugin = getPlugin("STATION", "Input");
+	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readStationData(date, vecStation);
 }
 
