@@ -502,8 +502,10 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 
 	unsigned int index = vecFilteredM.size();
 	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
-	  if (vecFilteredM[ii].date >= date)
-	    index = ii;
+		if (vecFilteredM[ii].date >= date){
+			index = ii;
+			break;
+		}
 	}
 
 	if (index >= vecFilteredM.size())
