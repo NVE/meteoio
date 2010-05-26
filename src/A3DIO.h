@@ -51,16 +51,16 @@ class A3DIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  std::vector< std::vector<StationData> >& vecStation,
-							  const unsigned int& stationindex=IOUtils::npos);
+			                   std::vector< std::vector<MeteoData> >& vecMeteo,
+			                   std::vector< std::vector<StationData> >& vecStation,
+			                   const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::vector< std::vector<StationData> >& vecStation,
-							   const std::string& name="");
+		                            const std::vector< std::vector<StationData> >& vecStation,
+		                            const std::string& name="");
 
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
@@ -69,7 +69,7 @@ class A3DIO : public IOInterface {
 	private:
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -9999
 		void read1DMeteo(const Date& dateStart, const Date& dateEnd, 
-					  std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
+		                 std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 		void read2DMeteo(std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 
 		void constructMeteo2DFilenames(const Date& _startDate, const Date& _endDate, std::vector<std::string>& _filenames);
@@ -77,11 +77,18 @@ class A3DIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
 		void read2DMeteoData(const std::string&, const std::string&, std::map<std::string,unsigned int>& hashStations, 
-						 std::vector< std::vector<MeteoData> >&, unsigned int& bufferindex);
+		                     std::vector< std::vector<MeteoData> >&, unsigned int& bufferindex);
 		void read2DMeteoHeader(const std::string& filename, std::map<std::string, unsigned int>& hashStations, 
-						   std::vector<StationData>&);
+		                       std::vector<StationData>&);
 		unsigned int getNrOfStations(std::vector<std::string>& filenames, 
-							    std::map<std::string, unsigned int>& hashStations);
+		                             std::map<std::string, unsigned int>& hashStations);
+
+		void create1DFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
+		void writeHeader(std::ofstream &file, const std::vector< std::vector<StationData> >& stations, const std::string parameter_name);
+		void write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations, 
+		                      const unsigned int& parindex, const std::string& filename,
+		                      const std::string& label);
+		void write_1year_2DMeteo(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams

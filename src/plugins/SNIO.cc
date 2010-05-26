@@ -179,7 +179,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 			failure_count++;
 			fout << setw(6) << setprecision(0) << ta << " ";
 		} else
-			fout << setw(6) << setprecision(2) << K_TO_C(Meteo[ii].ta) << " ";
+			fout << setw(6) << setprecision(2) << K_TO_C(ta) << " ";
 		if(rh==IOUtils::nodata) {
 			failure_count++;
 			fout << setw(5) << setprecision(0) << rh << " ";
@@ -215,7 +215,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 			failure_count++;
 			fout << setw(4) << setprecision(1) << "0.0" << " ";
 		} else {
-			fout << setw(4) << setprecision(0) << Meteo[ii].ilwr << " ";
+			fout << setw(4) << setprecision(0) << ilwr << " ";
 		}
 
 		//TSS, TSG (only required for Dirichlet)

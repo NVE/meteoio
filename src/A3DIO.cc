@@ -125,12 +125,21 @@ void A3DIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void A3DIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-					  const std::vector< std::vector<StationData> >&,
-					  const std::string&)
+void A3DIO::write2DGrid(const Grid2DObject&, const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
+}
+
+void A3DIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& data,
+					  const std::vector< std::vector<StationData> >&vec_stations,
+					  const std::string&)
+{
+	if(vec_stations.size()>0) {
+		//A3D format does not support stations changing position over time
+		create1DFile(data, vec_stations);
+		write_1year_2DMeteo(data, vec_stations);
+	}
 }
 
 void A3DIO::readStationData(const Date&, std::vector<StationData>&)
@@ -701,12 +710,143 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 	}
 }
 
-void A3DIO::write2DGrid(const Grid2DObject&, const std::string&)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+void A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations)
+{//TODO: add check for stations' positions
+	const unsigned int sta_nr = stations.size();
+
+	for(unsigned int ii=0; ii<sta_nr; ii++) {
+		const unsigned int size = data[ii].size();
+		if(size>0) {
+			const std::string filename = "meteo1D_"+stations[ii][0].stationName+".txt";
+			std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
+			if(!file) {
+				throw FileAccessException("Can not open file "+filename, AT);
+			}
+
+			file << "Name = " << stations[ii][0].stationName << "\n";
+			file << "Latitude = " << stations[ii][0].position.getLat() << "\n";
+			file << "Longitude = " << stations[ii][0].position.getLon() << "\n";
+			file << "X_Coord = " << stations[ii][0].position.getEasting() << "\n";
+			file << "Y_Coord = " << stations[ii][0].position.getNorthing() << "\n";
+			file << "Altitude = " << stations[ii][0].position.getAltitude() << "\n";
+			file << "YYYY MM DD HH ta iswr vw rh ea nswc\n";
+
+			file.flags ( std::ios::fixed );
+			for(unsigned int j=0; j<size; j++) {
+				int yyyy, mm, dd, hh;
+				data[ii][j].date.getDate(yyyy, mm, dd, hh);
+				file.fill('0');
+				file << setw(4) << yyyy << " " << setw(2) << mm << " " << setw(2) << dd << " " << setw(2) << hh << " ";
+				file.fill(' ');
+				if(data[ii][j].ta == IOUtils::nodata)
+					file << setw(6) << setprecision(0) <<  IOUtils::nodata << " ";
+				else
+					file << setw(6) << setprecision(2) <<  K_TO_C(data[ii][j].ta) << " ";
+				if(data[ii][j].iswr == IOUtils::nodata)
+					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
+				else
+					file << setw(6) << setprecision(2) << data[ii][j].iswr << " ";
+				if(data[ii][j].vw == IOUtils::nodata)
+					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
+				else
+					file << setw(6) << setprecision(2) << data[ii][j].vw << " ";
+				if(data[ii][j].rh == IOUtils::nodata)
+					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
+				else
+					file << setw(6) << setprecision(2) << data[ii][j].rh * 100. << " ";
+				if(data[ii][j].ilwr == IOUtils::nodata)
+					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
+				else
+					file << setw(6) << setprecision(2) << data[ii][j].ilwr << " ";
+				if(data[ii][j].hnw == IOUtils::nodata)
+					file << setw(6) << setprecision(0) << IOUtils::nodata << "\n";
+				else
+					file << setw(6) << setprecision(2) << data[ii][j].hnw << "\n";
+			}
+			file.close();
+		}
+	}
 }
 
+void A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<StationData> >& stations, const std::string parameter_name)
+{
+	std::ostringstream str_altitudes;
+	std::ostringstream str_eastings;
+	std::ostringstream str_northings;
+	const unsigned int sta_nr = stations.size();
+	
+	file << "X:\\filepath " << parameter_name <<endl;
+	for(unsigned int ii=0;ii<sta_nr;ii++) {
+		if(stations[ii].size() > 0) {
+			str_altitudes << stations[ii][0].position.getAltitude() << " ";
+			str_eastings << stations[ii][0].position.getEasting() << " ";
+			str_northings << stations[ii][0].position.getNorthing() << " ";
+		}
+	}
+	file << "YY MM DD HH " << str_altitudes.str() << "\n"; //altitudes
+	file << "YY MM DD HH " << str_eastings.str() << "\n"; //easting
+	file << "YY MM DD HH " << str_northings.str() << "\n"; //northing
+	file << "YYYY MM DD HH";
+	for(unsigned int ii=0; ii<sta_nr; ii++) {
+		if(stations[ii].size() > 0) {
+			file << " " << stations[ii][0].stationName;
+		}
+	}
+	file << std::endl;
+}
+
+void A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations,
+                             const unsigned int& parindex, const std::string& filename,
+                             const std::string& label)
+{//HACK: we assume that all stations have data that is time synchronized...
+	const unsigned int sta_nr = stations.size();
+
+	if(sta_nr>0) {
+		std::ofstream file(filename.c_str(), ios::out | ios::trunc);
+		if(!file) {
+			throw FileAccessException("Can not open file "+filename, AT);
+		}
+
+		writeHeader(file, stations, label);
+		file.flags ( ios::fixed );
+
+		const unsigned int nb_timesteps = data[0].size();
+		for(unsigned int ii=0; ii<nb_timesteps; ii++) {
+			int year, month, day, hour;
+			data[0][ii].date.getDate(year, month, day, hour);
+
+			file.fill('0');
+			file << setw(4) << year << " " << setw(2) << month << " " << setw(2) << day << " " << setw(2) << hour;
+			file.fill(' ');
+			for(unsigned int j=0; j<sta_nr; j++) {
+				double value = data[j][ii].param(parindex);
+				if(value==IOUtils::nodata) {
+					file << " " << setw(7) << setprecision(0) << IOUtils::nodata;
+				} else {
+					if(parindex==mio::MeteoData::TA) value = K_TO_C(value);
+					if(parindex==mio::MeteoData::RH) value = value*100.;
+					file << " " << setw(7) << setprecision(2) << value;
+				}
+			}
+			file << "\n";
+		}
+		file.close();
+	}
+}
+
+void A3DIO::write_1year_2DMeteo(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations)
+{ //TODO: split for multiple years
+	int year, month, day;
+	data[0][0].date.getDate(year, month, day);
+	std::ostringstream out;
+	out << year;
+
+	write2DmeteoFile(data, stations, mio::MeteoData::TA, "tair"+out.str()+".txt", "air temperature");
+	write2DmeteoFile(data, stations, mio::MeteoData::RH, "rhum"+out.str()+".txt", "relative humidity");
+	write2DmeteoFile(data, stations, mio::MeteoData::VW, "wspd"+out.str()+".txt", "wind velocity");
+	write2DmeteoFile(data, stations, mio::MeteoData::DW, "wdir"+out.str()+".txt", "wind direction");
+	write2DmeteoFile(data, stations, mio::MeteoData::HNW, "prec"+out.str()+".txt", "precipitations");
+}
 
 /*extern "C"
 {

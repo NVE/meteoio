@@ -44,19 +44,19 @@ class MeteoData {
 	public:
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0, 
-					TA=firstparam, ///< Air temperature
-					RH, ///< Relative humidity
-					VW, ///< Wind velocity
-					DW, ///< Wind direction
-					ISWR, ///< Incoming short wave radiation
-					RSWR, ///< Reflected short wave radiation
-					ILWR, ///< Incoming long wave radiation
-					HS, ///< Snow height
-					HNW, ///< New water equivalent height
-					TSG, ///< Temperature ground surface
-					TSS, ///< Temperature snow surface
-					P, ///< Air pressure
-					lastparam=P};
+		                 TA=firstparam, ///< Air temperature
+		                 RH, ///< Relative humidity
+		                 VW, ///< Wind velocity
+		                 DW, ///< Wind direction
+		                 ISWR, ///< Incoming short wave radiation
+		                 RSWR, ///< Reflected short wave radiation
+		                 ILWR, ///< Incoming long wave radiation
+		                 HS, ///< Snow height
+		                 HNW, ///< New water equivalent height
+		                 TSG, ///< Temperature ground surface
+		                 TSS, ///< Temperature snow surface
+		                 P, ///< Air pressure
+		                 lastparam=P};
 
 		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 
