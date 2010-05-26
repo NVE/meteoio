@@ -122,6 +122,12 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 void SNIO::readMetaData(unsigned int& nrOfStations)
 {	
+	/*
+	 * The format of the meta data file is as follows:
+	 * SHORTNAME LONGNAME altitude latitude longitude 
+	 * ALI2 Allieres:Chenau 1767 6.993 46.489 1.22
+	 */
+
 	string stationname, metafile;
 	cfg.getValue("METAFILE", "Input", metafile);
 	if (!IOUtils::validFileName(metafile))
@@ -133,10 +139,10 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 	//Loop over all stations
 	for (unsigned int ii=0; ii<nrOfStations; ii++){
 		string line="";
-		stringstream ss;
-		ss << ii+1;
+		stringstream snum;
+		snum << ii+1;
 
-		cfg.getValue("STATION" + ss.str(), "Input", stationname);
+		cfg.getValue("STATION" + snum.str(), "Input", stationname);
 
 		fin.open (metafile.c_str(), std::ifstream::in);	
 		if (fin.fail())
@@ -147,6 +153,7 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 			
 			unsigned int linenr = 0;
 			vector<string> tmpvec;
+			stringstream ss;
 
 			while (!fin.eof()){
 				getline(fin, line, eoln); //read complete line of data
@@ -160,9 +167,8 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 				if (ncols==0){
 					//Ignore empty lines
 				} else if ((ncols<6) || (ncols>6)){
-					throw InvalidFormatException(metafile+": each line must have 6 columns", AT);
+					throw InvalidFormatException(metafile+":"+ss.str() + " each line must have 6 columns", AT);
 				} else {
-
 					//6 columns exist
 					if (tmpvec.at(0) == stationname){
 						StationData sd;
