@@ -505,7 +505,7 @@ void GeotopIO::convertUnitsBack(MeteoData& meteo)
 	}
 
 	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=K_TO_C(meteo.tss);
+		meteo.tsg=K_TO_C(meteo.tsg);
 	}
 
 	if(meteo.tss!=IOUtils::nodata) {
@@ -527,7 +527,7 @@ void GeotopIO::convertUnits(MeteoData& meteo)
 	}
 
 	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tss);
+		meteo.tsg=C_TO_K(meteo.tsg);
 	}
 
 	if(meteo.tss!=IOUtils::nodata) {

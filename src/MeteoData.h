@@ -118,7 +118,7 @@ class MeteoData {
 		double ilwr; ///<Incoming Long wave radiation in W m-2
 		double tsg; ///<Soil or snow bottom temperature in Kelvin
 		double tss; ///<Soil or snow surface temperature in Kelvin
-		double hs; ///<Snow height in cm
+		double hs; ///<Snow height in m
 		double p;  ///<Atmospheric pressure in Pa
 
 

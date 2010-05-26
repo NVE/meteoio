@@ -69,13 +69,19 @@ class SNIO : public IOInterface {
 	private:
 		void writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string station_name);
 		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name);
+		void convertUnits(MeteoData& meteo);
+		void convertUnitsBack(MeteoData& meteo);
+		void parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, MeteoData& md);
+		void readMetaData(unsigned int& nrOfStations);
+		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
 		void cleanup() throw();
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		static const int sn_julian_offset;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters		
+		std::vector<StationData> vecAllStations;
 };
 
 } //namespace
