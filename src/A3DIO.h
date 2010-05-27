@@ -85,10 +85,13 @@ class A3DIO : public IOInterface {
 
 		int create1DFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
 		int writeHeader(std::ofstream &file, const std::vector< std::vector<StationData> >& stations, const std::string parameter_name);
+		void open2DFile(const std::vector< std::vector<StationData> >& stations,
+		                const std::string& fileprefix, const std::string& label, const double& year,
+		                std::ofstream& file);
 		int write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations,
 		                      const unsigned int& parindex, const std::string& filename,
 		                      const std::string& label);
-		void write_1year_2DMeteo(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
+		void write2DMeteo(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
 
 		ConfigReader cfg;
 		std::ifstream fin; //Input file streams

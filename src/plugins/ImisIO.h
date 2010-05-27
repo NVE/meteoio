@@ -34,8 +34,6 @@
 #include "StationData.h"
 #include "IOExceptions.h"
 
-#define IMIS_BUFF_SIZE 5000
-
 namespace mio {
 
 /**
