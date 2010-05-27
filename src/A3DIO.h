@@ -83,9 +83,9 @@ class A3DIO : public IOInterface {
 		unsigned int getNrOfStations(std::vector<std::string>& filenames, 
 		                             std::map<std::string, unsigned int>& hashStations);
 
-		void create1DFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
-		void writeHeader(std::ofstream &file, const std::vector< std::vector<StationData> >& stations, const std::string parameter_name);
-		void write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations, 
+		int create1DFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
+		int writeHeader(std::ofstream &file, const std::vector< std::vector<StationData> >& stations, const std::string parameter_name);
+		int write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations,
 		                      const unsigned int& parindex, const std::string& filename,
 		                      const std::string& label);
 		void write_1year_2DMeteo(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
