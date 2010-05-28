@@ -15,10 +15,12 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <cmath>
 #include "Grid3DObject.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
 	if(this != &source) {
@@ -241,16 +243,14 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 	}
 }
 
-namespace mio {
-	std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
-	{
-		os << "<Grid3DObject>\n";
-		os << grid.llcorner;
-		os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepth << " @ " << grid.cellsize << "m\n";
-		os << grid.grid3D;
-		os << "</Grid3DObject>\n";
-		return os;
-	}
+std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
+{
+	os << "<Grid3DObject>\n";
+	os << grid.llcorner;
+	os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepth << " @ " << grid.cellsize << "m\n";
+	os << grid.grid3D;
+	os << "</Grid3DObject>\n";
+	return os;
 }
 
 #ifdef _POPC_
@@ -281,3 +281,4 @@ void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 }
 #endif
 
+} //namespace

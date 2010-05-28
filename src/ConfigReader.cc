@@ -18,7 +18,8 @@
 #include "ConfigReader.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 const unsigned int ConfigReader::nothrow = 666;
 
@@ -187,3 +188,5 @@ void ConfigReader::Serialize(POPBuffer &buf, bool pack)
 	}
 }
 #endif
+
+} //namespace

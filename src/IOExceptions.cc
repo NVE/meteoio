@@ -18,7 +18,8 @@
 #include "IOExceptions.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 #ifdef _POPC_
 IOException::IOException(const std::string& message, const std::string& position):POPException(STD_EXCEPTION)
@@ -55,3 +56,5 @@ const char* IOException::what() const throw()
 {
 	return msg.c_str();
 }
+
+} //namespace

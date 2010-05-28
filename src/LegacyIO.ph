@@ -51,7 +51,7 @@
 #define MAX_STRING_LENGTH 256
 #define MAX_LINE_LENGTH 6000
 
-using namespace mio; //HACK for POPC: it should be in the namespace!
+namespace mio {
 
 typedef struct {
 	double x;
@@ -99,8 +99,14 @@ typedef Array<double> CDoubleArray;
 
 typedef Array<int> CIntArray;
 
+} //namespace
+
 // marshal_meteoio must be included after the structures'definitions
 #include "marshal_meteoio.h"
+
+namespace mio {
+
+class LegacyIODummy {}; //HACK for POPC
 
 parclass LegacyIO
 {
@@ -120,5 +126,7 @@ parclass LegacyIO
 		int dimx, dimy, dimz;
 
 };
+
+} //namespace
 
 #endif

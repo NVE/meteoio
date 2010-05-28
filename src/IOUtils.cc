@@ -43,6 +43,16 @@ double IOUtils::pow4(const double& val)
 	return (val*val*val*val);
 }
 
+double IOUtils::bearing_to_angle(const double& bearing) {
+	const double to_rad = M_PI/180.;
+	return (fmod(360.-bearing+90., 360.)*to_rad);
+}
+
+double IOUtils::angle_to_bearing(const double& angle) {
+	const double to_deg = 180.0 / M_PI;
+	return (fmod( 90.-angle*to_deg+360. , 360. ));
+}
+
 void IOUtils::trim(std::string& str)
 {
 	const std::string whitespaces (" \t\f\v\n\r");
@@ -351,4 +361,4 @@ void IOUtils::getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, doub
 	cfg.getValue("TZ", "Output", tz_out, ConfigReader::nothrow);
 }
 
-} //end namespace mio
+} //namespace

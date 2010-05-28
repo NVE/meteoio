@@ -18,7 +18,6 @@
 #include "SNIO.h"
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
 /**
@@ -45,7 +44,6 @@ namespace mio {
  * - METAFILE: filename of the meta data file; [Input] section
  * - NROFSTATIONS: integer, the number of stations for which meteo files are provided; [Input] section
  */
-}
 
 const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = 0.0; //plugin specific nodata value
@@ -185,7 +183,7 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 	}
 }
 
-void SNIO::parseMetaDataLine(const vector<string>& vecLine, StationData& sd)
+void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd)
 {
 	if (vecLine.size() != 6)
 		throw InvalidFormatException("While reading metadata: each line must have 6 columns", AT);	
@@ -304,7 +302,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-void SNIO::parseMeteoLine(const vector<string>& vecLine, const string& filepos, MeteoData& md)
+void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, MeteoData& md)
 {
 	if (vecLine.size() < 15)
 		throw InvalidFormatException("At " + filepos + " line is too short", AT);
@@ -544,7 +542,6 @@ void SNIO::convertUnits(MeteoData& meteo)
 	}
 }
 
-
 #ifndef _METEOIO_JNI
 extern "C"
 {
@@ -562,3 +559,5 @@ extern "C"
 	}
 }
 #endif
+
+} //namespace

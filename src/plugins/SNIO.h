@@ -44,7 +44,7 @@ class SNIO : public IOInterface {
 
 		SNIO(const std::string& configfile);
 		SNIO(const SNIO&);
-		SNIO(const ConfigReader&);
+		SNIO(const ConfigReader& cfgreader);
 		~SNIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");

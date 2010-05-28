@@ -21,7 +21,8 @@
 #include <cmath>
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
 	if(this != &source) {
@@ -236,16 +237,14 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)
 	}
 }
 
-namespace mio {
-	std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
-	{
-		os << "<Grid2DObject>\n";
-		os << grid.llcorner;
-		os << grid.ncols << " x " << grid.nrows << " @ " << grid.cellsize << "m\n";
-		os << grid.grid2D;
-		os << "</Grid2DObject>\n";
-		return os;
-	}
+std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
+{
+	os << "<Grid2DObject>\n";
+	os << grid.llcorner;
+	os << grid.ncols << " x " << grid.nrows << " @ " << grid.cellsize << "m\n";
+	os << grid.grid2D;
+	os << "</Grid2DObject>\n";
+	return os;
 }
 
 #ifdef _POPC_
@@ -271,4 +270,6 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 	}
 }
 #endif
+
+} //namespace
 

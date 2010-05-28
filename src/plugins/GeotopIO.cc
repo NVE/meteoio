@@ -18,7 +18,6 @@
 #include "GeotopIO.h"
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
 /**
@@ -43,7 +42,6 @@ namespace mio {
  * - METEOPATH: string containing the path to the meteorological files
  * - METEOPREFIX: file name prefix for meteorological files
  */
-}
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
@@ -556,3 +554,5 @@ extern "C"
 	}
 }
 #endif
+
+} //namespace

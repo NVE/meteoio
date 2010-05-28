@@ -19,10 +19,9 @@
 
 #include "marshal_meteoio.h"
 
-using namespace mio;
+namespace mio {
 
-//HACK for POPC: each method has been prefixed by "mio::" because it seems that POPC does not "see" the using namespace above...
-void mio::marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -36,7 +35,7 @@ void mio::marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag
 	}
 }
 
-void mio::marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -50,7 +49,7 @@ void mio::marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int ma
 	}
 }
 
-void mio::marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -64,7 +63,7 @@ void mio::marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int
 	}
 }
 
-void mio::marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -86,7 +85,7 @@ void mio::marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsi
 	}
 }
 
-void mio::marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -108,7 +107,7 @@ void mio::marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize
 	}
 }
 
-void mio::marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
@@ -128,7 +127,7 @@ void mio::marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET
 	}
 }
 
-void mio::marshal_map_str_str(POPBuffer &buf, std::map<std::string, std::string> &data_map, int maxsize, int flag, POPMemspool *temp)
+void marshal_map_str_str(POPBuffer &buf, std::map<std::string, std::string> &data_map, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -154,7 +153,7 @@ void mio::marshal_map_str_str(POPBuffer &buf, std::map<std::string, std::string>
 	}
 }
 
-void mio::marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -176,7 +175,7 @@ void mio::marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int max
 	}
 }
 
-void mio::marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &data_map, int maxsize, int flag, POPMemspool *temp)
+void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &data_map, int maxsize, int flag, POPMemspool *temp)
 {
 	if(flag&FLAG_MARSHAL) {
 		int n=data_map.size();
@@ -200,7 +199,7 @@ void mio::marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTO
 	}
 }
 
-void mio::marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMemspool *temp) {
+void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMemspool *temp) {
 	(void)maxsize;
 	(void)*temp;
 	if(flag&FLAG_MARSHAL) {
@@ -210,7 +209,7 @@ void mio::marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, PO
 	}
 }
 
-void mio::marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -232,7 +231,7 @@ void mio::marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int max
 	}
 }
 
-void mio::marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
@@ -252,7 +251,7 @@ void mio::marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DAT
 	}
 }
 
-void mio::marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -277,7 +276,7 @@ void mio::marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> 
 	}
 }
 
-void mio::marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -301,7 +300,7 @@ void mio::marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize,
 	}
 }
 
-void mio::marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -331,7 +330,7 @@ void mio::marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize,
 	}
 }
 
-void mio::marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -357,7 +356,7 @@ void mio::marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int f
 	}
 }
 
-void mio::marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -378,7 +377,7 @@ void mio::marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, i
 
 }
 
-void mio::marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -400,7 +399,7 @@ void mio::marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int fl
 	}
 }
 
-void mio::marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -450,7 +449,7 @@ void mio::marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize,
 	}
 }
 
-void mio::marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -489,5 +488,7 @@ void mio::marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, 
 		}
 	}
 }
+
+} //namespace
 
 #endif

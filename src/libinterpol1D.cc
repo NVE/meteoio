@@ -18,7 +18,8 @@
 #include "libinterpol1D.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 double Interpol1D::linearInterpolation(const double& d1, const double& d2, const double& weight)
 {
@@ -45,3 +46,5 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 
 	return (sum/(double)vecData.size());
 }
+
+} //namespace

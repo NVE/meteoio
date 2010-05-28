@@ -26,15 +26,15 @@
 #include "IOPlugin.h"
 #include "marshal_meteoio.h"
 
-using namespace mio; //HACK for POPC: it should be in the namespace!
-
-typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
-
 /**
 * @file IOHandler.ph
 * The is the parclass implementing the interface as defined by the IOInterface class.
 * This class is responsible for loading the necessary plugins and getting the data through them.
 */
+
+namespace mio {
+
+typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
 
 parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
@@ -76,5 +76,7 @@ parclass IOHandler {
 		PLUGIN_ITERATOR mapit;
 		A3DIO fileio;
 };
+
+} //namespace
 
 #endif

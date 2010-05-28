@@ -18,7 +18,8 @@
 #include "BufferedIOHandler.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 #ifdef _POPC_
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
@@ -352,3 +353,5 @@ unsigned int BufferedIOHandler::seek(const Date& date_in, std::vector<MeteoData>
 
 	return BufferedIOHandler::npos;
 }
+
+} //namespace

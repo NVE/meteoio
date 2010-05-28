@@ -31,7 +31,8 @@
 #include "DEMObject.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
 const double Interpol2D::wind_ys = 0.58;
@@ -580,3 +581,5 @@ double Interpol2D::lw_AirPressure(const double& altitude)
 	
 	return(p);
 }
+
+} //namespace

@@ -18,7 +18,8 @@
 #include "InterpolationAlgorithms.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 std::set<std::string> AlgorithmFactory::setAlgorithms;
 const bool AlgorithmFactory::__init = AlgorithmFactory::initStaticData();
@@ -437,4 +438,6 @@ void SimpleWindInterpolationAlgorithm::calculate(const MeteoData::Parameters& pa
 	Interpol2D::LapseIDW(vecDataVW, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
 }
+
+} //namespace
 

@@ -18,7 +18,6 @@
 #include "BormaIO.h"
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
 /**
@@ -44,7 +43,6 @@ namespace mio {
  * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station id for the given number #
  */
-}
 
 const double BormaIO::plugin_nodata = -999.0; //plugin specific nodata value
 
@@ -552,3 +550,5 @@ extern "C"
 	}
 }
 #endif
+
+} //namespace

@@ -27,6 +27,8 @@
 	#include "IOHandler.h"
 #endif
 
+using namespace std;
+
 namespace mio {
  /**
  * @page plugins Plugins overview
@@ -44,10 +46,6 @@ namespace mio {
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
  *
  */
-}
-
-using namespace std;
-using namespace mio;
 
 void IOHandler::registerPlugins()
 {
@@ -251,7 +249,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 #ifdef _POPC_
 void IOHandler::writeMeteoData(std::vector<METEO_DATASET>& vecMeteo,
                                std::vector<STATION_DATASET>& vecStation,
-                               std::string& name)
+                               const std::string& name)
 #else
 void IOHandler::writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
                                const std::vector<STATION_DATASET>& vecStation,
@@ -279,4 +277,4 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 	plugin->write2DGrid(grid_in, name);
 }
 
-
+} //namespace

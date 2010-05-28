@@ -22,7 +22,8 @@
 #endif
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 LegacyIO::LegacyIO(const std::string &meteopath)
 {
@@ -160,3 +161,4 @@ void LegacyIO::GetGridData(CNodeArray &nodes, const std::string& hour)
 #endif
 }
 
+} //namespace

@@ -22,7 +22,6 @@
 #endif
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
  /**
@@ -59,9 +58,8 @@ namespace mio {
  * @endcode
  *
  */
-}
 
-const struct mio::Coords::ELLIPSOID mio::Coords::ellipsoids[] = {
+const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
 	{ 6378137.,	6356752.3142 }, ///< E_WGS84
 	{ 6378137.,	6356752.3141 }, ///< E_GRS80
 	{ 6377563.396,	6356256.909 }, ///< E_AIRY
@@ -119,21 +117,19 @@ Coords& Coords::operator=(const Coords& source) {
 	return *this;
 }
 
-namespace mio {
 /**
 * @brief Print the content of the Coords object (usefull for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
-	std::ostream& operator<<(std::ostream &os, const Coords& coord)
-	{
-		os << "<Coords>\n";
-		os << "Lat/Long\t" << coord.printLatLon() << "\n";
-		os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
-		os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
-		os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
-		os << "</Coords>\n";
-		return os;
-	}
+std::ostream& operator<<(std::ostream &os, const Coords& coord)
+{
+	os << "<Coords>\n";
+	os << "Lat/Long\t" << coord.printLatLon() << "\n";
+	os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
+	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
+	os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
+	os << "</Coords>\n";
+	return os;
 }
 
 /**
@@ -1364,3 +1360,6 @@ void Coords::Serialize(POPBuffer &buf, bool pack)
 	}
 }
 #endif
+
+} //namespace
+

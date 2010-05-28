@@ -18,7 +18,8 @@
 #include "MeteoFilter.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 	/*
@@ -190,3 +191,4 @@ unsigned int MeteoFilter::getArgumentsForFilter(const std::string& keyname, std:
 	return vecArguments.size();
 }
 
+} //namespace

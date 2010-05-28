@@ -18,7 +18,6 @@
 #include "GrassIO.h"
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
 /**
@@ -39,7 +38,6 @@ namespace mio {
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
-}
 
 const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
@@ -293,3 +291,5 @@ extern "C"
 	}
 }
 #endif
+
+} //namespace

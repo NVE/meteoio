@@ -87,6 +87,19 @@ namespace IOUtils {
 	double pow3(const double& val);
 	double pow4(const double& val);
 
+	/**
+	* @brief Converts a compass bearing to a trigonometric angle
+	* @param bearing compass bearing (0° on top, clockwise, in [0°, 360°[)
+	* @return trigonometric angle (0° on the right, counterclockwise, in [0, 2PI[)
+	*/
+	double bearing_to_angle(const double& bearing);
+	/**
+	* @brief Converts a trigonometric angle to a compass bearing
+	* @param angle trigonometric angle (0° on the right, counterclockwise, in [0, 2PI[)
+	* @return bearing (0° on top, clockwise, in [0°, 360°[)
+	*/
+	double angle_to_bearing(const double& angle);
+
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern = "");
 
 	bool validFileName(const std::string& filename);

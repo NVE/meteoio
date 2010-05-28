@@ -17,7 +17,7 @@
 */
 #include "StationData.h"
 
-using namespace mio;
+namespace mio {
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
 StationData::StationData()
@@ -57,15 +57,13 @@ std::string StationData::getStationName() const {
 	return stationName;
 }
 
-namespace mio {
-	std::ostream& operator<<(std::ostream& os, const StationData& station) {
-		
-		os << "<station>\n";
-		os << std::setprecision(10) << station.position << "  Name:     " << station.stationName << "\n";
-		os << "</station>\n";
+std::ostream& operator<<(std::ostream& os, const StationData& station) {
 
-		return os;
-	}
+	os << "<station>\n";
+	os << std::setprecision(10) << station.position << "  Name:     " << station.stationName << "\n";
+	os << "</station>\n";
+
+	return os;
 }
 
 #ifdef _POPC_
@@ -82,3 +80,8 @@ void StationData::Serialize(POPBuffer &buf, bool pack)
 }
 #endif
 
+
+
+
+
+} //namespace

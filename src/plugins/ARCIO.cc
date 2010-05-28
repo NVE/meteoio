@@ -18,7 +18,6 @@
 #include "ARCIO.h"
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
 /**
@@ -90,7 +89,6 @@ namespace mio {
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
-}
 
 ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
@@ -321,3 +319,5 @@ extern "C"
 	}
 }
 #endif
+
+} //namespace

@@ -19,7 +19,8 @@
 #include "Meteo2DInterpolator.h"
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObject& _dem, 
 								 const std::vector<MeteoData>& _vecMeteo, 
@@ -164,3 +165,5 @@ void Meteo2DInterpolator::Serialize(POPBuffer &buf, bool pack)
 	}
 }
 #endif
+
+} //namespace

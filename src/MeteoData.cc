@@ -18,7 +18,7 @@
 #include "MeteoData.h"
 
 using namespace std;
-using namespace mio;
+namespace mio {
 
 /************************************************************
  * static section                                           *
@@ -189,22 +189,20 @@ const double& MeteoData::param(const unsigned int& parindex) const
 	return *(it->second);
 }
 
-namespace mio {
-	std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
-		
-		os << "<meteo>\n";
-		os << data.date;
-		
-		std::map<unsigned int, double*>::const_iterator it1;
-		for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){
-			if( (*it1->second) != IOUtils::nodata ) {
-				os << setw(7) << MeteoData::getParameterName(it1->first) << ":" << setw(15) << *it1->second << "\n";
-			}
+std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
+
+	os << "<meteo>\n";
+	os << data.date;
+
+	std::map<unsigned int, double*>::const_iterator it1;
+	for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){
+		if( (*it1->second) != IOUtils::nodata ) {
+			os << setw(7) << MeteoData::getParameterName(it1->first) << ":" << setw(15) << *it1->second << "\n";
 		}
-		os << "</meteo>\n";
-		
-		return os;
 	}
+	os << "</meteo>\n";
+
+	return os;
 }
 
 void MeteoData::initAllParameters()
@@ -253,3 +251,4 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 }
 #endif
 
+} //namespace

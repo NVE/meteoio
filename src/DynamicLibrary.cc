@@ -17,7 +17,7 @@
 */
 #include "DynamicLibrary.h"
 
-using namespace mio;
+namespace mio {
 
 #ifdef WIN32
 DynamicLibrary::DynamicLibrary(HINSTANCE objFile) : _objFile(objFile){}
@@ -90,3 +90,5 @@ void PluginObject::deleteSelf(void)
 {
 	(*_deleteObject)(reinterpret_cast<void*>(this));
 }
+
+} //namespace

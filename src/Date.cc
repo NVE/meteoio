@@ -20,7 +20,8 @@
 //const long Date::offset = 2415021;	///snowpack offset
 
 using namespace std;
-using namespace mio;
+
+namespace mio {
 
 const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
 const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
@@ -501,24 +502,22 @@ const Date Date::operator-(const Date& indate) const {
 	return tmp;
 }
 
-namespace mio {
-	std::ostream& operator<<(std::ostream &os, const Date &date) {
-		os << "<date>\n";
-		os << date.toString(Date::ISO) << "\n";
-		os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\n";
-		os << "DST=" << date.dst << "\n";
-		os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
-		os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
-		os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
-		try {
-			os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
-		} catch (...) {}
-		try {
-			os << "Excel:\t\t\t" << date.getExcelDate() << "\n";
-		} catch (...) {}
-		os << "</date>\n";
-		return os;
-	}
+std::ostream& operator<<(std::ostream &os, const Date &date) {
+	os << "<date>\n";
+	os << date.toString(Date::ISO) << "\n";
+	os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\n";
+	os << "DST=" << date.dst << "\n";
+	os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
+	os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
+	os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
+	try {
+		os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
+	} catch (...) {}
+	try {
+		os << "Excel:\t\t\t" << date.getExcelDate() << "\n";
+	} catch (...) {}
+	os << "</date>\n";
+	return os;
 }
 
 /**
@@ -693,3 +692,5 @@ void Date::Serialize(POPBuffer &buf, bool pack)
 	}
 }
 #endif
+
+} //namespace

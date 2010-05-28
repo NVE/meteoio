@@ -18,7 +18,6 @@
 #include "A3DIO.h"
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
 /**
@@ -56,7 +55,6 @@ namespace mio {
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
  */
-}
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
@@ -894,3 +892,5 @@ void A3DIO::write2DMeteo(const std::vector< std::vector<MeteoData> >& data, cons
 }
 
 */
+
+} //namespace

@@ -15,10 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <cmath>
 #include "FilterAlgorithms.h"
 
 using namespace std;
-using namespace mio;
 
 namespace mio {
  /**
@@ -43,8 +43,6 @@ namespace mio {
  * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess
  * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
  */
-}
-#define PI 3.141592653589
 
 std::map<std::string, FilterProperties> FilterAlgorithms::filterMap;
 const bool FilterAlgorithms::__init = FilterAlgorithms::initStaticData();
@@ -796,14 +794,14 @@ bool FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const 
 		//calculate ve and vn
 		double ve=0.0, vn=0.0;
 		for (unsigned int ii=0; ii<vecSize; ii++){
-			ve += vecWindowVW[ii] * sin(vecWindowDW[ii] * PI / 180.); //turn into radians
-			vn += vecWindowVW[ii] * cos(vecWindowDW[ii] * PI / 180.); //turn into radians
+			ve += vecWindowVW[ii] * sin(vecWindowDW[ii] * M_PI / 180.); //turn into radians
+			vn += vecWindowVW[ii] * cos(vecWindowDW[ii] * M_PI / 180.); //turn into radians
 		}
 		ve /= vecSize;
 		vn /= vecSize;
 
 		meanspeed = sqrt(ve*ve + vn*vn);
-		meandirection = fmod( atan2(ve,vn) * 180. / PI + 360. , 360.); // turn into degrees [0;360)
+		meandirection = fmod( atan2(ve,vn) * 180. / M_PI + 360. , 360.); // turn into degrees [0;360)
 	}
 
 	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
@@ -813,4 +811,6 @@ bool FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const 
 
 	return true;
 }
+
+} //namespace
 
