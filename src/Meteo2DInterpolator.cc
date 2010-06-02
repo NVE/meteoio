@@ -33,17 +33,10 @@ Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObje
 	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
 	 * for configuration of interpolation algorithms within the ConfigReader object.
 	 */
-	//cout << "In Meteo2DInterpolator constructor" << endl;
 	for (unsigned int ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpAlgorithms;
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
 		unsigned int nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
-
-		//cout << "Looking for interpoltions algorithms valid for: " << parname << endl;
-
-		/*for (unsigned int jj=0; jj<nrOfAlgorithms; jj++){
-			cout << parname<<" "<<jj<<": " << tmpAlgorithms[jj] << endl;
-		}*/
 
 		if (nrOfAlgorithms > 0)
 			mapAlgorithms[parname] = tmpAlgorithms;
@@ -54,11 +47,11 @@ Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObje
 		throw IOException("Size of vector<MeteoData> and vector<StationData> are not equal", AT);
 
 	//check that the stations are using the same projection as the dem
-	/*for (unsigned int i=0; i<(unsigned int)vecStation.size(); i++) {
+	for (unsigned int i=0; i<(unsigned int)vecStation.size(); i++) {
 		if(!vecStation[i].position.isSameProj(dem.llcorner)) {
 			throw IOException("Some stations are not using the same geographic projection as the DEM", AT);
 		}
-		}*/
+	}
 }
 
 void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const
@@ -67,7 +60,6 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
 	
 	if (it != mapAlgorithms.end()){
-		//cout << "Algorithms to be used for parameter " << MeteoData::getParameterName(meteoparam) << ":" << endl;
 		double maxQualityRating = 0.0;
 		auto_ptr<InterpolationAlgorithm> bestalgorithm(NULL);
 		vector<string> vecArgs;
@@ -82,16 +74,14 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 			//Get the quality rating and compare to previously computed quality ratings
 			const double rating = algorithm->getQualityRating(meteoparam);
 			if ((rating != 0.0) && (rating > maxQualityRating)){
+				//we use ">" so that in case of equality, the first choice will be kept
 				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
 				maxQualityRating = rating;
 			}
-
-			//cout << "\t" << it->second.at(ii) << "  rating:" << rating << endl;
 		}
 
 		//finally execute the algorithm with the best quality rating or throw an exception
 		if (bestalgorithm.get() == NULL) {
-			//result.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 			throw IOException("No interpolation algorithm with quality rating >0 found", AT);
 		}
 		bestalgorithm->calculate(meteoparam, result);
@@ -136,7 +126,7 @@ unsigned int Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Para
                                                            std::vector<std::string>& vecArgs) const
 {
 	vecArgs.clear();
-	string keyname = MeteoData::getParameterName(param) +"::"+ algorithm;		
+	const string keyname = MeteoData::getParameterName(param) +"::"+ algorithm;
 	cfg.getValue(keyname, "Interpolations2D", vecArgs, ConfigReader::nothrow);
 
 	return vecArgs.size();

@@ -23,10 +23,10 @@ namespace mio {
 /**
  * @page snowpack SNIO
  * @section snowpack_format Format
- * This is for reading grid data in the SNOWPACK meteo format
+ * This is for reading meteo data in the SNOWPACK meteo format
  *
  * @section snowpack_units Units
-* - temperatures in celsius (input and output) or in kelvin (input only)
+ * - temperatures in celsius (input and output) or in kelvin (input only)
  * - relative humidity in % (input and output) or in [0;1] (input only)
  * - wind speed in m/s
  * - precipitations in mm/h
@@ -34,10 +34,8 @@ namespace mio {
  *
  * @section snowpack_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coords); [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coords); [Input] section
- * - COORDSYS: output coordinate system (see Coords); [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coords); [Output] section
+ * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
+ * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - METEOPATH: path to the output directory; [Output] section
  * - METEOFILE#: input meteo data file, e.g. METEOFILE1, METEOFILE2; [Input] section
  * - STATION#: station name as listed in the METAFILE, e.g. STATION1, STATION2; [Input] section

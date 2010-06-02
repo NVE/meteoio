@@ -31,6 +31,7 @@ bool AlgorithmFactory::initStaticData()
 	 * available methods for single source and multiple sources interpolations. 
 	 * More details about some of these algorithms can be found in "A Meteorological 
 	 * Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, 2006.
+	 * Please don't forget to document InterpolationAlgorithms.h for the available algorithms!
 	 */
 
 	setAlgorithms.insert("CST");       // constant fill
@@ -40,6 +41,7 @@ bool AlgorithmFactory::initStaticData()
 	setAlgorithms.insert("IDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill
 	setAlgorithms.insert("RH");        // relative humidity interpolation
 	setAlgorithms.insert("WIND_CURV"); // wind velocity interpolation (using a heuristic terrain effect)
+	setAlgorithms.insert("USER"); // read user provided grid
 
 	return true;
 }
@@ -72,6 +74,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else if (algoname == "WIND_CURV"){
 		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+	} else if (algoname == "USER"){
+		return new USERinterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -218,10 +222,8 @@ void ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid
 	std::vector<double> vecCoefficients;
 	vecCoefficients.resize(4, 0.0);
 
-	//Get the argument for the algorithm: the default temperature lapse rate, otherwise use predefined
-	if (vecArgs.size() < 1){
-		vecCoefficients[1] = Interpol2D::dflt_temperature_lapse_rate;
-	} else if (vecArgs.size() == 1){
+	//Get the argument for the algorithm: the default lapse rate, otherwise throw an exception
+	if (vecArgs.size() == 1){
 		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
 	} else {
 		throw InvalidArgumentException("Wrong number of arguments supplied for the CST_LAPSE algorithm", AT);
@@ -437,6 +439,48 @@ void SimpleWindInterpolationAlgorithm::calculate(const MeteoData::Parameters& pa
 	Interpol2D::LinRegression(vecAltitudes, vecDataVW, vecCoefficients);
 	Interpol2D::LapseIDW(vecDataVW, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
+}
+
+std::string USERinterpolation::getGridFileName(const MeteoData::Parameters& param)
+{
+	const std::string ext=std::string(".asc");
+	if (vecArgs.size() != 1){
+		throw InvalidArgumentException("Please provide the path to the grids for the USER interpolation algorithm", AT);
+	}
+	const std::string& grid_path = vecArgs[0];
+	std::string gridname = grid_path + std::string("/");
+
+	if(vecMeteo.size()>0) {
+		const Date& timestep = vecMeteo.at(0).date;
+		gridname = gridname + timestep.toString(Date::NUM) + std::string("_") + MeteoData::getParameterName(param) + ext;
+	} else {
+		gridname = gridname + std::string("Default") + std::string("_") + MeteoData::getParameterName(param) + ext;
+	}
+	
+	return gridname;
+}
+
+double USERinterpolation::getQualityRating(const MeteoData::Parameters& param)
+{
+	const std::string filename = getGridFileName(param);
+
+	if (!IOUtils::validFileName(filename)) {
+		std::cout << "[E] Invalid grid filename for USER interpolation algorithm: " << filename << "\n";
+		return 0.0;
+	}
+	if(IOUtils::fileExists(filename)) {
+		return 1.0;
+	} else {
+		return 0.0;
+	}
+}
+
+
+void USERinterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+{
+	const std::string filename = getGridFileName(param);
+	//read2DGrid(grid, filename);
+	throw IOException("USER interpolation algorithm not yet implemented...", AT);
 }
 
 } //namespace

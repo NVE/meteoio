@@ -33,7 +33,7 @@ namespace mio {
 
 /**
  * @class SNIO
- * @brief This class enables the access to 2D grids stored in ARPS format
+ * @brief This class enables the access to meteo data stored in SNOWPACK format
  *
  * @author Mathias Bavay
  * @date   2009-12-04

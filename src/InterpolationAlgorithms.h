@@ -60,6 +60,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
+ * - USER: user provided grids to be read from disk (if available, see USERinterpolation) THIS IS NOT YET USABLE
  *
  * @section example Example of configuration file
  * Here is an example of the interpolation section of an configuration file (io.ini):
@@ -303,6 +304,27 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const MeteoData::Parameters& param);
 		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
 };
+
+/**
+ * @class USERinterpolation
+ * @brief Reads user provided gridded data on the disk.
+ * 
+ */
+class USERinterpolation : public InterpolationAlgorithm {
+	public:
+		USERinterpolation(const Meteo2DInterpolator& _mi,
+		               const DEMObject& _dem,
+		               const std::vector<MeteoData>& _vecMeteo,
+		               const std::vector<StationData>& _vecStation,
+		               const std::vector<std::string>& _vecArgs,
+		               const std::string _algo)
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+		virtual double getQualityRating(const MeteoData::Parameters& param);
+		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+	private:
+		std::string getGridFileName(const MeteoData::Parameters& param);
+};
+
 
 } //end namespace mio
 
