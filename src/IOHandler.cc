@@ -69,6 +69,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["GSN"]	= IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
 	mapPlugins["ARC"]	= IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
 	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
+	mapPlugins["ARPS"]	= IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
 }
 
 #ifdef _POPC_

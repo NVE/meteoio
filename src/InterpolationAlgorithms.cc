@@ -476,7 +476,7 @@ double USERinterpolation::getQualityRating(const MeteoData::Parameters& param)
 }
 
 
-void USERinterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+void USERinterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& /*grid*/)
 {
 	const std::string filename = getGridFileName(param);
 	//read2DGrid(grid, filename);
