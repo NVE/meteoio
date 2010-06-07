@@ -83,6 +83,8 @@ class ARPSIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		unsigned int dimx, dimy, dimz;
+		double cellsize;
+		double xcoord, ycoord;
 };
 
 } //namespace

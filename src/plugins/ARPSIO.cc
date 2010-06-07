@@ -26,7 +26,7 @@ namespace mio {
 /**
  * @page arps ARPSIO
  * @section arps_format Format
- * This is for reading grid data in the ARPS grid format
+ * This is for reading grid data in the ARPS grid format after processing by the ARPSGRID routine. Currently, only DEM reading is implemented.
  *
  * @section arps_units Units
  *
@@ -35,11 +35,10 @@ namespace mio {
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - METEOPATH: path to the output directory; [Output] section
- * - METEOFILE#: input meteo data file, e.g. METEOFILE1, METEOFILE2; [Input] section
- * - STATION#: station name as listed in the METAFILE, e.g. STATION1, STATION2; [Input] section
- * - METAFILE: filename of the meta data file; [Input] section
- * - NROFSTATIONS: integer, the number of stations for which meteo files are provided; [Input] section
+ * - DEMFILE: path and file containing the DEM; [Input] section
+ * - ARPS_X: x coordinate of the lower left corner of the grids; [Input] section
+ * - ARPS_Y: y coordinate of the lower left corner of the grids; [Input] section
+ * - ARPSPATH: path to the input directory where to find the arps files to be read as grids; [Input] section //NOT USED YET
  */
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
@@ -48,6 +47,7 @@ ARPSIO::ARPSIO(void (*delObj)(void*), const std::string& filename) : IOInterface
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	dimx=dimy=dimz=0;
+	cellsize=0.;
 	fin=NULL;
 }
 
@@ -55,6 +55,7 @@ ARPSIO::ARPSIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	dimx=dimy=dimz=0;
+	cellsize=0.;
 	fin=NULL;
 }
 
@@ -62,6 +63,7 @@ ARPSIO::ARPSIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	dimx=dimy=dimz=0;
+	cellsize=0.;
 	fin=NULL;
 }
 
@@ -177,9 +179,11 @@ void ARPSIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*n
 
 void ARPSIO::openGridFile(const std::string& _filename)
 {
+	double v1, v2;
+
 	filename = _filename;
 
-	if((fin=fopen(filename.c_str(),"r")) == 0) {
+	if((fin=fopen(filename.c_str(),"r")) == NULL) {
 		cleanup();
 		throw FileAccessException("Can not open file "+filename, AT);
 	}
@@ -189,7 +193,7 @@ void ARPSIO::openGridFile(const std::string& _filename)
 	for (int j=0; j<12; j++) {
 		fgets(dummy,ARPS_MAX_STRING_LENGTH,fin);
 	}
-	if (fscanf(fin,"%ud %ud %ud\n",&dimx,&dimy,&dimz)!=3) {
+	if (fscanf(fin,"%u %u %u\n",&dimx,&dimy,&dimz)!=3) {
 		cleanup();
 		throw InvalidFormatException("Can not read dimx, dimy, dimz from file "+filename, AT);
 	}
@@ -197,6 +201,32 @@ void ARPSIO::openGridFile(const std::string& _filename)
 		cleanup();
 		throw IndexOutOfBoundsException("Invalid dimx, dimy, dimz from file "+filename, AT);
 	}
+
+	//initializing cell size
+	moveToMarker("x_coordinate");
+	if (fscanf(fin,"%lg %lg",&v1,&v2)!=2) {
+		cleanup();
+		throw InvalidFormatException("Can not read first two x coordinates from file "+filename, AT);
+	}
+	const double cellsize_x = v2 - v1;
+	moveToMarker("y_coordinate");
+	if (fscanf(fin,"%lg %lg",&v1,&v2)!=2) {
+		cleanup();
+		throw InvalidFormatException("Can not read first two y coordinates from file "+filename, AT);
+	}
+	const double cellsize_y = v2 - v1;
+	if(cellsize_x!=cellsize_y) {
+		cleanup();
+		throw InvalidFormatException("Only square cells currently supported! Non compliance in file "+filename, AT);
+	}
+	cellsize = cellsize_y;
+
+	//get llcorner
+	cfg.getValue("ARPS_X", "Input", xcoord, 0);
+	cfg.getValue("ARPS_Y", "Input", ycoord, 0);
+
+	//come back to the begining of the file
+	rewind(fin);
 }
 
 void ARPSIO::cleanup() throw()
@@ -234,7 +264,9 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 	}
 
 	//resize the grid just in case
-	grid.grid2D.resize(dimx, dimy);
+	Coords llcorner(coordin, coordinparam);
+	llcorner.setXY(xcoord, ycoord, IOUtils::nodata);
+	grid.set(dimx, dimy, cellsize, llcorner);
 
 	// Read until the parameter is found
 	moveToMarker(parameter);

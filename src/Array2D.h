@@ -161,10 +161,10 @@ template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned
 			    const unsigned int& _ncols, const unsigned int& _nrows)
 {
 	if (((_nx+_ncols) > _array2D.nx) || ((_ny+_nrows) > _array2D.ny))
-		throw IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("Trying to cut an array to a size bigger than its original size!", AT);
 
 	if ((_ncols == 0) || (_nrows == 0)) //the plane to copy has to make sense
-		throw IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("Copying an array into a null sized array!", AT);
 
 	resize(_ncols, _nrows); //create new Array2D object
 
@@ -196,7 +196,7 @@ template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigne
 		nx = anx;
 		ny = any;
 	} else {
-		throw IndexOutOfBoundsException("", AT);    
+		throw IndexOutOfBoundsException("Can not resize a 2D array to negative sizes!", AT);    
 	}
 }
 

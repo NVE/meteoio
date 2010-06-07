@@ -167,8 +167,8 @@ class ConfigReader {
 		 * @param[in] options indicating whether an exception should be raised, when key is not present
 		 */
 		template <class T> void getValue(const std::string& key, const std::string& section,
-								   T& t,
-								   const unsigned int& options=0) const {
+		                                 T& t,
+		                                 const unsigned int& options=0) const {
 			try {
 				std::string _section = section;
 				IOUtils::toUpper(_section);

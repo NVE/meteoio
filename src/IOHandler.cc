@@ -44,6 +44,7 @@ namespace mio {
  * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
  * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
+ * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
  *
  */
 
