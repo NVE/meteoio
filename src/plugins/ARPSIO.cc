@@ -17,16 +17,13 @@
 */
 #include "ARPSIO.h"
 
-#define ARPS_MAX_LINE_LENGTH 6000
-#define ARPS_MAX_STRING_LENGTH 256
-
 using namespace std;
 
 namespace mio {
 /**
  * @page arps ARPSIO
  * @section arps_format Format
- * This is for reading grid data in the ARPS grid format after processing by the ARPSGRID routine. Currently, only DEM reading is implemented.
+ * This is for reading grid data in the ARPS grid format (it transparently supports both true ARPS ascii grids and grids modified by the ARPSGRID utility). Currently, only DEM reading is implemented.
  *
  * @section arps_units Units
  *
@@ -49,6 +46,7 @@ ARPSIO::ARPSIO(void (*delObj)(void*), const std::string& filename) : IOInterface
 	dimx=dimy=dimz=0;
 	cellsize=0.;
 	fin=NULL;
+	is_true_arps=true;
 }
 
 ARPSIO::ARPSIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
@@ -57,6 +55,7 @@ ARPSIO::ARPSIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	dimx=dimy=dimz=0;
 	cellsize=0.;
 	fin=NULL;
+	is_true_arps=true;
 }
 
 ARPSIO::ARPSIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -65,6 +64,7 @@ ARPSIO::ARPSIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader
 	dimx=dimy=dimz=0;
 	cellsize=0.;
 	fin=NULL;
+	is_true_arps=true;
 }
 
 ARPSIO::~ARPSIO() throw()
@@ -127,7 +127,11 @@ void ARPSIO::readDEM(DEMObject& dem_out)
 	std::string _filename;
 	cfg.getValue("DEMFILE", "Input", _filename);
 	openGridFile(_filename);
-	readGridLayer(std::string("zp_coordinat"), 1 ,dem_out);
+	if(is_true_arps) {
+		readGridLayer(std::string("zp coordinat"), 1 ,dem_out);
+	} else {
+		readGridLayer(std::string("zp_coordinat"), 1 ,dem_out);
+	}
 }
 
 void ARPSIO::readLanduse(Grid2DObject& /*landuse_out*/)
@@ -177,23 +181,14 @@ void ARPSIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*n
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARPSIO::openGridFile(const std::string& _filename)
+void ARPSIO::initializeGRIDARPS()
 {
 	double v1, v2;
 
-	filename = _filename;
-
-	if((fin=fopen(filename.c_str(),"r")) == NULL) {
-		cleanup();
-		throw FileAccessException("Can not open file "+filename, AT);
-	}
-
-	//now, initialize the sizes
-	char dummy[ARPS_MAX_LINE_LENGTH];
-	for (int j=0; j<12; j++) {
-		fgets(dummy,ARPS_MAX_STRING_LENGTH,fin);
-	}
-	if (fscanf(fin,"%u %u %u\n",&dimx,&dimy,&dimz)!=3) {
+	//go to read the sizes
+	moveToMarker("nnx");
+	fscanf(fin,"%*[^\n]"); //finish reading the line and move to the next one
+	if (fscanf(fin," %u %u %u \n",&dimx,&dimy,&dimz)!=3) {
 		cleanup();
 		throw InvalidFormatException("Can not read dimx, dimy, dimz from file "+filename, AT);
 	}
@@ -220,6 +215,66 @@ void ARPSIO::openGridFile(const std::string& _filename)
 		throw InvalidFormatException("Only square cells currently supported! Non compliance in file "+filename, AT);
 	}
 	cellsize = cellsize_y;
+}
+
+void ARPSIO::initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH])
+{
+	double v1, v2;
+
+	//go to read the sizes
+	if (sscanf(curr_line," nx = %u, ny = %u, nz = %u ",&dimx,&dimy,&dimz)!=3) {
+		cleanup();
+		throw InvalidFormatException("Can not read dimx, dimy, dimz from file "+filename, AT);
+	}
+	if (dimx==0 || dimy==0 || dimz==0) {
+		cleanup();
+		throw IndexOutOfBoundsException("Invalid dimx, dimy, dimz from file "+filename, AT);
+	}
+
+	//initializing cell size
+	moveToMarker("x coordinate");
+	if (fscanf(fin,"%lg %lg",&v1,&v2)!=2) {
+		cleanup();
+		throw InvalidFormatException("Can not read first two x coordinates from file "+filename, AT);
+	}
+	const double cellsize_x = v2 - v1;
+	moveToMarker("y coordinate");
+	if (fscanf(fin,"%lg %lg",&v1,&v2)!=2) {
+		cleanup();
+		throw InvalidFormatException("Can not read first two y coordinates from file "+filename, AT);
+	}
+	const double cellsize_y = v2 - v1;
+	if(cellsize_x!=cellsize_y) {
+		cleanup();
+		throw InvalidFormatException("Only square cells currently supported! Non compliance in file "+filename, AT);
+	}
+	cellsize = cellsize_y;
+}
+
+void ARPSIO::openGridFile(const std::string& _filename)
+{
+	unsigned int v1;
+	filename = _filename;
+
+	if((fin=fopen(filename.c_str(),"r")) == NULL) {
+		cleanup();
+		throw FileAccessException("Can not open file "+filename, AT);
+	}
+
+	//identify if the file is an original arps file or a file modified by ARPSGRID
+	char dummy[ARPS_MAX_LINE_LENGTH];
+	for (int j=0; j<5; j++) {
+		//the first easy difference in the structure happens at line 5
+		fgets(dummy,ARPS_MAX_STRING_LENGTH,fin);
+	}
+	if (sscanf(dummy," nx = %u, ny = ", &v1)<1) {
+		//this is an ASCII file modified by ARPSGRID
+		is_true_arps=false;
+		initializeGRIDARPS();
+	} else {
+		//this is a true ARPS file
+		initializeTrueARPS(dummy);
+	}
 
 	//get llcorner
 	cfg.getValue("ARPS_X", "Input", xcoord, 0);
@@ -293,7 +348,7 @@ void ARPSIO::moveToMarker(const std::string& marker)
 {
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	do {
-		fscanf(fin," %s ",dummy);
+		fscanf(fin," %[^\t\n] ",dummy);
 	} while (!feof(fin) && strcmp(dummy,marker.c_str()) != 0);
 	if(feof(fin)) {
 		cleanup();

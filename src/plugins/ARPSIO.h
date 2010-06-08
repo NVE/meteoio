@@ -30,6 +30,9 @@
 #include <sstream>
 #include <iostream>
 
+#define ARPS_MAX_LINE_LENGTH 6000
+#define ARPS_MAX_STRING_LENGTH 256
+
 namespace mio {
 
 /**
@@ -71,6 +74,8 @@ class ARPSIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
+		void initializeGRIDARPS();
+		void initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH]);
 		void openGridFile(const std::string& _filename);
 		void readGridLayer(const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
 		void moveToMarker(const std::string& marker);
@@ -85,6 +90,7 @@ class ARPSIO : public IOInterface {
 		unsigned int dimx, dimy, dimz;
 		double cellsize;
 		double xcoord, ycoord;
+		bool is_true_arps; //is it an original arps file or is it a truncated file?
 };
 
 } //namespace
