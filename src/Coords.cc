@@ -59,7 +59,11 @@ namespace mio {
  *
  */
 
-const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
+map<std::string, convfunc> Coords::to_wgs84;
+map<std::string, convfunc> Coords::from_wgs84;
+const bool Coords::__init = Coords::initializeMaps();
+
+const struct mio::Coords::ELLIPSOID mio::Coords::ellipsoids[6] = {
 	{ 6378137.,	6356752.3142 }, ///< E_WGS84
 	{ 6378137.,	6356752.3141 }, ///< E_GRS80
 	{ 6377563.396,	6356256.909 }, ///< E_AIRY
@@ -67,6 +71,22 @@ const struct Coords::ELLIPSOID Coords::ellipsoids[] = {
 	{ 6378249.145,	6356514.86955 }, ///< E_CLARKE1880
 	{ 6378160.,	6356774.719 } ///< E_GRS67
 };
+
+bool Coords::initializeMaps() {
+	//Please don't forget to mirror the keywords here in the documentation in Coords.h!!
+	to_wgs84["CH1903"]   = &Coords::CH1903_to_WGS84;
+	from_wgs84["CH1903"] = &Coords::WGS84_to_CH1903;
+	to_wgs84["UTM"]   = &Coords::UTM_to_WGS84;
+	from_wgs84["UTM"] = &Coords::WGS84_to_UTM;
+	to_wgs84["PROJ4"]   = &Coords::PROJ4_to_WGS84;
+	from_wgs84["PROJ4"] = &Coords::WGS84_to_PROJ4;
+	to_wgs84["LOCAL"]   = &Coords::local_to_WGS84;
+	from_wgs84["LOCAL"] = &Coords::WGS84_to_local;
+	to_wgs84["NULL"]   = &Coords::NULL_to_WGS84;
+	from_wgs84["NULL"] = &Coords::WGS84_to_NULL;
+	
+	return true;
+}
 
 /**
 * @brief Equality operator that checks that lat/lon match
@@ -111,7 +131,6 @@ Coords& Coords::operator=(const Coords& source) {
 		grid_i = source.grid_i;
 		grid_j = source.grid_j;
 		grid_k = source.grid_k;
-		initializeMaps();
 		setFunctionPointers();
 	}
 	return *this;
@@ -138,7 +157,6 @@ std::ostream& operator<<(std::ostream &os, const Coords& coord)
 * purpose. This is more or less the equivalent of NULL for a pointer...
 */
 Coords::Coords() {
-	initializeMaps();
 	setDefaultValues();
 	setProj("NULL", "NULL");
 }
@@ -152,7 +170,6 @@ Coords::Coords() {
 */
 Coords::Coords(const std::string& _coordinatesystem, const std::string& _parameters) {
 	setDefaultValues();
-	initializeMaps();
 	setProj(_coordinatesystem, _parameters);
 }
 
@@ -167,7 +184,6 @@ Coords::Coords(const double& _lat_ref, const double& _long_ref)
 {
 	setDefaultValues();
 	setLocalRef(_lat_ref, _long_ref);
-	initializeMaps();
 	setProj("LOCAL", "");
 }
 
@@ -1275,20 +1291,6 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 	//const double alpha2 = atan2( sinAlpha, -(sinU1*sin(sigma)-cosU1*cos(sigma)*cos(alpha1)) ); //reverse azimuth
 }
 
-void Coords::initializeMaps() {
-//Please don't forget to mirror the keywords here in the documentation in Coords.h!!
-	to_wgs84["CH1903"]   = &Coords::CH1903_to_WGS84;
-	from_wgs84["CH1903"] = &Coords::WGS84_to_CH1903;
-	to_wgs84["UTM"]   = &Coords::UTM_to_WGS84;
-	from_wgs84["UTM"] = &Coords::WGS84_to_UTM;
-	to_wgs84["PROJ4"]   = &Coords::PROJ4_to_WGS84;
-	from_wgs84["PROJ4"] = &Coords::WGS84_to_PROJ4;
-	to_wgs84["LOCAL"]   = &Coords::local_to_WGS84;
-	from_wgs84["LOCAL"] = &Coords::WGS84_to_local;
-	to_wgs84["NULL"]   = &Coords::NULL_to_WGS84;
-	from_wgs84["NULL"] = &Coords::WGS84_to_NULL;
-}
-
 void Coords::setFunctionPointers() {
 	//check whether there exists a tranformation for the given coordinatesystem
 	//init function pointers
@@ -1355,7 +1357,6 @@ void Coords::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&grid_j, 1);
 		buf.UnPack(&grid_k, 1);
 		marshal_geo_distances(buf, distance_algo, 0, !FLAG_MARSHAL, NULL);
-		initializeMaps();
 		setFunctionPointers();
 	}
 }

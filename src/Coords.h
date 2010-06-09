@@ -125,7 +125,6 @@ class Coords {
  private:
 	void clearCoordinates();
 	void setDefaultValues();
-	void initializeMaps();
 	void setFunctionPointers();
 	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
 
@@ -140,8 +139,10 @@ class Coords {
 	int grid_k; ///<grid index k (please notice that this index is NOT automatically regenerated NOR checked)
 	double ref_latitude, ref_longitude;
 
-	std::map<std::string, convfunc> to_wgs84;
-	std::map<std::string, convfunc> from_wgs84;
+	static const bool __init;    ///<helper variable to enable the init of static collection data
+	static bool initializeMaps();
+	static std::map<std::string, convfunc> to_wgs84;
+	static std::map<std::string, convfunc> from_wgs84;
 	std::string coordsystem;
 	std::string coordparam;
 	convfunc convToWGS84, convFromWGS84;
@@ -160,7 +161,7 @@ class Coords {
 		double a;
 		double b;
 	};
-	static const struct ELLIPSOID ellipsoids[];
+	static const struct ELLIPSOID ellipsoids[6];
 };
 } //end namespace
 
