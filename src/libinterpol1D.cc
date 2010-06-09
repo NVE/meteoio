@@ -69,4 +69,45 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 	return (sum/(double)vecData.size());
 }
 
+double Interpol1D::getMedian(const std::vector<double>& vecData)
+{
+	if (vecData.size() == 0)
+		throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
+
+	vector<double> vecTemp(vecData); //copy by value of vecData
+	
+	double median = 0.0;
+	unsigned int vecSize = vecTemp.size();
+	unsigned int middle = (unsigned int)(vecSize/2);
+	sort(vecTemp.begin(), vecTemp.end());
+
+	if ((vecSize % 2) == 1){ //uneven
+		median = vecTemp.at(middle);
+	} else { //use arithmetic mean of element n/2 and n/2-1
+		median = Interpol1D::linearInterpolation(vecTemp.at(middle-1), vecTemp.at(middle), 0.5);
+	}
+
+	return median;
+}
+
+double Interpol1D::getMedianAverageDeviation(const std::vector<double>& vecData)
+{
+	if (vecData.size() == 0)
+		throw NoAvailableDataException("Trying to calculate MAD with no data points", AT);
+	
+	vector<double> vecWindow(vecData);
+
+	double median = Interpol1D::getMedian(vecData);
+
+	//Calculate vector of deviations and write each value back into the vecWindow
+	for(unsigned int ii=0; ii<vecWindow.size(); ii++){
+		vecWindow[ii] = std::abs(vecWindow[ii] - median);
+	}
+
+	//Calculate the median of the deviations
+	double mad = Interpol1D::getMedian(vecWindow);
+
+	return mad;
+}
+
 } //namespace
