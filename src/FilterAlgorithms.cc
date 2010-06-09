@@ -559,34 +559,26 @@ bool FilterAlgorithms::NearestNeighbourResamplingProcess(const std::vector<Meteo
 				break;
 			}
 		}
+	}
 
-		if ((indexExact == -1) && (indexAfter>0)){ //no MeteoData object with the correct date present
-			MeteoData newmd(date);
-			newmd.setResampled(true);
+	if ((indexExact == -1) && (indexAfter>=0)){ //no MeteoData object with the correct date present
+		MeteoData newmd(date);
+		newmd.setResampled(true);
 
-			vecFilteredM.insert(vecFilteredM.begin() + indexAfter, newmd);
-			vecFilteredS.insert(vecFilteredS.begin() + indexAfter, vecFilteredS[0]);
-			indexExact = indexAfter;
-			indexAfter++;
-		} else if ((indexExact == -1) && (indexAfter == -1) && (indexBefore>=0)){
-			MeteoData newmd(date);
-			newmd.setResampled(true);
-
-			vecFilteredM.push_back(newmd);
-			vecFilteredS.push_back(vecFilteredS.at(0));
-			indexExact = vecFilteredM.size() - 1;
-		} else if ((indexExact == -1) && (indexBefore == -1) && (indexAfter>=0)){
-			MeteoData newmd(date);
-			newmd.setResampled(true);
-
-			vecFilteredM.insert(vecFilteredM.begin(), newmd);
-			vecFilteredS.insert(vecFilteredS.begin(), vecFilteredS[indexAfter]);
-			indexExact = 0;
-			indexAfter++;
-		} else if (indexExact != -1){
-		  if (vecFilteredM[indexExact].param(paramindex) != IOUtils::nodata)
-		    return false;
-		}
+		vecFilteredM.insert(vecFilteredM.begin() + indexAfter, newmd);
+		vecFilteredS.insert(vecFilteredS.begin() + indexAfter, vecFilteredS[0]);
+		indexExact = indexAfter;
+		indexAfter++;
+	} else if ((indexExact == -1) && (indexBefore>=0)){
+		MeteoData newmd(date);
+		newmd.setResampled(true);
+		
+		vecFilteredM.push_back(newmd);
+		vecFilteredS.push_back(vecFilteredS.at(0));
+		indexExact = vecFilteredM.size() - 1;
+	} else if (indexExact != -1){
+		if (vecFilteredM[indexExact].param(paramindex) != IOUtils::nodata)
+			return false;
 	}
 
 	//Try to find the nearest neighbour, if there are two equally distant, then return the arithmetic mean
