@@ -59,7 +59,7 @@ endif(DEST STREQUAL "par")
 
 if (DEST STREQUAL "safe")
   set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG")
-  set(ARCH  "-march=pentium3")
+  set(ARCH  "")
   set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "safe")
 
