@@ -15,7 +15,6 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <cmath>
 #include "FilterAlgorithms.h"
 
 using namespace std;
@@ -38,11 +37,13 @@ namespace mio {
  *
  * A few data transformations are also supported besides filtering:
  * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
- * - linear: linear data resampling, see FilterAlgorithms::LinResamplingProcess
- * - nearest_neighbour:  data resampling, see FilterAlgorithms::NearestNeighbourResamplingProcess
  * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgProcess
  * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess
  * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
+ *
+ * Two interpolation mechanism used for the resampling are implemented:
+ * - linear: linear data resampling, see FilterAlgorithms::LinResamplingProcess
+ * - nearest_neighbour:  data resampling, see FilterAlgorithms::NearestNeighbourResamplingProcess
  */
 
 std::map<std::string, FilterProperties> FilterAlgorithms::filterMap;
@@ -518,9 +519,15 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 }
 
 /**
- * @brief Linear Data resampling.
- * If a point is requested that is in between two input data points, the requested value is automatically calculated using
- * a linear interpolation.
+ * @brief Nearest Neighbour data resampling: Find the nearest neighbour of a desired data point 
+ *        that is not IOUtils::nodata and copy that value into the desired data point
+ *        - If the data point itself is not IOUtils::nodata, nothing needs to be done
+ *        - If two points have the same distance from the data point to be resampled, calculate mean and return it
+ *        - no arguments are considered
+ * @code
+ * [Interpolations1D]
+ * TA::resample = nearest_neighbour
+ * @endcode
  */
 bool FilterAlgorithms::NearestNeighbourResamplingProcess(const std::vector<MeteoData>& vecM, 
                                                            const std::vector<StationData>& vecS,
@@ -624,9 +631,15 @@ bool FilterAlgorithms::NearestNeighbourResamplingProcess(const std::vector<Meteo
 }
 
 /**
- * @brief Linear Data resampling.
- * If a point is requested that is in between two input data points, the requested value is automatically calculated using
- * a linear interpolation.
+ * @brief Linear data resampling: If a point is requested that is in between two input data points, 
+ *        the requested value is automatically calculated using a linear interpolation. Furthermore 
+ *        if the argument extrapolate is provided there will be an attempt made to extrapolate the
+ *        point if the interpolation fails
+ * @code
+ * [Interpolations1D]
+ * TA::resample = linear
+ * TA::args     = extrapolate
+ * @endcode
  */
 bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
 							const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
