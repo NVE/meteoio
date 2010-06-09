@@ -73,6 +73,11 @@ class FilterAlgorithms {
 					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
+		static bool NearestNeighbourResamplingProcess(const std::vector<MeteoData>& vecM, 
+                         const std::vector<StationData>& vecS,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
 		static bool MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
 					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 

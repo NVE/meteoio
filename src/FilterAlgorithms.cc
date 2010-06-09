@@ -38,7 +38,8 @@ namespace mio {
  *
  * A few data transformations are also supported besides filtering:
  * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
- * - resample: linear data resampling, FilterAlgorithms::LinResamplingProcess
+ * - linear: linear data resampling, see FilterAlgorithms::LinResamplingProcess
+ * - nearest_neighbour:  data resampling, see FilterAlgorithms::NearestNeighbourResamplingProcess
  * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgProcess
  * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess
  * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
@@ -55,7 +56,8 @@ bool FilterAlgorithms::initStaticData()
 	filterMap["max"]      = FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::MaxValueFilter);
 	filterMap["mad"]      = FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::MedianAbsoluteDeviationFilter);
 	filterMap["accumulate"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::AccumulateProcess);
-	filterMap["resample"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::LinResamplingProcess);
+	filterMap["linear"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::LinResamplingProcess);
+	filterMap["nearest_neighbour"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::NearestNeighbourResamplingProcess);
 	filterMap["median_avg"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::MedianAvgProcess);
 	filterMap["mean_avg"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::MeanAvgProcess);
 	filterMap["wind_avg"] = FilterProperties(false, (unsigned int)1, Date(0.0), &FilterAlgorithms::WindAvgProcess);
@@ -430,43 +432,24 @@ bool FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 	std::vector<double> vecWindow;
 	if (!getWindowData("mad", vecM, pos, date, _vecArgs, paramindex, vecWindow))
 		return false; //Not enough data to meet user configuration
-
-	//Calculate median
-	double median=IOUtils::nodata;
-	unsigned int vecSize = vecWindow.size();
-	unsigned int middle = (unsigned int)(vecSize/2);
-	sort(vecWindow.begin(), vecWindow.end());
-
-	if (vecSize == 0){
-		return false; //only nodata values detected or other problem
-	} else if ((vecSize % 2) == 1){ //uneven
-		median = vecWindow.at(middle);
-	} else { //use arithmetic mean of element n/2 and n/2-1
-		median = Interpol1D::linearInterpolation(vecWindow.at(middle-1), vecWindow.at(middle), 0.5);
-	}
-
-	//Calculate vector of deviations and write each value back into the vecWindow
-	for(unsigned int ii=0; ii<vecWindow.size(); ii++){
-		vecWindow[ii] = abs(vecWindow[ii] - median);
-	}
-
-	//Calculate the median of the deviations
-	double mad = IOUtils::nodata;
+	
+	//Calculate MAD
 	const double K = 1. / 0.6745;
-	sort(vecWindow.begin(), vecWindow.end());
-	if (vecSize == 0){
-		return false; //only nodata values detected or other problem
-	} else if ((vecSize % 2) == 1){ //uneven
-		mad = vecWindow.at(middle);
-	} else { //use arithmetic mean of element n/2 and n/2-1
-		mad = Interpol1D::linearInterpolation(vecWindow.at(middle-1), vecWindow.at(middle), 0.5);
-	}
-	mad *= K;
+	double mad = IOUtils::nodata;
+	double median = IOUtils::nodata;
 
-	//cout << "Median value: " << median << endl;
+	try {
+		median = Interpol1D::getMedian(vecWindow);
+		mad = Interpol1D::getMedianAverageDeviation(vecWindow);
+	} catch(exception& e){
+		return false;
+	}
+	
+	double sigma = mad * K;
+
 	for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
 		double& value = vecFilteredM[ii].param(paramindex);
-		if( (value>(median+3.*mad)) || (value<(median-3.*mad)) ) {
+		if( (value>(median + 3.*sigma)) || (value<(median - 3.*sigma)) ) {
 			value = IOUtils::nodata;
 		}
 	}
@@ -539,13 +522,126 @@ bool FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
  * If a point is requested that is in between two input data points, the requested value is automatically calculated using
  * a linear interpolation.
  */
+bool FilterAlgorithms::NearestNeighbourResamplingProcess(const std::vector<MeteoData>& vecM, 
+                                                           const std::vector<StationData>& vecS,
+                                                           const unsigned int& pos, const Date& date, 
+                                                           const std::vector<std::string>& _vecArgs,
+                                                           const unsigned int& paramindex,
+                                                           std::vector<MeteoData>& vecFilteredM, 
+                                                           std::vector<StationData>& vecFilteredS)
+{
+	(void)vecM; (void)vecS; (void)pos; (void)_vecArgs;
+	int indexBefore=-1, indexExact=-1, indexAfter=-1;
+
+	if ((vecFilteredM.size()==1) && (date==vecFilteredM[0].date)){//Nothing to do
+		return false; //Interpretation: filter not applied
+	} else if (vecFilteredM.size() == 0){
+		throw IOException("Not enough data to do resampling ...", AT);
+	} else if (vecFilteredM.size()>=2){
+		//check whether there is already an element with the correct date in vecFilteredM
+		for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
+			if (vecFilteredM.at(ii).date < date){
+				indexBefore = (int)ii;
+			} else if (vecFilteredM.at(ii).date == date){
+				indexExact = (int)ii;
+				if (indexExact < (int)(vecFilteredM.size()-1))
+					indexAfter = indexExact + 1;
+				break;
+			} else if (vecFilteredM.at(ii).date > date){
+				indexAfter = (int)ii;
+				break;
+			}
+		}
+
+		if ((indexExact == -1) && (indexAfter>0)){ //no MeteoData object with the correct date present
+			MeteoData newmd(date);
+			newmd.setResampled(true);
+
+			vecFilteredM.insert(vecFilteredM.begin() + indexAfter, newmd);
+			vecFilteredS.insert(vecFilteredS.begin() + indexAfter, vecFilteredS[0]);
+			indexExact = indexAfter;
+			indexAfter++;
+		} else if ((indexExact == -1) && (indexAfter == -1) && (indexBefore>=0)){
+			MeteoData newmd(date);
+			newmd.setResampled(true);
+
+			vecFilteredM.push_back(newmd);
+			vecFilteredS.push_back(vecFilteredS.at(0));
+			indexExact = vecFilteredM.size() - 1;
+		} else if ((indexExact == -1) && (indexBefore == -1) && (indexAfter>=0)){
+			MeteoData newmd(date);
+			newmd.setResampled(true);
+
+			vecFilteredM.insert(vecFilteredM.begin(), newmd);
+			vecFilteredS.insert(vecFilteredS.begin(), vecFilteredS[indexAfter]);
+			indexExact = 0;
+			indexAfter++;
+		} else if (indexExact != -1){
+		  if (vecFilteredM[indexExact].param(paramindex) != IOUtils::nodata)
+		    return false;
+		}
+	}
+
+	//Try to find the nearest neighbour, if there are two equally distant, then return the arithmetic mean
+	MeteoData m1, m2;
+	bool found1=false, found2=false;
+	for (unsigned int ii=indexExact+1; ii<vecFilteredM.size(); ii++){
+		if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
+			m1 = vecFilteredM[ii];
+			found1 = true;
+			break;
+		}
+	}
+
+	for (unsigned int ii=0; ii<(unsigned int)indexExact; ii++){
+		if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
+			m2 = vecFilteredM[ii];
+			found2 = true;
+		}
+	}
+
+	if (found1 && !found2){
+		vecFilteredM[indexExact].param(paramindex) = m1.param(paramindex);
+	} else if (!found1 && found2){
+		vecFilteredM[indexExact].param(paramindex) = m2.param(paramindex);
+	} else if (!found1 && !found2){
+		vecFilteredM[indexExact].param(paramindex) = IOUtils::nodata;
+	} else {
+		Date diff1 = m1.date - vecFilteredM[indexExact].date;
+		Date diff2 = vecFilteredM[indexExact].date - m2.date;
+
+		if (IOUtils::checkEpsilonEquality(diff1.getJulianDate(), diff2.getJulianDate(), 0.1/1440)){ //within 6 seconds
+			vecFilteredM[indexExact].param(paramindex) = Interpol1D::linearInterpolation(m1.param(paramindex), 
+																		  m2.param(paramindex), 0.5);
+		} else if (diff1 < diff2){
+			vecFilteredM[indexExact].param(paramindex) = m1.param(paramindex);
+		} else if (diff1 > diff2){
+			vecFilteredM[indexExact].param(paramindex) = m2.param(paramindex);
+		}
+	}
+
+	return true;
+}
+
+/**
+ * @brief Linear Data resampling.
+ * If a point is requested that is in between two input data points, the requested value is automatically calculated using
+ * a linear interpolation.
+ */
 bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
 							const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 							const unsigned int& paramindex,
 							std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
 {
-	(void)vecM; (void)vecS; (void)pos; (void)_vecArgs;
+	(void)vecM; (void)vecS; (void)pos;
 	int indexBefore=-1, indexExact=-1, indexAfter=-1;
+	bool extrapolate = false;
+
+	//Check whether extrapolation is desired
+	if (_vecArgs.size() > 0)
+		if (_vecArgs.at(0) == "extrapolate")
+			extrapolate = true;
+	
 
 	if ((vecFilteredM.size()==1) &&(date==vecFilteredM[0].date)){//Nothing to do
 		return false; //Interpretation: filter not applied
@@ -558,33 +654,50 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 				indexBefore = (int)ii;
 			} else if (vecFilteredM.at(ii).date == date){
 				indexExact = (int)ii;
+				if (indexExact < (int)(vecFilteredM.size()-1))
+					indexAfter = indexExact + 1;
+				break;
 			} else if (vecFilteredM.at(ii).date > date){
 				indexAfter = (int)ii;
+				break;
 			}
 		}
+	}
 
-		if ((indexExact == -1) && (indexAfter>0)){ //no MeteoData object with the correct date present
-			MeteoData newmd(date);
-			newmd.setResampled(true);
+	//Now check whether a new element needs to be inserted and whether resampling is possible
+	//cout <<"Size of vector: " << vecFilteredM.size()<<endl;
+	//cout << "before="<<indexBefore<< "  exact=" << indexExact << "  after="<<indexAfter<< endl;
 
+	if (indexExact == -1){ //no MeteoData object with the correct date present -> insertion
+		MeteoData newmd(date);
+		newmd.setResampled(true);
+
+		if (indexAfter >= 0){
 			vecFilteredM.insert(vecFilteredM.begin() + indexAfter, newmd);
 			vecFilteredS.insert(vecFilteredS.begin() + indexAfter, vecFilteredS[0]);
 			indexExact = indexAfter;
 			indexAfter++;
-		} else if (((indexExact != -1) && (indexAfter == -1)) || ((indexExact != -1) && (indexBefore == -1))){
-		  return false; //No resampling possible, for lack of a right/left element
-		} else if (indexExact != -1){
-		  if (vecFilteredM[indexExact].param(paramindex) != IOUtils::nodata)
-		    return false;
+		} else if (indexBefore >=0) {
+			vecFilteredM.insert(vecFilteredM.begin() + indexBefore + 1, newmd);
+			vecFilteredS.insert(vecFilteredS.begin() + indexBefore + 1, vecFilteredS[0]);
+			indexExact = indexBefore + 1;
 		}
+	} else if (((indexExact != -1) && (indexAfter == -1)) || ((indexExact != -1) && (indexBefore == -1))){
+		if (!extrapolate)
+			return false; //No resampling possible, for lack of a right/left element
+	} else if (indexExact != -1){
+		if (vecFilteredM[indexExact].param(paramindex) != IOUtils::nodata)
+			return false;
 	}
 
 	//Now find two points within the vecFilteredM (before and aft, that are not IOUtils::nodata)
 	//If that condition cannot be met, simply add nodata for the resampled value
-	
+
+	bool found1=false, found2=false;
 	for (unsigned int ii=indexBefore+1; (ii--) > 0; ){
 		if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
 			indexBefore=ii;
+			found1 = true;
 			break;
 		}
 	}		
@@ -592,7 +705,28 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 	for (unsigned int ii=indexAfter; ii<vecFilteredM.size(); ii++){
 		if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
 			indexAfter = ii;
+			found2 = true;
 			break;
+		}
+	}
+
+	if (extrapolate){
+		if (!found1 && found2){ //only nodata values found before indexExact, try looking after indexAfter
+			for (unsigned int ii=indexAfter; ii<vecFilteredM.size(); ii++){
+				if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
+					indexBefore = ii;
+					found1 = true;
+					break;
+				}
+			}		
+		} else if (found1 && !found2){ //only nodata found after indexExact, try looking before indexBefore
+			for (unsigned int ii=indexBefore+1; (ii--) > 0; ){
+				if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
+					indexAfter=ii;
+					found2 = true;
+					break;
+				}
+			}		
 		}
 	}
 
@@ -600,15 +734,15 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 	const MeteoData& tmpmd1 = vecFilteredM.at((unsigned int) indexBefore);
 	const MeteoData& tmpmd2 = vecFilteredM.at((unsigned int) indexAfter);
 
-	double weight = (date.getJulianDate() - tmpmd1.date.getJulianDate()) / (tmpmd2.date.getJulianDate() - tmpmd1.date.getJulianDate());
-
 	const double& val1 = tmpmd1.param(paramindex);
 	const double& val2 = tmpmd2.param(paramindex);
 
 	if ((val1 == IOUtils::nodata) || (val2 == IOUtils::nodata)){
 		resampledmd.param(paramindex) = IOUtils::nodata;
 	} else {
-		resampledmd.param(paramindex) = Interpol1D::linearInterpolation(val1, val2, weight);
+		resampledmd.param(paramindex) = Interpol1D::linearInterpolation(tmpmd1.date.getJulianDate(), val1,
+														    tmpmd2.date.getJulianDate(), val2, 
+														    date.getJulianDate());
 	}
 
 	return true;
@@ -654,18 +788,12 @@ bool FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, cons
 	if (!getWindowData("median_avg", vecM, pos, date, _vecArgs, paramindex, vecWindow))
 		return false; //Not enough data to meet user configuration
 
-	//Calculate median
-	double median=IOUtils::nodata;
-	unsigned int vecSize = vecWindow.size();
-	unsigned int middle = (unsigned int)(vecSize/2);
-	sort(vecWindow.begin(), vecWindow.end());
+	double median = IOUtils::nodata;
 
-	if (vecSize == 0){
-		return false; //only nodata values detected or other problem
-	} else if ((vecSize % 2) == 1){ //uneven
-		median = vecWindow.at(middle);
-	} else { //use arithmetic mean of element n/2 and n/2-1
-		median = Interpol1D::linearInterpolation(vecWindow.at(middle-1), vecWindow.at(middle), 0.5);
+	try {
+		median = Interpol1D::getMedian(vecWindow);
+	} catch(exception& e){
+		return false; //the median calculation did not work out, filter is not applied
 	}
 
 	//cout << "Median value: " << median << endl;
@@ -710,7 +838,7 @@ bool FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
 	//4) the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
 	//
 	std::vector<double> vecWindow;
-	if (!getWindowData("median_avg", vecM, pos, date, _vecArgs, paramindex, vecWindow))
+	if (!getWindowData("mean_avg", vecM, pos, date, _vecArgs, paramindex, vecWindow))
 		return false; //Not enough data to meet user configuration
 
 	//Calculate mean

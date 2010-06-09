@@ -76,6 +76,8 @@ class MeteoFilter {
  	private:
 		unsigned int getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters);
 		unsigned int getArgumentsForFilter(const std::string& keyname, std::vector<std::string>& vecArguments);		
+		
+		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments);
 
 		ConfigReader cfg;
 		std::vector< std::vector<std::string> > tasklist;

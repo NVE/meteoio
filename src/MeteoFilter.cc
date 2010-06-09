@@ -64,14 +64,12 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 
 			//At the end of pass one of the filters, the resampling filter is added, unless disabled
 			if (kk==0){
-				std::string resamplingarg="";
-				cfg.getValue(parname+"::resample", "Filters", resamplingarg, ConfigReader::nothrow);
-				std::vector<std::string> filterArgs;
-				getArgumentsForFilter(parname+"::resample", filterArgs); //Read arguments
-				if (resamplingarg != "no"){
-					tmpFilters1.push_back("resample");
-					parArgs.push_back(filterArgs);
+				vector<string> vecResamplingArguments;
+				string resamplingAlgorithm = getInterpolationForParameter(parname, vecResamplingArguments);
 				
+				if (resamplingAlgorithm != "no"){
+					tmpFilters1.push_back(resamplingAlgorithm);
+					parArgs.push_back(vecResamplingArguments);
 				}
 
 				checkonly=true;
@@ -109,21 +107,6 @@ bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 			//cout << "Added " << vecM[ii].date.toString(Date::ISO) << endl;
 		}
 	}
-
-	/*
-	if (vecM.at(pos).date == date){ //No resampling required, all other filters may apply
-		vecFilteredM.push_back(vecM[pos]);
-		vecFilteredS.push_back(vecS.at(pos));
-	} else { 
-		//resampling required
-		vecFilteredM.push_back(vecM.at(pos-1));
-		vecFilteredS.push_back(vecS.at(pos-1));
-		vecFilteredM.push_back(vecM.at(pos));
-		vecFilteredS.push_back(vecS.at(pos));
-	}
-	*/
-
-
 	
 	for (unsigned int ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
 		//cout << "For parameter: " << MeteoData::getParameterName(ii) << endl;
@@ -162,6 +145,26 @@ bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 	}
 
 	return true;
+}
+
+string MeteoFilter::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments)
+{
+	/*
+	 * This function retrieves the resampling algorithm to be used for the 
+	 * 1D interpolation of meteo parameters. It also extracts any possible 
+	 * arguments for that specific algorithm.
+	 */
+
+	vecArguments.clear();
+	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, ConfigReader::nothrow);
+
+	std::string tmp = "";
+	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, ConfigReader::nothrow);
+
+	if (tmp.length() > 0)
+		return tmp;
+
+	return "linear"; //the default resampling is linear
 }
 
 unsigned int MeteoFilter::getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters)

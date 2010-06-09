@@ -21,6 +21,28 @@ using namespace std;
 
 namespace mio {
 
+/**
+ * @brief This function solves the equation y = kx + d for two given points and return the y for a given x
+ * @param x1 x-coordinate of first point
+ * @param y1 y-coordinate of first point
+ * @param x2 x-coordinate of second point
+ * @param y2 y-coordinate of second point
+ * @param x3 x-coordinate of desired point
+ * @return y-coordinate of desired point
+ */
+double Interpol1D::linearInterpolation(const double& x1, const double& y1, 
+                                       const double& x2, const double& y2, const double& x3)
+{
+	if (x1 == x2)
+		throw IOException("Attempted division by null", AT);
+
+	//Solving y = kx +d
+	double k = (y1 - y2) / (x1 - x2);
+	double d = y2 - k*x2;
+
+	return (k*x3 + d);
+}
+
 double Interpol1D::linearInterpolation(const double& d1, const double& d2, const double& weight)
 {
 	double tmp = abs(d1 - d2);

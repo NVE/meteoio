@@ -21,13 +21,18 @@
 #include "IOExceptions.h"
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 namespace mio {
 
 class Interpol1D {
  	public:
+		static double linearInterpolation(const double& x1, const double& y1, 
+                                            const double& x2, const double& y2, const double& x3);
   		static double linearInterpolation(const double& d1, const double& d2, const double& weight=1.0);
 		static double arithmeticMean(const std::vector<double>& vecData);
+		static double getMedian(const std::vector<double>& vecData);
+		static double getMedianAverageDeviation(const std::vector<double>& vecData);
 };
 } //end namespace
 
