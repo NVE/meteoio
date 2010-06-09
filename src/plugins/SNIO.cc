@@ -105,6 +105,7 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	//the meta data cannot change for the stations in dependence of time
 	string strNrOfStations="";
 	unsigned int nrOfStations = 0;
+	vecStation.clear();
 
 	cfg.getValue("NROFSTATIONS", "Input", strNrOfStations);
 	if (!IOUtils::convertString(nrOfStations, strNrOfStations, std::dec))
@@ -302,6 +303,10 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, MeteoData& md)
 {
+	/*
+	 * This function takes a meteo line, extracts the date (ignores Julian) and then converts
+	 * all meteo parameters to doubles and finally copies them into the MeteoData object md
+	 */
 	if (vecLine.size() < 15)
 		throw InvalidFormatException("At " + filepos + " line is too short", AT);
 

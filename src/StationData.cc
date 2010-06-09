@@ -20,10 +20,7 @@
 namespace mio {
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
-StationData::StationData()
-{
-	stationName = "";
-}
+StationData::StationData() : position("NULL", "NULL"), stationName(""){}
 
 StationData::StationData(const Coords& _position, const std::string& name_in)
 {
