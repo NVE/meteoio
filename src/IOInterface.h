@@ -33,7 +33,7 @@ namespace mio {
 
 /**
  * @page dev_plugins Plugins developement guide
- * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. This means that plugins should follow some common rules, which are described in this guide.
+ * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. This means that plugins should follow some common rules, which are described in this guide. Templates header and code files are available to get you started, look into the "plugins" subdirectory of the source directory (files "template.cc" and "template.h").
  *
  * @section plugins_implementation Plugins implementation
  * Each plugin must inherit the class IOInterface and implement all or part of its interface (at least for public methods). The plugins are then free to implement the private methods that they see fit. Because the interface described in IOInterface is quite generic, some methods might not be relevant for a given plugin. In such a case, the plugin should throw an exception as illustrated in the example below:
