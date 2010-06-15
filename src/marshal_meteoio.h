@@ -31,9 +31,9 @@
 
 namespace mio {
 
-typedef Array2D<double> TYPE_DOUBLE2D;
-typedef Array3D<double> TYPE_DOUBLE3D;
-typedef Array2D<int> TYPE_INT2D;
+typedef Array2D<double> DOUBLE2D; //HACK for POPC
+typedef Array3D<double> DOUBLE3D;
+typedef Array2D<int> INT2D;
 typedef std::vector<std::string> STR_VECTOR;
 
 void marshal_uint(POPBuffer &buf,unsigned int &data, int maxsize, int flag, POPMemspool *temp);
@@ -42,11 +42,11 @@ void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize
 
 void marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp);
+void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp);
 
-void marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp);
+void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp);
 
-void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp);
+void marshal_INT2D(POPBuffer &buf, INT2D &data,int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp);
 

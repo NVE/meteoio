@@ -260,7 +260,7 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&nrows,1);
 		buf.Pack(&cellsize,1);
 		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
@@ -269,7 +269,7 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&cellsize,1);
 		marshal_Coords(buf, llcorner, 0, !FLAG_MARSHAL, NULL);
 		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
-		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
 	}
 }
 #endif

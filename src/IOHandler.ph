@@ -36,7 +36,8 @@ using namespace mio; //HACK for POPC
 
 namespace mio {
 
-typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
+typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR; //HACK for POPC
+//This one line above does absolutely nothing, but if removed, popc does not compile the file....
 
 parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
@@ -52,15 +53,16 @@ parclass IOHandler {
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 		virtual void readStationData([in]const Date& date, 
-			     	[proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
+		              [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
 		virtual void writeMeteoData([in,proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
-			     [in,proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
-			     [in]const std::string& name);
+		              [in,proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
+		              [in]const std::string& name);
 		virtual void readMeteoData([in]const Date& dateStart, [in]const Date& dateEnd,
-			[proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
-			[proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
-				const unsigned& stationindex=IOUtils::npos);
-		void readMeteoData([in]const Date& date, [proc=marshal_METEO_DATASET] METEO_DATASET& vecMeteo, [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
+		              [proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
+		              [proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
+		              const unsigned& stationindex=IOUtils::npos);
+		void readMeteoData([in]const Date& date, [proc=marshal_METEO_DATASET] METEO_DATASET& vecMeteo,
+		                   [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
 		virtual void readAssimilationData([in] const Date&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_vec_coords]std::vector<Coords>& pts);
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
@@ -68,14 +70,13 @@ parclass IOHandler {
 	private:
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname, 
-					 DynamicLibrary*& dynLibrary, IOInterface*& io);
+		                DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
 		ConfigReader cfg;
 		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;
-		PLUGIN_ITERATOR mapit;
 		A3DIO fileio;
 };
 

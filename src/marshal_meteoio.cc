@@ -199,6 +199,7 @@ void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &d
 	}
 }
 
+//HACK is this still needed?
 void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMemspool *temp) {
 	(void)maxsize;
 	(void)*temp;
@@ -276,7 +277,7 @@ void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data
 	}
 }
 
-void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -300,7 +301,7 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
 	}
 }
 
-void marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -330,7 +331,7 @@ void marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int 
 	}
 }
 
-void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp)
+void marshal_INT2D(POPBuffer &buf, INT2D &data,int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;

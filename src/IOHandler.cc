@@ -113,6 +113,7 @@ IOHandler::~IOHandler(){
 IOHandler::~IOHandler() throw(){
 #endif
 	// Get rid of the objects
+	std::map<std::string, IOPlugin::IOPlugin>::iterator mapit;
 	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); mapit++){
 		deletePlugin((mapit->second).dynLibrary, (mapit->second).io);
 	}
@@ -175,7 +176,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	std::string op_src="";
 	cfg.getValue(cfgkey, cfgsection, op_src);
 
-	mapit = mapPlugins.find(op_src);
+	std::map<std::string, IOPlugin::IOPlugin>::iterator mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
 		throw IOException(cfgkey + " does not seem to be valid plugin in file " + cfg.getSourceName(), AT);
 
@@ -279,4 +280,4 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 	plugin->write2DGrid(grid_in, name);
 }
 
-} //namespace
+} //end namespace

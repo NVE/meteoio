@@ -96,7 +96,7 @@ set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 #for the install target
 FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.ph")
 INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include)
 FILE(GLOB solibs "${PROJECT_SOURCE_DIR}/lib/*.so")
 FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a")

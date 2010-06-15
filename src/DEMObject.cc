@@ -823,13 +823,13 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&slope_failures,1);
 		buf.Pack(&curvature_failures,1);
 		marshal_slope_type(buf, dflt_algorithm, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, azi, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, curvature, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, Nx, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, Ny, 0, FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, Nz, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, azi, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, curvature, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, Nx, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, Ny, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, Nz, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
@@ -853,13 +853,13 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		Ny.clear();
 		Nz.clear();
 		marshal_slope_type(buf, dflt_algorithm, 0, !FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, slope, 0, !FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, azi, 0, !FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, curvature, 0, !FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, Nx, 0, !FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, Ny, 0, !FLAG_MARSHAL, NULL);
-		marshal_TYPE_DOUBLE2D(buf, Nz, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, slope, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, azi, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, curvature, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, Nx, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, Ny, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE2D(buf, Nz, 0, !FLAG_MARSHAL, NULL);
 	}
 }
 #endif

@@ -269,7 +269,7 @@ void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
 		//unsigned int x,y,z;
 		//grid3D.size(x,y,z);
-		marshal_TYPE_DOUBLE3D(buf, grid3D, 0, FLAG_MARSHAL, NULL);
+		marshal_DOUBLE3D(buf, grid3D, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
@@ -279,7 +279,7 @@ void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&cellsize,1);
 		marshal_Coords(buf, llcorner, 0, !FLAG_MARSHAL, NULL);
 		//grid3D.clear();//if(grid2D!=NULL)delete(grid2D);
-		marshal_TYPE_DOUBLE3D(buf, grid3D, 0, !FLAG_MARSHAL, NULL);
+		marshal_DOUBLE3D(buf, grid3D, 0, !FLAG_MARSHAL, NULL);
 	}
 }
 #endif

@@ -31,9 +31,6 @@
 #include "IOPlugin.h"
 
 namespace mio {
-
-typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;
-
 /**
 * @file IOHandler.h
 */
@@ -58,12 +55,12 @@ class IOHandler : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 
 		virtual void writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
-							   const std::vector<STATION_DATASET>& vecStation,
-							   const std::string& name="");
+		                            const std::vector<STATION_DATASET>& vecStation,
+		                            const std::string& name="");
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-						std::vector<METEO_DATASET>& vecMeteo,
-						std::vector<STATION_DATASET>& vecStation,
-						const unsigned& stationindex=IOUtils::npos);
+		                           std::vector<METEO_DATASET>& vecMeteo,
+		                           std::vector<STATION_DATASET>& vecStation,
+		                           const unsigned& stationindex=IOUtils::npos);
 		void readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
@@ -72,14 +69,13 @@ class IOHandler : public IOInterface {
 	private:
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname,
-					 DynamicLibrary*& dynLibrary, IOInterface*& io);
+		                DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
 		ConfigReader cfg;
 		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;
-		PLUGIN_ITERATOR mapit;
 		A3DIO fileio;
 };
 
