@@ -1325,8 +1325,11 @@ void Coords::setDefaultValues() {
 	distance_algo = GEO_COSINE;
 }
 
+} //end namespace
+
 #ifdef _POPC_
 #include "marshal_meteoio.h"
+using namespace mio; //HACK for POPC
 void Coords::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack){
@@ -1362,5 +1365,5 @@ void Coords::Serialize(POPBuffer &buf, bool pack)
 }
 #endif
 
-} //namespace
+//} //namespace //HACK for POPC
 

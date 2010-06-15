@@ -28,7 +28,6 @@
 #include "Coords.h"
 #include <vector>
 #include <string>
-#include "LegacyIO.ph"
 
 namespace mio {
 
@@ -48,14 +47,6 @@ void marshal_TYPE_DOUBLE2D(POPBuffer &buf, TYPE_DOUBLE2D &data,int maxsize, int 
 void marshal_TYPE_DOUBLE3D(POPBuffer &buf, TYPE_DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp);
 
 void marshal_TYPE_INT2D(POPBuffer &buf, TYPE_INT2D &data,int maxsize, int flag, POPMemspool *temp);
-
-void marshal_CDoubleArray(POPBuffer &buf, CDoubleArray &data,int maxsize, int flag, POPMemspool *temp);
-
-void marshal_CNodeArray(POPBuffer &buf,CNodeArray &data,int maxsize, int flag, POPMemspool *temp);
-
-void marshal_update_CNodeArray(POPBuffer &buf,CNodeArray &data, int maxsize, int flag, POPMemspool *temp);
-
-void marshal_input_CNodeArray(POPBuffer &buf,CNodeArray &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp);
 

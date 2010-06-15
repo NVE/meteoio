@@ -171,9 +171,11 @@ unsigned int ConfigReader::findKeys(std::vector<std::string>& vecResult,
 	return vecResult.size();
 }
 
+} //end namespace
 
 #ifdef _POPC_
 #include "marshal_meteoio.h"
+using namespace mio; //HACK for POPC
 void ConfigReader::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack)
@@ -189,4 +191,4 @@ void ConfigReader::Serialize(POPBuffer &buf, bool pack)
 }
 #endif
 
-} //namespace
+//} //namespace //HACK for POPC

@@ -17,8 +17,7 @@
 */
 #include "IOHandler.ph"
 //#include "IOInterface.ph"
-#include "LegacyIO.ph"
 //#include "BormaIO.ph"
 //#include "A3DIO.ph"
 
-@pack(IOHandler,LegacyIO)
+@pack(IOHandler)

@@ -32,6 +32,8 @@
 * This class is responsible for loading the necessary plugins and getting the data through them.
 */
 
+using namespace mio; //HACK for POPC
+
 namespace mio {
 
 typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR;

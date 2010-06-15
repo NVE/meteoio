@@ -247,8 +247,11 @@ std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
 	return os;
 }
 
+} //namespace
+
 #ifdef _POPC_
 #include "marshal_meteoio.h"
+using namespace mio; //HACK for POPC
 void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack)
@@ -271,5 +274,5 @@ void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 }
 #endif
 
-} //namespace
+//} //namespace //HACK for POPC
 

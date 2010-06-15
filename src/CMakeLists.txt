@@ -16,7 +16,6 @@ SET(meteoio_sources
 	Date.cc         
 	Grid2DObject.cc  
 	IOHandler.cc    
-	LegacyIO.cc       
 	Coords.cc
 	Meteo2DInterpolator.cc  
 	BufferedIOHandler.cc  
@@ -38,12 +37,10 @@ if (DEST STREQUAL "par")
 
   SET(meteoio_sources 
     marshal_meteoio.cc
-    LegacyIO.ph
     IOHandler.ph
     ${meteoio_sources}
     )
   SET_SOURCE_FILES_PROPERTIES( ${meteoio_sources} PROPERTIES LANGUAGE CXX )
-  SET_SOURCE_FILES_PROPERTIES( LegacyIO.ph PROPERTIES KEEP_EXTENSION TRUE)
   SET_SOURCE_FILES_PROPERTIES( IOHandler.ph PROPERTIES KEEP_EXTENSION TRUE)
   SET(STATICNAME ${PROJECT_NAME}_STATIC_par)
   SET(STATICLIBNAME ${PROJECT_NAME}popc)

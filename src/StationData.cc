@@ -63,8 +63,11 @@ std::ostream& operator<<(std::ostream& os, const StationData& station) {
 	return os;
 }
 
+} //end namespace
+
 #ifdef _POPC_
 #include "marshal_meteoio.h"
+using namespace mio; //HACK for POPC
 void StationData::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack){
@@ -77,8 +80,4 @@ void StationData::Serialize(POPBuffer &buf, bool pack)
 }
 #endif
 
-
-
-
-
-} //namespace
+//} //namespace //HACK for POPC
