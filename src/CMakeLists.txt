@@ -102,7 +102,7 @@ INSTALL(TARGETS ${STATICNAME}
   )
 
 if (DEST STREQUAL "par")
-  FILE(GLOB files "${PROJECT_SOURCE_DIR}/src/*.h ${PROJECT_SOURCE_DIR}/src/*.ph")
+  FILE(GLOB files ${PROJECT_SOURCE_DIR}/src/*.h ${PROJECT_SOURCE_DIR}/src/*.ph)
   FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*module")
 else(DEST)
   FILE(GLOB files "${PROJECT_SOURCE_DIR}/src/*.h")
