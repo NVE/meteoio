@@ -360,5 +360,50 @@ void IOUtils::getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, doub
 	cfg.getValue("TZ", "Input", tz_in, ConfigReader::nothrow);
 	cfg.getValue("TZ", "Output", tz_out, ConfigReader::nothrow);
 }
+	
+unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch){ 
+	//returns index of element, if element does not exist it returns closest index after soughtdate
+	//the element needs to be an exact hit or embedded between two measurments
+
+	unsigned int ii = 1;
+
+	if (vecM.size() <= 0) {//no elements in buffer
+		return IOUtils::npos;
+	}
+
+	//if we reach this point: at least one element in buffer
+	if (vecM[0].date > soughtdate) {
+		return IOUtils::npos;
+	}
+
+	if (vecM[vecM.size()-1].date < soughtdate) {//last element is earlier, return npos
+		return IOUtils::npos;
+	}
+
+	if (vecM[0].date == soughtdate) {//closest element
+		return 0;
+	}
+
+	//if we reach this point: the date is spanned by the buffer and there are at least two elements
+	//TODO: binary search
+	if (exactmatch){
+		while ((ii < vecM.size())) {
+			if (vecM[ii].date == soughtdate)
+				return ii;
+			
+			ii++;
+		}
+	} else {
+		while ((ii < vecM.size())) {
+			if ((vecM[ii].date >= soughtdate) && (vecM[ii-1].date < soughtdate)) {
+				return ii;
+			}
+			
+			ii++;
+		}
+	}
+
+	return IOUtils::npos;
+}
 
 } //namespace

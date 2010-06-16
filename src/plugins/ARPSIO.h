@@ -29,6 +29,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 #define ARPS_MAX_LINE_LENGTH 6000
 #define ARPS_MAX_STRING_LENGTH 256

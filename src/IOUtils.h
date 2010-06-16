@@ -33,6 +33,7 @@
 #include <cctype>
 #include <limits>
 
+#include "MeteoData.h"
 #include "IOExceptions.h"
 #include "Date.h"
 #include "Coords.h"
@@ -54,6 +55,7 @@
 
 namespace mio {
 
+class MeteoData;
 class Coords;
 class ConfigReader;
 
@@ -62,7 +64,7 @@ namespace IOUtils {
 	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = (unsigned int)-1;
 	const int inodata = -999;
-	const unsigned int npos    = (unsigned int)-1;
+	const unsigned int npos    = (unsigned int)-1;  ///<npos is the out-of-range value
 
 	const double earth_radius = 6371e3; ///<Earth radius in meters
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
@@ -86,6 +88,8 @@ namespace IOUtils {
 	double pow2(const double& val);
 	double pow3(const double& val);
 	double pow4(const double& val);
+
+	unsigned int seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
 
 	/**
 	* @brief Converts a compass bearing to a trigonometric angle
