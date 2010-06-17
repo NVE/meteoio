@@ -40,22 +40,16 @@ const double TEMPLATE::plugin_nodata = -999.; //plugin specific nodata value. It
 TEMPLATE::TEMPLATE(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 TEMPLATE::TEMPLATE(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 TEMPLATE::TEMPLATE(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
 }
 
 TEMPLATE::~TEMPLATE() throw()
@@ -63,13 +57,13 @@ TEMPLATE::~TEMPLATE() throw()
 	
 }
 
-void TEMPLATE::read2DGrid(Grid2DObject& grid_out, const std::string& /*_name*/)
+void TEMPLATE::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void TEMPLATE::readDEM(DEMObject& dem_out)
+void TEMPLATE::readDEM(DEMObject& /*dem_out*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -122,6 +116,10 @@ void TEMPLATE::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /
 	throw IOException("Nothing implemented here", AT);
 }
 
+void TEMPLATE::cleanup() throw()
+{
+	
+}
 
 #ifndef _METEOIO_JNI
 extern "C"

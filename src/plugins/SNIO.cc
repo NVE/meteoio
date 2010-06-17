@@ -23,7 +23,12 @@ namespace mio {
 /**
  * @page snowpack SNIO
  * @section snowpack_format Format
- * This is for reading meteo data in the SNOWPACK meteo format
+ * This is for reading meteo data in the SNOWPACK meteo format. The metadata has to be provided
+ * in a separate file that might contain multiple stations, one per line. Each line has the following structure:\n
+ * ALI2 Allieres:Chenau 1767 6.993 46.489 1.22 \n
+ * where the first field is the short name, followed by the fullname and the location, then the elevation,
+ * the longitude, the latitude and a wind coefficient (unused by MeteoIO). The short name is used for
+ * identifying the station and matching it with the data file (name given in io.ini).
  *
  * @section snowpack_units Units
  * - temperatures in celsius (input and output) or in kelvin (input only)

@@ -45,6 +45,7 @@ namespace mio {
  * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
  * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
+ * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
  *
  */
 
@@ -71,6 +72,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["ARC"]	= IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
 	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
 	mapPlugins["ARPS"]	= IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
+	mapPlugins["PGM"]	= IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
 }
 
 #ifdef _POPC_

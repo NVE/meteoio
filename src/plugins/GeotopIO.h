@@ -63,7 +63,6 @@ class GeotopIO : public IOInterface {
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
-		void read2DMeteo(const Date&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
 
 	private:
 		void initParamNames(std::map<std::string, unsigned int>& mapParam);
