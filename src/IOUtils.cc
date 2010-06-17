@@ -395,9 +395,8 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 		}
 	} else {
 		while ((ii < vecM.size())) {
-			if ((vecM[ii].date >= soughtdate) && (vecM[ii-1].date < soughtdate)) {
+			if ((vecM[ii].date >= soughtdate) && (vecM[ii-1].date < soughtdate))
 				return ii;
-			}
 			
 			ii++;
 		}

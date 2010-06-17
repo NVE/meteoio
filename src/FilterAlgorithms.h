@@ -90,15 +90,25 @@ class FilterAlgorithms {
 					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
 					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
 					std::vector<StationData>& vecFilteredS);
+		static bool ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
+					const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
+					const unsigned int& paramindex, std::vector<MeteoData>& vecFilteredM, 
+					std::vector<StationData>& vecFilteredS);
+
+		static double ExpSmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, 
+									 const unsigned int& paramindex, const double& alpha);
 
  	private:
+		static bool compareMeteoData (const MeteoData& m1, const MeteoData& m2);
 		static void parseFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
 							const unsigned int& minArgs, const unsigned int& maxArgs,
 							bool& isSoft, std::vector<double>& vecArgs_out);
 		static void parseWindowFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
 								const unsigned int& minArgs, const unsigned int& maxArgs,
 								bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out);
-
+		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
+                                    const unsigned int& pos, 
+                                    const std::vector<std::string>& _vecArgs, std::vector<MeteoData>& vecResult);
 		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
 						const unsigned int& pos,
 						const Date& date, const std::vector<std::string>& _vecArgs,
