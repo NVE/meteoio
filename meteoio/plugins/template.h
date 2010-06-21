@@ -18,8 +18,8 @@
 #ifndef __TEMPLATE_H__
 #define __TEMPLATE_H__
 
-#include "IOInterface.h"
-#include "Configreader.h"
+#include <meteoio/IOInterface.h>
+#include <meteoio/ConfigReader.h>
 
 #include <string>
 

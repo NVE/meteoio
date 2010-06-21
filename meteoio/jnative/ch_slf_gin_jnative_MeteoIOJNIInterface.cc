@@ -9,13 +9,14 @@
 
 #include <jni.h>
 #include "jnative.h"
-#include "MeteoIO.h"
+#include <meteoio/MeteoIO.h>
 #include "DEMLoader.h"
 #include "ch_slf_gin_jnative_MeteoIOJNIInterface.h"
 
 #include <stdlib.h>
 #include <time.h>
 
+using namespace mio;
 
 jdoubleArray jMakeError (JNIEnv *env, float errorCode){
 	jdoubleArray out = env->NewDoubleArray(1);

@@ -18,7 +18,7 @@
 #ifndef __GEOTOPIO_H__
 #define __GEOTOPIO_H__
 
-#include "MeteoIO.h"
+#include <meteoio/MeteoIO.h>
 
 #include <string>
 #include <sstream>

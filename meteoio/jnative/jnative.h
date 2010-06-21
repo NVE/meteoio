@@ -11,18 +11,16 @@
 
 #if  defined(_METEOIO_JNI) ||  defined(_METEOIO_JNA)
 
-#include "MeteoIO.h"
+#include <meteoio/MeteoIO.h>
 
 
 void loadMeteoAndStationData(double* cMetadata, double* cData,
 		const int nbStation, const int nbDataPerStation,
 		const std::string& algorithm,
-		const std::string metaCoordinateSystem,
-		std::vector<StationData>& vecStation, std::vector<MeteoData>& vecData,
-		enum MeteoData::Parameters& interpolation_type);
+		const std::string metaCoordinateSystem, std::vector<mio::StationData>& vecStation, 
+                std::vector<mio::MeteoData>& vecData, enum mio::MeteoData::Parameters& interpolation_type);
 
-void fulfillDoubleArray(const Grid2DObject&  p, const std::string& cellOrder,
-		double* dest);
+void fulfillDoubleArray(const mio::Grid2DObject&  p, const std::string& cellOrder, double* dest);
 
 
 #endif // defined(_METEOIO_JNI) ||  defined(_METEOIO_JNA)

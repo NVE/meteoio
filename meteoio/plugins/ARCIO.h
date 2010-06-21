@@ -18,12 +18,12 @@
 #ifndef __ARCIO_H__
 #define __ARCIO_H__
 
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "IOUtils.h"
-#include "Coords.h"
-#include "IOExceptions.h"
-#include "DynamicLibrary.h"
+#include <meteoio/ConfigReader.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/Coords.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/DynamicLibrary.h>
 
 #include <string>
 #include <sstream>

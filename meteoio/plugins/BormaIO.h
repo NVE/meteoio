@@ -18,17 +18,17 @@
 #ifndef __BORMAIO_H__
 #define __BORMAIO_H__
 
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "IOUtils.h"
+#include <meteoio/ConfigReader.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/Coords.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/DynamicLibrary.h>
 
+#include <libxml++/libxml++.h>
 #include <string>
 #include <sstream>
-#include <libxml++/libxml++.h>
 #include <iostream>
-
-#include "IOExceptions.h"
-#include "DynamicLibrary.h"
 
 namespace mio {
 

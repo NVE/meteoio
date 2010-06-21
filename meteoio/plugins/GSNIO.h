@@ -20,11 +20,13 @@
 
 #include "gsn/soapA3DWebServiceSoap12BindingProxy.h"
 #include "gsn/A3DWebServiceSoap12Binding.nsmap"
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "IOUtils.h"
-#include "IOExceptions.h"
-#include "DynamicLibrary.h"
+
+#include <meteoio/ConfigReader.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/Coords.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/DynamicLibrary.h>
 
 #include <string>
 #include <sstream>

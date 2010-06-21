@@ -7,12 +7,12 @@
 
 
 #include "DEMLoader.h"
-#include "ConfigReader.h"
+#include <meteoio/ConfigReader.h>
 #include "plugins/ARCIO.h"
 //#include "plugins/BormaIO.h"
 #include "plugins/GeotopIO.h"
 #include "plugins/GrassIO.h"
-#include "IOInterface.h"
+#include <meteoio/IOInterface.h>
 #include "synchronized.h"
 
 #include <iostream>

@@ -18,14 +18,13 @@
 #ifndef __PGMIO_H__
 #define __PGMIO_H__
 
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "IOUtils.h"
-#include "Coords.h"
-#include "IOExceptions.h"
-#include "DynamicLibrary.h"
-#include "Grid2DObject.h"
-#include "Grid3DObject.h"
+#include <meteoio/ConfigReader.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/Coords.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/DynamicLibrary.h>
+#include <meteoio/Grid3DObject.h>
 
 #include <string>
 #include <sstream>

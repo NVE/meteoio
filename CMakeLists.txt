@@ -7,9 +7,9 @@ SET(VERSION_MINOR 0 CACHE INTERNAL "")
 SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 PROJECT(meteoio)
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(src/plugins)
-ADD_SUBDIRECTORY(src/plugins/gsn)
+ADD_SUBDIRECTORY(meteoio)
+ADD_SUBDIRECTORY(meteoio/plugins)
+ADD_SUBDIRECTORY(meteoio/plugins/gsn)
 
 FIND_PROGRAM(COLORGCC_EXECUTABLE colorgcc)
 #IF(COLORGCC_EXECUTABLE)
@@ -105,11 +105,11 @@ FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
 INSTALL(FILES ${solibs} ${alibs} ${modules} DESTINATION lib)
 
 add_custom_target(distclean make clean
-  COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake src/cmake_install.cmake src/plugins/cmake_install.cmake src/plugins/gsn/cmake_install.cmake
+  COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake meteoio/cmake_install.cmake meteoio/plugins/cmake_install.cmake meteoio/plugins/gsn/cmake_install.cmake
   COMMAND cmake -E remove_directory CMakeFiles
-  COMMAND cmake -E remove_directory src/CMakeFiles
-  COMMAND cmake -E remove_directory src/plugins/gsn/CMakeFiles
-  COMMAND cmake -E remove_directory src/plugins/CMakeFiles)
+  COMMAND cmake -E remove_directory meteoio/CMakeFiles
+  COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
+  COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles)
 
 #for the uninstall target
 CONFIGURE_FILE(
@@ -120,7 +120,7 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
-ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/src/config.dox)
+ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
 
 #some cmake specific things
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})

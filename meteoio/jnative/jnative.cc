@@ -13,6 +13,9 @@
 #include "MeteoIO.h"
 
 #include <time.h>
+
+using namespace mio;
+
 const double nodata=-999.;
 
 void loadMeteoAndStationData(double* cMetadata, double* cData,
@@ -71,7 +74,19 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 		} else {
 			throw InvalidArgumentException("Invalid interpolation algorithm selected!", AT);
 		}
-		const MeteoData meteo(date_in, ta, iswr,vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr, p);
+		MeteoData meteo(date_in);
+		meteo.setData(MeteoData::TA, ta);
+		meteo.setData(MeteoData::ISWR, iswr);
+		meteo.setData(MeteoData::VW, vw);
+		meteo.setData(MeteoData::DW, dw);
+		meteo.setData(MeteoData::RH, rh);
+		meteo.setData(MeteoData::ILWR, ilwr);
+		meteo.setData(MeteoData::HNW, hnw);
+		meteo.setData(MeteoData::TSG, tsg);
+		meteo.setData(MeteoData::TSS, tss);
+		meteo.setData(MeteoData::HS, hs);
+		meteo.setData(MeteoData::RSWR, rswr);
+		meteo.setData(MeteoData::P, p);
 		vecData.push_back(meteo);
 	}
 }

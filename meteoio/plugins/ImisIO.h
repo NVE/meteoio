@@ -18,6 +18,12 @@
 #ifndef __IMISIO_H__
 #define __IMISIO_H__
 
+#include <meteoio/ConfigReader.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/Coords.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/DynamicLibrary.h>
 
 #include <string>
 #include <sstream>
@@ -25,14 +31,6 @@
 #include <vector>
 #include <ctime>
 #include <occi.h>
-
-#include "IOInterface.h"
-#include "ConfigReader.h"
-#include "IOUtils.h"
-#include "DynamicLibrary.h"
-#include "MeteoData.h"
-#include "StationData.h"
-#include "IOExceptions.h"
 
 namespace mio {
 

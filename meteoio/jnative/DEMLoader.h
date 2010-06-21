@@ -8,14 +8,14 @@
 #define _Included_DEMLoader
 
 
-#include "IOInterface.h"
-#include "Grid2DObject.h"
-#include "DEMObject.h"
-#include "Coords.h"
+#include <meteoio/IOInterface.h>
+#include <meteoio/Grid2DObject.h>
+#include <meteoio/DEMObject.h>
+#include <meteoio/Coords.h>
 
 
-typedef std::map<std::string, DEMObject>  demMapType;
-typedef std::pair<std::string, DEMObject>  demPairType;
+typedef std::map<std::string, mio::DEMObject>  demMapType;
+typedef std::pair<std::string, mio::DEMObject>  demPairType;
 
 
 /**
@@ -37,10 +37,10 @@ private:
     return _singleton;
   }
 
-  const DEMObject& internal_loadFullDEM(const std::string cDemFile,
+  const mio::DEMObject& internal_loadFullDEM(const std::string cDemFile,
  			const std::string  cDemCoordSystem, const std::string cInterfaceType);
 
-  const DEMObject& internal_loadSubDEM(const std::string cDemFile,
+  const mio::DEMObject& internal_loadSubDEM(const std::string cDemFile,
   			const std::string  cDemCoordSystem, const std::string cInterfaceType ,
   			const double xll , const double yll, const double xur, const double yur);
 
@@ -51,18 +51,18 @@ private:
    *        Pb of the ConfigReader member which cannot be mutualized throught different interplation !
    *
    */
-  IOInterface* generateIOInterface(const std::string cDemFile,
+  mio::IOInterface* generateIOInterface(const std::string cDemFile,
 		  const std::string  cDemCoordSystem,
 		  const std::string cInterfaceType);
 
 public:
 
-	static const DEMObject& loadFullDEM(const std::string cDemFile,
+	static const mio::DEMObject& loadFullDEM(const std::string cDemFile,
 			const std::string  cDemCoordSystem, const std::string cInterfaceType){
 		return DEMLoader::getInstance()->internal_loadFullDEM(cDemFile, cDemCoordSystem, cInterfaceType);
 	}
 
-	static const DEMObject& loadSubDEM(const std::string cDemFile,
+	static const mio::DEMObject& loadSubDEM(const std::string cDemFile,
 			const std::string  cDemCoordSystem, const std::string cInterfaceType ,
 			const double xll , const double yll, const double xur, const double yur){
 
