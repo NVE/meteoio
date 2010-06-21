@@ -49,7 +49,7 @@ namespace mio {
  */
 
 const int SNIO::sn_julian_offset = 2415021;
-const double SNIO::plugin_nodata = 0.0; //plugin specific nodata value
+const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
 SNIO::SNIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
@@ -306,6 +306,30 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
+double SNIO::cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness )
+{ 
+	//the goal is to have a fully self-contained function that matches what would be
+	//used later on for recomputing a cloudiness, etc
+	const double stefan_boltzmann = 5.67051e-8; // W m-2 K-4
+	double c2, c3; // varying constants
+	if ( TA < 273.16 ) { // for a flat ice surface
+		c2 = 21.88;
+		c3 = 7.66;
+	} else { // for a flat water surface
+		c2 = 17.27;
+		c3 = 35.86;
+	}
+
+	const double exp_p_sat = c2 *  (TA - 273.16) / (TA - c3);
+	const double p0 = 610.78; // triple point pressure of water
+	const double pressure = RH * ( p0 * exp( exp_p_sat )); //RH * saturation pressure
+	double ea = (0.97 * (0.68 + 0.0036 * sqrt(pressure)) * (1. + 0.18 * cloudiness * cloudiness)); //longwave radiation, Omstedt, 1990.
+	if(ea > 1.0) 
+		ea = 1.0;
+
+	return ( ea * (stefan_boltzmann * (TA*TA*TA*TA)) );
+}
+
 void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, MeteoData& md)
 {
 	/*
@@ -342,6 +366,15 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	md.setData(MeteoData::DW, tmpdata[7]);
 	md.setData(MeteoData::ISWR, tmpdata[8]);
 	md.setData(MeteoData::RSWR, tmpdata[9]);
+	
+	if ((tmpdata[10] <= 1) && (tmpdata[10] != plugin_nodata)){
+		if ((md.ta == plugin_nodata) || (md.rh == plugin_nodata)){
+			tmpdata[10] = cloudiness_to_ilwr(md.rh, md.ta, tmpdata[10]); //calculate ILWR from cloudiness
+		} else {
+			tmpdata[10] = plugin_nodata;
+		}
+	}
+
 	md.setData(MeteoData::ILWR, tmpdata[10]);
 	md.setData(MeteoData::TSS, tmpdata[11]);
 	md.setData(MeteoData::TSG, tmpdata[12]);
