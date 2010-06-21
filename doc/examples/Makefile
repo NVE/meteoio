@@ -1,7 +1,7 @@
 CC      = g++ -DGNU
 CFLAGS  = -Wall -Wextra
 DEBUG   = -g #-O3 # -DDEBUG -ggdb
-METEOIODIR = ../../src
+METEOIODIR = ../../
 
 LIBS      = -rdynamic -lstdc++ -ldl -L../../lib -lmeteoio
 

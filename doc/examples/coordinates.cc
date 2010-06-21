@@ -1,4 +1,4 @@
-#include "MeteoIO.h"
+#include <meteoio/MeteoIO.h>
 
 using namespace std;
 using namespace mio; //The MeteoIO namespace is called mio
