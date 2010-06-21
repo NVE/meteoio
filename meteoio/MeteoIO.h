@@ -1,0 +1,45 @@
+/***********************************************************************************/
+/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef __METEOIO_H__
+#define __METEOIO_H__
+
+#include <meteoio/Array.h>
+#include <meteoio/Array2D.h>
+#include <meteoio/Array3D.h>
+#include <meteoio/StationData.h>
+#include <meteoio/MeteoData.h>
+#include <meteoio/Grid2DObject.h>
+#include <meteoio/DEMObject.h>
+#include <meteoio/Date.h>
+#include <meteoio/DynamicLibrary.h>
+#include <meteoio/BufferedIOHandler.h>
+#include <meteoio/Coords.h>
+#include <meteoio/InterpolationAlgorithms.h>
+#include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/libinterpol1D.h>
+#include <meteoio/libinterpol2D.h>
+
+#ifdef _POPC_
+#include <meteoio/IOHandler.ph>
+#else
+#include <meteoio/IOHandler.h>
+#endif
+
+#endif
