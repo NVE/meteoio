@@ -53,7 +53,7 @@ endif(NOT DEST)
 
 if (DEST STREQUAL "par")
   set(CFLAGS "-Wall -Wextra -Wno-long-long")
-  set(OPTIM "-O3 -fomit-frame-pointer -DNDEBUG" CACHE STRING "" FORCE)
+  set(OPTIM "-g -O3 -DNDEBUG" CACHE STRING "" FORCE)
   set(DEBUG "-g -O0 -D__DEBUG" CACHE STRING "" FORCE)
 endif(DEST STREQUAL "par")
 
