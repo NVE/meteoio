@@ -309,7 +309,7 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
 		Coords location(coordin, coordinparam);
 		location.setLatLon(latitude, longitude, altitude);
-		sd.setStationData(location, stationName);
+		sd.setStationData(location, stationName, stationName);
 
 		//lt = ta
 		const std::string str_lt = xmlGetNodeContent(pNode, "lt");

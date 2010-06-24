@@ -201,7 +201,7 @@ void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationDat
 
 	Coords stationcoord(coordin, coordinparam);
 	stationcoord.setLatLon(tmpdata[3], tmpdata[4], tmpdata[2]);
-	sd.setStationData(stationcoord, vecLine[0]);
+	sd.setStationData(stationcoord, vecLine[0], vecLine[0]);
 }
 
 
@@ -391,12 +391,12 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 
 	for(unsigned int ii=0; ii<vecMeteo.size(); ii++) {
 		if(vecStation[ii].size()>0) {
-			std::string station_name = vecStation[ii][0].stationName;
-			if (station_name == "") station_name = "UNKNOWN";
-			const std::string output_name = path + "/" + station_name + ".inp";
+			std::string station_id = vecStation[ii][0].getStationID();
+			if (station_id == "") station_id = "UNKNOWN";
+			const std::string output_name = path + "/" + station_id + ".inp";
 			if( !IOUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());
-				writeStationHeader(vecMeteo[ii], station_name);
+				writeStationHeader(vecMeteo[ii], station_id);
 			} else {
 				fout.open(output_name.c_str());
 			}
@@ -406,10 +406,10 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	}
 }
 
-void SNIO::writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string station_name)
+void SNIO::writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string station_id)
 {
 	//writing the (very basic) metadata
-	fout << "MTO <" << station_name << "> " << Meteo.size() << "\n";
+	fout << "MTO <" << station_id << "> " << Meteo.size() << "\n";
 }
 
 void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name)

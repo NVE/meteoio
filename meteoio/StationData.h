@@ -54,25 +54,19 @@ class StationData {
 		* @param _position Position of the station
 		* @param name_in Name of the station (default "")
 		*/
-		StationData(const Coords& _position, const std::string& name_in="");
+		StationData(const Coords& _position, const std::string& _id="", const std::string& _name="");
 
 		//Specific getter functions
+		std::string getStationID() const;
 		std::string getStationName() const;
-
-
+		Coords getPosition() const;
+		
 		/**
 		* @brief General setter function, requires three to six arguments
 		* @param _position Position of the station
 		* @param name_in Name of the station (default "")
 		*/
-		void setStationData(const Coords& _position, const std::string& name_in="");
-
-		/**
-		* @brief General getter function, requires six arguments
-		* @param _position Position of the station
-		* @param name_in Name of the station (default "")
-		*/
-		void getStationData(Coords& _position, std::string& name_in);
+		void setStationData(const Coords& _position, const std::string& _id="", const std::string& _name="");
 
 		friend std::ostream& operator<<(std::ostream& os, const StationData& station);
 
@@ -87,7 +81,9 @@ class StationData {
 
 	public:
 		Coords position;
-		std::string stationName; ///<Name of the Station
+		std::string stationID; ///<ID of the Station, typically a short string
+		std::string stationName; ///<Name of the Station, detailled description
+		
 		//for Snowpack and other (1D) applications: add slope, aspect, horizon, etc
 };
 

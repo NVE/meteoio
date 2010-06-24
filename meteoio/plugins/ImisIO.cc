@@ -175,7 +175,7 @@ void ImisIO::readStationMetaData()
 
 		Coords myCoord(coordin, coordinparam);
 		myCoord.setXY(east, north, alt);
-		vecMyStation.push_back(StationData(myCoord, stationName));
+		vecMyStation.push_back(StationData(myCoord, stationName, stationName));
 	}
 }
 
@@ -276,7 +276,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	vector<int> datestart = vector<int>(5);
 	vector<int> dateend   = vector<int>(5);
 
-	parseStationName(vecMyStation.at(stationindex).getStationName(), stationName, stationNumber);
+	parseStationName(vecMyStation.at(stationindex).getStationID(), stationName, stationNumber);
 
 	dateStart.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
 	dateEnd.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);

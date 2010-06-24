@@ -147,9 +147,9 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 		unsigned int index = BufferedIOHandler::npos;
 
 		StationData tmpsd;
-		std::string stationName = "";
+		std::string stationID = "";
 		if (stationBuffer[ii].size() > 0){
-			stationName = stationBuffer[ii][0].stationName;
+			stationID = stationBuffer[ii][0].getStationID();
 			tmpsd = stationBuffer[ii][0];
 		}
 
@@ -167,7 +167,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 			}
 
 			if (rebuffer){
-				//cout << "[I] Station " << ii << "(" << stationName 
+				//cout << "[I] Station " << ii << "(" << stationID 
 				//	<< ") data for date " << date_in.toString(Date::FULL) << " not in buffer ..." << endl;
 				
 				bool dataexists = bufferData(date_in, ii);
@@ -191,7 +191,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 			vecMeteo.push_back(md);
 			vecStation.push_back(sd);
 		} else {
-			cout << "[I] No data found for station " << stationName << " at date " << date_in.toString(Date::FULL) 
+			cout << "[I] No data found for station " << stationID << " at date " << date_in.toString(Date::FULL) 
 				<< endl;
 			vecMeteo.push_back(MeteoData());
 			vecMeteo[ii].date = date_in; //set correct date

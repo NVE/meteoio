@@ -251,7 +251,7 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd,
 			throw;
 		}
 
-		sd.setStationData(location, "");
+		sd.setStationData(location, "", "");
 
 		//Read one line, construct Date object and see whether date is greater or equal than the date_in object
 		IOUtils::skipLines(fin, 1, eoln); //skip rest of line
@@ -657,8 +657,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 			throw ConversionFailedException("Conversion of station description failed in " + filename, AT);
 		}
 		coordinate.setXY(easting, northing, altitude);
-		vecS[stationnr-1].stationName = stationName;
-		vecS[stationnr-1].position = coordinate;
+		vecS[stationnr-1].setStationData(coordinate, stationName, stationName);
 	}
 }
 
@@ -718,13 +717,13 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data, const
 	for(unsigned int ii=0; ii<sta_nr; ii++) {
 		const unsigned int size = data[ii].size();
 		if(size>0) {
-			const std::string filename = tmp_path+"/meteo1D_"+stations[ii][0].stationName+".txt";
+			const std::string filename = tmp_path+"/meteo1D_"+stations[ii][0].getStationID()+".txt";
 			std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
 			if(!file) {
 				throw FileAccessException("[E] Can not open file "+filename, AT);
 			}
 
-			file << "Name = " << stations[ii][0].stationName << "\n";
+			file << "Name = " << stations[ii][0].getStationID() << "\n";
 			file << "Latitude = " << stations[ii][0].position.getLat() << "\n";
 			file << "Longitude = " << stations[ii][0].position.getLon() << "\n";
 			file << "X_Coord = " << stations[ii][0].position.getEasting() << "\n";
@@ -792,7 +791,7 @@ int A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<Stati
 	file << "YYYY MM DD HH";
 	for(unsigned int ii=0; ii<sta_nr; ii++) {
 		if(stations[ii].size() > 0) {
-			file << " " << stations[ii][0].stationName;
+			file << " " << stations[ii][0].getStationID();
 		}
 	}
 	file << std::endl;

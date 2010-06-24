@@ -107,15 +107,17 @@ void ConfigReader::parseFile(const std::string& filename)
 
 void ConfigReader::parseLine(const unsigned int& linenr, std::string& line, std::string& section)
 {
-	stringstream tmp;
+	//First thing cut away any possible comments (may start with "#" or ";")
+	size_t found = line.find_first_of("#;");
+	if (found != string::npos){
+		line.erase(found); //rest of line disregarded
+	}
 
-	IOUtils::trim(line); //delete leading and trailing whitespace characters
+	IOUtils::trim(line);    //delete leading and trailing whitespace characters
 	if (line.length() == 0) //ignore empty lines
 		return;
-	
-	if ((line[0]=='#') || (line[0]==';')) //check whether line is a comment
-		return;
 
+	stringstream tmp;       //stringstream to convert the unsigned int linenr into a string
 	if (line[0] == '['){
 		size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))){

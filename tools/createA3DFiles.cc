@@ -11,10 +11,10 @@ void create1DFile(const vector< vector<MeteoData> >& data, const vector<StationD
 {
 	unsigned int sta_nr = stations.size(), size = data.size();
 	for(unsigned int ii=0; ii<sta_nr; ii++) {
-		string file = "meteo1D_"+stations[ii].stationName+".txt";
+		string file = "meteo1D_"+stations[ii].getStationID()+".txt";
 		ofstream flux(file.c_str(), ios::out | ios::trunc);
 		if (flux) {
-			flux<<"Name = " <<stations[ii].stationName <<endl;
+			flux<<"Name = " <<stations[ii].getStationID() <<endl;
 			flux<<"Latitude = " <<stations[ii].latitude <<endl;
 			flux<<"Longitude = " <<stations[ii].longitude <<endl;
 			flux<<"X_Coord = " <<stations[ii].eastCoordinate <<endl;
@@ -59,7 +59,7 @@ void writeHeader(ofstream &file, const vector<StationData>& stations, const stri
 	file<<"YY MM DD HH "<< str_northings.str() <<endl; //northing
 	file<<"YYYY MM DD HH";
 	for(unsigned int i=0; i<sta_nr; i++) {
-		file<<" " <<stations[i].stationName.substr(0,3);
+		file<<" " <<stations[i].stationID.substr(0,3);
 	}
 	file<<endl;
 }

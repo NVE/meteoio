@@ -17,48 +17,54 @@
 */
 #include <meteoio/StationData.h>
 
+using namespace std;
+
 namespace mio {
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
-StationData::StationData() : position("NULL", "NULL"), stationName(""){}
+	StationData::StationData() : position("NULL", "NULL"), stationID(""), stationName(""){}
 
-StationData::StationData(const Coords& _position, const std::string& name_in)
+StationData::StationData(const Coords& _position, const std::string& _id, const std::string& _name)
 {
-	setStationData(_position, name_in);
+	setStationData(_position, _id, _name);
 }
 
-void StationData::setStationData(const Coords& _position, const std::string& name_in)
+void StationData::setStationData(const Coords& _position, const std::string& _id, const std::string& _name)
 {
-	position = _position;
-	stationName = name_in;
+	position    = _position;
+	stationID   = _id;
+	stationName = _name;
 }
-
-void StationData::getStationData(Coords& position_out, std::string& name_out) {
-	position_out = position;
-	name_out = stationName;
-}
-
 
 //Comparison operator
 bool StationData::operator==(const StationData& in) const {
-	return ( (position == in.position)
-		&& (stationName == in.stationName));
+	return ((position == in.position) && (stationID == in.stationID));// && (stationName == in.stationName));
 }
 
 bool StationData::operator!=(const StationData& in) const {
-  return !(*this==in);
+	return !(*this==in);
 }
 
-//Specific Getter Functions for StationData
+//Specific Getter Functions for stationName, stationID and position
+Coords StationData::getPosition() const {
+	return position;
+}
+
+std::string StationData::getStationID() const {
+	return stationID;
+}
+
 std::string StationData::getStationName() const {
 	return stationName;
 }
 
 std::ostream& operator<<(std::ostream& os, const StationData& station) {
 
-	os << "<station>\n";
-	os << std::setprecision(10) << station.position << "  Name:     " << station.stationName << "\n";
-	os << "</station>\n";
+	os << "<station>" << endl
+	   << std::setprecision(10) << station.position 
+	   << "ID:   " << station.getStationID() << endl 
+	   << "Name: " << station.getStationName() << endl
+	   << "</station>" << endl;
 
 	return os;
 }

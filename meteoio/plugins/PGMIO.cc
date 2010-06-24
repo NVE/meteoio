@@ -119,7 +119,7 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		IOUtils::convertString(nr_colors, tmpvec[0]);
 
 		cfg.getValue("PGM_XCOORD", "Input", xllcorner,0);
-		cfg.getValue("PGM_YCOORD", "Input", xllcorner,0);
+		cfg.getValue("PGM_YCOORD", "Input", yllcorner,0);
 		cfg.getValue("PGM_CELLSIZE", "Input", cellsize,0);
 		cfg.getValue("PGM_MIN", "Input", val_min,0);
 		cfg.getValue("PGM_MAX", "Input", val_max,0);

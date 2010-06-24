@@ -926,7 +926,7 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 
 	if (extrapolate){
 		if (!found1 && found2){ //only nodata values found before indexExact, try looking after indexAfter
-			for (unsigned int ii=indexAfter; ii<vecFilteredM.size(); ii++){
+			for (unsigned int ii=indexAfter+1; ii<vecFilteredM.size(); ii++){
 				if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
 					indexBefore = ii;
 					found1 = true;
@@ -934,7 +934,7 @@ bool FilterAlgorithms::LinResamplingProcess(const std::vector<MeteoData>& vecM, 
 				}
 			}		
 		} else if (found1 && !found2){ //only nodata found after indexExact, try looking before indexBefore
-			for (unsigned int ii=indexBefore+1; (ii--) > 0; ){
+			for (unsigned int ii=indexBefore; (ii--) > 0; ){
 				if (vecFilteredM[ii].param(paramindex) != IOUtils::nodata){
 					indexAfter=ii;
 					found2 = true;
