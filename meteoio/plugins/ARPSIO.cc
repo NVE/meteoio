@@ -112,8 +112,12 @@ void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& /*_name*/)
 		for (unsigned int iy = 0; iy < dimy; iy++) {
 			for (unsigned int iz = 0; iz < dimz; iz++) {
 				double tmp;
-				fscanf(fin," %16lf%*[\n]",&tmp);
-				grid_out.grid3D(ix,iy,iz) = tmp;
+				if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
+					grid_out.grid3D(ix,iy,iz) = tmp;
+				} else {
+					cleanup();
+					throw InvalidFormatException("Failure in reading 3D grid in file "+_filename, AT);
+				}
 			}
 		}
 	}
@@ -187,7 +191,11 @@ void ARPSIO::initializeGRIDARPS()
 
 	//go to read the sizes
 	moveToMarker("nnx");
-	fscanf(fin,"%*[^\n]"); //finish reading the line and move to the next one
+	//finish reading the line and move to the next one
+	if(fscanf(fin,"%*[^\n]")!=0) {
+		cleanup();
+		throw InvalidFormatException("Error in file format of file "+filename, AT);
+	}
 	if (fscanf(fin," %u %u %u \n",&dimx,&dimy,&dimz)!=3) {
 		cleanup();
 		throw InvalidFormatException("Can not read dimx, dimy, dimz from file "+filename, AT);
@@ -265,7 +273,10 @@ void ARPSIO::openGridFile(const std::string& _filename)
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	for (int j=0; j<5; j++) {
 		//the first easy difference in the structure happens at line 5
-		fgets(dummy,ARPS_MAX_STRING_LENGTH,fin);
+		if(fgets(dummy,ARPS_MAX_STRING_LENGTH,fin)==NULL) {
+			cleanup();
+			throw InvalidFormatException("Fail to read header lines of file "+filename, AT);
+		}
 	}
 	if (sscanf(dummy," nx = %u, ny = ", &v1)<1) {
 		//this is an ASCII file modified by ARPSGRID
@@ -331,15 +342,22 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 		double tmp;
 		const unsigned int jmax=dimx*dimy*(layer-1);
 		for (unsigned int j = 0; j < jmax; j++)
-			fscanf(fin," %16lf%*[\n]",&tmp);
+			if(fscanf(fin," %16lf%*[\n]",&tmp)==EOF) {
+				cleanup();
+				throw InvalidFormatException("Fail to skip data layers in file "+filename, AT);
+			}
 	}
 
 	//read the data we are interested in
 	for (unsigned int ix = 0; ix < dimx; ix++) {
 		for (unsigned int iy = 0; iy < dimy; iy++) {
 			double tmp;
-			fscanf(fin," %16lf%*[\n]",&tmp);
-			grid.grid2D(ix,iy) = tmp;
+			if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
+				grid.grid2D(ix,iy) = tmp;
+			} else {
+				cleanup();
+				throw InvalidFormatException("Fail to read data layer in file "+filename, AT);
+			}
 		}
 	}
 }

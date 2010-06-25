@@ -52,7 +52,8 @@ class StationData {
 		/**
 		* @brief A constructor that takes three to six arguments
 		* @param _position Position of the station
-		* @param name_in Name of the station (default "")
+		* @param _id Station's id (short identification)
+		* @param _name Full name of the station (default "")
 		*/
 		StationData(const Coords& _position, const std::string& _id="", const std::string& _name="");
 
@@ -64,7 +65,8 @@ class StationData {
 		/**
 		* @brief General setter function, requires three to six arguments
 		* @param _position Position of the station
-		* @param name_in Name of the station (default "")
+		* @param _id Station's id (short identification)
+		* @param _name Name of the station (default "")
 		*/
 		void setStationData(const Coords& _position, const std::string& _id="", const std::string& _name="");
 
