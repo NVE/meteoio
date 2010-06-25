@@ -23,7 +23,7 @@
 #include <meteoio/Grid2DObject.h>
 #include <meteoio/IOUtils.h>
 
-#include <math.h>
+#include <cmath>
 #include <limits>
 
 namespace mio {

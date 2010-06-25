@@ -281,6 +281,16 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	dateStart.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
 	dateEnd.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 
+	//Oracle can't deal with an integer for the hour of 24, hence the following workaround
+	if (datestart[3] == 24){
+		Date tmpDate = dateStart + Date(3.0/(60*60*24)); //add three seconds to omit 24 for 00 
+		tmpDate.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
+	}
+	if (dateend[3] == 24){
+		Date tmpDate = dateEnd + Date(3.0/(60*60*24)); //add three seconds to omit 24 for 00 
+		tmpDate.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
+	}
+
 	getImisData(stationName, stationNumber, datestart, dateend, vecResult);
 
 	MeteoData tmpmd;

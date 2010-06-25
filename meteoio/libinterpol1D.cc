@@ -22,7 +22,7 @@ using namespace std;
 namespace mio {
 
 /**
- * @brief This function solves the equation y = kx + d for two given points and return the y for a given x
+ * @brief This function solves the equation y = kx + d for two given points and returns y for a given x
  * @param x1 x-coordinate of first point
  * @param y1 y-coordinate of first point
  * @param x2 x-coordinate of second point
