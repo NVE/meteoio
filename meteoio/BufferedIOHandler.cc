@@ -23,10 +23,10 @@ namespace mio {
 
 #ifdef _POPC_
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	: iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
+	: iohandler(_iohandler), cfg(_cfg), meteoprocessor(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
 #else
 BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
-	  : IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoFilter(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
+	  : IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoprocessor(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
 #endif
 {
 	setBufferProperties();
@@ -182,7 +182,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 		if (index != BufferedIOHandler::npos) {
 			vector<MeteoData> mBuffer;
 			std::vector<StationData> sBuffer;
-			meteoFilter.filterData(meteoBuffer[ii], stationBuffer[ii], index, date_in, md, sd);
+			meteoprocessor.processData(date_in, meteoBuffer[ii], stationBuffer[ii], md, sd);
 		}
 
 		if (index != BufferedIOHandler::npos) {

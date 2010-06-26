@@ -9,6 +9,9 @@ IF(PROJ4)
 ENDIF(PROJ4)
 
 SET(meteoio_sources 
+	MeteoProcessor.cc
+	ResamplingAlgorithms.cc
+	Meteo1DInterpolator.cc
 	InterpolationAlgorithms.cc
 	MeteoFilter.cc
 	FilterAlgorithms.cc

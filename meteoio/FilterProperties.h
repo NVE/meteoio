@@ -26,20 +26,17 @@
 
 namespace mio {
 
-typedef bool(*funcptr)(const std::vector<MeteoData>&, const std::vector<StationData>&, 
-				   const unsigned int&, const Date&, const std::vector<std::string>&,
-				   const unsigned int&, std::vector<MeteoData>&, std::vector<StationData>&);
+typedef void(*funcptr)(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+                       const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+                       std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
 
 class FilterProperties {
 	public:
 		bool checkonly;
-		unsigned int minNbPoints;
-		Date deltatime;
 		funcptr filterfunc;
 		
- 		FilterProperties() : checkonly(false), minNbPoints(0), deltatime(0.0), filterfunc(NULL){}
- 		FilterProperties(const bool& _co, const unsigned int& _points, const Date& _date, const funcptr& _ptr ) 
-			: checkonly(_co), minNbPoints(_points), deltatime(_date), filterfunc(_ptr){}
+ 		FilterProperties() : checkonly(false), filterfunc(NULL){}
+ 		FilterProperties(const bool& _co, const funcptr& _ptr ) : checkonly(_co), filterfunc(_ptr){}
 };
 
 } //end namespace mio

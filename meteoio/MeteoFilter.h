@@ -62,24 +62,19 @@ class MeteoFilter {
 		 * @brief A function that executes all the filters that have been setup in the constructor
 		 * @param[in] vecM The raw sequence of MeteoData objects for a given station
 		 * @param[in] vecS The meta data for the MeteoData objects in vecM
-		 * @param[in] pos  An index pointing to the requested MeteoData object within vecM 
-		 *                 (or to the first MeteoData object in vecM that has a date after parameter date)
-		 * @param[in] date The requested date for a MeteoData object
-		 * @param[out] md The MeteoData object to be returned
-		 * @param[out] sd The associated StationData object for md
+		 * @param[out] vecWindowM The sequence of MeteoData objects that shall be filtered
+		 * @param[out] vecWindowS The meta data for the MeteoData objects in vecWindowM
+		 * @param[in] checkonly indicates whether to execute all filters or only "checkonly" filters
 		 */
-		bool filterData(const std::vector<MeteoData>& vecM, 
-					 const std::vector<StationData>& vecS, 
-					 const unsigned int& pos, const Date& date,
-					 MeteoData& md, StationData& sd);
+		void filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+                          std::vector<MeteoData> vecWindowM, std::vector<StationData> vecWindowS, 
+                          const bool& checkonly = false);
 
 
  	private:
 		unsigned int getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters);
 		unsigned int getArgumentsForFilter(const std::string& keyname, std::vector<std::string>& vecArguments);		
 		
-		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments);
-
 		ConfigReader cfg;
 		std::vector< std::vector<std::string> > tasklist;
 		std::vector< std::vector< std::vector<std::string> > > taskargs;

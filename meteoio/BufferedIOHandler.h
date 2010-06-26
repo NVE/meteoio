@@ -25,7 +25,7 @@
 #endif
 
 #include <meteoio/ConfigReader.h>
-#include <meteoio/MeteoFilter.h>
+#include <meteoio/MeteoProcessor.h>
 
 #include <map>
 #include <vector>
@@ -160,7 +160,7 @@ class BufferedIOHandler : public IOInterface {
 
 		IOHandler& iohandler;
 		ConfigReader cfg;
-		MeteoFilter meteoFilter;
+		MeteoProcessor meteoprocessor;
 
 		bool always_rebuffer;
 		Date bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date

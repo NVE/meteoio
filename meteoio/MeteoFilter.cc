@@ -37,50 +37,24 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 
 		unsigned int nrOfFilters = getFiltersForParameter(parname, tmpFilters2);
 
-		bool checkonly = false;
-		for (unsigned int kk=0; kk<2; kk++){//Filtering occurs in two passes
-
-			for (unsigned int ll=0; ll<nrOfFilters; ll++){
-				//Get the arguments for the specific filter from the cfg object
-				std::vector<std::string> filterArgs;
-				std::stringstream tmp;
-				tmp << parname << "::arg" << (ll+1);
-				getArgumentsForFilter(tmp.str(), filterArgs); //Read arguments
-				//cout << "ARGSEARCH: " << tmp.str() << "  found arguments: " << argnum << endl;
-
-				if (tmpFilters2[ll] == "resample")
-					throw InvalidArgumentException("Resampling not a valid filter", AT);
-				
-				if (checkonly){
-					if (FilterAlgorithms::filterProperties(tmpFilters2[ll]).checkonly == true){
-						tmpFilters1.push_back(tmpFilters2[ll]);
-						parArgs.push_back(filterArgs);
-					}
-				} else {
-					tmpFilters1.push_back(tmpFilters2[ll]);
-					parArgs.push_back(filterArgs);
-				}
-			}
-
-			//At the end of pass one of the filters, the resampling filter is added, unless disabled
-			if (kk==0){
-				vector<string> vecResamplingArguments;
-				string resamplingAlgorithm = getInterpolationForParameter(parname, vecResamplingArguments);
-				
-				if (resamplingAlgorithm != "no"){
-					tmpFilters1.push_back(resamplingAlgorithm);
-					parArgs.push_back(vecResamplingArguments);
-				}
-
-				checkonly=true;
-			}
+		for (unsigned int ll=0; ll<nrOfFilters; ll++){
+			//Get the arguments for the specific filter from the cfg object
+			std::vector<std::string> filterArgs;
+			std::stringstream tmp;
+			tmp << parname << "::arg" << (ll+1);
+			getArgumentsForFilter(tmp.str(), filterArgs); //Read arguments
+			//cout << "ARGSEARCH: " << tmp.str() << "  found arguments: " << argnum << endl;
+			
+			tmpFilters1.push_back(tmpFilters2[ll]);
+			parArgs.push_back(filterArgs);
 		}
-		
-		//cout << "ParArgsSize: " << parArgs.size() << endl;
 
+		//cout << "ParArgsSize: " << parArgs.size() << endl;
+		
 		tasklist.push_back(tmpFilters1);
 		taskargs.push_back(parArgs);
 	}
+
 	/* //For debugging only:
 	for (unsigned int jj=0; jj<tasklist.size(); jj++){
 		cout << MeteoData::getParameterName(jj) << "::" << endl;
@@ -91,80 +65,28 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 	*/
 }
 
-bool MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-					    const unsigned int& pos, const Date& date,
-					    MeteoData& md, StationData& sd)
+void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+                             std::vector<MeteoData> vecWindowM, std::vector<StationData> vecWindowS, 
+                             const bool& checkonly)
 {
-	//No need to operate on the raw data, a copy of relevant data will be stored in these vectors:
-	std::vector<MeteoData> vecFilteredM;   
-	std::vector<StationData> vecFilteredS;
-
-
-	for (int ii=(int)pos-5; ii<=(int)pos+4; ii++){
-		if ((ii>=0) && (ii<(int)vecM.size())){
-			vecFilteredM.push_back(vecM.at(ii));
-			vecFilteredS.push_back(vecS.at(ii));
-			//cout << "Added " << vecM[ii].date.toString(Date::ISO) << endl;
-		}
-	}
-	
+	//Loop through each meteo parameter, call the respective filter function	
 	for (unsigned int ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
 		//cout << "For parameter: " << MeteoData::getParameterName(ii) << endl;
 		for (unsigned int jj=0; jj<tasklist[ii].size(); jj++){ //For eack activated filter
 			//Call the appropriate filter function
+			const bool& isCheckOnly = FilterAlgorithms::filterProperties(tasklist[ii][jj]).checkonly;
+			if (checkonly && !isCheckOnly)
+				continue;
+
 			//cout << "\tExecuting: " << tasklist[ii][jj] << endl;
-			if (!FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, vecS, pos, date,
-																    taskargs.at(ii).at(jj),
-																    ii, vecFilteredM, vecFilteredS)){
-				//break; //if one of the filters returns false, then stop filtering for this parameter
-				;
-			}
+			FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, vecS, 
+															    taskargs.at(ii).at(jj), 
+															    MeteoData::Parameters(ii),
+															    vecWindowM, vecWindowS);
 		}
 	}
 
-	if (vecFilteredM.size()==1){ //no resampling was required
-		md = vecFilteredM[0];
-		sd = vecFilteredS[0];		
-	} else {
-	  //Two options, either the date is in the buffer vecFilteredM, then return it or not, then return nodata
-	  unsigned int pos = vecFilteredM.size() + 1;
-	  for (unsigned int ii=0; ii<vecFilteredM.size(); ii++){
-	    if (date == vecFilteredM[ii].date){
-	      pos = ii;
-	      break;
-	    }
-	  }
 
-	  if (pos < vecFilteredM.size()){
-	    md = vecFilteredM[pos];
-	    sd = vecFilteredS[pos];
-	  } else {
-	    md = MeteoData(date);
-	    sd = vecS.at(pos);	    
-	  }
-	}
-
-	return true;
-}
-
-string MeteoFilter::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments)
-{
-	/*
-	 * This function retrieves the resampling algorithm to be used for the 
-	 * 1D interpolation of meteo parameters. It also extracts any possible 
-	 * arguments for that specific algorithm.
-	 */
-
-	vecArguments.clear();
-	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, ConfigReader::nothrow);
-
-	std::string tmp = "";
-	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, ConfigReader::nothrow);
-
-	if (tmp.length() > 0)
-		return tmp;
-
-	return "linear"; //the default resampling is linear
 }
 
 unsigned int MeteoFilter::getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters)
