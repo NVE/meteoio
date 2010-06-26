@@ -385,20 +385,37 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 	}
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
-	//TODO: binary search
 	if (exactmatch){
-		while ((ii < vecM.size())) {
-			if (vecM[ii].date == soughtdate)
-				return ii;
-			
-			ii++;
+		unsigned int first = ii, last = vecM.size()-1;
+
+		//perform binary search
+		while (first <= last) {
+			unsigned int mid = (first + last) / 2;  // compute mid point
+			if (soughtdate > vecM[mid].date) 
+				first = mid + 1;                   // repeat search in top half
+			else if (soughtdate < vecM[mid].date) 
+				last = mid - 1;                    // repeat search in bottom half
+			else 
+				return mid;                        // found it. return position 
 		}
 	} else {
-		while ((ii < vecM.size())) {
-			if ((vecM[ii].date >= soughtdate) && (vecM[ii-1].date < soughtdate))
-				return ii;
+		unsigned int first = ii, last = vecM.size()-1;
+
+		//perform binary search
+		while (first <= last) {
+			unsigned int mid = (first + last) / 2;  // compute mid point
 			
-			ii++;
+			if (mid < (vecM.size()-1))
+				if ((soughtdate > vecM[mid].date) && (soughtdate < vecM[mid+1].date))
+					return mid+1;
+
+			if (soughtdate > vecM[mid].date) 
+				first = mid + 1;                   // repeat search in top half
+			else if (soughtdate < vecM[mid].date) 
+				last = mid - 1;                    // repeat search in bottom half
+			else
+				return mid;                        // found it. return position 
+			
 		}
 	}
 

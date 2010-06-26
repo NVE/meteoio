@@ -150,10 +150,7 @@ class BufferedIOHandler : public IOInterface {
 		void bufferAlways(const bool& bufferalways);
 		void setBufferDuration(const Date& _bufferbefore, const Date& _bufferafter);
 
-		static const unsigned int npos = (unsigned int)-1; ///<npos is the out-of-range value
-
 	private:
-		unsigned int seek(const Date& date_in, std::vector<MeteoData>& vecM);
 		bool bufferData(const Date& _date, const unsigned int& stationindex);
 		void bufferAllData(const Date& _date);
 		void setBufferProperties();

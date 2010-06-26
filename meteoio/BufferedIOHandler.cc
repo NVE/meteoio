@@ -144,7 +144,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 
 	//loop through all meteo buffers, there is one for each station
 	for (unsigned int ii=0; ii<meteoBuffer.size(); ii++) {
-		unsigned int index = BufferedIOHandler::npos;
+		unsigned int index = IOUtils::npos;
 
 		StationData tmpsd;
 		std::string stationID = "";
@@ -154,10 +154,10 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 		}
 
 		if (meteoBuffer[ii].size() > 0) {//check whether meteo data for the date exists in buffer
-			index = seek(date_in, meteoBuffer[ii]);
+			index = IOUtils::seek(date_in, meteoBuffer[ii], false);
 		}
 
-		if (index == BufferedIOHandler::npos) { //not in buffer
+		if (index == IOUtils::npos) { //not in buffer
 			//Check buffering strategy
 			bool rebuffer = false;
 			if ((startDateBuffer.at(ii) > date_in) || (endDateBuffer.at(ii) < date_in)){
@@ -172,20 +172,20 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 				
 				bool dataexists = bufferData(date_in, ii);
 				if (dataexists) {//date_in is contained in buffer
-					index = seek(date_in, meteoBuffer[ii]);
+					index = IOUtils::seek(date_in, meteoBuffer[ii], false);
 				}
 			}
 		}
 
 		//APPLY FILTERS
 		MeteoData md; StationData sd;
-		if (index != BufferedIOHandler::npos) {
+		if (index != IOUtils::npos) {
 			vector<MeteoData> mBuffer;
 			std::vector<StationData> sBuffer;
 			meteoprocessor.processData(date_in, meteoBuffer[ii], stationBuffer[ii], md, sd);
 		}
 
-		if (index != BufferedIOHandler::npos) {
+		if (index != IOUtils::npos) {
 			//vecMeteo.push_back(meteoBuffer[ii][index]);
 			//vecStation.push_back(stationBuffer[ii][index]);
 			vecMeteo.push_back(md);
@@ -317,41 +317,6 @@ void BufferedIOHandler::clearBuffer(){
 	startDateBuffer.clear();
 	endDateBuffer.clear();
 	mapBufferedGrids.clear();
-}
-
-unsigned int BufferedIOHandler::seek(const Date& date_in, std::vector<MeteoData>& vecM){ //TODO: binary search
-	//returns index of element, if element does not exist it returns closest index
-	//the element needs to be an exact hit or embedded between two measurments
-
-	unsigned int ii = 1;
-
-	if (vecM.size() <= 0) {//no elements in buffer
-		return BufferedIOHandler::npos;
-	}
-
-	//if we reach this point: at least one element in buffer
-	if (vecM[0].date > date_in) {
-		return BufferedIOHandler::npos;
-	}
-
-	if (vecM[vecM.size()-1].date < date_in) {//last element is earlier, return npos
-		return BufferedIOHandler::npos;
-	}
-
-	if (vecM[0].date == date_in) {//closest element
-		return 0;
-	}
-
-	//if we reach this point: the date is spanned by the buffer and there are at least two elements
-	while ((ii < vecM.size())) {
-		if ((vecM[ii].date >= date_in) && (vecM[ii-1].date < date_in)) {
-			return ii;
-		}
-
-		ii++;
-	}
-
-	return BufferedIOHandler::npos;
 }
 
 } //namespace
