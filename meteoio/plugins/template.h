@@ -37,7 +37,7 @@ class TEMPLATE : public IOInterface {
 		TEMPLATE(void (*delObj)(void*), const std::string& filename);
 
 		TEMPLATE(const std::string& configfile);
-		TEMPLATE(const ARPSIO&);
+		TEMPLATE(const TEMPLATE&);
 		TEMPLATE(const ConfigReader& cfgreader);
 		~TEMPLATE() throw();
 
@@ -59,8 +59,6 @@ class TEMPLATE : public IOInterface {
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
-
-		void read3DGrid(Grid3DObject& grid_out, const std::string& _name);
 
 	private:
 		void cleanup() throw();

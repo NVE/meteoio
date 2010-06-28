@@ -89,7 +89,7 @@ class Date {
 		Date(const time_t&, const double& _timezone=undefined, const bool& _dst=false);
 		Date(const Date& _date_in);
 
-		void setTimeZone(const double& _timezone, const bool& _dst);
+		void setTimeZone(const double& _timezone, const bool& _dst=false);
 		void setDate(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
 		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=undefined, const bool& _dst=false);
 		void setDate(const time_t& _time, const double& _timezone=undefined, const bool& _dst=false);

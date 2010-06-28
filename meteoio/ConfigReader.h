@@ -49,9 +49,9 @@ namespace mio {
 namespace IOUtils {
 	void toUpper(std::string& str);
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-								    const std::string& key, T& t);
+								    const std::string& key, T& t, const unsigned int& options=1);
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-								    const std::string& key, std::vector<T>& vecT);
+								    const std::string& key, std::vector<T>& vecT, const unsigned int& options=1);
 }
 
 #ifdef _POPC_

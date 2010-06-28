@@ -53,6 +53,14 @@ double IOUtils::angle_to_bearing(const double& angle) {
 	return (fmod( 90.-angle*to_deg+360. , 360. ));
 }
 
+void IOUtils::stripComments(std::string& str)
+{
+	size_t found = str.find_first_of("#;");
+	if (found != std::string::npos){
+		str.erase(found); //rest of line disregarded
+	}
+}
+
 void IOUtils::trim(std::string& str)
 {
 	const std::string whitespaces (" \t\f\v\n\r");

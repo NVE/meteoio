@@ -636,6 +636,10 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 	(void)vecS; (void)vecWindowS;
 
 	for (unsigned int ii=0; ii<vecWindowM.size(); ii++){
+		double& value = vecWindowM[ii].param(paramindex);
+		if (value == IOUtils::nodata) //No need to run filter for nodata points
+			continue;
+
 		unsigned int pos = IOUtils::seek(vecWindowM[ii].date, vecM, false);
 
 		std::vector<double> vecWindow;
@@ -656,7 +660,6 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 	
 		double sigma = mad * K;
 
-		double& value = vecWindowM[ii].param(paramindex);
 		if( (value>(median + 3.*sigma)) || (value<(median - 3.*sigma)) ) {
 			value = IOUtils::nodata;
 		}

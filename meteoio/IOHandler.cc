@@ -46,6 +46,7 @@ namespace mio {
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
  * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
  * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
+ * - \subpage wsmdfio "WSMDFIO" for reading WSMDF grid files (no extra requirements)
  *
  */
 
@@ -63,16 +64,17 @@ void IOHandler::registerPlugins()
 #else
 	const std::string popc_extra = "";
 #endif
-	mapPlugins["A3D"]	= IOPlugin("", "A3DIO", &fileio, NULL);
-	mapPlugins["BORMA"]	= IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
-	mapPlugins["IMIS"]	= IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]	= IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
-	mapPlugins["SNOWPACK"]	= IOPlugin("libsnio"+popc_extra+libsuffix, "SNIO", NULL, NULL);
-	mapPlugins["GSN"]	= IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]	= IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]	= IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
-	mapPlugins["ARPS"]	= IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
-	mapPlugins["PGM"]	= IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
+	mapPlugins["A3D"]       = IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["BORMA"]     = IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
+	mapPlugins["IMIS"]      = IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
+	mapPlugins["GEOTOP"]    = IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
+	mapPlugins["SNOWPACK"]  = IOPlugin("libsnio"+popc_extra+libsuffix, "SNIO", NULL, NULL);
+	mapPlugins["GSN"]	    = IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]	    = IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]	    = IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
+	mapPlugins["ARPS"]	    = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
+	mapPlugins["PGM"]	    = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
+	mapPlugins["WSMDF"]     = IOPlugin("libwsmdfio"+popc_extra+libsuffix, "WSMDFIO", NULL, NULL);
 }
 
 #ifdef _POPC_

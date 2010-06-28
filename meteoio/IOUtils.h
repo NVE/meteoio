@@ -59,6 +59,8 @@ class Coords;
 class ConfigReader;
 
 namespace IOUtils {
+	const unsigned int nothrow = 0;
+	const unsigned int dothrow = 1;
 	const double nodata = -999.0; ///<This is the internal nodata value
 	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = (unsigned int)-1;
@@ -114,6 +116,8 @@ namespace IOUtils {
 	* @param s The reference of the string to trim (in/out parameter)
 	*/
 	void trim(std::string &s);
+
+	void stripComments(std::string& str);
 
 	char getEoln(std::istream& fin);
 
@@ -189,14 +193,17 @@ namespace IOUtils {
 	* @param[out] t   The value associated to the key, converted to the requested type
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-						const std::string& key, T& t) {
+								    const std::string& key, T& t, const unsigned int& options=IOUtils::dothrow){
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
 		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
 
-		if (value == "") {
-			throw UnknownValueException("No value for key " + key, AT);
+		if (value == ""){ 
+				if (options == IOUtils::nothrow)
+					return;
+				else 
+					throw UnknownValueException("No value for key " + key, AT);
 		}
 
 		if(!convertString<T>(t, value, std::dec)) {
@@ -212,14 +219,17 @@ namespace IOUtils {
 	* @param[out] vecT        The vector of values associated to the key, each value is converted to the requested type
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
-							const std::string& key, std::vector<T>& vecT) {
+					    const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow){
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
 		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
 
-		if (value == "") {
-			throw UnknownValueException("No value for key " + key, AT);
+		if (value == ""){ 
+				if (options == IOUtils::nothrow)
+					return;
+				else 
+					throw UnknownValueException("No value for key " + key, AT);
 		}
 
 		//split value string 

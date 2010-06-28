@@ -108,10 +108,7 @@ void ConfigReader::parseFile(const std::string& filename)
 void ConfigReader::parseLine(const unsigned int& linenr, std::string& line, std::string& section)
 {
 	//First thing cut away any possible comments (may start with "#" or ";")
-	size_t found = line.find_first_of("#;");
-	if (found != string::npos){
-		line.erase(found); //rest of line disregarded
-	}
+	IOUtils::stripComments(line);
 
 	IOUtils::trim(line);    //delete leading and trailing whitespace characters
 	if (line.length() == 0) //ignore empty lines
