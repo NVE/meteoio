@@ -56,6 +56,10 @@ double& WSMDFIO::getParameter(const std::string& columnName, MeteoData& md)
 
 void WSMDFIO::checkColumnNames(const std::vector<std::string>& vecColumns, const bool& locationInHeader)
 {
+	/*
+	 * This function checks whether the sequence of keywords specified in the 
+	 * [HEADER] section (key 'fields') is valid
+	 */
 	vector<unsigned int> paramcounter = vector<unsigned int>(MeteoData::nrOfParameters, 0);
 
 	for (unsigned int ii=0; ii<vecColumns.size(); ii++){
@@ -70,12 +74,15 @@ void WSMDFIO::checkColumnNames(const std::vector<std::string>& vecColumns, const
 			paramcounter.at(mapParameterByName[vecColumns[ii]])++;
 		}
 	}
-
+	
+	//Check for multiple usages of parameters
 	for (unsigned int ii=0; ii<paramcounter.size(); ii++){
 		if (paramcounter[ii] > 1)
 			throw InvalidFormatException("In 'fields': Multiple use of " + MeteoData::getParameterName(ii), AT);
 	}
 	
+	//If there is no location information in the [HEADER] section, then
+	//location information must be part of fields
 	if (!locationInHeader){
 		unsigned int latcounter = 0, loncounter=0, altcounter=0;
 		for (unsigned int ii=0; ii<vecColumns.size(); ii++){
@@ -160,7 +167,11 @@ void WSMDFIO::readStationData(const Date&, std::vector<StationData>& /*vecStatio
 
 void WSMDFIO::parseInputOutputSection()
 {
-	//Parse input section
+	/*
+	 * Parse the [Input] and [Output] sections within ConfigReader object cfg
+	 */
+
+	//Parse input section: extract number of files to read and store filenames in vecFiles
 	unsigned int counter = 1;
 	string filename = "";
 	do {
@@ -179,7 +190,7 @@ void WSMDFIO::parseInputOutputSection()
 		counter++;
 	} while (filename != "");
 
-	//Parse output section
+	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
 	outpath = "";
 	outputIsAscii = true; 
 	outputIsGzipped = false;
@@ -276,7 +287,6 @@ void WSMDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 						    vecMeteo[ii], vecStation[ii]);
 			} else {
 				streampos currpos = fin.tellg();
-				cout << "Position in stream: " << currpos << endl;
 				fin.close();
 				fin.open (filename.c_str(), ios::in|ios::binary);				
 				if (fin.fail()) throw FileAccessException(filename, AT);
@@ -307,12 +317,11 @@ void WSMDFIO::readDataBinary(const char&, const std::string&, const double& time
 		unsigned int poscounter = 0;
 
 		for (unsigned int ii=0; ii<nrOfColumns; ii++){
-			float tmpval;
-			fin.read(reinterpret_cast < char * > (&tmpval), sizeof(float));			
-			double val = (double)tmpval;
-
 			if (vecDataSequence[ii] == "timestamp"){
-				md.date.setDate(val);
+				double tmpval;
+				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(double));
+
+				md.date.setDate(tmpval);
 
 				if ((timezone != IOUtils::nodata) && (timezone != 0.0))
 					md.date.setTimeZone(timezone);
@@ -321,18 +330,23 @@ void WSMDFIO::readDataBinary(const char&, const std::string&, const double& time
 					continue;
 				if (md.date > dateEnd)
 					break;
-
-			} else if (vecDataSequence[ii] == "latitude"){
-				lat = val;
-				poscounter++;
-			} else if (vecDataSequence[ii] == "longitude"){
-				lon = val;
-				poscounter++;
-			} else if (vecDataSequence[ii] == "altitude"){
-				alt = val;
-				poscounter++;
 			} else {
-				WSMDFIO::getParameter(vecDataSequence[ii], md) = val;
+				float tmpval;
+				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(float));			
+				double val = (double)tmpval;
+
+				if (vecDataSequence[ii] == "latitude"){
+					lat = val;
+					poscounter++;
+				} else if (vecDataSequence[ii] == "longitude"){
+					lon = val;
+					poscounter++;
+				} else if (vecDataSequence[ii] == "altitude"){
+					alt = val;
+					poscounter++;
+				} else {
+					WSMDFIO::getParameter(vecDataSequence[ii], md) = val;
+				}
 			}
 		}
 
@@ -460,8 +474,8 @@ void WSMDFIO::readHeader(const char& eoln, const std::string& filename, bool& lo
 	}
 
 	IOUtils::getValueForKey(mapHeader, "fields", vecDataSequence);
-	//IOUtils::getValueForKey(mapHeader, "units_offset", vecUnitsOffset);
-	//IOUtils::getValueForKey(mapHeader, "units_multiplier", vecUnitsMultiplier);
+	//IOUtils::getValueForKey(mapHeader, "units_offset", vecUnitsOffset, IOUtils::nothrow);
+	//IOUtils::getValueForKey(mapHeader, "units_multiplier", vecUnitsMultiplier, IOUtils::nothrow);
 
 	//Read [DATA] section tag
 	getline(fin, line, eoln);
@@ -551,8 +565,10 @@ void WSMDFIO::writeDataBinary(const bool& writeLocationInHeader, const std::vect
 	char eoln = '\n';
 
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
-		float val = (float)vecMeteo[ii].date.getJulianDate();
-		fout.write((char*)&val, sizeof(float));
+		float val = 0;
+		double julian = vecMeteo[ii].date.getJulianDate();
+		
+		fout.write((char*)&julian, sizeof(double));
 
 		if (!writeLocationInHeader){ //Meta data changes
 			val = (float)vecStation[ii].position.getLat();
