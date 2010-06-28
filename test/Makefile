@@ -56,6 +56,12 @@ testThomas: testThomas.o ../lib/libmeteoio.a
 testwriting: testwriting.o
 	$(CC) $(DEBUG) -o $@ testwriting.o ${LIBS}
 
+testCoords: testCoords.o
+	$(CC) $(DEBUG) -o $@ testCoords.o ${LIBS}
+
+sniotest: sniotest.o
+	$(CC) $(DEBUG) -o $@ sniotest.o ${LIBS}
+
 sensorscope: sensorscope.o ../lib/libmeteoio.a
 	$(CC) $(DEBUG) -rdynamic -o $@ sensorscope.o ${LIBS} 
 
@@ -66,5 +72,5 @@ hnw_interpolate: hnw_interpolate.o
 	$(CC) $(DEBUG) -o $@ hnw_interpolate.o ${LIBS}
 
 clean:
-	rm -rf *~ *.o main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.popc *.out testArray sensorscope testwriting
+	rm -rf *~ *.o main testThomas meteoio_demo testDate testConfigReader testMeteo testStation meteoio_demo.popc *.out testArray sensorscope testwriting testCoords
 
