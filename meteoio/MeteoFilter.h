@@ -67,7 +67,7 @@ class MeteoFilter {
 		 * @param[in] checkonly indicates whether to execute all filters or only "checkonly" filters
 		 */
 		void filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                          std::vector<MeteoData> vecWindowM, std::vector<StationData> vecWindowS, 
+                          std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS, 
                           const bool& checkonly = false);
 
 

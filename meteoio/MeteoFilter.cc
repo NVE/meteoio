@@ -66,7 +66,7 @@ MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
 }
 
 void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                             std::vector<MeteoData> vecWindowM, std::vector<StationData> vecWindowS, 
+                             std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS, 
                              const bool& checkonly)
 {
 	//Loop through each meteo parameter, call the respective filter function	

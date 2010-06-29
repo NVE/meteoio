@@ -230,7 +230,7 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 
 		Coords coordinate(coordin, coordinparam);
 		coordinate.setLatLon(latitude, longitude, altitude);
-		sd.setStationData(coordinate, name, name);
+		sd.setStationData(coordinate, vecStationName[stationindex], name);
 	} else {
 		soap_print_fault(&gsn, stdout);
 		throw IOException("Error in communication with GSN",AT);
