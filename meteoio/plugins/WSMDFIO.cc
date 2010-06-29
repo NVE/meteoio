@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 /**
- * @page wsmdf WSMDF
+ * @page wsmdfio WSMDF
  * @section template_format Format
  * *Put here the informations about the standard format that is implemented*
  *

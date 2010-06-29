@@ -188,9 +188,10 @@ namespace IOUtils {
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).
 	* @tparam T   [in] The type wanted for the return value (template type parameter).
-	* @param[in] properties   A map containing all the parameters.
-	* @param[in] key   The key of the parameter to retrieve.
-	* @param[out] t   The value associated to the key, converted to the requested type
+	* @param[in]  properties  A map containing all the parameters.
+	* @param[in]  key         The key of the parameter to retrieve.
+	* @param[out] t           The value associated to the key, converted to the requested type
+	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 								    const std::string& key, T& t, const unsigned int& options=IOUtils::dothrow){
@@ -214,9 +215,10 @@ namespace IOUtils {
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).
 	* @tparam T           [in] The type wanted for the return value (template type parameter).
-	* @param[in] properties  A map containing all the parameters.
-	* @param[in] key         The key of the parameter to retrieve.
+	* @param[in]  properties  A map containing all the parameters.
+	* @param[in]  key         The key of the parameter to retrieve.
 	* @param[out] vecT        The vector of values associated to the key, each value is converted to the requested type
+	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
 					    const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow){

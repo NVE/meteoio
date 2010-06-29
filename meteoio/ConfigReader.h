@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <map>
 #include <vector>
 
@@ -144,8 +145,9 @@ class ConfigReader {
 				IOUtils::getValueForKey<T>(properties, _section + "::" + key, vecT);
 			} catch(std::exception& e){
 				if (options != ConfigReader::nothrow) {
-					std::cerr << "[E] Error for ConfigReader of " << sourcename << ": " << e.what() << std::endl;
-					throw;
+					std::stringstream ss;
+					ss << "[E] Error for ConfigReader of " << sourcename << ": " << e.what();
+					throw UnknownValueException(ss.str(), AT);
 				}
 			}
 		}
@@ -176,8 +178,9 @@ class ConfigReader {
 				IOUtils::getValueForKey<T>(properties, _section + "::" + key, t);
 			} catch(std::exception& e){
 				if (options != ConfigReader::nothrow) {
-					std::cerr << "[E] Error for ConfigReader of " << sourcename << ": " << e.what() << std::endl;
-					throw;
+					std::stringstream ss;
+					ss << "[E] Error for ConfigReader of " << sourcename << ": " << e.what();
+					throw UnknownValueException(ss.str(), AT);
 				}
 			}
 		}

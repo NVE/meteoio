@@ -48,7 +48,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const ConfigReader& _cfg) : cfg(_cfg) {
 	*/
 }
 
-unsigned int Meteo1DInterpolator::resampleData(const Date& date, vector<MeteoData>& vecM, vector<StationData>& vecS)
+unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
 {
 	if (vecM.size() != vecS.size())
 		throw IOException("Inconsistency between vecM and vecS detected", AT);

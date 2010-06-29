@@ -455,6 +455,9 @@ void FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 	bool isSoft = false;
 	std::vector<double> doubleArgs;
 	parseFilterArguments("rate", vecArgs, 1, 1, isSoft, doubleArgs);
+
+	//disable the warnings triggered by the commented out section that follows
+	(void)vecM; (void)paramindex; (void)vecWindowM;
 	/*
 	const double& maxRateOfChange = doubleArgs[0];
 
