@@ -822,7 +822,7 @@ void FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
 /**
  * @brief Wind vector averaging.
  * This calculates the vector average over a user given time period. Each wind vector within this period
- * is added and the final sum is normalized by the number of vectors that have been added. A few more important information:
+ * is added and the final sum is normalized by the number of vectors that have been added. Important information:
  * - nodata values are excluded from the mean
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):
  *   - minimal number of points in window

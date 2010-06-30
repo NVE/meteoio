@@ -92,7 +92,7 @@ class WSMDFIO : public IOInterface {
 					     std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 
 		void checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii);
-
+		void setFormatting(const MeteoData::Parameters& paramindex);
 
 		std::vector<std::string> vecFiles;  //read from the ConfigReader [Input] section
 		std::string outpath;                //read from the ConfigReader [Output] section

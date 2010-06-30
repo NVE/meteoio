@@ -127,6 +127,9 @@ WSMDFIO::~WSMDFIO() throw()
 
 void WSMDFIO::cleanup() throw()
 {
+	//clear ios flags
+	fout << resetiosflags(ios_base::fixed | ios_base::left);
+
 	if (fin.is_open()) {//close fin if open
 		fin.close();
 	}
@@ -593,24 +596,46 @@ void WSMDFIO::writeDataAscii(const bool& writeLocationInHeader, const std::vecto
                              const std::vector<StationData>& vecStation, const std::vector<bool>& vecParamInUse)
 {
 	fout << "[DATA]" << endl;
-	fout.width(12);
-	fout.precision(4);
-
+	fout.fill(' ');
+	fout << right;
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
 		fout << vecMeteo[ii].date.toString(Date::ISO);
 
 		if (!writeLocationInHeader){ //Meta data changes
-			fout << " " << fixed << vecStation[ii].position.getLat();
-			fout << " " << fixed << vecStation[ii].position.getLon();
-			fout << " " << fixed << vecStation[ii].position.getAltitude();
+			fout << " " << setw(12) << setprecision(6) << vecStation[ii].position.getLat();
+			fout << " " << setw(12) << setprecision(6) << vecStation[ii].position.getLon();
+			fout << " " << setw(8)  << setprecision(2) << vecStation[ii].position.getAltitude();
 		}
 
 		for (unsigned int jj=0; jj<MeteoData::nrOfParameters; jj++){
-			if (vecParamInUse[jj])
-				fout << " " << fixed << vecMeteo[ii].param(jj);
+			fout << " ";
+			if (vecParamInUse[jj]){
+				setFormatting(MeteoData::Parameters(jj));
+				if (vecMeteo[ii].param(jj) == IOUtils::nodata)
+					fout << setprecision(0);
+				fout << vecMeteo[ii].param(jj);
+			}
 		}
 		fout << endl;
 	}
+}
+
+void WSMDFIO::setFormatting(const MeteoData::Parameters& paramindex)
+{
+	if ((paramindex == MeteoData::TA) || (paramindex == MeteoData::TSS) || (paramindex == MeteoData::TSG))
+		fout << setw(8) << setprecision(2);
+	else if (paramindex == MeteoData::VW)
+		fout << setw(6) << setprecision(1);
+	else if (paramindex == MeteoData::DW)
+		fout << setw(5) << setprecision(0);
+	else if ((paramindex == MeteoData::ISWR) || (paramindex == MeteoData::RSWR) || (paramindex == MeteoData::ILWR))
+		fout << setw(6) << setprecision(0);
+	else if (paramindex == MeteoData::HNW)
+		fout << setw(6) << setprecision(3);
+	else if (paramindex == MeteoData::HS)
+		fout << setw(8) << setprecision(3);
+	else if (paramindex == MeteoData::RH)
+		fout << setw(7) << setprecision(3);
 }
 
 void WSMDFIO::writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd, 
@@ -622,12 +647,13 @@ void WSMDFIO::writeHeaderSection(const bool& writeLocationInHeader, const Statio
 		fout << "station_name = " << sd.getStationName() << endl;
 	
 	if (writeLocationInHeader){
-		fout << "latitude = " << sd.position.getLat() << endl;
-		fout << "longitude = " << sd.position.getLon() << endl;
-		fout << "altitude = " << sd.position.getAltitude() << endl;
+		fout << fixed;
+		fout << "latitude = "  << left << setw(12) << setprecision(6) << sd.position.getLat() << endl;
+		fout << "longitude = " << setw(12) << setprecision(6) << sd.position.getLon() << endl;
+		fout << "altitude = "  << setw(8)  << setprecision(2) << sd.position.getAltitude() << endl;
 	}
 
-	fout << "nodata = " << IOUtils::nodata << endl;
+	fout << "nodata = " << setprecision(0) << IOUtils::nodata << endl;
 	
 	if ((timezone != IOUtils::nodata) && (timezone != 0.0))
 		fout << "tz = " << timezone << endl;
