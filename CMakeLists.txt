@@ -20,9 +20,9 @@ FIND_PROGRAM(COLORGCC_EXECUTABLE colorgcc)
 # require proper c++
 set(DEBUG_ARITHM ON CACHE BOOL "Use the debug flags -DDEBUG_ARITHM to catch arithmetic exceptions")
 IF(DEBUG_ARITHM)
-  set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long -DDEBUG_ARITHM")
+  set(CFLAGS "-Wall -Wextra -ansi -Wno-long-long -DDEBUG_ARITHM")
 ELSE(DEBUG_ARITHM)
-  set(CFLAGS "-Wall -Wextra -ansi -pedantic -Wno-long-long")
+  set(CFLAGS "-Wall -Wextra -ansi -Wno-long-long")
 ENDIF(DEBUG_ARITHM)
 
 SET(POPCC popcc)
