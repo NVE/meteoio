@@ -46,7 +46,7 @@ namespace mio {
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
  * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
  * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
- * - \subpage wsmdfio "WSMDFIO" for reading WSMDF grid files (no extra requirements)
+ * - \subpage smetio "SMETIO" for reading SMET meteo data files (no extra requirements)
  *
  */
 
@@ -74,7 +74,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["GRASS"]	    = IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
 	mapPlugins["ARPS"]	    = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
 	mapPlugins["PGM"]	    = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
-	mapPlugins["WSMDF"]     = IOPlugin("libwsmdfio"+popc_extra+libsuffix, "WSMDFIO", NULL, NULL);
+	mapPlugins["SMET"]     = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
 }
 
 #ifdef _POPC_

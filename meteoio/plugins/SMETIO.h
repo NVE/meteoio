@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __WSMDFIO_H__
-#define __WSMDFIO_H__
+#ifndef __SMETIO_H__
+#define __SMETIO_H__
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/ConfigReader.h>
@@ -26,20 +26,20 @@
 namespace mio {
 
 /**
- * @class WSMDFIO
+ * @class SMETIO
  * @brief This (empty) class is to be used as a template for developing new plugins
  *
  * @author Mathias Bavay
  * @date   2010-06-14
  */
-class WSMDFIO : public IOInterface {
+class SMETIO : public IOInterface {
 	public:
-		WSMDFIO(void (*delObj)(void*), const std::string& filename);
+		SMETIO(void (*delObj)(void*), const std::string& filename);
 
-		WSMDFIO(const std::string& configfile);
-		WSMDFIO(const WSMDFIO&);
-		WSMDFIO(const ConfigReader& cfgreader);
-		~WSMDFIO() throw();
+		SMETIO(const std::string& configfile);
+		SMETIO(const SMETIO&);
+		SMETIO(const ConfigReader& cfgreader);
+		~SMETIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 
@@ -61,7 +61,7 @@ class WSMDFIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
 	private:
-		static const std::string wsmdf_version;
+		static const std::string smet_version;
 		static std::map<std::string, MeteoData::Parameters> mapParameterByName; ///<Associate name and meteo parameter
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname 

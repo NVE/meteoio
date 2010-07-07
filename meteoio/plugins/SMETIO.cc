@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,15 +15,15 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "WSMDFIO.h"
+#include "SMETIO.h"
 
 using namespace std;
 
 namespace mio {
 /**
- * @page wsmdfio WSMDF
+ * @page smetio SMET
  * @section template_format Format
- * *Put here the informations about the standard format that is implemented*
+ * The Station METeo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its official format specification for more information.
  *
  * @section template_units Units
  *
@@ -35,11 +35,11 @@ namespace mio {
  * - etc
  */
 
-const std::string WSMDFIO::wsmdf_version = "0.9";
-map<string, MeteoData::Parameters> WSMDFIO::mapParameterByName;
-const bool WSMDFIO::__init = WSMDFIO::initStaticData();
+const std::string SMETIO::smet_version = "0.9";
+map<string, MeteoData::Parameters> SMETIO::mapParameterByName;
+const bool SMETIO::__init = SMETIO::initStaticData();
 
-bool WSMDFIO::initStaticData()
+bool SMETIO::initStaticData()
 {
 	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
 		mapParameterByName[MeteoData::getParameterName(ii)] = MeteoData::Parameters(ii);
@@ -48,13 +48,13 @@ bool WSMDFIO::initStaticData()
 	return true;
 }
 
-double& WSMDFIO::getParameter(const std::string& columnName, MeteoData& md)
+double& SMETIO::getParameter(const std::string& columnName, MeteoData& md)
 {
 	MeteoData::Parameters paramindex = mapParameterByName[columnName];
 	return md.param(paramindex);
 }
 
-void WSMDFIO::checkColumnNames(const std::vector<std::string>& vecColumns, const bool& locationInHeader)
+void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const bool& locationInHeader)
 {
 	/*
 	 * This function checks whether the sequence of keywords specified in the 
@@ -102,30 +102,30 @@ void WSMDFIO::checkColumnNames(const std::vector<std::string>& vecColumns, const
 //END STATIC SECTION
 
 
-WSMDFIO::WSMDFIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+SMETIO::SMETIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
-WSMDFIO::WSMDFIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+SMETIO::SMETIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
-WSMDFIO::WSMDFIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+SMETIO::SMETIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
-WSMDFIO::~WSMDFIO() throw()
+SMETIO::~SMETIO() throw()
 {
 	cleanup();
 }
 
-void WSMDFIO::cleanup() throw()
+void SMETIO::cleanup() throw()
 {
 	//clear ios flags
 	fout << resetiosflags(ios_base::fixed | ios_base::left);
@@ -138,37 +138,37 @@ void WSMDFIO::cleanup() throw()
 	}		
 }
 
-void WSMDFIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
+void SMETIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void WSMDFIO::readDEM(DEMObject& /*dem_out*/)
+void SMETIO::readDEM(DEMObject& /*dem_out*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void WSMDFIO::readLanduse(Grid2DObject& /*landuse_out*/)
+void SMETIO::readLanduse(Grid2DObject& /*landuse_out*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void WSMDFIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
+void SMETIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void WSMDFIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
+void SMETIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void WSMDFIO::parseInputOutputSection()
+void SMETIO::parseInputOutputSection()
 {
 	/*
 	 * Parse the [Input] and [Output] sections within ConfigReader object cfg
@@ -226,7 +226,7 @@ void WSMDFIO::parseInputOutputSection()
 	}
 }
 
-void WSMDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
+void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                             std::vector< std::vector<MeteoData> >& vecMeteo, 
                             std::vector< std::vector<StationData> >& vecStation,
                             const unsigned int& stationindex)
@@ -282,7 +282,7 @@ void WSMDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//2. Read Header
 			readHeader(eoln, filename, locationInHeader, timezone, sd, vecDataSequence);
-			WSMDFIO::checkColumnNames(vecDataSequence, locationInHeader);
+			SMETIO::checkColumnNames(vecDataSequence, locationInHeader);
 
 			//3. Read DATA
 			if (isAscii){
@@ -306,7 +306,7 @@ void WSMDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-void WSMDFIO::readDataBinary(const char&, const std::string&, const double& timezone, 
+void SMETIO::readDataBinary(const char&, const std::string&, const double& timezone,
 					    const StationData& sd, const std::vector<std::string>& vecDataSequence,
 					    const Date& dateStart, const Date& dateEnd,
 					    std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
@@ -348,7 +348,7 @@ void WSMDFIO::readDataBinary(const char&, const std::string&, const double& time
 					alt = val;
 					poscounter++;
 				} else {
-					WSMDFIO::getParameter(vecDataSequence[ii], md) = val;
+					SMETIO::getParameter(vecDataSequence[ii], md) = val;
 				}
 			}
 		}
@@ -370,7 +370,7 @@ void WSMDFIO::readDataBinary(const char&, const std::string&, const double& time
 	}	
 }
 
-void WSMDFIO::readDataAscii(const char& eoln, const std::string& filename, const double& timezone, 
+void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
 					   const StationData& sd, const std::vector<std::string>& vecDataSequence,
 					   const Date& dateStart, const Date& dateEnd,
 					   std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
@@ -420,7 +420,7 @@ void WSMDFIO::readDataAscii(const char& eoln, const std::string& filename, const
 					throw InvalidFormatException("In "+filename+": Altitude invalid", AT);
 				poscounter++;
 			} else {
-				if (!IOUtils::convertString(WSMDFIO::getParameter(vecDataSequence[ii], md), tmpvec[ii]))
+				if (!IOUtils::convertString(SMETIO::getParameter(vecDataSequence[ii], md), tmpvec[ii]))
 					throw InvalidFormatException("In "+filename+": Invalid value for param", AT);
 			}
 		}
@@ -433,7 +433,7 @@ void WSMDFIO::readDataAscii(const char& eoln, const std::string& filename, const
 	}
 }
 
-void WSMDFIO::readHeader(const char& eoln, const std::string& filename, bool& locationInHeader,
+void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& locationInHeader,
                          double& timezone, StationData& sd, std::vector<std::string>& vecDataSequence)
 {
 	string line="";
@@ -490,9 +490,9 @@ void WSMDFIO::readHeader(const char& eoln, const std::string& filename, bool& lo
 		throw InvalidFormatException("Section " + line + " in "+ filename + " invalid, expected [DATA]", AT);
 }
 
-void WSMDFIO::checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii)
+void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii)
 {
-	if ((vecSignature.size() != 3) || (vecSignature[0] != "WSMDF") || (vecSignature[1] != wsmdf_version))
+	if ((vecSignature.size() != 3) || (vecSignature[0] != "SMET") || (vecSignature[1] != smet_version))
 		throw InvalidFormatException("The signature of file " + filename + " is invalid", AT);
 
 	if (vecSignature[2] == "ASCII")
@@ -503,7 +503,7 @@ void WSMDFIO::checkSignature(const std::vector<std::string>& vecSignature, const
 		throw InvalidFormatException("The 3rd column in the file " + filename + " must be either ASCII or BINARY", AT);
 }
 
-void WSMDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
+void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 					    const std::vector< std::vector<StationData> >& vecStation,
 					    const std::string&)
 {
@@ -521,7 +521,7 @@ void WSMDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMet
 			sd.stationID = ss.str();
 		}
 
-		string filename = outpath + "/" + sd.stationID + ".wsmdf";
+		string filename = outpath + "/" + sd.stationID + ".smet";
 		if (!IOUtils::validFileName(filename)) //Check whether filename is valid
 			throw InvalidFileNameException(filename, AT);
 
@@ -529,7 +529,7 @@ void WSMDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMet
 			fout.open(filename.c_str());
 			if (fout.fail()) throw FileAccessException(filename.c_str(), AT);
 
-			fout << "WSMDF " << wsmdf_version << " ";
+			fout << "SMET " << smet_version << " ";
 			if (outputIsAscii)
 				fout << "ASCII" << endl;
 			else 
@@ -562,7 +562,7 @@ void WSMDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMet
 	}
 }
 
-void WSMDFIO::writeDataBinary(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
+void SMETIO::writeDataBinary(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
                               const std::vector<StationData>& vecStation, const std::vector<bool>& vecParamInUse)
 {
 	char eoln = '\n';
@@ -592,7 +592,7 @@ void WSMDFIO::writeDataBinary(const bool& writeLocationInHeader, const std::vect
 	}
 }
 
-void WSMDFIO::writeDataAscii(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
+void SMETIO::writeDataAscii(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
                              const std::vector<StationData>& vecStation, const std::vector<bool>& vecParamInUse)
 {
 	fout << "[DATA]" << endl;
@@ -620,7 +620,7 @@ void WSMDFIO::writeDataAscii(const bool& writeLocationInHeader, const std::vecto
 	}
 }
 
-void WSMDFIO::setFormatting(const MeteoData::Parameters& paramindex)
+void SMETIO::setFormatting(const MeteoData::Parameters& paramindex)
 {
 	if ((paramindex == MeteoData::TA) || (paramindex == MeteoData::TSS) || (paramindex == MeteoData::TSG))
 		fout << setw(8) << setprecision(2);
@@ -638,7 +638,7 @@ void WSMDFIO::setFormatting(const MeteoData::Parameters& paramindex)
 		fout << setw(7) << setprecision(3);
 }
 
-void WSMDFIO::writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd, 
+void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd,
                                  const double& timezone, const std::vector<bool>& vecParamInUse)
 {
 	fout << "[HEADER]" << endl;
@@ -672,7 +672,7 @@ void WSMDFIO::writeHeaderSection(const bool& writeLocationInHeader, const Statio
 }
 
 
-void WSMDFIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone, 
+void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
                                      std::vector<bool>& vecParamInUse)
 {
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
@@ -687,7 +687,7 @@ void WSMDFIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, dou
 		timezone = vecMeteo[0].date.getTimeZone();
 }
 
-bool WSMDFIO::checkConsistency(const std::vector<StationData>& vecStation, StationData& sd)
+bool SMETIO::checkConsistency(const std::vector<StationData>& vecStation, StationData& sd)
 {
 	for (unsigned int ii=1; ii<vecStation.size(); ii++){
 		if (vecStation[ii].position != vecStation[ii-1].position)
@@ -700,13 +700,13 @@ bool WSMDFIO::checkConsistency(const std::vector<StationData>& vecStation, Stati
 	return true;
 }
 
-void WSMDFIO::readSpecialPoints(std::vector<Coords>&)
+void SMETIO::readSpecialPoints(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void WSMDFIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
+void SMETIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -721,9 +721,9 @@ extern "C"
 	}
 
 	void* loadObject(const string& classname, const string& filename) {
-		if(classname == "WSMDFIO") {
+		if(classname == "SMETIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new WSMDFIO(deleteObject, filename);
+			return new SMETIO(deleteObject, filename);
 		}
 		//cerr << "Could not load " << classname << endl;
 		return NULL;
