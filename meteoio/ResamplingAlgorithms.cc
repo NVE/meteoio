@@ -48,14 +48,14 @@ const resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algon
 	it = algorithmMap.find(algoname);
 
 	if (it==algorithmMap.end())
-		throw UnknownValueException("Unknown resamplng algorithm called: " + algoname, AT);
+		throw UnknownValueException("Unknown resampling algorithm called: " + algoname, AT);
 
 	return it->second;
 }
 
-/******************************************************************************
+/**********************************************************************************
  * The following functions are implementations of different resampling algorithms *
- ******************************************************************************/
+ **********************************************************************************/
 
 /**
  * @brief Nearest Neighbour data resampling: Find the nearest neighbour of a desired data point 

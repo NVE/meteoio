@@ -3,7 +3,7 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 
-IF(GSNIO)
+IF(PLUGIN_GSNIO)
   find_program(WSDL2H wsdl2h)
   find_program(SOAPCPP2 soapcpp2)
   find_library(GSOAPPP gsoap++)
@@ -17,12 +17,12 @@ IF(GSNIO)
   SET_SOURCE_FILES_PROPERTIES(soapC.cpp PROPERTIES GENERATED TRUE)
   SET_SOURCE_FILES_PROPERTIES(soapA3DWebServiceSoap12BindingProxy.cpp PROPERTIES GENERATED TRUE)
 
-  add_executable(gsnclient gsnclient.cc soapA3DWebServiceSoap12BindingProxy.cpp soapC.cpp)
+  #add_executable(gsnclient gsnclient.cc soapA3DWebServiceSoap12BindingProxy.cpp soapC.cpp)
 
-  target_link_libraries(gsnclient ${GSOAPPP} stdc++)
-  add_dependencies(gsnclient wsdl2cpp)
+  #target_link_libraries(gsnclient ${GSOAPPP} stdc++)
+  #add_dependencies(gsnclient wsdl2cpp)
 
-ENDIF(GSNIO)
+ENDIF(PLUGIN_GSNIO)
 
 SET_DIRECTORY_PROPERTIES(PROPERTIES 
   ADDITIONAL_MAKE_CLEAN_FILES "*~;soap*;*.nsmap;gsnclient;A3DWebService.h")

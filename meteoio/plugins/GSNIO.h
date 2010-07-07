@@ -81,7 +81,7 @@ class GSNIO : public IOInterface {
 		A3DWebServiceSoap12BindingProxy gsn;
 		ConfigReader cfg;
 		std::vector<std::string> vecStationName;
-		std::string hostname, port, userid, passwd; ///< Variables for proxy configuration
+		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                              ///< Variable for proxy configuration
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters

@@ -51,6 +51,7 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
+ * - ENDPOINT: The URL of the web service e.g. http://192.33.210.10:22201/services/A3DWebService/
  * - PROXY: an IP address or a resolveable hostname
  * - PROXYPORT: the port the proxy is listening on
  * - PROXYUSER: (if necessary) a proxy username
@@ -86,12 +87,17 @@ GSNIO::GSNIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 GSNIO::~GSNIO() throw(){}
 
 void GSNIO::initGSNConnection(){
-	hostname = port = userid = passwd="";
+	endpoint = hostname = port = userid = passwd = "";
 	proxyport = -1;
 
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
-
+	
+	cfg.getValue("ENDPOINT", "INPUT", endpoint, ConfigReader::nothrow);
+	if (endpoint != ""){
+		gsn.soap_endpoint = endpoint.c_str();
+		cout << "\tUsing GSN Endpoint: " << endpoint << endl;
+	}
 	/*
 	 * Trying to read proxy settings:
 	 * - Firstly the hostname and port (both have to be provided).
@@ -99,9 +105,9 @@ void GSNIO::initGSNConnection(){
 	 * - parameters not set will be set to ""
 	 */
 	try {
-		cfg.getValue("PROXY", hostname, ConfigReader::nothrow);
+		cfg.getValue("PROXY", "INPUT", hostname, ConfigReader::nothrow);
 		if (hostname == "") return;
-		cfg.getValue("PROXYPORT", port, ConfigReader::nothrow);
+		cfg.getValue("PROXYPORT", "INPUT", port, ConfigReader::nothrow);
 		if (port == "") return;
 
 		if (!IOUtils::convertString(proxyport, port, std::dec))
@@ -112,9 +118,9 @@ void GSNIO::initGSNConnection(){
 		gsn.proxy_host = hostname.c_str();
 		gsn.proxy_port = proxyport;
 
-		cfg.getValue("PROXYUSER", userid);
+		cfg.getValue("PROXYUSER", "INPUT", userid);
 		gsn.proxy_userid = userid.c_str();
-		cfg.getValue("PROXYPASS", passwd);
+		cfg.getValue("PROXYPASS", "INPUT", passwd);
 		gsn.proxy_passwd = passwd.c_str();
 	} catch(...){}
 }

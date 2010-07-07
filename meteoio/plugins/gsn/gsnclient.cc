@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <ctime>
+#include <string.h>
 
 using namespace std;
 
@@ -19,6 +20,8 @@ int main(){
 	_ns1__getMeteoDataResponse meteodata;
 
 	//_ns1__getSensorInfoResponse sensorinfo;
+
+	gsn.soap_endpoint = "http://192.33.210.20:22001/services/A3DWebService/";
 
 	/*
 	gsn.proxy_host = "77.244.247.232"; // IP or domain
@@ -49,6 +52,7 @@ int main(){
 
 	cout << "TEST Webservice" << endl;
 
+	//if (soap_call___ns2__getSensors(&gsn, "", "", &sensors) == SOAP_OK){
 	if (gsn.getSensors(&sensors) == SOAP_OK){
 		cout << "Number of sensors accessible thorugh GSN: " << sensors.return_.size() << endl;
 		for (unsigned int ii=0; ii<sensors.return_.size(); ii++){
