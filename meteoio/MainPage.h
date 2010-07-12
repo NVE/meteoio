@@ -39,6 +39,7 @@ namespace mio {
  *    -# \subpage plugins "Available plugins" and usage
  *    -# \subpage coords "Available coordinate systems" and usage
  *    -# \subpage filters "Available filters" and usage
+ *    -# \subpage resampling "Available temporal interpolations" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  * -# Programing using MeteoIO
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
@@ -125,6 +126,9 @@ namespace mio {
  * @page quick_overview Quick overview
  * This library contains various classes that have been designed to deal with various sets of problems. This page shows the different sets of problems and what kind of functionnality the library offers to tackle them.
  *
+ * @section class_structure Class structure
+ * \image html structure.png "simplified class structure"
+ * \image latex structure.eps "simplified class structure" width=0.9\textwidth
  *
  * @section iohandler_sec Data reading
  * The class IOHandler provides the meteorological data from the sources selected by the user in its configuration file. This class inherits from IOInterface and is implemented through plugins that are responsible for implementing a given data access (see \ref dev_plugins "Plugins developer's guide" for more information). It therefore proposes a uniform, standardized access to the data that can be meteorological data, gridded data (including Digital Elevation Model (DEM) data or variations like for landuse codes) and tables of coordinates (for special processing at users selected locations). A buffered version of this class exists: BufferedIOHandler that should be prefered. The description of the plugins and their usage can be found in \ref plugins "Available plugins".
