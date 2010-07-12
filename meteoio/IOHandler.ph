@@ -27,12 +27,6 @@
 #include <map>
 #include <string>
 
-/**
-* @file IOHandler.ph
-* The is the parclass implementing the interface as defined by the IOInterface class.
-* This class is responsible for loading the necessary plugins and getting the data through them.
-*/
-
 using namespace mio; //HACK for POPC
 
 namespace mio {
@@ -40,6 +34,11 @@ namespace mio {
 typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR; //HACK for POPC
 //This one line above does absolutely nothing, but if removed, popc does not compile the file....
 
+/**
+* @file IOHandler.ph
+* The is the parclass implementing the interface as defined by the IOInterface class.
+* This class is responsible for loading the necessary plugins and getting the data through them.
+*/
 parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
 		classuid(1003);
@@ -53,11 +52,11 @@ parclass IOHandler {
 		virtual void read2DGrid([out]Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
-		virtual void readStationData([in]const Date& date, 
+		virtual void readStationData([in]const Date& date,
 		              [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
 		virtual void writeMeteoData([in,proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
 		              [in,proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,
-		              [in]const std::string& name);
+		              [in]const std::string& name="");
 		virtual void readMeteoData([in]const Date& dateStart, [in]const Date& dateEnd,
 		              [proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
 		              [proc=marshal_vector_STATION_DATASET] std::vector<STATION_DATASET>& vecStation,

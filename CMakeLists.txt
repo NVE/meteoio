@@ -46,9 +46,10 @@ if(NOT DEST)
 endif(NOT DEST)
 
 if (DEST STREQUAL "par")
-  set(CFLAGS "-Wall -Wextra -Wno-long-long")
-  set(OPTIM "-g -O3 -DNDEBUG" CACHE STRING "" FORCE)
-  set(DEBUG "-g -O0 -D__DEBUG" CACHE STRING "" FORCE)
+  set(EXTRA_WARNINGS "-Wextra ")
+  set(OPTIM "-g -O3 -DNDEBUG")
+  set(ARCH  "-mtune=native")
+  set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "par")
 
 if (DEST STREQUAL "safe")
@@ -59,7 +60,7 @@ endif(DEST STREQUAL "safe")
 
 IF(DEST STREQUAL "optimized")
   SET(OPTIM "-g -O3 -DNDEBUG")
-  SET(ARCH  "-mtune=native")
+  SET(ARCH  "-march=pentium4 -mtune=native")
   SET(DEBUG "-g -O0 -D__DEBUG")
 ENDIF(DEST STREQUAL "optimized")
 

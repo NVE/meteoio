@@ -31,11 +31,9 @@
 #include <string>
 
 namespace mio {
-/**
-* @file IOHandler.h
-*/
 
 /**
+* @file IOHandler.h
 * @class IOHandler
 * @brief This class is the class to use for raw I/O operations. It is responsible for transparently loading the plugins
 * and it follows the interface defined by the IOInterface class with the addition of
@@ -52,8 +50,8 @@ class IOHandler : public IOInterface {
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-
+		virtual void readStationData(const Date& date,
+		                             STATION_DATASET& vecStation);
 		virtual void writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
 		                            const std::vector<STATION_DATASET>& vecStation,
 		                            const std::string& name="");
@@ -61,7 +59,8 @@ class IOHandler : public IOInterface {
 		                           std::vector<METEO_DATASET>& vecMeteo,
 		                           std::vector<STATION_DATASET>& vecStation,
 		                           const unsigned& stationindex=IOUtils::npos);
-		void readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation);
+		void readMeteoData(const Date& date, METEO_DATASET& vecMeteo,
+		                   STATION_DATASET& vecStation);
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
@@ -79,6 +78,6 @@ class IOHandler : public IOInterface {
 		A3DIO fileio;
 };
 
-} //end namespace mio
+} //namespace
 
 #endif
