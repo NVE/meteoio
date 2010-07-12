@@ -166,7 +166,7 @@ namespace mio {
  * @subsection interpol2d_sec Spatial interpolations
  * The class Meteo2DInterpolator receives a Digital Elevation Model (DEM) in its constructor as well as two vectors, one of MeteoData the other one of StationData. Then it allows filling 2D grid (as Grid2DObject) with spatially interpolated meteorological parameters.
  * @subsection interpol1d_sec 1D interpolations
- * The Interpol1D is dedicated to 1D interpolations.
+ * The ResamplingAlgorithms class uses the Interpol1D class to perform temporal interpolations (for resampling).
  *
  * @section config_sec Configuration files handling
  * In order to offer a consistent interface to the user as well as make it easy to read configuration parameters, the class ConfigReader is exposed. Once constructed with a configuration file name, each key's parameter can be retrieved with a call to the templatized getValue() method.
