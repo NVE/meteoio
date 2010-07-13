@@ -42,7 +42,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 if(NOT DEST)
-  set(DEST "safe" CACHE STRING "Choose safe, optimized, par (with popcc) or hera" FORCE)
+  set(DEST "safe" CACHE STRING "Choose safe, optimized, hera, or par, hera_par (with popc)" FORCE)
 endif(NOT DEST)
 
 if (DEST STREQUAL "par")
@@ -51,6 +51,16 @@ if (DEST STREQUAL "par")
   set(ARCH  "-mtune=native")
   set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "par")
+
+if (DEST STREQUAL "hera_par")
+  set(EXTRA_WARNINGS "-Wextra ")
+  set(OPTIM "-g -O3 -DNDEBUG")
+  #required for AMD64: amdfam10 or fPIC, even for static libs
+  set(ARCH "-march=amdfam10")
+  #set(ARCH  "-mtune=native")
+  set(DEBUG "-g -O0 -D__DEBUG")
+  set(DEST "par")
+endif(DEST STREQUAL "hera_par")
 
 if (DEST STREQUAL "safe")
   set(OPTIM "-g -O3 -DNDEBUG")
@@ -71,7 +81,7 @@ if (DEST STREQUAL "hera")
 endif(DEST STREQUAL "hera")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${ARCH} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 
 message(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")

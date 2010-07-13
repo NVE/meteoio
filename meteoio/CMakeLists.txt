@@ -56,7 +56,7 @@ if (DEST STREQUAL "par")
 
   ADD_CUSTOM_COMMAND(
     OUTPUT "${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o"
-    COMMAND popcc -o ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -c ${PROJECT_SOURCE_DIR}/meteoio/PackMeteoIO.cc -fPIC -I${PROJECT_SOURCE_DIR} -g -combine -pipe -march=native -fomit-frame-pointer -O3 -Wall  -Wextra
+    COMMAND popcc -o ${PROJECT_SOURCE_DIR}/lib/PackMeteoIO.o -c ${PROJECT_SOURCE_DIR}/meteoio/PackMeteoIO.cc -I${PROJECT_SOURCE_DIR} -combine -pipe "${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}"
     DEPENDS ${STATICNAME}
     )
   ADD_CUSTOM_COMMAND(
