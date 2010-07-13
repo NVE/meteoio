@@ -64,17 +64,18 @@ void IOHandler::registerPlugins()
 #else
 	const std::string popc_extra = "";
 #endif
+	//mapPlugins[io.ini KEY]= IOPlugin(library file name, class name, NULL, NULL);
 	mapPlugins["A3D"]       = IOPlugin("", "A3DIO", &fileio, NULL);
 	mapPlugins["BORMA"]     = IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
 	mapPlugins["IMIS"]      = IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
 	mapPlugins["GEOTOP"]    = IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
 	mapPlugins["SNOWPACK"]  = IOPlugin("libsnio"+popc_extra+libsuffix, "SNIO", NULL, NULL);
-	mapPlugins["GSN"]	    = IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]	    = IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]	    = IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
-	mapPlugins["ARPS"]	    = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
-	mapPlugins["PGM"]	    = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
-	mapPlugins["SMET"]     = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
+	mapPlugins["GSN"]       = IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
+	mapPlugins["ARC"]       = IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
+	mapPlugins["GRASS"]     = IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
+	mapPlugins["ARPS"]      = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
+	mapPlugins["PGM"]       = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
+	mapPlugins["SMET"]      = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
 }
 
 #ifdef _POPC_
@@ -214,7 +215,7 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 	plugin->readLanduse(landuse_out);
 }
 
-void IOHandler::readStationData(const Date& date, std::vector<StationData>& vecStation)
+void IOHandler::readStationData(const Date& date, STATION_DATASET& vecStation)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readStationData(date, vecStation);

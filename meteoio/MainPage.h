@@ -42,6 +42,7 @@ namespace mio {
  *    -# \subpage resampling "Available temporal interpolations" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  * -# Programing using MeteoIO
+ *    -# \subpage workflow "Example Workflow"
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  *    -# \subpage examples "Usage examples"
  * -# Expanding MeteoIO
@@ -120,6 +121,13 @@ namespace mio {
  *
  * @subsection Finding_docs Where to find the proper documentation
  * As can be seen from the previous example, each plugin, each filter or each interpolation algorithm might have its own parameters. Therefore, this is the documentation of each specific plugin/filter/algorithm that has to be used in order to figure out what can be configured when it (see the next sections in the welcome page).
+ */
+
+ /**
+ * @page workflow Workflow
+ * Here is a workflow example showing how meteorological data is requested by the user's application and delivered. This is a simplified view, in order to show the general structure. Requesting grids (2D grids, DEM, etc) is very similar but does not perfom filtering or resampling.
+ * \image html workflow_meteoreading.png "simplified meteo reading workflow"
+ * \image latex workflow_meteoreading.eps "simplified meteo reading workflow" width=0.9\textwidth
  */
 
  /**
