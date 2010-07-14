@@ -3,7 +3,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 # Version of library
 SET(VERSION_MAJOR 1 CACHE INTERNAL "")
-SET(VERSION_MINOR 0 CACHE INTERNAL "")
+SET(VERSION_MINOR 1 CACHE INTERNAL "")
 SET(VERSION_PATCH 0 CACHE INTERNAL "")
 
 PROJECT(meteoio)
@@ -57,9 +57,7 @@ if (DEST STREQUAL "hera_par")
   set(OPTIM "-g -O3 -DNDEBUG")
   #required for AMD64: amdfam10 or fPIC, even for static libs
   set(ARCH "-march=amdfam10")
-  #set(ARCH  "-mtune=native")
   set(DEBUG "-g -O0 -D__DEBUG")
-  set(DEST "par")
 endif(DEST STREQUAL "hera_par")
 
 if (DEST STREQUAL "safe")
@@ -90,7 +88,7 @@ set(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
 set(PLUGIN_ARPSIO ON CACHE BOOL "Compilation ARPSIO ON or OFF")
 set(PLUGIN_PGMIO ON CACHE BOOL "Compilation PGMIO ON or OFF")
 set(PLUGIN_BORMAIO OFF CACHE BOOL "Compilation BORMAIO ON or OFF")
-set(PLUGIN_GEOTOPIO OFF CACHE BOOL "Compilation GEOTOPIO ON or OFF")
+set(PLUGIN_GEOTOPIO ON CACHE BOOL "Compilation GEOTOPIO ON or OFF")
 set(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 set(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
 set(PLUGIN_GRASSIO ON CACHE BOOL "Compilation GRASSIO ON or OFF")
@@ -132,3 +130,21 @@ ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.d
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
   set(GSOAPPP NOTFOUND CACHE FORCE)
 endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
+
+#creation of packages NOT FULLY WORKING YET
+set(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations.")
+set(CPACK_PACKAGE_NAME "MeteoIO")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6")
+
+set(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
+set(CPACK_PACKAGE_VENDOR "WSL/SLF")
+set(CPACK_PACKAGE_VERSION_MAJOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+
+set(CPACK_GENERATOR "DEB;RPM;")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}-${CMAKE_SYSTEM_PROCESSOR}")
+
+include(CPack)

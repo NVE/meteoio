@@ -1,8 +1,8 @@
 Begin3
 Title:          MeteoIO
-Version:        1.0
+Version:        1.1
 Entered-date:   
-Description:    Meteorological Input/Output library: it covers data retrieval, data filtering, data transformations and spatial interpolations.
+Description:    Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations.
 Keywords:       meteorological data access filtering spatial interpolation
 Author:         point of contact Mathias Bavay <bavay@slf.ch> 
 Maintained-by:  Mathias Bavay <bavay@slf.ch> 

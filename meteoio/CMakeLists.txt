@@ -35,7 +35,7 @@ SET(meteoio_sources
 	MeteoData.cc
 )
 
-if (DEST STREQUAL "par")
+if (DEST MATCHES "par")
   SET(CMAKE_CXX_SOURCE_FILE_EXTENSIONS cc;ph;)
 
   SET(meteoio_sources 
@@ -88,7 +88,7 @@ ELSE(DEST)
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     )
-endif(DEST STREQUAL "par")
+endif(DEST MATCHES "par")
 
 SET_TARGET_PROPERTIES(${STATICNAME} PROPERTIES 
   LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib
@@ -104,12 +104,12 @@ INSTALL(TARGETS ${STATICNAME}
   ARCHIVE DESTINATION lib
   )
 
-if (DEST STREQUAL "par")
+if (DEST MATCHES "par")
   FILE(GLOB files ${PROJECT_SOURCE_DIR}/meteoio/*.h ${PROJECT_SOURCE_DIR}/meteoio/*.ph)
   FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*module")
 else(DEST)
   FILE(GLOB files "${PROJECT_SOURCE_DIR}/meteoio/*.h")
-endif(DEST STREQUAL "par")
+endif(DEST MATCHES "par")
 
 INSTALL(FILES ${files} DESTINATION include/meteoio)
 INSTALL(FILES ${modules} DESTINATION lib)
