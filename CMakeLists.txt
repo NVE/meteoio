@@ -22,6 +22,7 @@ ENDIF(DEBUG_ARITHM)
 
 SET(POPCC popcc)
 
+###########################################################
 #platform specific
 IF(UNIX)
   IF(APPLE)
@@ -41,6 +42,8 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+###########################################################
+#targets providing sets of compiler options
 if(NOT DEST)
   set(DEST "safe" CACHE STRING "Choose safe, optimized, hera, or par, hera_par (with popc)" FORCE)
 endif(NOT DEST)
@@ -84,6 +87,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${ARCH} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${
 message(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
 
+###########################################################
+#plugins
 set(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
 set(PLUGIN_ARPSIO ON CACHE BOOL "Compilation ARPSIO ON or OFF")
 set(PLUGIN_PGMIO ON CACHE BOOL "Compilation PGMIO ON or OFF")
@@ -99,6 +104,7 @@ set(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
+###########################################################
 #for the install target
 FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.ph")
@@ -108,6 +114,22 @@ FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a")
 FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
 INSTALL(FILES ${solibs} ${alibs} ${modules} DESTINATION lib)
 
+INSTALL(TARGETS ${STATICNAME}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  )
+
+if (DEST MATCHES "par")
+  FILE(GLOB files ${PROJECT_SOURCE_DIR}/meteoio/*.h ${PROJECT_SOURCE_DIR}/meteoio/*.ph)
+  FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*module")
+else(DEST)
+  FILE(GLOB files "${PROJECT_SOURCE_DIR}/meteoio/*.h")
+endif(DEST MATCHES "par")
+
+INSTALL(FILES ${files} DESTINATION include/meteoio)
+INSTALL(FILES ${modules} DESTINATION lib)
+
 add_custom_target(distclean make clean
   COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake meteoio/cmake_install.cmake meteoio/plugins/cmake_install.cmake meteoio/plugins/gsn/cmake_install.cmake
   COMMAND cmake -E remove_directory CMakeFiles
@@ -115,6 +137,7 @@ add_custom_target(distclean make clean
   COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
   COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles)
 
+###########################################################
 #for the uninstall target
 CONFIGURE_FILE(
   "${PROJECT_SOURCE_DIR}/tools/cmake/cmake_uninstall.cmake.in"
@@ -131,11 +154,12 @@ if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
   set(GSOAPPP NOTFOUND CACHE FORCE)
 endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 
+###########################################################
 #creation of packages NOT FULLY WORKING YET
 set(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations.")
 set(CPACK_PACKAGE_NAME "MeteoIO")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++.so.6")
 
 set(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
 set(CPACK_PACKAGE_VENDOR "WSL/SLF")
