@@ -151,7 +151,7 @@ endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 set(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations.")
 set(CPACK_PACKAGE_NAME "MeteoIO")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++.so.6")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6")
 
 if (DEST MATCHES "par")
   set(PACKAGE_EXTRA "-par")

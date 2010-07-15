@@ -5,7 +5,7 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-IF(DEST STREQUAL "par")
+IF(DEST MATCHES "par")
   SET(CMAKE_CXX_OUTPUT_EXTENSION "_par.o")
   SET(ARCIONAME arcio_par)
   SET(ARPSIONAME arpsio_par)
@@ -34,7 +34,7 @@ ELSE(DEST)
   SET(IMISIONAME imisio)
   SET(BORMAIONAME bormaio)
   SET(SHAREDNAME ${PROJECT_NAME})
-ENDIF(DEST STREQUAL "par")
+ENDIF(DEST MATCHES "par")
 
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/lib)
 
