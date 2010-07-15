@@ -106,29 +106,21 @@ set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 ###########################################################
 #for the install target
-FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.ph")
-INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include)
-FILE(GLOB solibs "${PROJECT_SOURCE_DIR}/lib/*.so")
-FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a")
-FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
-INSTALL(FILES ${solibs} ${alibs} ${modules} DESTINATION lib)
-
-INSTALL(TARGETS ${STATICNAME}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  )
-
+FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.h")
 if (DEST MATCHES "par")
-  FILE(GLOB files ${PROJECT_SOURCE_DIR}/meteoio/*.h ${PROJECT_SOURCE_DIR}/meteoio/*.ph)
-  FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*module")
-else(DEST)
-  FILE(GLOB files "${PROJECT_SOURCE_DIR}/meteoio/*.h")
+  FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.ph")
 endif(DEST MATCHES "par")
+INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include/meteoio)
 
-INSTALL(FILES ${files} DESTINATION include/meteoio)
-INSTALL(FILES ${modules} DESTINATION lib)
+FILE(GLOB solibs "${PROJECT_SOURCE_DIR}/lib/libmeteoio*.so")
+FILE(GLOB plugins "${PROJECT_SOURCE_DIR}/lib/lib*.so")
+FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a")
+if (DEST MATCHES "par")
+  FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
+endif(DEST MATCHES "par")
+INSTALL(FILES ${solibs} ${alibs} ${modules} DESTINATION lib)
+INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins)
+
 
 add_custom_target(distclean make clean
   COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake meteoio/cmake_install.cmake meteoio/plugins/cmake_install.cmake meteoio/plugins/gsn/cmake_install.cmake
@@ -161,6 +153,9 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing
 set(CPACK_PACKAGE_NAME "MeteoIO")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++.so.6")
 
+if (DEST MATCHES "par")
+  set(PACKAGE_EXTRA "-par")
+endif(DEST MATCHES "par")
 set(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
 set(CPACK_PACKAGE_VENDOR "WSL/SLF")
 set(CPACK_PACKAGE_VERSION_MAJOR "1")
@@ -169,6 +164,6 @@ set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 set(CPACK_GENERATOR "DEB;RPM;")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}-${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}-${CMAKE_SYSTEM_PROCESSOR}")
 
 include(CPack)
