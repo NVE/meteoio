@@ -198,14 +198,20 @@ namespace IOUtils {
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
-		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
 
-		if (value == ""){ 
-				if (options == IOUtils::nothrow)
-					return;
-				else 
-					throw UnknownValueException("No value for key " + key, AT);
+		//const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
+		//if (value == ""){} //The alternative way
+
+		std::map<std::string, std::string>::const_iterator it;
+		it = properties.find(key);
+
+		if (it == properties.end()){
+			if (options == IOUtils::nothrow)
+				return;
+			else 
+				throw UnknownValueException("No value for key " + key, AT);
 		}
+		const std::string value = it->second;
 
 		if(!convertString<T>(t, value, std::dec)) {
 			throw ConversionFailedException(value, AT);
@@ -225,14 +231,17 @@ namespace IOUtils {
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}
-		const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
 
-		if (value == ""){ 
-				if (options == IOUtils::nothrow)
-					return;
-				else 
-					throw UnknownValueException("No value for key " + key, AT);
+		std::map<std::string, std::string>::const_iterator it;
+		it = properties.find(key);
+
+		if (it == properties.end()){
+			if (options == IOUtils::nothrow)
+				return;
+			else 
+				throw UnknownValueException("No value for key " + key, AT);
 		}
+		const std::string value = it->second;
 
 		//split value string 
 		std::vector<std::string> vecUnconvertedValues;

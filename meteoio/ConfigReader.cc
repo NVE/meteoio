@@ -56,8 +56,9 @@ void ConfigReader::addKey(const std::string& key, const std::string& value)
 
 void ConfigReader::addKey(const std::string& key, const std::string& section, const std::string& value)
 {
-	std::string line=key+string("=")+value;
-	this->properties[section + "::" + key] = value;
+	std::string _section = section;
+	IOUtils::toUpper(_section);
+	properties[_section + "::" + key] = value;
 }
 
 
