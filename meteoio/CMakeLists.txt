@@ -36,6 +36,7 @@ SET(meteoio_sources
 )
 
 if (DEST MATCHES "par")
+  #set_source_files_properties(SMETIO.cc PROPERTIES COMPILE_FLAGS "-fPIC")
   SET(CMAKE_CXX_SOURCE_FILE_EXTENSIONS cc;ph;)
 
   SET(meteoio_sources 
@@ -51,7 +52,7 @@ if (DEST MATCHES "par")
   TARGET_LINK_LIBRARIES(${STATICNAME} ${LIBPROJ})
   #SET(SHAREDNAME ${PROJECT_NAME}_par)
   INCLUDE(CMakeForceCompiler)
-  CMAKE_FORCE_C_COMPILER(popcc POPCC)
+  #CMAKE_FORCE_C_COMPILER(popcc POPCC)
   CMAKE_FORCE_CXX_COMPILER(popcc POPCC)
 
   ADD_CUSTOM_COMMAND(

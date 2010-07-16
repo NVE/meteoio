@@ -139,7 +139,21 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
-ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
+#FindDoxygen
+include(FindDoxygen)
+FIND_PACKAGE(Doxygen)
+if (DOXYGEN_FOUND)
+  ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
+  get_target_property(DOC_TARGET doc TYPE)
+  if(NOT DOC_TARGET)
+	add_custom_target(doc)
+  endif(NOT DOC_TARGET)
+  add_dependencies(doc documentation)
+  set(DOC_FILES License.txt )
+  set(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
+  install(FILES ${DOC_FILES} DESTINATION ${DOC_PATH})
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html DESTINATION ${DOC_PATH})
+endif (DOXYGEN_FOUND)
 
 #some cmake specific things
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
