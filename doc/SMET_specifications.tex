@@ -2,7 +2,7 @@
 
 
 %opening
-\title{Format specification for the SMET Weather Station Meteorological Data Format\\version 0.95}
+\title{Format specification for the SMET Weather Station Meteorological Data Format\\version 0.99}
 \author{Mathias Bavay}
 
 \begin{document}
@@ -74,20 +74,20 @@ The following keys are mandatory:
 	\item nodata: nodata value that is used in the data section, decimal number
 	\item fields: string of spaces/tabs delimited field types.
 \end{itemize}
-The location information must be either one of the following keys:
+The location information must be at least one of the following keys:
 \begin{itemize}
 	\item latitude: decimal latitude, decimal number
 	\item longitude: decimal longitude, decimal number
 	\item altitude: altitude above sea level, in meters, decimal number
 \end{itemize}
-OR
+and/or
 \begin{itemize}
 	\item easting: easting coordinate in a cartesian grid, decimal number
 	\item northing: northing coordinate in a cartesian grid, decimal number
 	\item altitude: altitude above sea level, in meters, decimal number
 	\item epsg: epgs coordinate system code, integer number
 \end{itemize}
-If both are specified, they must match to within +/-5m the same location. The location information can be written in each data line (adding the necessary columns) in case of a mobile station. In any case, the whole location data set must be either in the header or in the data section, with the exception of the epsg code always being in the header. Conversions between latitude/longitude and cartesian coordinate systems can be made using the Proj4 (or libproj4) software available at http://trac.osgeo.org/proj/\footnote{The conversion string is built similarly as what follow: cs2cs +init=epsg:\{epsg\_code\} +to +proj=latlong +datum=wgs84 +ellps=wgs84}.
+If both are specified, they must match to within +/-5m the same location. Whenever possible, it is recommended to provide both, since depending on the application one or the other one is the most convenient. The location information can be written in each data line (adding the necessary columns) in case of a mobile station. In any case, the whole location data set must be either in the header or in the data section, with the exception of the epsg code always being in the header. Conversions between latitude/longitude and cartesian coordinate systems can be made using the Proj4 (or libproj4) software available at http://trac.osgeo.org/proj/\footnote{The conversion string is built similarly as what follow: cs2cs +init=epsg:\{epsg\_code\} +to +proj=latlong +datum=wgs84 +ellps=wgs84}.
 
 The following are optional:
 \begin{itemize}
@@ -101,20 +101,30 @@ The following are optional:
 \end{itemize}
 
 The field tyes are measurement parameter identifier chosen from the following list: %%TODO: find standard naming scheme!
-\begin{itemize}
-	\item TA
-	\item RH
-	\item ISWR \ldots
-	\item timestamp (ISO 8601 Combined date and time formatted)
-	\item julian. If both timestamps and julian are present, they must be within 1 second of each other.
-\end{itemize}
+\begin{description}
+	\item[TA] Temperature Air, in Kelvin
+	\item[TSS] Temperature Snow Surface, in Kelvin
+	\item[TSG] Temperature Surface Ground, in Kelvin
+	\item[RH] Relative Humidity, between 0 and 1
+	\item[VW] Velocity Wind, in m/s
+	\item[DW] Direction Wind, in degrees, clockwise and north being zero degrees
+	\item[ISWR] Incoming Short Wave Radiation, in w/m$^2$
+	\item[RSWR] Reflected Short Wave Radiation, in w/m$^2$
+	\item[ILWR] Incoming Long Wave Radiation, in w/m$^2$
+	\item[OLWR] Outgoing Long Wave Radiation, in w/m$^2$
+	\item[HNW] Height New Water, in mm/h
+	\item[HS] Height Snow, in m
+	\item[timestamp] ISO 8601 Combined date and time formatted
+	\item[julian] as the decimal number of days and fractions of a day since January 1, 4713 BC Greenwich noon, Julian proleptic calendar\footnote{Please keep in mind that year zero does not exist and that by starting at noon, it makes a half-day shift compared to usual meteorological time bases}. If both timestamps and julian are present, they must be within less than 1 second of each other.
+\end{description}
+Unrecognized/unsupported fields for any given application should be silently skipped. 
 
 \subsection{Data section}
 The data section contains the data and starts with a section marker, that is the following fixed string, alone on a line, capitalized:
 \begin{quote} \begin{verbatim}
 [DATA]
 \end{verbatim}\end{quote} 
-Each data point occupies one line and the fields are delimited by any mixture and number of spaces and tabs (at least one). All units are MKSA with the possible use of the above mentionned multipliers/offsets. The data is sorted by ascendant temporal order (the use of a timestamp as the first field makes  an alphabetic ascending order equivalent to ascending temporal order).
+Each data point occupies one line and the fields are delimited by any mixture and number of spaces and tabs (at least one). All units are MKSA with the possible use of the above mentionned multipliers/offsets. The data is sorted by ascendant temporal order (the use of a timestamp as the first field makes an alphabetic ascending order equivalent to ascending temporal order).
 
 \section{Format variations}
 The file can be gzipped (as a whole). In such a case, only the gzip signature will be visible and the file will either need to be manually gunzipped before reading or read using libgzip (then giving access to the specific WSMDF signature). A binary version of the format is also available, the only difference with the ASCII version being that the data section (excluding the section marker) is coded as 32 bits IEEE754 single precision binary floating-point format. In such a case, no timestamp can be used, instead a julian date can be used (and must be coded as 64 bits IEEE754 double precision). Each data "line" must be terminated by a carriage return (\verb '\n' character).

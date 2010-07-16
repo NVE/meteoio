@@ -173,7 +173,7 @@ void ImisIO::readStationMetaData()
 
 		Coords myCoord(coordin, coordinparam);
 		myCoord.setXY(east, north, alt);
-		vecMyStation.push_back(StationData(myCoord, stationName, stationName));
+		vecMyStation.push_back(StationData(myCoord, stationName, resultset.at(0)));
 	}
 }
 

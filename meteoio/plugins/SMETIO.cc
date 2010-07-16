@@ -35,7 +35,7 @@ namespace mio {
  * - etc
  */
 
-const std::string SMETIO::smet_version = "0.9";
+const std::string SMETIO::smet_version = "0.95";
 map<string, MeteoData::Parameters> SMETIO::mapParameterByName;
 const bool SMETIO::__init = SMETIO::initStaticData();
 
@@ -492,8 +492,11 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 
 void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii)
 {
-	if ((vecSignature.size() != 3) || (vecSignature[0] != "SMET") || (vecSignature[1] != smet_version))
+	if ((vecSignature.size() != 3) || (vecSignature[0] != "SMET"))
 		throw InvalidFormatException("The signature of file " + filename + " is invalid", AT);
+
+	if((vecSignature[1] != "0.9") || (vecSignature[1] != smet_version))
+		throw InvalidFormatException("Unsupported file format version for file " + filename, AT);
 
 	if (vecSignature[2] == "ASCII")
 		isAscii = true;
@@ -651,6 +654,9 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
 		fout << "latitude = "  << left << setw(12) << setprecision(6) << sd.position.getLat() << endl;
 		fout << "longitude = " << setw(12) << setprecision(6) << sd.position.getLon() << endl;
 		fout << "altitude = "  << setw(8)  << setprecision(2) << sd.position.getAltitude() << endl;
+		fout << "easting = "  << left << setw(12) << setprecision(6) << sd.position.getEasting() << endl;
+		fout << "northing = " << setw(12) << setprecision(6) << sd.position.getNorthing() << endl;
+		//fout << "epsg = " << setw(12) << setprecision(6) << sd.position.getEPSG() << endl;
 	}
 
 	fout << "nodata = " << setprecision(0) << IOUtils::nodata << endl;
