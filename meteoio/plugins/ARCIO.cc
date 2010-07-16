@@ -90,6 +90,17 @@ namespace mio {
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
+/* World file format: This is the geolocalization file going alongside graphics output (tiff, png, jpg) By convention,
+ the file has the same name as the image file, with the third letter of the extension jammed with a w: tif->tfw, jpg->jqw.
+The format is the following:
+    5.000000000000 (size of pixel in x direction)
+    0.000000000000 (rotation term for row)
+    0.000000000000 (rotation term for column)
+    -5.000000000000 (size of pixel in y direction)
+    492169.690845528910 (x coordinate of centre of upper left pixel in map units)
+    5426523.318065105000 (y coordinate of centre of upper left pixel in map units) 
+*/
+
 ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
