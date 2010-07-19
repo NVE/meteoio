@@ -45,7 +45,7 @@ namespace mio {
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
-GeotopIO::GeotopIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+GeotopIO::GeotopIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -206,7 +206,6 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex)
 {
-
 	vector<std::string> tmpvec, vecColumnNames;
 	string line="", filename="", path="", prefix="";
 
@@ -544,10 +543,10 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const std::string& classname, const std::string& filename) {
+	void* loadObject(const std::string& classname, const ConfigReader& cfg) {
 		if(classname == "GeotopIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new GeotopIO(deleteObject, filename);
+			return new GeotopIO(deleteObject, cfg);
 		}
 		//cerr << "Could not load " << classname << endl;
 		return NULL;

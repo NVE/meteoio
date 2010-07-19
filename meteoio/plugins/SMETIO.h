@@ -34,7 +34,7 @@ namespace mio {
  */
 class SMETIO : public IOInterface {
 	public:
-		SMETIO(void (*delObj)(void*), const std::string& filename);
+		SMETIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		SMETIO(const std::string& configfile);
 		SMETIO(const SMETIO&);

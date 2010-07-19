@@ -160,7 +160,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		if(dynLibrary == NULL) {
 			std::cout << "failed\n\tCouldn't load the dynamic library " << filename << "\n\t" << DynamicLoader::getErrorMessage() << std::endl;
 		} else {
-			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg.getSourceName()));
+			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg));
 
 			if(io == NULL) {
 				std::cout << "failed" << std::endl;

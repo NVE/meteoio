@@ -101,7 +101,7 @@ The format is the following:
     5426523.318065105000 (y coordinate of centre of upper left pixel in map units) 
 */
 
-ARCIO::ARCIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+ARCIO::ARCIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -320,10 +320,10 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const string& filename) {
+	void* loadObject(const std::string& classname, const ConfigReader& cfg) {
 		if(classname == "ARCIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new ARCIO(deleteObject, filename);
+			return new ARCIO(deleteObject, cfg);
 		}
 		//cerr << "Could not load " << classname << endl;
 		return NULL;

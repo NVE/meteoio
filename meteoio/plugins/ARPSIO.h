@@ -45,7 +45,7 @@ namespace mio {
  */
 class ARPSIO : public IOInterface {
 	public:
-		ARPSIO(void (*delObj)(void*), const std::string& filename);
+		ARPSIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		ARPSIO(const std::string& configfile);
 		ARPSIO(const ARPSIO&);

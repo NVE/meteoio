@@ -64,7 +64,7 @@ void ImisIO::getDBParameters()
 	cfg.getValue("DBPASS", "Output", oraclePassword_out);*/
 }
 
-ImisIO::ImisIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+ImisIO::ImisIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
@@ -453,10 +453,10 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const string& filename) {
+	void* loadObject(const string& classname, const ConfigReader& cfg) {
 		if(classname == "ImisIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new ImisIO(deleteObject, filename);
+			return new ImisIO(deleteObject, cfg);
 		}
 		//cerr << "Could not load " << classname << endl;
 		return NULL;

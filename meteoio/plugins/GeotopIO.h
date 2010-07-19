@@ -37,7 +37,7 @@ class GeotopIO : public IOInterface {
 	public:
 		//virtual GeotopIO* clone() const;
 
-		GeotopIO(void (*delObj)(void*), const std::string& filename);
+		GeotopIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		GeotopIO(const std::string& configfile);
 		GeotopIO(const GeotopIO&);

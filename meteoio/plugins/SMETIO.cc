@@ -119,7 +119,7 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 //END STATIC SECTION
 
 
-SMETIO::SMETIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+SMETIO::SMETIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	parseInputOutputSection();
 }
@@ -746,10 +746,10 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const string& filename) {
+	void* loadObject(const string& classname, const ConfigReader& cfg) {
 		if(classname == "SMETIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new SMETIO(deleteObject, filename);
+			return new SMETIO(deleteObject, cfg);
 		}
 		//cerr << "Could not load " << classname << endl;
 		return NULL;

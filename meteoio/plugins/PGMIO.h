@@ -41,7 +41,7 @@ namespace mio {
  */
 class PGMIO : public IOInterface {
 	public:
-		PGMIO(void (*delObj)(void*), const std::string& filename);
+		PGMIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		PGMIO(const std::string& configfile);
 		PGMIO(const PGMIO&);

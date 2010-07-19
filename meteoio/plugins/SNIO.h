@@ -40,7 +40,7 @@ namespace mio {
  */
 class SNIO : public IOInterface {
 	public:
-		SNIO(void (*delObj)(void*), const std::string& filename);
+		SNIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		SNIO(const std::string& configfile);
 		SNIO(const SNIO&);

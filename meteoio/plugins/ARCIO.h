@@ -41,7 +41,7 @@ namespace mio {
 
 class ARCIO : public IOInterface {
 	public:
-		ARCIO(void (*delObj)(void*), const std::string& filename);
+		ARCIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		ARCIO(const std::string& configfile);
 		ARCIO(const ARCIO&);

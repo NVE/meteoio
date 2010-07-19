@@ -44,7 +44,7 @@ namespace mio {
  */
 class GSNIO : public IOInterface {
 	public:
-		GSNIO(void (*delObj)(void*), const std::string& filename);
+		GSNIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		GSNIO(const std::string& configfile);
 		GSNIO(const GSNIO&);

@@ -34,7 +34,7 @@ namespace mio {
  */
 class TEMPLATE : public IOInterface {
 	public:
-		TEMPLATE(void (*delObj)(void*), const std::string& filename);
+		TEMPLATE(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		TEMPLATE(const std::string& configfile);
 		TEMPLATE(const TEMPLATE&);

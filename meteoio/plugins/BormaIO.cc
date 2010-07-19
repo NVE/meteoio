@@ -46,7 +46,7 @@ namespace mio {
 
 const double BormaIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-BormaIO::BormaIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+BormaIO::BormaIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -540,10 +540,10 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const std::string& classname, const std::string& filename) {
+	void* loadObject(const string& classname, const ConfigReader& cfg) {
 		if(classname == "BormaIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new BormaIO(deleteObject, filename);
+			return new BormaIO(deleteObject, cfg);
 		}
 		//cerr << "Could not load " << classname << endl;
 		return NULL;

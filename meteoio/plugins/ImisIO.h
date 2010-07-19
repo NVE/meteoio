@@ -43,7 +43,7 @@ namespace mio {
  */
 class ImisIO : public IOInterface {
 	public:
-		ImisIO(void (*delObj)(void*), const std::string& filename);
+		ImisIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		ImisIO(const std::string& configfile);
 		ImisIO(const ImisIO&);

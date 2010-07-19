@@ -42,9 +42,7 @@ namespace mio {
 
 class BormaIO : public IOInterface {
 	public:
-		//virtual BormaIO* clone() const;
-
-		BormaIO(void (*delObj)(void*), const std::string& filename);
+		BormaIO(void (*delObj)(void*), const ConfigReader& i_cfg);
 
 		BormaIO(const std::string& configfile);
 		BormaIO(const BormaIO&);

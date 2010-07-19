@@ -43,7 +43,7 @@ namespace mio {
 
 const double PGMIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-PGMIO::PGMIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
+PGMIO::PGMIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -276,10 +276,10 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const string& filename) {
+	void* loadObject(const string& classname, const ConfigReader& cfg) {
 		if(classname == "PGMIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new PGMIO(deleteObject, filename);
+			return new PGMIO(deleteObject, cfg);
 		}
 		//cerr << "Could not load " << classname << endl;
 		return NULL;
