@@ -44,17 +44,12 @@ namespace mio {
  * COORDPARAM	= 31T
  * @endcode
  *
- * On the other hand, when using the Proj4 library for handling the coordinate conversion, the proj4 conversion
- * string must be specified in the parameters. For example (for UTM zone 10 coordinates):
+ * On the other hand, when using the Proj4 library for handling the coordinate conversion, the EPSG codes of
+ * the chosen projection must be specified (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
+ * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system. Such a code is 32767 at the maximum):
  * @code
  * COORDSYS	= PROJ4
- * COORDPARAM	= +proj=utm +ellps=WGS84 +zone=10
- * @endcode
- * It is also possible to use EPSG codes (such codes can be found at http://spatialreference.org/ref/epsg/?page=1)
- * as illustrated below (21781 is the EPSG code for the CH1903 coordinate system):
- * @code
- * COORDSYS	= PROJ4
- * COORDPARAM	= +init=epsg:21781
+ * COORDPARAM	= 21781
  * @endcode
  *
  */
@@ -76,15 +71,15 @@ bool Coords::initializeMaps() {
 	//Please don't forget to mirror the keywords here in the documentation in Coords.h!!
 	to_wgs84["CH1903"]   = &Coords::CH1903_to_WGS84;
 	from_wgs84["CH1903"] = &Coords::WGS84_to_CH1903;
-	to_wgs84["UTM"]   = &Coords::UTM_to_WGS84;
-	from_wgs84["UTM"] = &Coords::WGS84_to_UTM;
-	to_wgs84["PROJ4"]   = &Coords::PROJ4_to_WGS84;
-	from_wgs84["PROJ4"] = &Coords::WGS84_to_PROJ4;
-	to_wgs84["LOCAL"]   = &Coords::local_to_WGS84;
-	from_wgs84["LOCAL"] = &Coords::WGS84_to_local;
-	to_wgs84["NULL"]   = &Coords::NULL_to_WGS84;
-	from_wgs84["NULL"] = &Coords::WGS84_to_NULL;
-	
+	to_wgs84["UTM"]      = &Coords::UTM_to_WGS84;
+	from_wgs84["UTM"]    = &Coords::WGS84_to_UTM;
+	to_wgs84["PROJ4"]    = &Coords::PROJ4_to_WGS84;
+	from_wgs84["PROJ4"]  = &Coords::WGS84_to_PROJ4;
+	to_wgs84["LOCAL"]    = &Coords::local_to_WGS84;
+	from_wgs84["LOCAL"]  = &Coords::WGS84_to_local;
+	to_wgs84["NULL"]     = &Coords::NULL_to_WGS84;
+	from_wgs84["NULL"]   = &Coords::WGS84_to_NULL;
+
 	return true;
 }
 
@@ -532,6 +527,78 @@ void Coords::copyProj(const Coords& source, const bool _update) {
 	}
 }
 
+/**
+* @brief returns the epsg code of the current projection
+* @return epsg code
+*/
+short int Coords::getEPSG() const {
+	if(coordsystem=="CH1903") return 21781;
+	if(coordsystem=="UTM") {
+		//UTM Zone information
+		short int zoneNumber;
+		char zoneLetter;
+		if ((sscanf(coordparam.c_str(), "%hd%c", &zoneNumber, &zoneLetter) < 2) &&
+		   (sscanf(coordparam.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
+			throw InvalidFormatException("Can not parse given UTM zone: "+coordparam,AT);
+		}
+		zoneLetter = toupper(zoneLetter); //just in case... (sorry for the pun!)
+		if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
+			//Special zones for the poles: we should NOT use UTM in these regions!
+			throw InvalidFormatException("Invalid UTM zone: "+coordparam+" (trying to use UTM in polar regions)",AT);
+		}
+		if(zoneLetter >= 'M') {
+			//northern hemisphere
+			return (32600+zoneNumber);
+		} else {
+			//southern hemisphere
+			return (32700+zoneNumber);
+		}
+	}
+	if(coordsystem=="PROJ4") return atoi(coordparam.c_str());
+
+	//all others have no associated EPSG code
+	return -1;
+}
+
+/**
+* @brief set the current projection to a given EPSG-defined projection
+* @param epsg epsg code
+*/
+void Coords::setEPSG(const short int epsg) {
+	bool found=false;
+
+	if(!found && (epsg==21781)) {
+		coordsystem="CH1903";
+		coordparam="";
+		found=true;
+	}
+	if(!found && (epsg>=32601) && (epsg<=32660)) {
+		//northern hemisphere
+		coordsystem="UTM";
+		const short int zoneNumber = epsg-32600;
+		std::ostringstream osstream;
+		osstream << zoneNumber << "P";
+		coordparam=osstream.str();
+		found=true;
+	}
+	if(!found && (epsg>=32701) && (epsg<=32760)) {
+		//southern hemisphere
+		coordsystem="UTM";
+		const short int zoneNumber = epsg-32700;
+		std::ostringstream osstream;
+		osstream << zoneNumber << "N";
+		coordparam=osstream.str();
+		found=true;
+	}
+	if(!found) {
+		//anything else has to be processed by proj4
+		coordsystem="PROJ4";
+		std::ostringstream osstream;
+		osstream << epsg;
+		coordparam=osstream.str();
+	}
+}
+
 /////////////////////////////////////////////////////private methods
 /**
 * @brief Method converting towards WGS84
@@ -865,10 +932,10 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	const double k0 = 0.9996;		//scale factor for the projection
 
 	//UTM Zone information
-	int zoneNumber;
+	short int zoneNumber;
 	char zoneLetter;
-	if 	((sscanf(coordparam.c_str(), "%d%c", &zoneNumber, &zoneLetter) < 2) &&
-		(sscanf(coordparam.c_str(), "%d %c)", &zoneNumber, &zoneLetter) < 2)) {
+	if 	((sscanf(coordparam.c_str(), "%hd%c", &zoneNumber, &zoneLetter) < 2) &&
+		(sscanf(coordparam.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
 			throw InvalidFormatException("Can not parse given UTM zone: "+coordparam,AT);
 	}
 	zoneLetter = toupper(zoneLetter); //just in case... (sorry for the pun!)
@@ -879,7 +946,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 
 	//set reference parameters: central meridian of the zone, true northing and easting
 	//please note that the special zones still use the reference meridian as given by their zone number (ie: even if it might not be central anymore)
-	const int long0 = (zoneNumber - 1)*6 - 180 + 3;  //+3 puts origin in "middle" of zone as required for the projection meridian (might not be the middle for special zones)
+	const int long0 = ((int)zoneNumber - 1)*6 - 180 + 3;  //+3 puts origin in "middle" of zone as required for the projection meridian (might not be the middle for special zones)
 	if(zoneLetter<='N') {
 		north_in -= 10000000.0; //offset used for southern hemisphere
 	}
@@ -926,12 +993,13 @@ void Coords::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, dou
 {
 #ifdef PROJ4
 	const std::string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
+	const std::string dest_param="+init=epsg:"+coordparam;
 	projPJ pj_latlong, pj_dest;
 	double x=long_in*DEG_TO_RAD, y=lat_in*DEG_TO_RAD;
 
-	if ( !(pj_dest = pj_init_plus(coordparam.c_str())) ) {
+	if ( !(pj_dest = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_dest);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+coordparam, AT);
+		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+dest_param, AT);
 	}
 	if ( !(pj_latlong = pj_init_plus(src_param.c_str())) ) {
 		pj_free(pj_latlong);
@@ -968,13 +1036,14 @@ void Coords::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, dou
 void Coords::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
 #ifdef PROJ4
+	const std::string src_param="+init=epsg:"+coordparam;
 	const std::string dest_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
 	projPJ pj_latlong, pj_src;
 	double x=east_in, y=north_in;
 
-	if ( !(pj_src = pj_init_plus(coordparam.c_str())) ) {
+	if ( !(pj_src = pj_init_plus(src_param.c_str())) ) {
 		pj_free(pj_src);
-		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+coordparam, AT);
+		throw InvalidArgumentException("Failed to initalize Proj4 with given arguments: "+src_param, AT);
 	}
 	if ( !(pj_latlong = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_latlong);

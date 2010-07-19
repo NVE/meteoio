@@ -58,11 +58,6 @@ namespace mio {
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
-//A3DIO::A3DIO(void (*delObj)(void*), const string& filename) : IOInterface(delObj), cfg(filename)
-// {
-// 	getProjectionParameters();
-// }
-
 //Main constructor
 A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
@@ -84,9 +79,6 @@ A3DIO::~A3DIO() throw()
 {
 	cleanup();
 }
-
-//Clone function
-//A3DIO* A3DIO::clone() const { return new A3DIO(*this); }
 
 void A3DIO::cleanup() throw()
 {

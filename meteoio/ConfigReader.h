@@ -108,6 +108,12 @@ class ConfigReader {
 		std::string getSourceName();
 
 		/**
+		* @brief Print the content of the ConfigReader object (usefull for debugging)
+		* The ConfigReader is bound by "<ConfigReader>" and "</ConfigReader>" on separate lines
+		*/
+		friend std::ostream& operator<<(std::ostream& os, const ConfigReader& cfg);
+
+		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key
 		 * @code
 		 * algorithms = lsm linregres idw_kriging\n

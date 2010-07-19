@@ -23,19 +23,30 @@ namespace mio {
 /**
  * @page smetio SMET
  * @section template_format Format
- * The Station METeo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its official format specification for more information.
+ * The Station METeo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its <a href="../SMET_specifications.pdf">official format specification</a> for more information.
  *
  * @section template_units Units
- *
+ * All units are MKSA, the only exception being the precipitations that are in mm/h. It is however possible to use  multipliers and offsets (but they must be specified in the file header).
  *
  * @section template_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - etc
+ * - METEOFILE#: input filename and path. As many meteofiles as needed may be specified
+ * - METEOPATH: output directory where to write the output meteofiles
+ * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
+ *
+ * Example:
+ * @code
+ * [Input]
+ * METEOFILE1 = ./input/uppper_station.smet
+ * METEOFILE2 = ./input/lower_station.smet
+ * METEOFILE3 = ./input/outlet_station.smet
+ * [Output]
+ * METEOPATH = ./output
+ * METEOPARAM = ASCII GZIP
+ * @endcode
  */
 
-const std::string SMETIO::smet_version = "0.95";
+const std::string SMETIO::smet_version = "0.99";
 map<string, MeteoData::Parameters> SMETIO::mapParameterByName;
 const bool SMETIO::__init = SMETIO::initStaticData();
 
@@ -63,15 +74,21 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 	vector<unsigned int> paramcounter = vector<unsigned int>(MeteoData::nrOfParameters, 0);
 
 	for (unsigned int ii=0; ii<vecColumns.size(); ii++){
-		if ((vecColumns[ii] == "timestamp") || (vecColumns[ii] == "longitude")
-		    || (vecColumns[ii] == "latitude") || (vecColumns[ii] == "altitude")){
+		std::string column = vecColumns[ii];
+
+		//column names mapping
+		if(column=="OSWR") column="RSWR";
+		if(column=="PSUM") column="HNW";
+
+		if ((column == "timestamp") || (column == "longitude")
+		    || (column == "latitude") || (column == "altitude")){
 			//everything ok
 		} else {
-			map<string, MeteoData::Parameters>::iterator it = mapParameterByName.find(vecColumns[ii]);
+			map<string, MeteoData::Parameters>::iterator it = mapParameterByName.find(column);
 			if (it == mapParameterByName.end())
 				throw InvalidFormatException("Key 'fields' specified in [HEADER] section contains invalid names", AT);
 			
-			paramcounter.at(mapParameterByName[vecColumns[ii]])++;
+			paramcounter.at(mapParameterByName[column])++;
 		}
 	}
 	
@@ -104,19 +121,16 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 
 SMETIO::SMETIO(void (*delObj)(void*), const std::string& filename) : IOInterface(delObj), cfg(filename)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
 SMETIO::SMETIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
 SMETIO::SMETIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
@@ -495,12 +509,14 @@ void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const 
 	if ((vecSignature.size() != 3) || (vecSignature[0] != "SMET"))
 		throw InvalidFormatException("The signature of file " + filename + " is invalid", AT);
 
-	if((vecSignature[1] != "0.9") || (vecSignature[1] != smet_version))
+	std::string version = vecSignature[1];
+	if((version != "0.9") || (version != "0.95") || (version != smet_version))
 		throw InvalidFormatException("Unsupported file format version for file " + filename, AT);
 
-	if (vecSignature[2] == "ASCII")
+	const std::string type = vecSignature[2];
+	if (type == "ASCII")
 		isAscii = true;
-	else if (vecSignature[2] == "BINARY")
+	else if (type == "BINARY")
 		isAscii = false;
 	else 
 		throw InvalidFormatException("The 3rd column in the file " + filename + " must be either ASCII or BINARY", AT);
@@ -645,34 +661,38 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
                                  const double& timezone, const std::vector<bool>& vecParamInUse)
 {
 	fout << "[HEADER]" << endl;
-	fout << "station_id = " << sd.getStationID() << endl;
+	fout << "station_id   = " << sd.getStationID() << endl;
 	if (sd.getStationName() != "")
 		fout << "station_name = " << sd.getStationName() << endl;
 	
 	if (writeLocationInHeader){
 		fout << fixed;
-		fout << "latitude = "  << left << setw(12) << setprecision(6) << sd.position.getLat() << endl;
-		fout << "longitude = " << setw(12) << setprecision(6) << sd.position.getLon() << endl;
-		fout << "altitude = "  << setw(8)  << setprecision(2) << sd.position.getAltitude() << endl;
-		fout << "easting = "  << left << setw(12) << setprecision(6) << sd.position.getEasting() << endl;
-		fout << "northing = " << setw(12) << setprecision(6) << sd.position.getNorthing() << endl;
-		//fout << "epsg = " << setw(12) << setprecision(6) << sd.position.getEPSG() << endl;
+		fout << "latitude     = " << setw(14) << setprecision(6) << sd.position.getLat() << "\n";
+		fout << "longitude    = " << setw(14) << setprecision(6) << sd.position.getLon() << "\n";
+		fout << "altitude     = " << setw(9)  << setprecision(1) << sd.position.getAltitude() << "\n";
+		fout << "easting      = " << setw(14) << setprecision(6) << sd.position.getEasting() << "\n";
+		fout << "northing     = " << setw(14) << setprecision(6) << sd.position.getNorthing() << "\n";
+		fout << "epsg         = " << setw(7)  << setprecision(0) << sd.position.getEPSG() << "\n";
 	}
 
-	fout << "nodata = " << setprecision(0) << IOUtils::nodata << endl;
+	fout << "nodata       = " << setw(7) << setprecision(0) << IOUtils::nodata << "\n";
 	
 	if ((timezone != IOUtils::nodata) && (timezone != 0.0))
-		fout << "tz = " << timezone << endl;
+		fout << "tz           = " << setw(7)  << setprecision(0) << timezone << "\n";
 
-	fout << "fields = timestamp";
+	fout << "fields       = timestamp";
 
 	if (!writeLocationInHeader){
 		fout << " latitude longitude altitude";
 	}
 
 	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
-		if (vecParamInUse[ii])
-			fout << " " << MeteoData::getParameterName(ii);
+		if (vecParamInUse[ii]) {
+			std::string column=MeteoData::getParameterName(ii);
+			if(column=="RSWR") column="OSWR";
+			if(column=="HNW") column="PSUM";
+			fout << " " << column;
+		}
 	}
 	fout << endl;
 }

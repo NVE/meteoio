@@ -61,6 +61,16 @@ void ConfigReader::addKey(const std::string& key, const std::string& section, co
 	properties[_section + "::" + key] = value;
 }
 
+std::ostream& operator<<(std::ostream &os, const ConfigReader& cfg)
+{
+	os << "<ConfigReader>\n";
+	map<string,string>::const_iterator it;
+	for (it=cfg.properties.begin(); it != cfg.properties.end(); it++){
+		os << (*it).first << " -> " << (*it).second << "\n";
+	}
+	os << "</ConfigReader>\n";
+	return os;
+}
 
 //Parsing
 void ConfigReader::parseCmdLine(const std::string& cmd_line)

@@ -9,8 +9,8 @@ using namespace mio; //The MeteoIO namespace is called mio
 int main(int /*argc*/, char** /*argv*/) {
 	std::ofstream fout;
 
-	Date d1(2009,02,01,00,00);
-	Date d2(2010,02,28,23,00);
+	Date d1(2008,12,01,00,00);
+	Date d2(2009,01,31,23,00);
 	std::vector< std::vector<MeteoData> > vecMeteo;
 	std::vector< std::vector<StationData> > vecStation;
 

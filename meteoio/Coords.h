@@ -77,6 +77,7 @@ class Coords {
 	int getGridK() const;
 	void getProj(std::string& proj_type, std::string& proj_args) const;
 	std::string printLatLon() const;
+	short int getEPSG() const;
 
 	friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
 
@@ -89,6 +90,7 @@ class Coords {
 	void setLocalRef(const double _ref_latitude, const double _ref_longitude);
 	void setLocalRef(const std::string _coordparam);
 	void setDistances(const geo_distances _algo);
+	void setEPSG(const short int epsg);
 
 	void check();
 	double distance(const Coords& destination) const;
