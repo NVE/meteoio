@@ -510,7 +510,7 @@ void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const 
 		throw InvalidFormatException("The signature of file " + filename + " is invalid", AT);
 
 	std::string version = vecSignature[1];
-	if ((version == "0.9") && (version == "0.95") && (version == smet_version))
+	if ((version != "0.9") && (version != "0.95") && (version != smet_version))
 		throw InvalidFormatException("Unsupported file format version for file " + filename, AT);
 
 	const std::string type = vecSignature[2];
