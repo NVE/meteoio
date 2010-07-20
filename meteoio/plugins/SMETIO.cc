@@ -66,7 +66,7 @@ double& SMETIO::getParameter(const std::string& columnName, MeteoData& md)
 		return md.param(paramindex);
 	}
 	if(columnName=="PSUM") {
-		MeteoData::Parameters paramindex = mapParameterByName["RSWR"];
+		MeteoData::Parameters paramindex = mapParameterByName["HNW"];
 		return md.param(paramindex);
 	}
 
@@ -411,7 +411,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 		unsigned int ncols = IOUtils::readLineToVec(line, tmpvec);
 
 		if (ncols != nrOfColumns)
-			throw InvalidFormatException("In "+ filename + ": Invalid amount of data in data line", AT);
+			throw InvalidFormatException("In "+ filename + ": Invalid amount of data in data line "+line, AT);
 
 		MeteoData md;
 		StationData tmpsd = sd;
@@ -420,7 +420,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 		for (unsigned int ii=0; ii<nrOfColumns; ii++){
 			if (vecDataSequence[ii] == "timestamp"){
 				if (!IOUtils::convertString(md.date, tmpvec[ii]))
-					throw InvalidFormatException("In "+filename+": Timestamp invalid in data line", AT);
+					throw InvalidFormatException("In "+filename+": Timestamp "+tmpvec[ii]+" invalid in data line", AT);
 
 				if ((timezone != IOUtils::nodata) && (timezone != 0.0))
 					md.date.setTimeZone(timezone);
@@ -515,7 +515,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	}
 
 	IOUtils::getValueForKey(mapHeader, "fields", vecDataSequence);
-	//IOUtils::getValueForKey(mapHeader, "units_offset", vecUnitsOffset, IOUtils::nothrow);
+	//IOUtils::getValueForKey(mapHeader, "units_offset", vecUnitsOffset, IOUtils::nothrow); //TODO: implement these!!
 	//IOUtils::getValueForKey(mapHeader, "units_multiplier", vecUnitsMultiplier, IOUtils::nothrow);
 
 	//Read [DATA] section tag

@@ -315,9 +315,15 @@ template<> bool IOUtils::convertString<Date>(Date& t, const std::string& str, st
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	(void)f;
-	unsigned int year, month, day, hour, minute;
+	unsigned int year, month, day, hour, minute, second;
 	char rest[32] = "";
-	if (sscanf(s.c_str(), "%u-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
+
+	//HACK: we read the seconds, but we ignore them...
+	if (sscanf(s.c_str(), "%u-%u-%u %u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
+		t.setDate(year, month, day, hour, minute);
+	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
+		t.setDate(year, month, day, hour, minute);
+	} else if (sscanf(s.c_str(), "%u-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
 		t.setDate(year, month, day, hour, minute);
 	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
 		t.setDate(year, month, day, hour, minute);
