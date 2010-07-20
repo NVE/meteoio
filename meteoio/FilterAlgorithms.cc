@@ -27,6 +27,26 @@ namespace mio {
  * @section filters_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
  *
+ * @section filtering_section Filtering section
+ * The filters are specified for each parameter in the [Filters] section. This section contains
+ * a list of the various meteo parameters with their associated choice of filtering algorithms and
+ * optional parameters.The filters are applied serialy, in the order they are given in. An example of such section is given below:
+ * @code
+ * [Filters]
+ * TA::filter1	= min_max
+ * TA::arg1	= 230 330
+ * 
+ * RH::filter1	= min_max
+ * RH::arg1	= -0.2 1.2
+ * RH::filter2	= min_max
+ * RH::arg2	= soft 0.0 1.0
+ * 
+ * HNW::filter1	= min
+ * HNW::arg1	= -0.1
+ * HNW::filter2	= min
+ * HNW::arg2	= soft 0.
+ * @endcode
+ *
  * @section filters_available Available filters
  * The filters that are currently available are the following:
  * - rate: rate of change filter, see FilterAlgorithms::RateFilter

@@ -65,6 +65,7 @@ namespace IOUtils {
 	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = (unsigned int)-1;
 	const int inodata = -999;
+	const short int snodata = -999;
 	const unsigned int npos    = (unsigned int)-1;  ///<npos is the out-of-range value
 
 	const double earth_radius = 6371e3; ///<Earth radius in meters

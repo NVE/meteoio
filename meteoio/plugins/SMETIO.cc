@@ -60,7 +60,16 @@ bool SMETIO::initStaticData()
 }
 
 double& SMETIO::getParameter(const std::string& columnName, MeteoData& md)
-{
+{//HACK: the whole name mapping is a big hack. Replace with proper mapping!!!
+	if(columnName=="OSWR") {
+		MeteoData::Parameters paramindex = mapParameterByName["RSWR"];
+		return md.param(paramindex);
+	}
+	if(columnName=="PSUM") {
+		MeteoData::Parameters paramindex = mapParameterByName["RSWR"];
+		return md.param(paramindex);
+	}
+
 	MeteoData::Parameters paramindex = mapParameterByName[columnName];
 	return md.param(paramindex);
 }
@@ -469,9 +478,10 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 		IOUtils::stripComments(line);
 		IOUtils::trim(line);
 
-		if (line != "")
+		if (line != "") {
 			if (!IOUtils::readKeyValuePair(line, "=", mapHeader))
 				throw InvalidFormatException("Invalid key value pair in section [Header]", AT);
+		}
 	}
 
 	//Now extract info from mapHeader
@@ -479,15 +489,29 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	IOUtils::getValueForKey(mapHeader, "station_name", sd.stationName, IOUtils::nothrow);
 	IOUtils::getValueForKey(mapHeader, "tz", timezone, IOUtils::nothrow);
 
-	double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;	
+	//trying to read easting/northing
+	double easting=IOUtils::nodata, northing=IOUtils::nodata, alt=IOUtils::nodata;
+	short int epsg=IOUtils::snodata;
+	IOUtils::getValueForKey(mapHeader, "easting", easting, IOUtils::nothrow);
+	if (easting != IOUtils::nodata){ //HACK
+		IOUtils::getValueForKey(mapHeader, "northing", northing);
+		IOUtils::getValueForKey(mapHeader, "altitude", alt);
+		IOUtils::getValueForKey(mapHeader, "epsg", epsg);
+		sd.position.setEPSG(epsg);
+		sd.position.setXY(easting, northing, alt);
+		locationInHeader = true;
+	} else {
+		locationInHeader = false;
+	}
+
+	//now trying to read lat/long (second, so that it has precedence over east/north coordinates)
+	double lat=IOUtils::nodata, lon=IOUtils::nodata;
 	IOUtils::getValueForKey(mapHeader, "latitude", lat, IOUtils::nothrow);
 	if (lat != IOUtils::nodata){ //HACK
 		IOUtils::getValueForKey(mapHeader, "longitude", lon);
 		IOUtils::getValueForKey(mapHeader, "altitude", alt);
 		sd.position.setLatLon(lat, lon, alt);
 		locationInHeader = true;
-	} else {
-		locationInHeader = false;
 	}
 
 	IOUtils::getValueForKey(mapHeader, "fields", vecDataSequence);
@@ -519,7 +543,7 @@ void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const 
 	else if (type == "BINARY")
 		isAscii = false;
 	else 
-		throw InvalidFormatException("The 3rd column in the file " + filename + " must be either ASCII or BINARY", AT);
+		throw InvalidFormatException("The 3rd column in the signature of file " + filename + " must be either ASCII or BINARY", AT);
 }
 
 void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,

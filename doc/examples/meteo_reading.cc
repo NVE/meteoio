@@ -15,6 +15,8 @@ int main(int /*argc*/, char** argv) {
 	IOHandler raw_io(cfg);
 	BufferedIOHandler io(raw_io, cfg);
 
+	//we assume that the time given on the command line is in TZ=+1
+	d1.setTimeZone(1.);
 	IOUtils::convertString(d1,argv[1]);
 	io.readMeteoData(d1, vecMeteo, vecStation);
 

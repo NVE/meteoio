@@ -183,7 +183,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 	std::map<std::string, IOPlugin::IOPlugin>::iterator mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
-		throw IOException(cfgkey + " does not seem to be valid plugin in file " + cfg.getSourceName(), AT);
+		throw IOException("Can not find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has its developer declared it in IOHandler::registerPlugins?", AT);
 
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);

@@ -25,6 +25,23 @@ namespace mio {
  * The resampling infrastructure is described in ResamplingAlgorithms (for its API). 
  * The goal of this page is to give an overview of the available resampling algorithms and their usage.
  *
+ * @section resampling_section Resampling section
+ * The resampling is specified for each parameter in the [Interpol1D] section. This section contains
+ * a list of the various meteo parameters with their associated choice of resampling algorithm and
+ * optional parameters. If a meteo parameter is not listed in this section, a linear resampling would be
+ * assumed. An example of such section is given below:
+ * @code
+ * [Interpolations1D]
+ * TA::resample    = linear
+ * 
+ * RH::resample    = linear
+ * 
+ * VW::resample    = nearest_neighbour
+ * VW::args        = extrapolate
+ * 
+ * HNW::resample   = linear
+ * @endcode
+ *
  * @section algorithms_available Available Resampling Algorithms
  * Two algorithms for the resampling are implemented:
  * - linear: linear data resampling, see ResamplingAlgorithms::LinearResampling

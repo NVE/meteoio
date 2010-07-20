@@ -42,28 +42,14 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * memory of (eventual) previous time steps is kept. This means that all parameters and variables that are
  * automatically calculated get recalculated anew for each time step.
  *
- * @section practical Practical use
+ * @section interpol2D_section Spatial interpolations section
  * Practically, the user
  * has to specify in his configuration file (typically io.ini), for each parameter to be interpolated, which
- * spatial interpolations algorithms should be considered. This is provided as a space separated list of keywords
+ * spatial interpolations algorithms should be considered, in the [Interpolations2D] section. This is provided as a space separated list of keywords
  * (one per interpolation algorithm). Please notice that some algorithms may require extra arguments.
  * Then, each algorithm will be evaluated (through the use of its rating method) and receive a grade (that might
  * depend on the number of available data, the quality of the data, etc). The algorithm that receives the higher
- * score within the user list, will be used for interpolating the selected variable.
- *
- * @section keywords Available algorithms
- * The keywords defining the algorithms are the following:
- * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each cell (see StandardPressureAlgorithm)
- * - CST: constant value in each cell (see ConstAlgorithm)
- * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
- * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
- * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
- * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
- * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
- * - USER: user provided grids to be read from disk (if available, see USERinterpolation) THIS IS NOT YET USABLE
- *
- * @section example Example of configuration file
- * Here is an example of the interpolation section of an configuration file (io.ini):
+ * score within the user list, will be used for interpolating the selected variable. An example of such section is given below:
  * @code
  * [Interpolations2D]
  * TA::algorithms = IDW_LAPSE CST_LAPSE
@@ -77,6 +63,17 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * 
  * P::algorithms = STD_PRESS
  * @endcode
+ *
+ * @section keywords Available algorithms
+ * The keywords defining the algorithms are the following:
+ * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each cell (see StandardPressureAlgorithm)
+ * - CST: constant value in each cell (see ConstAlgorithm)
+ * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
+ * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
+ * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
+ * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
+ * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
+ * - USER: user provided grids to be read from disk (if available, see USERinterpolation) THIS IS NOT YET USABLE
  *
  * @section lapse Lapse rates
  * Several algorithms use elevation trends, currently modelled as a linear relation. The slope of this linear relation can
@@ -107,6 +104,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * The interpolation algorithms have been inspired by the following papers:
  * - "A Meteorological Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, Journal of Hydrometeorology 7 (2006), 217-234.
  * - "Simulating wind ﬁelds and snow redistribution using terrain-based parameters to model snow accumulation and melt over a semi-arid mountain catchment", Adam Winstral and Danny Marks, Hydrol. Process. 16 (2002), 3585– 3603. DOI: 10.1002/hyp.1238 [NOT YET IMPLEMENTED]
+ * - "Geostatistics for Natural Resources Evaluation", Pierre Goovaerts, Oxford University Press, Applied Geostatistics Series, 1997, 483 p., ISBN 0-19-511538-4
  * 
  * @author Mathias Bavay
  * @date   2010-04-12

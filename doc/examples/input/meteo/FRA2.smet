@@ -9,6 +9,7 @@ easting      =  708900.000000
 northing     =  132850.000000
 epsg         =   21781
 nodata       =    -999
+tz           =       1
 fields       = timestamp TA RH VW DW OSWR HS TSG TSS
 [DATA]
 2008-12-01T00:00   266.75   1.000    0.9   214      -1   158.000    273.45   266.85 

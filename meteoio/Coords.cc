@@ -138,6 +138,7 @@ Coords& Coords::operator=(const Coords& source) {
 std::ostream& operator<<(std::ostream &os, const Coords& coord)
 {
 	os << "<Coords>\n";
+	os << "Altitude\t" << coord.altitude << "\n";
 	os << "Lat/Long\t" << coord.printLatLon() << "\n";
 	os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
 	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
@@ -566,37 +567,39 @@ short int Coords::getEPSG() const {
 */
 void Coords::setEPSG(const short int epsg) {
 	bool found=false;
+	std::string coord_sys, coord_param;
 
 	if(!found && (epsg==21781)) {
-		coordsystem="CH1903";
-		coordparam="";
+		coord_sys="CH1903";
+		coord_param="";
 		found=true;
 	}
 	if(!found && (epsg>=32601) && (epsg<=32660)) {
 		//northern hemisphere
-		coordsystem="UTM";
+		coord_sys="UTM";
 		const short int zoneNumber = epsg-32600;
 		std::ostringstream osstream;
 		osstream << zoneNumber << "P";
-		coordparam=osstream.str();
+		coord_param=osstream.str();
 		found=true;
 	}
 	if(!found && (epsg>=32701) && (epsg<=32760)) {
 		//southern hemisphere
-		coordsystem="UTM";
+		coord_sys="UTM";
 		const short int zoneNumber = epsg-32700;
 		std::ostringstream osstream;
 		osstream << zoneNumber << "N";
-		coordparam=osstream.str();
+		coord_param=osstream.str();
 		found=true;
 	}
 	if(!found) {
 		//anything else has to be processed by proj4
-		coordsystem="PROJ4";
+		coord_sys="PROJ4";
 		std::ostringstream osstream;
 		osstream << epsg;
-		coordparam=osstream.str();
+		coord_param=osstream.str();
 	}
+	setProj(coord_sys, coord_param);
 }
 
 /////////////////////////////////////////////////////private methods
@@ -720,9 +723,9 @@ std::string Coords::decimal_to_dms(const double& decimal) {
 	std::stringstream dms;
 	const int d = (int)floor(decimal);
 	const int m = (int)floor( (decimal - (double)d)*60. );
-	const int s = (int)floor( decimal - (double)d - (double)m/60. );
+	const double s = 3600.*(decimal - (double)d) - 60.*(double)m;
 
-	dms << d << "°" << m << "'" << s << "\"";
+	dms << d << "°" << m << "'" << fixed << setprecision(6) << s << "\"";
 	return dms.str();
 }
 
