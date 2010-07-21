@@ -229,9 +229,9 @@ class IOInterface : public PluginObject {
 		/**
 		* @brief Write a Grid2DObject
 		* @param grid_in (Grid2DObject) The grid to write
-		* @param name (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
+		* @param options (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
 		*/
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name="") = 0;
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") = 0;
 };
 } //end namespace
 

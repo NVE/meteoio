@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/DEMObject.h>
+#include <limits.h>
 
 /**
 * @file DEMObject.cc
@@ -36,6 +37,7 @@ DEMObject::DEMObject(const slope_type& _algorithm) : Grid2DObject(), slope(), az
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 	slope_failures = curvature_failures = 0;
+	update_flag = INT_MAX;
 	setDefaultAlgorithm(_algorithm);
 }
 
@@ -55,6 +57,7 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 	slope_failures = curvature_failures = 0;
+	update_flag = INT_MAX;
 	setDefaultAlgorithm(_algorithm);
 }
 
@@ -75,6 +78,7 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
+	update_flag = INT_MAX;
 	setDefaultAlgorithm(_algorithm);
 	if(_update==false) {
 		updateAllMinMax();
@@ -94,6 +98,7 @@ DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update, const slope_
     slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
+	update_flag = INT_MAX;
 	setDefaultAlgorithm(_algorithm);
 	if(_update==false) {
 		updateAllMinMax();
@@ -124,12 +129,31 @@ DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsig
 	}
 
 	slope_failures = curvature_failures = 0;
+	update_flag = INT_MAX;
 	setDefaultAlgorithm(_algorithm);
 	if(_update==false) {
 		updateAllMinMax();
 	} else {
 		update(_algorithm);
 	}
+}
+
+/**
+* @brief Set the properties that will be calculated by the object when updating
+* The following properties can be turned on/off: slope/azimuth and/or normals, and/or curvatures.
+* Flags are combined using the binary "|" operator.
+* @param in_update_flag parameters to update
+*/
+void DEMObject::setUpdatePpt(const update_type& in_update_flag) {
+	update_flag = in_update_flag;
+}
+
+/**
+* @brief Get the properties that will be calculated by the object when updating
+* @return combination of flags set with the binary "|" operator
+*/
+int DEMObject::getUpdatePpt() {
+	return update_flag;
 }
 
 /**
@@ -143,12 +167,18 @@ void DEMObject::update(const slope_type& algorithm) {
 //(such as slope, azimuth, normal vector)
 
 	// Creating tables
-	slope.resize(ncols, nrows);
-	azi.resize(ncols, nrows);
-	curvature.resize(ncols, nrows);
-	Nx.resize(ncols, nrows);
-	Ny.resize(ncols, nrows);
-	Nz.resize(ncols, nrows);
+	if(update_flag&SLOPE) {
+		slope.resize(ncols, nrows);
+		azi.resize(ncols, nrows);
+	}
+	if(update_flag&CURVATURE) {
+		curvature.resize(ncols, nrows);
+	}
+	if(update_flag&NORMAL) {
+		Nx.resize(ncols, nrows);
+		Ny.resize(ncols, nrows);
+		Nz.resize(ncols, nrows);
+	}
 
 	CalculateAziSlopeCurve(algorithm);
 	updateAllMinMax();
@@ -211,12 +241,17 @@ void DEMObject::setDefaultAlgorithm(const slope_type& _algorithm) {
 */
 void DEMObject::updateAllMinMax() {
 //updates the min/max parameters of all 2D tables
+	if(update_flag&SLOPE) {
+		min_slope = slope.getMin(IOUtils::PARSE_NODATA);
+		max_slope = slope.getMax(IOUtils::PARSE_NODATA);
+	}
+	if(update_flag&CURVATURE) {
+		min_curvature = curvature.getMin(IOUtils::PARSE_NODATA);
+		max_curvature = curvature.getMax(IOUtils::PARSE_NODATA);
+	}
+
 	min_altitude = grid2D.getMin(IOUtils::PARSE_NODATA);
 	max_altitude = grid2D.getMax(IOUtils::PARSE_NODATA);
-	min_slope = slope.getMin(IOUtils::PARSE_NODATA);
-	max_slope = slope.getMax(IOUtils::PARSE_NODATA);
-	min_curvature = curvature.getMin(IOUtils::PARSE_NODATA);
-	max_curvature = curvature.getMax(IOUtils::PARSE_NODATA);
 }
 
 /**
@@ -227,15 +262,32 @@ void DEMObject::updateAllMinMax() {
 void DEMObject::printFailures() {
 	bool header=true;
 
-	for ( unsigned int i = 0; i < ncols; i++ ) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			if(((slope(i,j)==IOUtils::nodata) || (curvature(i,j)==IOUtils::nodata)) && (grid2D(i,j)!=IOUtils::nodata)) {
-				if(header==true) {
-					std::cout << "[i] DEM slope/curvature could not be computed at the following points \n";
-					std::cout << "[i]\tGrid Point\tElevation\tSlope\tCurvature\n";
-					header=false;
+	if(update_flag&SLOPE) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
+					if(header==true) {
+						std::cout << "[i] DEM slope could not be computed at the following points \n";
+						std::cout << "[i]\tGrid Point\tElevation\tSlope\n";
+						header=false;
+					}
+					std::cout << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" << slope(i,j) << "\n";
 				}
-				std::cout << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" << slope(i,j) << "\t" << curvature(i,j) << "\n";
+			}
+		}
+	}
+
+	if(update_flag&CURVATURE) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
+			for ( unsigned int j = 0; j < nrows; j++ ) {
+				if((curvature(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
+					if(header==true) {
+						std::cout << "[i] DEM curvature could not be computed at the following points \n";
+						std::cout << "[i]\tGrid Point\tElevation\tCurvature\n";
+						header=false;
+					}
+					std::cout << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" <<  curvature(i,j) << "\n";
+				}
 			}
 		}
 	}
@@ -257,8 +309,15 @@ void DEMObject::sanitize() {
 	if(slope_failures>0 || curvature_failures>0) {
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			for ( unsigned int j = 0; j < nrows; j++ ) {
-				if(((slope(i,j)==IOUtils::nodata) || (curvature(i,j)==IOUtils::nodata)) && (grid2D(i,j)!=IOUtils::nodata)) {
-					grid2D(i,j) = IOUtils::nodata;
+				if(update_flag&SLOPE) {
+					if((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
+						grid2D(i,j) = IOUtils::nodata;
+					}
+				}
+				if(update_flag&CURVATURE) {
+					if((curvature(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
+						grid2D(i,j) = IOUtils::nodata;
+					}
 				}
 			}
 		}
@@ -409,6 +468,8 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
+	double _slope, _azi, _curvature;
+	double _Nx, _Ny, _Nz;
 
 	if(algorithm==DFLT) {
 		algorithm = dflt_algorithm;
@@ -416,87 +477,63 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 
 	slope_failures = curvature_failures = 0;
 	if(algorithm==HICK) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
-				if( grid2D(i,j) == IOUtils::nodata ) {
-					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
-					azi(i,j) = IOUtils::nodata;
-					curvature(i,j) = IOUtils::nodata;
-				} else {
-					getNeighbours(i, j, A);
-					CalculateHick(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
-					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
-					curvature(i,j) = getCurvature(A);
-				}
-			}
-		}
+		CalculateSlope = &DEMObject::CalculateHick;
 	} else if(algorithm==HORN) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
-				if( grid2D(i,j) == IOUtils::nodata ) {
-					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
-					azi(i,j) = IOUtils::nodata;
-					curvature(i,j) = IOUtils::nodata;
-				} else {
-					getNeighbours(i, j, A);
-					CalculateHorn(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
-					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
-					curvature(i,j) = getCurvature(A);
-				}
-			}
-		}
+		CalculateSlope = &DEMObject::CalculateHorn;
 	} else if(algorithm==CORR) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
-				if( grid2D(i,j) == IOUtils::nodata ) {
-					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
-					azi(i,j) = IOUtils::nodata;
-					curvature(i,j) = IOUtils::nodata;
-				} else {
-					getNeighbours(i, j, A);
-					CalculateCorripio(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
-					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
-					curvature(i,j) = getCurvature(A);
-				}
-			}
-		}
+		CalculateSlope = &DEMObject::CalculateCorripio;
 	} else if(algorithm==FLEM) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
-				if( grid2D(i,j) == IOUtils::nodata ) {
-					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
-					azi(i,j) = IOUtils::nodata;
-					curvature(i,j) = IOUtils::nodata;
-				} else {
-					getNeighbours(i, j, A);
-					CalculateFleming(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
-					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j));
-					curvature(i,j) = getCurvature(A);
+		CalculateSlope = &DEMObject::CalculateFleming;
+	} else if(algorithm==D8) {
+		CalculateSlope = &DEMObject::CalculateHick;
+	} else {
+		throw InvalidArgumentException("Chosen slope algorithm not available", AT);
+	}
+
+	//Now, calculate the parameters using the previously defined function pointer
+	for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			if( grid2D(i,j) == IOUtils::nodata ) {
+				if(update_flag&SLOPE) {
+					_slope = _azi = IOUtils::nodata;
+				}
+				if(update_flag&CURVATURE) {
+					_curvature = IOUtils::nodata;
+				}
+				if(update_flag&NORMAL) {
+					_Nx = _Ny = _Nz = IOUtils::nodata;
+				}
+			} else {
+				getNeighbours(i, j, A);
+				(this->*CalculateSlope)(A, _slope, _Nx, _Ny, _Nz);
+				_azi = CalculateAspect(_Nx, _Ny, _Nz, _slope);
+				_curvature = getCurvature(A);
+				if(update_flag&SLOPE) {
+					slope(i,j) = _slope;
+					azi(i,j) = _azi;
+				}
+				if(update_flag&CURVATURE) {
+					curvature(i,j) = _curvature;
+				}
+				if(update_flag&NORMAL) {
+					Nx(i,j) = _Nx;
+					Ny(i,j) = _Ny;
+					Nz(i,j) = _Nz;
 				}
 			}
 		}
-	} else if(algorithm==D8) {
+	}
+
+	if((update_flag&SLOPE) && (algorithm==D8)) { //extra processing required: discretization
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			for ( unsigned int j = 0; j < nrows; j++ ) {
-				if( grid2D(i,j) == IOUtils::nodata ) {
-					Nx(i,j) = Ny(i,j) = Nz(i,j) = slope(i,j) = IOUtils::nodata;
-					azi(i,j) = IOUtils::nodata;
-					curvature(i,j) = IOUtils::nodata;
-				} else {
-					getNeighbours(i, j, A);
-					CalculateHick(A, slope(i,j), Nx(i,j), Ny(i,j), Nz(i,j));
-					azi(i,j) = CalculateAspect(Nx(i,j), Ny(i,j), Nz(i,j), slope(i,j), IOUtils::nodata);
 					//TODO: process flats by an extra algorithm
-					curvature(i,j) = getCurvature(A);
 					if(azi(i,j)!=IOUtils::nodata)
 						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
 					if(slope(i,j)!=IOUtils::nodata)
 						slope(i,j) = floor( slope(i,j)+0.5 );
-				}
 			}
 		}
-	} else {
-		throw InvalidArgumentException("Chosen slope algorithm not available", AT);
 	}
 
 	//Inform the user is some points have unexpectidly not been computed
@@ -818,6 +855,7 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&max_curvature,1);
 		buf.Pack(&slope_failures,1);
 		buf.Pack(&curvature_failures,1);
+		buf.Pack(&update_flag,1);
 		marshal_slope_type(buf, dflt_algorithm, 0, FLAG_MARSHAL, NULL);
 		marshal_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
 		marshal_DOUBLE2D(buf, slope, 0, FLAG_MARSHAL, NULL);
@@ -841,6 +879,7 @@ void DEMObject::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&max_curvature,1);
 		buf.UnPack(&slope_failures,1);
 		buf.UnPack(&curvature_failures,1);
+		buf.UnPack(&update_flag,1);
 		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
 		slope.clear();
 		azi.clear();

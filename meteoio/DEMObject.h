@@ -58,6 +58,14 @@ class DEMObject : public Grid2DObject {
 			CORR, ///< surface normal vector using the two triangle method (Corripio, 2002) and eight-neighbor algorithm (Horn, 1981) for border cells
 			D8 ///< discretized azimuth directions (angles for N, NE, etc) and slope rounded to nearest integer
 		} slope_type;
+
+		///Keywords for automatic update of parameters. They can be combined with "|"
+		typedef enum UPDATE_TYPE {
+			NO_UPDATE=0, ///< no updates at all
+			SLOPE=1, ///< update the slopes
+			NORMAL=2, ///< update the normals
+			CURVATURE=4 ///< update the curvatures
+		} update_type;
 		
 		DEMObject(const slope_type& _algorithm=DFLT);
 		
@@ -76,6 +84,9 @@ class DEMObject : public Grid2DObject {
 				const bool& _update=true, const slope_type& _algorithm=DFLT);
 
 		void setDefaultAlgorithm(const slope_type& _algorithm);
+		void setUpdatePpt(const update_type& in_update_flag);
+		int getUpdatePpt();
+
 		void update(const std::string& algorithm);
 		void update(const slope_type& algorithm=DFLT);
 		void updateAllMinMax();
@@ -93,6 +104,7 @@ class DEMObject : public Grid2DObject {
 		void CalculateFleming(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		void CalculateHorn(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		void CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
+		void (DEMObject::*CalculateSlope)(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		double getCurvature(double A[4][4]);
 
 		double steepestGradient(double A[4][4]);
@@ -104,6 +116,7 @@ class DEMObject : public Grid2DObject {
 		double safeGet(const int i, const int j);
 
 		slope_type dflt_algorithm;
+		int update_flag;
 		unsigned int slope_failures; ///<contains the number of points that have an elevation but no slope
 		unsigned int curvature_failures; ///<contains the number of points that have an elevation but no curvature
 

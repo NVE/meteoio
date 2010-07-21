@@ -10,6 +10,7 @@ int main(void) {
 	IOHandler io(cfg);
 
 	//reading dem
+	dem.setUpdatePpt(DEMObject::SLOPE);
 	io.readDEM(dem);
 
 	//writing some statistics about this dem
