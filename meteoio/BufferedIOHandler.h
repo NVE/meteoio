@@ -148,6 +148,15 @@ class BufferedIOHandler : public IOInterface {
 		//HACK: please do NOT use these methods, they will be replaced/changed/tweaked asap
 		//These methods should be considered experimental and NOT stable (from an API point of view)
 		void bufferAlways(const bool& bufferalways);
+
+		/**
+		 * @brief Manually tune the buffer
+		 * @param _bufferbefore start date of the buffer (in offset to initially requested date)
+		 * @param _bufferafter end date of the buffer (in offset to initially requested date)
+		 * @code
+		 * setBufferDuration(Date(2.0), Date(20.0)); //to get 2 days before the requested date to 20 days after
+		 * @endcode
+		 */
 		void setBufferDuration(const Date& _bufferbefore, const Date& _bufferafter);
 
 	private:

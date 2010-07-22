@@ -156,6 +156,9 @@ if (DOXYGEN_FOUND)
   install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html DESTINATION ${DOC_PATH})
 endif (DOXYGEN_FOUND)
 
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/doc/examples" DESTINATION "share/doc/${CMAKE_PROJECT_NAME}" PATTERN ".svn" EXCLUDE
+)
+
 #some cmake specific things
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
   set(GSOAPPP NOTFOUND CACHE FORCE)
@@ -164,21 +167,30 @@ endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 ###########################################################
 #creation of packages NOT FULLY WORKING YET
 set(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
 set(CPACK_PACKAGE_NAME "MeteoIO")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6")
+set(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
+set(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
+set(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
+set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6, libproj0")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
+set(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
+set(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6, libproj4")
+set(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
+set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 
 if (DEST MATCHES "par")
   set(PACKAGE_EXTRA "-par")
 endif(DEST MATCHES "par")
-set(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
-set(CPACK_PACKAGE_VENDOR "WSL/SLF")
 set(CPACK_PACKAGE_VERSION_MAJOR "1")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
-set(CPACK_GENERATOR "DEB;RPM;")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}-${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_GENERATOR "DEB;RPM;TGZ;")
+#set(CPACK_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_ARCH "i386")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}-${CPACK_ARCH}")
 
 include(CPack)
