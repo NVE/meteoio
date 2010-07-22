@@ -59,7 +59,7 @@ if (DEST STREQUAL "hera_par")
   set(EXTRA_WARNINGS "-Wextra ")
   set(OPTIM "-g -O3 -DNDEBUG")
   #required for AMD64: amdfam10 or fPIC, even for static libs
-  set(ARCH "-march=amdfam10")
+  set(ARCH "-march=amdfam10 -fPIC")
   set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "hera_par")
 
@@ -117,8 +117,9 @@ FILE(GLOB plugins "${PROJECT_SOURCE_DIR}/lib/plugins/lib*.so*")
 FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a*")
 if (DEST MATCHES "par")
   FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
+  INSTALL(FILES ${modules} DESTINATION lib/meteoio)
 endif(DEST MATCHES "par")
-INSTALL(FILES ${solibs} ${alibs} ${modules} DESTINATION lib)
+INSTALL(FILES ${solibs} ${alibs} DESTINATION lib)
 INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins)
 
 
