@@ -194,8 +194,8 @@ then
 	#use AX_LIB_ORACLE_OCI?
 	echo ""
 	AC_MSG_NOTICE([IMISIO enabled. Checking for prerequisites...])
-	CPPFLAGS="$CPPFLAGS -I$ORACLE_HOME/include"
-	LDFLAGS="$LDFLAGS -L$ORACLE_HOME/lib  -lclntsh -lnnz11"
+	CPPFLAGS="$CPPFLAGS -I$ORACLE_HOME/client_1/include"
+	LDFLAGS="$LDFLAGS -L$ORACLE_HOME/client_1/lib  -lclntsh -lnnz11"
 	AC_CHECK_HEADER([occi.h],,[AC_MSG_ERROR([Error, the occi.h header file is missing!])])
 	AC_CHECK_LIB([occi], [main],,[AC_MSG_ERROR([Error, the occi library is missing!])])
 	AC_SUBST(IMISIO,yes)

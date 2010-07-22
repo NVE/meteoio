@@ -6757,8 +6757,8 @@ then
 	echo ""
 	{ echo "$as_me:$LINENO: IMISIO enabled. Checking for prerequisites..." >&5
 echo "$as_me: IMISIO enabled. Checking for prerequisites..." >&6;}
-	CPPFLAGS="$CPPFLAGS -I$ORACLE_HOME/include"
-	LDFLAGS="$LDFLAGS -L$ORACLE_HOME/lib  -lclntsh -lnnz11"
+	CPPFLAGS="$CPPFLAGS -I$ORACLE_HOME/client_1/include"
+	LDFLAGS="$LDFLAGS -L$ORACLE_HOME/client_1/lib  -lclntsh -lnnz11"
 	if test "${ac_cv_header_occi_h+set}" = set; then
   { echo "$as_me:$LINENO: checking for occi.h" >&5
 echo $ECHO_N "checking for occi.h... $ECHO_C" >&6; }

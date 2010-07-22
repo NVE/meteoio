@@ -163,7 +163,7 @@ void ImisIO::readStationMetaData()
 		getStationData(stName, stationNumber, resultset);
 
 		if (resultset.size() < 4)
-			throw IOException("Could not read enough meta data", AT);
+			throw IOException("Could not read enough meta data for station "+stName+stationNumber, AT);
 
 		double east, north, alt;
 		if ((!IOUtils::convertString(east, resultset.at(1), std::dec))
@@ -187,6 +187,11 @@ void ImisIO::parseStationName(const std::string& stationName, std::string& stNam
 {
 	stName    = stationName.substr(0, stationName.length()-1); //The station name: e.g. KLO
 	stNumber  = stationName.substr(stationName.length()-1, 1); //The station number: e.g. 2
+	if(!std::isdigit(stNumber[0])) {
+		//the station is one of these non-imis stations that don't contain a number...
+		stName = stationName;
+		stNumber = "0";
+	}
 }
 
 /**

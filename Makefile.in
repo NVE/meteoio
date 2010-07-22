@@ -163,6 +163,7 @@ par: $(LIBDIR)/libmeteoiopopc.a  build_dynamiclibs_par meteoIO_module_par
 build_dynamiclibs_par:  $(LIBDIR)/plugins/libarciopopc.so \
 			$(LIBDIR)/plugins/libsmetiopopc.so \
 			$(LIBDIR)/plugins/libsniopopc.so \
+			$(LIBDIR)/plugins/libimisiopopc.so \
 			$(LIBDIR)/plugins/libgrassiopopc.so 
 
 meteoIO_module_par: $(LIBDIR)/meteoio.module
@@ -237,7 +238,7 @@ ifeq ($(SNIO),yes)
 endif
 
 $(LIBDIR)/plugins/libsmetio.so:$(PLUGINDIR)/SMETIO.cc $(PLUGINDIR)/SMETIO.h $(LIBDIR)/libmeteoio.a
-ifeq ($(SNIO),yes)
+ifeq ($(SMETIO),yes)
 	@echo **** Compiling SMET plugin
 	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/SMETIO.o $(PLUGINDIR)/SMETIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libsmetio.so -o $@ $(PLUGINDIR)/SMETIO.o $(LDFLAGS)
@@ -268,8 +269,8 @@ endif
 $(LIBDIR)/plugins/libimisio.so: $(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a
 ifeq ($(IMISIO),yes)
 	@echo **** Compiling Imis plugin
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/rdbms/public $(PLUGINDIR)/ImisIO.cc -c -o $(PLUGINDIR)/ImisIO.o
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/lib,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS) -L$(ORACLE_HOME)/lib -locci -lclntsh -lstdc++
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/client_1/rdbms/public $(PLUGINDIR)/ImisIO.cc -c -o $(PLUGINDIR)/ImisIO.o
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-rpath,$(ORACLE_HOME)/client_1/lib,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS) -L$(ORACLE_HOME)/client_1/lib -locci -lclntsh -lstdc++
 endif
 
 # Dynamic libraries par
@@ -288,17 +289,24 @@ ifeq ($(ARCIO),yes)
 endif
 
 $(LIBDIR)/plugins/libsmetiopopc.so:$(PLUGINDIR)/SMETIO.cc $(PLUGINDIR)/SMETIO.h $(LIBDIR)/libmeteoiopopc.a
-ifeq ($(ARCIO),yes)
+ifeq ($(SMETIO),yes)
 	@echo **** Compiling SMET file plugin
 	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/SMETIO.o $(PLUGINDIR)/SMETIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libsmetio.so -o $@ $(PLUGINDIR)/SMETIO.o $(LDFLAGS_POPC) $(LDFLAGS)
 endif
 
 $(LIBDIR)/plugins/libsniopopc.so:$(PLUGINDIR)/SNIO.cc $(PLUGINDIR)/SNIO.h $(LIBDIR)/libmeteoiopopc.a
-ifeq ($(ARCIO),yes)
+ifeq ($(SNIO),yes)
 	@echo **** Compiling SNIO file plugin
 	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/SNIO.o $(PLUGINDIR)/SNIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libsnio.so -o $@ $(PLUGINDIR)/SNIO.o $(LDFLAGS_POPC) $(LDFLAGS)
+endif
+
+$(LIBDIR)/plugins/libimisiopopc.so:$(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoiopopc.a
+ifeq ($(IMISIO),yes)
+	@echo **** Compiling Imis plugin
+	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -I$(ORACLE_HOME)/client_1/rdbms/public -c -o $(PLUGINDIR)/ImisIO.o $(PLUGINDIR)/ImisIO.cc
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libimisio.so -o $@ $(PLUGINDIR)/ImisIO.o $(LDFLAGS_POPC) $(LDFLAGS) -L$(ORACLE_HOME)/client_1/lib -locci -lclntsh -lstdc++
 endif
 
 ######
