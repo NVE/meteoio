@@ -185,16 +185,16 @@ char IOUtils::getEoln(std::istream& fin)
 				fin.get(peekc);
 				chars++;
 			}
-			//      cout << "Read: " << chars << "characters" << endl;
 			pbuf = fin.rdbuf();
 			pbuf->pubseekpos(position); //rewind
-			//cout << fin.peek();
+			fin.clear(); //reset eof flag, etc
 			return tmp;
 		}
 	} while ((chars < 3000) && (!fin.eof()));
-	   
+	
 	pbuf = fin.rdbuf();
 	pbuf->pubseekpos(position); //rewind
+	fin.clear(); //reset eof flag, etc
 
 	return '\n';
 }
