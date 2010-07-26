@@ -172,6 +172,7 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 	date = rhs.date;
 	resampled = rhs.resampled;
 
+	extraparameters = rhs.extraparameters;
 	initParameterMap();
 
 	std::map<unsigned int, double*>::const_iterator it;
