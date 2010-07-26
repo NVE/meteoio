@@ -97,7 +97,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	bool success = true;
 	try {
-		ConfigReader cfg; //This should be given as parameter to executeInterpolationSubDem
+		Config cfg; //This should be given as parameter to executeInterpolationSubDem
 		Meteo2DInterpolator mi(cfg, dem, vecData, vecStation);
 		mi.interpolate(interpolation_type, p);
 	}

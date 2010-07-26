@@ -40,7 +40,7 @@ namespace mio {
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
 
-ARPSIO::ARPSIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+ARPSIO::ARPSIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	dimx=dimy=dimz=0;
@@ -58,7 +58,7 @@ ARPSIO::ARPSIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	is_true_arps=true;
 }
 
-ARPSIO::ARPSIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+ARPSIO::ARPSIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	dimx=dimy=dimz=0;
@@ -382,7 +382,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const std::string& classname, const ConfigReader& cfg) {
+	void* loadObject(const std::string& classname, const Config& cfg) {
 		if(classname == "ARPSIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new ARPSIO(deleteObject, cfg);

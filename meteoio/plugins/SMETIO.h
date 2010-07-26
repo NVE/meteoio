@@ -19,7 +19,7 @@
 #define __SMETIO_H__
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 
 #include <string>
 
@@ -34,11 +34,11 @@ namespace mio {
  */
 class SMETIO : public IOInterface {
 	public:
-		SMETIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		SMETIO(void (*delObj)(void*), const Config& i_cfg);
 
 		SMETIO(const std::string& configfile);
 		SMETIO(const SMETIO&);
-		SMETIO(const ConfigReader& cfgreader);
+		SMETIO(const Config& cfgreader);
 		~SMETIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
@@ -94,11 +94,11 @@ class SMETIO : public IOInterface {
 		void checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii);
 		void setFormatting(const MeteoData::Parameters& paramindex);
 
-		std::vector<std::string> vecFiles;  //read from the ConfigReader [Input] section
-		std::string outpath;                //read from the ConfigReader [Output] section
-		bool outputIsAscii, outputIsGzipped;//read from the ConfigReader [Output] section
+		std::vector<std::string> vecFiles;  //read from the Config [Input] section
+		std::string outpath;                //read from the Config [Output] section
+		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section
 
-		ConfigReader cfg;
+		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
 

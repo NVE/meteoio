@@ -20,7 +20,7 @@
 
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/ResamplingAlgorithms.h>
 
 #include <iostream>
@@ -49,9 +49,9 @@ class Meteo1DInterpolator {
 		* taskargs:      a vector that holds the respective arguments for the algorithms
 		*                as a std::vector<std::string>, so there can be multiple arguments
 		*
-		* @param[in] _cfg ConfigReader object that holds the MeteoFilter configuration in the [Filters] section
+		* @param[in] _cfg Config object that holds the MeteoFilter configuration in the [Filters] section
 		*/
-		Meteo1DInterpolator(const ConfigReader& _cfg);
+		Meteo1DInterpolator(const Config& _cfg);
 
 		/**
 		 * @brief A function that executes all the resampling algorithms that have been setup in the constructor
@@ -65,7 +65,7 @@ class Meteo1DInterpolator {
  	private:
 		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments);
 
-		ConfigReader cfg;
+		Config cfg;
 		std::vector<std::string> tasklist;
 		std::vector< std::vector< std::string > > taskargs;
 };

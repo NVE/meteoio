@@ -45,7 +45,7 @@ parclass IOHandler {
 	public:
 		IOHandler(const std::string& configfile) @{od.url("localhost");}; // @{ power=100 ?: 50; };
 		//IOHandler(const IOHandler&) @{od.url("localhost");};
-		IOHandler(const ConfigReader&) @{od.url("localhost");}; //@{ power=100 ?: 50; };
+		IOHandler(const Config&) @{od.url("localhost");}; //@{ power=100 ?: 50; };
 		~IOHandler();
 
 		//methods defined in the IOInterface class
@@ -75,7 +75,7 @@ parclass IOHandler {
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
-		ConfigReader cfg;
+		Config cfg;
 		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;
 		A3DIO fileio;
 };

@@ -6,7 +6,7 @@ using namespace mio; //The MeteoIO namespace is called mio
 //and a sub-dem is extracted starting at these coordinates and extending dist_x and dist_y and written out.
 int main(void) {
 	DEMObject dem;
-	ConfigReader cfg("io.ini");
+	Config cfg("io.ini");
 	IOHandler io(cfg);
 
 	//reading dem

@@ -43,7 +43,7 @@ class IOHandler : public IOInterface {
 	public:
 		IOHandler(const std::string& configfile);
 		IOHandler(const IOHandler&);
-		IOHandler(const ConfigReader&);
+		IOHandler(const Config&);
 		~IOHandler() throw();
 
 		//methods defined in the IOInterface class
@@ -73,7 +73,7 @@ class IOHandler : public IOInterface {
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
-		ConfigReader cfg;
+		Config cfg;
 		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;
 		A3DIO fileio;
 };

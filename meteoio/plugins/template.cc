@@ -37,7 +37,7 @@ namespace mio {
 
 const double TEMPLATE::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-TEMPLATE::TEMPLATE(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+TEMPLATE::TEMPLATE(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -47,7 +47,7 @@ TEMPLATE::TEMPLATE(const std::string& configfile) : IOInterface(NULL), cfg(confi
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-TEMPLATE::TEMPLATE(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+TEMPLATE::TEMPLATE(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -128,7 +128,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const ConfigReader& cfg) {
+	void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "TEMPLATE") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new TEMPLATE(deleteObject, cfg);

@@ -15,71 +15,71 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 
 using namespace std;
 
 namespace mio {
 
-const unsigned int ConfigReader::nothrow = 666;
+const unsigned int Config::nothrow = 666;
 
 //Constructors
-ConfigReader::ConfigReader()
+Config::Config()
 {
 	//nothing is even put in the property map, the user will have to fill it by himself
 }
 
-ConfigReader::ConfigReader(const std::string& filename_in)
+Config::Config(const std::string& filename_in)
 {
 	addFile(filename_in);
 }
 
 
 //Populating the property map
-void ConfigReader::addFile(const std::string& filename_in)
+void Config::addFile(const std::string& filename_in)
 {
 	sourcename = filename_in;
 	parseFile(filename_in);
 }
 
-void ConfigReader::addCmdLine(const std::string& cmd_line)
+void Config::addCmdLine(const std::string& cmd_line)
 {
 	sourcename = std::string("Command line");
 	parseCmdLine(cmd_line);
 }
 
-void ConfigReader::addKey(const std::string& key, const std::string& value)
+void Config::addKey(const std::string& key, const std::string& value)
 {
 	std::string section="GENERAL";
 	addKey(key, section, value);
 }
 
-void ConfigReader::addKey(const std::string& key, const std::string& section, const std::string& value)
+void Config::addKey(const std::string& key, const std::string& section, const std::string& value)
 {
 	std::string _section = section;
 	IOUtils::toUpper(_section);
 	properties[_section + "::" + key] = value;
 }
 
-std::ostream& operator<<(std::ostream &os, const ConfigReader& cfg)
+std::ostream& operator<<(std::ostream &os, const Config& cfg)
 {
-	os << "<ConfigReader>\n";
+	os << "<Config>\n";
 	map<string,string>::const_iterator it;
 	for (it=cfg.properties.begin(); it != cfg.properties.end(); it++){
 		os << (*it).first << " -> " << (*it).second << "\n";
 	}
-	os << "</ConfigReader>\n";
+	os << "</Config>\n";
 	return os;
 }
 
 //Parsing
-void ConfigReader::parseCmdLine(const std::string& cmd_line)
+void Config::parseCmdLine(const std::string& cmd_line)
 {
 	(void)cmd_line;
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ConfigReader::parseFile(const std::string& filename)
+void Config::parseFile(const std::string& filename)
 {
 	std::ifstream fin; //Input file streams
 	unsigned int linenr = 0;
@@ -116,7 +116,7 @@ void ConfigReader::parseFile(const std::string& filename)
 	}
 }
 
-void ConfigReader::parseLine(const unsigned int& linenr, std::string& line, std::string& section)
+void Config::parseLine(const unsigned int& linenr, std::string& line, std::string& section)
 {
 	//First thing cut away any possible comments (may start with "#" or ";")
 	IOUtils::stripComments(line);
@@ -146,12 +146,12 @@ void ConfigReader::parseLine(const unsigned int& linenr, std::string& line, std:
 }
 
 //Return key/value filename
-std::string ConfigReader::getSourceName()
+std::string Config::getSourceName()
 {
 	return sourcename;
 }
 
-unsigned int ConfigReader::findKeys(std::vector<std::string>& vecResult, 
+unsigned int Config::findKeys(std::vector<std::string>& vecResult, 
 							const std::string keystart, 
 							const std::string section) const
 {
@@ -186,7 +186,7 @@ unsigned int ConfigReader::findKeys(std::vector<std::string>& vecResult,
 #ifdef _POPC_
 #include "marshal_meteoio.h"
 using namespace mio; //HACK for POPC
-void ConfigReader::Serialize(POPBuffer &buf, bool pack)
+void Config::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack)
 	{

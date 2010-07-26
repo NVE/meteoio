@@ -27,7 +27,7 @@ SET(meteoio_sources
 	IOInterface.cc  
 	libinterpol1D.cc  
 	StationData.cc
-	ConfigReader.cc       
+	Config.cc       
 	DynamicLibrary.cc  
 	IOExceptions.cc  
 	IOUtils.cc

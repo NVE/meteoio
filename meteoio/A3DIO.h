@@ -21,7 +21,7 @@
 #include <meteoio/IOInterface.h>
 
 #include <meteoio/Coords.h>
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>
 
@@ -39,7 +39,7 @@ class A3DIO : public IOInterface {
 
 		A3DIO(const std::string& configfile);
 		A3DIO(const A3DIO&);
-		A3DIO(const ConfigReader&);
+		A3DIO(const Config&);
 		~A3DIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& name="");
@@ -93,7 +93,7 @@ class A3DIO : public IOInterface {
 		                      const std::string& label);
 		void write2DMeteo(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations);
 
-		ConfigReader cfg;
+		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

@@ -128,7 +128,7 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 //END STATIC SECTION
 
 
-SMETIO::SMETIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+SMETIO::SMETIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	parseInputOutputSection();
 }
@@ -138,7 +138,7 @@ SMETIO::SMETIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	parseInputOutputSection();
 }
 
-SMETIO::SMETIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+SMETIO::SMETIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	parseInputOutputSection();
 }
@@ -194,7 +194,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& /*vecStation
 void SMETIO::parseInputOutputSection()
 {
 	/*
-	 * Parse the [Input] and [Output] sections within ConfigReader object cfg
+	 * Parse the [Input] and [Output] sections within Config object cfg
 	 */
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
@@ -205,7 +205,7 @@ void SMETIO::parseInputOutputSection()
 		filename = "";
 		
 		ss << "METEOFILE" << counter;
-		cfg.getValue(ss.str(), "Input", filename, ConfigReader::nothrow);
+		cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
 
 		if (filename != ""){
 			if (!IOUtils::validFileName(filename)) //Check whether filename is valid
@@ -222,8 +222,8 @@ void SMETIO::parseInputOutputSection()
 	outputIsGzipped = false;
 
 	vector<string> vecArgs;
-	cfg.getValue("METEOPATH", "Output", outpath, ConfigReader::nothrow);
-	cfg.getValue("METEOPARAM", "Output", vecArgs, ConfigReader::nothrow); //"ASCII|BINARY GZIP"
+	cfg.getValue("METEOPATH", "Output", outpath, Config::nothrow);
+	cfg.getValue("METEOPARAM", "Output", vecArgs, Config::nothrow); //"ASCII|BINARY GZIP"
 
 	if (outpath == "")
 		return;
@@ -770,7 +770,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const ConfigReader& cfg) {
+	void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "SMETIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new SMETIO(deleteObject, cfg);

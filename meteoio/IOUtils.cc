@@ -362,17 +362,17 @@ template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str
 }
 
 
-void IOUtils::getProjectionParameters(const ConfigReader& cfg, std::string& coordin, std::string& coordinparam, 
+void IOUtils::getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam, 
 							   std::string& coordout, std::string& coordoutparam) {
 	cfg.getValue("COORDSYS", "Input", coordin);
-	cfg.getValue("COORDPARAM", "Input", coordinparam, ConfigReader::nothrow);
-	cfg.getValue("COORDSYS", "Output", coordout, ConfigReader::nothrow);
-	cfg.getValue("COORDPARAM", "Output", coordoutparam, ConfigReader::nothrow);
+	cfg.getValue("COORDPARAM", "Input", coordinparam, Config::nothrow);
+	cfg.getValue("COORDSYS", "Output", coordout, Config::nothrow);
+	cfg.getValue("COORDPARAM", "Output", coordoutparam, Config::nothrow);
 }
 
-void IOUtils::getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, double& tz_out) {
-	cfg.getValue("TZ", "Input", tz_in, ConfigReader::nothrow);
-	cfg.getValue("TZ", "Output", tz_out, ConfigReader::nothrow);
+void IOUtils::getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
+	cfg.getValue("TZ", "Input", tz_in, Config::nothrow);
+	cfg.getValue("TZ", "Output", tz_out, Config::nothrow);
 }
 	
 unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch){ 

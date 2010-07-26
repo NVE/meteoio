@@ -48,7 +48,7 @@ private:
    * Returns an implementation of IOInterface with the appropriate
    * configuration. Each call generates a new Instance -> delete it after use !
    * TODO : Store the instances and reuse them, even in a concurent acceses context.
-   *        Pb of the ConfigReader member which cannot be mutualized throught different interplation !
+   *        Pb of the Config member which cannot be mutualized throught different interplation !
    *
    */
   mio::IOInterface* generateIOInterface(const std::string cDemFile,

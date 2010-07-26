@@ -51,7 +51,7 @@ namespace mio {
 const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-SNIO::SNIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -61,7 +61,7 @@ SNIO::SNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-SNIO::SNIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+SNIO::SNIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -590,7 +590,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const ConfigReader& cfg) {
+	void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "SNIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new SNIO(deleteObject, cfg);

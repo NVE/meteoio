@@ -45,7 +45,7 @@ namespace mio {
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
-GeotopIO::GeotopIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+GeotopIO::GeotopIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -55,7 +55,7 @@ GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(confi
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-GeotopIO::GeotopIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+GeotopIO::GeotopIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -543,7 +543,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const std::string& classname, const ConfigReader& cfg) {
+	void* loadObject(const std::string& classname, const Config& cfg) {
 		if(classname == "GeotopIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new GeotopIO(deleteObject, cfg);

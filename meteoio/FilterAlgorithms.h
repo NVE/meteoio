@@ -20,7 +20,7 @@
 
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/libinterpol1D.h>
 #include <meteoio/FilterProperties.h>
 

@@ -22,16 +22,16 @@ using namespace std;
 
 namespace mio {
 
-Meteo2DInterpolator::Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObject& _dem, 
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem, 
 								 const std::vector<MeteoData>& _vecMeteo, 
 								 const std::vector<StationData>& _vecStation) 
 	: cfg(_cfg), dem(_dem), vecMeteo(_vecMeteo), vecStation(_vecStation)
 {
 	/*
-	 * By reading the ConfigReader object build up a list of user configured algorithms
+	 * By reading the Config object build up a list of user configured algorithms
 	 * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
 	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
-	 * for configuration of interpolation algorithms within the ConfigReader object.
+	 * for configuration of interpolation algorithms within the Config object.
 	 */
 	for (unsigned int ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpAlgorithms;
@@ -102,7 +102,7 @@ unsigned int Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& p
 {
 	/* 
 	 * This function retrieves the user defined interpolation algorithms for 
-	 * parameter 'parname' by querying the ConfigReader object
+	 * parameter 'parname' by querying the Config object
 	 */
 	std::vector<std::string> vecKeys;
 
@@ -116,7 +116,7 @@ unsigned int Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& p
 		return 0;
 
 
-	cfg.getValue(vecKeys.at(0), "Interpolations2D", vecAlgorithms, ConfigReader::nothrow);
+	cfg.getValue(vecKeys.at(0), "Interpolations2D", vecAlgorithms, Config::nothrow);
 
 	return vecAlgorithms.size();
 }
@@ -127,7 +127,7 @@ unsigned int Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Para
 {
 	vecArgs.clear();
 	const string keyname = MeteoData::getParameterName(param) +"::"+ algorithm;
-	cfg.getValue(keyname, "Interpolations2D", vecArgs, ConfigReader::nothrow);
+	cfg.getValue(keyname, "Interpolations2D", vecArgs, Config::nothrow);
 
 	return vecArgs.size();
 }

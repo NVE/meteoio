@@ -18,7 +18,7 @@
 #ifndef __ARCIO_H__
 #define __ARCIO_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -41,11 +41,11 @@ namespace mio {
 
 class ARCIO : public IOInterface {
 	public:
-		ARCIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		ARCIO(void (*delObj)(void*), const Config& i_cfg);
 
 		ARCIO(const std::string& configfile);
 		ARCIO(const ARCIO&);
-		ARCIO(const ConfigReader&);
+		ARCIO(const Config&);
 		~ARCIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
@@ -67,7 +67,7 @@ class ARCIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
-		ConfigReader cfg;
+		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters

@@ -101,7 +101,7 @@ The format is the following:
     5426523.318065105000 (y coordinate of centre of upper left pixel in map units) 
 */
 
-ARCIO::ARCIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -111,7 +111,7 @@ ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-ARCIO::ARCIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+ARCIO::ARCIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -320,7 +320,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const std::string& classname, const ConfigReader& cfg) {
+	void* loadObject(const std::string& classname, const Config& cfg) {
 		if(classname == "ARCIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new ARCIO(deleteObject, cfg);

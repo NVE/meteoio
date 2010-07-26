@@ -81,7 +81,7 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/DynamicLibrary.o \
 		$(SRCDIR)/A3DIO.o \
 		$(SRCDIR)/BufferedIOHandler.o \
-		$(SRCDIR)/ConfigReader.o \
+		$(SRCDIR)/Config.o \
 		$(SRCDIR)/Date.o \
 		$(SRCDIR)/Grid2DObject.o \
 		$(SRCDIR)/Grid3DObject.o \
@@ -107,7 +107,7 @@ METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/A3DIO_par.o \
 		$(SRCDIR)/MeteoData_par.o \
 		$(SRCDIR)/StationData_par.o \
-		$(SRCDIR)/ConfigReader_par.o \
+		$(SRCDIR)/Config_par.o \
 		$(SRCDIR)/Date_par.o \
 		$(SRCDIR)/Grid2DObject_par.o \
 		$(SRCDIR)/Grid3DObject_par.o \

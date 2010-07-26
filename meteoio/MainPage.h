@@ -177,7 +177,7 @@ namespace mio {
  * The ResamplingAlgorithms class uses the Interpol1D class to perform temporal interpolations (for resampling).
  *
  * @section config_sec Configuration files handling
- * In order to offer a consistent interface to the user as well as make it easy to read configuration parameters, the class ConfigReader is exposed. Once constructed with a configuration file name, each key's parameter can be retrieved with a call to the templatized getValue() method.
+ * In order to offer a consistent interface to the user as well as make it easy to read configuration parameters, the class Config is exposed. Once constructed with a configuration file name, each key's parameter can be retrieved with a call to the templatized getValue() method.
  *
  *
  * @section date_sec Dates handling
@@ -237,14 +237,14 @@ namespace mio {
  *    on these two vectors. Typically filters that perform checks only (e.g. check whether values are within certain
  *    bounds), need not look at anything but the data in these vectors, whereas filters that have more complicated
  *    schemes of operation (like accumulation or resampling) might take into account the "raw" data as accessible
- *    through vecM and vecS. Helper functions that parse the arguments to the filters through a ConfigReader obejct
+ *    through vecM and vecS. Helper functions that parse the arguments to the filters through a Config obejct
  *    are available.
  *
  *
  * Here an example implementation of the MaximumFilter, which checks whether a value is greater then an argument
  * supplied to the filter and if so changes the value either to IOUtils::nodata (normal operation) or to the
  * maximum value supplied in the argument (soft mode of operation). An example section in the io.ini file supplied
- * to the ConfigReader could look like this:
+ * to the Config could look like this:
  * @code
  * [Filters]
  * TA::filter1 = max
@@ -299,7 +299,7 @@ namespace mio {
  * 	mio::BufferedIOHandler *io = NULL;
  *
  * 	try {
- * 		mio::ConfigReader cfg("io.ini");
+ * 		mio::Config cfg("io.ini");
  * 		raw_io = new mio::IOHandler(cfg);
  * 		io = new mio::BufferedIOHandler(*raw_io, cfg);
  * 	} catch (IOException& e){
@@ -335,11 +335,11 @@ namespace mio {
  * 	const double dist_x=700, dist_y=1200;
  * 	mio::DEMObject dem;
  * 	mio::IOHandler *raw_io = NULL;
- *	mio::ConfigReader *cfg = NULL;
+ *	mio::Config *cfg = NULL;
  * 	int i,j;
  *
  * 	try {
- * 		cfg = new mio::ConfigReader("io.ini");
+ * 		cfg = new mio::Config("io.ini");
  * 		raw_io = new mio::IOHandler(cfg);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;

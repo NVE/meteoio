@@ -37,11 +37,11 @@ class GeotopIO : public IOInterface {
 	public:
 		//virtual GeotopIO* clone() const;
 
-		GeotopIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		GeotopIO(void (*delObj)(void*), const Config& i_cfg);
 
 		GeotopIO(const std::string& configfile);
 		GeotopIO(const GeotopIO&);
-		GeotopIO(const ConfigReader&);
+		GeotopIO(const Config&);
 		~GeotopIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
@@ -76,7 +76,7 @@ class GeotopIO : public IOInterface {
 		void cleanup() throw();
 		void parseDate(const std::string& datestring, const std::string& fileandline, Date& _date);
 
-		ConfigReader cfg;
+		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

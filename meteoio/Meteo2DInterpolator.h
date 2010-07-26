@@ -46,7 +46,7 @@ class Meteo2DInterpolator {
 		/**
 		* @brief Constructor.
 		*/
-		Meteo2DInterpolator(const ConfigReader& _cfg, const DEMObject& _dem, 
+		Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem, 
 						const std::vector<MeteoData>& _vecMeteo, 
 						const std::vector<StationData>& _vecStation);
 
@@ -61,7 +61,7 @@ class Meteo2DInterpolator {
 		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const;
 
 	private:
-		const ConfigReader& cfg; ///< Reference to ConfigReader object, initialized during construction
+		const Config& cfg; ///< Reference to Config object, initialized during construction
 		const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction
 		const std::vector<MeteoData>& vecMeteo;  ///< Reference to a vec of MeteoData, initialized during construction
 		const std::vector<StationData>& vecStation;///< Reference to a vec of StationData, initialized during construction

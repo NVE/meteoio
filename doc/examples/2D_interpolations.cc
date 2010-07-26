@@ -12,7 +12,7 @@ int main(int /*argc*/, char** argv) {
 	std::vector<StationData> vecStation;
 
 	//initializing the io handlers according to the config file
-	ConfigReader cfg("io.ini");
+	Config cfg("io.ini");
 	IOHandler raw_io(cfg);
 	BufferedIOHandler io(raw_io, cfg);
 

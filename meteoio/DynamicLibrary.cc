@@ -34,7 +34,7 @@ DynamicLibrary::~DynamicLibrary(void)
 #endif
 }
 
-PluginObject* DynamicLibrary::newObject(const std::string& name, const ConfigReader& cfg)
+PluginObject* DynamicLibrary::newObject(const std::string& name, const Config& cfg)
 {
   // If there is no valid library, return null
 	if(_objFile == NULL) {
@@ -43,7 +43,7 @@ PluginObject* DynamicLibrary::newObject(const std::string& name, const ConfigRea
 
 	// Get the loadObject() function.  If it doesn't exist, return NULL.
 #ifdef WIN32
-	void (*loadSym)(const std::string&, const ConfigReader&) = (void (*)(const std::string&, const ConfigReader&))GetProcAddress(_objFile, "loadObject");
+	void (*loadSym)(const std::string&, const Config&) = (void (*)(const std::string&, const Config&))GetProcAddress(_objFile, "loadObject");
 #else
 	void* loadSym = dlsym(_objFile, "loadObject");
 #endif
@@ -53,7 +53,7 @@ PluginObject* DynamicLibrary::newObject(const std::string& name, const ConfigRea
 	}
 
 	// Load a new instance of the requested class, and return it
-	void* obj = ((void* (*)(const std::string&, const ConfigReader&))(loadSym))(name, cfg);
+	void* obj = ((void* (*)(const std::string&, const Config&))(loadSym))(name, cfg);
 	return reinterpret_cast<PluginObject*>(obj);
 }
 

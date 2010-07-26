@@ -18,7 +18,7 @@
 #ifndef __DYNAMICLIB_H__
 #define __DYNAMICLIB_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 
 #ifndef USE_PRECOMPILED_HEADERS
 #ifdef WIN32
@@ -96,7 +96,7 @@ class DynamicLibrary {
 
 		// Creates a new instance of the named class, or returns NULL is the 
 		// class isn't found. 
-		PluginObject* newObject(const std::string& name, const ConfigReader& cfg);
+		PluginObject* newObject(const std::string& name, const Config& cfg);
 
 		friend class DynamicLoader; ///< The friend class DynamicLoader can solely instantiate the DynamicLibrary class (protected constructor)
 };

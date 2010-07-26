@@ -89,7 +89,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * @code
  * 	std::vector<MeteoData> vecMeteo;
  * 	std::vector<StationData> vecStation;
- * 	ConfigReader cfg("io.ini");
+ * 	Config cfg("io.ini");
  * 	DEMObject dem;
  * 
  * 	[...]

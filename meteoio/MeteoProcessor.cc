@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-MeteoProcessor::MeteoProcessor(const ConfigReader& _cfg) : cfg(_cfg), mf(cfg), mi1d(cfg) {}
+MeteoProcessor::MeteoProcessor(const Config& _cfg) : cfg(_cfg), mf(cfg), mi1d(cfg) {}
 
 void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, 
                                  const std::vector<StationData>& vecS, MeteoData& md, StationData& sd)

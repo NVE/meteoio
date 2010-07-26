@@ -21,7 +21,7 @@
 #include "gsn/soapA3DWebServiceSoap12BindingProxy.h"
 #include "gsn/A3DWebServiceSoap12Binding.nsmap"
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -44,11 +44,11 @@ namespace mio {
  */
 class GSNIO : public IOInterface {
 	public:
-		GSNIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		GSNIO(void (*delObj)(void*), const Config& i_cfg);
 
 		GSNIO(const std::string& configfile);
 		GSNIO(const GSNIO&);
-		GSNIO(const ConfigReader&);
+		GSNIO(const Config&);
 		~GSNIO() throw();
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
@@ -79,7 +79,7 @@ class GSNIO : public IOInterface {
 				    std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex);
 
 		A3DWebServiceSoap12BindingProxy gsn;
-		ConfigReader cfg;
+		Config cfg;
 		std::vector<std::string> vecStationName;
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                              ///< Variable for proxy configuration

@@ -14,7 +14,7 @@ int main(int /*argc*/, char** /*argv*/) {
 	std::vector< std::vector<MeteoData> > vecMeteo;
 	std::vector< std::vector<StationData> > vecStation;
 
-	ConfigReader cfg("io.ini");
+	Config cfg("io.ini");
 	IOHandler raw_io(cfg);
 	BufferedIOHandler io(raw_io, cfg);
 

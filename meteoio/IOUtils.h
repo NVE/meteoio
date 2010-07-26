@@ -18,7 +18,7 @@
 #ifndef __IOUTILS_H__
 #define __IOUTILS_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/Coords.h>
 #include <meteoio/Date.h>
 #include <meteoio/IOExceptions.h>
@@ -56,7 +56,7 @@ namespace mio {
 
 class MeteoData;
 class Coords;
-class ConfigReader;
+class Config;
 
 namespace IOUtils {
 	const unsigned int nothrow = 0;
@@ -270,24 +270,24 @@ namespace IOUtils {
 	}
 
 	/**
-	* @brief A function that parses a ConfigReader object for COORSYS, COORDPARAM keywords in [Input] and [Output]
+	* @brief A function that parses a Config object for COORSYS, COORDPARAM keywords in [Input] and [Output]
 	*        section and sets the respective strings to the values of those keywords
-	* @param[in] cfg  A ConfigReader object
+	* @param[in] cfg  A Config object
 	* @param[out] coordin The coordinate system to be used for input data
 	* @param[out] coordinparam The coordinate system parameters to be used for output data
 	* @param[out] coordout The coordinate system to be used for output data
 	* @param[out] coordoutparam The coordinate system parameters to be used for output data
 	*/
-	void getProjectionParameters(const ConfigReader& cfg, std::string& coordin, std::string& coordinparam, 
+	void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam, 
 						    std::string& coordout, std::string& coordoutparam);
 
 	/**
-	* @brief A function that parses a ConfigReader object for the TZ keyword and returns the timezone
-	* @param[in] cfg  A ConfigReader object
+	* @brief A function that parses a Config object for the TZ keyword and returns the timezone
+	* @param[in] cfg  A Config object
 	* @param[out] tz_in value to be used for the input timezone
 	* @param[out] tz_out value to be used for the output timezone
 	*/
-	void getTimeZoneParameters(const ConfigReader& cfg, double& tz_in, double& tz_out);
+	void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out);
 
 } //end namespace IOUtils
 } //end namespace mio

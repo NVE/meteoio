@@ -18,7 +18,7 @@
 #ifndef __SNIO_H__
 #define __SNIO_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -40,11 +40,11 @@ namespace mio {
  */
 class SNIO : public IOInterface {
 	public:
-		SNIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		SNIO(void (*delObj)(void*), const Config& i_cfg);
 
 		SNIO(const std::string& configfile);
 		SNIO(const SNIO&);
-		SNIO(const ConfigReader& cfgreader);
+		SNIO(const Config& cfgreader);
 		~SNIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
@@ -76,7 +76,7 @@ class SNIO : public IOInterface {
 		void readMetaData(unsigned int& nrOfStations);
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
 		void cleanup() throw();
-		ConfigReader cfg;
+		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		static const int sn_julian_offset;

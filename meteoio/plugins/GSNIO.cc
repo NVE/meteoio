@@ -67,7 +67,7 @@ namespace mio {
 
 const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-GSNIO::GSNIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+GSNIO::GSNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -79,7 +79,7 @@ GSNIO::GSNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 	initGSNConnection();
 }
 
-GSNIO::GSNIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+GSNIO::GSNIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -94,7 +94,7 @@ void GSNIO::initGSNConnection(){
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
 	
-	cfg.getValue("ENDPOINT", "INPUT", endpoint, ConfigReader::nothrow);
+	cfg.getValue("ENDPOINT", "INPUT", endpoint, Config::nothrow);
 	if (endpoint != ""){
 		gsn.soap_endpoint = endpoint.c_str();
 		cout << "\tUsing GSN Endpoint: " << endpoint << endl;
@@ -106,9 +106,9 @@ void GSNIO::initGSNConnection(){
 	 * - parameters not set will be set to ""
 	 */
 	try {
-		cfg.getValue("PROXY", "INPUT", hostname, ConfigReader::nothrow);
+		cfg.getValue("PROXY", "INPUT", hostname, Config::nothrow);
 		if (hostname == "") return;
-		cfg.getValue("PROXYPORT", "INPUT", port, ConfigReader::nothrow);
+		cfg.getValue("PROXYPORT", "INPUT", port, Config::nothrow);
 		if (port == "") return;
 
 		if (!IOUtils::convertString(proxyport, port, std::dec))
@@ -344,7 +344,7 @@ void GSNIO::readStationNames()
 	string xmlpath="", str_stations="";
 	int stations=0;
 
-	cfg.getValue("NROFSTATIONS", "Input", str_stations, ConfigReader::nothrow);
+	cfg.getValue("NROFSTATIONS", "Input", str_stations, Config::nothrow);
 
 	if (str_stations != ""){
 		if (!IOUtils::convertString(stations, str_stations, std::dec))
@@ -421,7 +421,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const ConfigReader& cfg) {
+	void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "GSNIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new GSNIO(deleteObject, cfg);

@@ -21,12 +21,12 @@ using namespace std;
 
 namespace mio {
 
-MeteoFilter::MeteoFilter(const ConfigReader& _cfg) : cfg(_cfg) {
+MeteoFilter::MeteoFilter(const Config& _cfg) : cfg(_cfg) {
 	/*
-	 * By reading the ConfigReader object build up a list of user configured filters
+	 * By reading the Config object build up a list of user configured filters
 	 * for each MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
 	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
-	 * for configuration of filters within the ConfigReader object.
+	 * for configuration of filters within the Config object.
 	 */
 	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpFilters1;
@@ -93,14 +93,14 @@ unsigned int MeteoFilter::getFiltersForParameter(const std::string& parname, std
 {
 	/* 
 	 * This function retrieves the filter sequence for parameter 'parname' 
-	 * by querying the ConfigReader object
+	 * by querying the Config object
 	 */
 	std::vector<std::string> vecKeys;
 	std::string tmp;
 	cfg.findKeys(vecKeys, parname+"::filter", "Filters");
 
 	for (unsigned int ii=0; ii<vecKeys.size(); ii++){
-		cfg.getValue(vecKeys[ii], "Filters", tmp, ConfigReader::nothrow);
+		cfg.getValue(vecKeys[ii], "Filters", tmp, Config::nothrow);
 		vecFilters.push_back(tmp);
 	}
 
@@ -112,7 +112,7 @@ unsigned int MeteoFilter::getArgumentsForFilter(const std::string& keyname, std:
 	/*
 	 * Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
 	 */
-	cfg.getValue(keyname, "Filters", vecArguments, ConfigReader::nothrow);
+	cfg.getValue(keyname, "Filters", vecArguments, Config::nothrow);
 	return vecArguments.size();
 }
 

@@ -24,7 +24,7 @@
 #include <meteoio/IOHandler.h>
 #endif
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/MeteoProcessor.h>
 
 #include <map>
@@ -54,17 +54,17 @@ class BufferedIOHandler : public IOInterface {
 
 		/**
 		 * @brief The constructor accepts an already initialized child of IOInterface (e.g. A3DIO, BormaIO, ImisIO)
-		 *        and a ConfigReader object
+		 *        and a Config object
 		 *
 		 * Example Usage:
 		 * @code
 		 * IOHandler *io1;
-		 * ConfigReader cfg("io.ini");
+		 * Config cfg("io.ini");
 		 * io1 = new A3DIO(cfg);
 		 * BufferedIOHandler bio(*io1, cfg);
 		 * @endcode
 		 */
-		BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg);
+		BufferedIOHandler(IOHandler& _iohandler, const Config& _cfg);
 	#ifdef _POPC_
 		virtual ~BufferedIOHandler();
 	#else
@@ -111,7 +111,7 @@ class BufferedIOHandler : public IOInterface {
 		 * @code
 		 * vector<MeteoData> vecMeteo;      //empty vector
 		 * vector<StationData> vecStation;  //empty vector
-		 * BufferedIOHandler bio(A3DIO("io.ini"), ConfigReader("io.ini"));
+		 * BufferedIOHandler bio(A3DIO("io.ini"), Config("io.ini"));
 		 * bio.readMeteoData(Date(2008,06,21,11,00), vecMeteo, vecStation); //21.6.2008 11:00
 		 * @endcode
 		 * @param _date       A Date object representing the date/time for the sought MeteoData objects
@@ -165,7 +165,7 @@ class BufferedIOHandler : public IOInterface {
 		void setBufferProperties();
 
 		IOHandler& iohandler;
-		ConfigReader cfg;
+		Config cfg;
 		MeteoProcessor meteoprocessor;
 
 		bool always_rebuffer;

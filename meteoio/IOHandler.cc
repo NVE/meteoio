@@ -101,9 +101,9 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 #endif
 
 #ifdef _POPC_
-IOHandler::IOHandler(const ConfigReader& cfgreader) : cfg(cfgreader), fileio(cfgreader)
+IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), fileio(cfgreader)
 #else
-IOHandler::IOHandler(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader)
+IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader)
 #endif
 {
 #if defined(_POPC_) && defined(DEBUG_ARITHM)
@@ -148,7 +148,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 	std::string pluginpath = "";
 
 	try {
-		cfg.getValue("PLUGINPATH", pluginpath, ConfigReader::nothrow);
+		cfg.getValue("PLUGINPATH", pluginpath, Config::nothrow);
 		if (pluginpath != "")
 			pluginpath += "/";
 

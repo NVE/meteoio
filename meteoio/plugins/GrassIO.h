@@ -18,7 +18,7 @@
 #ifndef __GRASSIO_H__
 #define __GRASSIO_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -41,11 +41,11 @@ namespace mio {
  */
 class GrassIO : public IOInterface {
 	public:
-		GrassIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		GrassIO(void (*delObj)(void*), const Config& i_cfg);
 
 		GrassIO(const std::string& configfile);
 		GrassIO(const GrassIO&);
-		GrassIO(const ConfigReader&);
+		GrassIO(const Config&);
 		~GrassIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
@@ -70,7 +70,7 @@ class GrassIO : public IOInterface {
 	private:
 		void cleanup() throw();
 
-		ConfigReader cfg;
+		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		static const double plugin_nodata;

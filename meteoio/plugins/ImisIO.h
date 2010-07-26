@@ -18,7 +18,7 @@
 #ifndef __IMISIO_H__
 #define __IMISIO_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -43,11 +43,11 @@ namespace mio {
  */
 class ImisIO : public IOInterface {
 	public:
-		ImisIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		ImisIO(void (*delObj)(void*), const Config& i_cfg);
 
 		ImisIO(const std::string& configfile);
 		ImisIO(const ImisIO&);
-		ImisIO(const ConfigReader&);
+		ImisIO(const Config&);
 		~ImisIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
@@ -85,7 +85,7 @@ class ImisIO : public IOInterface {
 		void readStationMetaData();
 		void convertUnits(MeteoData& meteo);
 
-		ConfigReader cfg;
+		Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecMyStation;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

@@ -64,7 +64,7 @@ void ImisIO::getDBParameters()
 	cfg.getValue("DBPASS", "Output", oraclePassword_out);*/
 }
 
-ImisIO::ImisIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+ImisIO::ImisIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
@@ -76,7 +76,7 @@ ImisIO::ImisIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	getDBParameters();
 }
 
-ImisIO::ImisIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+ImisIO::ImisIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
@@ -142,7 +142,7 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 }
 
 /**
- * @brief A meta function that extracts all station names from the ConfigReader,
+ * @brief A meta function that extracts all station names from the Config,
  *        parses them and retrieves all meta data from the IMIS database
  */
 void ImisIO::readStationMetaData()
@@ -195,7 +195,7 @@ void ImisIO::parseStationName(const std::string& stationName, std::string& stNam
 }
 
 /**
- * @brief This function extracts all info about the stations that are to be used from global ConfigReader object
+ * @brief This function extracts all info about the stations that are to be used from global Config object
  * @param vecStationName A vector that will hold all relevant stations as std::strings
  */
 void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
@@ -266,7 +266,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
  * @param dateEnd      The end of the interval to retrieve data for
  * @param vecMeteo     The vector that will hold all MeteoData for each station
  * @param vecStation   The vector that will hold all StationData for each station
- * @param stationindex The index of the station as specified in the ConfigReader
+ * @param stationindex The index of the station as specified in the Config
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                       std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
@@ -458,7 +458,7 @@ extern "C"
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const ConfigReader& cfg) {
+	void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "ImisIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new ImisIO(deleteObject, cfg);

@@ -32,7 +32,7 @@ namespace mio {
 
 
 /**
- * @class ConfigReader
+ * @class Config
  * @brief A class that reads a key/value file. These files (typically named *.ini) follow the INI file format standard (see http://en.wikipedia.org/wiki/INI_file) and have the following structure:
  * - they consist of 0 or more explicitly indicated sections, which start with a sectionname enclosed in square brackets
  *   e.g. [General] or [Filter]
@@ -56,23 +56,23 @@ namespace IOUtils {
 }
 
 #ifdef _POPC_
-class ConfigReader : POPBase {
+class Config : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);
 #else
-class ConfigReader {
+class Config {
 #endif
 	public:
 		/**
 		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object
 		*/
-		ConfigReader();
+		Config();
 
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
 		 * @param[in] filename_in string representing the absolute filename of the key/value file
 		*/
-		ConfigReader(const std::string& filename_in);
+		Config(const std::string& filename_in);
 
 		/**
 		 * @brief Add the content of a file to the internal key/value map object
@@ -102,16 +102,16 @@ class ConfigReader {
 		void addKey(const std::string& key, const std::string& section, const std::string& value);
 
 		/**
-		 * @brief Returns the filename that the ConfigReader object was constructed with.
+		 * @brief Returns the filename that the Config object was constructed with.
 		 * @return std::string The absolute filename of the key/value file.
 		 */
 		std::string getSourceName();
 
 		/**
-		* @brief Print the content of the ConfigReader object (usefull for debugging)
-		* The ConfigReader is bound by "<ConfigReader>" and "</ConfigReader>" on separate lines
+		* @brief Print the content of the Config object (usefull for debugging)
+		* The Config is bound by "<Config>" and "</Config>" on separate lines
 		*/
-		friend std::ostream& operator<<(std::ostream& os, const ConfigReader& cfg);
+		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
 
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key
@@ -150,9 +150,9 @@ class ConfigReader {
 				IOUtils::toUpper(_section);
 				IOUtils::getValueForKey<T>(properties, _section + "::" + key, vecT);
 			} catch(std::exception& e){
-				if (options != ConfigReader::nothrow) {
+				if (options != Config::nothrow) {
 					std::stringstream ss;
-					ss << "[E] Error for ConfigReader of " << sourcename << ": " << e.what();
+					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
 					throw UnknownValueException(ss.str(), AT);
 				}
 			}
@@ -183,9 +183,9 @@ class ConfigReader {
 				IOUtils::toUpper(_section);
 				IOUtils::getValueForKey<T>(properties, _section + "::" + key, t);
 			} catch(std::exception& e){
-				if (options != ConfigReader::nothrow) {
+				if (options != Config::nothrow) {
 					std::stringstream ss;
-					ss << "[E] Error for ConfigReader of " << sourcename << ": " << e.what();
+					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
 					throw UnknownValueException(ss.str(), AT);
 				}
 			}
@@ -217,7 +217,7 @@ class ConfigReader {
 		std::map<std::string, std::string> properties; //Save key value pairs
 		std::string sourcename; //description of the data source for the key/value pair
 
-}; //end class definition ConfigReader
+}; //end class definition Config
 
 } //end namespace mio
 

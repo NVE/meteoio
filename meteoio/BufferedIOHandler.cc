@@ -22,10 +22,10 @@ using namespace std;
 namespace mio {
 
 #ifdef _POPC_
-BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
+BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const Config& _cfg) 
 	: iohandler(_iohandler), cfg(_cfg), meteoprocessor(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
 #else
-BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const ConfigReader& _cfg) 
+BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const Config& _cfg) 
 	  : IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoprocessor(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
 #endif
 {

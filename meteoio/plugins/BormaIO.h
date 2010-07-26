@@ -18,7 +18,7 @@
 #ifndef __BORMAIO_H__
 #define __BORMAIO_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -42,11 +42,11 @@ namespace mio {
 
 class BormaIO : public IOInterface {
 	public:
-		BormaIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		BormaIO(void (*delObj)(void*), const Config& i_cfg);
 
 		BormaIO(const std::string& configfile);
 		BormaIO(const BormaIO&);
-		BormaIO(const ConfigReader&);
+		BormaIO(const Config&);
 		~BormaIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
@@ -92,7 +92,7 @@ class BormaIO : public IOInterface {
 					 std::vector< std::vector<StationData> >& vecStation, 
 					 const unsigned int& stationnr);
 
-		ConfigReader cfg;
+		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::vector<std::string> vecStationName;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

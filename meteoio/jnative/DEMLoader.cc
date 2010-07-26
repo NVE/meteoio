@@ -7,7 +7,7 @@
 
 
 #include "DEMLoader.h"
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include "plugins/ARCIO.h"
 //#include "plugins/BormaIO.h"
 #include "plugins/GeotopIO.h"
@@ -37,7 +37,7 @@ IOInterface* DEMLoader::generateIOInterface(
 
 	IOInterface *io = NULL;
 	try {
-		ConfigReader cfg;
+		Config cfg;
 		cfg.addKey("DEMFILE", cDemFile);
 		cfg.addKey("COORDIN", cDemCoordSystem);
 		cfg.addKey("COORDPARAM","");

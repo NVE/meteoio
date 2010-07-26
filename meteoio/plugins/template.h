@@ -19,7 +19,7 @@
 #define __TEMPLATE_H__
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 
 #include <string>
 
@@ -34,11 +34,11 @@ namespace mio {
  */
 class TEMPLATE : public IOInterface {
 	public:
-		TEMPLATE(void (*delObj)(void*), const ConfigReader& i_cfg);
+		TEMPLATE(void (*delObj)(void*), const Config& i_cfg);
 
 		TEMPLATE(const std::string& configfile);
 		TEMPLATE(const TEMPLATE&);
-		TEMPLATE(const ConfigReader& cfgreader);
+		TEMPLATE(const Config& cfgreader);
 		~TEMPLATE() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
@@ -63,7 +63,7 @@ class TEMPLATE : public IOInterface {
 	private:
 		void cleanup() throw();
 
-		ConfigReader cfg;
+		Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

@@ -18,7 +18,7 @@
 #ifndef __ARPSIO_H__
 #define __ARPSIO_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -45,11 +45,11 @@ namespace mio {
  */
 class ARPSIO : public IOInterface {
 	public:
-		ARPSIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		ARPSIO(void (*delObj)(void*), const Config& i_cfg);
 
 		ARPSIO(const std::string& configfile);
 		ARPSIO(const ARPSIO&);
-		ARPSIO(const ConfigReader& cfgreader);
+		ARPSIO(const Config& cfgreader);
 		~ARPSIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
@@ -81,7 +81,7 @@ class ARPSIO : public IOInterface {
 		void readGridLayer(const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
 		void moveToMarker(const std::string& marker);
 
-		ConfigReader cfg;
+		Config cfg;
 		//std::ifstream fin; //Input file streams
 		FILE *fin;
 		std::ofstream fout;//Output file streams

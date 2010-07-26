@@ -21,12 +21,12 @@ using namespace std;
 
 namespace mio {
 
-Meteo1DInterpolator::Meteo1DInterpolator(const ConfigReader& _cfg) : cfg(_cfg) {
+Meteo1DInterpolator::Meteo1DInterpolator(const Config& _cfg) : cfg(_cfg) {
 	/*
-	 * By reading the ConfigReader object build up a list of user configured resampling algorithm
+	 * By reading the Config object build up a list of user configured resampling algorithm
 	 * for each MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
 	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
-	 * for configuration of resampling algorithms within the ConfigReader object.
+	 * for configuration of resampling algorithms within the Config object.
 	 */
 	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
@@ -97,10 +97,10 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 	 */
 
 	vecArguments.clear();
-	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, ConfigReader::nothrow);
+	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, Config::nothrow);
 
 	std::string tmp = "";
-	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, ConfigReader::nothrow);
+	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, Config::nothrow);
 
 	if (tmp.length() > 0)
 		return tmp;

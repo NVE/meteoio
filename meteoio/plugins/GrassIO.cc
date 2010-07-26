@@ -41,7 +41,7 @@ namespace mio {
 
 const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-GrassIO::GrassIO(void (*delObj)(void*), const ConfigReader& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+GrassIO::GrassIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -51,7 +51,7 @@ GrassIO::GrassIO(const std::string& configfile) : IOInterface(NULL), cfg(configf
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-GrassIO::GrassIO(const ConfigReader& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+GrassIO::GrassIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -282,7 +282,7 @@ extern "C"
 	}
 
 
-	void* loadObject(const string& classname, const ConfigReader& cfg) {
+	void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "GrassIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new GrassIO(deleteObject, cfg);

@@ -20,7 +20,7 @@
 
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/MeteoFilter.h>
 #include <meteoio/Meteo1DInterpolator.h>
 
@@ -37,7 +37,7 @@ namespace mio {
 
 class MeteoProcessor {
 	public:
-		MeteoProcessor(const ConfigReader& _cfg);
+		MeteoProcessor(const Config& _cfg);
 
 		/**
 		 * @brief A function that executes all the filters that have been setup in the constructor
@@ -51,7 +51,7 @@ class MeteoProcessor {
 		                 MeteoData& md, StationData& sd);
 
  	private:
-		ConfigReader cfg;
+		Config cfg;
 		MeteoFilter mf;
 		Meteo1DInterpolator mi1d;
 };

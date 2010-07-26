@@ -18,7 +18,7 @@
 #ifndef __PGMIO_H__
 #define __PGMIO_H__
 
-#include <meteoio/ConfigReader.h>
+#include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
@@ -41,11 +41,11 @@ namespace mio {
  */
 class PGMIO : public IOInterface {
 	public:
-		PGMIO(void (*delObj)(void*), const ConfigReader& i_cfg);
+		PGMIO(void (*delObj)(void*), const Config& i_cfg);
 
 		PGMIO(const std::string& configfile);
 		PGMIO(const PGMIO&);
-		PGMIO(const ConfigReader& cfgreader);
+		PGMIO(const Config& cfgreader);
 		~PGMIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
@@ -73,7 +73,7 @@ class PGMIO : public IOInterface {
 		void cleanup() throw();
 		int getNextHeader(std::vector<std::string>& vecString, const std::string& filename);
 
-		ConfigReader cfg;
+		Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::ifstream fin; //Input file streams
