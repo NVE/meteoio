@@ -138,7 +138,7 @@ void MeteoData::addParameter(const std::string& i_paramname)
 	nrOfAllParameters++;	
 }
 
-unsigned int MeteoData::getNrOfParameters()
+unsigned int MeteoData::getNrOfParameters() const
 {
 	return nrOfAllParameters;
 }
@@ -220,7 +220,7 @@ bool MeteoData::operator==(const MeteoData& in) const
 	//An object is equal if the date is equal and all meteo parameters are equal
 	bool eval = (date==in.date);
 
-	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
+	for (unsigned int ii=0; ii<in.getNrOfParameters(); ii++){
 		eval &= (param(ii) == in.param(ii));
 	}
 

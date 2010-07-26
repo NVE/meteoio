@@ -133,7 +133,7 @@ class MeteoData {
 		double hs; ///<Snow height in m
 		double p;  ///<Atmospheric pressure in Pa
 
-		unsigned int getNrOfParameters();
+		unsigned int getNrOfParameters() const;
  private:
 		static std::map<unsigned int, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
 		static const bool __init;    ///<helper variable to enable the init of static collection data
