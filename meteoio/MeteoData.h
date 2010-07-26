@@ -61,6 +61,7 @@ class MeteoData {
 		                 lastparam=P};
 
 		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
+		static const std::string& getParameterName(const unsigned int& parindex);
 
 		/**
 		 * @brief The default constructor initializing every double attribute to nodata and the Date to julian==0.0
@@ -93,6 +94,13 @@ class MeteoData {
 		*/
 		void setDate(const Date& _date);
 
+		/**
+		* @brief Add another variable to the MeteoData object, 
+		*        a double value will be added and the nrOfParameters increased
+		* @param i_paramname A parameter name, e.g. "VSWR"
+		*/
+		void addParameter(const std::string& i_paramname);
+
 		bool isResampled();
 		void setResampled(const bool&);
 
@@ -100,7 +108,9 @@ class MeteoData {
 
 		double& param(const unsigned int& parindex);
 		const double& param(const unsigned int& parindex) const;
-		static const std::string& getParameterName(const unsigned int& parindex);
+		double& param(const std::string& parname);
+		const double& param(const std::string& parname) const;
+		const std::string& getNameForParameter(const unsigned int& parindex) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 
@@ -123,15 +133,21 @@ class MeteoData {
 		double hs; ///<Snow height in m
 		double p;  ///<Atmospheric pressure in Pa
 
-
+		unsigned int getNrOfParameters();
  private:
-		void initAllParameters();
-		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
-		static std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
+		static std::map<unsigned int, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname 
-		bool resampled;              ///<set this to true if MeteoData is result of resampling
+
+		unsigned int nrOfAllParameters;
+		std::map<std::string, double> extraparameters; ///<All non-standard meteo parameters will end up in this map
+		std::map<std::string, double*> mapParameterByName; ///<Associate name and meteo parameter
+		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
+		std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
+
+		void initAllParameters();
 		void initParameterMap();     ///<initializes the meteoparam map that allows sequential access to meteo parameters
+		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
 
 typedef std::vector<MeteoData> METEO_DATASET;

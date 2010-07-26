@@ -190,13 +190,11 @@ void BufferedIOHandler::readMeteoData(const Date& i_date, std::vector<MeteoData>
 			try {
 				vector<StationData> vecStations;
 				iohandler.readStationData(i_date, vecStations);
-				if (vecStations.size() > ii)sd = vecStations[ii];
+				if (vecStations.size() > ii) sd = vecStations[ii];
 			} catch(exception& ex) {/*Ignore any exception*/}
 		}
 
 		if (index != IOUtils::npos) {
-			//vecMeteo.push_back(meteoBuffer[ii][index]);
-			//vecStation.push_back(stationBuffer[ii][index]);
 			vecMeteo.push_back(md);
 			vecStation.push_back(sd);
 		} else {
