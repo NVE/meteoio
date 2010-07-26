@@ -128,7 +128,7 @@ void BufferedIOHandler::setBufferProperties()
 	bufferafter = Date(20.0);  //plus 20 days
 }
 
-void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
+void BufferedIOHandler::readMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
 	/* For every station: 
 	 * 1) See whether data is already buffered
 	 * 2) Filter - includes resampling
@@ -139,7 +139,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 	vecStation.clear();
 
 	if (meteoBuffer.size() == 0){ //init
-		bufferAllData(date_in);
+		bufferAllData(i_date);
 	}
 
 	//loop through all meteo buffers, there is one for each station
@@ -154,13 +154,13 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 		}
 
 		if (meteoBuffer[ii].size() > 0) {//check whether meteo data for the date exists in buffer
-			index = IOUtils::seek(date_in, meteoBuffer[ii], false);
+			index = IOUtils::seek(i_date, meteoBuffer[ii], false);
 		}
 
 		if (index == IOUtils::npos) { //not in buffer
 			//Check buffering strategy
 			bool rebuffer = false;
-			if ((startDateBuffer.at(ii) > date_in) || (endDateBuffer.at(ii) < date_in)){
+			if ((startDateBuffer.at(ii) > i_date) || (endDateBuffer.at(ii) < i_date)){
 				rebuffer = true;
 			} else { 
 				if (always_rebuffer) rebuffer = true;
@@ -168,11 +168,11 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 
 			if (rebuffer){
 				//cout << "[I] Station " << ii << "(" << stationID 
-				//	<< ") data for date " << date_in.toString(Date::FULL) << " not in buffer ..." << endl;
+				//	<< ") data for date " << i_date.toString(Date::FULL) << " not in buffer ..." << endl;
 				
-				bool dataexists = bufferData(date_in, ii);
-				if (dataexists) {//date_in is contained in buffer
-					index = IOUtils::seek(date_in, meteoBuffer[ii], false);
+				bool dataexists = bufferData(i_date, ii);
+				if (dataexists) {//i_date is contained in buffer
+					index = IOUtils::seek(i_date, meteoBuffer[ii], false);
 				}
 			}
 		}
@@ -182,7 +182,16 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 		if (index != IOUtils::npos) {
 			vector<MeteoData> mBuffer;
 			std::vector<StationData> sBuffer;
-			meteoprocessor.processData(date_in, meteoBuffer[ii], stationBuffer[ii], md, sd);
+			meteoprocessor.processData(i_date, meteoBuffer[ii], stationBuffer[ii], md, sd);
+		}
+		
+		//Check whether StationData is meaningful, try to get meaningful meta data
+		if (sd == StationData()){
+			try {
+				vector<StationData> vecStations;
+				iohandler.readStationData(i_date, vecStations);
+				if (vecStations.size() > ii)sd = vecStations[ii];
+			} catch(exception& ex) {/*Ignore any exception*/}
 		}
 
 		if (index != IOUtils::npos) {
@@ -191,21 +200,21 @@ void BufferedIOHandler::readMeteoData(const Date& date_in, std::vector<MeteoData
 			vecMeteo.push_back(md);
 			vecStation.push_back(sd);
 		} else {
-			cout << "[I] No data found for station " << stationID << " at date " << date_in.toString(Date::FULL) 
+			cout << "[I] No data found for station " << stationID << " at date " << i_date.toString(Date::FULL) 
 				<< endl;
 			vecMeteo.push_back(MeteoData());
-			vecMeteo[ii].date = date_in; //set correct date
+			vecMeteo[ii].date = i_date; //set correct date
 
 			vecStation.push_back(sd);
 		}
 	}
 
-	if (vecMeteo.size() == 0) {//No data found - return one object set to date_in and nodata in all other fields
+	if (vecMeteo.size() == 0) {//No data found - return one object set to i_date and nodata in all other fields
 		vecMeteo.push_back(MeteoData());
-		vecMeteo[0].date = date_in; //set correct date
+		vecMeteo[0].date = i_date; //set correct date
 
 		vecStation.push_back(StationData());
-		//throw IOException("[E] No data for any station for date " + date_in.toString(Date::FULL) + " found", AT);
+		//throw IOException("[E] No data for any station for date " + i_date.toString(Date::FULL) + " found", AT);
 	}	
 }
 
