@@ -130,12 +130,13 @@ namespace IOUtils {
 	* @param delimiter (const string&) delimiter to use for the parsing
 	* @param out_map (map\<string,string\>&) map after parsing
 	* @param keyprefix this string is prefixed before the key, defaults to no prefix: ""
+	* @param setToUpperCase If set to true the key will be put into upper case (for case insensitivity)
 	* @return (bool) true when line is empty
 	*/
 	bool readKeyValuePair(const std::string& in_line, 
 					  const std::string& delimiter, 
 					  std::map<std::string,std::string>& out_map,
-					  const std::string& keyprefix="");
+					  const std::string& keyprefix="", const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
 	unsigned int readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);

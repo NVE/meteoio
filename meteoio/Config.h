@@ -87,19 +87,21 @@ class Config {
 		void addCmdLine(const std::string& cmd_line);
 
 		/**
-		 * @brief Add a specific key/value pair to the internal key/value map object
+		 * @brief Add a specific key/value pair to the internal key/value map object.
+		 *        key is case insensitive
 		 * @param[in] key string representing the key to be added
 		 * @param[in] value string representing the matching value to be added
 		*/
 		void addKey(const std::string& key, const std::string& value);
 
 		/**
-		 * @brief Add a specific key/value pair to the internal key/value map object
+		 * @brief Add a specific key/value pair to the internal key/value map object. 
+		 *        key and section are case insensitive
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[in] value string representing the matching value to be added
 		*/
-		void addKey(const std::string& key, const std::string& section, const std::string& value);
+		void addKey(std::string key, std::string section, const std::string& value);
 
 		/**
 		 * @brief Returns the filename that the Config object was constructed with.
@@ -146,9 +148,11 @@ class Config {
 								   const unsigned int& options=0) const {
 			try {
 				vecT.clear();
-				std::string _section = section;
+				std::string _key(key);
+				std::string _section(section);
+				IOUtils::toUpper(_key);
 				IOUtils::toUpper(_section);
-				IOUtils::getValueForKey<T>(properties, _section + "::" + key, vecT);
+				IOUtils::getValueForKey<T>(properties, _section + "::" + _key, vecT);
 			} catch(std::exception& e){
 				if (options != Config::nothrow) {
 					std::stringstream ss;
@@ -179,9 +183,11 @@ class Config {
 		                                 T& t,
 		                                 const unsigned int& options=0) const {
 			try {
-				std::string _section = section;
+				std::string _key(key);
+				std::string _section(section);
+				IOUtils::toUpper(_key);
 				IOUtils::toUpper(_section);
-				IOUtils::getValueForKey<T>(properties, _section + "::" + key, t);
+				IOUtils::getValueForKey<T>(properties, _section + "::" + _key, t);
 			} catch(std::exception& e){
 				if (options != Config::nothrow) {
 					std::stringstream ss;
@@ -205,9 +211,10 @@ class Config {
 		 * @endcode
 		 */
 		unsigned int findKeys(std::vector<std::string>& vecResult,
-						  const std::string keystart, const std::string section="GENERAL") const;
+						  std::string keystart, std::string section="GENERAL") const;
 
 		static const unsigned int nothrow;
+		static const std::string defaultSection;
 
 	private:
 		void parseCmdLine(const std::string& cmd_line);

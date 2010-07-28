@@ -22,6 +22,7 @@ using namespace std;
 namespace mio {
 
 const unsigned int Config::nothrow = 666;
+const std::string Config::defaultSection = "GENERAL";
 
 //Constructors
 Config::Config()
@@ -29,17 +30,17 @@ Config::Config()
 	//nothing is even put in the property map, the user will have to fill it by himself
 }
 
-Config::Config(const std::string& filename_in)
+Config::Config(const std::string& i_filename)
 {
-	addFile(filename_in);
+	addFile(i_filename);
 }
 
 
 //Populating the property map
-void Config::addFile(const std::string& filename_in)
+void Config::addFile(const std::string& i_filename)
 {
-	sourcename = filename_in;
-	parseFile(filename_in);
+	sourcename = i_filename;
+	parseFile(i_filename);
 }
 
 void Config::addCmdLine(const std::string& cmd_line)
@@ -50,15 +51,15 @@ void Config::addCmdLine(const std::string& cmd_line)
 
 void Config::addKey(const std::string& key, const std::string& value)
 {
-	std::string section="GENERAL";
+	std::string section=defaultSection;
 	addKey(key, section, value);
 }
 
-void Config::addKey(const std::string& key, const std::string& section, const std::string& value)
+void Config::addKey(std::string key, std::string section, const std::string& value)
 {
-	std::string _section = section;
-	IOUtils::toUpper(_section);
-	properties[_section + "::" + key] = value;
+	IOUtils::toUpper(key);
+	IOUtils::toUpper(section);
+	properties[section + "::" + key] = value;
 }
 
 std::ostream& operator<<(std::ostream &os, const Config& cfg)
@@ -83,7 +84,7 @@ void Config::parseFile(const std::string& filename)
 {
 	std::ifstream fin; //Input file streams
 	unsigned int linenr = 0;
-	std::string line="", section="GENERAL";
+	std::string line="", section=defaultSection;
 	
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename,AT);
@@ -139,7 +140,7 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 	}
 
 	//At this point line can only be a key value pair
-	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::")){
+	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::", true)){
 		tmp << linenr;
 		throw InvalidFormatException("Error reading key value pair in " + sourcename + " line:" + tmp.str(), AT);    
 	}
@@ -151,29 +152,29 @@ std::string Config::getSourceName()
 	return sourcename;
 }
 
-unsigned int Config::findKeys(std::vector<std::string>& vecResult, 
-							const std::string keystart, 
-							const std::string section) const
+unsigned int Config::findKeys(std::vector<std::string>& vecResult, std::string keystart, 
+						std::string section) const
 {
 	vecResult.clear();
-	string _section = section;
-	if (_section.length() == 0) //enforce the default section if user tries to give empty section string
-		_section = "GENERAL";
 
-	IOUtils::toUpper(_section);
-	string _keystart = _section + "::" + keystart;
+	if (section.length() == 0) //enforce the default section if user tries to give empty section string
+		section = defaultSection;
+
+	IOUtils::toUpper(section);
+	IOUtils::toUpper(keystart);
+	string _keystart = section + "::" + keystart;
 
 	//Loop through keys, look for substring match - push it into vecResult
 	map<string,string>::const_iterator it;
 	for (it=properties.begin(); it != properties.end(); it++){
 		string tmp = (*it).first;
-		tmp = tmp.substr(0,_keystart.length());
+		tmp = tmp.substr(0, _keystart.length());
 
 		int matchcount = _keystart.compare(tmp);
 
 		if (matchcount == 0){ //perfect match
 			string tmp2 = it->first;
-			tmp2 = tmp2.substr(_section.length() + 2);
+			tmp2 = tmp2.substr(section.length() + 2);
 			vecResult.push_back(tmp2);
 		}
 	}
