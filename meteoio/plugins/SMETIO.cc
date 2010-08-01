@@ -355,7 +355,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 				if (md.date < dateStart)
 					continue;
 				if (md.date > dateEnd)
-					break;
+					return;
 			} else {
 				float tmpval;
 				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(float));			
@@ -428,7 +428,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 				if (md.date < dateStart)
 					continue;
 				if (md.date > dateEnd)
-					break;
+					return;
 
 			} else if (vecDataSequence[ii] == "latitude"){
 				if (!IOUtils::convertString(lat, tmpvec[ii])) 

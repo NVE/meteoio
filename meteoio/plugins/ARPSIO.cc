@@ -288,8 +288,8 @@ void ARPSIO::openGridFile(const std::string& _filename)
 	}
 
 	//get llcorner
-	cfg.getValue("ARPS_X", "Input", xcoord, 0);
-	cfg.getValue("ARPS_Y", "Input", ycoord, 0);
+	cfg.getValue("ARPS_X", "Input", xcoord);
+	cfg.getValue("ARPS_Y", "Input", ycoord);
 
 	//come back to the begining of the file
 	rewind(fin);
