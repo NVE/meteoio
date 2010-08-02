@@ -389,9 +389,10 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 		//cout << "===" << endl;
 		//cout << sd << endl;
 		//cout << md.date.toString(Date::ISO) << endl;
-
-		vecMeteo.push_back(md);
-		vecStation.push_back(tmpsd);
+		if (md.date >= dateStart){
+			vecMeteo.push_back(md);
+			vecStation.push_back(tmpsd);
+		}
 	}	
 }
 
@@ -453,8 +454,10 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 		if (poscounter == 3)
 			tmpsd.position.setLatLon(lat, lon, alt);
 
-		vecMeteo.push_back(md);
-		vecStation.push_back(tmpsd);
+		if (md.date >= dateStart){
+			vecMeteo.push_back(md);
+			vecStation.push_back(tmpsd);
+		}
 	}
 }
 
