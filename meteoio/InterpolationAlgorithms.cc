@@ -384,6 +384,14 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const MeteoData::Param
 	if (param != MeteoData::VW)
 		return 0.0;
 
+	//This algorithm requires the curvatures
+	unsigned int nx=0, ny=0;
+	dem.curvature.size(nx,ny);
+	if (nx==0 || ny==0) {
+		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Skipping algorithm...\n";
+		return 0.0;
+	}
+
 	vector<double> vecAltitudes, vecDataVW, vecDataDW;
 	vector<StationData> vecMeta;
 	unsigned int nrOfMeasurments = 0;

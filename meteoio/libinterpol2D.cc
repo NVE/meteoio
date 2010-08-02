@@ -144,7 +144,7 @@ int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<do
 	//finds the linear regression for points (x,y,z,Value)
 	const double r_thres=0.7;
 	double a,b,r;
-	
+
 	if ((unsigned int)X.size()==2) {
 		std::cout << "[W] only two points for linear regression!" << std::endl;
 	}

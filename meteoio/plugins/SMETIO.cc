@@ -196,6 +196,7 @@ void SMETIO::parseInputOutputSection()
 	/*
 	 * Parse the [Input] and [Output] sections within Config object cfg
 	 */
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
 	unsigned int counter = 1;
@@ -247,6 +248,7 @@ void SMETIO::parseInputOutputSection()
 
 		outputIsGzipped = true;
 	}
+
 }
 
 void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -488,16 +490,19 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	IOUtils::getValueForKey(mapHeader, "station_id", sd.stationID);
 	IOUtils::getValueForKey(mapHeader, "station_name", sd.stationName, IOUtils::nothrow);
 	IOUtils::getValueForKey(mapHeader, "tz", timezone, IOUtils::nothrow);
+	sd.position.setProj(coordin, coordinparam); //set the default projection from config file
 
 	//trying to read easting/northing
 	double easting=IOUtils::nodata, northing=IOUtils::nodata, alt=IOUtils::nodata;
 	short int epsg=IOUtils::snodata;
+	IOUtils::getValueForKey(mapHeader, "epsg", epsg, IOUtils::nothrow);
+	if(epsg!=IOUtils::snodata) {
+		sd.position.setEPSG(epsg);
+	}
 	IOUtils::getValueForKey(mapHeader, "easting", easting, IOUtils::nothrow);
 	if (easting != IOUtils::nodata){ //HACK
 		IOUtils::getValueForKey(mapHeader, "northing", northing);
 		IOUtils::getValueForKey(mapHeader, "altitude", alt);
-		IOUtils::getValueForKey(mapHeader, "epsg", epsg);
-		sd.position.setEPSG(epsg);
 		sd.position.setXY(easting, northing, alt);
 		locationInHeader = true;
 	} else {
@@ -555,6 +560,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
 		//1. check consitency of station data position -> write location in header or data section
 		StationData sd;
+		sd.position.setProj(coordout, coordoutparam);
 		bool isConsistent = checkConsistency(vecStation.at(ii), sd);
 		
 		if (sd.stationID == ""){
@@ -688,8 +694,8 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
 	fout << "station_id   = " << sd.getStationID() << endl;
 	if (sd.getStationName() != "")
 		fout << "station_name = " << sd.getStationName() << endl;
-	
-	if (writeLocationInHeader){
+
+	if (writeLocationInHeader){ //TODO: only write if != nodata
 		fout << fixed;
 		fout << "latitude     = " << setw(14) << setprecision(6) << sd.position.getLat() << "\n";
 		fout << "longitude    = " << setw(14) << setprecision(6) << sd.position.getLon() << "\n";
