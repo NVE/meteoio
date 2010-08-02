@@ -25,6 +25,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <map>
 
 namespace mio {
 

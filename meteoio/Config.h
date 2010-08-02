@@ -47,13 +47,7 @@ namespace mio {
  * @date   2008-11-30
  */
 
-namespace IOUtils {
-	void toUpper(std::string& str);
-	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-								    const std::string& key, T& t, const unsigned int& options=1);
-	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-								    const std::string& key, std::vector<T>& vecT, const unsigned int& options=1);
-}
+class ConfigProxy;
 
 #ifdef _POPC_
 class Config : POPBase {
@@ -63,6 +57,8 @@ class Config : POPBase {
 class Config {
 #endif
 	public:
+		enum Options { dothrow, nothrow };
+
 		/**
 		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object
 		*/
@@ -115,6 +111,21 @@ class Config {
 		*/
 		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
 
+		template <typename T> std::vector<T> getValue(const std::string& key, const Options& opt=Config::dothrow) const
+		{
+			std::vector<T> tmp;
+			getValue(key, Config::defaultSection, tmp, opt);
+			return tmp;
+		}
+
+		template <typename T> std::vector<T> getValue(const std::string& key, const std::string& section,
+                                                        const Options& opt=Config::dothrow) const
+		{
+			std::vector<T> tmp;
+			getValue(key, section, tmp, opt);
+			return tmp;
+		}
+
 		/**
 		 * @brief Template function to retrieve a vector of values of class T for a certain key
 		 * @code
@@ -123,12 +134,13 @@ class Config {
 		 * @endcode
 		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
 		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved
-		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
-		template <class T> void getValue(const std::string& key,
+		template <typename T> void getValue(const std::string& key,
 								   std::vector<T>& vecT,
-								   const unsigned int& options=0) const {
-			getValue(key, "GENERAL", vecT, options);
+								   const Options& opt=Config::dothrow) const
+		{
+			getValue(key, "GENERAL", vecT, opt);
 		}
 
 		/**
@@ -140,12 +152,11 @@ class Config {
 		 * @param[in] key std::string representing a KEY in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] vecT a variable of class vector<T> into which the values for the corresponding key are saved
-		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
-		template <class T> void getValue(const std::string& key,
-								   const std::string& section,
-								   std::vector<T>& vecT,
-								   const unsigned int& options=0) const {
+		template <typename T> void getValue(const std::string& key, const std::string& section,
+								      std::vector<T>& vecT, const Options& opt=Config::dothrow) const 
+		{
 			try {
 				vecT.clear();
 				std::string _key(key);
@@ -154,7 +165,7 @@ class Config {
 				IOUtils::toUpper(_section);
 				IOUtils::getValueForKey<T>(properties, _section + "::" + _key, vecT);
 			} catch(std::exception& e){
-				if (options != Config::nothrow) {
+				if (opt != Config::nothrow) {
 					std::stringstream ss;
 					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
 					throw UnknownValueException(ss.str(), AT);
@@ -163,13 +174,38 @@ class Config {
 		}
 
 		/**
+		 * @ brief A function that allows to retrieve a value for a key as return parameter (vectors of values too)
+		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
+		 * @param[in] opt indicating whether an exception should be raised, when key is not present
+		 * @return A value of type T
+		 */
+		ConfigProxy get(const std::string& key, const Options& opt=Config::dothrow) const;
+
+		/**
+		 * @ brief A function that allows to retrieve a value for a key as return parameter (vectors of values too)
+		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[in] opt indicating whether an exception should be raised, when key is not present
+		 * @return A value of type T
+		 *
+		 * Example Usage:
+		 * @code
+		 * Config cfg("io.ini");
+		 * vector<int> = cfg.get("DEPTHS", "INPUT", Config::nothrow);
+		 * string mystr = cfg.get("PATH", "OUTPUT");
+		 * @endcode
+		 */
+		ConfigProxy get(const std::string& key, const std::string& section, const Options& opt=Config::dothrow) const;
+
+		/**
 		 * @brief Template function to retrieve a value of class T for a certain key
 		 * @param[in] key std::string representing a KEY in the key/value file (default section "GENERAL" is assumed)
 		 * @param[out] t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
-		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
-		template <class T> void getValue(const std::string& key, T& t, const unsigned int& options=0) const {
-			getValue(key, "GENERAL", t, options);
+		template <typename T> void getValue(const std::string& key, T& t, const Options& opt=Config::dothrow) const
+		{
+			getValue(key, "GENERAL", t, opt);
 		}
 
 		/**
@@ -177,11 +213,11 @@ class Config {
 		 * @param[in] key std::string representing a KEY in the key/value file
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[out] t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
-		 * @param[in] options indicating whether an exception should be raised, when key is not present
+		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
-		template <class T> void getValue(const std::string& key, const std::string& section,
-		                                 T& t,
-		                                 const unsigned int& options=0) const {
+		template <typename T> void getValue(const std::string& key, const std::string& section, T& t,
+                                              const Options& opt=Config::dothrow) const
+		{
 			try {
 				std::string _key(key);
 				std::string _section(section);
@@ -189,7 +225,7 @@ class Config {
 				IOUtils::toUpper(_section);
 				IOUtils::getValueForKey<T>(properties, _section + "::" + _key, t);
 			} catch(std::exception& e){
-				if (options != Config::nothrow) {
+				if (opt != Config::nothrow) {
 					std::stringstream ss;
 					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
 					throw UnknownValueException(ss.str(), AT);
@@ -213,7 +249,6 @@ class Config {
 		unsigned int findKeys(std::vector<std::string>& vecResult,
 						  std::string keystart, std::string section="GENERAL") const;
 
-		static const unsigned int nothrow;
 		static const std::string defaultSection;
 
 	private:
@@ -225,6 +260,25 @@ class Config {
 		std::string sourcename; //description of the data source for the key/value pair
 
 }; //end class definition Config
+
+class ConfigProxy {
+ public:
+	const Config& proxycfg;
+	const std::string& key;
+	const std::string& section;
+     const Config::Options& opt;
+
+	ConfigProxy(const Config& i_cfg, const std::string& i_key, 
+			  const std::string& i_section, const Config::Options& i_opt) 
+			: proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
+			
+	template<typename T> operator T()
+		{ 
+			T tmp;
+			proxycfg.getValue(key, section, tmp, opt);
+			return tmp; 
+		}
+};
 
 } //end namespace mio
 

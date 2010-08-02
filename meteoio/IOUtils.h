@@ -18,7 +18,6 @@
 #ifndef __IOUTILS_H__
 #define __IOUTILS_H__
 
-#include <meteoio/Config.h>
 #include <meteoio/Coords.h>
 #include <meteoio/Date.h>
 #include <meteoio/IOExceptions.h>

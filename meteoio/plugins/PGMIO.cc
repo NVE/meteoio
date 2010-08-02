@@ -118,11 +118,11 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		}
 		IOUtils::convertString(nr_colors, tmpvec[0]);
 
-		cfg.getValue("PGM_XCOORD", "Input", xllcorner, 0);
-		cfg.getValue("PGM_YCOORD", "Input", yllcorner, 0);
-		cfg.getValue("PGM_CELLSIZE", "Input", cellsize, 0);
-		cfg.getValue("PGM_MIN", "Input", val_min, 0);
-		cfg.getValue("PGM_MAX", "Input", val_max, 0);
+		cfg.getValue("PGM_XCOORD", "Input", xllcorner, Config::dothrow);
+		cfg.getValue("PGM_YCOORD", "Input", yllcorner, Config::dothrow);
+		cfg.getValue("PGM_CELLSIZE", "Input", cellsize, Config::dothrow);
+		cfg.getValue("PGM_MIN", "Input", val_min, Config::dothrow);
+		cfg.getValue("PGM_MAX", "Input", val_max, Config::dothrow);
 
 		Coords location(coordin, coordinparam);
 		location.setXY(xllcorner, yllcorner, IOUtils::nodata);

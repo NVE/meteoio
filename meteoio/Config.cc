@@ -21,7 +21,6 @@ using namespace std;
 
 namespace mio {
 
-const unsigned int Config::nothrow = 666;
 const std::string Config::defaultSection = "GENERAL";
 
 //Constructors
@@ -35,6 +34,15 @@ Config::Config(const std::string& i_filename)
 	addFile(i_filename);
 }
 
+ConfigProxy Config::get(const std::string& key, const Options& opt) const 
+{
+	return ConfigProxy(*this, key, Config::defaultSection, opt);
+}
+
+ConfigProxy Config::get(const std::string& key, const std::string& section, const Options& opt) const 
+{
+	return ConfigProxy(*this, key, section, opt);
+}
 
 //Populating the property map
 void Config::addFile(const std::string& i_filename)
