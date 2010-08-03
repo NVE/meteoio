@@ -45,7 +45,7 @@ namespace mio {
  * }
  * @endcode
  * 
- * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units)
+ * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units). Moreover, it is required by the BufferedIOHandler that each plugin that implements readMeteoData @em also implements the readStationData method. This is required so that the metadata is available even if not data exists for the requested time period.
  *
  * The meteorological data must be returned in a vector of vectors of MeteoData (and similarly, of StationData in order to provide the metadata). This consists of building a vector of MeteoData objects, each containing a set of measurements for a given timestamp, at a given location. This vector that contains the time series at one specific location is then added to a vector (pushed) that will then contain all locations.
  * \image html vector_vector.png "vector of vector structure"
@@ -66,6 +66,14 @@ namespace mio {
  * - keywords, listing (with a brief description) the keywords that are recognized by the plugin for its configuration
  * 
  * The internal documentation of the plugin can remain as normal C++ comments (since they are addressed to the maintainer of the plugin).
+ *
+ * @section plugins_testing Plugins testing and validation
+ * In order to check that a plugin operates properly, developers are invited to test the following (among others), for a plugin that reads meteorological data (these tests can be performed using the example code <a href="../../doc/examples/meteo_reading.cc">doc/examples/meteo_reading.cc</a>):
+ * - request one time stamp part of the original data set
+ * - request one time stamp within the period of the original data set, but not matching an existing time stamp
+ * - request a data point @em before the original data set
+ * - request a data point @em after the original data set
+ * - request a data point at the end of a very large data set (tens of Mb) and check that memory consumption remains the same as when requesting a data point at the begining of the data set (ie: that the memory for one buffer is used, but that the temporary memory usage of the plugin does not increase with the amount of data it has to parse before returning it to the BufferedIOHandler)
  */
 
 /**

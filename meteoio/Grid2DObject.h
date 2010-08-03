@@ -67,10 +67,10 @@ class Grid2DObject {
 		*/
 		Grid2DObject();
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-			const double& cellsize, const Coords& _llcorner);
+		             const double& cellsize, const Coords& _llcorner);
 
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-			const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in);
+		             const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in);
 
 		/**
 		* @brief constructs an object as a subset of another grid object
@@ -81,8 +81,8 @@ class Grid2DObject {
 		* @param _nrows (const unsigned int) number of rows of the subset
 		*/
 		Grid2DObject(const Grid2DObject& _grid2Dobj,
-				   const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
-				   const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
+		             const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
+		             const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
 
 		/**
 		* @brief Compute the positional parameters that are not already known
@@ -113,7 +113,7 @@ class Grid2DObject {
 		* @param _llcorner lower left corner point
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-			const double& cellsize, const Coords& _llcorner);
+		         const double& cellsize, const Coords& _llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid2D of type
 		* Array2D\<double\> will be destroyed and recreated to size ncols x nrows.
@@ -124,7 +124,7 @@ class Grid2DObject {
 		* @param grid2D_in (CArray\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-			const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
+		         const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
 
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
@@ -143,9 +143,9 @@ class Grid2DObject {
 
  protected:
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,
-				const double& cellsize, const Coords& _llcorner);
+		               const double& cellsize, const Coords& _llcorner);
 		void setValues(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _cellsize);
+		               const double& _cellsize);
 
 		/**
 		* @brief Converts WGS84 coordinates into grid coordinates (i,j)

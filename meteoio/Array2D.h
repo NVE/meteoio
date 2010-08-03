@@ -60,13 +60,31 @@ template <class T> class Array2DProxy {
 template<class T> class Array2D {
 	public:
 		Array2D();
+
+		/**
+		* A constructor that creates an array of a given size
+		* @param anx number of columns of the new array
+		* @param any number of rows of the new array
+		*/
 		Array2D(const unsigned int& anx, const unsigned int& any);
+
+		/**
+		* A constructor that creates an array filled with constant values
+		* @param anx number of columns of the new array
+		* @param any number of rows of the new array
+		* @param init initial value to fill the array with
+		*/
 		Array2D(const unsigned int& anx, const unsigned int& any, const T& init);
 
 		/**
 		* A constructor that can be used to create an Array2D object that is contained in the
 		* one passed as _array2D argument. The resulting Array2D object is a by value copy of
 		* a subplane of the plane spanned by the _array2D
+		* @param _array2D array containing to extract the values from
+		* @param _nx lower left corner cell X index
+		* @param _ny lower left corner cell Y index
+		* @param _ncols number of columns of the new array
+		* @param _nrows number of rows of the new array
 		*/
 		Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
 			    const unsigned int& _ncols, const unsigned int& _nrows);
@@ -75,6 +93,11 @@ template<class T> class Array2D {
 		* @brief A method that can be used to cut out a subplane of an existing Array2D object 
 		* that is passed as _array2D argument. The resulting Array2D object is a by value copy of
 		* a subplane of the plane spanned by the _array2D
+		* @param _array2D array containing to extract the values from
+		* @param _nx lower left corner cell X index
+		* @param _ny lower left corner cell Y index
+		* @param _ncols number of columns of the new array
+		* @param _nrows number of rows of the new array
 		*/
 		void subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
 		            const unsigned int& _ncols, const unsigned int& _nrows);

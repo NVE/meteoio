@@ -185,10 +185,49 @@ void SMETIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_ou
 	throw IOException("Nothing implemented here", AT);
 }
 
-void SMETIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
+{//big HACK: this is a barbaric code duplication!! Plus it should support coordinates in the data
+	unsigned int startindex=0, endindex=vecFiles.size();
+	vecStation.clear();
+
+	//Now loop through all requested stations, open the respective files and parse them
+	for (unsigned int ii=startindex; ii<endindex; ii++){
+		bool isAscii = true;
+		string filename = vecFiles.at(ii); //filename of current station
+		
+		if (!IOUtils::fileExists(filename))
+			throw FileNotFoundException(filename, AT);
+
+		fin.clear();
+		fin.open (filename.c_str(), ios::in);
+		if (fin.fail())
+			throw FileAccessException(filename, AT);
+
+		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+
+		//Go through file, save key value pairs
+		string line="";
+		std::vector<std::string> tmpvec, vecDataSequence;
+		double timezone = 0.0;
+		bool locationInHeader = false;
+		StationData sd;
+
+		try {
+			//1. Read signature
+			getline(fin, line, eoln); //read complete signature line
+			IOUtils::stripComments(line);
+			IOUtils::readLineToVec(line, tmpvec);
+			checkSignature(tmpvec, filename, isAscii);
+
+			//2. Read Header
+			readHeader(eoln, filename, locationInHeader, timezone, sd, vecDataSequence);
+			cleanup();
+		} catch(std::exception& e) {
+			cleanup();
+			throw;
+		}
+		vecStation.push_back(sd);
+	}
 }
 
 void SMETIO::parseInputOutputSection()

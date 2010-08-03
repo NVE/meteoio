@@ -89,17 +89,55 @@ template<class T> class Array3D {
 		/**
 		* A constructor that can be used to create an Array3D object that is contained in the
 		* one passed as _array3D argument. The resulting Array3D object is a by value copy of
-		* a subspace of the space spanned by the _array3D
+		* a subvolume of the volume spanned by the _array3D
+		* @param _array3D array containing to extract the values from
+		* @param _nx lower left corner cell X index
+		* @param _ny lower left corner cell Y index
+		* @param _nz lower left corner cell Z index
+		* @param _ncols number of columns of the new array
+		* @param _nrows number of rows of the new array
+		* @param _ndepth number of depths of the new array
 		*/
 		Array3D(const Array3D<T>& _array3D,
-			   const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-			   const unsigned int& _cols, const unsigned int& _nrows, const unsigned int& _ndepth);
-		Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz);
-		Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init);
+		        const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
+		        const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth);
 
-		void resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz);
-		void resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init);
-		void size(unsigned int& _nx, unsigned int& _ny, unsigned int& _nz) const;
+		/**
+		* A constructor that creates an array of a given size
+		* @param anx number of columns of the new array
+		* @param any number of rows of the new array
+		* @param anz number of rows of the new array
+		*/
+		Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
+
+		/**
+		* A constructor that creates an array filled with constant values
+		* @param anx number of columns of the new array
+		* @param any number of rows of the new array
+		* @param anz number of depths of the new array
+		* @param init initial value to fill the array with
+		*/
+		Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
+
+		/**
+		* A method that can be used to create an Array3D object that is contained in the
+		* one passed as _array3D argument. The resulting Array3D object is a by value copy of
+		* a subvolume of the volume spanned by the _array3D
+		* @param _array3D array containing to extract the values from
+		* @param _nx lower left corner cell X index
+		* @param _ny lower left corner cell Y index
+		* @param _nz lower left corner cell Z index
+		* @param _ncols number of columns of the new array
+		* @param _nrows number of rows of the new array
+		* @param _ndepth number of depths of the new array
+		*/
+		void subset(const Array3D<T>& _array3D,
+		            const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
+		            const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth);
+
+		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
+		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
+		void size(unsigned int& anx, unsigned int& any, unsigned int& anz) const;
 		void clear();
 
 		/**
@@ -186,8 +224,15 @@ template<class T> Array3D<T>::Array3D() {
 }
 
 template<class T> Array3D<T>::Array3D(const Array3D<T>& _array3D,
-			   const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-			   const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth) 
+                                      const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
+                                      const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth)
+{
+	subset(_array3D, _nx, _ny, _nz, _ncols, _nrows, _ndepth);
+}
+
+template<class T> void Array3D<T>::subset(const Array3D<T>& _array3D,
+                                     const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
+                                     const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth)
 {
 	
 	if (((_nx+_ncols) > _array3D.nx) || ((_ny+_nrows) > _array3D.ny) || ((_nz+_ndepth) > _array3D.nz))
@@ -209,44 +254,44 @@ template<class T> Array3D<T>::Array3D(const Array3D<T>& _array3D,
 	}
 }
 
-template<class T> Array3D<T>::Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz) {
-	resize(_nx, _ny, _nz);
+template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
+	resize(anx, any, anz);
 }
 
-template<class T> Array3D<T>::Array3D(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init) {
-	resize(_nx, _ny, _nz, _init);
+template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
+	resize(anx, any, anz, init);
 }
 
-template<class T> void Array3D<T>::resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz) {
+template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
 	clear();
 
-	if ((_nx > 0) && (_ny > 0) && (_nz > 0)) {
-		vecData.resize(_nx*_ny*_nz);
-		nx = _nx;
-		ny = _ny;
-		nz = _nz;
+	if ((anx > 0) && (any > 0) && (anz > 0)) {
+		vecData.resize(anx*any*anz);
+		nx = anx;
+		ny = any;
+		nz = anz;
 		nxny = nx*ny;
 	} else {
 		throw IndexOutOfBoundsException("", AT);    
 	}
 }
 
-template<class T> void Array3D<T>::resize(const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz, const T& _init) {
-	resize(_nx, _ny, _nz);
+template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
+	resize(anx, any, anz);
 
 	for (unsigned int ii=0; ii<nz; ii++) { 
 		for (unsigned int jj=0; jj<ny; jj++) {
 			for (unsigned int kk=0; kk<nx; kk++) {
-				operator()(kk,jj,ii) = _init; //Running through the vector in order of memory alignment
+				operator()(kk,jj,ii) = init; //Running through the vector in order of memory alignment
 			}
 		}
 	}
 }
 
-template<class T> void Array3D<T>::size(unsigned int& _nx, unsigned int& _ny, unsigned int& _nz) const {
-	_nx=nx;
-	_ny=ny;
-	_nz=nz;
+template<class T> void Array3D<T>::size(unsigned int& anx, unsigned int& any, unsigned int& anz) const {
+	anx=nx;
+	any=ny;
+	anz=nz;
 }
 
 template<class T> void Array3D<T>::clear() {

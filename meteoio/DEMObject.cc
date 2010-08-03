@@ -119,22 +119,54 @@ DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update, const slope_
 * @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsigned int& _ny, 
-				 const unsigned int& _ncols, const unsigned int& _nrows, const bool& _update, const slope_type& _algorithm)
-	: Grid2DObject(_dem, _nx,_ny, _ncols,_nrows), slope(_dem.slope,_nx,_ny, _ncols,_nrows),
-	  azi(_dem.azi,_nx,_ny, _ncols,_nrows), curvature(_dem.curvature,_nx,_ny, _ncols,_nrows),
-	  Nx(_dem.Nx,_nx,_ny, _ncols,_nrows), Ny(_dem.Ny,_nx,_ny, _ncols,_nrows), Nz(_dem.Nz,_nx,_ny, _ncols,_nrows)
+                     const unsigned int& _ncols, const unsigned int& _nrows,
+                     const bool& _update, const slope_type& _algorithm)
+                     : Grid2DObject(_dem, _nx,_ny, _ncols,_nrows),
+                       slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	if ((_ncols==0) || (_nrows==0)) {
 		throw InvalidArgumentException("requesting a subset of 0 columns or rows for DEMObject", AT);
 	}
-
+	
+	//handling of the update properties
 	slope_failures = curvature_failures = 0;
-	update_flag = INT_MAX;
+	update_flag = _dem.getUpdatePpt();
 	setDefaultAlgorithm(_algorithm);
-	if(_update==false) {
-		updateAllMinMax();
-	} else {
+	if(_update==true) {
+		//if the object is in automatic update, then we only process the arrays according to
+		//the update_flag
 		update(_algorithm);
+	} else {
+		//if the object is NOT in automatic update, we manually copy all non-empty arrays
+		//from the original set
+		unsigned int nx, ny;
+		
+		_dem.slope.size(nx, ny);
+		if(nx>0 && ny>0) {
+			slope.subset(_dem.slope,_nx,_ny, _ncols,_nrows);
+		}
+		_dem.azi.size(nx, ny);
+		if(nx>0 && ny>0) {
+			azi.subset(_dem.azi,_nx,_ny, _ncols,_nrows);
+		}
+		_dem.curvature.size(nx, ny);
+		if(nx>0 && ny>0) {
+			curvature.subset(_dem.curvature,_nx,_ny, _ncols,_nrows);
+		}
+		_dem.Nx.size(nx, ny);
+		if(nx>0 && ny>0) {
+			Nx.subset(_dem.Nx,_nx,_ny, _ncols,_nrows);
+		}
+		_dem.Ny.size(nx, ny);
+		if(nx>0 && ny>0) {
+			Ny.subset(_dem.Ny,_nx,_ny, _ncols,_nrows);
+		}
+		_dem.Nz.size(nx, ny);
+		if(nx>0 && ny>0) {
+			Nz.subset(_dem.Nz,_nx,_ny, _ncols,_nrows);
+		}
+
+		updateAllMinMax();
 	}
 }
 
@@ -152,7 +184,7 @@ void DEMObject::setUpdatePpt(const update_type& in_update_flag) {
 * @brief Get the properties that will be calculated by the object when updating
 * @return combination of flags set with the binary "|" operator
 */
-int DEMObject::getUpdatePpt() {
+int DEMObject::getUpdatePpt() const {
 	return update_flag;
 }
 

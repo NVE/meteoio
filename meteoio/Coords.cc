@@ -538,15 +538,7 @@ short int Coords::getEPSG() const {
 		//UTM Zone information
 		short int zoneNumber;
 		char zoneLetter;
-		if ((sscanf(coordparam.c_str(), "%hd%c", &zoneNumber, &zoneLetter) < 2) &&
-		   (sscanf(coordparam.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
-			throw InvalidFormatException("Can not parse given UTM zone: "+coordparam,AT);
-		}
-		zoneLetter = toupper(zoneLetter); //just in case... (sorry for the pun!)
-		if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
-			//Special zones for the poles: we should NOT use UTM in these regions!
-			throw InvalidFormatException("Invalid UTM zone: "+coordparam+" (trying to use UTM in polar regions)",AT);
-		}
+		parseUTMZone(coordparam, zoneLetter, zoneNumber);
 		if(zoneLetter >= 'M') {
 			//northern hemisphere
 			return (32600+zoneNumber);
@@ -882,7 +874,15 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 	long_in = fmod(long_in+360.+180., 360.) - 180.; //normalized to [-180. ; 180.[
 	const double Long = long_in * to_rad;
 	const double Lat = lat_in * to_rad;
-	const int zoneNumber = getUTMZone(lat_in, long_in, zone);
+	int zoneNumber = getUTMZone(lat_in, long_in, zone);
+	short int in_zoneNumber;
+	char in_zoneLetter;
+	parseUTMZone(coordparam, in_zoneLetter, in_zoneNumber);
+	if(in_zoneNumber!=zoneNumber) {
+		std::cerr << "[W] requested UTM zone is not appropriate for the given coordinates. Normally, It should be zone ";
+		std::cerr << zoneNumber << "\n";
+		zoneNumber = in_zoneNumber;
+	}
 	const double long0 = (double)((zoneNumber - 1)*6 - 180 + 3) * to_rad; //+3 puts origin in middle of zone
 
 	//Geometrical parameters
@@ -937,15 +937,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	//UTM Zone information
 	short int zoneNumber;
 	char zoneLetter;
-	if 	((sscanf(coordparam.c_str(), "%hd%c", &zoneNumber, &zoneLetter) < 2) &&
-		(sscanf(coordparam.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
-			throw InvalidFormatException("Can not parse given UTM zone: "+coordparam,AT);
-	}
-	zoneLetter = toupper(zoneLetter); //just in case... (sorry for the pun!)
-	if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
-			//Special zones for the poles: we should NOT use UTM in these regions!
-			throw InvalidFormatException("Invalid UTM zone: "+coordparam+" (trying to use UTM in polar regions)",AT);
-	}
+	parseUTMZone(coordparam, zoneLetter, zoneNumber);
 
 	//set reference parameters: central meridian of the zone, true northing and easting
 	//please note that the special zones still use the reference meridian as given by their zone number (ie: even if it might not be central anymore)
@@ -955,7 +947,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	}
 	east_in -= 500000.0; //longitude offset: x coordinate is relative to central meridian
 
-	//calculating footprint latitude fp
+	//calculating footprint latitude fp (it should be done using a few iterations)
 	const double arc = north_in/k0; //Meridional arc
 	const double mu = arc / (a*(1.-e2/4.-3.*e2*e2/64.-5.*e2*e2*e2/256.));
 	const double e1 = (1.-b/a) / (1.+b/a); //simplification of [1 - (1 - e2)1/2]/[1 + (1 - e2)1/2]
@@ -977,12 +969,28 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	const double Q2 = 0.5*D*D;
 	const double Q3 = (5. + 3.*T1 + 10.*C1 - 4.*C1*C1 - 9.*eP2) * 1./24.*D*D*D*D;
 	const double Q4 = (61. + 90.*T1 + 298.*C1 + 45.*T1*T1 - 3.*C1*C1 - 252.*eP2) * 1./720.*D*D*D*D*D*D;
+	//const double Q4extra = (1385. + 3633.*T1 + 4095.*T1*T1 + 1575.*T1*T1*T1) * 1./40320.*D*D*D*D*D*D*D*D;
+
 	const double Q5 = D;
 	const double Q6 = (1. + 2.*T1 + C1) * 1./6.*D*D*D;
 	const double Q7 = (5. - 2.*C1 + 28.*T1 - 3.*C1*C1 + 8.*eP2 + 24.*T1*T1) * 1./120.*D*D*D*D*D;
+	//const double Q7extra = (61. + 662.*T1 + 1320.*T1*T1 +720.*T1*T1*T1) * 1./5040.*D*D*D*D*D*D*D;
 
-	lat_out = (fp - Q1 * (Q2 - Q3 + Q4))*to_deg;
-	long_out = (double)long0 + ((Q5 - Q6 + Q7)/cos(fp))*to_deg;
+	lat_out = (fp - Q1 * (Q2 - Q3 + Q4 /*+Q4extra*/))*to_deg;
+	long_out = (double)long0 + ((Q5 - Q6 + Q7 /*-Q7extra*/)/cos(fp))*to_deg;
+}
+
+void Coords::parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber) const
+{ //helper method: parse a UTM zone specification string into letter and number
+	if ((sscanf(zone_info.c_str(), "%hd%c", &zoneNumber, &zoneLetter) < 2) &&
+		(sscanf(zone_info.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
+			throw InvalidFormatException("Can not parse given UTM zone: "+zone_info,AT);
+	}
+	zoneLetter = toupper(zoneLetter); //just in case... (sorry for the pun!)
+	if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
+			//Special zones for the poles: we should NOT use UTM in these regions!
+			throw InvalidFormatException("Invalid UTM zone: "+zone_info+" (trying to use UTM in polar regions)",AT);
+	}
 }
 
 /**

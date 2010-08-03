@@ -70,22 +70,22 @@ class DEMObject : public Grid2DObject {
 		DEMObject(const slope_type& _algorithm=DFLT);
 		
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& cellsize_in, const Coords& llcorner_in, const slope_type& _algorithm=DFLT);
+		          const double& cellsize_in, const Coords& llcorner_in, const slope_type& _algorithm=DFLT);
 	
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
-			const double& cellsize_in, const Coords& llcorner_in, const Array2D<double>& altitude_in,
-			const bool& _update=true, const slope_type& _algorithm=DFLT);
+		          const double& cellsize_in, const Coords& llcorner_in, const Array2D<double>& altitude_in,
+		          const bool& _update=true, const slope_type& _algorithm=DFLT);
 		
 		DEMObject(const Grid2DObject& dem_in, const bool& _update=true, const slope_type& _algorithm=DFLT);
 
 		DEMObject (const DEMObject& _dem,
-				const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
-				const unsigned int& _ncols, const unsigned int& _nrows, //dimensions of the sub-plane
-				const bool& _update=true, const slope_type& _algorithm=DFLT);
+		           const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
+		           const unsigned int& _ncols, const unsigned int& _nrows, //dimensions of the sub-plane
+		           const bool& _update=true, const slope_type& _algorithm=DFLT);
 
 		void setDefaultAlgorithm(const slope_type& _algorithm);
 		void setUpdatePpt(const update_type& in_update_flag);
-		int getUpdatePpt();
+		int getUpdatePpt() const;
 
 		void update(const std::string& algorithm);
 		void update(const slope_type& algorithm=DFLT);

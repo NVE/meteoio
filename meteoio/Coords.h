@@ -118,6 +118,8 @@ class Coords {
 	void WGS84_to_NULL(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void NULL_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 
+	void parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber) const;
+
 	//Distances calculations
 	void distance(const Coords& destination, double& distance, double& bearing) const;
 	double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const;
