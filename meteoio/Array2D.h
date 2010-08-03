@@ -71,6 +71,14 @@ template<class T> class Array2D {
 		Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
 			    const unsigned int& _ncols, const unsigned int& _nrows);
 
+		/**
+		* @brief A method that can be used to cut out a subplane of an existing Array2D object 
+		* that is passed as _array2D argument. The resulting Array2D object is a by value copy of
+		* a subplane of the plane spanned by the _array2D
+		*/
+		void subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
+		            const unsigned int& _ncols, const unsigned int& _nrows);
+
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void size(unsigned int& nx, unsigned int& ny) const;
@@ -161,6 +169,12 @@ template<class T> Array2D<T>::Array2D() {
 template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
 			    const unsigned int& _ncols, const unsigned int& _nrows)
 {
+	subset(_array2D, _nx, _ny, _ncols, _nrows);
+}
+
+template<class T> void Array2D<T>::subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
+                                          const unsigned int& _ncols, const unsigned int& _nrows)
+{
 	if (((_nx+_ncols) > _array2D.nx) || ((_ny+_nrows) > _array2D.ny))
 		throw IndexOutOfBoundsException("Trying to cut an array to a size bigger than its original size!", AT);
 
@@ -176,7 +190,6 @@ template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned
 			operator()(jj,ii) = _array2D(_nx+jj, _ny+ii);
 		}
 	}
-
 }
 
 template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any, const T& init) {
