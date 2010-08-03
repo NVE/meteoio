@@ -70,6 +70,13 @@ void Config::addKey(std::string key, std::string section, const std::string& val
 	properties[section + "::" + key] = value;
 }
 
+void Config::deleteKey(std::string key, std::string section)
+{
+	IOUtils::toUpper(key);
+	IOUtils::toUpper(section);
+	properties.erase(section + "::" + key);
+}
+
 std::ostream& operator<<(std::ostream &os, const Config& cfg)
 {
 	os << "<Config>\n";

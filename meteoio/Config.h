@@ -91,6 +91,13 @@ class Config {
 		void addKey(const std::string& key, const std::string& value);
 
 		/**
+		 * @brief Delete a specific key/value pair from the internal map object, key/section are case insensitive
+		 * @param[in] key string representing the key to be added
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		*/
+		void deleteKey(std::string key, std::string section=Config::defaultSection);
+
+		/**
 		 * @brief Add a specific key/value pair to the internal key/value map object. 
 		 *        key and section are case insensitive
 		 * @param[in] key string representing the key to be added
