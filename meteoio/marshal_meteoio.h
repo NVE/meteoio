@@ -59,6 +59,8 @@ void marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int maxsize,
 
 void marshal_map_str_str(POPBuffer &buf, std::map<std::string, std::string> &data_map, int maxsize, int flag, POPMemspool *temp);
 
+void marshal_map_str_dbl(POPBuffer &buf, std::map<std::string, double> &data_map, int maxsize, int flag, POPMemspool *temp);
+
 void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &data_map, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMemspool *temp);

@@ -187,6 +187,7 @@ void SMETIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_ou
 
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {//big HACK: this is a barbaric code duplication!! Plus it should support coordinates in the data
+//ie: it should use the given date!
 	unsigned int startindex=0, endindex=vecFiles.size();
 	vecStation.clear();
 

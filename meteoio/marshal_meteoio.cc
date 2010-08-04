@@ -127,6 +127,32 @@ void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &da
 	}
 }
 
+void marshal_map_str_dbl(POPBuffer &buf, std::map<std::string, double> &data_map, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if(flag&FLAG_MARSHAL) {
+		int n=data_map.size();
+		buf.Pack(&n,1);
+		for(std::map<std::string, double>::const_iterator it = data_map.begin(); it != data_map.end(); ++it) {
+			buf.Pack(&(it->first),1);
+			buf.Pack(&(it->second),1);
+		}
+
+	} else {
+		int n=0;
+		std::string key;
+		double value;
+		buf.UnPack(&n,1);
+		data_map.clear();
+		for(int i=0;i<n;i++) {
+			buf.UnPack(&key,1);
+			buf.UnPack(&value,1);
+			data_map[key] = value;
+		}
+	}
+}
+
 void marshal_map_str_str(POPBuffer &buf, std::map<std::string, std::string> &data_map, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
