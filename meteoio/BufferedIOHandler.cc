@@ -58,12 +58,22 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const std::string& 
 void BufferedIOHandler::readDEM(DEMObject& _grid2Dobj)
 {
 	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
-	if (it != mapBufferedGrids.end()) { //already in map
-		_grid2Dobj = (*it).second; 
+	if (it != mapBufferedGrids.end()) {
+		//already in map. If the update properties have changed,
+		//we copy the ones given in input and force the update of the object
+		const DEMObject::update_type in_ppt = (DEMObject::update_type)_grid2Dobj.getUpdatePpt();
+		_grid2Dobj = (*it).second;
+		const DEMObject::update_type buff_ppt = (DEMObject::update_type)_grid2Dobj.getUpdatePpt();
+		if(in_ppt!=buff_ppt) {
+			_grid2Dobj.setUpdatePpt(in_ppt);
+			_grid2Dobj.update();
+		}
 		return;
 	}
 	
 	DEMObject tmpgrid2D;
+	 //copy the updating policy of the destination
+	tmpgrid2D.setUpdatePpt((DEMObject::update_type)_grid2Dobj.getUpdatePpt());
 	iohandler.readDEM(tmpgrid2D);
 	mapBufferedGrids["/:DEM"] = tmpgrid2D;
 	_grid2Dobj = tmpgrid2D;

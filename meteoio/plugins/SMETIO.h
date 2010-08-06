@@ -62,6 +62,7 @@ class SMETIO : public IOInterface {
 
 	private:
 		static const std::string smet_version;
+		static const unsigned int buffer_reserve; //for optimizing vectors (ie: avoid unecessary resizing)
 		static std::map<std::string, MeteoData::Parameters> mapParameterByName; ///<Associate name and meteo parameter
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname 
@@ -94,6 +95,7 @@ class SMETIO : public IOInterface {
 		void checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii);
 		void setFormatting(const MeteoData::Parameters& paramindex);
 
+		unsigned int nr_stations; //number of stations to read from
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
 		std::string outpath;                //read from the Config [Output] section
 		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section

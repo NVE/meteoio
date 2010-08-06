@@ -47,6 +47,7 @@ namespace mio {
  */
 
 const std::string SMETIO::smet_version = "0.99";
+const unsigned int SMETIO::buffer_reserve = 23*24*2; //kind of average size of a buffer for optimizing vectors
 map<string, MeteoData::Parameters> SMETIO::mapParameterByName;
 const bool SMETIO::__init = SMETIO::initStaticData();
 
@@ -188,11 +189,11 @@ void SMETIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_ou
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {//big HACK: this is a barbaric code duplication!! Plus it should support coordinates in the data
 //ie: it should use the given date!
-	unsigned int startindex=0, endindex=vecFiles.size();
 	vecStation.clear();
+	vecStation.reserve(nr_stations);
 
 	//Now loop through all requested stations, open the respective files and parse them
-	for (unsigned int ii=startindex; ii<endindex; ii++){
+	for (unsigned int ii=0; ii<nr_stations; ii++){
 		bool isAscii = true;
 		string filename = vecFiles.at(ii); //filename of current station
 		
@@ -257,6 +258,8 @@ void SMETIO::parseInputOutputSection()
 		counter++;
 	} while (filename != "");
 
+	nr_stations = counter - 1;
+
 	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
 	outpath = "";
 	outputIsAscii = true; 
@@ -314,6 +317,8 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		
 		vecMeteo = vector< vector<MeteoData> >(vecFiles.size());
 		vecStation = vector< vector<StationData> >(vecFiles.size());
+		vecMeteo.reserve(nr_stations);
+		vecStation.reserve(nr_stations);
 	}
 
 	//Now loop through all requested stations, open the respective files and parse them
@@ -372,11 +377,14 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 }
 
 void SMETIO::readDataBinary(const char&, const std::string&, const double& timezone,
-					    const StationData& sd, const std::vector<std::string>& vecDataSequence,
-					    const Date& dateStart, const Date& dateEnd,
-					    std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
+                            const StationData& sd, const std::vector<std::string>& vecDataSequence,
+                            const Date& dateStart, const Date& dateEnd,
+                            std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
 {
 	const unsigned int nrOfColumns = vecDataSequence.size();
+
+	vecMeteo.reserve(buffer_reserve);
+	vecStation.reserve(buffer_reserve);
 
 	while (!fin.eof()){
 		MeteoData md;
@@ -437,13 +445,17 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 }
 
 void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
-					   const StationData& sd, const std::vector<std::string>& vecDataSequence,
-					   const Date& dateStart, const Date& dateEnd,
-					   std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
+                           const StationData& sd, const std::vector<std::string>& vecDataSequence,
+                           const Date& dateStart, const Date& dateEnd,
+                           std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
 {
 	string line = "";
 	vector<string> tmpvec;
 	const unsigned int nrOfColumns = vecDataSequence.size();
+
+	tmpvec.reserve(nrOfColumns);
+	vecMeteo.reserve(buffer_reserve);
+	vecStation.reserve(buffer_reserve);
 
 	while (!fin.eof()){
 		getline(fin, line, eoln);
@@ -542,6 +554,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	if(epsg!=IOUtils::snodata) {
 		sd.position.setEPSG(epsg);
 	}
+	
 	IOUtils::getValueForKey(mapHeader, "easting", easting, IOUtils::nothrow);
 	if (easting != IOUtils::nodata){ //HACK
 		IOUtils::getValueForKey(mapHeader, "northing", northing);

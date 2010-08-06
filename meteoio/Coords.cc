@@ -558,6 +558,7 @@ short int Coords::getEPSG() const {
 * @param epsg epsg code
 */
 void Coords::setEPSG(const short int epsg) {
+//TODO: get rid of the zone letter. This is not part of the standard and redundant (and messy)
 	bool found=false;
 	std::string coord_sys, coord_param;
 

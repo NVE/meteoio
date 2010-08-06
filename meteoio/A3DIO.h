@@ -68,8 +68,11 @@ class A3DIO : public IOInterface {
 
 	private:
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -9999
+		static const unsigned int buffer_reserve; //for optimizing vectors (ie: avoid unecessary resizing)
+		void read1DStation(std::string& file_1d, StationData& sd);
 		void read1DMeteo(const Date& dateStart, const Date& dateEnd, 
 		                 std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
+		void read2DStations(const Date& timestamp, std::vector<StationData>& vecStation);
 		void read2DMeteo(std::vector< std::vector<MeteoData> >&, std::vector< std::vector<StationData> >&); ///< No buffering
 
 		void constructMeteo2DFilenames(const Date& _startDate, const Date& _endDate, std::vector<std::string>& _filenames);
