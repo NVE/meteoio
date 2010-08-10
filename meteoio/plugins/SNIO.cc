@@ -54,16 +54,25 @@ const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
 }
 
 SNIO::SNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
 }
 
 SNIO::SNIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
 }
 
 SNIO::~SNIO() throw()
@@ -279,6 +288,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			
 				if (ncols >= 15){//valid length for MeteoData
 					MeteoData md;
+					md.date.setTimeZone(in_tz);
 					parseMeteoLine(tmpvec, filename + ":" + ss.str(), md);
 					
 					if ((md.date >= dateStart) && (md.date <= dateEnd)){//check date and add to vectors

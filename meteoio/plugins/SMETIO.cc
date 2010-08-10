@@ -188,7 +188,7 @@ void SMETIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_ou
 
 void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {//big HACK: this is a barbaric code duplication!! Plus it should support coordinates in the data
-//ie: it should use the given date!
+//ie: it should use the given date! (and TZ)
 	vecStation.clear();
 	vecStation.reserve(nr_stations);
 
@@ -234,9 +234,12 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 void SMETIO::parseInputOutputSection()
 {
-	/*
-	 * Parse the [Input] and [Output] sections within Config object cfg
-	 */
+	//default timezones
+	in_dflt_TZ = out_dflt_TZ = 0.;
+	cfg.getValue("TZ","Input",in_dflt_TZ,Config::nothrow);
+	cfg.getValue("TZ","Output",out_dflt_TZ,Config::nothrow);
+
+	// Parse the [Input] and [Output] sections within Config object cfg
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
@@ -388,6 +391,8 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 
 	while (!fin.eof()){
 		MeteoData md;
+		if ((timezone != IOUtils::nodata) && (timezone != 0.0))
+			md.date.setTimeZone(timezone);
 		StationData tmpsd = sd;
 		double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;
 		unsigned int poscounter = 0;
@@ -398,9 +403,6 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(double));
 
 				md.date.setDate(tmpval);
-
-				if ((timezone != IOUtils::nodata) && (timezone != 0.0))
-					md.date.setTimeZone(timezone);
 
 				if (md.date < dateStart)
 					continue;
@@ -469,6 +471,8 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 			throw InvalidFormatException("In "+ filename + ": Invalid amount of data in data line "+line, AT);
 
 		MeteoData md;
+		if ((timezone != IOUtils::nodata) && (timezone != 0.0))
+			md.date.setTimeZone(timezone);
 		StationData tmpsd = sd;
 		double lat, lon, alt;
 		unsigned int poscounter = 0;
@@ -476,10 +480,6 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 			if (vecDataSequence[ii] == "timestamp"){
 				if (!IOUtils::convertString(md.date, tmpvec[ii]))
 					throw InvalidFormatException("In "+filename+": Timestamp "+tmpvec[ii]+" invalid in data line", AT);
-
-				if ((timezone != IOUtils::nodata) && (timezone != 0.0))
-					md.date.setTimeZone(timezone);
-
 				if (md.date < dateStart)
 					continue;
 				if (md.date > dateEnd)
@@ -544,6 +544,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	//Now extract info from mapHeader
 	IOUtils::getValueForKey(mapHeader, "station_id", sd.stationID);
 	IOUtils::getValueForKey(mapHeader, "station_name", sd.stationName, IOUtils::nothrow);
+	timezone = in_dflt_TZ;
 	IOUtils::getValueForKey(mapHeader, "tz", timezone, IOUtils::nothrow);
 	sd.position.setProj(coordin, coordinparam); //set the default projection from config file
 
@@ -556,7 +557,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	}
 	
 	IOUtils::getValueForKey(mapHeader, "easting", easting, IOUtils::nothrow);
-	if (easting != IOUtils::nodata){ //HACK
+	if (easting != IOUtils::nodata){
 		IOUtils::getValueForKey(mapHeader, "northing", northing);
 		IOUtils::getValueForKey(mapHeader, "altitude", alt);
 		sd.position.setXY(easting, northing, alt);
@@ -568,7 +569,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	//now trying to read lat/long (second, so that it has precedence over east/north coordinates)
 	double lat=IOUtils::nodata, lon=IOUtils::nodata;
 	IOUtils::getValueForKey(mapHeader, "latitude", lat, IOUtils::nothrow);
-	if (lat != IOUtils::nodata){ //HACK
+	if (lat != IOUtils::nodata){ 
 		IOUtils::getValueForKey(mapHeader, "longitude", lon);
 		IOUtils::getValueForKey(mapHeader, "altitude", alt);
 		sd.position.setLatLon(lat, lon, alt);

@@ -50,7 +50,7 @@ DEMObject::DEMObject(const slope_type& _algorithm) : Grid2DObject(), slope(), az
 * @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _cellsize, const Coords& _llcorner, const slope_type& _algorithm)
+                     const double& _cellsize, const Coords& _llcorner, const slope_type& _algorithm)
 	: Grid2DObject(_ncols, _nrows, _cellsize, _llcorner),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
@@ -72,8 +72,8 @@ DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
 * @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _altitude,
-				const bool& _update, const slope_type& _algorithm)
+                     const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _altitude,
+                     const bool& _update, const slope_type& _algorithm)
 	: Grid2DObject(_ncols, _nrows, _cellsize, _llcorner, _altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {

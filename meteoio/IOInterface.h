@@ -47,6 +47,8 @@ namespace mio {
  * 
  * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units). Moreover, it is required by the BufferedIOHandler that each plugin that implements readMeteoData @em also implements the readStationData method. This is required so that the metadata is available even if not data exists for the requested time period.
  *
+ * Finally, plugins must properly handle time zones. The Date class provides everything that is necessary, but the plugin developer must still properly set the time zone to each Date object (using the "TZ" key in the io.ini configuration file at least as a default value and afterwards overwriting with a plugin specified time zone specification if available). The time zone should be set \em before setting the date (so that the date that is given is understood as a date within the specified time zone).
+ *
  * The meteorological data must be returned in a vector of vectors of MeteoData (and similarly, of StationData in order to provide the metadata). This consists of building a vector of MeteoData objects, each containing a set of measurements for a given timestamp, at a given location. This vector that contains the time series at one specific location is then added to a vector (pushed) that will then contain all locations.
  * \image html vector_vector.png "vector of vector structure"
  * \image latex vector_vector.eps "vector of vector structure" width=0.9\textwidth

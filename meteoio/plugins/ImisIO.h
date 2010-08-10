@@ -85,6 +85,7 @@ class ImisIO : public IOInterface {
 		void readStationMetaData();
 		void convertUnits(MeteoData& meteo);
 
+		static const double in_tz; //timezone
 		Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecMyStation;

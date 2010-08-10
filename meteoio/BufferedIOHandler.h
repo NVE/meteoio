@@ -71,6 +71,12 @@ class BufferedIOHandler : public IOInterface {
 		virtual ~BufferedIOHandler() throw();
 	#endif
 
+		///Keywords for slope computation algorithm
+		typedef enum BUFFER_POLICY {
+			KEEP_NODATA, ///< when a data point is nodata in the buffer, return the buffered value
+			RECHECK_NODATA ///< when a data point is nodata in the buffer, refresh the buffer to see if a value could be found
+		} buffer_policy;
+
 		/**
 		 * @brief The function returns the next MeteoData object for each station with a
 		 *        date >= to the parameter _date. vecMeteo and vecStation will be empty if there
@@ -145,9 +151,11 @@ class BufferedIOHandler : public IOInterface {
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
-		//HACK: please do NOT use these methods, they will be replaced/changed/tweaked asap
-		//These methods should be considered experimental and NOT stable (from an API point of view)
-		void bufferAlways(const bool& bufferalways);
+		/**
+		 * @brief Manually tune the buffering policy
+		 * @param policy flag to define how to handle nodata (see BufferedIOHandler::buffer_policy)
+		 */
+		void setBufferPolicy(const buffer_policy& policy);
 
 		/**
 		 * @brief Manually tune the buffer
@@ -162,7 +170,7 @@ class BufferedIOHandler : public IOInterface {
 	private:
 		bool bufferData(const Date& _date, const unsigned int& stationindex);
 		void bufferAllData(const Date& _date);
-		void setBufferProperties();
+		void setDfltBufferProperties();
 
 		IOHandler& iohandler;
 		Config cfg;

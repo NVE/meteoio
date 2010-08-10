@@ -76,6 +76,8 @@ class SNIO : public IOInterface {
 		void readMetaData(unsigned int& nrOfStations);
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
 		void cleanup() throw();
+
+		double in_tz, out_tz;
 		Config cfg;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams

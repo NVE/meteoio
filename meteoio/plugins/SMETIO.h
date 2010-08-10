@@ -99,6 +99,7 @@ class SMETIO : public IOInterface {
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
 		std::string outpath;                //read from the Config [Output] section
 		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section
+		double in_dflt_TZ, out_dflt_TZ;     //default time zones
 
 		Config cfg;
 		std::ifstream fin; //Input file streams

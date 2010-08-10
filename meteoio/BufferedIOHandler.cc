@@ -29,7 +29,7 @@ BufferedIOHandler::BufferedIOHandler(IOHandler& _iohandler, const Config& _cfg)
 	  : IOInterface(NULL), iohandler(_iohandler), cfg(_cfg), meteoprocessor(_cfg), meteoBuffer(), stationBuffer(), startDateBuffer(), endDateBuffer(), mapBufferedGrids()
 #endif
 {
-	setBufferProperties();
+	setDfltBufferProperties();
 }
 
 #ifdef _POPC_
@@ -38,7 +38,7 @@ BufferedIOHandler::~BufferedIOHandler()
 BufferedIOHandler::~BufferedIOHandler() throw()
 #endif
 {
-	setBufferProperties();
+	setDfltBufferProperties();
 }
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& _grid2Dobj, const std::string& _filename)
@@ -131,7 +131,7 @@ void BufferedIOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd
 	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
 }
 
-void BufferedIOHandler::setBufferProperties()
+void BufferedIOHandler::setDfltBufferProperties()
 {
 	always_rebuffer = true;
 	bufferbefore = Date(2.0);  //minus 2 days
@@ -294,9 +294,12 @@ bool BufferedIOHandler::bufferData(const Date& _date, const unsigned int& statio
 	return true;
 }
 
-void BufferedIOHandler::bufferAlways(const bool& bufferalways)
+void BufferedIOHandler::setBufferPolicy(const buffer_policy& policy)
 {
-	always_rebuffer = bufferalways;
+	if(policy==RECHECK_NODATA)
+		always_rebuffer=true;
+	else
+		always_rebuffer=false;
 }
 
 void BufferedIOHandler::setBufferDuration(const Date& _beforeDate, const Date& _afterDate)

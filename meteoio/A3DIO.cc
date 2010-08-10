@@ -63,17 +63,26 @@ const unsigned int A3DIO::buffer_reserve = 23*24*2; //kind of average size of a 
 A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
 }
 
 //Copy constructor
 A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
 }
 
 A3DIO::A3DIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
 }
 
 A3DIO::~A3DIO() throw()
@@ -267,6 +276,7 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd,
 	Date tmp_date;
 	
 	MeteoData tmpdata;
+	tmpdata.date.setTimeZone(in_tz);
 	StationData sd;
 	bool eofreached = false;
 
@@ -337,6 +347,7 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd,
 bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string filename)
 {
 	Date tmp_date;
+	tmp_date.setTimeZone(in_tz);
 	int tmp_ymdh[4];
 	std::vector<std::string> tmpvec;
 	tmpvec.reserve(6);
@@ -421,8 +432,8 @@ void A3DIO::read2DStations(const Date& timestamp, std::vector<StationData>& vecS
 	//1D and 2D data must correspond, that means that if there is 1D data
 	//for a certain date (e.g. 1.1.2006) then 2D data must exist (prec2006.txt etc),
 	//otherwise throw FileNotFoundException
-	Date startDate(vecMeteo[0][0].date);
-	Date endDate(vecMeteo[0][vecMeteo[0].size()-1].date);
+	Date startDate(vecMeteo[0][0].date.getJulianDate(), in_tz, false); //so that the correct filenames for the TZ will be constructed
+	Date endDate(vecMeteo[0][vecMeteo[0].size()-1].date.getJulianDate(), in_tz, false);
 
 	constructMeteo2DFilenames(startDate, endDate, filenames);//get all files for all years
 	stations = getNrOfStations(filenames, hashStations);
@@ -577,6 +588,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 	unsigned int columns;
 	std::vector<std::string> tmpvec, vec_names;
 	Date tmp_date;
+	tmp_date.setTimeZone(in_tz);
 	int tmp_ymdh[4];
 
 	fin.clear();
@@ -799,7 +811,7 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data, const
 			file.flags ( std::ios::fixed );
 			for(unsigned int j=0; j<size; j++) {
 				int yyyy, mm, dd, hh;
-				data[ii][j].date.getDate(yyyy, mm, dd, hh);
+				data[ii][j].date.getDate(yyyy, mm, dd, hh); //HACK: use out_tz!!
 				file.fill('0');
 				file << setw(4) << yyyy << " " << setw(2) << mm << " " << setw(2) << dd << " " << setw(2) << hh << " ";
 				file.fill(' ');
@@ -898,7 +910,7 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 	file.flags ( ios::fixed );
 
 	for(unsigned int ii=0; ii<nb_timesteps; ii++) {
-		data[0][ii].date.getDate(year, month, day, hour);
+		data[0][ii].date.getDate(year, month, day, hour); //HACK: use out_tz!!
 		if(year!=startyear) {
 			//if the year has changed, we need to write to a new file
 			file.close();

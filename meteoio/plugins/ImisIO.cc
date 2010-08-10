@@ -49,6 +49,7 @@ namespace mio {
  */
 
 const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
+const double ImisIO::in_tz = 1.; //All IMIS data is in gmt+1
 
 const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24:MI') as datum, avg(ta) as ta, avg(iswr) as iswr, avg(vw) as vw, avg(dw) as dw, avg(rh) as rh, avg(ilwr) as ilwr, avg(hnw) as hnw, avg(tsg) as tsg, avg(tss) as tss, avg(hs) as hs, avg(rswr) as rswr from ams.v_ams_raw WHERE stat_abk=:1 and stao_nr=:2 and datum>=:3 and datum<=:4 group by datum order by datum asc";
 
@@ -281,8 +282,12 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	parseStationName(vecMyStation.at(stationindex).getStationID(), stationName, stationNumber);
 
-	dateStart.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
-	dateEnd.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
+	//IMIS is in TZ=+1, so moving back to this timezone
+	Date dateS(dateStart), dateE(dateEnd);
+	dateS.setTimeZone(in_tz);
+	dateE.setTimeZone(in_tz);
+	dateS.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
+	dateE.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 
 	//Oracle can't deal with an integer for the hour of 24, hence the following workaround
 	if (datestart[3] == 24){
@@ -297,6 +302,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	getImisData(stationName, stationNumber, datestart, dateend, vecResult);
 
 	MeteoData tmpmd;
+	tmpmd.date.setTimeZone(in_tz);
 	for (unsigned int ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
