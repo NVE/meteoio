@@ -1,6 +1,6 @@
 Begin4
 Title:          MeteoIO
-Version:        1.1
+Version:        1.1.1
 Entered-date:   2010-07-27
 Description:    Meteorological data preprocessing library: it covers data retrieval, data filtering, data transformations and statistical spatial interpolations. Convenience classes are also available for related issues.
 Keywords:       meteorological data access filtering spatial interpolation

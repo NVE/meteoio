@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.6])
-AC_INIT(meteoio, 0.1, bavay@slf.ch)
+AC_INIT(meteoio, 1.1.1, bavay@slf.ch)
 
 m4_include(m4/ax_cflags_warn_all.m4)
 m4_include(m4/m4_ax_cflags_gcc_option.m4)
