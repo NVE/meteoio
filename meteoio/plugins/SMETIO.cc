@@ -46,6 +46,8 @@ namespace mio {
  * @endcode
  */
 
+//TODO: keep a pointer to last read position, so we can fseek for the next read?
+
 const std::string SMETIO::smet_version = "0.99";
 const unsigned int SMETIO::buffer_reserve = 23*24*2; //kind of average size of a buffer for optimizing vectors
 map<string, MeteoData::Parameters> SMETIO::mapParameterByName;

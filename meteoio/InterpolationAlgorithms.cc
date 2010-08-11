@@ -371,8 +371,8 @@ void RHAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& gr
 	Interpol2D::LapseIDW(vecTd, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
 
 	//Recompute Rh from the interpolated td
-	for (unsigned int ii=0; ii<grid.ncols; ii++) {
-		for (unsigned int jj=0; jj<grid.nrows; jj++) {
+	for (unsigned int jj=0; jj<grid.nrows; jj++) {
+		for (unsigned int ii=0; ii<grid.ncols; ii++) {
 			grid.grid2D(ii,jj) = Interpol2D::DewPointtoRh(grid.grid2D(ii,jj), ta.grid2D(ii,jj), 1);
 		}
 	}

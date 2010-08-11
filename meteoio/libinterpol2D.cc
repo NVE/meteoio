@@ -228,8 +228,8 @@ void Interpol2D::stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid)
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
-	for (unsigned int i=0; i<grid.ncols; i++) {
-		for (unsigned int j=0; j<grid.nrows; j++) {
+	for (unsigned int j=0; j<grid.nrows; j++) {
+		for (unsigned int i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = lw_AirPressure(dem.grid2D(i,j));
 			} else {
@@ -251,8 +251,8 @@ void Interpol2D::constantGrid2DFill(const double& value, const DEMObject& dem, G
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//fills a data table with constant values
-	for (unsigned int i=0; i<grid.ncols; i++) {
-		for (unsigned int j=0; j<grid.nrows; j++) {
+	for (unsigned int j=0; j<grid.nrows; j++) {
+		for (unsigned int i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = value;
 			} else {
@@ -281,8 +281,8 @@ void Interpol2D::constantLapseGrid2DFill(const double& value, const double& alti
 
 	//fills a data table with constant values and then reprojects it to the DEM's elevation from a given altitude
 	//the laspe rate parameters must have been set before
-	for (unsigned int i=0; i<grid.ncols; i++) {
-		for (unsigned int j=0; j<grid.nrows; j++) {
+	for (unsigned int j=0; j<grid.nrows; j++) {
+		for (unsigned int i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = funcptr(value, altitude, dem.grid2D(i,j), vecCoefficients);
 			} else {
@@ -338,8 +338,8 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 	const double xllcorner = dem.llcorner.getEasting();
 	const double yllcorner = dem.llcorner.getNorthing();
 	const double cellsize = dem.cellsize;
-	for (unsigned int i=0; i<grid.ncols; i++) {
-		for (unsigned int j=0; j<grid.nrows; j++) {
+	for (unsigned int j=0; j<grid.nrows; j++) {
+		for (unsigned int i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize),
 				                           (yllcorner+j*cellsize), vecTref, vecStations_in);
@@ -371,8 +371,8 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 	const double xllcorner = dem.llcorner.getEasting();
 	const double yllcorner = dem.llcorner.getNorthing();
 	const double cellsize = dem.cellsize;
-	for (unsigned int i=0; i<grid.ncols; i++) {
-		for(unsigned int j=0; j<grid.nrows; j++) {
+	for (unsigned int j=0; j<grid.nrows; j++) {
+		for (unsigned int i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize), (yllcorner+j*cellsize),
 				                           vecData_in, vecStations_in);
@@ -409,8 +409,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	double Ww;		// Wind weighting
 	double Od;		// Diverting factor
 	
-	for (unsigned int i=0;i<VW.ncols-1;i++) {
-		for (unsigned int j=0;j<VW.nrows-1;j++){
+	for (unsigned int j=0;j<VW.nrows-1;j++) {
+		for (unsigned int i=0;i<VW.ncols-1;i++){
 			// Get input data
 			speed = VW.grid2D(i,j);
 			dir = DW.grid2D(i,j);

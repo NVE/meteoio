@@ -295,8 +295,8 @@ void DEMObject::printFailures() {
 	bool header=true;
 
 	if(update_flag&SLOPE) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			for ( unsigned int i = 0; i < ncols; i++ ) {
 				if((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 					if(header==true) {
 						std::cout << "[i] DEM slope could not be computed at the following points \n";
@@ -310,8 +310,8 @@ void DEMObject::printFailures() {
 	}
 
 	if(update_flag&CURVATURE) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			for ( unsigned int i = 0; i < ncols; i++ ) {
 				if((curvature(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 					if(header==true) {
 						std::cout << "[i] DEM curvature could not be computed at the following points \n";
@@ -339,8 +339,8 @@ void DEMObject::printFailures() {
 */
 void DEMObject::sanitize() {
 	if(slope_failures>0 || curvature_failures>0) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			for ( unsigned int i = 0; i < ncols; i++ ) {
 				if(update_flag&SLOPE) {
 					if((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 						grid2D(i,j) = IOUtils::nodata;
@@ -523,8 +523,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	//Now, calculate the parameters using the previously defined function pointer
-	for ( unsigned int i = 0; i < ncols; i++ ) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
+	for ( unsigned int j = 0; j < nrows; j++ ) {
+		for ( unsigned int i = 0; i < ncols; i++ ) {
 			if( grid2D(i,j) == IOUtils::nodata ) {
 				if(update_flag&SLOPE) {
 					_slope = _azi = IOUtils::nodata;
@@ -557,8 +557,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	if((update_flag&SLOPE) && (algorithm==D8)) { //extra processing required: discretization
-		for ( unsigned int i = 0; i < ncols; i++ ) {
-			for ( unsigned int j = 0; j < nrows; j++ ) {
+		for ( unsigned int j = 0; j < nrows; j++ ) {
+			for ( unsigned int i = 0; i < ncols; i++ ) {
 					//TODO: process flats by an extra algorithm
 					if(azi(i,j)!=IOUtils::nodata)
 						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
