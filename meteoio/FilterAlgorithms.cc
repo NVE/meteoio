@@ -460,6 +460,7 @@ double FilterAlgorithms::ExpSmoothingAlgorithm(const std::vector<MeteoData>& vec
  * @brief Rate of change filter.
  * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point. Remarks:
  * - the maximum permissible rate of change (per seconds) has to be provided as an argument
+ * THIS FILTER IS CURRENTLY DISABLED
  * @code
  * TA::filter1	= rate
  * TA::arg1	= 0.01
@@ -720,16 +721,22 @@ void FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 		if (pos != IOUtils::npos){
 			unsigned int startpos = pos;
 			double sum = 0.0;
+			bool exist=false;
 			while((vecM[pos].date + deltatime) > vecM[startpos].date){
 				const double& val = vecM[pos].param(paramindex);
 
-				if (val != IOUtils::nodata)
+				if (val != IOUtils::nodata) {
 					sum += val;
+					exist=true;
+				}
 
 				if (pos > 0) pos--;
 				else break;
 			}
-			vecWindowM[ii].param(paramindex) = sum;
+			if(exist==true)
+				vecWindowM[ii].param(paramindex) = sum;
+			else
+				vecWindowM[ii].param(paramindex) = IOUtils::nodata;
 			//cout << "sum: " << vecWindowM[ii].param(paramindex) << endl;
 		} else {
 			throw IOException("Could not find an element to start accumulation", AT);

@@ -57,7 +57,7 @@ double Interpol1D::linearInterpolation(const double& d1, const double& d2, const
 
 
 double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
-{
+{//This method is not safe against vector containing nodata
 	if (vecData.size() == 0)
 		throw NoAvailableDataException("Trying to calculate an arithmetic mean with no data points", AT);
 
@@ -70,7 +70,7 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 }
 
 double Interpol1D::getMedian(const std::vector<double>& vecData)
-{
+{//This method is not safe against vector containing nodata
 	if (vecData.size() == 0)
 		throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
 
@@ -91,7 +91,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 }
 
 double Interpol1D::getMedianAverageDeviation(const std::vector<double>& vecData)
-{
+{//This method is not safe against vector containing nodata
 	if (vecData.size() == 0)
 		throw NoAvailableDataException("Trying to calculate MAD with no data points", AT);
 	

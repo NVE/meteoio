@@ -118,53 +118,66 @@ double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const 
 	return sqrt( DX*DX + DY*DY );
 }
 
+//these weighting functions take the square of a distance as an argument and return a weight
+double Interpol2D::weightInvDist(const double& d2)
+{
+	return invSqrt( d2 ); //we use the optimized approximation for 1/sqrt
+}
+double Interpol2D::weightInvDistSqrt(const double& d2)
+{
+	return invSqrt( invSqrt(d2) ); //we use the optimized approximation for 1/sqrt
+}
+double Interpol2D::weightInvDist2(const double& d2)
+{
+	return 1./d2; //we use the optimized approximation for 1/sqrt
+}
+double Interpol2D::weightInvDistN(const double& d2)
+{
+	return (double)pow( invSqrt(d2) , (float)dist_pow); //we use the optimized approximation for 1/sqrt
+}
 
 //Data regression models
 /**
 * @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
 * the linear regression has the form Y = aX + b with a regression coefficient r
-* @param X (vector\<double\>) vector of X coordinates
-* @param Y (vector\<double\>) vector of Y coordinates (same order as X)
-* @param a (double) slope of the linear regression
-* @param b (double) origin of the linear regression
-* @param r (double) linear regression coefficient
-* @param ignore_index (const int) if positive, index of a point to exclude from the regression
+* @param X vector of X coordinates
+* @param Y vector of Y coordinates (same order as X)
+* @param a slope of the linear regression
+* @param b origin of the linear regression
+* @param r linear regression coefficient
 */
-void Interpol2D::LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, const int ignore_index)
-{
-	//finds the linear regression for points (x,y,z,Value)
-	//if ignore_index>=0, ignore given index (as a way to remopve a point from the interpolation)
+void Interpol2D::LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, const unsigned int imax, double& a, double& b, double& r)
+{//finds the linear regression for points (x,y,z,Value)
 	double x_avg=0., y_avg=0.;
 	double sx=0., sy=0., sxy=0.;
-	const int imax = (int)X.size();
 
 	//computing x_avg and y_avg
-	for (int i=0; i<imax; i++) {
-		if (i!=ignore_index) {
-			x_avg += X[i];
-			y_avg += Y[i];
-		}
+	for (unsigned int i=0; i<imax; i++) {
+		x_avg += X[i];
+		y_avg += Y[i];
 	}
-	if (ignore_index>=0) {
-		x_avg /= (double)(imax - 1);
-		y_avg /= (double)(imax - 1);
-	} else {
-		x_avg /= (double)imax;
-		y_avg /= (double)imax;
-	}
+	x_avg /= (double)imax;
+	y_avg /= (double)imax;
 
 	//computing sx, sy, sxy
-	for (int i=0; i<imax; i++) {
-		if (i!=ignore_index) {
-			sx += (X[i]-x_avg) * (X[i]-x_avg);
-			sy += (Y[i]-y_avg) * (Y[i]-y_avg);
-			sxy += (X[i]-x_avg) * (Y[i]-y_avg);
-		}
+	for (unsigned int i=0; i<imax; i++) {
+		sx += (X[i]-x_avg) * (X[i]-x_avg);
+		sy += (Y[i]-y_avg) * (Y[i]-y_avg);
+		sxy += (X[i]-x_avg) * (Y[i]-y_avg);
 	}
 
 	//computing the regression line
-	a = sxy / sx;          //pbl if X=cst & Y!=cst
-	b = y_avg - a*x_avg;   //pbl if X=cst & Y!=cst
+	const double epsilon = 1e-6;
+	if(sx <= x_avg*epsilon) {
+		//all points have same X -> we return a constant value that is the average
+		a = 0.;
+		b = y_avg;
+		r = 1.;
+		std::cerr << "[W] Computing linear regression on data at identical X\n";
+		return;
+	}
+	a = sxy / sx;
+	b = y_avg - a*x_avg;
 	if(sy==0) {
 		//horizontal line: all y's are equals
 		r = 1.;
@@ -182,42 +195,62 @@ void Interpol2D::LinRegressionCore(const std::vector<double>& X, const std::vect
 * @param coeffs (vector\<double\>) a,b,r coefficients in a vector
 * @return (int) EXIT_SUCCESS or EXIT_FAILURE
 */
-int Interpol2D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, std::vector<double>& coeffs)
+int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, std::vector<double>& coeffs)
 {
 	//finds the linear regression for points (x,y,z,Value)
 	const double r_thres=0.7;
+	//we want at least 4 points AND 85% of the initial data set kept in the regression
+	const double min_dataset=floor(0.85*(double)in_X.size());
+	const unsigned int min_pts=(min_dataset>4)?min_dataset:4;
+	unsigned int nb_pts = in_X.size();
 	double a,b,r;
 
-	if ((unsigned int)X.size()==2) {
-		std::cout << "[W] only two points for linear regression!" << std::endl;
+	if (nb_pts==2) {
+		std::cout << "[W] only two points for linear regression!\n";
 	}
-	if((unsigned int)X.size()<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
-		std::cerr << "[E] Not enough data point for linear regression!" << std::endl;
+	if(nb_pts<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
+		std::cerr << "[E] Not enough data point for linear regression!\n";
 		coeffs[1]=0.;
-		coeffs[2]=X[1];
+		coeffs[2]=in_X[1];
 		coeffs[3]=1.;
 		return EXIT_FAILURE;
 	}
 
-	LinRegressionCore(X, Y, coeffs[1], coeffs[2], coeffs[3],-1);
-	if(coeffs[3]<r_thres && (unsigned int)X.size()>=4) { //is r good enough? (and we need at least 3 points for a linear regression)
-		//if r is not good enough, we try by removing 1 point and keep the best result from these N-1 calculations...
-		for (unsigned int i=0; i<(unsigned int)X.size(); i++) {
-			LinRegressionCore(X, Y, a, b, r,(int)i);
+	LinRegressionCore(in_X, in_Y, nb_pts, coeffs[1], coeffs[2], coeffs[3]);
+	if(fabs(coeffs[3])>=r_thres)
+		return EXIT_SUCCESS;
+
+	std::vector<double> X(in_X), Y(in_Y);
+
+	while(fabs(coeffs[3])<r_thres && nb_pts>min_pts) {
+		//we try to remove the one point in the data set that is the worst
+		coeffs[3]=0.;
+		unsigned int index_bad=0;
+		for (unsigned int i=0; i<nb_pts; i++) {
+			//removing alternatively each point
+			//index nb_pts is used as temporary storage
+			const double X_tmp=X[i]; X[i]=X[nb_pts-1];
+			const double Y_tmp=Y[i]; Y[i]=Y[nb_pts-1];
+			LinRegressionCore(X, Y, nb_pts-1, a, b, r);
+			X[i]=X_tmp;
+			Y[i]=Y_tmp;
+
 			if (fabs(r)>fabs(coeffs[3])) {
 				coeffs[1]=a;
 				coeffs[2]=b;
 				coeffs[3]=r;
+				index_bad=i;
 			}
 		}
+		//the worst point has been found, we overwrite it
+		X[index_bad]=X[nb_pts-1];
+		Y[index_bad]=Y[nb_pts-1];
+		nb_pts--;
 	}
+
 	//check if r is reasonnable
 	if (fabs(coeffs[3])<r_thres) {
-		std::cout << "[W] Poor regression coefficient: " << std::setprecision(4) << coeffs[3] << std::endl;
-		//for (unsigned int i=0; i<X.size(); i++){
-		// printf("%g %g\n",X[i],Y[i]);
-		// }
-		//throw IOException("Poor linear regression coefficient", AT);
+		std::cout << "[W] Poor regression coefficient: " << std::setprecision(4) << coeffs[3] << "\n";
 	}
 
 	return EXIT_SUCCESS;

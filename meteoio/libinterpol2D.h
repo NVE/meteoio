@@ -101,11 +101,18 @@ class Interpol2D {
 		static double getReferenceAltitude(const DEMObject& dem);
 		
 		//core methods
-		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, 
-		                              double& a, double& b, double& r, const int ignore_index);
+		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y,
+		                              const unsigned int imax, double& a, double& b, double& r);
 		static double IDWCore(const double& x, const double& y,
 		                      const std::vector<double>& vecData_in,
 		                      const std::vector<StationData>& vecStations_in);
+
+		//weighting methods
+		double weightInvDist(const double& d2);
+		double weightInvDistSqrt(const double& d2);
+		double weightInvDist2(const double& d2);
+		double weightInvDistN(const double& d2);
+		double dist_pow; //power for the weighting method weightInvDistN
 
 	private:
 		//static members
