@@ -94,6 +94,7 @@ class Interpol2D {
 
 	private:
 		//generic functions
+		static double InvHorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
 		static double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
 		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j, 
 		                                 const double& X2, const double& Y2);

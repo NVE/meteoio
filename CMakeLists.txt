@@ -140,19 +140,22 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
-#FindDoxygen
+#Build the documentation if doxygen is found
+include(FindDoxygen)
+FIND_PACKAGE(Doxygen)
+if (DOXYGEN_FOUND)
+	ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
+	get_target_property(DOC_TARGET doc TYPE)
+	if(NOT DOC_TARGET)
+		add_custom_target(doc)
+	endif(NOT DOC_TARGET)
+	add_dependencies(doc documentation)
+endif (DOXYGEN_FOUND)
+#Install the documentation if the user desires it
 set(INSTALL_DOC ON CACHE BOOL "Install documentation ON or OFF")
 if(INSTALL_DOC)
 	set(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
-	include(FindDoxygen)
-	FIND_PACKAGE(Doxygen)
 	if (DOXYGEN_FOUND)
-		ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
-		get_target_property(DOC_TARGET doc TYPE)
-		if(NOT DOC_TARGET)
-			add_custom_target(doc)
-		endif(NOT DOC_TARGET)
-		add_dependencies(doc documentation)
 		install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html DESTINATION ${DOC_PATH})
 	else (DOXYGEN_FOUND)
 		message("Doxygen has not been found and is needed to build online documentation. Please either install doxygen or download a documentation-only package!")

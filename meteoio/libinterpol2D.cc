@@ -22,6 +22,32 @@ using namespace std;
 
 namespace mio {
 
+//Quake3 fast 1/x² approximation
+// For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
+// Credited to Greg Walsh.
+// 32  Bit float magic number 
+//#define SQRT_MAGIC_F 0x5f3759df
+#define SQRT_MAGIC_F 0x5f375a86
+
+//maximum relative error is <1.7% while computation time for sqrt is <1/4. At 0, returns a large number
+//on a large scale interpolation test on TA, max relative error is 1e-6
+inline float invSqrt(const float x) {
+	const float xhalf = 0.5f*x;
+	
+	union {
+		// get bits for floating value
+		float x;
+		int i;
+	} u;
+	u.x = x;
+	u.i = SQRT_MAGIC_F - (u.i >> 1);  // gives initial guess y0
+	return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
+}
+
+inline float fastSqrt_Q3(const float x) {
+	return x * invSqrt(x);
+}
+
 const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
 const double Interpol2D::wind_ys = 0.58;
 const double Interpol2D::wind_yc = 0.42;
@@ -53,7 +79,24 @@ double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const 
 {
 	//This function computes the horizontaldistance between two points
 	//coordinates are given in a square, metric grid system
-	return sqrt( (X1-X2)*(X1-X2) + (Y1-Y2)*(Y1-Y2) );
+	const double DX=(X1-X2), DY=(Y1-Y2);
+	return sqrt( DX*DX + DY*DY );
+}
+
+/**
+* @brief Computes the 1/horizontal distance between points, given by coordinates in a geographic grid
+* @param X1 (const double) first point's X coordinate
+* @param Y1 (const double) first point's Y coordinate
+* @param X2 (const double) second point's X coordinate
+* @param Y2 (const double) second point's Y coordinate
+* @return (double) 1/distance in m
+*/
+double Interpol2D::InvHorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2)
+{
+	//This function computes 1/horizontaldistance between two points
+	//coordinates are given in a square, metric grid system
+	const double DX=(X1-X2), DY=(Y1-Y2);
+	return invSqrt( DX*DX + DY*DY ); //we use the optimized approximation for 1/sqrt
 }
 
 /**
@@ -65,14 +108,14 @@ double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const 
 * @return (double) distance in m
 */
 double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const int& j, const double& X2, const double& Y2)
-{
+{//TODO: store DEM easting/northing, etc as private members
 	//This function computes the horizontal distance between two points
 	//coordinates are given in a square, metric grid system
 	//for grid points toward real coordinates
 	const double X1 = (dem.llcorner.getEasting()+i*dem.cellsize);
 	const double Y1 = (dem.llcorner.getNorthing()+j*dem.cellsize);
-	
-	return sqrt( (X1-X2)*(X1-X2) + (Y1-Y2)*(Y1-Y2) );
+	const double DX=(X1-X2), DY=(Y1-Y2);
+	return sqrt( DX*DX + DY*DY );
 }
 
 
@@ -230,8 +273,9 @@ void Interpol2D::stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid)
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (unsigned int j=0; j<grid.nrows; j++) {
 		for (unsigned int i=0; i<grid.ncols; i++) {
-			if (dem.grid2D(i,j)!=IOUtils::nodata) {
-				grid.grid2D(i,j) = lw_AirPressure(dem.grid2D(i,j));
+			const double cell_altitude=dem.grid2D(i,j);
+			if (cell_altitude!=IOUtils::nodata) {
+				grid.grid2D(i,j) = lw_AirPressure(cell_altitude);
 			} else {
 				grid.grid2D(i,j) = IOUtils::nodata;
 			}
@@ -283,8 +327,9 @@ void Interpol2D::constantLapseGrid2DFill(const double& value, const double& alti
 	//the laspe rate parameters must have been set before
 	for (unsigned int j=0; j<grid.nrows; j++) {
 		for (unsigned int i=0; i<grid.ncols; i++) {
-			if (dem.grid2D(i,j)!=IOUtils::nodata) {
-				grid.grid2D(i,j) = funcptr(value, altitude, dem.grid2D(i,j), vecCoefficients);
+			const double cell_altitude=dem.grid2D(i,j);
+			if (cell_altitude!=IOUtils::nodata) {
+				grid.grid2D(i,j) = funcptr(value, altitude, cell_altitude, vecCoefficients);
 			} else {
 				grid.grid2D(i,j) = IOUtils::nodata;
 			}
@@ -296,11 +341,14 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
                            const std::vector<StationData>& vecStations_in)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
-	double parameter=0., norm=0., weight;
+	double parameter=0., norm=0.;
 	
 	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
-		weight=1./(HorizontalDistance(x, y, vecStations_in[i].position.getEasting(),
-		       vecStations_in[i].position.getNorthing()) + 1e-6);
+		/*const double weight=1./(HorizontalDistance(x, y, vecStations_in[i].position.getEasting(),
+		       vecStations_in[i].position.getNorthing()) + 1e-6);*/
+		const double DX=x-vecStations_in[i].position.getEasting();
+		const double DY=y-vecStations_in[i].position.getNorthing();
+		const double weight = invSqrt( DX*DX + DY*DY ); //use the optimized 1/sqrt approximation
 		parameter += weight*vecData_in[i];
 		norm += weight;
 	}
@@ -340,11 +388,12 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 	const double cellsize = dem.cellsize;
 	for (unsigned int j=0; j<grid.nrows; j++) {
 		for (unsigned int i=0; i<grid.ncols; i++) {
-			if (dem.grid2D(i,j)!=IOUtils::nodata) {
+			const double cell_altitude=dem.grid2D(i,j);
+			if (cell_altitude!=IOUtils::nodata) {
 				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize),
 				                           (yllcorner+j*cellsize), vecTref, vecStations_in);
 				grid.grid2D(i,j) = funcptr(grid.grid2D(i,j), ref_altitude,
-				                           dem.grid2D(i,j), vecCoefficients);
+				                           cell_altitude, vecCoefficients);
 			} else {
 				grid.grid2D(i,j) = IOUtils::nodata;
 			}
@@ -408,6 +457,9 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	double slopeDir;	// Slope in the direction of the wind
 	double Ww;		// Wind weighting
 	double Od;		// Diverting factor
+
+	const double dem_min_slope=dem.min_slope, dem_range_slope=(dem.max_slope-dem_min_slope);
+	const double dem_min_curvature=dem.min_curvature, dem_range_curvature=(dem.max_curvature-dem_min_curvature);
 	
 	for (unsigned int j=0;j<VW.nrows-1;j++) {
 		for (unsigned int i=0;i<VW.ncols-1;i++){
@@ -436,8 +488,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				//normalize curvature and beta. 
 				//Note: it should be slopeDir instead of beta, but beta is more efficient
 				//to compute (only once for each dem) and it should not be that different...
-				beta = (beta - dem.min_slope)/(dem.max_slope - dem.min_slope) - 0.5;
-				curvature = (curvature - dem.min_curvature)/(dem.max_curvature - dem.min_curvature) - 0.5;
+				beta = (beta - dem_min_slope)/dem_range_slope - 0.5;
+				curvature = (curvature - dem_min_curvature)/dem_range_curvature - 0.5;
 
 				// Calculate the slope in the direction of the wind
 				slopeDir = beta * cos(dir - azi);
