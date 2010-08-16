@@ -60,6 +60,15 @@ class Meteo2DInterpolator {
 		 */
 		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const;
 
+
+		/**
+		 * @brief A min/max filter for 2D grids
+		 * @param minval Minimum value allowed in the 2D grid
+		 * @param maxval Maximum value allowed in the 2D grid
+		 * @param gridobj A Grid2DObject that will be min/max checked
+		 */
+		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
+
 	private:
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction

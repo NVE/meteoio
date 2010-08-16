@@ -96,6 +96,13 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 	if(!result.llcorner.isSameProj(dem.llcorner)) {
 		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
 	}
+
+	//Run soft min/max filter for RH and HNW
+	if (meteoparam == MeteoData::RH){
+		Meteo2DInterpolator::checkMinMax(0.0, 1.0, result);
+	} else if (meteoparam == MeteoData::HNW){
+		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
+	}
 }
 
 unsigned int Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms)
@@ -131,6 +138,26 @@ unsigned int Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Para
 
 	return vecArgs.size();
 }
+
+void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj)
+{
+	unsigned int nx=0, ny=0;
+
+	gridobj.grid2D.size(nx, ny);
+
+	for (unsigned int ii=0; ii<nx; ii++){
+		for (unsigned int jj=0; jj<ny; jj++){
+			if (gridobj.grid2D(ii,jj) == IOUtils::nodata){
+				//Do nothing
+			} else if (gridobj.grid2D(ii,jj) < minval){
+				gridobj.grid2D(ii,jj) = minval;
+			} else if (gridobj.grid2D(ii,jj) > maxval){
+				gridobj.grid2D(ii,jj) = maxval;
+			}
+		}
+	}
+}
+
 
 #ifdef _POPC_
 #include "marshal_meteoio.h"
