@@ -48,11 +48,15 @@ class ResamplingAlgorithms {
 
 		//Available algorithms
 		static void LinearResampling(const unsigned int& position, const MeteoData::Parameters& paramindex,
-                                       const std::vector<std::string>& taskargs,
-                                       std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+		                             const std::vector<std::string>& taskargs,
+		                             std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
 		static void NearestNeighbour(const unsigned int& position, const MeteoData::Parameters& paramindex, 
-                                       const std::vector<std::string>& taskargs,
-                                       std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+		                             const std::vector<std::string>& taskargs,
+		                             std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+
+		static void Accumulate(const unsigned int& pos, const MeteoData::Parameters& paramindex,
+		                       const std::vector<std::string>& taskargs,
+		                       std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
 		
  	private:
 		static std::map<std::string, resamplingptr> algorithmMap;

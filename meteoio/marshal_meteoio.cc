@@ -313,7 +313,7 @@ void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data,int maxsize, int flag, POPM
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
 		if (nx>0 && ny>0) {
-			for (unsigned int i=0;i<nx;i++) buf.Pack(&data(i,0),ny);
+			for (unsigned int i=0;i<ny;i++) buf.Pack(&data(0,i), nx);
 		}
 	} else {
 		unsigned int nx,ny;
@@ -321,14 +321,14 @@ void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data,int maxsize, int flag, POPM
 		buf.UnPack(&ny,1);
 		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-			for (unsigned int i=0;i<nx;i++) buf.UnPack(&data(i,0),ny);
+			for (unsigned int i=0;i<ny;i++) buf.UnPack(&data(0,i),nx);
 		} else
 			data.clear();
 	}
 }
 
 void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp)
-{
+{//HACK: this marshalling is sub-optimal!!
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
@@ -362,22 +362,20 @@ void marshal_INT2D(POPBuffer &buf, INT2D &data,int maxsize, int flag, POPMemspoo
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
-		unsigned int dim[2];
-		data.size(dim[0],dim[1]);
-		buf.Pack(dim,2);
-		unsigned int nx=dim[0];
-		unsigned int ny=dim[1];
+		unsigned int nx, ny;
+		data.size(nx,ny);
+		buf.Pack(&nx,1);
+		buf.Pack(&ny,1);
 		if (nx>0 && ny>0) {
-			for (unsigned int i=0;i<nx;i++) buf.Pack(&data(i,0),ny);
+			for (unsigned int i=0;i<ny;i++) buf.Pack(&data(0,i),nx);
 		}
 	} else {
-		unsigned int dim[2];
-		buf.UnPack(dim,2);
-		unsigned int nx=dim[0];
-		unsigned int ny=dim[1];
+		unsigned int nx,ny;
+		buf.UnPack(&nx,1);
+		buf.UnPack(&ny,1);
 		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-			for (unsigned int i=0;i<nx;i++) buf.UnPack(&data(i,0),ny);
+			for (unsigned int i=0;i<ny;i++) buf.UnPack(&data(0,i),nx);
 		} else
 			data.clear();
 	}

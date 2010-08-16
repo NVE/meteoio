@@ -108,4 +108,19 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 	return "linear"; //the default resampling is linear
 }
 
+std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator) {
+
+	os << "<Meteo1DInterpolator>\n";
+	for (unsigned int jj=0; jj<Interpolator.tasklist.size(); jj++){
+		os << MeteoData::getParameterName(jj) << "::" << Interpolator.tasklist[jj] << "\t";
+		for (unsigned int ii=0; ii<Interpolator.taskargs[jj].size(); ii++){
+			os << "ARGS: " << Interpolator.taskargs[jj][ii] << " ";
+		}
+		os << "\n";
+	}
+	os << "</Meteo1DInterpolator>\n";
+
+	return os;
+}
+
 } //namespace

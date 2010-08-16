@@ -30,7 +30,7 @@ void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>&
 	unsigned int startindex = IOUtils::npos, endindex = IOUtils::npos;
 	
 	//No need to operate on the raw data, a copy of relevant data will be stored in these vectors:
-	std::vector<MeteoData> vecWindowM;   
+	std::vector<MeteoData> vecWindowM;
 	std::vector<StationData> vecWindowS;
 
 	/*

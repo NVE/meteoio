@@ -348,6 +348,7 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 			}
 	}
 
+//HACK TODO swap ix/iy (for speed) and number cells from llcorner (cf ARCIO)
 	//read the data we are interested in
 	for (unsigned int ix = 0; ix < dimx; ix++) {
 		for (unsigned int iy = 0; iy < dimy; iy++) {

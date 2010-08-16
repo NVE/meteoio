@@ -62,6 +62,8 @@ class Meteo1DInterpolator {
 		 */
 		unsigned int resampleData(const Date& date, std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
 
+		friend std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator);
+
  	private:
 		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments);
 

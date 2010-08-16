@@ -55,6 +55,7 @@ bool ResamplingAlgorithms::initStaticData()
 {
 	algorithmMap["linear"]            = &ResamplingAlgorithms::LinearResampling;
 	algorithmMap["nearest_neighbour"] = &ResamplingAlgorithms::NearestNeighbour;
+	algorithmMap["accumulate"] = &ResamplingAlgorithms::Accumulate;
 
 	return true;
 }
@@ -87,10 +88,9 @@ const resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algon
  */
 
 void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const MeteoData::Parameters& paramindex,
-                                            const std::vector<std::string>& taskargs,
-                                            std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
+                                            const std::vector<std::string>& /*taskargs*/,
+                                            std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
 {
-	(void)taskargs; (void)vecS;
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
 
@@ -148,10 +148,9 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const Meteo
  * @endcode
  */
 void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const MeteoData::Parameters& paramindex,
-								    const std::vector<std::string>& taskargs,
-								    std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
+                                            const std::vector<std::string>& taskargs,
+                                            std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
 {
-	(void)vecS;
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
 
@@ -218,9 +217,92 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const Meteo
 	const double& val1 = vecM[indexP1].param(paramindex);
 	const double& val2 = vecM[indexP2].param(paramindex);
 	vecM[pos].param(paramindex) = Interpol1D::linearInterpolation(vecM[indexP1].date.getJulianDate(), val1,
-										                 vecM[indexP2].date.getJulianDate(), val2, 
-										                 vecM[pos].date.getJulianDate());
+	                              vecM[indexP2].date.getJulianDate(), val2,
+	                              vecM[pos].date.getJulianDate());
 }
+
+/**
+ * @brief Accumulation over a user given period.
+ * The input data is accumulated over a given time interval (given as filter argument, in minutes).
+ * This is for example needed for converting rain gauges measurements read every 10 minutes to
+ * hourly precipitation measurements. Remarks:
+ * - the accumulation period has to be provided as an argument (in seconds)
+ * @code
+ * HNW::filter1 = accumulate
+ * HNW::arg1	 = 3600
+ * @endcode
+ */
+void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::Parameters& paramindex,
+                                      const std::vector<std::string>& taskargs,
+                                      std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
+{
+	//Not ready for usage yet...
+	throw IOException("Not finished...", AT);
+
+	unsigned int npos = pos;
+	if (pos >= vecM.size())
+		throw IOException("The position of the resampled element is out of bounds", AT);
+
+	//Get accumulation period
+	double accumulate_period;
+	if (taskargs.size()==1) {
+		IOUtils::convertString(accumulate_period, taskargs[0]);
+		if(accumulate_period<=0.) {
+			std::stringstream tmp;
+			tmp << "Invalid accumulation period (" << accumulate_period << ") ";
+			tmp << "for parameter " << MeteoData::getParameterName(paramindex);
+			throw InvalidArgumentException(tmp.str(), AT);
+		}
+	} else {
+		std::stringstream tmp;
+		tmp << "Please provide accumulation period (in seconds) for parameter " << MeteoData::getParameterName(paramindex);
+		throw InvalidArgumentException(tmp.str(), AT);
+	}
+	
+	//find start of accumulation period
+	bool found_start=false;
+	int ii=pos;
+	const Date Start(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.));
+	for (; ii>=0; ii--) {
+		if(vecM[(unsigned int)ii].date<=Start) {
+			found_start=true;
+			break;
+		}
+	}
+
+	if(found_start==false) {
+		std::cerr << "[W] Could not accumulate " << MeteoData::getParameterName(paramindex);
+		std::cerr << ", not enough data for accumulation period\n";
+		return;
+	}
+
+	//resample the starting point
+	std::vector<std::string> dummy_args;
+	const unsigned int org_size = vecM.size();
+	LinearResampling(ii, paramindex, dummy_args, vecM, vecS);
+	if(vecM.size()>org_size)
+		npos++;
+
+	//start accumulating
+	double sum = 0.0;
+	bool exist=false;
+	while(vecM[ii].date<=vecM[npos].date) {
+		//we will at least enter once into this loop since accumulate_period>0
+		const double& val = vecM[npos].param(paramindex);
+		if (val != IOUtils::nodata) {
+			sum += val;
+			exist=true;
+		}
+		ii++;
+	}
+
+	//add last remaining point after interpolating it
+	//HACK: TODO
+
+
+	//check if at least one point has been summed. If not -> nodata
+}
+
 
 } //namespace
 
