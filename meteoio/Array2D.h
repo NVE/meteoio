@@ -207,7 +207,7 @@ template<class T> void Array2D<T>::subset(const Array2D<T>& _array2D, const unsi
 	//Copy by value subspace
 	for (unsigned int jj=0; jj<ny; jj++) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(jj,ii) = _array2D(_nx+ii, _ny+jj);
+			operator()(ii,jj) = _array2D(_nx+ii, _ny+jj);
 		}
 	}
 }
