@@ -385,8 +385,6 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 	//returns index of element, if element does not exist it returns closest index after soughtdate
 	//the element needs to be an exact hit or embedded between two measurments
 
-	unsigned int ii = 1;
-
 	if (vecM.size() <= 0) {//no elements in buffer
 		return IOUtils::npos;
 	}
@@ -406,7 +404,7 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
 	if (exactmatch){
-		unsigned int first = ii, last = vecM.size()-1;
+		unsigned int first = 1, last = vecM.size()-1;
 
 		//perform binary search
 		while (first <= last) {
@@ -419,7 +417,7 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 				return mid;                        // found it. return position 
 		}
 	} else {
-		unsigned int first = ii, last = vecM.size()-1;
+		unsigned int first = 0, last = vecM.size()-1;
 
 		//perform binary search
 		while (first <= last) {

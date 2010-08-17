@@ -188,6 +188,14 @@ void MeteoData::setDate(const Date& _date)
 	date = _date;
 }
 
+void MeteoData::reset()
+{
+	std::map<unsigned int, double*>::iterator it;
+	for (it=meteoparam.begin(); it!=meteoparam.end(); it++){
+		*it->second = IOUtils::nodata;
+	}	
+}
+
 void MeteoData::setData(const MeteoData::Parameters& param, const double& value)
 {
 	*meteoparam[param] = value;
@@ -276,6 +284,17 @@ const double& MeteoData::param(const std::string& parname) const
 #endif
 	return *(it->second);
 }
+
+bool MeteoData::param_exists(const std::string& parname) const
+{
+	std::map<std::string, double*>::const_iterator it;
+	it = mapParameterByName.find(parname);
+	if (it != mapParameterByName.end()) 
+		return true;
+
+	return false;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 

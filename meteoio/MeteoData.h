@@ -102,6 +102,9 @@ class MeteoData {
 		*/
 		void addParameter(const std::string& i_paramname);
 
+		bool param_exists(const std::string& parname) const;
+		void reset();
+
 		bool isResampled();
 		void setResampled(const bool&);
 

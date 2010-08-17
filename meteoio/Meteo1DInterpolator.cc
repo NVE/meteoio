@@ -53,27 +53,31 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 	if (vecM.size() != vecS.size())
 		throw IOException("Inconsistency between vecM and vecS detected", AT);
 
+	if (vecM.size() == 0){ //Deal with case of the empty vector
+		vecM.push_back(MeteoData(date));
+		vecS.push_back(StationData());
+		return 0; //nothing left to do
+	}
+
 	//Find element in the vector, or insert it at the appropriate position
 	unsigned int position = IOUtils::seek(date, vecM, false);
 
-	if (position == IOUtils::npos){ //nothing found append new element at the left or right
-		if (vecM.size() == 0){
-			vecM.push_back(MeteoData(date));
-			vecS.push_back(StationData());
-			return 0; //nothing left to do
-		}
+	MeteoData tmpmd(vecM.at(0)); //create a clone of one of the elements
+	tmpmd.reset(); //set all values to IOUtils::nodata
+	tmpmd.setDate(date);
 
+	if (position == IOUtils::npos){ //nothing found append new element at the left or right
 		if (vecM.at(0).date > date){
-			vecM.insert(vecM.begin(), MeteoData(date));
+			vecM.insert(vecM.begin(), tmpmd);
 			vecS.insert(vecS.begin(), vecS.at(0)); //copy element
 			position = 0;
 		} else if (vecM.at(vecM.size()-1).date < date){
-			vecM.push_back(MeteoData(date));
+			vecM.push_back(tmpmd);
 			vecS.push_back(vecS.at(vecS.size()-1)); //copy element
 			position = vecM.size() - 1;
 		}
 	} else if ((position != IOUtils::npos) && (vecM[position].date != date)){//insert before position
-		vecM.insert(vecM.begin()+position, MeteoData(date));
+		vecM.insert(vecM.begin()+position, tmpmd);
 		vecS.insert(vecS.begin()+position, vecS[position]); //copy element
 	}
 
