@@ -85,8 +85,6 @@ void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 															    vecWindowM, vecWindowS);
 		}
 	}
-
-
 }
 
 unsigned int MeteoFilter::getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters)

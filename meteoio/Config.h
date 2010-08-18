@@ -71,6 +71,12 @@ class Config {
 		Config(const std::string& filename_in);
 
 		/**
+		 * @brief Write the Config object to a file
+		 * @param filename The filename including the path, e.g. "/tmp/test.ini"
+		 */
+		void write(const std::string& filename);
+
+		/**
 		 * @brief Add the content of a file to the internal key/value map object
 		 * @param[in] filename_in string representing the absolute filename of the key/value file
 		*/
@@ -262,10 +268,10 @@ class Config {
 		void parseCmdLine(const std::string& cmd_line);
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::string& line, std::string& section);
+		std::string extract_section(std::string& key);
 
 		std::map<std::string, std::string> properties; //Save key value pairs
 		std::string sourcename; //description of the data source for the key/value pair
-
 }; //end class definition Config
 
 class ConfigProxy {

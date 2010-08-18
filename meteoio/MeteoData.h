@@ -102,7 +102,17 @@ class MeteoData {
 		*/
 		void addParameter(const std::string& i_paramname);
 
+		/**
+		* @brief Check whether a certain parameter is a part of this MeteoData instance
+		* @param paramname A string parameter, representing a meteo parameter, e.g. "VSWR"
+		* @return A boolean indicating whether the parameter is a part of the object
+		*/
 		bool param_exists(const std::string& parname) const;
+
+		/**
+		 * @brief Resets all the meteo parameters to IOUtils::nodata
+		 *        NOTE: member vars date and resampled are not affected
+		 */
 		void reset();
 
 		bool isResampled();
@@ -115,6 +125,7 @@ class MeteoData {
 		double& param(const std::string& parname);
 		const double& param(const std::string& parname) const;
 		const std::string& getNameForParameter(const unsigned int& parindex) const;
+		//unsigned int getParameterIndex(const std::string& parname) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 
@@ -144,6 +155,7 @@ class MeteoData {
 		static bool initStaticData();///<initialize the static map meteoparamname 
 
 		unsigned int nrOfAllParameters;
+
 		std::map<std::string, double> extraparameters; ///<All non-standard meteo parameters will end up in this map
 		std::map<std::string, double*> mapParameterByName; ///<Associate name and meteo parameter
 		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter

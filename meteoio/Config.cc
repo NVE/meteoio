@@ -197,6 +197,55 @@ unsigned int Config::findKeys(std::vector<std::string>& vecResult, std::string k
 	return vecResult.size();
 }
 
+std::string Config::extract_section(std::string& key)
+{
+	string::size_type pos = key.find("::");
+
+	if (pos != string::npos){
+		string sectionname = key.substr(0, pos);
+		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
+		return sectionname;
+	}
+	return "GENERAL";
+}
+
+void Config::write(const std::string& filename)
+{
+	
+	std::ofstream fout;
+	fout.open(filename.c_str());
+	if (fout.fail()) 
+		throw FileAccessException(filename, AT);
+
+	try {
+		map<string,string>::const_iterator it;
+		string current_section = "";
+		unsigned int sectioncount = 0;
+		for (it=properties.begin(); it != properties.end(); it++){
+			string tmp = it->first;
+			string section = extract_section(tmp);
+
+			if (current_section != section){
+				current_section = section;
+				if (sectioncount != 0)
+					fout << endl;
+				sectioncount++;
+				fout << "[" << section << "]" << endl;
+			}
+
+			fout << tmp << " = " << it->second << endl;
+		}
+	} catch(...) {
+		if (fout.is_open()) //close fout if open
+			fout.close();
+
+		throw;
+	}
+
+	if (fout.is_open()) //close fout if open
+		fout.close();
+}
+
 } //end namespace
 
 #ifdef _POPC_
