@@ -79,10 +79,9 @@ void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 				continue;
 
 			//cout << "\tExecuting: " << tasklist[ii][jj] << endl;
-			FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, vecS, 
-															    taskargs.at(ii).at(jj), 
-															    MeteoData::Parameters(ii),
-															    vecWindowM, vecWindowS);
+			FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, vecS,
+			                                   taskargs.at(ii).at(jj), MeteoData::Parameters(ii),
+			                                   vecWindowM, vecWindowS);
 		}
 	}
 }
@@ -112,6 +111,26 @@ unsigned int MeteoFilter::getArgumentsForFilter(const std::string& keyname, std:
 	 */
 	cfg.getValue(keyname, "Filters", vecArguments, Config::nothrow);
 	return vecArguments.size();
+}
+
+std::ostream& operator<<(std::ostream& os, const MeteoFilter& data)
+{
+	os << "<MeteoFilter>\n";
+	os << "Config cfg; (not expanded)\n";
+
+	for (unsigned int ii=0; ii<data.tasklist.size(); ii++){ //For all meteo parameters
+		os << std::setw(5) << MeteoData::getParameterName(ii) << " =\t";
+		for (unsigned int jj=0; jj<data.tasklist[ii].size(); jj++){ //For eack activated filter
+			os << "[ " << data.tasklist[ii][jj] << " ";
+			for(unsigned int kk=0; kk<data.taskargs.at(ii).at(jj).size(); kk++)
+				os <<  data.taskargs.at(ii).at(jj).at(kk) << " ";
+			os << "]\t";
+		}
+		os << "\n";
+	}
+
+	os << "</MeteoFilter>\n";
+	return os;
 }
 
 } //namespace

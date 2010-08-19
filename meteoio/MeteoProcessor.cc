@@ -62,4 +62,14 @@ void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>&
 	sd = vecWindowS[position];
 }
 
+std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
+{
+	os << "<MeteoProcessor>\n";
+	os << "Config cfg; (not expanded)\n";
+	os << data.mf;
+	os << data.mi1d;
+	os << "</MeteoProcessor>\n";
+	return os;
+}
+
 } //namespace

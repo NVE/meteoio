@@ -70,6 +70,7 @@ class MeteoFilter {
                           std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS, 
                           const bool& checkonly = false);
 
+		friend std::ostream& operator<<(std::ostream& os, const MeteoFilter& data);
 
  	private:
 		unsigned int getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters);

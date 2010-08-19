@@ -329,7 +329,7 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 		/*const double weight=1./(HorizontalDistance(x, y, vecStations_in[i].position.getEasting(),
 		       vecStations_in[i].position.getNorthing()) + 1e-6);*/
 		const Coords& position = vecStations_in[i].position;
-		const double DX=x-position.getEasting();
+		const double DX=x-position.getEasting(); //optimization: precompute and store in a vector?
 		const double DY=y-position.getNorthing();
 		const double weight = invSqrt( DX*DX + DY*DY + scale ); //use the optimized 1/sqrt approximation
 		//const double weight = weightInvDistSqrt( (DX*DX + DY*DY) );

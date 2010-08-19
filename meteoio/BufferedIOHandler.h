@@ -167,6 +167,8 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		void setBufferDuration(const Date& _bufferbefore, const Date& _bufferafter);
 
+		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
+
 	private:
 		bool bufferData(const Date& _date, const unsigned int& stationindex);
 		void bufferAllData(const Date& _date);

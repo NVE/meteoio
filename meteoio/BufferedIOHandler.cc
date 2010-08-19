@@ -339,4 +339,34 @@ void BufferedIOHandler::clearBuffer(){
 	mapBufferedGrids.clear();
 }
 
+std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
+{
+	os << "<BufferedIOHandler>\n";
+	os << "Config cfg; (not expanded)\n";
+	os << data.iohandler;
+	os << data.meteoprocessor;
+
+	os << "Rebuffer if not found: " << data.always_rebuffer << "\n";
+	os << "Buffer span: -" << data.bufferbefore.getJulianDate() << " days, +" << data.bufferafter.getJulianDate() << " days\n";
+
+	
+	os << "Current buffer content (" << data.stationBuffer.size() << " stations, " << data.mapBufferedGrids.size() << " grids):\n";
+	for(unsigned int i=0; i<data.stationBuffer.size(); i++) {
+		os << std::setw(10) << data.stationBuffer[i][0].stationID << " = ";
+		os << data.startDateBuffer[i].toString(Date::ISO) << " - ";
+		os << data.endDateBuffer[i].toString(Date::ISO) << ", ";
+		os << data.meteoBuffer[i].size() << " timesteps\n";
+	}
+
+	std::map<std::string, Grid2DObject>::const_iterator it1;
+	for (it1=data.mapBufferedGrids.begin(); it1 != data.mapBufferedGrids.end(); it1++){
+		os << setw(10) << "Grid" << " = " << it1->first << ", ";
+		os << (it1->second).ncols << " x " << (it1->second).nrows << " @ " << (it1->second).cellsize << "m\n";
+	}
+
+	os << "</BufferedIOHandler>\n";
+
+	return os;
+}
+
 } //namespace

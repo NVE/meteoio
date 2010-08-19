@@ -50,6 +50,8 @@ class MeteoProcessor {
 		void processData(const Date& date, const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
 		                 MeteoData& md, StationData& sd);
 
+		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
+
  	private:
 		Config cfg;
 		MeteoFilter mf;
