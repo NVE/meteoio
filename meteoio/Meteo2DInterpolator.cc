@@ -149,10 +149,11 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 		for (unsigned int ii=0; ii<nx; ii++){
 			double& value = gridobj.grid2D(ii,jj);
 			if (value == IOUtils::nodata){
-				//Do nothing
-			} else if (value < minval){
+				continue;
+			}
+			if (value < minval) {
 				value = minval;
-			} else if (value > maxval){
+			} else if (value > maxval) {
 				value = maxval;
 			}
 		}

@@ -47,7 +47,7 @@ class IOHandler : public IOInterface {
 		~IOHandler() throw();
 
 		//methods defined in the IOInterface class
-		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readStationData(const Date& date,
@@ -64,6 +64,8 @@ class IOHandler : public IOInterface {
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
+
+		friend std::ostream& operator<<(std::ostream& os, const IOHandler& data);
 
 	private:
 		void loadDynamicPlugins();

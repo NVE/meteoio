@@ -133,7 +133,7 @@ class Grid2DObject {
 		* @param target (Grid2DObject) grid to compare to
 		* @return (bool) true if same geolocalization
 		*/
-		bool isSameGeolocalization(const Grid2DObject& target);
+		bool isSameGeolocalization(const Grid2DObject& target) const;
 
 		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
 		unsigned int ncols; ///<number of columns in the grid

@@ -19,6 +19,7 @@
 #define __LIBINTERPOL1D_H__
 
 #include <meteoio/IOExceptions.h>
+#include <meteoio/IOUtils.h>
 
 #include <cmath>
 #include <vector>
@@ -34,6 +35,11 @@ class Interpol1D {
 		static double arithmeticMean(const std::vector<double>& vecData);
 		static double getMedian(const std::vector<double>& vecData);
 		static double getMedianAverageDeviation(const std::vector<double>& vecData);
+		static double variance(const std::vector<double>& X);
+		static double std_dev(const std::vector<double>& X);
+		static double covariance(const std::vector<double>& z1, const std::vector<double>& z2);
+
+		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r);
 };
 } //end namespace
 

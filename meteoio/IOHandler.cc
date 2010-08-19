@@ -90,7 +90,7 @@ IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(con
 //Copy constructor
 #ifdef _POPC_
 //IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(aio.cfg), bormaio(aio.cfg), imisio(aio.cfg){
-	//Nothing else so far
+	//Nothing else so far //HACK for POPC
 //}
 #else
 IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fileio(aio.cfg)
@@ -196,10 +196,10 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	return (mapit->second).io;
 }
 
-void IOHandler::read2DGrid(Grid2DObject& _grid, const std::string& _filename)
+void IOHandler::read2DGrid(Grid2DObject& out_grid, const std::string& _filename)
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");
-	plugin->read2DGrid(_grid, _filename);
+	plugin->read2DGrid(out_grid, _filename);
 }
 
 void IOHandler::readDEM(DEMObject& dem_out)
@@ -283,6 +283,23 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Output");
 	plugin->write2DGrid(grid_in, name);
+}
+
+std::ostream& operator<<(std::ostream& os, const IOHandler& data)
+{
+	os << "<IOHandler>\n";
+	os << data.cfg;
+
+	os << "<mapPlugins>\n";
+	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";
+	std::map<std::string, IOPlugin::IOPlugin>::const_iterator it1;
+	for (it1=data.mapPlugins.begin(); it1 != data.mapPlugins.end(); it1++){
+		os << setw(10) << it1->first << " = " <<  it1->second;
+	}
+	os << "</mapPlugins>\n";
+	os << "</IOHandler>\n";
+
+	return os;
 }
 
 } //end namespace

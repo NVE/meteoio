@@ -125,7 +125,7 @@ double Interpol2D::weightInvDist(const double& d2)
 }
 double Interpol2D::weightInvDistSqrt(const double& d2)
 {
-	return invSqrt( invSqrt(d2) ); //we use the optimized approximation for 1/sqrt
+	return fastSqrt_Q3( invSqrt(d2) ); //we use the optimized approximation for 1/sqrt
 }
 double Interpol2D::weightInvDist2(const double& d2)
 {
@@ -139,56 +139,6 @@ double Interpol2D::weightInvDistN(const double& d2)
 //Data regression models
 /**
 * @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
-* the linear regression has the form Y = aX + b with a regression coefficient r
-* @param X vector of X coordinates
-* @param Y vector of Y coordinates (same order as X)
-* @param a slope of the linear regression
-* @param b origin of the linear regression
-* @param r linear regression coefficient
-*/
-void Interpol2D::LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y, const unsigned int imax, double& a, double& b, double& r)
-{//finds the linear regression for points (x,y,z,Value)
-	double x_avg=0., y_avg=0.;
-	double sx=0., sy=0., sxy=0.;
-
-	//computing x_avg and y_avg
-	for (unsigned int i=0; i<imax; i++) {
-		x_avg += X[i];
-		y_avg += Y[i];
-	}
-	x_avg /= (double)imax;
-	y_avg /= (double)imax;
-
-	//computing sx, sy, sxy
-	for (unsigned int i=0; i<imax; i++) {
-		sx += (X[i]-x_avg) * (X[i]-x_avg);
-		sy += (Y[i]-y_avg) * (Y[i]-y_avg);
-		sxy += (X[i]-x_avg) * (Y[i]-y_avg);
-	}
-
-	//computing the regression line
-	const double epsilon = 1e-6;
-	if(sx <= x_avg*epsilon) {
-		//all points have same X -> we return a constant value that is the average
-		a = 0.;
-		b = y_avg;
-		r = 1.;
-		std::cerr << "[W] Computing linear regression on data at identical X\n";
-		return;
-	}
-	a = sxy / sx;
-	b = y_avg - a*x_avg;
-	if(sy==0) {
-		//horizontal line: all y's are equals
-		r = 1.;
-	} else {
-		//any other line
-		r = sxy / sqrt(sx*sy);
-	}
-}
-
-/**
-* @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
 * the linear regression has the form Y = aX + b with a regression coefficient r. If the regression coefficient is not good enough, a bad point is looked removed.
 * @param X (vector\<double\>) vector of X coordinates
 * @param Y (vector\<double\>) vector of Y coordinates (same order as X)
@@ -200,9 +150,9 @@ int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector
 	//finds the linear regression for points (x,y,z,Value)
 	const double r_thres=0.7;
 	//we want at least 4 points AND 85% of the initial data set kept in the regression
-	const double min_dataset=floor(0.85*(double)in_X.size());
+	const unsigned int min_dataset=(unsigned int)floor(0.85*(double)in_X.size());
 	const unsigned int min_pts=(min_dataset>4)?min_dataset:4;
-	unsigned int nb_pts = in_X.size();
+	const unsigned int nb_pts = in_X.size();
 	double a,b,r;
 
 	if (nb_pts==2) {
@@ -216,23 +166,21 @@ int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector
 		return EXIT_FAILURE;
 	}
 
-	LinRegressionCore(in_X, in_Y, nb_pts, coeffs[1], coeffs[2], coeffs[3]);
+	Interpol1D::LinRegression(in_X, in_Y, coeffs[1], coeffs[2], coeffs[3]);
 	if(fabs(coeffs[3])>=r_thres)
 		return EXIT_SUCCESS;
 
 	std::vector<double> X(in_X), Y(in_Y);
+	unsigned int nb_valid_pts=nb_pts;
 
-	while(fabs(coeffs[3])<r_thres && nb_pts>min_pts) {
+	while(fabs(coeffs[3])<r_thres && nb_valid_pts>min_pts) {
 		//we try to remove the one point in the data set that is the worst
 		coeffs[3]=0.;
 		unsigned int index_bad=0;
 		for (unsigned int i=0; i<nb_pts; i++) {
-			//removing alternatively each point
-			//index nb_pts is used as temporary storage
-			const double X_tmp=X[i]; X[i]=X[nb_pts-1];
-			const double Y_tmp=Y[i]; Y[i]=Y[nb_pts-1];
-			LinRegressionCore(X, Y, nb_pts-1, a, b, r);
-			X[i]=X_tmp;
+			//invalidating alternatively each point
+			const double Y_tmp=Y[i]; Y[i]=IOUtils::nodata;
+			Interpol1D::LinRegression(X, Y, a, b, r);
 			Y[i]=Y_tmp;
 
 			if (fabs(r)>fabs(coeffs[3])) {
@@ -243,9 +191,8 @@ int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector
 			}
 		}
 		//the worst point has been found, we overwrite it
-		X[index_bad]=X[nb_pts-1];
-		Y[index_bad]=Y[nb_pts-1];
-		nb_pts--;
+		Y[index_bad]=IOUtils::nodata;
+		nb_valid_pts--;
 	}
 
 	//check if r is reasonnable
@@ -301,12 +248,12 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 * @param grid 2D array to fill
 */
 void Interpol2D::stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid) {
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+                                       grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (unsigned int j=0; j<grid.nrows; j++) {
 		for (unsigned int i=0; i<grid.ncols; i++) {
-			const double cell_altitude=dem.grid2D(i,j);
+			const double& cell_altitude=dem.grid2D(i,j);
 			if (cell_altitude!=IOUtils::nodata) {
 				grid.grid2D(i,j) = lw_AirPressure(cell_altitude);
 			} else {
@@ -374,14 +321,18 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
                            const std::vector<StationData>& vecStations_in)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
+	const unsigned int n_stations=vecStations_in.size();
 	double parameter=0., norm=0.;
+	const double scale = 1.e6;
 	
-	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
+	for (unsigned int i=0; i<n_stations; i++) {
 		/*const double weight=1./(HorizontalDistance(x, y, vecStations_in[i].position.getEasting(),
 		       vecStations_in[i].position.getNorthing()) + 1e-6);*/
-		const double DX=x-vecStations_in[i].position.getEasting();
-		const double DY=y-vecStations_in[i].position.getNorthing();
-		const double weight = invSqrt( DX*DX + DY*DY ); //use the optimized 1/sqrt approximation
+		const Coords& position = vecStations_in[i].position;
+		const double DX=x-position.getEasting();
+		const double DY=y-position.getNorthing();
+		const double weight = invSqrt( DX*DX + DY*DY + scale ); //use the optimized 1/sqrt approximation
+		//const double weight = weightInvDistSqrt( (DX*DX + DY*DY) );
 		parameter += weight*vecData_in[i];
 		norm += weight;
 	}
@@ -407,11 +358,12 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
                           Grid2DObject& grid)
 {	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
 	const double ref_altitude = getReferenceAltitude(dem);
+	const unsigned int n_stations=vecStations_in.size();
 
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	std::vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
 	
-	for (unsigned int i=0; i<(unsigned int)vecStations_in.size(); i++) {
+	for (unsigned int i=0; i<n_stations; i++) {
 		vecTref[i] = funcptr(vecData_in[i], vecStations_in[i].position.getAltitude(), 
 		                     ref_altitude, vecCoefficients);
 	}

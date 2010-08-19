@@ -223,7 +223,7 @@ void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nr
 	llcorner = _llcorner;
 }
 
-bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target)
+bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 {
 	if( ncols==target.ncols && nrows==target.nrows &&
 		llcorner==target.llcorner &&
@@ -251,16 +251,13 @@ std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
 using namespace mio; //HACK for POPC
 void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
 {
-	if (pack)
-	{
+	if (pack) {
 		buf.Pack(&ncols,1);
 		buf.Pack(&nrows,1);
 		buf.Pack(&cellsize,1);
 		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
 		marshal_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
-	}
-	else
-	{
+	} else {
 		buf.UnPack(&ncols,1);
 		buf.UnPack(&nrows,1);
 		buf.UnPack(&cellsize,1);

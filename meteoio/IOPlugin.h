@@ -51,7 +51,12 @@ class IOPlugin {
 		 */
 		IOPlugin(std::string _s1, std::string _s2, IOInterface *p1, DynamicLibrary *p2) : libname(_s1), classname(_s2), io(p1), dynLibrary(p2){}
 		IOPlugin() : libname(""), classname(""), io(NULL), dynLibrary(NULL){}
+
+		friend std::ostream& operator<<(std::ostream& os, const IOPlugin& data);
+		static const std::string header; //to contain a helpful header for understanding the output of <<
+
 };
+
 } //end namespace
 
 #endif

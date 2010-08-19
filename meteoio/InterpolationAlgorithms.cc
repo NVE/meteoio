@@ -74,7 +74,9 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else if (algoname == "WIND_CURV"){
 		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
-	} else if (algoname == "USER"){
+	/*} else if (algoname == "KRIG"){
+		return new SimpleKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+	*/} else if (algoname == "USER"){
 		return new USERinterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);

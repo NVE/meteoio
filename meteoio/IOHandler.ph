@@ -49,7 +49,7 @@ parclass IOHandler {
 		~IOHandler();
 
 		//methods defined in the IOInterface class
-		virtual void read2DGrid([out]Grid2DObject& dem_out, const std::string& parameter="");
+		virtual void read2DGrid([out]Grid2DObject& out_grid, const std::string& parameter="");
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 		virtual void readStationData([in]const Date& date,
@@ -66,6 +66,8 @@ parclass IOHandler {
 		virtual void readAssimilationData([in] const Date&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_vec_coords]std::vector<Coords>& pts);
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
+
+		friend std::ostream& operator<<(std::ostream& os, const IOHandler& data);
 
 	private:
 		void loadDynamicPlugins();

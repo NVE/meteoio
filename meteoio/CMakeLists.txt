@@ -8,7 +8,8 @@ IF(PROJ4)
   ADD_DEFINITIONS(-DPROJ4)
 ENDIF(PROJ4)
 
-SET(meteoio_sources 
+SET(meteoio_sources
+	IOPlugin.cc
 	MeteoProcessor.cc
 	ResamplingAlgorithms.cc
 	Meteo1DInterpolator.cc

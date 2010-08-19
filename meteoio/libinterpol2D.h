@@ -29,6 +29,7 @@
 #include <meteoio/Date.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/libinterpol1D.h>
 
 #include <cmath>
 #include <vector>
@@ -108,9 +109,9 @@ class Interpol2D {
 		                      const std::vector<StationData>& vecStations_in);
 
 		//weighting methods
-		double weightInvDist(const double& d2);
-		double weightInvDistSqrt(const double& d2);
-		double weightInvDist2(const double& d2);
+		static double weightInvDist(const double& d2);
+		static double weightInvDistSqrt(const double& d2);
+		static double weightInvDist2(const double& d2);
 		double weightInvDistN(const double& d2);
 		double dist_pow; //power for the weighting method weightInvDistN
 
