@@ -285,6 +285,7 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 	plugin->write2DGrid(grid_in, name);
 }
 
+#ifndef _POPC_
 std::ostream& operator<<(std::ostream& os, const IOHandler& data)
 {
 	os << "<IOHandler>\n";
@@ -301,5 +302,6 @@ std::ostream& operator<<(std::ostream& os, const IOHandler& data)
 
 	return os;
 }
+#endif
 
 } //end namespace

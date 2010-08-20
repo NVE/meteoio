@@ -67,7 +67,7 @@ parclass IOHandler {
 		virtual void readSpecialPoints([out,proc=marshal_vec_coords]std::vector<Coords>& pts);
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
 
-		friend std::ostream& operator<<(std::ostream& os, const IOHandler& data);
+		//friend std::ostream& operator<<(std::ostream& os, const IOHandler& data); //HACK for POPC
 
 	private:
 		void loadDynamicPlugins();

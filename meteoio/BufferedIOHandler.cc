@@ -343,7 +343,9 @@ std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 {
 	os << "<BufferedIOHandler>\n";
 	os << "Config cfg; (not expanded)\n";
+	#ifndef _POPC_ //HACK for POPC
 	os << data.iohandler;
+	#endif
 	os << data.meteoprocessor;
 
 	os << "Rebuffer if not found: " << data.always_rebuffer << "\n";
