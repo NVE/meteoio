@@ -67,7 +67,7 @@ class PGMIO : public IOInterface {
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
-		void read3DGrid(Grid3DObject& grid_out, const std::string& _name);
+		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name);
 
 	private:
 		void cleanup() throw();

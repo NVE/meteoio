@@ -74,7 +74,7 @@ class GeotopIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		void cleanup() throw();
-		void parseDate(const std::string& datestring, const std::string& fileandline, Date& _date);
+		void parseDate(const std::string& datestring, const std::string& fileandline, Date& date);
 
 		Config cfg;
 		std::ifstream fin; //Input file streams

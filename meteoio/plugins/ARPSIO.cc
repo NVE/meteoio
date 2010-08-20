@@ -90,7 +90,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& /*_name*/)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& /*_name*/)
+void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& /*in_name*/)
 {
 	std::string meteopathname;
 	std::string parameter, grid_name;
@@ -259,10 +259,10 @@ void ARPSIO::initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH])
 	cellsize = cellsize_y;
 }
 
-void ARPSIO::openGridFile(const std::string& _filename)
+void ARPSIO::openGridFile(const std::string& in_filename)
 {
 	unsigned int v1;
-	filename = _filename;
+	filename = in_filename;
 
 	if((fin=fopen(filename.c_str(),"r")) == NULL) {
 		cleanup();

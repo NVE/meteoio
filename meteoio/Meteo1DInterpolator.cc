@@ -115,6 +115,7 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator) {
 
 	os << "<Meteo1DInterpolator>\n";
+	os << "Config cfg; (not expanded)\n";
 	for (unsigned int jj=0; jj<Interpolator.tasklist.size(); jj++){
 		os << MeteoData::getParameterName(jj) << "::" << Interpolator.tasklist[jj] << "\t";
 		for (unsigned int ii=0; ii<Interpolator.taskargs[jj].size(); ii++){

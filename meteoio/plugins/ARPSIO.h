@@ -71,13 +71,13 @@ class ARPSIO : public IOInterface {
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
-		void read3DGrid(Grid3DObject& grid_out, const std::string& _name);
+		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name);
 
 	private:
 		void cleanup() throw();
 		void initializeGRIDARPS();
 		void initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH]);
-		void openGridFile(const std::string& _filename);
+		void openGridFile(const std::string& in_filename);
 		void readGridLayer(const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
 		void moveToMarker(const std::string& marker);
 

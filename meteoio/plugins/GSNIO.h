@@ -69,8 +69,8 @@ class GSNIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
-		void parseString(const std::string& _string, std::vector<std::string>& vecString, MeteoData& md);
-		void convertStringToDouble(double& d, const std::string& _string, const std::string& _parname);
+		void parseString(const std::string& in_string, std::vector<std::string>& vecString, MeteoData& md);
+		void convertStringToDouble(double& d, const std::string& in_string, const std::string& in_parname);
 		void convertUnits(MeteoData& meteo);
 		void initGSNConnection();
 		void readStationNames();

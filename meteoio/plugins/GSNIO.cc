@@ -169,9 +169,9 @@ void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 }
 
 void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-							  std::vector< std::vector<MeteoData> >& vecMeteo,
-							  std::vector< std::vector<StationData> >& vecStation,
-							  const unsigned int& stationindex)
+                          std::vector< std::vector<MeteoData> >& vecMeteo,
+                          std::vector< std::vector<StationData> >& vecStation,
+                          const unsigned int& stationindex)
 {
 	if (vecStationName.size() == 0)
 		readStationNames(); //reads station names into vector<string> vecStationName
@@ -244,12 +244,12 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 	}
 }
 
-void GSNIO::parseString(const std::string& _string, std::vector<std::string>& vecString, MeteoData& md){
+void GSNIO::parseString(const std::string& in_string, std::vector<std::string>& vecString, MeteoData& md){
 	vecString.clear();
 
 	//cout << _string << endl;
 
-	std::stringstream ss(_string);
+	std::stringstream ss(in_string);
 	std::string tmpstring;
 
 	while (std::getline(ss, tmpstring, ';')){
@@ -284,8 +284,8 @@ void GSNIO::parseString(const std::string& _string, std::vector<std::string>& ve
 }
 
 //TODO: this should be done by IOUtils!!
-void GSNIO::convertStringToDouble(double& d, const std::string& _string, const std::string& _parname){
-	if (!IOUtils::convertString(d, _string, std::dec))
+void GSNIO::convertStringToDouble(double& d, const std::string& in_string, const std::string& in_parname){
+	if (!IOUtils::convertString(d, in_string, std::dec))
 		throw ConversionFailedException("Conversion failed for value " + _parname, AT);
 }
 

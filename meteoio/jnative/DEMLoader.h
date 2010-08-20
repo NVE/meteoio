@@ -31,10 +31,10 @@ private:
 
 
   static DEMLoader *getInstance (){
-    if (NULL == _singleton){
-        _singleton =  new DEMLoader;
+    if (NULL == singleton){
+        singleton =  new DEMLoader;
      }
-    return _singleton;
+    return singleton;
   }
 
   const mio::DEMObject& internal_loadFullDEM(const std::string cDemFile,
@@ -74,9 +74,9 @@ public:
 	* Public static access to destroy (interest ?!?)
 	*/
 	static void kill (){
-		if (NULL != _singleton) {
-			delete _singleton; //call destructor
-			_singleton = NULL;
+		if (NULL != singleton) {
+			delete singleton; //call destructor
+			singleton = NULL;
 		  }
 	  }
 
@@ -90,7 +90,7 @@ private:
 	/**
 	 * Static pointer to the unique instance, if null the instance had not been initialized yet
 	 */
-	static DEMLoader *_singleton;
+	static DEMLoader *singleton;
 };
 
 #endif

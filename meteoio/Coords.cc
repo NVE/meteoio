@@ -159,27 +159,27 @@ Coords::Coords() {
 
 /**
 * @brief Regular constructor: usually, this is the constructor to use
-* @param[in] _coordinatesystem string identifying the coordinate system to use
-* @param[in] _parameters string giving some additional parameters for the projection (optional)
+* @param[in] in_coordinatesystem string identifying the coordinate system to use
+* @param[in] in_parameters string giving some additional parameters for the projection (optional)
 *
 * See setProj() for a full description of these strings
 */
-Coords::Coords(const std::string& _coordinatesystem, const std::string& _parameters) {
+Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters) {
 	setDefaultValues();
-	setProj(_coordinatesystem, _parameters);
+	setProj(in_coordinatesystem, in_parameters);
 }
 
 /**
 * @brief Local projection onstructor: this constructor is only suitable for building a local projection.
 * Such a projection defines easting and northing as the distance (in meters) to a reference point
 * which coordinates have to be provided here.
-* @param[in] _lat_ref latitude of the reference point
-* @param[in] _long_ref longitude of the reference point
+* @param[in] in_lat_ref latitude of the reference point
+* @param[in] in_long_ref longitude of the reference point
 */
-Coords::Coords(const double& _lat_ref, const double& _long_ref)
+Coords::Coords(const double& in_lat_ref, const double& in_long_ref)
 {
 	setDefaultValues();
-	setLocalRef(_lat_ref, _long_ref);
+	setLocalRef(in_lat_ref, in_long_ref);
 	setProj("LOCAL", "");
 }
 
@@ -279,14 +279,14 @@ std::string Coords::printLatLon() const {
 * The automatic update of the easting/northing can be turned off so that
 * both lat/lon and east/north coordinates can be provided in order to thereafter check the
 * coordinates by calling check().
-* @param[in] _coordinates string containing the lat/lon to read
-* @param[in] _altitude altitude to set (optional)
-* @param[in] _update should the easting/northing be updated? (default=true)
+* @param[in] in_coordinates string containing the lat/lon to read
+* @param[in] in_altitude altitude to set (optional)
+* @param[in] in_update should the easting/northing be updated? (default=true)
 */
-void Coords::setLatLon(const std::string& _coordinates, const double _altitude, const bool _update) {
+void Coords::setLatLon(const std::string& in_coordinates, const double in_altitude, const bool in_update) {
 	double lat, lon;
-	parseLatLon(_coordinates, lat, lon);
-	setLatLon(lat, lon, _altitude, _update);
+	parseLatLon(in_coordinates, lat, lon);
+	setLatLon(lat, lon, in_altitude, in_update);
 }
 
 /**
@@ -294,18 +294,18 @@ void Coords::setLatLon(const std::string& _coordinates, const double _altitude, 
 * The automatic update of the easting/northing can be turned off so that
 * both lat/lon and east/north coordinates can be provided in order to thereafter check the
 * coordinates by calling check().
-* @param[in] _latitude latitude to set
-* @param[in] _longitude longitude to set
-* @param[in] _altitude altitude to set
-* @param[in] _update should the easting/northing be updated? (default=true)
+* @param[in] in_latitude latitude to set
+* @param[in] in_longitude longitude to set
+* @param[in] in_altitude altitude to set
+* @param[in] in_update should the easting/northing be updated? (default=true)
 */
-void Coords::setLatLon(const double _latitude, const double _longitude, const double _altitude, const bool _update) {
-	latitude = _latitude;
-	longitude = _longitude;
-	if(_altitude!=IOUtils::nodata) {
-		altitude = _altitude;
+void Coords::setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update) {
+	latitude = in_latitude;
+	longitude = in_longitude;
+	if(in_altitude!=IOUtils::nodata) {
+		altitude = in_altitude;
 	}
-	if(coordsystem!="NULL" && _update==true) {
+	if(coordsystem!="NULL" && in_update==true) {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
 	grid_i = grid_j = grid_k = IOUtils::inodata;
@@ -316,18 +316,18 @@ void Coords::setLatLon(const double _latitude, const double _longitude, const do
 * The automatic update of the latitude/longitude can be turned off so that
 * both lat/lon and east/north coordinates can be provided in order to thereafter check the
 * coordinates by calling check().
-* @param[in] _easting easting to set
-* @param[in] _northing northing to set
-* @param[in] _altitude altitude to set
-* @param[in] _update should the easting/northing be updated? (default=true)
+* @param[in] in_easting easting to set
+* @param[in] in_northing northing to set
+* @param[in] in_altitude altitude to set
+* @param[in] in_update should the easting/northing be updated? (default=true)
 */
-void Coords::setXY(const double _easting, const double _northing, const double _altitude, const bool _update) {
-	easting = _easting;
-	northing = _northing;
-	if(_altitude!=IOUtils::nodata) {
-		altitude = _altitude;
+void Coords::setXY(const double in_easting, const double in_northing, const double in_altitude, const bool in_update) {
+	easting = in_easting;
+	northing = in_northing;
+	if(in_altitude!=IOUtils::nodata) {
+		altitude = in_altitude;
 	}
-	if(coordsystem!="NULL" && _update==true) {
+	if(coordsystem!="NULL" && in_update==true) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 	grid_i = grid_j = grid_k = IOUtils::inodata;
@@ -346,17 +346,17 @@ void Coords::setXY(const double _easting, const double _northing, const double _
 * by calling Grid2DObject::gridify or Grid3DObject::gridify .
 *
 * @note To make it short: <b>use this method with caution!!</b>
-* @param[in] _grid_i grid index along the X direction
-* @param[in] _grid_j grid index along the Y direction
-* @param[in] _grid_k grid index along the Z direction
-* @param[in] _invalidate should the geographic coordinates be invalidated? (default=true, this flag should be false ONLY when calling from Grid2/3DObject)
+* @param[in] in_grid_i grid index along the X direction
+* @param[in] in_grid_j grid index along the Y direction
+* @param[in] in_grid_k grid index along the Z direction
+* @param[in] in_invalidate should the geographic coordinates be invalidated? (default=true, this flag should be false ONLY when calling from Grid2/3DObject)
 */
-void Coords::setGridIndex(const int _grid_i, const int _grid_j, const int _grid_k, const bool _invalidate) {
+void Coords::setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool in_invalidate) {
 //HACK TODO make grid_i,j,k friends of Grid2/3DObject -> remove _invalidate and ALWAYS invalidate
-	grid_i = _grid_i;
-	grid_j = _grid_j;
-	grid_k = _grid_k;
-	if(_invalidate==true) {
+	grid_i = in_grid_i;
+	grid_j = in_grid_j;
+	grid_k = in_grid_k;
+	if(in_invalidate==true) {
 		latitude = IOUtils::nodata;
 		longitude = IOUtils::nodata;
 		easting = IOUtils::nodata;
@@ -368,8 +368,8 @@ void Coords::setGridIndex(const int _grid_i, const int _grid_j, const int _grid_
 /**
 * @brief Set projection to use
 * This projection will be used for converting between lat/lon and East/North
-* @param[in] _coordinatesystem string identifying the coordinate system to use
-* @param[in] _parameters string giving some additional parameters for the projection (optional)
+* @param[in] in_coordinatesystem string identifying the coordinate system to use
+* @param[in] in_parameters string giving some additional parameters for the projection (optional)
 *
 *  \anchor Coordinate_types
 * The coordinate system can be any of the following:
@@ -378,19 +378,19 @@ void Coords::setGridIndex(const int _grid_i, const int _grid_j, const int _grid_
 * - PROJ4 for coordinate conversion relying on the Proj4 library [ref: http://trac.osgeo.org/proj/]
 * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
 */
-void Coords::setProj(const std::string& _coordinatesystem, const std::string& _parameters) {
+void Coords::setProj(const std::string& in_coordinatesystem, const std::string& in_parameters) {
 	//the latitude/longitude had not been calculated, so we do it first in order to have our reference
 	//before further conversions (usage scenario: giving a x,y and then converting to anyother x,y in another system
 	if ((coordsystem != "NULL") && ((latitude==IOUtils::nodata) || (longitude==IOUtils::nodata))) {
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 
-	if(_coordinatesystem == "") {
+	if(in_coordinatesystem == "") {
 		coordsystem = std::string("NULL");
 	} else {
-		coordsystem = _coordinatesystem;
+		coordsystem = in_coordinatesystem;
 	}
-	coordparam  = _parameters;
+	coordparam  = in_parameters;
 	setFunctionPointers();
 
 	//since lat/long is our reference, we refresh x,y (only if lat/lon exist)
@@ -402,15 +402,15 @@ void Coords::setProj(const std::string& _coordinatesystem, const std::string& _p
 /**
 * @brief Set the local projection reference coordinates
 * This projection will be used for converting between lat/lon and East/North
-* @param[in] _ref_latitude latitude of the local origin
-* @param[in] _ref_longitude longitude of the local origin
+* @param[in] in_ref_latitude latitude of the local origin
+* @param[in] in_ref_longitude longitude of the local origin
 */
-void Coords::setLocalRef(const double _ref_latitude, const double _ref_longitude) {
-	if(_ref_latitude==IOUtils::nodata || _ref_longitude==IOUtils::nodata) {
+void Coords::setLocalRef(const double in_ref_latitude, const double in_ref_longitude) {
+	if(in_ref_latitude==IOUtils::nodata || in_ref_longitude==IOUtils::nodata) {
 		throw InvalidArgumentException("For LOCAL projection, please provide both reference latitude and longitude!", AT);
 	}
-	ref_latitude = _ref_latitude;
-	ref_longitude = _ref_longitude;
+	ref_latitude = in_ref_latitude;
+	ref_longitude = in_ref_longitude;
 	if(coordsystem=="LOCAL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
@@ -419,10 +419,10 @@ void Coords::setLocalRef(const double _ref_latitude, const double _ref_longitude
 /**
 * @brief Set the local projection reference coordinates
 * This projection will be used for converting between lat/lon and East/North
-* @param[in] _coordparam string containing the (lat,lon) of the local origin
+* @param[in] in_coordparam string containing the (lat,lon) of the local origin
 */
-void Coords::setLocalRef(const std::string _coordparam) {
-	coordparam = _coordparam;
+void Coords::setLocalRef(const std::string in_coordparam) {
+	coordparam = in_coordparam;
 	parseLatLon(coordparam, ref_latitude, ref_longitude);
 	if(coordsystem=="LOCAL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
@@ -432,10 +432,10 @@ void Coords::setLocalRef(const std::string _coordparam) {
 /**
 * @brief Set the algorithm to use to compute distances
 * Various algorithm exist that offer various precision/complexity tradeoffs.
-* @param[in] _algo enum giving the algorithm to be used (see documentation for geo_distances)
+* @param[in] in_algo enum giving the algorithm to be used (see documentation for geo_distances)
 */
-void Coords::setDistances(const geo_distances _algo) {
-	distance_algo = _algo;
+void Coords::setDistances(const geo_distances in_algo) {
+	distance_algo = in_algo;
 	if(coordsystem=="LOCAL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
