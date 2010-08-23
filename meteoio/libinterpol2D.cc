@@ -443,7 +443,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	double Ww;		// Wind weighting
 	double Od;		// Diverting factor
 
-	const double dem_min_slope=dem.min_slope, dem_range_slope=(dem.max_slope-dem_min_slope);
+	const double to_rad = M_PI/180.;
+	const double dem_min_slope=dem.min_slope*to_rad, dem_range_slope=(dem.max_slope-dem_min_slope)*to_rad;
 	const double dem_min_curvature=dem.min_curvature, dem_range_curvature=(dem.max_curvature-dem_min_curvature);
 	
 	for (unsigned int j=0;j<VW.nrows-1;j++) {
@@ -451,8 +452,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 			// Get input data
 			speed = VW.grid2D(i,j);
 			dir = DW.grid2D(i,j);
-			beta = dem.slope(i, j);
-			azi = dem.azi(i, j);
+			beta = dem.slope(i, j)*to_rad;
+			azi = dem.azi(i, j)*to_rad;
 			curvature = dem.curvature(i, j);
 
 			if(speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {

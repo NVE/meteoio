@@ -90,16 +90,22 @@ bool Coords::initializeMaps() {
 */
 bool Coords::operator==(const Coords& in) const {
 //check that two Coords objects represent the same location
-
-	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata || easting==IOUtils::nodata || northing==IOUtils::nodata) {
+	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+		const bool comparison = ( IOUtils::checkEpsilonEquality(getLat(), in.getLat(), IOUtils::lat_epsilon) &&
+		                          IOUtils::checkEpsilonEquality(getLon(), in.getLon(), IOUtils::lon_epsilon) );
+		return comparison;
+	}
+	if(easting!=IOUtils::nodata && northing!=IOUtils::nodata) {
+		const bool comparison = ( IOUtils::checkEpsilonEquality(getEasting(), in.getEasting(), 5.) &&
+		                          IOUtils::checkEpsilonEquality(getNorthing(), in.getNorthing(), 5.) );
+		return comparison;
+	}
+	if(grid_i!=IOUtils::nodata && grid_j!=IOUtils::nodata && grid_k!=IOUtils::nodata) {
 		//only available information is grid indices
 		const bool comparison = ( grid_i==in.grid_i && grid_j==in.grid_j && grid_k==in.grid_k );
 		return comparison;
-	} else {
-		const bool comparison = ( IOUtils::checkEpsilonEquality(getLat(), in.getLat(), IOUtils::lat_epsilon) &&
-				IOUtils::checkEpsilonEquality(getLon(), in.getLon(), IOUtils::lon_epsilon) );
-		return comparison;
 	}
+	return false;
 }
 
 /**

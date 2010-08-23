@@ -581,6 +581,7 @@ double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const doub
 //(direction of the normal pointing out of the surface, clockwise from north)
 //This azimuth calculation is similar to Hodgson (1998)
 //local_nodata is the value that we want to give to the aspect of points that don't have a slope
+//The value is a bearing (ie: deg, clockwise, 0=North)
 
 	if(Nx==IOUtils::nodata || Ny==IOUtils::nodata || Nz==IOUtils::nodata || slope==IOUtils::nodata) {
 		return IOUtils::nodata;
@@ -589,16 +590,16 @@ double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const doub
 	if ( slope > 0. ) { //there is some slope
 		if ( Nx == 0. ) { //no E-W slope, so it is purely N-S
 			if ( Ny < 0. ) {
-				return (M_PI);	  // south facing
+				return(180.); // south facing
 			} else {
-				return (0.);	  // north facing
+				return (0.); // north facing
 			}
 		} else { //there is a E-W slope
-			const double N_norm = sqrt( Nx*Nx + Ny*Ny + Nz*Nz );
+			const double to_deg = 180./M_PI;
 			if ( Nx > 0. ) {
-				return (M_PI * 0.5 - atan( (Ny/N_norm) / (Nx/N_norm) ));
+				return (90. - atan(Ny/Nx)*to_deg);
 			} else {
-				return (M_PI * 1.5 - atan( (Ny/N_norm) / (Nx/N_norm) ));
+				return (270. - atan(Ny/Nx)*to_deg);
 			}
 		}
 	} else { // if slope = 0
@@ -620,7 +621,8 @@ void DEMObject::CalculateHick(double A[4][4], double& slope, double& Nx, double&
 		Nz = IOUtils::nodata;
 		slope_failures++;
 	} else {
-		slope = atan( smax );
+		const double to_deg = 180./M_PI;
+		slope = atan(smax)*to_deg;
 
 		//Nx and Ny: x and y components of the normal pointing OUT of the surface
 		if ( smax > 0. ) { //ie: there is some slope
@@ -651,7 +653,8 @@ void DEMObject::CalculateFleming(double A[4][4], double& slope, double& Nx, doub
 		Nx = 0.5 * (A[2][1] - A[2][3]) / cellsize;
 		Ny = 0.5 * (A[3][2] - A[1][2]) / cellsize;
 		Nz = 1.;
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) );
+		const double to_deg = 180./M_PI;
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
 	} else {
 		CalculateHick(A, slope, Nx, Ny, Nz);
 	}
@@ -669,7 +672,8 @@ void DEMObject::CalculateHorn(double A[4][4], double& slope, double& Nx, double&
 
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) );
+		const double to_deg = 180./M_PI;
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
 		CalculateHick(A, slope, Nx, Ny, Nz);
@@ -685,7 +689,8 @@ void DEMObject::CalculateCorripio(double A[4][4], double& slope, double& Nx, dou
 		Nz = 1.;
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) );
+		const double to_deg = 180./M_PI;
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
 		CalculateHick(A, slope, Nx, Ny, Nz);
