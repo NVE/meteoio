@@ -288,20 +288,30 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 #ifndef _POPC_
 std::ostream& operator<<(std::ostream& os, const IOHandler& data)
 {
+	os << data.toString();
+	return os;
+}
+#endif
+
+#ifdef _POPC_
+std::string IOHandler::toString()
+#else
+std::string IOHandler::toString() const
+#endif
+{
+	std::stringstream os;
 	os << "<IOHandler>\n";
-	os << data.cfg;
+	os << cfg;
 
 	os << "<mapPlugins>\n";
 	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";
 	std::map<std::string, IOPlugin::IOPlugin>::const_iterator it1;
-	for (it1=data.mapPlugins.begin(); it1 != data.mapPlugins.end(); it1++){
+	for (it1=mapPlugins.begin(); it1 != mapPlugins.end(); it1++){
 		os << setw(10) << it1->first << " = " <<  it1->second;
 	}
 	os << "</mapPlugins>\n";
 	os << "</IOHandler>\n";
-
-	return os;
+	return os.str();
 }
-#endif
 
 } //end namespace

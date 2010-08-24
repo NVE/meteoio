@@ -66,6 +66,7 @@ class IOHandler : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 		friend std::ostream& operator<<(std::ostream& os, const IOHandler& data);
+		std::string toString() const;
 
 	private:
 		void loadDynamicPlugins();

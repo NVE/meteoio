@@ -84,20 +84,24 @@ bool Coords::initializeMaps() {
 }
 
 /**
-* @brief Equality operator that checks that lat/lon match
+* @brief Equality operator that checks that lat/lon match. This currently does NOT compare the altitudes!
 * @param[in] in Coord object to compare to
 * @return true or false
 */
 bool Coords::operator==(const Coords& in) const {
 //check that two Coords objects represent the same location
+	const double x_eps=5.;
 	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		const bool comparison = ( IOUtils::checkEpsilonEquality(getLat(), in.getLat(), IOUtils::lat_epsilon) &&
 		                          IOUtils::checkEpsilonEquality(getLon(), in.getLon(), IOUtils::lon_epsilon) );
 		return comparison;
 	}
 	if(easting!=IOUtils::nodata && northing!=IOUtils::nodata) {
-		const bool comparison = ( IOUtils::checkEpsilonEquality(getEasting(), in.getEasting(), 5.) &&
-		                          IOUtils::checkEpsilonEquality(getNorthing(), in.getNorthing(), 5.) );
+		//in this case, it means that we don't know anything about the projection parameters
+		//otherwise the lat/long would have been calculated. So EPSG should be nodata
+		const bool comparison = ( IOUtils::checkEpsilonEquality(getEasting(), in.getEasting(), x_eps) &&
+		                          IOUtils::checkEpsilonEquality(getNorthing(), in.getNorthing(), x_eps) &&
+		                          getEPSG()==in.getEPSG());
 		return comparison;
 	}
 	if(grid_i!=IOUtils::nodata && grid_j!=IOUtils::nodata && grid_k!=IOUtils::nodata) {
@@ -149,6 +153,7 @@ std::ostream& operator<<(std::ostream &os, const Coords& coord)
 	os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
 	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
 	os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
+	os << "EPSG\t\t" << coord.getEPSG() << "\n";
 	os << "</Coords>\n";
 	return os;
 }
