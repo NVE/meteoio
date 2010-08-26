@@ -697,6 +697,7 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
  * hourly precipitation measurements. Remarks:
  * - the accumulation period has to be provided as an argument (in seconds)
+ * - this ONLY works for accumulations periods that are multiples of the initial sampling rate (ie: to accumulate 10 minutes data to hourly). This leads to \em wrong results in other cases (ie: 20 minutes to 30 minutes accumulation DOES NOT WORK, it is currently being re-implemented for this purpose).
  * @code
  * HNW::filter1 = accumulate
  * HNW::arg1	 = 3600

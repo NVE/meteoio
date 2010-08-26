@@ -497,6 +497,155 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_
 	}
 }
 
+/**
+* @brief Returns a list of grid points that are on the straight line between two coordinates
+* @param point the origin point
+* @param bearing direction given by a compass bearing
+* @param vec_points vector of points that are between point and the edge of the dem following direction given by bearing
+*
+*/
+void DEMObject::getPointsBetween(const Coords point, const double bearing, std::vector<GRID_POINT_2D>& vec_points) {
+
+	//equation of the line between for a point (x0,y0) and a direction (pi/2 - bearing)
+	const double x0 = (point.getEasting() - llcorner.getEasting())/cellsize;
+	const double y0 = (point.getNorthing() - llcorner.getNorthing())/cellsize;
+	/*double alpha = fmod((360.-bearing), 360.)*M_PI/180. + M_PI/2.;
+	if (alpha > 2*M_PI) {alpha = alpha - 2*M_PI;}*/
+	const double alpha=IOUtils::bearing_to_angle(bearing);
+	std::cout << "alpha=" << alpha << std::endl;
+	const double a = tan(alpha);
+	const double b = y0 - a * x0;
+	
+	std::cout << "a=" << a << std::endl;
+	
+	//looking which point is on the limit of the grid and not outside
+	Coords pointlim;
+	pointlim.copyProj(llcorner); //we use the same projection parameters as the DEM
+	
+	//there are four possibilities
+	if (alpha >=0 & alpha < (M_PI/2)) { //1st quadrant (0 <= alpha < 90)
+		//retrieving grid coordinates for the limit point of the grid / dem. It correspond (xlim,ylim) = (ncols,nrows) of the dem
+		double xlim = (signed)ncols;
+		double ylim = (signed)nrows;
+		
+		//there are two possible "point2" on the line, reachin the end of the dem
+		double y2 = a * xlim + b;
+		double x2 = (ylim - b) / (a + 1e-12);
+		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
+		
+		if (y2 <= ylim)
+        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+		else
+        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+	} else if (alpha >= (M_PI/2) & alpha < M_PI) { //2nd quadrant (90 <= alpha < 180)
+		double xlim = 0;
+		double ylim = (signed)nrows;
+		
+		//there are two possible "point2" on the line, reachin the end of the dem
+		double y2 = a * xlim + b;
+		double x2 = (ylim - b) / (a + 1e-12);
+		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
+	
+		if (y2 <= ylim)
+        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+		else
+			pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+	} else if (alpha >= M_PI & alpha < ((3* M_PI)/2)) { //3rd quadrant (180 <= alpha < 270)
+		double xlim = 0;
+		double ylim = 0;
+		
+		//there are two possible "point2" on the line, reachin the end of the dem
+		double y2 = a * xlim + b;
+		double x2 = (ylim - b) / (a + 1e-12);
+		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
+		
+		if (x2 <= xlim)
+        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+		else
+        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+	} else if (alpha >= (3*M_PI/2) & alpha < (2*M_PI)) {
+		double xlim = (signed)ncols; //4th quadrant (270 <= alpha < 360)
+		double ylim = 0;
+		
+		//there are two possible "point2" on the line, reachin the end of the dem
+		double y2 = a * xlim + b;
+		double x2 = (ylim - b) / (a + 1e-12);
+		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
+	
+		if (y2 >= ylim)
+        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+		else
+			pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+	}
+	
+	if(gridify(pointlim)==false) {
+	    std::cerr << "[E] pointlim OUTSIDE dem\n";
+	}
+	std::cout << "(" << pointlim.getGridI() << "," << pointlim.getGridJ() << ")\n";
+
+	std::vector<Grid2DObject::GRID_POINT_2D> vector_points;
+	getPointsBetween(point, pointlim,vector_points);
+
+	vec_points = vector_points;
+
+}
+
+/**
+* @brief Returns the horizon from a given point looking toward a given bearing
+* @param point the origin point
+* @param bearing direction given by a compass bearing
+* @return angle above the horizontal (in deg)
+*
+*/
+double DEMObject::getHorizon(const Coords& point, const double& bearing) {
+
+  std::vector<Grid2DObject::GRID_POINT_2D> vec_points;
+
+	getPointsBetween(point, bearing, vec_points);
+
+	//for (unsigned int ii=0; ii < vec_points.size(); ii++) {
+	//std::cout << "(" << vec_points[ii].ix << "," << vec_points[ii].iy << ") -> " << grid2D(vec_points[ii].ix, vec_points[ii].iy) << std::endl;
+	//}
+
+	//height of the departure point
+	const double height0 = grid2D(point.getGridI(),point.getGridJ());
+	double max_tangent = 0.;
+	for (unsigned int ii=0; ii < vec_points.size(); ii++) {
+	  const double delta_height = grid2D(vec_points[ii].ix, vec_points[ii].iy) - height0; //absolute heights in confrontation to the departure point
+	  const double x_distance = (double)((int)vec_points[ii].ix - point.getGridI()) * cellsize;
+	  const double y_diff = (double)((int)vec_points[ii].iy - point.getGridJ());
+	  const double y_distance = y_diff * cellsize;
+
+
+
+	  const double distance = sqrt(x_distance * x_distance + y_distance * y_distance); //distances in meters from the departure point
+	  const double tangent = (delta_height / distance);
+
+	  if(tangent > max_tangent) {
+	   max_tangent = tangent;
+	  }
+	}
+
+	const double max_angle = atan(max_tangent);
+	return (max_angle*180./M_PI);
+
+}
+
+/**
+* @brief Returns the horizon from a given point looking 360 degrees around by increments
+* @param point the origin point
+* @param increment to the bearing between two angles
+* @param horizon vector of heights above a given angle
+*
+*/
+void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon) {
+
+    for(double bearing=0.0; bearing <360.; bearing += increment) {
+        const double alpha = getHorizon(point, bearing * M_PI/180.);
+        horizon.push_back(alpha);
+    }
+}
+
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
