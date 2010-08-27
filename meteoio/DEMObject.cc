@@ -504,90 +504,59 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_
 * @param vec_points vector of points that are between point and the edge of the dem following direction given by bearing
 *
 */
-void DEMObject::getPointsBetween(const Coords point, const double bearing, std::vector<GRID_POINT_2D>& vec_points) {
-
-	//equation of the line between for a point (x0,y0) and a direction (pi/2 - bearing)
+void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std::vector<GRID_POINT_2D>& vec_points) {
+	//equation of the line between for a point (x0,y0) and a bearing
 	const double x0 = (point.getEasting() - llcorner.getEasting())/cellsize;
 	const double y0 = (point.getNorthing() - llcorner.getNorthing())/cellsize;
-	/*double alpha = fmod((360.-bearing), 360.)*M_PI/180. + M_PI/2.;
-	if (alpha > 2*M_PI) {alpha = alpha - 2*M_PI;}*/
-	const double alpha=IOUtils::bearing_to_angle(bearing);
-	std::cout << "alpha=" << alpha << std::endl;
-	const double a = tan(alpha);
+	const double bear=fmod(bearing+360., 360.); //this should not be needed, but as safety...
+	const double a = tan( IOUtils::bearing_to_angle(bear) ); //to get trigonometric angle
 	const double b = y0 - a * x0;
-	
-	std::cout << "a=" << a << std::endl;
-	
+		
 	//looking which point is on the limit of the grid and not outside
 	Coords pointlim;
 	pointlim.copyProj(llcorner); //we use the same projection parameters as the DEM
-	
-	//there are four possibilities
-	if (alpha >=0 & alpha < (M_PI/2)) { //1st quadrant (0 <= alpha < 90)
-		//retrieving grid coordinates for the limit point of the grid / dem. It correspond (xlim,ylim) = (ncols,nrows) of the dem
-		double xlim = (signed)ncols;
-		double ylim = (signed)nrows;
-		
-		//there are two possible "point2" on the line, reachin the end of the dem
-		double y2 = a * xlim + b;
-		double x2 = (ylim - b) / (a + 1e-12);
-		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
-		
-		if (y2 <= ylim)
-        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-		else
-        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-	} else if (alpha >= (M_PI/2) & alpha < M_PI) { //2nd quadrant (90 <= alpha < 180)
-		double xlim = 0;
-		double ylim = (signed)nrows;
-		
-		//there are two possible "point2" on the line, reachin the end of the dem
-		double y2 = a * xlim + b;
-		double x2 = (ylim - b) / (a + 1e-12);
-		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
-	
-		if (y2 <= ylim)
-        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-		else
-			pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-	} else if (alpha >= M_PI & alpha < ((3* M_PI)/2)) { //3rd quadrant (180 <= alpha < 270)
-		double xlim = 0;
-		double ylim = 0;
-		
-		//there are two possible "point2" on the line, reachin the end of the dem
-		double y2 = a * xlim + b;
-		double x2 = (ylim - b) / (a + 1e-12);
-		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
-		
-		if (x2 <= xlim)
-        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-		else
-        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-	} else if (alpha >= (3*M_PI/2) & alpha < (2*M_PI)) {
-		double xlim = (signed)ncols; //4th quadrant (270 <= alpha < 360)
-		double ylim = 0;
-		
-		//there are two possible "point2" on the line, reachin the end of the dem
-		double y2 = a * xlim + b;
-		double x2 = (ylim - b) / (a + 1e-12);
-		std::cout << "(x2=" << x2 << ",y2=" << y2 << ")" << std::endl;
-	
+
+	//define the boundaries according to the quadrant we are in
+	double xlim, ylim;
+	if(bear>=0. && bear<90.) {
+		xlim = (double)(ncols-1);
+		ylim = (double)(nrows-1);
+	} else if (bear>=90. && bear<180.) {
+		xlim = (double)(ncols-1);
+		ylim = 0.;
+	} else if (bear>=180. && bear<270.) {
+		xlim = 0.;
+		ylim = 0.;
+	} else {
+		xlim = 0.;
+		ylim = (double)(nrows-1);
+	}
+
+	//calculate the two possible intersections between the bearing line and the boundaries
+	const double y2 = a * xlim + b;
+	const double x2 = (ylim - b) / (a + 1e-12);
+
+	//Find out which point is the first intersect and take it as our destination point
+	if(bear>=90. && bear<270.) {
 		if (y2 >= ylim)
         		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
 		else
-			pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+	} else {	
+		if (y2 <= ylim)
+        		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
+		else
+        		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
 	}
-	
+
 	if(gridify(pointlim)==false) {
-	    std::cerr << "[E] pointlim OUTSIDE dem\n";
+		std::stringstream tmp;
+		tmp << "[E] Wrong destination point calculated for bearing " << bearing;
+		throw InvalidArgumentException(tmp.str(), AT);
 	}
-	std::cout << "(" << pointlim.getGridI() << "," << pointlim.getGridJ() << ")\n";
 
-	std::vector<Grid2DObject::GRID_POINT_2D> vector_points;
-	getPointsBetween(point, pointlim,vector_points);
-
-	vec_points = vector_points;
-
+	getPointsBetween(point, pointlim, vec_points);
+	//HACK BUG : for bearing=160 -> both start and end points are missing from the list!!
 }
 
 /**
@@ -599,36 +568,31 @@ void DEMObject::getPointsBetween(const Coords point, const double bearing, std::
 */
 double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 
-  std::vector<Grid2DObject::GRID_POINT_2D> vec_points;
-
+	std::vector<Grid2DObject::GRID_POINT_2D> vec_points;
 	getPointsBetween(point, bearing, vec_points);
 
-	//for (unsigned int ii=0; ii < vec_points.size(); ii++) {
-	//std::cout << "(" << vec_points[ii].ix << "," << vec_points[ii].iy << ") -> " << grid2D(vec_points[ii].ix, vec_points[ii].iy) << std::endl;
-	//}
+	//Starting point
+	const int ix0 = (int)point.getGridI();
+	const int iy0 = (int)point.getGridJ();
+	const double height0 = grid2D(ix0,iy0);
 
-	//height of the departure point
-	const double height0 = grid2D(point.getGridI(),point.getGridJ());
+	//going through every point and looking for the highest tangent (which is also the highest angle)
 	double max_tangent = 0.;
 	for (unsigned int ii=0; ii < vec_points.size(); ii++) {
-	  const double delta_height = grid2D(vec_points[ii].ix, vec_points[ii].iy) - height0; //absolute heights in confrontation to the departure point
-	  const double x_distance = (double)((int)vec_points[ii].ix - point.getGridI()) * cellsize;
-	  const double y_diff = (double)((int)vec_points[ii].iy - point.getGridJ());
-	  const double y_distance = y_diff * cellsize;
+		const int ix = (int)vec_points[ii].ix;
+		const int iy = (int)vec_points[ii].iy;
+		const double delta_height = grid2D(ix, iy) - height0;
+		const double x_distance = (double)(ix - ix0) * cellsize;
+		const double y_distance = (double)(iy - iy0) * cellsize;
+		const double distance = sqrt(x_distance * x_distance + y_distance * y_distance);
+		const double tangent = (delta_height / distance);
 
-
-
-	  const double distance = sqrt(x_distance * x_distance + y_distance * y_distance); //distances in meters from the departure point
-	  const double tangent = (delta_height / distance);
-
-	  if(tangent > max_tangent) {
-	   max_tangent = tangent;
-	  }
+		if(tangent > max_tangent) max_tangent = tangent;
 	}
 
-	const double max_angle = atan(max_tangent);
-	return (max_angle*180./M_PI);
-
+	//returning the angle matching the highest tangent
+	const double to_deg = 180./M_PI;
+	return ( atan(max_tangent)*to_deg );
 }
 
 /**
