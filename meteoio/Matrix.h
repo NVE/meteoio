@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -28,17 +28,30 @@ namespace mio {
 
 #define NOSAFECHECKS
 
-//HACK: indices are WRONG!! we should start at 1, not 0!!
+/**
+ * @class Matrix
+ * @brief This class implements the basic operations on matrices.
+ * Elements are access in matrix notation: that is A(1,2) represents the second element of the
+ * first line. Index go from 1 to nrows/ncols.
+ * 
+ * It might not be
+ * the best ever such implementation, but the goal is to provide a standalone matrix class.
+ * It might be later possible to chose between using the embedded implementation or to act as a
+ * front end to BLAS for those who have it installed on their system.
+ *
+ * @author Mathias Bavay
+ */
 class Matrix {
 	public:
 		Matrix();
 
 		/**
-		* A constructor that creates an array of a given size
+		* A constructor that creates a matrix of a given size
 		* @param anx number of columns of the new array
 		* @param any number of rows of the new array
 		*/
 		Matrix(const int& anx, const int& any);
+		Matrix(const unsigned int& anx, const unsigned int& any);
 
 		/**
 		* A constructor that creates an array filled with constant values
@@ -98,8 +111,8 @@ class Matrix {
 
 	protected:
 		std::vector<double> vecData;
-		unsigned int nx;
-		unsigned int ny;
+		unsigned int ncols;
+		unsigned int nrows;
 };
 
 } //end namespace

@@ -21,122 +21,116 @@
 namespace mio {
 
 Matrix::Matrix() {
-	nx = ny = 0;
+	nrows = ncols = 0;
 }
 
-Matrix::Matrix(const int& anx, const int& any) {
-	if(anx<0 || any<0) {
+Matrix::Matrix(const int& rows, const int& cols) {
+	if(rows<0 || cols<0) {
 		std::stringstream tmp;
 		tmp << "Trying construct a matrix with negative dimensions: ";
-		tmp << "(" << anx << "," << any << ")";
+		tmp << "(" << rows << "," << cols << ")";
 		throw IOException(tmp.str(), AT);
 	}
-	nx = ny = 0;
-	resize((unsigned)anx,(unsigned)any);
+	nrows = ncols = 0;
+	resize((unsigned)rows,(unsigned)cols);
 }
 
-Matrix::Matrix(const unsigned int& anx, const unsigned int& any, const double& init) {
-	nx = ny = 0;
-	resize(anx,any,init);
+Matrix::Matrix(const unsigned int& rows, const unsigned int& cols) {
+	nrows = ncols = 0;
+	resize(rows,cols);
+}
+
+Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double& init) {
+	nrows = ncols = 0;
+	resize(rows,cols,init);
 }
 
 Matrix::Matrix(const unsigned int& n, const double& init) {
-	nx = ny = 0;
+	nrows = ncols = 0;
 	resize(n,n,0.);
-	for(unsigned int jj=0; jj<ny; jj++) operator()(jj,jj) = init;
+	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
 }
 
-void Matrix::resize(const unsigned int& anx, const unsigned int& any) {
+void Matrix::resize(const unsigned int& rows, const unsigned int& cols) {
 	clear();
 
-	if ((anx > 0) && (any > 0)) {
-		vecData.resize(anx*any);
-		nx = anx;
-		ny = any;
+	if ((rows > 0) && (cols > 0)) {
+		vecData.resize(rows*cols);
+		ncols = cols;
+		nrows = rows;
 	} else {
 		throw IndexOutOfBoundsException("Can not resize a matrix to negative sizes!", AT);
 	}
 }
 
-void Matrix::resize(const unsigned int& anx, const unsigned int& any, const double& init) {
-	resize(anx, any);
+void Matrix::resize(const unsigned int& rows, const unsigned int& cols, const double& init) {
+	resize(rows, cols);
 
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+	for (unsigned int ii=1; ii<=nrows; ii++) {
+		for (unsigned int jj=1; jj<=ncols; jj++) {
 			operator()(ii,jj) = init;
 		}
 	}
 }
 
-void Matrix::size(unsigned int& anx, unsigned int& any) const{
-	anx=nx;
-	any=ny;
+void Matrix::size(unsigned int& rows, unsigned int& cols) const{
+	rows=nrows;
+	cols=ncols;
 }
 
 void Matrix::clear() {
 	vecData.clear();
-	nx=ny=0;
+	nrows=ncols=0;
 }
 
-double& Matrix::operator ()(const unsigned int& x, const unsigned int& y) {
+double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
 #ifndef NOSAFECHECKS
-	if ((x<1) || (x >= nx) || (y<1) || (y >= ny)) {
+	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
 		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
-	return vecData[x + y*nx];
+	return vecData[(j-1) + (i-1)*ncols];
 }
 
-const double Matrix::operator ()(const unsigned int& x, const unsigned int& y) const {
+const double Matrix::operator ()(const unsigned int& i, const unsigned int& j) const {
 #ifndef NOSAFECHECKS
-	if ((x<1) || (x >= nx) || (y<1) || (y >= ny)) {
+	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
 		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
-	return vecData[x + y*nx];
+	return vecData[(j-1) + (i-1)*ncols];
 }
 
 std::ostream& operator<<(std::ostream& os, const Matrix& data) {
-	//os << "<matrix>\n";
-	const unsigned int wd=5;
+	const unsigned int wd=6;
 	os << "\n┌ ";
-	for(unsigned int jj=0; jj<(data.ny*(wd+1)); jj++)
+	for(unsigned int jj=1; jj<=(data.ncols*(wd+1)); jj++)
 		os << " ";
 	os << " ┐\n";
-	for(unsigned int jj=0; jj<data.ny; jj++) {
+	for(unsigned int ii=1; ii<=data.nrows; ii++) {
 		os << "│ ";
-		for (unsigned int ii=0; ii<data.nx; ii++) {
+		for (unsigned int jj=1; jj<=data.ncols; jj++) {
 			os << std::setw(wd) << std::fixed << std::setprecision(2) << data(ii,jj) << " ";
 		}
 		os << " │\n";
 	}
 	os << "└ ";
-	for(unsigned int jj=0; jj<(data.ny*(wd+1)); jj++)
+	for(unsigned int jj=1; jj<=(data.ncols*(wd+1)); jj++)
 		os << " ";
 	os << " ┘\n";
-	//os << "\n";
 	return os;
 }
 
-/*const double Matrix::operator()(const unsigned int& x, const unsigned int& y) const {
-#ifndef NOSAFECHECKS
-	if ((x >= nx) || (y >= ny)) {
-		throw IndexOutOfBoundsException("", AT);
-	}
-#endif
-	return vecData[ (x-1) + (y-1)*nx];
-}*/
-
 bool Matrix::operator==(const Matrix& in) const {
-	unsigned int in_nx, in_ny;
-	in.size(in_nx, in_ny);
+	unsigned int in_nrows, in_ncols;
+	in.size(in_nrows, in_ncols);
 
-	if(nx!=in_nx || ny!=in_ny)
+	if(nrows!=in_nrows || ncols!=in_ncols)
 		return false;
 
-	for(unsigned int jj=0; jj<ny; jj++) {
-		for(unsigned int ii=0; ii<nx; ii++) {
-			if( operator()(ii,jj) != in(ii,jj) ) return false;
+	for(unsigned int i=1; i<=nrows; i++) {
+		for(unsigned int j=1; j<=ncols; j++) {
+			if( operator()(i,j) != in(i,j) ) return false;
 		}
 	}
 
@@ -148,20 +142,19 @@ bool Matrix::operator!=(const Matrix& in) const {
 }
 
 Matrix& Matrix::operator+=(const Matrix& rhs) {
-
 	//check dimensions compatibility
-	if(nx!=rhs.nx || ny!=rhs.ny) {
+	if(nrows!=rhs.nrows || ncols!=rhs.ncols) {
 		std::stringstream tmp;
-		tmp << "Trying to Add two matrix with incompatible dimensions: ";
-		tmp << "(" << nx << "," << ny << ") * ";
-		tmp << "(" << rhs.nx << "," << rhs.ny << ")";
+		tmp << "Trying to add two matrix with incompatible dimensions: ";
+		tmp << "(" << nrows << "," << ncols << ") * ";
+		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
 		throw IOException(tmp.str(), AT);
 	}
 
 	//fill sum matrix
-	for(unsigned int jj=0; jj<ny; jj++) {
-		for(unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) += rhs(ii,jj);
+	for(unsigned int i=1; i<=nrows; i++) {
+		for(unsigned int j=1; j<=ncols; j++) {
+			operator()(i,j) += rhs(i,j);
 		}
 	}
 
@@ -177,9 +170,9 @@ const Matrix Matrix::operator+(const Matrix& rhs) {
 
 Matrix& Matrix::operator+=(const double& rhs) {
 	//fill sum matrix
-	for(unsigned int jj=0; jj<ny; jj++) {
-		for(unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) += rhs;
+	for(unsigned int i=1; i<=nrows; i++) {
+		for(unsigned int j=1; j<=ncols; j++) {
+			operator()(i,j) += rhs;
 		}
 	}
 
@@ -194,20 +187,19 @@ const Matrix Matrix::operator+(const double& rhs) {
 }
 
 Matrix& Matrix::operator-=(const Matrix& rhs) {
-
 	//check dimensions compatibility
-	if(nx!=rhs.nx || ny!=rhs.ny) {
+	if(nrows!=rhs.nrows || ncols!=rhs.ncols) {
 		std::stringstream tmp;
-		tmp << "Trying to Add two matrix with incompatible dimensions: ";
-		tmp << "(" << nx << "," << ny << ") * ";
-		tmp << "(" << rhs.nx << "," << rhs.ny << ")";
+		tmp << "Trying to substract two matrix with incompatible dimensions: ";
+		tmp << "(" << nrows << "," << ncols << ") * ";
+		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
 		throw IOException(tmp.str(), AT);
 	}
 
 	//fill sum matrix
-	for(unsigned int jj=0; jj<ny; jj++) {
-		for(unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) -= rhs(ii,jj);
+	for(unsigned int i=1; i<=nrows; i++) {
+		for(unsigned int j=1; j<=ncols; j++) {
+			operator()(i,j) -= rhs(i,j);
 		}
 	}
 
@@ -235,28 +227,29 @@ const Matrix Matrix::operator-(const double& rhs) {
 }
 
 Matrix& Matrix::operator*=(const Matrix& rhs) {
-
 	//check dimensions compatibility
-	if(nx!=rhs.ny) {
+	if(ncols!=rhs.nrows) {
 		std::stringstream tmp;
 		tmp << "Trying to multiply two matrix with incompatible dimensions: ";
-		tmp << "(" << nx << "," << ny << ") * ";
-		tmp << "(" << rhs.nx << "," << rhs.ny << ")";
+		tmp << "(" << nrows << "," << ncols << ") * ";
+		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
 		throw IOException(tmp.str(), AT);
 	}
 
 	//create new matrix
-	Matrix result(rhs.nx,ny);
+	Matrix result(nrows,rhs.ncols);
 
 	//fill product matrix
-	for(unsigned int jj=0; jj<result.ny; jj++) {
-		for(unsigned int ii=0; ii<result.nx; ii++) {
+	for(unsigned int i=1; i<=result.nrows; i++) {
+		for(unsigned int j=1; j<=result.ncols; j++) {
 			double sum=0.;
-			for(unsigned int idx=0; idx<nx; idx++)
-				sum+= operator()(idx,jj) * rhs(ii,idx);
-			result(ii,jj) = sum;
+			for(unsigned int idx=1; idx<=ncols; idx++) {
+				sum+= operator()(i,idx) * rhs(idx,j);
+			}
+			result(i,j) = sum;
 		}
 	}
+
 	*this = result;
 	return *this;
 }
@@ -269,9 +262,9 @@ const Matrix Matrix::operator*(const Matrix& rhs) {
 }
 
 Matrix& Matrix::operator*=(const double& rhs) {
-	for(unsigned int jj=0; jj<ny; jj++) {
-		for(unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) *= rhs;
+	for(unsigned int i=1; i<=nrows; i++) {
+		for(unsigned int j=1; j<=ncols; j++) {
+			operator()(i,j) *= rhs;
 		}
 	}
 
@@ -303,28 +296,27 @@ const Matrix Matrix::operator/(const double& rhs) {
 
 const Matrix Matrix::T() {
 //other possibility: create a "transpose" flag that simply swaps the data reading...
-	Matrix result(ny, nx);
-
-	for(unsigned int jj=0; jj<result.ny; jj++) {
-		for(unsigned int ii=0; ii<result.nx; ii++) {
-			result(ii,jj) = operator()(jj,ii);
+	Matrix result(ncols, nrows);
+	for(unsigned int i=1; i<=result.nrows; i++) {
+		for(unsigned int j=1; j<=result.ncols; j++) {
+			result(i,j) = operator()(j,i);
 		}
 	}
 	return result;
 }
 
 double Matrix::det() const {
-	if(nx!=ny) {
+	if(nrows!=ncols) {
 		std::stringstream tmp;
 		tmp << "Trying to calculate the determinant of a non-square matrix ";
-		tmp << "(" << nx << "," << ny << ") !";
+		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
 	Matrix U;
 	LU(U);
 
 	double product=1.;
-	for(unsigned int i=0; i<nx; i++) product *= U(i,i);
+	for(unsigned int i=1; i<=nrows; i++) product *= U(i,i);
 	
 	return product;
 }
@@ -333,34 +325,34 @@ const Matrix Matrix::LU(Matrix& U) const {
 //Dolittle algorithm, cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html
 //HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 //This is implemented for matrix storage from 0 to n-1
-	if(nx!=ny) {
+	if(nrows!=ncols) {
 		std::stringstream tmp;
 		tmp << "Trying to calculate the LU decomposition of a non-square matrix ";
-		tmp << "(" << nx << "," << ny << ") !";
+		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
 
+	const unsigned int n = nrows;
 	U = *this;
 	const Matrix& A = *this;
-	Matrix L(nx, 1.); //initialized as diagonal matrix, then populated
+	Matrix L(n, 1.); //initialized as diagonal matrix, then populated
 
-	const unsigned int n = nx;
 	for(unsigned int k=1; k<=n; k++) {
 		//compute U elements
 		for(unsigned int j=1; j<k; j++) {
-			U(j-1,k-1) = 0.;
+			U(k,j) = 0.;
 		}
 		for(unsigned int j=k; j<=n; j++) {
 			double sum=0.;
-			for(unsigned int m=1; m<=(k-1); m++) sum += L(m-1,k-1)*U(j-1,m-1);
-			U(j-1,k-1) = A(j-1,k-1) - sum;
+			for(unsigned int m=1; m<=(k-1); m++) sum += L(k,m)*U(m,j);
+			U(k,j) = A(k,j) - sum;
 		}
 
 		//compute L elements
 		for(unsigned int i=k+1; i<=n; i++) {
 			double sum=0.;
-			for(unsigned int m=1; m<=(k-1); m++) sum += L(m-1,i-1)*U(k-1,m-1);
-			L(k-1,i-1) = (A(k-1,i-1) - sum) / (U(k-1,k-1)+1e-12);
+			for(unsigned int m=1; m<=(k-1); m++) sum += L(i,m)*U(m,k);
+			L(i,k) = (A(i,k) - sum) / (U(k,k)+1e-12);
 		}
 	}
 
@@ -373,38 +365,38 @@ const Matrix Matrix::LU(Matrix& U) const {
 
 const Matrix Matrix::inv() {
 //This uses an LU decomposition followed by backward and forward solving for the inverse
-	if(nx!=ny) {
+	if(nrows!=ncols) {
 		std::stringstream tmp;
 		tmp << "Trying to invert a non-square matrix ";
-		tmp << "(" << nx << "," << ny << ") !";
+		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
+	const unsigned int n = nrows;
 
 	Matrix U;
 	Matrix L=LU(U); //LU decomposition of current object
 
 	//checking that the matrix can be inversed
 	double product=1.;
-	for(unsigned int i=0; i<nx; i++) product *= U(i,i);
+	for(unsigned int i=1; i<=n; i++) product *= U(i,i);
 	if(product==0.) {
 		throw IOException("The given matrix is singular and can not be inversed", AT);
 	}
 
-	const unsigned int n = nx;
 	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
 	//we start by forward solving LY=I with Y=UX
 	Matrix Y(n, n);
 	for(unsigned int i=1; i<=n; i++) {
-		Y(i-1,i-1) = 1./L(i-1,i-1); //j==i
+		Y(i,i) = 1./L(i,i); //j==i
 		for(unsigned int j=1; j<i; j++) { //j<i
 			double sum=0.;
 			for(unsigned int k=i-1; k>=1; k--) {
-				sum += L(k-1,i-1) * Y(j-1,k-1);
+				sum += L(i,k) * Y(k,j);
 			}
-			Y(j-1,i-1) = -1./(L(i-1,i-1)+1e-12) * sum;
+			Y(i,j) = -1./(L(i,i)+1e-12) * sum;
 		}
 		for(unsigned int j=i+1; j<=n; j++) { //j>i
-			Y(j-1,i-1) = 0.;
+			Y(i,j) = 0.;
 		}
 	}
 
@@ -414,9 +406,9 @@ const Matrix Matrix::inv() {
 		for(unsigned int j=1; j<=n; j++) { //lines
 			double sum=0.;
 			for(unsigned int k=i+1; k<=n; k++) {
-				sum += U(k-1,i-1) * X(j-1,k-1);
+				sum += U(i,k) * X(k,j);
 			}
-			X(j-1,i-1) = (Y(j-1,i-1) - sum) / (U(i-1,i-1)+1e-12);
+			X(i,j) = (Y(i,j) - sum) / (U(i,i)+1e-12);
 		}
 	}
 
@@ -426,16 +418,16 @@ const Matrix Matrix::inv() {
 bool Matrix::isIdentity() const {
 	const double eps=1e-6;
 
-	if(nx!=ny) {
+	if(nrows!=ncols) {
 		std::stringstream tmp;
 		tmp << "A non-square matrix ";
-		tmp << "(" << nx << "," << ny << ") can not be the identity matrix!";
+		tmp << "(" << nrows << "," << ncols << ") can not be the identity matrix!";
 		throw IOException(tmp.str(), AT);
 	}
 	
 	bool is_identity=true;
-	for(unsigned int i=0; i<nx; i++) {
-		for(unsigned int j=0; j<ny; j++) {
+	for(unsigned int i=1; i<=nrows; i++) {
+		for(unsigned int j=1; j<=ncols; j++) {
 			const double val = operator()(i,j);
 			if(i!=j) {
 				if(IOUtils::checkEpsilonEquality(val,0.,eps)==false) {
