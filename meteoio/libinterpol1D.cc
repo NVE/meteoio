@@ -242,4 +242,54 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 //TODO: with variable changes, compute log and exp regression
 
+/**
+* @brief Computes the Log regression coefficients fitting the points given as X and Y in two vectors
+* the log regression has the form Y = a*ln(X) + b with a regression coefficient r (it is nodata safe)
+* @param X vector of X coordinates
+* @param Y vector of Y coordinates (same order as X)
+* @param a slope of the regression
+* @param b origin of the regression
+* @param r regression coefficient
+*/
+void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r)
+{
+	std::vector<double> x;
+
+	for(unsigned int i=0; i<X.size(); i++) {
+		const double val = X[i];
+		if(val!=IOUtils::nodata) {
+			x.push_back( log(val) );
+		} else {
+			x.push_back( IOUtils::nodata );
+		}
+	}
+
+	LinRegression(x, Y, a, b, r); //HACK: how should we transform r?
+}
+
+/**
+* @brief Computes the power regression coefficients fitting the points given as X and Y in two vectors
+* the power regression has the form Y = b*X^a with a regression coefficient r (it is nodata safe)
+* @param X vector of X coordinates
+* @param Y vector of Y coordinates (same order as X)
+* @param a slope of the regression
+* @param b origin of the regression
+* @param r regression coefficient
+*/
+void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r)
+{
+	std::vector<double> y;
+
+	for(unsigned int i=0; i<Y.size(); i++) {
+		const double val = Y[i];
+		if(val!=IOUtils::nodata) {
+			y.push_back( log(val) );
+		} else {
+			y.push_back( IOUtils::nodata );
+		}
+	}
+
+	LinRegression(X, y, a, b, r); //HACK: how should we transform r?
+}
+
 } //namespace

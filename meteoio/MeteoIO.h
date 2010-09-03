@@ -19,25 +19,39 @@
 #ifndef __METEOIO_H__
 #define __METEOIO_H__
 
-#include <meteoio/Array.h>
+//list in alphabetical order
 #include <meteoio/Array2D.h>
 #include <meteoio/Array3D.h>
-#include <meteoio/StationData.h>
-#include <meteoio/MeteoData.h>
-#include <meteoio/Grid2DObject.h>
-#include <meteoio/DEMObject.h>
-#include <meteoio/Date.h>
-#include <meteoio/DynamicLibrary.h>
+#include <meteoio/Array.h>
 #include <meteoio/BufferedIOHandler.h>
+#include <meteoio/Config.h>
 #include <meteoio/Coords.h>
+#include <meteoio/Date.h>
+#include <meteoio/DEMObject.h>
+#include <meteoio/DynamicLibrary.h>
+#include <meteoio/FilterAlgorithms.h>
+#include <meteoio/FilterProperties.h>
+#include <meteoio/Grid2DObject.h>
+#include <meteoio/Grid3DObject.h>
 #include <meteoio/InterpolationAlgorithms.h>
-#include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/IOExceptions.h>
 #include <meteoio/IOInterface.h>
+#include <meteoio/IOPlugin.h>
+#include <meteoio/IOUtils.h>
 #include <meteoio/libinterpol1D.h>
 #include <meteoio/libinterpol2D.h>
+#include <meteoio/Matrix.h>
+#include <meteoio/Meteo1DInterpolator.h>
+#include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/MeteoData.h>
+#include <meteoio/MeteoFilter.h>
+#include <meteoio/MeteoProcessor.h>
+#include <meteoio/ResamplingAlgorithms.h>
+#include <meteoio/StationData.h>
 
 #ifdef _POPC_
 #include <meteoio/IOHandler.ph>
+#include <meteoio/marshal_meteoio.h>
 #else
 #include <meteoio/IOHandler.h>
 #endif

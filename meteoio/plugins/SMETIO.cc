@@ -462,6 +462,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 	vecStation.reserve(buffer_reserve);
 
 	while (!fin.eof()){
+		//HACK nodata mapping is NOT done!!!!!!
 		getline(fin, line, eoln);
 		IOUtils::stripComments(line);
 		IOUtils::trim(line);

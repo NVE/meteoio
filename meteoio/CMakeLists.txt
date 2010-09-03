@@ -9,6 +9,7 @@ IF(PROJ4)
 ENDIF(PROJ4)
 
 SET(meteoio_sources
+	Matrix.cc
 	IOPlugin.cc
 	MeteoProcessor.cc
 	ResamplingAlgorithms.cc

@@ -75,6 +75,7 @@ endif
 
 ######## Sources, objects, headers
 METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
+		$(SRCDIR)/Matrix.o \
 		$(SRCDIR)/StationData.o \
 		$(SRCDIR)/IOPlugin.o \
 		$(SRCDIR)/IOHandler.o \
@@ -101,6 +102,7 @@ METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/InterpolationAlgorithms.o 
 
 METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
+		$(SRCDIR)/Matrix_par.o \
 		$(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/IOPlugin_par.o \
 		$(SRCDIR)/IOHandler.stub.o \
