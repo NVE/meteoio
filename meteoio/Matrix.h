@@ -65,8 +65,29 @@ class Matrix : public Array2D<double> {
 
 		friend std::ostream& operator<<(std::ostream& os, const Matrix& data);
 
+		Matrix& operator+=(const Matrix& rhs);
+		const Matrix operator+(const Matrix& rhs);
+		Matrix& operator+=(const double& rhs);
+		const Matrix operator+(const double& rhs);
+
+		Matrix& operator-=(const Matrix& rhs);
+		const Matrix operator-(const Matrix& rhs);
+		Matrix& operator-=(const double& rhs);
+		const Matrix operator-(const double& rhs);
+
 		Matrix& operator*=(const Matrix& rhs);
 		const Matrix operator*(const Matrix& rhs);
+		Matrix& operator*=(const double& rhs);
+		const Matrix operator*(const double& rhs);
+
+		Matrix& operator/=(const double& rhs);
+		const Matrix operator/(const double& rhs);
+
+		bool operator==(const Matrix&) const; ///<Operator that tests for equality
+		bool operator!=(const Matrix&) const; ///<Operator that tests for inequality
+
+		bool isIdentity() const;
+		static const bool isIdentity(const Matrix& A);
 
 /*	protected:
 		std::vector<T> vecData;

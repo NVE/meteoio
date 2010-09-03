@@ -77,6 +77,113 @@ std::ostream& operator<<(std::ostream& os, const Matrix& data) {
 	return vecData[ (x-1) + (y-1)*nx];
 }*/
 
+bool Matrix::operator==(const Matrix& in) const {
+	unsigned int in_nx, in_ny;
+	in.size(in_nx, in_ny);
+
+	if(nx!=in_nx || ny!=in_ny)
+		return false;
+
+	for(unsigned int jj=0; jj<ny; jj++) {
+		for(unsigned int ii=0; ii<nx; ii++) {
+			if( operator()(ii,jj) != in(ii,jj) ) return false;
+		}
+	}
+
+	return true;
+}
+
+bool Matrix::operator!=(const Matrix& in) const {
+	return !(*this==in);
+}
+
+Matrix& Matrix::operator+=(const Matrix& rhs) {
+
+	//check dimensions compatibility
+	if(nx!=rhs.nx || ny!=rhs.ny) {
+		std::stringstream tmp;
+		tmp << "Trying to Add two matrix with incompatible dimensions: ";
+		tmp << "(" << nx << "," << ny << ") * ";
+		tmp << "(" << rhs.nx << "," << rhs.ny << ")";
+		throw IOException(tmp.str(), AT);
+	}
+
+	//fill sum matrix
+	for(unsigned int jj=0; jj<ny; jj++) {
+		for(unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii,jj) += rhs(ii,jj);
+		}
+	}
+
+	return *this;
+}
+
+const Matrix Matrix::operator+(const Matrix& rhs) {
+	Matrix result = *this;
+	result += rhs; //already implemented
+
+	return result;
+}
+
+Matrix& Matrix::operator+=(const double& rhs) {
+	//fill sum matrix
+	for(unsigned int jj=0; jj<ny; jj++) {
+		for(unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii,jj) += rhs;
+		}
+	}
+
+	return *this;
+}
+
+const Matrix Matrix::operator+(const double& rhs) {
+	Matrix result = *this;
+	result += rhs; //already implemented
+
+	return result;
+}
+
+Matrix& Matrix::operator-=(const Matrix& rhs) {
+
+	//check dimensions compatibility
+	if(nx!=rhs.nx || ny!=rhs.ny) {
+		std::stringstream tmp;
+		tmp << "Trying to Add two matrix with incompatible dimensions: ";
+		tmp << "(" << nx << "," << ny << ") * ";
+		tmp << "(" << rhs.nx << "," << rhs.ny << ")";
+		throw IOException(tmp.str(), AT);
+	}
+
+	//fill sum matrix
+	for(unsigned int jj=0; jj<ny; jj++) {
+		for(unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii,jj) -= rhs(ii,jj);
+		}
+	}
+
+	return *this;
+}
+
+const Matrix Matrix::operator-(const Matrix& rhs) {
+	Matrix result = *this;
+	result -= rhs; //already implemented
+
+	return result;
+}
+
+Matrix& Matrix::operator-=(const double& rhs) {
+	*this += -rhs;
+
+	return *this;
+}
+
+const Matrix Matrix::operator-(const double& rhs) {
+	Matrix result = *this;
+	result += -rhs; //already implemented
+
+	return result;
+}
+
 Matrix& Matrix::operator*=(const Matrix& rhs) {
 
 	//check dimensions compatibility
@@ -107,6 +214,35 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 const Matrix Matrix::operator*(const Matrix& rhs) {
 	Matrix result = *this;
 	result *= rhs; //already implemented
+
+	return result;
+}
+
+Matrix& Matrix::operator*=(const double& rhs) {
+	for(unsigned int jj=0; jj<ny; jj++) {
+		for(unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii,jj) *= rhs;
+		}
+	}
+
+	return *this;
+}
+
+const Matrix Matrix::operator*(const double& rhs) {
+	Matrix result = *this;
+	result *= rhs; //already implemented
+
+	return result;
+}
+
+Matrix& Matrix::operator/=(const double& rhs) {
+	*this *= (1./rhs);
+	return *this;
+}
+
+const Matrix Matrix::operator/(const double& rhs) {
+	Matrix result = *this;
+	result *= 1./rhs; //already implemented
 
 	return result;
 }
@@ -166,7 +302,7 @@ const Matrix Matrix::LU(Matrix& U) const {
 		}
 		for(unsigned int j=k; j<=n; j++) {
 			double sum=0.;
-			for(unsigned int m=1; m<=(k-1); m++) sum +=L(m-1,k-1)*U(j-1,m-1);
+			for(unsigned int m=1; m<=(k-1); m++) sum += L(m-1,k-1)*U(j-1,m-1);
 			U(j-1,k-1) = A(j-1,k-1) - sum;
 		}
 
@@ -174,7 +310,7 @@ const Matrix Matrix::LU(Matrix& U) const {
 		for(unsigned int i=k+1; i<=n; i++) {
 			double sum=0.;
 			for(unsigned int m=1; m<=(k-1); m++) sum += L(m-1,i-1)*U(k-1,m-1);
-			L(k-1,i-1) = (A(k-1,i-1) - sum) / U(k-1,k-1);
+			L(k-1,i-1) = (A(k-1,i-1) - sum) / (U(k-1,k-1)+1e-12);
 		}
 	}
 
@@ -215,7 +351,7 @@ const Matrix Matrix::inv() {
 			for(unsigned int k=i-1; k>=1; k--) {
 				sum += L(k-1,i-1) * Y(j-1,k-1);
 			}
-			Y(j-1,i-1) = -1./L(i-1,i-1)*sum;
+			Y(j-1,i-1) = -1./(L(i-1,i-1)+1e-12) * sum;
 		}
 		for(unsigned int j=i+1; j<=n; j++) { //j>i
 			Y(j-1,i-1) = 0.;
@@ -230,11 +366,46 @@ const Matrix Matrix::inv() {
 			for(unsigned int k=i+1; k<=n; k++) {
 				sum += U(k-1,i-1) * X(j-1,k-1);
 			}
-			X(j-1,i-1) = (Y(j-1,i-1) - sum)/U(i-1,i-1);
+			X(j-1,i-1) = (Y(j-1,i-1) - sum) / (U(i-1,i-1)+1e-12);
 		}
 	}
 
 	return X;
+}
+
+bool Matrix::isIdentity() const {
+	const double eps=1e-6;
+
+	if(nx!=ny) {
+		std::stringstream tmp;
+		tmp << "A non-square matrix ";
+		tmp << "(" << nx << "," << ny << ") can not be the identity matrix!";
+		throw IOException(tmp.str(), AT);
+	}
+	
+	bool is_identity=true;
+	for(unsigned int i=0; i<nx; i++) {
+		for(unsigned int j=0; j<ny; j++) {
+			const double val = operator()(i,j);
+			if(i!=j) {
+				if(IOUtils::checkEpsilonEquality(val,0.,eps)==false) {
+					is_identity=false;
+					break;
+				}
+			} else {
+				if(IOUtils::checkEpsilonEquality(val,1.,eps)==false) {
+					is_identity=false;
+					break;
+				}
+			}
+		}
+	}
+
+	return is_identity;
+}
+
+const bool Matrix::isIdentity(const Matrix& A) {
+	return A.isIdentity();
 }
 
 } //end namespace
