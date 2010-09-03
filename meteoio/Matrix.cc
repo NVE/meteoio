@@ -46,6 +46,56 @@ Matrix::Matrix(const unsigned int& n, const double& init) {
 	for(unsigned int jj=0; jj<ny; jj++) operator()(jj,jj) = init;
 }
 
+void Matrix::resize(const unsigned int& anx, const unsigned int& any) {
+	clear();
+
+	if ((anx > 0) && (any > 0)) {
+		vecData.resize(anx*any);
+		nx = anx;
+		ny = any;
+	} else {
+		throw IndexOutOfBoundsException("Can not resize a matrix to negative sizes!", AT);
+	}
+}
+
+void Matrix::resize(const unsigned int& anx, const unsigned int& any, const double& init) {
+	resize(anx, any);
+
+	for (unsigned int jj=0; jj<ny; jj++) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii,jj) = init;
+		}
+	}
+}
+
+void Matrix::size(unsigned int& anx, unsigned int& any) const{
+	anx=nx;
+	any=ny;
+}
+
+void Matrix::clear() {
+	vecData.clear();
+	nx=ny=0;
+}
+
+double& Matrix::operator ()(const unsigned int& x, const unsigned int& y) {
+#ifndef NOSAFECHECKS
+	if ((x<1) || (x >= nx) || (y<1) || (y >= ny)) {
+		throw IndexOutOfBoundsException("", AT);
+	}
+#endif
+	return vecData[x + y*nx];
+}
+
+const double Matrix::operator ()(const unsigned int& x, const unsigned int& y) const {
+#ifndef NOSAFECHECKS
+	if ((x<1) || (x >= nx) || (y<1) || (y >= ny)) {
+		throw IndexOutOfBoundsException("", AT);
+	}
+#endif
+	return vecData[x + y*nx];
+}
+
 std::ostream& operator<<(std::ostream& os, const Matrix& data) {
 	//os << "<matrix>\n";
 	const unsigned int wd=5;

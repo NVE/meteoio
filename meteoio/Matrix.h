@@ -20,7 +20,6 @@
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/IOExceptions.h>
-#include <meteoio/Array2D.h>
 
 #include <vector>
 #include <iostream>
@@ -30,7 +29,7 @@ namespace mio {
 #define NOSAFECHECKS
 
 //HACK: indices are WRONG!! we should start at 1, not 0!!
-class Matrix : public Array2D<double> {
+class Matrix {
 	public:
 		Matrix();
 
@@ -55,6 +54,14 @@ class Matrix : public Array2D<double> {
 		* @param any number of rows of the new array
 		*/
 		Matrix(const unsigned int& n, const double& init);
+
+		void resize(const unsigned int& nx, const unsigned int& ny);
+		void resize(const unsigned int& nx, const unsigned int& ny, const double& init);
+		void size(unsigned int& nx, unsigned int& ny) const;
+		void clear();
+
+		double& operator ()(const unsigned int& x, const unsigned int& y);
+		const double operator ()(const unsigned int& x, const unsigned int& y) const;
 
 		//void T();
 		const Matrix T();
@@ -89,10 +96,10 @@ class Matrix : public Array2D<double> {
 		bool isIdentity() const;
 		static const bool isIdentity(const Matrix& A);
 
-/*	protected:
-		std::vector<T> vecData;
+	protected:
+		std::vector<double> vecData;
 		unsigned int nx;
-		unsigned int ny;*/
+		unsigned int ny;
 };
 
 } //end namespace
