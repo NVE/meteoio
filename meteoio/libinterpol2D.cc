@@ -140,8 +140,8 @@ double Interpol2D::weightInvDistN(const double& d2)
 /**
 * @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
 * the linear regression has the form Y = aX + b with a regression coefficient r. If the regression coefficient is not good enough, a bad point is looked removed.
-* @param X (vector\<double\>) vector of X coordinates
-* @param Y (vector\<double\>) vector of Y coordinates (same order as X)
+* @param in_X (vector\<double\>) vector of X coordinates
+* @param in_Y (vector\<double\>) vector of Y coordinates (same order as X)
 * @param coeffs (vector\<double\>) a,b,r coefficients in a vector
 * @return (int) EXIT_SUCCESS or EXIT_FAILURE
 */

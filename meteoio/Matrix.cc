@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -46,6 +46,10 @@ Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double&
 }
 
 Matrix::Matrix(const unsigned int& n, const double& init) {
+	diagonal(n, init);
+}
+
+void Matrix::diagonal(const unsigned int& n, const double& init) {
 	nrows = ncols = 0;
 	resize(n,n,0.);
 	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
@@ -312,8 +316,8 @@ double Matrix::det() const {
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
-	Matrix U;
-	LU(U);
+	Matrix L,U;
+	LU(L,U);
 
 	double product=1.;
 	for(unsigned int i=1; i<=nrows; i++) product *= U(i,i);
@@ -321,7 +325,7 @@ double Matrix::det() const {
 	return product;
 }
 
-const Matrix Matrix::LU(Matrix& U) const {
+void Matrix::LU(Matrix& L, Matrix& U) const {
 //Dolittle algorithm, cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html
 //HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 //This is implemented for matrix storage from 0 to n-1
@@ -333,9 +337,10 @@ const Matrix Matrix::LU(Matrix& U) const {
 	}
 
 	const unsigned int n = nrows;
+	U.clear();
 	U = *this;
+	L.diagonal(n, 1.); //initialized as diagonal matrix, then populated
 	const Matrix& A = *this;
-	Matrix L(n, 1.); //initialized as diagonal matrix, then populated
 
 	for(unsigned int k=1; k<=n; k++) {
 		//compute U elements
@@ -355,8 +360,6 @@ const Matrix Matrix::LU(Matrix& U) const {
 			L(i,k) = (A(i,k) - sum) / (U(k,k)+1e-12);
 		}
 	}
-
-	return L;
 }
 
 /*void Matrix::inv() {
@@ -374,7 +377,8 @@ const Matrix Matrix::inv() {
 	const unsigned int n = nrows;
 
 	Matrix U;
-	Matrix L=LU(U); //LU decomposition of current object
+	Matrix L;
+	LU(L, U); //LU decomposition of current object
 
 	//checking that the matrix can be inversed
 	double product=1.;

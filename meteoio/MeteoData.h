@@ -104,7 +104,7 @@ class MeteoData {
 
 		/**
 		* @brief Check whether a certain parameter is a part of this MeteoData instance
-		* @param paramname A string parameter, representing a meteo parameter, e.g. "VSWR"
+		* @param parname A string parameter, representing a meteo parameter, e.g. "VSWR"
 		* @return A boolean indicating whether the parameter is a part of the object
 		*/
 		bool param_exists(const std::string& parname) const;

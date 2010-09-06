@@ -34,8 +34,7 @@ namespace mio {
  * Elements are access in matrix notation: that is A(1,2) represents the second element of the
  * first line. Index go from 1 to nrows/ncols.
  * 
- * It might not be
- * the best ever such implementation, but the goal is to provide a standalone matrix class.
+ * It might not be the best ever such implementation, but the goal is to provide a standalone matrix class.
  * It might be later possible to chose between using the embedded implementation or to act as a
  * front end to BLAS for those who have it installed on their system.
  *
@@ -46,42 +45,84 @@ class Matrix {
 		Matrix();
 
 		/**
-		* A constructor that creates a matrix of a given size
-		* @param anx number of columns of the new array
-		* @param any number of rows of the new array
+		* @brief A constructor that creates a matrix of a given size
+		* @param rows number of rows of the new matrix
+		* @param cols number of columns of the new matrix
 		*/
-		Matrix(const int& anx, const int& any);
-		Matrix(const unsigned int& anx, const unsigned int& any);
+		Matrix(const int& rows, const int& cols);
+		Matrix(const unsigned int& rows, const unsigned int& cols);
 
 		/**
-		* A constructor that creates an array filled with constant values
-		* @param anx number of columns of the new array
-		* @param any number of rows of the new array
-		* @param init initial value to fill the array with
+		* @brief A constructor that creates a matrix filled with constant values
+		* @param rows number of rows of the new matrix
+		* @param cols number of columns of the new matrix
+		* @param init initial value to fill the matrix with
 		*/
-		Matrix(const unsigned int& anx, const unsigned int& any, const double& init);
+		Matrix(const unsigned int& rows, const unsigned int& cols, const double& init);
 
 		/**
-		* A constructor that creates a diagonal matrix of size n
-		* @param n number of columns of the new array
-		* @param any number of rows of the new array
+		* @brief A constructor that creates a diagonal matrix of size n
+		* @param n dimension of the new square matrix
+		* @param init initial value to fill the matrix with
 		*/
 		Matrix(const unsigned int& n, const double& init);
 
-		void resize(const unsigned int& nx, const unsigned int& ny);
-		void resize(const unsigned int& nx, const unsigned int& ny, const double& init);
-		void size(unsigned int& nx, unsigned int& ny) const;
+		/**
+		* @brief Convert the current matrix to a diagonal matrix of size n
+		* @param n dimension of the new square matrix
+		* @param init initial value to fill the matrix with
+		*/
+		void diagonal(const unsigned int& n, const double& init);
+
+		void resize(const unsigned int& rows, const unsigned int& cols);
+		void resize(const unsigned int& rows, const unsigned int& cols, const double& init);
+
+		/**
+		* @brief get the dimensions of the current object
+		* @param rows number of rows of the matrix
+		* @param cols number of columns of the matrix
+		*/
+		void size(unsigned int& rows, unsigned int& cols) const;
+
+		/**
+		* @brief free the memory and set the matrix dimensions to (0,0)
+		*/
 		void clear();
 
 		double& operator ()(const unsigned int& x, const unsigned int& y);
 		const double operator ()(const unsigned int& x, const unsigned int& y) const;
 
-		//void T();
+		/**
+		* @brief matrix transpose
+		* @return transposed matrix
+		*/
 		const Matrix T();
-		//void inv();
+		//void T();
+
+		/**
+		* @brief matrix invert. 
+		* It first performs LU decomposition and then computes the inverse by
+		* backward and forward solving of LU * A-1 = I
+		* @return inversed matrix
+		*/
 		const Matrix inv();
+		//void inv();
+
+		/**
+		* @brief matrix determinant
+		* @return determinant
+		*/
 		double det() const;
-		const Matrix LU(Matrix& U) const;
+
+		/**
+		* @brief matrix LU decomposition. 
+		* Perform LU decomposition by the Dolittle algorithm, 
+		* (cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html)
+		* HACK: there is no permutation matrix, so it might not be able to give a decomposition...
+		* @param L lower diagonal matrix
+		* @param U upper diagonal matrix
+		*/
+		void LU(Matrix& L, Matrix& U) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Matrix& data);
 
@@ -106,6 +147,10 @@ class Matrix {
 		bool operator==(const Matrix&) const; ///<Operator that tests for equality
 		bool operator!=(const Matrix&) const; ///<Operator that tests for inequality
 
+		/**
+		* @brief check if a matrix is the identity matrix
+		* @return true if it is I
+		*/
 		bool isIdentity() const;
 		static const bool isIdentity(const Matrix& A);
 
