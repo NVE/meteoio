@@ -46,10 +46,10 @@ Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double&
 }
 
 Matrix::Matrix(const unsigned int& n, const double& init) {
-	diagonal(n, init);
+	identity(n, init);
 }
 
-void Matrix::diagonal(const unsigned int& n, const double& init) {
+void Matrix::identity(const unsigned int& n, const double& init) {
 	nrows = ncols = 0;
 	resize(n,n,0.);
 	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
@@ -339,7 +339,7 @@ void Matrix::LU(Matrix& L, Matrix& U) const {
 	const unsigned int n = nrows;
 	U.clear();
 	U = *this;
-	L.diagonal(n, 1.); //initialized as diagonal matrix, then populated
+	L.identity(n, 1.); //initialized as identity matrix, then populated
 	const Matrix& A = *this;
 
 	for(unsigned int k=1; k<=n; k++) {

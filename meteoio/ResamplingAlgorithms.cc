@@ -261,10 +261,10 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 	
 	//find start of accumulation period
 	bool found_start=false;
-	int ii=pos;
+	int start_idx=pos;
 	const Date Start(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.));
-	for (; ii>=0; ii--) {
-		if(vecM[(unsigned int)ii].date<=Start) {
+	for (; start_idx>=0; start_idx--) {
+		if(vecM[(unsigned int)start_idx].date<=Start) {
 			found_start=true;
 			break;
 		}
@@ -277,23 +277,24 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 	}
 
 	//resample the starting point
-	std::vector<std::string> dummy_args;
-	const unsigned int org_size = vecM.size();
-	LinearResampling(ii, paramindex, dummy_args, vecM, vecS);
-	if(vecM.size()>org_size)
-		npos++;
+	//HACK: we consider nodata to be 0. In fact, we should try to interpolate from valid points
+	//if they are not too far away
+	/*Interpol1D::linearInterpolation(vecM[(unsigned int)start_idx].date.getJulianDate(), ,
+	                              vecM[(unsigned int)start_idx+1].date.getJulianDate(), val2,
+	                              vecM[pos].date.getJulianDate());*/
 
 	//start accumulating
 	double sum = 0.0;
 	bool exist=false;
-	while(vecM[ii].date<=vecM[npos].date) {
+	int end_idx=start_idx;
+	while(vecM[end_idx].date<=vecM[npos].date) {
 		//we will at least enter once into this loop since accumulate_period>0
 		const double& val = vecM[npos].param(paramindex);
 		if (val != IOUtils::nodata) {
 			sum += val;
 			exist=true;
 		}
-		ii++;
+		end_idx++;
 	}
 
 	//add last remaining point after interpolating it

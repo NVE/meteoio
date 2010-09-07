@@ -68,11 +68,11 @@ class Matrix {
 		Matrix(const unsigned int& n, const double& init);
 
 		/**
-		* @brief Convert the current matrix to a diagonal matrix of size n
+		* @brief Convert the current matrix to a identity matrix of size n
 		* @param n dimension of the new square matrix
 		* @param init initial value to fill the matrix with
 		*/
-		void diagonal(const unsigned int& n, const double& init);
+		void identity(const unsigned int& n, const double& init);
 
 		void resize(const unsigned int& rows, const unsigned int& cols);
 		void resize(const unsigned int& rows, const unsigned int& cols, const double& init);
