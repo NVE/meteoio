@@ -135,7 +135,7 @@ void BufferedIOHandler::setDfltBufferProperties()
 {
 	always_rebuffer = true;
 	bufferbefore = Date(2.0);  //minus 2 days
-	bufferafter = Date(300.0);  //plus 20 days
+	bufferafter = Date(20.0);  //plus 20 days
 }
 
 void BufferedIOHandler::readMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation){
