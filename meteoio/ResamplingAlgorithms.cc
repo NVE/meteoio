@@ -259,19 +259,12 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 	bool found_start=false;
 	int start_idx = (int)pos;
 	Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.));
+
 	for (; start_idx>=0; start_idx--) {
 		if(vecM[(unsigned int)start_idx].date <= dateStart) {
 			found_start=true;
 			break;
 		}
-	}
-
-	if(found_start==false) {
-		cerr << "[W] Could not accumulate " << MeteoData::getParameterName(paramindex)
-			<< ", not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO)
-			<< endl;
-		vecM[pos].param(paramindex) = IOUtils::nodata;
-		return;
 	}
 
 	//resample the starting point
@@ -286,8 +279,13 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 		dateStart = vecM[pos].date;
 	}
 
-	if (interval_end >= vecM.size()) //Nothing to do, point at the very right of our window
+	if ((found_start==false) || (interval_end >= vecM.size())){
+		cerr << "[W] Could not accumulate " << MeteoData::getParameterName(paramindex)
+			<< ", not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO)
+			<< endl;
+		vecM[pos].param(paramindex) = IOUtils::nodata;
 		return;
+	}
 
 	//start accumulating
 	double val2 = vecM[(unsigned int)interval_end].param(paramindex);
