@@ -96,7 +96,7 @@ double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
 	return vecData[(j-1) + (i-1)*ncols];
 }
 
-const double Matrix::operator ()(const unsigned int& i, const unsigned int& j) const {
+double Matrix::operator ()(const unsigned int& i, const unsigned int& j) const {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
 		throw IndexOutOfBoundsException("", AT);
@@ -450,7 +450,7 @@ bool Matrix::isIdentity() const {
 	return is_identity;
 }
 
-const bool Matrix::isIdentity(const Matrix& A) {
+bool Matrix::isIdentity(const Matrix& A) {
 	return A.isIdentity();
 }
 

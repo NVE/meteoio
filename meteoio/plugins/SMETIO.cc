@@ -805,13 +805,13 @@ void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, doub
 
 bool SMETIO::checkConsistency(const std::vector<StationData>& vecStation, StationData& sd)
 {
+	if (vecStation.size() > 0) //HACK to get the station data even when encoutering bug 87
+		sd = vecStation[0];
+
 	for (unsigned int ii=1; ii<vecStation.size(); ii++){
 		if (vecStation[ii].position != vecStation[ii-1].position)
 			return false;
 	}
-
-	if (vecStation.size() > 0)
-		sd = vecStation[0];
 
 	return true;
 }

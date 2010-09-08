@@ -90,7 +90,7 @@ class Matrix {
 		void clear();
 
 		double& operator ()(const unsigned int& x, const unsigned int& y);
-		const double operator ()(const unsigned int& x, const unsigned int& y) const;
+		double operator ()(const unsigned int& x, const unsigned int& y) const;
 
 		/**
 		* @brief matrix transpose
@@ -152,7 +152,7 @@ class Matrix {
 		* @return true if it is I
 		*/
 		bool isIdentity() const;
-		static const bool isIdentity(const Matrix& A);
+		static bool isIdentity(const Matrix& A);
 
 	protected:
 		std::vector<double> vecData;
