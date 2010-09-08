@@ -74,7 +74,8 @@ class Date {
 		typedef enum {
 			ISO, ///< ISO 8601 extended format combined date: YYYY-MM-DDTHH:mm:SS (fields might be dropped, in the least to the most significant order)
 			FULL, ///< ISO 8601 followed by the julian date (in parenthesis)
-			NUM ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
+			NUM, ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
+			DIN ///<DIN5008 format: DD.MM.YYYY HH:MM
 		} FORMATS;
 		static const int daysLeapYear[];
 		static const int daysNonLeapYear[];

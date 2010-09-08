@@ -65,6 +65,7 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 	MeteoData tmpmd(vecM.at(0)); //create a clone of one of the elements
 	tmpmd.reset(); //set all values to IOUtils::nodata
 	tmpmd.setDate(date);
+	tmpmd.setResampled(true);
 
 	if (position == IOUtils::npos){ //nothing found append new element at the left or right
 		if (vecM.at(0).date > date){

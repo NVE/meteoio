@@ -236,10 +236,6 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
                                       const std::vector<std::string>& taskargs,
                                       std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
 {
-	//Not ready for usage yet...
-	throw IOException("Not finished...", AT);
-
-	unsigned int npos = pos;
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
 
@@ -255,53 +251,79 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 		}
 	} else {
 		std::stringstream tmp;
-		tmp << "Please provide accumulation period (in seconds) for parameter " << MeteoData::getParameterName(paramindex);
+		tmp << "Please provide accumulation period (in seconds) for param" << MeteoData::getParameterName(paramindex);
 		throw InvalidArgumentException(tmp.str(), AT);
 	}
 	
 	//find start of accumulation period
 	bool found_start=false;
-	int start_idx=pos;
-	const Date Start(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.));
+	int start_idx = (int)pos;
+	Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.));
 	for (; start_idx>=0; start_idx--) {
-		if(vecM[(unsigned int)start_idx].date<=Start) {
+		if(vecM[(unsigned int)start_idx].date <= dateStart) {
 			found_start=true;
 			break;
 		}
 	}
 
 	if(found_start==false) {
-		std::cerr << "[W] Could not accumulate " << MeteoData::getParameterName(paramindex);
-		std::cerr << ", not enough data for accumulation period\n";
+		cerr << "[W] Could not accumulate " << MeteoData::getParameterName(paramindex)
+			<< ", not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO)
+			<< endl;
+		vecM[pos].param(paramindex) = IOUtils::nodata;
 		return;
 	}
 
 	//resample the starting point
 	//HACK: we consider nodata to be 0. In fact, we should try to interpolate from valid points
 	//if they are not too far away
-	/*Interpol1D::linearInterpolation(vecM[(unsigned int)start_idx].date.getJulianDate(), ,
-	                              vecM[(unsigned int)start_idx+1].date.getJulianDate(), val2,
-	                              vecM[pos].date.getJulianDate());*/
+
+	int interval_start = start_idx;
+	int interval_end   = start_idx + 1;
+	
+	if ((interval_end == pos) && (vecM[pos].isResampled())){
+		interval_end++;
+		dateStart = vecM[pos].date;
+	}
+
+	if (interval_end >= vecM.size()) //Nothing to do, point at the very right of our window
+		return;
 
 	//start accumulating
-	double sum = 0.0;
-	bool exist=false;
-	int end_idx=start_idx;
-	while(vecM[end_idx].date<=vecM[npos].date) {
-		//we will at least enter once into this loop since accumulate_period>0
-		const double& val = vecM[npos].param(paramindex);
+	double val2 = vecM[(unsigned int)interval_end].param(paramindex);
+	if (val2 == IOUtils::nodata) val2 = 0.0;
+
+	double part1 = val2 - Interpol1D::linearInterpolation(vecM[interval_start].date.getJulianDate(), 0.0,
+											    vecM[interval_end].date.getJulianDate(), val2,
+											    dateStart.getJulianDate());
+
+	double sum = part1;
+	int end_idx = interval_end + 1;
+	while((end_idx < vecM.size()) && (vecM[end_idx].date < vecM[pos].date)) {
+		const double& val = vecM[end_idx].param(paramindex);
 		if (val != IOUtils::nodata) {
 			sum += val;
-			exist=true;
 		}
 		end_idx++;
 	}
 
-	//add last remaining point after interpolating it
-	//HACK: TODO
+	if ((vecM[end_idx].date == vecM[pos].date) || (end_idx >= pos+1)){
+		vecM[pos].param(paramindex) = sum;
+		return;
+	}
 
+	double part2 = 0;
+	if ((pos + 1) < vecM.size()){
+		double nextval = vecM[(unsigned int)pos+1].param(paramindex);
+		part2 = Interpol1D::linearInterpolation(vecM[pos-1].date.getJulianDate(), 0.0,
+										vecM[pos+1].date.getJulianDate(), nextval,
+										vecM[pos].date.getJulianDate());
+	}
 
-	//check if at least one point has been summed. If not -> nodata
+	sum += part2;
+
+	vecM[pos].param(paramindex) = sum;
+	//TODO:check if at least one point has been summed. If not -> nodata
 }
 
 

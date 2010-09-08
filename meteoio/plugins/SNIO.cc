@@ -390,6 +390,18 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	md.setData(MeteoData::TSG, tmpdata[12]);
 	md.setData(MeteoData::HNW, tmpdata[13]);
 	md.setData(MeteoData::HS, tmpdata[14]);
+
+	//cout << "Adding parameters:" << endl;
+	//All the rest of the values ought to be ts[ii] values
+	stringstream ss;
+	for (unsigned int ii=15; ii<tmpdata.size(); ii++){
+		ss.str("");
+		ss << "TS" << (ii-15);
+		md.addParameter(ss.str());		
+		md.param(ss.str()) = tmpdata[ii];
+		//cout << "Added " << ss.str() << ": " << tmpdata[ii] << endl;
+	}
+	//cout << "Adding parameters done" << endl;
 }
 
 void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
@@ -591,6 +603,20 @@ void SNIO::convertUnits(MeteoData& meteo)
 		if (meteo.rh>1.2)
 			meteo.rh /= 100;
 	}
+
+	//cout << "Converting" << endl;
+	stringstream ss;
+	for (unsigned int ii=0; ii<100; ii++){
+		ss.str("");
+		ss << "TS" << ii;
+		if (meteo.param_exists(ss.str())){
+			double& value = meteo.param(ss.str());
+			value = C_TO_K(value);
+		} else {
+			break;
+		}		
+	}
+	//cout << "Converting done" << endl;
 }
 
 #ifndef _METEOIO_JNI

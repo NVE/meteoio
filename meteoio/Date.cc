@@ -566,6 +566,13 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out << " ("
 			<< setprecision(10) << julian_out << ")" ;
+	} else if(type==DIN) {
+			tmpstr 
+			<< setw(2) << setfill('0') << day_out << "."
+			<< setw(2) << setfill('0') << month_out << "."
+			<< setw(4) << setfill('0') << year_out << " "
+			<< setw(2) << setfill('0') << hour_out << ":"
+			<< setw(2) << setfill('0') << minute_out;
 	} else {
 		throw InvalidArgumentException("Wrong date conversion format requested", AT);
 	}
