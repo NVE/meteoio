@@ -234,7 +234,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const Meteo
  */
 void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::Parameters& paramindex,
                                       const std::vector<std::string>& taskargs,
-                                      std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
+                                      std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
 {
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
@@ -266,13 +266,17 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 			break;
 		}
 	}
+	if(found_start==false && start_idx<0) {
+		throw IndexOutOfBoundsException("Can not find start of accumulation period in provided buffer!", AT);
+	}
 
-	//resample the starting point
+	//resample the starting point.
 	//HACK: we consider nodata to be 0. In fact, we should try to interpolate from valid points
 	//if they are not too far away
 
-	int interval_start = start_idx;
-	int interval_end   = start_idx + 1;
+	 //since we caught the exception above, we know that start_idx>=0
+	const unsigned int interval_start = (unsigned)start_idx;
+	unsigned int interval_end   = (unsigned)start_idx + 1;
 	
 	if ((interval_end == pos) && (vecM[pos].isResampled())){
 		interval_end++;
@@ -288,7 +292,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 	}
 
 	//start accumulating
-	double val2 = vecM[(unsigned int)interval_end].param(paramindex);
+	double val2 = vecM[interval_end].param(paramindex);
 	if (val2 == IOUtils::nodata) val2 = 0.0;
 
 	double part1 = val2 - Interpol1D::linearInterpolation(vecM[interval_start].date.getJulianDate(), 0.0,
@@ -296,7 +300,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 											    dateStart.getJulianDate());
 
 	double sum = part1;
-	int end_idx = interval_end + 1;
+	unsigned int end_idx = interval_end + 1;
 	while((end_idx < vecM.size()) && (vecM[end_idx].date < vecM[pos].date)) {
 		const double& val = vecM[end_idx].param(paramindex);
 		if (val != IOUtils::nodata) {
@@ -312,7 +316,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 
 	double part2 = 0;
 	if ((pos + 1) < vecM.size()){
-		double nextval = vecM[(unsigned int)pos+1].param(paramindex);
+		double nextval = vecM[pos+1].param(paramindex);
 		part2 = Interpol1D::linearInterpolation(vecM[pos-1].date.getJulianDate(), 0.0,
 										vecM[pos+1].date.getJulianDate(), nextval,
 										vecM[pos].date.getJulianDate());
