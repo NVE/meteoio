@@ -41,11 +41,13 @@ bool AlgorithmFactory::initStaticData()
 	setAlgorithms.insert("IDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill
 	setAlgorithms.insert("RH");        // relative humidity interpolation
 	setAlgorithms.insert("WIND_CURV"); // wind velocity interpolation (using a heuristic terrain effect)
+	setAlgorithms.insert("MAGNUSS"); // precipitation interpolation according to (Magnusson, 2010)
 	setAlgorithms.insert("USER"); // read user provided grid
 
 	return true;
 }
 
+//HACK: do not build a new object at every time step!!
 InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algoname, 
                                                        const Meteo2DInterpolator& _mi,
                                                        const DEMObject& _dem,
@@ -77,7 +79,9 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 	/*} else if (algoname == "KRIG"){
 		return new SimpleKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	*/} else if (algoname == "USER"){
-		return new USERinterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new USERInterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+	} else if (algoname == "MAGNUSS"){
+		return new MagnussInterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -451,7 +455,7 @@ void SimpleWindInterpolationAlgorithm::calculate(const MeteoData::Parameters& pa
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
 }
 
-std::string USERinterpolation::getGridFileName(const MeteoData::Parameters& param)
+std::string USERInterpolation::getGridFileName(const MeteoData::Parameters& param)
 {
 	const std::string ext=std::string(".asc");
 	if (vecArgs.size() != 1){
@@ -470,7 +474,7 @@ std::string USERinterpolation::getGridFileName(const MeteoData::Parameters& para
 	return gridname;
 }
 
-double USERinterpolation::getQualityRating(const MeteoData::Parameters& param)
+double USERInterpolation::getQualityRating(const MeteoData::Parameters& param)
 {
 	const std::string filename = getGridFileName(param);
 
@@ -486,11 +490,44 @@ double USERinterpolation::getQualityRating(const MeteoData::Parameters& param)
 }
 
 
-void USERinterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& /*grid*/)
+void USERInterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& /*grid*/)
 {
 	const std::string filename = getGridFileName(param);
 	//read2DGrid(grid, filename);
 	throw IOException("USER interpolation algorithm not yet implemented...", AT);
+}
+
+double MagnussInterpolation::getQualityRating(const MeteoData::Parameters& param)
+{
+	//check incoming data for number of data points
+	vector<double> vecData;
+	const unsigned int nrOfMeasurments = getData(param, vecData);
+
+	if (nrOfMeasurments == 0)
+		return 0.0;
+
+	return 0.8;
+}
+
+
+void MagnussInterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+{
+	//initialize precipitation grid with IDW_LAPSE
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm("IDW_LAPSE", mi, dem, vecMeteo, vecStation, vecArgs));
+	algorithm->calculate(param, grid);
+	const double orig_mean = grid.grid2D.getMean();
+
+	 //get TA interpolation from call back to Meteo2DInterpolator
+	Grid2DObject ta;
+	mi.interpolate(MeteoData::TA, ta);
+
+	//slope/curvature correction for solid precipitation
+	Interpol2D::PrecipMagnusson(dem, ta, grid);
+
+	//HACK: correction for precipitation sum over the whole domain
+	//this is a cheap/crappy way of compensating for the spatial redistribution of snow on the slopes
+	const double new_mean = grid.grid2D.getMean();
+	grid.grid2D *= orig_mean/new_mean;
 }
 
 } //namespace

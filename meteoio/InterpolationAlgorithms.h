@@ -73,6 +73,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
+ * - MAGNUSS: precipitation interpolation according to (Magnusson, 2010) (see MagnussInterpolation)
  * - USER: user provided grids to be read from disk (if available, see USERinterpolation) THIS IS NOT YET USABLE
  *
  * @section lapse Lapse rates
@@ -304,13 +305,13 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 };
 
 /**
- * @class USERinterpolation
+ * @class USERInterpolation
  * @brief Reads user provided gridded data on the disk.
  * 
  */
-class USERinterpolation : public InterpolationAlgorithm {
+class USERInterpolation : public InterpolationAlgorithm {
 	public:
-		USERinterpolation(const Meteo2DInterpolator& _mi,
+		USERInterpolation(const Meteo2DInterpolator& _mi,
 		               const DEMObject& _dem,
 		               const std::vector<MeteoData>& _vecMeteo,
 		               const std::vector<StationData>& _vecStation,
@@ -323,6 +324,28 @@ class USERinterpolation : public InterpolationAlgorithm {
 		std::string getGridFileName(const MeteoData::Parameters& param);
 };
 
+/**
+ * @class MagnussInterpolation
+ * @brief Precipitation distribution according to the local slope and curvature.
+ * The precipitation distribution is initialized using Inverse Distance Weighting with lapse rate (see IDWLapseAlgorithm)
+ * and then modified for the pixels whose air temperatures are below or at freezing according to the method described in
+ * <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review 
+ * and <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
+ */
+class MagnussInterpolation : public InterpolationAlgorithm {
+	public:
+		MagnussInterpolation(const Meteo2DInterpolator& _mi,
+		               const DEMObject& _dem,
+		               const std::vector<MeteoData>& _vecMeteo,
+		               const std::vector<StationData>& _vecStation,
+		               const std::vector<std::string>& _vecArgs,
+		               const std::string _algo)
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+		virtual double getQualityRating(const MeteoData::Parameters& param);
+		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+	private:
+		std::string getGridFileName(const MeteoData::Parameters& param);
+};
 
 } //end namespace mio
 
