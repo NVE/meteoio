@@ -139,7 +139,7 @@ class InterpolationAlgorithm {
 		const DEMObject& dem;
 		const std::vector<MeteoData>& vecMeteo;
 		const std::vector<StationData>& vecStation;
-		const std::vector<std::string>& vecArgs;
+		const std::vector<std::string> vecArgs; //we must keep our own copy, it is different for each algorithm!
 		const std::string algo;
 
 		unsigned int getData(const MeteoData::Parameters& param, std::vector<double>& vecData) const;
@@ -203,8 +203,10 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
  * @class ConstLapseRateAlgorithm
  * @brief Constant filling with elevation lapse rate interpolation algorithm.
  * Assuming that average values occured at the average of the elevations, the grid is filled with average values
- * reprojected to real grid elevation according to a user specified lapse rate. The lapse rate has
- * to be provided as an extra argument, otherwise the standard -0.0065 K/m is used (which only makes sense for temperatures)
+ * reprojected to real grid elevation according to a lapse rate. The lapse rate is either calculated from the data
+ * (if no extra argument is provided), or given by the user-provided the optional argument <i>"cst_lapse"</i>.
+ * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
+ * unsuccessful, then user provided lapse rate is used as a fallback.
  */
 class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
 	public:
@@ -327,10 +329,15 @@ class USERInterpolation : public InterpolationAlgorithm {
 /**
  * @class MagnussInterpolation
  * @brief Precipitation distribution according to the local slope and curvature.
- * The precipitation distribution is initialized using Inverse Distance Weighting with lapse rate (see IDWLapseAlgorithm)
- * and then modified for the pixels whose air temperatures are below or at freezing according to the method described in
- * <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review 
- * and <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
+ * The precipitation distribution is initialized using a specified algorithm (IDW_LAPSE by default, see IDWLapseAlgorithm).
+ * An optional parameter can be given to specify which algorithm has to be used for initializing the grid.
+ * Please do not forget to provide the arguments of the chosen algorithm itself if necessary!
+ * 
+ * After this initialization, the pixels whose air temperatures are below or at freezing are modified according
+ * to the method described in <i>"Quantitative evaluation of different hydrological modelling approaches
+ * in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review and
+ * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
+ * @author Florian Kobierska, Jan Magnusson and Mathias Bavay
  */
 class MagnussInterpolation : public InterpolationAlgorithm {
 	public:
@@ -343,8 +350,6 @@ class MagnussInterpolation : public InterpolationAlgorithm {
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
 		virtual double getQualityRating(const MeteoData::Parameters& param);
 		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
-	private:
-		std::string getGridFileName(const MeteoData::Parameters& param);
 };
 
 } //end namespace mio

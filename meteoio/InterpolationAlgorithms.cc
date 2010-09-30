@@ -76,8 +76,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else if (algoname == "WIND_CURV"){
 		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
-	/*} else if (algoname == "KRIG"){
-		return new SimpleKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+	/*} else if (algoname == "ODKRIG"){
+		return new OrdinaryKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	*/} else if (algoname == "USER"){
 		return new USERInterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else if (algoname == "MAGNUSS"){
@@ -228,10 +228,23 @@ void ConstLapseRateAlgorithm::calculate(const MeteoData::Parameters& param, Grid
 	std::vector<double> vecCoefficients;
 	vecCoefficients.resize(4, 0.0);
 
-	//Get the argument for the algorithm: the default lapse rate, otherwise throw an exception
-	if (vecArgs.size() == 1){
+	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
+	if (vecArgs.size() == 0){
+		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
+	} else if (vecArgs.size() == 1) {
 		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
-	} else {
+	} else if (vecArgs.size() == 2) {
+		std::string isSoft;
+		IOUtils::convertString(isSoft, vecArgs[1]);
+		if(isSoft=="soft") {
+			if(Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) {
+				vecCoefficients.assign(4, 0.0);
+				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+			}
+		} else {
+			IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+		}
+	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the CST_LAPSE algorithm", AT);
 	}
 
@@ -493,6 +506,9 @@ double USERInterpolation::getQualityRating(const MeteoData::Parameters& param)
 void USERInterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& /*grid*/)
 {
 	const std::string filename = getGridFileName(param);
+	unsigned int nrOfMeasurments = 0;
+	printInfo(param, nrOfMeasurments);
+
 	//read2DGrid(grid, filename);
 	throw IOException("USER interpolation algorithm not yet implemented...", AT);
 }
@@ -512,8 +528,23 @@ double MagnussInterpolation::getQualityRating(const MeteoData::Parameters& param
 
 void MagnussInterpolation::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
 {
-	//initialize precipitation grid with IDW_LAPSE
-	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm("IDW_LAPSE", mi, dem, vecMeteo, vecStation, vecArgs));
+	vector<double> vecData;
+	unsigned int nrOfMeasurments = getData(param, vecData);
+	printInfo(param, nrOfMeasurments);
+
+	//retrieve optional arguments
+	std::string base_algo;
+	if (vecArgs.size() == 0){
+		base_algo=std::string("IDW_LAPSE");
+	} else if (vecArgs.size() == 1){
+		IOUtils::convertString(base_algo, vecArgs[0]);
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the MAGNUSS algorithm", AT);
+	}
+
+	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
+	IOUtils::toUpper(base_algo);
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, dem, vecMeteo, vecStation, vecArgs));
 	algorithm->calculate(param, grid);
 	const double orig_mean = grid.grid2D.getMean();
 

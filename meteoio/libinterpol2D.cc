@@ -48,7 +48,6 @@ inline float fastSqrt_Q3(const float x) {
 	return x * invSqrt(x);
 }
 
-const double Interpol2D::dflt_temperature_lapse_rate = -0.0065;
 const double Interpol2D::wind_ys = 0.58;
 const double Interpol2D::wind_yc = 0.42;
 
@@ -140,10 +139,10 @@ double Interpol2D::weightInvDistN(const double& d2)
 /**
 * @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
 * the linear regression has the form Y = aX + b with a regression coefficient r. If the regression coefficient is not good enough, a bad point is looked removed.
-* @param in_X (vector\<double\>) vector of X coordinates
-* @param in_Y (vector\<double\>) vector of Y coordinates (same order as X)
-* @param coeffs (vector\<double\>) a,b,r coefficients in a vector
-* @return (int) EXIT_SUCCESS or EXIT_FAILURE
+* @param in_X vector of X coordinates
+* @param in_Y vector of Y coordinates (same order as X)
+* @param coeffs a,b,r coefficients in a vector
+* @return EXIT_SUCCESS or EXIT_FAILURE
 */
 int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, std::vector<double>& coeffs)
 {

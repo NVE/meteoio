@@ -91,9 +91,6 @@ class Interpol2D {
 		static double RhtoDewPoint(double RH, double TA, const short int& force_water);
 		static double DewPointtoRh(double TD, double TA, const short int& force_water);
 
-		//some consts
-		const static double dflt_temperature_lapse_rate; ///<default lapse rate for temperature(elevation)
-
 	private:
 		//generic functions
 		static double InvHorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
