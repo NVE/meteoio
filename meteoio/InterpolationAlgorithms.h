@@ -73,7 +73,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
- * - MAGNUSS: precipitation interpolation according to (Magnusson, 2010) (see MagnussInterpolation)
+ * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2010) (see SnowHNWInterpolation)
  * - USER: user provided grids to be read from disk (if available, see USERinterpolation) THIS IS NOT YET USABLE
  *
  * @section lapse Lapse rates
@@ -103,9 +103,11 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  *
  * @section biblio Bibliography
  * The interpolation algorithms have been inspired by the following papers:
- * - "A Meteorological Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, Journal of Hydrometeorology 7 (2006), 217-234.
- * - "Simulating wind ﬁelds and snow redistribution using terrain-based parameters to model snow accumulation and melt over a semi-arid mountain catchment", Adam Winstral and Danny Marks, Hydrol. Process. 16 (2002), 3585– 3603. DOI: 10.1002/hyp.1238 [NOT YET IMPLEMENTED]
- * - "Geostatistics for Natural Resources Evaluation", Pierre Goovaerts, Oxford University Press, Applied Geostatistics Series, 1997, 483 p., ISBN 0-19-511538-4
+ * - <i>"A Meteorological Distribution System for High-Resolution Terrestrial Modeling (MicroMet)"</i>, Liston and Elder, Journal of Hydrometeorology <b>7</b> (2006), 217-234.
+ * - <i>"Simulating wind ﬁelds and snow redistribution using terrain-based parameters to model snow accumulation and melt over a semi-arid mountain catchment"</i>, Adam Winstral and Danny Marks, Hydrological Processes <b>16</b> (2002), 3585– 3603. DOI: 10.1002/hyp.1238 [NOT YET IMPLEMENTED]
+ * - <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Jan Magnusson, Daniel Farinotti, Tobias Jonas and Mathias Bavay, Hydrological Processes, 2010, under review.
+ * - <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Matthias Huss, Daniel Farinotti, Andreas Bauder and Martin Funk, Hydrological Processes, <b>22</b>, 3888-3902, 2008.
+ * - <i>"Geostatistics for Natural Resources Evaluation"</i>, Pierre Goovaerts, Oxford University Press, Applied Geostatistics Series, 1997, 483 p., ISBN 0-19-511538-4
  * 
  * @author Mathias Bavay
  * @date   2010-04-12
@@ -327,7 +329,7 @@ class USERInterpolation : public InterpolationAlgorithm {
 };
 
 /**
- * @class MagnussInterpolation
+ * @class SnowHNWInterpolation
  * @brief Precipitation distribution according to the local slope and curvature.
  * The precipitation distribution is initialized using a specified algorithm (IDW_LAPSE by default, see IDWLapseAlgorithm).
  * An optional parameter can be given to specify which algorithm has to be used for initializing the grid.
@@ -339,9 +341,9 @@ class USERInterpolation : public InterpolationAlgorithm {
  * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
  * @author Florian Kobierska, Jan Magnusson and Mathias Bavay
  */
-class MagnussInterpolation : public InterpolationAlgorithm {
+class SnowHNWInterpolation : public InterpolationAlgorithm {
 	public:
-		MagnussInterpolation(const Meteo2DInterpolator& _mi,
+		SnowHNWInterpolation(const Meteo2DInterpolator& _mi,
 		               const DEMObject& _dem,
 		               const std::vector<MeteoData>& _vecMeteo,
 		               const std::vector<StationData>& _vecStation,

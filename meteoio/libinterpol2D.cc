@@ -618,7 +618,7 @@ double Interpol2D::lw_AirPressure(const double& altitude)
 * @param grid 2D array of precipitation to fill
 * @author Florian Kobierska, Jan Magnusson and Mathias Bavay
 */
-void Interpol2D::PrecipMagnusson(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
+void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
 {
 	if(!grid.isSameGeolocalization(dem)) {
 		throw IOException("Requested grid does not match the geolocalization of the DEM", AT);

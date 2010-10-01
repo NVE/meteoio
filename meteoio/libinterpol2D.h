@@ -75,7 +75,7 @@ class Interpol2D {
 		static void IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                 const DEMObject& dem, Grid2DObject& grid);
 		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);
-		static void PrecipMagnusson(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
+		static void PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 
 		//projections functions
 		static double ConstProject(const double& value, const double& altitude, const double& new_altitude,
