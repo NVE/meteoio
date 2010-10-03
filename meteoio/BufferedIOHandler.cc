@@ -170,7 +170,7 @@ void BufferedIOHandler::readMeteoData(const Date& i_date, std::vector<MeteoData>
 		if (index == IOUtils::npos) { //not in buffer
 			//Check buffering strategy
 			bool rebuffer = false;
-			if ((startDateBuffer.at(ii) > i_date) || (endDateBuffer.at(ii) < i_date)){
+			if ((startDateBuffer.at(ii) > i_date) || (endDateBuffer.at(ii) <= i_date)){
 				rebuffer = true;
 			} else { 
 				if (always_rebuffer) rebuffer = true;
@@ -296,10 +296,11 @@ bool BufferedIOHandler::bufferData(const Date& _date, const unsigned int& statio
 
 void BufferedIOHandler::setBufferPolicy(const buffer_policy& policy)
 {
-	if(policy==RECHECK_NODATA)
+	if (policy==RECHECK_NODATA){
 		always_rebuffer=true;
-	else
+	} else {
 		always_rebuffer=false;
+	}
 }
 
 void BufferedIOHandler::setBufferDuration(const Date& _beforeDate, const Date& _afterDate)
