@@ -25,7 +25,8 @@ namespace mio {
 /**
  * @page imis IMIS
  * @section imis_format Format
- * This plugin reads data directly from the IMIS network database (Oracle database). It retrieves standard IMIS data as well as ENETZ and ANETZ data.
+ * This plugin reads data directly from the IMIS network database (Oracle database). 
+ * It retrieves standard IMIS data as well as ENETZ and ANETZ data.
  *
  * @section imis_units Units
  * The units are assumed to be the following:
@@ -55,11 +56,118 @@ const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24
 
 const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_h from station2.standort WHERE stat_abk like :1 AND stao_nr=:2";
 
+std::map<std::string, AnetzData> ImisIO::mapAnetz;
+const bool ImisIO::__init = ImisIO::initStaticData();
+
+bool ImisIO::initStaticData()
+{
+	//Associate string with AnetzData
+	mapAnetz["AMD2"] = AnetzData(2,"*GLA","*SAE","",3,1.2417929,0.548411708,-0.0692799);
+	mapAnetz["ANV2"] = AnetzData(2,"*EVO","*MVE","",2,0.7920454,0.771111962,IOUtils::nodata);
+	mapAnetz["ANV3"] = AnetzData(1,"*EVO","","",1,1.6468,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["ARO2"] = AnetzData(2,"*EVO","*GSB","",2,0.9692294,0.218384531,IOUtils::nodata);
+	mapAnetz["ARO3"] = AnetzData(2,"*EVO","*ZER","",3,1.0748285,1.649860092,-0.0728015);
+	mapAnetz["BED2"] = AnetzData(2,"*PIO","*ULR","",3,0.9934869,1.047586006,-0.05489259);
+	mapAnetz["BED3"] = AnetzData(2,"*PIO","*ULR","",2,0.6999,0.4122,IOUtils::nodata);
+	mapAnetz["BER2"] = AnetzData(2,"*ROB","*COV","",3,1.4454061,0.558775717,-0.05063568);
+	mapAnetz["BER3"] = AnetzData(2,"*ROB","*COV","",2,0.378476,0.817976734,IOUtils::nodata);
+	mapAnetz["BEV2"] = AnetzData(2,"*SAM","*COV","",3,1.8237643,0.853292298,-0.33642156);
+	mapAnetz["BOG2"] = AnetzData(1,"*ROE","","",1,1.0795,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["BOR2"] = AnetzData(1,"*VIS","","",1,1.0662264,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["BOV2"] = AnetzData(2,"*GSB","*EVO","",2,0.3609309,0.934922978,IOUtils::nodata);
+	mapAnetz["CAM2"] = AnetzData(2,"*PIO","*COM","",2,0.750536,0.426864157,IOUtils::nodata);
+	mapAnetz["CHA2"] = AnetzData(2,"*AIG","*SIO","",2,0.7107216,0.99869915,IOUtils::nodata);
+	mapAnetz["CON2"] = AnetzData(2,"*SIO","*MVE","",3,3.5344378,1.952708399,-0.74509918);
+	mapAnetz["DAV2"] = AnetzData(2,"*WFJ","*DAV","",3,0.594108,1.091565634,-0.12150025);
+	mapAnetz["DAV3"] = AnetzData(2,"*WFJ","*DAV","",3,0.9266618,0.815816241,-0.06248703);
+	mapAnetz["DAV4"] = AnetzData(2,"*WFJ","*DAV","",3,0.9266618,0.815816241,-0.06248703);
+	mapAnetz["DAV5"] = AnetzData(2,"*WFJ","*DAV","",3,0.9266618,0.815816241,-0.06248703);
+	mapAnetz["DTR2"] = AnetzData(2,"*PIO","*COM","",2,0.0384,0.9731,IOUtils::nodata);
+	mapAnetz["DVF2"] = AnetzData(1,"*WFJ","","",1,1,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["ELM2"] = AnetzData(1,"*GLA","","",1,1.4798048,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["ELS2"] = AnetzData(2,"*ABO","*INT","",3,1.0886792,0.568730457,-0.07758286);
+	mapAnetz["FAE2"] = AnetzData(1,"*ABO","","",1,2.1132038,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["FIR2"] = AnetzData(2,"*INT","*GRH","",3,1.2416838,0.243226327,-0.02392287);
+	mapAnetz["FIS2"] = AnetzData(1,"*ABO","","",1,1.1991,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["FNH2"] = AnetzData(2,"*AIG","*GSB","",2,1.3949428,0.297933922,IOUtils::nodata);
+	mapAnetz["FOU2"] = AnetzData(1,"*GSB","","",1,0.8448844,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["FUL2"] = AnetzData(2,"*FEY","*AIG","",2,1.070156,0.587972864,IOUtils::nodata);
+	mapAnetz["FUS2"] = AnetzData(1,"*PIO","","",1,1.3557753,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["GAD2"] = AnetzData(2,"*ENG","*GUE","",3,0.9764334,0.814293499,-0.07074082);
+	mapAnetz["GAN2"] = AnetzData(2,"*ABO","*VIS","",2,0.520224,0.825813298,IOUtils::nodata);
+	mapAnetz["GLA2"] = AnetzData(1,"*GLA","","",1,1.7186314,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["GOM2"] = AnetzData(2,"*ULR","*GRH","",2,0.4413,0.4235,IOUtils::nodata);
+	mapAnetz["GOM3"] = AnetzData(2,"*ULR","*GRH","",2,0.3269755,0.62995601,IOUtils::nodata);
+	mapAnetz["GUT2"] = AnetzData(2,"*GRH","*ENG","",2,0.3977985,0.463100458,IOUtils::nodata);
+	mapAnetz["GUT3"] = AnetzData(2,"*GRH","*ENG","",2,0.3977985,0.463100458,IOUtils::nodata);
+	mapAnetz["HTR2"] = AnetzData(2,"*HIR","*COM","",2,0.8668,0.5939,IOUtils::nodata);
+	mapAnetz["HTR3"] = AnetzData(2,"*SBE","*COM","",2,1.3023275,-0.663411226,IOUtils::nodata);
+	mapAnetz["ILI2"] = AnetzData(1,"*AIG","","",1,1.2341516,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["JUL2"] = AnetzData(2,"*COV","*SAM","",2,0.4900961,0.871078269,IOUtils::nodata);
+	mapAnetz["KES2"] = AnetzData(2,"*SAM","*DAV","",2,0.847596,1.112635571,IOUtils::nodata);
+	mapAnetz["KLO2"] = AnetzData(1,"*DAV","","",1,1.585,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["KLO3"] = AnetzData(2,"*DAV","*WFJ","",3,0.8352,0.9493,-0.0526);
+	mapAnetz["LAU2"] = AnetzData(2,"*ABO","*SIO","",2,0.3037172,0.791695555,IOUtils::nodata);
+	mapAnetz["LUK2"] = AnetzData(2,"*DIS","*PIO","",3,0.8593029,0.378261758,0.85930291);
+	mapAnetz["MEI2"] = AnetzData(3,"*ENG","*GUE","*ALT",3,0.3882119,0.399244859,0.3298324);
+	mapAnetz["MES2"] = AnetzData(2,"*HIR","*COM","",2,1.3552818,-0.393843912,IOUtils::nodata);
+	mapAnetz["MUN2"] = AnetzData(1,"*VIS","","",1,0.8624804,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["NAR2"] = AnetzData(2,"*PIO","*COM","",3,0.4089981,0.873419792,-0.028464);
+	mapAnetz["NEN2"] = AnetzData(2,"*SIO","*EVO","",3,0.9352699,1.312867984,-0.14543389);
+	mapAnetz["OBM2"] = AnetzData(2,"*AIG","*MLS","",3,1.9413387,1.64250639,-0.37210579);
+	mapAnetz["OBW2"] = AnetzData(2,"*GRH","*ULR","",3,0.2471352,1.219258485,-0.02153657);
+	mapAnetz["OBW3"] = AnetzData(2,"*GRH","*ULR","",2,0.5274,0.4815,IOUtils::nodata);
+	mapAnetz["OFE2"] = AnetzData(1,"*SCU","","",1,1.8758744,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["ORT2"] = AnetzData(1,"*GLA","","",1,1.6214,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["OTT2"] = AnetzData(1,"*ABO","","",1,1.3759903,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["PAR2"] = AnetzData(1,"*WFJ","","",1,1.6252986,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["PUZ2"] = AnetzData(2,"*DIS","*GUE","",2,0.9481811,0.1490937,IOUtils::nodata);
+	mapAnetz["ROA2"] = AnetzData(2,"*INT","*NAP","",3,1.748338,0.574491521,-0.1670437);
+	mapAnetz["SAA2"] = AnetzData(2,"*ZER","*VIS","",3,0.6316695,1.210149675,-0.11760175);
+	mapAnetz["SAA3"] = AnetzData(1,"*VIS","","",1,1.2905,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["SCA2"] = AnetzData(2,"*ALT","*DIS","",2,0.8118627,0.360141586,IOUtils::nodata);
+	mapAnetz["SCA3"] = AnetzData(2,"*ALT","*GLA","",2,0.4768725,0.819642544,IOUtils::nodata);
+	mapAnetz["SCB2"] = AnetzData(2,"*ENG","*INT","",3,1.0535332,1.21234263,-0.1307221);
+	mapAnetz["SCH2"] = AnetzData(1,"*INT","","",1,1.54557,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["SHE2"] = AnetzData(1,"*INT","","",1,1.1065938,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["SIM2"] = AnetzData(2,"*COM","*SBE","",2,0.6861131,0.296215066,IOUtils::nodata);
+	mapAnetz["SLF2"] = AnetzData(1,"*WFJ","","",1,0.9585787,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["SMN2"] = AnetzData(1,"*SCU","","",1,0.6979953,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["SPN2"] = AnetzData(2,"*VIS","*ZER","",2,1.1049,1.4598,IOUtils::nodata);
+	mapAnetz["SPN3"] = AnetzData(1,"*VIS","","",1,1.0244902,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["STH2"] = AnetzData(2,"*PLF","*ABO","",3,1.1252659,0.893324895,-0.13194965);
+	mapAnetz["STN2"] = AnetzData(2,"*EVO","*MVE","",2,0.9042348,0.687519213,IOUtils::nodata);
+	mapAnetz["TAM2"] = AnetzData(2,"*VAD","*GLA","",2,0.6304286,0.738150034,IOUtils::nodata);
+	mapAnetz["TAM3"] = AnetzData(2,"*VAD","*GLA","",3,1.5515584,0.407868299,-0.0800763);
+	mapAnetz["TRU2"] = AnetzData(2,"*MVE","*VIS","",2,1.1359,0.6577,IOUtils::nodata);
+	mapAnetz["TUJ2"] = AnetzData(2,"*GUE","*DIS","",2,0.3636322,0.591777057,IOUtils::nodata);
+	mapAnetz["TUJ3"] = AnetzData(2,"*GUE","*DIS","",2,0.4742,0.7791,IOUtils::nodata);
+	mapAnetz["TUM2"] = AnetzData(1,"*DIS","","",1,1.752091,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["URS2"] = AnetzData(2,"*GUE","*GRH","",3,0.6847615,0.277707092,-0.03085219);
+	mapAnetz["VAL2"] = AnetzData(2,"*PIO","*GUE","",3,1.2130704,0.508735389,-0.02905053);
+	mapAnetz["VDS2"] = AnetzData(1,"*MVE","","",1,1.8282525,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["VIN2"] = AnetzData(1,"*SCU","","",1,0.8245,IOUtils::nodata,IOUtils::nodata);
+	mapAnetz["VLS2"] = AnetzData(2,"*DIS","*HIR","",2,0.5764952,0.613916765,IOUtils::nodata);
+	mapAnetz["ZER2"] = AnetzData(2,"*ZER","*EVO","",2,0.8707182,0.988158355,IOUtils::nodata);
+	mapAnetz["ZER4"] = AnetzData(2,"*ZER","*EVO","",2,0.8707182,0.988158355,IOUtils::nodata);
+	mapAnetz["ZNZ2"] = AnetzData(1,"*WFJ","","",1,0.9980525,IOUtils::nodata,IOUtils::nodata);
+
+	return true;
+}
+
 void ImisIO::getDBParameters()
 {
 	cfg.getValue("DBNAME", "Input", oracleDBName_in);
 	cfg.getValue("DBUSER", "Input", oracleUserName_in);
 	cfg.getValue("DBPASS", "Input", oraclePassword_in);
+
+	string tmp = cfg.get("USEANETZ", "Input", Config::nothrow);
+	if (tmp != "") {
+		useAnetz = cfg.get("USEANETZ", "Input");
+	} else {
+		useAnetz = false;
+	}
+
 	/*cfg.getValue("DBNAME", "Output", oracleDBName_out);
 	cfg.getValue("DBUSER", "Output", oracleUserName_out);
 	cfg.getValue("DBPASS", "Output", oraclePassword_out);*/
@@ -258,6 +366,113 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo, vecStation, ii);
+	}
+
+	if (useAnetz){
+		map<string, unsigned int> mapAnetzNames;
+		Config anetzConfig;
+		initializeAnetzBuffer(indexStart, indexEnd, mapAnetzNames, anetzConfig);
+		assimilateAnetzData(indexStart, indexEnd, vecMeteo, vecStation, mapAnetzNames, anetzConfig);
+		//anetzConfig.write("testanetz.ini");
+	}
+}
+
+void ImisIO::assimilateAnetzData(const unsigned int& indexStart, const unsigned int& indexEnd,
+						   std::vector< std::vector<MeteoData> >& vecMeteo,
+						   std::vector< std::vector<StationData> >& vecStation,						   
+						   std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg)
+{
+	IOHandler rawio(anetzcfg);
+	BufferedIOHandler bio(rawio, anetzcfg);
+
+	for (unsigned int ii=indexStart; ii<indexEnd; ii++){
+		map<string,AnetzData>::const_iterator it = mapAnetz.find(vecMyStation.at(ii).getStationID());
+		if (it != mapAnetz.end()){
+			vector<MeteoData> vecAnetzMeteo;
+			vector<StationData> vecAnetzStation;
+
+			for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++){
+				bio.readMeteoData(vecMeteo[ii][jj].date, vecAnetzMeteo, vecAnetzStation);
+				//Go through every data point and replace hnw with ANETZ precipitation data
+				//cout << "Date: " << vecMeteo[ii][jj].date.toString(Date::ISO) << " " << it->first<< endl;
+				vecMeteo[ii][jj].hnw = getHNW(vecAnetzMeteo, it->second, ii, mapAnetzNames); 
+			}
+		}
+	}
+}
+
+double ImisIO::getHNW(const vector<MeteoData>& vecAnetz, const AnetzData& ad, const unsigned int& index, 
+				  const std::map<std::string, unsigned int>& mapAnetzNames)
+{
+	double hnw = 0.0;
+	map<string, unsigned int>::const_iterator it;
+
+	if (ad.nrOfAnetzStations == ad.nrOfCoefficients){
+		//1, 2, or 3 ANETZ stations without interaction
+		for (unsigned int ii=0; ii<ad.nrOfCoefficients; ii++){
+			it = mapAnetzNames.find(ad.anetzstations[ii]);
+			//cout << ii << ": Using " << ad.anetzstations[ii] << " with hnw: " << vecAnetz.at(it->second).hnw << endl;
+			if (it != mapAnetzNames.end())
+				hnw += ad.coeffs[ii] * vecAnetz.at(it->second).hnw;
+		}
+	} else {
+		if (ad.nrOfCoefficients != 3)
+			throw IOException("Misconfiguration in ANETZ data", AT);
+
+		// Exactly two ANETZ stations with one interaction term
+		it = mapAnetzNames.find(ad.anetzstations[0]);
+		const double& hnw0 = vecAnetz.at(it->second).hnw;
+		it = mapAnetzNames.find(ad.anetzstations[1]);
+		const double& hnw1 = vecAnetz.at(it->second).hnw;
+		//cout << "0: Using " << ad.anetzstations[0] << " with hnw: " << hnw0 << endl;
+		//cout << "1: Using " << ad.anetzstations[1] << " with hnw: " << hnw1 << endl;
+
+		hnw += ad.coeffs[0] * hnw0;
+		hnw += ad.coeffs[1] * hnw1;
+
+		hnw += ad.coeffs[2] * hnw0 * hnw1;
+	}
+	//cout << "--> hnw: " << hnw << endl;
+	
+	return hnw;
+}
+
+
+void ImisIO::initializeAnetzBuffer(const unsigned int& indexStart, const unsigned int& indexEnd,
+							std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg)
+{
+	set<string> uniqueStations;
+	
+	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+		map<string,AnetzData>::const_iterator it = mapAnetz.find(vecMyStation.at(ii).getStationID());
+		if (it != mapAnetz.end()){
+			for (unsigned int jj=0; jj<it->second.nrOfAnetzStations; jj++){
+				uniqueStations.insert(it->second.anetzstations[jj]);
+			}
+		}
+	}
+
+	unsigned int pp = 0;
+	stringstream ss;
+	ss << uniqueStations.size();
+	anetzcfg.addKey("PLUGINPATH", "GENERAL", cfg.get("PLUGINPATH"));
+	anetzcfg.addKey("METEO", "Input", "IMIS");
+	anetzcfg.addKey("DBNAME", "Input", oracleDBName_in);
+	anetzcfg.addKey("DBUSER", "Input", oracleUserName_in);
+	anetzcfg.addKey("DBPASS", "Input", oraclePassword_in);
+	anetzcfg.addKey("NROFSTATIONS", "Input", ss.str());
+	anetzcfg.addKey("COORDSYS", "Input", coordin);
+	anetzcfg.addKey("COORDPARAM", "Input", coordinparam);
+	anetzcfg.addKey("HNW::resample", "Interpolations1D", "accumulate");
+	anetzcfg.addKey("HNW::args", "Interpolations1D", "1800");
+	
+	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ii++){
+		mapAnetzNames[*ii] = pp;
+		pp++;
+		
+		ss.str("");
+		ss << "STATION" << pp;
+		anetzcfg.addKey(ss.str(), "Input", *ii);
 	}
 }
 

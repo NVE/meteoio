@@ -24,15 +24,50 @@
 #include <meteoio/Coords.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/DynamicLibrary.h>
+#include <meteoio/BufferedIOHandler.h>
 
 #include <string>
 #include <sstream>
+#include <set>
+#include <map>
 #include <iostream>
 #include <vector>
 #include <ctime>
 #include <occi.h>
 
 namespace mio {
+
+	class AnetzData{
+		public:
+			AnetzData(): nrOfAnetzStations(0), nrOfCoefficients(0)
+			{
+				anetzstations.push_back("");
+				anetzstations.push_back("");
+				anetzstations.push_back("");
+				coeffs.push_back(IOUtils::nodata);
+				coeffs.push_back(IOUtils::nodata);
+				coeffs.push_back(IOUtils::nodata);
+			}
+
+			AnetzData(const unsigned int& nr_anetz,
+					const std::string& i_anetz1, const std::string& i_anetz2, const std::string& i_anetz3, 
+					const unsigned int& nr_coeffs, 
+					const double& coeff1, const double& coeff2, const double& coeff3) 
+				: nrOfAnetzStations(nr_anetz), nrOfCoefficients(nr_coeffs)
+			{
+				anetzstations.push_back(i_anetz1);
+				anetzstations.push_back(i_anetz2);
+				anetzstations.push_back(i_anetz3);
+				coeffs.push_back(coeff1);
+				coeffs.push_back(coeff2);
+				coeffs.push_back(coeff3);
+			}
+
+			std::string anetzstation1, anetzstation2, anetzstation3;
+			unsigned int nrOfAnetzStations, nrOfCoefficients;
+			std::vector<double> coeffs;
+			std::vector<std::string> anetzstations;
+	};
 
 /**
  * @class ImisIO
@@ -84,6 +119,14 @@ class ImisIO : public IOInterface {
 		void parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber);
 		void readStationMetaData();
 		void convertUnits(MeteoData& meteo);
+		void initializeAnetzBuffer(const unsigned int& indexStart, const unsigned int& indexEnd,
+							  std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg);
+		void assimilateAnetzData(const unsigned int& indexStart, const unsigned int& indexEnd,
+							std::vector< std::vector<MeteoData> >& vecMeteo,
+							std::vector< std::vector<StationData> >& vecStation,		   
+							std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg);
+		double getHNW(const std::vector<MeteoData>& vecAnetz, const AnetzData& ad, const unsigned int& index, 
+				    const std::map<std::string, unsigned int>& mapAnetzNames);
 
 		static const double in_tz; //timezone
 		Config cfg;
@@ -95,9 +138,14 @@ class ImisIO : public IOInterface {
 		std::string oracleUserName_in;
 		std::string oraclePassword_in;
 		std::string oracleDBName_in;
+		bool useAnetz;
 		/*std::string oracleUserName_out;
 		std::string oraclePassword_out;
 		std::string oracleDBName_out;*/
+
+		static std::map<std::string, AnetzData> mapAnetz;
+		static const bool __init;    ///<helper variable to enable the init of static collection data
+		static bool initStaticData();///<initialize the static map meteoparamname 
 };
 
 } //end namespace mio
