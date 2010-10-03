@@ -115,7 +115,7 @@ class MeteoData {
 		 */
 		void reset();
 
-		bool isResampled();
+		bool isResampled() const;
 		void setResampled(const bool&);
 
 		void standardizeNodata(const double& plugin_nodata);

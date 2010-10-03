@@ -213,7 +213,7 @@ void MeteoData::standardizeNodata(const double& plugin_nodata) {
 	}
 }
 
-bool MeteoData::isResampled()
+bool MeteoData::isResampled() const
 {
 	return resampled;
 }

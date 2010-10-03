@@ -59,6 +59,9 @@ class ResamplingAlgorithms {
 		                       std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
 		
  	private:
+		static double funcval(const std::vector<MeteoData>& vecM, const unsigned int& index, 
+						  const Date& date, const unsigned int& paramindex);
+
 		static std::map<std::string, resamplingptr> algorithmMap;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map algorithmMap
