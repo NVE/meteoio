@@ -665,6 +665,9 @@ void ImisIO::convertUnits(MeteoData& meteo)
 	if(meteo.rh!=IOUtils::nodata) {
 		meteo.rh /= 100.;
 	}
+
+	if(meteo.hs!=IOUtils::nodata)
+		meteo.hs /= 100.0;
 }
 
 void ImisIO::cleanup() throw()

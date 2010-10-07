@@ -61,13 +61,13 @@ class Config {
 
 		/**
 		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object
-		*/
+		 */
 		Config();
 
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
 		 * @param[in] filename_in string representing the absolute filename of the key/value file
-		*/
+		 */
 		Config(const std::string& filename_in);
 
 		/**
@@ -79,13 +79,13 @@ class Config {
 		/**
 		 * @brief Add the content of a file to the internal key/value map object
 		 * @param[in] filename_in string representing the absolute filename of the key/value file
-		*/
+		 */
 		void addFile(const std::string& filename_in);
 
 		/**
 		 * @brief Add the content of the given command line to the internal key/value map object
 		 * @param[in] cmd_line string representing the command line to be parsed for key/value pairs or switches
-		*/
+		 */
 		void addCmdLine(const std::string& cmd_line);
 
 		/**
@@ -93,7 +93,7 @@ class Config {
 		 *        key is case insensitive
 		 * @param[in] key string representing the key to be added
 		 * @param[in] value string representing the matching value to be added
-		*/
+		 */
 		void addKey(const std::string& key, const std::string& value);
 
 		/**
@@ -109,7 +109,7 @@ class Config {
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[in] value string representing the matching value to be added
-		*/
+		 */
 		void addKey(std::string key, std::string section, const std::string& value);
 
 		/**
@@ -119,9 +119,9 @@ class Config {
 		std::string getSourceName();
 
 		/**
-		* @brief Print the content of the Config object (usefull for debugging)
-		* The Config is bound by "<Config>" and "</Config>" on separate lines
-		*/
+		 * @brief Print the content of the Config object (usefull for debugging)
+		 * The Config is bound by "<Config>" and "</Config>" on separate lines
+		 */
 		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
 
 		template <typename T> std::vector<T> getValue(const std::string& key, const Options& opt=Config::dothrow) const
