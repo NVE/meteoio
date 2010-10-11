@@ -499,8 +499,8 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	//IMIS is in TZ=+1, so moving back to this timezone
 	Date dateS(dateStart), dateE(dateEnd);
-	dateS.setTimeZone(in_tz);
-	dateE.setTimeZone(in_tz);
+	//dateS.setTimeZone(in_tz);
+	//dateE.setTimeZone(in_tz);
 	dateS.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
 	dateE.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 
@@ -517,7 +517,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	getImisData(stationName, stationNumber, datestart, dateend, vecResult);
 
 	MeteoData tmpmd;
-	tmpmd.date.setTimeZone(in_tz);
+	//tmpmd.date.setTimeZone(in_tz);
 	for (unsigned int ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
