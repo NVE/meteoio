@@ -391,11 +391,46 @@ void ImisIO::assimilateAnetzData(const unsigned int& indexStart, const unsigned 
 			vector<MeteoData> vecAnetzMeteo;
 			vector<StationData> vecAnetzStation;
 
+			vector<double> vecHNW = vector<double>(vecMeteo[ii].size(), 0.0);
+
 			for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++){
 				bio.readMeteoData(vecMeteo[ii][jj].date, vecAnetzMeteo, vecAnetzStation);
-				//Go through every data point and replace hnw with ANETZ precipitation data
 				//cout << "Date: " << vecMeteo[ii][jj].date.toString(Date::ISO) << " " << it->first<< endl;
-				vecMeteo[ii][jj].hnw = getHNW(vecAnetzMeteo, it->second, ii, mapAnetzNames); 
+				vecHNW[jj] = getHNW(vecAnetzMeteo, it->second, ii, mapAnetzNames);
+			}
+
+			//now slice up the whole data into slices of 6 hours and distribute psum, if no own value exists
+			for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++){
+				Date startDate = vecMeteo[ii][jj].date;
+				unsigned int counter = 0;
+				double psum = 0.0;
+				while ((counter < 12) && (jj+counter)<vecMeteo[ii].size()){
+					if (vecMeteo[ii][jj+counter].date < (startDate + Date(0.25))){
+						if (vecHNW[jj+counter] != IOUtils::nodata)
+							psum += vecHNW[jj+counter];
+					}
+					counter++;
+				}
+
+				psum /= 12; // to get half hour values
+
+				if (counter < 12){
+					if (vecMeteo[ii].size() <= (jj+counter)){
+						//Erase the rest, since we cannot accumulate hnw correctly
+						vecMeteo[ii].erase(vecMeteo[ii].begin()+jj, vecMeteo[ii].end());
+						break;
+					}
+				}
+
+				for (unsigned int kk=jj; kk<(jj+counter); kk++){
+					double& hnw = vecMeteo[ii][kk].hnw;
+					if ((hnw == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(hnw, 0.0, 0.000001))){
+						//replace by psum
+						hnw = psum;
+					}
+				}
+				
+				jj += (counter-1);
 			}
 		}
 	}
@@ -414,6 +449,9 @@ double ImisIO::getHNW(const vector<MeteoData>& vecAnetz, const AnetzData& ad, co
 			//cout << ii << ": Using " << ad.anetzstations[ii] << " with hnw: " << vecAnetz.at(it->second).hnw << endl;
 			if (it != mapAnetzNames.end())
 				hnw += ad.coeffs[ii] * vecAnetz.at(it->second).hnw;
+
+			if (vecAnetz.at(it->second).hnw == IOUtils::nodata)
+				return 0.0;
 		}
 	} else {
 		if (ad.nrOfCoefficients != 3)
@@ -427,13 +465,16 @@ double ImisIO::getHNW(const vector<MeteoData>& vecAnetz, const AnetzData& ad, co
 		//cout << "0: Using " << ad.anetzstations[0] << " with hnw: " << hnw0 << endl;
 		//cout << "1: Using " << ad.anetzstations[1] << " with hnw: " << hnw1 << endl;
 
+		if ((hnw0 == IOUtils::nodata) || (hnw1 == IOUtils::nodata))
+			return 0.0;
+
 		hnw += ad.coeffs[0] * hnw0;
 		hnw += ad.coeffs[1] * hnw1;
 
 		hnw += ad.coeffs[2] * hnw0 * hnw1;
 	}
 	//cout << "--> hnw: " << hnw << endl;
-	
+
 	return hnw;
 }
 
@@ -521,10 +562,19 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	for (unsigned int ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
+		const StationData& sd = vecMyStation.at(stationindex);
+
+		//For IMIS stations the hnw value is a rate (mm/h), therefore we need to 
+		//divide it by two to conjure the accumulated value for the half hour
+		if (sd.stationID.length() > 0){
+			if (sd.stationID[0] != '*') //excludes ANETZ stations, they come in hourly sampling
+				if (tmpmd.hnw != IOUtils::nodata)
+					tmpmd.hnw /= 2; //half hour accumulated value for IMIS stations only
+		}
 
 		//Now insert tmpmd and a StationData object
 		vecMeteo.at(stationindex).push_back(tmpmd);
-		vecStation.at(stationindex).push_back(vecMyStation.at(stationindex));
+		vecStation.at(stationindex).push_back(sd);
 	}
 }
 
@@ -668,6 +718,7 @@ void ImisIO::convertUnits(MeteoData& meteo)
 
 	if(meteo.hs!=IOUtils::nodata)
 		meteo.hs /= 100.0;
+
 }
 
 void ImisIO::cleanup() throw()
