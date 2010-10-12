@@ -74,6 +74,7 @@ bool FilterAlgorithms::initStaticData()
 	filterMap["mad"]           = FilterProperties(true,  &FilterAlgorithms::MedianAbsoluteDeviationFilter);
 	filterMap["accumulate"]    = FilterProperties(false, &FilterAlgorithms::AccumulateProcess);
 	filterMap["exp_smoothing"] = FilterProperties(false, &FilterAlgorithms::ExpSmoothingFilter);
+	filterMap["wma_smoothing"] = FilterProperties(false, &FilterAlgorithms::WMASmoothingFilter);
 	filterMap["median_avg"]    = FilterProperties(false, &FilterAlgorithms::MedianAvgProcess);
 	filterMap["mean_avg"]      = FilterProperties(false, &FilterAlgorithms::MeanAvgProcess);
 	filterMap["wind_avg"]      = FilterProperties(false, &FilterAlgorithms::WindAvgProcess);
@@ -322,6 +323,63 @@ void FilterAlgorithms::ExpSmoothingFilter(const std::vector<MeteoData>& vecM, co
 	}
 }
 
+/**
+ * @brief WMA smooting filter, weighted moving average
+ * - http://en.wikipedia.org/wiki/Simple_moving_average#Weighted_moving_average
+ * - nodata values are excluded from the moving average calculation
+ * - Two arguments expected (all have to be present and valid for the filter to start operating):
+ *   - minimal number of points in window
+ *   - minimal time interval spanning the window (in seconds)
+ * - the arguments may be preceded by the keywords "left", "center" or "right", indicating the window position
+ * - the keyword "soft" maybe added at the beginning, if the window position is allowed to be adjusted to the data present
+ * @code
+ *          TA::filter1 = wma_smoothing
+ *          TA::arg1    = right 1 1800 (1800 seconds time span for the strictly right leaning window)
+ * @endcode
+ */
+void FilterAlgorithms::WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+				   const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+                       std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+{
+	(void)vecS; (void)vecWindowS;
+	if (vecArgs.size() < 2)
+		throw InvalidArgumentException("Wrong number of arguments for WMASmoothingFilter", AT);
+
+	bool isSoft = false;
+	std::string windowposition = "center"; //the default is a centered window
+	std::vector<double> doubleArgs;
+	parseWindowFilterArguments("wma_smoothing", vecArgs, 2, 2, isSoft, windowposition, doubleArgs);
+
+	//for every element in vecWindowM, get the Window and perform weighted moving average smoothing
+	for (unsigned int ii=0; ii<vecWindowM.size(); ii++){
+		vector<MeteoData> vecTmpWindow;
+		unsigned int position = IOUtils::seek(vecWindowM[ii].date, vecM);
+
+		if (position != IOUtils::npos){
+			unsigned int posfind = getWindowData("wma_smoothing", vecM, position, vecArgs, vecTmpWindow);
+			if (posfind == IOUtils::npos)
+				continue;
+
+			if (windowposition == "left"){
+				vecTmpWindow.erase(vecTmpWindow.begin()+posfind+1, vecTmpWindow.end()); //delete all after posfind
+				vecWindowM[ii].param(paramindex) = WMASmoothingAlgorithm(vecTmpWindow, paramindex);
+				//cout << "WMASmoothing: " << vecWindowM[ii].param(paramindex) << endl;
+			} else if (windowposition == "right"){
+				vecTmpWindow.erase(vecTmpWindow.begin(), vecTmpWindow.begin()+posfind); //delete all before posfind
+				std::reverse(vecTmpWindow.begin(), vecTmpWindow.end()); //reverse the vector, posfind most significant
+				vecWindowM[ii].param(paramindex) = WMASmoothingAlgorithm(vecTmpWindow, paramindex);
+				//cout << "WMASmoothing: " << vecWindowM[ii].param(paramindex) << endl;
+			} else { //centered window - regroup according to time difference with posfind
+				for (unsigned int jj=0; jj<vecTmpWindow.size(); jj++)
+					vecTmpWindow[jj].date=Date(abs(vecWindowM[ii].date.getJulianDate() - vecTmpWindow[jj].date.getJulianDate()));
+				std::sort(vecTmpWindow.begin(), vecTmpWindow.end(), compareMeteoData);
+				vecWindowM[ii].param(paramindex) = WMASmoothingAlgorithm(vecTmpWindow, paramindex);
+				//cout << "WMASmoothing: " << vecWindowM[ii].param(paramindex) << endl;
+			}
+		}	
+	}
+}
+
 bool FilterAlgorithms::compareMeteoData (const MeteoData& m1, const MeteoData& m2)
 { 
 	return (m1.date>m2.date);
@@ -454,6 +512,41 @@ double FilterAlgorithms::ExpSmoothingAlgorithm(const std::vector<MeteoData>& vec
 	}
 
 	return expavg;
+}
+
+/**
+ * @brief Actual implementation of the smoothing algorithm
+ * @param vecMeteo A vector of MeteoData
+ * @param paramindex The meteo data parameter to be smoothed
+ * @return The wma smoothing value for the specified meteo parameter of the last element in vecMeteo
+ */
+double FilterAlgorithms::WMASmoothingAlgorithm(const std::vector<MeteoData>& vecMyMeteo, const unsigned int& paramindex)
+{
+	vector<MeteoData> vecMeteo(vecMyMeteo);
+
+	if (vecMeteo.size() == 0)
+		return IOUtils::nodata;
+
+	std::reverse(vecMeteo.begin(), vecMeteo.end()); //reverse the vector, posfind most significant
+
+	bool initCompleted = false;
+	double wma = IOUtils::nodata;
+	unsigned int counter = 0;
+
+	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+		const double& currentval = vecMeteo[ii].param(paramindex);
+		if (currentval != IOUtils::nodata){
+			if (wma == IOUtils::nodata) wma = 0.0; //initialize wma here, otherwise it could be nodata
+
+			wma += (vecMeteo.size()-counter) * currentval;
+			counter++;
+		}
+	}
+
+	if ((wma != IOUtils::nodata) && (counter > 0))
+		wma /= (counter*(counter+1)/2); 
+
+	return wma;
 }
 
 /**

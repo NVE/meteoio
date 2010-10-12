@@ -76,9 +76,13 @@ class FilterAlgorithms {
 		static void ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
                          const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
                          std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
+		static void WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+					const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
 
 		static double ExpSmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, 
 									 const unsigned int& paramindex, const double& alpha);
+		static double WMASmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, const unsigned int& paramindex);
 
  	private:
 		static bool compareMeteoData (const MeteoData& m1, const MeteoData& m2);
