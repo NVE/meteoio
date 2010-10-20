@@ -286,7 +286,7 @@ void GSNIO::parseString(const std::string& in_string, std::vector<std::string>& 
 //TODO: this should be done by IOUtils!!
 void GSNIO::convertStringToDouble(double& d, const std::string& in_string, const std::string& in_parname){
 	if (!IOUtils::convertString(d, in_string, std::dec))
-		throw ConversionFailedException("Conversion failed for value " + _parname, AT);
+		throw ConversionFailedException("Conversion failed for value " + in_parname, AT);
 }
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
