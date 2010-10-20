@@ -10,7 +10,7 @@
 
 #include "jnative.h"
 #include "DEMLoader.h"
-#include "MeteoIO.h"
+#include <meteoio/MeteoIO.h>
 
 #include <time.h>
 

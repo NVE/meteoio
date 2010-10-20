@@ -43,7 +43,7 @@ jdoubleArray convert_JNIArray(JNIEnv *env, const Grid2DObject&  p, const std::st
 }
 
 JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolationSubDem
-			  (JNIEnv *env, jclass theClass,
+			  (JNIEnv *env, jclass /*theClass*/,
 			  jstring jAlgorithm, jstring jIOinterface,
 			  jstring jDemFile,jstring jDemCoordSystem,
 			  jdouble demXll, jdouble demYll,

@@ -7,7 +7,6 @@
 #ifndef _Included_DEMLoader
 #define _Included_DEMLoader
 
-
 #include <meteoio/IOInterface.h>
 #include <meteoio/Grid2DObject.h>
 #include <meteoio/DEMObject.h>

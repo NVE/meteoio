@@ -22,7 +22,7 @@ else				#for release
 endif
 
 #PATHS
-METEOIO_ROOT	= ../../
+METEOIO_ROOT	= ../..
 LIBDIR		= $(METEOIO_ROOT)/lib
 SRCDIR		= $(METEOIO_ROOT)
 JAVAHOME	= ${JAVA_HOME}
@@ -30,11 +30,12 @@ JNI_INCLUDE	= -I$(JAVAHOME)/include -I$(JAVAHOME)/include/win32 -I$(JAVAHOME)/in
 
 LIBS		= -lmeteoio
 LDFLAGS		= -L$(LIBDIR) $(LIBS) -shared -Xlinker --add-stdcall-alias
-INCLUDE		= -I$(SRCDIR) -I$(SRCDIR)/meteoio $(JNI_INCLUDE)
+INCLUDE		= -I$(SRCDIR) $(JNI_INCLUDE)
 
 #OBJECTS
 METEOIO_JNI_OBJ = 	ch_slf_gin_jnative_MeteoIOJNIInterface.o \
-			jnative.o
+			jnative.o \
+			DEMLoader.o
 
 #generic rules
 .cc.o: $*.cc $*.h
@@ -44,5 +45,9 @@ METEOIO_JNI_OBJ = 	ch_slf_gin_jnative_MeteoIOJNIInterface.o \
 #TARGETS
 all: $(METEOIO_JNI_OBJ)
 
+link:
+	#g++ -DGNU -rdynamic -lstdc++ -ldl *.o $(LIBDIR)/libmeteoio.so  -oliblibmeteoio.so
+	g++ -DGNU -rdynamic -shared -lstdc++ -ldl *.o -L$(LIBDIR) -lmeteoio -L$(LIBDIR)/plugins -larcio -lgeotopio -lgrassio -olibmeteoio_jni.so
+
 clean:
-	-rm -f *.o
+	-rm *.o

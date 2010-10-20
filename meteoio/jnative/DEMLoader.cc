@@ -8,19 +8,20 @@
 
 #include "DEMLoader.h"
 #include <meteoio/Config.h>
-#include "plugins/ARCIO.h"
-//#include "plugins/BormaIO.h"
-#include "plugins/GeotopIO.h"
-#include "plugins/GrassIO.h"
+#include <meteoio/plugins/ARCIO.h>
+//#include <meteoio/plugins/BormaIO.h>
+#include <meteoio/plugins/GeotopIO.h>
+#include <meteoio/plugins/GrassIO.h>
 #include <meteoio/IOInterface.h>
 #include "synchronized.h"
 
 #include <iostream>
 #include <sstream>
 
+using namespace mio;
 
 // Initialisation
-DEMLoader *DEMLoader::_singleton = NULL;
+DEMLoader *DEMLoader::singleton = NULL;
 
 // DEMLoader::_singleton->demMap is a critical resource in a multithread context
 //Any writting needs to be synchrionized first !
@@ -38,9 +39,9 @@ IOInterface* DEMLoader::generateIOInterface(
 	IOInterface *io = NULL;
 	try {
 		Config cfg;
-		cfg.addKey("DEMFILE", cDemFile);
-		cfg.addKey("COORDIN", cDemCoordSystem);
-		cfg.addKey("COORDPARAM","");
+		cfg.addKey("DEMFILE", "Input", cDemFile); //HACK translate "\" to "/"
+		cfg.addKey("COORDSYS", "Input", cDemCoordSystem);
+		cfg.addKey("COORDPARAM", "Input", "");
 		if(cInterfaceType == "ARCIO")
 			io = new ARCIO(cfg);
 		//else if(cInterfaceType ==  "BormaIO" ): io = new BormaIO(cfg);
@@ -91,16 +92,17 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 			if (io!=NULL){
 				std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
 				DEMObject dem;
+				dem.setUpdatePpt(DEMObject::NO_UPDATE);
 				//read file ...
 				io->readDEM(dem);
 
 				//set the two opposing corners
 				Coords llcorner(cDemCoordSystem, "");
-				llcorner.setXY(demXll, demYll);
+				llcorner.setXY(demXll, demYll, IOUtils::nodata);
 				dem.gridify(llcorner);
 
 				Coords urcorner(cDemCoordSystem, "");
-				urcorner.setXY(demXur, demYur);
+				urcorner.setXY(demXur, demYur, IOUtils::nodata);
 				dem.gridify(urcorner);
 
 				//extract a sub-dem
@@ -140,6 +142,7 @@ const DEMObject& DEMLoader::internal_loadFullDEM(const std::string  cDemFile,
 			if (io!=NULL){
 				std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
 				DEMObject dem;
+				dem.setUpdatePpt(DEMObject::NO_UPDATE);
 				io->readDEM(dem);
 				//read file ...
 				demMap.insert(demPairType(s, dem));// critical operation
