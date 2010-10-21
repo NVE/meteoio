@@ -120,7 +120,7 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 			std::cout << "Problem while extracting subDEM in DEMLoader, cause: "
 						<< e.what() << std::endl;
 			DEMObject dem;
-			demMap.insert(demPairType(s, sub_dem));
+			demMap.insert(demPairType(s, dem));
 		}
 	}
 	return demMap[s];
@@ -161,7 +161,7 @@ const DEMObject& DEMLoader::internal_loadFullDEM(const std::string  cDemFile,
 				std::cout << "Problem while reading dem file in DEMLoader, cause: "
 							<< e.what() << std::endl;
 				DEMObject dem;
-				demMap.insert(demPairType(s, sub_dem));
+				demMap.insert(demPairType(s, dem));
 			}
 		}
 	}
