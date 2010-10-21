@@ -65,7 +65,13 @@ void IOUtils::stripComments(std::string& str)
 
 std::string IOUtils::cleanPath(const std::string& in_path) {
 	std::string out_path(in_path);
-	replace(out_path.begin(), out_path.end(), '\\', '/');
+
+	size_t curr = out_path.find('\\', 0);
+	while(curr!=std::string::npos){
+		out_path.replace(curr, 1, "/");
+		curr = out_path.find('\\', curr);
+	}
+	//out_path.replace(out_path.begin(), out_path.end(), '\\', '/');
 	return out_path;
 }
 
@@ -98,7 +104,7 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 	if ((delimiter==" ") || (delimiter=="\t")) {
 		pos = in_line.find_first_of(" \t", 0);
 	} else {
-		pos = in_line.find(delimiter); //first occurence of '='    
+		pos = in_line.find(delimiter); //first occurence of '='
 	}
 
 
@@ -116,7 +122,7 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 
 		if (setToUpperCase)
 			IOUtils::toUpper(key);
-			
+
 
 		out_map[keyprefix + key] = value;
 	} else {
@@ -140,7 +146,7 @@ bool IOUtils::fileExists(const std::string& filename)
 
 bool IOUtils::validFileName(const std::string& filename)
 {
-	size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces  
+	size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
 	if((startpos!=0) || (filename==".") || (filename=="..")) {
 		return false;
 	}
@@ -148,9 +154,9 @@ bool IOUtils::validFileName(const std::string& filename)
 	return true;
 }
 
-void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap, 
+void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 				  std::istream& fin,
-				  const unsigned int& linecount, 
+				  const unsigned int& linecount,
 				  const std::string& delimiter)
 {
 	int linenr = 0;
@@ -203,7 +209,7 @@ char IOUtils::getEoln(std::istream& fin)
 			return tmp;
 		}
 	} while ((chars < 3000) && (!fin.eof()));
-	
+
 	pbuf = fin.rdbuf();
 	pbuf->pubseekpos(position); //rewind
 	fin.clear(); //reset eof flag, etc
@@ -374,7 +380,7 @@ template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str
 }
 
 
-void IOUtils::getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam, 
+void IOUtils::getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
 							   std::string& coordout, std::string& coordoutparam) {
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, Config::nothrow);
@@ -386,8 +392,8 @@ void IOUtils::getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz
 	cfg.getValue("TZ", "Input", tz_in, Config::nothrow);
 	cfg.getValue("TZ", "Output", tz_out, Config::nothrow);
 }
-	
-unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch){ 
+
+unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch){
 	//returns index of element, if element does not exist it returns closest index after soughtdate
 	//the element needs to be an exact hit or embedded between two measurments
 
@@ -415,12 +421,12 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 		//perform binary search
 		while (first <= last) {
 			unsigned int mid = (first + last) / 2;  // compute mid point
-			if (soughtdate > vecM[mid].date) 
+			if (soughtdate > vecM[mid].date)
 				first = mid + 1;                   // repeat search in top half
-			else if (soughtdate < vecM[mid].date) 
+			else if (soughtdate < vecM[mid].date)
 				last = mid - 1;                    // repeat search in bottom half
-			else 
-				return mid;                        // found it. return position 
+			else
+				return mid;                        // found it. return position
 		}
 	} else {
 		unsigned int first = 0, last = vecM.size()-1;
@@ -428,18 +434,18 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 		//perform binary search
 		while (first <= last) {
 			unsigned int mid = (first + last) / 2;  // compute mid point
-			
+
 			if (mid < (vecM.size()-1))
 				if ((soughtdate > vecM[mid].date) && (soughtdate < vecM[mid+1].date))
 					return mid+1;
 
-			if (soughtdate > vecM[mid].date) 
+			if (soughtdate > vecM[mid].date)
 				first = mid + 1;                   // repeat search in top half
-			else if (soughtdate < vecM[mid].date) 
+			else if (soughtdate < vecM[mid].date)
 				last = mid - 1;                    // repeat search in bottom half
 			else
-				return mid;                        // found it. return position 
-			
+				return mid;                        // found it. return position
+
 		}
 	}
 
