@@ -42,14 +42,16 @@ jdoubleArray convert_JNIArray(JNIEnv *env, const Grid2DObject&  p, const std::st
 	return out;
 }
 
-JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolationSubDem
+jdoubleArray __internalWrapper
 			  (JNIEnv *env, jclass /*theClass*/,
 			  jstring jAlgorithm, jstring jIOinterface,
 			  jstring jDemFile,jstring jDemCoordSystem,
 			  jdouble demXll, jdouble demYll,
 			  jdouble demXrt, jdouble demYrt,
 			  jdoubleArray jMetadata, jdoubleArray jData,
-			  jstring jMetaCoordSystem, jstring jcellOrder){
+			  jstring jMetaCoordSystem, jstring jcellOrder,
+			  jdoubleArray jClusterThresholds, jdoubleArray jClusterValues,
+			  jdoubleArray jVectorizingOptions){
 
 	const char * cDemFile = env->GetStringUTFChars(jDemFile,0);
 	const char * cDemCoordSystem = env->GetStringUTFChars(jDemCoordSystem,0);
@@ -97,7 +99,7 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	bool success = true;
 	try {
-		Config cfg; //This should be given as parameter to executeInterpolationSubDem
+		const Config& cfg = DEMLoader::getConfig();
 		Meteo2DInterpolator mi(cfg, dem, vecData, vecStation);
 		mi.interpolate(interpolation_type, p);
 	}
@@ -142,6 +144,24 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 	return out;
 }
 
+
+JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolationSubDem
+			  (JNIEnv *env, jclass theClass,
+			  jstring jAlgorithm, jstring jIOinterface,
+			  jstring jDemFile,jstring jDemCoordSystem,
+			  jdouble demXll, jdouble demYll,
+			  jdouble demXrt, jdouble demYrt,
+			  jdoubleArray jMetadata, jdoubleArray jData,
+			  jstring jMetaCoordSystem, jstring jcellOrder){
+
+
+	return __internalWrapper(
+			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
+			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
+			NULL, NULL, NULL);
+}
+
+
 JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolation
 			(JNIEnv *env, jclass theClass,
 			jstring jAlgorithm, jstring jIOinterface, jstring jDemFile, jstring jDemCoordSystem,
@@ -149,9 +169,39 @@ JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_execu
 			jstring jMetaCoordSystem, jstring jcellOrder){
 
 
-	return Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolationSubDem(
+	return __internalWrapper(
 			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
-			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder);
+			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
+			NULL, NULL, NULL);
+}
+
+
+JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeClusterization
+			(JNIEnv *env, jclass theClass,
+			jstring jAlgorithm, jstring jIOinterface, jstring jDemFile, jstring jDemCoordSystem,
+			jdoubleArray jMetadata, jdoubleArray jData,
+			jstring jMetaCoordSystem, jstring jcellOrder,
+			jdoubleArray jClusterThresholds, jdoubleArray jClusterValues){
+
+	return __internalWrapper(
+			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
+			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
+			jClusterThresholds, jClusterValues, NULL);
+}
+
+
+JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_polygonize
+			(JNIEnv *env, jclass theClass,
+			jstring jAlgorithm, jstring jIOinterface, jstring jDemFile, jstring jDemCoordSystem,
+			jdoubleArray jMetadata, jdoubleArray jData,
+			jstring jMetaCoordSystem, jstring jcellOrder,
+			jdoubleArray jClusterThresholds, jdoubleArray jClusterValues,
+			jdoubleArray jVectorizingOptions){
+
+	return __internalWrapper(
+			env, theClass,jAlgorithm, jIOinterface, jDemFile, jDemCoordSystem,
+			-1, -1,-1, -1,jMetadata, jData, jMetaCoordSystem, jcellOrder,
+			jClusterThresholds, jClusterValues, jVectorizingOptions);
 }
 
 

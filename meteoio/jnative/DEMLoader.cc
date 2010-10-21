@@ -38,10 +38,21 @@ IOInterface* DEMLoader::generateIOInterface(
 
 	IOInterface *io = NULL;
 	try {
-		Config cfg;
 		cfg.addKey("DEMFILE", "Input", IOUtils::cleanPath(cDemFile));
 		cfg.addKey("COORDSYS", "Input", cDemCoordSystem);
 		cfg.addKey("COORDPARAM", "Input", "");
+
+		//Add interpolation algorithms
+		cfg.addKey("TA::algorithms", "Interpolations2D", "IDW_LAPSE CST_LAPSE");
+		cfg.addKey("TA::cst_lapse", "Interpolations2D", "-0.008");
+		cfg.addKey("RH::algorithms", "Interpolations2D", "RH IDW_LAPSE CST");
+		cfg.addKey("HNW::algorithms", "Interpolations2D", "IDW_LAPSE CST");
+		cfg.addKey("VW::algorithms", "Interpolations2D", "IDW_LAPSE CST");
+		cfg.addKey("DW::algorithms", "Interpolations2D", "IDW CST");
+		cfg.addKey("P::algorithms", "Interpolations2D", "STD_PRESS");
+		cfg.addKey("ILWR::algorithms", "Interpolations2D", "IDW_LAPSE CST");
+		cfg.addKey("ISWR::algorithms", "Interpolations2D", "IDW_LAPSE CST");
+
 		if(cInterfaceType == "ARCIO")
 			io = new ARCIO(cfg);
 		//else if(cInterfaceType ==  "BormaIO" ): io = new BormaIO(cfg);

@@ -44,6 +44,35 @@ public final class MeteoIOJNIInterface {
 			String metaCoordSystem,
 			String cellOrder
 			);
+
+	public static final native double[] executeClusterization(
+			String algorithm,
+			String iointerface,
+			String demFile,
+			String demCoordSystem,
+			double[] metadata,
+			double[] data,
+			String metaCoordSystem,
+			String cellOrder,
+			double[] clusterThresholds,
+			double[] clusterValues
+			);
+
+
+	public static final native double[] polygonize(
+			String algorithm,
+			String iointerface,
+			String demFile,
+			String demCoordSystem,
+			double[] metadata,
+			double[] data,
+			String metaCoordSystem,
+			String cellOrder,
+			double[] clusterThresholds,
+			double[] clusterValues,
+			double[] options
+			);
+
 }*/
 
 /**
@@ -70,23 +99,37 @@ public final class MeteoIOJNIInterface {
 #ifdef __cplusplus
 extern "C" {
 #endif
+	/*
+	 * Class:     ch_slf_gin_jnative_MeteoIOJNIInterface
+	 * Method:    executeInterpolationSubDem
+	 * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;DDDD[D[DLjava/lang/String;Ljava/lang/String;)[D
+	 */
+	JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolationSubDem
+	  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jdouble, jdouble, jdouble, jdouble, jdoubleArray, jdoubleArray, jstring, jstring);
 
-/*
- * Class:     ch_slf_gin_jnative_MeteoIOJNIInterface
- * Method:    executeInterpolationSubDem
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;DDDD[D[DLjava/lang/String;Ljava/lang/String;)[D
- */
-JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolationSubDem
-  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jdouble, jdouble, jdouble, jdouble, jdoubleArray, jdoubleArray, jstring, jstring);
+	/*
+	 * Class:     ch_slf_gin_jnative_MeteoIOJNIInterface
+	 * Method:    executeInterpolation
+	 * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[D[DLjava/lang/String;Ljava/lang/String;)[D
+	 */
+	JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolation
+	  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jdoubleArray, jdoubleArray, jstring, jstring);
 
-/*
- * Class:     ch_slf_gin_jnative_MeteoIOJNIInterface
- * Method:    executeInterpolation
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[D[DLjava/lang/String;Ljava/lang/String;)[D
- */
-JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeInterpolation
-  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jdoubleArray, jdoubleArray, jstring, jstring);
+	/*
+	 * Class:     ch_slf_gin_jnative_MeteoIOJNIInterface
+	 * Method:    executeClusterization
+	 * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[D[DLjava/lang/String;Ljava/lang/String;[D[D)[D
+	 */
+	JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_executeClusterization
+	  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jdoubleArray, jdoubleArray, jstring, jstring, jdoubleArray, jdoubleArray);
 
+	/*
+	 * Class:     ch_slf_gin_jnative_MeteoIOJNIInterface
+	 * Method:    polygonize
+	 * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[D[DLjava/lang/String;Ljava/lang/String;[D[D[D)[D
+	 */
+	JNIEXPORT jdoubleArray JNICALL Java_ch_slf_gin_jnative_MeteoIOJNIInterface_polygonize
+	  (JNIEnv *, jclass, jstring, jstring, jstring, jstring, jdoubleArray, jdoubleArray, jstring, jstring, jdoubleArray, jdoubleArray, jdoubleArray);
 
 #ifdef __cplusplus
 }

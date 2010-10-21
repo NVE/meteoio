@@ -182,7 +182,7 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 	Grid2DObject  p(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	bool success = true;
 	try {
-		Config cfg; //This should be given as parameter to executeInterpolationSubDem
+		const Config& cfg = DEMLoader::getConfig();
 		Meteo2DInterpolator mi(cfg, dem, vecData, vecStation);
 		mi.interpolate(interpolation_type, p);
 	}

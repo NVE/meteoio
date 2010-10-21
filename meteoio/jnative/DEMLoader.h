@@ -69,6 +69,10 @@ public:
 				cDemCoordSystem,cInterfaceType , xll , yll, xur,yur);
 	}
 
+	static const mio::Config& getConfig(){
+		return getInstance ()->cfg;
+	}
+
 	/**
 	* Public static access to destroy (interest ?!?)
 	*/
@@ -85,6 +89,11 @@ private:
 	 * Structure containing the DEMObjects. The key is the dem file name.
 	 */
 	demMapType  demMap;
+
+	/**
+	 * Shared Config for every interpolation
+	 */
+	mio::Config cfg;
 
 	/**
 	 * Static pointer to the unique instance, if null the instance had not been initialized yet
