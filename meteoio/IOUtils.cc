@@ -63,6 +63,12 @@ void IOUtils::stripComments(std::string& str)
 	}
 }
 
+std::string IOUtils::cleanPath(const std::string& in_path) {
+	std::string out_path(in_path);
+	replace(out_path.begin(), out_path.end(), '\\', '/');
+	return out_path;
+}
+
 void IOUtils::trim(std::string& str)
 {
 	const std::string whitespaces (" \t\f\v\n\r");

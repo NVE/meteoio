@@ -112,6 +112,12 @@ namespace IOUtils {
 	bool fileExists(const std::string& filename);
 
 	/**
+	* @brief Replace "\" by "/" in a string so that a path string is cross plateform
+	* @param in_path the path string to cleanup
+	*/
+	std::string cleanPath(const std::string& in_path);
+
+	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string. 
 	* @param s The reference of the string to trim (in/out parameter)
 	*/

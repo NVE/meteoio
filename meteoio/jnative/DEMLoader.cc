@@ -10,7 +10,7 @@
 #include <meteoio/Config.h>
 #include <meteoio/plugins/ARCIO.h>
 //#include <meteoio/plugins/BormaIO.h>
-#include <meteoio/plugins/GeotopIO.h>
+//#include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/GrassIO.h>
 #include <meteoio/IOInterface.h>
 #include "synchronized.h"
@@ -39,14 +39,14 @@ IOInterface* DEMLoader::generateIOInterface(
 	IOInterface *io = NULL;
 	try {
 		Config cfg;
-		cfg.addKey("DEMFILE", "Input", cDemFile); //HACK translate "\" to "/"
+		cfg.addKey("DEMFILE", "Input", IOUtils::cleanPath(cDemFile));
 		cfg.addKey("COORDSYS", "Input", cDemCoordSystem);
 		cfg.addKey("COORDPARAM", "Input", "");
 		if(cInterfaceType == "ARCIO")
 			io = new ARCIO(cfg);
 		//else if(cInterfaceType ==  "BormaIO" ): io = new BormaIO(cfg);
-		else if(cInterfaceType == "GeotopIO" )
-			io = new GeotopIO(cfg);
+		/*else if(cInterfaceType == "GeotopIO" )
+			io = new GeotopIO(cfg);*/
 		else if(cInterfaceType == "GrassIO" )
 			io = new GrassIO(cfg);
 		else

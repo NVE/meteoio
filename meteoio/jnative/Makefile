@@ -47,7 +47,7 @@ all: $(METEOIO_JNI_OBJ)
 
 link:
 	#g++ -DGNU -rdynamic -lstdc++ -ldl *.o $(LIBDIR)/libmeteoio.so  -oliblibmeteoio.so
-	g++ -DGNU -rdynamic -shared -lstdc++ -ldl *.o -L$(LIBDIR) -lmeteoio -L$(LIBDIR)/plugins -larcio -lgeotopio -lgrassio -olibmeteoio_jni.so
+	g++ -DGNU -rdynamic -shared -lstdc++ -ldl *.o -L$(LIBDIR) -lmeteoio -L$(LIBDIR)/plugins -larcio -lgrassio -olibmeteoio_jni.so
 
 clean:
 	-rm *.o
