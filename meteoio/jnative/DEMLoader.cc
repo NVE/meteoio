@@ -87,33 +87,40 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 	synchronized(mutexDemMap) //defines and enter a critical section
 	{
 		iter = demMap.find(s); //may have been loaded by concurent thread
-		if( iter == demMap.end() ){
-			IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
-			if (io!=NULL){
-				std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
-				DEMObject dem;
-				dem.setUpdatePpt(DEMObject::NO_UPDATE);
-				//read file ...
-				io->readDEM(dem);
+		try{
+			if( iter == demMap.end() ){
+				IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
+				if (io!=NULL){
+					std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
+					DEMObject dem;
+					dem.setUpdatePpt(DEMObject::NO_UPDATE);
+					//read file ...
+					io->readDEM(dem);
 
-				//set the two opposing corners
-				Coords llcorner(cDemCoordSystem, "");
-				llcorner.setXY(demXll, demYll, IOUtils::nodata);
-				dem.gridify(llcorner);
+					//set the two opposing corners
+					Coords llcorner(cDemCoordSystem, "");
+					llcorner.setXY(demXll, demYll, IOUtils::nodata);
+					dem.gridify(llcorner);
 
-				Coords urcorner(cDemCoordSystem, "");
-				urcorner.setXY(demXur, demYur, IOUtils::nodata);
-				dem.gridify(urcorner);
+					Coords urcorner(cDemCoordSystem, "");
+					urcorner.setXY(demXur, demYur, IOUtils::nodata);
+					dem.gridify(urcorner);
 
-				//extract a sub-dem
-				DEMObject sub_dem(dem, llcorner.getGridI(), llcorner.getGridJ(),
-						urcorner.getGridI(),-llcorner.getGridI()+1,
-						urcorner.getGridJ() -llcorner.getGridJ()+1);
+					//extract a sub-dem
+					DEMObject sub_dem(dem, llcorner.getGridI(), llcorner.getGridJ(),
+							urcorner.getGridI(),-llcorner.getGridI()+1,
+							urcorner.getGridJ() -llcorner.getGridJ()+1);
 
-				demMap.insert(demPairType(s, sub_dem));// critical operation
-				std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
-				delete io;
+					demMap.insert(demPairType(s, sub_dem));// critical operation
+					std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
+					delete io;
+				}
 			}
+		}catch (IOException& e){
+			std::cout << "Problem while extracting subDEM in DEMLoader, cause: "
+						<< e.what() << std::endl;
+			DEMObject dem;
+			demMap.insert(demPairType(s, sub_dem));
 		}
 	}
 	return demMap[s];
@@ -138,16 +145,23 @@ const DEMObject& DEMLoader::internal_loadFullDEM(const std::string  cDemFile,
 	{
 		iter = demMap.find(s); //may have been loaded by concurent thread
 		if( iter == demMap.end() ){
-			IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
-			if (io!=NULL){
-				std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
+			try{
+				IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
+				if (io!=NULL){
+					std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
+					DEMObject dem;
+					dem.setUpdatePpt(DEMObject::NO_UPDATE);
+					io->readDEM(dem);
+					//read file ...
+					demMap.insert(demPairType(s, dem));// critical operation
+					std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
+					delete io;
+				}
+			}catch (IOException& e){
+				std::cout << "Problem while reading dem file in DEMLoader, cause: "
+							<< e.what() << std::endl;
 				DEMObject dem;
-				dem.setUpdatePpt(DEMObject::NO_UPDATE);
-				io->readDEM(dem);
-				//read file ...
-				demMap.insert(demPairType(s, dem));// critical operation
-				std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
-				delete io;
+				demMap.insert(demPairType(s, sub_dem));
 			}
 		}
 	}

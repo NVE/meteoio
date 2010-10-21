@@ -171,7 +171,7 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 	std::vector<StationData> vecStation;
 	enum MeteoData::Parameters interpolation_type;
 	//initialize MeteoData and StationData vectors
-	loadMeteoAndStationData(metadata, data, nbStation, nbDataPerStation, algorithm, 
+	loadMeteoAndStationData(metadata, data, nbStation, nbDataPerStation, algorithm,
 		metaCoordSystem, vecStation, vecData, interpolation_type);
 	tmpEnd = clock(); //end
 	const double msDataLoading = (tmpEnd - tmpStart)/1000.0;
@@ -187,7 +187,7 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 		mi.interpolate(interpolation_type, p);
 	}
 	catch(IOException e){
-		std::cout << "Interpolation failed : " << e.exception() << std::endl;
+		std::cout << "Interpolation failed " << std::endl;
 		success = false;
 	}
 	catch(...){
