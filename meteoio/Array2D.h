@@ -49,7 +49,7 @@ template <class T> class Array2DProxy {
 		Array2DProxy(Array2D<T>& _array2D, const unsigned int& _anx) : array2D(_array2D), anx(_anx){}
 		Array2D<T>& array2D;
 		const unsigned int anx;
-}; 
+};
 
 /**
  * @class Array2D
@@ -86,11 +86,11 @@ template<class T> class Array2D {
 		* @param _ncols number of columns of the new array
 		* @param _nrows number of rows of the new array
 		*/
-		Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
+		Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
 			    const unsigned int& _ncols, const unsigned int& _nrows);
 
 		/**
-		* @brief A method that can be used to cut out a subplane of an existing Array2D object 
+		* @brief A method that can be used to cut out a subplane of an existing Array2D object
 		* that is passed as _array2D argument. The resulting Array2D object is a by value copy of
 		* a subplane of the plane spanned by the _array2D
 		* @param _array2D array containing to extract the values from
@@ -99,7 +99,7 @@ template<class T> class Array2D {
 		* @param _ncols number of columns of the new array
 		* @param _nrows number of rows of the new array
 		*/
-		void subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
+		void subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
 		            const unsigned int& _ncols, const unsigned int& _nrows);
 
 		void resize(const unsigned int& nx, const unsigned int& ny);
@@ -130,10 +130,12 @@ template<class T> class Array2D {
 		void clear();
 		T& operator ()(const unsigned int& x, const unsigned int& y);
 		const T operator ()(const unsigned int& x, const unsigned int& y) const;
+		T& operator ()(const unsigned int& i);
+		const T operator ()(const unsigned int& i) const;
 		Array2DProxy<T> operator[](const unsigned int& i);
 
 		Array2D<T>& operator =(const Array2D<T>&);
-		
+
 		Array2D<T>& operator+=(const T& rhs);
 		const Array2D<T> operator+(const T& rhs);
 		Array2D<T>& operator+=(const Array2D<T>& rhs);
@@ -160,6 +162,13 @@ template<class T> class Array2D {
 		unsigned int ny;
 };
 
+template<class T> T& Array2D<T>::operator()(const unsigned int& i) {
+	return vecData[i];
+}
+
+template<class T> const T Array2D<T>::operator()(const unsigned int& i) const {
+	return vecData[i];
+}
 template<class T> T& Array2D<T>::operator()(const unsigned int& x, const unsigned int& y) {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny)) {
@@ -180,20 +189,20 @@ template<class T> const T Array2D<T>::operator()(const unsigned int& x, const un
 }
 
 template<class T> Array2DProxy<T> Array2D<T>::operator[](const unsigned int& i) {
-	return Array2DProxy<T>(*this, i); 
+	return Array2DProxy<T>(*this, i);
 }
 
 template<class T> Array2D<T>::Array2D() {
 	nx = ny = 0;
 }
 
-template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
+template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
 			    const unsigned int& _ncols, const unsigned int& _nrows)
 {
 	subset(_array2D, _nx, _ny, _ncols, _nrows);
 }
 
-template<class T> void Array2D<T>::subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny, 
+template<class T> void Array2D<T>::subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
                                           const unsigned int& _ncols, const unsigned int& _nrows)
 {
 	if (((_nx+_ncols) > _array2D.nx) || ((_ny+_nrows) > _array2D.ny))
@@ -230,18 +239,16 @@ template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigne
 		nx = anx;
 		ny = any;
 	} else {
-		throw IndexOutOfBoundsException("Can not resize a 2D array to negative sizes!", AT);    
+		throw IndexOutOfBoundsException("Can not resize a 2D array to negative sizes!", AT);
 	}
 }
 
 template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigned int& any, const T& init) {
 	resize(anx, any);
 
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) = init;
-		}
-	}
+	const unsigned int nxy = ny*nx;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		operator()(jj) = init;
 }
 
 template<class T> void Array2D<T>::size(unsigned int& anx, unsigned int& any) const{
@@ -257,8 +264,9 @@ template<class T> void Array2D<T>::clear() {
 template<class T> std::ostream& operator<<(std::ostream& os, const Array2D<T>& array) {
 	os << "<array2d>\n";
 	for(unsigned int jj=0; jj<array.ny; jj++) {
+		unsigned int jnx = jj*array.nx;
 		for (unsigned int ii=0; ii<array.nx; ii++) {
-			os << array(ii,jj) << " ";
+			os << array(ii+jnx) << " ";
 		}
 		os << "\n";
 	}
@@ -270,20 +278,17 @@ template<class T> T Array2D<T>::getMin(const IOUtils::nodata_handling flag_nodat
 
 	T min = std::numeric_limits<T>::max();
 
+	const unsigned int nxy = ny*nx;
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int ii=0; ii<nx; ii++) {
-				const T val = operator()(ii,jj);
-				if(val<min) min=val;
-			}
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			const T val = operator()(jj);
+			if(val<min) min=val;
 		}
 		return min;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int ii=0; ii<nx; ii++) {
-				const T val = operator()(ii,jj);
-				if(val!=IOUtils::nodata && val<min) min=val;
-			}
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			const T val = operator()(jj);
+			if(val!=IOUtils::nodata && val<min) min=val;
 		}
 		if(min!=std::numeric_limits<T>::max()) return min;
 		else return (T)IOUtils::nodata;
@@ -296,20 +301,17 @@ template<class T> T Array2D<T>::getMax(const IOUtils::nodata_handling flag_nodat
 
 	T max = -std::numeric_limits<T>::max();
 
+	const unsigned int nxy = ny*nx;
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int ii=0; ii<nx; ii++) {
-				const T val = operator()(ii,jj);
-				if(val>max) max=val;
-			}
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			const T val = operator()(jj);
+			if(val>max) max=val;
 		}
 		return max;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int ii=0; ii<nx; ii++) {
-				const T val = operator()(ii,jj);
-				if(val!=IOUtils::nodata && val>max) max=val;
-			}
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			const T val = operator()(jj);
+			if(val!=IOUtils::nodata && val>max) max=val;
 		}
 		if(max!=-std::numeric_limits<T>::max()) return max;
 		else return (T)IOUtils::nodata;
@@ -323,24 +325,21 @@ template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_noda
 	T mean = 0;
 
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int ii=0; ii<nx; ii++) {
-				const T val = operator()(ii,jj);
-				mean += val;
-			}
-		}
 		const unsigned int count = nx*ny;
+		for (unsigned int jj=0; jj<count; jj++) {
+			const T val = operator()(jj);
+			mean += val;
+		}
 		if(count>0) return mean/(T)(count);
 		else return (T)0;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
 		unsigned int count = 0;
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int ii=0; ii<nx; ii++) {
-				const T val = operator()(ii,jj);
-				if(val!=IOUtils::nodata) {
-					mean += val;
-					count++;
-				}
+		const unsigned int nxy = nx*ny;
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			const T val = operator()(jj);
+			if(val!=IOUtils::nodata) {
+				mean += val;
+				count++;
 			}
 		}
 		if(count>0) return mean/(T)(count);
@@ -366,12 +365,10 @@ template<class T> Array2D<T>& Array2D<T>::operator+=(const Array2D<T>& rhs)
 	if ((rhs.nx != nx) || (rhs.ny != ny))
 		throw IOException("Trying to add two Array2D objects with different dimensions", AT);
 
+	const unsigned int nxy = nx*ny;
 	//Add to every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) += rhs(ii,jj);
-		}
-	}	
+	for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) += rhs(jj);
 
 	return *this;
 }
@@ -387,11 +384,9 @@ template<class T> const Array2D<T> Array2D<T>::operator+(const Array2D<T>& rhs)
 template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) += rhs;
-		}
-	}	
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		operator()(jj) += rhs;
 
 	return *this;
 }
@@ -411,11 +406,9 @@ template<class T> Array2D<T>& Array2D<T>::operator-=(const Array2D<T>& rhs)
 		throw IOException("Trying to substract two Array2D objects with different dimensions", AT);
 
 	//Substract to every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) -= rhs(ii,jj);
-		}
-	}	
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		operator()(jj) -= rhs(jj);
 
 	return *this;
 }
@@ -431,11 +424,9 @@ template<class T> const Array2D<T> Array2D<T>::operator-(const Array2D<T>& rhs)
 template<class T> Array2D<T>& Array2D<T>::operator-=(const T& rhs)
 {
 	//Substract to every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) -= rhs;
-		}
-	}	
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		operator()(jj) -= rhs;
 
 	return *this;
 }
@@ -455,11 +446,9 @@ template<class T> Array2D<T>& Array2D<T>::operator*=(const Array2D<T>& rhs)
 		throw IOException("Trying to multiply two Array2D objects with different dimensions", AT);
 
 	//Add to every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) *= rhs(ii,jj);
-		}
-	}	
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		operator()(jj) *= rhs(jj);
 
 	return *this;
 }
@@ -475,11 +464,9 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const Array2D<T>& rhs)
 template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
 {
 	//Add to every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) *= rhs;
-		}
-	}	
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) *= rhs;
 
 	return *this;
 }
@@ -499,11 +486,9 @@ template<class T> Array2D<T>& Array2D<T>::operator/=(const Array2D<T>& rhs)
 		throw IOException("Trying to divide two Array2D objects with different dimensions", AT);
 
 	//Divide every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) /= rhs(ii,jj);
-		}
-	}	
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		operator()(jj) /= rhs(jj);
 
 	return *this;
 }
@@ -519,11 +504,9 @@ template<class T> const Array2D<T> Array2D<T>::operator/(const Array2D<T>& rhs)
 template<class T> Array2D<T>& Array2D<T>::operator/=(const T& rhs)
 {
 	//Divide every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<ny; jj++) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) /= rhs;
-		}
-	}	
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		operator()(jj) /= rhs;
 
 	return *this;
 }
