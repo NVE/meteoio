@@ -103,29 +103,54 @@ void fulfillDoubleArray(const Grid2DObject&  p,
 	dest[5] = 1.; //reserved ...
 
 	if(cellOrder == "llur"){
-		for (unsigned int kk = 0; kk < p.nrows; kk++)
+		unsigned int knx = 6;
+		unsigned int iknx = 0;
+		for (unsigned int kk = 0; kk < p.nrows; kk++){
 			for (unsigned int ll=0; ll < p.ncols; ll++)
-				dest[6+kk*p.ncols + ll] = p.grid2D(ll, kk);
-			}
+				dest[knx + ll] = p.grid2D(ll+iknx);
+			knx+=p.ncols;
+			iknx+=p.ncols;
+		}
+	}
 	else if(cellOrder == "urll" ){
-		for (int kk = (signed)p.nrows-1; kk >=0; kk--)
-			for (int ll=(signed)p.ncols -1; ll >=0; ll--)
-				dest[6+(unsigned)kk*p.ncols + (unsigned)ll] = p.grid2D(ll, (unsigned)kk);
-			}
+		unsigned int knx = (p.nrows-1)*p.ncols+6;
+		unsigned int iknx = 0;
+		for (unsigned int kk = p.nrows-1; kk >=0; kk--){
+			for (unsigned int ll=p.ncols -1; ll >=0; ll--)
+				dest[knx + ll] = p.grid2D(p.ncols -1-ll+iknx);
+			knx-=p.ncols;
+			iknx+=p.ncols;
+		}
+	}
 	else if(cellOrder == "lrul" ){
-		for (int kk = 0; kk < (signed)p.nrows; kk++)
-			for (int ll=(signed)p.ncols -1; ll >=0; ll--)
-				dest[6+(unsigned)kk*p.ncols + (unsigned)ll] = p.grid2D((unsigned)ll, (unsigned)kk);
-			}
+		unsigned int knx = 6;
+		unsigned int iknx = 0;
+		for (unsigned int kk = 0; kk < p.nrows; kk++){
+			for (unsigned int ll=p.ncols -1; ll >=0; ll--)
+				dest[knx+ ll] = p.grid2D(p.ncols -1-ll+iknx);
+			knx+=p.ncols;
+			iknx+=p.ncols;
+		}
+	}
 	else if(cellOrder == "ullr"){
-		for (int kk = (signed)p.nrows-1; kk >=0; kk--)
+		unsigned int knx = (p.nrows-1)*p.ncols+6;
+		unsigned int iknx = 0;
+		for (unsigned int kk = (signed)p.nrows-1; kk >=0; kk--){
 			for (unsigned int ll=0; ll < p.ncols; ll++)
-				dest[6+(unsigned)kk*p.ncols + ll] = p.grid2D(ll, (unsigned)kk);
-			}
+				dest[knx + ll] = p.grid2D(ll+iknx);
+			knx-=p.ncols;
+			iknx+=p.ncols;
+		}
+	}
 	else{
-		for (unsigned int kk = 0; kk < p.nrows; kk++)
+		unsigned int knx = 6;
+		unsigned int iknx = 0;
+		for (unsigned int kk = 0; kk < p.nrows; kk++){
 			for (unsigned int ll=0; ll < p.ncols; ll++)
-				dest[6+kk*p.ncols + ll] = p.grid2D(ll, kk);
+				dest[knx + ll] = p.grid2D(ll+iknx);
+			knx+=p.ncols;
+			iknx+=p.ncols;
+		}
 	}
 }
 
