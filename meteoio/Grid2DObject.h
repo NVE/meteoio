@@ -141,6 +141,18 @@ class Grid2DObject {
 		double cellsize; ///<dimension in meters of a cell (considered to be square)
 		Coords llcorner; ///<lower left corner of the grid
 
+		/**
+		* @brief Partitional algorithm to classify each point of the grid.
+		* The classification is given by a list of growing thresholds, the 'clusters' are then a simple
+		* range of values. Each cluster comes with an 'id' that replaces the values of the points.
+		*
+		*
+		* @param thresholds (const std::vector<double>&) ordered list of thresholds representing a scale of values. Each level of this scale defines a cluster
+		* @param ids (const std::vector<double>&) clusters Ids to be used. clustersId.size()=thresholds.size()+1
+		* @return (bool) true if clusturization was succesfull
+		*/
+		bool clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids);
+
  protected:
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,
 		               const double& cellsize, const Coords& _llcorner);

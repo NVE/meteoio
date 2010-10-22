@@ -57,7 +57,7 @@ Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrow
 }
 
 Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _nx, const unsigned int& _ny,
-				const unsigned int& _ncols, const unsigned int& _nrows) 
+				const unsigned int& _ncols, const unsigned int& _nrows)
 	: grid2D(_grid2Dobj.grid2D, _nx,_ny, _ncols,_nrows)
 {
 	setValues(_ncols, _nrows, _grid2Dobj.cellsize);
@@ -96,7 +96,7 @@ bool Grid2DObject::gridify(Coords& point) const {
 	}
 
 	if(point.getGridI()!=IOUtils::inodata && point.getGridJ()!=IOUtils::inodata) {
-		//we need to compute (easting,northing) and (lat,lon) 
+		//we need to compute (easting,northing) and (lat,lon)
 		return( grid_to_WGS84(point) );
 	} else {
 		//we need to compute (i,j)
@@ -233,6 +233,31 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 		return false;
 	}
 }
+
+bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids)
+{
+	if (thresholds.size()==0) {
+		throw IOException("Can't start clusterization, cluster definition list is empty", AT);
+	}
+	if ((thresholds.size()+1) != ids.size()) {
+		throw IOException("Can't start clusterization, cluster definition list doesnt fit id definition list", AT);
+	}
+	const unsigned int count = ncols*nrows;
+	const unsigned int nscl = thresholds.size();
+	for (unsigned int jj = 0; jj< count; jj++){
+		const double& val = grid2D(jj);
+		if (val!=IOUtils::nodata){
+			unsigned int i = 0;
+			for ( ;i<nscl; i++)
+				if(thresholds[i] >= val)
+					break;
+			grid2D(jj) = ids[i];
+		}
+	}
+	return true;
+}
+
+
 
 std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
 {
