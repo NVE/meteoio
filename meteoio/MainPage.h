@@ -48,6 +48,7 @@ namespace mio {
  * -# Expanding MeteoIO
  *    -# How to \subpage dev_plugins "write a Plugin"
  *    -# How to \subpage dev_filters "write a Filter"
+ *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
  */
 
  /**
@@ -196,6 +197,7 @@ namespace mio {
 //Plugins overview given in IOHandler.cc
 //Filters overview given in FilterAlgorithms.cc
 //Plugin development given in IOInterface.h
+//2D interpolation development given in Meteo2DInterpolator.h
 
  /**
  * @page dev_filters Filter developer's guide

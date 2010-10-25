@@ -165,7 +165,7 @@ Matrix& Matrix::operator+=(const Matrix& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator+(const Matrix& rhs) {
+const Matrix Matrix::operator+(const Matrix& rhs) const {
 	Matrix result = *this;
 	result += rhs; //already implemented
 
@@ -183,7 +183,7 @@ Matrix& Matrix::operator+=(const double& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator+(const double& rhs) {
+const Matrix Matrix::operator+(const double& rhs) const {
 	Matrix result = *this;
 	result += rhs; //already implemented
 
@@ -210,7 +210,7 @@ Matrix& Matrix::operator-=(const Matrix& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator-(const Matrix& rhs) {
+const Matrix Matrix::operator-(const Matrix& rhs) const {
 	Matrix result = *this;
 	result -= rhs; //already implemented
 
@@ -223,7 +223,7 @@ Matrix& Matrix::operator-=(const double& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator-(const double& rhs) {
+const Matrix Matrix::operator-(const double& rhs) const {
 	Matrix result = *this;
 	result += -rhs; //already implemented
 
@@ -258,7 +258,7 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator*(const Matrix& rhs) {
+const Matrix Matrix::operator*(const Matrix& rhs) const {
 	Matrix result = *this;
 	result *= rhs; //already implemented
 
@@ -275,7 +275,7 @@ Matrix& Matrix::operator*=(const double& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator*(const double& rhs) {
+const Matrix Matrix::operator*(const double& rhs) const {
 	Matrix result = *this;
 	result *= rhs; //already implemented
 
@@ -287,18 +287,36 @@ Matrix& Matrix::operator/=(const double& rhs) {
 	return *this;
 }
 
-const Matrix Matrix::operator/(const double& rhs) {
+const Matrix Matrix::operator/(const double& rhs) const {
 	Matrix result = *this;
 	result *= 1./rhs; //already implemented
 
 	return result;
 }
 
+double Matrix::scalar(const Matrix& m) {
+	return m.scalar();
+}
+
+const double Matrix::scalar() const {
+	if(ncols!=1 || nrows!=1) {
+		std::stringstream tmp;
+		tmp << "Trying to get scalar value of a non (1x1) matrix ";
+		tmp << "(" << nrows << "," << ncols << ") !";
+		throw IOException(tmp.str(), AT);
+	}
+	return operator()(1,1);
+}
+
+Matrix Matrix::T(const Matrix& m) {
+	return m.T();
+}
+
 /*void Matrix::T() {
 
 }*/
 
-const Matrix Matrix::T() {
+const Matrix Matrix::T() const {
 //other possibility: create a "transpose" flag that simply swaps the data reading...
 	Matrix result(ncols, nrows);
 	for(unsigned int i=1; i<=result.nrows; i++) {
@@ -366,7 +384,7 @@ void Matrix::LU(Matrix& L, Matrix& U) const {
 	
 }*/
 
-const Matrix Matrix::inv() {
+const Matrix Matrix::inv() const {
 //This uses an LU decomposition followed by backward and forward solving for the inverse
 	if(nrows!=ncols) {
 		std::stringstream tmp;

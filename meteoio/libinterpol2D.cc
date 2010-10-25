@@ -653,4 +653,92 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 	}
 }
 
+/**
+* @brief Ordinary Kriging matrix formulation
+* This implements the matrix formulation of Ordinary Kriging, as shown (for example) in 
+* <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, pp122.
+* @param vecData vector containing the values as measured at the stations
+* @param vecStations vector of stations
+* @param dem digital elevation model
+* @param grid 2D array of precipitation to fill
+* @author Mathias Bavay
+*/
+void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector<StationData>& vecStations, const DEMObject& dem, Grid2DObject& grid)
+{
+	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	unsigned int nrOfMeasurments = vecStations.size();
+	Matrix G(nrOfMeasurments, nrOfMeasurments);
+	Matrix gamma((unsigned int)1, nrOfMeasurments);
+	const Matrix One((unsigned int)1, nrOfMeasurments, 1.);
+	const Matrix One_T = One.T();
+
+	//fill the G matrix
+	for(unsigned int i=1; i<=nrOfMeasurments; i++) {
+		const Coords& st1 = vecStations[i].position;
+		const double x1 = st1.getEasting();
+		const double y1 = st1.getNorthing();
+
+		for(unsigned int j=1; j<=nrOfMeasurments; j++) {
+			//compute distance between stations
+			const Coords& st2 = vecStations[j].position;
+			const double DX = x1-st2.getEasting();
+			const double DY = y1-st2.getNorthing();
+			const double distance = fastSqrt_Q3(DX*DX + DY*DY);
+
+			G(i,j) = varioFit(distance);
+		}
+	}
+
+	//G inverse matrix
+	const Matrix Ginv = G.inv();
+
+	//calculate constant denominator
+	const Matrix OneT_Ginv = One_T * Ginv;
+	const double denom = Matrix::scalar( OneT_Ginv * One );
+
+	//now, calculate each point
+	for(unsigned int i=1; i<=grid.ncols; i++) {
+		for(unsigned int j=1; j<=grid.nrows; j++) {
+			const double x = grid.llcorner.getEasting()+i*grid.cellsize;
+			const double y = grid.llcorner.getNorthing()+j*grid.cellsize;
+
+			//fill gamma
+			for(unsigned int st=1; st<=nrOfMeasurments; st++) {
+				//compute distance between cell and each station
+				const Coords& position = vecStations[st].position;
+				const double DX = x-position.getEasting();
+				const double DY = y-position.getNorthing();
+				const double distance = fastSqrt_Q3(DX*DX + DY*DY);
+
+				gamma(1,st) = varioFit(distance);
+			}
+
+			const Matrix lambda = Matrix::T(gamma + One * ((1. - Matrix::scalar(OneT_Ginv*gamma)) / denom) ) * Ginv;
+
+			//calculate local parameter interpolation
+			double p = 0.;
+			for(unsigned int st=1; st<=nrOfMeasurments; st++) {
+				p += lambda(1,st) * vecData[st-1]; //because the vector starts at 0
+			}
+			grid.grid2D(i,j) = p;
+		}
+	}
+}
+
+/**
+* @brief Return the fitted variogram value for a given distance
+* The various variogram models can be found in
+* <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, pp63.
+* @param distance distance to the measured value
+* @return variogram fit
+* @author Mathias Bavay
+*/
+double Interpol2D::varioFit(const double& /*distance*/)
+{
+	//return variogramm fit of covariance between stations i and j
+	//HACK: todo!
+	
+	return 1.;
+}
+
 } //namespace

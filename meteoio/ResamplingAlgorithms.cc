@@ -299,7 +299,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
           vecM[pos].param(paramindex) = sum;
           return;
 	}
-          
+	
 	if ((interval_end+1) == pos){
 		valend = funcval(vecM, interval_end, vecM[pos].date, paramindex);
           if (valend != IOUtils::nodata)
@@ -324,8 +324,8 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 	//TODO:check if at least one point has been summed. If not -> nodata
 }
 
-double ResamplingAlgorithms::funcval(const vector<MeteoData>& vecM, const unsigned int& index,
-							  const Date& date, const unsigned int& paramindex)
+double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const unsigned int& index,
+                                     const Date& date, const unsigned int& paramindex)
 {
 	unsigned int start = index;
 	if (vecM[start].isResampled()){
@@ -353,8 +353,8 @@ double ResamplingAlgorithms::funcval(const vector<MeteoData>& vecM, const unsign
 			return IOUtils::nodata;
 
 		return Interpol1D::linearInterpolation(vecM[start].date.getJulianDate(), 0.0,
-									    vecM[end].date.getJulianDate(), valend,
-									    date.getJulianDate());
+		                                       vecM[end].date.getJulianDate(), valend,
+		                                       date.getJulianDate());
 	}
 
 	return IOUtils::nodata;

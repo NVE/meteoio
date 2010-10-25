@@ -76,30 +76,31 @@ class FilterAlgorithms {
 		static void ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
                          const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
                          std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-					const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+		static void WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
+		         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
                          std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-
-		static double ExpSmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, 
-									 const unsigned int& paramindex, const double& alpha);
-		static double WMASmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, const unsigned int& paramindex);
 
  	private:
 		static bool compareMeteoData (const MeteoData& m1, const MeteoData& m2);
 		static void parseFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
-							const unsigned int& minArgs, const unsigned int& maxArgs,
-							bool& isSoft, std::vector<double>& vecArgs_out);
+		                    const unsigned int& minArgs, const unsigned int& maxArgs,
+		                    bool& isSoft, std::vector<double>& vecArgs_out);
 		static void parseWindowFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
-								const unsigned int& minArgs, const unsigned int& maxArgs,
-								bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out);
+		                    const unsigned int& minArgs, const unsigned int& maxArgs,
+		                    bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out);
 		static unsigned int getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
                                     const unsigned int& pos, 
                                     const std::vector<std::string>& _vecArgs, std::vector<MeteoData>& vecResult);
 		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
-						const unsigned int& pos,
-						const Date& date, const std::vector<std::string>& _vecArgs,
-						const unsigned int& paramindex, std::vector<double>& vecWindow,
-						std::vector<Date> *vecDate = NULL);
+		                          const unsigned int& pos,
+		                          const Date& date, const std::vector<std::string>& _vecArgs,
+		                          const unsigned int& paramindex, std::vector<double>& vecWindow,
+		                          std::vector<Date> *vecDate = NULL);
+
+		static double ExpSmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, 
+		         const unsigned int& paramindex, const double& alpha);
+		static double WMASmoothingAlgorithm(const std::vector<MeteoData>& vecMyMeteo, const unsigned int& paramindex);
+
 		static std::map<std::string, FilterProperties> filterMap;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map filterMap

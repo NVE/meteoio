@@ -74,6 +74,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2010) (see SnowHNWInterpolation)
+ * - ODKRIG: ordinary kriging THIS IS NOT YET USABLE
  * - USER: user provided grids to be read from disk (if available, see USERinterpolation) THIS IS NOT YET USABLE
  *
  * @section lapse Lapse rates
@@ -108,6 +109,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Jan Magnusson, Daniel Farinotti, Tobias Jonas and Mathias Bavay, Hydrological Processes, 2010, under review.
  * - <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Matthias Huss, Daniel Farinotti, Andreas Bauder and Martin Funk, Hydrological Processes, <b>22</b>, 3888-3902, 2008.
  * - <i>"Geostatistics for Natural Resources Evaluation"</i>, Pierre Goovaerts, Oxford University Press, Applied Geostatistics Series, 1997, 483 p., ISBN 0-19-511538-4
+ * - <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, 900 p.
  * 
  * @author Mathias Bavay
  * @date   2010-04-12
@@ -352,6 +354,27 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
 		virtual double getQualityRating(const MeteoData::Parameters& param);
 		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+};
+
+/**
+ * @class OrdinaryKrigingAlgorithm
+ * @brief Ordinary kriging THIS IS NOT USABLE YET
+ * @author Mathias Bavay
+ */
+class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
+	public:
+		OrdinaryKrigingAlgorithm(const Meteo2DInterpolator& _mi,
+		               const DEMObject& _dem,
+		               const std::vector<MeteoData>& _vecMeteo,
+		               const std::vector<StationData>& _vecStation,
+		               const std::vector<std::string>& _vecArgs,
+		               const std::string _algo)
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+		virtual double getQualityRating(const MeteoData::Parameters& param);
+		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+
+	private:
+		double computeVariogram(const std::vector<StationData>& vecStations) const;
 };
 
 } //end namespace mio

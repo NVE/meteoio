@@ -436,8 +436,8 @@ void ImisIO::assimilateAnetzData(const unsigned int& indexStart, const unsigned 
 	}
 }
 
-double ImisIO::getHNW(const vector<MeteoData>& vecAnetz, const AnetzData& ad, const unsigned int& index, 
-				  const std::map<std::string, unsigned int>& mapAnetzNames)
+double ImisIO::getHNW(const std::vector<MeteoData>& vecAnetz, const AnetzData& ad, const unsigned int& index, 
+                      const std::map<std::string, unsigned int>& mapAnetzNames)
 {
 	double hnw = 0.0;
 	map<string, unsigned int>::const_iterator it;

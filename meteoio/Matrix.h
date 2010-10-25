@@ -93,10 +93,18 @@ class Matrix {
 		double operator ()(const unsigned int& x, const unsigned int& y) const;
 
 		/**
+		* @brief Return a 1x1 matrix as a scalar
+		* @return scalar value
+		*/
+		const double scalar() const;
+		static double scalar(const Matrix& m);
+
+		/**
 		* @brief matrix transpose
 		* @return transposed matrix
 		*/
-		const Matrix T();
+		const Matrix T() const;
+		static Matrix T(const Matrix& m);
 		//void T();
 
 		/**
@@ -105,7 +113,7 @@ class Matrix {
 		* backward and forward solving of LU * A-1 = I
 		* @return inversed matrix
 		*/
-		const Matrix inv();
+		const Matrix inv() const;
 		//void inv();
 
 		/**
@@ -127,22 +135,22 @@ class Matrix {
 		friend std::ostream& operator<<(std::ostream& os, const Matrix& data);
 
 		Matrix& operator+=(const Matrix& rhs);
-		const Matrix operator+(const Matrix& rhs);
+		const Matrix operator+(const Matrix& rhs) const;
 		Matrix& operator+=(const double& rhs);
-		const Matrix operator+(const double& rhs);
+		const Matrix operator+(const double& rhs) const;
 
 		Matrix& operator-=(const Matrix& rhs);
-		const Matrix operator-(const Matrix& rhs);
+		const Matrix operator-(const Matrix& rhs) const;
 		Matrix& operator-=(const double& rhs);
-		const Matrix operator-(const double& rhs);
+		const Matrix operator-(const double& rhs) const;
 
 		Matrix& operator*=(const Matrix& rhs);
-		const Matrix operator*(const Matrix& rhs);
+		const Matrix operator*(const Matrix& rhs) const;
 		Matrix& operator*=(const double& rhs);
-		const Matrix operator*(const double& rhs);
+		const Matrix operator*(const double& rhs) const;
 
 		Matrix& operator/=(const double& rhs);
-		const Matrix operator/(const double& rhs);
+		const Matrix operator/(const double& rhs) const;
 
 		bool operator==(const Matrix&) const; ///<Operator that tests for equality
 		bool operator!=(const Matrix&) const; ///<Operator that tests for inequality

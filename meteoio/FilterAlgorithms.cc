@@ -516,7 +516,7 @@ double FilterAlgorithms::ExpSmoothingAlgorithm(const std::vector<MeteoData>& vec
 
 /**
  * @brief Actual implementation of the smoothing algorithm
- * @param vecMeteo A vector of MeteoData
+ * @param vecMyMeteo A vector of MeteoData
  * @param paramindex The meteo data parameter to be smoothed
  * @return The wma smoothing value for the specified meteo parameter of the last element in vecMeteo
  */

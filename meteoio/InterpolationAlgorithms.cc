@@ -42,6 +42,7 @@ bool AlgorithmFactory::initStaticData()
 	setAlgorithms.insert("RH");        // relative humidity interpolation
 	setAlgorithms.insert("WIND_CURV"); // wind velocity interpolation (using a heuristic terrain effect)
 	setAlgorithms.insert("HNW_SNOW"); // precipitation interpolation according to (Magnusson, 2010)
+	setAlgorithms.insert("ODKRIG"); // ordinary kriging
 	setAlgorithms.insert("USER"); // read user provided grid
 
 	return true;
@@ -76,9 +77,9 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else if (algoname == "WIND_CURV"){
 		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
-	/*} else if (algoname == "ODKRIG"){
+	} else if (algoname == "ODKRIG"){
 		return new OrdinaryKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
-	*/} else if (algoname == "USER"){
+	} else if (algoname == "USER"){
 		return new USERInterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
 	} else if (algoname == "HNW_SNOW"){
 		return new SnowHNWInterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
@@ -563,6 +564,38 @@ void SnowHNWInterpolation::calculate(const MeteoData::Parameters& param, Grid2DO
 	//this is a cheap/crappy way of compensating for the spatial redistribution of snow on the slopes
 	const double new_mean = grid.grid2D.getMean();
 	grid.grid2D *= orig_mean/new_mean;
+}
+
+double OrdinaryKrigingAlgorithm::getQualityRating(const MeteoData::Parameters& param)
+{
+	throw IOException("ODKRIG interpolation algorithm not yet implemented...", AT);
+	vector<double> vecData;
+	unsigned int nrOfMeasurments = getData(param, vecData);
+
+	if(nrOfMeasurments>=20) return 0.9;
+	return 0.;
+}
+
+
+void OrdinaryKrigingAlgorithm::calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+{
+//optimization: getrange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
+	throw IOException("ODKRIG interpolation algorithm not yet implemented...", AT);
+
+	vector<double> vecData;
+	vector<StationData> vecMeta;
+	getData(param, vecData, vecMeta);
+
+	Interpol2D::ODKriging(vecData, vecMeta, dem, grid);
+	
+}
+
+double OrdinaryKrigingAlgorithm::computeVariogram(const std::vector<StationData>& /*vecStations*/) const
+{
+	//return variogramm fit of covariance between stations i and j
+	//HACK: todo!
+	
+	return 1.;
 }
 
 } //namespace

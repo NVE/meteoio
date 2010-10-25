@@ -22,14 +22,7 @@
 #ifndef INTERPOL2D_H
 #define INTERPOL2D_H
 
-#include <meteoio/StationData.h>
-#include <meteoio/MeteoData.h>
-#include <meteoio/Grid2DObject.h>
-#include <meteoio/DEMObject.h>
-#include <meteoio/Date.h>
-#include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/libinterpol1D.h>
+#include <meteoio/MeteoIO.h>
 
 #include <cmath>
 #include <vector>
@@ -37,8 +30,8 @@
 #include <assert.h>
 
 #define MAX_INPUT_STATIONS 255
-#define GRAVITY	9.80665		     // (m s-2)
-#define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1)
+#define GRAVITY	9.80665		     // (m s-2) //HACK: move to libmeteolaws
+#define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1) //HACK: move to libmeteolaws
 
 namespace mio {
 
@@ -76,6 +69,9 @@ class Interpol2D {
                                 const DEMObject& dem, Grid2DObject& grid);
 		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);
 		static void PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
+		static void ODKriging(const std::vector<double>& vecData,
+		                      const std::vector<StationData>& vecStations,
+		                      const DEMObject& dem, Grid2DObject& grid);
 
 		//projections functions
 		static double ConstProject(const double& value, const double& altitude, const double& new_altitude,
@@ -112,6 +108,9 @@ class Interpol2D {
 		static double weightInvDist2(const double& d2);
 		double weightInvDistN(const double& d2);
 		double dist_pow; //power for the weighting method weightInvDistN
+
+		//variogram methods
+		static double varioFit(const double& distance);
 
 	private:
 		//static members
