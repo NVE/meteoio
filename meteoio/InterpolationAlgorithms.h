@@ -71,6 +71,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
+ * - LIDW_LAPSE: IDW_LAPSE restrictited to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2010) (see SnowHNWInterpolation)
@@ -134,10 +135,14 @@ class InterpolationAlgorithm {
 		{
 			if (vecMeteo.size() != vecStation.size())
 				throw InvalidArgumentException("The two data and metadata vectors don't match in size!", AT);
+			nrOfMeasurments = 0;
+			param = MeteoData::NODATA;
 		}
 		virtual ~InterpolationAlgorithm() {}
-		virtual double getQualityRating(const MeteoData::Parameters& param) = 0;
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid) = 0;
+		virtual void initialize(const MeteoData::Parameters& in_param) = 0;
+		virtual double getQualityRating() = 0;
+		virtual void calculate(Grid2DObject& grid) = 0;
+		std::string getInfo() const;
  	protected:
 		const Meteo2DInterpolator& mi;
 		const DEMObject& dem;
@@ -146,11 +151,16 @@ class InterpolationAlgorithm {
 		const std::vector<std::string> vecArgs; //we must keep our own copy, it is different for each algorithm!
 		const std::string algo;
 
+		MeteoData::Parameters param; ///<the parameter that we will interpolate
+		unsigned int nrOfMeasurments; ///<the available number of measurements
+		std::vector<double> vecData; ///<store the measurement for the given parameter
+		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
+		std::stringstream info; ///<to store some extra information about the interoplation process
+
 		unsigned int getData(const MeteoData::Parameters& param, std::vector<double>& vecData) const;
 		unsigned int getData(const MeteoData::Parameters& param, 
 		                     std::vector<double>& vecData, std::vector<StationData>& vecMeta) const;
 		unsigned int getStationAltitudes(const std::vector<StationData>& vecMeta, std::vector<double>& vecData) const;
-		void printInfo(const MeteoData::Parameters& param, const unsigned int& stations_used) const;
 };
 
 class AlgorithmFactory {
@@ -181,8 +191,9 @@ class ConstAlgorithm : public InterpolationAlgorithm {
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 };
 
 /**
@@ -199,8 +210,9 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 		                          const std::vector<std::string>& _vecArgs,
 		                          const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 };
 
 /**
@@ -221,8 +233,9 @@ class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
 		                        const std::vector<std::string>& _vecArgs,
 		                        const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 };
 
 /**
@@ -241,8 +254,9 @@ class IDWAlgorithm : public InterpolationAlgorithm {
 		             const std::vector<std::string>& _vecArgs,
 		             const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 };
 
 /**
@@ -250,7 +264,10 @@ class IDWAlgorithm : public InterpolationAlgorithm {
  * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
  * The input data is projected to a reference elevation and spatially interpolated using an Inverse Distance
  * Weighting interpolation algorithm (see IDWAlgorithm). Then, each value is reprojected to the real
- * elevation of the relative cell.
+ * elevation of the relative cell. The lapse rate is either calculated from the data
+ * (if no extra argument is provided), or given by the user-provided the optional argument <i>"idw_lapse"</i>.
+ * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
+ * unsuccessful or too bad (r^2<0.6), then user provided lapse rate is used as a fallback.
  */
 class IDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
@@ -261,8 +278,31 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
 		                  const std::vector<std::string>& _vecArgs,
 		                  const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
+};
+
+
+/**
+ * @class LocalIDWLapseAlgorithm
+ * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
+ * The closest n stations (n being given as an extra argument of <i>"idw_lapse"</i>) to each pixel are
+ * used to compute the local lapse rate, allowing to project the contributions of these n stations to the
+ * local pixel with an inverse distance weight.
+ */
+class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
+	public:
+		LocalIDWLapseAlgorithm(const Meteo2DInterpolator& _mi,
+		                  const DEMObject& _dem,
+		                  const std::vector<MeteoData>& _vecMeteo,
+		                  const std::vector<StationData>& _vecStation,
+		                  const std::vector<std::string>& _vecArgs,
+		                  const std::string _algo)
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 };
 
 /**
@@ -284,8 +324,11 @@ class RHAlgorithm : public InterpolationAlgorithm {
 		            const std::vector<std::string>& _vecArgs,
 		            const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
+	private:
+		std::vector<double> vecDataTA, vecDataRH; ///<vectors of extracted TA and RH
 };
 
 /**
@@ -306,8 +349,11 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 		                                 const std::vector<std::string>& _vecArgs,
 		                                 const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
+	private:
+		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
 };
 
 /**
@@ -324,10 +370,11 @@ class USERInterpolation : public InterpolationAlgorithm {
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 	private:
-		std::string getGridFileName(const MeteoData::Parameters& param);
+		std::string getGridFileName();
 };
 
 /**
@@ -352,8 +399,9 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 };
 
 /**
@@ -370,9 +418,9 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
 			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
-		virtual double getQualityRating(const MeteoData::Parameters& param);
-		virtual void calculate(const MeteoData::Parameters& param, Grid2DObject& grid);
-
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
 	private:
 		double computeVariogram(const std::vector<StationData>& vecStations) const;
 };

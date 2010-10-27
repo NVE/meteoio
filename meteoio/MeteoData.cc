@@ -42,6 +42,7 @@ bool MeteoData::initStaticData()
 	static_meteoparamname[HS]   = "HS";
 	static_meteoparamname[RSWR] = "RSWR";
 	static_meteoparamname[P]    = "P";
+	static_meteoparamname[NODATA] = "NODATA";
 
 	return true;
 }

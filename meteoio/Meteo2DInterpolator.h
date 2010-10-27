@@ -102,6 +102,16 @@ class Meteo2DInterpolator {
 		 * @param meteoparam Any MeteoData member variable as specified in the 
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
+		 * @param InfoString some information about the interpolation process (useful for GUIs)
+		 */
+		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result, std::string& InfoString) const;
+
+		/**
+		 * @brief A generic function that can interpolate for any given MeteoData member variable
+		 * 
+		 * @param meteoparam Any MeteoData member variable as specified in the 
+		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
+		 * @param result A Grid2DObject that will be filled with the interpolated data
 		 */
 		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const;
 

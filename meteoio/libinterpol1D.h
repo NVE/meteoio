@@ -39,9 +39,10 @@ class Interpol1D {
 		static double std_dev(const std::vector<double>& X);
 		static double covariance(const std::vector<double>& z1, const std::vector<double>& z2);
 
-		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r);
-		static void LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r);
-		static void ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r);
+		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
+		static int NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::stringstream& mesg);
+		static void LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
+		static void ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 };
 } //end namespace
 

@@ -49,12 +49,24 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& _cfg, const DEMObject& _d
 	//check that the stations are using the same projection as the dem
 	for (unsigned int i=0; i<(unsigned int)vecStation.size(); i++) {
 		if(!vecStation[i].position.isSameProj(dem.llcorner)) {
-			throw IOException("Some stations are not using the same geographic projection as the DEM", AT);
+			std::stringstream os;
+			std::string type, args;
+			vecStation[i].position.getProj(type, args);
+			os << "Station " << vecStation[i].stationID << " is using projection (" << type << " " << args << ") ";
+			dem.llcorner.getProj(type, args);
+			os << "while DEM is using projection ("<< type << " " << args << ") ";
+			throw IOException(os.str(), AT);
 		}
 	}
 }
 
 void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const
+{
+	std::string InfoString;
+	interpolate(meteoparam, result, InfoString);
+}
+
+void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result, std::string& InfoString) const
 {
 	//Show algorithms to be used for this parameter
 	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
@@ -72,7 +84,8 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, dem, 
 			                                            vecMeteo, vecStation, vecArgs));
 			//Get the quality rating and compare to previously computed quality ratings
-			const double rating = algorithm->getQualityRating(meteoparam);
+			algorithm->initialize(meteoparam);
+			const double rating = algorithm->getQualityRating();
 			if ((rating != 0.0) && (rating > maxQualityRating)){
 				//we use ">" so that in case of equality, the first choice will be kept
 				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
@@ -84,7 +97,10 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 		if (bestalgorithm.get() == NULL) {
 			throw IOException("No interpolation algorithm with quality rating >0 found", AT);
 		}
-		bestalgorithm->calculate(meteoparam, result);
+		bestalgorithm->calculate(result);
+		InfoString = bestalgorithm->getInfo();
+		std::cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+		std::cout << " (" << InfoString << ") " << std::endl;
 	} else {
 		//Some default message, that interpolation for this parameter needs configuration
 		throw IOException("You need to configure the interpolation algorithms for parameter " + 
@@ -168,19 +184,19 @@ void Meteo2DInterpolator::Serialize(POPBuffer &buf, bool pack)
 //TODO: check this serialization!! It seems dubious that it would work at all...
 	if (pack)
 	{
-		//buf.Pack(&cfg,1);
-		/*buf.Pack(&dem,1);
+		/*buf.Pack(*cfg,1);
+		buf.Pack(*dem,1);
 		marshal_METEO_DATASET(buf, vecMeteo, 0, FLAG_MARSHAL, NULL);
-		marshal_STATION_DATASET(buf, vecStation, 0, FLAG_MARSHAL, NULL);*/
-		marshal_map_str_vecstr(buf, mapAlgorithms, 0, FLAG_MARSHAL, NULL);
+		marshal_STATION_DATASET(buf, vecStation, 0, FLAG_MARSHAL, NULL);
+		marshal_map_str_vecstr(buf, mapAlgorithms, 0, FLAG_MARSHAL, NULL);*/
 	}
 	else
 	{
-		//buf.UnPack(&cfg,1);
-		/*buf.UnPack(&dem,1);
+		/*buf.UnPack(*cfg,1);
+		buf.UnPack(*dem,1);
 		marshal_METEO_DATASET(buf, vecMeteo, 0, !FLAG_MARSHAL, NULL);
-		marshal_STATION_DATASET(buf, vecStation, 0, !FLAG_MARSHAL, NULL);*/
-		marshal_map_str_vecstr(buf, mapAlgorithms, 0, !FLAG_MARSHAL, NULL);
+		marshal_STATION_DATASET(buf, vecStation, 0, !FLAG_MARSHAL, NULL);
+		marshal_map_str_vecstr(buf, mapAlgorithms, 0, !FLAG_MARSHAL, NULL);*/
 	}
 }
 #endif

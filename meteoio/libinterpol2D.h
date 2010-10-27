@@ -67,6 +67,10 @@ class Interpol2D {
                                      Grid2DObject& grid);
 		static void IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                 const DEMObject& dem, Grid2DObject& grid);
+		static void LocalLapseIDW(const std::vector<double>& vecData_in,
+		                          const std::vector<StationData>& vecStations_in,
+		                          const DEMObject& dem, const unsigned int& nrOfNeighbors,
+		                          Grid2DObject& grid, double& r2);
 		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);
 		static void PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void ODKriging(const std::vector<double>& vecData,
@@ -94,6 +98,9 @@ class Interpol2D {
 		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j, 
 		                                 const double& X2, const double& Y2);
 		static double getReferenceAltitude(const DEMObject& dem);
+		static void getNeighbors(const double& x, const double& y,
+		                         const std::vector<StationData>& vecStations,
+		                         std::vector< std::pair<double, unsigned int> >& list);
 		
 		//core methods
 		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y,
@@ -101,6 +108,10 @@ class Interpol2D {
 		static double IDWCore(const double& x, const double& y,
 		                      const std::vector<double>& vecData_in,
 		                      const std::vector<StationData>& vecStations_in);
+		static double LLIDW_pixel(const unsigned int& i, const unsigned int& j,
+		                          const std::vector<double>& vecData_in,
+		                          const std::vector<StationData>& vecStations_in,
+		                          const DEMObject& dem, const unsigned int& nrOfNeighbors, double& r2);
 
 		//weighting methods
 		static double weightInvDist(const double& d2);

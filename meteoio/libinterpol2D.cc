@@ -17,6 +17,7 @@
 */
 //This is the two 2D meteo interpolation library.
 #include <meteoio/libinterpol2D.h>
+#include <utility>
 
 using namespace std;
 
@@ -117,6 +118,30 @@ double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const 
 	return sqrt( DX*DX + DY*DY );
 }
 
+/**
+* @brief Build the list of (stations index, distance to grid cell) ordered by their distance to a grid cell
+* @param x x coordinate of cell
+* @param y y coordinate of cell
+* @param list list of pairs (stations index, distance to grid cell)
+*/
+void Interpol2D::getNeighbors(const double& x, const double& y,
+                              const std::vector<StationData>& vecStations,
+                              std::vector< std::pair<double, unsigned int> >& list)
+{
+	if(list.size()>0) list.clear();
+	
+	for(unsigned int i=0; i<vecStations.size(); i++) {
+		const Coords& position = vecStations[i].position;
+		const double DX = x-position.getEasting();
+		const double DY = y-position.getNorthing();
+		const double d2 = (DX*DX + DY*DY);
+		const std::pair <double, unsigned int> tmp(d2,i);
+		list.push_back(tmp);
+	}
+
+	sort (list.begin(), list.end());
+}
+
 //these weighting functions take the square of a distance as an argument and return a weight
 double Interpol2D::weightInvDist(const double& d2)
 {
@@ -138,7 +163,7 @@ double Interpol2D::weightInvDistN(const double& d2)
 //Data regression models
 /**
 * @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
-* the linear regression has the form Y = aX + b with a regression coefficient r. If the regression coefficient is not good enough, a bad point is looked removed.
+* It relies on Interpol1D::NoisyLinRegression.
 * @param in_X vector of X coordinates
 * @param in_Y vector of Y coordinates (same order as X)
 * @param coeffs a,b,r coefficients in a vector
@@ -146,60 +171,10 @@ double Interpol2D::weightInvDistN(const double& d2)
 */
 int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, std::vector<double>& coeffs)
 {
-	//finds the linear regression for points (x,y,z,Value)
-	const double r_thres=0.7;
-	//we want at least 4 points AND 85% of the initial data set kept in the regression
-	const unsigned int min_dataset=(unsigned int)floor(0.85*(double)in_X.size());
-	const unsigned int min_pts=(min_dataset>4)?min_dataset:4;
-	const unsigned int nb_pts = in_X.size();
-	double a,b,r;
-
-	if (nb_pts==2) {
-		std::cout << "[W] only two points for linear regression!\n";
-	}
-	if(nb_pts<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
-		std::cerr << "[E] Not enough data point for linear regression!\n";
-		coeffs[1]=0.;
-		coeffs[2]=in_X[1];
-		coeffs[3]=1.;
-		return EXIT_FAILURE;
-	}
-
-	Interpol1D::LinRegression(in_X, in_Y, coeffs[1], coeffs[2], coeffs[3]);
-	if(fabs(coeffs[3])>=r_thres)
-		return EXIT_SUCCESS;
-
-	std::vector<double> X(in_X), Y(in_Y);
-	unsigned int nb_valid_pts=nb_pts;
-
-	while(fabs(coeffs[3])<r_thres && nb_valid_pts>min_pts) {
-		//we try to remove the one point in the data set that is the worst
-		coeffs[3]=0.;
-		unsigned int index_bad=0;
-		for (unsigned int i=0; i<nb_pts; i++) {
-			//invalidating alternatively each point
-			const double Y_tmp=Y[i]; Y[i]=IOUtils::nodata;
-			Interpol1D::LinRegression(X, Y, a, b, r);
-			Y[i]=Y_tmp;
-
-			if (fabs(r)>fabs(coeffs[3])) {
-				coeffs[1]=a;
-				coeffs[2]=b;
-				coeffs[3]=r;
-				index_bad=i;
-			}
-		}
-		//the worst point has been found, we overwrite it
-		Y[index_bad]=IOUtils::nodata;
-		nb_valid_pts--;
-	}
-
-	//check if r is reasonnable
-	if (fabs(coeffs[3])<r_thres) {
-		std::cout << "[W] Poor regression coefficient: " << std::setprecision(4) << coeffs[3] << "\n";
-	}
-
-	return EXIT_SUCCESS;
+	std::stringstream mesg;
+	const int code = Interpol1D::NoisyLinRegression(in_X, in_Y, coeffs[1], coeffs[2], coeffs[3], mesg);
+	std::cout << mesg.str();
+	return code;
 }
 
 
@@ -383,6 +358,100 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 			}
 		}
 	}
+}
+
+/**
+* @brief Grid filling function: 
+* Similar to Interpol2D::LapseIDW but using a limited number of stations for each cell
+* @param vecData_in input values to use for the IDW
+* @param vecStations_in position of the "values" (altitude and coordinates)
+* @param dem array of elevations (dem)
+* @param nrOfNeighbors number of neighboring stations to use for each pixel
+* @param grid 2D array to fill
+* @param r2 average r² coefficient of the lapse rate regressions
+*/
+void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
+                               const DEMObject& dem, const unsigned int& nrOfNeighbors,
+                               Grid2DObject& grid, double& r2)
+{
+	unsigned int count=0;
+	double sum=0;
+	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+
+	//run algorithm
+	for (unsigned int j=0; j<grid.nrows; j++) {
+		for (unsigned int i=0; i<grid.ncols; i++) {
+			//LL_IDW_pixel returns nodata when appropriate
+			double r;
+			const double value = LLIDW_pixel(i,j,vecData_in, vecStations_in, dem, nrOfNeighbors, r);
+			grid.grid2D(i,j) = value;
+			if(value!=IOUtils::nodata) {
+				sum += fabs(r);
+				count++;
+			}
+		}
+	}
+	if(count>0)
+		r2 = sum/(double)count;
+	else
+		r2 = 0.;
+}
+
+//calculate a local pixel for LocalLapseIDW
+double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
+                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
+                                const DEMObject& dem, const unsigned int& nrOfNeighbors, double& r2)
+{
+	const double& cell_altitude=dem.grid2D(i,j);
+	if(cell_altitude==IOUtils::nodata)
+		return IOUtils::nodata;
+
+	std::vector< std::pair<double, unsigned int> > list;
+	std::vector<double> X, Y, coeffs;
+	coeffs.resize(4, 0.0);
+
+	//fill vectors with appropriate neighbors
+	const double x = dem.llcorner.getEasting()+i*dem.cellsize;
+	const double y = dem.llcorner.getNorthing()+j*dem.cellsize;
+	getNeighbors(x, y, vecStations_in, list);
+	for(unsigned int st=0; st<nrOfNeighbors; st++) {
+		const unsigned int st_index=list[st].second;
+		const double value = vecData_in[st_index];
+		const double alt = vecStations_in[st_index].position.getAltitude();
+		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
+			X.push_back( alt );
+			Y.push_back( value );
+		}
+	}
+
+	//compute lapse rate
+	if(X.size()==0)
+		return IOUtils::nodata;
+	std::stringstream mesg;
+	Interpol1D::NoisyLinRegression(X, Y, coeffs[1], coeffs[2], coeffs[3], mesg);
+	r2=coeffs[3];
+
+	//compute local pixel value
+	unsigned int count=0;
+	double pixel_value=0., norm=0.;
+	const double scale=0.;
+	for(unsigned int st=0; st<nrOfNeighbors; st++) {
+		const unsigned int st_index=list[st].second;
+		const double value = vecData_in[st_index];
+		const double alt = vecStations_in[st_index].position.getAltitude();
+		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
+			const double contrib = LinProject(value, alt, cell_altitude, coeffs);
+			const double weight = invSqrt( list[st].first + scale + 1.e-6 );
+			pixel_value += weight*contrib;
+			norm += weight;
+			count++;
+		}
+	}
+
+	if(count>0)
+		return (pixel_value/norm);
+	else
+		return IOUtils::nodata;
 }
 
 /**

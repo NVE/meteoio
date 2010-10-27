@@ -185,8 +185,9 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 * @param a slope of the linear regression
 * @param b origin of the linear regression
 * @param r linear regression coefficient
+* @param mesg information message if something fishy is detected
 */
-void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r)
+void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {	//check arguments
 	const unsigned int n=X.size();
 	if(n==0)
@@ -226,7 +227,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 		a = 0.;
 		b = y_avg;
 		r = 1.;
-		std::cerr << "[W] Computing linear regression on data at identical X\n";
+		mesg << "[W] Computing linear regression on data at identical X\n";
 		return;
 	}
 	a = sxy / sx;
@@ -240,7 +241,74 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	}
 }
 
-//TODO: with variable changes, compute log and exp regression
+/**
+* @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
+* the linear regression has the form Y = aX + b with a regression coefficient r. If the regression coefficient is not good enough, tries to remove bad points (up to 15% of the initial data set can be removed, keeping at least 4 points)
+* @param in_X vector of X coordinates
+* @param in_Y vector of Y coordinates (same order as X)
+* @param A slope of the linear regression
+* @param B origin of the linear regression
+* @param R linear regression coefficient
+* @param mesg information message if something fishy is detected
+* @return EXIT_SUCCESS or EXIT_FAILURE
+*/
+int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::stringstream& mesg)
+{
+	//finds the linear regression for points (x,y,z,Value)
+	const double r_thres=0.7;
+	//we want at least 4 points AND 85% of the initial data set kept in the regression
+	const unsigned int min_dataset=(unsigned int)floor(0.85*(double)in_X.size());
+	const unsigned int min_pts=(min_dataset>4)?min_dataset:4;
+	const unsigned int nb_pts = in_X.size();
+	double a,b,r;
+
+	if (nb_pts==2) {
+		mesg << "[W] only two points for linear regression!\n";
+	}
+	if(nb_pts<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
+		mesg << "[E] Not enough data point for linear regression!\n";
+		A=0.;
+		B=in_X[1];
+		R=1.;
+		return EXIT_FAILURE;
+	}
+
+	Interpol1D::LinRegression(in_X, in_Y, A, B, R, mesg);
+	if(fabs(R)>=r_thres)
+		return EXIT_SUCCESS;
+
+	std::vector<double> X(in_X), Y(in_Y);
+	unsigned int nb_valid_pts=nb_pts;
+
+	while(fabs(R)<r_thres && nb_valid_pts>min_pts) {
+		//we try to remove the one point in the data set that is the worst
+		R=0.;
+		unsigned int index_bad=0;
+		for (unsigned int i=0; i<nb_pts; i++) {
+			//invalidating alternatively each point
+			const double Y_tmp=Y[i]; Y[i]=IOUtils::nodata;
+			Interpol1D::LinRegression(X, Y, a, b, r, mesg);
+			Y[i]=Y_tmp;
+
+			if (fabs(r)>fabs(R)) {
+				A=a;
+				B=b;
+				R=r;
+				index_bad=i;
+			}
+		}
+		//the worst point has been found, we overwrite it
+		Y[index_bad]=IOUtils::nodata;
+		nb_valid_pts--;
+	}
+
+	//check if r is reasonnable
+	if (fabs(R)<r_thres) {
+		mesg << "[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
+	}
+
+	return EXIT_SUCCESS;
+}
 
 /**
 * @brief Computes the Log regression coefficients fitting the points given as X and Y in two vectors
@@ -250,8 +318,9 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 * @param a slope of the regression
 * @param b origin of the regression
 * @param r regression coefficient
+* @param mesg information message if something fishy is detected
 */
-void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r)
+void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {
 	std::vector<double> x;
 
@@ -264,7 +333,7 @@ void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<d
 		}
 	}
 
-	LinRegression(x, Y, a, b, r); //HACK: how should we transform r?
+	LinRegression(x, Y, a, b, r, mesg); //HACK: how should we transform r?
 }
 
 /**
@@ -275,8 +344,9 @@ void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<d
 * @param a slope of the regression
 * @param b origin of the regression
 * @param r regression coefficient
+* @param mesg information message if something fishy is detected
 */
-void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r)
+void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {
 	std::vector<double> y;
 
@@ -289,7 +359,7 @@ void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<d
 		}
 	}
 
-	LinRegression(X, y, a, b, r); //HACK: how should we transform r?
+	LinRegression(X, y, a, b, r, mesg); //HACK: how should we transform r?
 }
 
 } //namespace
