@@ -113,10 +113,12 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
 	}
 
-	//Run soft min/max filter for RH and HNW
+	//Run soft min/max filter for RH, HNW and HS
 	if (meteoparam == MeteoData::RH){
 		Meteo2DInterpolator::checkMinMax(0.0, 1.0, result);
 	} else if (meteoparam == MeteoData::HNW){
+		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
+	} else if (meteoparam == MeteoData::HS){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
 	}
 }

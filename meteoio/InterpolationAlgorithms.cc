@@ -326,6 +326,7 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	getStationAltitudes(vecMeta, vecAltitudes);
+	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;
 
 	//Set regression coefficients
 	std::vector<double> vecCoefficients;
@@ -337,16 +338,21 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	} else if (vecArgs.size() == 1) { //force lapse rate
 		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
 	} else if (vecArgs.size() == 2) {
-		std::string isSoft;
-		IOUtils::convertString(isSoft, vecArgs[1]);
-		if(isSoft=="soft") { //soft
+		std::string extraArg;
+		IOUtils::convertString(extraArg, vecArgs[1]);
+		if(extraArg=="soft") { //soft
 			if((Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) ||
 			   (fabs(vecCoefficients[3])<thresh_fixed_rate) ) {
 				vecCoefficients.assign(4, 0.0);
 				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
 			}
-		} else { //not soft
+		} else if(extraArg=="frac") {
+			funcptr = &Interpol2D::FracProject;
 			IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+		} else {
+			std::stringstream os;
+			os << "Unknown argument \"" << extraArg << "\" supplied for the IDW_LAPSE algorithm";
+			throw InvalidArgumentException(os.str(), AT);
 		}
 	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the IDW_LAPSE algorithm", AT);
@@ -354,7 +360,7 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 
 	//run algorithm
 	info << "r^2=" << vecCoefficients[3];
-	Interpol2D::LapseIDW(vecData, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
+	Interpol2D::LapseIDW(vecData, vecMeta, dem, vecCoefficients, funcptr, grid);
 }
 
 
