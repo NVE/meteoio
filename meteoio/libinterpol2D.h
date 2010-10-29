@@ -82,6 +82,8 @@ class Interpol2D {
 		                           const std::vector<double>& coeffs);
 		static double LinProject(const double& value, const double& altitude, const double& new_altitude, 
 		                         const std::vector<double>& coeffs);
+		static double FracProject(const double& value, const double& altitude, const double& new_altitude,
+		                          const std::vector<double>& coeffs);
 
 		static int LinRegression(const std::vector<double>& data_in, 
 		                         const std::vector<double>& elevations, std::vector<double>& coeffs);

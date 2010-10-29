@@ -214,6 +214,26 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 	return (value + coeffs[1] * (new_altitude - altitude));
 }
 
+
+/**
+* @brief Projects a given parameter to another elevation: 
+* This implementation assumes that the value increases by a given fraction as a function of the elevation.
+* This interface has to follow the interface of *LapseRateProjectPtr
+* @param value original value
+* @param altitude altitude of the original value
+* @param new_altitude altitude of the reprojected value
+* @param coeffs coefficients to use for the projection
+* @return reprojected value
+*/
+double Interpol2D::FracProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
+{
+	//linear lapse: coeffs must have been already computed
+	if (coeffs.size()<1) {
+		throw IOException("Linear regression coefficients not initialized", AT);
+	}
+	return (value * (1. + coeffs[1] * (new_altitude - altitude)));
+}
+
 //Filling Functions
 /**
 * @brief Grid filling function: 

@@ -30,16 +30,16 @@ namespace mio {
  *
  * @section template_keywords Keywords
  * This plugin uses the following keywords:
- * - METEOFILE#: input filename and path. As many meteofiles as needed may be specified
+ * - STATION#: input filename and path. As many meteofiles as needed may be specified
  * - METEOPATH: output directory where to write the output meteofiles
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  *
  * Example:
  * @code
  * [Input]
- * METEOFILE1 = ./input/uppper_station.smet
- * METEOFILE2 = ./input/lower_station.smet
- * METEOFILE3 = ./input/outlet_station.smet
+ * STATION1 = ./input/uppper_station.smet
+ * STATION2 = ./input/lower_station.smet
+ * STATION3 = ./input/outlet_station.smet
  * [Output]
  * METEOPATH = ./output
  * METEOPARAM = ASCII GZIP
@@ -48,7 +48,7 @@ namespace mio {
 
 //TODO: keep a pointer to last read position, so we can fseek for the next read?
 
-const std::string SMETIO::smet_version = "0.99";
+const std::string SMETIO::smet_version = "1.0";
 const unsigned int SMETIO::buffer_reserve = 23*24*2; //kind of average size of a buffer for optimizing vectors
 map<string, MeteoData::Parameters> SMETIO::mapParameterByName;
 const bool SMETIO::__init = SMETIO::initStaticData();
@@ -251,7 +251,7 @@ void SMETIO::parseInputOutputSection()
 		stringstream ss;
 		filename = "";
 		
-		ss << "METEOFILE" << counter;
+		ss << "STATION" << counter;
 		cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
 
 		if (filename != ""){
@@ -599,7 +599,7 @@ void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const 
 		throw InvalidFormatException("The signature of file " + filename + " is invalid", AT);
 
 	std::string version = vecSignature[1];
-	if ((version != "0.9") && (version != "0.95") && (version != smet_version))
+	if ((version != "0.9") && (version != "0.95") && (version != "0.99") && (version != smet_version))
 		throw InvalidFormatException("Unsupported file format version for file " + filename, AT);
 
 	const std::string type = vecSignature[2];

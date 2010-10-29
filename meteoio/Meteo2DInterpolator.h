@@ -49,15 +49,24 @@ namespace mio {
  *
  * @section implementation_2Dinterpol Implementation
  * It is therefore necessary to create in InterpolationAlgorithms.cc (and declared in the .h) a new class,
- * nammed after the algorithm that will be implemented and inheriting InterpolationAlgorithm. Two methods need
+ * nammed after the algorithm that will be implemented and inheriting InterpolationAlgorithm. Three methods need
  * to be implemented (the constructor being inherited from InterpolationAlgorithm and automatically called
  * by an object factory):
- * - double getQualityRating(const MeteoData::Parameters& param)
- * - void calculate(const MeteoData::Parameters& param, Grid2DObject& grid)
+ * - void initialize(const MeteoData::Parameters& in_param)
+ * - double getQualityRating()
+ * - void calculate(Grid2DObject& grid)
+ *
+ * The initialize method takes the meteorological parameter that will be interpolated and set the param
+ * private member to it. It then computes the private member nrOfMeasurments that contains the number of
+ * stations that have this meteorological parameter available by calling getData(param, vecData, vecMeta), which
+ * also fills the vectors vecData and vecMeta with the available data (as double) and metadata (as StationData).
+ * Custom data preparation can obviously be done in this method.
  * 
  * The calculate method must properly erase and reste the grid that it receives before filling it. If necessary,
  * (as is the case for precipitation and relative humidity, for example) the grid can be checked for min/max by
- * calling checkMinMax() at the end of Meteo2DInterpolator::interpolate.
+ * calling checkMinMax() at the end of Meteo2DInterpolator::interpolate.It can also add extra information about the
+ * interpolation process (such as a regression coefficient or error estimate) to the InterpolationAlgorithm::info
+ * stringstream (which will be made available to external programs, such as GUIs).
  *
  * The new class and its associated end user key must be declared in AlgorithmFactory::initStaticData() and
  * the constructor called in AlgorithmFactory::getAlgorithm. It is recommended that any generic statistical
@@ -69,7 +78,7 @@ namespace mio {
  * The newly added interpolation algorithm must be added to the list of available algorithms in
  * InterpolationAlgorithms.h with a proper description. An example can also be given in the example section
  * of the same file. Please feel free to add necessary bibliographic references to the bibliographic section!
- * 
+ *
 */
 
 /**

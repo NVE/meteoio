@@ -222,7 +222,10 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
  * reprojected to real grid elevation according to a lapse rate. The lapse rate is either calculated from the data
  * (if no extra argument is provided), or given by the user-provided the optional argument <i>"cst_lapse"</i>.
  * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
- * unsuccessful, then user provided lapse rate is used as a fallback.
+ * unsuccessful, then user provided lapse rate is used as a fallback. If the optional user given lapse rate is
+ * followed by <i>"frac"</i>, then the lapse rate is understood as a fractional lapse rate, that is a relative change
+ * of the value as a function of the elevation (for example, +0.05% per meters). In this case, no attempt to calculate
+ * the fractional lapse from the data is made.
  */
 class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
 	public:

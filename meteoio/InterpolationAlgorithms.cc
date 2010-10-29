@@ -242,9 +242,6 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	double avgAltitudes = Interpol1D::arithmeticMean(vecAltitudes);
 	double avgData = Interpol1D::arithmeticMean(vecData);
 
-	if (vecData.size() == 1)
-		funcptr = &Interpol2D::LinProject;
-
 	//Set regression coefficients
 	std::vector<double> vecCoefficients;
 	vecCoefficients.resize(4, 0.0);
@@ -255,15 +252,20 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	} else if (vecArgs.size() == 1) {
 		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
 	} else if (vecArgs.size() == 2) {
-		std::string isSoft;
-		IOUtils::convertString(isSoft, vecArgs[1]);
-		if(isSoft=="soft") { //soft
+		std::string extraArg;
+		IOUtils::convertString(extraArg, vecArgs[1]);
+		if(extraArg=="soft") { //soft
 			if(Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) {
 				vecCoefficients.assign(4, 0.0);
 				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
 			}
-		} else { //not soft
+		} else if(extraArg=="frac") {
+			funcptr = &Interpol2D::FracProject;
 			IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+		} else {
+			std::stringstream os;
+			os << "Unknown argument \"" << extraArg << "\" supplied for the CST_LAPSE algorithm";
+			throw InvalidArgumentException(os.str(), AT);
 		}
 	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the CST_LAPSE algorithm", AT);
