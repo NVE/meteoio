@@ -184,7 +184,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 * @param Y vector of Y coordinates (same order as X)
 * @param a slope of the linear regression
 * @param b origin of the linear regression
-* @param r linear regression coefficient
+* @param r absolute value of linear regression coefficient
 * @param mesg information message if something fishy is detected
 */
 void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
@@ -237,7 +237,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 		r = 1.;
 	} else {
 		//any other line
-		r = sxy / sqrt(sx*sy);
+		r = fabs( sxy / sqrt(sx*sy) );
 	}
 }
 
@@ -274,13 +274,13 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 	}
 
 	Interpol1D::LinRegression(in_X, in_Y, A, B, R, mesg);
-	if(fabs(R)>=r_thres)
+	if(R>=r_thres)
 		return EXIT_SUCCESS;
 
 	std::vector<double> X(in_X), Y(in_Y);
 	unsigned int nb_valid_pts=nb_pts;
 
-	while(fabs(R)<r_thres && nb_valid_pts>min_pts) {
+	while(R<r_thres && nb_valid_pts>min_pts) {
 		//we try to remove the one point in the data set that is the worst
 		R=0.;
 		unsigned int index_bad=0;
@@ -303,7 +303,7 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 	}
 
 	//check if r is reasonnable
-	if (fabs(R)<r_thres) {
+	if (R<r_thres) {
 		mesg << "[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
 	}
 

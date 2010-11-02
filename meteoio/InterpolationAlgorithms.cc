@@ -272,7 +272,7 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	}
 
 	//run algorithm
-	info << "r^2=" << vecCoefficients[3];
+	info << "r^2=" << IOUtils::pow2( vecCoefficients[3] );
 	Interpol2D::constantLapseGrid2DFill(avgData, avgAltitudes, dem, vecCoefficients, funcptr, grid);
 }
 
@@ -319,7 +319,7 @@ double IDWLapseAlgorithm::getQualityRating()
 }
 
 void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
-{	const double thresh_fixed_rate = 0.6;
+{	const double thresh_r_fixed_rate = 0.6;
 	vector<double> vecAltitudes;
 
 	if (nrOfMeasurments == 0)
@@ -342,7 +342,7 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 		IOUtils::convertString(extraArg, vecArgs[1]);
 		if(extraArg=="soft") { //soft
 			if((Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) ||
-			   (fabs(vecCoefficients[3])<thresh_fixed_rate) ) {
+			   (vecCoefficients[3]<thresh_r_fixed_rate) ) { //because we return |r|
 				vecCoefficients.assign(4, 0.0);
 				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
 			}
@@ -359,7 +359,7 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	}
 
 	//run algorithm
-	info << "r^2=" << vecCoefficients[3];
+	info << "r^2=" << IOUtils::pow2( vecCoefficients[3] );
 	Interpol2D::LapseIDW(vecData, vecMeta, dem, vecCoefficients, funcptr, grid);
 }
 
@@ -398,7 +398,7 @@ void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	//run algorithm
 	double r2=0.;
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2);
-	info << "r^2=" << r2;
+	info << "r^2=" << IOUtils::pow2( r2 );
 }
 
 
@@ -590,7 +590,7 @@ double SnowHNWInterpolation::getQualityRating()
 	if (nrOfMeasurments == 0)
 		return 0.0;
 
-	return 0.8;
+	return 0.9;
 }
 
 void SnowHNWInterpolation::calculate(Grid2DObject& grid)
@@ -602,15 +602,19 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	} else if (vecArgs.size() == 1){
 		IOUtils::convertString(base_algo, vecArgs[0]);
 	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the MAGNUSS algorithm", AT);
+		throw InvalidArgumentException("Wrong number of arguments supplied for the HNW_SNOW algorithm", AT);
 	}
 
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
 	IOUtils::toUpper(base_algo);
-	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, dem, vecMeteo, vecStation, vecArgs));
+	vector<string> vecArgs2;
+	mi.getArgumentsForAlgorithm(param, base_algo, vecArgs2);
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, dem, vecMeteo, vecStation, vecArgs2));
 	algorithm->initialize(param);
 	algorithm->calculate(grid);
+	info << algorithm->getInfo();
 	const double orig_mean = grid.grid2D.getMean();
+	std::cout << grid;
 
 	 //get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;
@@ -622,7 +626,7 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	//HACK: correction for precipitation sum over the whole domain
 	//this is a cheap/crappy way of compensating for the spatial redistribution of snow on the slopes
 	const double new_mean = grid.grid2D.getMean();
-	grid.grid2D *= orig_mean/new_mean;
+	if(new_mean!=0.) grid.grid2D *= orig_mean/new_mean;
 }
 
 

@@ -133,6 +133,15 @@ class Meteo2DInterpolator {
 		 */
 		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
 
+		/**
+		 * @brief Retrieve the arguments vector for a given interoplation algorithm
+		 * @param param the meteorological parameter that is concerned
+		 * @param algorithm the desired algorithm
+		 * @param vecArgs a vector of strings containing the arguments
+		 */
+		unsigned int getArgumentsForAlgorithm(const MeteoData::Parameters& param, 
+		                                      const std::string& algorithm,
+		                                      std::vector<std::string>& vecArgs) const;
 	private:
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction
@@ -142,9 +151,6 @@ class Meteo2DInterpolator {
 		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
 
 		unsigned int getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);
-		unsigned int getArgumentsForAlgorithm(const MeteoData::Parameters& param, 
-									   const std::string& algorithm, 
-									   std::vector<std::string>& vecArgs) const;
 
 };
 } //end namespace

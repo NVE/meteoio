@@ -82,7 +82,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 			
 			//Get the configured algorithm
 			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, dem, 
-			                                            vecMeteo, vecStation, vecArgs));
+			                                           vecMeteo, vecStation, vecArgs));
 			//Get the quality rating and compare to previously computed quality ratings
 			algorithm->initialize(meteoparam);
 			const double rating = algorithm->getQualityRating();

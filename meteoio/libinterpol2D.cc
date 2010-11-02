@@ -734,8 +734,9 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 					val *= (60.-slope)/20.;
 				} //else: unchanged
 
-				if(val!=IOUtils::nodata) {
-					grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature); //cf Huss
+				if(val!=IOUtils::nodata && dem_range_curvature!=0.) {
+					//cf Huss
+					grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
 				}
 			}
 		}
