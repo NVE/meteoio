@@ -614,7 +614,6 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	algorithm->calculate(grid);
 	info << algorithm->getInfo();
 	const double orig_mean = grid.grid2D.getMean();
-	std::cout << grid;
 
 	 //get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;

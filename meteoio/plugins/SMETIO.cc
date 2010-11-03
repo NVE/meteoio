@@ -212,6 +212,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 		//Go through file, save key value pairs
 		string line="";
 		std::vector<std::string> tmpvec, vecDataSequence;
+		std::vector<double> vecUnitsOffset, vecUnitsMultiplier;
 		double timezone = 0.0;
 		bool locationInHeader = false;
 		StationData sd;
@@ -224,7 +225,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 			checkSignature(tmpvec, filename, isAscii);
 
 			//2. Read Header
-			readHeader(eoln, filename, locationInHeader, timezone, sd, vecDataSequence);
+			readHeader(eoln, filename, locationInHeader, timezone, sd, vecDataSequence, vecUnitsOffset, vecUnitsMultiplier);
 			cleanup();
 		} catch(std::exception& e) {
 			cleanup();
@@ -344,6 +345,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		//Go through file, save key value pairs
 		string line="";
 		std::vector<std::string> tmpvec, vecDataSequence;
+		std::vector<double> vecUnitsOffset, vecUnitsMultiplier;
 		double timezone = 0.0;
 		bool locationInHeader = false;
 		StationData sd;
@@ -356,13 +358,13 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			checkSignature(tmpvec, filename, isAscii);
 
 			//2. Read Header
-			readHeader(eoln, filename, locationInHeader, timezone, sd, vecDataSequence);
+			readHeader(eoln, filename, locationInHeader, timezone, sd, vecDataSequence, vecUnitsOffset, vecUnitsMultiplier);
 			SMETIO::checkColumnNames(vecDataSequence, locationInHeader);
 
 			//3. Read DATA
 			if (isAscii){
-				readDataAscii(eoln, filename, timezone, sd, vecDataSequence, dateStart, dateEnd,
-						    vecMeteo[ii], vecStation[ii]);
+				readDataAscii(eoln, filename, timezone, sd, vecDataSequence, vecUnitsOffset,
+			                      vecUnitsMultiplier, dateStart, dateEnd, vecMeteo[ii], vecStation[ii]);
 			} else {
 				streampos currpos = fin.tellg();
 				fin.close();
@@ -370,8 +372,8 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				if (fin.fail()) throw FileAccessException(filename, AT);
 				fin.seekg(currpos); //jump to binary data section
 
-				readDataBinary(eoln, filename, timezone, sd, vecDataSequence, dateStart, dateEnd,
-							vecMeteo[ii], vecStation[ii]);
+				readDataBinary(eoln, filename, timezone, sd, vecDataSequence, vecUnitsOffset,
+				               vecUnitsMultiplier, dateStart, dateEnd, vecMeteo[ii], vecStation[ii]);
 			}
 			cleanup();
 		} catch(std::exception& e) {
@@ -383,6 +385,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void SMETIO::readDataBinary(const char&, const std::string&, const double& timezone,
                             const StationData& sd, const std::vector<std::string>& vecDataSequence,
+                            const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
                             const Date& dateStart, const Date& dateEnd,
                             std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
 {
@@ -425,7 +428,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 					alt = val;
 					poscounter++;
 				} else {
-					SMETIO::getParameter(vecDataSequence[ii], md) = val;
+					SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
 				}
 			}
 		}
@@ -450,6 +453,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 
 void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
                            const StationData& sd, const std::vector<std::string>& vecDataSequence,
+                           const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
                            const Date& dateStart, const Date& dateEnd,
                            std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
 {
@@ -501,8 +505,10 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 					throw InvalidFormatException("In "+filename+": Altitude invalid", AT);
 				poscounter++;
 			} else {
-				if (!IOUtils::convertString(SMETIO::getParameter(vecDataSequence[ii], md), tmpvec[ii]))
+				double val;
+				if (!IOUtils::convertString(val, tmpvec[ii]))
 					throw InvalidFormatException("In "+filename+": Invalid value for param", AT);
+				SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
 			}
 		}
 
@@ -517,7 +523,8 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 }
 
 void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& locationInHeader,
-                         double& timezone, StationData& sd, std::vector<std::string>& vecDataSequence)
+                        double& timezone, StationData& sd, std::vector<std::string>& vecDataSequence,
+                        std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier)
 {
 	string line="";
 	while (!fin.eof() && (fin.peek() != '['))
@@ -580,8 +587,40 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	}
 
 	IOUtils::getValueForKey(mapHeader, "fields", vecDataSequence);
-	//IOUtils::getValueForKey(mapHeader, "units_offset", vecUnitsOffset, IOUtils::nothrow); //TODO: implement these!!
-	//IOUtils::getValueForKey(mapHeader, "units_multiplier", vecUnitsMultiplier, IOUtils::nothrow);
+
+	//trying to read units offsets
+	std::vector<std::string> vecTmp;
+	IOUtils::getValueForKey(mapHeader, "units_offset", vecTmp, IOUtils::nothrow); //TODO: implement these!!
+	vecUnitsOffset.clear();
+	if(vecTmp.size()==0) {
+		for(unsigned int i=0; i<vecDataSequence.size(); i++)
+			vecUnitsOffset.push_back(0.);
+	} else if(vecTmp.size()==vecDataSequence.size()) {
+		for(unsigned int i=0; i<vecDataSequence.size(); i++) {
+			double tmp;
+			IOUtils::convertString(tmp, vecTmp[i]);
+			vecUnitsOffset.push_back(tmp);
+		}
+	} else {
+		throw InvalidFormatException("header lines \"units_offset\" and \"fields\" do not match in "+ filename, AT);
+	}
+
+	//trying to read units multipliers
+	vecTmp.clear();
+	IOUtils::getValueForKey(mapHeader, "units_multiplier", vecTmp, IOUtils::nothrow);
+	vecUnitsMultiplier.clear();
+	if(vecTmp.size()==0) {
+		for(unsigned int i=0; i<vecDataSequence.size(); i++)
+			vecUnitsMultiplier.push_back(1.);
+	} else if(vecTmp.size()==vecDataSequence.size()) {
+		for(unsigned int i=0; i<vecDataSequence.size(); i++) {
+			double tmp;
+			IOUtils::convertString(tmp, vecTmp[i]);
+			vecUnitsMultiplier.push_back(tmp);
+		}
+	} else {
+		throw InvalidFormatException("header lines \"units_multipliers\" and \"fields\" do not match in "+ filename, AT);
+	}
 
 	//Read [DATA] section tag
 	getline(fin, line, eoln);

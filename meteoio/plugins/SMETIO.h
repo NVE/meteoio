@@ -82,15 +82,18 @@ class SMETIO : public IOInterface {
                                const std::vector<StationData>& vecStation, const std::vector<bool>& vecParamInUse);
 
 		void readHeader(const char& eoln, const std::string& filename, bool& locationInHeader,
-                          double& timezone, StationData& sd, std::vector<std::string>& vecDataSequence);
+                                double& timezone, StationData& sd, std::vector<std::string>& vecDataSequence,
+		                std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier);
 		void readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
-					    const StationData& sd, const std::vector<std::string>& vecDataSequence,
-					    const Date& dateStart, const Date& dateEnd,
-					    std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		                   const StationData& sd, const std::vector<std::string>& vecDataSequence,
+		                   const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
+		                   const Date& dateStart, const Date& dateEnd,
+		                   std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 		void readDataBinary(const char& eoln, const std::string& filename, const double& timezone,
-					     const StationData& sd, const std::vector<std::string>& vecDataSequence,
-					     const Date& dateStart, const Date& dateEnd,
-					     std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		                    const StationData& sd, const std::vector<std::string>& vecDataSequence,
+		                    const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
+		                    const Date& dateStart, const Date& dateEnd,
+		                    std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
 
 		void checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii);
 		void setFormatting(const MeteoData::Parameters& paramindex);
