@@ -55,7 +55,7 @@ bool ResamplingAlgorithms::initStaticData()
 {
 	algorithmMap["linear"]            = &ResamplingAlgorithms::LinearResampling;
 	algorithmMap["nearest_neighbour"] = &ResamplingAlgorithms::NearestNeighbour;
-	algorithmMap["accumulate"] = &ResamplingAlgorithms::Accumulate;
+	algorithmMap["accumulate"]        = &ResamplingAlgorithms::Accumulate;
 
 	return true;
 }
@@ -87,7 +87,7 @@ const resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algon
  * @endcode
  */
 
-void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const MeteoData::Parameters& paramindex,
+void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsigned int& paramindex,
                                             const std::vector<std::string>& /*taskargs*/,
                                             std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
 {
@@ -147,7 +147,7 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const Meteo
  * TA::args     = extrapolate
  * @endcode
  */
-void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const MeteoData::Parameters& paramindex,
+void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsigned int& paramindex,
                                             const std::vector<std::string>& taskargs,
                                             std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
 {
@@ -232,7 +232,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const Meteo
  * HNW::arg1	 = 3600
  * @endcode
  */
-void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::Parameters& paramindex,
+void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned int& paramindex,
                                       const std::vector<std::string>& taskargs,
                                       std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
 {
@@ -250,12 +250,12 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 		if(accumulate_period<=0.) {
 			std::stringstream tmp;
 			tmp << "Invalid accumulation period (" << accumulate_period << ") ";
-			tmp << "for parameter " << MeteoData::getParameterName(paramindex);
+			tmp << "for parameter " << vecM.at(0).getNameForParameter(paramindex);
 			throw InvalidArgumentException(tmp.str(), AT);
 		}
 	} else {
 		std::stringstream tmp;
-		tmp << "Please provide accumulation period (in seconds) for param" << MeteoData::getParameterName(paramindex);
+		tmp << "Please provide accumulation period (in seconds) for param" << vecM.at(0).getNameForParameter(paramindex);
 		throw InvalidArgumentException(tmp.str(), AT);
 	}
 	
@@ -272,7 +272,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const MeteoData::
 	}
 
 	if (!found_start){
-		cerr << "[W] Could not accumulate " << MeteoData::getParameterName(paramindex)
+		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex)
 			<< ", not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO)
 			<< endl;
 		vecM[pos].param(paramindex) = IOUtils::nodata;

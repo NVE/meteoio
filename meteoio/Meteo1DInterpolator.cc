@@ -82,12 +82,23 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 		vecS.insert(vecS.begin()+position, vecS[position]); //copy element
 	}
 
-	for (unsigned int ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
+	unsigned int ii = 0;
+
+	for (ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
 		//cout << "For parameter: " << MeteoData::getParameterName(ii) << ": " << tasklist[ii] << endl;
 
 		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, MeteoData::Parameters(ii), 
-                                                                taskargs[ii], vecM, vecS);
+			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, ii, taskargs[ii], vecM, vecS);
+	}
+
+	//There might be more parameters, interpolate them too
+	const MeteoData& origmd = vecM.at(0);
+	for ( ; ii < origmd.getNrOfParameters(); ii++){
+		vector<string> taskarg;
+		const string algo = getInterpolationForParameter(origmd.getNameForParameter(ii), taskarg);
+
+		if (algo != "no") //resampling can be disabled by stating e.g. TA::resample = no
+			ResamplingAlgorithms::getAlgorithm(algo)(position, ii, taskarg, vecM, vecS);
 	}
 
 	return position; //the position of the resampled MeteoData object within vecM
