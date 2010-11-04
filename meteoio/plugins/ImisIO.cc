@@ -56,6 +56,10 @@ const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24
 
 const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_h from station2.standort WHERE stat_abk like :1 AND stao_nr=:2";
 
+const string ImisIO::sqlQueryDriftStation = "SELECT drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' and snow_stat_abk=:1 and snow_stao_nr=:2";
+
+const string ImisIO::sqlQueryMeteoDataDrift = "select  to_char(a.datum, 'YYYY-MM-DD HH24:MI') as datum, a.ta as ta, a.iswr as iswr, a.vw as vw, a.dw as dw, a.rh as rh, a.ilwr as ilwr, a.hnw as hnw, a.tsg as tsg, a.tss as tss, a.hs as hs, a.rswr as rswr, b.vw as VW_DRIFT, b.dw as DW_DRIFT from (select * from ams.v_ams_raw where stat_abk=:1 and stao_nr=:2 and datum >=:3 AND datum <= :4) a left outer join (select * from ams.v_ams_raw where stat_abk=:5 and stao_nr=:6 and datum > :3 and datum < :4) b ON a.datum = b.datum order by datum asc";
+
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 const bool ImisIO::__init = ImisIO::initStaticData();
 
@@ -240,12 +244,41 @@ void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
+void ImisIO::openDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+{
+	env  = Environment::createEnvironment();// static OCCI function
+	conn = env->createConnection(oracleUserName_in, oraclePassword_in, oracleDBName_in);
+}
+
+void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+{
+	try {
+		env->terminateConnection(conn);
+		Environment::terminateEnvironment(env); // static OCCI function
+	} catch (exception& e){
+		Environment::terminateEnvironment(env); // static OCCI function
+	}
+}
+
 void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 
-	if (vecMyStation.size() == 0)
-		readStationMetaData(); //reads all the station meta data into the vecMyStation
+	if (vecMyStation.size() == 0){//Imis station meta data cannot change between time steps
+		Environment *env = NULL;
+		Connection *conn = NULL;
+
+		try {
+			openDBConnection(env, conn);
+
+			readStationMetaData(conn); //reads all the station meta data into the vecMyStation (member vector)
+
+			closeDBConnection(env, conn);
+		} catch (exception& e){
+			closeDBConnection(env, conn);
+			throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
+		}
+	}
 
 	vecStation = vecMyStation;
 }
@@ -254,14 +287,14 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
  * @brief A meta function that extracts all station names from the Config,
  *        parses them and retrieves all meta data from the IMIS database
  */
-void ImisIO::readStationMetaData()
+void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 {
 	vector<string> vecStationName;
 	readStationNames(vecStationName);
 
 	for (unsigned int ii=0; ii<vecStationName.size(); ii++){
 
-		const string& stationName = vecStationName.at(ii);
+		const string& stationName = vecStationName[ii];
 		string stName = "", stationNumber = "";
 		vector<string> resultset;
 
@@ -269,7 +302,7 @@ void ImisIO::readStationMetaData()
 		parseStationName(stationName, stName, stationNumber);
 
 		//Now connect to the database and retrieve the meta data - this only needs to be done once per instance
-		getStationData(stName, stationNumber, resultset);
+		getStationData(stName, stationNumber, resultset, conn);
 
 		if (resultset.size() < 4)
 			throw IOException("Could not read enough meta data for station "+stName+stationNumber, AT);
@@ -283,7 +316,41 @@ void ImisIO::readStationMetaData()
 		Coords myCoord(coordin, coordinparam);
 		myCoord.setXY(east, north, alt);
 		vecMyStation.push_back(StationData(myCoord, stationName, resultset.at(0)));
+
+		//Check whether there is a special drift station for the current station (only IMIS stations)
+		string driftstation = getDriftStation(stName, stationNumber, conn);
+		if (driftstation != "") mapDriftStation[vecStationName[ii]] = driftstation;
 	}
+}
+
+std::string ImisIO::getDriftStation(std::string stationName, std::string stationNumber, oracle::occi::Connection*& conn)
+{
+	if (stationNumber == "") //not an IMIS station, thus no further querying necessary
+		return "";
+
+	string driftstation = "";
+
+	try {
+		Statement *stmt = conn->createStatement(sqlQueryDriftStation);
+		ResultSet *rs = NULL;
+
+		stmt->setString(1, stationName);    // set 1st variable's value
+		stmt->setString(2, stationNumber);  // set 2nd variable's value
+		rs = stmt->executeQuery();
+
+		while (rs->next() == true) {
+			driftstation = "";
+			driftstation += rs->getString(1);
+			driftstation += rs->getString(2);
+		}
+
+		stmt->closeResultSet(rs);
+		conn->terminateStatement(stmt);
+	} catch (exception& e){
+		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+	}
+
+	return driftstation;
 }
 
 /**
@@ -340,147 +407,218 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<StationData> >& vecStation,
                            const unsigned int& stationindex)
 {
-	if (vecMyStation.size() == 0)
-		readStationMetaData(); //reads all the station meta data into the vecMyStation
+	Environment *env = NULL;
+	Connection *conn = NULL;
 
-	if (vecMyStation.size() == 0) //if there are no stations -> return
-		return;
+	try {
+		if (vecMyStation.size() == 0){
+			openDBConnection(env, conn);
+			readStationMetaData(conn); //reads all the station meta data into the vecMyStation (member vector)
+		}
 
-	unsigned int indexStart=0, indexEnd=vecMyStation.size();
+		if (vecMyStation.size() == 0){ //if there are no stations -> return
+			if ((env != NULL) || (conn != NULL)) closeDBConnection(env, conn);
+			return;
+		}
 
-	//The following part decides whether all the stations are rebuffered or just one station
-	if (stationindex == IOUtils::npos){
-		vecMeteo.clear();
-		vecStation.clear();
+		unsigned int indexStart=0, indexEnd=vecMyStation.size();
 
-		vecMeteo.insert(vecMeteo.begin(), vecMyStation.size(), vector<MeteoData>());
-		vecStation.insert(vecStation.begin(), vecMyStation.size(), vector<StationData>());
-	} else {
-		if ((stationindex < vecMeteo.size()) && (stationindex < vecStation.size())){
-			indexStart = stationindex;
-			indexEnd   = stationindex+1;
+		//The following part decides whether all the stations are rebuffered or just one station
+		if (stationindex == IOUtils::npos){
+			vecMeteo.clear();
+			vecStation.clear();
+
+			vecMeteo.insert(vecMeteo.begin(), vecMyStation.size(), vector<MeteoData>());
+			vecStation.insert(vecStation.begin(), vecMyStation.size(), vector<StationData>());
 		} else {
-			throw IndexOutOfBoundsException("You tried to access a stationindex in readMeteoData that is out of bounds", AT);
+			if ((stationindex < vecMeteo.size()) && (stationindex < vecStation.size())){
+				indexStart = stationindex;
+				indexEnd   = stationindex+1;
+			} else {
+				throw IndexOutOfBoundsException("You tried to access a stationindex in readMeteoData that is out of bounds", AT);
+			}
 		}
-	}
 
-	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
-		readData(dateStart, dateEnd, vecMeteo, vecStation, ii);
-	}
+		if ((env == NULL) || (conn == NULL))
+			openDBConnection(env, conn);
 
-	if (useAnetz){
-		map<string, unsigned int> mapAnetzNames;
-		Config anetzConfig;
-		initializeAnetzBuffer(indexStart, indexEnd, mapAnetzNames, anetzConfig);
-		assimilateAnetzData(indexStart, indexEnd, vecMeteo, vecStation, mapAnetzNames, anetzConfig);
-		//anetzConfig.write("testanetz.ini");
-	}
-}
+		for (unsigned int ii=indexStart; ii<indexEnd; ii++) //loop through stations
+			readData(dateStart, dateEnd, vecMeteo, vecStation, ii, vecMyStation, env, conn);
 
-void ImisIO::assimilateAnetzData(const unsigned int& indexStart, const unsigned int& indexEnd,
-                                 std::vector< std::vector<MeteoData> >& vecMeteo,
-                                 std::vector< std::vector<StationData> >& vecStation,
-                                 std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg)
-{
-	IOHandler rawio(anetzcfg);
-	BufferedIOHandler bio(rawio, anetzcfg);
-
-	for (unsigned int ii=indexStart; ii<indexEnd; ii++){
-		map<string,AnetzData>::const_iterator it = mapAnetz.find(vecMyStation.at(ii).getStationID());
-		if (it != mapAnetz.end()){
-			vector<MeteoData> vecAnetzMeteo;
+		if (useAnetz){ //Important: we don't care about the metadata for ANETZ stations
+			map<string, unsigned int> mapAnetzNames;
 			vector<StationData> vecAnetzStation;
+			vector< vector<MeteoData> > vecMeteoAnetz;
+			vector< vector<StationData> > vecStationAnetz;
+			
+			findAnetzStations(indexStart, indexEnd, mapAnetzNames, vecAnetzStation);
+			
+			vecMeteoAnetz.insert(vecMeteoAnetz.begin(), vecAnetzStation.size(), vector<MeteoData>());
+			vecStationAnetz.insert(vecStationAnetz.begin(), vecAnetzStation.size(), vector<StationData>());
 
-			vector<double> vecHNW = vector<double>(vecMeteo[ii].size(), 0.0);
+			//dateStart must be changed to be a multiple of 6h before the original dateStart
+			double julian = floor(dateStart.getJulianDate() * 4.0) / 4.0;
+			Date date_anetz_start = Date(julian);
 
+			//read Anetz Data
+			for (unsigned int ii=0; ii<vecAnetzStation.size(); ii++)
+				readData(date_anetz_start, dateEnd, vecMeteoAnetz, vecStationAnetz, ii, vecAnetzStation, env, conn);
+
+			assimilateAnetzData(date_anetz_start, vecStation, vecMeteoAnetz, mapAnetzNames, vecMeteo);
+		}
+
+		closeDBConnection(env, conn);
+	} catch (exception& e){
+		closeDBConnection(env, conn);		
+		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
+	}
+}
+
+void ImisIO::assimilateAnetzData(const Date& dateStart, const std::vector< std::vector<StationData> >& vecStation,
+						   const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+						   const std::map<std::string, unsigned int>& mapAnetzNames,						   
+						   std::vector< std::vector<MeteoData> >& vecMeteo)
+						   
+{
+	//1. calc psum for station 1, 2, 3, time ....
+	vector< vector<double> > vec_of_psums;
+	calculatePsum(dateStart, vecMeteoAnetz, vec_of_psums);
+
+	//2. do coefficient calculation (getHNW) for every single station and data point
+	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+		string stationid = "";
+
+		if (vecStation.at(ii).size() > 0) 
+			stationid = vecStation[ii][0].getStationID();
+		map<string,AnetzData>::const_iterator it = mapAnetz.find(stationid);
+
+		if (it != mapAnetz.end()){
+			vector<double> current_station_psum;
+			getAnetzHNW(it->second, mapAnetzNames, vec_of_psums, current_station_psum);
+
+			unsigned int counter = 0;
+			Date current_slice_date = dateStart;
 			for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++){
-				bio.readMeteoData(vecMeteo[ii][jj].date, vecAnetzMeteo, vecAnetzStation);
-				//cout << "Date: " << vecMeteo[ii][jj].date.toString(Date::ISO) << " " << it->first<< endl;
-				vecHNW[jj] = getHNW(vecAnetzMeteo, it->second, ii, mapAnetzNames);
-			}
-
-			//now slice up the whole data into slices of 6 hours and distribute psum, if no own value exists
-			for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++){
-				Date startDate = vecMeteo[ii][jj].date;
-				unsigned int counter = 0;
-				double psum = 0.0;
-				while ((counter < 12) && (jj+counter)<vecMeteo[ii].size()){
-					if (vecMeteo[ii][jj+counter].date < (startDate + Date(0.25))){
-						if (vecHNW[jj+counter] != IOUtils::nodata)
-							psum += vecHNW[jj+counter];
-					}
+				while (vecMeteo[ii][jj].date.getJulianDate() > (current_slice_date.getJulianDate()+0.2485)){
 					counter++;
+					double julian = floor((current_slice_date.getJulianDate() +0.25001) * 4.0) / 4.0;
+					current_slice_date = Date(julian);
 				}
 
-				psum /= 12; // to get half hour values
+				if (counter >= current_station_psum.size()) { break; } //should never happen
 
-				if (counter < 12){
-					if (vecMeteo[ii].size() <= (jj+counter)){
-						//Erase the rest, since we cannot accumulate hnw correctly
-						vecMeteo[ii].erase(vecMeteo[ii].begin()+jj, vecMeteo[ii].end());
-						break;
-					}
-				}
+				//cout << "Current slice date: " << current_slice_date.toString(Date::ISO) 
+				//	<< "  value: " << current_station_psum.at(counter) << endl;
 
-				for (unsigned int kk=jj; kk<(jj+counter); kk++){
-					double& hnw = vecMeteo[ii][kk].hnw;
-					if ((hnw == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(hnw, 0.0, 0.000001))){
-						//replace by psum
-						hnw = psum;
-					}
+				double& hnw = vecMeteo[ii][jj].hnw;
+				//cout << vecMeteo[ii][jj].date.toString(Date::ISO) << ": " << hnw;
+				if ((hnw == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(hnw, 0.0, 0.001))){
+					//replace by psum if there is no own value measured
+					hnw = current_station_psum.at(counter);
 				}
-				
-				jj += (counter-1);
+				//cout << "  ---> " << hnw << endl;
 			}
 		}
 	}
 }
 
-double ImisIO::getHNW(const std::vector<MeteoData>& vecAnetz, const AnetzData& ad, const unsigned int& index, 
-                      const std::map<std::string, unsigned int>& mapAnetzNames)
+void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames, 
+					const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum)
 {
-	double hnw = 0.0;
 	map<string, unsigned int>::const_iterator it;
+
+	vector<unsigned int> vecIndex; //this vector will hold up to three indexes for the Anetz stations (position in vec_of_psums)
+	for (unsigned int ii=0; ii<ad.nrOfAnetzStations; ii++){
+		it = mapAnetzNames.find(ad.anetzstations[ii]);
+		vecIndex.push_back(it->second);
+	}
 
 	if (ad.nrOfAnetzStations == ad.nrOfCoefficients){
 		//1, 2, or 3 ANETZ stations without interaction
-		for (unsigned int ii=0; ii<ad.nrOfCoefficients; ii++){
-			it = mapAnetzNames.find(ad.anetzstations[ii]);
-			//cout << ii << ": Using " << ad.anetzstations[ii] << " with hnw: " << vecAnetz.at(it->second).hnw << endl;
-			if (it != mapAnetzNames.end())
-				hnw += ad.coeffs[ii] * vecAnetz.at(it->second).hnw;
+		for (unsigned int kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
+			double sum = 0.0;
+			for (unsigned int ii=0; ii<ad.nrOfCoefficients; ii++){
+				sum += ad.coeffs[ii] * vec_of_psums.at(vecIndex[ii])[kk]; 
+			}
+			psum.push_back(sum/12.0);
 
-			if (vecAnetz.at(it->second).hnw == IOUtils::nodata)
-				return 0.0;
+			//cout << kk << " --> sum: " << sum/12 << endl;
 		}
 	} else {
 		if (ad.nrOfCoefficients != 3)
 			throw IOException("Misconfiguration in ANETZ data", AT);
 
 		// Exactly two ANETZ stations with one interaction term
-		it = mapAnetzNames.find(ad.anetzstations[0]);
-		const double& hnw0 = vecAnetz.at(it->second).hnw;
-		it = mapAnetzNames.find(ad.anetzstations[1]);
-		const double& hnw1 = vecAnetz.at(it->second).hnw;
-		//cout << "0: Using " << ad.anetzstations[0] << " with hnw: " << hnw0 << endl;
-		//cout << "1: Using " << ad.anetzstations[1] << " with hnw: " << hnw1 << endl;
+		for (unsigned int kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
+			double sum = 0.0;
+			const double& hnw0 = vec_of_psums.at(vecIndex.at(0))[kk];
+			const double& hnw1 = vec_of_psums.at(vecIndex.at(1))[kk];
+			//cout << "0: Using " << ad.anetzstations[0] << " with hnw: " << hnw0 << endl;
+			//cout << "1: Using " << ad.anetzstations[1] << " with hnw: " << hnw1 << endl;
+			sum += ad.coeffs[0] * hnw0;
+			sum += ad.coeffs[1] * hnw1;
+			sum += ad.coeffs[2] * hnw0 * hnw1;
 
-		if ((hnw0 == IOUtils::nodata) || (hnw1 == IOUtils::nodata))
-			return 0.0;
+			psum.push_back(sum/12.0);
 
-		hnw += ad.coeffs[0] * hnw0;
-		hnw += ad.coeffs[1] * hnw1;
-
-		hnw += ad.coeffs[2] * hnw0 * hnw1;
+			//cout << kk << " --> sum: " << sum/12 << endl;
+		}
 	}
-	//cout << "--> hnw: " << hnw << endl;
-
-	return hnw;
 }
 
+void	ImisIO::calculatePsum(const Date& dateStart, const vector< vector<MeteoData> >& vecMeteoAnetz, 
+					  std::vector< std::vector<double> >& vec_of_psums)
+{
+	for (unsigned int ii=0; ii<vecMeteoAnetz.size(); ii++){
+		double tmp_psum = 0.0;
+		Date current_date = dateStart;
 
-void ImisIO::initializeAnetzBuffer(const unsigned int& indexStart, const unsigned int& indexEnd,
-							std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg)
+		vector<double> vec_current_station;
+		unsigned int counter_of_elements = 0;
+		for (unsigned int jj=0; jj<vecMeteoAnetz[ii].size(); jj++){
+			const Date& anetzdate = vecMeteoAnetz[ii][jj].date;
+			const double& hnw = vecMeteoAnetz[ii][jj].hnw;
+
+			if ((current_date < anetzdate) && ((current_date.getJulianDate() + 0.25) > anetzdate.getJulianDate())){
+				;
+			} else {
+				if ((counter_of_elements > 0) && (counter_of_elements < 6)) //this is mystical, but kind of a guess of the future
+					tmp_psum = tmp_psum * 6.0 / (double)counter_of_elements;
+
+				vec_current_station.push_back(tmp_psum);
+
+				//cout << "Station "<< ii << ": " << current_date.toString(Date::ISO) << ": " << tmp_psum << endl;
+
+				current_date = Date(current_date.getJulianDate() + 0.25);
+				tmp_psum = 0.0;
+				counter_of_elements = 0;
+			}
+
+			if (hnw != IOUtils::nodata){
+				//cout << "\tStation "<< ii << ": " << anetzdate.toString(Date::ISO) << ": " << hnw << endl;
+				tmp_psum += hnw;
+				counter_of_elements++;
+			}
+
+		}
+
+		if ((counter_of_elements > 0) && (counter_of_elements < 6)) //this is mystical, but kind of a guess of the future
+			tmp_psum = tmp_psum*6/counter_of_elements;
+
+		vec_current_station.push_back(tmp_psum);
+		vec_of_psums.push_back(vec_current_station);
+		//cout << "Station "<< ii << ": " << current_date.toString(Date::ISO) << ": " << tmp_psum << endl;
+	}
+
+	for (unsigned int ii=1; ii<vec_of_psums.size(); ii++){
+		if (vec_of_psums[ii].size() != vec_of_psums[ii-1].size())
+			throw IOException("Error while summing up the precipitation data for the ANETZ stations", AT);
+	}
+}
+
+void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned int& indexEnd,
+						 std::map<std::string, unsigned int>& mapAnetzNames, 
+						 std::vector<StationData>& vecAnetzStation)
 {
 	set<string> uniqueStations;
 	
@@ -494,26 +632,13 @@ void ImisIO::initializeAnetzBuffer(const unsigned int& indexStart, const unsigne
 	}
 
 	unsigned int pp = 0;
-	stringstream ss;
-	ss << uniqueStations.size();
-	anetzcfg.addKey("PLUGINPATH", "GENERAL", cfg.get("PLUGINPATH"));
-	anetzcfg.addKey("METEO", "Input", "IMIS");
-	anetzcfg.addKey("DBNAME", "Input", oracleDBName_in);
-	anetzcfg.addKey("DBUSER", "Input", oracleUserName_in);
-	anetzcfg.addKey("DBPASS", "Input", oraclePassword_in);
-	anetzcfg.addKey("NROFSTATIONS", "Input", ss.str());
-	anetzcfg.addKey("COORDSYS", "Input", coordin);
-	anetzcfg.addKey("COORDPARAM", "Input", coordinparam);
-	anetzcfg.addKey("HNW::resample", "Interpolations1D", "accumulate");
-	anetzcfg.addKey("HNW::args", "Interpolations1D", "1800");
-	
 	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ii++){
 		mapAnetzNames[*ii] = pp;
 		pp++;
-		
-		ss.str("");
-		ss << "STATION" << pp;
-		anetzcfg.addKey(ss.str(), "Input", *ii);
+
+		StationData sd;
+		sd.stationID = *ii;
+		vecAnetzStation.push_back(sd);
 	}
 }
 
@@ -526,7 +651,9 @@ void ImisIO::initializeAnetzBuffer(const unsigned int& indexStart, const unsigne
  * @param stationindex The index of the station as specified in the Config
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-                      std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex)
+                      std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex,
+				  const vector<StationData>& vecStationNames,
+				  oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	vecMeteo.at(stationindex).clear();
 	vecStation.at(stationindex).clear();
@@ -536,7 +663,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	vector<int> datestart = vector<int>(5);
 	vector<int> dateend   = vector<int>(5);
 
-	parseStationName(vecMyStation.at(stationindex).getStationID(), stationName, stationNumber);
+	parseStationName(vecStationNames.at(stationindex).getStationID(), stationName, stationNumber);
 
 	//IMIS is in TZ=+1, so moving back to this timezone
 	Date dateS(dateStart), dateE(dateEnd);
@@ -555,14 +682,15 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		tmpDate.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 	}
 
-	getImisData(stationName, stationNumber, datestart, dateend, vecResult);
+	//get data for one specific station 
+	getImisData(stationName, stationNumber, datestart, dateend, vecResult, env, conn);
 
 	MeteoData tmpmd;
 	//tmpmd.date.setTimeZone(in_tz);
 	for (unsigned int ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
-		const StationData& sd = vecMyStation.at(stationindex);
+		const StationData& sd = vecStationNames.at(stationindex);
 
 		//For IMIS stations the hnw value is a rate (mm/h), therefore we need to 
 		//divide it by two to conjure the accumulated value for the half hour
@@ -597,6 +725,13 @@ void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
 	IOUtils::convertString(md.param(MeteoData::TSS),  _meteo.at(9),  dec);
 	IOUtils::convertString(md.param(MeteoData::HS),   _meteo.at(10), dec);
 	IOUtils::convertString(md.param(MeteoData::RSWR), _meteo.at(11), dec);
+
+	if (_meteo.size() == 14){ //extra drift data
+		if (!md.param_exists("VW_DRIFT")) md.addParameter("VW_DRIFT");
+		if (!md.param_exists("DW_DRIFT")) md.addParameter("DW_DRIFT");
+		IOUtils::convertString(md.param("VW_DRIFT"), _meteo.at(13), dec);
+		IOUtils::convertString(md.param("DW_DRIFT"), _meteo.at(12), dec);
+	}
 }
 
 /**
@@ -605,20 +740,15 @@ void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
  * @param stao_nr :       a string key of table station2
  * @param vecStationData: string vector in which data will be filled
  */
-void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao_nr, std::vector<std::string>& vecStationData)
+void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao_nr, 
+					   std::vector<std::string>& vecStationData, oracle::occi::Connection*& conn)
 {
-	Environment *env = NULL;
 	vecStationData.clear();
 
 	try {
-		Connection *conn = NULL;
-		Statement *stmt = NULL;
+		Statement *stmt = conn->createStatement(sqlQueryStationData);
 		ResultSet *rs = NULL;
 
-		env = Environment::createEnvironment();// static OCCI function
-		conn = env->createConnection(oracleUserName_in, oraclePassword_in, oracleDBName_in);
-
-		stmt = conn->createStatement(sqlQueryStationData);
 		stmt->setString(1, stat_abk); // set 1st variable's value
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 		rs = stmt->executeQuery();    // execute the statement stmt
@@ -631,12 +761,8 @@ void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
-		env->terminateConnection(conn);
-
-		Environment::terminateEnvironment(env); // static OCCI function
 	} catch (exception& e){
-		Environment::terminateEnvironment(env); // static OCCI function
-		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
@@ -651,19 +777,27 @@ void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
  */
 void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_nr,
                           const std::vector<int>& datestart, const std::vector<int>& dateend,
-                          std::vector< std::vector<std::string> >& vecMeteoData)
+                          std::vector< std::vector<std::string> >& vecMeteoData,
+					 oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
-	Environment *env = NULL;
+	unsigned int nrOfColumns = 12;
+
 	vecMeteoData.clear();
 
+	//First check whether this is a station with seperate wind drift data
+	bool seperateDriftStation = false;
+	map<string,string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
+	if (it != mapDriftStation.end())
+		seperateDriftStation = true;
+
 	try {
-		env = Environment::createEnvironment();// static OCCI function
-		Connection *conn = NULL;
 		Statement *stmt = NULL;
 		ResultSet *rs = NULL;
-
-		conn = env->createConnection(oracleUserName_in, oraclePassword_in, oracleDBName_in);
-		stmt = conn->createStatement(sqlQueryMeteoData);
+		if (!seperateDriftStation){
+			stmt = conn->createStatement(sqlQueryMeteoData);
+		} else {
+			stmt = conn->createStatement(sqlQueryMeteoDataDrift);
+		}
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
 		occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
@@ -673,13 +807,21 @@ void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_n
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
 		stmt->setDate(4, enddate);    // set 4th variable's value (enddate)
 
+		if (seperateDriftStation){
+			string drift_stat_abk="", drift_stao_nr=""; 
+			parseStationName(it->second, drift_stat_abk, drift_stao_nr);
+			nrOfColumns += 2; //two extra columns for drift wind and direction
+			stmt->setString(5, drift_stat_abk); 
+			stmt->setString(6, drift_stao_nr);  
+		}
+
 		rs = stmt->executeQuery(); // execute the statement stmt
 
 		rs->setMaxColumnSize(7,22);
 		vector<string> vecTmpMeteoData;
 		while (rs->next() == true) {
 			vecTmpMeteoData.clear();
-			for (unsigned int ii=1; ii<=12; ii++) { // 12 columns
+			for (unsigned int ii=1; ii<=nrOfColumns; ii++) { // 12 or 14 columns
 				vecTmpMeteoData.push_back(rs->getString(ii));
 			}
 			vecMeteoData.push_back(vecTmpMeteoData);
@@ -687,11 +829,8 @@ void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_n
 
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
-		env->terminateConnection(conn);
-		Environment::terminateEnvironment(env); // static OCCI function
 	} catch (exception& e){
-		Environment::terminateEnvironment(env); // static OCCI function
-		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
