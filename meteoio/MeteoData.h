@@ -59,8 +59,7 @@ class MeteoData {
 		                 TSG, ///< Temperature ground surface
 		                 TSS, ///< Temperature snow surface
 		                 P, ///< Air pressure
-		                 lastparam=P,
-		                 NODATA};
+		                 lastparam=P};
 
 		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static const std::string& getParameterName(const unsigned int& parindex);

@@ -529,7 +529,6 @@ double FilterAlgorithms::WMASmoothingAlgorithm(const std::vector<MeteoData>& vec
 
 	std::reverse(vecMeteo.begin(), vecMeteo.end()); //reverse the vector, posfind most significant
 
-	bool initCompleted = false;
 	double wma = IOUtils::nodata;
 	unsigned int counter = 0;
 

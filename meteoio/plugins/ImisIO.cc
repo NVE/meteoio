@@ -378,9 +378,9 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 }
 
 void ImisIO::assimilateAnetzData(const unsigned int& indexStart, const unsigned int& indexEnd,
-						   std::vector< std::vector<MeteoData> >& vecMeteo,
-						   std::vector< std::vector<StationData> >& vecStation,						   
-						   std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg)
+                                 std::vector< std::vector<MeteoData> >& vecMeteo,
+                                 std::vector< std::vector<StationData> >& vecStation,
+                                 std::map<std::string, unsigned int>& mapAnetzNames, Config& anetzcfg)
 {
 	IOHandler rawio(anetzcfg);
 	BufferedIOHandler bio(rawio, anetzcfg);

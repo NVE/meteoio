@@ -136,7 +136,7 @@ class InterpolationAlgorithm {
 			if (vecMeteo.size() != vecStation.size())
 				throw InvalidArgumentException("The two data and metadata vectors don't match in size!", AT);
 			nrOfMeasurments = 0;
-			param = MeteoData::NODATA;
+			param = MeteoData::firstparam; //this is a stupid default value, but since we never check it...
 		}
 		virtual ~InterpolationAlgorithm() {}
 		virtual void initialize(const MeteoData::Parameters& in_param) = 0;

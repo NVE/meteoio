@@ -234,7 +234,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
  */
 void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned int& paramindex,
                                       const std::vector<std::string>& taskargs,
-                                      std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
+                                      std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
 {
 	/*
 	 * HACK TODO: Overall check IOUtils::nodata data path and test all scenarios with good test cases
