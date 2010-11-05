@@ -194,7 +194,6 @@ set(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
 set(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
-
 IF(UNIX)
 	IF(APPLE)
 		set(CPACK_GENERATOR "PackageMaker;")
@@ -207,6 +206,25 @@ ELSE(UNIX)
 		SET(CPACK_PACKAGE_ICON "meteoio/icon.bmp")
 	ENDIF(WIN32)
 ENDIF(UNIX)
+
+
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}" CACHE INTERNAL "tarball basename")
+set(CPACK_SOURCE_GENERATOR TGZ)
+# The following components are regex's to match anywhere (unless anchored)
+# in absolute path + filename to find files or directories to be excluded
+# from source tarball.
+set(CPACK_SOURCE_IGNORE_FILES
+	"~$"
+	"\\\\.svn/"
+	"/CMakeFiles/"
+	"/CMakeCache*"
+	"/cmake_install\\\\.cmake$"
+	"/cmake_uninstall\\\\.cmake$"
+	"^_CPack_.*/"
+	"/CPack*"
+	"\\\\.o$"
+	"/m4/"
+)
 
 #set(CPACK_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 

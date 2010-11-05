@@ -57,7 +57,9 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * 
  * RH::algorithms = RH IDW_LAPSE CST_LAPSE CST
  * 
- * HNW::algorithms = IDW_LAPSE CST_LAPSE CST
+ * HNW::algorithms = HNW_SNOW IDW_LAPSE CST_LAPSE CST
+ * HNW::hnw_snow = cst_lapse
+ * HNW::cst_lapse = 0.0005 frac
  * 
  * VW::algorithms = IDW_LAPSE CST_LAPSE
  * 

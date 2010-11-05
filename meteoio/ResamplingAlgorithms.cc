@@ -290,32 +290,32 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 	double sum = IOUtils::nodata;
 	
 	if ((valend == IOUtils::nodata) || (valstart == IOUtils::nodata)){
-          sum = 0.0; //HACK maybe it should be set it to IOUtils::nodata
+		sum = 0.0; //HACK maybe it should be set it to IOUtils::nodata
 	} else {
 		if ((start_idx == (pos-1)) && (dateStart == vecM[start_idx].date))
 			valstart = 0.0;
 
-          sum = valend - valstart;
+		sum = valend - valstart;
 	}
 
 	if (interval_end == pos){
-          vecM[pos].param(paramindex) = sum;
-          return;
+		vecM[pos].param(paramindex) = sum;
+		return;
 	}
 
 	if ((interval_end+1) == pos){
 		valend = funcval(vecM, interval_end, vecM[pos].date, paramindex);
-          if (valend != IOUtils::nodata)
+		if (valend != IOUtils::nodata)
 			sum += valend;
 
 		vecM[pos].param(paramindex) = sum;
 		return;
 	} else {
-          for (unsigned int ii=interval_end+1; ii<pos; ii++){
+		for (unsigned int ii=interval_end+1; ii<pos; ii++){
 			const double& val = vecM[ii].param(paramindex);
 			if (val != IOUtils::nodata)
 				sum += val;
-          }
+		}
 	}
 
 	valend = funcval(vecM, pos, vecM[pos].date, paramindex);
