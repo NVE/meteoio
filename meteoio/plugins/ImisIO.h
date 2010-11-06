@@ -119,12 +119,12 @@ class ImisIO : public IOInterface {
 		void getImisData(const std::string& stat_abk, const std::string& stao_nr,
 		                 const std::vector<int>& datestart, const std::vector<int>& dateend,
 		                 std::vector< std::vector<std::string> >& dataImis,
-					  oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+                                 oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex,
-				    const std::vector<StationData>& vecStationNames,
-				    oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+                              const std::vector<StationData>& vecStationNames,
+                              oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void readStationNames(std::vector<std::string>& vecStationName);
 		void parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber);
 		void readStationMetaData(oracle::occi::Connection*& conn);
@@ -132,16 +132,16 @@ class ImisIO : public IOInterface {
 
 		//helper functions for the Anetz coefficient mangling:
 		void findAnetzStations(const unsigned int& indexStart, const unsigned int& indexEnd,
-                                 std::map<std::string, unsigned int>& mapAnetzNames,
-						   std::vector<StationData>& vecAnetzStation);
-		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames, 
-					  const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
-		void assimilateAnetzData(const Date& dateStart, const std::vector< std::vector<StationData> >& vecStation,
-							const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-							const std::map<std::string, unsigned int>& mapAnetzNames,						   
-							std::vector< std::vector<MeteoData> >& vecMeteo);
-		void	calculatePsum(const Date& dateStart, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-					    std::vector< std::vector<double> >& vec_of_psums);
+                              std::map<std::string, unsigned int>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
+		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames,
+                                 const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
+		void assimilateAnetzData(const Date& dateStart, const Date& dateEnd, 
+                                         const std::vector< std::vector<StationData> >& vecStation,
+                                         const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+                                         const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
+                                         std::vector< std::vector<MeteoData> >& vecMeteo);
+		void calculatePsum(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+                                   std::vector< std::vector<double> >& vec_of_psums);
 
 		static const double in_tz; //timezone
 		Config cfg;
