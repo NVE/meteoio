@@ -171,7 +171,6 @@ if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
 endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 
 ###########################################################
-#creation of packages NOT FULLY WORKING YET
 set(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
 set(CPACK_PACKAGE_NAME "MeteoIO")

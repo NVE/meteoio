@@ -564,7 +564,7 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsign
 	}
 }
 
-void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd, const vector< vector<MeteoData> >& vecMeteoAnetz,
+void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
                            std::vector< std::vector<double> >& vec_of_psums)
 {
 	unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulianDate() - dateStart.getJulianDate() + 0.00001) * 4.0) + 1;
@@ -656,7 +656,7 @@ void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned in
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                       std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex,
-                      const vector<StationData>& vecStationNames, oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+                      const std::vector<StationData>& vecStationNames, oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	vecMeteo.at(stationindex).clear();
 	vecStation.at(stationindex).clear();
