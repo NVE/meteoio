@@ -26,6 +26,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+#include <utility>
 
 namespace mio {
 
@@ -70,6 +72,7 @@ class Meteo1DInterpolator {
 		Config cfg;
 		std::vector<std::string> tasklist;
 		std::vector< std::vector< std::string > > taskargs;
+		std::map<	std::string, std::pair < std::string, std::vector < std::string > > >	extended_tasklist;
 };
 } //end namespace
 

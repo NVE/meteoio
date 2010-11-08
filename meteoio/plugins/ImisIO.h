@@ -24,7 +24,6 @@
 #include <meteoio/Coords.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/DynamicLibrary.h>
-#include <meteoio/BufferedIOHandler.h>
 
 #include <string>
 #include <sstream>

@@ -92,15 +92,25 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 	}
 
 	//There might be more parameters, interpolate them too
-	const MeteoData& origmd = vecM.at(0);
+	const MeteoData& origmd = vecM.at(0); //this element must exist at this point
 	for ( ; ii < origmd.getNrOfParameters(); ii++){
-		vector<string> taskarg;
-		const string algo = getInterpolationForParameter(origmd.getNameForParameter(ii), taskarg);
+		string parametername = origmd.getNameForParameter(ii);
 
-		if (algo != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(algo)(position, ii, taskarg, vecM, vecS);
+		//In order to parse the user config only once for this parameter we store
+		//the algorithm and its arguments in a hash map calles extended_tasklist
+		map<string, pair<string, vector<string> > >::const_iterator it = extended_tasklist.find(parametername);
+		if (it == extended_tasklist.end()){
+			vector<string> taskarg; //vector to be filled with taskarguments
+			const string algo = getInterpolationForParameter(parametername, taskarg);			
+			
+			extended_tasklist[parametername] = pair<string, vector<string> > (algo, taskarg);
+			it = extended_tasklist.find(parametername);
+		}
+
+		if (it->second.first != "no") //resampling can be disabled by stating e.g. TA::resample = no
+			ResamplingAlgorithms::getAlgorithm(it->second.first)(position, ii, it->second.second, vecM, vecS);
 	}
-
+	
 	return position; //the position of the resampled MeteoData object within vecM
 }
 
