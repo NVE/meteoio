@@ -253,7 +253,8 @@ void ImisIO::openDBConnection(oracle::occi::Environment*& env, oracle::occi::Con
 void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	try {
-		env->terminateConnection(conn);
+		if (conn != NULL)
+			env->terminateConnection(conn);
 		Environment::terminateEnvironment(env); // static OCCI function
 	} catch (exception& e){
 		Environment::terminateEnvironment(env); // static OCCI function
