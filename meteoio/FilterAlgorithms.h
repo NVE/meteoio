@@ -61,6 +61,14 @@ class FilterAlgorithms {
                          const std::vector<StationData>& vecS, 
                          const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
                          std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
+		static void StandardDeviationFilter(const std::vector<MeteoData>& vecM,
+                         const std::vector<StationData>& vecS, 
+                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
+		static void Tukey53HFilter(const std::vector<MeteoData>& vecM,
+                         const std::vector<StationData>& vecS, 
+                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
 		static void AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
                          const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
                          std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);

@@ -79,6 +79,8 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 
 double Interpol1D::getMedian(const std::vector<double>& vecData)
 {
+//TODO: use nth_element (in #include <algorithm>) for getting middle element
+// as much more efficient than full sorting (O(n) compared to O(n log(n))
 	if (vecData.size() == 0)
 		throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
 	

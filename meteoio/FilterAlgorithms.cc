@@ -54,9 +54,13 @@ namespace mio {
  * - min: minimum check filter, see FilterAlgorithms::MinValueFilter
  * - max: maximum check filter, see FilterAlgorithms::MaxValueFilter
  * - mad: median absolute deviation, see FilterAlgorithms::MedianAbsoluteDeviationFilter
+ * - stddev: reject data outside mean +/- k*stddev, see FilterAlgorithms::StandardDeviationFilter
+ * - Tukey53H: Tukey53H spike detection, based on median, see FilterAlgorithms::Tukey53HFilter
  *
  * A few data transformations are also supported besides filtering:
  * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
+ * - exp_smoothing: exponential smoothing of data, see FilterAlgorithms::ExpSmoothingFilter
+ * - wma_smoothing window moving average smoothing of data, see FilterAlgorithms::WMASmoothingFilter
  * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgProcess
  * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess
  * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
@@ -72,6 +76,8 @@ bool FilterAlgorithms::initStaticData()
 	filterMap["min"]           = FilterProperties(true,  &FilterAlgorithms::MinValueFilter);
 	filterMap["max"]           = FilterProperties(true,  &FilterAlgorithms::MaxValueFilter);
 	filterMap["mad"]           = FilterProperties(true,  &FilterAlgorithms::MedianAbsoluteDeviationFilter);
+	filterMap["stddev"]        = FilterProperties(true,  &FilterAlgorithms::StandardDeviationFilter);
+	filterMap["Tukey53H"]      = FilterProperties(true,  &FilterAlgorithms::Tukey53HFilter);
 	filterMap["accumulate"]    = FilterProperties(false, &FilterAlgorithms::AccumulateProcess);
 	filterMap["exp_smoothing"] = FilterProperties(false, &FilterAlgorithms::ExpSmoothingFilter);
 	filterMap["wma_smoothing"] = FilterProperties(false, &FilterAlgorithms::WMASmoothingFilter);
@@ -273,6 +279,7 @@ void FilterAlgorithms::ExpSmoothingFilter(const std::vector<MeteoData>& vecM, co
 				   const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
                        std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
 {
+//HACK: this should be a process, not a filter!!
 	(void)vecS; (void)vecWindowS;
 	if (vecArgs.size() < 3)
 		throw InvalidArgumentException("Wrong number of arguments for ExpSmoothingFilter", AT);
@@ -552,7 +559,7 @@ double FilterAlgorithms::WMASmoothingAlgorithm(const std::vector<MeteoData>& vec
  * @brief Rate of change filter.
  * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point. Remarks:
  * - the maximum permissible rate of change (per seconds) has to be provided as an argument
- * THIS FILTER IS CURRENTLY DISABLED
+ *
  * @code
  * TA::filter1	= rate
  * TA::arg1	= 0.01
@@ -570,54 +577,22 @@ void FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
 	parseFilterArguments("rate", vecArgs, 1, 1, isSoft, doubleArgs);
 
 	//disable the warnings triggered by the commented out section that follows
-	(void)vecM; (void)paramindex; (void)vecWindowM;
-	/*
+	(void)vecM;// (void)paramindex; (void)vecWindowM;
 	const double& maxRateOfChange = doubleArgs[0];
 
-	//Run actual Rate filter over all relevant meteo data
-	for (unsigned int ii=2; ii<vecWindowM.size(); ii++){
-		MeteoData& current     = vecWindowM[ii];
-		MeteoData& previous    = vecWindowM[ii-1];
-		MeteoData& preprevious = vecWindowM[ii-2];
+	for(unsigned int ii=1; ii<vecWindowM.size(); ii++) {
+		double& value = vecWindowM[ii].param(paramindex);
+		const double curr_value = vecWindowM[ii].param(paramindex);
+		const double curr_time = vecWindowM[ii].date.getJulianDate();
+		const double prev_value = vecWindowM[ii-1].param(paramindex);
+		const double prev_time = vecWindowM[ii-1].date.getJulianDate();
+		const double local_rate = (curr_value-prev_value) / ((curr_time-prev_time)*24.*3600.); //per seconds
+
+		if( abs(local_rate) > maxRateOfChange ) {
+			value = IOUtils::nodata;
+		}
 	}
-
-
 	
-	if(vecWindowM.size()>1) {
-		//the request time step is NOT part of the data, it will have to be resampled
-		const double prev_value = vecM[pos-vecWindowM.size()].param(paramindex);
-		const double prev_time = vecM[pos-vecWindowM.size()].date.getJulianDate()*24.*3600.; //in seconds
-
-		for(unsigned int ii=0; ii<vecWindowM.size(); ii++){
-			double& value = vecWindowM[ii].param(paramindex);
-			const double curr_value = vecWindowM[ii].param(paramindex);
-			const double curr_time = vecWindowM[ii].date.getJulianDate()*24.*3600.; //in seconds
-			const double local_rate = abs((curr_value-prev_value)/(curr_time-prev_time));
-
-			if( local_rate > doubleArgs[0] ) {
-				value = IOUtils::nodata;
-			}
-		}
-	} else {
-		//const double tmp = vecWindowM.size();
-		//std::cout << tmp << std::endl;
-		//the request time step is part of the data
-		if(pos>1) { //if we are at the start of the data set, we can not apply the filter...
-			double& value = vecWindowM[0].param(paramindex);
-			const double curr_value = vecM[pos].param(paramindex);
-			const double curr_time = vecM[pos].date.getJulianDate()*24.*3600.; //in seconds
-			const double prev_value = vecM[pos-1].param(paramindex);
-			const double prev_time = vecM[pos-1].date.getJulianDate()*24.*3600.; //in seconds
-			const double local_rate = abs((curr_value-prev_value)/(curr_time-prev_time));
-
-			if( local_rate > doubleArgs[0] ) {
-				value = IOUtils::nodata;
-			}
-		} else {
-			//the filter can not be applied
-		}
-	}
-	*/
 }
 
 /**
@@ -749,6 +724,8 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
                                       std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
 {
+//NOTE Problem: if a bunch of identical values ~median are part of the data set, mad will be 0
+//and therefore we will reject all values that are != median
 	(void)vecS; (void)vecWindowS;
 
 	for (unsigned int ii=0; ii<vecWindowM.size(); ii++){
@@ -773,13 +750,113 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 		} catch(exception& e){
 			return;
 		}
-	
+
 		double sigma = mad * K;
 
 		if( (value>(median + 3.*sigma)) || (value<(median - 3.*sigma)) ) {
 			value = IOUtils::nodata;
 		}
 	}
+}
+
+
+/**
+ * @brief Standard deviation.
+ * Values outside of mean ± 2 std_dev are rejected.
+ * @code
+ * Valid examples for the io.ini file:
+ *          TA::filter1 = stddev
+ *          TA::arg1    = soft left 1 1800  (1800 seconds time span for the left leaning window)
+ *          RH::filter1 = stddev
+ *          RH::arg1    = 10 6000            (strictly centered window spanning 6000 seconds and at least 10 points)
+ * @endcode
+ */
+void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vecM,
+                                      const std::vector<StationData>& vecS, 
+				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+                                      std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+{
+	(void)vecS; (void)vecWindowS;
+
+	for (unsigned int ii=0; ii<vecWindowM.size(); ii++){
+		double& value = vecWindowM[ii].param(paramindex);
+		if (value == IOUtils::nodata) //No need to run filter for nodata points
+			continue;
+
+		unsigned int pos = IOUtils::seek(vecWindowM[ii].date, vecM, false);
+
+		std::vector<double> vecWindow;
+		if (!getWindowData("stddev", vecM, pos, vecWindowM[ii].date, vecArgs, paramindex, vecWindow))
+			return; //Not enough data to meet user configuration
+	
+		//Calculate deviation
+		double mean     = IOUtils::nodata;
+		double std_dev  = IOUtils::nodata;
+
+		try {
+			mean = Interpol1D::arithmeticMean(vecWindow);
+			std_dev = Interpol1D::std_dev(vecWindow);
+		} catch(exception& e){
+			return;
+		}
+
+		if( abs(value-mean)>2.*std_dev) {
+			value = IOUtils::nodata;
+		}
+	}
+}
+
+/**
+ * @brief Tukey 53H method
+ * A smooth time sequence is generated from the median, substracted from the original signal and compared with the standard deviation. 
+ * see <i>"Despiking Acoustic Doppler Velocimeter Data"</i>, Derek G. Goring and Vladimir L. Nikora, Journal of Hydraulic Engineering, <b>128</b>, 1, 2002
+ * THIS CODE IS NOT ACTIVE YET
+ * @code
+ * Valid examples for the io.ini file:
+ *          TA::filter1 = Tukey53H
+ *          TA::arg1    = soft left 1 1800  (1800 seconds time span for the left leaning window)
+ *          RH::filter1 = Tukey53H
+ *          RH::arg1    = 10 6000            (strictly centered window spanning 6000 seconds and at least 10 points)
+ * @endcode
+ */
+void FilterAlgorithms::Tukey53HFilter(const std::vector<MeteoData>& vecM,
+                                      const std::vector<StationData>& vecS, 
+				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
+                                      std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+{
+	(void)vecS; (void)vecWindowS;
+	(void)vecM; (void)vecArgs; (void)paramindex; (void)vecWindowM;
+
+/*	for (unsigned int ii=2; ii<vecWindowM.size(); ii++){
+		double& value = vecWindowM[ii].param(paramindex);
+		if (value == IOUtils::nodata) //No need to run filter for nodata points
+			continue;
+
+		std::vector<double> vec1;
+		for(unsigned int i=; i<; i++) {
+
+		}
+		vec1.push_back(vecWindowM[ii-2].param(paramindex);
+		vec1.push_back(vecWindowM[ii-1].param(paramindex);
+		vec1.push_back(vecWindowM[ii].param(paramindex);
+		vec1.push_back(vecWindowM[ii+1].param(paramindex);
+		vec1.push_back(vecWindowM[ii+2].param(paramindex);
+	
+		//Calculate deviation
+		double mean     = IOUtils::nodata;
+		double std_dev  = IOUtils::nodata;
+
+		try {
+			mean = Interpol1D::arithmeticMean(vecWindow);
+			std_dev = Interpol1D::std_dev(vecWindow);
+		} catch(exception& e){
+			return;
+		}
+
+		if( abs(value-mean)>2.*std_dev) {
+			value = IOUtils::nodata;
+		}
+	}*/
 }
 
 
