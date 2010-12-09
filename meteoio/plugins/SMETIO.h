@@ -49,11 +49,9 @@ class SMETIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           std::vector< std::vector<StationData> >& vecStation,
 		                           const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-		                            const std::vector< std::vector<StationData> >& vecStation,
 		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
@@ -71,15 +69,15 @@ class SMETIO : public IOInterface {
 
 		void cleanup() throw();
 		void parseInputOutputSection();
-		bool checkConsistency(const std::vector<StationData>& vecStation, StationData& sd);
+		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone, 
                                       std::vector<bool>& vecParamInUse);
 		void writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd, 
                                   const double& timezone, const std::vector<bool>& vecParamInUse);
 		void writeDataAscii(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
-                              const std::vector<StationData>& vecStation, const std::vector<bool>& vecParamInUse);
+                              const std::vector<bool>& vecParamInUse);
 		void writeDataBinary(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
-                               const std::vector<StationData>& vecStation, const std::vector<bool>& vecParamInUse);
+                               const std::vector<bool>& vecParamInUse);
 
 		void readHeader(const char& eoln, const std::string& filename, bool& locationInHeader,
                                 double& timezone, StationData& sd, std::vector<std::string>& vecDataSequence,
@@ -87,13 +85,11 @@ class SMETIO : public IOInterface {
 		void readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
 		                   const StationData& sd, const std::vector<std::string>& vecDataSequence,
 		                   const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
-		                   const Date& dateStart, const Date& dateEnd,
-		                   std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		                   const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo);
 		void readDataBinary(const char& eoln, const std::string& filename, const double& timezone,
 		                    const StationData& sd, const std::vector<std::string>& vecDataSequence,
 		                    const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
-		                    const Date& dateStart, const Date& dateEnd,
-		                    std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		                    const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo);
 
 		void checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii);
 		void setFormatting(const MeteoData::Parameters& paramindex);

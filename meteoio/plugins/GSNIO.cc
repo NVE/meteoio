@@ -146,7 +146,6 @@ void GSNIO::readLanduse(Grid2DObject&)
 }
 
 void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-					  const std::vector< std::vector<StationData> >&,
 					  const std::string&)
 {
 	//Nothing so far
@@ -170,7 +169,6 @@ void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                           std::vector< std::vector<MeteoData> >& vecMeteo,
-                          std::vector< std::vector<StationData> >& vecStation,
                           const unsigned int& stationindex)
 {
 	if (vecStationName.size() == 0)
@@ -184,12 +182,9 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	//The following part decides whether all the stations are rebuffered or just one station
 	if (stationindex == IOUtils::npos){
 		vecMeteo.clear();
-		vecStation.clear();
-
 		vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), vector<MeteoData>());
-		vecStation.insert(vecStation.begin(), vecStationName.size(), vector<StationData>());
 	} else {
-		if ((stationindex < vecMeteo.size()) && (stationindex < vecStation.size())){
+		if (stationindex < vecMeteo.size()){
 			indexStart = stationindex;
 			indexEnd   = stationindex+1;
 		} else {
@@ -201,7 +196,7 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		StationData sd;
 		readStationMetaData(sd, ii);
 
-		readData(dateStart, dateEnd, vecMeteo, vecStation, sd, ii);
+		readData(dateStart, dateEnd, vecMeteo, sd, ii);
 	}
 }
 
@@ -290,7 +285,7 @@ void GSNIO::convertStringToDouble(double& d, const std::string& in_string, const
 }
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-				 std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex)
+				 const StationData& sd, const unsigned int& stationindex)
 {
 	_ns1__getMeteoData meteodata_req;
 	_ns1__getMeteoDataResponse meteodata;
@@ -324,11 +319,11 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< st
 		cout << "\t[D] GSN: nr of datasets received for station "<< stationindex << ": " << meteodata.return_.size() << endl;
 		for (unsigned int jj=0; jj<meteodata.return_.size(); jj++){
 			MeteoData md;
+			md.meta = sd;
 			parseString(meteodata.return_[jj], vecString, md);
 			convertUnits(md);
 
 			vecMeteo[stationindex].push_back(md);
-			vecStation[stationindex].push_back(sd);
 		}
 	} else {
 		soap_print_fault(&gsn, stderr);

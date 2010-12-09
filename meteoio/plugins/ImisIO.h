@@ -92,11 +92,9 @@ class ImisIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           std::vector< std::vector<StationData> >& vecStation,
 		                           const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-		                            const std::vector< std::vector<StationData> >& vecStation,
 		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
@@ -121,9 +119,8 @@ class ImisIO : public IOInterface {
                                  oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-		              std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex,
-                              const std::vector<StationData>& vecStationNames,
-                              oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+		              const unsigned int& stationindex, const std::vector<StationData>& vecStationNames,
+				    oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void readStationNames(std::vector<std::string>& vecStationName);
 		void parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber);
 		void readStationMetaData(oracle::occi::Connection*& conn);
@@ -135,12 +132,11 @@ class ImisIO : public IOInterface {
 		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames,
                                  const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
 		void assimilateAnetzData(const Date& dateStart, const Date& dateEnd, 
-                                         const std::vector< std::vector<StationData> >& vecStation,
-                                         const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-                                         const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
-                                         std::vector< std::vector<MeteoData> >& vecMeteo);
+							const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+							const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
+							std::vector< std::vector<MeteoData> >& vecMeteo);
 		void calculatePsum(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-                                   std::vector< std::vector<double> >& vec_of_psums);
+                             std::vector< std::vector<double> >& vec_of_psums);
 
 		static const double in_tz; //timezone
 		Config cfg;

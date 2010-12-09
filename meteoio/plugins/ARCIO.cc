@@ -253,18 +253,14 @@ void ARCIO::readStationData(const Date&, std::vector<StationData>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::readMeteoData(const Date&, const Date&,
-					 std::vector< std::vector<MeteoData> >&,
-					 std::vector< std::vector<StationData> >&,
+void ARCIO::readMeteoData(const Date&, const Date&, std::vector< std::vector<MeteoData> >&,
 					 const unsigned int&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-					  const std::vector< std::vector<StationData> >&,
-					  const std::string&)
+void ARCIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

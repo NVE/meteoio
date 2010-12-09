@@ -202,17 +202,14 @@ void GrassIO::readStationData(const Date&, std::vector<StationData>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GrassIO::readMeteoData(const Date&, const Date&,
-					 std::vector< std::vector<MeteoData> >&,
-					 std::vector< std::vector<StationData> >&,
-					 const unsigned int&)
+void GrassIO::readMeteoData(const Date&, const Date&, std::vector< std::vector<MeteoData> >&,
+					   const unsigned int&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
 void GrassIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-					    const std::vector< std::vector<StationData> >&,
 					    const std::string&)
 {
 	//Nothing so far

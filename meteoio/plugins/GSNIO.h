@@ -54,11 +54,9 @@ class GSNIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
@@ -76,7 +74,7 @@ class GSNIO : public IOInterface {
 		void readStationNames();
 		void readStationMetaData(StationData& sd, const unsigned int& stationindex);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
-				    std::vector< std::vector<StationData> >& vecStation, const StationData& sd, const unsigned int& stationindex);
+				    const StationData& sd, const unsigned int& stationindex);
 
 		A3DWebServiceSoap12BindingProxy gsn;
 		Config cfg;

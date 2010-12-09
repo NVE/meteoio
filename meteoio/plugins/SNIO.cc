@@ -128,7 +128,7 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	if (vecAllStations.size() == 0)
 		readMetaData(nrOfStations);
 	
-	vecStation = vecAllStations;
+	vecStation = vecAllStations; //vecAllStations is a global vector that holds all meta data
 }
 
 void SNIO::readMetaData(unsigned int& nrOfStations)
@@ -214,10 +214,8 @@ void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationDat
 }
 
 
-void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-					 std::vector< std::vector<MeteoData> >& vecMeteo, 
-					 std::vector< std::vector<StationData> >& vecStation,
-					 const unsigned int&)
+void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
+					const unsigned int&)
 {
 	/*
 	 * Read the meteorological snowpack input file, formatted as follows:
@@ -239,9 +237,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		readMetaData(nrOfStations);
 
 	vecMeteo.clear();
-	vecStation.clear();
 	vecMeteo.insert(vecMeteo.begin(), vecAllStations.size(), vector<MeteoData>());
-	vecStation.insert(vecStation.begin(), vecAllStations.size(), vector<StationData>());
 
 	for (unsigned int ii=0; ii<vecAllStations.size(); ii++){
 		string filename="", line="";
@@ -289,12 +285,12 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				if (ncols >= 15){//valid length for MeteoData
 					MeteoData md;
 					md.date.setTimeZone(in_tz);
+					md.meta = vecAllStations[ii];
 					parseMeteoLine(tmpvec, filename + ":" + ss.str(), md);
 					
 					if ((md.date >= dateStart) && (md.date <= dateEnd)){//check date and add to vectors
 						convertUnits(md);
 						vecMeteo[ii].push_back(md);
-						vecStation[ii].push_back(vecAllStations.at(ii));
 					}
 				} else if (ncols == 1){
 					if (tmpvec.at(0) == "END") {
@@ -404,16 +400,14 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	//cout << "Adding parameters done" << endl;
 }
 
-void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-                          const std::vector< std::vector<StationData> >& vecStation,
-                          const std::string&)
+void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
 	string path="";
 	cfg.getValue("METEOPATH", "Output", path);
 
 	for(unsigned int ii=0; ii<vecMeteo.size(); ii++) {
-		if(vecStation[ii].size()>0) {
-			std::string station_id = vecStation[ii][0].getStationID();
+		if (vecMeteo[ii].size() > 0) {
+			std::string station_id = vecMeteo[ii][0].meta.getStationID();
 			if (station_id == "") station_id = "UNKNOWN";
 			const std::string output_name = path + "/" + station_id + ".inp";
 			if( !IOUtils::fileExists(output_name) ) {

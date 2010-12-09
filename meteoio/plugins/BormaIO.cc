@@ -96,7 +96,6 @@ void BormaIO::readLanduse(Grid2DObject&)
 }
 
 void BormaIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-					    const std::vector< std::vector<StationData> >&,
 					    const std::string&)
 {
 	//Nothing so far
@@ -112,7 +111,6 @@ void BormaIO::readStationData(const Date&, std::vector<StationData>&)
 
 void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 							  std::vector< std::vector<MeteoData> >& vecMeteo,
-							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex)
 {
 	if (vecStationName.size() == 0)
@@ -123,12 +121,10 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	//The following part decides whether all the stations are rebuffered or just one station
 	if (stationindex == IOUtils::npos){
 		vecMeteo.clear();
-		vecStation.clear();
 
 		vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>());
-		vecStation.insert(vecStation.begin(), vecStationName.size(), std::vector<StationData>());
 	} else {
-		if ((stationindex < vecMeteo.size()) && (stationindex < vecStation.size())){
+		if (stationindex < vecMeteo.size()){
 			indexStart = stationindex;
 			indexEnd   = stationindex+1;
 		} else {
@@ -138,7 +134,7 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		//cout << vecStationName[ii] << endl;
-		bufferData(dateStart, dateEnd, vecMeteo, vecStation, ii);
+		bufferData(dateStart, dateEnd, vecMeteo, ii);
 	}
 }
 
@@ -221,7 +217,6 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 
 bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
 					   std::vector< std::vector<MeteoData> >& vecMeteo,
-					   std::vector< std::vector<StationData> >& vecStation,
 					   const unsigned int& stationnr)
 {
 	std::vector<std::string> vecFiles;
@@ -232,7 +227,6 @@ bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
 	}
 
 	vecMeteo[stationnr].clear();
-	vecStation[stationnr].clear();
 
 	getFiles(vecStationName[stationnr], dateStart, dateEnd, vecFiles, vecDate);
 	//cout << "[i] Buffering station number: " << vecStationName[stationnr] << "  " << vecFiles.size() << " files" << endl;
@@ -245,8 +239,8 @@ bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
 		MeteoData meteoData;
 		StationData stationData;
 		xmlExtractData(vecFiles[ii], vecDate[ii], meteoData, stationData);
+		meteoData.meta = stationData;
 		vecMeteo[stationnr].push_back(meteoData);
-		vecStation[stationnr].push_back(stationData);
 	}
 
 	return true;

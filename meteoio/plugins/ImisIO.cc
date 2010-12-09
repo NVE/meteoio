@@ -237,7 +237,6 @@ void ImisIO::write2DGrid(const Grid2DObject&, const std::string&)
 }
 
 void ImisIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-                            const std::vector< std::vector<StationData> >&,
                             const std::string&)
 {
 	//Nothing so far
@@ -281,7 +280,7 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 		}
 	}
 
-	vecStation = vecMyStation;
+	vecStation = vecMyStation; //vecMyStation is a global vector holding all meta data
 }
 
 /**
@@ -403,9 +402,7 @@ void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 }
 
 
-void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                           std::vector< std::vector<MeteoData> >& vecMeteo,
-                           std::vector< std::vector<StationData> >& vecStation,
+void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                            const unsigned int& stationindex)
 {
 	Environment *env = NULL;
@@ -427,12 +424,9 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		//The following part decides whether all the stations are rebuffered or just one station
 		if (stationindex == IOUtils::npos){
 			vecMeteo.clear();
-			vecStation.clear();
-
 			vecMeteo.insert(vecMeteo.begin(), vecMyStation.size(), vector<MeteoData>());
-			vecStation.insert(vecStation.begin(), vecMyStation.size(), vector<StationData>());
 		} else {
-			if ((stationindex < vecMeteo.size()) && (stationindex < vecStation.size())){
+			if (stationindex < vecMeteo.size()){
 				indexStart = stationindex;
 				indexEnd   = stationindex+1;
 			} else {
@@ -444,18 +438,15 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			openDBConnection(env, conn);
 
 		for (unsigned int ii=indexStart; ii<indexEnd; ii++) //loop through stations
-			readData(dateStart, dateEnd, vecMeteo, vecStation, ii, vecMyStation, env, conn);
+			readData(dateStart, dateEnd, vecMeteo, ii, vecMyStation, env, conn);
 
 		if (useAnetz){ //Important: we don't care about the metadata for ANETZ stations
 			map<string, unsigned int> mapAnetzNames;
 			vector<StationData> vecAnetzStation;
 			vector< vector<MeteoData> > vecMeteoAnetz;
-			vector< vector<StationData> > vecStationAnetz;
 
 			findAnetzStations(indexStart, indexEnd, mapAnetzNames, vecAnetzStation);
-
 			vecMeteoAnetz.insert(vecMeteoAnetz.begin(), vecAnetzStation.size(), vector<MeteoData>());
-			vecStationAnetz.insert(vecStationAnetz.begin(), vecAnetzStation.size(), vector<StationData>());
 
 			//date_anetz_start/end must be changed to be a multiple of 6h before the original dateStart, dateEnd
 			Date date_anetz_start = Date(floor(dateStart.getJulianDate() * 4.0) / 4.0);
@@ -463,10 +454,10 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//read Anetz Data
 			for (unsigned int ii=0; ii<vecAnetzStation.size(); ii++)
-				readData(date_anetz_start, dateEnd, vecMeteoAnetz, vecStationAnetz, ii, vecAnetzStation, env, conn);
+				readData(date_anetz_start, dateEnd, vecMeteoAnetz, ii, vecAnetzStation, env, conn);
 
 			for (unsigned int ii=indexStart; ii<indexEnd; ii++) //loop through relevant stations
-				assimilateAnetzData(date_anetz_start, date_anetz_end, vecStation, vecMeteoAnetz, mapAnetzNames, ii, vecMeteo);
+				assimilateAnetzData(date_anetz_start, date_anetz_end, vecMeteoAnetz, mapAnetzNames, ii, vecMeteo);
 		}
 
 		closeDBConnection(env, conn);
@@ -476,8 +467,8 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-void ImisIO::assimilateAnetzData(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<StationData> >& vecStation,
-                                 const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+void ImisIO::assimilateAnetzData(const Date& dateStart, const Date& dateEnd, 
+						   const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
                                  const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
                                  std::vector< std::vector<MeteoData> >& vecMeteo)
 						   
@@ -488,8 +479,8 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const Date& dateEnd, con
 
 	//2. do coefficient calculation (getHNW) for every single station and data point
 	string stationid = "";
-	if (vecStation.at(stationindex).size() > 0) 
-		stationid = vecStation[stationindex][0].getStationID();
+	if (vecMeteoAnetz.at(stationindex).size() > 0) 
+		stationid = vecMeteoAnetz[stationindex][0].meta.getStationID();
 
 	map<string,AnetzData>::const_iterator it = mapAnetz.find(stationid); //find the AnetzData for this station
 	if (it != mapAnetz.end()){
@@ -652,15 +643,13 @@ void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned in
  * @param dateStart    The beginning of the interval to retrieve data for
  * @param dateEnd      The end of the interval to retrieve data for
  * @param vecMeteo     The vector that will hold all MeteoData for each station
- * @param vecStation   The vector that will hold all StationData for each station
  * @param stationindex The index of the station as specified in the Config
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-                      std::vector< std::vector<StationData> >& vecStation, const unsigned int& stationindex,
-                      const std::vector<StationData>& vecStationNames, oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+                      const unsigned int& stationindex, const std::vector<StationData>& vecStationNames, 
+				  oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	vecMeteo.at(stationindex).clear();
-	vecStation.at(stationindex).clear();
 
 	string stationName="", stationNumber="";
 	vector< vector<string> > vecResult;
@@ -690,23 +679,21 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	getImisData(stationName, stationNumber, datestart, dateend, vecResult, env, conn);
 
 	MeteoData tmpmd;
+	tmpmd.meta = vecStationNames.at(stationindex);
 	//tmpmd.date.setTimeZone(in_tz);
 	for (unsigned int ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
-		const StationData& sd = vecStationNames.at(stationindex);
 
 		//For IMIS stations the hnw value is a rate (mm/h), therefore we need to 
 		//divide it by two to conjure the accumulated value for the half hour
-		if (sd.stationID.length() > 0){
-			if (sd.stationID[0] != '*') //excludes ANETZ stations, they come in hourly sampling
+		if (tmpmd.meta.stationID.length() > 0){
+			if (tmpmd.meta.stationID[0] != '*') //excludes ANETZ stations, they come in hourly sampling
 				if (tmpmd.hnw != IOUtils::nodata)
 					tmpmd.hnw /= 2; //half hour accumulated value for IMIS stations only
 		}
 
-		//Now insert tmpmd and a StationData object
-		vecMeteo.at(stationindex).push_back(tmpmd);
-		vecStation.at(stationindex).push_back(sd);
+		vecMeteo.at(stationindex).push_back(tmpmd); //Now insert tmpmd 
 	}
 }
 
