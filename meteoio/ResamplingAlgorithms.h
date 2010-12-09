@@ -32,8 +32,7 @@
 namespace mio {
 
 typedef void(*resamplingptr)(const unsigned int& position, const unsigned int& paramindex,
-					    const std::vector<std::string>& taskargs,
-                             std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+					    const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 
 /**
  * @class ResamplingAlgorithms
@@ -48,15 +47,12 @@ class ResamplingAlgorithms {
 
 		//Available algorithms
 		static void LinearResampling(const unsigned int& position, const unsigned int& paramindex,
-		                             const std::vector<std::string>& taskargs,
-		                             std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 		static void NearestNeighbour(const unsigned int& position, const unsigned int& paramindex, 
-		                             const std::vector<std::string>& taskargs,
-		                             std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 
 		static void Accumulate(const unsigned int& pos, const unsigned int& paramindex,
-		                       const std::vector<std::string>& taskargs,
-		                       std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+		                       const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 		
  	private:
 		static double funcval(const std::vector<MeteoData>& vecM, const unsigned int& index, 

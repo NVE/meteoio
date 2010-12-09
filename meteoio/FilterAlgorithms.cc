@@ -275,12 +275,10 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
  *          RH::arg1    = 10 600 0.6 (strictly left window spanning 600 seconds and at least 10 points), alpha=0.6
  * @endcode
  */
-void FilterAlgorithms::ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				   const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                       std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+								  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
 //HACK: this should be a process, not a filter!!
-	(void)vecS; (void)vecWindowS;
 	if (vecArgs.size() < 3)
 		throw InvalidArgumentException("Wrong number of arguments for ExpSmoothingFilter", AT);
 
@@ -344,11 +342,9 @@ void FilterAlgorithms::ExpSmoothingFilter(const std::vector<MeteoData>& vecM, co
  *          TA::arg1    = right 1 1800 (1800 seconds time span for the strictly right leaning window)
  * @endcode
  */
-void FilterAlgorithms::WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				   const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                       std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+								  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS;
 	if (vecArgs.size() < 2)
 		throw InvalidArgumentException("Wrong number of arguments for WMASmoothingFilter", AT);
 
@@ -565,12 +561,9 @@ double FilterAlgorithms::WMASmoothingAlgorithm(const std::vector<MeteoData>& vec
  * TA::arg1	= 0.01
  * @endcode
  */
-void FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                  std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+						    const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS;
-
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
 	std::vector<double> doubleArgs;
@@ -606,11 +599,10 @@ void FilterAlgorithms::RateFilter(const std::vector<MeteoData>& vecM, const std:
  * TA::arg1	= 230 330
  * @endcode
  */
-void FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				                const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                    std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecM; (void)vecS; (void)vecWindowS;
+	(void)vecM;
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
 	std::vector<double> doubleArgs;
@@ -648,11 +640,10 @@ void FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& vecM, const st
  * TA::arg1	= 230
  * @endcode
  */
-void FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                      std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecM; (void)vecS; (void)vecWindowS;
+	(void)vecM;
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
 	std::vector<double> doubleArgs;
@@ -682,11 +673,10 @@ void FilterAlgorithms::MinValueFilter(const std::vector<MeteoData>& vecM, const 
  * TA::arg1	= 330
  * @endcode
  */
-void FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                      std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecM; (void)vecS; (void)vecWindowS;
+	(void)vecM;
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
 	std::vector<double> doubleArgs;
@@ -719,15 +709,11 @@ void FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const 
  *          RH::arg1    = 10 600            (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  */
-void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM, 
-                                      const std::vector<StationData>& vecS, 
-				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                      std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+										   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
 //NOTE Problem: if a bunch of identical values ~median are part of the data set, mad will be 0
 //and therefore we will reject all values that are != median
-	(void)vecS; (void)vecWindowS;
-
 	for (unsigned int ii=0; ii<vecWindowM.size(); ii++){
 		double& value = vecWindowM[ii].param(paramindex);
 		if (value == IOUtils::nodata) //No need to run filter for nodata points
@@ -771,13 +757,9 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
  *          RH::arg1    = 10 6000            (strictly centered window spanning 6000 seconds and at least 10 points)
  * @endcode
  */
-void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vecM,
-                                      const std::vector<StationData>& vecS, 
-				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                      std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+									  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS;
-
 	for (unsigned int ii=0; ii<vecWindowM.size(); ii++){
 		double& value = vecWindowM[ii].param(paramindex);
 		if (value == IOUtils::nodata) //No need to run filter for nodata points
@@ -819,12 +801,9 @@ void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vec
  *          RH::arg1    = 10 6000            (strictly centered window spanning 6000 seconds and at least 10 points)
  * @endcode
  */
-void FilterAlgorithms::Tukey53HFilter(const std::vector<MeteoData>& vecM,
-                                      const std::vector<StationData>& vecS, 
-				                  const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                      std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::Tukey53HFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS;
 	(void)vecM; (void)vecArgs; (void)paramindex; (void)vecWindowM;
 
 /*	for (unsigned int ii=2; ii<vecWindowM.size(); ii++){
@@ -870,12 +849,9 @@ void FilterAlgorithms::Tukey53HFilter(const std::vector<MeteoData>& vecM,
  * HNW::arg1	 = 3600
  * @endcode
  */
-void FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				             const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                 std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+								 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS;
-	
 	//parse arguments and check whether they are valid
 	bool isSoft = false;
 	std::vector<double> doubleArgs;
@@ -931,11 +907,9 @@ void FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
  *          RH::arg1    = 10 600            (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  */
-void FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				             const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                 std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+								const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS;
 	//Remarks:
 	//1) nodata values are not considered when calculating the median
 	//2) if there is an even number of window elements the arithmetic mean is used to calculate the median
@@ -982,11 +956,9 @@ void FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, cons
  *          RH::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  */
-void FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				             const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                 std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS;
 	//Remarks:
 	//1) nodata values are not considered when calculating the mean
 	//2) Two arguments expected (both have to be fullfilled for the filter to start operating):
@@ -1032,11 +1004,10 @@ void FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
  *          VW::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
  * @endcode
  */
-void FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-				             const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                                 std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS)
+void FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM)
 {
-	(void)vecS; (void)vecWindowS; (void)paramindex;
+	(void)paramindex;
 	//Remarks:
 	//1) nodata values are not considered when calculating the mean
 	//2) Two arguments expected (both have to be fullfilled for the filter to start operating):

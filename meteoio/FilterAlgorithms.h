@@ -45,48 +45,32 @@ class FilterAlgorithms {
 		static const FilterProperties& filterProperties(const std::string& filtername);
 
 		//Available filters
-		static void RateFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM,
-                         const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void StandardDeviationFilter(const std::vector<MeteoData>& vecM,
-                         const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void Tukey53HFilter(const std::vector<MeteoData>& vecM,
-                         const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
-		static void WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
-		         const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                         std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
+		static void RateFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+						   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+										  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void StandardDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+									 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void Tukey53HFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+								const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							    const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+								 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+								 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 
  	private:
 		static bool compareMeteoData (const MeteoData& m1, const MeteoData& m2);

@@ -66,8 +66,7 @@ class MeteoFilter {
 		 * @param[out] vecWindowS The meta data for the MeteoData objects in vecWindowM
 		 * @param[in] checkonly indicates whether to execute all filters or only "checkonly" filters
 		 */
-		void filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                          std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS, 
+		void filterData(const std::vector<MeteoData>& vecM, std::vector<MeteoData>& vecWindowM,
                           const bool& checkonly = false);
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoFilter& data);

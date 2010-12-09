@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/MeteoData.h>
+#include <meteoio/StationData.h>
 
 using namespace std;
 namespace mio {
@@ -170,6 +171,7 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 		return *this;
 
 	date = rhs.date;
+	meta = rhs.meta;
 	resampled = rhs.resampled;
 
 	extraparameters = rhs.extraparameters;
@@ -300,6 +302,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 
 	os << "<meteo>\n";
 	os << data.date;
+	os << data.meta;
 
 	std::map<unsigned int, double*>::const_iterator it1;
 	for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){

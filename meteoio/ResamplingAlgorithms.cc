@@ -88,8 +88,7 @@ const resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algon
  */
 
 void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsigned int& paramindex,
-                                            const std::vector<std::string>& /*taskargs*/,
-                                            std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
+                                            const std::vector<std::string>& /*taskargs*/, std::vector<MeteoData>& vecM)
 {
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
@@ -148,8 +147,7 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsig
  * @endcode
  */
 void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsigned int& paramindex,
-                                            const std::vector<std::string>& taskargs,
-                                            std::vector<MeteoData>& vecM, std::vector<StationData>& /*vecS*/)
+                                            const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM)
 {
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
@@ -233,8 +231,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
  * @endcode
  */
 void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned int& paramindex,
-                                      const std::vector<std::string>& taskargs,
-                                      std::vector<MeteoData>& vecM, std::vector<StationData>&)
+                                      const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM)
 {
 	/*
 	 * HACK TODO: Overall check IOUtils::nodata data path and test all scenarios with good test cases

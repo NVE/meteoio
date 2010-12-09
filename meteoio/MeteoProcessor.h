@@ -47,8 +47,7 @@ class MeteoProcessor {
 		 * @param[out] md The MeteoData object to be returned
 		 * @param[out] sd The associated StationData object for md
 		 */
-		void processData(const Date& date, const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-		                 MeteoData& md, StationData& sd);
+		void processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md);
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
 

@@ -221,20 +221,17 @@ void IOHandler::readStationData(const Date& date, STATION_DATASET& vecStation)
 	plugin->readStationData(date, vecStation);
 }
 
-void IOHandler::readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION_DATASET& vecStation)
+void IOHandler::readMeteoData(const Date& date, METEO_DATASET& vecMeteo)
 {
 	vecMeteo.clear();
-	vecStation.clear();
 
 	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
-	std::vector< std::vector<StationData> > stationTmpBuffer;
-	readMeteoData(date, date, meteoTmpBuffer, stationTmpBuffer);
+	readMeteoData(date, date, meteoTmpBuffer);
 
 	unsigned int emptycounter = 0;
 	for (unsigned int ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
-		if ((meteoTmpBuffer[ii].size() > 0) && (stationTmpBuffer[ii].size() > 0)){
+		if (meteoTmpBuffer[ii].size() > 0){
 			vecMeteo.push_back(meteoTmpBuffer[ii][0]);
-			vecStation.push_back(stationTmpBuffer[ii][0]);
 		} else {
 			emptycounter++;
 		}
@@ -242,30 +239,26 @@ void IOHandler::readMeteoData(const Date& date, METEO_DATASET& vecMeteo, STATION
 
 	if (emptycounter == meteoTmpBuffer.size()){
 		vecMeteo.clear();
-		vecStation.clear();
 	}
 }
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 						std::vector<METEO_DATASET>& vecMeteo,
-						std::vector<STATION_DATASET>& vecStation,
 						const unsigned& stationindex)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
-	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, vecStation, stationindex);
+	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
 }
 #ifdef _POPC_
 void IOHandler::writeMeteoData(std::vector<METEO_DATASET>& vecMeteo,
-                               std::vector<STATION_DATASET>& vecStation,
                                const std::string& name)
 #else
 void IOHandler::writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
-                               const std::vector<STATION_DATASET>& vecStation,
                                const std::string& name)
 #endif
 {
 	IOInterface *plugin = getPlugin("METEO", "Output");
-	plugin->writeMeteoData(vecMeteo, vecStation, name);
+	plugin->writeMeteoData(vecMeteo, name);
 }
 
 void IOHandler::readAssimilationData(const Date& date_in, Grid2DObject& da_out)

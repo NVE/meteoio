@@ -48,14 +48,10 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& _cfg) : cfg(_cfg) {
 	*/
 }
 
-unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM, std::vector<StationData>& vecS)
+unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
 {
-	if (vecM.size() != vecS.size())
-		throw IOException("Inconsistency between vecM and vecS detected", AT);
-
 	if (vecM.size() == 0){ //Deal with case of the empty vector
 		vecM.push_back(MeteoData(date));
-		vecS.push_back(StationData());
 		return 0; //nothing left to do
 	}
 
@@ -70,16 +66,13 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 	if (position == IOUtils::npos){ //nothing found append new element at the left or right
 		if (vecM.at(0).date > date){
 			vecM.insert(vecM.begin(), tmpmd);
-			vecS.insert(vecS.begin(), vecS.at(0)); //copy element
 			position = 0;
 		} else if (vecM.at(vecM.size()-1).date < date){
 			vecM.push_back(tmpmd);
-			vecS.push_back(vecS.at(vecS.size()-1)); //copy element
 			position = vecM.size() - 1;
 		}
 	} else if ((position != IOUtils::npos) && (vecM[position].date != date)){//insert before position
 		vecM.insert(vecM.begin()+position, tmpmd);
-		vecS.insert(vecS.begin()+position, vecS[position]); //copy element
 	}
 
 	unsigned int ii = 0;
@@ -88,7 +81,7 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 		//cout << "For parameter: " << MeteoData::getParameterName(ii) << ": " << tasklist[ii] << endl;
 
 		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, ii, taskargs[ii], vecM, vecS);
+			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, ii, taskargs[ii], vecM);
 	}
 
 	//There might be more parameters, interpolate them too
@@ -108,7 +101,7 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 		}
 
 		if (it->second.first != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(it->second.first)(position, ii, it->second.second, vecM, vecS);
+			ResamplingAlgorithms::getAlgorithm(it->second.first)(position, ii, it->second.second, vecM);
 	}
 	
 	return position; //the position of the resampled MeteoData object within vecM

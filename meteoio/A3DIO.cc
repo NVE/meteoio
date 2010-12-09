@@ -131,14 +131,12 @@ void A3DIO::write2DGrid(const Grid2DObject&, const std::string&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void A3DIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& data,
-					  const std::vector< std::vector<StationData> >&vec_stations,
-					  const std::string&)
+void A3DIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec_data, const std::string&)
 {
-	if(vec_stations.size()>0) {
+	if(vec_data.size() > 0) {
 		//A3D format does not support stations changing position over time
-		create1DFile(data, vec_stations);
-		write2DMeteo(data, vec_stations);
+		create1DFile(vec_data);
+		write2DMeteo(vec_data);
 	}
 }
 
@@ -178,32 +176,23 @@ void A3DIO::readStationData(const Date& timestamp, std::vector<StationData>& vec
 	}
 }
 
-void A3DIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
-{
-	std::vector< std::vector<StationData> > vecStation;
-	readMeteoData(dateStart, dateEnd, vecMeteo, vecStation);
-}
-
 void A3DIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 					 std::vector< std::vector<MeteoData> >& vecMeteo,
-					 std::vector< std::vector<StationData> >& vecStation,
-					 const unsigned int& stationindex)
+					 const unsigned int& /*stationindex*/)
 {
 	//if dateStart and dateEnd are the same: return exact match for date
 	//if dateStart > dateEnd: return first data set with date > dateStart
 	//read in all data starting with dateStart until dateEnd
 	//if there is no data at all then the vector will be empty, no exception will be thrown
-	(void)stationindex;
 	vecMeteo.clear();
-	vecStation.clear();
 
 	//first from meteo1d.txt
-	read1DMeteo(dateStart, dateEnd, vecMeteo, vecStation);
+	read1DMeteo(dateStart, dateEnd, vecMeteo);
 
 	//then all corresponding data sets from the 2d meteo files
 	//note: they have to be entirely corresponding (for every date)
 	try {
-		read2DMeteo(vecMeteo, vecStation);
+		read2DMeteo(vecMeteo);
 	} catch(std::exception& e){
 		std::cerr << "[E] No meteo2d data found or error while reading it, using only Meteo1D data: "
 		          << std::endl << "\t" << e.what() << std::endl;
@@ -268,9 +257,7 @@ void A3DIO::read1DStation(std::string& file_1d, StationData& sd)
 	}
 }
 
-void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd,
-				std::vector< std::vector<MeteoData> >& vecMeteo,
-				std::vector< std::vector<StationData> >& vecStation)
+void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	std::string file_1d="", line="";
 	Date tmp_date;
@@ -296,7 +283,7 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd,
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 	//get station metadata
-	read1DStation(file_1d, sd);
+	read1DStation(file_1d, tmpdata.meta);
 
 	//Go through file, save key value pairs
 	try {
@@ -314,27 +301,21 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd,
 
 		if ((dateEnd < dateStart) && (!eofreached)){ //Special case
 			vecMeteo.push_back( std::vector<MeteoData>() );
-			vecStation.push_back( std::vector<StationData>() );
 			vecMeteo[0].push_back(tmpdata);
-			vecStation[0].push_back(sd);
 		} else if ((tmpdata.date <= dateEnd)  && (!eofreached)) {
 			vecMeteo.push_back( std::vector<MeteoData>() );
-			vecStation.push_back( std::vector<StationData>() );
 			vecMeteo[0].reserve(buffer_reserve);
-			vecStation[0].reserve(buffer_reserve);
 		}
 
 		while ((tmpdata.date <= dateEnd)  && (!eofreached)) {
 			//At this point tmpdata.date is >= dateStart
 			vecMeteo[0].push_back(tmpdata);
-			vecStation[0].push_back(sd);
 
 			getline(fin, line, eoln); //read complete line
 			eofreached = readMeteoDataLine(line, tmpdata, file_1d);
 			//tmpdata.cleanData();
 			convertUnits(tmpdata);
 		}
-		//cout << "Size of buffer: " << vecMeteo[0].size() << "   " << tmp_date << endl;
 	} catch(...) {
 		std::cout << "[E] " << AT << ": "<< std::endl;
 		cleanup();
@@ -418,7 +399,7 @@ void A3DIO::read2DStations(const Date& timestamp, std::vector<StationData>& vecS
   Remarks: The headers of the files may defer - for each unique
   StationData one MeteoData and one StationData object will be created
 */
- void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo, std::vector< std::vector<StationData> >& vecStation)
+void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 
 	unsigned int stations=0, bufferindex=0;
@@ -455,13 +436,12 @@ void A3DIO::read2DStations(const Date& timestamp, std::vector<StationData>& vecS
 		//init vecStation with proper StationData, vecMeteo with nodata
 		for (unsigned int jj=0; jj<tmpvecS.size(); jj++){
 			vecMeteo.push_back( std::vector<MeteoData>() );
-			vecStation.push_back( std::vector<StationData>() );
-			vecStation[jj+1].reserve(buffer_reserve);
 			vecMeteo[jj+1].reserve(buffer_reserve);
+			MeteoData tmd;          //create an empty data set
+			tmd.meta = tmpvecS[jj]; //add meta data to that data set
 			for (unsigned int ii=0; ii<vecMeteo[0].size(); ii++){
 				//NOTE: there needs to be the same amount of 1D and 2D data
-				vecStation[jj+1].push_back(tmpvecS[jj]);
-				vecMeteo[jj+1].push_back(MeteoData());
+				vecMeteo[jj+1].push_back(tmd);
 			}
 		}
 
@@ -490,9 +470,6 @@ void A3DIO::read2DStations(const Date& timestamp, std::vector<StationData>& vecS
 		//clear all 2D meteo data if error occurs
 		if (vecMeteo.size() > 1)
 			vecMeteo.erase(vecMeteo.begin()+1, vecMeteo.end());
-
-		if (vecStation.size() > 1)
-			vecStation.erase(vecStation.begin()+1, vecStation.end());
 
 		cleanup();
 		throw;
@@ -671,7 +648,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 }
 
 void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,unsigned int>& hashStations,
-				std::vector<StationData>& vecS)
+						std::vector<StationData>& vecS)
 {
 	std::string line_in = "";
 	unsigned int columns = 0;
@@ -784,29 +761,29 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 	}
 }
 
-int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations)
+int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 {//TODO: add check for stations' positions
 	std::string tmp_path;
 	cfg.getValue("METEOPATH", "Output", tmp_path);
-	const unsigned int sta_nr = stations.size();
+	const unsigned int sta_nr = data.size();
 	if(sta_nr==0) return EXIT_FAILURE;
 
 	for(unsigned int ii=0; ii<sta_nr; ii++) {
 		const unsigned int size = data[ii].size();
 		if(size>0) {
-			const std::string filename = tmp_path+"/meteo1D_"+stations[ii][0].getStationID()+".txt";
+			const std::string filename = tmp_path+"/meteo1D_"+data[ii][0].meta.getStationID()+".txt";
 			std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
 			if(!file) {
 				throw FileAccessException("[E] Can not open file "+filename, AT);
 			}
 
-			file << "Name = " << stations[ii][0].getStationID() << "\n";
-			file << "Latitude = " << stations[ii][0].position.getLat() << "\n";
-			file << "Longitude = " << stations[ii][0].position.getLon() << "\n";
-			file << "X_Coord = " << stations[ii][0].position.getEasting() << "\n";
-			file << "Y_Coord = " << stations[ii][0].position.getNorthing() << "\n";
-			file << "Altitude = " << stations[ii][0].position.getAltitude() << "\n";
-			file << "YYYY MM DD HH ta iswr vw rh ea nswc\n";
+			file << "Name = " << data[ii][0].meta.getStationID() << endl;
+			file << "Latitude = " << data[ii][0].meta.position.getLat() << endl;
+			file << "Longitude = " << data[ii][0].meta.position.getLon() << endl;
+			file << "X_Coord = " << data[ii][0].meta.position.getEasting() << endl;
+			file << "Y_Coord = " << data[ii][0].meta.position.getNorthing() << endl;
+			file << "Altitude = " << data[ii][0].meta.position.getAltitude() << endl;
+			file << "YYYY MM DD HH ta iswr vw rh ea nswc" << endl;
 
 			file.flags ( std::ios::fixed );
 			for(unsigned int j=0; j<size; j++) {
@@ -846,36 +823,37 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data, const
 	return EXIT_SUCCESS;
 }
 
-int A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<StationData> >& stations, const std::string parameter_name)
+int A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& data, const std::string parameter_name)
 {
 	std::ostringstream str_altitudes;
 	std::ostringstream str_eastings;
 	std::ostringstream str_northings;
-	const unsigned int sta_nr = stations.size();
+	const unsigned int sta_nr = data.size();
 	if(sta_nr==0) return EXIT_FAILURE;
 	
 	file << "X:\\filepath " << parameter_name <<endl;
-	for(unsigned int ii=0;ii<sta_nr;ii++) {
-		if(stations[ii].size() > 0) {
-			str_altitudes << stations[ii][0].position.getAltitude() << " ";
-			str_eastings << stations[ii][0].position.getEasting() << " ";
-			str_northings << stations[ii][0].position.getNorthing() << " ";
+	for(unsigned int ii=0; ii<sta_nr; ii++) {
+		if(data[ii].size() > 0) {
+			str_altitudes << data[ii][0].meta.position.getAltitude() << " ";
+			str_eastings  << data[ii][0].meta.position.getEasting() << " ";
+			str_northings << data[ii][0].meta.position.getNorthing() << " ";
 		}
 	}
-	file << "YY MM DD HH " << str_altitudes.str() << "\n"; //altitudes
-	file << "YY MM DD HH " << str_eastings.str() << "\n"; //easting
-	file << "YY MM DD HH " << str_northings.str() << "\n"; //northing
+	file << "YY MM DD HH " << str_altitudes.str() << endl; //altitudes
+	file << "YY MM DD HH " << str_eastings.str()  << endl; //easting
+	file << "YY MM DD HH " << str_northings.str() << endl; //northing
 	file << "YYYY MM DD HH";
 	for(unsigned int ii=0; ii<sta_nr; ii++) {
-		if(stations[ii].size() > 0) {
-			file << " " << stations[ii][0].getStationID();
+		if(data[ii].size() > 0) {
+			file << " " << data[ii][0].meta.getStationID();
 		}
 	}
 	file << std::endl;
+
 	return EXIT_SUCCESS;
 }
 
-void A3DIO::open2DFile(const std::vector< std::vector<StationData> >& stations,
+void A3DIO::open2DFile(const std::vector< std::vector<MeteoData> >& data,
                        const std::string& fileprefix, const std::string& label, const double& year, 
                        std::ofstream& file)
 {//creates a meteo2D file according to the specifications
@@ -889,15 +867,14 @@ void A3DIO::open2DFile(const std::vector< std::vector<StationData> >& stations,
 	if(!file) {
 		throw FileAccessException("Can not create file "+filename, AT);
 	}
-	writeHeader(file, stations, label);
+	writeHeader(file, data, label);
 }
 
 int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
-                            const std::vector< std::vector<StationData> >& stations,
                             const unsigned int& parindex, const std::string& fileprefix,
                             const std::string& label)
 {//HACK: we assume that all stations have data that is time synchronized...
-	const unsigned int sta_nr = stations.size();
+	const unsigned int sta_nr = data.size();
 	if(sta_nr==0) return EXIT_FAILURE;
 	const unsigned int nb_timesteps = data[0].size();
 	if(nb_timesteps==0) return EXIT_FAILURE;
@@ -906,7 +883,7 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 	int startyear, year, month, day, hour;
 	data[0][0].date.getDate(startyear, month, day, hour);
 
-	open2DFile(stations, fileprefix, label, startyear, file);
+	open2DFile(data, fileprefix, label, startyear, file);
 	file.flags ( ios::fixed );
 
 	for(unsigned int ii=0; ii<nb_timesteps; ii++) {
@@ -915,7 +892,7 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 			//if the year has changed, we need to write to a new file
 			file.close();
 			startyear = year;
-			open2DFile(stations, fileprefix, label, year, file);
+			open2DFile(data, fileprefix, label, year, file);
 			file.flags ( ios::fixed );
 		}
 
@@ -938,16 +915,16 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 	return EXIT_SUCCESS;
 }
 
-void A3DIO::write2DMeteo(const std::vector< std::vector<MeteoData> >& data, const std::vector< std::vector<StationData> >& stations)
+void A3DIO::write2DMeteo(const std::vector< std::vector<MeteoData> >& data)
 {
 	std::string tmp_path;
 	cfg.getValue("METEOPATH", "Output", tmp_path);
 
-	write2DmeteoFile(data, stations, mio::MeteoData::TA, tmp_path+"/tair", "air temperature");
-	write2DmeteoFile(data, stations, mio::MeteoData::RH, tmp_path+"/rhum", "relative humidity");
-	write2DmeteoFile(data, stations, mio::MeteoData::VW, tmp_path+"/wspd", "wind velocity");
-	write2DmeteoFile(data, stations, mio::MeteoData::DW, tmp_path+"/wdir", "wind direction");
-	write2DmeteoFile(data, stations, mio::MeteoData::HNW, tmp_path+"/prec", "precipitations");
+	write2DmeteoFile(data, mio::MeteoData::TA, tmp_path+"/tair", "air temperature");
+	write2DmeteoFile(data, mio::MeteoData::RH, tmp_path+"/rhum", "relative humidity");
+	write2DmeteoFile(data, mio::MeteoData::VW, tmp_path+"/wspd", "wind velocity");
+	write2DmeteoFile(data, mio::MeteoData::DW, tmp_path+"/wdir", "wind direction");
+	write2DmeteoFile(data, mio::MeteoData::HNW, tmp_path+"/prec", "precipitations");
 }
 
 /*extern "C"

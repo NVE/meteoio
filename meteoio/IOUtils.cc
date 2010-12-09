@@ -17,7 +17,8 @@
 */
 
 #include <meteoio/IOUtils.h>
-#include <meteoio/Config.h> // to avoid forward declaration hell
+#include <meteoio/Config.h>    // to avoid forward declaration hell
+#include <meteoio/MeteoData.h> // to avoid forward declaration hell
 
 namespace mio {
 

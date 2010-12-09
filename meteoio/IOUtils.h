@@ -21,7 +21,6 @@
 #include <meteoio/Coords.h>
 #include <meteoio/Date.h>
 #include <meteoio/IOExceptions.h>
-#include <meteoio/MeteoData.h>
 
 #include <sstream>
 #include <string>

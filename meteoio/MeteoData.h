@@ -19,6 +19,7 @@
 #define __METEODATA_H__
 
 #include <meteoio/Date.h>
+#include <meteoio/StationData.h>
 #include <meteoio/IOUtils.h>
 
 #include <string>
@@ -135,6 +136,7 @@ class MeteoData {
 
 		//direct access allowed
 		Date date; ///<Timestamp of the measurement
+		StationData meta; ///<The meta data of the measurement
 		double ta; ///<Air temperature in Kelvin
 		double vw; ///<Wind velocity in m s-1
 		double dw; ///<Wind direction in degrees

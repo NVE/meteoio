@@ -26,9 +26,9 @@
 
 namespace mio {
 
-typedef void(*funcptr)(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
+typedef void(*funcptr)(const std::vector<MeteoData>& vecM,
                        const std::vector<std::string>& vecArgs, const MeteoData::Parameters& paramindex,
-                       std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS);
+                       std::vector<MeteoData>& vecWindowM);
 
 class FilterProperties {
 	public:

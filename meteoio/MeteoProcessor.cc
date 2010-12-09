@@ -23,15 +23,13 @@ namespace mio {
 
 MeteoProcessor::MeteoProcessor(const Config& _cfg) : cfg(_cfg), mf(cfg), mi1d(cfg) {}
 
-void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, 
-                                 const std::vector<StationData>& vecS, MeteoData& md, StationData& sd)
+void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	unsigned int currentpos = IOUtils::seek(date, vecM, false); 
 	unsigned int startindex = IOUtils::npos, endindex = IOUtils::npos;
 	
 	//No need to operate on the raw data, a copy of relevant data will be stored in these vectors:
 	std::vector<MeteoData> vecWindowM;
-	std::vector<StationData> vecWindowS;
 
 	/*
 	 * Cut out a window of data, on which the filtering and the resampling will occur
@@ -47,19 +45,17 @@ void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>&
 			endindex = ii;
 
 			vecWindowM.push_back(vecM.at(ii));
-			vecWindowS.push_back(vecS.at(ii));
 			//cout << "Added " << vecM[ii].date.toString(Date::ISO) << endl;
 		}
 	}
 
-	mf.filterData(vecM, vecS, vecWindowM, vecWindowS, false); //first pass
+	mf.filterData(vecM, vecWindowM, false); //first pass
 
-	unsigned int position = mi1d.resampleData(date, vecWindowM, vecWindowS); //resampling
+	unsigned int position = mi1d.resampleData(date, vecWindowM); //resampling
 
-	mf.filterData(vecM, vecS, vecWindowM, vecWindowS, true); //checkonly, second filter pass
+	mf.filterData(vecM, vecWindowM, true); //checkonly, second filter pass
 
 	md = vecWindowM[position];
-	sd = vecWindowS[position];
 }
 
 std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)

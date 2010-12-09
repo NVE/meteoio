@@ -182,7 +182,6 @@ class IOInterface : public PluginObject {
 		*/
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
 							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos) = 0;
 
 		/**
@@ -211,7 +210,6 @@ class IOInterface : public PluginObject {
 		*                    of a file name, a db table, etc) 
 		*/
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="") = 0;
 
 		/**

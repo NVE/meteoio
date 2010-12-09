@@ -65,8 +65,7 @@ MeteoFilter::MeteoFilter(const Config& _cfg) : cfg(_cfg) {
 	*/
 }
 
-void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS, 
-                             std::vector<MeteoData>& vecWindowM, std::vector<StationData>& vecWindowS, 
+void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, std::vector<MeteoData>& vecWindowM, 
                              const bool& checkonly)
 {
 	//Loop through each meteo parameter, call the respective filter function	
@@ -79,9 +78,8 @@ void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, const std::vect
 				continue;
 
 			//cout << "\tExecuting: " << tasklist[ii][jj] << endl;
-			FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, vecS,
-			                                   taskargs.at(ii).at(jj), MeteoData::Parameters(ii),
-			                                   vecWindowM, vecWindowS);
+			FilterAlgorithms::filterProperties(tasklist[ii][jj]).filterfunc(vecM, taskargs.at(ii).at(jj), 
+															    MeteoData::Parameters(ii), vecWindowM);
 		}
 	}
 }

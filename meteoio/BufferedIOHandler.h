@@ -87,16 +87,9 @@ class BufferedIOHandler : public IOInterface {
 		 * @param vecMeteo   A vector of MeteoData objects to be filled with data
 		 * @param vecStation A vector of StationData objects to be filled with meta data
 		 */
-		void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-
-		/**
-		 * @brief See BufferedIOHandler::readMeteoData(const Date& date_in,
-		 *                                             vector<MeteoData>& vecMeteo,
-		 *                                             vector<StationData>& vecStation).
-		 */
-		void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		/**
 		 * @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets
@@ -124,7 +117,7 @@ class BufferedIOHandler : public IOInterface {
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
 		 * @param vecStation  A vector of StationData objects to be filled with data
 		 */
-		void readMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation);
+		void readMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
 
 		/**
 		 * @brief Clear all buffers in BufferedIOHandler and hence force rebuffering
@@ -138,15 +131,12 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 							  std::vector< std::vector<MeteoData> >& vecMeteo,
-							  std::vector< std::vector<StationData> >& vecStation,
 							  const unsigned int& stationindex=IOUtils::npos);
 #ifdef _POPC_
 		virtual void writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
-							   std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 #else
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-							   const std::vector< std::vector<StationData> >& vecStation,
 							   const std::string& name="");
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
@@ -182,7 +172,6 @@ class BufferedIOHandler : public IOInterface {
 		Date bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date
 
 		std::vector< std::vector<MeteoData> > meteoBuffer;
-		std::vector< std::vector<StationData> > stationBuffer;
 		std::vector< Date > startDateBuffer;
 		std::vector< Date > endDateBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;

@@ -62,7 +62,7 @@ class Meteo1DInterpolator {
 		 * @param[in] vecS A vector of StationData where the new object will be inserted if not present
 		 * @return    The position of the newly constructed MeteoData/StationData pair within vecM & vecS
 		 */
-		unsigned int resampleData(const Date& date, std::vector<MeteoData>& vecM, std::vector<StationData>& vecS);
+		unsigned int resampleData(const Date& date, std::vector<MeteoData>& vecM);
 
 		friend std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator);
 
