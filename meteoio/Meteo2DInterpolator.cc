@@ -22,10 +22,9 @@ using namespace std;
 
 namespace mio {
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem, 
-								 const std::vector<MeteoData>& _vecMeteo, 
-								 const std::vector<StationData>& _vecStation) 
-	: cfg(_cfg), dem(_dem), vecMeteo(_vecMeteo), vecStation(_vecStation)
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, const DEMObject& i_dem,
+								 const std::vector<MeteoData>& i_vecMeteo)
+	: cfg(i_cfg), dem(i_dem), vecMeteo(i_vecMeteo)
 {
 	/*
 	 * By reading the Config object build up a list of user configured algorithms
@@ -42,17 +41,14 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& _cfg, const DEMObject& _d
 			mapAlgorithms[parname] = tmpAlgorithms;
 	}
 
-	//check whether the size of the two vectors is equal
-	if (vecMeteo.size() != vecStation.size())
-		throw IOException("Size of vector<MeteoData> and vector<StationData> are not equal", AT);
-
 	//check that the stations are using the same projection as the dem
-	for (unsigned int i=0; i<(unsigned int)vecStation.size(); i++) {
-		if(!vecStation[i].position.isSameProj(dem.llcorner)) {
+	for (unsigned int i=0; i<(unsigned int)vecMeteo.size(); i++) {
+		const StationData& meta = vecMeteo[i].meta; 
+		if(!meta.position.isSameProj(dem.llcorner)) {
 			std::stringstream os;
 			std::string type, args;
-			vecStation[i].position.getProj(type, args);
-			os << "Station " << vecStation[i].stationID << " is using projection (" << type << " " << args << ") ";
+			meta.position.getProj(type, args);
+			os << "Station " << meta.stationID << " is using projection (" << type << " " << args << ") ";
 			dem.llcorner.getProj(type, args);
 			os << "while DEM is using projection ("<< type << " " << args << ") ";
 			throw IOException(os.str(), AT);
@@ -82,7 +78,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 			
 			//Get the configured algorithm
 			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, dem, 
-			                                           vecMeteo, vecStation, vecArgs));
+			                                           vecMeteo, vecArgs));
 			//Get the quality rating and compare to previously computed quality ratings
 			algorithm->initialize(meteoparam);
 			const double rating = algorithm->getQualityRating();

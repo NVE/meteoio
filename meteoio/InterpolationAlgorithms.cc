@@ -54,7 +54,6 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
                                                        const Meteo2DInterpolator& _mi,
                                                        const DEMObject& _dem,
                                                        const std::vector<MeteoData>& _vecMeteo,
-                                                       const std::vector<StationData>& _vecStation,
                                                        const std::vector<std::string>& _vecArgs)
 {
 	std::string algoname(_algoname);
@@ -65,27 +64,27 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 		throw UnknownValueException("The interpolation algorithm '"+algoname+"' does not exist" , AT);
 
 	if (algoname == "CST"){
-		return new ConstAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new ConstAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "STD_PRESS"){
-		return new StandardPressureAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new StandardPressureAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "CST_LAPSE"){
-		return new ConstLapseRateAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new ConstLapseRateAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "IDW"){
-		return new IDWAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new IDWAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "IDW_LAPSE"){
-		return new IDWLapseAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new IDWLapseAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "LIDW_LAPSE"){
-		return new LocalIDWLapseAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new LocalIDWLapseAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "RH"){
-		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "WIND_CURV"){
-		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "ODKRIG"){
-		return new OrdinaryKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new OrdinaryKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "USER"){
-		return new USERInterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new USERInterpolation(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else if (algoname == "HNW_SNOW"){
-		return new SnowHNWInterpolation(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algoname);
+		return new SnowHNWInterpolation(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -114,7 +113,7 @@ unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
 		const double& val = vecMeteo[ii].param(param);
 		if (val != IOUtils::nodata){
 			vecData.push_back(val);
-			vecMeta.push_back(vecStation[ii]);
+			vecMeta.push_back(vecMeteo[ii].meta);
 		}
 	}
 
@@ -410,7 +409,7 @@ void RHAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 		if ((vecMeteo[ii].rh != IOUtils::nodata) && (vecMeteo[ii].ta != IOUtils::nodata)){
 			vecDataTA.push_back(vecMeteo[ii].ta);
 			vecDataRH.push_back(vecMeteo[ii].rh);
-			vecMeta.push_back(vecStation[ii]);
+			vecMeta.push_back(vecMeteo[ii].meta);
 			nrOfMeasurments++;
 		}
 	}
@@ -478,7 +477,7 @@ void SimpleWindInterpolationAlgorithm::initialize(const MeteoData::Parameters& i
 		if ((vecMeteo[ii].vw != IOUtils::nodata) && (vecMeteo[ii].dw != IOUtils::nodata)){
 			vecDataVW.push_back(vecMeteo[ii].vw);
 			vecDataDW.push_back(vecMeteo[ii].dw);
-			vecMeta.push_back(vecStation[ii]);
+			vecMeta.push_back(vecMeteo[ii].meta);
 			nrOfMeasurments++;
 		}
 	}
@@ -609,7 +608,7 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	IOUtils::toUpper(base_algo);
 	vector<string> vecArgs2;
 	mi.getArgumentsForAlgorithm(param, base_algo, vecArgs2);
-	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, dem, vecMeteo, vecStation, vecArgs2));
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, dem, vecMeteo, vecArgs2));
 	algorithm->initialize(param);
 	algorithm->calculate(grid);
 	info << algorithm->getInfo();

@@ -130,13 +130,10 @@ class InterpolationAlgorithm {
 		InterpolationAlgorithm(const Meteo2DInterpolator& _mi, 
 		                       const DEMObject& _dem,
 		                       const std::vector<MeteoData>& _vecMeteo,
-		                       const std::vector<StationData>& _vecStation,
 		                       const std::vector<std::string>& _vecArgs,
 		                       const std::string _algo)
-			: mi(_mi), dem(_dem), vecMeteo(_vecMeteo), vecStation(_vecStation), vecArgs(_vecArgs), algo(_algo) 
+			: mi(_mi), dem(_dem), vecMeteo(_vecMeteo), vecArgs(_vecArgs), algo(_algo) 
 		{
-			if (vecMeteo.size() != vecStation.size())
-				throw InvalidArgumentException("The two data and metadata vectors don't match in size!", AT);
 			nrOfMeasurments = 0;
 			param = MeteoData::firstparam; //this is a stupid default value, but since we never check it...
 		}
@@ -149,7 +146,6 @@ class InterpolationAlgorithm {
 		const Meteo2DInterpolator& mi;
 		const DEMObject& dem;
 		const std::vector<MeteoData>& vecMeteo;
-		const std::vector<StationData>& vecStation;
 		const std::vector<std::string> vecArgs; //we must keep our own copy, it is different for each algorithm!
 		const std::string algo;
 
@@ -171,7 +167,6 @@ class AlgorithmFactory {
                                                             const Meteo2DInterpolator& _mi,
 		                                            const DEMObject& _dem,
 		                                            const std::vector<MeteoData>& _vecMeteo,
-		                                            const std::vector<StationData>& _vecStation,
 		                                            const std::vector<std::string>& _vecArgs);
 
 		static std::set<std::string> setAlgorithms; ///<all algorithms that are configured
@@ -189,10 +184,9 @@ class ConstAlgorithm : public InterpolationAlgorithm {
 		ConstAlgorithm(const Meteo2DInterpolator& _mi, 
 		               const DEMObject& _dem,
 		               const std::vector<MeteoData>& _vecMeteo,
-		               const std::vector<StationData>& _vecStation,
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -208,10 +202,9 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 		StandardPressureAlgorithm(const Meteo2DInterpolator& _mi, 
 		                          const DEMObject& _dem,
 		                          const std::vector<MeteoData>& _vecMeteo,
-		                          const std::vector<StationData>& _vecStation,
 		                          const std::vector<std::string>& _vecArgs,
 		                          const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -234,10 +227,9 @@ class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
 		ConstLapseRateAlgorithm(const Meteo2DInterpolator& _mi, 
 		                        const DEMObject& _dem,
 		                        const std::vector<MeteoData>& _vecMeteo,
-		                        const std::vector<StationData>& _vecStation,
 		                        const std::vector<std::string>& _vecArgs,
 		                        const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -255,10 +247,9 @@ class IDWAlgorithm : public InterpolationAlgorithm {
 		IDWAlgorithm(const Meteo2DInterpolator& _mi, 
 		             const DEMObject& _dem,
 		             const std::vector<MeteoData>& _vecMeteo,
-		             const std::vector<StationData>& _vecStation,
 		             const std::vector<std::string>& _vecArgs,
 		             const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -283,10 +274,9 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
 		IDWLapseAlgorithm(const Meteo2DInterpolator& _mi, 
 		                  const DEMObject& _dem,
 		                  const std::vector<MeteoData>& _vecMeteo,
-		                  const std::vector<StationData>& _vecStation,
 		                  const std::vector<std::string>& _vecArgs,
 		                  const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -305,10 +295,9 @@ class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
 		LocalIDWLapseAlgorithm(const Meteo2DInterpolator& _mi,
 		                  const DEMObject& _dem,
 		                  const std::vector<MeteoData>& _vecMeteo,
-		                  const std::vector<StationData>& _vecStation,
 		                  const std::vector<std::string>& _vecArgs,
 		                  const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -329,10 +318,9 @@ class RHAlgorithm : public InterpolationAlgorithm {
 		RHAlgorithm(const Meteo2DInterpolator& _mi, 
 		            const DEMObject& _dem,
 		            const std::vector<MeteoData>& _vecMeteo,
-		            const std::vector<StationData>& _vecStation,
 		            const std::vector<std::string>& _vecArgs,
 		            const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -354,10 +342,9 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 		SimpleWindInterpolationAlgorithm(const Meteo2DInterpolator& _mi,
 		                                 const DEMObject& _dem,
 		                                 const std::vector<MeteoData>& _vecMeteo,
-		                                 const std::vector<StationData>& _vecStation,
 		                                 const std::vector<std::string>& _vecArgs,
 		                                 const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -375,10 +362,9 @@ class USERInterpolation : public InterpolationAlgorithm {
 		USERInterpolation(const Meteo2DInterpolator& _mi,
 		               const DEMObject& _dem,
 		               const std::vector<MeteoData>& _vecMeteo,
-		               const std::vector<StationData>& _vecStation,
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -404,10 +390,9 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
 		SnowHNWInterpolation(const Meteo2DInterpolator& _mi,
 		               const DEMObject& _dem,
 		               const std::vector<MeteoData>& _vecMeteo,
-		               const std::vector<StationData>& _vecStation,
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -423,10 +408,9 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		OrdinaryKrigingAlgorithm(const Meteo2DInterpolator& _mi,
 		               const DEMObject& _dem,
 		               const std::vector<MeteoData>& _vecMeteo,
-		               const std::vector<StationData>& _vecStation,
 		               const std::vector<std::string>& _vecArgs,
 		               const std::string _algo)
-			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecStation, _vecArgs, _algo) {}
+			: InterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algo) {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
