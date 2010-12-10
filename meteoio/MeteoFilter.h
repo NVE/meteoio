@@ -54,7 +54,7 @@ class MeteoFilter {
 		* Important: the filtering occurs in two passes:
 		* Pass 1   : all filters specified are executed, resampling (if required) is the last filter applied
 		* Pass 2   : all filters, that only perform checks are reapplied to the resampled values
-		* @param[in] _cfg Config object that holds the MeteoFilter configuration in the [Filters] section
+		* @param[in] cfg Config object that holds the MeteoFilter configuration in the [Filters] section
 		*/
 		MeteoFilter(const Config& cfg);
 

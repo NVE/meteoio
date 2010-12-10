@@ -468,10 +468,9 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 }
 
 void ImisIO::assimilateAnetzData(const Date& dateStart, const Date& dateEnd, 
-						   const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+                                 const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
                                  const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
                                  std::vector< std::vector<MeteoData> >& vecMeteo)
-						   
 {
 	//1. calc psum for station 1, 2, 3, time ....
 	vector< vector<double> > vec_of_psums;
@@ -647,7 +646,7 @@ void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned in
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                       const unsigned int& stationindex, const std::vector<StationData>& vecStationNames, 
-				  oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+                      oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	vecMeteo.at(stationindex).clear();
 

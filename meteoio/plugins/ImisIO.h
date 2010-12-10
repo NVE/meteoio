@@ -110,7 +110,7 @@ class ImisIO : public IOInterface {
 		void getDBParameters();
 
 		void getStationData(const std::string& stat_abk, const std::string& stao_nr, std::vector<std::string>& data2S,
-						oracle::occi::Connection*& conn);
+		                    oracle::occi::Connection*& conn);
 		std::string getDriftStation(std::string stationName, std::string stationNumber, oracle::occi::Connection*& conn);
 
 		void getImisData(const std::string& stat_abk, const std::string& stao_nr,
@@ -120,7 +120,7 @@ class ImisIO : public IOInterface {
 		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              const unsigned int& stationindex, const std::vector<StationData>& vecStationNames,
-				    oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+		              oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void readStationNames(std::vector<std::string>& vecStationName);
 		void parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber);
 		void readStationMetaData(oracle::occi::Connection*& conn);
