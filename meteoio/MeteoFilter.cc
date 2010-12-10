@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-MeteoFilter::MeteoFilter(const Config& _cfg) : cfg(_cfg) {
+MeteoFilter::MeteoFilter(const Config& cfg) {
 	/*
 	 * By reading the Config object build up a list of user configured filters
 	 * for each MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
@@ -35,14 +35,14 @@ MeteoFilter::MeteoFilter(const Config& _cfg) : cfg(_cfg) {
 
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
 
-		unsigned int nrOfFilters = getFiltersForParameter(parname, tmpFilters2);
+		unsigned int nrOfFilters = getFiltersForParameter(cfg, parname, tmpFilters2);
 
 		for (unsigned int ll=0; ll<nrOfFilters; ll++){
 			//Get the arguments for the specific filter from the cfg object
 			std::vector<std::string> filterArgs;
 			std::stringstream tmp;
 			tmp << parname << "::arg" << (ll+1);
-			getArgumentsForFilter(tmp.str(), filterArgs); //Read arguments
+			getArgumentsForFilter(cfg, tmp.str(), filterArgs); //Read arguments
 			//cout << "ARGSEARCH: " << tmp.str() << "  found arguments: " << argnum << endl;
 			
 			tmpFilters1.push_back(tmpFilters2[ll]);
@@ -84,7 +84,7 @@ void MeteoFilter::filterData(const std::vector<MeteoData>& vecM, std::vector<Met
 	}
 }
 
-unsigned int MeteoFilter::getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters)
+unsigned int MeteoFilter::getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters)
 {
 	/* 
 	 * This function retrieves the filter sequence for parameter 'parname' 
@@ -102,7 +102,7 @@ unsigned int MeteoFilter::getFiltersForParameter(const std::string& parname, std
 	return vecFilters.size();
 }
 
-unsigned int MeteoFilter::getArgumentsForFilter(const std::string& keyname, std::vector<std::string>& vecArguments)
+unsigned int MeteoFilter::getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments)
 {
 	/*
 	 * Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
@@ -114,7 +114,6 @@ unsigned int MeteoFilter::getArgumentsForFilter(const std::string& keyname, std:
 std::ostream& operator<<(std::ostream& os, const MeteoFilter& data)
 {
 	os << "<MeteoFilter>\n";
-	os << "Config cfg; (not expanded)\n";
 
 	for (unsigned int ii=0; ii<data.tasklist.size(); ii++){ //For all meteo parameters
 		os << std::setw(5) << MeteoData::getParameterName(ii) << " =\t";

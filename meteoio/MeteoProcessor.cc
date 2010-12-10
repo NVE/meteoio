@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-MeteoProcessor::MeteoProcessor(const Config& _cfg) : cfg(_cfg), mf(cfg), mi1d(cfg) {}
+MeteoProcessor::MeteoProcessor(const Config& cfg) : mf(cfg), mi1d(cfg) {}
 
 void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
@@ -61,7 +61,6 @@ void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>&
 std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
 {
 	os << "<MeteoProcessor>\n";
-	os << "Config cfg; (not expanded)\n";
 	os << data.mf;
 	os << data.mi1d;
 	os << "</MeteoProcessor>\n";

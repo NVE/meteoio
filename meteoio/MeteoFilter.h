@@ -56,7 +56,7 @@ class MeteoFilter {
 		* Pass 2   : all filters, that only perform checks are reapplied to the resampled values
 		* @param[in] _cfg Config object that holds the MeteoFilter configuration in the [Filters] section
 		*/
-		MeteoFilter(const Config& _cfg);
+		MeteoFilter(const Config& cfg);
 
 		/**
 		 * @brief A function that executes all the filters that have been setup in the constructor
@@ -70,10 +70,9 @@ class MeteoFilter {
 		friend std::ostream& operator<<(std::ostream& os, const MeteoFilter& data);
 
  	private:
-		unsigned int getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters);
-		unsigned int getArgumentsForFilter(const std::string& keyname, std::vector<std::string>& vecArguments);
+		unsigned int getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters);
+		unsigned int getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments);
 		
-		Config cfg;
 		std::vector< std::vector<std::string> > tasklist;
 		std::vector< std::vector< std::vector<std::string> > > taskargs;
 };

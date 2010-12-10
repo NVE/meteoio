@@ -37,7 +37,7 @@ namespace mio {
 
 class MeteoProcessor {
 	public:
-		MeteoProcessor(const Config& _cfg);
+		MeteoProcessor(const Config& cfg);
 
 		/**
 		 * @brief A function that executes all the filters that have been setup in the constructor
@@ -50,7 +50,6 @@ class MeteoProcessor {
 		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
 
  	private:
-		Config cfg;
 		MeteoFilter mf;
 		Meteo1DInterpolator mi1d;
 };
