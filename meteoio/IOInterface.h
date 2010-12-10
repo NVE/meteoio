@@ -156,7 +156,7 @@ class IOInterface : public PluginObject {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation) = 0;
 
 		/**
-		* @brief Fill vecMeteo and vecStation with a time series of objects  
+		* @brief Fill vecMeteo with a time series of objects
 		* corresponding to the interval indicated by dateStart and dateEnd.
 		*
 		* Matching rules:
@@ -177,15 +177,14 @@ class IOInterface : public PluginObject {
 		* @param dateStart   A Date object representing the beginning of an interval (inclusive)
 		* @param dateEnd     A Date object representing the end of an interval (inclusive)
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
-		* @param vecStation  A vector of vector<StationData> objects to be filled with data
 		* @param stationindex (optional) update only the station given by this index
 		*/
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  const unsigned int& stationindex=IOUtils::npos) = 0;
+		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           const unsigned int& stationindex=IOUtils::npos) = 0;
 
 		/**
-		* @brief Write vecMeteo and vecStation time series of objects to a certain destination
+		* @brief Write vecMeteo time series to a certain destination
 		*
 		* Example Usage:
 		* Configure the io.ini to use a certain plugin for the output:
@@ -205,12 +204,11 @@ class IOInterface : public PluginObject {
 		* io1.writeMeteoData(vecMeteo, vecStation)
 		* @endcode
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
-		* @param vecStation  A vector of vector<StationData> objects to be filled with data
-		* @param name        (optional string) Identifier usefull for the output plugin (it could become part 
+		* @param name        (optional string) Identifier usefull for the output plugin (it could become part
 		*                    of a file name, a db table, etc) 
 		*/
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::string& name="") = 0;
+		                            const std::string& name="") = 0;
 
 		/**
 		* @brief Parse the assimilation data into a Grid2DObject for a certain date represented by the Date object

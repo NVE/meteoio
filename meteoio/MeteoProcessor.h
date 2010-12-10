@@ -43,9 +43,7 @@ class MeteoProcessor {
 		 * @brief A function that executes all the filters that have been setup in the constructor
 		 * @param[in] date The requested date for a MeteoData object
 		 * @param[in] vecM The raw sequence of MeteoData objects for a given station
-		 * @param[in] vecS The meta data for the MeteoData objects in vecM
 		 * @param[out] md The MeteoData object to be returned
-		 * @param[out] sd The associated StationData object for md
 		 */
 		void processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md);
 

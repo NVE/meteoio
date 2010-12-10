@@ -46,43 +46,43 @@ class FilterAlgorithms {
 
 		//Available filters
 		static void RateFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-						   const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                       const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void MinMaxFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-							const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                         const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void MinValueFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                           const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                           const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void MedianAbsoluteDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-										  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                                          const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void StandardDeviationFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-									 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                                    const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void Tukey53HFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                           const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void AccumulateProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-								const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                              const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void MedianAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-							    const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                             const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void MeanAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                           const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 		static void WindAvgProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-							  const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
-		static void ExpSmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-								 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
-		static void WMASmoothingFilter(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
-								 const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		                           const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void ExpSmoothingProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+		                                const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
+		static void WMASmoothingProcess(const std::vector<MeteoData>& vecM, const std::vector<std::string>& vecArgs,
+		                                const MeteoData::Parameters& paramindex, std::vector<MeteoData>& vecWindowM);
 
  	private:
 		static bool compareMeteoData (const MeteoData& m1, const MeteoData& m2);
 		static void parseFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
-		                    const unsigned int& minArgs, const unsigned int& maxArgs,
-		                    bool& isSoft, std::vector<double>& vecArgs_out);
+		                                 const unsigned int& minArgs, const unsigned int& maxArgs,
+		                                 bool& isSoft, std::vector<double>& vecArgs_out);
 		static void parseWindowFilterArguments(const std::string& filtername, const std::vector<std::string>& vecArgs_in,
-		                    const unsigned int& minArgs, const unsigned int& maxArgs,
-		                    bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out);
+		                                       const unsigned int& minArgs, const unsigned int& maxArgs,
+		                                       bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out);
 		static unsigned int getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
-                                    const unsigned int& pos, 
-                                    const std::vector<std::string>& _vecArgs, std::vector<MeteoData>& vecResult);
+                                                  const unsigned int& pos, 
+                                                  const std::vector<std::string>& _vecArgs, std::vector<MeteoData>& vecResult);
 		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
 		                          const unsigned int& pos,
 		                          const Date& date, const std::vector<std::string>& _vecArgs,
@@ -90,7 +90,7 @@ class FilterAlgorithms {
 		                          std::vector<Date> *vecDate = NULL);
 
 		static double ExpSmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, 
-		         const unsigned int& paramindex, const double& alpha);
+		                                    const unsigned int& paramindex, const double& alpha);
 		static double WMASmoothingAlgorithm(const std::vector<MeteoData>& vecMyMeteo, const unsigned int& paramindex);
 
 		static std::map<std::string, FilterProperties> filterMap;

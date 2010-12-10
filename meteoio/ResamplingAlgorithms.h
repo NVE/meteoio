@@ -46,6 +46,8 @@ class ResamplingAlgorithms {
 		static const resamplingptr& getAlgorithm(const std::string& algorithmname);
 
 		//Available algorithms
+		static void NoResampling(const unsigned int& position, const unsigned int& paramindex,
+		                         const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 		static void LinearResampling(const unsigned int& position, const unsigned int& paramindex,
 		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 		static void NearestNeighbour(const unsigned int& position, const unsigned int& paramindex, 
@@ -56,7 +58,7 @@ class ResamplingAlgorithms {
 		
  	private:
 		static double funcval(const std::vector<MeteoData>& vecM, const unsigned int& index, 
-						  const Date& date, const unsigned int& paramindex);
+		                      const Date& date, const unsigned int& paramindex);
 
 		static std::map<std::string, resamplingptr> algorithmMap;
 		static const bool __init;    ///<helper variable to enable the init of static collection data

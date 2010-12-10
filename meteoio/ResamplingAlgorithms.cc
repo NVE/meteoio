@@ -44,8 +44,10 @@ namespace mio {
  *
  * @section algorithms_available Available Resampling Algorithms
  * Two algorithms for the resampling are implemented:
+ * - none: do not perform resampling, see ResamplingAlgorithms::NoResampling
  * - linear: linear data resampling, see ResamplingAlgorithms::LinearResampling
  * - nearest_neighbour:  data resampling, see ResamplingAlgorithms::NearestNeighbour
+ * - accumulate: data re-accumulation as suitable for precipitations, see ResamplingAlgorithms::Accumulate
  */
 
 std::map<std::string, resamplingptr> ResamplingAlgorithms::algorithmMap;
@@ -53,6 +55,7 @@ const bool ResamplingAlgorithms::__init = ResamplingAlgorithms::initStaticData()
 
 bool ResamplingAlgorithms::initStaticData()
 {
+	algorithmMap["none"]              = &ResamplingAlgorithms::NoResampling;
 	algorithmMap["linear"]            = &ResamplingAlgorithms::LinearResampling;
 	algorithmMap["nearest_neighbour"] = &ResamplingAlgorithms::NearestNeighbour;
 	algorithmMap["accumulate"]        = &ResamplingAlgorithms::Accumulate;
@@ -74,6 +77,21 @@ const resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algon
 /**********************************************************************************
  * The following functions are implementations of different resampling algorithms *
  **********************************************************************************/
+
+/**
+ * @brief No resampling: do not resample parameter but keep original sampling rate
+ * @code
+ * [Interpolations1D]
+ * TA::resample = none
+ * @endcode
+ */
+
+void ResamplingAlgorithms::NoResampling(const unsigned int& /*pos*/, const unsigned int& /*paramindex*/,
+                                        const std::vector<std::string>& /*taskargs*/, std::vector<MeteoData>& /*vecM*/)
+{
+	return;
+}
+
 
 /**
  * @brief Nearest Neighbour data resampling: Find the nearest neighbour of a desired data point 

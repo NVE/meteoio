@@ -61,19 +61,17 @@ class MeteoFilter {
 		/**
 		 * @brief A function that executes all the filters that have been setup in the constructor
 		 * @param[in] vecM The raw sequence of MeteoData objects for a given station
-		 * @param[in] vecS The meta data for the MeteoData objects in vecM
 		 * @param[out] vecWindowM The sequence of MeteoData objects that shall be filtered
-		 * @param[out] vecWindowS The meta data for the MeteoData objects in vecWindowM
 		 * @param[in] checkonly indicates whether to execute all filters or only "checkonly" filters
 		 */
 		void filterData(const std::vector<MeteoData>& vecM, std::vector<MeteoData>& vecWindowM,
-                          const bool& checkonly = false);
+		                const bool& checkonly = false);
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoFilter& data);
 
  	private:
 		unsigned int getFiltersForParameter(const std::string& parname, std::vector<std::string>& vecFilters);
-		unsigned int getArgumentsForFilter(const std::string& keyname, std::vector<std::string>& vecArguments);		
+		unsigned int getArgumentsForFilter(const std::string& keyname, std::vector<std::string>& vecArguments);
 		
 		Config cfg;
 		std::vector< std::vector<std::string> > tasklist;

@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/libinterpol1D.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -79,7 +80,7 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 
 double Interpol1D::getMedian(const std::vector<double>& vecData)
 {
-//TODO: use nth_element (in #include <algorithm>) for getting middle element
+//This uses a sorting algorithm for getting middle element
 // as much more efficient than full sorting (O(n) compared to O(n log(n))
 	if (vecData.size() == 0)
 		throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
@@ -96,12 +97,12 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 	
 	const unsigned int vecSize = vecTemp.size();
 	const unsigned int middle = (unsigned int)(vecSize/2);
-	sort(vecTemp.begin(), vecTemp.end());
+	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
 	if ((vecSize % 2) == 1){ //uneven
-		return vecTemp.at(middle);
+		return *(vecTemp.begin()+middle);
 	} else { //use arithmetic mean of element n/2 and n/2-1
-		return Interpol1D::linearInterpolation(vecTemp.at(middle-1), vecTemp.at(middle), 0.5);
+		return Interpol1D::linearInterpolation( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
 	}
 }
 

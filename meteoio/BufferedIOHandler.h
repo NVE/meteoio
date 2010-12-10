@@ -85,7 +85,6 @@ class BufferedIOHandler : public IOInterface {
 		 *
 		 * @param _date start date of the data search for each station
 		 * @param vecMeteo   A vector of MeteoData objects to be filled with data
-		 * @param vecStation A vector of StationData objects to be filled with meta data
 		 */
 		void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
 
@@ -115,7 +114,6 @@ class BufferedIOHandler : public IOInterface {
 		 * @endcode
 		 * @param _date       A Date object representing the date/time for the sought MeteoData objects
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
-		 * @param vecStation  A vector of StationData objects to be filled with data
 		 */
 		void readMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
 
@@ -130,14 +128,14 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-							  std::vector< std::vector<MeteoData> >& vecMeteo,
-							  const unsigned int& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           const unsigned int& stationindex=IOUtils::npos);
 #ifdef _POPC_
 		virtual void writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
-							   const std::string& name="");
+		                            const std::string& name="");
 #else
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-							   const std::string& name="");
+		                            const std::string& name="");
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
