@@ -131,8 +131,8 @@ class ImisIO : public IOInterface {
                               std::map<std::string, unsigned int>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
 		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames,
                                  const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
-		void assimilateAnetzData(const Date& dateStart, const Date& dateEnd, 
-							const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+		void assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
+							const std::vector< std::vector<double> > vec_of_psums, 
 							const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
 							std::vector< std::vector<MeteoData> >& vecMeteo);
 		void calculatePsum(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
