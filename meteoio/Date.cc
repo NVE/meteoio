@@ -98,6 +98,14 @@ Date::Date(const int& _year, const int& _month, const int& _day, const int& _hou
 }
 
 // SETTERS
+
+/**
+* @brief Set internal gmt time from system time
+*/
+void Date::setFromSys() {
+	setDate( time(NULL) ); //Unix time_t setter
+}
+
 /**
 * @brief Set timezone and Daylight Saving Time flag.
 * @param _timezone timezone as an offset to GMT (in hours)

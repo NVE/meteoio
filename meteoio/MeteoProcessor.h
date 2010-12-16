@@ -52,6 +52,7 @@ class MeteoProcessor {
  	private:
 		MeteoFilter mf;
 		Meteo1DInterpolator mi1d;
+		static const unsigned int window_half_size; //number of elements in filtering window on the left and right
 };
 } //end namespace
 

@@ -21,6 +21,8 @@ using namespace std;
 
 namespace mio {
 
+const unsigned int MeteoProcessor::window_half_size = 40; //org: 4
+
 MeteoProcessor::MeteoProcessor(const Config& cfg) : mf(cfg), mi1d(cfg) {}
 
 void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
@@ -35,7 +37,7 @@ void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>&
 	 * Cut out a window of data, on which the filtering and the resampling will occur
 	 */
 	bool windowexists = false;
-	for (int ii=(int)currentpos-5; ii<=(int)currentpos+4; ii++){
+	for (int ii=(int)(currentpos-window_half_size-1); ii<=(int)(currentpos+window_half_size); ii++){
 		if ((ii>=0) && (ii<(int)vecM.size())){
 			
 			if (!windowexists){
