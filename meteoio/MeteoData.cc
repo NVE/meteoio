@@ -333,6 +333,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 	if (pack){
 		buf.Pack(&resampled,1);
 		date.Serialize(buf,true);
+		meta.Serialize(buf,true);
 		buf.Pack(&nrOfAllParameters,1);
 		buf.Pack(&ta,1);
 		buf.Pack(&vw,1);
@@ -347,9 +348,10 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&hs,1);
 		buf.Pack(&p,1);
 		marshal_map_str_dbl(buf, extraparameters, 0, FLAG_MARSHAL, NULL);
-	}else{
+	} else {
 		buf.UnPack(&resampled,1);
 		date.Serialize(buf,false);
+		meta.Serialize(buf,false);
 		buf.UnPack(&nrOfAllParameters,1);
 		buf.UnPack(&ta,1);
 		buf.UnPack(&vw,1);
