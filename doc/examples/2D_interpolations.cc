@@ -9,7 +9,6 @@ using namespace mio; //The MeteoIO namespace is called mio
 int main(int /*argc*/, char** argv) {
 	Date d1;
 	std::vector<MeteoData> vecMeteo;
-	std::vector<StationData> vecStation;
 
 	//initializing the io handlers according to the config file
 	Config cfg("io.ini");
@@ -23,10 +22,10 @@ int main(int /*argc*/, char** argv) {
 	//we assume that the time given on the command line is in TZ=+1
 	d1.setTimeZone(1.);
 	IOUtils::convertString(d1,argv[1]);
-	io.readMeteoData(d1, vecMeteo, vecStation);
+	io.readMeteoData(d1, vecMeteo);
 
 	//performing spatial interpolations
-	Meteo2DInterpolator mi(cfg, dem, vecMeteo, vecStation);
+	Meteo2DInterpolator mi(cfg, dem, vecMeteo);
 	Grid2DObject param;
 	mi.interpolate(MeteoData::RH, param);
 

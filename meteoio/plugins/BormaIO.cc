@@ -73,9 +73,6 @@ void BormaIO::cleanup() throw()
 	}
 }
 
-//Clone function
-//BormaIO* BormaIO::clone() const { return new BormaIO(*this); }
-
 void BormaIO::read2DGrid(Grid2DObject&, const std::string& filename)
 {
 	//Nothing so far

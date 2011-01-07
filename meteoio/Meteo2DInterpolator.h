@@ -141,6 +141,9 @@ class Meteo2DInterpolator {
 		unsigned int getArgumentsForAlgorithm(const MeteoData::Parameters& param, 
 		                                      const std::string& algorithm,
 		                                      std::vector<std::string>& vecArgs) const;
+
+		friend std::ostream& operator<<(std::ostream& os, const Meteo2DInterpolator& mi);
+
 	private:
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction

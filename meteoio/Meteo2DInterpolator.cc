@@ -23,8 +23,8 @@ using namespace std;
 namespace mio {
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, const DEMObject& i_dem,
-								 const std::vector<MeteoData>& i_vecMeteo)
-	: cfg(i_cfg), dem(i_dem), vecMeteo(i_vecMeteo)
+                                         const std::vector<MeteoData>& i_vecMeteo)
+                                         : cfg(i_cfg), dem(i_dem), vecMeteo(i_vecMeteo)
 {
 	/*
 	 * By reading the Config object build up a list of user configured algorithms
@@ -174,28 +174,50 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 	}
 }
 
+std::ostream& operator<<(std::ostream &os, const Meteo2DInterpolator &mi) {
+	os << "<Meteo2DInterpolator>\n";
+	os << "Config *cfg = " << hex << &mi.cfg << "\n";
+	os << "DemObject *dem= " << hex << &mi.dem << "\n";
+
+	const unsigned int nb_stations = mi.vecMeteo.size();
+	os << "Current vecMeteo content : " << nb_stations << " stations";
+	if(nb_stations>0) os << " at " << mi.vecMeteo[0].date.toString(Date::ISO);
+	os << " \n";
+
+	os << "User list of algorithms:\n";
+	std::map<std::string, std::vector<std::string> >::const_iterator iter = mi.mapAlgorithms.begin();
+	for (; iter != mi.mapAlgorithms.end(); iter++) {
+		os << setw(10) << iter->first << " :: ";
+		for(unsigned int jj=0; jj<iter->second.size(); jj++) {
+			os << iter->second[jj] << " ";
+		}
+		os << "\n";
+	}
+
+	os << "</Meteo2DInterpolator>\n";
+	return os;
+}
+
 
 #ifdef _POPC_
 #include "marshal_meteoio.h"
 void Meteo2DInterpolator::Serialize(POPBuffer &buf, bool pack)
 {
-//TODO: check this serialization!! It seems dubious that it would work at all...
-	if (pack)
+//TODO: check this serialization!!
+	/*if (pack)
 	{
-		/*buf.Pack(*cfg,1);
-		buf.Pack(*dem,1);
+		buf.Pack(cfg,1); //Pbl: cfg is a reference...
+		buf.Pack(dem,1);
 		marshal_METEO_DATASET(buf, vecMeteo, 0, FLAG_MARSHAL, NULL);
-		marshal_STATION_DATASET(buf, vecStation, 0, FLAG_MARSHAL, NULL);
-		marshal_map_str_vecstr(buf, mapAlgorithms, 0, FLAG_MARSHAL, NULL);*/
+		marshal_map_str_vecstr(buf, mapAlgorithms, 0, FLAG_MARSHAL, NULL);
 	}
 	else
 	{
-		/*buf.UnPack(*cfg,1);
-		buf.UnPack(*dem,1);
+		buf.UnPack(cfg,1);
+		buf.UnPack(dem,1);
 		marshal_METEO_DATASET(buf, vecMeteo, 0, !FLAG_MARSHAL, NULL);
-		marshal_STATION_DATASET(buf, vecStation, 0, !FLAG_MARSHAL, NULL);
-		marshal_map_str_vecstr(buf, mapAlgorithms, 0, !FLAG_MARSHAL, NULL);*/
-	}
+		marshal_map_str_vecstr(buf, mapAlgorithms, 0, !FLAG_MARSHAL, NULL);
+	}*/
 }
 #endif
 

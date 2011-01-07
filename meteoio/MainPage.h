@@ -295,7 +295,6 @@ namespace mio {
  * 	//provide date as ISO formatted, for example 2008-12-01T15:35:00
  * 	Date d1;
  * 	std::vector<mio::MeteoData> vecMeteo;
- * 	std::vector<mio::StationData> vecStation;
  *
  * 	mio::IOHandler *raw_io = NULL;
  * 	mio::BufferedIOHandler *io = NULL;
@@ -310,15 +309,14 @@ namespace mio {
  *
  * 	try {
  * 		mio::convertString(d1,argv[1]);
- * 		io->readMeteoData(d1, vecMeteo, vecStation);
+ * 		io->readMeteoData(d1, vecMeteo);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem when reading data, cause: " << e.what() << std::endl;
  * 	}
  *
  * 	//writing some data out in order to prove that it really worked!
  * 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
- * 		std::cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << std::endl;
- * 		std::cout << vecStation[ii] << std::endl;
+ * 		std::cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << std::endl;
  * 		std::cout << vecMeteo[ii] << std::endl;
  * 	}
  *
@@ -363,11 +361,10 @@ namespace mio {
  *
  * The next example shows how to compute and output spatial interpolations using previously read meteorological data and DEM.
  * \code
- * void spatial_interpolations(mio::IOHandler& io, mio::DEMObject& dem, std::vector<mio::MeteoData>& vecMeteo,
- * 		std::vector<mio::StationData>& vecStation);
+ * void spatial_interpolations(mio::IOHandler& io, mio::DEMObject& dem, std::vector<mio::MeteoData>& vecMeteo);
  * {
  * 	mio::Grid2DObject ta;
- * 	mio::Meteo2DInterpolator mi(dem, vecMeteo, vecStation);
+ * 	mio::Meteo2DInterpolator mi(dem, vecMeteo);
  *
  * 	mi.interpolate(mio::MeteoData::TA, ta);
  *

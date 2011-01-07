@@ -33,10 +33,6 @@ namespace mio {
 
 class A3DIO : public IOInterface {
 	public:
-		//virtual A3DIO* clone() const;
-
-		//A3DIO(void (*delObj)(void*), const std::string& filename);
-
 		A3DIO(const std::string& configfile);
 		A3DIO(const A3DIO&);
 		A3DIO(const Config&);

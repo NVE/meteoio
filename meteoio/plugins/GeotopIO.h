@@ -35,8 +35,6 @@ namespace mio {
  */
 class GeotopIO : public IOInterface {
 	public:
-		//virtual GeotopIO* clone() const;
-
 		GeotopIO(void (*delObj)(void*), const Config& i_cfg);
 
 		GeotopIO(const std::string& configfile);

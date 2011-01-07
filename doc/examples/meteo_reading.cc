@@ -9,7 +9,6 @@ using namespace mio; //The MeteoIO namespace is called mio
 int main(int /*argc*/, char** argv) {
 	Date d1;
 	std::vector<MeteoData> vecMeteo;
-	std::vector<StationData> vecStation;
 
 	Config cfg("io.ini");
 	IOHandler raw_io(cfg);
@@ -18,12 +17,11 @@ int main(int /*argc*/, char** argv) {
 	//we assume that the time given on the command line is in TZ=+1
 	d1.setTimeZone(1.);
 	IOUtils::convertString(d1,argv[1]);
-	io.readMeteoData(d1, vecMeteo, vecStation);
+	io.readMeteoData(d1, vecMeteo);
 
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
-		std::cout << "---------- Station: " << (ii+1) << " / " << vecStation.size() << std::endl;
-		std::cout << vecStation[ii] << std::endl;
+		std::cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << std::endl;
 		std::cout << vecMeteo[ii] << std::endl;
 	}
 

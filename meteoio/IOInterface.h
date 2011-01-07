@@ -94,19 +94,6 @@ class IOInterface : public PluginObject {
 		virtual ~IOInterface();
 
 		/**
-		* @brief A virtual copy constructor used for cloning objects
-		*    
-		* Example Usage:
-		* @code
-		* IOInterface *io1,*io2;
-		* io1 = new IOHandler("io.ini");
-		* io2 = io1->clone(); 
-		* @endcode
-		* @return A pointer to the cloned object.
-		*/
-		//virtual IOInterface* clone() const = 0;
-
-		/**
 		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the 
 		* specific 2D grid to be parsed into the Grid2DObject.
 		* @param grid_out A Grid2DObject instance 
@@ -168,11 +155,10 @@ class IOInterface : public PluginObject {
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* vector< vector<StationData> > vecStation;  //empty vector
 		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
 		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
 		* IOHandler io1("io.ini");
-		* io1.readMeteoData(d1, d2, vecMeteo, vecStation);
+		* io1.readMeteoData(d1, d2, vecMeteo);
 		* @endcode
 		* @param dateStart   A Date object representing the beginning of an interval (inclusive)
 		* @param dateEnd     A Date object representing the end of an interval (inclusive)
@@ -196,12 +182,11 @@ class IOInterface : public PluginObject {
 		* An example implementation (reading and writing):
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
-		* vector< vector<StationData> > vecStation;  //empty vector
 		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
 		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
 		* IOHandler io1("io.ini");
-		* io1.readMeteoData(d1, d2, vecMeteo, vecStation);
-		* io1.writeMeteoData(vecMeteo, vecStation)
+		* io1.readMeteoData(d1, d2, vecMeteo);
+		* io1.writeMeteoData(vecMeteo)
 		* @endcode
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
 		* @param name        (optional string) Identifier usefull for the output plugin (it could become part
