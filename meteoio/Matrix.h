@@ -117,6 +117,14 @@ class Matrix {
 		//void inv();
 
 		/**
+		* @brief matrix solving for A·X=B.
+		* It first performs LU decomposition and then solves A·X=B by
+		* backward and forward solving of LU * X = B
+		* @return solution matrix
+		*/
+		static const Matrix solve(const Matrix& A, const Matrix& B);
+
+		/**
 		* @brief matrix determinant
 		* @return determinant
 		*/

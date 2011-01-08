@@ -346,7 +346,6 @@ double Matrix::det() const {
 void Matrix::LU(Matrix& L, Matrix& U) const {
 //Dolittle algorithm, cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html
 //HACK: there is no permutation matrix, so it might not be able to give a decomposition...
-//This is implemented for matrix storage from 0 to n-1
 	if(nrows!=ncols) {
 		std::stringstream tmp;
 		tmp << "Trying to calculate the LU decomposition of a non-square matrix ";
@@ -412,7 +411,7 @@ const Matrix Matrix::inv() const {
 		Y(i,i) = 1./L(i,i); //j==i
 		for(unsigned int j=1; j<i; j++) { //j<i
 			double sum=0.;
-			for(unsigned int k=i-1; k>=1; k--) {
+			for(unsigned int k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
 				sum += L(i,k) * Y(k,j);
 			}
 			Y(i,j) = -1./(L(i,i)+1e-12) * sum;
@@ -436,6 +435,58 @@ const Matrix Matrix::inv() const {
 
 	return X;
 }
+
+const Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
+//This uses an LU decomposition followed by backward and forward solving for A·X=B
+	unsigned int nrows,ncols;
+	A.size(nrows, ncols);
+	if(nrows!=ncols) {
+		std::stringstream tmp;
+		tmp << "Trying to solve A·X=B with A non square matrix ";
+		tmp << "(" << nrows << "," << ncols << ") !";
+		throw IOException(tmp.str(), AT);
+	}
+	const unsigned int n = nrows;
+
+	Matrix U;
+	Matrix L;
+	A.LU(L, U); //LU decomposition of A
+
+	//checking that the matrix can be inversed
+	double product=1.;
+	for(unsigned int i=1; i<=n; i++) product *= U(i,i);
+	if(product==0.) {
+		throw IOException("The given A matrix in solving A·X=B is singular and can not be inversed", AT);
+	}
+
+	//we solve AX=B. Since A=LU, then LUX = B
+	//we start by forward solving LY=B with Y=UX
+	Matrix Y(n, n);
+	for(unsigned int i=1; i<=n; i++) {
+		for(unsigned int j=1; j<=n; j++) {
+			double sum=0.;
+			for(unsigned int k=1; k<i; k++) {
+				sum += L(i,k) * Y(k,j);
+			}
+			Y(i,j) = (B(i,j) - sum) / (L(i,i)+1e-12);
+		}
+	}
+
+	//now, we backward solve UX=Y
+	Matrix X(n,n);
+	for(unsigned int i=n; i>=1; i--) { //lines
+		for(unsigned int j=1; j<=n; j++) {
+			double sum = 0.;
+			for(unsigned int k=i+1; k<=n; k++) {
+				sum += U(i,k) * X(k,j);
+			}
+			X(i,j) = (Y(i,j) - sum) / (U(i,i)+1e-12);
+		}
+	}
+
+	return X;
+}
+
 
 bool Matrix::isIdentity() const {
 	const double eps=1e-6;
