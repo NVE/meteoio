@@ -760,7 +760,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	Matrix G(nrOfMeasurments, nrOfMeasurments);
 	Matrix gamma((unsigned int)1, nrOfMeasurments);
 	const Matrix One((unsigned int)1, nrOfMeasurments, 1.);
-	const Matrix One_T = One.T();
+	const Matrix One_T = One.getT();
 
 	//fill the G matrix
 	for(unsigned int i=1; i<=nrOfMeasurments; i++) {
@@ -780,7 +780,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	}
 
 	//G inverse matrix
-	const Matrix Ginv = G.inv();
+	const Matrix Ginv = G.getInv();
 
 	//calculate constant denominator
 	const Matrix OneT_Ginv = One_T * Ginv;

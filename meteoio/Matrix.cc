@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -51,6 +51,19 @@ Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double&
 
 Matrix::Matrix(const unsigned int& n, const double& init) {
 	identity(n, init);
+}
+
+Matrix::Matrix(const Matrix& init) {
+	if(nrows!=0 || ncols!=0) clear();
+	unsigned int tmprows, tmpcols;
+	init.size(tmprows, tmpcols);
+	resize(tmprows, tmpcols);
+
+	for (unsigned int ii=1; ii<=nrows; ii++) {
+		for (unsigned int jj=1; jj<=ncols; jj++) {
+			operator()(ii,jj) = init(ii,jj);
+		}
+	}
 }
 
 void Matrix::identity(const unsigned int& n, const double& init) {
@@ -312,7 +325,7 @@ double Matrix::scalar(const Matrix& m) {
 	return m.scalar();
 }
 
-const double Matrix::scalar() const {
+double Matrix::scalar() const {
 	if(ncols!=1 || nrows!=1) {
 		std::stringstream tmp;
 		tmp << "Trying to get scalar value of a non (1x1) matrix ";
@@ -323,14 +336,10 @@ const double Matrix::scalar() const {
 }
 
 Matrix Matrix::T(const Matrix& m) {
-	return m.T();
+	return m.getT();
 }
 
-/*void Matrix::T() {
-
-}*/
-
-const Matrix Matrix::T() const {
+Matrix Matrix::getT() const {
 //other possibility: create a "transpose" flag that simply swaps the data reading...
 	Matrix result(ncols, nrows);
 	for(unsigned int i=1; i<=result.nrows; i++) {
@@ -340,6 +349,11 @@ const Matrix Matrix::T() const {
 	}
 	return result;
 }
+
+/*void Matrix::T() {
+	Matrix tmp(*this);
+	*this = tmp.getT();
+}*/
 
 double Matrix::det() const {
 	if(nrows!=ncols) {
@@ -395,11 +409,7 @@ bool Matrix::LU(Matrix& L, Matrix& U) const {
 	return true;
 }
 
-/*void Matrix::inv() {
-	
-}*/
-
-const Matrix Matrix::inv() const {
+Matrix Matrix::getInv() const {
 //This uses an LU decomposition followed by backward and forward solving for the inverse
 //See for example Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
 	if(nrows!=ncols) {
@@ -454,7 +464,60 @@ const Matrix Matrix::inv() const {
 	return X;
 }
 
-const Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
+void Matrix::inv() {
+//same as getInv() const but we write the final result on top of the input matrix
+	if(nrows!=ncols) {
+		std::stringstream tmp;
+		tmp << "Trying to invert a non-square matrix ";
+		tmp << "(" << nrows << "," << ncols << ") !";
+		throw IOException(tmp.str(), AT);
+	}
+	const unsigned int n = nrows;
+
+	Matrix U;
+	Matrix L;
+	if(LU(L, U)==false) {
+		throw IOException("LU decomposition of given matrix not possible", AT);
+	}
+
+	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
+	//we start by forward solving LY=I with Y=UX
+	Matrix Y(n, n);
+	for(unsigned int i=1; i<=n; i++) {
+		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
+			throw IOException("The given matrix can not be inversed", AT);
+		}
+		Y(i,i) = 1./L(i,i); //j==i
+		for(unsigned int j=1; j<i; j++) { //j<i
+			double sum=0.;
+			for(unsigned int k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
+				sum += L(i,k) * Y(k,j);
+			}
+			Y(i,j) = -1./L(i,i) * sum;
+		}
+		for(unsigned int j=i+1; j<=n; j++) { //j>i
+			Y(i,j) = 0.;
+		}
+	}
+
+	//now, we backward solve UX=Y
+	Matrix& X = *this; //we write the solution over the input matrix
+	for(unsigned int i=n; i>=1; i--) { //lines
+		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
+			throw IOException("The given matrix is singular and can not be inversed", AT);
+		}
+		for(unsigned int j=1; j<=n; j++) { //lines
+			double sum=0.;
+			for(unsigned int k=i+1; k<=n; k++) {
+				sum += U(i,k) * X(k,j);
+			}
+			X(i,j) = (Y(i,j) - sum) / U(i,i);
+		}
+	}
+}
+
+
+Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
 	unsigned int Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);

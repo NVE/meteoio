@@ -68,6 +68,12 @@ class Matrix {
 		Matrix(const unsigned int& n, const double& init);
 
 		/**
+		* @brief Copy constructor
+		* @param init matrix to copy
+		*/
+		Matrix(const Matrix& init);
+
+		/**
 		* @brief Convert the current matrix to a identity matrix of size n
 		* @param n dimension of the new square matrix
 		* @param init initial value to fill the matrix with
@@ -90,7 +96,7 @@ class Matrix {
 		void clear();
 
 		/**
-		* @brief fill the matrix with random numbers
+		* @brief fill the matrix with random numbers.
 		* @param range range of the randoms numbers (they will be between -range and +range)
 		*/
 		void random(const double& range);
@@ -99,17 +105,17 @@ class Matrix {
 		double operator ()(const unsigned int& x, const unsigned int& y) const;
 
 		/**
-		* @brief Return a 1x1 matrix as a scalar
+		* @brief Converts a 1x1 matrix to a scalar.
 		* @return scalar value
 		*/
-		const double scalar() const;
+		double scalar() const;
 		static double scalar(const Matrix& m);
 
 		/**
-		* @brief matrix transpose
+		* @brief matrix transpose.
 		* @return transposed matrix
 		*/
-		const Matrix T() const;
+		Matrix getT() const;
 		static Matrix T(const Matrix& m);
 		//void T();
 
@@ -120,8 +126,8 @@ class Matrix {
 		* see Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
 		* @return inversed matrix
 		*/
-		const Matrix inv() const;
-		//void inv();
+		Matrix getInv() const;
+		void inv();
 
 		/**
 		* @brief matrix solving for A·X=B.
@@ -129,7 +135,7 @@ class Matrix {
 		* backward and forward solving of LU * X = B
 		* @return solution matrix
 		*/
-		static const Matrix solve(const Matrix& A, const Matrix& B);
+		static Matrix solve(const Matrix& A, const Matrix& B);
 
 		/**
 		* @brief matrix determinant
