@@ -89,6 +89,12 @@ class Matrix {
 		*/
 		void clear();
 
+		/**
+		* @brief fill the matrix with random numbers
+		* @param range range of the randoms numbers (they will be between -range and +range)
+		*/
+		void random(const double& range);
+
 		double& operator ()(const unsigned int& x, const unsigned int& y);
 		double operator ()(const unsigned int& x, const unsigned int& y) const;
 
@@ -111,6 +117,7 @@ class Matrix {
 		* @brief matrix invert. 
 		* It first performs LU decomposition and then computes the inverse by
 		* backward and forward solving of LU * A-1 = I
+		* see Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
 		* @return inversed matrix
 		*/
 		const Matrix inv() const;
@@ -137,8 +144,9 @@ class Matrix {
 		* HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 		* @param L lower diagonal matrix
 		* @param U upper diagonal matrix
+		* @return false if the decomposition can not be performed (division by zero)
 		*/
-		void LU(Matrix& L, Matrix& U) const;
+		bool LU(Matrix& L, Matrix& U) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Matrix& data);
 
@@ -174,6 +182,7 @@ class Matrix {
 		std::vector<double> vecData;
 		unsigned int ncols;
 		unsigned int nrows;
+		static const double epsilon, epsilon_mtr;
 };
 
 } //end namespace

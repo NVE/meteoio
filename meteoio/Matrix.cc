@@ -17,8 +17,12 @@
 */
 
 #include <meteoio/Matrix.h>
+#include <time.h> //needed for random()
 
 namespace mio {
+
+const double Matrix::epsilon = 1e-9; //for considering a determinant to be zero, etc
+const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrix
 
 Matrix::Matrix() {
 	nrows = ncols = 0;
@@ -87,6 +91,15 @@ void Matrix::clear() {
 	nrows=ncols=0;
 }
 
+void Matrix::random(const double& range) {
+	srand((unsigned)time(0));
+	for(unsigned int i=1; i<=nrows; i++) {
+		for(unsigned int j=1; j<=ncols; j++) {
+			operator()(i,j) = (double)rand()/(double)RAND_MAX*range;
+		}
+	}
+}
+
 double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
@@ -134,7 +147,8 @@ bool Matrix::operator==(const Matrix& in) const {
 
 	for(unsigned int i=1; i<=nrows; i++) {
 		for(unsigned int j=1; j<=ncols; j++) {
-			if( operator()(i,j) != in(i,j) ) return false;
+			//if( operator()(i,j) != in(i,j) ) return false;
+			if( !IOUtils::checkEpsilonEquality( operator()(i,j) , in(i,j), epsilon_mtr) ) return false;
 		}
 	}
 
@@ -335,7 +349,7 @@ double Matrix::det() const {
 		throw IOException(tmp.str(), AT);
 	}
 	Matrix L,U;
-	LU(L,U);
+	if(LU(L,U)==false) return 0.;
 
 	double product=1.;
 	for(unsigned int i=1; i<=nrows; i++) product *= U(i,i);
@@ -343,7 +357,7 @@ double Matrix::det() const {
 	return product;
 }
 
-void Matrix::LU(Matrix& L, Matrix& U) const {
+bool Matrix::LU(Matrix& L, Matrix& U) const {
 //Dolittle algorithm, cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html
 //HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 	if(nrows!=ncols) {
@@ -370,13 +384,15 @@ void Matrix::LU(Matrix& L, Matrix& U) const {
 			U(k,j) = A(k,j) - sum;
 		}
 
+		if( k<n && IOUtils::checkEpsilonEquality(U(k,k), 0., epsilon) ) return false; //we can not compute L
 		//compute L elements
 		for(unsigned int i=k+1; i<=n; i++) {
 			double sum=0.;
 			for(unsigned int m=1; m<=(k-1); m++) sum += L(i,m)*U(m,k);
-			L(i,k) = (A(i,k) - sum) / (U(k,k)+1e-12);
+			L(i,k) = (A(i,k) - sum) / U(k,k);
 		}
 	}
+	return true;
 }
 
 /*void Matrix::inv() {
@@ -385,6 +401,7 @@ void Matrix::LU(Matrix& L, Matrix& U) const {
 
 const Matrix Matrix::inv() const {
 //This uses an LU decomposition followed by backward and forward solving for the inverse
+//See for example Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
 	if(nrows!=ncols) {
 		std::stringstream tmp;
 		tmp << "Trying to invert a non-square matrix ";
@@ -395,26 +412,24 @@ const Matrix Matrix::inv() const {
 
 	Matrix U;
 	Matrix L;
-	LU(L, U); //LU decomposition of current object
-
-	//checking that the matrix can be inversed
-	double product=1.;
-	for(unsigned int i=1; i<=n; i++) product *= U(i,i);
-	if(product==0.) {
-		throw IOException("The given matrix is singular and can not be inversed", AT);
+	if(LU(L, U)==false) {
+		throw IOException("LU decomposition of given matrix not possible", AT);
 	}
 
 	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
 	//we start by forward solving LY=I with Y=UX
 	Matrix Y(n, n);
 	for(unsigned int i=1; i<=n; i++) {
+		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
+			throw IOException("The given matrix can not be inversed", AT);
+		}
 		Y(i,i) = 1./L(i,i); //j==i
 		for(unsigned int j=1; j<i; j++) { //j<i
 			double sum=0.;
 			for(unsigned int k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
 				sum += L(i,k) * Y(k,j);
 			}
-			Y(i,j) = -1./(L(i,i)+1e-12) * sum;
+			Y(i,j) = -1./L(i,i) * sum;
 		}
 		for(unsigned int j=i+1; j<=n; j++) { //j>i
 			Y(i,j) = 0.;
@@ -424,12 +439,15 @@ const Matrix Matrix::inv() const {
 	//now, we backward solve UX=Y
 	Matrix X(n,n);
 	for(unsigned int i=n; i>=1; i--) { //lines
+		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
+			throw IOException("The given matrix is singular and can not be inversed", AT);
+		}
 		for(unsigned int j=1; j<=n; j++) { //lines
 			double sum=0.;
 			for(unsigned int k=i+1; k<=n; k++) {
 				sum += U(i,k) * X(k,j);
 			}
-			X(i,j) = (Y(i,j) - sum) / (U(i,i)+1e-12);
+			X(i,j) = (Y(i,j) - sum) / U(i,i);
 		}
 	}
 
@@ -438,49 +456,59 @@ const Matrix Matrix::inv() const {
 
 const Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
-	unsigned int nrows,ncols;
-	A.size(nrows, ncols);
-	if(nrows!=ncols) {
+	unsigned int Anrows,Ancols, Bnrows, Bncols;
+	A.size(Anrows, Ancols);
+	if(Anrows!=Ancols) {
 		std::stringstream tmp;
 		tmp << "Trying to solve A·X=B with A non square matrix ";
-		tmp << "(" << nrows << "," << ncols << ") !";
+		tmp << "(" << Anrows << "," << Ancols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
-	const unsigned int n = nrows;
+	B.size(Bnrows, Bncols);
+	if(Anrows!=Bnrows)  {
+		std::stringstream tmp;
+		tmp << "Trying to solve A·X=B with A and B of incompatible dimensions ";
+		tmp << "(" << Anrows << "," << Ancols << ") and (";
+		tmp << "(" << Bnrows << "," << Bncols << ") !";
+		throw IOException(tmp.str(), AT);
+	}
+	const unsigned int n = Anrows;
+	const unsigned int m = Bncols;
 
 	Matrix U;
 	Matrix L;
-	A.LU(L, U); //LU decomposition of A
-
-	//checking that the matrix can be inversed
-	double product=1.;
-	for(unsigned int i=1; i<=n; i++) product *= U(i,i);
-	if(product==0.) {
-		throw IOException("The given A matrix in solving A·X=B is singular and can not be inversed", AT);
+	if(A.LU(L, U)==false) {
+		throw IOException("LU decomposition of A matrix not possible", AT);
 	}
 
 	//we solve AX=B. Since A=LU, then LUX = B
 	//we start by forward solving LY=B with Y=UX
-	Matrix Y(n, n);
+	Matrix Y(n, m);
 	for(unsigned int i=1; i<=n; i++) {
-		for(unsigned int j=1; j<=n; j++) {
+		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
+			throw IOException("The given matrix can not be inversed", AT);
+		}
+		for(unsigned int j=1; j<=m; j++) {
 			double sum=0.;
 			for(unsigned int k=1; k<i; k++) {
 				sum += L(i,k) * Y(k,j);
 			}
-			Y(i,j) = (B(i,j) - sum) / (L(i,i)+1e-12);
+			Y(i,j) = (B(i,j) - sum) / L(i,i);
 		}
 	}
 
 	//now, we backward solve UX=Y
-	Matrix X(n,n);
+	Matrix X(n,m);
 	for(unsigned int i=n; i>=1; i--) { //lines
-		for(unsigned int j=1; j<=n; j++) {
+		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
+			throw IOException("The given matrix is singular and can not be inversed", AT);
+		}
+		for(unsigned int j=1; j<=m; j++) {
 			double sum = 0.;
 			for(unsigned int k=i+1; k<=n; k++) {
 				sum += U(i,k) * X(k,j);
 			}
-			X(i,j) = (Y(i,j) - sum) / (U(i,i)+1e-12);
+			X(i,j) = (Y(i,j) - sum) / U(i,i);
 		}
 	}
 
@@ -489,8 +517,6 @@ const Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 
 
 bool Matrix::isIdentity() const {
-	const double eps=1e-6;
-
 	if(nrows!=ncols) {
 		std::stringstream tmp;
 		tmp << "A non-square matrix ";
@@ -503,12 +529,12 @@ bool Matrix::isIdentity() const {
 		for(unsigned int j=1; j<=ncols; j++) {
 			const double val = operator()(i,j);
 			if(i!=j) {
-				if(IOUtils::checkEpsilonEquality(val,0.,eps)==false) {
+				if(IOUtils::checkEpsilonEquality(val,0.,epsilon_mtr)==false) {
 					is_identity=false;
 					break;
 				}
 			} else {
-				if(IOUtils::checkEpsilonEquality(val,1.,eps)==false) {
+				if(IOUtils::checkEpsilonEquality(val,1.,epsilon_mtr)==false) {
 					is_identity=false;
 					break;
 				}
