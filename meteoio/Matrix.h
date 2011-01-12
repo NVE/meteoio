@@ -117,7 +117,7 @@ class Matrix {
 		*/
 		Matrix getT() const;
 		static Matrix T(const Matrix& m);
-		//void T();
+		void T();
 
 		/**
 		* @brief matrix invert. 

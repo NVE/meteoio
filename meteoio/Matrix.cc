@@ -50,13 +50,14 @@ Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double&
 }
 
 Matrix::Matrix(const unsigned int& n, const double& init) {
+	nrows = ncols = 0;
 	identity(n, init);
 }
 
 Matrix::Matrix(const Matrix& init) {
-	if(nrows!=0 || ncols!=0) clear();
 	unsigned int tmprows, tmpcols;
 	init.size(tmprows, tmpcols);
+	nrows = ncols = 0;
 	resize(tmprows, tmpcols);
 
 	for (unsigned int ii=1; ii<=nrows; ii++) {
@@ -67,7 +68,6 @@ Matrix::Matrix(const Matrix& init) {
 }
 
 void Matrix::identity(const unsigned int& n, const double& init) {
-	nrows = ncols = 0;
 	resize(n,n,0.);
 	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
 }
@@ -350,10 +350,10 @@ Matrix Matrix::getT() const {
 	return result;
 }
 
-/*void Matrix::T() {
+void Matrix::T() {
 	Matrix tmp(*this);
 	*this = tmp.getT();
-}*/
+}
 
 double Matrix::det() const {
 	if(nrows!=ncols) {

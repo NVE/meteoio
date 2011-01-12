@@ -8,26 +8,20 @@ using namespace mio; //The MeteoIO namespace is called mio
 //Obviously, a large number will fill your screen with the output.
 int main(int /*argc*/, char** argv) {
 
-	srand((unsigned)time(0));
-	const double rand_range = 10.;
 	unsigned int n;
 	IOUtils::convertString(n, argv[1]);
 
 	//we create a suqare matrix of size n, filled with random numbers
 	Matrix m1(n,n);
-	for(unsigned int i=1; i<=n; i++) {
-		for(unsigned int j=1; j<=n; j++) {
-			m1(i,j)=floor((double)rand()/(double)RAND_MAX*rand_range);
-		}
-	}
+	m1.random(10.);
 
 	std::cout << "Randomly filled (" << n << "," << n << ") matrix\n";
 	std::cout << "\t\tm1=" << m1; //print the matrix on the screen
 	std::cout << "=> det(m1)=" << m1.det() << "\n"; //determinant
-	std::cout << "\t\tT(m1)=" << m1.T(); //transpose
+	std::cout << "\t\tT(m1)=" << m1.getT(); //transpose
 	std::cout << "\t\tm1-2=" << m1-2.; //arithmetic with scalars
 	std::cout << "\t\tm1*m1=" << m1*m1; //arithmetic with matrices
-	Matrix m2= m1.inv();
+	Matrix m2= m1.getInv();
 	std::cout << "\t\tinv(m1)=" << m2; //inverse
 	Matrix m3=m1*m2;
 	if(m3.isIdentity()==true) //test if this is the identity matrix
@@ -35,9 +29,16 @@ int main(int /*argc*/, char** argv) {
 	else
 		std::cout << "=> m1*inv(m1) is NOT identity matrix\n";
 
+	Matrix I(n,1.); //build an n*n identity matrix
+	Matrix m4=Matrix::solve(m1,I); //solve m1*X=I
+	std::cout << "\tIn m1*X=I, X=" << m4; //print the matrix on the screen
+
 	Matrix L,U;
-	m1.LU(L,U); //LU factorization
-	std::cout << "\tLU factorization of m1: L=" << L << "\t\tU=" << U;
+	if(m1.LU(L,U)==false) { //LU factorization
+		std::cout << "\tLU factorization of m1 can not be computed\n";
+	} else {
+		std::cout << "\tLU factorization of m1: L=" << L << "\t\tU=" << U;
+	}
 
 	return 0;
 }
