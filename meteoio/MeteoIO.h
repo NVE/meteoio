@@ -48,6 +48,7 @@
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/ResamplingAlgorithms.h>
 #include <meteoio/StationData.h>
+#include <meteoio/IOManager.h>
 
 #ifdef _POPC_
 #include <meteoio/IOHandler.ph>

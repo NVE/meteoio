@@ -158,9 +158,14 @@ class BufferedIOHandler : public IOInterface {
 		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
 
 	private:
+		void legacy_readMeteoData(const Date& dateStart, const Date& dateEnd,
+							 std::vector< std::vector<MeteoData> >& vecMeteo,
+							 const unsigned int& stationindex=IOUtils::npos);
+
 		bool bufferData(const Date& _date, const unsigned int& stationindex);
 		void bufferAllData(const Date& _date);
 		void setDfltBufferProperties();
+		void bufferAllData(const Date& date_start, const Date& date_end);
 
 		IOHandler& iohandler;
 		Config cfg;
@@ -168,8 +173,10 @@ class BufferedIOHandler : public IOInterface {
 
 		bool always_rebuffer;
 		Date bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date
+		Date buffer_start, buffer_end;
 
 		std::vector< std::vector<MeteoData> > meteoBuffer;
+		std::vector< std::vector<MeteoData> > vec_buffer_meteo;
 		std::vector< Date > startDateBuffer;
 		std::vector< Date > endDateBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;

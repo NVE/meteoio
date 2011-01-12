@@ -47,6 +47,8 @@ class MeteoProcessor {
 		 */
 		void processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md);
 
+		void getWindowSize(Date& dateStart, Date& dateEnd, unsigned int& num_of_points);
+
 		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
 
  	private:

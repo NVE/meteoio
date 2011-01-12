@@ -25,6 +25,14 @@ const unsigned int MeteoProcessor::window_half_size = 40; //org: 4
 
 MeteoProcessor::MeteoProcessor(const Config& cfg) : mf(cfg), mi1d(cfg) {}
 
+void MeteoProcessor::getWindowSize(Date& time_before, Date& time_after, unsigned int& num_of_points)
+{
+	//Plan: parse through io.ini and establish the maximal window size needed
+	time_before.setDate(1.0); //a day
+	time_after.setDate(1.0);  //a day
+	num_of_points = 0;
+}
+
 void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	unsigned int currentpos = IOUtils::seek(date, vecM, false); 
