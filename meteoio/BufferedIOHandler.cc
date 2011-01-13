@@ -360,6 +360,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 }
 
 void BufferedIOHandler::bufferAllData(const Date& date_start, const Date& date_end){
+	vec_buffer_meteo.clear();
 	iohandler.readMeteoData(date_start, date_end, vec_buffer_meteo);
 	buffer_start = date_start;
 	buffer_end   = date_end;

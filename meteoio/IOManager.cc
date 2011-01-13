@@ -110,28 +110,75 @@ void IOManager::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecM
 	}
 }
 
-void IOManager::interpolate(const Date& date, const MeteoData::Parameters& meteoparam, Grid2DObject& result)
+void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+                            Grid2DObject& result)
 {
 	string info_string;
-	interpolate(date, meteoparam, result, info_string);
+	interpolate(date, dem, meteoparam, result, info_string);
 }
 	
-void IOManager::interpolate(const Date& date, const MeteoData::Parameters& meteoparam,
+void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 					   Grid2DObject& result, std::string& info_string)
 {
-	DEMObject dem;
-	
-	if (processing_level == IOManager::raw){
-		rawio.readDEM(dem);
-	} else {
-		bufferedio.readDEM(dem);
-	}
-
 	vector<MeteoData> vec_meteo;
 	getMeteoData(date, vec_meteo);
 
 	Meteo2DInterpolator mi(cfg, dem, vec_meteo);
 	mi.interpolate(meteoparam, result, info_string);
+}
+
+void IOManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
+{
+	if (processing_level == IOManager::raw){
+		rawio.read2DGrid(grid2D, filename);
+	} else {
+		bufferedio.read2DGrid(grid2D, filename);
+	}
+}
+
+void IOManager::readDEM(DEMObject& grid2D)
+{
+	if (processing_level == IOManager::raw){
+		rawio.readDEM(grid2D);
+	} else {
+		bufferedio.readDEM(grid2D);
+	}
+}
+
+void IOManager::readLanduse(Grid2DObject& grid2D)
+{
+	if (processing_level == IOManager::raw){
+		rawio.readLanduse(grid2D);
+	} else {
+		bufferedio.readLanduse(grid2D);
+	}
+}
+
+void IOManager::readAssimilationData(const Date& date, Grid2DObject& grid2D)
+{
+	if (processing_level == IOManager::raw){
+		rawio.readAssimilationData(date, grid2D);
+	} else {
+		bufferedio.readAssimilationData(date, grid2D);
+	}
+}
+
+void IOManager::readSpecialPoints(std::vector<Coords>& cpa)
+{
+	if (processing_level == IOManager::raw){
+		rawio.readSpecialPoints(cpa);
+	} else {
+		bufferedio.readSpecialPoints(cpa);
+	}
+}
+
+void IOManager::write2DGrid(const Grid2DObject& grid2D, const std::string& name)
+{
+	if (processing_level == IOManager::raw){
+		rawio.write2DGrid(grid2D, name);
+	} else {
+		bufferedio.write2DGrid(grid2D, name);
+	}
 }
 
 } //namespace

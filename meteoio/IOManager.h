@@ -35,6 +35,15 @@ class IOManager {
 
 		IOManager(const Config& i_cfg);
 
+		//Legacy support to support functionality of the IOInterface superclass:
+		void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
+		void readDEM(DEMObject& dem_out);
+		void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
+		void readLanduse(Grid2DObject& landuse_out);
+		void readSpecialPoints(std::vector<Coords>& pts);
+		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
+		//end legacy support
+
 		unsigned int getStationData(const Date& date, std::vector<StationData>& vecStation);
 
 		//for an intervall of data: decide whether data should be filtered or raw
@@ -44,10 +53,11 @@ class IOManager {
 		//data can be raw or processed (filtered, resampled)
 		unsigned int getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo);
 		
-		void interpolate(const Date& date, const MeteoData::Parameters& meteoparam, 
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
                            Grid2DObject& result, std::string& info_string);
 		
-		void interpolate(const Date& date, const MeteoData::Parameters& meteoparam, Grid2DObject& result);
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+					  Grid2DObject& result);
 		
 		void setProcessingLevel(const unsigned int& i_level);
 
