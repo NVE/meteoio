@@ -61,14 +61,19 @@ class IOManager {
 		
 		void setProcessingLevel(const unsigned int& i_level);
 
+		double getAvgSamplingRate();
+
 		void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
 
 	private:
+		void add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo);
+
 		Config cfg;
 		IOHandler rawio;
 		BufferedIOHandler bufferedio;
 		MeteoProcessor meteoprocessor;
 
+		std::map<Date, std::vector<MeteoData> > meteo_cache; ///< stores already fetched data points
 		unsigned int processing_level;
 };
 } //end namespace

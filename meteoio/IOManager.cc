@@ -34,6 +34,15 @@ void IOManager::setProcessingLevel(const unsigned int& i_level)
 	processing_level = i_level;
 }
 
+double IOManager::getAvgSamplingRate()
+{
+	if (processing_level == IOManager::raw){
+		return IOUtils::nodata;
+	} else {
+		return bufferedio.getAvgSamplingRate();
+	}
+}
+
 unsigned int IOManager::getStationData(const Date& date, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
@@ -64,6 +73,17 @@ unsigned int IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
 	return vecMeteo.size(); //equivalent with the number of stations that have data
 }
 
+void IOManager::add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo)
+{
+	//Check cache size, delete oldest elements if necessary
+	if (meteo_cache.size() > 200){
+		meteo_cache.clear();
+		//meteo_cache.erase(meteo_cache.begin(), meteo_cache.begin()+50);
+	}
+
+	meteo_cache[i_date] = vecMeteo;
+}
+
 //data can be raw or processed (filtered, resampled)
 unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo)
 {
@@ -89,6 +109,12 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 
 
 	//2.  Check which data is available, buffered locally
+	map<Date, vector<MeteoData> >::const_iterator it = meteo_cache.find(i_date);
+	if (it != meteo_cache.end()){
+		vecMeteo = it->second;
+		return vecMeteo.size();
+	}
+
 	//    request an appropriate window of data from bufferedio
 	//    Hand window of data over to meteo processor
 	bufferedio.readMeteoData(i_date-time_before, i_date+time_after, vec_cache);
@@ -97,6 +123,9 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 		meteoprocessor.processData(i_date, vec_cache[ii], tmpmd);
 		vecMeteo.push_back(tmpmd);
 	}
+
+	//Store result in the local cache
+	add_to_cache(i_date, vecMeteo);
 
 	return vecMeteo.size();
 }
@@ -120,11 +149,8 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 					   Grid2DObject& result, std::string& info_string)
 {
-	vector<MeteoData> vec_meteo;
-	getMeteoData(date, vec_meteo);
-
-	Meteo2DInterpolator mi(cfg, dem, vec_meteo);
-	mi.interpolate(meteoparam, result, info_string);
+	Meteo2DInterpolator mi(cfg, *this);
+	mi.interpolate(date, dem, meteoparam, result, info_string);
 }
 
 void IOManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)

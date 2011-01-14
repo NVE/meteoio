@@ -27,6 +27,8 @@
 
 namespace mio {
 
+class IOManager; //forward declaration
+
 /**
  * @page dev_2Dinterpol How to write a spatial interpolation algorithm
  * Point measurements can be spatially interpolated by MeteoIO, through the use of interpolation
@@ -100,8 +102,9 @@ class Meteo2DInterpolator {
 		/**
 		* @brief Constructor.
 		*/
-		Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem, 
-						const std::vector<MeteoData>& _vecMeteo);
+		//Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem, 
+		//				const std::vector<MeteoData>& _vecMeteo);
+		Meteo2DInterpolator(const Config& i_cfg, IOManager& iomanager);
 
 
 		/**
@@ -112,7 +115,9 @@ class Meteo2DInterpolator {
 		 * @param result A Grid2DObject that will be filled with the interpolated data
 		 * @param InfoString some information about the interpolation process (useful for GUIs)
 		 */
-		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result, std::string& InfoString) const;
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+					  Grid2DObject& result);
+		//void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result, std::string& InfoString) const;
 
 		/**
 		 * @brief A generic function that can interpolate for any given MeteoData member variable
@@ -121,8 +126,9 @@ class Meteo2DInterpolator {
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
 		 */
-		void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const;
-
+		//void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const;
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+					  Grid2DObject& result, std::string& InfoString);
 
 		/**
 		 * @brief A min/max filter for 2D grids
@@ -145,9 +151,12 @@ class Meteo2DInterpolator {
 		friend std::ostream& operator<<(std::ostream& os, const Meteo2DInterpolator& mi);
 
 	private:
+		void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
+
 		const Config& cfg; ///< Reference to Config object, initialized during construction
-		const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction
-		const std::vector<MeteoData>& vecMeteo;  ///< Reference to a vec of MeteoData, initialized during construction
+		IOManager& iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
+		//const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction
+		//const std::vector<MeteoData>& vecMeteo;  ///< Reference to a vec of MeteoData, initialized during construction
 		
 		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
 

@@ -155,6 +155,8 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		void setBufferDuration(const Date& _bufferbefore, const Date& _bufferafter);
 
+		double getAvgSamplingRate();
+
 		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
 
 	private:

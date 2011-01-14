@@ -281,6 +281,23 @@ void BufferedIOHandler::legacy_readMeteoData(const Date& date_start, const Date&
 		meteoBuffer = vecMeteo;      //copy by value
 }
 
+double BufferedIOHandler::getAvgSamplingRate()
+{
+	if (vec_buffer_meteo.size() > 0){
+		unsigned int sum = 0;
+		for (unsigned int ii=0; ii<vec_buffer_meteo.size(); ii++){
+			//count all data
+			sum += vec_buffer_meteo[ii].size();
+		}
+		if (sum > 0){
+			double days = buffer_end.getJulianDate() - buffer_start.getJulianDate();
+			return ((double)sum / days);
+		}
+	}
+
+	return IOUtils::nodata;
+}
+
 void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end, 
 							   std::vector< std::vector<MeteoData> >& vecMeteo,
 							   const unsigned int& /*stationindex*/)

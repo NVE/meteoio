@@ -51,10 +51,11 @@ bool AlgorithmFactory::initStaticData()
 
 //HACK: do not build a new object at every time step!!
 InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algoname, 
-                                                       const Meteo2DInterpolator& _mi,
+                                                       Meteo2DInterpolator& _mi,
+											const Date& date,
                                                        const DEMObject& _dem,
-                                                       const std::vector<MeteoData>& _vecMeteo,
-                                                       const std::vector<std::string>& _vecArgs)
+                                                       const std::vector<std::string>& _vecArgs,
+											IOManager& iom)
 {
 	std::string algoname(_algoname);
 	IOUtils::toUpper(algoname);
@@ -64,32 +65,44 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 		throw UnknownValueException("The interpolation algorithm '"+algoname+"' does not exist" , AT);
 
 	if (algoname == "CST"){
-		return new ConstAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new ConstAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "STD_PRESS"){
-		return new StandardPressureAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new StandardPressureAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "CST_LAPSE"){
-		return new ConstLapseRateAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new ConstLapseRateAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "IDW"){
-		return new IDWAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new IDWAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "IDW_LAPSE"){
-		return new IDWLapseAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new IDWLapseAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "LIDW_LAPSE"){
-		return new LocalIDWLapseAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new LocalIDWLapseAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "RH"){
-		return new RHAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new RHAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "WIND_CURV"){
-		return new SimpleWindInterpolationAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new SimpleWindInterpolationAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "ODKRIG"){
-		return new OrdinaryKrigingAlgorithm(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new OrdinaryKrigingAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "USER"){
-		return new USERInterpolation(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new USERInterpolation(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else if (algoname == "HNW_SNOW"){
-		return new SnowHNWInterpolation(_mi, _dem, _vecMeteo, _vecArgs, _algoname);
+		return new SnowHNWInterpolation(_mi, date, _dem, _vecArgs, _algoname, iom);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
 
 	return NULL;
+}
+
+InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi, 
+									  const Date& i_date,
+									  const DEMObject& i_dem,
+									  const std::vector<std::string>& i_vecArgs,
+									  const std::string& i_algo, IOManager& iom)
+	: mi(i_mi), date(i_date), dem(i_dem), vecArgs(i_vecArgs), algo(i_algo), iomanager(iom) 
+{
+	nrOfMeasurments = 0;
+	param = MeteoData::firstparam; //this is a stupid default value, but since we never check it...
+	iomanager.getMeteoData(date, vecMeteo);
 }
 
 unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param, 
@@ -103,12 +116,12 @@ unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
 unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param, 
                                              std::vector<double>& vecData, std::vector<StationData>& vecMeta) const
 {
-	if(vecData.size()>0) {
+	if (vecData.size() > 0)
 		vecData.clear();
-	}
-	if(vecMeta.size()>0) {
+
+	if (vecMeta.size() > 0)
 		vecMeta.clear();
-	}
+
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
 		const double& val = vecMeteo[ii].param(param);
 		if (val != IOUtils::nodata){
@@ -442,7 +455,7 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject ta;
-	mi.interpolate(MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
+	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 
 	//here, RH->Td, interpolations, Td->RH
 	std::vector<double> vecTd(vecDataRH.size(), 0.0); // init to 0.0
@@ -519,7 +532,7 @@ void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject dw;
-	mi.interpolate(MeteoData::DW, dw); //get DW interpolation from call back to Meteo2DInterpolator
+	mi.interpolate(date, dem, MeteoData::DW, dw); //get DW interpolation from call back to Meteo2DInterpolator
 	
 	//Krieging
 	std::vector<double> vecCoefficients;
@@ -608,7 +621,7 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	IOUtils::toUpper(base_algo);
 	vector<string> vecArgs2;
 	mi.getArgumentsForAlgorithm(param, base_algo, vecArgs2);
-	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, dem, vecMeteo, vecArgs2));
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, date, dem, vecArgs2, iomanager));
 	algorithm->initialize(param);
 	algorithm->calculate(grid);
 	info << algorithm->getInfo();
@@ -616,7 +629,7 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 
 	 //get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;
-	mi.interpolate(MeteoData::TA, ta);
+	mi.interpolate(date, dem, MeteoData::TA, ta);
 
 	//slope/curvature correction for solid precipitation
 	Interpol2D::PrecipSnow(dem, ta, grid);

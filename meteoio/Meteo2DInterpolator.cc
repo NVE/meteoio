@@ -21,10 +21,32 @@
 using namespace std;
 
 namespace mio {
-
+	/*
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, const DEMObject& i_dem,
                                          const std::vector<MeteoData>& i_vecMeteo)
                                          : cfg(i_cfg), dem(i_dem), vecMeteo(i_vecMeteo)
+{
+	*/
+	/*
+	 * By reading the Config object build up a list of user configured algorithms
+	 * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
+	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
+	 * for configuration of interpolation algorithms within the Config object.
+	 */
+/*
+	for (unsigned int ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
+		std::vector<std::string> tmpAlgorithms;
+		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
+		unsigned int nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
+
+		if (nrOfAlgorithms > 0)
+			mapAlgorithms[parname] = tmpAlgorithms;
+	}
+
+	check_projections(dem, vecMeteo);
+}
+*/
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) : cfg(i_cfg), iomanager(i_iom)
 {
 	/*
 	 * By reading the Config object build up a list of user configured algorithms
@@ -40,10 +62,13 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, const DEMObject& i
 		if (nrOfAlgorithms > 0)
 			mapAlgorithms[parname] = tmpAlgorithms;
 	}
+}
 
+void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo)
+{
 	//check that the stations are using the same projection as the dem
-	for (unsigned int i=0; i<(unsigned int)vecMeteo.size(); i++) {
-		const StationData& meta = vecMeteo[i].meta; 
+	for (unsigned int i=0; i<(unsigned int)vec_meteo.size(); i++) {
+		const StationData& meta = vec_meteo[i].meta; 
 		if(!meta.position.isSameProj(dem.llcorner)) {
 			std::stringstream os;
 			std::string type, args;
@@ -56,13 +81,15 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, const DEMObject& i
 	}
 }
 
-void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const
+void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                                      Grid2DObject& result)
 {
 	std::string InfoString;
-	interpolate(meteoparam, result, InfoString);
+	interpolate(date, dem, meteoparam, result, InfoString);
 }
 
-void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result, std::string& InfoString) const
+void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                                      Grid2DObject& result, std::string& InfoString)
 {
 	//Show algorithms to be used for this parameter
 	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
@@ -77,8 +104,7 @@ void Meteo2DInterpolator::interpolate(const MeteoData::Parameters& meteoparam, G
 			getArgumentsForAlgorithm(meteoparam, algoname, vecArgs);
 			
 			//Get the configured algorithm
-			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, dem, 
-			                                           vecMeteo, vecArgs));
+			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, date, dem, vecArgs, iomanager));
 			//Get the quality rating and compare to previously computed quality ratings
 			algorithm->initialize(meteoparam);
 			const double rating = algorithm->getQualityRating();
@@ -177,12 +203,12 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 std::ostream& operator<<(std::ostream &os, const Meteo2DInterpolator &mi) {
 	os << "<Meteo2DInterpolator>\n";
 	os << "Config *cfg = " << hex << &mi.cfg << "\n";
-	os << "DemObject *dem= " << hex << &mi.dem << "\n";
+	//os << "DemObject *dem= " << hex << &mi.dem << "\n";
 
-	const unsigned int nb_stations = mi.vecMeteo.size();
-	os << "Current vecMeteo content : " << nb_stations << " stations";
-	if(nb_stations>0) os << " at " << mi.vecMeteo[0].date.toString(Date::ISO);
-	os << " \n";
+	//const unsigned int nb_stations = mi.vecMeteo.size();
+	//os << "Current vecMeteo content : " << nb_stations << " stations";
+	//if(nb_stations>0) os << " at " << mi.vecMeteo[0].date.toString(Date::ISO);
+	//os << " \n";
 
 	os << "User list of algorithms:\n";
 	std::map<std::string, std::vector<std::string> >::const_iterator iter = mi.mapAlgorithms.begin();
