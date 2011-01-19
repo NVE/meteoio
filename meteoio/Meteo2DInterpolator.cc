@@ -203,6 +203,7 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 std::ostream& operator<<(std::ostream &os, const Meteo2DInterpolator &mi) {
 	os << "<Meteo2DInterpolator>\n";
 	os << "Config *cfg = " << hex << &mi.cfg << "\n";
+	os << "IOManager *iomanager = "  << hex << &mi.iomanager << "\n";
 	//os << "DemObject *dem= " << hex << &mi.dem << "\n";
 
 	//const unsigned int nb_stations = mi.vecMeteo.size();

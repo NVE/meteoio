@@ -294,7 +294,7 @@ std::string IOHandler::toString() const
 {
 	std::stringstream os;
 	os << "<IOHandler>\n";
-	os << cfg;
+	os << "Config cfg = " << hex << &cfg << "\n";
 
 	os << "<mapPlugins>\n";
 	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";

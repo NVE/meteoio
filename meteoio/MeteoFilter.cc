@@ -116,7 +116,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoFilter& data)
 	os << "<MeteoFilter>\n";
 
 	for (unsigned int ii=0; ii<data.tasklist.size(); ii++){ //For all meteo parameters
-		os << std::setw(5) << MeteoData::getParameterName(ii) << " =\t";
+		os << std::setw(10) << MeteoData::getParameterName(ii) << " = ";
 		for (unsigned int jj=0; jj<data.tasklist[ii].size(); jj++){ //For eack activated filter
 			os << "[ " << data.tasklist[ii][jj] << " ";
 			for(unsigned int kk=0; kk<data.taskargs.at(ii).at(jj).size(); kk++)

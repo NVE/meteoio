@@ -73,6 +73,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
 	os << "<MeteoProcessor>\n";
 	os << data.mf;
 	os << data.mi1d;
+	os << "window_half_size = " << data.window_half_size << "\n";
 	os << "</MeteoProcessor>\n";
 	return os;
 }

@@ -207,4 +207,51 @@ void IOManager::write2DGrid(const Grid2DObject& grid2D, const std::string& name)
 	}
 }
 
+std::ostream& operator<<(std::ostream& os, const IOManager& io)
+{
+	os << "<IOManager>\n";
+	os << "Config cfg = " << hex << &io.cfg << "\n";
+	os << io.rawio;
+	os << io.bufferedio;
+	os << io.meteoprocessor;
+	os << "Processing level = " << io.processing_level << "\n";
+
+	unsigned int count=0;
+	unsigned int min_stations=std::numeric_limits<unsigned int>::max();
+	unsigned int max_stations=-std::numeric_limits<unsigned int>::max();
+	std::map<Date, std::vector<MeteoData> >::const_iterator iter = io.meteo_cache.begin();
+	for (; iter != io.meteo_cache.end(); iter++) {
+		const unsigned int nb_stations = iter->second.size();
+		if(nb_stations>max_stations) max_stations=nb_stations;
+		if(nb_stations<min_stations) min_stations=nb_stations;
+		count++;
+	}
+
+	if(count==0) {
+		os << "Meteo cache is empty\n";
+	}
+	if(count==1) {
+		os << "Meteo cache contains 1 element at " << io.meteo_cache.begin()->first.toString(Date::ISO);
+		os << " for ";
+		if(max_stations==min_stations)
+			os << min_stations << " station(s)\n";
+		else
+			os << "between " << min_stations << " and " << max_stations << " stations\n";
+	}
+	if(count>1) {
+		const double avg_sampling = ( (io.meteo_cache.rbegin()->first.getJulianDate()) - (io.meteo_cache.begin()->first.getJulianDate()) ) / (double)(count-1);
+		os << "Meteo cache goes from " << io.meteo_cache.begin()->first.toString(Date::ISO);
+		os << " to " << io.meteo_cache.rbegin()->first.toString(Date::ISO);
+		os << " with " << count << " timesteps (" << setprecision(3) << fixed << avg_sampling*24.*3600. << " s sampling rate)";
+		os << " for ";
+		if(max_stations==min_stations)
+			os << min_stations << " station(s)\n";
+		else
+			os << "between " << min_stations << " and " << max_stations << " stations\n";
+	}
+
+	os << "</IOManager>\n";
+	return os;
+}
+
 } //namespace

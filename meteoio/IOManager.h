@@ -65,6 +65,8 @@ class IOManager {
 
 		void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
 
+		friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
+
 	private:
 		void add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo);
 

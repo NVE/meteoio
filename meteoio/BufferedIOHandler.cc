@@ -403,12 +403,8 @@ void BufferedIOHandler::clearBuffer(){
 std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 {
 	os << "<BufferedIOHandler>\n";
-	os << "Config cfg; (not expanded)\n";
-	#ifndef _POPC_
-	os << data.iohandler;
-	#else
-	os << data.iohandler.toString();
-	#endif
+	os << "Config cfg = " << hex << &data.cfg << "\n";
+	os << "IOHandler &iohandler = " << hex << &data.iohandler << "\n";
 	os << data.meteoprocessor;
 
 	os << "Rebuffer if not found: " << data.always_rebuffer << "\n";
