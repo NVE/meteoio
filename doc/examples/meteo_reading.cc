@@ -11,13 +11,12 @@ int main(int /*argc*/, char** argv) {
 	std::vector<MeteoData> vecMeteo;
 
 	Config cfg("io.ini");
-	IOHandler raw_io(cfg);
-	BufferedIOHandler io(raw_io, cfg);
+	IOManager io(cfg);
 
 	//we assume that the time given on the command line is in TZ=+1
 	d1.setTimeZone(1.);
 	IOUtils::convertString(d1,argv[1]);
-	io.readMeteoData(d1, vecMeteo);
+	io.getMeteoData(d1, vecMeteo);
 
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {

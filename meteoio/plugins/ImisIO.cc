@@ -47,6 +47,7 @@ namespace mio {
  * - DBPASS: password to use when connecting to the database
  * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station code for the given number #
+ * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations
  */
 
 const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value

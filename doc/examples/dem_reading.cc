@@ -7,7 +7,7 @@ using namespace mio; //The MeteoIO namespace is called mio
 int main(void) {
 	DEMObject dem;
 	Config cfg("io.ini");
-	IOHandler io(cfg);
+	IOManager io(cfg);
 
 	//reading dem
 	dem.setUpdatePpt(DEMObject::SLOPE);
@@ -19,6 +19,12 @@ int main(void) {
 	std::cout << "DEM information: \n";
 	std::cout << "\tmin=" << dem.grid2D.getMin() << " max=" << dem.grid2D.getMax() << " mean=" << dem.grid2D.getMean() << "\n";
 	std::cout << "\tmin slope=" << dem.min_slope << " max slope=" << dem.max_slope << std::endl;
+
+
+	Grid2DObject slope(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.slope);
+	io.write2DGrid(slope,"slope.asc");
+	Grid2DObject azi(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.azi);
+	io.write2DGrid(azi,"azi.asc");
 
 	//retrieving grid coordinates of a real world point
 	Coords point;

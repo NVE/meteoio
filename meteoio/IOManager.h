@@ -48,16 +48,16 @@ class IOManager {
 
 		//for an intervall of data: decide whether data should be filtered or raw
 		unsigned int getMeteoData(const Date& dateStart, const Date& dateEnd,
-							 std::vector< std::vector<MeteoData> >& vecMeteo);
+		                          std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		//data can be raw or processed (filtered, resampled)
 		unsigned int getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo);
 		
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
-                           Grid2DObject& result, std::string& info_string);
+		                 Grid2DObject& result, std::string& info_string);
 		
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
-					  Grid2DObject& result);
+		                 Grid2DObject& result);
 		
 		void setProcessingLevel(const unsigned int& i_level);
 
