@@ -129,7 +129,7 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 	//vec_cache is either filtered or unfiltered
 
 	for (unsigned int ii=0; ii<vec_cache.size(); ii++){//resampling for every station
-		cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
+		//cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
 		unsigned int position = meteoprocessor.resample(i_date, vec_cache[ii]);
 		vecMeteo.push_back(vec_cache[ii][position]);
 	}

@@ -377,6 +377,20 @@ void Coords::setGridIndex(const int in_grid_i, const int in_grid_j, const int in
 }
 
 /**
+* @brief Set altitude at a given value. 
+* If the i,j,k indices were set, reset them to inodata,
+* except if specified otherwise with in_update=false.
+* @param[in] in_altitude altitude above sea level, in meters
+* @param[in] in_update should the indices be (if necessary) recalculated? (default=true)
+*/
+void Coords::setAltitude(const double in_altitude, const bool in_update) {
+	altitude = in_altitude;
+	if(in_update==true) {
+		grid_i = grid_j = grid_k = IOUtils::inodata;
+	}
+}
+
+/**
 * @brief Set projection to use
 * This projection will be used for converting between lat/lon and East/North
 * @param[in] in_coordinatesystem string identifying the coordinate system to use

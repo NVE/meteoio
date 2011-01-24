@@ -86,6 +86,7 @@ class Coords {
 	void setLatLon(const std::string& in_coordinates, const double in_altitude, const bool in_update=true);
 	void setXY(const double in_easting, const double in_northing, const double in_altitude, const bool in_update=true);
 	void setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool in_invalidate=true);
+	void setAltitude(const double in_altitude, const bool in_update=true);
 	void setProj(const std::string& in_coordinatesystem, const std::string& in_parameters="");
 	void setLocalRef(const double in_ref_latitude, const double in_ref_longitude);
 	void setLocalRef(const std::string in_coordparam);

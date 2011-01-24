@@ -155,6 +155,31 @@ bool IOUtils::validFileName(const std::string& filename)
 	return true;
 }
 
+void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+{
+	DIR *dp;
+	struct dirent *dirp;
+
+	if((dp  = opendir(path.c_str())) == NULL) {
+		throw FileAccessException("Error opening directory " + path, AT);
+	}
+
+	while ((dirp = readdir(dp)) != NULL) {
+		std::string tmp = std::string(dirp->d_name);
+		if( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
+			if (pattern=="") {
+				dirlist.push_back(tmp);
+			} else {
+				size_t pos = tmp.find(pattern);
+				if (pos!=std::string::npos) {
+					dirlist.push_back(tmp);
+				}
+			}
+		}
+	}
+	closedir(dp);
+}
+
 void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 				  std::istream& fin,
 				  const unsigned int& linecount,
@@ -259,33 +284,10 @@ unsigned int IOUtils::readLineToVec(const std::string& line_in, std::vector<std:
 	return vecString.size();
 }
 
-
-void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
-{
-	DIR *dp;
-	struct dirent *dirp;
-
-	if((dp  = opendir(path.c_str())) == NULL) {
-		throw FileAccessException("Error opening directory " + path, AT);
-	}
-
-	while ((dirp = readdir(dp)) != NULL) {
-		std::string tmp = std::string(dirp->d_name);
-		if (pattern=="") {
-			dirlist.push_back(tmp);
-		} else {
-			size_t pos = tmp.find(pattern);
-			if (pos!=std::string::npos) {
-				dirlist.push_back(tmp);
-			}
-		}
-	}
-	closedir(dp);
-}
-
 // generic template function convertString must be defined in the header
 
 const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const char NUM[] = "0123456789";
 
 template<> bool IOUtils::convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
@@ -349,9 +351,40 @@ template<> bool IOUtils::convertString<Date>(Date& t, const std::string& str, st
 	} else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
 		t.setDate(year, month, day, 0, 0);
 	} else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
-		t = Date( ((double)hour)/24. + ((double)minute)/24./60. );
+		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. );
 	} else {
-		return false;
+		//try to read purely numerical date, potentially surrounded by other chars
+		const unsigned int in_len = str.length();
+		size_t beg = str.find_first_of(NUM);
+		if(beg==npos || beg==in_len) return false;
+		size_t end = str.find_first_not_of(NUM, beg+1);
+		if(end==npos) end = in_len;
+
+		const std::string datum = str.substr(beg, end-beg);
+		const unsigned int d_len = datum.length();
+		if(d_len<8 || d_len>14) return false;
+		if( convertString(year,datum.substr(0,4))==false ) return false;
+		if( convertString(month,datum.substr(4,2))==false ) return false;
+		if( convertString(day,datum.substr(6,2))==false ) return false;
+		if( convertString(hour,datum.substr(8,2))==false ) return false;
+		if(d_len==10)
+			minute=0;
+		else {
+			if(d_len>=12) {
+				if( convertString(minute,datum.substr(10,2))==false ) return false;
+			} else
+				return false;
+			if(d_len==12)
+				second=0;
+			else {
+				if(d_len==14) {
+					if( convertString(second,datum.substr(12,2))==false ) return false;
+				} else
+					return false;
+			}
+		}
+		
+		t.setDate( year, month, day, hour, minute );
 	}
 
 	std::string tmp(rest);

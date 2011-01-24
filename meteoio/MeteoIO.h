@@ -27,6 +27,7 @@
 #include <meteoio/Config.h>
 #include <meteoio/Coords.h>
 #include <meteoio/Date.h>
+#include <meteoio/Timer.h>
 #include <meteoio/DEMObject.h>
 #include <meteoio/DynamicLibrary.h>
 #include <meteoio/FilterAlgorithms.h>

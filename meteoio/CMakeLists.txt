@@ -23,23 +23,24 @@ SET(meteoio_sources
 	InterpolationAlgorithms.cc
 	MeteoFilter.cc
 	FilterAlgorithms.cc
-  	A3DIO.cc
-	Date.cc         
-	Grid2DObject.cc  
-	IOHandler.cc    
+	A3DIO.cc
+	Date.cc
+	Timer.cc
+	Grid2DObject.cc
+	IOHandler.cc
 	Coords.cc
-	Meteo2DInterpolator.cc  
-	BufferedIOHandler.cc  
-	DEMObject.cc       
-	Grid3DObject.cc  
-	IOInterface.cc  
-	libinterpol1D.cc  
+	Meteo2DInterpolator.cc
+	BufferedIOHandler.cc
+	DEMObject.cc
+	Grid3DObject.cc
+	IOInterface.cc
+	libinterpol1D.cc
 	StationData.cc
-	Config.cc       
-	DynamicLibrary.cc  
-	IOExceptions.cc  
+	Config.cc
+	DynamicLibrary.cc
+	IOExceptions.cc
 	IOUtils.cc
-	libinterpol2D.cc  
+	libinterpol2D.cc
 	MeteoData.cc
 )
 
