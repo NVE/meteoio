@@ -287,6 +287,16 @@ const double& MeteoData::param(const std::string& parname) const
 	return *(it->second);
 }
 
+unsigned int MeteoData::getParameterIndex(const std::string& parname) const
+{
+	for (map<unsigned int, string>::const_iterator it=meteoparamname.begin(); it!=meteoparamname.end(); it++){
+		if (it->second == parname)
+			return it->first;
+	}
+
+	return IOUtils::npos; //parameter not a part of MeteoData
+}
+
 bool MeteoData::param_exists(const std::string& parname) const
 {
 	std::map<std::string, double*>::const_iterator it;

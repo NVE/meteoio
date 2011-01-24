@@ -22,6 +22,7 @@
 #include <meteoio/StationData.h>
 #include <meteoio/Config.h>
 #include <meteoio/ResamplingAlgorithms.h>
+#include <meteoio/ProcessingBlock.h>
 
 #include <iostream>
 #include <string>
@@ -62,6 +63,8 @@ class Meteo1DInterpolator {
 		 * @return    The position of the newly constructed MeteoData/StationData pair within vecM & vecS
 		 */
 		unsigned int resampleData(const Date& date, std::vector<MeteoData>& vecM);
+
+		void getWindowSize(ProcessingProperties& o_properties);
 
 		friend std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator);
 

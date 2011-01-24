@@ -23,14 +23,90 @@ namespace mio {
 
 const unsigned int MeteoProcessor::window_half_size = 40; //org: 4
 
-MeteoProcessor::MeteoProcessor(const Config& cfg) : mf(cfg), mi1d(cfg) {}
-
-void MeteoProcessor::getWindowSize(Date& time_before, Date& time_after, unsigned int& num_of_points)
+MeteoProcessor::MeteoProcessor(const Config& cfg) : mf(cfg), mi1d(cfg) 
 {
-	//Plan: parse through io.ini and establish the maximal window size needed
-	time_before.setDate(1.0); //a day
-	time_after.setDate(1.0);  //a day
-	num_of_points = 0;
+	//Parse [Filters] section, create processing stack for each configured parameter
+	set<string> set_of_used_parameters;
+	//unsigned int nr_of_parameters = 
+	get_parameters(cfg, set_of_used_parameters);
+
+	for (set<string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); it++){
+		//cout << "Creating stack for parameter: " << *it << endl;
+		ProcessingStack* tmp = new ProcessingStack(cfg, *it);
+		processing_stack[*it] = tmp;
+	}
+	//cout << "NrOfParameters: " << nr_of_parameters << endl;
+}
+
+MeteoProcessor::~MeteoProcessor()
+{
+	//clean up heap memory
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++)
+		delete it->second;
+}
+
+unsigned int MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
+{
+	std::vector<std::string> vec_keys;
+	cfg.findKeys(vec_keys, "", "Filters");
+
+	for (unsigned int ii=0; ii<vec_keys.size(); ii++){
+		size_t found = vec_keys[ii].find_first_of(":");
+		if (found != std::string::npos){
+			string tmp = vec_keys[ii].substr(0,found);
+			set_parameters.insert(tmp);
+		}
+	}
+
+	return set_parameters.size();
+}
+
+void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties)
+{
+	ProcessingProperties tmp;
+
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++){
+		(*(it->second)).getWindowSize(tmp);
+
+		compareProperties(tmp, o_properties);
+	}
+
+	//Also take the Meteo1DInterpolator into account:
+	mi1d.getWindowSize(tmp);
+	compareProperties(tmp, o_properties);
+}
+
+void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current)
+{
+	current.points_before = MAX(current.points_before, newprop.points_before);
+	current.points_after = MAX(current.points_after, newprop.points_after);
+	
+	if (newprop.time_before > current.time_before)
+		current.time_before = newprop.time_before;
+	
+	if (newprop.time_after > current.time_after)
+		current.time_after = newprop.time_after;
+}
+
+void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec, 
+                             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
+{
+	//call the different processing stacks
+	std::vector< std::vector<MeteoData> > vec_tmp = ivec;
+	//cout << "Calling processing stacks for all parameters" << endl;
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++){
+		//cout << "Calling processing stack for parameter " << it->first << endl;
+		(*(it->second)).process(vec_tmp, ovec, second_pass);
+		vec_tmp = ovec;
+	}
+
+	if (processing_stack.size() == 0)
+		ovec = ivec;
+}
+
+unsigned int MeteoProcessor::resample(const Date& date, std::vector<MeteoData>& ivec)
+{
+	return mi1d.resampleData(date, ivec);
 }
 
 void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)

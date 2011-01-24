@@ -126,7 +126,7 @@ class MeteoData {
 		double& param(const std::string& parname);
 		const double& param(const std::string& parname) const;
 		const std::string& getNameForParameter(const unsigned int& parindex) const;
-		//unsigned int getParameterIndex(const std::string& parname) const;
+		unsigned int getParameterIndex(const std::string& parname) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 

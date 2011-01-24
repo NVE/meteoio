@@ -48,6 +48,15 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& _cfg) : cfg(_cfg) {
 	*/
 }
 
+void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties)
+{
+	o_properties.points_before = 1;
+	o_properties.points_after  = 1;
+
+	o_properties.time_before   = Date(0.8);
+	o_properties.time_after    = Date(0.8);
+}
+
 unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
 {
 	if (vecM.size() == 0){ //Deal with case of the empty vector

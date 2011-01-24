@@ -63,11 +63,20 @@ unsigned int IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	vecMeteo.clear();
 
+	vector< vector<MeteoData> > tmp_meteo;
+
 	if (processing_level == IOManager::raw){
 		rawio.readMeteoData(dateStart, dateEnd, vecMeteo);
 	} else {
-		bufferedio.readMeteoData(dateStart, dateEnd, vecMeteo);
+		bufferedio.readMeteoData(dateStart, dateEnd, tmp_meteo);
 		//now it needs to secured that the data is actually filtered, if configured
+
+		if ((IOManager::filtered & processing_level) == IOManager::filtered){
+			//cout << "Now filtering ..." << endl;
+			meteoprocessor.process(tmp_meteo, vecMeteo);
+		} else {
+			vecMeteo = tmp_meteo;
+		}
 	}
 
 	return vecMeteo.size(); //equivalent with the number of stations that have data
@@ -91,9 +100,8 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 
 	vector< vector<MeteoData> > vec_cache;
 
-	Date time_before, time_after;
-	unsigned int npoints;
-	meteoprocessor.getWindowSize(time_before, time_after, npoints);
+	ProcessingProperties properties;
+	meteoprocessor.getWindowSize(properties);
 
 	//1. Check whether user wants raw data or processed data
 	if (processing_level == IOManager::raw){
@@ -117,11 +125,13 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 
 	//    request an appropriate window of data from bufferedio
 	//    Hand window of data over to meteo processor
-	bufferedio.readMeteoData(i_date-time_before, i_date+time_after, vec_cache);
-	for (unsigned int ii=0; ii<vec_cache.size(); ii++){
-		MeteoData tmpmd;
-		meteoprocessor.processData(i_date, vec_cache[ii], tmpmd);
-		vecMeteo.push_back(tmpmd);
+	bufferedio.readMeteoData(i_date-properties.time_before, i_date+properties.time_after, vec_cache);
+	//vec_cache is either filtered or unfiltered
+
+	for (unsigned int ii=0; ii<vec_cache.size(); ii++){//resampling for every station
+		cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
+		unsigned int position = meteoprocessor.resample(i_date, vec_cache[ii]);
+		vecMeteo.push_back(vec_cache[ii][position]);
 	}
 
 	//Store result in the local cache

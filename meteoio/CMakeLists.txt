@@ -10,6 +10,11 @@ ENDIF(PROJ4)
 
 SET(meteoio_sources
 	IOManager.cc
+	ProcessingStack.cc
+	FilterMeanAvg.cc
+	FilterBlock.cc
+	FilterMinMax.cc
+	ProcessingBlock.cc
 	Matrix.cc
 	IOPlugin.cc
 	MeteoProcessor.cc
