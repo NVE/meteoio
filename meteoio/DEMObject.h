@@ -36,6 +36,8 @@ class DEMObjectDummy {}; //HACK for POPC
  * @class DEMObject
  * @brief A class to represent DEMs: reads elevation grids, computes local slope, azimuth, curvature.
  * The nodata parameter is supposed to be IOUtils::nodata.
+ *
+ * @ingroup data_str
  * @author Gaël Rosset - Mathias Bavay
  * @date   2009-07-20
  */

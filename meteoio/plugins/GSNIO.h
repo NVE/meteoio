@@ -39,6 +39,7 @@ namespace mio {
  * @class GSNIO
  * @brief This class enables the access to the GSN web service
  *
+ * @ingroup plugins
  * @author Thomas Egger
  * @date   2009-09-25
  */

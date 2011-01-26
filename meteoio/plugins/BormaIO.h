@@ -36,6 +36,7 @@ namespace mio {
  * @class BormaIO
  * @brief This class enables the access meteo data in Borma's XML format
  *
+ * @ingroup plugins
  * @author Thomas Egger
  * @date   2008-11-20
  */

@@ -36,7 +36,9 @@ typedef void(*resamplingptr)(const unsigned int& position, const unsigned int& p
 
 /**
  * @class ResamplingAlgorithms
- * @brief 
+ * @brief Temporal resampling algorithms
+ *
+ * @ingroup stats
  * @author Thomas Egger
  * @date   2010-06-25
  */

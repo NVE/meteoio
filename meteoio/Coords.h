@@ -38,6 +38,8 @@ typedef void(Coords::*convfunc)(double, double, double&, double&) const;
  * given object, as soon as a latitude/longitude can be computed/read, it will be used as a reference.
  * This means that every subsequent change of projection system or read will be the conversion of this
  * reference lat/lon position (until a new "set" is called). See Coords::setProj for the supported coordinate systems.
+ *
+ * @ingroup data_str
  * @author Mathias Bavay
  * @date   2009-01-20
 */

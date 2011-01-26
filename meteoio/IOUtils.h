@@ -21,6 +21,7 @@
 #include <meteoio/Coords.h>
 #include <meteoio/Date.h>
 #include <meteoio/IOExceptions.h>
+#include <meteoio/meteolaws/Meteoconst.h>
 
 #include <sstream>
 #include <string>
@@ -66,9 +67,8 @@ namespace IOUtils {
 	const short int snodata = -999;
 	const unsigned int npos    = (unsigned int)-1;  ///<npos is the out-of-range value
 
-	const double earth_radius = 6371e3; ///<Earth radius in meters
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
-	const double lon_epsilon = grid_epsilon / earth_radius; ///<in degrees. Small angle for longitudes, so sin(x)=x
+	const double lon_epsilon = grid_epsilon / Cst::earth_R0; ///<in degrees. Small angle for longitudes, so sin(x)=x
 	const double lat_epsilon = lon_epsilon/2.; ///<in degrees. Small angle for latitudes. Since for longitudes it is for 360deg, it has to be 180deg for latitudes
 
 	typedef enum NODATA_HANLDING {
@@ -296,7 +296,15 @@ namespace IOUtils {
 	*/
 	void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out);
 
+	/**
+	* @brief Nicely format an hour given as fractional day into a human readable hour.
+	* @param fractional fractional day (ie: fractional part of a julian date)
+	* @return string containing a human readable time
+	*/
+	std::string printFractionalDay(const double& fractional);
+
 } //end namespace IOUtils
+
 } //end namespace mio
 
 #endif

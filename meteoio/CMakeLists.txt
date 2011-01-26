@@ -8,6 +8,8 @@ IF(PROJ4)
   ADD_DEFINITIONS(-DPROJ4)
 ENDIF(PROJ4)
 
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
+
 SET(meteoio_sources
 	IOManager.cc
 	ProcessingStack.cc
@@ -35,6 +37,7 @@ SET(meteoio_sources
 	Grid3DObject.cc
 	IOInterface.cc
 	libinterpol1D.cc
+	libfit1D.cc
 	StationData.cc
 	Config.cc
 	DynamicLibrary.cc
@@ -42,6 +45,7 @@ SET(meteoio_sources
 	IOUtils.cc
 	libinterpol2D.cc
 	MeteoData.cc
+	${meteolaws_sources}
 )
 
 if (DEST MATCHES "par")

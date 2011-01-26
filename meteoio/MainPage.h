@@ -19,6 +19,23 @@
 #define __MAINPAGE_H__
 
 namespace mio {
+//groups
+/*! \defgroup meteolaws Meteorological Laws
+   Documentation for meteorological laws and constants.
+*/
+
+/*! \defgroup plugins IO plugins
+   Documentation for available IO plugins. Please consider having a look at the \subpage plugins "Available plugins and usage" page and the \subpage dev_plugins "How to write a Plugin" page.
+*/
+
+/*! \defgroup stats Statistical calculations
+   Documentation for available statistical calculations. This is heavily used by the \subpage filters "Filters" as well as the \subpage resampling "1D interpolations" and \subpage interpol2d "2D interpolations".
+*/
+
+/*! \defgroup data_str Data structures
+   Documentation for available data structures.
+*/
+
  /**
  * @mainpage Welcome to MeteoIO
  * @section intro_sec Introduction
@@ -296,19 +313,17 @@ namespace mio {
  * 	Date d1;
  * 	std::vector<mio::MeteoData> vecMeteo;
  *
- * 	mio::IOHandler *raw_io = NULL;
- * 	mio::BufferedIOHandler *io = NULL;
+ * 	mio::IOManager *io = NULL;
  *
  * 	try {
  * 		mio::Config cfg("io.ini");
- * 		raw_io = new mio::IOHandler(cfg);
- * 		io = new mio::BufferedIOHandler(*raw_io, cfg);
+ * 		io = new mio::IOManager(cfg);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
  *
  * 	try {
- * 		mio::convertString(d1,argv[1]);
+ * 		mio::IOUtils::convertString(d1,argv[1]);
  * 		io->readMeteoData(d1, vecMeteo);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem when reading data, cause: " << e.what() << std::endl;
@@ -321,7 +336,6 @@ namespace mio {
  * 	}
  *
  * 	delete io;
- * 	delete raw_io;
  *
  * 	return 0;
  * }
@@ -334,17 +348,17 @@ namespace mio {
  * int main(void) {
  * 	const double dist_x=700, dist_y=1200;
  * 	mio::DEMObject dem;
- * 	mio::IOHandler *raw_io = NULL;
+ * 	mio::IOManager *io = NULL;
  *	mio::Config *cfg = NULL;
  * 	int i,j;
  *
  * 	try {
  * 		cfg = new mio::Config("io.ini");
- * 		raw_io = new mio::IOHandler(cfg);
+ * 		io = new mio::IOManager(cfg);
  * 	} catch (IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
- * 	raw_io->readDEM(dem);
+ * 	io->readDEM(dem);
  *	mio::Coords point(*cfg);
  *	point.setLatLon(46.1592, 8.12993);
  *	dem.WGS84_to_grid(point, i,j);
@@ -359,18 +373,31 @@ namespace mio {
  * }
  * \endcode
  *
- * The next example shows how to compute and output spatial interpolations using previously read meteorological data and DEM.
+ * The next example shows how to compute and output spatial interpolations.
  * \code
- * void spatial_interpolations(mio::IOHandler& io, mio::DEMObject& dem, std::vector<mio::MeteoData>& vecMeteo);
- * {
- * 	mio::Grid2DObject ta;
- * 	mio::Meteo2DInterpolator mi(dem, vecMeteo);
+ * #include "MeteoIO.h"
  *
- * 	mi.interpolate(mio::MeteoData::TA, ta);
- *
- * 	std::cout << "Writing the Grids to files" << std::endl;
- * 	io->write2DGrid(ta, "ta_2d.asc");
- *
+ * int main(void) {
+ * 	mio::Date d1;
+ * 
+ * 	//initializing the io handlers according to the config file
+ * 	mio::Config cfg("io.ini");
+ * 	mio::IOManager io(cfg);
+ * 
+ * 	//reading the dem (necessary for several spatial interpolations algoritms)
+ * 	mio::DEMObject dem;
+ * 	io.readDEM(dem);
+ * 
+ * 	//we assume that the time given on the command line is in TZ=+1
+ * 	d1.setTimeZone(1.);
+ * 	mio::IOUtils::convertString(d1,argv[1]);
+ * 
+ * 	//performing spatial interpolations
+ * 	mio::Grid2DObject ta_grid;
+ * 	io.interpolate(d1, dem, MeteoData::TA, ta_grid);
+ * 	io.write2DGrid(param,"ta.asc");
+ * 
+ * 	return 0;
  * }
  * \endcode
  */

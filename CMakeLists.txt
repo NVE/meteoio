@@ -10,6 +10,7 @@ PROJECT(meteoio)
 ADD_SUBDIRECTORY(meteoio)
 ADD_SUBDIRECTORY(meteoio/plugins)
 ADD_SUBDIRECTORY(meteoio/plugins/gsn)
+ADD_SUBDIRECTORY(meteoio/meteolaws)
 
 # require proper c++
 set(DEBUG_ARITHM ON CACHE BOOL "Use the debug flags -DDEBUG_ARITHM to catch arithmetic exceptions")

@@ -47,7 +47,7 @@ void Timer::start() {
 
 /**
 * @brief Stop the timer. 
-* It can be restarted after, adding time to what was already timed.
+* It can be restarted afterward, adding time to what was already timed.
 */
 void Timer::stop() {
 	if (isRunning) {
@@ -67,7 +67,7 @@ void Timer::reset() {
 /**
 * @brief Get total elapsed time. 
 * It returns the sum of all the elapsed time between all the start/stop sessions since
-* the timer was created or last call to reset. Time is in seconds with microsecond resolution.
+* the timer was created or the last call to reset. Time is in seconds with microsecond resolution.
 */
 double Timer::getElapsed() {
 	if (isRunning) {

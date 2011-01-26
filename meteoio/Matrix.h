@@ -38,6 +38,7 @@ namespace mio {
  * It might be later possible to chose between using the embedded implementation or to act as a
  * front end to BLAS for those who have it installed on their system.
  *
+ * @ingroup data_str
  * @author Mathias Bavay
  */
 class Matrix {
@@ -110,6 +111,12 @@ class Matrix {
 		*/
 		double scalar() const;
 		static double scalar(const Matrix& m);
+
+		/**
+		* @brief Dot product.
+		* @return scalar value
+		*/
+		static double dot(const Matrix& A, const Matrix& B);
 
 		/**
 		* @brief matrix transpose.

@@ -32,6 +32,7 @@ namespace mio {
  * @class Grid2DObject
  * @brief A class to represent 2D Grids. Typical application as DEM or Landuse Model.
  *
+ * @ingroup data_str
  * @author Thomas Egger
  * @date   2008-12-20
  */

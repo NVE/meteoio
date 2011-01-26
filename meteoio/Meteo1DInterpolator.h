@@ -35,6 +35,8 @@ namespace mio {
 /**
  * @class Meteo1DInterpolator
  * @brief A class that can resample MeteoData objects
+ *
+ * @ingroup stats
  * @author Thomas Egger
  * @date   2010-06-24
  */

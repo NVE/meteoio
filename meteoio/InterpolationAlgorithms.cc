@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/InterpolationAlgorithms.h>
+#include <meteoio/meteolaws/Atmosphere.h>
 
 using namespace std;
 
@@ -462,7 +463,7 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 
 	//Compute dew point temperatures at stations
 	for (unsigned int ii=0; ii<vecDataRH.size(); ii++){
-		vecTd[ii] = Interpol2D::RhtoDewPoint(vecDataRH[ii], vecDataTA[ii], 1);
+		vecTd[ii] = Atmosphere::RhtoDewPoint(vecDataRH[ii], vecDataTA[ii], 1);
 	}
 			
 	//Krieging on Td
@@ -476,7 +477,7 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 	//Recompute Rh from the interpolated td
 	for (unsigned int jj=0; jj<grid.nrows; jj++) {
 		for (unsigned int ii=0; ii<grid.ncols; ii++) {
-			grid.grid2D(ii,jj) = Interpol2D::DewPointtoRh(grid.grid2D(ii,jj), ta.grid2D(ii,jj), 1);
+			grid.grid2D(ii,jj) = Atmosphere::DewPointtoRh(grid.grid2D(ii,jj), ta.grid2D(ii,jj), 1);
 		}
 	}
 }

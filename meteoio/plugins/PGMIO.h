@@ -36,6 +36,7 @@ namespace mio {
  * @class PGMIO
  * @brief This class writes 2D grids as Portable Grey Map file format.
  *
+ * @ingroup plugins
  * @author Mathias Bavay
  * @date   2010-06-17
  */

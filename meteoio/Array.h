@@ -32,6 +32,7 @@ namespace mio {
  * @class Array
  * @brief The template class Array is a 1D array (vector) able to hold any type of object as datatype
  *
+ * @ingroup data_str
  * @author Thomas Egger
  * @date   2009-05-02
  */

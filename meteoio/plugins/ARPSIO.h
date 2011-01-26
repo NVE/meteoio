@@ -40,6 +40,7 @@ namespace mio {
  * @class ARPSIO
  * @brief This class enables the access to 2D grids stored in ARPS format
  *
+ * @ingroup plugins
  * @author Mathias Bavay
  * @date   2009-12-04
  */

@@ -35,6 +35,7 @@ namespace mio {
  * @class ARCIO
  * @brief This class enables the access to 2D grids stored in ESRI ASCII (ARCGIS) format
  *
+ * @ingroup plugins
  * @author Thomas Egger
  * @date   2009-08-28
  */

@@ -335,6 +335,34 @@ double Matrix::scalar() const {
 	return operator()(1,1);
 }
 
+double Matrix::dot(const Matrix& A, const Matrix& B) {
+	unsigned int Acols, Arows, Bcols, Brows;
+	A.size(Arows, Acols);
+	B.size(Brows, Bcols);
+
+	if(Acols!=1 || Bcols!=1) {
+		std::stringstream tmp;
+		tmp << "Trying to get dot product of non vector matrix ";
+		tmp << "(" << Arows << "," << Acols << ") · ";
+		tmp << "(" << Brows << "," << Bcols << ") · ";
+		throw IOException(tmp.str(), AT);
+	}
+	if(Arows!=Brows) {
+		std::stringstream tmp;
+		tmp << "Trying to get dot product of incompatible matrix ";
+		tmp << "(" << Arows << "," << Acols << ") · ";
+		tmp << "(" << Brows << "," << Bcols << ") · ";
+		throw IOException(tmp.str(), AT);
+	}
+
+	double sum=0.;
+	for(unsigned int i=1; i<=Arows; i++) {
+		sum += A(i,1)*B(i,1);
+	}
+	
+	return sum;
+}
+
 Matrix Matrix::T(const Matrix& m) {
 	return m.getT();
 }

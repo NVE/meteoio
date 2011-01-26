@@ -23,15 +23,7 @@
 #define INTERPOL2D_H
 
 #include <meteoio/MeteoIO.h>
-
-#include <cmath>
 #include <vector>
-#include <iomanip>
-#include <assert.h>
-
-#define MAX_INPUT_STATIONS 255
-#define GRAVITY	9.80665		     // (m s-2) //HACK: move to libmeteolaws
-#define GAS_CONSTANT_AIR 287.	     // (J kg-1 K-1) //HACK: move to libmeteolaws
 
 namespace mio {
 
@@ -41,6 +33,8 @@ namespace mio {
  * Each parameter to be interpolated declares which interpolation method to use. 
  * Then the class computes the interpolation for each 2D grid point,
  * combining the inputs provided by the available data sources.
+ *
+ * @ingroup stats
  * @author Mathias Bavay
  * @date   2009-01-20
  */
@@ -87,11 +81,6 @@ class Interpol2D {
 
 		static int LinRegression(const std::vector<double>& data_in, 
 		                         const std::vector<double>& elevations, std::vector<double>& coeffs);
-
-		//these should be in the libphysicslaws, that still has to be created...!
-		static double lw_AirPressure(const double& altitude);
-		static double RhtoDewPoint(double RH, double TA, const short int& force_water);
-		static double DewPointtoRh(double TD, double TA, const short int& force_water);
 
 	private:
 		//generic functions

@@ -55,7 +55,8 @@ namespace mio {
  * - truncated julian date, see Date::getTruncatedJulianDate
  * - Unix date, see Date::getUnixDate
  * - Excel date, see Date::getExcelDate
- * 
+ *
+ * @ingroup data_str
  * @author Mathias Bavay
  * @date 2010-04-15
  */

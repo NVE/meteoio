@@ -53,8 +53,10 @@ template <class T> class Array2DProxy {
 
 /**
  * @class Array2D
- * @brief The template class Array2D is a 2D Array (Matrix) able to hold any type of object as datatype
+ * @brief The template class Array2D is a 2D Array (Matrix) able to hold any type of object as datatype. 
+ * It relies on the Array2DProxy class to provide the [][] operator (slower than the (i,j) call).
  *
+ * @ingroup data_str
  * @author Thomas Egger
  */
 template<class T> class Array2D {

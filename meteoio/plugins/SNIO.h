@@ -35,6 +35,7 @@ namespace mio {
  * @class SNIO
  * @brief This class enables the access to meteo data stored in SNOWPACK format
  *
+ * @ingroup plugins
  * @author Mathias Bavay
  * @date   2009-12-04
  */

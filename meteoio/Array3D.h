@@ -35,7 +35,7 @@ template <class T> class Array3DProxy2;
 /**
  * @class Array3DProxy
  * @brief The template class Array3DProxy is a helper class for the template class Array3D
- *        with the purpose of adding the [][][] operator to Array3D
+ *        with the purpose of adding the [][] operator to Array3D
  *
  * @author Thomas Egger
  */
@@ -77,8 +77,9 @@ template <class T> class Array3DProxy2 {
 
 /**
  * @class Array3D
- * @brief The template class Array3D is a 3D Array (Tensor) able to hold any type of object as datatype
- *
+ * @brief The template class Array3D is a 3D Array (Tensor) able to hold any type of object as datatype. 
+ * It relies on the Array3DProxy2 class to provide the [][][] operator (slower than the (i,j,k) call).
+ * @ingroup data_str
  * @date  2009-07-19
  * @author Thomas Egger
  */

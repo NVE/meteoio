@@ -486,4 +486,18 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 	return IOUtils::npos;
 }
 
+std::string IOUtils::printFractionalDay(const double& fractional) {
+	const double hours=floor(fractional*24.);
+	const double minutes=floor((fractional*24.-hours)*60.);
+	const double seconds=fractional*24.*3600.-hours*3600.-minutes*60.;
+
+	std::stringstream tmp;
+	tmp << std::fixed << std::setfill('0') << std::setprecision(0);
+	tmp << std::setw(2) << hours << ":";
+	tmp << std::setw(2) << minutes << ":";
+	tmp << std::setw(2) << seconds;
+
+	return tmp.str();
+}
+
 } //namespace

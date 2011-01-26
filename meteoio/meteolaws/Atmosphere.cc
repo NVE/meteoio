@@ -1,0 +1,171 @@
+/***********************************************************************************/
+/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/***********************************************************************************/
+/* This file is part of MeteoIO.
+    MeteoIO is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MeteoIO is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <assert.h>
+#include <cmath>
+#include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteolaws/Meteoconst.h>
+#include <meteoio/IOUtils.h>
+
+namespace mio {
+
+/**
+* @brief Standard atmosphere pressure
+* @param altitude altitude above sea level (m)
+* @return standard pressure (Pa)
+*/
+double Atmosphere::stdAirPressure(const double& altitude) {
+	const double p0 = Cst::std_press; // Air and standard pressure in Pa
+	const double lapse_rate = 0.0065; // K m-1
+	const double sea_level_temp = 288.15; // K
+	const double expo = Cst::gravity / (lapse_rate * Cst::gas_constant_air);
+	const double R0 = Cst::earth_R0; // Earth's radius in m
+	
+	const double p = p0 * pow( 1. - ( (lapse_rate * R0 * altitude) / (sea_level_temp * (R0 + altitude)) ), expo );
+	
+	return(p);
+}
+
+/**
+* @brief Standard water vapor saturation
+* @param T air temperature (K)
+* @return standard water vapor saturation pressure (Pa)
+*/
+double Atmosphere::waterSaturationPressure(const double& T) {
+	double c2, c3; // varying constants
+
+	if ( T < 273.16 ) { // for a flat ice surface
+		c2 = 21.88;
+		c3 = 7.66;
+	} else { // for a flat water surface
+		c2 = 17.27;
+		c3 = 35.86;
+	}
+	const double exp_p_sat = c2 *  (T - 273.16) / (T - c3); //exponent
+
+	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
+}
+
+/**
+* @brief Convert a relative humidity to a dew point temperature. 
+* @param RH relative humidity between 0 and 1
+* @param TA air temperature (K)
+* @param force_water if set to true, compute over water. Otherwise, a smooth transition between over ice and over water is computed.
+* @return dew point temperature (K)
+*/
+double Atmosphere::RhtoDewPoint(double RH, double TA, const bool& force_water)
+{
+	TA = K_TO_C(TA);
+	double Es, E, Tdw, Tdi; //saturation and current water vapor pressure
+	const double Aw = 611.21, Bw = 17.502, Cw = 240.97; //parameters for water
+	const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice
+	const double Tfreeze = 0.;                          //freezing temperature
+	const double Tnucl = -16.0;                         //nucleation temperature
+	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);     //distance to pure ice
+	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6); //distance to pure water
+
+	//in order to avoid getting NaN if RH=0
+	RH += 0.0001;
+	assert(RH>0.);
+	if (TA >= Tfreeze || force_water==true) {//above freezing point, water
+		Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+		E = RH * Es;
+		Tdw = ( Cw * log(E / Aw) ) / ( Bw - log(E / Aw) );
+		return C_TO_K(Tdw);
+	}
+	if (TA < Tnucl) { //below nucleation, ice
+		Es = Ai * exp( (Bi * TA) / (Ci + TA) );
+		E = RH * Es;
+		Tdi = ( Ci * log(E / Ai) ) / ( Bi - log(E / Ai) );
+		return C_TO_K(Tdi);
+	}
+
+	//no clear state, we do a smooth interpolation between water and ice
+	Es = Ai * exp( (Bi*TA) / (Ci + TA) );
+	E = RH * Es;
+	Tdi = ( Ci * log(E / Ai) ) / ( Bi - log(E / Ai) );
+
+	Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+	E = RH * Es;
+	Tdw = ( Cw * log(E / Aw) ) / ( Bw - log(E / Aw) );
+
+	return C_TO_K( (di / (di + dw) * Tdi + dw / (di + dw) * Tdw) );
+}
+
+/**
+* @brief Convert a dew point temperature to a relative humidity.  
+* @param TD dew point temperature (K)
+* @param TA air temperature (K)
+* @param force_water if set to true, compute over water. Otherwise, a smooth transition between over ice and over water is computed.
+* @return relative humidity between 0 and 1
+*/
+double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
+{
+	//Convert a dew point temperature into a Relative Humidity
+	//TA, TD are in Kelvins, RH is returned between 0 and 1
+	TA = K_TO_C(TA);
+	TD = K_TO_C(TD);
+	double Es, E, Rhi, Rhw, Rh;                         //saturation and current water vapro pressure
+	const double Aw = 611.21, Bw = 17.502, Cw = 240.97; //parameters for water
+	const double Ai = 611.15, Bi = 22.452, Ci = 272.55; //parameters for ice
+	const double Tfreeze = 0.;                          //freezing temperature
+	const double Tnucl = -16.0;                         //nucleation temperature
+	const double di = 1. / ((TA - Tnucl) * (TA - Tnucl) + 1e-6);     //distance to pure ice
+	const double dw = 1. / ((Tfreeze - TA) * (Tfreeze - TA) + 1e-6); //distance to pure water
+
+	if (TA >= Tfreeze || force_water==true) {
+		//above freezing point, water
+		Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+		E  = Aw * exp( (Bw * TD) / (Cw + TD) );
+		Rhw = (E / Es);
+		if (Rhw > 1.) {
+			return 1.;
+		} else {
+			return Rhw;
+		}
+	}
+	if (TA < Tnucl) {
+		//below nucleation, ice
+		Es = Ai * exp( (Bi * TA) / (Ci + TA) );
+		E  = Ai * exp( (Bi * TD) / (Ci + TD) );
+		Rhi = (E / Es);
+		if (Rhi > 1.) {
+			return 1.;
+		} else {
+			return Rhi;
+		}
+	}
+
+	//no clear state, we do a smooth interpolation between water and ice
+	Es = Ai * exp( (Bi * TA) / (Ci + TA) );
+	E  = Ai * exp( (Bi * TD) / (Ci + TD) );
+	Rhi = E / Es;
+
+	Es = Aw * exp( (Bw * TA) / (Cw + TA) );
+	E  = Aw * exp( (Bw * TD) / (Cw + TD) );
+	Rhw = E / Es;
+
+	Rh = (di / (di + dw) * Rhi + dw / (di + dw) * Rhw);
+	if(Rh > 1.) {
+		return 1.;
+	} else {
+		return Rh;
+	}
+}
+
+} //namespace

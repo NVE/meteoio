@@ -36,6 +36,7 @@ namespace mio {
  * @class GrassIO
  * @brief This class enables the access to 2D grids stored in GRASS ASCII (e.g. JGrass) format
  *
+ * @ingroup plugins
  * @author Thomas Egger
  * @date   2008-08-03
  */

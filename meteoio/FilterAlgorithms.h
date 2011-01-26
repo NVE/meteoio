@@ -35,7 +35,8 @@ namespace mio {
 
 /**
  * @class FilterAlgorithms
- * @brief 
+ * @brief A class to filter time series of data
+ *
  * @author Thomas Egger
  * @date   2009-11-03
  */

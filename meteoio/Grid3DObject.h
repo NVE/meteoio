@@ -31,6 +31,7 @@ namespace mio {
  * @class Grid3DObject
  * @brief A class to represent 3D Grids. Typical application: wind field
  *
+ * @ingroup data_str
  * @author Thomas Egger
  * @date   2009-07-20
  */

@@ -30,6 +30,7 @@ namespace mio {
  * @class GeotopIO
  * @brief This class enables the access meteo data in legacy Geotop format
  *
+ * @ingroup plugins
  * @author Thomas Egger
  * @date   2009-07-02
  */

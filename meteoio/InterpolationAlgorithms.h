@@ -122,6 +122,8 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
 /**
  * @class InterpolationAlgorithm
  * @brief A class to perform 2D spatial interpolations. For more, see \ref interpol2d
+ *
+ * @ingroup stats
  * @author Thomas Egger
  * @date   2010-04-01
 */

@@ -72,6 +72,8 @@ namespace mio {
  * @class ImisIO
  * @brief The class with-in the data from the database are treated. The MeteoData and the StationData will be set in.
  * This class also herited to IOInterface class which is abstract.
+ *
+ * @ingroup plugins
  * @author Thomas Egger, first version by Moustapha Mbengue
  * @date 2010-11-02
  */

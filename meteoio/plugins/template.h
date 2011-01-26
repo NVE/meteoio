@@ -29,6 +29,7 @@ namespace mio {
  * @class TEMPLATE
  * @brief This (empty) class is to be used as a template for developing new plugins
  *
+ * @ingroup plugins
  * @author Mathias Bavay
  * @date   2010-06-14
  */

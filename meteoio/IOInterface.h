@@ -84,6 +84,7 @@ namespace mio {
  * a derived class is to be created that holds the specific implementation of the purely virtual member funtions. 
  * The IOHandler class is a wrapper class that is able to deal with all above implementations of the IOInterface abstract base class.
  *
+ * @ingroup plugins
  * @author Thomas Egger
  * @date   2009-01-08
  */

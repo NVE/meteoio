@@ -34,6 +34,7 @@ namespace mio {
  * @class MeteoData
  * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date object)
  *
+ * @ingroup data_str
  * @author Thomas Egger
  * @date   2008-12-05
  */

@@ -27,6 +27,15 @@
 
 namespace mio {
 
+/**
+ * @class Interpol1D
+ * @brief A class to perform basic 1D statistics.
+ * Each method is static
+ *
+ * @ingroup stats
+ * @author Mathias Bavay
+ * @date   2009-01-20
+ */
 class Interpol1D {
  	public:
 		static double linearInterpolation(const double& x1, const double& y1, 
@@ -44,6 +53,7 @@ class Interpol1D {
 		static void LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 		static void ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 };
+
 } //end namespace
 
 #endif

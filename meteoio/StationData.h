@@ -32,6 +32,7 @@ namespace mio {
  * @class StationData
  * @brief A class to represent meteo stations with attributes like longitude, latitude, etc.
  *
+ * @ingroup data_str
  * @author Thomas Egger
  * @date   2008-11-29
  */

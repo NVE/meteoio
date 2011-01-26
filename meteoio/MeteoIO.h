@@ -51,6 +51,11 @@
 #include <meteoio/StationData.h>
 #include <meteoio/IOManager.h>
 
+#include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteolaws/Suntrajectory.h>
+#include <meteoio/meteolaws/Sun.h>
+#include <meteoio/meteolaws/Meteoconst.h>
+
 #ifdef _POPC_
 #include <meteoio/IOHandler.ph>
 #include <meteoio/marshal_meteoio.h>
