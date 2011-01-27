@@ -19,7 +19,6 @@ SET(meteoio_sources
 	ResamplingAlgorithms.cc
 	Meteo1DInterpolator.cc
 	InterpolationAlgorithms.cc
-	MeteoFilter.cc
 	FilterAlgorithms.cc
 	A3DIO.cc
 	Date.cc
