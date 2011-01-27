@@ -15,10 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/ProcessingBlock.h>
-#include <meteoio/FilterMinMax.h>
-#include <meteoio/FilterMeanAvg.h>
-#include <meteoio/FilterMedianAvg.h>
+#include <meteoio/meteofilters/ProcessingBlock.h>
+#include <meteoio/meteofilters/FilterMinMax.h>
+#include <meteoio/meteofilters/FilterMeanAvg.h>
+#include <meteoio/meteofilters/FilterMedianAvg.h>
 
 namespace mio {
 
@@ -54,9 +54,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 }
 
 ProcessingBlock::ProcessingBlock(const std::string& name) : block_name(name)
-{
-	
-}
+{}
 
 std::string ProcessingBlock::getName() const
 {

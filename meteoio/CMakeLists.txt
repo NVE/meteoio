@@ -9,16 +9,10 @@ IF(PROJ4)
 ENDIF(PROJ4)
 
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
 SET(meteoio_sources
 	IOManager.cc
-	WindowedFilter.cc
-	ProcessingStack.cc
-	FilterMeanAvg.cc
-	FilterMedianAvg.cc
-	FilterBlock.cc
-	FilterMinMax.cc
-	ProcessingBlock.cc
 	Matrix.cc
 	IOPlugin.cc
 	MeteoProcessor.cc
@@ -48,6 +42,7 @@ SET(meteoio_sources
 	libinterpol2D.cc
 	MeteoData.cc
 	${meteolaws_sources}
+	${meteofilters_sources}
 )
 
 if (DEST MATCHES "par")

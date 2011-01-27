@@ -15,50 +15,42 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __WINDOWEDFILTER_H__
-#define __WINDOWEDFILTER_H__
+#ifndef __PROCESSINGSTACK_H__
+#define __PROCESSINGSTACK_H__
 
-#include <meteoio/FilterBlock.h>
+#include <meteoio/meteofilters/ProcessingBlock.h>
+#include <meteoio/Config.h>
+#include <memory>
 #include <vector>
 #include <string>
 
 namespace mio {
 
 /**
- * @class  WindowedFilter
+ * @class  ProcessingStack
  * @brief  
  * @author Thomas Egger
- * @date   2011-01-22
+ * @date   2011-01-11
  */
-
-class WindowedFilter : public FilterBlock {
+class ProcessingStack {
 	public:
-		enum Centering {
-			left,   ///< left centered window
-			center, ///< centered window
-			right   ///< right centered window
-		};
+		/**
+		 * @brief Constructor parses cfg and builds up a filter stack for param_name
+		 */
+		ProcessingStack(const Config& cfg, const std::string& param_name);
+		~ProcessingStack();
 
-		WindowedFilter(const std::string& name);
+		void process(const std::vector< std::vector<MeteoData> >& ivec, 
+				   std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
-		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-						 std::vector<MeteoData>& ovec) = 0;
-
-		static unsigned int get_centering(std::vector<std::string>& vec_args);
-
-	protected:
-		const std::vector<const MeteoData*>& get_window(const unsigned int& index,
-											   const std::vector<MeteoData>& ivec);
-
-		bool is_soft;
-		unsigned int min_data_points;
-		Date min_time_span;
-		Centering centering;
-
-		unsigned int elements_left, elements_right, last_index;
+		void getWindowSize(ProcessingProperties& o_properties);
 
 	private:
-		std::vector<const MeteoData*> vec_window;
+		unsigned int getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters);
+		unsigned int getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments);
+
+		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
+		std::string param_name;
 };
 
 } //end namespace

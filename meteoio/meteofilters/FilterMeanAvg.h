@@ -15,42 +15,32 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __PROCESSINGSTACK_H__
-#define __PROCESSINGSTACK_H__
+#ifndef __FILTERMEANAVG_H__
+#define __FILTERMEANAVG_H__
 
-#include <meteoio/ProcessingBlock.h>
-#include <meteoio/Config.h>
-#include <memory>
+#include <meteoio/meteofilters/WindowedFilter.h>
 #include <vector>
 #include <string>
 
 namespace mio {
 
 /**
- * @class  ProcessingStack
+ * @class  FilterMeanAvg
  * @brief  
  * @author Thomas Egger
- * @date   2011-01-11
+ * @date   2011-01-24
  */
-class ProcessingStack {
+
+class FilterMeanAvg : public WindowedFilter {
 	public:
-		/**
-		 * @brief Constructor parses cfg and builds up a filter stack for param_name
-		 */
-		ProcessingStack(const Config& cfg, const std::string& param_name);
-		~ProcessingStack();
+		FilterMeanAvg(const std::vector<std::string>& vec_args);
 
-		void process(const std::vector< std::vector<MeteoData> >& ivec, 
-				   std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
-
-		void getWindowSize(ProcessingProperties& o_properties);
+		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+						 std::vector<MeteoData>& ovec);
 
 	private:
-		unsigned int getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters);
-		unsigned int getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments);
-
-		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
-		std::string param_name;
+		void parse_args(std::vector<std::string> vec_args);
+		double calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
 };
 
 } //end namespace

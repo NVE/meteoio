@@ -15,42 +15,34 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERMINMAX_H__
-#define __FILTERMINMAX_H__
+#ifndef __FILTERMEDIANAVG_H__
+#define __FILTERMEDIANAVG_H__
 
-#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember)) 
-
-#include <meteoio/MeteoData.h>
-#include <meteoio/FilterBlock.h>
+#include <meteoio/meteofilters/WindowedFilter.h>
+#include <meteoio/libinterpol1D.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 namespace mio {
 
 /**
- * @class  FilterMinMax
+ * @class  FilterMedianAvg
  * @brief  
  * @author Thomas Egger
- * @date   2011-01-02
+ * @date   2011-01-24
  */
 
-class FilterMinMax : public FilterBlock {
+class FilterMedianAvg : public WindowedFilter {
 	public:
-		FilterMinMax(const std::vector<std::string>& vec_args);
+		FilterMedianAvg(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 						 std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
-
-		bool is_soft;
-		double min_val, max_val;
-		double min_soft, max_soft;
-
-		//bool fixed_rate();
-		//unsigned int fixed_rate_ninput_to_noutput(const unsigned int& ninput); //how many output samples?
-		//unsigned int fixed_rate_noutput_to_ninput(const unsigned int& noutput);//how many input  samples?
+		double calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
 };
 
 } //end namespace

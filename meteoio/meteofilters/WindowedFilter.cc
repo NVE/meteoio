@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/WindowedFilter.h>
+#include <meteoio/meteofilters/WindowedFilter.h>
 
 using namespace std;
 

@@ -15,34 +15,37 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERMEDIANAVG_H__
-#define __FILTERMEDIANAVG_H__
+#ifndef __FILTERMINMAX_H__
+#define __FILTERMINMAX_H__
 
-#include <meteoio/WindowedFilter.h>
-#include <meteoio/libinterpol1D.h>
+//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember)) 
+
+#include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
 #include <string>
-#include <algorithm>
 
 namespace mio {
 
 /**
- * @class  FilterMedianAvg
+ * @class  FilterMinMax
  * @brief  
  * @author Thomas Egger
- * @date   2011-01-24
+ * @date   2011-01-02
  */
 
-class FilterMedianAvg : public WindowedFilter {
+class FilterMinMax : public FilterBlock {
 	public:
-		FilterMedianAvg(const std::vector<std::string>& vec_args);
+		FilterMinMax(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 						 std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
-		double calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
+
+		bool is_soft;
+		double min_val, max_val;
+		double min_soft, max_soft;
 };
 
 } //end namespace

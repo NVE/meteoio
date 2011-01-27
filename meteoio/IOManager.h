@@ -20,6 +20,7 @@
 
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/MeteoProcessor.h>
 
 namespace mio {
 

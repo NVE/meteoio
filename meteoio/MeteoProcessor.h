@@ -23,7 +23,7 @@
 #include <meteoio/Config.h>
 #include <meteoio/MeteoFilter.h>
 #include <meteoio/Meteo1DInterpolator.h>
-#include <meteoio/ProcessingStack.h>
+#include <meteoio/meteofilters/ProcessingStack.h>
 
 #include <vector>
 #include <set>
