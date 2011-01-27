@@ -74,6 +74,7 @@ class Meteo1DInterpolator {
 		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments);
 
 		Config cfg;
+		double window_size; ///< In seconds
 		std::vector<std::string> tasklist;
 		std::vector< std::vector< std::string > > taskargs;
 		std::map<	std::string, std::pair < std::string, std::vector < std::string > > >	extended_tasklist;

@@ -38,6 +38,16 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& _cfg) : cfg(_cfg) {
 		taskargs.push_back(vecResamplingArguments);
 	}
 
+	window_size = 0.5; //default size is half a day
+	string tmp = cfg.get("WINDOW_SIZE", "Interpolations1D", Config::nothrow); 
+	if (tmp != "") {
+		window_size = cfg.get("WINDOW_SIZE", "Interpolations1D"); 
+		window_size /= 86400; //user uses seconds, internally julian day is used
+	}
+	if (window_size <= 0.01)
+		throw IOException("WINDOW_SIZE not valid", AT);
+
+
 	/*//For debugging only: 	
 	for (unsigned int jj=0; jj<tasklist.size(); jj++){
 		cout << MeteoData::getParameterName(jj) << "::" << tasklist[jj] << endl;
@@ -53,8 +63,8 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties)
 	o_properties.points_before = 1;
 	o_properties.points_after  = 1;
 
-	o_properties.time_before   = Date(0.8);
-	o_properties.time_after    = Date(0.8);
+	o_properties.time_before   = Date(window_size/2.0);
+	o_properties.time_after    = Date(window_size/2.0);
 }
 
 unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
