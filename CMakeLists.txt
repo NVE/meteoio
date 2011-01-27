@@ -11,6 +11,7 @@ ADD_SUBDIRECTORY(meteoio)
 ADD_SUBDIRECTORY(meteoio/plugins)
 ADD_SUBDIRECTORY(meteoio/plugins/gsn)
 ADD_SUBDIRECTORY(meteoio/meteolaws)
+ADD_SUBDIRECTORY(meteoio/meteofilters)
 
 # require proper c++
 set(DEBUG_ARITHM ON CACHE BOOL "Use the debug flags -DDEBUG_ARITHM to catch arithmetic exceptions")
@@ -108,10 +109,15 @@ set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 ###########################################################
 #for the install target
 FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.h")
+FILE(GLOB hlawsfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/meteolaws/*.h")
+FILE(GLOB hfilterfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/meteofilters/*.h")
+
 if (DEST MATCHES "par")
   FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.ph")
 endif(DEST MATCHES "par")
 INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include/meteoio)
+INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws)
+INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters)
 
 FILE(GLOB solibs "${PROJECT_SOURCE_DIR}/lib/libmeteoio*.so*")
 FILE(GLOB plugins "${PROJECT_SOURCE_DIR}/lib/plugins/lib*.so*")
