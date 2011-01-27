@@ -15,32 +15,34 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERMEANAVG_H__
-#define __FILTERMEANAVG_H__
+#ifndef __FILTERMEDIANAVG_H__
+#define __FILTERMEDIANAVG_H__
 
 #include <meteoio/WindowedFilter.h>
+#include <meteoio/libinterpol1D.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 namespace mio {
 
 /**
- * @class  FilterMeanAvg
+ * @class  FilterMedianAvg
  * @brief  
  * @author Thomas Egger
  * @date   2011-01-24
  */
 
-class FilterMeanAvg : public WindowedFilter {
+class FilterMedianAvg : public WindowedFilter {
 	public:
-		FilterMeanAvg(const std::vector<std::string>& vec_args);
+		FilterMedianAvg(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 						 std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
-		double calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
+		double calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
 };
 
 } //end namespace

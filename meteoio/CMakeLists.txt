@@ -12,8 +12,10 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
 
 SET(meteoio_sources
 	IOManager.cc
+	WindowedFilter.cc
 	ProcessingStack.cc
 	FilterMeanAvg.cc
+	FilterMedianAvg.cc
 	FilterBlock.cc
 	FilterMinMax.cc
 	ProcessingBlock.cc

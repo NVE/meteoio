@@ -15,13 +15,13 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/FilterMeanAvg.h>
+#include <meteoio/FilterMedianAvg.h>
 
 using namespace std;
 
 namespace mio {
 
-FilterMeanAvg::FilterMeanAvg(const std::vector<std::string>& vec_args) : WindowedFilter("MEAN_AVG")
+FilterMedianAvg::FilterMedianAvg(const std::vector<std::string>& vec_args) : WindowedFilter("MEAN_AVG")
 {
 	parse_args(vec_args);
 
@@ -32,7 +32,7 @@ FilterMeanAvg::FilterMeanAvg(const std::vector<std::string>& vec_args) : Windowe
 	properties.points_after = min_data_points;
 }
 
-void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterMedianAvg::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 					   std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
@@ -48,13 +48,13 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
 
 		if (is_soft){
 			if (vec_window.size() > 0){
-				value = calc_avg(index, vec_window);
+				value = calc_median(index, vec_window);
 			} else {
 				value = IOUtils::nodata;
 			}
 		} else {
 			if (vec_window.size() >= min_data_points){
-				value = calc_avg(index, vec_window);
+				value = calc_median(index, vec_window);
 			} else {
 				value = IOUtils::nodata;
 			}
@@ -71,32 +71,35 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
  * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
  * @return A double either representing the average or IOUtils::nodata if averaging fails 
  */
-double FilterMeanAvg::calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
+double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
 {
 	if (vec_window.size() == 0)
 		return IOUtils::nodata;
 
-	double sum = 0;
-	unsigned int counter = 0;
-	for (unsigned int ii=0; ii<vec_window.size(); ii++){
+	vector<double> vecTemp;
+	for(unsigned int ii=0; ii<vec_window.size(); ii++){ //get rid of nodata elements
 		const double& value = (*vec_window[ii]).param(index);
-		if (value != IOUtils::nodata){
-			sum += value;
-			counter++;
-			//cout << "Adding value: " << value << "(" << (*vec_window[ii]).date.toString(Date::ISO) << ")" << endl;
-		}
+		if (value != IOUtils::nodata)
+			vecTemp.push_back(value);
+
+		//cout << "Adding value: " << value << endl;
 	}
 
-	if (counter == 0){
+	if (vecTemp.size() == 0)
 		return IOUtils::nodata;
-	} else if (counter == 1){
-		return sum;
-	}
+	
+	const unsigned int size_of_vec = vecTemp.size();
+	const unsigned int middle = (unsigned int)(size_of_vec/2);
+	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
-	return (sum / (double)counter);
+	if ((size_of_vec % 2) == 1){ //uneven
+		return *(vecTemp.begin()+middle);
+	} else { //use arithmetic mean of element n/2 and n/2-1
+		return Interpol1D::linearInterpolation( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
+	}
 }	
 
-void FilterMeanAvg::parse_args(std::vector<std::string> vec_args)
+void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 {
 	vector<double> filter_args;
 

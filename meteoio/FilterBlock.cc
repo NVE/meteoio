@@ -21,24 +21,6 @@ bool FilterBlock::is_soft(std::vector<std::string>& vec_args)
 	return false;
 }
 
-unsigned int FilterBlock::get_orientation(std::vector<std::string>& vec_args)
-{
-	if (vec_args.size() > 0){
-		if (vec_args[0] == "left"){
-			vec_args.erase(vec_args.begin());
-			return FilterBlock::left;
-		} else if (vec_args[0] == "right"){
-			vec_args.erase(vec_args.begin());
-			return FilterBlock::right;
-		} else if (vec_args[0] == "center"){
-			vec_args.erase(vec_args.begin());
-			return FilterBlock::center;
-		}
-	}
-	
-	return FilterBlock::center; //the default
-}
-
 void FilterBlock::convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
 						 const std::vector<std::string>& vec_args, std::vector<double>& dbl_args)
 {

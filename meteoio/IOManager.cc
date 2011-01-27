@@ -116,7 +116,7 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 	}
 
 
-	//2.  Check which data is available, buffered locally
+	//2.  Check which data point is available, buffered locally
 	map<Date, vector<MeteoData> >::const_iterator it = meteo_cache.find(i_date);
 	if (it != meteo_cache.end()){
 		vecMeteo = it->second;
@@ -126,7 +126,7 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 	//    request an appropriate window of data from bufferedio
 	//    Hand window of data over to meteo processor
 	bufferedio.readMeteoData(i_date-properties.time_before, i_date+properties.time_after, vec_cache);
-	//vec_cache is either filtered or unfiltered
+	//vec_cache is either filtered or unfiltered, in any case it is wise to buffer it
 
 	for (unsigned int ii=0; ii<vec_cache.size(); ii++){//resampling for every station
 		//cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;

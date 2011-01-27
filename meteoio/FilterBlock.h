@@ -34,20 +34,12 @@ namespace mio {
  */
 class FilterBlock : public ProcessingBlock {
 	public:
-		enum WindowOrientation {
-			left,   ///< left centered window
-			center, ///< centered window
-			right   ///< right centered window
-		};
-
 		virtual ~FilterBlock();
 		
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 						 std::vector<MeteoData>& ovec) = 0;
 
 		static bool is_soft(std::vector<std::string>& vec_args);
-		static unsigned int get_orientation(std::vector<std::string>& vec_args);
-
 
 		void convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
 					   const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);

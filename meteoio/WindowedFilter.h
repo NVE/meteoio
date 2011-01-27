@@ -15,32 +15,50 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERMEANAVG_H__
-#define __FILTERMEANAVG_H__
+#ifndef __WINDOWEDFILTER_H__
+#define __WINDOWEDFILTER_H__
 
-#include <meteoio/WindowedFilter.h>
+#include <meteoio/FilterBlock.h>
 #include <vector>
 #include <string>
 
 namespace mio {
 
 /**
- * @class  FilterMeanAvg
+ * @class  WindowedFilter
  * @brief  
  * @author Thomas Egger
- * @date   2011-01-24
+ * @date   2011-01-22
  */
 
-class FilterMeanAvg : public WindowedFilter {
+class WindowedFilter : public FilterBlock {
 	public:
-		FilterMeanAvg(const std::vector<std::string>& vec_args);
+		enum Centering {
+			left,   ///< left centered window
+			center, ///< centered window
+			right   ///< right centered window
+		};
+
+		WindowedFilter(const std::string& name);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-						 std::vector<MeteoData>& ovec);
+						 std::vector<MeteoData>& ovec) = 0;
+
+		static unsigned int get_centering(std::vector<std::string>& vec_args);
+
+	protected:
+		const std::vector<const MeteoData*>& get_window(const unsigned int& index,
+											   const std::vector<MeteoData>& ivec);
+
+		bool is_soft;
+		unsigned int min_data_points;
+		Date min_time_span;
+		Centering centering;
+
+		unsigned int elements_left, elements_right, last_index;
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
-		double calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
+		std::vector<const MeteoData*> vec_window;
 };
 
 } //end namespace
