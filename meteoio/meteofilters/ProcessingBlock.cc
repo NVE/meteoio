@@ -19,6 +19,7 @@
 #include <meteoio/meteofilters/FilterMinMax.h>
 #include <meteoio/meteofilters/FilterMeanAvg.h>
 #include <meteoio/meteofilters/FilterMedianAvg.h>
+#include <meteoio/meteofilters/RateFilter.h>
 
 namespace mio {
 
@@ -30,6 +31,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("MIN_MAX");
 	availableBlocks.insert("MEAN_AVG");
 	availableBlocks.insert("MEDIAN_AVG");
+	availableBlocks.insert("RATE");
 
 	return true;
 }
@@ -46,6 +48,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterMeanAvg(vec_args);
 	} else if (blockname == "MEDIAN_AVG"){
 		return new FilterMedianAvg(vec_args);
+	} else if (blockname == "RATE"){
+		return new RateFilter(vec_args);
 	} else {
 		throw IOException("The processing block '"+blockname+"' does not exist" , AT);		
 	}
