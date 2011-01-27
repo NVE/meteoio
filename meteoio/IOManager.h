@@ -51,7 +51,30 @@ class IOManager {
 		unsigned int getMeteoData(const Date& dateStart, const Date& dateEnd,
 		                          std::vector< std::vector<MeteoData> >& vecMeteo);
 
-		//data can be raw or processed (filtered, resampled)
+		/**
+		 * @brief Fill vector<MeteoData> object with multiple datasets
+		 * corresponding to the time indicated by the Date object.
+		 * Matching rule: Find first data set for every station which has an event time (measurement time)
+		 * that is greater (newer) or equal to the time represented by the Date object parameter. The
+		 * vector<StationData> object holds multiple StationData objects representing meta information
+		 * about the meteo stations that recorded the meteo data.
+		 *
+		 * NOTE:
+		 * - vecMeteo will contain nodata objects if an exact time match is impossible
+		 *   and resampling is turned off. If resampling is turned on a resampled value is returned
+		 *   if resampling is possible (enough measurements), otherwise nodata objects will be returned
+		 * - is there is absolutely no data to be found, and hence not even station data, vecMeteo and vecStation
+		 *   will be filled with only one nodata obejct of MeteoData and StationData respectively
+		 *
+		 * Example Usage:
+		 * @code
+		 * vector<MeteoData> vecMeteo;      //empty vector
+		 * IOManager iomanager(Config("io.ini"));
+		 * iomanager.getMeteoData(Date(2008,06,21,11,00), vecMeteo); //21.6.2008 11:00
+		 * @endcode
+		 * @param i_date      A Date object representing the date/time for the sought MeteoData objects
+		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
+		 */
 		unsigned int getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo);
 		
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 

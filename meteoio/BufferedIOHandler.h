@@ -25,7 +25,6 @@
 #endif
 
 #include <meteoio/Config.h>
-#include <meteoio/MeteoProcessor.h>
 
 #include <map>
 #include <vector>
@@ -86,36 +85,9 @@ class BufferedIOHandler : public IOInterface {
 		 * @param _date start date of the data search for each station
 		 * @param vecMeteo   A vector of MeteoData objects to be filled with data
 		 */
-		void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
+		//void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-
-		/**
-		 * @brief Fill vector<MeteoData> and vector<StationData> objects with multiple datasets
-		 * corresponding to the time indicated by the Date object.
-		 * Matching rule: Find first data set for every station which has an event time (measurement time)
-		 * that is greater (newer) or equal to the time represented by the Date object parameter. The
-		 * vector<StationData> object holds multiple StationData objects representing meta information
-		 * about the meteo stations that recorded the meteo data.
-		 *
-		 * NOTE:
-		 * - vecMeteo and vecStation will contain nodata objects if an exact time match is impossible
-		 *   and resampling is turned off. If resampling is turned on a resampled value is returned
-		 *   if resampling is possible (enough measurements), otherwise nodata objects will be returned
-		 * - is there is absolutely no data to be found, and hence not even station data, vecMeteo and vecStation
-		 *   will be filled with only one nodata obejct of MeteoData and StationData respectively
-		 *
-		 * Example Usage:
-		 * @code
-		 * vector<MeteoData> vecMeteo;      //empty vector
-		 * vector<StationData> vecStation;  //empty vector
-		 * BufferedIOHandler bio(A3DIO("io.ini"), Config("io.ini"));
-		 * bio.readMeteoData(Date(2008,06,21,11,00), vecMeteo, vecStation); //21.6.2008 11:00
-		 * @endcode
-		 * @param _date       A Date object representing the date/time for the sought MeteoData objects
-		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
-		 */
-		void readMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
 
 		/**
 		 * @brief Clear all buffers in BufferedIOHandler and hence force rebuffering
@@ -160,27 +132,16 @@ class BufferedIOHandler : public IOInterface {
 		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
 
 	private:
-		void legacy_readMeteoData(const Date& dateStart, const Date& dateEnd,
-							 std::vector< std::vector<MeteoData> >& vecMeteo,
-							 const unsigned int& stationindex=IOUtils::npos);
-
-		bool bufferData(const Date& _date, const unsigned int& stationindex);
-		void bufferAllData(const Date& _date);
 		void setDfltBufferProperties();
 		void bufferAllData(const Date& date_start, const Date& date_end);
 
 		IOHandler& iohandler;
 		Config cfg;
-		MeteoProcessor meteoprocessor;
 
 		bool always_rebuffer;
-		Date bufferbefore, bufferafter; //NrOfDays to buffer before and after a given date
 		Date buffer_start, buffer_end;
 
-		std::vector< std::vector<MeteoData> > meteoBuffer;
 		std::vector< std::vector<MeteoData> > vec_buffer_meteo;
-		std::vector< Date > startDateBuffer;
-		std::vector< Date > endDateBuffer;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 };
 } //end namespace

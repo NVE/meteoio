@@ -21,7 +21,6 @@
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
 #include <meteoio/Config.h>
-#include <meteoio/MeteoFilter.h>
 #include <meteoio/Meteo1DInterpolator.h>
 #include <meteoio/meteofilters/ProcessingStack.h>
 
@@ -42,18 +41,17 @@ class MeteoProcessor {
 		MeteoProcessor(const Config& cfg);
 		~MeteoProcessor();
 
+		/**
+		 * @brief A function that executes all the filters for all meteo parameters 
+		 *        configuered by the user
+		 * @param[in] ivec A dataset of MeteoData
+		 * @param[in] ovec The filtered output of MeteoData
+		 * @param[in] second_pass Whether this is the second pass (check only filters)
+		 */
 		void process(const std::vector< std::vector<MeteoData> >& ivec, 
 				   std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
 		unsigned int resample(const Date& date, std::vector<MeteoData>& ivec);
-
-		/**
-		 * @brief A function that executes all the filters that have been setup in the constructor
-		 * @param[in] date The requested date for a MeteoData object
-		 * @param[in] vecM The raw sequence of MeteoData objects for a given station
-		 * @param[out] md The MeteoData object to be returned
-		 */
-		void processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md);
 
 		void getWindowSize(ProcessingProperties& o_properties);
 		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
@@ -64,9 +62,7 @@ class MeteoProcessor {
 
 		std::map<std::string, ProcessingStack*> processing_stack;
 
-		MeteoFilter mf;
 		Meteo1DInterpolator mi1d;
-		static const unsigned int window_half_size; //number of elements in filtering window on the left and right
 };
 } //end namespace
 

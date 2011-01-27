@@ -21,9 +21,7 @@ using namespace std;
 
 namespace mio {
 
-const unsigned int MeteoProcessor::window_half_size = 40; //org: 4
-
-MeteoProcessor::MeteoProcessor(const Config& cfg) : mf(cfg), mi1d(cfg) 
+MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg) 
 {
 	//Parse [Filters] section, create processing stack for each configured parameter
 	set<string> set_of_used_parameters;
@@ -109,47 +107,14 @@ unsigned int MeteoProcessor::resample(const Date& date, std::vector<MeteoData>& 
 	return mi1d.resampleData(date, ivec);
 }
 
-void MeteoProcessor::processData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
-{
-	unsigned int currentpos = IOUtils::seek(date, vecM, false); 
-	unsigned int startindex = IOUtils::npos, endindex = IOUtils::npos;
-	
-	//No need to operate on the raw data, a copy of relevant data will be stored in these vectors:
-	std::vector<MeteoData> vecWindowM;
-
-	/*
-	 * Cut out a window of data, on which the filtering and the resampling will occur
-	 */
-	bool windowexists = false;
-	for (int ii=(int)(currentpos-window_half_size-1); ii<=(int)(currentpos+window_half_size); ii++){
-		if ((ii>=0) && (ii<(int)vecM.size())){
-			
-			if (!windowexists){
-				windowexists = true;
-				startindex = ii;
-			}
-			endindex = ii;
-
-			vecWindowM.push_back(vecM.at(ii));
-			//cout << "Added " << vecM[ii].date.toString(Date::ISO) << endl;
-		}
-	}
-
-	mf.filterData(vecM, vecWindowM, false); //first pass
-
-	unsigned int position = mi1d.resampleData(date, vecWindowM); //resampling
-
-	mf.filterData(vecM, vecWindowM, true); //checkonly, second filter pass
-
-	md = vecWindowM[position];
-}
-
 std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
 {
 	os << "<MeteoProcessor>\n";
-	os << data.mf;
 	os << data.mi1d;
-	os << "window_half_size = " << data.window_half_size << "\n";
+	for (map<string, ProcessingStack*>::const_iterator it=data.processing_stack.begin(); 
+		it != data.processing_stack.end(); it++){
+		//os << (*it->second) << endl;
+	}
 	os << "</MeteoProcessor>\n";
 	return os;
 }
