@@ -125,7 +125,7 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 
 	//    request an appropriate window of data from bufferedio
 	//    Hand window of data over to meteo processor
-	bufferedio.readMeteoData(i_date-properties.time_before, i_date+properties.time_after, vec_cache);
+	getMeteoData(i_date-properties.time_before, i_date+properties.time_after, vec_cache);
 	//vec_cache is either filtered or unfiltered, in any case it is wise to buffer it
 
 	for (unsigned int ii=0; ii<vec_cache.size(); ii++){//resampling for every station

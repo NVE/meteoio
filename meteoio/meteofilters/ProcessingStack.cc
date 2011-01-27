@@ -120,6 +120,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 				//Now call the filters in a row
 				bool appliedFilter = false;
 				for (unsigned int jj=0; jj<filter_stack.size(); jj++){
+					//cout << param_name << ": processing filter " << (*filter_stack[jj]).getName() << endl;
 					if (second_pass){
 						if (!(*filter_stack[jj]).getProperties().for_second_pass)
 							continue;
