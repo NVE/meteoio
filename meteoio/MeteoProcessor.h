@@ -38,14 +38,20 @@ namespace mio {
 
 class MeteoProcessor {
 	public:
+		/**
+		 * @brief The default constructor - Set up a processing stack for each parameter
+		 *        The different stacks are created on the heap and pointers to the objects
+		 *        are stored in the map<string,ProcessingStack*> object processing_stack
+		 * @param[in] cfg Config object that holds the config of the filters in the [Filters] section
+		 */
 		MeteoProcessor(const Config& cfg);
 		~MeteoProcessor();
 
 		/**
 		 * @brief A function that executes all the filters for all meteo parameters 
 		 *        configuered by the user
-		 * @param[in] ivec A dataset of MeteoData
-		 * @param[in] ovec The filtered output of MeteoData
+		 * @param[in] ivec The raw sequence of MeteoData objects for all stations
+		 * @param[in] ovec The filtered output of MeteoData object for all stations
 		 * @param[in] second_pass Whether this is the second pass (check only filters)
 		 */
 		void process(const std::vector< std::vector<MeteoData> >& ivec, 
