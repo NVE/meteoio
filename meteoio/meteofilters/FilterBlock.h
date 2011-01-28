@@ -19,7 +19,7 @@
 #define __FILTERBLOCK_H__
 
 #include <meteoio/MeteoData.h>
-#include <meteoio/ProcessingBlock.h>
+#include <meteoio/meteofilters/ProcessingBlock.h>
 #include <vector>
 #include <string>
 #include <set>

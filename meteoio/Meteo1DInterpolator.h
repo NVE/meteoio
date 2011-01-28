@@ -22,7 +22,7 @@
 #include <meteoio/StationData.h>
 #include <meteoio/Config.h>
 #include <meteoio/ResamplingAlgorithms.h>
-#include <meteoio/ProcessingBlock.h>
+#include <meteoio/meteofilters/ProcessingBlock.h>
 
 #include <iostream>
 #include <string>

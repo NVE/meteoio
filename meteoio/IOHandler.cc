@@ -76,6 +76,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["ARPS"]      = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
 	mapPlugins["PGM"]       = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
 	mapPlugins["SMET"]      = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
+	mapPlugins["COSMOXML"]      = IOPlugin("libcosmoxmlio"+popc_extra+libsuffix, "CosmoXMLIO", NULL, NULL);
 }
 
 #ifdef _POPC_

@@ -45,9 +45,12 @@
 #include <meteoio/Meteo1DInterpolator.h>
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/MeteoData.h>
-#include <meteoio/MeteoFilter.h>
-#include <meteoio/MeteoProcessor.h>
-#include <meteoio/ResamplingAlgorithms.h>
+//#include <meteoio/MeteoFilter.h> //HACK: is it obsolete?
+#include <meteoio/MeteoProcessor.h> //HACK: is it obsolete?
+#include <meteoio/meteofilters/FilterBlock.h>
+#include <meteoio/meteofilters/ProcessingBlock.h>
+#include <meteoio/meteofilters/ProcessingStack.h>
+#include <meteoio/ResamplingAlgorithms.h> //HACK: is it obsolete?
 #include <meteoio/StationData.h>
 #include <meteoio/IOManager.h>
 

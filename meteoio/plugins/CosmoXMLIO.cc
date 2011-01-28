@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "CosmoXMLIO.h"
-#include <Atmosphere.h>
+#include <meteoio/plugins/CosmoXMLIO.h>
+#include <meteoio/meteolaws/Atmosphere.h>
 
 using namespace std;
 
@@ -203,7 +203,7 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 		//Initialize variables
 		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
 		double nodata=IOUtils::nodata;
-		double temperature=IOUtils::nodata, dew_point=IOUtils::nodata, global_radiation=IOUtils::nodata;
+		double temperature=IOUtils::nodata, dew_point=IOUtils::nodata, humidity=IOUtils::nodata, global_radiation=IOUtils::nodata;
 		double rain=IOUtils::nodata, wind_speed=IOUtils::nodata, max_wind_speed=IOUtils::nodata;
 		Date olddate=IOUtils::nodata, newdate=IOUtils::nodata;
 		int write=0;
@@ -250,7 +250,7 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 						meteo.meta = station;
 						meteo.ta=temperature;
 						//meteo.rh=humidity;		
-						meteo.rh=DewPointtoRh(humidity,temperature,TRUE)	//Create humidity from the dew point
+						meteo.rh=Atmosphere::DewPointtoRh(humidity,temperature,TRUE);	//Create humidity from the dew point
 						meteo.iswr=global_radiation;
 						meteo.hnw=rain;
 						meteo.vw=wind_speed;
@@ -270,7 +270,7 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 		}
 		meteo.meta = station;
 		meteo.ta=temperature;
-		meteo.rh=DewPointtoRh(humidity,temperature,TRUE)	//Create humidity from the dew point
+		meteo.rh=Atmosphere::DewPointtoRh(humidity,temperature,TRUE);	//Create humidity from the dew point
 		meteo.iswr=global_radiation;
 		meteo.hnw=rain;
 		meteo.vw=wind_speed;
