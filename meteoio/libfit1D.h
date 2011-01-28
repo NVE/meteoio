@@ -31,6 +31,29 @@ class Fit1D;
 
 typedef double (Fit1D::*FitFctPtr)(const double& X);
 
+class RegModel {
+	public:
+		std::string name; ///< A string representing the regression model
+		FitFctPtr fitFct; ///< The pointer to the regression model
+		unsigned int nb_param; ///< Number of parameters of the model
+		unsigned int min_nb_pts; ///< Minimum number of data points required to use the model
+		
+		/**
+		 * @brief The main constructor for the RegModel class
+		 *
+		 * @param _s1 A std::string representing the file to be opened (or "" if plugin is statically linked)
+		 * @param _s2 A std::string that is the classname of the object to be loaded (e.g. "A3DIO", "GSNIO")
+		 * @param p1  A pointer to the loaded object of type IOInterface (or NULL)
+		 * @param p2  A pointer to the loaded dynamic library (or NULL)
+		 */
+		RegModel(const std::string in_name, FitFctPtr in_fitFct, const unsigned int& in_nb_param, const unsigned int& in_min_nb_pts) : name(in_name), fitFct(in_fitFct), nb_param(in_nb_param), min_nb_pts(in_min_nb_pts){}
+		RegModel() : name(""), fitFct(NULL), nb_param(0), min_nb_pts(0){}
+
+		friend std::ostream& operator<<(std::ostream& os, const RegModel& data);
+		static const std::string header; //to contain a helpful header for understanding the output of <<
+
+};
+
 /**
  * @class Fit1D
  * @brief A class to perform non-linear least square fitting.
@@ -42,7 +65,7 @@ typedef double (Fit1D::*FitFctPtr)(const double& X);
  */
 class Fit1D {
  	public:
-		Fit1D(const std::vector<double>& in_X, const std::vector<double>& in_Y);
+		Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y);
 
 		void setGuess(const std::vector<double> lambda_in);
 		bool leastSquareFit(std::vector<double>& coefficients);
@@ -60,21 +83,28 @@ class Fit1D {
 	private:
 		FitFctPtr fitFct; //fit function pointer
 		unsigned int nPts, nParam; //number of data points, number of parameters
+		std::string regname; //human readable regression model name
 		bool fit_ready;
 		std::string infoString;
 		const std::vector<double>& X; //X of input data set to fit
 		const std::vector<double>& Y; //Y of input data set to fit
 
 		std::vector<double> Lambda; //parameters of the fit
+		std::map<std::string, RegModel::RegModel> mapRegs;
 
+		void registerRegressions();
 		void initLambda();
 		void initDLambda(Matrix& dLambda) const;
 		double getDelta(const double& var) const;
 		double DDer(const double& x, const unsigned int& index);
 
-		//various fit functions
+		//various fit models
 		double LinFit(const double& x);
 		double SqFit(const double& x);
+
+		//variogram fit models
+		double LinVario(const double& x);
+		double SphericVario(const double& x);
 };
 
 } //end namespace

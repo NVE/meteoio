@@ -22,30 +22,51 @@ using namespace std;
 
 namespace mio {
 
+const std::string RegModel::header="<RegModel>              name, fitFctPtr,    nb_param,      min_nb_pts</RegModel>";
+
+std::ostream& operator<<(std::ostream& os, const RegModel& data) {
+	os << "<RegModel>" << std::setw(21) << data.name << "," << std::setw(10) << std::showbase << data.fitFct;
+	os << "," << data.nb_param;
+	os << "," << data.min_nb_pts << "</RegModel>\n";
+	return os;
+}
+
+/////////////////// Begining of the Fit1D class
 const double Fit1D::lambda_init = 1.; //initial default guess
 const double Fit1D::delta_init_abs = 1.; //initial delta, absolute
 const double Fit1D::delta_init_rel = 0.2; //initial delta, relative
-const double Fit1D::eps_conv = 1e-3; //convergence criteria
-const unsigned int Fit1D::max_iter = 20; //maximum number of iterations
+const double Fit1D::eps_conv = 1e-6; //convergence criteria
+const unsigned int Fit1D::max_iter = 10; //maximum number of iterations
 
-//static section
-//HACK: do property map: reg_name, fct_ptr, nb_parameters, min_nb_pts
-/*void Fit1D::registerInterpolations() {
-	mapRegs["name"]  = Regmodel(fct_ptr, nb_param, min_nb_pts);
-}*/
+void Fit1D::registerRegressions() {
+	mapRegs["LIN"]        = RegModel("linear",              &Fit1D::LinFit,       2, 2);
+	mapRegs["SQ"]         = RegModel("quadratic",           &Fit1D::SqFit,        3, 3);
+	mapRegs["VARIO_LIN"]  = RegModel("linear variogram",    &Fit1D::LinVario,     2, 2);
+	mapRegs["VARIO_SPH"]  = RegModel("spherical variogram", &Fit1D::SphericVario, 3, 3);
+}
 
 //default constructor
-Fit1D::Fit1D(const std::vector<double>& in_X, const std::vector<double>& in_Y) : X(in_X), Y(in_Y) {
-//TODO: set the interpolation type, establish nbPts, nbParam matching with fit type
-	//fitFct = &Fit1D::LinFit;
-	fitFct = &Fit1D::SqFit;
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) : X(in_X), Y(in_Y) {
 	if( X.size()!=Y.size() ) {
 		stringstream ss;
 		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
+
+	registerRegressions();
+	nParam = mapRegs[regType].nb_param;
+	regname = mapRegs[regType].name;
+	const unsigned int min_nb_pts = mapRegs[regType].min_nb_pts;
 	nPts=X.size();
-	nParam=3;
+
+	if(nPts<min_nb_pts) {
+		stringstream ss;
+		ss << "Only " << nPts << " data points for " << regname << " regression model.";
+		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	fitFct = mapRegs[regType].fitFct;
 	fit_ready = false;
 }
 
@@ -85,7 +106,7 @@ void Fit1D::setGuess(const std::vector<double> lambda_in) {
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	for(unsigned int i=0; i<=nGuess; i++) {
+	for(unsigned int i=0; i<nGuess; i++) {
 		Lambda.push_back( lambda_in[i] );
 	}
 	fit_ready = false;
@@ -176,7 +197,8 @@ bool Fit1D::leastSquareFit(std::vector<double>& coefficients) {
 
 	//building infoString
 	stringstream ss;
-	ss << "Computed regression with *** model - Sum of square residuals = " << R2 << " , max_delta = " << max_delta;
+	ss << "Computed regression with " << regname << " model ";
+	ss << "- Sum of square residuals = " << R2 << " , max_delta = " << max_delta;
 	infoString = ss.str();
 
 	coefficients = Lambda;
@@ -203,6 +225,36 @@ double Fit1D::LinFit(const double& x) {
 double Fit1D::SqFit(const double& x) {
 	const double y = Lambda.at(0)*x*x + Lambda.at(1)*x + Lambda.at(2); //Lambda is a vector
 	return y;
+}
+
+//variogram models
+double Fit1D::LinVario(const double& x) {
+	const double c0 = Lambda.at(0);
+	const double bl = Lambda.at(1);
+
+	if(x==0) {
+		return 0;
+	} else {
+		const double y = c0 + bl * fabs(x);
+		return y;
+	}
+}
+
+double Fit1D::SphericVario(const double& x) {
+	const double c0 = Lambda.at(0);
+	const double cs = Lambda.at(1);
+	const double as = Lambda.at(2);
+
+	if(x==0) return 0;
+
+	const double abs_x = fabs(x);
+	if(abs_x>0 && abs_x<=as) {
+		const double val = abs_x/as;
+		const double y = c0 + cs * ( 1.5*val - 0.5*val*val*val );
+		return y;
+	} else {
+		return (c0+cs);
+	}
 }
 
 } //namespace
