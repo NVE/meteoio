@@ -26,14 +26,54 @@ const double Fit1D::lambda_init = 1.; //initial default guess
 const double Fit1D::delta_init_abs = 1.; //initial delta, absolute
 const double Fit1D::delta_init_rel = 0.2; //initial delta, relative
 const double Fit1D::eps_conv = 1e-3; //convergence criteria
+const unsigned int Fit1D::max_iter = 20; //maximum number of iterations
+
+//static section
+//HACK: do property map: reg_name, fct_ptr, nb_parameters, min_nb_pts
+/*void Fit1D::registerInterpolations() {
+	mapRegs["name"]  = Regmodel(fct_ptr, nb_param, min_nb_pts);
+}*/
 
 //default constructor
 Fit1D::Fit1D(const std::vector<double>& in_X, const std::vector<double>& in_Y) : X(in_X), Y(in_Y) {
 //TODO: set the interpolation type, establish nbPts, nbParam matching with fit type
-	fitFct = &Fit1D::LinFit;
-	nPts=3;
-	nParam=2;
-	dLambda.resize(nParam,1);
+	//fitFct = &Fit1D::LinFit;
+	fitFct = &Fit1D::SqFit;
+	if( X.size()!=Y.size() ) {
+		stringstream ss;
+		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	nPts=X.size();
+	nParam=3;
+	fit_ready = false;
+}
+
+/**
+* @brief Calculate a value using the computed least square fit. 
+* The fit has to be computed before.
+* @param x abscissa
+* @return f(x) using the computed least square fit
+*/
+double Fit1D::getF(const double& x) {
+	if(fit_ready==true) {
+		return (this->*(fitFct))(x);
+	} else {
+		throw InvalidArgumentException("The regression has not yet being computed!", AT);
+	}
+}
+
+/**
+* @brief Return a string of information about the fit. 
+* The fit has to be computed before.
+* @return info string
+*/
+std::string Fit1D::getInfo() {
+	if(fit_ready==true) {
+		return infoString;
+	} else {
+		throw InvalidArgumentException("The regression has not yet being computed!", AT);
+	}
 }
 
 void Fit1D::setGuess(const std::vector<double> lambda_in) {
@@ -48,6 +88,7 @@ void Fit1D::setGuess(const std::vector<double> lambda_in) {
 	for(unsigned int i=0; i<=nGuess; i++) {
 		Lambda.push_back( lambda_in[i] );
 	}
+	fit_ready = false;
 }
 
 void Fit1D::initLambda() {
@@ -55,72 +96,113 @@ void Fit1D::initLambda() {
 		Lambda.resize(nParam, lambda_init);
 }
 
-void Fit1D::initDLambda() {
+void Fit1D::initDLambda(Matrix& dLambda) const {
+	dLambda.resize(nParam,1);
 	for(unsigned int m=1; m<=nParam; m++) {
-		const double var = Lambda[m];
+		const double var = Lambda[m-1]; //Lambda is a vector
 		if(var==0) {
-			dLambda(m,1) = delta_init_abs;
+			dLambda(m,1) = delta_init_abs * 0.5;
 		} else {
-			dLambda(m,1) = delta_init_rel * var;
+			dLambda(m,1) = delta_init_rel * var * 0.5;
 		}
 	}
 }
 
-double Fit1D::DDer(const double& X, const unsigned int& index) {
-	const double var = Lambda.at(index);
-	const double delta = dLambda(index,1)/2.;
+double Fit1D::getDelta(const double& var) const {
+//calculate a sensible delta for the partial derivative
+	if(var==0) {
+		return (delta_init_abs * 0.5);
+	} else {
+		return (delta_init_rel * var * 0.5);
+	}
+}
+
+double Fit1D::DDer(const double& x, const unsigned int& index) {
+	const double var = Lambda[index-1]; //Lambda is a vector
+	const double delta = getDelta(var);
 	const double v1 = var - delta;
 	const double v2 = var + delta;
 
-	Lambda[index] = v1;
-	const double Y1 = (this->*(fitFct))(X);
-	Lambda[index] = v2;
-	const double Y2 = (this->*(fitFct))(X);
-	Lambda[index] = var;
+	Lambda[index-1] = v1;
+	const double y1 = (this->*(fitFct))(x);
+	Lambda[index-1] = v2;
+	const double y2 = (this->*(fitFct))(x);
+	Lambda[index-1] = var;
 
-	return (Y2-Y1)/(v2-v1);
+	return (y2-y1)/(v2-v1);
 }
 
-void Fit1D::leastSquareFit() {
+bool Fit1D::leastSquareFit(std::vector<double>& coefficients) {
 	double max_delta = std::numeric_limits<double>::max();
 	initLambda();
-	initDLambda();
+	Matrix dLambda; //parameters variations
+	initDLambda(dLambda);
 
+	Matrix A(nPts, nParam);
+	Matrix dBeta(nPts,(unsigned)1);
+	
+	unsigned int iter = 0;
 	do {
-		Matrix A(nPts, nParam);
+		iter++;
+		//set A matrix
 		for(unsigned int m=1; m<=nPts; m++) {
 			for(unsigned int n=1; n<=nParam; n++) {
-				A(m,n) = DDer( X[m], n );
+				const double value = DDer( X[m-1], n ); //X is a vector
+				A(m,n) = value;
 			}
+		}
+
+		//set dBeta matrix
+		for(unsigned int m=1; m<=nPts; m++) {
+			dBeta(m,1) = Y[m-1] - (this->*(fitFct))(X[m-1]); //X and Y are vectors
 		}
 
 		//calculate parameters deltas
 		const Matrix a = A.getT() * A;
-		const Matrix dBeta = A*dLambda;
 		const Matrix b = A.getT() * dBeta;
-		dLambda = Matrix::solve(a,b);
+		Matrix::solve(a, b, dLambda);
 
 		//apply the deltas to the parameters, record maximum delta
 		max_delta = 0.;
 		for(unsigned int m=1; m<=nParam; m++) {
-			Lambda[m] += dLambda(m,1);
+			Lambda[m-1] += dLambda(m,1); //Lambda is a vector
 			if( fabs(dLambda(m,1))>max_delta ) max_delta=fabs(dLambda(m,1));
 		}
 
-		//compute R2
-		//const double R2 = Matrix::dot(dBeta, dBeta);
-	} while (max_delta>eps_conv);
+	} while (max_delta>eps_conv && iter<max_iter);
 
-	std::cout << "Coefficients:\n";
-	for(unsigned int i=0; i<Lambda.size(); i++) {
-		std::cout << Lambda[i] << "\n";
+	//compute R2
+	const double R2 = Matrix::dot(dBeta, dBeta);
+
+	//building infoString
+	stringstream ss;
+	ss << "Computed regression with *** model - Sum of square residuals = " << R2 << " , max_delta = " << max_delta;
+	infoString = ss.str();
+
+	coefficients = Lambda;
+
+	if(max_delta>eps_conv) { //it did not converge
+		fit_ready = false;
+		return false;
+	} else {		 //it did converge
+		fit_ready = true;
+		return true;
 	}
-	
 }
 
-double Fit1D::LinFit(const double& X) {
-	const double Y = Lambda.at(0)*X + Lambda.at(1);
-	return Y;
+bool Fit1D::leastSquareFit() {
+	vector<double> coefficients;
+	return leastSquareFit(coefficients);
+}
+
+double Fit1D::LinFit(const double& x) {
+	const double y = Lambda.at(0)*x + Lambda.at(1); //Lambda is a vector
+	return y;
+}
+
+double Fit1D::SqFit(const double& x) {
+	const double y = Lambda.at(0)*x*x + Lambda.at(1)*x + Lambda.at(2); //Lambda is a vector
+	return y;
 }
 
 } //namespace

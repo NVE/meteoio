@@ -140,9 +140,21 @@ class Matrix {
 		* @brief matrix solving for A·X=B.
 		* It first performs LU decomposition and then solves A·X=B by
 		* backward and forward solving of LU * X = B
+		* @param A A matrix
+		* @param B B matrix
 		* @return solution matrix
 		*/
 		static Matrix solve(const Matrix& A, const Matrix& B);
+
+		/**
+		* @brief matrix solving for A·X=B.
+		* It first performs LU decomposition and then solves A·X=B by
+		* backward and forward solving of LU * X = B
+		* @param A A matrix
+		* @param B B matrix
+		* @param X solution matrix
+		*/
+		static void solve(const Matrix& A, const Matrix& B, Matrix& X);
 
 		/**
 		* @brief matrix determinant

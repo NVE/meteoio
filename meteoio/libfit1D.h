@@ -45,26 +45,36 @@ class Fit1D {
 		Fit1D(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 
 		void setGuess(const std::vector<double> lambda_in);
-		void leastSquareFit();
+		bool leastSquareFit(std::vector<double>& coefficients);
+		bool leastSquareFit();
+		double getF(const double& x);
+		std::string getInfo();
 
 	private:
 		static const double lambda_init; //initial default guess
 		static const double delta_init_abs; //initial delta, absolute
 		static const double delta_init_rel; //initial delta, relative
 		static const double eps_conv; //convergence criteria
+		static const unsigned int max_iter; //maximum number of iterations
+
+	private:
 		FitFctPtr fitFct; //fit function pointer
 		unsigned int nPts, nParam; //number of data points, number of parameters
-		const std::vector<double>& X, Y; //X & Y of input data set to fit
+		bool fit_ready;
+		std::string infoString;
+		const std::vector<double>& X; //X of input data set to fit
+		const std::vector<double>& Y; //Y of input data set to fit
 
 		std::vector<double> Lambda; //parameters of the fit
-		Matrix dLambda; //parameters variations;
 
 		void initLambda();
-		void initDLambda();
-		double DDer(const double& X, const unsigned int& index);
+		void initDLambda(Matrix& dLambda) const;
+		double getDelta(const double& var) const;
+		double DDer(const double& x, const unsigned int& index);
 
 		//various fit functions
-		double LinFit(const double& X);
+		double LinFit(const double& x);
+		double SqFit(const double& x);
 };
 
 } //end namespace

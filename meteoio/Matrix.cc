@@ -275,7 +275,7 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 		for(unsigned int j=1; j<=result.ncols; j++) {
 			double sum=0.;
 			for(unsigned int idx=1; idx<=ncols; idx++) {
-				sum+= operator()(i,idx) * rhs(idx,j);
+				sum += operator()(i,idx) * rhs(idx,j);
 			}
 			result(i,j) = sum;
 		}
@@ -544,8 +544,7 @@ void Matrix::inv() {
 	}
 }
 
-
-Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
+void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
 	unsigned int Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
@@ -589,7 +588,7 @@ Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 	}
 
 	//now, we backward solve UX=Y
-	Matrix X(n,m);
+	X.resize(n,m); //we need to ensure that X has the correct dimensions
 	for(unsigned int i=n; i>=1; i--) { //lines
 		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
 			throw IOException("The given matrix is singular and can not be inversed", AT);
@@ -602,7 +601,12 @@ Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 			X(i,j) = (Y(i,j) - sum) / U(i,i);
 		}
 	}
+}
 
+Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
+//This uses an LU decomposition followed by backward and forward solving for A·X=B
+	Matrix X;
+	solve(A, B, X);
 	return X;
 }
 

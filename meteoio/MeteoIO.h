@@ -39,6 +39,7 @@
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOPlugin.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/libfit1D.h>
 #include <meteoio/libinterpol1D.h>
 #include <meteoio/libinterpol2D.h>
 #include <meteoio/Matrix.h>
