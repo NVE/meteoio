@@ -30,12 +30,13 @@ RateFilter::RateFilter(const std::vector<std::string>& vec_args) : FilterBlock("
 void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
                            std::vector<MeteoData>& ovec)
 {
+	ovec.clear();
 	unsigned int last_good = IOUtils::npos;
 	
 	//Find first point that is not IOUtils::nodata
 	for (unsigned int ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);		
-		if (ivec[ii].param(index) != IOUtils::nodata){
+		if (ovec[ii].param(index) != IOUtils::nodata){
 			last_good = ii;
 			break;
 		}

@@ -128,6 +128,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 					appliedFilter = true;
 
 					(*filter_stack[jj]).process(index, tmp, ovec[ii]);
+
 					if (tmp.size() == ovec[ii].size()){
 						if ((jj+1) != filter_stack.size()){//after the last filter not necessary
 							for (unsigned int jj=0; jj<ovec[ii].size(); jj++){
@@ -143,7 +144,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 					ovec[ii] = ivec[ii]; //just copy input to output
 			} else {
 				ovec[ii] = ivec[ii]; //just copy input to output
-			}
+			}			
 		}
 	}
 }
