@@ -93,13 +93,19 @@ class IOManager {
 
 	private:
 		void add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo);
+		void fill_filtered_cache();
+		bool read_filtered_cache(const Date& start_date, const Date& end_date,
+							std::vector<METEO_DATASET>& vec_meteo);
 
 		Config cfg;
 		IOHandler rawio;
 		BufferedIOHandler bufferedio;
 		MeteoProcessor meteoprocessor;
+		ProcessingProperties proc_properties;
 
-		std::map<Date, std::vector<MeteoData> > meteo_cache; ///< stores already fetched data points
+		std::map<Date, std::vector<MeteoData> > meteo_cache;  ///< stores already fetched data points
+		std::vector< std::vector<MeteoData> > filtered_cache; ///< stores already filtered data intervals
+		Date fcache_start, fcache_end;
 		unsigned int processing_level;
 };
 } //end namespace

@@ -24,6 +24,10 @@ namespace mio {
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(i_cfg), bufferedio(rawio, i_cfg), meteoprocessor(i_cfg)
 {
 	processing_level = IOManager::filtered | IOManager::resampled;
+
+	fcache_start = fcache_end = Date(0.0);
+
+	meteoprocessor.getWindowSize(proc_properties);
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
@@ -63,23 +67,61 @@ unsigned int IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	vecMeteo.clear();
 
-	vector< vector<MeteoData> > tmp_meteo;
-
 	if (processing_level == IOManager::raw){
 		rawio.readMeteoData(dateStart, dateEnd, vecMeteo);
 	} else {
-		bufferedio.readMeteoData(dateStart, dateEnd, tmp_meteo);
-		//now it needs to secured that the data is actually filtered, if configured
+		bool success = read_filtered_cache(dateStart, dateEnd, vecMeteo);
 
-		if ((IOManager::filtered & processing_level) == IOManager::filtered){
-			//cout << "Now filtering ..." << endl;
-			meteoprocessor.process(tmp_meteo, vecMeteo);
-		} else {
-			vecMeteo = tmp_meteo;
+		if (!success){
+			vector< vector<MeteoData> > tmp_meteo;
+			bufferedio.readMeteoData(dateStart, dateEnd, tmp_meteo);
+
+			//now it needs to be secured that the data is actually filtered, if configured
+			if ((IOManager::filtered & processing_level) == IOManager::filtered){
+				fill_filtered_cache();
+				read_filtered_cache(dateStart, dateEnd, vecMeteo);
+			} else {
+				vecMeteo = tmp_meteo;
+			}
 		}
 	}
 
 	return vecMeteo.size(); //equivalent with the number of stations that have data
+}
+
+void IOManager::fill_filtered_cache()
+{
+	if ((IOManager::filtered & processing_level) == IOManager::filtered){
+		//ask the bufferediohandler for the whole buffer
+		const vector<METEO_DATASET>& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
+
+		//cout << "Now filtering ..." << endl;
+		meteoprocessor.process(buffer, filtered_cache);
+	}
+}
+
+bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date,
+                                    std::vector<METEO_DATASET>& vec_meteo)
+{
+	if ((start_date >= fcache_start) && (end_date <= fcache_end)){
+		//it's already in the filtered_cache, so just copy the requested slice
+		for (unsigned int ii=0; ii<filtered_cache.size(); ii++){
+			unsigned int startpos = IOUtils::seek(start_date, filtered_cache[ii], false);
+			if (startpos != IOUtils::npos){
+				vec_meteo.push_back(vector<MeteoData>());
+				unsigned int index = vec_meteo.size()-1;
+				for (unsigned int jj=startpos; jj<filtered_cache[ii].size(); jj++){
+					const MeteoData& md = filtered_cache[ii][jj];
+					if (md.date <= end_date)
+						vec_meteo[index].push_back(md);
+				}
+			}
+		}
+
+		return true;
+	}
+	
+	return false;
 }
 
 void IOManager::add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo)
@@ -99,9 +141,6 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 	vecMeteo.clear();
 
 	vector< vector<MeteoData> > vec_cache;
-
-	ProcessingProperties properties;
-	meteoprocessor.getWindowSize(properties);
 
 	//1. Check whether user wants raw data or processed data
 	if (processing_level == IOManager::raw){
@@ -123,9 +162,8 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 		return vecMeteo.size();
 	}
 
-	//    request an appropriate window of data from bufferedio
-	//    Hand window of data over to meteo processor
-	getMeteoData(i_date-properties.time_before, i_date+properties.time_after, vec_cache);
+	//request an appropriate window of filtered or unfiltered data
+	getMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, vec_cache);
 	//vec_cache is either filtered or unfiltered, in any case it is wise to buffer it
 
 	for (unsigned int ii=0; ii<vec_cache.size(); ii++){//resampling for every station

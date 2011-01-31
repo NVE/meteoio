@@ -126,6 +126,7 @@ void BufferedIOHandler::writeMeteoData(const std::vector< std::vector<MeteoData>
 void BufferedIOHandler::setDfltBufferProperties()
 {
 	always_rebuffer = true;
+	default_chunk_size = Date(15.0); //15 days
 }
 
 void BufferedIOHandler::setBufferPolicy(const buffer_policy& policy)
@@ -154,6 +155,14 @@ double BufferedIOHandler::getAvgSamplingRate()
 	return IOUtils::nodata;
 }
 
+const std::vector<METEO_DATASET>& BufferedIOHandler::get_complete_buffer(Date& start, Date& end)
+{
+	start = buffer_start;
+	end   = buffer_end;
+
+	return vec_buffer_meteo; //return reference
+}
+
 void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end, 
 							   std::vector< std::vector<MeteoData> >& vecMeteo,
 							   const unsigned int& /*stationindex*/)
@@ -161,7 +170,6 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 {
 	vecMeteo.clear();
 
-	Date default_chunk_size(15.0); //15 days
 	Date current_buffer_end(date_start + default_chunk_size);
 	vector< vector<MeteoData> > tmp_meteo_buffer;
 

@@ -60,6 +60,7 @@ class MeteoProcessor {
 		unsigned int resample(const Date& date, std::vector<MeteoData>& ivec);
 
 		void getWindowSize(ProcessingProperties& o_properties);
+
 		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
 
  	private:

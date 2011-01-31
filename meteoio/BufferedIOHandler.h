@@ -131,7 +131,11 @@ class BufferedIOHandler : public IOInterface {
 
 		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
 
+		friend class IOManager;
+
 	private:
+		const std::vector<METEO_DATASET>& get_complete_buffer(Date& start, Date& end);
+
 		void setDfltBufferProperties();
 		void bufferAllData(const Date& date_start, const Date& date_end);
 
@@ -139,7 +143,7 @@ class BufferedIOHandler : public IOInterface {
 		Config cfg;
 
 		bool always_rebuffer;
-		Date buffer_start, buffer_end;
+		Date buffer_start, buffer_end, default_chunk_size;
 
 		std::vector< std::vector<MeteoData> > vec_buffer_meteo;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;

@@ -90,11 +90,15 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
 	//call the different processing stacks
-	std::vector< std::vector<MeteoData> > vec_tmp = ivec;
+	std::vector< std::vector<MeteoData> > vec_tmp;
 	//cout << "Calling processing stacks for all parameters" << endl;
 	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++){
 		//cout << "Calling processing stack for parameter " << it->first << endl;
-		(*(it->second)).process(vec_tmp, ovec, second_pass);
+		if (it==processing_stack.begin()){
+			(*(it->second)).process(ivec, ovec, second_pass);
+		} else {
+			(*(it->second)).process(vec_tmp, ovec, second_pass);
+		}
 		vec_tmp = ovec;
 	}
 

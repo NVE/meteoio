@@ -36,6 +36,7 @@ void FilterMinMax::process(const unsigned int& index, const std::vector<MeteoDat
 		ovec.push_back(ivec[ii]);
 		
 		double& tmp = ovec[ii].param(index);
+		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
 		if (tmp < min_val){
 			if (is_soft){
