@@ -28,10 +28,10 @@ class IOManager {
 
 	public:
 		enum ProcessingLevel {
-			raw           = 0,
-			filtered      = 1 << 0,
-			resampled     = 1 << 1,
-			num_of_levels = 1 << 2
+			raw           = 1,
+			filtered      = 1 << 1,
+			resampled     = 1 << 2,
+			num_of_levels = 1 << 3
 		};
 
 		IOManager(const Config& i_cfg);
@@ -47,24 +47,42 @@ class IOManager {
 
 		unsigned int getStationData(const Date& date, std::vector<StationData>& vecStation);
 
-		//for an intervall of data: decide whether data should be filtered or raw
+		/**
+		* @brief Fill vecMeteo with a time series of objects
+		* corresponding to the interval indicated by dateStart and dateEnd.
+		* Depending on the ProcessingLevel for the instance of the IOManager
+		* the data returned will be either raw (read directly from the IOHandler)
+		* or processed (read from an BufferedIOHandler and filtered through the 
+		* MeteoProcessor
+		*
+		* vecMeteo will be empty if no datasets were retrieved in the interval defined
+		* by dateStart and dateEnd
+		*    
+		* Example Usage:
+		* @code
+		* vector< vector<MeteoData> > vecMeteo;      //empty vector
+		* Date d1(2008,06,21,11,00);       //21.6.2008 11:00
+		* Date d2(2008,07,21,11,00);       //21.7.2008 11:00
+		* IOManager iom(Config("io.ini"));
+		* unsigned int nstations = iom.getMeteoData(d1, d2, vecMeteo);
+		* @endcode
+		* @param dateStart   A Date object representing the beginning of an interval (inclusive)
+		* @param dateEnd     A Date object representing the end of an interval (inclusive)
+		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
+		* @return            Number of stations for which data has been found in the interval
+		*/
 		unsigned int getMeteoData(const Date& dateStart, const Date& dateEnd,
 		                          std::vector< std::vector<MeteoData> >& vecMeteo);
 
 		/**
-		 * @brief Fill vector<MeteoData> object with multiple datasets
-		 * corresponding to the time indicated by the Date object.
-		 * Matching rule: Find first data set for every station which has an event time (measurement time)
-		 * that is greater (newer) or equal to the time represented by the Date object parameter. The
-		 * vector<StationData> object holds multiple StationData objects representing meta information
-		 * about the meteo stations that recorded the meteo data.
+		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
+		 * corresponding to the instant indicated by a Date object. Each MeteoData
+		 * instance within the vector represents the data for one station at the given 
+		 * instant. Depending on the ProcessingLevel configured data will be either 
+		 * raw (read directly from the IOHandler)
 		 *
 		 * NOTE:
-		 * - vecMeteo will contain nodata objects if an exact time match is impossible
-		 *   and resampling is turned off. If resampling is turned on a resampled value is returned
-		 *   if resampling is possible (enough measurements), otherwise nodata objects will be returned
-		 * - is there is absolutely no data to be found, and hence not even station data, vecMeteo and vecStation
-		 *   will be filled with only one nodata obejct of MeteoData and StationData respectively
+		 * - vecMeteo will be empty if there is no data found for any station
 		 *
 		 * Example Usage:
 		 * @code
@@ -74,6 +92,7 @@ class IOManager {
 		 * @endcode
 		 * @param i_date      A Date object representing the date/time for the sought MeteoData objects
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
+		 * @return            Number of stations for which data has been found in the interval
 		 */
 		unsigned int getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo);
 		
@@ -83,6 +102,18 @@ class IOManager {
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
 		                 Grid2DObject& result);
 		
+		/**
+		 * @brief Set the desired ProcessingLevel of the IOManager instance
+		 *        The processing level affects the way meteo data is read and processed
+		 *        Three values are possible:
+		 *        - IOManager::raw data shall be read directly from the buffer
+		 *        - IOManager::filtered data shall be filtered before returned to the user
+		 *        - IOManager::resampled data shall be resampled before returned to the user
+		 *          this only affects the function getMeteoData(const Date&, METEO_DATASET&);
+		 *
+		 *        The three values can be combined: e.g. IOManager::filtered | IOManager:resampled
+		 * @param i_level The ProcessingLevel values that shall be used to process data
+		 */
 		void setProcessingLevel(const unsigned int& i_level);
 
 		double getAvgSamplingRate();

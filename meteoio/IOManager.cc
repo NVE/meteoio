@@ -23,7 +23,7 @@ namespace mio {
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(i_cfg), bufferedio(rawio, i_cfg), meteoprocessor(i_cfg)
 {
-	processing_level = IOManager::filtered | IOManager::resampled;
+	setProcessingLevel(IOManager::filtered | IOManager::resampled);
 
 	fcache_start = fcache_end = Date(0.0);
 
@@ -34,6 +34,10 @@ void IOManager::setProcessingLevel(const unsigned int& i_level)
 {
 	if (i_level >= IOManager::num_of_levels)
 		throw InvalidArgumentException("The processing level is invalid", AT);
+
+	if (((i_level & IOManager::raw) == IOManager::raw) 
+	    && ((i_level & IOManager::filtered) == IOManager::filtered))
+		throw InvalidArgumentException("The processing level is invalid (raw and filtered at the same time)", AT);
 
 	processing_level = i_level;
 }
@@ -89,6 +93,9 @@ unsigned int IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
 	return vecMeteo.size(); //equivalent with the number of stations that have data
 }
 
+/**
+ * @brief Filter the whole meteo data buffer provided by bufferedio
+ */
 void IOManager::fill_filtered_cache()
 {
 	if ((IOManager::filtered & processing_level) == IOManager::filtered){
@@ -100,6 +107,13 @@ void IOManager::fill_filtered_cache()
 	}
 }
 
+/**
+ * @brief Try to cut out a chunk of the time series stored in filtered_cache
+ * @param start_date The start date of the chunk to be cut out (inclusive)
+ * @param start_date The end date of the chunk to be cut out (inclusive)
+ * @param vec_meteo  A vector to store the chunk cut out
+ * @return true if the requested chunk was contained by filtered_cache, false otherwise
+ */
 bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date,
                                     std::vector<METEO_DATASET>& vec_meteo)
 {
