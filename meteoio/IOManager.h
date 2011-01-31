@@ -128,7 +128,7 @@ class IOManager {
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
 							std::vector<METEO_DATASET>& vec_meteo);
 
-		Config cfg;
+		const Config& cfg;
 		IOHandler rawio;
 		BufferedIOHandler bufferedio;
 		MeteoProcessor meteoprocessor;

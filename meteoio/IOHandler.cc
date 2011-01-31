@@ -244,8 +244,8 @@ void IOHandler::readMeteoData(const Date& date, METEO_DATASET& vecMeteo)
 }
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
-						std::vector<METEO_DATASET>& vecMeteo,
-						const unsigned& stationindex)
+                              std::vector<METEO_DATASET>& vecMeteo,
+                              const unsigned& stationindex)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
@@ -295,7 +295,7 @@ std::string IOHandler::toString() const
 {
 	std::stringstream os;
 	os << "<IOHandler>\n";
-	os << "Config cfg = " << hex << &cfg << "\n";
+	os << "Config cfg = " << hex << &cfg << dec << "\n";
 
 	os << "<mapPlugins>\n";
 	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";

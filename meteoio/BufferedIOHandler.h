@@ -38,6 +38,11 @@ namespace mio {
  * and transparently buffering the data. It follows the interface defined by the IOInterface class with the addition of
  * a few convenience methods.
  *
+ * @section buffereiohandler_keywords Keywords
+ * This module uses the following keywords to customize the buffering:
+ * - BUFF_CHUNKS: how many chunks of data to buffer; [General] section (NOT YET USED)
+ * - BUFF_CHUNK_SIZE: size in days of a chunk of data to read at once; [General] section
+ * 
  * @author Thomas Egger
  * @date   2009-07-25
  */
@@ -63,7 +68,7 @@ class BufferedIOHandler : public IOInterface {
 		 * BufferedIOHandler bio(*io1, cfg);
 		 * @endcode
 		 */
-		BufferedIOHandler(IOHandler& _iohandler, const Config& _cfg);
+		BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg);
 	#ifdef _POPC_
 		virtual ~BufferedIOHandler();
 	#else
@@ -117,16 +122,6 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		void setBufferPolicy(const buffer_policy& policy);
 
-		/**
-		 * @brief Manually tune the buffer
-		 * @param _bufferbefore start date of the buffer (in offset to initially requested date)
-		 * @param _bufferafter end date of the buffer (in offset to initially requested date)
-		 * @code
-		 * setBufferDuration(Date(2.0), Date(20.0)); //to get 2 days before the requested date to 20 days after
-		 * @endcode
-		 */
-		void setBufferDuration(const Date& _bufferbefore, const Date& _bufferafter);
-
 		double getAvgSamplingRate();
 
 		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
@@ -137,13 +132,15 @@ class BufferedIOHandler : public IOInterface {
 		const std::vector<METEO_DATASET>& get_complete_buffer(Date& start, Date& end);
 
 		void setDfltBufferProperties();
-		void bufferAllData(const Date& date_start, const Date& date_end);
+		void bufferData(const Date& date_start, const Date& date_end, std::vector< std::vector<MeteoData> >& vecvecMeteo);
 
 		IOHandler& iohandler;
-		Config cfg;
+		const Config& cfg;
 
 		bool always_rebuffer;
-		Date buffer_start, buffer_end, default_chunk_size;
+		Date buffer_start, buffer_end;
+		Date chunk_size; ///< How much data to read at once
+		unsigned int chunks; ///< How many chuncks to buffer
 
 		std::vector< std::vector<MeteoData> > vec_buffer_meteo;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;

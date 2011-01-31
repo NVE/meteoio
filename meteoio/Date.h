@@ -122,11 +122,6 @@ class Date {
 		friend std::ostream& operator<<(std::ostream& os, const Date& date);
 
 		//Operator Prototypes
-		///Can be used to add an interval to an existing Date object.
-		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.
-		Date& operator+=(const Date&);
-		///Can be used to subtract an interval from an existing Date object
-		Date& operator-=(const Date&);
 		bool operator==(const Date&) const;
 		bool operator!=(const Date&) const;
 		bool operator<(const Date&) const;
@@ -134,8 +129,19 @@ class Date {
 		bool operator>(const Date&) const;
 		bool operator>=(const Date&) const;
 
+		///Intervals arithmetic
+		///Can be used to add an interval to an existing Date object.
+		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.
+		Date& operator+=(const Date&);
+		///Can be used to subtract an interval from an existing Date object
+		Date& operator-=(const Date&);
+		Date& operator*=(const double&);
+		Date& operator/=(const double&);
+
 		const Date operator+(const Date&) const;
 		const Date operator-(const Date&) const;
+		const Date operator*(const double&) const;
+		const Date operator/(const double&) const;
 
 	private:
 		double localToGMT(const double& _julian)const;

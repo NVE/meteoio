@@ -272,12 +272,13 @@ void IOManager::write2DGrid(const Grid2DObject& grid2D, const std::string& name)
 std::ostream& operator<<(std::ostream& os, const IOManager& io)
 {
 	os << "<IOManager>\n";
-	os << "Config cfg = " << hex << &io.cfg << "\n";
+	os << "Config& cfg = " << hex << &io.cfg << dec << "\n";
 	os << io.rawio;
 	os << io.bufferedio;
 	os << io.meteoprocessor;
 	os << "Processing level = " << io.processing_level << "\n";
 
+	//display meteocache
 	unsigned int count=0;
 	unsigned int min_stations=std::numeric_limits<unsigned int>::max();
 	unsigned int max_stations=-std::numeric_limits<unsigned int>::max();
@@ -290,26 +291,40 @@ std::ostream& operator<<(std::ostream& os, const IOManager& io)
 	}
 
 	if(count==0) {
-		os << "Meteo cache is empty\n";
+		os << "Meteocache is empty\n";
 	}
 	if(count==1) {
-		os << "Meteo cache contains 1 element at " << io.meteo_cache.begin()->first.toString(Date::ISO);
-		os << " for ";
+		os << "Meteocache content (";
 		if(max_stations==min_stations)
-			os << min_stations << " station(s)\n";
+			os << min_stations;
 		else
-			os << "between " << min_stations << " and " << max_stations << " stations\n";
+			os << min_stations << " to " << max_stations;
+		os << " station(s))\n";
+		os << io.meteo_cache.begin()->first.toString(Date::ISO) << " - 1 timestep\n";
 	}
 	if(count>1) {
 		const double avg_sampling = ( (io.meteo_cache.rbegin()->first.getJulianDate()) - (io.meteo_cache.begin()->first.getJulianDate()) ) / (double)(count-1);
-		os << "Meteo cache goes from " << io.meteo_cache.begin()->first.toString(Date::ISO);
-		os << " to " << io.meteo_cache.rbegin()->first.toString(Date::ISO);
-		os << " with " << count << " timesteps (" << setprecision(3) << fixed << avg_sampling*24.*3600. << " s sampling rate)";
-		os << " for ";
+
+		os << "Meteocache content (";
 		if(max_stations==min_stations)
-			os << min_stations << " station(s)\n";
+			os << min_stations;
 		else
-			os << "between " << min_stations << " and " << max_stations << " stations\n";
+			os << min_stations << " to " << max_stations;
+		os << " station(s))\n";
+		os << io.meteo_cache.begin()->first.toString(Date::ISO);
+		os << " - " << io.meteo_cache.rbegin()->first.toString(Date::ISO);
+		os << " - " << count << " timesteps (" << setprecision(3) << fixed << avg_sampling*24.*3600. << " s sampling rate)";
+	}
+
+	//display filtered_cache
+	os << "Filteredcache content (" << io.filtered_cache.size() << " stations)\n";
+	for(unsigned int ii=0; ii<io.filtered_cache.size(); ii++) {
+		if (io.filtered_cache[ii].size() > 0){
+			os << std::setw(10) << io.filtered_cache[ii][0].meta.stationID << " = "
+			   << io.filtered_cache[ii][0].date.toString(Date::ISO) << " - "
+			   << io.filtered_cache[ii][io.filtered_cache[ii].size()-1].date.toString(Date::ISO) << ", "
+			   << io.filtered_cache[ii].size() << " timesteps" << endl;
+		}
 	}
 
 	os << "</IOManager>\n";

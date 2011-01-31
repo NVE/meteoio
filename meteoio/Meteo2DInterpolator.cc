@@ -202,14 +202,8 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 
 std::ostream& operator<<(std::ostream &os, const Meteo2DInterpolator &mi) {
 	os << "<Meteo2DInterpolator>\n";
-	os << "Config *cfg = " << hex << &mi.cfg << "\n";
-	os << "IOManager *iomanager = "  << hex << &mi.iomanager << "\n";
-	//os << "DemObject *dem= " << hex << &mi.dem << "\n";
-
-	//const unsigned int nb_stations = mi.vecMeteo.size();
-	//os << "Current vecMeteo content : " << nb_stations << " stations";
-	//if(nb_stations>0) os << " at " << mi.vecMeteo[0].date.toString(Date::ISO);
-	//os << " \n";
+	os << "Config& cfg = " << hex << &mi.cfg << dec << "\n";
+	os << "IOManager& iomanager = "  << hex << &mi.iomanager << dec << "\n";
 
 	os << "User list of algorithms:\n";
 	std::map<std::string, std::vector<std::string> >::const_iterator iter = mi.mapAlgorithms.begin();

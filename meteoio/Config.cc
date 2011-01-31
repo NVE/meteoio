@@ -206,7 +206,7 @@ std::string Config::extract_section(std::string& key)
 		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
 		return sectionname;
 	}
-	return "GENERAL";
+	return defaultSection;
 }
 
 void Config::write(const std::string& filename)

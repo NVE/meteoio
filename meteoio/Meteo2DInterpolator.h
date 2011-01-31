@@ -156,8 +156,6 @@ class Meteo2DInterpolator {
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		IOManager& iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
-		//const DEMObject& dem;    ///< Reference to DEMObject object, initialized during construction
-		//const std::vector<MeteoData>& vecMeteo;  ///< Reference to a vec of MeteoData, initialized during construction
 		
 		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
 

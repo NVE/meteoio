@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteofilters/FilterMedianAvg.h>
+#include <cmath>
 
 using namespace std;
 
@@ -116,7 +117,7 @@ void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT); 
 	}
 
-	min_data_points = filter_args[0];
+	min_data_points = (unsigned int)floor(filter_args[0]);
 	min_time_span = Date(filter_args[1] / 86400.0);
 } 
 

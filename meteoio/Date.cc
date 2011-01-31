@@ -461,6 +461,18 @@ Date& Date::operator-=(const Date& indate) {
 	return *this;
 }
 
+Date& Date::operator*=(const double& value) {
+	gmt_julian *= value;
+	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	return *this;
+}
+
+Date& Date::operator/=(const double& value) {
+	gmt_julian /= value;
+	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	return *this;
+}
+
 bool Date::operator==(const Date& indate) const { 
 	const double epsilon=1./(24.*3600.); //that is, 1 second in units of days
 	return( fabs(indate.gmt_julian - gmt_julian) < epsilon );
@@ -507,6 +519,16 @@ const Date Date::operator+(const Date& indate) const {
 
 const Date Date::operator-(const Date& indate) const {
 	Date tmp(gmt_julian - indate.gmt_julian);
+	return tmp;
+}
+
+const Date Date::operator*(const double& value) const {
+	Date tmp(gmt_julian * value);
+	return tmp;
+}
+
+const Date Date::operator/(const double& value) const {
+	Date tmp(gmt_julian / value);
 	return tmp;
 }
 
