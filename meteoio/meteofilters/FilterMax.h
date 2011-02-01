@@ -15,38 +15,39 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERBLOCK_H__
-#define __FILTERBLOCK_H__
+#ifndef __FILTERMAX_H__
+#define __FILTERMAX_H__
 
-#include <meteoio/MeteoData.h>
-#include <meteoio/meteofilters/ProcessingBlock.h>
+//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember)) 
+
+#include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
 #include <string>
-#include <set>
 
 namespace mio {
 
 /**
- * @class  FilterBlock
- * @brief  An abstract class 
- * @author Thomas Egger
+ * @class  FilterMax
+ * @brief  
+ * @author Thomas Egger - Mathias Bavay
  * @date   2011-01-02
  */
-class FilterBlock : public ProcessingBlock {
+
+class FilterMax : public FilterBlock {
 	public:
-		virtual ~FilterBlock();
-		
+		FilterMax(const std::vector<std::string>& vec_args);
+
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec) = 0;
+						 std::vector<MeteoData>& ovec);
 
-		static bool is_soft(std::vector<std::string>& vec_args);
+	private:
+		void parse_args(std::vector<std::string> vec_args);
 
-		void convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
-		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);
-
-	protected:
-		FilterBlock(const std::string& filter_name); ///< protected constructor only to be called by children
+		bool is_soft;
+		double max_val;
+		double max_soft;
 };
 
-}
+} //end namespace
+
 #endif

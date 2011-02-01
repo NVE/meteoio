@@ -224,43 +224,45 @@ namespace mio {
  * This means that a filter might be executed for the parameter TA and another one for the parameter HNW, so the filter
  * algorithm only has to deal with a generic filtering method based on double values.
  *
- * To implement a new filter two steps are necessary:
+ * To implement a new filter, the following steps are necessary:
  *
- * -# Registering the filter within the function FilterAlgorithms::initStaticData(), by simply adding a line that
- *    resembles:
+ * -# Implementing the filter, as a derived class of FilterBlock, by creating two files: the header file and its
+ *    implementation file, in the meteofilters subdirectory of the source code.
+ *    The class will contain two public methods: a constructor
+ *    that takes a vector of strings containing the filter arguments and a method
  *    @code
- *    filterMap["filtername"]=FilterProperties(true, (unsigned int)1, Date(0.0), &FilterAlgorithms::ImplementedFilter);
+ *    process(const unsigned int& index, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
  *    @endcode
- *    Where the filtername can be freely chosen (although it has to be unique) and the parameters to FilterProperties
- *    are (in this order) a boolean stating whether this filter is only a check or whether it changes data,
- *    an unsigned integer stating how many points are minimally needed for this filter to be executed, a Date object
- *    marking the minimal period that data supplied to this filter needs to span and finally a function pointer
- *    pointing towards the actual implementation of the filter.
- * -# Implementation of the filter, a static function which always has the following interface and returns a boolean:
+ *    that
+ *    applies the filter to the provided vector of values, for a meteo parameter pointed to by index. This index
+ *    is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
+ *    parameters). The constructor must set up properties.for_second_pass to mark if the filter can be applied
+ *    a second time during a second pass, that is after resampling.
+ *    A private method
  *    @code
- *    bool FilterAlgorithms::FilterName(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
- *			  const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
- *			  const unsigned int& paramindex,
- *			  std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
+ *    parse_args(std::vector<std::string> vec_args)
  *    @endcode
- *    vecM and vecS represent the raw data as it is read through the readMeteoData functions of the MeteoIO plugins.
- *    the unsigned integer pos is the index of either the elements within vecM and vecS that represents the data
- *    data for the given Date object called date, or if there is no exact match possible then pos is the index of
- *    the first tuple with a date greater (that is newer) than the date requested (in this case a resampling will have
- *    to interpolate the data for the date requested). paramindex is the MeteoData parameter that this filter shall be
- *    run upon (see MeteoData for the enumeration of parameters - e.g. TA(=0), HNW(=6), ISWR(=1)). The two vectors
- *    vecFilteredM and vecFilteredS correspond and they hold the filtered data. Typically they hold one or two elements
- *    depending on whether resampling is required or not. In case resampling is not required they only hold one value
- *    each representing the exact date requested. Changes on the vecFilteredM and vecFilteredS vectors will be
- *    propagated back to the BufferedIOHandler and thus to the user. If the filter has to alter data it may do so only
- *    on these two vectors. Typically filters that perform checks only (e.g. check whether values are within certain
- *    bounds), need not look at anything but the data in these vectors, whereas filters that have more complicated
- *    schemes of operation (like accumulation or resampling) might take into account the "raw" data as accessible
- *    through vecM and vecS. Helper functions that parse the arguments to the filters through a Config obejct
- *    are available.
+ *    is also implemented to extract the numerical
+ *    values out of the vector of strings of arguments.
+ * -# Adding the created implementation file to meteofilters/CMakeLists.txt in a similar way as for the other
+ *    filters
+ * -# Registering the filter within the function BlockFactory::initStaticData(), by simply adding a line
+ *    similar to (in meteofilters/ProcessingBlocks.cc):
+ *    @code
+ *    availableBlocks.insert("MIN");
+ *    @endcode
+ *    Where the filter key can be freely chosen (although it has to be unique and easy/meanigful to the end user
+ *    who will use it in his configuration file)
+ * -# Adding the filter in the processing loop, in BlockFactory::getBlock(), by adding three lines similar to:
+ *    @code
+ *     else if (blockname == "MIN_MAX"){
+ *     		return new FilterMinMax(vec_args);
+ * 	}
+ *    @endcode
+ * -# Including the filter's header file in meteofilters/ProcessingBlocks.cc
  *
- *
- * Here an example implementation of the MaximumFilter, which checks whether a value is greater then an argument
+ * The class FilterMax can be used as an example of implementation of a basic filter that will check whether a
+ * value is greater than an argument
  * supplied to the filter and if so changes the value either to IOUtils::nodata (normal operation) or to the
  * maximum value supplied in the argument (soft mode of operation). An example section in the io.ini file supplied
  * to the Config could look like this:
@@ -271,33 +273,14 @@ namespace mio {
  * @endcode
  * Which has the following interpretation: Apply filter max (max-value-filter) to the parameter TA (air temperature)
  * in case that a value is greater than 280 degrees Kelvin change that value to 280.
- *
- * Now for the actual implementation of the filter:
+ * A more customized operation could be:
  * @code
- * bool FilterAlgorithms::MaxValueFilter(const std::vector<MeteoData>& vecM, const std::vector<StationData>& vecS,
- *	         const unsigned int& pos, const Date& date, const std::vector<std::string>& _vecArgs,
- *		    const unsigned int& paramindex,
- *		    std::vector<MeteoData>& vecFilteredM, std::vector<StationData>& vecFilteredS)
- * {
- *      (void)vecM; (void)vecS; (void)pos; (void)date; (void)vecFilteredS;
- *      //parse arguments and check whether they are valid
- *      bool isSoft = false;
- *      std::vector<double> vecArgs;
- *      parseFilterArguments("max", _vecArgs, 1, 1, isSoft, vecArgs);
- *
- *      //Run actual MaxValue filter over all relevant meteo data
- *      for(unsigned int ii=0; ii<vecFilteredM.size(); ii++){
- *      double& value = vecFilteredM[ii].param(paramindex);
- *      if (value == IOUtils::nodata) continue;
- *        if (value>vecArgs[0]){
- *        	if (isSoft) value=vecArgs[0];
- *        	else value=IOUtils::nodata;
- *        }
- *      }
- *
- *      return true;
- * }
+ * [Filters]
+ * TA::filter1 = max
+ * TA::arg1    = soft 280 260
  * @endcode
+ * Which will replace any value greater than 280 Kelvin by 260 Kelvin.
+ * 
  */
 
 /**

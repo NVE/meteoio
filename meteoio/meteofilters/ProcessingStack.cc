@@ -149,4 +149,18 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 	}
 }
 
+std::ostream& operator<<(std::ostream& os, const ProcessingStack& data)
+{
+	//os << "<ProcessingStack>";
+	os << setw(10) << data.param_name << "::";
+
+	for(unsigned int ii=0; ii<data.filter_stack.size(); ii++) {
+		os << setw(10) << *(data.filter_stack[ii]);
+	}
+
+	//os << "</ProcessingStack>";
+	os << "\n";
+	return os;
+}
+
 }

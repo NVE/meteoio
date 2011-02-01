@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteofilters/ProcessingBlock.h>
+#include <meteoio/meteofilters/FilterMin.h>
+#include <meteoio/meteofilters/FilterMax.h>
 #include <meteoio/meteofilters/FilterMinMax.h>
 #include <meteoio/meteofilters/FilterMeanAvg.h>
 #include <meteoio/meteofilters/FilterMedianAvg.h>
@@ -28,6 +30,8 @@ const bool BlockFactory::__init = BlockFactory::initStaticData();
 
 bool BlockFactory::initStaticData()
 {
+	availableBlocks.insert("MIN");
+	availableBlocks.insert("MAX");
 	availableBlocks.insert("MIN_MAX");
 	availableBlocks.insert("MEAN_AVG");
 	availableBlocks.insert("MEDIAN_AVG");
@@ -42,7 +46,12 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	if (availableBlocks.find(blockname) == availableBlocks.end())
 		throw UnknownValueException("The processing block '"+blockname+"' does not exist" , AT);
 
-	if (blockname == "MIN_MAX"){
+	
+	if (blockname == "MIN"){
+		return new FilterMin(vec_args);
+	} else if (blockname == "MAX"){
+		return new FilterMax(vec_args);
+	} else if (blockname == "MIN_MAX"){
 		return new FilterMinMax(vec_args);
 	} else if (blockname == "MEAN_AVG"){
 		return new FilterMeanAvg(vec_args);
@@ -67,9 +76,29 @@ std::string ProcessingBlock::getName() const
 
 ProcessingBlock::~ProcessingBlock() {}
 
+std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data)
+{
+	os << "[" << data.block_name << " ";
+	//os << data.properties;
+	os << "]";
+	return os;
+}
+
+
 const ProcessingProperties& ProcessingBlock::getProperties() const
 {
 	return properties;
+}
+
+std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data)
+{
+	os << "{-" << data.time_before.getJulianDate()*3600. << " +";
+	os << data.time_after.getJulianDate()*3600. << " h ; ";
+	os << "-" << data.points_before << " +" << data.points_after << " pts";
+	if(data.for_second_pass==true)
+		os << " ; 2nd pass";
+	os << "}";
+	return os;
 }
 
 } //end namespace

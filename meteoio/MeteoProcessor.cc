@@ -115,9 +115,11 @@ std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
 {
 	os << "<MeteoProcessor>\n";
 	os << data.mi1d;
+	os << "Processing stacks:\n";
 	for (map<string, ProcessingStack*>::const_iterator it=data.processing_stack.begin(); 
 		it != data.processing_stack.end(); it++){
-		//os << (*it->second) << endl;
+		//os << setw(10) << it->first << "::"; //the processing stack already contains it
+		os << (*it->second);
 	}
 	os << "</MeteoProcessor>\n";
 	return os;

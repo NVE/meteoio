@@ -28,7 +28,9 @@ namespace mio {
 class ProcessingProperties {
 	public:
 		ProcessingProperties() : for_second_pass(false), time_before(0.0), time_after(0.0),
-						points_before(0), points_after(0) {}
+		                         points_before(0), points_after(0) {}
+
+		friend std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data);
 
 		bool for_second_pass;
 
@@ -54,6 +56,7 @@ class ProcessingBlock {
 
 		std::string getName() const;
 		const ProcessingProperties& getProperties() const;
+		friend std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data);
 
 	protected:
 		std::string block_name;

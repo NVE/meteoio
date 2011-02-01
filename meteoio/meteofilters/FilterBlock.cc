@@ -39,7 +39,7 @@ bool FilterBlock::is_soft(std::vector<std::string>& vec_args)
 }
 
 void FilterBlock::convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
-						 const std::vector<std::string>& vec_args, std::vector<double>& dbl_args)
+                               const std::vector<std::string>& vec_args, std::vector<double>& dbl_args)
 {
 	if ((vec_args.size() < min_nargs) || (vec_args.size() > max_nargs))
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT); 
