@@ -51,6 +51,7 @@ if (DEST MATCHES "par")
   SET(meteoio_sources 
     marshal_meteoio.cc
     IOHandler.ph
+    IOManager.ph
     ${meteoio_sources}
     )
   SET_SOURCE_FILES_PROPERTIES( ${meteoio_sources} PROPERTIES LANGUAGE CXX )
