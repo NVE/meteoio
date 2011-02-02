@@ -134,7 +134,7 @@ class IOManager {
 		MeteoProcessor meteoprocessor;
 		ProcessingProperties proc_properties;
 
-		std::map<Date, std::vector<MeteoData> > meteo_cache;  ///< stores already fetched data points
+		std::map<Date, std::vector<MeteoData> > resampled_cache;  ///< stores already resampled data points
 		std::vector< std::vector<MeteoData> > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end;
 		unsigned int processing_level;

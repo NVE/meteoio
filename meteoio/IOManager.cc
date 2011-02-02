@@ -82,6 +82,10 @@ unsigned int IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//now it needs to be secured that the data is actually filtered, if configured
 			if ((IOManager::filtered & processing_level) == IOManager::filtered){
+				//we don't use tmp_meteo, but calling readMeteoData has filled the buffer for us
+				//and fill_filtered_cache will directly use the BufferedIO buffer
+				//HACK: if BufferedIO's buffer can not hold all data between start and end
+				//then this would not work
 				fill_filtered_cache();
 				read_filtered_cache(dateStart, dateEnd, vecMeteo);
 			} else {
@@ -152,12 +156,12 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 void IOManager::add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo)
 {
 	//Check cache size, delete oldest elements if necessary
-	if (meteo_cache.size() > 200){
-		meteo_cache.clear();
-		//meteo_cache.erase(meteo_cache.begin(), meteo_cache.begin()+50);
+	if (resampled_cache.size() > 200){
+		resampled_cache.clear();
+		//resampled_cache.erase(resampled_cache.begin(), resampled_cache.begin()+50);
 	}
 
-	meteo_cache[i_date] = vecMeteo;
+	resampled_cache[i_date] = vecMeteo;
 }
 
 //data can be raw or processed (filtered, resampled)
@@ -181,8 +185,8 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 
 
 	//2.  Check which data point is available, buffered locally
-	map<Date, vector<MeteoData> >::const_iterator it = meteo_cache.find(i_date);
-	if (it != meteo_cache.end()){
+	map<Date, vector<MeteoData> >::const_iterator it = resampled_cache.find(i_date);
+	if (it != resampled_cache.end()){
 		vecMeteo = it->second;
 		return vecMeteo.size();
 	}
@@ -293,8 +297,8 @@ std::ostream& operator<<(std::ostream& os, const IOManager& io)
 	unsigned int count=0;
 	unsigned int min_stations=std::numeric_limits<unsigned int>::max();
 	unsigned int max_stations=-std::numeric_limits<unsigned int>::max();
-	std::map<Date, std::vector<MeteoData> >::const_iterator iter = io.meteo_cache.begin();
-	for (; iter != io.meteo_cache.end(); iter++) {
+	std::map<Date, std::vector<MeteoData> >::const_iterator iter = io.resampled_cache.begin();
+	for (; iter != io.resampled_cache.end(); iter++) {
 		const unsigned int nb_stations = iter->second.size();
 		if(nb_stations>max_stations) max_stations=nb_stations;
 		if(nb_stations<min_stations) min_stations=nb_stations;
@@ -302,28 +306,28 @@ std::ostream& operator<<(std::ostream& os, const IOManager& io)
 	}
 
 	if(count==0) {
-		os << "Meteocache is empty\n";
+		os << "Resampled cache is empty\n";
 	}
 	if(count==1) {
-		os << "Meteocache content (";
+		os << "Resampled cache content (";
 		if(max_stations==min_stations)
 			os << min_stations;
 		else
 			os << min_stations << " to " << max_stations;
 		os << " station(s))\n";
-		os << io.meteo_cache.begin()->first.toString(Date::ISO) << " - 1 timestep\n";
+		os << io.resampled_cache.begin()->first.toString(Date::ISO) << " - 1 timestep\n";
 	}
 	if(count>1) {
-		const double avg_sampling = ( (io.meteo_cache.rbegin()->first.getJulianDate()) - (io.meteo_cache.begin()->first.getJulianDate()) ) / (double)(count-1);
+		const double avg_sampling = ( (io.resampled_cache.rbegin()->first.getJulianDate()) - (io.resampled_cache.begin()->first.getJulianDate()) ) / (double)(count-1);
 
-		os << "Meteocache content (";
+		os << "Resampled cache content (";
 		if(max_stations==min_stations)
 			os << min_stations;
 		else
 			os << min_stations << " to " << max_stations;
 		os << " station(s))\n";
-		os << io.meteo_cache.begin()->first.toString(Date::ISO);
-		os << " - " << io.meteo_cache.rbegin()->first.toString(Date::ISO);
+		os << io.resampled_cache.begin()->first.toString(Date::ISO);
+		os << " - " << io.resampled_cache.rbegin()->first.toString(Date::ISO);
 		os << " - " << count << " timesteps (" << setprecision(3) << fixed << avg_sampling*24.*3600. << " s sampling rate)";
 	}
 
