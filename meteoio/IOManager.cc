@@ -121,13 +121,24 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 		//it's already in the filtered_cache, so just copy the requested slice
 		for (unsigned int ii=0; ii<filtered_cache.size(); ii++){
 			unsigned int startpos = IOUtils::seek(start_date, filtered_cache[ii], false);
+			if (startpos == IOUtils::npos){
+				if (filtered_cache[ii].size() > 0){
+					if (filtered_cache[ii][0].date <= end_date){
+						startpos = 0;
+					}
+				}
+			}
+
 			if (startpos != IOUtils::npos){
 				vec_meteo.push_back(vector<MeteoData>());
 				unsigned int index = vec_meteo.size()-1;
 				for (unsigned int jj=startpos; jj<filtered_cache[ii].size(); jj++){
 					const MeteoData& md = filtered_cache[ii][jj];
-					if (md.date <= end_date)
+					if (md.date <= end_date){
 						vec_meteo[index].push_back(md);
+					} else {
+						break;
+					}
 				}
 			}
 		}
