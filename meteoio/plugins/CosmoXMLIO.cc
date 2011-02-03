@@ -17,6 +17,12 @@
 */
 #include <meteoio/plugins/CosmoXMLIO.h>
 #include <meteoio/meteolaws/Atmosphere.h>
+#include <sstream>
+
+// reading a text file
+#include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -173,37 +179,69 @@ void CosmoXMLIO::readStationNames(std::vector<std::string>& vecStationName)
 		std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
 		vecStationName.push_back(stationname);
 	}
+	
+	//-----> Version for a directory with station list <-----//
+	
+	//Get all files from directory
+	string meteopath = "";
+ 	cfg.getValue("METEOPATH", "Input", meteopath);
+	if (meteopath == "")
+		throw ConversionFailedException("Error while reading value for METEOPATH", AT);	
+	const string pattern = "xml";
+	list<string> dirlist;
+	IOUtils::readDirectory(meteopath, dirlist, pattern);
+	dirlist.sort();
+	//Plot all the station names
+	list<string>::iterator itr;
+	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {
+		cout<<meteopath<<"/"<<*itr<<endl; //itr does not contain the path
+	}
 }
 
-//-----> Read meteo and station data <-----
+
+
+//-----> Read meteo and station data <----- SECOND VERSION: uses stations directory
 void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 					    std::vector< std::vector<MeteoData> >& vecMeteo, 
 					    const unsigned int&)
 {
-	vector<string> vecStationName;
-	readStationNames(vecStationName);
-	vecMeteo.clear();
-
-	string meteopath="", station_path="";
-
-	cfg.getValue("METEOPATH", "Input", meteopath);
-
+	//Get all files from directory
+	string meteopath = "", station_path="";
+ 	cfg.getValue("METEOPATH", "Input", meteopath);
 	if (meteopath == "")
-		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
+		throw ConversionFailedException("Error while reading value for METEOPATH", AT);	
+	const string pattern = "xml";
+	list<string> dirlist;
+	IOUtils::readDirectory(meteopath, dirlist, pattern);
+	dirlist.sort();
+	
+	vecMeteo.clear();	//Initialize Meteo Vector
+	
+	//Timezone
+	int timezone_in;
+	cfg.getValue("TZ", "Input", timezone_in);
 
-
-	vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>()); //allocation for the vectors
-
-	for (unsigned int ii=0; ii<vecStationName.size(); ii++) {	
-		station_path = meteopath + "/" + vecStationName[ii] + ".xml";
-		cout << station_path << endl;
+	vecMeteo.insert(vecMeteo.begin(), dirlist.size(), std::vector<MeteoData>()); //Allocation for the vectors
+	list<string>::iterator itr;	//To loop in the stations list
+	
+	//Plot all the station names
+	cout << endl << "Files available:" << endl;
+	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {
+		cout<<meteopath<<"/"<<*itr<<endl; //itr does not contain the path -> create the name.
+	}
+	cout << endl;
+	
+	unsigned int ii=0; //Declare and initialize counter (to know which station we are dealing with)
+	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	
+		station_path = meteopath + "/" + *itr;
+		cout << "Reading file " << station_path << endl;
 		
 		MeteoData meteo;
 		StationData station;
 		//Initialize variables
 		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
 		double nodata=IOUtils::nodata;
-		double temperature=IOUtils::nodata, dew_point=IOUtils::nodata, humidity=IOUtils::nodata, global_radiation=IOUtils::nodata;
+		double temperature=IOUtils::nodata, dew_point=IOUtils::nodata, global_radiation=IOUtils::nodata;
 		double rain=IOUtils::nodata, wind_speed=IOUtils::nodata, max_wind_speed=IOUtils::nodata;
 		Date olddate=IOUtils::nodata, newdate=IOUtils::nodata;
 		int write=0;
@@ -235,7 +273,8 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 				//WriteData
 				if(key=="reference_ts") {
 					if(write==0) {
-						write=1;	//Doesn't print first data set
+						write=1;	//Doesn't print first data set, as it is only definition
+						//HACK may want to check what we have in the values and print them if numbers and not definitions...
 						olddate = getDateValue(reader);
 					}
 					else {
@@ -247,54 +286,216 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 						} else {
 							throw InvalidFormatException("Meteo data found, but no position information", AT);
 						}
+						if (timezone_in != 0.0) meteo.date.setTimeZone(timezone_in);
+						//cout<<"Timezone in= "<<timezone_in<<endl;
 						meteo.meta = station;
 						meteo.ta=temperature;
-						//meteo.rh=humidity;		
-						meteo.rh=Atmosphere::DewPointtoRh(humidity,temperature,TRUE);	//Create humidity from the dew point
+						meteo.rh=Atmosphere::DewPointtoRh(C_TO_K(dew_point),C_TO_K(temperature),TRUE);	//Create humidity from the dew point, uses °K and not °C
 						meteo.iswr=global_radiation;
 						meteo.hnw=rain;
 						meteo.vw=wind_speed;
 						//meteo.mvw=max_wind_speed;	//HACK create variable
 						//cout << meteo; //To check if the data set is well written
 						vecMeteo[ii].push_back( meteo ); //HACK set index
+						//Initialize MeteoData
+						temperature=IOUtils::nodata, dew_point=IOUtils::nodata, global_radiation=IOUtils::nodata;
+						rain=IOUtils::nodata, wind_speed=IOUtils::nodata, max_wind_speed=IOUtils::nodata;
 					}
 				}
 			}
 		}
-		//Print the last set of data
+		//Save the last set of data
 		meteo.date = olddate;
 		if(altitude!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 			station.position.setLatLon(latitude, longitude, altitude);
 		} else {
 			throw InvalidFormatException("Meteo data found, but no position information", AT);
 		}
+		if (timezone_in != 0.0) meteo.date.setTimeZone(timezone_in);
 		meteo.meta = station;
 		meteo.ta=temperature;
-		meteo.rh=Atmosphere::DewPointtoRh(humidity,temperature,TRUE);	//Create humidity from the dew point
+		meteo.rh=Atmosphere::DewPointtoRh(C_TO_K(dew_point),C_TO_K(temperature),TRUE);	//Create humidity from the dew point, uses °K and not °C
 		meteo.iswr=global_radiation;
 		meteo.hnw=rain;
 		meteo.vw=wind_speed;
 		//meteo.mvw=max_wind_speed;	//HACK create variable
 		//cout << meteo; //To check if the data set is well written
+		//cout << "No data code= "<<nodata<<endl;
 		vecMeteo[ii].push_back( meteo ); //HACK set index
 		reader.close();
+		//Increment counter
+		ii++;
 	}
-		
+	cout << endl << "Meteo Data read" << endl << endl;
 	
-/*	catch(const std::exception& e)
-	{
-		std::cout << "Exception caught: " << e.what() << std::endl;
-	}*/
-	
-	std::cout<<"Meteo Data read!"<<std::endl;
-	//throw IOException("Nothing implemented here", AT); //Has to be removed once programm is written!!!
+	//TEST Write meteo data
+	writeMeteoData(vecMeteo);
 }
+//-----> End of Read meteo and Station data <-----
 
-void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
+// //-----> Read meteo and station data <----- FIRST VERSION: uses stations list
+// void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
+// 					    std::vector< std::vector<MeteoData> >& vecMeteo, 
+// 					    const unsigned int&)
+// {
+// 	vector<string> vecStationName;
+// 	readStationNames(vecStationName);
+// 	vecMeteo.clear();
+// 
+// 	string meteopath="", station_path="";
+// 	int timezone_in;
+// 
+// 	cfg.getValue("METEOPATH", "Input", meteopath);
+// 
+// 	if (meteopath == "")
+// 		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
+// 
+// 	cfg.getValue("TZ", "Input", timezone_in);
+// 
+// 	vecMeteo.insert(vecMeteo.begin(), vecStationName.size(), std::vector<MeteoData>()); //allocation for the vectors
+// 
+// 	for (unsigned int ii=0; ii<vecStationName.size(); ii++) {	
+// 		station_path = meteopath + "/" + vecStationName[ii] + ".xml";
+// 		// cout << station_path << endl;
+// 		
+// 		MeteoData meteo;
+// 		StationData station;
+// 		//Initialize variables
+// 		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
+// 		double nodata=IOUtils::nodata;
+// 		double temperature=IOUtils::nodata, dew_point=IOUtils::nodata, global_radiation=IOUtils::nodata;
+// 		double rain=IOUtils::nodata, wind_speed=IOUtils::nodata, max_wind_speed=IOUtils::nodata;
+// 		Date olddate=IOUtils::nodata, newdate=IOUtils::nodata;
+// 		int write=0;
+// 		
+// 		//Read station and meteo data
+// 		//xmlpp::TextReader reader("./input/meteo/GribMD2.xml");
+// 		xmlpp::TextReader reader(station_path);
+// 		while(reader.read()) {
+// 			if(reader.has_attributes()) {
+// 				reader.move_to_first_attribute();
+// 				const string key=reader.get_value();
+// 				//StationData
+// 				if(key=="identifier") station.stationName = getValue(reader);
+// 				if(key=="station_abbreviation") station.stationID = getValue(reader);
+// 				if(key=="station.height") altitude = getDoubleValue(reader);
+// 				if(key=="station.latitude") latitude = getDoubleValue(reader);
+// 				if(key=="station.longitude") longitude = getDoubleValue(reader);
+// 	// 			if(key=="model_station_height") altitude = getDoubleValue(reader);
+// 	// 			if(key=="model_station_latitude") latitude = getDoubleValue(reader);
+// 	// 			if(key=="model_station_longitude") longitude = getDoubleValue(reader);
+// 				if(key=="missing_value_code") nodata = getDoubleValue(reader);
+// 				//MeteoData
+// 				if(key=="T_2M") temperature = getDoubleValue(reader);
+// 				if(key=="TD_2M") dew_point = getDoubleValue(reader);
+// 				if(key=="GLOB") global_radiation = getDoubleValue(reader);
+// 				if(key=="TOT_PREC") rain = getDoubleValue(reader);
+// 				if(key=="FF_10M") wind_speed = getDoubleValue(reader);
+// 				if(key=="VMAX_10M") max_wind_speed = getDoubleValue(reader);
+// 				//WriteData
+// 				if(key=="reference_ts") {
+// 					if(write==0) {
+// 						write=1;	//Doesn't print first data set
+// 						olddate = getDateValue(reader);
+// 					}
+// 					else {
+// 						newdate = getDateValue(reader);
+// 						meteo.date = olddate;
+// 						olddate = newdate;
+// 						if(altitude!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+// 							station.position.setLatLon(latitude, longitude, altitude);
+// 						} else {
+// 							throw InvalidFormatException("Meteo data found, but no position information", AT);
+// 						}
+// 						if (timezone_in != 0.0) meteo.date.setTimeZone(timezone_in);
+// 						//cout<<"Timezone in= "<<timezone_in<<endl;
+// 						meteo.meta = station;
+// 						meteo.ta=temperature;
+// 						meteo.rh=Atmosphere::DewPointtoRh(C_TO_K(dew_point),C_TO_K(temperature),TRUE);	//Create humidity from the dew point, uses °K and not °C
+// 						meteo.iswr=global_radiation;
+// 						meteo.hnw=rain;
+// 						meteo.vw=wind_speed;
+// 						//meteo.mvw=max_wind_speed;	//HACK create variable
+// 						//cout << meteo; //To check if the data set is well written
+// 						vecMeteo[ii].push_back( meteo ); //HACK set index
+// 						//Initialize MeteoData
+// 						temperature=IOUtils::nodata, dew_point=IOUtils::nodata, global_radiation=IOUtils::nodata;
+// 						rain=IOUtils::nodata, wind_speed=IOUtils::nodata, max_wind_speed=IOUtils::nodata;
+// 					}
+// 				}
+// 			}
+// 		}
+// 		//Print the last set of data
+// 		meteo.date = olddate;
+// 		if(altitude!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
+// 			station.position.setLatLon(latitude, longitude, altitude);
+// 		} else {
+// 			throw InvalidFormatException("Meteo data found, but no position information", AT);
+// 		}
+// 		if (timezone_in != 0.0) meteo.date.setTimeZone(timezone_in);
+// 		meteo.meta = station;
+// 		meteo.ta=temperature;
+// 		meteo.rh=Atmosphere::DewPointtoRh(C_TO_K(dew_point),C_TO_K(temperature),TRUE);	//Create humidity from the dew point, uses °K and not °C
+// 		meteo.iswr=global_radiation;
+// 		meteo.hnw=rain;
+// 		meteo.vw=wind_speed;
+// 		//meteo.mvw=max_wind_speed;	//HACK create variable
+// 		//cout << meteo; //To check if the data set is well written
+// 		//cout << "No data code= "<<nodata<<endl;
+// 		vecMeteo[ii].push_back( meteo ); //HACK set index
+// 		reader.close();
+// 	}
+// 		
+// 	
+// /*	catch(const std::exception& e)
+// 	{
+// 		std::cout << "Exception caught: " << e.what() << std::endl;
+// 	}*/
+// 	
+// 	//std::cout<<"Meteo Data read!"<<std::endl;
+// 	//throw IOException("Nothing implemented here", AT); //Has to be removed once programm is written!!!
+// }
+
+void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 						const std::string&)
 {
+	ofstream XMLfile, fout;
+	string filename="", s="", meteopath_out = "", line;
+	stringstream rawXML, out;
+	//cfg.getValue("METEOPATH", "Output", meteopath_out);
+	meteopath_out = "./meteoOUT/";
+	cout << "In writeMeteoData" << endl << endl;
+	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
+		rawXML.str("");
+ 		filename = meteopath_out + "RawXMLfile.xml";
+  		ifstream XMLfile (filename.c_str());
+  		if (XMLfile.is_open()) {
+    			while ( XMLfile.good() ) {
+      				getline (XMLfile,line);
+      				//cout << line << endl;
+				rawXML << line << endl;
+    			}
+    			XMLfile.close();
+  		}
+  		else cout << "Unable to open file"; 
+ 		//cout << rawXML.str();
+
+		//cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << " -----------------" << endl;
+		//cout << "Taille = " << vecMeteo[ii].size() << endl;
+		//cout << "Température = " << vecMeteo[ii].ta() << endl;
+		out << ii;
+		s = out.str();
+		filename = meteopath_out + "Station" + s + ".xml";
+		cout << "Filename = " << filename << endl;
+		out.str("");
+		fout.open(filename.c_str());
+		//fout << "Taille du vecteur " << ii << " = " << vecMeteo[ii].size() << endl;
+		fout << rawXML.str();
+		fout.close();
+	}
+	cout << endl << "Out of writeMeteoData" << endl << endl;
 	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	//throw IOException("Nothing implemented here", AT);
 }
 
 void CosmoXMLIO::readSpecialPoints(std::vector<Coords>&)
