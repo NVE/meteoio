@@ -10,8 +10,8 @@ int main(int /*argc*/, char** argv) {
 
 	mio::Date d1;
 	d1.setTimeZone(TZ);
-	mio::IOUtils::convertString(d1,argv[1]); //get date and time
-	Sun.setDate(d1.getJulianDate(), d1.getTimeZone());
+	mio::IOUtils::convertString(d1,argv[1], TZ); //get date and time
+	Sun.setDate(d1.getJulianDate(), d1.getTimeZone()); //local julian date and timezone
 
 	double iswr_ref;
 	mio::IOUtils::convertString(iswr_ref,argv[2]); //get measured global incoming radiation

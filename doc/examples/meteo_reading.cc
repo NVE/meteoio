@@ -14,8 +14,7 @@ int main(int /*argc*/, char** argv) {
 	IOManager io(cfg);
 
 	//we assume that the time given on the command line is in TZ=+1
-	d1.setTimeZone(1.);
-	IOUtils::convertString(d1,argv[1]);
+	IOUtils::convertString(d1,argv[1], 1.);
 	io.getMeteoData(d1, vecMeteo);
 
 	//writing some data out in order to prove that it really worked!

@@ -20,7 +20,7 @@ INCLUDE_POPC=-I. -I$(METEOIODIR)
 #####################
 #	TARGETS
 #####################
-all: meteo_reading dem_reading coordinates 2D_interpolations time data_converter matrix
+all: meteo_reading dem_reading coordinates 2D_interpolations time data_converter matrix sun
 
 meteo_reading: meteo_reading.o
 	$(CC) $(DEBUG) -o $@ meteo_reading.o ${LIBS}
@@ -36,7 +36,9 @@ data_converter: data_converter.o
 	$(CC) $(DEBUG) -o $@ data_converter.o ${LIBS}
 matrix: matrix.o
 	$(CC) $(DEBUG) -o $@ matrix.o ${LIBS}
+sun: sun.o
+	$(CC) $(DEBUG) -o $@ sun.o ${LIBS}
 
 clean:
-	rm -rf *~ *.o  *.out meteo_reading dem_reading coordinates 2D_interpolations time data_converter matrix
+	rm -rf *~ *.o  *.out meteo_reading dem_reading coordinates 2D_interpolations time data_converter matrix sun
 

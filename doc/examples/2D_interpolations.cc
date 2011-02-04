@@ -18,8 +18,7 @@ int main(int /*argc*/, char** argv) {
 	io.readDEM(dem);
 
 	//we assume that the time given on the command line is in TZ=+1
-	d1.setTimeZone(1.);
-	IOUtils::convertString(d1,argv[1]);
+	IOUtils::convertString(d1,argv[1], 1.);
 
 	//performing spatial interpolations
 	Grid2DObject param;

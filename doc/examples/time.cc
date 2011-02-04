@@ -10,16 +10,17 @@ int main(int argc, char** argv) {
 	const double TZ=-4.;
 
 	Date tmp;
+	tmp.setTimeZone(TZ); //HACK
 	tmp.setFromSys();
 	std::cout << "now=" << tmp;
 	double julian=tmp.getJulianDate();
 	julian = floor(julian*24.*2. + 0.5) / (24.*2.);
-	tmp.setDate(julian);
+	tmp.setDate(julian, TZ);
 	std::cout << "Rounded now=" << tmp;
 	return 0;
 
 	Date d1;
-	IOUtils::convertString(d1,argv[1]);
+	IOUtils::convertString(d1,argv[1], 0);
 	std::cout << "In timezone GMT+0:\n";
 	std::cout << d1 << std::endl;
 
@@ -29,7 +30,7 @@ int main(int argc, char** argv) {
 
 	std::cout << "Same, directly read in timezone GMT " << TZ << ":\n";
 	d1.setTimeZone(TZ,false);
-	IOUtils::convertString(d1,argv[1]);
+	IOUtils::convertString(d1,argv[1], TZ);
 	std::cout << d1 << std::endl;
 
 	std::cout << "And swapped back to timezone GMT+0:\n";
