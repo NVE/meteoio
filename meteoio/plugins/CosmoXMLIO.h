@@ -75,6 +75,7 @@ namespace mio {
 			
 			Config cfg;
 			static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+			static const double in_tz, out_tz; //plugin specific time zones
 			std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 	};
 	
