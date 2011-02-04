@@ -43,6 +43,7 @@ namespace mio {
  * @author Thomas Egger
  * @date   2009-09-25
  */
+
 class GSNIO : public IOInterface {
 	public:
 		GSNIO(void (*delObj)(void*), const Config& i_cfg);
@@ -83,6 +84,7 @@ class GSNIO : public IOInterface {
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                              ///< Variable for proxy configuration
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		double in_tz, out_tz; //default time zones
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 

@@ -11,6 +11,7 @@ ENDIF(PROJ4)
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
+#	FilterAlgorithms.cc obsoleted
 SET(meteoio_sources
 	IOManager.cc
 	Matrix.cc
@@ -19,7 +20,6 @@ SET(meteoio_sources
 	ResamplingAlgorithms.cc
 	Meteo1DInterpolator.cc
 	InterpolationAlgorithms.cc
-	FilterAlgorithms.cc
 	A3DIO.cc
 	Date.cc
 	Timer.cc

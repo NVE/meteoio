@@ -25,7 +25,7 @@ IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(i_cfg), bufferedio
 {
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
 
-	fcache_start = fcache_end = Date(0.0);
+	fcache_start = fcache_end = Date(0.0, 0.); //HACK this should not matter, since 0 is still way back before any real data...
 
 	meteoprocessor.getWindowSize(proc_properties);
 }
@@ -173,7 +173,7 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 
 	//1. Check whether user wants raw data or processed data
 	if (processing_level == IOManager::raw){
-		rawio.readMeteoData(i_date-Date(0.001), i_date+Date(0.001), vec_cache);
+		rawio.readMeteoData(i_date-Duration(0.001, 0.), i_date+Duration(0.001, 0.), vec_cache);
 		for (unsigned int ii=0; ii<vec_cache.size(); ii++){
 			unsigned int index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)

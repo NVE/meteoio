@@ -58,8 +58,6 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 
 		const double local_rate = (curr_value-prev_value) / ((curr_time-prev_time)*24.*3600.); //per seconds
 
-		//cout << "Time: " << ovec[ii].date.toString(Date::ISO) << "  local_rate=" << local_rate << endl;
-
 		if (abs(local_rate) > max_rate_of_change ) {
 			curr_value = IOUtils::nodata;
 		} else {
@@ -68,8 +66,7 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 	}
 }	
 
-void RateFilter::parse_args(std::vector<std::string> vec_args)
-{
+void RateFilter::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 	FilterBlock::convert_args(1, 1, vec_args, filter_args);
 

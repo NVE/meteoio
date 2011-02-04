@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "SNIO.h"
+#include <meteoio/meteolaws/Atmosphere.h>
 
 using namespace std;
 
@@ -284,7 +285,6 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 			
 				if (ncols >= 15){//valid length for MeteoData
 					MeteoData md;
-					md.date.setTimeZone(in_tz);
 					md.meta = vecAllStations[ii];
 					parseMeteoLine(tmpvec, filename + ":" + ss.str(), md);
 					
@@ -312,30 +312,6 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 	}
 }
 
-double SNIO::cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness )
-{ 
-	//the goal is to have a fully self-contained function that matches what would be
-	//used later on for recomputing a cloudiness, etc
-	const double stefan_boltzmann = 5.67051e-8; // W m-2 K-4
-	double c2, c3; // varying constants
-	if ( TA < 273.16 ) { // for a flat ice surface
-		c2 = 21.88;
-		c3 = 7.66;
-	} else { // for a flat water surface
-		c2 = 17.27;
-		c3 = 35.86;
-	}
-
-	const double exp_p_sat = c2 *  (TA - 273.16) / (TA - c3);
-	const double p0 = 610.78; // triple point pressure of water
-	const double pressure = RH * ( p0 * exp( exp_p_sat )); //RH * saturation pressure
-	double ea = (0.97 * (0.68 + 0.0036 * sqrt(pressure)) * (1. + 0.18 * cloudiness * cloudiness)); //longwave radiation, Omstedt, 1990.
-	if(ea > 1.0) 
-		ea = 1.0;
-
-	return ( ea * (stefan_boltzmann * (TA*TA*TA*TA)) );
-}
-
 void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, MeteoData& md)
 {
 	/*
@@ -351,11 +327,11 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	//deal with the date
 	if (vecLine[1].length() != 10)
 		throw InvalidFormatException("At " + filepos + " date format must be DD.MM.YYYY", AT);
-	string year  = vecLine[1].substr(6,4);
-	string month = vecLine[1].substr(3,2);
-	string day   = vecLine[1].substr(0,2);
+	const string year  = vecLine[1].substr(6,4);
+	const string month = vecLine[1].substr(3,2);
+	const string day   = vecLine[1].substr(0,2);
 	
-	if (!IOUtils::convertString(md.date, year+"-"+month+"-"+day+"T"+vecLine[2]))
+	if (!IOUtils::convertString(md.date, year+"-"+month+"-"+day+"T"+vecLine[2], in_tz, std::dec))
 		throw InvalidFormatException("At " + filepos + " date format invalid", AT);
 	
 	//Extract all data as double values
@@ -375,7 +351,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	
 	if ((tmpdata[10] <= 1) && (tmpdata[10] != plugin_nodata)){
 		if ((md.ta == plugin_nodata) || (md.rh == plugin_nodata)){
-			tmpdata[10] = cloudiness_to_ilwr(md.rh, md.ta, tmpdata[10]); //calculate ILWR from cloudiness
+			tmpdata[10] = Atmosphere::Omstedt_ilwr(md.rh, md.ta, tmpdata[10]); //calculate ILWR from cloudiness
 		} else {
 			tmpdata[10] = plugin_nodata;
 		}
@@ -387,7 +363,6 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	md.setData(MeteoData::HNW, tmpdata[13]);
 	md.setData(MeteoData::HS, tmpdata[14]);
 
-	//cout << "Adding parameters:" << endl;
 	//All the rest of the values ought to be ts[ii] values
 	stringstream ss;
 	for (unsigned int ii=15; ii<tmpdata.size(); ii++){
@@ -395,9 +370,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		ss << "TS" << (ii-15);
 		md.addParameter(ss.str());		
 		md.param(ss.str()) = tmpdata[ii];
-		//cout << "Added " << ss.str() << ": " << tmpdata[ii] << endl;
 	}
-	//cout << "Adding parameters done" << endl;
 }
 
 void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
@@ -435,8 +408,10 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 
 	for(unsigned int ii=0; ii<Meteo.size(); ii++) {
 		int YYYY, MM, DD, HH, MI;
-		Meteo[ii].date.getDate(YYYY, MM, DD, HH, MI);
-		const double sn_julian = Meteo[ii].date.getJulianDate() - sn_julian_offset + 0.5;
+		Date tmp_date(Meteo[ii].date);
+		tmp_date.setTimeZone(out_tz);
+		tmp_date.getDate(YYYY, MM, DD, HH, MI);
+		const double sn_julian = tmp_date.getJulianDate() - sn_julian_offset + 0.5;
 		const double ta = Meteo[ii].ta;
 		const double rh = Meteo[ii].rh;
 		const double hnw = Meteo[ii].hnw;
@@ -559,22 +534,6 @@ void SNIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*nam
 	throw IOException("Nothing implemented here", AT);
 }
 
-/*void SNIO::convertUnitsBack(MeteoData& meteo)
-{
-	//converts Kelvin to C, converts RH to [0,100]
-	if(meteo.ta!=IOUtils::nodata) {
-		meteo.ta=K_TO_C(meteo.ta);
-	}
-	
-	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=K_TO_C(meteo.tsg);
-	}
-	
-	if(meteo.tss!=IOUtils::nodata) {
-		meteo.tss=K_TO_C(meteo.tss);
-	}
-}
-*/
 void SNIO::convertUnits(MeteoData& meteo)
 {
 	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
@@ -598,7 +557,6 @@ void SNIO::convertUnits(MeteoData& meteo)
 			meteo.rh /= 100;
 	}
 
-	//cout << "Converting" << endl;
 	stringstream ss;
 	for (unsigned int ii=0; ii<100; ii++){
 		ss.str("");
@@ -610,7 +568,6 @@ void SNIO::convertUnits(MeteoData& meteo)
 			break;
 		}		
 	}
-	//cout << "Converting done" << endl;
 }
 
 #ifndef _METEOIO_JNI

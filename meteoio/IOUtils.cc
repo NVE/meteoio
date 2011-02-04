@@ -330,7 +330,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, st
 	return true;
 }
 
-template<> bool IOUtils::convertString<Date>(Date& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+bool IOUtils::convertString(Date& t, const std::string& str, const double& TZ, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -341,17 +341,17 @@ template<> bool IOUtils::convertString<Date>(Date& t, const std::string& str, st
 
 	//HACK: we read the seconds, but we ignore them...
 	if (sscanf(s.c_str(), "%u-%u-%u %u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
-		t.setDate(year, month, day, hour, minute);
+		t.setDate(year, month, day, hour, minute, TZ);
 	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
-		t.setDate(year, month, day, hour, minute);
+		t.setDate(year, month, day, hour, minute, TZ);
 	} else if (sscanf(s.c_str(), "%u-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		t.setDate(year, month, day, hour, minute);
+		t.setDate(year, month, day, hour, minute, TZ);
 	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		t.setDate(year, month, day, hour, minute);
+		t.setDate(year, month, day, hour, minute, TZ);
 	} else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
-		t.setDate(year, month, day, 0, 0);
+		t.setDate(year, month, day, 0, 0, TZ);
 	} else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
-		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. );
+		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. , TZ);
 	} else {
 		//try to read purely numerical date, potentially surrounded by other chars
 		const unsigned int in_len = str.length();
@@ -384,7 +384,7 @@ template<> bool IOUtils::convertString<Date>(Date& t, const std::string& str, st
 			}
 		}
 		
-		t.setDate( year, month, day, hour, minute );
+		t.setDate( year, month, day, hour, minute, TZ );
 	}
 
 	std::string tmp(rest);
@@ -449,6 +449,7 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 	}
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
+	//HACK: would it be better to create a timesries object and call vector's binary search on it?
 	if (exactmatch){
 		unsigned int first = 1, last = vecM.size()-1;
 

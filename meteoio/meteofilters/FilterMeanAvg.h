@@ -36,7 +36,7 @@ class FilterMeanAvg : public WindowedFilter {
 		FilterMeanAvg(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-						 std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);

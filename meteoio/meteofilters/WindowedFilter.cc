@@ -22,12 +22,11 @@ using namespace std;
 namespace mio {
 
 WindowedFilter::WindowedFilter(const std::string& name) 
-	: FilterBlock(name), is_soft(false), min_data_points(1), min_time_span(0.0), 
+	: FilterBlock(name), is_soft(false), min_data_points(1), min_time_span(0.0, 0.), 
 	  centering(WindowedFilter::center), elements_left(0), elements_right(0), last_index(IOUtils::npos)
 {}
 
-unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
-{
+unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args) {
 	if (vec_args.size() > 0){
 		if (vec_args[0] == "left"){
 			vec_args.erase(vec_args.begin());
@@ -54,7 +53,7 @@ unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
  * @param vec_window A vector of pointers to MeteoData
  */
 const std::vector<const MeteoData*>& WindowedFilter::get_window(const unsigned int& index, 
-                                                          const std::vector<MeteoData>& ivec)
+                                                                const std::vector<MeteoData>& ivec)
 {
 	//cout << "Requesting index " << index << endl;
 

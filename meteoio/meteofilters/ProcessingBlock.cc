@@ -60,7 +60,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "RATE"){
 		return new RateFilter(vec_args);
 	} else {
-		throw IOException("The processing block '"+blockname+"' does not exist" , AT);		
+		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);		
 	}
 
 	return NULL;
@@ -69,15 +69,13 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 ProcessingBlock::ProcessingBlock(const std::string& name) : block_name(name)
 {}
 
-std::string ProcessingBlock::getName() const
-{
+std::string ProcessingBlock::getName() const {
 	return block_name;
 }
 
 ProcessingBlock::~ProcessingBlock() {}
 
-std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data)
-{
+std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data) {
 	os << "[" << data.block_name << " ";
 	//os << data.properties;
 	os << "]";
@@ -85,13 +83,11 @@ std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data)
 }
 
 
-const ProcessingProperties& ProcessingBlock::getProperties() const
-{
+const ProcessingProperties& ProcessingBlock::getProperties() const {
 	return properties;
 }
 
-std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data)
-{
+std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data) {
 	os << "{-" << data.time_before.getJulianDate()*3600. << " +";
 	os << data.time_after.getJulianDate()*3600. << " h ; ";
 	os << "-" << data.points_before << " +" << data.points_after << " pts";

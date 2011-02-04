@@ -47,6 +47,7 @@ class SunObject {
 		SunObject(const double& _latitude, const double& _longitude, const double& _altitude);
 		SunObject(const double& _latitude, const double& _longitude, const double& _altitude, const double& _julian, const double& TZ=0.);
 
+		//local julian date and timezone
 		void setDate(const double& _julian, const double& TZ=0.);
 		void setLatLon(const double& _latitude, const double& _longitude, const double& _altitude);
 		void setElevationThresh(const double& _elevation_threshold);

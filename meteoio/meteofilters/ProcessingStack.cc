@@ -32,35 +32,24 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 		std::vector<std::string> vec_args;
 		std::stringstream tmp;
 		tmp << param_name << "::arg" << (ii+1);
+
 		getArgumentsForFilter(cfg, tmp.str(), vec_args); //Read arguments
-
-		//cout << "Read arguments for filter " << block_name << ": " << endl;
-		//for (unsigned int jj=0; jj<vec_args.size(); jj++){
-		//	cout << jj << ": " << vec_args[jj] << endl;
-		//}
-
 		filter_stack.push_back(BlockFactory::getBlock(block_name, vec_args));
 	}
-
-	//for (unsigned int ii=0; ii<filter_stack.size(); ii++){
-	//	cout << "Found processing block: " << (*filter_stack[ii]).getName() << endl;
-	//}
 }
 
-ProcessingStack::~ProcessingStack()
-{
+ProcessingStack::~ProcessingStack() {
 	//this is suboptimal, shared_ptr<> would be the preference
 	//it's unfortunately a part of boost only
 	for (unsigned int ii=0; ii<filter_stack.size(); ii++)
 		delete filter_stack[ii];
 }
 
-void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
-{
+void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) {
 	o_properties.points_before = 0;
 	o_properties.points_after = 0;
-	o_properties.time_after = Date(0.0);
-	o_properties.time_before = Date(0.0);
+	o_properties.time_after = Duration(0.0, 0.);
+	o_properties.time_before = Duration(0.0, 0.);
 
 	for (unsigned int jj=0; jj<filter_stack.size(); jj++){
 		const ProcessingProperties& properties = (*filter_stack[jj]).getProperties();
@@ -94,7 +83,8 @@ unsigned int ProcessingStack::getFiltersForParameter(const Config& cfg, const st
 	return vecFilters.size();
 }
 
-unsigned int ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments)
+unsigned int ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
+                                                    std::vector<std::string>& vecArguments)
 {
 	/*
 	 * Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
@@ -149,8 +139,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 	}
 }
 
-std::ostream& operator<<(std::ostream& os, const ProcessingStack& data)
-{
+std::ostream& operator<<(std::ostream& os, const ProcessingStack& data) {
 	//os << "<ProcessingStack>";
 	os << setw(10) << data.param_name << "::";
 
@@ -163,4 +152,4 @@ std::ostream& operator<<(std::ostream& os, const ProcessingStack& data)
 	return os;
 }
 
-}
+} //end namespace

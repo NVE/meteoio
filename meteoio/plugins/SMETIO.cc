@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "SMETIO.h"
+#include <meteoio/IOUtils.h>
 
 using namespace std;
 
@@ -238,7 +239,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 void SMETIO::parseInputOutputSection()
 {
 	//default timezones
-	in_dflt_TZ = out_dflt_TZ = 0.;
+	in_dflt_TZ = out_dflt_TZ = IOUtils::nodata;
 	cfg.getValue("TZ","Input",in_dflt_TZ,Config::nothrow);
 	cfg.getValue("TZ","Output",out_dflt_TZ,Config::nothrow);
 
@@ -301,8 +302,8 @@ void SMETIO::parseInputOutputSection()
 }
 
 void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                            std::vector< std::vector<MeteoData> >& vecMeteo, 
-                            const unsigned int& stationindex)
+                           std::vector< std::vector<MeteoData> >& vecMeteo,
+                           const unsigned int& stationindex)
 {
 	//Make sure that vecMeteo have the correct dimension and stationindex is valid
 	unsigned int startindex=0, endindex=vecFiles.size();	
@@ -316,7 +317,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		vecMeteo[stationindex].clear();
 	} else {
-		vecMeteo.clear();		
+		vecMeteo.clear();
 		vecMeteo = vector< vector<MeteoData> >(vecFiles.size());
 		vecMeteo.reserve(nr_stations);
 	}
@@ -355,6 +356,14 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			readHeader(eoln, filename, locationInHeader, timezone, sd, vecDataSequence, vecUnitsOffset, vecUnitsMultiplier);
 			SMETIO::checkColumnNames(vecDataSequence, locationInHeader);
 
+			//now, timezone MUST contain something valid
+			if(timezone==IOUtils::nodata) {
+				stringstream ss;
+				ss << "No timezone information available for file " << filename;
+				ss << " either in file header or io.ini";
+				throw InvalidFormatException(ss.str(), AT);
+			}
+
 			//3. Read DATA
 			if (isAscii){
 				readDataAscii(eoln, filename, timezone, sd, vecDataSequence, vecUnitsOffset,
@@ -388,8 +397,6 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 
 	while (!fin.eof()){
 		MeteoData md;
-		if ((timezone != IOUtils::nodata) && (timezone != 0.0))
-			md.date.setTimeZone(timezone);
 		StationData tmpsd = sd;
 		double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;
 		unsigned int poscounter = 0;
@@ -399,7 +406,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 				double tmpval;
 				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(double));
 
-				md.date.setDate(tmpval);
+				md.date.setDate(tmpval, timezone);
 
 				if (md.date < dateStart)
 					continue;
@@ -433,9 +440,6 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 		if (poscounter == 3)
 			tmpsd.position.setLatLon(lat, lon, alt);
 
-		//cout << "===" << endl;
-		//cout << sd << endl;
-		//cout << md.date.toString(Date::ISO) << endl;
 		if (md.date >= dateStart){
 			md.meta = tmpsd;
 			vecMeteo.push_back(md);
@@ -457,6 +461,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 
 	while (!fin.eof()){
 		//HACK nodata mapping is NOT done!!!!!!
+		//something like lat = IOUtils::standardizeNodata(lat, plugin_nodata); should be done
 		getline(fin, line, eoln);
 		IOUtils::stripComments(line);
 		IOUtils::trim(line);
@@ -468,14 +473,12 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 			throw InvalidFormatException("In "+ filename + ": Invalid amount of data in data line "+line, AT);
 
 		MeteoData md;
-		if ((timezone != IOUtils::nodata) && (timezone != 0.0))
-			md.date.setTimeZone(timezone);
 		StationData tmpsd = sd;
 		double lat, lon, alt;
 		unsigned int poscounter = 0;
 		for (unsigned int ii=0; ii<nrOfColumns; ii++){
 			if (vecDataSequence[ii] == "timestamp"){
-				if (!IOUtils::convertString(md.date, tmpvec[ii]))
+				if (!IOUtils::convertString(md.date, tmpvec[ii], timezone, std::dec))
 					throw InvalidFormatException("In "+filename+": Timestamp "+tmpvec[ii]+" invalid in data line", AT);
 				if (md.date < dateStart)
 					continue;
@@ -642,7 +645,6 @@ void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const 
 
 void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
-
 	//Loop through all stations
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
 		//1. check consitency of station data position -> write location in header or data section
@@ -675,7 +677,11 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			vector<bool> vecParamInUse = vector<bool>(MeteoData::nrOfParameters, false); 
 			double timezone = IOUtils::nodata;
 			checkForUsedParameters(vecMeteo[ii], timezone, vecParamInUse);
-			writeHeaderSection(isConsistent, sd, timezone, vecParamInUse);
+			if(out_dflt_TZ!=IOUtils::nodata) {
+				writeHeaderSection(isConsistent, sd, out_dflt_TZ, vecParamInUse);
+			} else {
+				writeHeaderSection(isConsistent, sd, timezone, vecParamInUse);
+			}
 			
 			//3. write data depending on ASCII/BINARY
 			if (outputIsAscii) {
@@ -699,14 +705,21 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 }
 
 void SMETIO::writeDataBinary(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
-					    const std::vector<bool>& vecParamInUse)
+                             const std::vector<bool>& vecParamInUse)
 {
 	char eoln = '\n';
 
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
 		float val = 0;
-		double julian = vecMeteo[ii].date.getJulianDate();
-		
+
+		double julian;
+		if(out_dflt_TZ!=IOUtils::nodata) {
+			Date tmp_date(vecMeteo[ii].date);
+			tmp_date.setTimeZone(out_dflt_TZ);
+			julian = tmp_date.getJulianDate();
+		} else {
+			julian = vecMeteo[ii].date.getJulianDate();
+		}		
 		fout.write((char*)&julian, sizeof(double));
 
 		if (!writeLocationInHeader){ //Meta data changes
@@ -729,13 +742,19 @@ void SMETIO::writeDataBinary(const bool& writeLocationInHeader, const std::vecto
 }
 
 void SMETIO::writeDataAscii(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
-					   const std::vector<bool>& vecParamInUse)
+                            const std::vector<bool>& vecParamInUse)
 {
 	fout << "[DATA]" << endl;
 	fout.fill(' ');
 	fout << right;
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
-		fout << vecMeteo[ii].date.toString(Date::ISO);
+		if(out_dflt_TZ!=IOUtils::nodata) {
+			Date tmp_date(vecMeteo[ii].date);
+			tmp_date.setTimeZone(out_dflt_TZ);
+			fout << tmp_date.toString(Date::ISO);
+		} else {
+			fout << vecMeteo[ii].date.toString(Date::ISO);
+		}
 
 		if (!writeLocationInHeader){ //Meta data changes
 			fout << " " << setw(12) << setprecision(6) << vecMeteo[ii].meta.position.getLat();
@@ -775,7 +794,7 @@ void SMETIO::setFormatting(const MeteoData::Parameters& paramindex)
 }
 
 void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd,
-                                 const double& timezone, const std::vector<bool>& vecParamInUse)
+                                const double& timezone, const std::vector<bool>& vecParamInUse)
 {
 	fout << "[HEADER]" << endl;
 	fout << "station_id   = " << sd.getStationID() << endl;
@@ -816,7 +835,7 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
 
 
 void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
-                                     std::vector<bool>& vecParamInUse)
+                                    std::vector<bool>& vecParamInUse)
 {
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
 		for (unsigned int jj=0; jj<MeteoData::nrOfParameters; jj++){
@@ -837,7 +856,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 
 	for (unsigned int ii=1; ii<vecMeteo.size(); ii++){
 		if (vecMeteo[ii].meta.position != vecMeteo[ii-1].meta.position)
-			return false;
+			return false; //BUG: if one is nodata -> we consider that positions are not consistent
 	}
 
 	return true;

@@ -140,8 +140,8 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsig
 	} else if (!found1 && !found2){ // no nearest neighbour with a value different from IOUtils::nodata
 		vecM[pos].param(paramindex) = IOUtils::nodata;
 	} else {
-		Date diff1 = m1.date - vecM[pos].date; //calculate time interval to element at pos
-		Date diff2 = vecM[pos].date - m2.date; //calculate time interval to element at pos
+		Duration diff1 = m1.date - vecM[pos].date; //calculate time interval to element at pos
+		Duration diff2 = vecM[pos].date - m2.date; //calculate time interval to element at pos
 
 		if (IOUtils::checkEpsilonEquality(diff1.getJulianDate(), diff2.getJulianDate(), 0.1/1440)){ //within 6 seconds
 			vecM[pos].param(paramindex) = Interpol1D::linearInterpolation(m1.param(paramindex), m2.param(paramindex), 0.5);
@@ -277,7 +277,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 	//find start of accumulation period
 	bool found_start=false;
 	unsigned int start_idx = pos+1;
-	Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.));
+	Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.), vecM[pos].date.getTimeZone());
 
 	for (start_idx=pos+1; (start_idx--) > 0; ){
 		if(vecM[start_idx].date.getJulianDate() <= dateStart.getJulianDate()) {

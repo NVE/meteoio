@@ -70,18 +70,24 @@ const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 GSNIO::GSNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValue("TZ","Input",in_tz);
+	cfg.getValue("TZ","Output",out_tz);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValue("TZ","Input",in_tz);
+	cfg.getValue("TZ","Output",out_tz);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValue("TZ","Input",in_tz);
+	cfg.getValue("TZ","Output",out_tz);
 	initGSNConnection();
 }
 
@@ -195,7 +201,6 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		StationData sd;
 		readStationMetaData(sd, ii);
-
 		readData(dateStart, dateEnd, vecMeteo, sd, ii);
 	}
 }
@@ -208,7 +213,15 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 	sensorloc_req.sensor = &vecStationName[stationindex];
 
 	if (gsn.getSensorLocation(&sensorloc_req, &sensorloc) == SOAP_OK){
-		if (sensorloc.return_.size() != 4) throw IOException("Not enough SensorLocation data received ...", AT);
+		if (sensorloc.return_.size() < 4) {
+			stringstream ss;
+			const unsigned int nr = sensorloc.return_.size();
+			ss << "Not enough SensorLocation data received: expected 4, received " << nr << "\n";
+			for(unsigned int ii=0; ii<nr; ii++) {
+				ss << "sensorloc[" << ii << "]=" << sensorloc.return_[ii] << "  ";
+			}
+			throw IOException(ss.str(), AT);
+		}
 
 		const std::string *s0 = &sensorloc.return_[0]; //easier to type
 		const std::string *s1 = &sensorloc.return_[1]; //easier to type
@@ -221,9 +234,9 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 		double latitude=IOUtils::nodata, longitude=IOUtils::nodata, altitude=IOUtils::nodata;
 		const std::string name = s0->substr((sep0+1), (s0->size()-sep0-2));
 
-		convertStringToDouble(latitude, s1->substr((sep1+1), (s1->size()-sep1-2)), "Latitude");
-		convertStringToDouble(longitude, s2->substr((sep2+1), (s2->size()-sep2-2)), "Longitude");
-		convertStringToDouble(altitude, s3->substr((sep3+1), (s3->size()-sep3-2)), "Altitude");
+		convertStringToDouble(latitude, s1->substr((sep1+1), (s1->size()-1)), "Latitude");
+		convertStringToDouble(longitude, s2->substr((sep2+1), (s2->size()-1)), "Longitude");
+		convertStringToDouble(altitude, s3->substr((sep3+1), (s3->size()-1)), "Altitude");
 
 		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
 		latitude = IOUtils::standardizeNodata(latitude, plugin_nodata);
@@ -242,15 +255,14 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 void GSNIO::parseString(const std::string& in_string, std::vector<std::string>& vecString, MeteoData& md){
 	vecString.clear();
 
-	//cout << _string << endl;
-
+	//cout << in_string << endl;
 	std::stringstream ss(in_string);
 	std::string tmpstring;
 
 	while (std::getline(ss, tmpstring, ';')){
 		std::stringstream data(tmpstring);
 		while (std::getline(data, tmpstring, '=')){
-			string key = tmpstring;
+			const string key = tmpstring;
 			if (!(std::getline(data, tmpstring, '=')))
 				throw InvalidFormatException("",AT);
 
@@ -271,44 +283,32 @@ void GSNIO::parseString(const std::string& in_string, std::vector<std::string>& 
 				time_t measurementTime;
 				if (!IOUtils::convertString(measurementTime, tmpstring, std::dec))
 					throw ConversionFailedException("Conversion failed for value TIMED", AT);
-				md.date.setDate(measurementTime);
-				md.date += Date(1.0/12.0); //Add two hours
+				md.date.setDate(measurementTime, in_tz);
+				md.date += 2.0/24.0; //Add two hours
 			}
 		}
 	}
 }
 
-//TODO: this should be done by IOUtils!!
 void GSNIO::convertStringToDouble(double& d, const std::string& in_string, const std::string& in_parname){
 	if (!IOUtils::convertString(d, in_string, std::dec))
 		throw ConversionFailedException("Conversion failed for value " + in_parname, AT);
 }
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-				 const StationData& sd, const unsigned int& stationindex)
+                     const StationData& sd, const unsigned int& stationindex)
 {
 	_ns1__getMeteoData meteodata_req;
 	_ns1__getMeteoDataResponse meteodata;
 	std::vector<std::string> vecString;
 
 	meteodata_req.sensor = &vecStationName[stationindex];
-	/*
-	  Date dateStart1(time(NULL));
-	  dateStart1 -= Date(0.013);
-	  Date dateEnd1(time(NULL));
-
-	  LONG64 l1(dateStart1.getEpochTime());
-	  LONG64 l2(dateEnd1.getEpochTime());
-	*/
 
 	LONG64 l1(dateStart.getUnixDate());
 	LONG64 l2(dateEnd.getUnixDate());
 
 	l1*=1000; //GSN is using ms, not seconds
 	l2*=1000; //GSN is using ms, not seconds
-
-	//cout << dateStart << "  " << dateEnd << endl;
-	//cout << dateStart.getUnixDate() << "==" << l1 << endl; cout << dateEnd.getUnixDate() << "==" << l2 << endl;
 
 	meteodata_req.from = l1;
 	meteodata_req.to = l2;

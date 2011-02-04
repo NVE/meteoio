@@ -27,15 +27,15 @@ namespace mio {
 
 class ProcessingProperties {
 	public:
-		ProcessingProperties() : for_second_pass(false), time_before(0.0), time_after(0.0),
+		ProcessingProperties() : for_second_pass(false), time_before(0., 0.), time_after(0., 0.),
 		                         points_before(0), points_after(0) {}
 
 		friend std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data);
 
 		bool for_second_pass;
 
-		Date time_before;
-		Date time_after;
+		Duration time_before;
+		Duration time_after;
 
 		unsigned int points_before;
 		unsigned int points_after;
@@ -52,7 +52,7 @@ class ProcessingBlock {
 		virtual ~ProcessingBlock();
 		
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-						 std::vector<MeteoData>& ovec) = 0;
+		                     std::vector<MeteoData>& ovec) = 0;
 
 		std::string getName() const;
 		const ProcessingProperties& getProperties() const;

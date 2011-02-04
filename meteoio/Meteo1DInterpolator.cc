@@ -63,8 +63,8 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties)
 	o_properties.points_before = 1;
 	o_properties.points_after  = 1;
 
-	o_properties.time_before   = Date(window_size/2.0);
-	o_properties.time_after    = Date(window_size/2.0);
+	o_properties.time_before   = Duration(window_size/2.0, 0.);
+	o_properties.time_after    = Duration(window_size/2.0, 0.);
 }
 
 unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)

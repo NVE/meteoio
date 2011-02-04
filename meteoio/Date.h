@@ -86,19 +86,19 @@ class Date {
 		static const float Excel_offset;
 
 		Date();
-		Date(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
-		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=undefined, const bool& _dst=false);
-		Date(const time_t&, const double& _timezone=undefined, const bool& _dst=false);
-		Date(const Date& _date_in);
+		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
+		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
+		Date(const time_t&, const double& in_timezone, const bool& in_dst=false);
+		Date(const Date& in_date);
 
 		void setFromSys();
-		void setTimeZone(const double& _timezone, const bool& _dst=false);
-		void setDate(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& _timezone=undefined, const bool& _dst=false);
-		void setDate(const time_t& _time, const double& _timezone=undefined, const bool& _dst=false);
-		void setModifiedJulianDate(const double& julian_in, const double& _timezone=undefined, const bool& _dst=false);
-		void setUnixDate(const time_t& _time, const double& _timezone=undefined, const bool& _dst=false);
-		void setExcelDate(const double excel_in, const double& _timezone=undefined, const bool& _dst=false);
+		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
+		void setDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& _dst=false);
+		void setDate(const time_t& in_time, const double& in_timezone, const bool& _dst=false);
+		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
+		void setUnixDate(const time_t& in_time, const double& in_timezone, const bool& _dst=false);
+		void setExcelDate(const double excel_in, const double& in_timezone, const bool& _dst=false);
 
 		double getTimeZone() const;
 		bool getDST() const;
@@ -133,21 +133,24 @@ class Date {
 		///Can be used to add an interval to an existing Date object.
 		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.
 		Date& operator+=(const Date&);
-		///Can be used to subtract an interval from an existing Date object
 		Date& operator-=(const Date&);
+		Date& operator+=(const double&);
+		Date& operator-=(const double&);
 		Date& operator*=(const double&);
 		Date& operator/=(const double&);
 
 		const Date operator+(const Date&) const;
 		const Date operator-(const Date&) const;
+		const Date operator+(const double&) const;
+		const Date operator-(const double&) const;
 		const Date operator*(const double&) const;
 		const Date operator/(const double&) const;
 
-	private:
-		double localToGMT(const double& _julian)const;
-		double GMTToLocal(const double& _gmt_julian) const;
-		double calculateJulianDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute) const;
-		void calculateValues(const double& julian, int& _year, int& _month, int& _day, int& _hour, int& _minute) const;
+	protected:
+		double localToGMT(const double& in_julian)const;
+		double GMTToLocal(const double& in_gmt_julian) const;
+		double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
+		void calculateValues(const double& julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute) const;
 		long getJulianDayNumber(const int&, const int&, const int&) const;
 		bool isLeapYear(const int&) const;
 		void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
@@ -158,6 +161,9 @@ class Date {
 		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
 		static const double undefined;
 };
+
+typedef Date Duration; //so that later, we can implement a true Interval/Duration class
+
 } //end namespace
 
 #endif

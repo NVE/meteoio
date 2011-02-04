@@ -34,7 +34,7 @@ FilterMedianAvg::FilterMedianAvg(const std::vector<std::string>& vec_args) : Win
 }
 
 void FilterMedianAvg::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-					   std::vector<MeteoData>& ovec)
+                              std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 
@@ -118,7 +118,7 @@ void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 	}
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Date(filter_args[1] / 86400.0);
+	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 } 
 
 }

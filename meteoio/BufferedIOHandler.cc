@@ -132,7 +132,7 @@ void BufferedIOHandler::setDfltBufferProperties()
 	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days,Config::nothrow); //in days
 	cfg.getValue("BUFF_CHUNKS", "General", chunks,Config::nothrow);
 
-	chunk_size = Date(chunk_size_days);
+	chunk_size = Duration(chunk_size_days, 0);
 }
 
 void BufferedIOHandler::setBufferPolicy(const buffer_policy& policy)
@@ -204,7 +204,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 			bufferData(current_buffer_end, current_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
 
 			if (tmp_meteo_buffer.size() != buffer_size)
-				throw IOException("God damn it!", AT); //HACK: wrong, this can legitimately happen (not enough data available to fully fill the buffer)
+				throw IOException("The number of stations changed over time, this is not handled yet!", AT);
 			
 			//Loop through stations and append data
 			for (unsigned int ii=0; ii<buffer_size; ii++){

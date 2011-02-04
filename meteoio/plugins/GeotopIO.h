@@ -73,6 +73,7 @@ class GeotopIO : public IOInterface {
 		void parseDate(const std::string& datestring, const std::string& fileandline, Date& date);
 
 		Config cfg;
+		double in_tz, out_tz;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

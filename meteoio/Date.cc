@@ -45,56 +45,56 @@ Date::Date() {
 /**
 * @brief Julian date constructor.
 * @param julian_in julian date to set
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_dst is it DST? (default: no)
 */
-Date::Date(const double& julian_in, const double& _timezone, const bool& _dst) {
+Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst) {
 	timezone = 0;
 	dst = false;
-	setDate(julian_in, _timezone, _dst);
+	setDate(julian_in, in_timezone, in_dst);
 }
 
 /**
 * @brief Unix date constructor.
-* @param _time unix time (ie: as number of seconds since Unix Epoch)
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param in_time unix time (ie: as number of seconds since Unix Epoch)
+* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_dst is it DST? (default: no)
 */
-Date::Date(const time_t& _time, const double& _timezone, const bool& _dst) {
+Date::Date(const time_t& in_time, const double& in_timezone, const bool& in_dst) {
 	timezone = 0;
 	dst = false;
-	setDate(_time, _timezone, _dst);
+	setDate(in_time, in_timezone, in_dst);
 }
 //HACK: is it needed? Why paroc_base instead of POPC??
 /**
 * @brief Copy constructor.
-* @param _date_in Date object to copy
+* @param in_date Date object to copy
 */
 #ifdef _POPC_
-Date::Date(const Date& _date_in) : paroc_base()
+Date::Date(const Date& in_date) : paroc_base()
 #else
-Date::Date(const Date& _date_in)
+Date::Date(const Date& in_date)
 #endif
 {
-	setDate(_date_in.getJulianDate(), _date_in.getTimeZone(), _date_in.getDST());
+	setDate(in_date.getJulianDate(), in_date.getTimeZone(), in_date.getDST());
 }
 
 /**
 * @brief Date constructor by elements.
 * All values are checked for plausibility.
-* @param _year in 4 digits
-* @param _month please keep in mind that first month of the year is 1 (ie: not 0!)
-* @param _day please keep in mind that first day of the month is 1 (ie: not 0!)
-* @param _hour
-* @param _minute
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param in_year in 4 digits
+* @param in_month please keep in mind that first month of the year is 1 (ie: not 0!)
+* @param in_day please keep in mind that first day of the month is 1 (ie: not 0!)
+* @param in_hour
+* @param in_minute
+* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_dst is it DST? (default: no)
 */
-Date::Date(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone, const bool& in_dst)
 {
 	timezone = 0;
 	dst = false;
-	setDate(_year, _month, _day, _hour, _minute, _timezone, _dst);
+	setDate(in_year, in_month, in_day, in_hour, in_minute, in_timezone, in_dst);
 }
 
 // SETTERS
@@ -103,22 +103,22 @@ Date::Date(const int& _year, const int& _month, const int& _day, const int& _hou
 * @brief Set internal gmt time from system time
 */
 void Date::setFromSys() {
-	setDate( time(NULL) ); //Unix time_t setter
+	setDate( time(NULL), timezone ); //Unix time_t setter
 }
 
 /**
 * @brief Set timezone and Daylight Saving Time flag.
-* @param _timezone timezone as an offset to GMT (in hours)
-* @param _dst is it DST?
+* @param in_timezone timezone as an offset to GMT (in hours)
+* @param in_dst is it DST?
 */
-void Date::setTimeZone(const double& _timezone, const bool& _dst) {
+void Date::setTimeZone(const double& in_timezone, const bool& in_dst) {
 //please keep in mind that timezone might be fractional (ie: 15 minutes, etc)
-	if(abs(_timezone) > 12) {
+	if(abs(in_timezone) > 12) {
 		throw InvalidArgumentException("[E] Time zone can NOT be greater than +/-12!!", AT);
 	}
 
-	timezone = _timezone;
-	dst = _dst;
+	timezone = in_timezone;
+	dst = in_dst;
 }
 
 /**
@@ -162,12 +162,12 @@ void Date::setDate(const int& _year, const int& _month, const int& _day, const i
 /**
 * @brief Set date from a julian date (JD).
 * @param julian_in julian date to set
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_dst is it DST? (default: no)
 */
-void Date::setDate(const double& julian_in, const double& _timezone, const bool& _dst) {
-	if(_timezone!=undefined) {
-		setTimeZone(_timezone, _dst);
+void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst) {
+	if(in_timezone!=undefined) { //HACK: is it still needed?
+		setTimeZone(in_timezone, in_dst);
 	}
 	gmt_julian = localToGMT(julian_in);
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
@@ -196,13 +196,13 @@ void Date::setModifiedJulianDate(const double& julian_in, const double& _timezon
 
 /**
 * @brief Set date from a Unix date.
-* @param _time unix time (ie: as number of seconds since Unix Epoch)
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param in_time unix time (ie: as number of seconds since Unix Epoch)
+* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_dst is it DST? (default: no)
 */
-void Date::setUnixDate(const time_t& _time, const double& _timezone, const bool& _dst) {
-	const double _julian = (double)(_time)/(24.*60.*60.) + Unix_offset;
-	setDate(_julian, _timezone, _dst);
+void Date::setUnixDate(const time_t& in_time, const double& in_timezone, const bool& in_dst) {
+	const double in_julian = (double)(in_time)/(24.*60.*60.) + Unix_offset;
+	setDate(in_julian, in_timezone, in_dst);
 }
 
 /**
@@ -290,7 +290,7 @@ double Date::getTruncatedJulianDate(const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return Unix time in the current timezone / in GMT depending on the gmt parameter
 */
-time_t Date::getUnixDate(const bool& gmt) const {
+time_t Date::getUnixDate(const bool& gmt) const { //HACK: should Unix date always be GMT?
 	if (gmt_julian < Unix_offset)
 			throw IOException("Dates before 1970 cannot be displayed in Unix epoch time", AT);
 
@@ -448,7 +448,7 @@ bool Date::isLeapYear() const {
 	*/
 }
 
-// OPERATORS
+// OPERATORS //HACK this will have to handle Durations
 Date& Date::operator+=(const Date& indate) {
 	gmt_julian += indate.gmt_julian;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
@@ -457,6 +457,18 @@ Date& Date::operator+=(const Date& indate) {
 
 Date& Date::operator-=(const Date& indate) {
 	gmt_julian -= indate.gmt_julian;
+	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	return *this;
+}
+
+Date& Date::operator+=(const double& indate) {
+	gmt_julian += indate;
+	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	return *this;
+}
+
+Date& Date::operator-=(const double& indate) {
+	gmt_julian -= indate;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
@@ -513,22 +525,32 @@ bool Date::operator>=(const Date& indate) const {
 }
 
 const Date Date::operator+(const Date& indate) const {
-	Date tmp(gmt_julian + indate.gmt_julian);
+	Date tmp(gmt_julian + indate.gmt_julian, timezone);
 	return tmp;
 }
 
 const Date Date::operator-(const Date& indate) const {
-	Date tmp(gmt_julian - indate.gmt_julian);
+	Date tmp(gmt_julian - indate.gmt_julian, timezone);
+	return tmp;
+}
+
+const Date Date::operator+(const double& indate) const {
+	Date tmp(gmt_julian + indate, timezone);
+	return tmp;
+}
+
+const Date Date::operator-(const double& indate) const {
+	Date tmp(gmt_julian - indate, timezone);
 	return tmp;
 }
 
 const Date Date::operator*(const double& value) const {
-	Date tmp(gmt_julian * value);
+	Date tmp(gmt_julian * value, timezone);
 	return tmp;
 }
 
 const Date Date::operator/(const double& value) const {
-	Date tmp(gmt_julian / value);
+	Date tmp(gmt_julian / value, timezone);
 	return tmp;
 }
 
@@ -595,7 +617,8 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out << " ("
-			<< setprecision(10) << julian_out << ")" ;
+			<< setprecision(10) << julian_out << ") GMT"
+			<< setw(2) << setfill('0') << showpos << timezone << noshowpos;
 	} else if(type==DIN) {
 			tmpstr 
 			<< setw(2) << setfill('0') << day_out << "."

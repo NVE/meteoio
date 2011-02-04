@@ -188,8 +188,9 @@ namespace IOUtils {
 	// fully specialized template functions (implementation must not be in header)
 	template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
-	template<> bool convertString<Date>(Date& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+
+	bool convertString(Date& t, const std::string& str, const double& TZ, std::ios_base& (*f)(std::ios_base&) = std::dec);
 
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).

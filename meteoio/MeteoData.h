@@ -82,7 +82,7 @@ class MeteoData {
 		* @brief A constructor that sets the measurment time
 		* @param _date A Date object representing the time of the measurement
 		*/
-		MeteoData(const Date& _date);
+		MeteoData(const Date& in_date);
 
 		/**
 		* @brief General setter function, requires one to eight arguments
@@ -95,7 +95,7 @@ class MeteoData {
 		* @brief A setter function for the measurement date
 		* @param _date A Date object representing the time of the measurement
 		*/
-		void setDate(const Date& _date);
+		void setDate(const Date& in_date);
 
 		/**
 		* @brief Add another variable to the MeteoData object, 
@@ -169,7 +169,7 @@ class MeteoData {
 		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
 
-typedef std::vector<MeteoData> METEO_DATASET;
+typedef std::vector<MeteoData> METEO_DATASET; //HACK: replace by TIMESERIE
 
 } //end namespace
 

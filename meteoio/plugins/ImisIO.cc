@@ -450,8 +450,10 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 			vecMeteoAnetz.insert(vecMeteoAnetz.begin(), vecAnetzStation.size(), vector<MeteoData>());
 
 			//date_anetz_start/end must be changed to be a multiple of 6h before the original dateStart, dateEnd
-			Date date_anetz_start = Date(floor(dateStart.getJulianDate() * 4.0) / 4.0);
-			Date date_anetz_end   = Date(floor(dateEnd.getJulianDate() * 4.0) / 4.0);
+			Date date_anetz_start = Date(floor(dateStart.getJulianDate(true) * 4.0) / 4.0, 0.);
+			date_anetz_start.setTimeZone(in_tz);
+			Date date_anetz_end   = Date(floor(dateEnd.getJulianDate(true) * 4.0) / 4.0, 0.);
+			date_anetz_end.setTimeZone(in_tz);
 
 			//read Anetz Data
 			for (unsigned int ii=0; ii<vecAnetzStation.size(); ii++)
@@ -486,11 +488,13 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 
 	unsigned int counter = 0;
 	Date current_slice_date = dateStart;
+	current_slice_date.setTimeZone(in_tz);
 	for (unsigned int jj=0; jj<vecMeteo[stationindex].size(); jj++){
-		while (vecMeteo[stationindex][jj].date.getJulianDate() > (current_slice_date.getJulianDate()+0.2485)){
+		while (vecMeteo[stationindex][jj].date > (current_slice_date+0.2485)){
 			counter++;
-			double julian = floor((current_slice_date.getJulianDate() +0.25001) * 4.0) / 4.0;
-			current_slice_date = Date(julian);
+			double julian = floor((current_slice_date.getJulianDate(true) +0.25001) * 4.0) / 4.0;
+			current_slice_date = Date(julian, 0.);
+			current_slice_date.setTimeZone(in_tz);
 		}
 
 		if (counter >= current_station_psum.size()) { break; } //should never happen
@@ -546,20 +550,20 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsign
 			sum += ad.coeffs[2] * hnw0 * hnw1;
 
 			psum.push_back(sum/12.0);
-
-			//cout << kk << " --> sum: " << sum/12 << endl;
 		}
 	}
 }
 
-void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
+                           const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
                            std::vector< std::vector<double> >& vec_of_psums)
 {
-	unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulianDate() - dateStart.getJulianDate() + 0.00001) * 4.0) + 1;
+	unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulianDate(true) - dateStart.getJulianDate(true) + 0.00001) * 4.0) + 1;
 
 	for (unsigned int ii=0; ii<vecMeteoAnetz.size(); ii++){
 		double tmp_psum = 0.0;
 		Date current_date = dateStart;
+		current_date.setTimeZone(in_tz);
 
 		vector<double> vec_current_station;
 		unsigned int counter_of_elements = 0;
@@ -567,7 +571,7 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd, const std
 			const Date& anetzdate = vecMeteoAnetz[ii][jj].date;
 			const double& hnw = vecMeteoAnetz[ii][jj].hnw;
 
-			if ((current_date < anetzdate) && ((current_date.getJulianDate() + 0.25) > anetzdate.getJulianDate())){
+			if ((current_date < anetzdate) && ((current_date+0.25) > anetzdate)){
 				;
 			} else {
 				if ((counter_of_elements > 0) && (counter_of_elements < 6)) //this is mystical, but kind of a guess of the future
@@ -575,15 +579,12 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd, const std
 
 				vec_current_station.push_back(tmp_psum);
 
-				//cout << "Station "<< ii << ": " << current_date.toString(Date::ISO) << ": " << tmp_psum << endl;
-
-				current_date = Date(current_date.getJulianDate() + 0.25);
+				current_date += 0.25;
 				tmp_psum = 0.0;
 				counter_of_elements = 0;
 			}
 
 			if (hnw != IOUtils::nodata){
-				//cout << "\tStation "<< ii << ": " << anetzdate.toString(Date::ISO) << ": " << hnw << endl;
 				tmp_psum += hnw;
 				counter_of_elements++;
 			}
@@ -594,7 +595,6 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd, const std
 			tmp_psum = tmp_psum*6/counter_of_elements;
 
 		vec_current_station.push_back(tmp_psum);
-		//cout << "Station "<< ii << ": " << current_date.toString(Date::ISO) << ": " << tmp_psum << endl;
 
 		for (unsigned int jj=vec_current_station.size(); jj<nr_of_slices; jj++){ //To fill up the vector
 			vec_current_station.push_back(0.0);
@@ -656,18 +656,18 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	//IMIS is in TZ=+1, so moving back to this timezone
 	Date dateS(dateStart), dateE(dateEnd);
-	//dateS.setTimeZone(in_tz);
-	//dateE.setTimeZone(in_tz);
+	dateS.setTimeZone(in_tz);
+	dateE.setTimeZone(in_tz);
 	dateS.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
 	dateE.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 
 	//Oracle can't deal with an integer for the hour of 24, hence the following workaround
 	if (datestart[3] == 24){
-		Date tmpDate = dateStart + Date(3.0/(60*60*24)); //add three seconds to omit 24 for 00 
+		Date tmpDate = dateS + 3.0/(24.*3600.); //add three seconds to omit 24 for 00
 		tmpDate.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
 	}
 	if (dateend[3] == 24){
-		Date tmpDate = dateEnd + Date(3.0/(60*60*24)); //add three seconds to omit 24 for 00 
+		Date tmpDate = dateE + 3.0/(24.*3600.); //add three seconds to omit 24 for 00
 		tmpDate.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 	}
 
@@ -676,7 +676,6 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationNames.at(stationindex);
-	//tmpmd.date.setTimeZone(in_tz);
 	for (unsigned int ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd);
 		convertUnits(tmpmd);
@@ -700,7 +699,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
  */
 void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
 {
-	IOUtils::convertString(md.date, _meteo.at(0), dec);
+	IOUtils::convertString(md.date, _meteo.at(0), in_tz, dec);
 	IOUtils::convertString(md.param(MeteoData::TA),   _meteo.at(1),  dec);
 	IOUtils::convertString(md.param(MeteoData::ISWR), _meteo.at(2),  dec);
 	IOUtils::convertString(md.param(MeteoData::VW),   _meteo.at(3),  dec);

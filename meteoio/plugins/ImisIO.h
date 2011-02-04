@@ -36,37 +36,36 @@
 
 namespace mio {
 
-	class AnetzData{
-		public:
-			AnetzData(): nrOfAnetzStations(0), nrOfCoefficients(0)
-			{
-				anetzstations.push_back("");
-				anetzstations.push_back("");
-				anetzstations.push_back("");
-				coeffs.push_back(IOUtils::nodata);
-				coeffs.push_back(IOUtils::nodata);
-				coeffs.push_back(IOUtils::nodata);
-			}
+class AnetzData{
+	public:
+		AnetzData(): nrOfAnetzStations(0), nrOfCoefficients(0) {
+			anetzstations.push_back("");
+			anetzstations.push_back("");
+			anetzstations.push_back("");
+			coeffs.push_back(IOUtils::nodata);
+			coeffs.push_back(IOUtils::nodata);
+			coeffs.push_back(IOUtils::nodata);
+		}
 
-			AnetzData(const unsigned int& nr_anetz,
-					const std::string& i_anetz1, const std::string& i_anetz2, const std::string& i_anetz3, 
-					const unsigned int& nr_coeffs, 
-					const double& coeff1, const double& coeff2, const double& coeff3) 
-				: nrOfAnetzStations(nr_anetz), nrOfCoefficients(nr_coeffs)
-			{
-				anetzstations.push_back(i_anetz1);
-				anetzstations.push_back(i_anetz2);
-				anetzstations.push_back(i_anetz3);
-				coeffs.push_back(coeff1);
-				coeffs.push_back(coeff2);
-				coeffs.push_back(coeff3);
-			}
+		AnetzData(const unsigned int& nr_anetz,
+		          const std::string& i_anetz1, const std::string& i_anetz2, const std::string& i_anetz3,
+		          const unsigned int& nr_coeffs,
+		          const double& coeff1, const double& coeff2, const double& coeff3)
+		          : nrOfAnetzStations(nr_anetz), nrOfCoefficients(nr_coeffs)
+		{
+			anetzstations.push_back(i_anetz1);
+			anetzstations.push_back(i_anetz2);
+			anetzstations.push_back(i_anetz3);
+			coeffs.push_back(coeff1);
+			coeffs.push_back(coeff2);
+			coeffs.push_back(coeff3);
+		}
 
-			std::string anetzstation1, anetzstation2, anetzstation3;
-			unsigned int nrOfAnetzStations, nrOfCoefficients;
-			std::vector<double> coeffs;
-			std::vector<std::string> anetzstations;
-	};
+		std::string anetzstation1, anetzstation2, anetzstation3;
+		unsigned int nrOfAnetzStations, nrOfCoefficients;
+		std::vector<double> coeffs;
+		std::vector<std::string> anetzstations;
+};
 
 /**
  * @class ImisIO
@@ -130,15 +129,15 @@ class ImisIO : public IOInterface {
 
 		//helper functions for the Anetz coefficient mangling:
 		void findAnetzStations(const unsigned int& indexStart, const unsigned int& indexEnd,
-                              std::map<std::string, unsigned int>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
+		                       std::map<std::string, unsigned int>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
 		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames,
-                                 const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
+		                 const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
 		void assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
-							const std::vector< std::vector<double> > vec_of_psums, 
-							const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
-							std::vector< std::vector<MeteoData> >& vecMeteo);
+		                         const std::vector< std::vector<double> > vec_of_psums,
+		                         const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
+		                         std::vector< std::vector<MeteoData> >& vecMeteo);
 		void calculatePsum(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-                             std::vector< std::vector<double> >& vec_of_psums);
+		                   std::vector< std::vector<double> >& vec_of_psums);
 
 		static const double in_tz; //timezone
 		Config cfg;

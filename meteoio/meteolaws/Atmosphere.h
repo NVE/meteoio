@@ -33,6 +33,7 @@ class Atmosphere {
 
 		static double stdAirPressure(const double& altitude);
 		static double waterSaturationPressure(const double& T);
+		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double RhtoDewPoint(double RH, double TA, const bool& force_water);
 		static double DewPointtoRh(double TD, double TA, const bool& force_water);
 };

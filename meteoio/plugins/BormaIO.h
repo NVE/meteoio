@@ -24,6 +24,7 @@
 #include <meteoio/Coords.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/DynamicLibrary.h>
+#include <meteoio/Date.h>
 
 #include <libxml++/libxml++.h>
 #include <string>
@@ -80,20 +81,23 @@ class BormaIO : public IOInterface {
 		void xmlExtractData(const std::string& filename, const Date& date_in, MeteoData& md, StationData& sd);
 		std::string xmlGetNodeName(xmlpp::Node* pNode);
 		xmlpp::Node* xmlGetNode(xmlpp::Node* parentNode, const std::string& nodename);
-		void stringToDate(const std::string& tmp, Date& date_out) const;
+		Date stringToDate(const std::string& tmp) const;
 		bool validFilename(const std::string& tmp) const;
 		void cleanup() throw();
 		void getFiles(const std::string& stationsname, const Date& start_date, const Date& end_date,
-				std::vector<std::string>& vecFiles, std::vector<Date>& vecDate);
+		              std::vector<std::string>& vecFiles, std::vector<Date>& vecDate);
 		void readStationNames(void);
 		bool bufferData(const Date& dateStart, const Date& dateEnd, 
-					 std::vector< std::vector<MeteoData> >& vecMeteo, 
-					 const unsigned int& stationnr);
+		                std::vector< std::vector<MeteoData> >& vecMeteo,
+		                const unsigned int& stationnr);
 
 		Config cfg;
+		double in_tz;
 		std::ifstream fin; //Input file streams
 		std::vector<std::string> vecStationName;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		static const double default_tz; //default timezone
+		static const double pivot_year; //pivot year for Y2K suppport
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 

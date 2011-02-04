@@ -62,6 +62,32 @@ double Atmosphere::waterSaturationPressure(const double& T) {
 }
 
 /**
+* @brief Evaluate the long wave radiation from RH, TA and cloudiness. 
+* This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
+* Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
+* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
+* @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+	//the goal is to have a fully self-contained function that matches what would be
+	//used later on for recomputing a cloudiness, etc
+	const double pressure = RH * waterSaturationPressure(TA); //RH * saturation pressure
+	const double eps_w = 0.97;
+	const double a1 = 0.68;
+	const double a2 = 0.0036;
+	const double a3 = 0.18;
+	const double stefan_boltzmann = 5.67051e-8; // W m-2 K-4
+
+	double ea = (eps_w * (a1 + a2 * sqrt(pressure)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
+	if(ea > 1.0) 
+		ea = 1.0;
+
+	return ( ea * (stefan_boltzmann * (TA*TA*TA*TA)) );
+}
+
+/**
 * @brief Convert a relative humidity to a dew point temperature. 
 * @param RH relative humidity between 0 and 1
 * @param TA air temperature (K)

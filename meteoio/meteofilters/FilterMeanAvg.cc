@@ -115,7 +115,7 @@ void FilterMeanAvg::parse_args(std::vector<std::string> vec_args)
 	}
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
-	min_time_span = Date(filter_args[1] / 86400.0);
+	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 } 
 
 }

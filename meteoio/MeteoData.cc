@@ -144,7 +144,7 @@ unsigned int MeteoData::getNrOfParameters() const
 	return nrOfAllParameters;
 }
 
-MeteoData::MeteoData() : date(0.0), resampled(false)
+MeteoData::MeteoData() : date(0.0, 0.), resampled(false)
 {
 	initParameterMap(); //must be first statement
 	initAllParameters();
@@ -185,9 +185,9 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 	return *this;
 }
 
-void MeteoData::setDate(const Date& _date)
+void MeteoData::setDate(const Date& in_date)
 {
-	date = _date;
+	date = in_date;
 }
 
 void MeteoData::reset()
@@ -220,9 +220,9 @@ bool MeteoData::isResampled() const
 	return resampled;
 }
 
-void MeteoData::setResampled(const bool& _resampled)
+void MeteoData::setResampled(const bool& in_resampled)
 {
-	resampled = _resampled;
+	resampled = in_resampled;
 }
 
 bool MeteoData::operator==(const MeteoData& in) const
@@ -311,8 +311,8 @@ bool MeteoData::param_exists(const std::string& parname) const
 std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 
 	os << "<meteo>\n";
-	os << data.date;
 	os << data.meta;
+	os << data.date.toString(Date::FULL) << "\n";
 
 	std::map<unsigned int, double*>::const_iterator it1;
 	for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){
