@@ -58,4 +58,14 @@ void FilterBlock::extract_dbl_vector(const unsigned int& index, const std::vecto
 	}
 }
 
+void FilterBlock::extract_dbl_vector(const unsigned int& index, const std::vector<const MeteoData*>& ivec,
+                                     std::vector<double>& ovec)
+{
+	ovec.clear();
+	for(unsigned int ii=0; ii<ivec.size(); ii++) {
+		const double& value = (*ivec[ii]).param(index);
+		ovec.push_back( value );
+	}
+}
+
 } //end namespace

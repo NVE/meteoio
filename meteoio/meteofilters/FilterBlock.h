@@ -45,6 +45,8 @@ class FilterBlock : public ProcessingBlock {
 		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);
 		static void extract_dbl_vector(const unsigned int& index, const std::vector<MeteoData>& ivec,
 		                               std::vector<double>& ovec);
+		static void extract_dbl_vector(const unsigned int& index, const std::vector<const MeteoData*>& ivec,
+                                               std::vector<double>& ovec);
 
 	protected:
 		FilterBlock(const std::string& filter_name); ///< protected constructor only to be called by children
