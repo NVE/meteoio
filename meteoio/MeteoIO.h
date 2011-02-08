@@ -58,7 +58,7 @@
 #include <meteoio/meteofilters/ProcessingStack.h>
 #include <meteoio/meteofilters/RateFilter.h>
 #include <meteoio/meteofilters/WindowedFilter.h>
-#include <meteoio/MeteoIO.h>
+//#include <meteoio/MeteoIO.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h>
 #include <meteoio/meteolaws/Sun.h>

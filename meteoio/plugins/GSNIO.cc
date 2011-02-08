@@ -44,6 +44,7 @@ namespace mio {
  * - wind speed in m/s
  * - precipitations in mm/h
  * - radiation in W/m²
+ * - time is provided as a Unix timestamp, which is always in UTC
  *
  * @section gsn_keywords Keywords
  * This plugin uses the following keywords:
@@ -70,24 +71,18 @@ const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
 GSNIO::GSNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TZ","Input",in_tz);
-	cfg.getValue("TZ","Output",out_tz);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TZ","Input",in_tz);
-	cfg.getValue("TZ","Output",out_tz);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TZ","Input",in_tz);
-	cfg.getValue("TZ","Output",out_tz);
 	initGSNConnection();
 }
 
@@ -252,10 +247,7 @@ void GSNIO::readStationMetaData(StationData& sd, const unsigned int& stationinde
 	}
 }
 
-void GSNIO::parseString(const std::string& in_string, std::vector<std::string>& vecString, MeteoData& md){
-	vecString.clear();
-
-	//cout << in_string << endl;
+void GSNIO::parseString(const std::string& in_string, MeteoData& md){
 	std::stringstream ss(in_string);
 	std::string tmpstring;
 
@@ -270,21 +262,24 @@ void GSNIO::parseString(const std::string& in_string, std::vector<std::string>& 
 			else if (key == "AIR_TEMP") convertStringToDouble(md.ta, tmpstring, "Air Temperature");
 			else if (key == "WIND_SPEED") convertStringToDouble(md.vw, tmpstring, "Wind Velocity");
 			else if (key == "WIND_DIRECTION") convertStringToDouble(md.dw, tmpstring, "Wind Velocity");
-			else if (key == "SOLAR_RAD") {
-				convertStringToDouble(md.iswr, tmpstring, "solar_rad");
+			else if (key == "INCOMING_RADIATION") {
+				convertStringToDouble(md.iswr, tmpstring, "incoming_radiation");
 				//convertStringToDouble(md.ilwr, tmpstring, "solar_rad");
 			}
-			else if (key == "AIR_HUMID") convertStringToDouble(md.rh, tmpstring, "air_humid");
-			else if (key == "SOIL_TEMP_ECTM") convertStringToDouble(md.tss, tmpstring, "soil_temp_ectm");
+			else if (key == "RELATIVE_HUMIDITY") convertStringToDouble(md.rh, tmpstring, "relative_humidity");
+			else if (key == "SURFACE_TEMP") convertStringToDouble(md.tss, tmpstring, "soil_temp");
 			else if (key == "GROUND_TEMP_TNX") convertStringToDouble(md.tsg, tmpstring, "ground_temp_tnx");
 			else if (key == "RAIN_METER") convertStringToDouble(md.hnw, tmpstring, "rain_meter");
 			else if (key == "TIMED") {
 				tmpstring = tmpstring.substr(0,tmpstring.length()-3); //cut away the seconds
 				time_t measurementTime;
-				if (!IOUtils::convertString(measurementTime, tmpstring, std::dec))
-					throw ConversionFailedException("Conversion failed for value TIMED", AT);
-				md.date.setDate(measurementTime, in_tz);
-				md.date += 2.0/24.0; //Add two hours
+				if (!IOUtils::convertString(measurementTime, tmpstring, std::dec)) {
+					stringstream ss;
+					ss << "Conversion failed for value TIMED=" << tmpstring;
+					throw ConversionFailedException(ss.str(), AT);
+				}
+				md.date.setDate(measurementTime);
+				md.date.rnd(60., Date::CLOSEST); //HACK: round to closest minute
 			}
 		}
 	}
@@ -313,16 +308,13 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< st
 	meteodata_req.from = l1;
 	meteodata_req.to = l2;
 
-	//cout << std::dec << meteodata_req.param1 << "\t" << meteodata_req.param2 << endl;
-
 	if (gsn.getMeteoData(&meteodata_req, &meteodata) == SOAP_OK){
 		cout << "\t[D] GSN: nr of datasets received for station "<< stationindex << ": " << meteodata.return_.size() << endl;
 		for (unsigned int jj=0; jj<meteodata.return_.size(); jj++){
 			MeteoData md;
 			md.meta = sd;
-			parseString(meteodata.return_[jj], vecString, md);
+			parseString(meteodata.return_[jj], md);
 			convertUnits(md);
-
 			vecMeteo[stationindex].push_back(md);
 		}
 	} else {

@@ -43,6 +43,8 @@ class FilterBlock : public ProcessingBlock {
 
 		void convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
 		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);
+		static void extract_dbl_vector(const unsigned int& index, const std::vector<MeteoData>& ivec,
+		                               std::vector<double>& ovec);
 
 	protected:
 		FilterBlock(const std::string& filter_name); ///< protected constructor only to be called by children

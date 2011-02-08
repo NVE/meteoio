@@ -64,8 +64,7 @@ A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
 }
 
 //Copy constructor
@@ -73,16 +72,14 @@ A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
 }
 
 A3DIO::A3DIO(const Config& in_cfg) : IOInterface(NULL), cfg(in_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
 }
 
 A3DIO::~A3DIO() throw()

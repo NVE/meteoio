@@ -290,7 +290,7 @@ namespace IOUtils {
 						    std::string& coordout, std::string& coordoutparam);
 
 	/**
-	* @brief A function that parses a Config object for the TZ keyword and returns the timezone
+	* @brief A function that parses a Config object for the time_zone keyword and returns the timezone
 	* @param[in] cfg  A Config object
 	* @param[out] tz_in value to be used for the input timezone
 	* @param[out] tz_out value to be used for the output timezone

@@ -38,6 +38,7 @@ namespace mio {
  * So far the following children have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
  * - \subpage a3d "A3D" for reading original Alpine3D meteo files (no extra requirements)
  * - \subpage borma "BORMA" for reading Borma xml meteo files (requires libxml)
+ * - \subpage cosmoxml "COSMO" for treading XML files produced by MeteoSwiss COSMO's postprocessing (requires libxml)
  * - \subpage imis "IMIS" for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
  * - \subpage geotop "GEOTOP" for reading original GeoTop meteo files (no extra requirements)
  * - \subpage snowpack "SNOWPACK" for reading original SNOWPACK meteo files (no extra requirements)

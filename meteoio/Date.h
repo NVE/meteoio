@@ -28,9 +28,6 @@
 #include <iostream>
 #include <ctime>
 
-///Using the following namespace for the comparison operator overloading
-//using namespace rel_ops;
-
 namespace mio {
 
 /**
@@ -78,6 +75,14 @@ class Date {
 			NUM, ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
 			DIN ///<DIN5008 format: DD.MM.YYYY HH:MM
 		} FORMATS;
+
+		///Keywords for selecting rounding strategy
+		typedef enum RND_TYPE {
+			UP, ///< rounding toward highest absolute value
+			DOWN, ///< rounding toward smallest absolute value
+			CLOSEST ///< rounding toward closest
+		} RND;
+
 		static const int daysLeapYear[];
 		static const int daysNonLeapYear[];
 		static const double DST_shift;
@@ -88,16 +93,16 @@ class Date {
 		Date();
 		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		Date(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
-		Date(const time_t&, const double& in_timezone, const bool& in_dst=false);
+		Date(const time_t&, const bool& in_dst=false);
 		Date(const Date& in_date);
 
-		void setFromSys(const double& in_timezone);
+		void setFromSys();
 		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
 		void setDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
 		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& _dst=false);
-		void setDate(const time_t& in_time, const double& in_timezone, const bool& _dst=false);
+		void setDate(const time_t& in_time, const bool& _dst=false);
 		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
-		void setUnixDate(const time_t& in_time, const double& in_timezone, const bool& _dst=false);
+		void setUnixDate(const time_t& in_time, const bool& _dst=false);
 		void setExcelDate(const double excel_in, const double& in_timezone, const bool& _dst=false);
 		void setUndef(const bool& flag);
 
@@ -119,7 +124,8 @@ class Date {
 		int getJulianDayNumber() const;
 		bool isLeapYear() const;
 
-		double rndJulianDate() const;
+		void rnd(const double& precision, const RND& type=CLOSEST);
+		static const Date rnd(const Date& indate, const double& precision, const RND& type=CLOSEST);
 
 		const std::string toString(FORMATS type, const bool& gmt=false) const;
 

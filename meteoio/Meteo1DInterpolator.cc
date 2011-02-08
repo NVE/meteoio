@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-Meteo1DInterpolator::Meteo1DInterpolator(const Config& _cfg) : cfg(_cfg) {
+Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg) : cfg(in_cfg) {
 	/*
 	 * By reading the Config object build up a list of user configured resampling algorithm
 	 * for each MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
@@ -47,8 +47,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& _cfg) : cfg(_cfg) {
 	if (window_size <= 0.01)
 		throw IOException("WINDOW_SIZE not valid", AT);
 
-
-	/*//For debugging only: 	
+	/*//For debugging only:
 	for (unsigned int jj=0; jj<tasklist.size(); jj++){
 		cout << MeteoData::getParameterName(jj) << "::" << tasklist[jj] << endl;
 		for (unsigned int ii=0; ii<taskargs[jj].size(); ii++){
@@ -97,8 +96,6 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 	unsigned int ii = 0;
 
 	for (ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
-		//cout << "For parameter: " << MeteoData::getParameterName(ii) << ": " << tasklist[ii] << endl;
-
 		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
 			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, ii, taskargs[ii], vecM);
 	}

@@ -73,7 +73,7 @@ const std::string& MeteoData::getNameForParameter(const unsigned int& parindex) 
 }
 
 void MeteoData::initParameterMap()
-{
+{//NOTE: any performace improvement here would make a big difference...
 	//Associate unsigned int value and a string representation of a meteo parameter
 	meteoparamname[TA]   = "TA";
 	meteoparamname[ISWR] = "ISWR";
@@ -167,6 +167,7 @@ MeteoData::MeteoData(const MeteoData& md)
 
 MeteoData& MeteoData::operator=(const MeteoData& rhs)
 {
+//NOTE: any performace improvement here would make a big difference...
 	if (this == &rhs) //Test self assignment
 		return *this;
 

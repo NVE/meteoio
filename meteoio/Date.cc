@@ -17,8 +17,6 @@
 */
 #include <meteoio/Date.h>
 
-//const long Date::offset = 2415021;	///snowpack offset
-
 using namespace std;
 
 namespace mio {
@@ -55,14 +53,12 @@ Date::Date(const double& julian_in, const double& in_timezone, const bool& in_ds
 
 /**
 * @brief Unix date constructor.
-* @param in_time unix time (ie: as number of seconds since Unix Epoch)
-* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const time_t& in_time, const double& in_timezone, const bool& in_dst) {
-	timezone = 0;
+Date::Date(const time_t& in_time, const bool& in_dst) {
 	dst = false;
-	setDate(in_time, in_timezone, in_dst);
+	setDate(in_time, 0., in_dst);
 }
 //HACK: is it needed? Why paroc_base instead of POPC??
 /**
@@ -101,10 +97,10 @@ void Date::setUndef(const bool& flag) {
 	undef = flag;
 }
 /**
-* @brief Set internal gmt time from system time
+* @brief Set internal gmt time from system time. This is always UTC
 */
-void Date::setFromSys(const double& in_timezone) {
-	setDate( time(NULL), in_timezone ); //Unix time_t setter
+void Date::setFromSys() {
+	setDate( time(NULL) ); //Unix time_t setter, always in gmt
 }
 
 /**
@@ -174,12 +170,11 @@ void Date::setDate(const double& julian_in, const double& in_timezone, const boo
 
 /**
 * @brief Set date from a Unix date.
-* @param _time unix time (ie: as number of seconds since Unix Epoch)
-* @param _timezone timezone as an offset to GMT (in hours, optional)
+* @param _time unix time (ie: as number of seconds since Unix Epoch, always UTC)
 * @param _dst is it DST? (default: no)
 */
-void Date::setDate(const time_t& _time, const double& _timezone, const bool& _dst) {
-	setUnixDate(_time, _timezone, _dst);
+void Date::setDate(const time_t& _time, const bool& _dst) {
+	setUnixDate(_time, _dst);
 }
 
 /**
@@ -195,13 +190,12 @@ void Date::setModifiedJulianDate(const double& julian_in, const double& _timezon
 
 /**
 * @brief Set date from a Unix date.
-* @param in_time unix time (ie: as number of seconds since Unix Epoch)
-* @param in_timezone timezone as an offset to GMT (in hours, optional)
+* @param in_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
 * @param in_dst is it DST? (default: no)
 */
-void Date::setUnixDate(const time_t& in_time, const double& in_timezone, const bool& in_dst) {
+void Date::setUnixDate(const time_t& in_time, const bool& in_dst) {
 	const double in_julian = (double)(in_time)/(24.*60.*60.) + Unix_offset;
-	setDate(in_julian, in_timezone, in_dst);
+	setDate(in_julian, 0., in_dst);
 }
 
 /**
@@ -483,6 +477,7 @@ bool Date::isLeapYear() const {
 	getDate(local_year, local_month, local_day, local_hour, local_minute);
 
 	return (isLeapYear(local_year));
+
 	/*
 	if( ((local_year%4 == 0) && (local_year%100 != 0)) || (local_year%400 == 0) ) {
 	return true;
@@ -493,51 +488,98 @@ bool Date::isLeapYear() const {
 }
 
 /**
- * @brief Rounds julian date
+ * @brief Round date to a given precision
+ * @param precision round date to the given precision, in seconds
+ * @param type rounding strategy (default: CLOSEST)
  */
-double Date::rndJulianDate() const {
-	return floor(getJulianDate()*24.*2.) / (24.*2.);
+void Date::rnd(const double& precision, const RND& type) {
+	if(undef==false) {
+		const double rnd_factor = (3600*24)/precision;
+		if(type==UP)
+			gmt_julian = ceil(gmt_julian*rnd_factor) / rnd_factor;
+		if(type==DOWN)
+			gmt_julian = floor(gmt_julian*rnd_factor) / rnd_factor;
+		if(type==CLOSEST)
+			gmt_julian = round(gmt_julian*rnd_factor) / rnd_factor;
+	}
+}
+
+const Date Date::rnd(const Date& indate, const double& precision, const RND& type) {
+	if( !indate.isUndef() ) {
+		const double rnd_factor = (3600*24)/precision;
+		double gmt_julian;
+		if(type==UP)
+			gmt_julian = ceil(gmt_julian*rnd_factor) / rnd_factor;
+		if(type==DOWN)
+			gmt_julian = floor(gmt_julian*rnd_factor) / rnd_factor;
+		if(type==CLOSEST)
+			gmt_julian = round(gmt_julian*rnd_factor) / rnd_factor;
+
+		Date tmp(gmt_julian, indate.getTimeZone());
+		return tmp;
+	} else {
+		Date tmp(indate);
+		return tmp;
+	}
 }
 
 // OPERATORS //HACK this will have to handle Durations
-//HACK: handle undef dates!!
 Date& Date::operator+=(const Date& indate) {
+	if(undef==true || indate.isUndef()) {
+		undef=true;
+		return *this;
+	}
 	gmt_julian += indate.gmt_julian;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
 
 Date& Date::operator-=(const Date& indate) {
+	if(undef==true || indate.isUndef()) {
+		undef=true;
+		return *this;
+	}
 	gmt_julian -= indate.gmt_julian;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
 
 Date& Date::operator+=(const double& indate) {
-	gmt_julian += indate;
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	if(undef==false) {
+		gmt_julian += indate;
+		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	}
 	return *this;
 }
 
 Date& Date::operator-=(const double& indate) {
-	gmt_julian -= indate;
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	if(undef==false) {
+		gmt_julian -= indate;
+		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	}
 	return *this;
 }
 
 Date& Date::operator*=(const double& value) {
-	gmt_julian *= value;
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	if(undef==false) {
+		gmt_julian *= value;
+		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	}
 	return *this;
 }
 
 Date& Date::operator/=(const double& value) {
-	gmt_julian /= value;
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	if(undef==false) {
+		gmt_julian /= value;
+		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	}
 	return *this;
 }
 
-bool Date::operator==(const Date& indate) const { 
+bool Date::operator==(const Date& indate) const {
+	if(undef==true || indate.isUndef()) {
+		return( undef==true && indate.isUndef() );
+	}
 	const double epsilon=1./(24.*3600.); //that is, 1 second in units of days
 	return( fabs(indate.gmt_julian - gmt_julian) < epsilon );
 }
@@ -547,6 +589,9 @@ bool Date::operator!=(const Date& indate) const {
 }
 
 bool Date::operator<(const Date& indate) const {
+	if(undef==true || indate.isUndef()) {
+		throw UnknownValueException("Date object is undefined!", AT);
+	}
 	if (*this == indate) {
 		return false;
 	}
@@ -555,6 +600,10 @@ bool Date::operator<(const Date& indate) const {
 }
 
 bool Date::operator<=(const Date& indate) const {
+	if(undef==true || indate.isUndef()) {
+		throw UnknownValueException("Date object is undefined!", AT);
+	}
+
 	if (*this == indate) {
 		return true;
 	}
@@ -562,6 +611,10 @@ bool Date::operator<=(const Date& indate) const {
 }
 
 bool Date::operator>(const Date& indate) const {
+	if(undef==true || indate.isUndef()) {
+		throw UnknownValueException("Date object is undefined!", AT);
+	}
+
 	if (*this == indate) {
 		return false;
 	}
@@ -570,6 +623,10 @@ bool Date::operator>(const Date& indate) const {
 }
 
 bool Date::operator>=(const Date& indate) const {
+	if(undef==true || indate.isUndef()) {
+		throw UnknownValueException("Date object is undefined!", AT);
+	}
+
 	if (*this == indate) {
 		return true;
 	}
@@ -577,31 +634,45 @@ bool Date::operator>=(const Date& indate) const {
 }
 
 const Date Date::operator+(const Date& indate) const {
+	if(undef==true || indate.isUndef()) {
+		Date tmp; //create an Undef date
+		return tmp;
+	}
+
 	Date tmp(gmt_julian + indate.gmt_julian, timezone);
 	return tmp;
 }
 
 const Date Date::operator-(const Date& indate) const {
+	if(undef==true || indate.isUndef()) {
+		Date tmp; //create an Undef date
+		return tmp;
+	}
+
 	Date tmp(gmt_julian - indate.gmt_julian, timezone);
 	return tmp;
 }
 
 const Date Date::operator+(const double& indate) const {
+	//remains undef if undef
 	Date tmp(gmt_julian + indate, timezone);
 	return tmp;
 }
 
 const Date Date::operator-(const double& indate) const {
+	//remains undef if undef
 	Date tmp(gmt_julian - indate, timezone);
 	return tmp;
 }
 
 const Date Date::operator*(const double& value) const {
+	//remains undef if undef
 	Date tmp(gmt_julian * value, timezone);
 	return tmp;
 }
 
 const Date Date::operator/(const double& value) const {
+	//remains undef if undef
 	Date tmp(gmt_julian / value, timezone);
 	return tmp;
 }

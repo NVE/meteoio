@@ -69,7 +69,7 @@ class GSNIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
-		void parseString(const std::string& in_string, std::vector<std::string>& vecString, MeteoData& md);
+		void parseString(const std::string& in_string, MeteoData& md);
 		void convertStringToDouble(double& d, const std::string& in_string, const std::string& in_parname);
 		void convertUnits(MeteoData& meteo);
 		void initGSNConnection();
@@ -84,7 +84,6 @@ class GSNIO : public IOInterface {
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                              ///< Variable for proxy configuration
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		double in_tz, out_tz; //default time zones
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 

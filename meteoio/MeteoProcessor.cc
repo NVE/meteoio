@@ -25,15 +25,12 @@ MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg)
 {
 	//Parse [Filters] section, create processing stack for each configured parameter
 	set<string> set_of_used_parameters;
-	//unsigned int nr_of_parameters = 
 	get_parameters(cfg, set_of_used_parameters);
 
 	for (set<string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); it++){
-		//cout << "Creating stack for parameter: " << *it << endl;
 		ProcessingStack* tmp = new ProcessingStack(cfg, *it);
 		processing_stack[*it] = tmp;
 	}
-	//cout << "NrOfParameters: " << nr_of_parameters << endl;
 }
 
 MeteoProcessor::~MeteoProcessor()
@@ -91,9 +88,8 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
 {
 	//call the different processing stacks
 	std::vector< std::vector<MeteoData> > vec_tmp;
-	//cout << "Calling processing stacks for all parameters" << endl;
+
 	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++){
-		//cout << "Calling processing stack for parameter " << it->first << endl;
 		if (it==processing_stack.begin()){
 			(*(it->second)).process(ivec, ovec, second_pass);
 		} else {

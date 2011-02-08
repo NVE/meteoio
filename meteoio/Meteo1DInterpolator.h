@@ -56,7 +56,7 @@ class Meteo1DInterpolator {
 		*
 		* @param[in] _cfg Config object that holds the MeteoFilter configuration in the [Filters] section
 		*/
-		Meteo1DInterpolator(const Config& _cfg);
+		Meteo1DInterpolator(const Config& in_cfg);
 
 		/**
 		 * @brief A function that executes all the resampling algorithms that have been setup in the constructor

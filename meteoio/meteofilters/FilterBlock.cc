@@ -49,4 +49,13 @@ void FilterBlock::convert_args(const unsigned int& min_nargs, const unsigned int
 	}
 }
 
+void FilterBlock::extract_dbl_vector(const unsigned int& index, const std::vector<MeteoData>& ivec,
+                                     std::vector<double>& ovec)
+{
+	ovec.clear();
+	for(unsigned int ii=0; ii<ivec.size(); ii++) {
+		ovec.push_back( ivec[ii].param(index) );
+	}
+}
+
 } //end namespace

@@ -52,27 +52,7 @@ void FilterMinMax::process(const unsigned int& index, const std::vector<MeteoDat
 			}
 		}
 	}
-}	
-
-/*
-void FilterMinMax::soft_filter(double& val)
-{
-	if (tmp < min_val){
-		tmp = min_soft;
-	} else if (tmp > max_val){
-		tmp = max_soft;
-	}
 }
-
-void FilterMinMax::hard_filter(double& val)
-{
-	if (tmp < min_val){
-		tmp = IOUtils::nodata;
-	} else if (tmp > max_val){
-		tmp = IOUtils::nodata;
-	}	
-}
-*/
 
 void FilterMinMax::parse_args(std::vector<std::string> vec_args)
 {
@@ -104,4 +84,4 @@ void FilterMinMax::parse_args(std::vector<std::string> vec_args)
 	}
 }
 
-} 
+} //end namespace

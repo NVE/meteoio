@@ -55,7 +55,7 @@ class MeteoProcessor {
 		 * @param[in] second_pass Whether this is the second pass (check only filters)
 		 */
 		void process(const std::vector< std::vector<MeteoData> >& ivec, 
-				   std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
+		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
 		unsigned int resample(const Date& date, std::vector<MeteoData>& ivec);
 

@@ -415,7 +415,7 @@ template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str
 
 
 void IOUtils::getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
-							   std::string& coordout, std::string& coordoutparam) {
+                                      std::string& coordout, std::string& coordoutparam) {
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, Config::nothrow);
 	cfg.getValue("COORDSYS", "Output", coordout, Config::nothrow);
@@ -449,7 +449,7 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 	}
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
-	//HACK: would it be better to create a timesries object and call vector's binary search on it?
+	//HACK: would it be better to create a timeseries object and call vector's binary search on it?
 	if (exactmatch){
 		unsigned int first = 1, last = vecM.size()-1;
 

@@ -25,7 +25,7 @@ IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(i_cfg), bufferedio
 {
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
 
-	fcache_start = fcache_end = Date(0.0, 0.); //HACK this should not matter, since 0 is still way back before any real data...
+	fcache_start = fcache_end = Date(0.0, 0.); //this should not matter, since 0 is still way back before any real data...
 
 	meteoprocessor.getWindowSize(proc_properties);
 }
