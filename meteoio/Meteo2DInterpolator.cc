@@ -21,31 +21,7 @@
 using namespace std;
 
 namespace mio {
-	/*
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, const DEMObject& i_dem,
-                                         const std::vector<MeteoData>& i_vecMeteo)
-                                         : cfg(i_cfg), dem(i_dem), vecMeteo(i_vecMeteo)
-{
-	*/
-	/*
-	 * By reading the Config object build up a list of user configured algorithms
-	 * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
-	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
-	 * for configuration of interpolation algorithms within the Config object.
-	 */
-/*
-	for (unsigned int ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
-		std::vector<std::string> tmpAlgorithms;
-		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
-		unsigned int nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
 
-		if (nrOfAlgorithms > 0)
-			mapAlgorithms[parname] = tmpAlgorithms;
-	}
-
-	check_projections(dem, vecMeteo);
-}
-*/
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) : cfg(i_cfg), iomanager(i_iom)
 {
 	/*

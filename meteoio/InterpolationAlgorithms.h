@@ -79,7 +79,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2010) (see SnowHNWInterpolation)
  * - ODKRIG: ordinary kriging THIS IS NOT YET USABLE
- * - USER: user provided grids to be read from disk (if available, see USERinterpolation) THIS IS NOT YET USABLE
+ * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  *
  * @section lapse Lapse rates
  * Several algorithms use elevation trends, currently modelled as a linear relation. The slope of this linear relation can
@@ -90,20 +90,20 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * kept. If the final correlation coefficient is less than 0.7, a warning is displayed.
  *
  * @section dev_use Developer usage
- * From the developer's point of view, all that has to be done is instantiate a Meteo2DInterpolator object and call its 
- * Meteo2DInterpolator::interpolate method.
+ * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its 
+ * IOManager::interpolate method.
  * @code
- * 	std::vector<MeteoData> vecMeteo;
- * 	std::vector<StationData> vecStation;
  * 	Config cfg("io.ini");
+ * 	IOManager io(cfg);
+ * 	
+ * 	//reading the dem (necessary for several spatial interpolations algoritms)
  * 	DEMObject dem;
- * 
- * 	[...]
- * 
- * 	//performing spatial interpolations
- * 	Meteo2DInterpolator mi(cfg, dem, vecMeteo, vecStation);
+ * 	io.readDEM(dem);
+ * 	
+ *	//performing spatial interpolations
  * 	Grid2DObject param;
- * 	mi.interpolate(MeteoData::RH, param);
+ *	io.interpolate(date, dem, MeteoData::TA, param);
+ *	
  * @endcode
  *
  * @section biblio Bibliography
@@ -357,6 +357,16 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 /**
  * @class USERInterpolation
  * @brief Reads user provided gridded data on the disk.
+ * The grids are all in a directory that is given as the algorithm's argument. The files must be named
+ * according to the following schema:
+ * - {numeric date}_{capitalized meteo parameter}.asc, for example 200812011500_TA.asc
+ * - Default_{capitalized meteo parameter}.asc for the grid to use when no measurements exist (which prevents
+ * retrieving the date for the interpolation)
+ * The meteo parameters can be found in \ref meteoparam "MeteoData". Example of use:
+ * @code
+ * TA::algorithms = USER
+ * TA::user = ./meteo_grids
+ * @endcode
  * 
  */
 class USERInterpolation : public InterpolationAlgorithm {

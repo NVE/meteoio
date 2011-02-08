@@ -583,13 +583,12 @@ double USERInterpolation::getQualityRating()
 	}
 }
 
-void USERInterpolation::calculate(Grid2DObject& /*grid*/)
+void USERInterpolation::calculate(Grid2DObject& grid)
 {
 	const std::string filename = getGridFileName();
 	nrOfMeasurments = 0;
 
-	//read2DGrid(grid, filename);
-	throw IOException("USER interpolation algorithm not yet implemented...", AT);
+	iomanager.read2DGrid(grid, filename);
 }
 
 
