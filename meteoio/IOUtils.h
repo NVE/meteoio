@@ -45,10 +45,10 @@
 #endif
 
 #ifndef C_TO_K
-#define C_TO_K( T ) ( T + 273.15 )	  // Celsius to Kelvin
+#define C_TO_K( T ) ( T + 273.15 )	  // degree Celsius to kelvin
 #endif
 #ifndef K_TO_C
-#define K_TO_C( T ) ( T - 273.15 )	  // Kelvin to Celsius
+#define K_TO_C( T ) ( T - 273.15 )	  // kelvin to degree Celsius
 #endif
 
 namespace mio {
@@ -190,7 +190,7 @@ namespace IOUtils {
 	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 
-	bool convertString(Date& t, const std::string& str, const double& TZ, std::ios_base& (*f)(std::ios_base&) = std::dec);
+	bool convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&) = std::dec);
 
 	/**
 	* @brief Returns, with the requested type, the value associated to a key (template function).

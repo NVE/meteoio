@@ -30,16 +30,15 @@ const float Date::MJD_offset = 2400000.5; ///<offset between julian date and mod
 const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
 const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 
-const double Date::undefined = -999.;
-
 // CONSTUCTORS
 /**
 * @brief Default constructor: timezone is set to GMT without DST, julian date is set to 0 (meaning -4713-01-01T12:00)
 */
 Date::Date() {
+	undef = true;
 	timezone = 0;
 	dst = false;
-	setDate(0., undefined, false);
+	setDate(0., 0., false);
 }
 
 /**
@@ -98,12 +97,14 @@ Date::Date(const int& in_year, const int& in_month, const int& in_day, const int
 }
 
 // SETTERS
-
+void Date::setUndef(const bool& flag) {
+	undef = flag;
+}
 /**
 * @brief Set internal gmt time from system time
 */
-void Date::setFromSys() {
-	setDate( time(NULL), timezone ); //Unix time_t setter
+void Date::setFromSys(const double& in_timezone) {
+	setDate( time(NULL), in_timezone ); //Unix time_t setter
 }
 
 /**
@@ -135,9 +136,8 @@ void Date::setTimeZone(const double& in_timezone, const bool& in_dst) {
 void Date::setDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
 {
 	plausibilityCheck(_year, _month, _day, _hour, _minute);
-	if(_timezone!=undefined) {
-		setTimeZone(_timezone, _dst);
-	}
+	undef = false;
+	setTimeZone(_timezone, _dst);
 
 	if(timezone==0 && dst==false) {
 		//data is GMT and no DST
@@ -166,10 +166,9 @@ void Date::setDate(const int& _year, const int& _month, const int& _day, const i
 * @param in_dst is it DST? (default: no)
 */
 void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst) {
-	if(in_timezone!=undefined) { //HACK: is it still needed?
-		setTimeZone(in_timezone, in_dst);
-	}
+	setTimeZone(in_timezone, in_dst);
 	gmt_julian = localToGMT(julian_in);
+	undef = false;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 }
 
@@ -218,11 +217,18 @@ void Date::setExcelDate(const double excel_in, const double& _timezone, const bo
 }
 
 // GETTERS
+bool Date::isUndef() const {
+	return undef;
+}
+
 /**
 * @brief Returns timezone.
 * @return timezone as an offset to GMT
 */
 double Date::getTimeZone() const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	return timezone;
 }
 
@@ -231,6 +237,9 @@ double Date::getTimeZone() const {
 * @return dst enabled?
 */
 bool Date::getDST() const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	return dst;
 }
 
@@ -241,6 +250,9 @@ bool Date::getDST() const {
 * @return julian date in the current timezone / in GMT depending on the gmt parameter
 */
 double Date::getJulianDate(const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		return gmt_julian;
 	} else {
@@ -257,6 +269,9 @@ double Date::getJulianDate(const bool& gmt) const {
 * @return modified julian date in the current timezone / in GMT depending on the gmt parameter
 */
 double Date::getModifiedJulianDate(const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		return (gmt_julian - MJD_offset);
 	} else {
@@ -274,6 +289,9 @@ double Date::getModifiedJulianDate(const bool& gmt) const {
 * @return truncated julian date in the current timezone / in GMT depending on the gmt parameter
 */
 double Date::getTruncatedJulianDate(const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		return (fmod( (gmt_julian - 0.5), 10000. ));
 	} else {
@@ -291,6 +309,9 @@ double Date::getTruncatedJulianDate(const bool& gmt) const {
 * @return Unix time in the current timezone / in GMT depending on the gmt parameter
 */
 time_t Date::getUnixDate(const bool& gmt) const { //HACK: should Unix date always be GMT?
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if (gmt_julian < Unix_offset)
 			throw IOException("Dates before 1970 cannot be displayed in Unix epoch time", AT);
 
@@ -311,6 +332,9 @@ time_t Date::getUnixDate(const bool& gmt) const { //HACK: should Unix date alway
 * @return Excel date in the current timezone / in GMT depending on the gmt parameter
 */
 double Date::getExcelDate(const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if (gmt_julian < Excel_offset)
 		throw IOException("Dates before 1900 cannot be converted to Excel date", AT);
 
@@ -329,6 +353,9 @@ double Date::getExcelDate(const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 */
 void Date::getDate(double& julian_out, const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		julian_out = gmt_julian;
 	} else {
@@ -343,6 +370,9 @@ void Date::getDate(double& julian_out, const bool& gmt) const {
 * @return year
 */
 int Date::getYear(const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		return gmt_year;
 	} else {
@@ -361,6 +391,9 @@ int Date::getYear(const bool& gmt) const {
 * @param gmt convert returned value to GMT? (default: false)
 */
 void Date::getDate(int& year_out, int& month_out, int& day_out, const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		year_out = gmt_year;
 		month_out = gmt_month;
@@ -381,6 +414,9 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, const bool& gmt)
 * @param gmt convert returned value to GMT? (default: false)
 */
 void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		year_out = gmt_year;
 		month_out = gmt_month;
@@ -403,6 +439,9 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, c
 * @param gmt convert returned value to GMT? (default: false)
 */
 void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, int& minute_out, const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	if(gmt) {
 		year_out = gmt_year;
 		month_out = gmt_month;
@@ -421,6 +460,9 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, i
 * @return julian day number
 */
 int Date::getJulianDayNumber() const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	//this is quite inefficient... we might want to deal with leap years with their rule + days arrays instead
 	int local_year, local_month, local_day, local_hour, local_minute;
 	getDate(local_year, local_month, local_day, local_hour, local_minute);
@@ -433,22 +475,32 @@ int Date::getJulianDayNumber() const {
 * @return true if the current year is a leap year
 */
 bool Date::isLeapYear() const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
 	//this is quite inefficient... we might want to deal with leap years with their rule instead
 	int local_year, local_month, local_day, local_hour, local_minute;
 	getDate(local_year, local_month, local_day, local_hour, local_minute);
 
 	return (isLeapYear(local_year));
-
 	/*
 	if( ((local_year%4 == 0) && (local_year%100 != 0)) || (local_year%400 == 0) ) {
-		return true;
-	} else {
-		return false;
-	}
+	return true;
+} else {
+	return false;
+}
 	*/
 }
 
+/**
+ * @brief Rounds julian date
+ */
+double Date::rndJulianDate() const {
+	return floor(getJulianDate()*24.*2.) / (24.*2.);
+}
+
 // OPERATORS //HACK this will have to handle Durations
+//HACK: handle undef dates!!
 Date& Date::operator+=(const Date& indate) {
 	gmt_julian += indate.gmt_julian;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
@@ -556,18 +608,22 @@ const Date Date::operator/(const double& value) const {
 
 std::ostream& operator<<(std::ostream &os, const Date &date) {
 	os << "<date>\n";
-	os << date.toString(Date::ISO) << "\n";
-	os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\n";
-	os << "DST=" << date.dst << "\n";
-	os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
-	os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
-	os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
-	try {
-		os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
-	} catch (...) {}
-	try {
-		os << "Excel:\t\t\t" << date.getExcelDate() << "\n";
-	} catch (...) {}
+	if(date.undef==true)
+		os << "Date is undefined\n";
+	else {
+		os << date.toString(Date::ISO) << "\n";
+		os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\n";
+		os << "DST=" << date.dst << "\n";
+		os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
+		os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
+		os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
+		try {
+			os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
+		} catch (...) {}
+		try {
+			os << "Excel:\t\t\t" << date.getExcelDate() << "\n";
+		} catch (...) {}
+	}
 	os << "</date>\n";
 	return os;
 }
@@ -582,6 +638,9 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 {//the date are displayed in LOCAL timezone (more user friendly)
 	int year_out, month_out, day_out, hour_out, minute_out;
 	double julian_out;
+
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
 
 	if(gmt) {
 		julian_out = gmt_julian;
@@ -740,6 +799,7 @@ void Date::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&gmt_day,1);
 		buf.Pack(&gmt_hour,1);
 		buf.Pack(&gmt_minute,1);
+		buf.Pack(&undef,1);
 	} else {
 		buf.UnPack(&timezone,1);
 		buf.UnPack(&dst,1);
@@ -749,6 +809,7 @@ void Date::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&gmt_day,1);
 		buf.UnPack(&gmt_hour,1);
 		buf.UnPack(&gmt_minute,1);
+		buf.UnPack(&undef,1);
 	}
 }
 #endif

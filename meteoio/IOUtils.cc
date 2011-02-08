@@ -330,7 +330,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, st
 	return true;
 }
 
-bool IOUtils::convertString(Date& t, const std::string& str, const double& TZ, std::ios_base& (*f)(std::ios_base&))
+bool IOUtils::convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -341,17 +341,17 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& TZ, s
 
 	//HACK: we read the seconds, but we ignore them...
 	if (sscanf(s.c_str(), "%u-%u-%u %u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
-		t.setDate(year, month, day, hour, minute, TZ);
+		t.setDate(year, month, day, hour, minute, time_zone);
 	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
-		t.setDate(year, month, day, hour, minute, TZ);
+		t.setDate(year, month, day, hour, minute, time_zone);
 	} else if (sscanf(s.c_str(), "%u-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		t.setDate(year, month, day, hour, minute, TZ);
+		t.setDate(year, month, day, hour, minute, time_zone);
 	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		t.setDate(year, month, day, hour, minute, TZ);
+		t.setDate(year, month, day, hour, minute, time_zone);
 	} else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
-		t.setDate(year, month, day, 0, 0, TZ);
+		t.setDate(year, month, day, 0, 0, time_zone);
 	} else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
-		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. , TZ);
+		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. , time_zone);
 	} else {
 		//try to read purely numerical date, potentially surrounded by other chars
 		const unsigned int in_len = str.length();
@@ -384,7 +384,7 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& TZ, s
 			}
 		}
 		
-		t.setDate( year, month, day, hour, minute, TZ );
+		t.setDate( year, month, day, hour, minute, time_zone );
 	}
 
 	std::string tmp(rest);
@@ -423,8 +423,8 @@ void IOUtils::getProjectionParameters(const Config& cfg, std::string& coordin, s
 }
 
 void IOUtils::getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
-	cfg.getValue("TZ", "Input", tz_in, Config::nothrow);
-	cfg.getValue("TZ", "Output", tz_out, Config::nothrow);
+	cfg.getValue("TIME_ZONE", "Input", tz_in, Config::nothrow);
+	cfg.getValue("TIME_ZONE", "Output", tz_out, Config::nothrow);
 }
 
 unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch){

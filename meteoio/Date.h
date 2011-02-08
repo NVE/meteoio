@@ -91,7 +91,7 @@ class Date {
 		Date(const time_t&, const double& in_timezone, const bool& in_dst=false);
 		Date(const Date& in_date);
 
-		void setFromSys();
+		void setFromSys(const double& in_timezone);
 		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
 		void setDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
 		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& _dst=false);
@@ -99,7 +99,9 @@ class Date {
 		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
 		void setUnixDate(const time_t& in_time, const double& in_timezone, const bool& _dst=false);
 		void setExcelDate(const double excel_in, const double& in_timezone, const bool& _dst=false);
+		void setUndef(const bool& flag);
 
+		bool isUndef() const;
 		double getTimeZone() const;
 		bool getDST() const;
 		double getJulianDate(const bool& gmt=false) const;
@@ -117,6 +119,8 @@ class Date {
 		int getJulianDayNumber() const;
 		bool isLeapYear() const;
 
+		double rndJulianDate() const;
+
 		const std::string toString(FORMATS type, const bool& gmt=false) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Date& date);
@@ -128,7 +132,7 @@ class Date {
 		bool operator<=(const Date&) const;
 		bool operator>(const Date&) const;
 		bool operator>=(const Date&) const;
-
+		
 		///Intervals arithmetic
 		///Can be used to add an interval to an existing Date object.
 		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.
@@ -159,7 +163,7 @@ class Date {
 		bool dst;
 		double gmt_julian;
 		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
-		static const double undefined;
+		bool undef;
 };
 
 typedef Date Duration; //so that later, we can implement a true Interval/Duration class

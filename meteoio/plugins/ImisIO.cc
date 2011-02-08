@@ -770,16 +770,16 @@ void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_n
 
 	vecMeteoData.clear();
 
-	//First check whether this is a station with seperate wind drift data
-	bool seperateDriftStation = false;
+	//First check whether this is a station with separate wind drift data
+	bool separateDriftStation = false;
 	map<string,string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
 	if (it != mapDriftStation.end())
-		seperateDriftStation = true;
+		separateDriftStation = true;
 
 	try {
 		Statement *stmt = NULL;
 		ResultSet *rs = NULL;
-		if (!seperateDriftStation){
+		if (!separateDriftStation){
 			stmt = conn->createStatement(sqlQueryMeteoData);
 		} else {
 			stmt = conn->createStatement(sqlQueryMeteoDataDrift);
@@ -793,7 +793,7 @@ void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_n
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
 		stmt->setDate(4, enddate);    // set 4th variable's value (enddate)
 
-		if (seperateDriftStation){
+		if (separateDriftStation){
 			string drift_stat_abk="", drift_stao_nr=""; 
 			parseStationName(it->second, drift_stat_abk, drift_stao_nr);
 			nrOfColumns += 2; //two extra columns for drift wind and direction
@@ -824,7 +824,7 @@ void ImisIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
+	//converts degC to Kelvin, converts ilwr to ea, converts RH to [0,1]
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
