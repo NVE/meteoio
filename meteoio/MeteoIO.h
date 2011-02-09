@@ -70,7 +70,7 @@
 
 #ifdef _POPC_
 #include <meteoio/IOHandler.ph>
-#include <meteoio/IOManager.ph>
+#include <meteoio/IOManager.h> //HACK
 #include <meteoio/marshal_meteoio.h>
 #else
 #include <meteoio/IOHandler.h>

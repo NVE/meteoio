@@ -16,7 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/IOHandler.ph>
-#include <meteoio/IOManager.ph>
+//#include <meteoio/IOManager.ph>
 
 //@pack(IOHandler, IOManager)
 @pack(IOHandler)

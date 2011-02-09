@@ -98,21 +98,21 @@ class IOManager {
 		unsigned int getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo);
 
 #ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam, 
+		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
+		                 Grid2DObject& result);
+#else
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+		                 Grid2DObject& result);
+#endif
+
+#ifdef _POPC_ //HACK popc
+		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 #else
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
 		                 Grid2DObject& result, std::string& info_string);
 #endif
 
-#ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam, 
-		                 Grid2DObject& result);
-#else
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
-		                 Grid2DObject& result);
-#endif
-		
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
 		 *        The processing level affects the way meteo data is read and processed

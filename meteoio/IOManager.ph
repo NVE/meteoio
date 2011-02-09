@@ -73,12 +73,12 @@ parclass IOManager {
 		std::string toString() /*const*/; //HACK popc
 		//friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
 
-		/*enum ProcessingLevel { //HACK popc
+		enum ProcessingLevel { //HACK BUG popc
 			raw           = 1,
 			filtered      = 1 << 1,
 			resampled     = 1 << 2,
 			num_of_levels = 1 << 3
-		};*/
+		};
 
 	private:
 		void add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo);

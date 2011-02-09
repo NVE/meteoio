@@ -227,7 +227,7 @@ void IOManager::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, c
 }
 
 #ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
                             Grid2DObject& result)
 #else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
@@ -239,7 +239,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 }
 
 #ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
                             Grid2DObject& result, std::string& info_string)
 #else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
