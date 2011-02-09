@@ -196,9 +196,15 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 	//vec_cache is either filtered or unfiltered, in any case it is wise to buffer it
 
 	for (unsigned int ii=0; ii<vec_cache.size(); ii++){//resampling for every station
-		//cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
-		unsigned int position = meteoprocessor.resample(i_date, vec_cache[ii]);
-		vecMeteo.push_back(vec_cache[ii][position]);
+		if ((IOManager::resampled & processing_level) == IOManager::resampled){
+			//cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
+			unsigned int position = meteoprocessor.resample(i_date, vec_cache[ii]);
+			vecMeteo.push_back(vec_cache[ii][position]);
+		} else { //only filtering activated
+			unsigned int index = IOUtils::seek(i_date, vec_cache[ii], true);
+			if (index != IOUtils::npos)
+				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
+		}
 	}
 
 	//Store result in the local cache
