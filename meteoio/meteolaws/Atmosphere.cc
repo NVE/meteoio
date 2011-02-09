@@ -25,6 +25,26 @@
 namespace mio {
 
 /**
+ * @brief Calculate the black body emissivity
+ * @param lwr longwave radiation emitted by the body (W m-2)
+ * @param T   surface temperature of the body (K)
+ */
+double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
+	const double T2 = T*T;
+	return ( lwr / (Cst::stefan_boltzmann * (T2*T2)) );
+}
+
+/**
+ * @brief Calculates the black body long wave radiation knowing its emissivity
+ * @param ea emissivity of the body (0-1)
+ * @param T   surface temperature of the body (K)
+ */
+double Atmosphere::blkBody_Radiation(const double& ea, const double& T) {
+	const double T2 = T*T;
+	return ( ea * (Cst::stefan_boltzmann * (T2*T2)) );
+}
+
+/**
 * @brief Standard atmosphere pressure
 * @param altitude altitude above sea level (m)
 * @return standard pressure (Pa)
@@ -33,13 +53,33 @@ double Atmosphere::stdAirPressure(const double& altitude) {
 	const double p0 = Cst::std_press; // Air and standard pressure in Pa
 	const double lapse_rate = 0.0065; // K m-1
 	const double sea_level_temp = 288.15; // K
-	const double expo = Cst::gravity / (lapse_rate * Cst::gas_constant_air);
+	const double expo = Cst::gravity / (lapse_rate * Cst::gaz_constant_dry_air);
 	const double R0 = Cst::earth_R0; // Earth's radius in m
 	
 	const double p = p0 * pow( 1. - ( (lapse_rate * R0 * altitude) / (sea_level_temp * (R0 + altitude)) ), expo );
 	
 	return(p);
 }
+
+/**
+* @brief Standard atmosphere wet bulb temperature. 
+* This gives the lowest temperature that could be reached by water evaporation. It is therefore linked to
+* relative humidity. This implementation assumes a standard atmosphere for pressure and saturation pressure.
+* @param T air temperature (K)
+* @param RH relative humidity (between 0 and 1)
+* @param altitude altitude above sea level (m)
+* @return wet bulb temperature (K)
+*/
+double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const double& altitude)
+{
+	const double L = Cst::l_water_vaporization; //latent heat of vaporisation
+	const double mixing_ratio = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
+	const double p = stdAirPressure(altitude);
+	const double Vp = waterSaturationPressure(T);
+
+	return ( T - (RH*Vp - Vp) * mixing_ratio * L / p / Cst::specific_heat_air );
+}
+
 
 /**
 * @brief Standard water vapor saturation
@@ -62,6 +102,27 @@ double Atmosphere::waterSaturationPressure(const double& T) {
 }
 
 /**
+* @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
+* This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
+* Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+* @param e0 water vapor pressure (Pa)
+* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
+* @return emissivity (between 0 and 1)
+*/
+double Atmosphere::Omstedt_emissivity(const double& e0, const double& cloudiness) {
+	const double eps_w = 0.97;
+	const double a1 = 0.68;
+	const double a2 = 0.0036;
+	const double a3 = 0.18;
+
+	double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
+	if(ea > 1.0) 
+		ea = 1.0;
+
+	return ea;
+}
+
+/**
 * @brief Evaluate the long wave radiation from RH, TA and cloudiness. 
 * This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
 * Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
@@ -71,20 +132,45 @@ double Atmosphere::waterSaturationPressure(const double& T) {
 * @return long wave radiation (W/m^2)
 */
 double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) {
-	//the goal is to have a fully self-contained function that matches what would be
-	//used later on for recomputing a cloudiness, etc
-	const double pressure = RH * waterSaturationPressure(TA); //RH * saturation pressure
-	const double eps_w = 0.97;
-	const double a1 = 0.68;
-	const double a2 = 0.0036;
-	const double a3 = 0.18;
-	const double stefan_boltzmann = 5.67051e-8; // W m-2 K-4
+	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
+	const double ea = Omstedt_emissivity(e0, cloudiness);
 
-	double ea = (eps_w * (a1 + a2 * sqrt(pressure)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
-	if(ea > 1.0) 
-		ea = 1.0;
+	return blkBody_Radiation(ea, TA);
+}
 
-	return ( ea * (stefan_boltzmann * (TA*TA*TA*TA)) );
+
+/**
+ * @brief Evaluate the atmosphere emissivity for clear sky. 
+ * This uses the formula from Brutsaert -- "On a Derivable
+ * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
+ * Research, Vol. 11, No. 5, October 1975, pp 742-744.
+ * Alternative: Satterlund (1979): Water Resources Research, 15, 1649-1650.
+ * @param e0 Water vapor saturation pressure (Pa)
+ * @param TA Air temperature (K)
+ * @return clear sky emissivity
+ */
+double Atmosphere::Brutsaert_emissivity(const double& e0, const double& TA) {
+	const double e0_mBar = 0.01 * e0;
+	const double exponent = 1./7.;
+
+	return (1.24 * pow( (e0_mBar / TA), exponent) );
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear sky. 
+ * This uses the formula from Brutsaert -- "On a Derivable
+ * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
+ * Research, Vol. 11, No. 5, October 1975, pp 742-744.
+ * Alternative: Satterlund (1979): Water Resources Research, 15, 1649-1650.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
+	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
+	const double ea = Brutsaert_emissivity(e0, TA);
+
+	return blkBody_Radiation(ea, TA);
 }
 
 /**

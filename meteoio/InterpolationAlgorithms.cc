@@ -589,6 +589,10 @@ void USERInterpolation::calculate(Grid2DObject& grid)
 	nrOfMeasurments = 0;
 
 	iomanager.read2DGrid(grid, filename);
+	//make sure the grid is georeferenced the same as the dem
+	if(grid.isSameGeolocalization(dem)==false) {
+		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that has not the same georeferencing as the DEM!", AT);
+	}
 }
 
 

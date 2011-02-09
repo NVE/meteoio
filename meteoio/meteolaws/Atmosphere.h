@@ -33,9 +33,18 @@ class Atmosphere {
 
 		static double stdAirPressure(const double& altitude);
 		static double waterSaturationPressure(const double& T);
+		static double wetBulbTemperature(const double& T, const double& RH, const double& altitude);
+
+		static double Omstedt_emissivity(const double& e0, const double& cloudiness);
 		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
+		static double Brutsaert_emissivity(const double& e0, const double& TA);
+		static double Brutsaert_ilwr(const double& RH, const double& TA);
+
 		static double RhtoDewPoint(double RH, double TA, const bool& force_water);
 		static double DewPointtoRh(double TD, double TA, const bool& force_water);
+
+		static double blkBody_Emissivity(const double& lwr, const double& T);
+		static double blkBody_Radiation(const double& ea, const double& T);
 };
 
 } //end namespace

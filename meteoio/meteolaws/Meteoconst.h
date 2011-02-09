@@ -21,10 +21,23 @@
 namespace mio {
 
 namespace Cst {
+	const double stefan_boltzmann = 5.67051e-8; // (W m-2 K-4)
 	const double gravity = 9.80665; // (m s-2)
-	const double gas_constant_air = 287.; // (J kg-1 K-1)
 	const double std_press = 101325.; // (Pa)
+
+	const double gaz_constant_dry_air = 287.; // (J kg-1 K-1)
+	const double gaz_constant_water_vapor = 461.9; // (J kg-1 K-1)
+	const double gaz_constant = 8.31451; // (J mol-1 K-1)
+
 	const double p_water_triple_pt = 610.78; // (Pa)
+	const double t_water_triple_pt = 273.16; // (K)
+	const double l_water_sublimation = 2.838e6; // (J Kg-1)
+	const double l_water_vaporization = 2.504e6; // (J Kg-1)
+	const double l_water_fusion = 3.34e5; // (J Kg-1)
+
+	const double specific_heat_ice = 2100.0; // (J K-1), at 0C
+	const double specific_heat_water = 4190.0; // (J K-1) at 0C
+	const double specific_heat_air = 1004.67; // (J K-1), see Stull "Meteorology for scientists and engineers" p44
 
 	const double earth_R0 = 6356766.0; // (m)
 
