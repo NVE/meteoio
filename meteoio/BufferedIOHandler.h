@@ -86,7 +86,7 @@ class BufferedIOHandler : public IOInterface {
 		 * @param date date for which to read the metadata
 		 * @param vecStation vector of metadata
 		 */
-		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
+		virtual void readStationData(const Date& date, STATION_TIMESERIE& vecStation);
 
 		/**
 		 * @brief Clear all buffers in BufferedIOHandler and hence force rebuffering
@@ -99,13 +99,13 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           std::vector< METEO_TIMESERIE >& vecMeteo,
 		                           const unsigned int& stationindex=IOUtils::npos);
 #ifdef _POPC_
-		virtual void writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
+		virtual void writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo,
 		                            const std::string& name="");
 #else
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
+		virtual void writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo,
 		                            const std::string& name="");
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
@@ -123,10 +123,10 @@ class BufferedIOHandler : public IOInterface {
 		friend class IOManager;
 
 	private:
-		const std::vector<METEO_DATASET>& get_complete_buffer(Date& start, Date& end);
+		const std::vector<METEO_TIMESERIE>& get_complete_buffer(Date& start, Date& end);
 
 		void setDfltBufferProperties();
-		void bufferData(const Date& date_start, const Date& date_end, std::vector< std::vector<MeteoData> >& vecvecMeteo);
+		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo);
 
 		IOHandler& iohandler;
 		const Config& cfg;
@@ -136,7 +136,7 @@ class BufferedIOHandler : public IOInterface {
 		Date chunk_size; ///< How much data to read at once
 		unsigned int chunks; ///< How many chuncks to buffer
 
-		std::vector< std::vector<MeteoData> > vec_buffer_meteo;
+		std::vector< METEO_TIMESERIE > vec_buffer_meteo;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 };
 } //end namespace

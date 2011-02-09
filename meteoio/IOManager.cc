@@ -15,6 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include <meteoio/IOManager.h>
 
 using namespace std;
@@ -51,7 +52,7 @@ double IOManager::getAvgSamplingRate()
 	}
 }
 
-unsigned int IOManager::getStationData(const Date& date, std::vector<StationData>& vecStation)
+unsigned int IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation)
 {
 	vecStation.clear();
 
@@ -67,7 +68,7 @@ unsigned int IOManager::getStationData(const Date& date, std::vector<StationData
 
 //for an interval of data: decide whether data should be filtered or raw
 unsigned int IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, 
-                                     std::vector< std::vector<MeteoData> >& vecMeteo)
+                                     std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	vecMeteo.clear();
 
@@ -104,7 +105,7 @@ void IOManager::fill_filtered_cache()
 {
 	if ((IOManager::filtered & processing_level) == IOManager::filtered){
 		//ask the bufferediohandler for the whole buffer
-		const vector<METEO_DATASET>& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
+		const vector< METEO_TIMESERIE >& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
 
 		//cout << "Now filtering ..." << endl;
 		meteoprocessor.process(buffer, filtered_cache);
@@ -119,7 +120,7 @@ void IOManager::fill_filtered_cache()
  * @return true if the requested chunk was contained by filtered_cache, false otherwise
  */
 bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date,
-                                    std::vector<METEO_DATASET>& vec_meteo)
+                                    std::vector< METEO_TIMESERIE >& vec_meteo)
 {
 	if ((start_date >= fcache_start) && (end_date <= fcache_end)){
 		//it's already in the filtered_cache, so just copy the requested slice
@@ -153,7 +154,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 	return false;
 }
 
-void IOManager::add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo)
+void IOManager::add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo)
 {
 	//Check cache size, delete oldest elements if necessary
 	if (resampled_cache.size() > 200){
@@ -165,7 +166,7 @@ void IOManager::add_to_cache(const Date& i_date, const std::vector<MeteoData>& v
 }
 
 //data can be raw or processed (filtered, resampled)
-unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo)
+unsigned int IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 {
 	vecMeteo.clear();
 
@@ -212,8 +213,11 @@ unsigned int IOManager::getMeteoData(const Date& i_date, std::vector<MeteoData>&
 
 	return vecMeteo.size();
 }
-
-void IOManager::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name)
+#ifdef _POPC_ //HACK popc
+void IOManager::writeMeteoData(/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, /*const*/ std::string& name)
+#else
+void IOManager::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, const std::string& name)
+#endif
 {
 	if (processing_level == IOManager::raw){
 		rawio.writeMeteoData(vecMeteo, name);
@@ -222,15 +226,25 @@ void IOManager::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecM
 	}
 }
 
+#ifdef _POPC_ //HACK popc
+void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+                            Grid2DObject& result)
+#else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
                             Grid2DObject& result)
+#endif
 {
 	string info_string;
 	interpolate(date, dem, meteoparam, result, info_string);
 }
-	
+
+#ifdef _POPC_ //HACK popc
+void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+                            Grid2DObject& result, std::string& info_string)
+#else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-					   Grid2DObject& result, std::string& info_string)
+                            Grid2DObject& result, std::string& info_string)
+#endif
 {
 	Meteo2DInterpolator mi(cfg, *this);
 	mi.interpolate(date, dem, meteoparam, result, info_string);
@@ -290,21 +304,24 @@ void IOManager::write2DGrid(const Grid2DObject& grid2D, const std::string& name)
 	}
 }
 
-std::ostream& operator<<(std::ostream& os, const IOManager& io)
-{
+std::string IOManager::toString() const {
+	stringstream os;
+
 	os << "<IOManager>\n";
-	os << "Config& cfg = " << hex << &io.cfg << dec << "\n";
-	os << io.rawio;
-	os << io.bufferedio;
-	os << io.meteoprocessor;
-	os << "Processing level = " << io.processing_level << "\n";
+	os << "Config& cfg = " << hex << &cfg << dec << "\n";
+#ifndef _POPC_ //HACK popc
+	os << rawio;
+#endif
+	os << bufferedio;
+	os << meteoprocessor;
+	os << "Processing level = " << processing_level << "\n";
 
 	//display meteocache
 	unsigned int count=0;
 	unsigned int min_stations=std::numeric_limits<unsigned int>::max();
 	unsigned int max_stations=-std::numeric_limits<unsigned int>::max();
-	std::map<Date, std::vector<MeteoData> >::const_iterator iter = io.resampled_cache.begin();
-	for (; iter != io.resampled_cache.end(); iter++) {
+	std::map<Date, std::vector<MeteoData> >::const_iterator iter = resampled_cache.begin();
+	for (; iter != resampled_cache.end(); iter++) {
 		const unsigned int nb_stations = iter->second.size();
 		if(nb_stations>max_stations) max_stations=nb_stations;
 		if(nb_stations<min_stations) min_stations=nb_stations;
@@ -321,10 +338,10 @@ std::ostream& operator<<(std::ostream& os, const IOManager& io)
 		else
 			os << min_stations << " to " << max_stations;
 		os << " station(s))\n";
-		os << io.resampled_cache.begin()->first.toString(Date::ISO) << " - 1 timestep\n";
+		os << resampled_cache.begin()->first.toString(Date::ISO) << " - 1 timestep\n";
 	}
 	if(count>1) {
-		const double avg_sampling = ( (io.resampled_cache.rbegin()->first.getJulianDate()) - (io.resampled_cache.begin()->first.getJulianDate()) ) / (double)(count-1);
+		const double avg_sampling = ( (resampled_cache.rbegin()->first.getJulianDate()) - (resampled_cache.begin()->first.getJulianDate()) ) / (double)(count-1);
 
 		os << "Resampled cache content (";
 		if(max_stations==min_stations)
@@ -332,24 +349,32 @@ std::ostream& operator<<(std::ostream& os, const IOManager& io)
 		else
 			os << min_stations << " to " << max_stations;
 		os << " station(s))\n";
-		os << io.resampled_cache.begin()->first.toString(Date::ISO);
-		os << " - " << io.resampled_cache.rbegin()->first.toString(Date::ISO);
+		os << resampled_cache.begin()->first.toString(Date::ISO);
+		os << " - " << resampled_cache.rbegin()->first.toString(Date::ISO);
 		os << " - " << count << " timesteps (" << setprecision(3) << fixed << avg_sampling*24.*3600. << " s sampling rate)";
 	}
 
 	//display filtered_cache
-	os << "Filteredcache content (" << io.filtered_cache.size() << " stations)\n";
-	for(unsigned int ii=0; ii<io.filtered_cache.size(); ii++) {
-		if (io.filtered_cache[ii].size() > 0){
-			os << std::setw(10) << io.filtered_cache[ii][0].meta.stationID << " = "
-			   << io.filtered_cache[ii][0].date.toString(Date::ISO) << " - "
-			   << io.filtered_cache[ii][io.filtered_cache[ii].size()-1].date.toString(Date::ISO) << ", "
-			   << io.filtered_cache[ii].size() << " timesteps" << endl;
+	os << "Filteredcache content (" << filtered_cache.size() << " stations)\n";
+	for(unsigned int ii=0; ii<filtered_cache.size(); ii++) {
+		if (filtered_cache[ii].size() > 0){
+			os << std::setw(10) << filtered_cache[ii][0].meta.stationID << " = "
+			   << filtered_cache[ii][0].date.toString(Date::ISO) << " - "
+			   << filtered_cache[ii][filtered_cache[ii].size()-1].date.toString(Date::ISO) << ", "
+			   << filtered_cache[ii].size() << " timesteps" << endl;
 		}
 	}
 
 	os << "</IOManager>\n";
+	return os.str();
+}
+
+//#ifndef _POPC_
+std::ostream& operator<<(std::ostream& os, const IOManager& io)
+{
+	os << io.toString();
 	return os;
 }
+//#endif
 
 } //namespace

@@ -39,6 +39,8 @@ typedef std::vector<std::string> STR_VECTOR;
 
 void marshal_uint(POPBuffer &buf,unsigned int &data, int maxsize, int flag, POPMemspool *temp);
 
+void marshal_MeteoParameters(POPBuffer &buf, MeteoData::Parameters &data, int maxsize, int flag, POPMemspool *temp);
+
 void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_geo_distances(POPBuffer &buf, Coords::geo_distances &data, int maxsize, int flag, POPMemspool *temp);
@@ -51,9 +53,9 @@ void marshal_INT2D(POPBuffer &buf, INT2D &data,int maxsize, int flag, POPMemspoo
 
 void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_METEO_TIMESERIE(POPBuffer &buf, METEO_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_vector_METEO_TIMESERIE(POPBuffer &buf, std::vector<METEO_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int maxsize, int flag, POPMemspool *temp);
 
@@ -65,9 +67,9 @@ void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &d
 
 void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_STATION_TIMESERIE(POPBuffer &buf, STATION_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_vector_STATION_TIMESERIE(POPBuffer &buf, std::vector<STATION_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp);
 

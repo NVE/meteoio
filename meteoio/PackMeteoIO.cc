@@ -18,5 +18,5 @@
 #include <meteoio/IOHandler.ph>
 #include <meteoio/IOManager.ph>
 
+//@pack(IOHandler, IOManager)
 @pack(IOHandler)
-@pack(IOManager)

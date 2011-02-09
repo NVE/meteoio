@@ -21,6 +21,7 @@
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/MeteoProcessor.h>
+#include <meteoio/MeteoData.h>
 
 namespace mio {
 
@@ -45,7 +46,7 @@ class IOManager {
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 		//end legacy support
 
-		unsigned int getStationData(const Date& date, std::vector<StationData>& vecStation);
+		unsigned int getStationData(const Date& date, STATION_TIMESERIE& vecStation);
 
 		/**
 		* @brief Fill vecMeteo with a time series of objects
@@ -72,7 +73,7 @@ class IOManager {
 		* @return            Number of stations for which data has been found in the interval
 		*/
 		unsigned int getMeteoData(const Date& dateStart, const Date& dateEnd,
-		                          std::vector< std::vector<MeteoData> >& vecMeteo);
+		                          std::vector< METEO_TIMESERIE >& vecMeteo);
 
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
@@ -94,13 +95,23 @@ class IOManager {
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
 		 * @return            Number of stations for which data has been found in the interval
 		 */
-		unsigned int getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo);
-		
+		unsigned int getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo);
+
+#ifdef _POPC_ //HACK popc
+		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam, 
+		                 Grid2DObject& result, std::string& info_string);
+#else
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
 		                 Grid2DObject& result, std::string& info_string);
-		
+#endif
+
+#ifdef _POPC_ //HACK popc
+		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam, 
+		                 Grid2DObject& result);
+#else
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
 		                 Grid2DObject& result);
+#endif
 		
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
@@ -118,15 +129,20 @@ class IOManager {
 
 		double getAvgSamplingRate();
 
-		void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
+#ifdef _POPC_ //HACK popc
+		void writeMeteoData(/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, /*const*/ std::string& name/*=""*/);
+#else
+		void writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, const std::string& name="");
+#endif
 
+		std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
 
 	private:
-		void add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo);
+		void add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo);
 		void fill_filtered_cache();
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
-							std::vector<METEO_DATASET>& vec_meteo);
+		                         std::vector< METEO_TIMESERIE >& vec_meteo);
 
 		const Config& cfg;
 		IOHandler rawio;
@@ -134,8 +150,8 @@ class IOManager {
 		MeteoProcessor meteoprocessor;
 		ProcessingProperties proc_properties;
 
-		std::map<Date, std::vector<MeteoData> > resampled_cache;  ///< stores already resampled data points
-		std::vector< std::vector<MeteoData> > filtered_cache; ///< stores already filtered data intervals
+		std::map<Date, METEO_TIMESERIE > resampled_cache;  ///< stores already resampled data points
+		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end;
 		unsigned int processing_level;
 };

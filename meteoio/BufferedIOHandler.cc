@@ -107,16 +107,16 @@ void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& 
 	in_grid2Dobj = tmpgrid2D;
 }
 
-void BufferedIOHandler::readStationData(const Date& date, std::vector<StationData>& vecStation)
+void BufferedIOHandler::readStationData(const Date& date, STATION_TIMESERIE& vecStation)
 {
 	iohandler.readStationData(date, vecStation);
 }
 
 #ifdef _POPC_
-void BufferedIOHandler::writeMeteoData(std::vector< std::vector<MeteoData> >& vecMeteo,
+void BufferedIOHandler::writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo,
                                        const std::string& name)
 #else 
-void BufferedIOHandler::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
+void BufferedIOHandler::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo,
                                        const std::string& name)
 #endif
 {
@@ -161,7 +161,7 @@ double BufferedIOHandler::getAvgSamplingRate()
 	return IOUtils::nodata;
 }
 
-const std::vector<METEO_DATASET>& BufferedIOHandler::get_complete_buffer(Date& start, Date& end)
+const std::vector< METEO_TIMESERIE >& BufferedIOHandler::get_complete_buffer(Date& start, Date& end)
 {
 	start = buffer_start;
 	end   = buffer_end;
@@ -170,7 +170,7 @@ const std::vector<METEO_DATASET>& BufferedIOHandler::get_complete_buffer(Date& s
 }
 
 void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end, 
-                                      std::vector< std::vector<MeteoData> >& vecMeteo,
+                                      std::vector< METEO_TIMESERIE >& vecMeteo,
                                       const unsigned int& /*stationindex*/)
 {
 	vecMeteo.clear();
@@ -245,7 +245,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 	}
 }
 
-void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end, std::vector< std::vector<MeteoData> >& vecvecMeteo){
+void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo){
 	//TODO: implement reading data by chunks. It has to be done the same way as rebuffering
 	vecvecMeteo.clear(); //the plugins do it internally anyway, but this is cheap and safe...
 	iohandler.readMeteoData(date_start, date_end, vecvecMeteo);

@@ -22,8 +22,15 @@
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/marshal_meteoio.h>
+#include <meteoio/IOPlugin.h>
+
+using namespace mio; //HACK for POPC
 
 namespace mio {
+
+typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR; //HACK for POPC
+//This one line above does absolutely nothing, but if removed, popc does not compile the file....
+
 
 /**
 * @file IOManager.ph
@@ -31,61 +38,63 @@ namespace mio {
 */
 
 parclass IOManager {
-		classuid(1005);
+		classuid(1004);
 	public:
-		enum ProcessingLevel {
+		IOManager([in]const Config& i_cfg);
+
+		//Legacy support to support functionality of the IOInterface superclass:
+		void read2DGrid([out]Grid2DObject& grid_out, [in]const std::string& parameter="");
+		void readDEM([out]DEMObject& dem_out);
+		void readAssimilationData([in]const Date& date_in, [out]Grid2DObject& da_out);
+		void readLanduse([out]Grid2DObject& landuse_out);
+		void readSpecialPoints([out]std::vector<Coords>& pts);
+		void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& options="");
+		//end legacy support
+
+		unsigned int getStationData([in]const Date& date, [out, proc=marshal_STATION_TIMESERIE]STATION_TIMESERIE& vecStation);
+
+		unsigned int getMeteoData([in]const Date& dateStart, [in]const Date& dateEnd,
+		                          [out, proc=marshal_vector_METEO_TIMESERIE]std::vector< METEO_TIMESERIE >& vecMeteo);
+
+		unsigned int getMeteoData([in]const Date& i_date, [out, proc=marshal_METEO_TIMESERIE]METEO_TIMESERIE& vecMeteo);
+		
+		void interpolate([in]const Date& date, [in]const DEMObject& dem, [in, proc=marshal_MeteoParameters]/*const*/ MeteoData::Parameters& meteoparam,
+		                 [out]Grid2DObject& result, [out]std::string& info_string);
+		
+		void interpolate([in]const Date& date, [in]const DEMObject& dem, [in, proc=marshal_MeteoParameters]/*const*/ MeteoData::Parameters& meteoparam,
+		                 [out]Grid2DObject& result); //HACK popc
+		
+		void setProcessingLevel([in]const unsigned int& i_level);
+
+		double getAvgSamplingRate();
+
+		void writeMeteoData([in ,proc=marshal_vector_METEO_TIMESERIE]/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, [in]const std::string& name=""); //HACK popc
+
+		std::string toString() /*const*/; //HACK popc
+		//friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
+
+		/*enum ProcessingLevel { //HACK popc
 			raw           = 1,
 			filtered      = 1 << 1,
 			resampled     = 1 << 2,
 			num_of_levels = 1 << 3
-		};
-
-		IOManager(const Config& i_cfg);
-
-		//Legacy support to support functionality of the IOInterface superclass:
-		void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
-		void readDEM(DEMObject& dem_out);
-		void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
-		void readLanduse(Grid2DObject& landuse_out);
-		void readSpecialPoints(std::vector<Coords>& pts);
-		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
-		//end legacy support
-
-		unsigned int getStationData(const Date& date, std::vector<StationData>& vecStation);
-
-		unsigned int getMeteoData(const Date& dateStart, const Date& dateEnd,
-		                          std::vector< std::vector<MeteoData> >& vecMeteo);
-
-		unsigned int getMeteoData(const Date& i_date, std::vector<MeteoData>& vecMeteo);
-		
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
-		                 Grid2DObject& result, std::string& info_string);
-		
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
-		                 Grid2DObject& result);
-		
-		void setProcessingLevel(const unsigned int& i_level);
-
-		double getAvgSamplingRate();
-
-		void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
-
-		friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
+		};*/
 
 	private:
-		void add_to_cache(const Date& i_date, const std::vector<MeteoData>& vecMeteo);
+		void add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo);
 		void fill_filtered_cache();
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
-							std::vector<METEO_DATASET>& vec_meteo);
+		                         std::vector< METEO_TIMESERIE >& vec_meteo);
 
-		const Config& cfg;
+		//const Config& cfg; //HACK popc
+		Config cfg; //HACK popc
 		IOHandler rawio;
 		BufferedIOHandler bufferedio;
 		MeteoProcessor meteoprocessor;
 		ProcessingProperties proc_properties;
 
-		std::map<Date, std::vector<MeteoData> > meteo_cache;
-		std::vector< std::vector<MeteoData> > filtered_cache;
+		std::map<Date, METEO_TIMESERIE > resampled_cache;  ///< stores already resampled data points
+		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end;
 		unsigned int processing_level;
 };

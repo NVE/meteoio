@@ -51,13 +51,13 @@ class IOHandler : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readStationData(const Date& date,
-		                             STATION_DATASET& vecStation);
-		virtual void writeMeteoData(const std::vector<METEO_DATASET>& vecMeteo,
+		                             STATION_TIMESERIE& vecStation);
+		virtual void writeMeteoData(const std::vector<METEO_TIMESERIE>& vecMeteo,
 		                            const std::string& name="");
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector<METEO_DATASET>& vecMeteo,
+		                           std::vector<METEO_TIMESERIE>& vecMeteo,
 		                           const unsigned& stationindex=IOUtils::npos);
-		void readMeteoData(const Date& date, METEO_DATASET& vecMeteo);
+		void readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo);
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);

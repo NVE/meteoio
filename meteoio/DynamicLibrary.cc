@@ -43,15 +43,19 @@ PluginObject* DynamicLibrary::newObject(const std::string& name, const Config& c
 
 	// Get the loadObject() function.  If it doesn't exist, return NULL.
 #ifdef WIN32
-	void (*loadSym)(const std::string&, const Config&) = (void (*)(const std::string&, const Config&))GetProcAddress(_objFile, "loadObject");
+	const void (*loadSym)(const std::string&, const Config&) = (void (*)(const std::string&, const Config&))GetProcAddress(_objFile, "loadObject");
 #else
-	void* loadSym = dlsym(_objFile, "loadObject");
+	const void* loadSym = dlsym(_objFile, "loadObject");
 #endif
 
 	if(loadSym == NULL) {
 		return NULL;
 	}
 
+//HACK: this has to stay until c++ standard handles this case...
+#ifdef __GNUC__
+__extension__
+#endif
 	// Load a new instance of the requested class, and return it
 	void* obj = ((void* (*)(const std::string&, const Config&))(loadSym))(name, cfg);
 	return reinterpret_cast<PluginObject*>(obj);

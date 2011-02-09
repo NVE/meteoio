@@ -45,17 +45,17 @@ SET(meteoio_sources
 )
 
 if (DEST MATCHES "par")
-  #set_source_files_properties(SMETIO.cc PROPERTIES COMPILE_FLAGS "-fPIC")
   SET(CMAKE_CXX_SOURCE_FILE_EXTENSIONS cc;ph;)
 
   SET(meteoio_sources 
     marshal_meteoio.cc
     IOHandler.ph
-    IOManager.ph
+    #IOManager.ph
     ${meteoio_sources}
     )
   SET_SOURCE_FILES_PROPERTIES( ${meteoio_sources} PROPERTIES LANGUAGE CXX )
   SET_SOURCE_FILES_PROPERTIES( IOHandler.ph PROPERTIES KEEP_EXTENSION TRUE)
+  #SET_SOURCE_FILES_PROPERTIES( IOManager.ph PROPERTIES KEEP_EXTENSION TRUE)
   SET(STATICNAME ${PROJECT_NAME}_STATIC_par)
   SET(STATICLIBNAME ${PROJECT_NAME}popc)
   ADD_LIBRARY(${STATICNAME} STATIC ${meteoio_sources})

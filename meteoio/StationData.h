@@ -91,7 +91,7 @@ class StationData {
 		//for Snowpack and other (1D) applications: add slope, aspect, horizon, etc
 };
 
-typedef std::vector<StationData> STATION_DATASET;
+typedef std::vector<StationData> STATION_TIMESERIE;
 
 } //end namespace
 

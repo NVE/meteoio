@@ -35,6 +35,20 @@ void marshal_uint(POPBuffer &buf, unsigned int &data, int maxsize, int flag, POP
 	}
 }
 
+void marshal_MeteoParameters(POPBuffer &buf, MeteoData::Parameters &data, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		int n=(int)data;
+		buf.Pack(&n,1);
+	} else {
+		int n;
+		buf.UnPack(&n,1);
+		data=(MeteoData::Parameters)n;
+	}
+}
+
 void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
@@ -85,7 +99,7 @@ void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, i
 	}
 }
 
-void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_METEO_TIMESERIE(POPBuffer &buf, METEO_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -107,21 +121,21 @@ void marshal_METEO_DATASET(POPBuffer &buf, METEO_DATASET &data, int maxsize, int
 	}
 }
 
-void marshal_vector_METEO_DATASET(POPBuffer &buf, std::vector<METEO_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_METEO_TIMESERIE(POPBuffer &buf, std::vector<METEO_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
 		for(int i=0;i<n;i++) {
-			marshal_METEO_DATASET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
+			marshal_METEO_TIMESERIE(buf, data[i], maxsize, FLAG_MARSHAL, temp);
 		}
 	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();
 		for(int i=0;i<n;i++) {
-			METEO_DATASET obj;
-			marshal_METEO_DATASET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
+			METEO_TIMESERIE obj;
+			marshal_METEO_TIMESERIE(buf, obj, maxsize, !FLAG_MARSHAL, temp);
 			data.push_back(obj);
 		}
 	}
@@ -236,7 +250,7 @@ void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMems
 	}
 }
 
-void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_STATION_TIMESERIE(POPBuffer &buf, STATION_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -258,21 +272,21 @@ void marshal_STATION_DATASET(POPBuffer &buf, STATION_DATASET &data, int maxsize,
 	}
 }
 
-void marshal_vector_STATION_DATASET(POPBuffer &buf, std::vector<STATION_DATASET> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_STATION_TIMESERIE(POPBuffer &buf, std::vector<STATION_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
 		for(int i=0;i<n;i++) {
-			marshal_STATION_DATASET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
+			marshal_STATION_TIMESERIE(buf, data[i], maxsize, FLAG_MARSHAL, temp);
 		}
 	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();
 		for(int i=0;i<n;i++) {
-			STATION_DATASET obj;
-			marshal_STATION_DATASET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
+			STATION_TIMESERIE obj;
+			marshal_STATION_TIMESERIE(buf, obj, maxsize, !FLAG_MARSHAL, temp);
 			data.push_back(obj);
 		}
 	}

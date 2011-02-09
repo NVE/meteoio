@@ -169,7 +169,7 @@ class MeteoData {
 		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
 
-typedef std::vector<MeteoData> METEO_DATASET; //HACK: replace by TIMESERIE
+typedef std::vector<MeteoData> METEO_TIMESERIE;
 
 } //end namespace
 

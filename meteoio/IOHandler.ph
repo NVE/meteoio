@@ -53,13 +53,13 @@ parclass IOHandler {
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 		virtual void readStationData([in]const Date& date,
-		              [proc=marshal_STATION_DATASET] STATION_DATASET& vecStation);
-		virtual void writeMeteoData([in,proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
+		              [proc=marshal_STATION_TIMESERIE] STATION_TIMESERIE& vecStation);
+		virtual void writeMeteoData([in,proc=marshal_vector_METEO_TIMESERIE] std::vector<METEO_TIMESERIE>& vecMeteo,
 		              [in]const std::string& name="");
 		virtual void readMeteoData([in]const Date& dateStart, [in]const Date& dateEnd,
-		              [proc=marshal_vector_METEO_DATASET] std::vector<METEO_DATASET>& vecMeteo,
+		              [proc=marshal_vector_METEO_TIMESERIE] std::vector<METEO_TIMESERIE>& vecMeteo,
 		              const unsigned& stationindex=IOUtils::npos);
-		void readMeteoData([in]const Date& date, [proc=marshal_METEO_DATASET] METEO_DATASET& vecMeteo);
+		void readMeteoData([in]const Date& date, [proc=marshal_METEO_TIMESERIE] METEO_TIMESERIE& vecMeteo);
 		virtual void readAssimilationData([in] const Date&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_vec_coords]std::vector<Coords>& pts);
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
