@@ -54,7 +54,7 @@ class Meteo1DInterpolator {
 		* taskargs:      a vector that holds the respective arguments for the algorithms
 		*                as a std::vector<std::string>, so there can be multiple arguments
 		*
-		* @param[in] _cfg Config object that holds the MeteoFilter configuration in the [Filters] section
+		* @param[in] in_cfg Config object that holds the MeteoFilter configuration in the [Filters] section
 		*/
 		Meteo1DInterpolator(const Config& in_cfg);
 

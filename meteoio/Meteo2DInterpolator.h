@@ -110,26 +110,28 @@ class Meteo2DInterpolator {
 
 		/**
 		 * @brief A generic function that can interpolate for any given MeteoData member variable
-		 * 
+		 *
+		 * @param date date for which to interpolate
+		 * @param dem Digital Elevation Model on which to perform the interpolation
+		 * @param meteoparam Any MeteoData member variable as specified in the 
+		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
+		 * @param result A Grid2DObject that will be filled with the interpolated data
+		 */
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+		                 Grid2DObject& result);
+
+		/**
+		 * @brief A generic function that can interpolate for any given MeteoData member variable
+		 *
+		 * @param date date for which to interpolate
+		 * @param dem Digital Elevation Model on which to perform the interpolation
 		 * @param meteoparam Any MeteoData member variable as specified in the 
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
 		 * @param InfoString some information about the interpolation process (useful for GUIs)
 		 */
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-					  Grid2DObject& result);
-		//void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result, std::string& InfoString) const;
-
-		/**
-		 * @brief A generic function that can interpolate for any given MeteoData member variable
-		 * 
-		 * @param meteoparam Any MeteoData member variable as specified in the 
-		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
-		 * @param result A Grid2DObject that will be filled with the interpolated data
-		 */
-		//void interpolate(const MeteoData::Parameters& meteoparam, Grid2DObject& result) const;
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-					  Grid2DObject& result, std::string& InfoString);
+		                 Grid2DObject& result, std::string& InfoString);
 
 		/**
 		 * @brief A min/max filter for 2D grids

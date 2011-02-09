@@ -80,7 +80,7 @@ class MeteoData {
 
 		/**
 		* @brief A constructor that sets the measurment time
-		* @param _date A Date object representing the time of the measurement
+		* @param in_date A Date object representing the time of the measurement
 		*/
 		MeteoData(const Date& in_date);
 
@@ -93,7 +93,7 @@ class MeteoData {
 
 		/**
 		* @brief A setter function for the measurement date
-		* @param _date A Date object representing the time of the measurement
+		* @param in_date A Date object representing the time of the measurement
 		*/
 		void setDate(const Date& in_date);
 

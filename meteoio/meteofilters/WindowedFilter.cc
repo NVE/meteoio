@@ -50,7 +50,6 @@ unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args) {
  *        vec_window is not allowed to be changed between two calls
  * @param index The index of the element in ivec that requires a window
  * @param ivec The original sequence of data points
- * @param vec_window A vector of pointers to MeteoData
  */
 const std::vector<const MeteoData*>& WindowedFilter::get_window(const unsigned int& index, 
                                                                 const std::vector<MeteoData>& ivec)

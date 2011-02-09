@@ -82,16 +82,10 @@ class BufferedIOHandler : public IOInterface {
 		} buffer_policy;
 
 		/**
-		 * @brief The function returns the next MeteoData object for each station with a
-		 *        date >= to the parameter _date. vecMeteo and vecStation will be empty if there
-		 *        is no MeteoData to be found.
-		 *        NOTE: only the real measured data is looked at: no resampled values are taken into account
-		 *
-		 * @param _date start date of the data search for each station
-		 * @param vecMeteo   A vector of MeteoData objects to be filled with data
+		 * @brief Read the metadata for a given date. 
+		 * @param date date for which to read the metadata
+		 * @param vecStation vector of metadata
 		 */
-		//void getNextMeteoData(const Date& _date, std::vector<MeteoData>& vecMeteo);
-
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 
 		/**

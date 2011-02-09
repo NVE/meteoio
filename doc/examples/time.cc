@@ -7,28 +7,25 @@ using namespace mio;
 //provide date as ISO formatted, for example 2008-12-01T15:35:00
 int main(int argc, char** argv) {
 	(void)argc;
-	const double TZ=-4.;
+	const double TZ=+1.;
 
-	Date tmp;
-	tmp.setTimeZone(TZ); //HACK
-	tmp.setFromSys();
-	std::cout << "now=" << tmp;
-	double julian=tmp.getJulianDate();
-	julian = floor(julian*24.*2. + 0.5) / (24.*2.);
-	tmp.setDate(julian, TZ);
-	std::cout << "Rounded now=" << tmp;
-	return 0;
+	Date now;
+	now.setFromSys();
+	now.setTimeZone(TZ);
+	std::cout << "now=" << now;
+	now.rnd(1800., Date::DOWN);
+	std::cout << "Rounded now=" << now;
 
 	Date d1;
 	IOUtils::convertString(d1,argv[1], 0);
 	std::cout << "In timezone GMT+0:\n";
 	std::cout << d1 << std::endl;
 
-	std::cout << "In timezone GMT " << TZ << ":\n";
+	std::cout << "In timezone GMT" << std::showpos << TZ << std::noshowpos << ":\n";
 	d1.setTimeZone(TZ,false);
 	std::cout << d1 << std::endl;
 
-	std::cout << "Same, directly read in timezone GMT " << TZ << ":\n";
+	std::cout << "Same, directly read in timezone GMT" << std::showpos << TZ << std::noshowpos << ":\n";
 	d1.setTimeZone(TZ,false);
 	IOUtils::convertString(d1,argv[1], TZ);
 	std::cout << d1 << std::endl;
@@ -36,13 +33,6 @@ int main(int argc, char** argv) {
 	std::cout << "And swapped back to timezone GMT+0:\n";
 	d1.setTimeZone(0.,false);
 	std::cout << d1 << std::endl;
-
-	std::cout << "Dates comparison in same TZ:\n";
-	d1.setTimeZone(TZ,false);
-	Date d2(d1);
-	d2-=1./24.;
-	d2.setTimeZone(0.,false);
-	std::cout << (d1<=d2) << std::endl;
 	
 	return 0;
 }

@@ -38,14 +38,6 @@ class RegModel {
 		unsigned int nb_param; ///< Number of parameters of the model
 		unsigned int min_nb_pts; ///< Minimum number of data points required to use the model
 		
-		/**
-		 * @brief The main constructor for the RegModel class
-		 *
-		 * @param _s1 A std::string representing the file to be opened (or "" if plugin is statically linked)
-		 * @param _s2 A std::string that is the classname of the object to be loaded (e.g. "A3DIO", "GSNIO")
-		 * @param p1  A pointer to the loaded object of type IOInterface (or NULL)
-		 * @param p2  A pointer to the loaded dynamic library (or NULL)
-		 */
 		RegModel(const std::string in_name, FitFctPtr in_fitFct, const unsigned int& in_nb_param, const unsigned int& in_min_nb_pts) : name(in_name), fitFct(in_fitFct), nb_param(in_nb_param), min_nb_pts(in_min_nb_pts){}
 		RegModel() : name(""), fitFct(NULL), nb_param(0), min_nb_pts(0){}
 
