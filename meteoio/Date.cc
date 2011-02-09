@@ -33,10 +33,9 @@ const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and 
 * @brief Default constructor: timezone is set to GMT without DST, julian date is set to 0 (meaning -4713-01-01T12:00)
 */
 Date::Date() {
-	undef = true;
-	timezone = 0;
 	dst = false;
 	setDate(0., 0., false);
+	undef = true;
 }
 
 /**
@@ -97,10 +96,15 @@ void Date::setUndef(const bool& flag) {
 	undef = flag;
 }
 /**
-* @brief Set internal gmt time from system time. This is always UTC
+* @brief Set internal gmt time from system time as well as system time zone.
 */
 void Date::setFromSys() {
-	setDate( time(NULL) ); //Unix time_t setter, always in gmt
+	const time_t curr = time(NULL); //current time in UTC
+	tm local = *localtime(&curr); //convert to local time
+	const double tz = (double)local.tm_gmtoff/3600.; //time zone shift
+
+	setDate( curr ); //Unix time_t setter, always in gmt
+	setTimeZone( tz );
 }
 
 /**
