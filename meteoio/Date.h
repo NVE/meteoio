@@ -89,6 +89,7 @@ class Date {
 		static const float MJD_offset;
 		static const float Unix_offset;
 		static const float Excel_offset;
+		static const float Matlab_offset;
 
 		Date();
 		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
@@ -104,6 +105,7 @@ class Date {
 		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
 		void setUnixDate(const time_t& in_time, const bool& _dst=false);
 		void setExcelDate(const double excel_in, const double& in_timezone, const bool& _dst=false);
+		void setMatlabDate(const double excel_in, const double& in_timezone, const bool& _dst=false);
 		void setUndef(const bool& flag);
 
 		bool isUndef() const;
@@ -114,6 +116,7 @@ class Date {
 		double getTruncatedJulianDate(const bool& gmt=false) const;
 		time_t getUnixDate(const bool& gmt=false) const;
 		double getExcelDate(const bool& gmt=false) const;
+		double getMatlabDate(const bool& gmt=false) const;
 
 		void getDate(double& julian_out, const bool& gmt=false) const;
 		void getDate(int& year, int& month, int& day, const bool& gmt=false) const;
@@ -142,6 +145,7 @@ class Date {
 		///Intervals arithmetic
 		///Can be used to add an interval to an existing Date object.
 		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.
+		///Please use the Duration type instead of Date for such calculations!
 		Date& operator+=(const Date&);
 		Date& operator-=(const Date&);
 		Date& operator+=(const double&);

@@ -27,6 +27,7 @@ const double Date::DST_shift = 1.0; //in hours
 const float Date::MJD_offset = 2400000.5; ///<offset between julian date and modified julian date
 const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Unix Epoch time
 const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
+const float Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
 // CONSTUCTORS
 /**
@@ -70,7 +71,13 @@ Date::Date(const Date& in_date) : paroc_base()
 Date::Date(const Date& in_date)
 #endif
 {
-	setDate(in_date.getJulianDate(), in_date.getTimeZone(), in_date.getDST());
+	if(in_date.isUndef()) {
+		dst = false;
+		setDate(0., 0., false);
+		undef = true;
+	} else {
+		setDate(in_date.getJulianDate(), in_date.getTimeZone(), in_date.getDST());
+	}
 }
 
 /**
@@ -210,9 +217,22 @@ void Date::setUnixDate(const time_t& in_time, const bool& in_dst) {
 */
 void Date::setExcelDate(const double excel_in, const double& _timezone, const bool& _dst) {
 	//TODO: handle date < 1900-01-00 and date before 1900-03-01
+	//see http://www.mathworks.com/help/toolbox/finance/x2mdate.html
 	const double _julian = excel_in + Excel_offset;
 	setDate(_julian, _timezone, _dst);
 }
+
+/**
+* @brief Set date from an Matlab date.
+* @param matlab_in Matlab date to set
+* @param _timezone timezone as an offset to GMT (in hours, optional)
+* @param _dst is it DST? (default: no)
+*/
+void Date::setMatlabDate(const double matlab_in, const double& _timezone, const bool& _dst) {
+	const double _julian = matlab_in + Matlab_offset;
+	setDate(_julian, _timezone, _dst);
+}
+
 
 // GETTERS
 bool Date::isUndef() const {
@@ -343,6 +363,25 @@ double Date::getExcelDate(const bool& gmt) const {
 		return ( local_julian - Excel_offset);
 	}
 }
+
+/**
+* @brief Return Matlab date. 
+* This is the number of days since 0000-01-01T00:00:00. See http://www.mathworks.com/help/techdoc/ref/datenum.html
+* @param gmt convert returned value to GMT? (default: false)
+* @return Matlab date in the current timezone / in GMT depending on the gmt parameter
+*/
+double Date::getMatlabDate(const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
+	if(gmt) {
+		return ( gmt_julian - Matlab_offset);
+	} else {
+		const double local_julian = GMTToLocal(gmt_julian);
+		return ( local_julian - Matlab_offset);
+	}
+}
+
 
 /**
 * @brief Retrieve julian date.
@@ -643,7 +682,8 @@ const Date Date::operator+(const Date& indate) const {
 		return tmp;
 	}
 
-	Date tmp(gmt_julian + indate.gmt_julian, timezone);
+	Date tmp(gmt_julian + indate.gmt_julian, 0.);
+	tmp.setTimeZone(timezone);
 	return tmp;
 }
 
@@ -653,31 +693,36 @@ const Date Date::operator-(const Date& indate) const {
 		return tmp;
 	}
 
-	Date tmp(gmt_julian - indate.gmt_julian, timezone);
+	Date tmp(gmt_julian - indate.gmt_julian, 0.);
+	tmp.setTimeZone(timezone);
 	return tmp;
 }
 
 const Date Date::operator+(const double& indate) const {
 	//remains undef if undef
-	Date tmp(gmt_julian + indate, timezone);
+	Date tmp(gmt_julian + indate, 0.);
+	tmp.setTimeZone(timezone);
 	return tmp;
 }
 
 const Date Date::operator-(const double& indate) const {
 	//remains undef if undef
-	Date tmp(gmt_julian - indate, timezone);
+	Date tmp(gmt_julian - indate, 0.);
+	tmp.setTimeZone(timezone);
 	return tmp;
 }
 
 const Date Date::operator*(const double& value) const {
 	//remains undef if undef
-	Date tmp(gmt_julian * value, timezone);
+	Date tmp(gmt_julian * value, 0.);
+	tmp.setTimeZone(timezone);
 	return tmp;
 }
 
 const Date Date::operator/(const double& value) const {
 	//remains undef if undef
-	Date tmp(gmt_julian / value, timezone);
+	Date tmp(gmt_julian / value, 0.);
+	tmp.setTimeZone(timezone);
 	return tmp;
 }
 
@@ -687,11 +732,11 @@ std::ostream& operator<<(std::ostream &os, const Date &date) {
 		os << "Date is undefined\n";
 	else {
 		os << date.toString(Date::ISO) << "\n";
-		os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\n";
-		os << "DST=" << date.dst << "\n";
+		os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\t\t" << "DST=" << date.dst << "\n";
 		os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
 		os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
 		os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
+		os << "MatlabJulian:\t\t" << date.getMatlabDate() << "\n";
 		try {
 			os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
 		} catch (...) {}
