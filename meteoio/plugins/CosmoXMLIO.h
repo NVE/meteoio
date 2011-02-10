@@ -59,7 +59,6 @@ namespace mio {
 			
 			virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 			virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, const unsigned int& stationindex=IOUtils::npos);
-			void readStationNames(std::vector<std::string>& vecStationName);
 			
 			virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
 			
@@ -72,9 +71,19 @@ namespace mio {
 			std::string getValue(xmlpp::TextReader& reader);
 			double getDoubleValue(xmlpp::TextReader& reader);
 			Date getDateValue(xmlpp::TextReader& reader);
+			double c2k(const double& value);
+			double k2c(const double& value);
+			
+			void finishMeteo(const double& latitude, const double& longitude, const double& altitude, 
+			                 double& dew_point, MeteoData& meteo);
+			void writeHeader(std::stringstream& XMLdata);	//Write the first lines of the XML output file
+			void writeLocationHeader(const StationData& station, std::stringstream& XMLdata);
+			void writeMeteoDataDescription(std::stringstream& XMLdata);	//Write the middle of the XML output file
+			void writeMeteo(const std::vector<MeteoData>& vecMeteo, std::stringstream& XMLdata);
+			void writeFooter(std::stringstream& XMLdata);	//Write the last lines of the XML output file
 			
 			Config cfg;
-			static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+			double plugin_nodata;	//plugin specific no data value
 			static const double in_tz, out_tz; //plugin specific time zones
 			std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 	};
