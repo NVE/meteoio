@@ -74,63 +74,91 @@ ifeq ($(PROJ4),yes)
 endif
 
 ######## Sources, objects, headers
-METEOIO_OBJ = 	$(SRCDIR)/MeteoData.o \
+METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/Matrix.o \
-		$(SRCDIR)/StationData.o \
 		$(SRCDIR)/IOPlugin.o \
-		$(SRCDIR)/IOHandler.o \
-		$(SRCDIR)/IOInterface.o \
-		$(SRCDIR)/DynamicLibrary.o \
+		$(SRCDIR)/MeteoProcessor.o \
+		$(SRCDIR)/ResamplingAlgorithms.o \
+		$(SRCDIR)/Meteo1DInterpolator.o \
+		$(SRCDIR)/InterpolationAlgorithms.o \
 		$(SRCDIR)/A3DIO.o \
-		$(SRCDIR)/BufferedIOHandler.o \
-		$(SRCDIR)/Config.o \
 		$(SRCDIR)/Date.o \
+		$(SRCDIR)/Timer.o \
 		$(SRCDIR)/Grid2DObject.o \
-		$(SRCDIR)/Grid3DObject.o \
-		$(SRCDIR)/FilterAlgorithms.o \
+		$(SRCDIR)/IOHandler.o \
+		$(SRCDIR)/Coords.o \
+		$(SRCDIR)/Meteo2DInterpolator.o \
+		$(SRCDIR)/BufferedIOHandler.o \
 		$(SRCDIR)/DEMObject.o \
+		$(SRCDIR)/Grid3DObject.o \
+		$(SRCDIR)/IOInterface.o \
+		$(SRCDIR)/libinterpol1D.o \
+		$(SRCDIR)/libfit1D.o \
+		$(SRCDIR)/StationData.o \
+		$(SRCDIR)/Config.o \
+		$(SRCDIR)/DynamicLibrary.o \
 		$(SRCDIR)/IOExceptions.o \
 		$(SRCDIR)/IOUtils.o \
-		$(SRCDIR)/Coords.o \
 		$(SRCDIR)/libinterpol2D.o \
-		$(SRCDIR)/libinterpol1D.o \
-		$(SRCDIR)/Meteo2DInterpolator.o \
-		$(SRCDIR)/Meteo1DInterpolator.o \
-		$(SRCDIR)/MeteoProcessor.o \
-		$(SRCDIR)/MeteoFilter.o \
-		$(SRCDIR)/ResamplingAlgorithms.o \
-		$(SRCDIR)/InterpolationAlgorithms.o 
+		$(SRCDIR)/MeteoData.o \
+		$(SRCDIR)/meteofilters/FilterMin.o \
+		$(SRCDIR)/meteofilters/FilterMax.o \
+		$(SRCDIR)/meteofilters/FilterMinMax.o \
+		$(SRCDIR)/meteofilters/FilterMedianAvg.o \
+		$(SRCDIR)/meteofilters/FilterMeanAvg.o \
+		$(SRCDIR)/meteofilters/FilterStdDev.o \
+		$(SRCDIR)/meteofilters/RateFilter.o \
+		$(SRCDIR)/meteofilters/FilterBlock.o \
+		$(SRCDIR)/meteofilters/WindowedFilter.o \
+		$(SRCDIR)/meteofilters/ProcessingBlock.o \
+		$(SRCDIR)/meteofilters/ProcessingStack.o \
+		$(SRCDIR)/meteolaws/Atmosphere.o \
+		$(SRCDIR)/meteolaws/Suntrajectory.o \
+		$(SRCDIR)/meteolaws/Sun.o 
 
-METEOIO_OBJ_POPC =  $(SRCDIR)/IOInterface_par.o \
+METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
+		$(SRCDIR)/marshal_meteoio_par.o \
+		$(SRCDIR)/IOManager_par.o \
 		$(SRCDIR)/Matrix_par.o \
-		$(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/IOPlugin_par.o \
-		$(SRCDIR)/IOHandler.stub.o \
-		$(SRCDIR)/IOHandler_par.o \
-		$(SRCDIR)/BufferedIOHandler_par.o \
+		$(SRCDIR)/MeteoProcessor_par.o \
+		$(SRCDIR)/ResamplingAlgorithms_par.o \
+		$(SRCDIR)/Meteo1DInterpolator_par.o \
+		$(SRCDIR)/InterpolationAlgorithms_par.o \
 		$(SRCDIR)/A3DIO_par.o \
-		$(SRCDIR)/MeteoData_par.o \
+		$(SRCDIR)/Date_par.o \
+		$(SRCDIR)/Timer_par.o \
+		$(SRCDIR)/Grid2DObject_par.o \
+		$(SRCDIR)/IOHandler_par.o \
+		$(SRCDIR)/Coords_par.o \
+		$(SRCDIR)/Meteo2DInterpolator_par.o \
+		$(SRCDIR)/BufferedIOHandler_par.o \
+		$(SRCDIR)/DEMObject_par.o \
+		$(SRCDIR)/Grid3DObject_par.o \
+		$(SRCDIR)/IOInterface_par.o \
+		$(SRCDIR)/libinterpol1D_par.o \
+		$(SRCDIR)/libfit1D_par.o \
 		$(SRCDIR)/StationData_par.o \
 		$(SRCDIR)/Config_par.o \
-		$(SRCDIR)/Date_par.o \
-		$(SRCDIR)/Grid2DObject_par.o \
-		$(SRCDIR)/Grid3DObject_par.o \
-		$(SRCDIR)/MeteoFilter_par.o \
-		$(SRCDIR)/FilterAlgorithms_par.o \
-		$(SRCDIR)/DEMObject_par.o \
+		$(SRCDIR)/DynamicLibrary_par.o \
 		$(SRCDIR)/IOExceptions_par.o \
 		$(SRCDIR)/IOUtils_par.o \
-		$(SRCDIR)/Coords_par.o \
 		$(SRCDIR)/libinterpol2D_par.o \
-		$(SRCDIR)/libinterpol1D_par.o \
-		$(SRCDIR)/Meteo2DInterpolator_par.o \
-		$(SRCDIR)/InterpolationAlgorithms_par.o \
-		$(SRCDIR)/DynamicLibrary_par.o \
-		$(SRCDIR)/Meteo1DInterpolator_par.o \
-		$(SRCDIR)/MeteoProcessor_par.o \
-		$(SRCDIR)/MeteoFilter_par.o \
-		$(SRCDIR)/ResamplingAlgorithms_par.o \
-		$(SRCDIR)/marshal_meteoio_par.o
+		$(SRCDIR)/MeteoData_par.o \
+		$(SRCDIR)/meteofilters/FilterMin_par.o \
+		$(SRCDIR)/meteofilters/FilterMax_par.o \
+		$(SRCDIR)/meteofilters/FilterMinMax_par.o \
+		$(SRCDIR)/meteofilters/FilterMedianAvg_par.o \
+		$(SRCDIR)/meteofilters/FilterMeanAvg_par.o \
+		$(SRCDIR)/meteofilters/FilterStdDev_par.o \
+		$(SRCDIR)/meteofilters/RateFilter_par.o \
+		$(SRCDIR)/meteofilters/FilterBlock_par.o \
+		$(SRCDIR)/meteofilters/WindowedFilter_par.o \
+		$(SRCDIR)/meteofilters/ProcessingBlock_par.o \
+		$(SRCDIR)/meteofilters/ProcessingStack_par.o \
+		$(SRCDIR)/meteolaws/Atmosphere_par.o \
+		$(SRCDIR)/meteolaws/Suntrajectory_par.o \
+		$(SRCDIR)/meteolaws/Sun_par.o 
 
 TOOLS_OBJ =	$(TOOLSDIR)/createA3DFiles.o
 
@@ -185,10 +213,14 @@ distclean: clean
 install:
 	@echo **** Installing MeteoIO
 	mkdir -p @includedir@/meteoio
+	mkdir -p @includedir@/meteoio/meteofilters
+	mkdir -p @includedir@/meteoio/meteolaws
 	mkdir -p @libdir@
 	mkdir -p @libdir@/meteoio/plugins
 	cp ${SRCDIR}/*.h @includedir@/meteoio
 	cp ${SRCDIR}/*.ph @includedir@/meteoio
+	cp ${SRCDIR}/meteofilters/*.h @includedir@/meteoio/meteofilters
+	cp ${SRCDIR}/meteolaws/*.h @includedir@/meteoio/meteolaws
 	-cp lib/libmeteoio* @libdir@
 	-cp lib/plugins/*.so @libdir@/meteoio/plugins
 	-cp lib/*.module @libdir@/meteoio
