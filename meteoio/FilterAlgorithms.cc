@@ -48,7 +48,9 @@ namespace mio {
  * @endcode
  *
  * @section filters_available Available filters
- * The filters that are currently available are the following:
+ * NOTE: this is now obsolete, but not all the filters have been ported to the new infrastructure.
+ * The documentation has not (yet) been ported to the new structure either... 
+ * The filters that were originally available were the following:
  * - rate: rate of change filter, see FilterAlgorithms::RateFilter
  * - min_max: range check filter, see FilterAlgorithms::MinMaxFilter
  * - min: minimum check filter, see FilterAlgorithms::MinValueFilter
