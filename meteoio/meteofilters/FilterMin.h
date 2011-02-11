@@ -28,9 +28,18 @@ namespace mio {
 
 /**
  * @class  FilterMin
- * @brief  
+ * @ingroup processing
  * @author Thomas Egger - Mathias Bavay
  * @date   2011-01-02
+ * @brief Min range filter.
+ * Reject all values smaller than the min. Remarks:
+ * - the minimum permissible value has to be provided has an argument (in SI)
+ * - the keyword "soft" maybe added, in such a case all data smaller than the min would be assigned
+ * the minimum permissible value
+ * @code
+ * TA::filter1	= min
+ * TA::arg1	= 230
+ * @endcode
  */
 
 class FilterMin : public FilterBlock {

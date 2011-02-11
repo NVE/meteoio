@@ -26,9 +26,25 @@ namespace mio {
 
 /**
  * @class  FilterMeanAvg
- * @brief  
+ * @ingroup processing
  * @author Thomas Egger
  * @date   2011-01-24
+ * @brief Mean average processing. 
+ * The mean average filter returns the mean value of all values within a user given time window. Remarks:
+ * - nodata values are excluded from the mean
+ * - Two arguments expected (both have to be fullfilled for the filter to start operating):
+ *   - minimal number of points in window
+ *   - minimal time interval spanning the window (in seconds)
+ * - the two arguments may be preceded by the keywords "left", "center" or "right", indicating the window position
+ * - the keyword "soft" maybe added, if the window position is allowed to be adjusted to the data present
+ *
+ * @code
+ * Valid examples for the io.ini file:
+ *          TA::filter1 = mean_avg
+ *          TA::arg1    = soft left 1 1800 (1800 seconds time span for the left leaning window)
+ *          RH::filter1 = mean_avg
+ *          RH::arg1    = 10 600          (strictly centered window spanning 600 seconds and at least 10 points)
+ * @endcode
  */
 
 class FilterMeanAvg : public WindowedFilter {

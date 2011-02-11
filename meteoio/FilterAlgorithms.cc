@@ -20,53 +20,6 @@
 using namespace std;
 
 namespace mio {
- /**
- * @page filters Filters overview
- * The filtering infrastructure is described in FilterAlgorithms (for its API). The goal of this page is to give an overview of the available filters and their usage.
- *
- * @section filters_modes Modes of operation
- * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
- *
- * @section filtering_section Filtering section
- * The filters are specified for each parameter in the [Filters] section. This section contains
- * a list of the various meteo parameters (see MeteoData) with their associated choice of filtering algorithms and
- * optional parameters.The filters are applied serialy, in the order they are given in. An example of such section is given below:
- * @code
- * [Filters]
- * TA::filter1	= min_max
- * TA::arg1	= 230 330
- * 
- * RH::filter1	= min_max
- * RH::arg1	= -0.2 1.2
- * RH::filter2	= min_max
- * RH::arg2	= soft 0.0 1.0
- * 
- * HNW::filter1	= min
- * HNW::arg1	= -0.1
- * HNW::filter2	= min
- * HNW::arg2	= soft 0.
- * @endcode
- *
- * @section filters_available Available filters
- * NOTE: this is now obsolete, but not all the filters have been ported to the new infrastructure.
- * The documentation has not (yet) been ported to the new structure either... 
- * The filters that were originally available were the following:
- * - rate: rate of change filter, see FilterAlgorithms::RateFilter
- * - min_max: range check filter, see FilterAlgorithms::MinMaxFilter
- * - min: minimum check filter, see FilterAlgorithms::MinValueFilter
- * - max: maximum check filter, see FilterAlgorithms::MaxValueFilter
- * - mad: median absolute deviation, see FilterAlgorithms::MedianAbsoluteDeviationFilter
- * - stddev: reject data outside mean +/- k*stddev, see FilterAlgorithms::StandardDeviationFilter
- * - Tukey53H: Tukey53H spike detection, based on median, see FilterAlgorithms::Tukey53HFilter
- *
- * A few data transformations are also supported besides filtering:
- * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
- * - exp_smoothing: exponential smoothing of data, see FilterAlgorithms::ExpSmoothingProcess
- * - wma_smoothing window moving average smoothing of data, see FilterAlgorithms::WMASmoothingProcess
- * - median_avg: running median average over a given window, see FilterAlgorithms::MedianAvgProcess
- * - mean_avg: running mean average over a given window, see FilterAlgorithms::MeanAvgProcess
- * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
- */
 
 std::map<std::string, FilterProperties> FilterAlgorithms::filterMap;
 const bool FilterAlgorithms::__init = FilterAlgorithms::initStaticData();

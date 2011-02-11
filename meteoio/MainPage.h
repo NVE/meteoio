@@ -29,7 +29,11 @@ namespace mio {
 */
 
 /*! \defgroup stats Statistical calculations
-   Documentation for available statistical calculations. This is heavily used by the \subpage filters "Filters" as well as the \subpage resampling "1D interpolations" and \subpage interpol2d "2D interpolations".
+   Documentation for available statistical calculations. This is heavily used by the \subpage processing "Available data processing elements" as well as the \subpage resampling "1D interpolations" and \subpage interpol2d "2D interpolations".
+*/
+
+/*! \defgroup processing Data processing elements
+   Documentation for available data processing components. These can be used on incoming meteorological data. See \subpage processing "Available data processing elements".
 */
 
 /*! \defgroup data_str Data structures
@@ -55,16 +59,17 @@ namespace mio {
  *    -# \subpage general "General concepts"
  *    -# \subpage plugins "Available plugins" and usage
  *    -# \subpage coords "Available coordinate systems" and usage
- *    -# \subpage filters "Available filters" and usage
+ *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
+ *    -# \subpage build_io "How to build your io.ini configuration file"
  * -# Programing using MeteoIO
  *    -# \subpage workflow "Example Workflow"
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
  *    -# \subpage examples "Usage examples"
  * -# Expanding MeteoIO
  *    -# How to \subpage dev_plugins "write a Plugin"
- *    -# How to \subpage dev_filters "write a Filter"
+ *    -# How to \subpage dev_processing "write a processing element"
  *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
  */
 
@@ -84,6 +89,7 @@ namespace mio {
  * - a module to deal with configuration files. The program that you are using might be using this module for other configuration files.
  *
  * @section Config Configuration file
+ * @anchor config_doc
  * @subsection Config_syntax Configuration file syntax
  * The configuration inputs/outputs file is divided in sections. Each section name is enclosed in brackets.
  * @code
@@ -112,6 +118,7 @@ namespace mio {
  * [Input]
  * COORDSYS	= CH1903	#mandatory: which coordinate system is used for the geographic coordinates
  * COORDPARAM	= -999		#extra arguments for the chosen coordinate system (often, none)
+ * TIME_ZONE    = +1		#default time zone for inputs
  *
  * DEM		= ARC		#plugin to use for reading DEM information
  * #this might be followed by any number of arguments that are specific to this plugin
@@ -139,6 +146,37 @@ namespace mio {
  *
  * @subsection Finding_docs Where to find the proper documentation
  * As can be seen from the previous example, each plugin, each filter or each interpolation algorithm might have its own parameters. Therefore, this is the documentation of each specific plugin/filter/algorithm that has to be used in order to figure out what can be configured when it (see the next sections in the welcome page).
+ */
+
+/**
+ * @page build_io "How to build your io.ini configuration file"
+ * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. This section will show you
+ * how to practically set up your first configuration file. Please read \ref general documentation page before starting!
+ *
+ * You first need to create the various sections:
+ * - [General] : the documentation about this section is found in ??
+ * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
+ *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for special points
+ *             (key=SPECIALPTS), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
+ *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
+ *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
+ *             system should often be specified, as explained in \ref coords .
+ *
+ *  - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
+ * 
+ *  - [Filters] : This section lists the pre-processing that has to be performed on the incoming meteorological data.
+ *                It builds a stack of processing elements one after the other one, for each meteorological parameter.
+ *                See \ref processing for more information.
+ *
+ *  - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data.
+ *                         See \ref resampling .
+ *
+ *  - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided
+ *                         Digital Elevation Model. See \ref interpol2d .
+ *
+ *
+ * The application that you are using might also need its own section(s), check this with your application.
+ * 
  */
 
  /**
@@ -217,24 +255,26 @@ namespace mio {
 //2D interpolation development given in Meteo2DInterpolator.h
 
  /**
- * @page dev_filters Filter developer's guide
+ * @page dev_processing Processing elements developer's guide
  *
- * In order to add a new filter to the already existing set of filters the developer only needs to edit
- * the class FilterAlgorithms. It is important to understand that the filter operate on a "per parameter" basis.
- * This means that a filter might be executed for the parameter TA and another one for the parameter HNW, so the filter
- * algorithm only has to deal with a generic filtering method based on double values.
+ * In order to add a new filter/processing element to the already existing set of components, the developer only needs to
+ * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteofilters. 
+ * It is important to understand that the processing elements operate on a "per parameter" basis.
+ * This means that an element might be executed for the parameter TA and another one for the parameter HNW, so the 
+ * algorithm only has to deal with a generic processing method based on double values.
  *
- * To implement a new filter, the following steps are necessary:
+ * To implement a new processing element, the following steps are necessary:
  *
- * -# Implementing the filter, as a derived class of FilterBlock, by creating two files: the header file and its
+ * -# Implementing the element, as a derived class of ProcessingBlock or FilterBlock or WindowedFilter, by creating
+ *    two files: the header file and its
  *    implementation file, in the meteofilters subdirectory of the source code.
  *    The class will contain two public methods: a constructor
- *    that takes a vector of strings containing the filter arguments and a method
+ *    that takes a vector of strings containing the element's arguments and a method
  *    @code
  *    process(const unsigned int& index, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
  *    @endcode
  *    that
- *    applies the filter to the provided vector of values, for a meteo parameter pointed to by index. This index
+ *    applies the element to the provided vector of values, for a meteo parameter pointed to by index. This index
  *    is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
  *    parameters). The constructor must set up properties.for_second_pass to mark if the filter can be applied
  *    a second time during a second pass, that is after resampling.

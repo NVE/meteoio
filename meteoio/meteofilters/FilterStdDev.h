@@ -28,9 +28,18 @@ namespace mio {
 
 /**
  * @class  FilterStdDev
- * @brief Standard Deviation filter
+ * @ingroup processing
  * @author Mathias Bavay
  * @date   2011-02-07
+ * @brief Standard deviation filter.
+ * Values outside of mean ± 2 std_dev are rejected.
+ * @code
+ * Valid examples for the io.ini file:
+ *          TA::filter1 = stddev
+ *          TA::arg1    = soft left 1 1800  (1800 seconds time span for the left leaning window)
+ *          RH::filter1 = stddev
+ *          RH::arg1    = 10 6000            (strictly centered window spanning 6000 seconds and at least 10 points)
+ * @endcode
  */
 
 class FilterStdDev : public WindowedFilter {

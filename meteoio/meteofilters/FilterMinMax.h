@@ -28,9 +28,19 @@ namespace mio {
 
 /**
  * @class  FilterMinMax
- * @brief  
+ * @ingroup processing
+ * @brief Min/Max range filter.
  * @author Thomas Egger
  * @date   2011-01-02
+ * Reject all values greater than the max or smaller than the min. Remarks:
+ * - two arguments have to be provided, min and max (in SI)
+ * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
+ * the maximum permissible value and all data smaller than the min would be assigned the minimum permissible value
+ * @code
+ * TA::filter1	= min_max
+ * TA::arg1	= 230 330
+ * @endcode
+ * 
  */
 
 class FilterMinMax : public FilterBlock {

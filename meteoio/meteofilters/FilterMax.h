@@ -28,9 +28,18 @@ namespace mio {
 
 /**
  * @class  FilterMax
- * @brief  
+ * @ingroup processing
  * @author Thomas Egger - Mathias Bavay
  * @date   2011-01-02
+ * @brief Max range filter.
+ * Reject all values greater than the max. Remarks:
+ * - the maximum permissible value has to be provided has an argument (in SI)
+ * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
+ * the maximum permissible value
+ * @code
+ * TA::filter1	= max
+ * TA::arg1	= 330
+ * @endcode
  */
 
 class FilterMax : public FilterBlock {

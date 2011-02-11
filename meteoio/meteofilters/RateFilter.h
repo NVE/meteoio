@@ -26,6 +26,7 @@ namespace mio {
 
 /**
  * @class  RateFilter
+ * @ingroup processing
  * @author Thomas Egger
  * @date   2011-01-26
  * @brief Rate of change filter.
