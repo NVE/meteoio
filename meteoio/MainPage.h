@@ -154,7 +154,8 @@ namespace mio {
  * how to practically set up your first configuration file. Please read \ref general documentation page before starting!
  *
  * You first need to create the various sections:
- * - [General] : the documentation about this section is found in ??
+ * - [General] : The documentation about this section is found in ??. It currently contains the PLUGIN_PATH key that
+ *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler). 
  * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
  *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for special points
  *             (key=SPECIALPTS), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
@@ -166,14 +167,19 @@ namespace mio {
  * 
  *  - [Filters] : This section lists the pre-processing that has to be performed on the incoming meteorological data.
  *                It builds a stack of processing elements one after the other one, for each meteorological parameter.
- *                See \ref processing for more information.
+ *                See \ref processing for more information. It also contains 
  *
- *  - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data.
+ *  - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data. The goal is
+ *                         to be able to take in data at any sampling rate and to extract values at any user given time step
+ *                         according to the resampling specifications of the user. The search window size can be given with
+ *                         key WINDOW_SIZE that expresses (in seconds) how far a valid point can be searched for when
+ *                         re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point). 
  *                         See \ref resampling .
  *
  *  - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided
- *                         Digital Elevation Model. See \ref interpol2d .
- *
+ *                         Digital Elevation Model. The goal is to populate two dimensional grids with meteorological
+ *                         parameters from point measurements, according to the specifications of the user.
+ *                         See \ref interpol2d .
  *
  * The application that you are using might also need its own section(s), check this with your application.
  * 

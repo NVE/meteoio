@@ -21,6 +21,7 @@
 #include <meteoio/meteofilters/FilterMinMax.h>
 #include <meteoio/meteofilters/FilterMeanAvg.h>
 #include <meteoio/meteofilters/FilterMedianAvg.h>
+#include <meteoio/meteofilters/FilterWindAvg.h>
 #include <meteoio/meteofilters/FilterStdDev.h>
 #include <meteoio/meteofilters/RateFilter.h>
 
@@ -70,7 +71,7 @@ namespace mio {
  * - wma_smoothing window moving average smoothing of data, see FilterAlgorithms::WMASmoothingProcess
  * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
  * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
- * - wind_avg: vector average over a given window, see FilterAlgorithms::WindAvgProcess
+ * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
  */
 
 std::set<std::string> BlockFactory::availableBlocks;
@@ -83,6 +84,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("MIN_MAX");
 	availableBlocks.insert("MEAN_AVG");
 	availableBlocks.insert("MEDIAN_AVG");
+	availableBlocks.insert("WIND_AVG");
 	availableBlocks.insert("STD_DEV");
 	availableBlocks.insert("RATE");
 
@@ -106,6 +108,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterMeanAvg(vec_args);
 	} else if (blockname == "MEDIAN_AVG"){
 		return new FilterMedianAvg(vec_args);
+	} else if (blockname == "WIND_AVG"){
+		return new FilterWindAvg(vec_args);
 	} else if (blockname == "STD_DEV"){
 		return new FilterStdDev(vec_args);
 	} else if (blockname == "RATE"){

@@ -134,7 +134,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 					ovec[ii] = ivec[ii]; //just copy input to output
 			} else {
 				ovec[ii] = ivec[ii]; //just copy input to output
-			}			
+			}
 		}
 	}
 }
