@@ -256,7 +256,7 @@ namespace mio {
  */
 
 //Plugins overview given in IOHandler.cc
-//Filters overview given in FilterAlgorithms.cc
+//Filters overview given in ProcessingBlock.cc
 //Plugin development given in IOInterface.h
 //2D interpolation development given in Meteo2DInterpolator.h
 
