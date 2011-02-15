@@ -106,9 +106,14 @@ void Date::setUndef(const bool& flag) {
 * @brief Set internal gmt time from system time as well as system time zone.
 */
 void Date::setFromSys() {
-	const time_t curr = time(NULL); //current time in UTC
+	/*const time_t curr = time(NULL); //current time in UTC
 	tm local = *localtime(&curr); //convert to local time
-	const double tz = (double)local.tm_gmtoff/3600.; //time zone shift
+	const double tz = (double)local.tm_gmtoff/3600.; //time zone shift*/
+
+	const time_t curr = time(NULL);// current time in UTC
+	tm local = *gmtime(&curr);// current time in UTC, stored as tm
+	const time_t utc = (mktime(&local));// convert GMT tm to GMT time_t
+	double tz = difftime(utc,curr)/3600.; //time zone shift
 
 	setDate( curr ); //Unix time_t setter, always in gmt
 	setTimeZone( tz );

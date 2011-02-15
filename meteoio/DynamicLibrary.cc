@@ -43,7 +43,7 @@ PluginObject* DynamicLibrary::newObject(const std::string& name, const Config& c
 
 	// Get the loadObject() function.  If it doesn't exist, return NULL.
 #ifdef WIN32
-	const void (*loadSym)(const std::string&, const Config&) = (void (*)(const std::string&, const Config&))GetProcAddress(_objFile, "loadObject");
+	const void (*loadSym)(const std::string&, const Config&) = (const void (*)(const std::string&, const Config&))GetProcAddress(_objFile, "loadObject");
 #else
 	const void* loadSym = dlsym(_objFile, "loadObject");
 #endif
