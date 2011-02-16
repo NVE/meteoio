@@ -38,20 +38,30 @@ namespace mio {
  * @section cosmoxml_units Units
  * The units are assumed to be the following:
  * - temperatures in celsius
- * - relative humidity in %
+ * - dew point in celsius (input)
+ * - relative humidity in % (output)
  * - wind speed in m/s
  * - precipitations in mm/h
  * - radiation in W/m²
+ * - maximal wind speed in m/s (not implemented yet...)
  *
  * @section cosmoxml_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: input coordinate system (see Coords) specified in the [Input] section
- * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
- * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
- * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - XMLPATH: string containing the path to the xml files
- * - NROFSTATIONS: total number of stations listed for use
- * - STATION#: station id for the given number #
+ * - COORDSYS:	input coordinate system (see Coords) specified in the [Input] section
+ * - METEOPATH: string containing the path to the xml files to be read, specified in the [Input] section
+ * - METEOPATH: string containing the path where the XML files have to be written, specified in the [Output] section
+ * - METEO:	specify COSMOXML for [Input] and/or [Output] section(s)
+ *
+ * Example:
+ * @code
+ * [Input]
+ * COORDSYS	= CH1903
+ * METEO		= COSMOXML
+ * METEOPATH	= ./input/meteoXMLdata
+ * [Output]
+ * METEO		= COSMOXML
+ * METEOPATH	= ./output/meteoXMLdata
+ * @endcode
  */
 
 const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
@@ -61,16 +71,6 @@ struct indent {
   int depth_;
   indent(int depth): depth_(depth) {};
 };
-
-std::ostream & operator<<(std::ostream & o, indent const & in)
-{
-  for(int i = 0; i != in.depth_; ++i)
-  {
-    o << "  ";
-  }
-  return o;
-}
-
 
 CosmoXMLIO::CosmoXMLIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -119,11 +119,99 @@ void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*d
 	throw IOException("Nothing implemented here", AT);
 }
 
-void CosmoXMLIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*/)
+void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationData>& vecStation)
 {
-	//Nothing so far
-	// -----> Implemented in readMeteoData <-----
-	throw IOException("Nothing implemented here", AT);
+	//Get all files from directory
+	string meteopath = "", station_path="";
+ 	cfg.getValue("METEOPATH", "Input", meteopath);
+	if (meteopath == "")
+		throw ConversionFailedException("Error while reading value for METEOPATH", AT);	
+	const string pattern = "xml";
+	list<string> dirlist;
+	IOUtils::readDirectory(meteopath, dirlist, pattern);
+	dirlist.sort();
+	
+	vecStation.clear();	//Initialize Station Vector
+
+	list<string>::iterator itr;	//To loop in the stations list
+	
+	//Plot all the station names
+	cout << "Stations in the directory:\n";
+	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {
+		cout<<meteopath<<"/"<<*itr<<endl; //itr does not contain the path -> create the name.
+	}
+	cout << endl;
+	
+	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	//Loop over all stations in the meteopath directory
+		station_path = meteopath + "/" + *itr;
+		cout << "Reading file " << station_path << endl;
+		
+		StationData sd;
+		//Initialize variables
+		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
+		string station_name="", station_ID="";
+		bool is_first=true;
+		Date first_date=IOUtils::nodata, last_date=IOUtils::nodata, date_read=IOUtils::nodata;
+		
+		// int i=0; //Is used to plot saved data -> test if the routine is OK
+		
+		//Read station and meteo data
+		xmlpp::TextReader reader(station_path);
+		while(reader.read()) {
+			if(reader.has_attributes()) {
+				reader.move_to_first_attribute();
+				const string key=reader.get_value();
+				//StationData
+				if(key=="identifier") station_name = getValue(reader);
+				if(key=="station_abbreviation") station_ID = getValue(reader);
+				if(key=="station.height") altitude = getDoubleValue(reader);
+				if(key=="station.latitude") latitude = getDoubleValue(reader);
+				if(key=="station.longitude") longitude = getDoubleValue(reader);
+ 				if(key=="missing_value_code") plugin_nodata = getDoubleValue(reader);
+				//Test used to write station data only if the given date is in the station data interval
+				if(key=="reference_ts") {
+					if(!is_first) {
+						//Check date
+						date_read = getDateValue(reader);
+						if (date_read < first_date) {
+							first_date = date_read;
+						}
+						if (date_read > last_date) {
+							last_date = date_read;
+						}
+					} else {
+						//First date to be read -> is first and last date
+						first_date = getDateValue(reader);
+						last_date = first_date;
+						is_first = false;
+					}
+				}
+				//End of date test
+			}
+		}
+		
+		//Write station data if the given date is in the station data interval
+		if ((station_date > first_date) && (station_date < last_date)) {
+			sd.stationName = station_name;
+			sd.stationID = station_ID;
+			sd.position.setLatLon(latitude, longitude, altitude);
+			vecStation.push_back(sd);	//Store results in vecStation
+			
+			//Test if the routine is OK
+// 			cout << vecStation[i] << endl;
+// 			i++;
+		}
+		
+		//Write station data for any date
+// 		sd.stationName = station_name;
+// 		sd.stationID = station_ID;
+// 		sd.position.setLatLon(latitude, longitude, altitude);
+// 		vecStation.push_back(sd);	//Store results in vecStation
+
+		//Test if the routine is OK
+// 		cout << vecStation[i] << endl;
+// 		i++;
+	}
 }
 
 
@@ -202,10 +290,13 @@ void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, co
 //----------> End of functions used to read XML files <----------
 
 //----------> Read Station and Meteo data, uses all stations in the "meteopath" directory <----------
-void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
+void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 					    std::vector< std::vector<MeteoData> >& vecMeteo, 
 					    const unsigned int&)
 {
+	//Check start and end dates
+	cout << "Start date = " << dateStart << "\nEnd date = " << dateEnd << endl;
+	
 	//Get all files from directory
 	string meteopath = "", station_path="";
  	cfg.getValue("METEOPATH", "Input", meteopath);
@@ -229,7 +320,7 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 	cout << endl;
 	
 	unsigned int ii=0;	//Declare and initialize counter (to know which station we are dealing with)
-	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	
+	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	//Loop over all stations in the meteopath directory
 		station_path = meteopath + "/" + *itr;
 		cout << "Reading file " << station_path << endl;
 		
@@ -238,6 +329,7 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
 		double dew_point=IOUtils::nodata;
 		bool is_first=true;
+		bool next_station = false;
 		
 		//Read station and meteo data
 		xmlpp::TextReader reader(station_path);
@@ -264,29 +356,64 @@ void CosmoXMLIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*
 				if(key=="FF_10M") meteo.vw = getDoubleValue(reader);
 				//if(key=="VMAX_10M") max_wind_speed = getDoubleValue(reader); //TODO create this variable
 				if(key=="reference_ts") {
-					if(!is_first) { //we can finish our object and push it
+					if(!is_first) {
+						//We can finish our object and push it.
+						//Before we check if it is in the right time interval
+						if (meteo.date < dateStart) {
+							cout << "Current meteo date is :\n" << meteo.date << "\nGoing to next entry.\n\n\n";
+							meteo.reset();
+							meteo.date = getDateValue(reader);
+							//Go to the next entry
+							continue;
+						}
+						if (meteo.date > dateEnd) {
+							cout << "Current meteo date is :\n" << meteo.date << "\nGoing to next station.\n\n\n";
+							meteo.reset();
+							//Go to the next station
+							next_station = true;
+							break;
+						}
+						cout << "Current meteo date is :\n" << meteo.date << "\nWriting data.\n\n\n";
 						finishMeteo(latitude, longitude, altitude, dew_point, meteo);
 						vecMeteo[ii].push_back( meteo );
-						meteo.reset();
 					} else {
+						//Nothing in memory to be written when we meet the first date entry
 						is_first = false;
 					}
-					
+					meteo.reset();
 					meteo.date = getDateValue(reader);
 				}
 			}
 		}
-		//Save the last set of data
+		if (next_station==true) continue;
+		//Save the last set of data, if it is in the right time interval
+		if ((meteo.date > dateEnd) || (meteo.date < dateStart)) {
+			cout << "Current meteo date is :\n" << meteo.date << "\nGoing to next station.\n\n\n";
+			continue;
+		}
+		cout << "Current meteo date is :\n" << meteo.date << "\nWriting data.\n\n\n";
 		finishMeteo(latitude, longitude, altitude, dew_point, meteo);
 		vecMeteo[ii].push_back( meteo );
-		
 		reader.close();
+		//Test if the routine is OK -> how many points in memory for this station?
+		cout << "\nSize of vecMeteo[" << ii << "] = " << vecMeteo[ii].size() << endl << endl;
 		//Increment counter
 		ii++;
 	}
 	
 	//TEST Write meteo data
+	cout << "----- TEST writeMeteoData -----\n";
 	writeMeteoData(vecMeteo);
+	cout << "\n----- END OF TEST writeMeteoData -----\n";
+	
+	// TEST Read station data
+	cout << "----- TEST readStationData ---> PLOTTING results -----\n";
+	std::vector<StationData> vecStation;
+	readStationData(dateStart, vecStation);
+	for(unsigned int ii=0; ii!=vecStation.size(); ii++) {
+		cout << vecStation[ii] << endl;
+	}
+	cout << "\n----- END OF TEST readStationData -----\n";
 }
 //--------------------> End of Read Station and Meteo XMLdata <--------------------
 //--------------------------------------------------------------------------------//
@@ -400,7 +527,7 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
 		//Test existence of element 0
 		if(vecMeteo[ii].size()==0) {
-			std::cout << "[E] Station " << ii << " exists but contains no data! Skip writing it...\n";
+			std::cout << "[E] Station " << ii+1 << " exists but contains no data! Skip writing it...\n";
 			continue;
 		}
 		

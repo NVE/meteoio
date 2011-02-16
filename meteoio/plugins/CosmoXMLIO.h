@@ -41,7 +41,7 @@ namespace mio {
 	* of the MeteoSwiss COSMO meteorological model.
 	*
 	* @author Marc Diebold
-	* @date   2011-01-21
+	* @date   January/February 2011
 	*/
 	class CosmoXMLIO : public IOInterface {
 		public:
