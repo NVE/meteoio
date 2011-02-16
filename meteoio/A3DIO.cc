@@ -339,7 +339,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 			throw InvalidFormatException(filename + ": " + line, AT);
 	}
 
-	tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3], 0., in_tz);
+	tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3], 0, in_tz);
 
 	//Read rest of line with values ta, iswr, vw, rh, ea, hnw
 
@@ -599,7 +599,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 				throw InvalidFormatException("[E] Check date columns in " + filename, AT);
 			}
 		}
-		tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3],0., in_tz);
+		tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3],0, in_tz);
 
 		MeteoData& currentMeteoData = vecM[0][bufferindex]; //1D Element to synchronize date
 		if (tmp_date == currentMeteoData.date) {

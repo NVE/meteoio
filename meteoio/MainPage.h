@@ -25,15 +25,15 @@ namespace mio {
 */
 
 /*! \defgroup plugins IO plugins
-   Documentation for available IO plugins. Please consider having a look at the \subpage plugins "Available plugins and usage" page and the \subpage dev_plugins "How to write a Plugin" page.
+   Documentation for available IO plugins. Please consider having a look at the \ref plugins "Available plugins and usage" page and the \ref dev_plugins "How to write a Plugin" page.
 */
 
 /*! \defgroup stats Statistical calculations
-   Documentation for available statistical calculations. This is heavily used by the \subpage processing "Available data processing elements" as well as the \subpage resampling "1D interpolations" and \subpage interpol2d "2D interpolations".
+   Documentation for available statistical calculations. This is heavily used by the \ref processing "Available data processing elements" as well as the \ref resampling "1D interpolations" and \ref interpol2d "2D interpolations".
 */
 
 /*! \defgroup processing Data processing elements
-   Documentation for available data processing components. These can be used on incoming meteorological data. See \subpage processing "Available data processing elements".
+   Documentation for available data processing components. These can be used on incoming meteorological data. See \ref processing "Available data processing elements".
 */
 
 /*! \defgroup data_str Data structures

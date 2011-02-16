@@ -131,8 +131,29 @@ void BufferedIOHandler::setDfltBufferProperties()
 	chunks=1;
 	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days,Config::nothrow); //in days
 	cfg.getValue("BUFF_CHUNKS", "General", chunks,Config::nothrow);
-
 	chunk_size = Duration(chunk_size_days, 0);
+
+	//get buffer centering options
+	double buff_centering = -1.;
+	double buff_start = -1.;
+	cfg.getValue("BUFF_CENTERING", "General", buff_centering, Config::nothrow);
+	cfg.getValue("BUFF_BEFORE", "General", buff_start, Config::nothrow);
+	if(buff_centering!=-1. && buff_start!=-1.) {
+		throw InvalidArgumentException("Please do NOT provide both BUFF_CENTERING and BUFF_BEFORE!!", AT);
+	}
+
+	if(buff_start!=-1.) {
+		buff_before = Duration(buff_start, 0);
+	} else {
+		if(buff_centering!=-1.) {
+			if(buff_centering<0. || buff_centering>1.) {
+				throw InvalidArgumentException("BUFF_CENTERING must be between 0 and 1", AT);
+			}
+			buff_before = chunk_size * buff_centering;
+		} else {
+			buff_before = chunk_size * 0.1; //10% centering by default
+		}
+	}
 }
 
 void BufferedIOHandler::setBufferPolicy(const buffer_policy& policy)
@@ -174,8 +195,8 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
                                       const unsigned int& /*stationindex*/)
 {
 	vecMeteo.clear();
-
-	Date current_buffer_end(date_start + chunk_size*chunks);
+	const Date new_buffer_start(date_start-buff_before); //taking centering into account
+	Date new_buffer_end(new_buffer_start + chunk_size*chunks);
 	vector< vector<MeteoData> > tmp_meteo_buffer; //it must be here -> adresses copied in 2. are still valid
 
 	//Read MeteoData for requested interval in chunks, furthermore buffer it
@@ -183,25 +204,22 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 
 	//0. initialize if not already initialized
 	if (vec_buffer_meteo.size() == 0) //init
-		bufferData(date_start, current_buffer_end, vec_buffer_meteo);
+		bufferData(new_buffer_start, new_buffer_end, vec_buffer_meteo);
 
 	unsigned int buffer_size = vec_buffer_meteo.size();
 
 	//1. Check whether data is in buffer already, and buffer it if not
-	if ((date_start >= buffer_start) && (date_end <= buffer_end)){
-		//copy data and we're done
-	} else {
+	if(date_start<buffer_start || date_end>buffer_end) {
 		//rebuffer data
-		if (current_buffer_end == buffer_end){
-			//only append
-		} else {
+		if(new_buffer_end!=buffer_end || new_buffer_start!=buffer_start) {
 			//rebuffer for real
-			bufferData(date_start, current_buffer_end, vec_buffer_meteo);
+			bufferData(new_buffer_start, new_buffer_end, vec_buffer_meteo);
 			buffer_size = vec_buffer_meteo.size();
 		}
 
-		while (date_end > current_buffer_end){
-			bufferData(current_buffer_end, current_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
+		while (date_end > new_buffer_end){
+			//if the requested interval is bigger than a normal buffer, we have to increase the buffer anyway...
+			bufferData(new_buffer_end, new_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
 
 			if (tmp_meteo_buffer.size() != buffer_size)
 				throw IOException("The number of stations changed over time, this is not handled yet!", AT);
@@ -218,8 +236,8 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 
 				vec_buffer_meteo[ii].insert(vec_buffer_meteo[ii].end(), tmp_meteo_buffer[ii].begin(), tmp_meteo_buffer[ii].end());
 			}
-			current_buffer_end += chunk_size*chunks;
-			buffer_end = current_buffer_end;				
+			new_buffer_end += chunk_size*chunks;
+			buffer_end = new_buffer_end;
 		}
 	}
 

@@ -42,6 +42,12 @@ namespace mio {
  * This module uses the following keywords to customize the buffering:
  * - BUFF_CHUNKS: how many chunks of data to buffer; [General] section (NOT YET USED)
  * - BUFF_CHUNK_SIZE: size in days of a chunk of data to read at once; [General] section
+ * - BUFF_CENTERING: centering of the buffer. When rebuffering, the new date will be located BUFF_CENTERING % from the
+ *                   begining of the buffer (therefore, it takes a value between 0 and 1); [General] section, optional
+ *                   (10% by default)
+ * - BUFF_BEFORE: alternate way of buffer centering: When rebuffering, the new date will be located BUFF_BEFORE days from the
+ *                begining of the buffer (therefore, it takes a value in days); [General] section, optional. Only one of
+ *                two centering option can be used. 
  * 
  * @author Thomas Egger
  * @date   2009-07-25
@@ -133,7 +139,8 @@ class BufferedIOHandler : public IOInterface {
 
 		bool always_rebuffer;
 		Date buffer_start, buffer_end;
-		Date chunk_size; ///< How much data to read at once
+		Duration chunk_size; ///< How much data to read at once
+		Duration buff_before; ///< How much data to read before the requested date in buffer
 		unsigned int chunks; ///< How many chuncks to buffer
 
 		std::vector< METEO_TIMESERIE > vec_buffer_meteo;
