@@ -242,6 +242,16 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 	}
 }
 
+void Grid3DObject::extractLayer(const unsigned int& z, Grid2DObject& layer) 
+{
+	layer.set(ncols, nrows, cellsize, llcorner);
+	for(unsigned int jj=0; jj<nrows; jj++) {
+		for(unsigned int ii=0; ii<ncols; ii++) {
+			layer.grid2D(ii,jj) = grid3D(ii,jj,z);
+		}
+	}
+}
+
 std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
 {
 	os << "<Grid3DObject>\n";

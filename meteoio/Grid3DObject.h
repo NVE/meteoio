@@ -21,6 +21,7 @@
 #include <meteoio/Coords.h>
 #include <meteoio/Array3D.h>
 #include <meteoio/IOExceptions.h>
+#include <meteoio/Grid2DObject.h>
 
 #include <cmath>
 #include <iostream>
@@ -128,6 +129,8 @@ class Grid3DObject{
 		* @return (bool) true if same geolocalization
 		*/
 		bool isSameGeolocalization(const Grid3DObject& target);
+		
+		void extractLayer(const unsigned int& z, Grid2DObject& layer);
 
 		Array3D<double> grid3D;
 		unsigned int ncols, nrows, ndepth;
