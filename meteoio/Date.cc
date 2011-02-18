@@ -113,7 +113,7 @@ void Date::setFromSys() {
 	const time_t curr = time(NULL);// current time in UTC
 	tm local = *gmtime(&curr);// current time in UTC, stored as tm
 	const time_t utc = (mktime(&local));// convert GMT tm to GMT time_t
-	double tz = difftime(utc,curr)/3600.; //time zone shift
+	double tz = - difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
 
 	setDate( curr ); //Unix time_t setter, always in gmt
 	setTimeZone( tz );
