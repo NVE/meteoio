@@ -53,13 +53,13 @@ namespace mio {
 const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
 const double ImisIO::in_tz = 1.; //All IMIS data is in gmt+1
 
-const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24:MI') as datum, avg(ta) as ta, avg(iswr) as iswr, avg(vw) as vw, avg(dw) as dw, avg(rh) as rh, avg(ilwr) as ilwr, avg(hnw) as hnw, avg(tsg) as tsg, avg(tss) as tss, avg(hs) as hs, avg(rswr) as rswr from ams.v_ams_raw WHERE stat_abk=:1 and stao_nr=:2 and datum>=:3 and datum<=:4 group by datum order by datum asc";
+const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24:MI') as datum, avg(ta) as ta, avg(iswr) as iswr, avg(vw) as vw, avg(dw) as dw, avg(rh) as rh, avg(ilwr) as ilwr, avg(hnw) as hnw, avg(tsg) as tsg, avg(tss) as tss, avg(hs) as hs, avg(rswr) as rswr FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 GROUP BY datum ORDER BY datum asc";
 
-const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_h from station2.standort WHERE stat_abk like :1 AND stao_nr=:2";
+const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_h,hts1_1,hts1_2,hts1_3 FROM station2.standort WHERE stat_abk like :1 AND stao_nr=:2";
 
-const string ImisIO::sqlQueryDriftStation = "SELECT drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' and snow_stat_abk=:1 and snow_stao_nr=:2";
+const string ImisIO::sqlQueryDriftStation = "SELECT drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' AND snow_stat_abk=:1 AND snow_stao_nr=:2";
 
-const string ImisIO::sqlQueryMeteoDataDrift = "select  to_char(a.datum, 'YYYY-MM-DD HH24:MI') as datum, a.ta as ta, a.iswr as iswr, a.vw as vw, a.dw as dw, a.rh as rh, a.ilwr as ilwr, a.hnw as hnw, a.tsg as tsg, a.tss as tss, a.hs as hs, a.rswr as rswr, b.vw as VW_DRIFT, b.dw as DW_DRIFT from (select * from ams.v_ams_raw where stat_abk=:1 and stao_nr=:2 and datum >=:3 AND datum <= :4) a left outer join (select * from ams.v_ams_raw where stat_abk=:5 and stao_nr=:6 and datum > :3 and datum < :4) b ON a.datum = b.datum order by datum asc";
+const string ImisIO::sqlQueryMeteoDataDrift = "SELECT  TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') as datum, avg(a.ta) as ta, avg(a.iswr) as iswr, avg(a.vw) as vw, avg(a.dw) as dw, avg(a.rh) as rh, avg(a.ilwr) as ilwr, avg(a.hnw) as hnw, avg(a.tsg) as tsg, avg(a.tss) as tss, avg(a.hs) as hs, avg(a.rswr) as rswr, avg(b.vw) as VW_DRIFT, avg(b.dw) as DW_DRIFT FROM (SELECT * FROM ams.v_ams_raw where stat_abk=:1 and stao_nr=:2 and datum >=:3 AND datum <= :4) a LEFT OUTER JOIN (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:5 and stao_nr=:6 AND datum > :3 AND datum < :4) b ON a.datum = b.datum ORDER BY datum asc";
 
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 const bool ImisIO::__init = ImisIO::initStaticData();
