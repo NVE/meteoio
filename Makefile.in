@@ -106,6 +106,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteofilters/FilterMinMax.o \
 		$(SRCDIR)/meteofilters/FilterMedianAvg.o \
 		$(SRCDIR)/meteofilters/FilterMeanAvg.o \
+		$(SRCDIR)/meteofilters/FilterWindAvg.o \
 		$(SRCDIR)/meteofilters/FilterStdDev.o \
 		$(SRCDIR)/meteofilters/RateFilter.o \
 		$(SRCDIR)/meteofilters/FilterBlock.o \
@@ -150,6 +151,7 @@ METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
 		$(SRCDIR)/meteofilters/FilterMinMax_par.o \
 		$(SRCDIR)/meteofilters/FilterMedianAvg_par.o \
 		$(SRCDIR)/meteofilters/FilterMeanAvg_par.o \
+		$(SRCDIR)/meteofilters/FilterWindAvg_par.o \
 		$(SRCDIR)/meteofilters/FilterStdDev_par.o \
 		$(SRCDIR)/meteofilters/RateFilter_par.o \
 		$(SRCDIR)/meteofilters/FilterBlock_par.o \
