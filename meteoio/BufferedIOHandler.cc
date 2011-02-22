@@ -209,9 +209,9 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 	unsigned int buffer_size = vec_buffer_meteo.size();
 
 	//1. Check whether data is in buffer already, and buffer it if not
-	if(date_start<buffer_start || date_end>buffer_end) {
+	if ((date_start < buffer_start) || (date_end > buffer_end)){
 		//rebuffer data
-		if(new_buffer_end!=buffer_end || new_buffer_start!=buffer_start) {
+		if ((new_buffer_end != buffer_end) || (new_buffer_start != buffer_start)){
 			//rebuffer for real
 			bufferData(new_buffer_start, new_buffer_end, vec_buffer_meteo);
 			buffer_size = vec_buffer_meteo.size();
@@ -219,7 +219,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 
 		while (date_end > new_buffer_end){
 			//if the requested interval is bigger than a normal buffer, we have to increase the buffer anyway...
-			bufferData(new_buffer_end, new_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
+			iohandler.readMeteoData(new_buffer_end, new_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
 
 			if (tmp_meteo_buffer.size() != buffer_size)
 				throw IOException("The number of stations changed over time, this is not handled yet!", AT);
