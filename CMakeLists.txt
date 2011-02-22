@@ -20,7 +20,7 @@ set(PROFILING "-pg -fprofile-arcs")
 set(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
 
 IF(DEBUG_ARITHM)
-  LIST(APPEND CFLAGS "-DDEBUG_ARITHM")
+	LIST(APPEND CFLAGS "-DDEBUG_ARITHM")
 ENDIF(DEBUG_ARITHM)
 
 SET(POPCC popcc)
@@ -28,60 +28,60 @@ SET(POPCC popcc)
 ###########################################################
 #platform specific
 IF(UNIX)
-  IF(APPLE)
-    set(PLATFORM "-DAPPLE")
-  ELSE(APPLE)
-    set(PLATFORM "-DLINUX")
-  ENDIF(APPLE)
+	IF(APPLE)
+		set(PLATFORM "-DAPPLE")
+	ELSE(APPLE)
+		set(PLATFORM "-DLINUX")
+	ENDIF(APPLE)
 ELSE(UNIX)
-  IF(WIN32)
-    set(PLATFORM "-DWIN32 -U__STRICT_ANSI__")
-  ENDIF(WIN32)
+	IF(WIN32)
+		set(PLATFORM "-DWIN32 -U__STRICT_ANSI__")
+	ENDIF(WIN32)
 ENDIF(UNIX)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "release" CACHE STRING
-      "Choose the type of build, options are: debug release "
-      FORCE)
+	set(CMAKE_BUILD_TYPE "release" CACHE STRING
+	"Choose the type of build, options are: debug release "
+	FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 ###########################################################
 #targets providing sets of compiler options
 if(NOT DEST)
-  set(DEST "safe" CACHE STRING "Choose safe, optimized, hera, or par, hera_par (with popc)" FORCE)
+	set(DEST "safe" CACHE STRING "Choose safe, optimized, hera, or par, hera_par (with popc)" FORCE)
 endif(NOT DEST)
 
 if (DEST STREQUAL "par")
-  set(EXTRA_WARNINGS "-Wextra ")
-  set(OPTIM "-g -O3 -DNDEBUG")
-  set(ARCH  "-mtune=native")
-  set(DEBUG "-g -O0 -D__DEBUG")
+	set(EXTRA_WARNINGS "-Wextra ")
+	set(OPTIM "-g -O3 -DNDEBUG")
+	set(ARCH  "-mtune=native")
+	set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "par")
 
 if (DEST STREQUAL "hera_par")
-  set(EXTRA_WARNINGS "-Wextra ")
-  set(OPTIM "-g -O3 -DNDEBUG")
-  #required for AMD64: amdfam10 or fPIC, even for static libs
-  set(ARCH "-march=amdfam10 -fPIC")
-  set(DEBUG "-g -O0 -D__DEBUG")
+	set(EXTRA_WARNINGS "-Wextra ")
+	set(OPTIM "-g -O3 -DNDEBUG")
+	#required for AMD64: amdfam10 or fPIC, even for static libs
+	set(ARCH "-march=amdfam10 -fPIC")
+	set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "hera_par")
 
 if (DEST STREQUAL "safe")
-  set(OPTIM "-g -O3 -DNDEBUG")
-  set(ARCH  "")
-  set(DEBUG "-g -O0 -D__DEBUG")
+	set(OPTIM "-g -O3 -DNDEBUG")
+	set(ARCH  "")
+	set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "safe")
 
 IF(DEST STREQUAL "optimized")
-  SET(OPTIM "-g -O3 -DNDEBUG")
-  SET(ARCH  "-march=pentium4 -mtune=native")
-  SET(DEBUG "-g -O0 -D__DEBUG")
+	SET(OPTIM "-g -O3 -DNDEBUG")
+	SET(ARCH  "-march=pentium4 -mtune=native")
+	SET(DEBUG "-g -O0 -D__DEBUG")
 ENDIF(DEST STREQUAL "optimized")
 
 if (DEST STREQUAL "hera")
-  set(OPTIM "-g -O3 -DNDEBUG")
-  set(ARCH  "-march=amdfam10")
-  set(DEBUG "-g -O0 -D__DEBUG")
+	set(OPTIM "-g -O3 -DNDEBUG")
+	set(ARCH  "-march=amdfam10")
+	set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "hera")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
@@ -114,9 +114,9 @@ FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.h")
 FILE(GLOB hlawsfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/meteolaws/*.h")
 FILE(GLOB hfilterfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/meteofilters/*.h")
 
-if (DEST MATCHES "par")
-  FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.ph")
-endif(DEST MATCHES "par")
+IF(DEST MATCHES "par")
+	FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.ph")
+ENDIF(DEST MATCHES "par")
 INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include/meteoio COMPONENT headers)
 INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT headers)
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
@@ -124,20 +124,20 @@ INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT
 FILE(GLOB solibs "${PROJECT_SOURCE_DIR}/lib/libmeteoio*.so*")
 FILE(GLOB plugins "${PROJECT_SOURCE_DIR}/lib/plugins/lib*.so*")
 FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a*")
-if (DEST MATCHES "par")
-  FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
-  INSTALL(FILES ${modules} DESTINATION lib/meteoio COMPONENT libraries)
-endif(DEST MATCHES "par")
+IF(DEST MATCHES "par")
+	FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
+	INSTALL(FILES ${modules} DESTINATION lib/meteoio COMPONENT libraries)
+ENDIF(DEST MATCHES "par")
 INSTALL(FILES ${solibs} ${alibs} DESTINATION lib COMPONENT libraries)
 INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins COMPONENT plugins)
 
 
 add_custom_target(distclean make clean
-  COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake meteoio/cmake_install.cmake meteoio/plugins/cmake_install.cmake meteoio/plugins/gsn/cmake_install.cmake
-  COMMAND cmake -E remove_directory CMakeFiles
-  COMMAND cmake -E remove_directory meteoio/CMakeFiles
-  COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
-  COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles)
+	COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake meteoio/cmake_install.cmake meteoio/plugins/cmake_install.cmake meteoio/plugins/gsn/cmake_install.cmake
+	COMMAND cmake -E remove_directory CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles)
 
 ###########################################################
 #for the uninstall target
@@ -163,23 +163,27 @@ endif (DOXYGEN_FOUND)
 #Install the documentation if the user desires it
 set(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
 if(INSTALL_DOC)
-	set(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
+	if(WIN32)
+		set(DOC_PATH "doc")
+	else(WIN32)
+		set(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
+	endif(WIN32)
 	if (DOXYGEN_FOUND)
 		install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html DESTINATION ${DOC_PATH} COMPONENT documentation)
 	else (DOXYGEN_FOUND)
 		message("Doxygen has not been found and is needed to build online documentation. Please either install doxygen or download a documentation-only package!")
 	endif (DOXYGEN_FOUND)
-	set(DOC_FILES License.txt doc/SMET_specifications.pdf)
+	set(DOC_FILES License.txt doc/SMET_specifications.pdf ${CMAKE_SOURCE_DIR}/meteoio/icons/icon.ico)
 	install(FILES ${DOC_FILES} DESTINATION ${DOC_PATH} COMPONENT documentation)
 	install(DIRECTORY "${PROJECT_SOURCE_DIR}/doc/examples"
-		DESTINATION "share/doc/${CMAKE_PROJECT_NAME}"
-		PATTERN ".svn" EXCLUDE
-		COMPONENT examples)
+		DESTINATION "${DOC_PATH}"
+		COMPONENT examples
+		PATTERN ".svn" EXCLUDE)
 endif(INSTALL_DOC)
 
 #some cmake specific things
 if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
-  set(GSOAPPP NOTFOUND CACHE FORCE)
+	set(GSOAPPP NOTFOUND CACHE FORCE)
 endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 
 ###########################################################
@@ -192,7 +196,7 @@ set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons\\\\icon.ico")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
 
 if (DEST MATCHES "par")
-  set(PACKAGE_EXTRA "-par")
+	set(PACKAGE_EXTRA "-par")
 endif(DEST MATCHES "par")
 set(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
@@ -260,14 +264,14 @@ ELSE(UNIX)
 		set(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 		set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}-${VERSION}")
 		set(CPACK_NSIS_MENU_LINKS
-			"doc/html/index.html" "MeteoIO documentation"
-			"doc/examples" "MeteoIO examples"
+			"${DOC_PATH}/html/index.html" "MeteoIO documentation"
+			"${DOC_PATH}/examples" "MeteoIO examples"
 			"https://slfsmm.indefero.net/p/meteoio/" "Home page")
-		set(CPACK_NSIS_URL_INFO_ABOUT "https://slfsmm.indefero.net/p/meteoio/")
-		set(CPACK_NSIS_HELP_LINK "doc/html/index.html")
-		#set(CPACK_NSIS_PACKAGE_NAME "${EWS_APP_NAME}")
-		#set(CPACK_NSIS_DISPLAY_NAME "${EWS_APP_NAME}")
-		#set(CPACK_NSIS_CONTACT "${EWS_EMAIL}")
+		#info for the add/uninstall software administration
+		set(CPACK_NSIS_INSTALLED_ICON_NAME "${DOC_PATH}\\\\icon.ico")
+		set(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
+		set(CPACK_NSIS_HELP_LINK "https://slfsmm.indefero.net/p/meteoio")
+		set(CPACK_NSIS_CONTACT "Mathias.Bavay@wsl.ch")
 	ENDIF(WIN32)
 ENDIF(UNIX)
 
