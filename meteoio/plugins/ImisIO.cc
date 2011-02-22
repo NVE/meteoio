@@ -59,7 +59,7 @@ const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_
 
 const string ImisIO::sqlQueryDriftStation = "SELECT drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' AND snow_stat_abk=:1 AND snow_stao_nr=:2";
 
-const string ImisIO::sqlQueryMeteoDataDrift = "SELECT  TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') as datum, avg(a.ta) as ta, avg(a.iswr) as iswr, avg(a.vw) as vw, avg(a.dw) as dw, avg(a.rh) as rh, avg(a.ilwr) as ilwr, avg(a.hnw) as hnw, avg(a.tsg) as tsg, avg(a.tss) as tss, avg(a.hs) as hs, avg(a.rswr) as rswr, avg(b.vw) as VW_DRIFT, avg(b.dw) as DW_DRIFT FROM (SELECT * FROM ams.v_ams_raw where stat_abk=:1 and stao_nr=:2 and datum >=:3 AND datum <= :4) a LEFT OUTER JOIN (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:5 and stao_nr=:6 AND datum > :3 AND datum < :4) b ON a.datum = b.datum ORDER BY datum asc";
+const string ImisIO::sqlQueryMeteoDataDrift = "SELECT  TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') as datum, avg(a.ta) as ta, avg(a.iswr) as iswr, avg(a.vw) as vw, avg(a.dw) as dw, avg(a.rh) as rh, avg(a.ilwr) as ilwr, avg(a.hnw) as hnw, avg(a.tsg) as tsg, avg(a.tss) as tss, avg(a.hs) as hs, avg(a.rswr) as rswr, avg(b.vw) as VW_DRIFT, avg(b.dw) as DW_DRIFT FROM (SELECT * FROM ams.v_ams_raw where stat_abk=:1 and stao_nr=:2 and datum >=:3 AND datum <= :4) a LEFT OUTER JOIN (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:5 and stao_nr=:6 AND datum > :3 AND datum < :4) b ON a.datum = b.datum GROUP BY a.datum ORDER BY a.datum asc";
 
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 const bool ImisIO::__init = ImisIO::initStaticData();
