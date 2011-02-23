@@ -97,6 +97,20 @@ class IOManager {
 		 */
 		unsigned int getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo);
 
+		/**
+		 * @brief Push a vector of time series of MeteoData objects into the IOManager. This overwrites
+		 *        any internal buffers that are used and subsequent calls to getMeteoData or interpolate
+		 *        will be performed upon this data. This method is a way to bypass the internal reading
+		 *        of MeteoData from a certain source and is useful in case the user is only interested 
+		 *        in data processing and interpolation performed by the IOManager object. 
+		 * @param level Level of processing that has already been performed on the data (raw XOR filtered)
+		 * @param date_start Representing the beginning of the data
+		 * @param date_end Representing the end of the data
+		 * @param vecMeteo The actual data being pushed into the IOManager object
+		 */
+		void push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end, 
+						 const std::vector< METEO_TIMESERIE >& vecMeteo);
+
 #ifdef _POPC_ //HACK popc
 		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
 		                 Grid2DObject& result);
@@ -152,7 +166,7 @@ class IOManager {
 
 		std::map<Date, METEO_TIMESERIE > resampled_cache;  ///< stores already resampled data points
 		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals
-		Date fcache_start, fcache_end;
+		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
 		unsigned int processing_level;
 };
 } //end namespace
