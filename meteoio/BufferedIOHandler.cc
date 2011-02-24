@@ -37,9 +37,7 @@ BufferedIOHandler::~BufferedIOHandler()
 #else
 BufferedIOHandler::~BufferedIOHandler() throw()
 #endif
-{
-	setDfltBufferProperties();
-}
+{}
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string& in_filename)
 {
@@ -128,9 +126,9 @@ void BufferedIOHandler::setDfltBufferProperties()
 	always_rebuffer = false;
 
 	double chunk_size_days = 15.; //default chunk size value
-	chunks=1;
-	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days,Config::nothrow); //in days
-	cfg.getValue("BUFF_CHUNKS", "General", chunks,Config::nothrow);
+	chunks = 1;
+	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days, Config::nothrow); //in days
+	cfg.getValue("BUFF_CHUNKS", "General", chunks, Config::nothrow);
 	chunk_size = Duration(chunk_size_days, 0);
 
 	//get buffer centering options
@@ -138,17 +136,16 @@ void BufferedIOHandler::setDfltBufferProperties()
 	double buff_start = -1.;
 	cfg.getValue("BUFF_CENTERING", "General", buff_centering, Config::nothrow);
 	cfg.getValue("BUFF_BEFORE", "General", buff_start, Config::nothrow);
-	if(buff_centering!=-1. && buff_start!=-1.) {
+	if ((buff_centering != -1.) && (buff_start != -1.))
 		throw InvalidArgumentException("Please do NOT provide both BUFF_CENTERING and BUFF_BEFORE!!", AT);
-	}
 
-	if(buff_start!=-1.) {
+	if (buff_start != -1.){
 		buff_before = Duration(buff_start, 0);
 	} else {
-		if(buff_centering!=-1.) {
-			if(buff_centering<0. || buff_centering>1.) {
+		if (buff_centering != -1.){
+			if ((buff_centering < 0.) || (buff_centering > 1.))
 				throw InvalidArgumentException("BUFF_CENTERING must be between 0 and 1", AT);
-			}
+
 			buff_before = chunk_size * buff_centering;
 		} else {
 			buff_before = chunk_size * 0.1; //10% centering by default
