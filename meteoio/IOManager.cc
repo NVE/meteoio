@@ -63,6 +63,11 @@ void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_s
 		fcache_start   = date_start;
 		fcache_end     = date_end;
 		filtered_cache = vecMeteo;
+	} else if (level == IOManager::raw){
+		//push data into the BufferedIOHandler
+		fcache_start = fcache_end = Date(0.0, 0.);
+		filtered_cache.clear();
+		bufferedio.push_meteo_data(date_start, date_end, vecMeteo);
 	} else {
 		throw InvalidArgumentException("The processing level is invalid (should be raw OR filtered)", AT);
 	}

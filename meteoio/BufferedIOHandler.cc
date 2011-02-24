@@ -271,6 +271,26 @@ void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end,
 	buffer_end   = date_end;
 }
 
+/**
+ * @brief Push a vector of time series of MeteoData objects into the local buffer. 
+ *        This overwrites the local buffer. This method is a way to bypass the internal reading
+ *        of MeteoData from a certain source.
+ * @param date_start Representing the beginning of the data
+ * @param date_end Representing the end of the data
+ * @param vecMeteo The actual data being pushed into vec_buffer_meteo
+ */
+void BufferedIOHandler::push_meteo_data(const Date& date_start, const Date& date_end,
+                                        const std::vector< METEO_TIMESERIE >& vecMeteo)
+{
+	//perform check on date_start and date_end
+	if (date_end < date_start)
+		throw InvalidArgumentException("date_start cannot be greater than date_end", AT);
+
+	buffer_start     = date_start;
+	buffer_end       = date_end;
+	vec_buffer_meteo = vecMeteo;
+}
+
 void BufferedIOHandler::readSpecialPoints(std::vector<Coords>& in_cpa)
 {
 	iohandler.readSpecialPoints(in_cpa);

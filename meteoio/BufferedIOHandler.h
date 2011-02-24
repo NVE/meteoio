@@ -131,6 +131,9 @@ class BufferedIOHandler : public IOInterface {
 	private:
 		const std::vector<METEO_TIMESERIE>& get_complete_buffer(Date& start, Date& end);
 
+		void push_meteo_data(const Date& date_start, const Date& date_end,
+		                     const std::vector< METEO_TIMESERIE >& vecMeteo);
+
 		void setDfltBufferProperties();
 		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo);
 
