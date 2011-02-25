@@ -112,9 +112,10 @@ void MeteoData::initParameterMap()
 
 	nrOfAllParameters = meteoparam.size();
 
-	for (unsigned int ii=0; ii<getNrOfParameters(); ii++){
-		mapParameterByName[getNameForParameter(ii)] = meteoparam[ii];
-	}
+	//Go through all parameters in <int,string> map and store them into <string,double*> map
+	map<unsigned int, string>::const_iterator tmpit;
+	for (tmpit = meteoparamname.begin(); tmpit != meteoparamname.end(); tmpit++)
+		mapParameterByName[tmpit->second] = meteoparam[tmpit->first];
 
 	//Check for inconsistency between enum Parameters and the two maps meteoparam and meteoparamname
 	if ((meteoparam.size() != meteoparamname.size()) || (meteoparam.size() != getNrOfParameters()))
