@@ -188,11 +188,10 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 
 	for (unsigned int ii=MeteoData::lastparam+1; ii<rhs.getNrOfParameters(); ii++) {
 		//for the extraparameters other measures are necessary
-		tmpit = rhs.meteoparam.find(ii);
-		const string& name = meteoparamname[ii];
-		double* val = &extraparameters[name];
-		meteoparam[ii] = val;
-		mapParameterByName[name] = val;
+		const string& name = meteoparamname[ii];  //get the name of that extra parameter
+		double* val = &extraparameters[name];     //copy the pointer
+		meteoparam[ii] = val;                     //copy pointer into meteoparam
+		mapParameterByName[name] = val;           //copy pointer into mapParameterByName
 	}
 
 	nrOfAllParameters = meteoparam.size();
