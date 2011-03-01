@@ -165,6 +165,7 @@ class MeteoData {
 		std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
 
 		void initAllParameters();
+		void associateMemberVariables();
 		void initParameterMap();     ///<initializes the meteoparam map that allows sequential access to meteo parameters
 		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
