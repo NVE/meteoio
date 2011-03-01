@@ -106,27 +106,7 @@ void MeteoData::initParameterMap()
 	meteoparamname[P]    = "P";
 
 	//The following mapping needs to be done for every instance of MeteoData
-	meteoparam[TA]       = &ta;
-	meteoparam[ISWR]     = &iswr;
-	meteoparam[VW]       = &vw;
-	meteoparam[DW]       = &dw;
-	meteoparam[RH]       = &rh;
-	meteoparam[ILWR]     = &ilwr;
-	meteoparam[HNW]      = &hnw;
-	meteoparam[TSG]      = &tsg;
-	meteoparam[TSS]      = &tss;
-	meteoparam[HS]       = &hs;
-	meteoparam[RSWR]     = &rswr;
-	meteoparam[P]        = &p;
-
-	std::map<std::string, double>::iterator it;
-	unsigned int counter = lastparam + 1;
-	for (it=extraparameters.begin(); it!=extraparameters.end(); it++){
-		meteoparamname[counter] = it->first;
-		meteoparam[counter]     = &(it->second); //points to the address of the element
-		counter++;
-	}
-
+	associateMemberVariables();
 	nrOfAllParameters = meteoparam.size();
 
 	//Go through all parameters in <int,string> map and store them into <string,double*> map
@@ -180,7 +160,7 @@ MeteoData::MeteoData(const MeteoData& md) : paroc_base()
 MeteoData::MeteoData(const MeteoData& md)
 #endif
 {
-	*this = md;
+	*this = md; //reverts to the operator= implementation
 }
 
 MeteoData& MeteoData::operator=(const MeteoData& rhs)
@@ -195,13 +175,15 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 	extraparameters = rhs.extraparameters;
 	meteoparamname = rhs.meteoparamname;
 
-	associateMemberVariables(); //copies pointers into the meteoparam map
+	associateMemberVariables(); //sets the pointers for the standard parameters in the meteoparam map
+
 	std::map<unsigned int, double*>::const_iterator tmpit;
 	for (unsigned int ii=0; ii<=MeteoData::lastparam; ii++) {
+		//go through meteoparameters and copy them by value
 		double* val = meteoparam[ii];
 		tmpit = rhs.meteoparam.find(ii);
-		*val  = *(tmpit->second); //copy by value
-		mapParameterByName[meteoparamname[ii]] = val; //copy pointer into second map
+		*val  = *(tmpit->second);                     //copy by value
+		mapParameterByName[meteoparamname[ii]] = val; //copy pointer into mapParameterByName
 	}
 
 	for (unsigned int ii=MeteoData::lastparam+1; ii<rhs.getNrOfParameters(); ii++) {
@@ -215,29 +197,10 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 
 	nrOfAllParameters = meteoparam.size();
 
-	/*
-
-	//Go through all parameters in <int,string> map and store them into <string,double*> map
-	map<unsigned int, string>::const_iterator tmpit;
-	for (tmpit = meteoparamname.begin(); tmpit != meteoparamname.end(); tmpit++)
-		mapParameterByName[tmpit->second] = meteoparam[tmpit->first];
-
 	//Check for inconsistency between enum Parameters and the two maps meteoparam and meteoparamname
-	if ((meteoparam.size() != meteoparamname.size()) || (meteoparam.size() != getNrOfParameters()))
-		throw IOException("Inconsistency within class MeteoData: Check function initParameterMap()", AT);
+	//if ((meteoparam.size() != meteoparamname.size()) || (meteoparam.size() != getNrOfParameters()))
+	//	throw IOException("Inconsistency within class MeteoData: Check function initParameterMap()", AT);
 
-	std::map<unsigned int, double*>::const_iterator it;
-	map<unsigned int, string>::const_iterator tmpit;
-	for (it=rhs.meteoparam.begin(); it!=rhs.meteoparam.end(); it++){
-		*meteoparam[it->first] = *(it->second);
-		mapParameterByName[meteoparamname[it->first]] = meteoparam[it->first];
-
-		/*tmpit = rhs.meteoparamname.find(it->first);
-		cout << "in=: index " << it->first << " value: " << *(it->second) << endl;
-		*mapParameterByName[tmpit->second] = *(it->second);
-
-	}
-*/
 	return *this;
 }
 
