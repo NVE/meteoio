@@ -177,11 +177,20 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 	resampled = rhs.resampled;
 
 	extraparameters = rhs.extraparameters;
-	initParameterMap();
+	initParameterMap(); //resets all values to IOUtils::nodata
+
+	meteoparamname = rhs.meteoparamname;
 
 	std::map<unsigned int, double*>::const_iterator it;
+	map<unsigned int, string>::const_iterator tmpit;
 	for (it=rhs.meteoparam.begin(); it!=rhs.meteoparam.end(); it++){
 		*meteoparam[it->first] = *(it->second);
+		mapParameterByName[meteoparamname[it->first]] = meteoparam[it->first];
+
+		/*tmpit = rhs.meteoparamname.find(it->first);
+		cout << "in=: index " << it->first << " value: " << *(it->second) << endl;
+		*mapParameterByName[tmpit->second] = *(it->second);
+		*/
 	}
 
 	return *this;
