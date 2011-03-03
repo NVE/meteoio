@@ -22,11 +22,13 @@ using namespace std;
 namespace mio {
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
-	StationData::StationData() : position("NULL", "NULL"), stationID(""), stationName(""){}
+StationData::StationData() : position("NULL", "NULL"), stationID(""), stationName(""),
+                             slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
 StationData::StationData(const Coords& _position, const std::string& _id, const std::string& _name)
 {
 	setStationData(_position, _id, _name);
+	setStationSlope(IOUtils::nodata, IOUtils::nodata);
 }
 
 void StationData::setStationData(const Coords& _position, const std::string& _id, const std::string& _name)
@@ -36,9 +38,23 @@ void StationData::setStationData(const Coords& _position, const std::string& _id
 	stationName = _name;
 }
 
+void StationData::setStationSlope(const double& in_slope_angle, const double& in_azimuth)
+{
+	if(in_slope_angle!=IOUtils::nodata) {
+		slope = fmod(in_slope_angle, 360.);
+	} else
+		slope = IOUtils::nodata;
+
+	if(in_azimuth!=IOUtils::nodata)
+		azi = fmod(in_azimuth, 360.);
+	else
+		azi =  IOUtils::nodata;
+}
+
 //Comparison operator
 bool StationData::operator==(const StationData& in) const {
-	return ((position == in.position) && (stationID == in.stationID));// && (stationName == in.stationName));
+	return ( (position == in.position) && (stationID == in.stationID) &&
+	         (slope==in.slope) && (azi==in.azi) );// && (stationName == in.stationName));
 }
 
 bool StationData::operator!=(const StationData& in) const {
@@ -58,12 +74,21 @@ std::string StationData::getStationName() const {
 	return stationName;
 }
 
+double StationData::getSlopeAngle() const {
+	return slope;
+}
+
+double StationData::getAzimuth() const {
+	return azi;
+}
+
 std::ostream& operator<<(std::ostream& os, const StationData& station) {
 
 	os << "<station>" << endl
 	   << std::setprecision(10) << station.position 
-	   << "ID:   " << station.getStationID() << endl 
-	   << "Name: " << station.getStationName() << endl
+	   << "ID:    " << station.getStationID() << endl 
+	   << "Name:  " << station.getStationName() << endl
+	   << "Slope: " << station.getSlopeAngle() << " bearing: " << station.getAzimuth() << endl
 	   << "</station>" << endl;
 
 	return os;
@@ -80,10 +105,14 @@ void StationData::Serialize(POPBuffer &buf, bool pack)
 		marshal_Coords(buf, position, 0, FLAG_MARSHAL, NULL);
 		buf.Pack(&stationID, 1);
 		buf.Pack(&stationName, 1);
+		buf.Pack(&slope, 1);
+		buf.Pack(&azi, 1);
 	}else{
 		marshal_Coords(buf, position, 0, !FLAG_MARSHAL, NULL);
 		buf.UnPack(&stationID, 1);
 		buf.UnPack(&stationName, 1);
+		buf.UnPack(&slope, 1);
+		buf.UnPack(&azi, 1);
 	}
 }
 #endif

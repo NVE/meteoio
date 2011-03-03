@@ -63,14 +63,33 @@ class StationData {
 		std::string getStationID() const;
 		std::string getStationName() const;
 		Coords getPosition() const;
+
+		/**
+		* @brief Get local slope angle
+		* @return angle of the local slope (in degrees, between 0 and 90 degrees)
+		*/
+		double getSlopeAngle() const;
+
+		/**
+		* @brief Get local slope azimuth
+		* @return azimuth of the local slope expressed as a bearing (0 is North, in degrees, clockwise)
+		*/
+		double getAzimuth() const;
 		
 		/**
-		* @brief General setter function, requires three to six arguments
+		* @brief General setter function
 		* @param _position Position of the station
 		* @param _id Station's id (short identification)
 		* @param _name Name of the station (default "")
 		*/
 		void setStationData(const Coords& _position, const std::string& _id="", const std::string& _name="");
+
+		/**
+		* @brief Slope information setter
+		* @param in_slope_angle angle of the local slope (in degrees, between 0 and 90 degrees)
+		* @param in_azimuth azimuth of the local slope expressed as a bearing (0 is North, in degrees, clockwise)
+		*/
+		void setStationSlope(const double& in_slope_angle, const double& in_azimuth);
 
 		friend std::ostream& operator<<(std::ostream& os, const StationData& station);
 
@@ -87,7 +106,10 @@ class StationData {
 		Coords position;
 		std::string stationID; ///<ID of the Station, typically a short string
 		std::string stationName; ///<Name of the Station, detailled description
-		
+
+	private:
+		double slope; ///<Local slope at the station, in degrees, between 0 and 90 degrees
+		double azi; ///<Azimuth at the local slope at the station, in degrees, 0 at north, compass orientation
 		//for Snowpack and other (1D) applications: add slope, aspect, horizon, etc
 };
 
