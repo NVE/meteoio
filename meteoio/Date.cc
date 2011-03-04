@@ -58,7 +58,7 @@ Date::Date(const double& julian_in, const double& in_timezone, const bool& in_ds
 */
 Date::Date(const time_t& in_time, const bool& in_dst) {
 	dst = false;
-	setDate(in_time, 0., in_dst);
+	setDate(in_time, in_dst);
 }
 //HACK: is it needed? Why paroc_base instead of POPC??
 /**
