@@ -142,6 +142,55 @@ Coords& Coords::operator=(const Coords& source) {
 }
 
 /**
+* @brief Simple merge strategy.
+* If some fields of the first argument are empty, they will be filled by the macthing field from the
+* second argument.
+* @param coord1 first Coords to merge, highest priority
+* @param coord2 second Coords to merge, lowest priority
+* @return new Coords object
+*/
+Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
+	Coords tmp(coord1);
+	tmp.merge(coord2);
+}
+
+/**
+* @brief Simple merge strategy.
+* If some fields of the current object are empty, they will be filled by the macthing field from the
+* provided argument.
+* @param coord2 extra Coords to merge, lowest priority
+*/
+void Coords::merge(const Coords& coord2) {
+	if(altitude==IOUtils::nodata) altitude=coord2.altitude;
+	if(latitude==IOUtils::nodata) latitude=coord2.latitude;
+	if(longitude==IOUtils::nodata) longitude=coord2.longitude;
+	if(easting==IOUtils::nodata) easting=coord2.easting;
+	if(northing==IOUtils::nodata) northing=coord2.northing;
+
+	if(grid_i==IOUtils::nodata) grid_i=coord2.grid_i;
+	if(grid_j==IOUtils::nodata) grid_j=coord2.grid_j;
+	if(grid_k==IOUtils::nodata) grid_k=coord2.grid_k;
+
+	if(ref_latitude==IOUtils::nodata) ref_latitude=coord2.ref_latitude;
+	if(ref_longitude==IOUtils::nodata) ref_longitude=coord2.ref_longitude;
+
+	if(coordsystem=="NULL") coordsystem=coord2.coordsystem;
+	if(coordparam=="NULL") coordparam=coord2.coordparam;
+
+	if(distance_algo==IOUtils::nodata) distance_algo=coord2.distance_algo;
+
+	//refresh pointers list, recalculate what could be calculated, etc
+	setFunctionPointers();
+	//in LOCAL projection, the check for the existence of the ref point will be done in the projection functions
+	if(latitude!=IOUtils::nodata && coordsystem!="NULL") {
+		convert_from_WGS84(latitude, longitude, easting, northing);
+	}
+	if(latitude==IOUtils::nodata && coordsystem!="NULL") {
+		convert_to_WGS84(easting, northing, latitude, longitude);
+	}
+}
+
+/**
 * @brief Print the content of the Coords object (usefull for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
@@ -421,6 +470,12 @@ void Coords::setProj(const std::string& in_coordinatesystem, const std::string& 
 	//since lat/long is our reference, we refresh x,y (only if lat/lon exist)
 	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		convert_from_WGS84(latitude, longitude, easting, northing);
+	}
+	//if we only had x/y but not even a coord system, we could not compute lat/long. We now do it
+	if( (latitude==IOUtils::nodata || longitude==IOUtils::nodata) &&
+	    (easting!=IOUtils::nodata && northing!=IOUtils::nodata) &&
+	    (coordsystem != "NULL") ) {
+		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 }
 

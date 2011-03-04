@@ -28,7 +28,7 @@ StationData::StationData() : position("NULL", "NULL"), stationID(""), stationNam
 StationData::StationData(const Coords& _position, const std::string& _id, const std::string& _name)
 {
 	setStationData(_position, _id, _name);
-	setStationSlope(IOUtils::nodata, IOUtils::nodata);
+	setSlope(IOUtils::nodata, IOUtils::nodata);
 }
 
 void StationData::setStationData(const Coords& _position, const std::string& _id, const std::string& _name)
@@ -38,10 +38,14 @@ void StationData::setStationData(const Coords& _position, const std::string& _id
 	stationName = _name;
 }
 
-void StationData::setStationSlope(const double& in_slope_angle, const double& in_azimuth)
+void StationData::setSlope(const double& in_slope_angle, const double& in_azimuth)
 {
 	if(in_slope_angle!=IOUtils::nodata) {
 		slope = fmod(in_slope_angle, 360.);
+		//normalizing the slope between 0 and 90
+		if(slope>90. && slope <=180.) slope = 180. - slope;
+		if(slope>180. && slope <=270.) slope = slope - 180.;
+		if(slope>270. && slope <=360.) slope = 360. - slope;
 	} else
 		slope = IOUtils::nodata;
 
@@ -60,6 +64,20 @@ bool StationData::operator==(const StationData& in) const {
 bool StationData::operator!=(const StationData& in) const {
 	return !(*this==in);
 }
+
+StationData StationData::merge(const StationData& sd1, const StationData& sd2) {
+	StationData tmp(sd1);
+	tmp.merge(sd2);
+}
+
+void StationData::merge(const StationData& sd2) {
+	if(stationID=="") stationID=sd2.stationID;
+	if(stationName=="") stationName=sd2.stationName;
+	if(slope==IOUtils::nodata) slope=sd2.slope;
+	if(azi==IOUtils::nodata) azi=sd2.azi;
+	position.merge(sd2.position);
+}
+
 
 //Specific Getter Functions for stationName, stationID and position
 Coords StationData::getPosition() const {

@@ -89,7 +89,7 @@ class StationData {
 		* @param in_slope_angle angle of the local slope (in degrees, between 0 and 90 degrees)
 		* @param in_azimuth azimuth of the local slope expressed as a bearing (0 is North, in degrees, clockwise)
 		*/
-		void setStationSlope(const double& in_slope_angle, const double& in_azimuth);
+		void setSlope(const double& in_slope_angle, const double& in_azimuth);
 
 		friend std::ostream& operator<<(std::ostream& os, const StationData& station);
 
@@ -101,6 +101,24 @@ class StationData {
 		*/
 		bool operator==(const StationData&) const;
 		bool operator!=(const StationData&) const; ///<Operator that tests for inequality
+
+		/**
+		* @brief Simple merge strategy. 
+		* If some fields of the first argument are empty, they will be filled by the macthing field from the
+		* second argument.
+		* @param sd1 first StationData to merge, highest priority
+		* @param sd2 second StationData to merge, lowest priority
+		* @return new StationData object
+		*/
+		static StationData merge(const StationData& sd1, const StationData& sd2);
+
+		/**
+		* @brief Simple merge strategy. 
+		* If some fields of the current object are empty, they will be filled by the macthing field from the
+		* provided argument.
+		* @param sd2 extra StationData to merge, lowest priority
+		*/
+		void merge(const StationData& sd2);
 
 	public:
 		Coords position;

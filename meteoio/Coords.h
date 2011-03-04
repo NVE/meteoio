@@ -68,6 +68,9 @@ class Coords {
 	bool operator==(const Coords&) const; ///<Operator that tests for equality
 	bool operator!=(const Coords&) const; ///<Operator that tests for inequality
 
+	static Coords merge(const Coords& coord1, const Coords& coord2);
+	void merge(const Coords& coord2);
+
 	//Getter methods
 	double getEasting() const;
 	double getNorthing() const;
