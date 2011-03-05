@@ -110,21 +110,31 @@ class ImisIO : public IOInterface {
 		void closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void getDBParameters();
 
-		void getStationData(const std::string& stat_abk, const std::string& stao_nr, std::vector<std::string>& data2S,
-		                    oracle::occi::Connection*& conn);
-		std::string getDriftStation(std::string stationName, std::string stationNumber, oracle::occi::Connection*& conn);
+		unsigned int getStationIDs(const std::string& stat_code,
+		                           const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
+		                           oracle::occi::Connection*& conn);
+		unsigned int getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
+		                                const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
+		                                oracle::occi::Connection*& conn);
+		unsigned int getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
+		                             const std::string& sqlQuery, std::vector<std::string>& vecHts1,
+		                             oracle::occi::Connection*& conn);
+		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,
+		                    const std::vector<int>& datestart, const std::vector<int>& dateend,
+		                    const std::vector<std::string>& i_vecHts,
+		                    std::vector< std::vector<std::string> >& vecMeteoData,
+		                    oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 
-		void getImisData(const std::string& stat_abk, const std::string& stao_nr,
-		                 const std::vector<int>& datestart, const std::vector<int>& dateend,
-		                 std::vector< std::vector<std::string> >& dataImis,
-                                 oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
-		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md);
+		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md, bool& _fullStation);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-		              const unsigned int& stationindex, const std::vector<StationData>& vecStationNames,
+		              const unsigned int& stationindex, const std::vector<StationData>& vecStationID,
 		              oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
-		void readStationNames(std::vector<std::string>& vecStationName);
-		void parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber);
+		void readStationIDs(std::vector<std::string>& vecStationID);
+		void parseStationID(const std::string& stationID, std::string& stnAbbrev, std::string& stnNumber);
+		
 		void readStationMetaData(oracle::occi::Connection*& conn);
+		void convertSnowTemperature(MeteoData& meteo, const std::string& parameter);
+		void convertSensorDepth(MeteoData& meteo, const std::string& parameter);
 		void convertUnits(MeteoData& meteo);
 
 		//helper functions for the Anetz coefficient mangling:
@@ -136,19 +146,22 @@ class ImisIO : public IOInterface {
 		                         const std::vector< std::vector<double> > vec_of_psums,
 		                         const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
 		                         std::vector< std::vector<MeteoData> >& vecMeteo);
-		void calculatePsum(const Date& dateStart, const Date& dateEnd, const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-		                   std::vector< std::vector<double> >& vec_of_psums);
+		void calculatePsum(const Date& dateStart, const Date& dateEnd,
+                       const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+                       std::vector< std::vector<double> >& vec_of_psums);
 
 		static const double in_tz; //timezone
 		Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
-		std::vector<StationData> vecMyStation;
+		std::vector<StationData> vecStationMetaData;
 		std::map<std::string, std::string> mapDriftStation;
+		std::vector<double> vecHts;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const std::string sqlQueryMeteoData;
-		static const std::string sqlQueryStationData;
-		static const std::string sqlQueryDriftStation;
-		static const std::string sqlQueryMeteoDataDrift;
+		static const std::string sqlQueryStationIDs;
+		static const std::string sqlQueryStationMetaData;
+		static const std::string sqlQuerySensorDepths;
+		static const std::string sqlQueryMeteoDataDrift; // combined snow_drift query from two stations (ams.v_ams_raw)
+		static const std::string sqlQueryMeteoData; // single station query (ams.v_ams_raw)
 		std::string oracleUserName_in;
 		std::string oraclePassword_in;
 		std::string oracleDBName_in;

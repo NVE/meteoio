@@ -53,6 +53,7 @@ class MeteoData {
 		                 RH, ///< Relative humidity
 		                 VW, ///< Wind velocity
 		                 DW, ///< Wind direction
+		                 VW_MAX, ///< Maximum wind velocity
 		                 ISWR, ///< Incoming short wave radiation
 		                 RSWR, ///< Reflected short wave radiation
 		                 ILWR, ///< Incoming long wave radiation
@@ -138,18 +139,19 @@ class MeteoData {
 		//direct access allowed
 		Date date; ///<Timestamp of the measurement
 		StationData meta; ///<The meta data of the measurement
-		double ta; ///<Air temperature in Kelvin
-		double vw; ///<Wind velocity in m s-1
+		double ta; ///<Air temperature (K)
+		double vw; ///<Wind velocity (m s-1)
 		double dw; ///<Wind direction in degrees
-		double rh; ///<Relative humidity between 0 and 1
-		double hnw; ///<Precipitations in mm h-1
-		double iswr; ///<Incoming shortwave radiation in W m-2
-		double rswr; ///<Reflected Short Wave Radiation in W m-2
-		double ilwr; ///<Incoming Long wave radiation in W m-2
-		double tsg; ///<Soil or snow bottom temperature in Kelvin
-		double tss; ///<Soil or snow surface temperature in Kelvin
-		double hs; ///<Snow height in m
-		double p;  ///<Atmospheric pressure in Pa
+		double vw_max; ///<Maximum wind velocity (m s-1)
+		double rh; ///<Relative humidity between 0 and 1 (1)
+		double hnw; ///<Precipitations in mm h-1, that is (kg m-2)
+		double iswr; ///<Incoming shortwave radiation (W m-2)
+		double rswr; ///<Reflected Short Wave Radiation (W m-2)
+		double ilwr; ///<Incoming Long wave radiation (W m-2)
+		double tsg; ///<Soil or snow bottom temperature (K)
+		double tss; ///<Soil or snow surface temperature (K)
+		double hs; ///<Snow height (m)
+		double p;  ///<Atmospheric pressure (Pa)
 
 		unsigned int getNrOfParameters() const;
  private:

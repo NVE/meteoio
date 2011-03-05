@@ -20,6 +20,7 @@
 using namespace std;
 using namespace oracle;
 using namespace oracle::occi;
+using namespace mio;
 
 namespace mio {
 /**
@@ -50,16 +51,18 @@ namespace mio {
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations
  */
 
-const double ImisIO::plugin_nodata = -999.0; //plugin specific nodata value
-const double ImisIO::in_tz = 1.; //All IMIS data is in gmt+1
+const double ImisIO::plugin_nodata = -999.; ///< plugin specific nodata value
+const double ImisIO::in_tz = 1.; ///< All IMIS data is in gmt+1, that is UTC+1 (a quelques secondes près;-)
 
-const string ImisIO::sqlQueryMeteoData = "SELECT to_char(datum, 'YYYY-MM-DD HH24:MI') as datum, avg(ta) as ta, avg(iswr) as iswr, avg(vw) as vw, avg(dw) as dw, avg(rh) as rh, avg(ilwr) as ilwr, avg(hnw) as hnw, avg(tsg) as tsg, avg(tss) as tss, avg(hs) as hs, avg(rswr) as rswr FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 GROUP BY datum ORDER BY datum asc";
+const string ImisIO::sqlQueryStationIDs = "SELECT station_name, drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' AND station_code=:1"; ///< Wind drift station meta data
 
-const string ImisIO::sqlQueryStationData = "SELECT stao_name,stao_x,stao_y,stao_h,hts1_1,hts1_2,hts1_3 FROM station2.standort WHERE stat_abk like :1 AND stao_nr=:2";
+const string ImisIO::sqlQueryStationMetaData = "SELECT stao_name, stao_x, stao_y, stao_h FROM station2.standort WHERE stat_abk LIKE :1 AND stao_nr=:2"; ///< Snow station meta data
 
-const string ImisIO::sqlQueryDriftStation = "SELECT drift_stat_abk, drift_stao_nr FROM station2.v_snow_drift_standort WHERE application_code='snowpack' AND snow_stat_abk=:1 AND snow_stao_nr=:2";
+const string ImisIO::sqlQuerySensorDepths = "SELECT hts1_1, hts1_2, hts1_3 FROM station2.standort WHERE stat_abk LIKE :1 AND stao_nr=:2"; ///< Sensor depths at station
 
-const string ImisIO::sqlQueryMeteoDataDrift = "SELECT  TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') as datum, avg(a.ta) as ta, avg(a.iswr) as iswr, avg(a.vw) as vw, avg(a.dw) as dw, avg(a.rh) as rh, avg(a.ilwr) as ilwr, avg(a.hnw) as hnw, avg(a.tsg) as tsg, avg(a.tss) as tss, avg(a.hs) as hs, avg(a.rswr) as rswr, avg(b.vw) as VW_DRIFT, avg(b.dw) as DW_DRIFT FROM (SELECT * FROM ams.v_ams_raw where stat_abk=:1 and stao_nr=:2 and datum >=:3 AND datum <= :4) a LEFT OUTER JOIN (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:5 and stao_nr=:6 AND datum > :3 AND datum < :4) b ON a.datum = b.datum GROUP BY a.datum ORDER BY a.datum asc";
+const string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') AS thedate, a.ta, a.iswr, a.vw, a.dw, a.vw_max, a.rh, a.ilwr, a.hnw, a.tsg, a.tss, a.hs, a.rswr, b.vw AS vw_drift, b.dw AS dw_drift, a.ts1, a.ts2, a.ts3 FROM (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4) a LEFT OUTER JOIN (SELECT case when to_char(datum,'MI')=40 then trunc(datum,'HH24')+0.5/24 else datum end as datum, vw, dw FROM ams.v_ams_raw WHERE stat_abk=:5 AND stao_nr=:6 AND datum>=:3 AND datum<=:4) b ON a.datum=b.datum ORDER BY thedate"; ///< C. Marty's Data query with wind drift station; gets wind from enet stations for imis snow station too! [2010-02-24]
+
+const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr, vw_max, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
 
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 const bool ImisIO::__init = ImisIO::initStaticData();
@@ -168,7 +171,7 @@ void ImisIO::getDBParameters()
 
 	string tmp = cfg.get("USEANETZ", "Input", Config::nothrow);
 	if (tmp != "") {
-		useAnetz = cfg.get("USEANETZ", "Input");
+		cfg.getValue("USEANETZ", "Input", useAnetz);
 	} else {
 		useAnetz = false;
 	}
@@ -261,18 +264,19 @@ void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Co
 	}
 }
 
+// HACK Deprecated ??
 void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 
-	if (vecMyStation.size() == 0){//Imis station meta data cannot change between time steps
+	if (vecStationMetaData.size() == 0){//Imis station meta data cannot change between time steps
 		Environment *env = NULL;
 		Connection *conn = NULL;
 
 		try {
 			openDBConnection(env, conn);
 
-			readStationMetaData(conn); //reads all the station meta data into the vecMyStation (member vector)
+			readStationMetaData(conn); //reads all the station meta data into the vecStationMetaData (member vector)
 
 			closeDBConnection(env, conn);
 		} catch (exception& e){
@@ -281,105 +285,111 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 		}
 	}
 
-	vecStation = vecMyStation; //vecMyStation is a global vector holding all meta data
+	vecStation = vecStationMetaData; //vecStationMetaData is a global vector holding all meta data
 }
 
 /**
  * @brief A meta function that extracts all station names from the Config,
- *        parses them and retrieves all meta data from the IMIS database
+ *        parses them and retrieves all meta data from SDB
  */
 void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 {
-	vector<string> vecStationName;
-	readStationNames(vecStationName);
+	vector<string> vecStationID;
+	readStationIDs(vecStationID);
+	bool converted=true;
 
-	for (unsigned int ii=0; ii<vecStationName.size(); ii++){
-
-		const string& stationName = vecStationName[ii];
-		string stName = "", stationNumber = "";
-		vector<string> resultset;
-
-		//the stationName consists of the STAT_ABK and the STAO_NR, e.g. "KLO2" consists of "KLO" and "2"
-		parseStationName(stationName, stName, stationNumber);
-
-		//Now connect to the database and retrieve the meta data - this only needs to be done once per instance
-		getStationData(stName, stationNumber, resultset, conn);
-
-		if (resultset.size() < 4)
-			throw IOException("Could not read enough meta data for station "+stName+stationNumber, AT);
-
-		double east, north, alt;
-		if ((!IOUtils::convertString(east, resultset.at(1), std::dec))
-		    || (!IOUtils::convertString(north, resultset.at(2), std::dec))
-		    || (!IOUtils::convertString(alt, resultset.at(3), std::dec)))
-			throw ConversionFailedException("Error while converting station coordinate from Imis DB", AT);
-
-		Coords myCoord(coordin, coordinparam);
-		myCoord.setXY(east, north, alt);
-		vecMyStation.push_back(StationData(myCoord, stationName, resultset.at(0)));
-
-		//Check whether there is a special drift station for the current station (only IMIS stations)
-		string driftstation = getDriftStation(stName, stationNumber, conn);
-		if (driftstation != "") mapDriftStation[vecStationName[ii]] = driftstation;
-	}
-}
-
-std::string ImisIO::getDriftStation(std::string stationName, std::string stationNumber, oracle::occi::Connection*& conn)
-{
-	if (stationNumber == "") //not an IMIS station, thus no further querying necessary
-		return "";
-
-	string driftstation = "";
-
-	try {
-		Statement *stmt = conn->createStatement(sqlQueryDriftStation);
-		ResultSet *rs = NULL;
-
-		stmt->setString(1, stationName);    // set 1st variable's value
-		stmt->setString(2, stationNumber);  // set 2nd variable's value
-		rs = stmt->executeQuery();
-
-		while (rs->next() == true) {
-			driftstation = "";
-			driftstation += rs->getString(1);
-			driftstation += rs->getString(2);
+	for (unsigned int ii=0; ii<vecStationID.size(); ii++) {
+		// Retrieve the station IDs - this only needs to be done once per instance
+		string stat_abk = "", stao_nr = "", station_name = "";
+		parseStationID(vecStationID[ii], stat_abk, stao_nr);
+		if (vecStationID[ii].at(0) != '*') {
+			vector<string> stnIDs;
+			string drift_stat_abk = "", drift_stao_nr = "";
+			getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, conn);
+			converted = IOUtils::convertString(station_name, stnIDs.at(0));
+			converted = IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
+			converted = IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
+			string drift_stationID = "";
+			drift_stationID += drift_stat_abk + drift_stao_nr;
+			if (drift_stationID != "") {
+				mapDriftStation[vecStationID[ii]] = drift_stationID;
+			} else {
+				throw ConversionFailedException("Error! No drift station for station "+stat_abk+stao_nr, AT);
+			}
+			if (!converted) {
+				throw ConversionFailedException("Error while converting station IDs for station "+stat_abk+stao_nr, AT);
+			}
 		}
 
-		stmt->closeResultSet(rs);
-		conn->terminateStatement(stmt);
-	} catch (exception& e){
-		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
-	}
+		// Retrieve the station meta data - this only needs to be done once per instance
+		vector<string> stationMetaData;
+		double east, north, alt;
+		string stao_name = "";
+		converted=true;
+		getStationMetaData(stat_abk, stao_nr, sqlQueryStationMetaData, stationMetaData, conn);
+		converted = IOUtils::convertString(stao_name, stationMetaData.at(0));
+		converted = IOUtils::convertString(east, stationMetaData.at(1), std::dec);
+		converted = IOUtils::convertString(north, stationMetaData.at(2), std::dec);
+		converted = IOUtils::convertString(alt, stationMetaData.at(3), std::dec);
+		if (!converted) {
+			throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
+		}
 
-	return driftstation;
+		// HACK to obtain a valid station_name w/o spaces within
+		if (station_name == "") {
+			if (stao_name != "") {
+				station_name += vecStationID[ii] + ":" + stao_name;
+			} else {
+				station_name += vecStationID[ii];
+			}
+		} else {
+			vector<string> tmpname;
+			IOUtils::readLineToVec(station_name, tmpname, ' ');
+			unsigned int jj=1;
+			while (jj < tmpname.size()) {
+				if (tmpname.at(jj) != "-") {
+					tmpname.at(0) += "_" + tmpname.at(jj);
+				} else {
+					tmpname.at(0) += ":";
+					if (jj < tmpname.size()-1)
+						tmpname.at(0) += tmpname.at(++jj);
+				}
+				jj++;
+			}
+			station_name = tmpname.at(0);
+		}
+		Coords myCoord(coordin, coordinparam);
+		myCoord.setXY(east, north, alt);
+		vecStationMetaData.push_back(StationData(myCoord, vecStationID[ii], station_name));
+	}
 }
 
 /**
  * @brief This function breaks up the station name into two components (a string and a number e.g. KLO2 -> "KLO","2")
- * @param stationName The full name of the station (e.g. "KLO2")
+ * @param stationID The full name of the station (e.g. "KLO2")
  * @param stName      The string part of the name  (e.g. "KLO")
  * @param stNumber    The integer part of the name (e.g. "2")
  */
-void ImisIO::parseStationName(const std::string& stationName, std::string& stName, std::string& stNumber)
+void ImisIO::parseStationID(const std::string& stationID, std::string& stat_abk, std::string& stao_nr)
 {
-	stName    = stationName.substr(0, stationName.length()-1); //The station name: e.g. KLO
-	stNumber  = stationName.substr(stationName.length()-1, 1); //The station number: e.g. 2
-	if(!std::isdigit(stNumber[0])) {
+	stat_abk = stationID.substr(0, stationID.length()-1); //The station name: e.g. KLO
+	stao_nr = stationID.substr(stationID.length()-1, 1); //The station number: e.g. 2
+	if(!std::isdigit(stao_nr[0])) {
 		//the station is one of these non-imis stations that don't contain a number...
-		stName = stationName;
-		stNumber = "0";
+		stat_abk = stationID;
+		stao_nr = "0";
 	}
 }
 
 /**
  * @brief This function extracts all info about the stations that are to be used from global Config object
- * @param vecStationName A vector that will hold all relevant stations as std::strings
+ * @param vecStationID A vector that will hold all relevant stations as std::strings
  */
-void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
+void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 {
-	vecStationName.clear();
+	vecStationID.clear();
 
-	//Read in the StationNames
+	//Read in the StationIDs
 	string xmlpath="", str_stations="";
 	unsigned int stations=0;
 
@@ -398,36 +408,35 @@ void ImisIO::readStationNames(std::vector<std::string>& vecStationName)
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
 		std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
-		vecStationName.push_back(stationname);
+		vecStationID.push_back(stationname);
 	}
 }
 
-
-void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-                           const unsigned int& stationindex)
+void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
+                           std::vector< std::vector<MeteoData> >& vecMeteo, const unsigned int& stationindex)
 {
 	Environment *env = NULL;
 	Connection *conn = NULL;
 
 	try {
-		if (vecMyStation.size() == 0){
+		if (vecStationMetaData.size() == 0) {
 			openDBConnection(env, conn);
-			readStationMetaData(conn); //reads all the station meta data into the vecMyStation (member vector)
+			readStationMetaData(conn); //reads all the station meta data into the vecStationMetaData (member vector)
 		}
 
-		if (vecMyStation.size() == 0){ //if there are no stations -> return
+		if (vecStationMetaData.size() == 0) { //if there are no stations -> return
 			if ((env != NULL) || (conn != NULL)) closeDBConnection(env, conn);
 			return;
 		}
 
-		unsigned int indexStart=0, indexEnd=vecMyStation.size();
+		unsigned int indexStart=0, indexEnd=vecStationMetaData.size();
 
 		//The following part decides whether all the stations are rebuffered or just one station
-		if (stationindex == IOUtils::npos){
+		if (stationindex == IOUtils::npos) {
 			vecMeteo.clear();
-			vecMeteo.insert(vecMeteo.begin(), vecMyStation.size(), vector<MeteoData>());
+			vecMeteo.insert(vecMeteo.begin(), vecStationMetaData.size(), vector<MeteoData>());
 		} else {
-			if (stationindex < vecMeteo.size()){
+			if (stationindex < vecMeteo.size()) {
 				indexStart = stationindex;
 				indexEnd   = stationindex+1;
 			} else {
@@ -438,10 +447,11 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 		if ((env == NULL) || (conn == NULL))
 			openDBConnection(env, conn);
 
-		for (unsigned int ii=indexStart; ii<indexEnd; ii++) //loop through stations
-			readData(dateStart, dateEnd, vecMeteo, ii, vecMyStation, env, conn);
+		for (unsigned int ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
+			readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, conn);
+		}
 
-		if (useAnetz){ //Important: we don't care about the metadata for ANETZ stations
+		if (useAnetz) { //Important: we don't care about the metadata for ANETZ stations
 			vector<StationData> vecAnetzStation;       //holds the unique ANETZ stations that need to be read
 			vector< vector<MeteoData> > vecMeteoAnetz; //holds the meteo data of the ANETZ stations
 			map<string, unsigned int> mapAnetzNames;   //associates an ANETZ station with an index within vecMeteoAnetz
@@ -464,7 +474,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vect
 			calculatePsum(date_anetz_start, date_anetz_end, vecMeteoAnetz, vec_of_psums);
 
 			for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through relevant stations
-				map<string,AnetzData>::const_iterator it = mapAnetz.find(vecMyStation.at(ii).getStationID());
+				map<string,AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
 				if (it != mapAnetz.end())
 					assimilateAnetzData(date_anetz_start, it->second, vec_of_psums, mapAnetzNames, ii, vecMeteo);
 			}
@@ -610,12 +620,13 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 }
 
 void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned int& indexEnd,
-                               std::map<std::string, unsigned int>& mapAnetzNames, std::vector<StationData>& vecAnetzStation)
+                               std::map<std::string, unsigned int>& mapAnetzNames,
+                               std::vector<StationData>& vecAnetzStation)
 {
 	set<string> uniqueStations;
-	
+
 	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
-		map<string,AnetzData>::const_iterator it = mapAnetz.find(vecMyStation.at(ii).getStationID());
+		map<string, AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
 		if (it != mapAnetz.end()){
 			for (unsigned int jj=0; jj<it->second.nrOfAnetzStations; jj++){
 				uniqueStations.insert(it->second.anetzstations[jj]);
@@ -636,23 +647,24 @@ void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned in
 
 /**
  * @brief A meta function to read meteo data for one specific station (specified by the stationindex)
- * @param dateStart    The beginning of the interval to retrieve data for
- * @param dateEnd      The end of the interval to retrieve data for
- * @param vecMeteo     The vector that will hold all MeteoData for each station
- * @param stationindex The index of the station as specified in the Config
+ * @param dateStart     The beginning of the interval to retrieve data for
+ * @param dateEnd       The end of the interval to retrieve data for
+ * @param vecMeteo      The vector that will hold all MeteoData for each station
+ * @param stationindex  The index of the station as specified in the Config
+ * @param vecStationIDs Vector of station IDs
+ * @param env           Create Oracle environnment
+ * @param conn          Create connection to SDB
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-                      const unsigned int& stationindex, const std::vector<StationData>& vecStationNames, 
+                      const unsigned int& stationindex, const std::vector<StationData>& vecStationIDs,
                       oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	vecMeteo.at(stationindex).clear();
 
-	string stationName="", stationNumber="";
+	string stat_abk="", stao_nr="";
 	vector< vector<string> > vecResult;
 	vector<int> datestart = vector<int>(5);
 	vector<int> dateend   = vector<int>(5);
-
-	parseStationName(vecStationNames.at(stationindex).getStationID(), stationName, stationNumber);
 
 	//IMIS is in TZ=+1, so moving back to this timezone
 	Date dateS(dateStart), dateE(dateEnd);
@@ -671,16 +683,19 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		tmpDate.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 	}
 
-	//get data for one specific station 
-	getImisData(stationName, stationNumber, datestart, dateend, vecResult, env, conn);
+	//get data for one specific station
+	std::vector<std::string> vecHts1;
+	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
+	getSensorDepths(stat_abk, stao_nr, sqlQuerySensorDepths, vecHts1, conn);
+	bool fullStation = getStationData(stat_abk, stao_nr, datestart, dateend, vecHts1, vecResult, env, conn);
 
 	MeteoData tmpmd;
-	tmpmd.meta = vecStationNames.at(stationindex);
+	tmpmd.meta = vecStationIDs.at(stationindex);
 	for (unsigned int ii=0; ii<vecResult.size(); ii++){
-		parseDataSet(vecResult[ii], tmpmd);
+		parseDataSet(vecResult[ii], tmpmd, fullStation);
 		convertUnits(tmpmd);
 
-		//For IMIS stations the hnw value is a rate (mm/h), therefore we need to 
+		//For IMIS stations the hnw value is a rate (kg m-2 h-1), therefore we need to
 		//divide it by two to conjure the accumulated value for the half hour
 		if (tmpmd.meta.stationID.length() > 0){
 			if (tmpmd.meta.stationID[0] != '*') //excludes ANETZ stations, they come in hourly sampling
@@ -694,95 +709,200 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 /**
  * @brief Puts the data that has been retrieved from the database into a MeteoData object
- * @param _meteo a row of meteo data from the database (note: order important, matches SQL query)
+ * @param i_meteo a row of meteo data from the database (NOTE order important, matches SQL query, see also MeteoData.[cch])
  * @param md     the object to copy the data to
+ * @param fullstation
+ * 	- true if it is a combined snow_drift station (station2.v_snow_drift_standort)
+ * 	- false if it is a "conventional" station, for example an ANETZ-station (station2.standort)
  */
-void ImisIO::parseDataSet(const std::vector<std::string>& _meteo, MeteoData& md)
+void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md, bool& fullStation)
 {
-	IOUtils::convertString(md.date, _meteo.at(0), in_tz, dec);
-	IOUtils::convertString(md.param(MeteoData::TA),   _meteo.at(1),  dec);
-	IOUtils::convertString(md.param(MeteoData::ISWR), _meteo.at(2),  dec);
-	IOUtils::convertString(md.param(MeteoData::VW),   _meteo.at(3),  dec);
-	IOUtils::convertString(md.param(MeteoData::DW),   _meteo.at(4),  dec);
-	IOUtils::convertString(md.param(MeteoData::RH),   _meteo.at(5),  dec);
-	IOUtils::convertString(md.param(MeteoData::ILWR), _meteo.at(6),  dec);
-	IOUtils::convertString(md.param(MeteoData::HNW),  _meteo.at(7),  dec);
-	IOUtils::convertString(md.param(MeteoData::TSG),  _meteo.at(8),  dec);
-	IOUtils::convertString(md.param(MeteoData::TSS),  _meteo.at(9),  dec);
-	IOUtils::convertString(md.param(MeteoData::HS),   _meteo.at(10), dec);
-	IOUtils::convertString(md.param(MeteoData::RSWR), _meteo.at(11), dec);
+	IOUtils::convertString(md.date, i_meteo.at(0), in_tz, dec);
+	IOUtils::convertString(md.param(MeteoData::TA),     i_meteo.at(1),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::ISWR),   i_meteo.at(2),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::VW),     i_meteo.at(3),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::DW),     i_meteo.at(4),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::VW_MAX), i_meteo.at(5),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::RH),     i_meteo.at(6),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::ILWR),   i_meteo.at(7),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::HNW),    i_meteo.at(8),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::TSG),    i_meteo.at(9),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::TSS),    i_meteo.at(10),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::HS),     i_meteo.at(11), std::dec);
+	IOUtils::convertString(md.param(MeteoData::RSWR),   i_meteo.at(12), std::dec);
 
-	if (_meteo.size() == 14){ //extra drift data
+	unsigned int ii = 13;
+	if (fullStation) {
 		if (!md.param_exists("VW_DRIFT")) md.addParameter("VW_DRIFT");
+		IOUtils::convertString(md.param("VW_DRIFT"), i_meteo.at(ii++), std::dec);
 		if (!md.param_exists("DW_DRIFT")) md.addParameter("DW_DRIFT");
-		IOUtils::convertString(md.param("VW_DRIFT"), _meteo.at(13), dec);
-		IOUtils::convertString(md.param("DW_DRIFT"), _meteo.at(12), dec);
+		IOUtils::convertString(md.param("DW_DRIFT"), i_meteo.at(ii++), std::dec);
+	}
+
+	// additional snow station parameters
+	if (!md.param_exists("ts1")) md.addParameter("ts1");
+	IOUtils::convertString(md.param("ts1"), i_meteo.at(ii++), std::dec);
+	if (!md.param_exists("ts2")) md.addParameter("ts2");
+	IOUtils::convertString(md.param("ts2"), i_meteo.at(ii++), std::dec);
+	if (!md.param_exists("ts3")) md.addParameter("ts3");
+	IOUtils::convertString(md.param("ts3"), i_meteo.at(ii++), std::dec);
+	if (fullStation) {
+		if (!md.param_exists("hts1_1")) md.addParameter("hts1_1");
+		IOUtils::convertString(md.param("hts1_1"), i_meteo.at(ii++), std::dec);
+		if (!md.param_exists("hts1_2")) md.addParameter("hts1_2");
+		IOUtils::convertString(md.param("hts1_2"), i_meteo.at(ii++), std::dec);
+		if (!md.param_exists("hts1_3")) md.addParameter("hts1_3");
+		IOUtils::convertString(md.param("hts1_3"), i_meteo.at(ii++), std::dec);
 	}
 }
 
 /**
- * @brief This function gets back data from table station2 and fills vector with station data
- * @param stat_abk :      a string key of table station2
- * @param stao_nr :       a string key of table station2
- * @param vecStationData: string vector in which data will be filled
+ * @brief This function gets IDs from table station2.v_snow_drift_standort and fills vecStationIDs
+ * @param station_code  a string key corresponding to stationID
+ * @param vecStationIDs string vector in which data will be filled
+ * @param conn          create connection to SDB
+ * @param return number of columns retrieved
  */
-void ImisIO::getStationData(const std::string& stat_abk, const std::string& stao_nr,
-                            std::vector<std::string>& vecStationData, oracle::occi::Connection*& conn)
+unsigned int ImisIO::getStationIDs(const std::string& station_code, const std::string& sqlQuery,
+                                   std::vector<std::string>& vecStationIDs,
+                                   oracle::occi::Connection*& conn)
 {
-	vecStationData.clear();
+	vecStationIDs.clear();
 
 	try {
-		Statement *stmt = conn->createStatement(sqlQueryStationData);
+		Statement *stmt = conn->createStatement(sqlQuery);
 		ResultSet *rs = NULL;
 
-		stmt->setString(1, stat_abk); // set 1st variable's value
-		stmt->setString(2, stao_nr);  // set 2nd variable's value
+		stmt->setString(1, station_code); // set 1st variable's value
+
 		rs = stmt->executeQuery();    // execute the statement stmt
+		vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
-			for (unsigned int ii=0; ii<4; ii++) {
-				vecStationData.push_back(rs->getString(ii+1));
+			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+				vecStationIDs.push_back(rs->getString(ii));
 			}
 		}
 
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
+		return cols.size();
 	} catch (exception& e){
 		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
 /**
- * @brief This is a private function. It gets back data from ams.v_imis which is a table of the database
- * and fill them in a vector of vector of string. Each record returned is a string vector.
- * @param stat_abk :     a string key of ams.v_imis
- * @param stao_nr :      a string key of ams.v_imis
+ * @brief This function gets IDs from table station2.v_snow_drift_standort and fills vecStationIDs
+ * @param stat_abk a string key of table station2
+ * @param stao_nr  a string key of table station2
+ * @param veHts1   vector of string to retieve sensor depths
+ * @param conn     create connection to SDB
+ * @param return number of columns retrieved
+ */
+unsigned int ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
+                                     const std::string& sqlQuery, std::vector<std::string>& vecHts1,
+                                     oracle::occi::Connection*& conn)
+{
+	vecHts1.clear();
+
+	try {
+		Statement *stmt = conn->createStatement(sqlQuery);
+		ResultSet *rs = NULL;
+		
+		stmt->setString(1, stat_abk); // set 1st variable's value
+		stmt->setString(2, stao_nr);  // set 2nd variable's value
+
+		rs = stmt->executeQuery();    // execute the statement stmt
+		vector<MetaData> cols = rs->getColumnListMetaData();
+
+		while (rs->next() == true) {
+			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+				vecHts1.push_back(rs->getString(ii));
+			}
+		}
+
+		stmt->closeResultSet(rs);
+		conn->terminateStatement(stmt);
+		return cols.size();
+	} catch (exception& e){
+		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+	}
+}
+
+/**
+ * @brief This function gets meta data from table station2.standort and fills vecStationMetaData
+ * @param stat_abk           a string key of table
+ * @param stao_nr            a string key of table
+ * @param sqlQuery           the query to execute
+ * @param vecStationMetaData string vector in which data will be filled
+ * @param conn               create connection to SDB
+ * @param return             number of columns retrieved
+ */
+unsigned int ImisIO::getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
+                                        const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
+                                        oracle::occi::Connection*& conn)
+{
+	vecStationMetaData.clear();
+
+	try {
+		Statement *stmt = conn->createStatement(sqlQuery);
+		ResultSet *rs = NULL;
+
+		stmt->setString(1, stat_abk); // set 1st variable's value
+		stmt->setString(2, stao_nr);  // set 2nd variable's value
+
+		rs = stmt->executeQuery();    // execute the statement stmt
+		vector<MetaData> cols = rs->getColumnListMetaData();
+
+		while (rs->next() == true) {
+			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+				vecStationMetaData.push_back(rs->getString(ii));
+			}
+		}
+
+		stmt->closeResultSet(rs);
+		conn->terminateStatement(stmt);
+		return cols.size();
+	} catch (exception& e){
+		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+	}
+}
+
+/**
+ * @brief Gets data from ams.v_ams_raw which is a table of SDB and
+ * retrieves the temperature sensor depths from station2.standort \n
+ * Each record returned are vector of strings which are pushed back in vecMeteoData.
+ * @param stat_abk :     a string key of ams.v_ams_raw
+ * @param stao_nr :      a string key of ams.v_ams_raw
  * @param datestart :    a vector of five(5) integer corresponding to the recording date
  * @param dateend :      a vector of five(5) integer corresponding to the recording date
  * @param vecMeteoData : a vector of vector of string in which data will be filled
+ * @param return number of columns retrieved
  */
-void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_nr,
-                          const std::vector<int>& datestart, const std::vector<int>& dateend,
-                          std::vector< std::vector<std::string> >& vecMeteoData,
-                          oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao_nr,
+                            const std::vector<int>& datestart, const std::vector<int>& dateend,
+                            const std::vector<std::string>& vecHts1,
+                            std::vector< std::vector<std::string> >& vecMeteoData,
+                            oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
-	unsigned int nrOfColumns = 12;
-
 	vecMeteoData.clear();
-
-	//First check whether this is a station with separate wind drift data
-	bool separateDriftStation = false;
-	map<string,string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
-	if (it != mapDriftStation.end())
-		separateDriftStation = true;
+	bool fullStation = true;
 
 	try {
 		Statement *stmt = NULL;
 		ResultSet *rs = NULL;
-		if (!separateDriftStation){
-			stmt = conn->createStatement(sqlQueryMeteoData);
-		} else {
+
+		map<string, string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
+		if (it != mapDriftStation.end()) {
 			stmt = conn->createStatement(sqlQueryMeteoDataDrift);
+			string drift_stat_abk="", drift_stao_nr="";
+			parseStationID(it->second, drift_stat_abk, drift_stao_nr);
+			stmt->setString(5, drift_stat_abk);
+			stmt->setString(6, drift_stao_nr);
+		} else {
+			stmt = conn->createStatement(sqlQueryMeteoData);
+			fullStation = false;
 		}
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
@@ -791,32 +911,48 @@ void ImisIO::getImisData (const std::string& stat_abk, const std::string& stao_n
 		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
 		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
-		stmt->setDate(4, enddate);    // set 4th variable's value (enddate)
-
-		if (separateDriftStation){
-			string drift_stat_abk="", drift_stao_nr=""; 
-			parseStationName(it->second, drift_stat_abk, drift_stao_nr);
-			nrOfColumns += 2; //two extra columns for drift wind and direction
-			stmt->setString(5, drift_stat_abk); 
-			stmt->setString(6, drift_stao_nr);  
-		}
+		stmt->setDate(4, enddate);    // set 4th variable's value (end date)
 
 		rs = stmt->executeQuery(); // execute the statement stmt
+		vector<MetaData> cols = rs->getColumnListMetaData();
 
-		rs->setMaxColumnSize(7,22);
-		vector<string> vecTmpMeteoData;
+		vector<string> vecData;
 		while (rs->next() == true) {
-			vecTmpMeteoData.clear();
-			for (unsigned int ii=1; ii<=nrOfColumns; ii++) { // 12 or 14 columns
-				vecTmpMeteoData.push_back(rs->getString(ii));
+			vecData.clear();
+			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+				vecData.push_back(rs->getString(ii));
 			}
-			vecMeteoData.push_back(vecTmpMeteoData);
+			if (fullStation) {
+				for (unsigned int ii=0; ii<vecHts1.size(); ii++) {
+					vecData.push_back(vecHts1.at(ii));
+				}
+			}
+			vecMeteoData.push_back(vecData);
 		}
 
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
+		return fullStation;
 	} catch (exception& e){
 		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+	}
+}
+
+void ImisIO::convertSnowTemperature(MeteoData& meteo, const std::string& parameter)
+{
+	if (meteo.param_exists(parameter)) {
+		const unsigned int idx = meteo.getParameterIndex(parameter);
+		if(meteo.param(idx)!=IOUtils::nodata)
+			meteo.param(idx) += Cst::t_water_freezing_pt; //C_TO_K
+	}
+}
+
+void ImisIO::convertSensorDepth(MeteoData& meteo, const std::string& parameter)
+{
+	if (meteo.param_exists(parameter)) {
+		const unsigned int idx = meteo.getParameterIndex(parameter);
+		if(meteo.param(idx)!=IOUtils::nodata)
+			meteo.param(idx) /= 100.; // centimetre to metre
 	}
 }
 
@@ -824,7 +960,7 @@ void ImisIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts degC to Kelvin, converts ilwr to ea, converts RH to [0,1]
+	//converts degC to kelvin, converts ilwr to ea, converts RH to [0,1], cm to m
 	if(meteo.ta!=IOUtils::nodata) {
 		meteo.ta=C_TO_K(meteo.ta);
 	}
@@ -844,6 +980,13 @@ void ImisIO::convertUnits(MeteoData& meteo)
 	if(meteo.hs!=IOUtils::nodata)
 		meteo.hs /= 100.0;
 
+	//convert extra parameters (if present) //HACK TODO: find a dynamic way...
+	convertSnowTemperature(meteo, "ts1");
+	convertSnowTemperature(meteo, "ts2");
+	convertSnowTemperature(meteo, "ts3");
+	convertSensorDepth(meteo, "hts1_1");
+	convertSensorDepth(meteo, "hts1_2");
+	convertSensorDepth(meteo, "hts1_3");
 }
 
 void ImisIO::cleanup() throw()

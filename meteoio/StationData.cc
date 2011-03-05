@@ -68,6 +68,7 @@ bool StationData::operator!=(const StationData& in) const {
 StationData StationData::merge(const StationData& sd1, const StationData& sd2) {
 	StationData tmp(sd1);
 	tmp.merge(sd2);
+	return tmp;
 }
 
 void StationData::merge(const StationData& sd2) {

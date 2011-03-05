@@ -31,18 +31,19 @@ const bool MeteoData::__init = MeteoData::initStaticData();
 bool MeteoData::initStaticData()
 {
 	//Associate unsigned int value and a string representation of a meteo parameter
-	static_meteoparamname[TA]   = "TA";
-	static_meteoparamname[ISWR] = "ISWR";
-	static_meteoparamname[VW]   = "VW";
-	static_meteoparamname[DW]   = "DW";
-	static_meteoparamname[RH]   = "RH";
-	static_meteoparamname[ILWR] = "ILWR";
-	static_meteoparamname[HNW]  = "HNW";
-	static_meteoparamname[TSG]  = "TSG";
-	static_meteoparamname[TSS]  = "TSS";
-	static_meteoparamname[HS]   = "HS";
-	static_meteoparamname[RSWR] = "RSWR";
-	static_meteoparamname[P]    = "P";
+	static_meteoparamname[TA]     = "TA";
+	static_meteoparamname[ISWR]   = "ISWR";
+	static_meteoparamname[VW]     = "VW";
+	static_meteoparamname[DW]     = "DW";
+	static_meteoparamname[VW_MAX] = "VW_MAX";
+	static_meteoparamname[RH]     = "RH";
+	static_meteoparamname[ILWR]   = "ILWR";
+	static_meteoparamname[HNW]    = "HNW";
+	static_meteoparamname[TSG]    = "TSG";
+	static_meteoparamname[TSS]    = "TSS";
+	static_meteoparamname[HS]     = "HS";
+	static_meteoparamname[RSWR]   = "RSWR";
+	static_meteoparamname[P]      = "P";
 
 	return true;
 }
@@ -79,6 +80,7 @@ void MeteoData::associateMemberVariables()
 	meteoparam[ISWR]     = &iswr;
 	meteoparam[VW]       = &vw;
 	meteoparam[DW]       = &dw;
+	meteoparam[VW_MAX]   = &vw_max;
 	meteoparam[RH]       = &rh;
 	meteoparam[ILWR]     = &ilwr;
 	meteoparam[HNW]      = &hnw;
@@ -92,18 +94,19 @@ void MeteoData::associateMemberVariables()
 void MeteoData::initParameterMap()
 {//NOTE: any performace improvement here would make a big difference...
 	//Associate unsigned int value and a string representation of a meteo parameter
-	meteoparamname[TA]   = "TA";
-	meteoparamname[ISWR] = "ISWR";
-	meteoparamname[VW]   = "VW";
-	meteoparamname[DW]   = "DW";
-	meteoparamname[RH]   = "RH";
-	meteoparamname[ILWR] = "ILWR";
-	meteoparamname[HNW]  = "HNW";
-	meteoparamname[TSG]  = "TSG";
-	meteoparamname[TSS]  = "TSS";
-	meteoparamname[HS]   = "HS";
-	meteoparamname[RSWR] = "RSWR";
-	meteoparamname[P]    = "P";
+	meteoparamname[TA]     = "TA";
+	meteoparamname[ISWR]   = "ISWR";
+	meteoparamname[VW]     = "VW";
+	meteoparamname[DW]     = "DW";
+	meteoparamname[VW_MAX] = "VW_MAX";
+	meteoparamname[RH]     = "RH";
+	meteoparamname[ILWR]   = "ILWR";
+	meteoparamname[HNW]    = "HNW";
+	meteoparamname[TSG]    = "TSG";
+	meteoparamname[TSS]    = "TSS";
+	meteoparamname[HS]     = "HS";
+	meteoparamname[RSWR]   = "RSWR";
+	meteoparamname[P]      = "P";
 
 	//The following mapping needs to be done for every instance of MeteoData
 	associateMemberVariables();
@@ -335,7 +338,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 	std::map<unsigned int, double*>::const_iterator it1;
 	for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){
 		if( (*it1->second) != IOUtils::nodata ) {
-			os << setw(7) << data.getNameForParameter(it1->first) << ":" << setw(15) << *it1->second << "\n";
+			os << setw(8) << data.getNameForParameter(it1->first) << ":" << setw(15) << *it1->second << "\n";
 		}
 	}
 	os << "</meteo>\n";
@@ -366,6 +369,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&ta,1);
 		buf.Pack(&vw,1);
 		buf.Pack(&dw,1);
+		buf.Pack(&vw_max,1);
 		buf.Pack(&rh,1);
 		buf.Pack(&hnw,1);
 		buf.Pack(&iswr,1);
@@ -384,6 +388,7 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&ta,1);
 		buf.UnPack(&vw,1);
 		buf.UnPack(&dw,1);
+		buf.UnPack(&vw_max,1);
 		buf.UnPack(&rh,1);
 		buf.UnPack(&hnw,1);
 		buf.UnPack(&iswr,1);

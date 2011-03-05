@@ -45,10 +45,10 @@
 #endif
 
 #ifndef C_TO_K
-#define C_TO_K( T ) ( T + 273.15 )	  // degree Celsius to kelvin
+#define C_TO_K( T ) ( T + Cst::t_water_freezing_pt )	  // degree Celsius to kelvin
 #endif
 #ifndef K_TO_C
-#define K_TO_C( T ) ( T - 273.15 )	  // kelvin to degree Celsius
+#define K_TO_C( T ) ( T - Cst::t_water_freezing_pt )	  // kelvin to degree Celsius
 #endif
 
 namespace mio {

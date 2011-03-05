@@ -152,6 +152,7 @@ Coords& Coords::operator=(const Coords& source) {
 Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
 	Coords tmp(coord1);
 	tmp.merge(coord2);
+	return tmp;
 }
 
 /**

@@ -52,27 +52,6 @@ double IOManager::getAvgSamplingRate()
 	}
 }
 
-void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end, 
-						  const std::vector< METEO_TIMESERIE >& vecMeteo)
-{
-	//perform check on date_start and date_end
-	if (date_end < date_start)
-		throw InvalidArgumentException("date_start cannot be greater than date_end", AT);
-
-	if (level == IOManager::filtered){
-		fcache_start   = date_start;
-		fcache_end     = date_end;
-		filtered_cache = vecMeteo;
-	} else if (level == IOManager::raw){
-		//push data into the BufferedIOHandler
-		fcache_start = fcache_end = Date(0.0, 0.);
-		filtered_cache.clear();
-		bufferedio.push_meteo_data(date_start, date_end, vecMeteo);
-	} else {
-		throw InvalidArgumentException("The processing level is invalid (should be raw OR filtered)", AT);
-	}
-}
-
 unsigned int IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation)
 {
 	vecStation.clear();
@@ -128,9 +107,8 @@ void IOManager::fill_filtered_cache()
 		//ask the bufferediohandler for the whole buffer
 		const vector< METEO_TIMESERIE >& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
 
-		//cout << "Now filtering ... data for " << buffer.size() << " stations" << endl; clock_t cstart = std::clock();
+		//cout << "Now filtering ..." << endl;
 		meteoprocessor.process(buffer, filtered_cache);
-		//cout << "Filtering: " << ( std::clock() - cstart ) / (double)CLOCKS_PER_SEC << " seconds" << endl;
 	}
 }
 
