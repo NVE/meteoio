@@ -42,10 +42,10 @@ namespace mio {
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - METEOPATH: path to the output directory; [Output] section
+ * - METEOPATH: path to the meteo files directory; [Input] and [Output] sections
  * - METEOFILE#: input meteo data file, e.g. METEOFILE1, METEOFILE2; [Input] section
  * - STATION#: station name as listed in the METAFILE, e.g. STATION1, STATION2; [Input] section
- * - METAFILE: filename of the meta data file; [Input] section
+ * - METAFILE: filename of the meta data file (in METEOPATH); [Input] section
  * - NROFSTATIONS: integer, the number of stations for which meteo files are provided; [Input] section
  */
 
@@ -133,19 +133,16 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 }
 
 void SNIO::readMetaData(unsigned int& nrOfStations)
-{	
-	/*
-	 * The format of the meta data file is as follows:
-	 * SHORTNAME LONGNAME altitude latitude longitude 
-	 * ALI2 Allieres:Chenau 1767 6.993 46.489 1.22
-	 */
-
-	string stationname, metafile;
+{
+	string stationname, metafile, inpath;
 	cfg.getValue("METAFILE", "Input", metafile);
-	if (!IOUtils::validFileName(metafile))
-		throw InvalidFileNameException(metafile, AT);
-	if (!IOUtils::fileExists(metafile))
-		throw FileNotFoundException(metafile, AT);
+	cfg.getValue("METEOPATH", "Input", inpath);
+	stringstream meta_with_path;
+	meta_with_path << inpath << "/" << metafile;
+	if ( !IOUtils::validFileName(meta_with_path.str()) )
+		throw InvalidFileNameException(meta_with_path.str(), AT);
+	if ( !IOUtils::fileExists(meta_with_path.str()) )
+		throw FileNotFoundException(meta_with_path.str(), AT);
 	fin.clear();
 	
 	//Loop over all stations
@@ -156,11 +153,11 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 
 		cfg.getValue("STATION" + snum.str(), "Input", stationname);
 
-		fin.open (metafile.c_str(), std::ifstream::in);	
+		fin.open (meta_with_path.str().c_str(), std::ifstream::in);
 		if (fin.fail())
-			throw FileAccessException(metafile, AT);
+			throw FileAccessException(meta_with_path.str(), AT);
 		
-		try{ 
+		try{
 			char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 			
 			unsigned int linenr = 0;
@@ -179,7 +176,7 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 				if (ncols==0){
 					//Ignore empty lines
 				} else if ((ncols<6) || (ncols>6)){
-					throw InvalidFormatException(metafile+":"+ss.str() + " each line must have 6 columns", AT);
+					throw InvalidFormatException(meta_with_path.str()+":"+ss.str() + " each line must have 6 columns", AT);
 				} else {
 					//6 columns exist
 					if (tmpvec.at(0) == stationname){
@@ -211,12 +208,12 @@ void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationDat
 
 	Coords stationcoord(coordin, coordinparam);
 	stationcoord.setLatLon(tmpdata[3], tmpdata[4], tmpdata[2]);
-	sd.setStationData(stationcoord, vecLine[0], vecLine[0]);
+	sd.setStationData(stationcoord, vecLine[0], vecLine[1]);
 }
 
 
 void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
-					const unsigned int&)
+                         const unsigned int&)
 {
 	/*
 	 * Read the meteorological snowpack input file, formatted as follows:
@@ -226,10 +223,11 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 	 */
 
 	vector<string> tmpvec;
-	string strNrOfStations;
+	string strNrOfStations, inpath;
 	unsigned int nrOfStations = 0;
 
 	cfg.getValue("NROFSTATIONS", "Input", strNrOfStations);
+	cfg.getValue("METEOPATH", "Input", inpath);
 
 	if (!IOUtils::convertString(nrOfStations, strNrOfStations, std::dec))
 		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
@@ -242,23 +240,24 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 
 	for (unsigned int ii=0; ii<vecAllStations.size(); ii++){
 		string filename="", line="";
-		stringstream ss;
+		stringstream ss, file_with_path;
 
 		ss << ii+1;
 		cfg.getValue("METEOFILE"+ss.str(), "Input", filename);
+		file_with_path << inpath << "/" << filename;
 
-		if (!IOUtils::validFileName(filename))
-			throw InvalidFileNameException(filename, AT);
-		if (!IOUtils::fileExists(filename))
-			throw FileNotFoundException(filename, AT);
+		if ( !IOUtils::validFileName(file_with_path.str()) )
+			throw InvalidFileNameException(file_with_path.str(), AT);
+		if ( !IOUtils::fileExists(file_with_path.str()) )
+			throw FileNotFoundException(file_with_path.str(), AT);
   
 		fin.clear();
-		fin.open (filename.c_str(), std::ifstream::in);
+		fin.open (file_with_path.str().c_str(), std::ifstream::in);
 	
 		if (fin.fail())
-			throw FileAccessException(filename, AT);
+			throw FileAccessException(file_with_path.str(), AT);
 		if (fin.eof())
-			throw InvalidFileNameException(filename + ": Empty file", AT);
+			throw InvalidFileNameException(file_with_path.str() + ": Empty file", AT);
 	
 		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 		
@@ -268,7 +267,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 				if (line.substr(0,3) != "MTO") //if its not meta information rewind to the beginning
 					fin.seekg (0, ios::beg);
 			}else {
-				throw InvalidFormatException(filename + ": first line in invalid format", AT);
+				throw InvalidFormatException(file_with_path.str() + ": first line in invalid format", AT);
 			}
 		
 
@@ -286,7 +285,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 				if (ncols >= 15){//valid length for MeteoData
 					MeteoData md;
 					md.meta = vecAllStations[ii];
-					parseMeteoLine(tmpvec, filename + ":" + ss.str(), md);
+					parseMeteoLine(tmpvec, file_with_path.str() + ":" + ss.str(), md);
 					
 					if ((md.date >= dateStart) && (md.date <= dateEnd)){//check date and add to vectors
 						convertUnits(md);
@@ -296,12 +295,12 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 					if (tmpvec.at(0) == "END") {
 						break; //reached end of MeteoData
 					} else {
-						throw InvalidFormatException(filename + ":line " + ss.str() + " premature end of line", AT);
+						throw InvalidFormatException(file_with_path.str() + ":line " + ss.str() + " premature end of line", AT);
 					}
 				} else if (ncols == 0){
 					//Ignore empty lines
 				} else {
-					throw InvalidFormatException(filename + ":line " + ss.str() + " premature end of line", AT);
+					throw InvalidFormatException(file_with_path.str() + ":line " + ss.str() + " premature end of line", AT);
 				}
 			}				
 		} catch (std::exception& e){

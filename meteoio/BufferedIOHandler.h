@@ -116,12 +116,6 @@ class BufferedIOHandler : public IOInterface {
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
-		/**
-		 * @brief Manually tune the buffering policy
-		 * @param policy flag to define how to handle nodata (see BufferedIOHandler::buffer_policy)
-		 */
-		void setBufferPolicy(const buffer_policy& policy);
-
 		double getAvgSamplingRate();
 
 		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
@@ -140,7 +134,6 @@ class BufferedIOHandler : public IOInterface {
 		IOHandler& iohandler;
 		const Config& cfg;
 
-		bool always_rebuffer;
 		Date buffer_start, buffer_end;
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer

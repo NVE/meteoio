@@ -123,8 +123,6 @@ void BufferedIOHandler::writeMeteoData(const std::vector< METEO_TIMESERIE >& vec
 
 void BufferedIOHandler::setDfltBufferProperties()
 {
-	always_rebuffer = false;
-
 	double chunk_size_days = 15.; //default chunk size value
 	chunks = 1;
 	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days, Config::nothrow); //in days
@@ -150,15 +148,6 @@ void BufferedIOHandler::setDfltBufferProperties()
 		} else {
 			buff_before = chunk_size * 0.1; //10% centering by default
 		}
-	}
-}
-
-void BufferedIOHandler::setBufferPolicy(const buffer_policy& policy)
-{
-	if (policy==RECHECK_NODATA){
-		always_rebuffer=true;
-	} else {
-		always_rebuffer=false;
 	}
 }
 
@@ -308,7 +297,6 @@ std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 	os << "Config& cfg = " << hex << &data.cfg << dec << "\n";
 	os << "IOHandler &iohandler = " << hex << &data.iohandler << dec << "\n";
 
-	os << "Rebuffer if not found: " << data.always_rebuffer << "\n";
 	os << "Buffering " << data.chunks << " chunk(s) of " <<data.chunk_size.getJulianDate() << " days\n";
 	
 	os << "Current buffer content (" << data.vec_buffer_meteo.size() << " stations, " 

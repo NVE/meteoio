@@ -20,6 +20,14 @@
 #include <meteoio/Config.h>    // to avoid forward declaration hell
 #include <meteoio/MeteoData.h> // to avoid forward declaration hell
 
+#ifdef _WIN32
+	#include <windows.h>
+	#include <strsafe.h>
+#else
+	#include <dirent.h>
+	#include <sys/stat.h>
+#endif
+
 namespace mio {
 
 bool IOUtils::checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon)
@@ -134,6 +142,56 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 	return true;
 }
 
+bool IOUtils::validFileName(const std::string& filename)
+{
+	size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
+	if((startpos!=0) || (filename==".") || (filename=="..")) {
+		return false;
+	}
+
+	return true;
+}
+
+#ifdef _WIN32
+bool IOUtils::fileExists(const std::string& filename)
+{
+	return ( GetFileAttributes( (CString)filename ) != INVALID_FILE_ATTRIBUTES );
+}
+
+void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+{
+	WIN32_FIND_DATA ffd;
+	HANDLE hFind = INVALID_HANDLE_VALUE;
+
+	size_t path_length = path.length();
+	if (path_length > (MAX_PATH - 3)) {
+		std::cout << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
+		throw FileAccessException("Error opening directory " + path, AT);
+	}
+
+	hFind = FindFirstFile((LPCSTR)(path+"\\"+pattern), &ffd);
+	if (INVALID_HANDLE_VALUE == hFind) {
+		throw FileAccessException("Error opening directory " + path, AT);
+	}
+
+	do {
+		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			//this is a directory -> do nothing
+		} else {
+			std::string filename(ffd.cFileName);
+			dirlist.push_back(filename);
+		}
+	}
+	while (FindNextFile(hFind, &ffd) != 0);
+
+	const DWORD dwError = GetLastError();
+	if (dwError != ERROR_NO_MORE_FILES) {
+		throw FileAccessException("Error listing files in directory " + path, AT);
+	}
+
+	FindClose(hFind);
+}
+#else
 bool IOUtils::fileExists(const std::string& filename)
 {
 	struct stat buffer ;
@@ -143,16 +201,6 @@ bool IOUtils::fileExists(const std::string& filename)
 	}
 
 	return false;
-}
-
-bool IOUtils::validFileName(const std::string& filename)
-{
-	size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
-	if((startpos!=0) || (filename==".") || (filename=="..")) {
-		return false;
-	}
-
-	return true;
 }
 
 void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
@@ -179,6 +227,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 	}
 	closedir(dp);
 }
+#endif
 
 void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 				  std::istream& fin,

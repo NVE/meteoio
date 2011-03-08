@@ -31,16 +31,17 @@ namespace mio {
  *
  * @section template_keywords Keywords
  * This plugin uses the following keywords:
- * - STATION#: input filename and path. As many meteofiles as needed may be specified
- * - METEOPATH: output directory where to write the output meteofiles
+ * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified
+ * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
  *
  * Example:
  * @code
  * [Input]
- * STATION1 = ./input/uppper_station.smet
- * STATION2 = ./input/lower_station.smet
- * STATION3 = ./input/outlet_station.smet
+ * METEOPATH = ./input
+ * STATION1 = uppper_station.smet
+ * STATION2 = lower_station.smet
+ * STATION3 = outlet_station.smet
  * [Output]
  * METEOPATH = ./output
  * METEOPARAM = ASCII GZIP
@@ -247,6 +248,8 @@ void SMETIO::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
+	std::string inpath;
+	cfg.getValue("METEOPATH", "Input", inpath);
 	unsigned int counter = 1;
 	string filename = "";
 	do {
@@ -257,10 +260,12 @@ void SMETIO::parseInputOutputSection()
 		cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
 
 		if (filename != ""){
-			if (!IOUtils::validFileName(filename)) //Check whether filename is valid
-				throw InvalidFileNameException(filename, AT);
+			stringstream file_and_path;
+			file_and_path << inpath << "/" << filename;
+			if (!IOUtils::validFileName(file_and_path.str())) //Check whether filename is valid
+				throw InvalidFileNameException(file_and_path.str(), AT);
 
-			vecFiles.push_back(filename);
+			vecFiles.push_back(file_and_path.str());
 		}
 		counter++;
 	} while (filename != "");

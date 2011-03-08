@@ -32,8 +32,6 @@
 #include <iostream>
 #include <cstdio>
 #include <fstream>
-#include <dirent.h>
-#include <sys/stat.h>
 #include <cctype>
 #include <limits>
 
