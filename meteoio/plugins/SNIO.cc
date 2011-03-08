@@ -150,6 +150,7 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 		string line="";
 		stringstream snum;
 		snum << ii+1;
+		bool station_found=false;
 
 		cfg.getValue("STATION" + snum.str(), "Input", stationname);
 
@@ -183,8 +184,14 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 						StationData sd;
 						parseMetaDataLine(tmpvec, sd);
 						vecAllStations.push_back(sd);
+						station_found=true;
 					}
 				}
+			}
+			if(station_found==false) {
+				stringstream ss;
+				ss << "No metadata found for station " << stationname << " in " << meta_with_path.str();
+				throw NoAvailableDataException(ss.str(), AT);
 			}
 		} catch(std::exception& e){
 			cleanup();
