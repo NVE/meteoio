@@ -19,6 +19,23 @@
 
 using namespace std;
 
+#ifdef _WIN32
+//This is C99, Microsoft should move on and suppport it, it is almost 15 years old!!
+double round(const double& x) {
+	//middle value point test
+	if (ceil(x+0.5) == floor(x+0.5)) {
+		const int a = (int)ceil(x);
+		if (a%2 == 0) {
+			return ceil(x);
+		} else {
+			return floor(x);
+		}
+	} else {
+		return floor(x+0.5);
+	}
+}
+#endif
+
 namespace mio {
 
 const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
