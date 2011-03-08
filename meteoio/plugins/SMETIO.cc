@@ -248,8 +248,10 @@ void SMETIO::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	std::string inpath;
-	cfg.getValue("METEOPATH", "Input", inpath);
+	std::string inpath="", in_meteo="";
+	cfg.getValue("METEO", "Input", in_meteo);
+	if(in_meteo=="SMET") //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("METEOPATH", "Input", inpath);
 	unsigned int counter = 1;
 	string filename = "";
 	do {

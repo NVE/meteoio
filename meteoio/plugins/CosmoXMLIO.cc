@@ -47,19 +47,19 @@ namespace mio {
  *
  * @section cosmoxml_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS:	input coordinate system (see Coords) specified in the [Input] section
+ * - COORDSYS:  input coordinate system (see Coords) specified in the [Input] section
  * - METEOPATH: string containing the path to the xml files to be read, specified in the [Input] section
  * - METEOPATH: string containing the path where the XML files have to be written, specified in the [Output] section
- * - METEO:	specify COSMOXML for [Input] and/or [Output] section(s)
+ * - METEO:     specify COSMOXML for [Input] and/or [Output] section(s)
  *
  * Example:
  * @code
  * [Input]
  * COORDSYS	= CH1903
- * METEO		= COSMOXML
+ * METEO	= COSMOXML
  * METEOPATH	= ./input/meteoXMLdata
  * [Output]
- * METEO		= COSMOXML
+ * METEO	= COSMOXML
  * METEOPATH	= ./output/meteoXMLdata
  * @endcode
  */
@@ -189,11 +189,6 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 	}
 }
 
-
-
-//--------------------> Read Station and Meteo XMLdata <--------------------
-
-//----------> Functions used to read XML files <----------
 //Use parser to get value corresponding to a key
 std::string CosmoXMLIO::getValue(xmlpp::TextReader& reader) {
 	reader.move_to_element();
@@ -262,7 +257,6 @@ void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, co
 	//Reset dew_point
 	dew_point = IOUtils::nodata;
 }
-//----------> End of functions used to read XML files <----------
 
 //----------> Read Station and Meteo data, uses all stations in the "meteopath" directory <----------
 void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -318,7 +312,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				if(key=="GLOB") meteo.iswr = getDoubleValue(reader);
 				if(key=="TOT_PREC") meteo.hnw = getDoubleValue(reader);
 				if(key=="FF_10M") meteo.vw = getDoubleValue(reader);
-				//if(key=="VMAX_10M") max_wind_speed = getDoubleValue(reader); //TODO create this variable
+				if(key=="VMAX_10M") meteo.vw_max = getDoubleValue(reader);
 				if(key=="reference_ts") {
 					if(!is_first) {
 						//We can finish our object and push it.
@@ -353,12 +347,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		ii++;
 	}
 }
-//--------------------> End of Read Station and Meteo XMLdata <--------------------
-//--------------------------------------------------------------------------------//
 
-//--------------------> Write Station and Meteo XMLdata <--------------------
-
-//----------> Functions used to write the XML files <----------
 //Writes header and description of station data
 void CosmoXMLIO::writeHeader(std::stringstream& XMLdata)
 {
@@ -440,7 +429,7 @@ void CosmoXMLIO::writeMeteo(const std::vector<MeteoData>& vecMeteo, std::strings
 		XMLdata << "<col id=\"GLOB\">" << vecMeteo[jj].iswr << "</col>\n";
 		XMLdata << "<col id=\"TOT_PREC\">" << vecMeteo[jj].hnw << "</col>\n";
 		XMLdata << "<col id=\"FF_10M\">" << vecMeteo[jj].vw << "</col>\n";
-		//XMLdata << "<col id=\"VMAX_10M\">" << vecMeteo[jj].mvw() << "</col>\n";	//TODO create this variable
+		XMLdata << "<col id=\"VMAX_10M\">" << vecMeteo[jj].vw_max << "</col>\n";
 		XMLdata << "</row>\n";
 	}
 }
@@ -451,9 +440,7 @@ void CosmoXMLIO::writeFooter(std::stringstream& XMLdata)
 	XMLdata << "</ttable>\n<!-- data values section -->\n</col>\n";
 	XMLdata << "</row>\n</ttable>\n</tree-table-xml>\n";
 }
-//----------> End of functions used to write the XML files <----------
 
-//----------> Write the XML output files <----------
 void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 						const std::string&)
 {
@@ -492,8 +479,6 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 		fout.close();
 	}
 }
-//--------------------> End of write the XML output files <--------------------
-//---------------------------------------------------------------------------//
 
 void CosmoXMLIO::readSpecialPoints(std::vector<Coords>&)
 {

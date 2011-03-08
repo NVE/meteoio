@@ -270,7 +270,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 		splitting_coef = 1.0;
 	} else {
 		// clear sky index (ratio global measured to top of atmosphere radiation)
-		const double Mt = iswr_measured / iswr_modeled;
+		const double Mt = iswr_measured / iswr_modeled; // should be <=1.2
 		const double clear_sky = 0.147;
 		
 		// diffuse fraction: hourly ratio of diffuse to global radiation incident on a horizontal surface
@@ -289,7 +289,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 		}
 	}
 
-	return (splitting_coef);
+	return (splitting_coef); // should be <=1.1; diff/toa should be <=0.8
 }
 
 std::ostream& operator<<(std::ostream &os, const SunObject& data)
