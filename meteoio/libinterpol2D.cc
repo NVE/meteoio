@@ -15,7 +15,11 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-//This is the two 2D meteo interpolation library.
+#ifdef MSVC
+	#define _USE_MATH_DEFINES
+#endif
+#include <cmath>
+
 #include <meteoio/libinterpol2D.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 
@@ -27,7 +31,7 @@ namespace mio {
 // For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
 // Credited to Greg Walsh.
 // 32  Bit float magic number 
-//#define SQRT_MAGIC_F 0x5f3759df
+#define SQRT_MAGIC_D 0x5f3759df
 #define SQRT_MAGIC_F 0x5f375a86
 
 //maximum relative error is <1.7% while computation time for sqrt is <1/4. At 0, returns a large number
@@ -42,6 +46,19 @@ inline float invSqrt(const float x) {
 	} u;
 	u.x = x;
 	u.i = SQRT_MAGIC_F - (u.i >> 1);  // gives initial guess y0
+	return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
+}
+
+inline double invSqrt(const double x) {
+	const double xhalf = 0.5f*x;
+	
+	union {
+		// get bits for floating value
+		float x;
+		int i;
+	} u;
+	u.x = x;
+	u.i = SQRT_MAGIC_D - (u.i >> 1);  // gives initial guess y0
 	return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
 }
 
@@ -157,7 +174,7 @@ double Interpol2D::weightInvDist2(const double& d2)
 }
 double Interpol2D::weightInvDistN(const double& d2)
 {
-	return (double)pow( invSqrt(d2) , (float)dist_pow); //we use the optimized approximation for 1/sqrt
+	return pow( invSqrt(d2) , dist_pow); //we use the optimized approximation for 1/sqrt
 }
 
 //Data regression models

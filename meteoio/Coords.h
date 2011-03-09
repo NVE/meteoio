@@ -24,7 +24,6 @@
 #include <string>
 #include <iostream>
 #include <map>
-#include <cmath>
 
 namespace mio {
 

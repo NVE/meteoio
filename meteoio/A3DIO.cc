@@ -334,7 +334,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 		//throw InvalidFormatException("Premature End of Line or no data for date " + date_in + " found in File " + filename, AT);
 	}
 
-	for (int ii=0; ii<4; ii++) {
+	for (unsigned int ii=0; ii<4; ii++) {
 		if (!IOUtils::convertString(tmp_ymdh[ii], tmpvec.at(ii), std::dec))
 			throw InvalidFormatException(filename + ": " + line, AT);
 	}
@@ -343,7 +343,7 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 
 	//Read rest of line with values ta, iswr, vw, rh, ea, hnw
 
-	for (int ii=0; ii<6; ii++) { //go through the columns
+	for (unsigned int ii=0; ii<6; ii++) { //go through the columns
 		if (!IOUtils::convertString(tmp_values[ii], tmpvec.at(ii+4), std::dec)) {
 			throw InvalidFormatException(filename + ": " + line, AT);
 		}
@@ -594,7 +594,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 			                             + filename, AT);
 		}
 
-		for (int ii=0; ii<4; ii++) {
+		for (unsigned int ii=0; ii<4; ii++) {
 			if (!IOUtils::convertString(tmp_ymdh[ii], tmpvec[ii], std::dec)) {
 				throw InvalidFormatException("[E] Check date columns in " + filename, AT);
 			}

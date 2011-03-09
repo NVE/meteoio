@@ -15,8 +15,13 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/DEMObject.h>
+#ifdef MSVC
+	#define _USE_MATH_DEFINES
+#endif
+#include <cmath>
 #include <limits.h>
+
+#include <meteoio/DEMObject.h>
 
 /**
 * @file DEMObject.cc
@@ -406,10 +411,10 @@ double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
 	}
 
 	for(unsigned int ii=1; ii<vec_points.size(); ii++) {
-		const int ix1=vec_points[last_point].ix;
-		const int iy1=vec_points[last_point].iy;
-		const int ix2=vec_points[ii].ix;
-		const int iy2=vec_points[ii].iy;
+		const unsigned int ix1=vec_points[last_point].ix;
+		const unsigned int iy1=vec_points[last_point].iy;
+		const unsigned int ix2=vec_points[ii].ix;
+		const unsigned int iy2=vec_points[ii].iy;
 
 		if(grid2D(ix2,iy2)!=IOUtils::nodata) {
 			if(grid2D(ix1,iy1)!=IOUtils::nodata) {

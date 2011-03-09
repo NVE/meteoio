@@ -15,6 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef MSVC
+	#define _USE_MATH_DEFINES
+#endif
+#include <cmath>
 #include <meteoio/FilterAlgorithms.h>
 
 using namespace std;

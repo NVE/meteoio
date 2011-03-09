@@ -15,6 +15,11 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef MSVC
+	#define _USE_MATH_DEFINES
+#endif
+#include <cmath>
+
 #include <meteoio/Coords.h>
 
 #ifdef PROJ4
@@ -628,7 +633,7 @@ short int Coords::getEPSG() const {
 			return (32700+zoneNumber);
 		}
 	}
-	if(coordsystem=="PROJ4") return atoi(coordparam.c_str());
+	if(coordsystem=="PROJ4") return (short)atoi(coordparam.c_str());
 
 	//all others have no associated EPSG code
 	return -1;

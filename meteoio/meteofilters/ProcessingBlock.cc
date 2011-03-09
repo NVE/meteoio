@@ -118,7 +118,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);		
 	}
 
-	return NULL;
+	//return NULL; //unreachable code
 }
 
 ProcessingBlock::ProcessingBlock(const std::string& name) : block_name(name)

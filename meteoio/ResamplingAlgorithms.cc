@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/ResamplingAlgorithms.h>
+#include <cmath>
 
 using namespace std;
 

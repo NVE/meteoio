@@ -43,6 +43,7 @@ PluginObject* DynamicLibrary::newObject(const std::string& name, const Config& c
 
 	// Get the loadObject() function.  If it doesn't exist, return NULL.
 #ifdef WIN32
+	#pragma warning(disable:4191) //GetProcAddress does NOT return a FARPROC, the warning misses it...
 	const void (*loadSym)(const std::string&, const Config&) = (const void (*)(const std::string&, const Config&))GetProcAddress(_objFile, "loadObject");
 #else
 	const void* loadSym = dlsym(_objFile, "loadObject");

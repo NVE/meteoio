@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/Grid2DObject.h>
+#include <cmath>
 
 using namespace std;
 
@@ -117,8 +118,8 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 		//still fitting in the grid and return an error
 		if(i<0) i=0;
 		if(j<0) j=0;
-		if(i>(signed)ncols) i=ncols;
-		if(j>(signed)nrows) j=nrows;
+		if(i>(signed)ncols) i=(signed)ncols;
+		if(j>(signed)nrows) j=(signed)nrows;
 		point.setGridIndex(i, j, IOUtils::inodata, false);
 		return false;
 	}
@@ -172,7 +173,7 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 		error_code=false;
 	}
 	if(i>(signed)ncols) {
-		i=ncols;
+		i=(signed)ncols;
 		error_code=false;
 	}
 	if(j<0) {
@@ -180,7 +181,7 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 		error_code=false;
 	}
 	if(j>(signed)nrows) {
-		j=nrows;
+		j=(signed)nrows;
 		error_code=false;
 	}
 

@@ -21,7 +21,6 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>
 
-#include <cmath>
 #include <vector>
 #include <algorithm>
 

@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/libfit1D.h>
+#include <cmath>
 //#include <algorithm>
 
 using namespace std;

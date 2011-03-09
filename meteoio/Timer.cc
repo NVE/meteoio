@@ -19,9 +19,16 @@
 //AUTHORS: Tuan Anh Nguyen (original implementation in popc)
 //         Mathias Bavay (port and rewrite for Alpine3D, then MeteoIO)
 
-#include "Timer.h"
-#include <sys/time.h>
 #include <stdio.h>
+#ifdef _WIN32
+	#include <windows.h>
+	#undef max
+	#undef min
+#else
+	#include <sys/time.h>
+#endif
+
+#include "Timer.h"
 
 namespace mio {
 
@@ -76,12 +83,30 @@ double Timer::getElapsed() {
 	return elapsed;
 }
 
+#ifdef _WIN32
+double Timer::getCurrentTime() {
+	SYSTEMTIME systemTime;
+	GetSystemTime( &systemTime );
+
+	FILETIME fileTime;
+	SystemTimeToFileTime( &systemTime, &fileTime );
+
+	ULARGE_INTEGER uli;
+	uli.LowPart = fileTime.dwLowDateTime;
+	uli.HighPart = fileTime.dwHighDateTime;
+
+	ULONGLONG units_convert = 10000*1000; //it gives the time since 1 January 1601 (UTC) in units of 100ns
+	return (double)(uli.QuadPart/units_convert - 11644473600L); //offset in seconds to Unix epoch
+	//this is 134774 days * 24*3600
+}
+#else
 double Timer::getCurrentTime() {
 	timeval tp;
 	gettimeofday(&tp,NULL);
 	const double t=tp.tv_sec+double(tp.tv_usec)*1.0e-6;
 	return t;
 }
+#endif
 
 } //namespace
 

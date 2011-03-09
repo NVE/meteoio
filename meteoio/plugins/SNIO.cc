@@ -29,7 +29,9 @@ namespace mio {
  * ALI2 Allieres:Chenau 1767 6.993 46.489 1.22 \n
  * where the first field is the short name, followed by the fullname and the location, then the elevation,
  * the longitude, the latitude and a wind coefficient (unused by MeteoIO). The short name is used for
- * identifying the station and matching it with the data file (name given in io.ini).
+ * identifying the station and matching it with the data file (name given in io.ini). If no such metadata file is
+ * provided, the metadata will be left nodata. This only makes sense if the metadata would be later filled by another way
+ * (like a merge).
  *
  * @section snowpack_units Units
  * - temperatures in celsius (input and output) or in kelvin (input only)
@@ -45,7 +47,7 @@ namespace mio {
  * - METEOPATH: path to the meteo files directory; [Input] and [Output] sections
  * - METEOFILE#: input meteo data file, e.g. METEOFILE1, METEOFILE2; [Input] section
  * - STATION#: station name as listed in the METAFILE, e.g. STATION1, STATION2; [Input] section
- * - METAFILE: filename of the meta data file (in METEOPATH); [Input] section
+ * - METAFILE: filename of the meta data file (in METEOPATH); [Input] section (optional but recommended)
  * - NROFSTATIONS: integer, the number of stations for which meteo files are provided; [Input] section
  */
 
@@ -132,10 +134,51 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation = vecAllStations; //vecAllStations is a global vector that holds all meta data
 }
 
+bool SNIO::readStationMetaData(const std::string& metafile, const std::string& stationname, StationData& sd)
+{
+	fin.open (metafile.c_str(), std::ifstream::in);
+	if (fin.fail())
+		throw FileAccessException(metafile, AT);
+
+	try{
+		string line="";
+		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+
+		unsigned int linenr = 0;
+		vector<string> tmpvec;
+
+		while (!fin.eof()){
+			getline(fin, line, eoln); //read complete line of data
+
+			linenr++;
+			stringstream ss;
+			ss << linenr;
+
+			unsigned int ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
+
+			if (ncols==0){
+				//Ignore empty lines
+			} else if ((ncols<6) || (ncols>6)){
+				throw InvalidFormatException(metafile+":"+ss.str() + " each line must have 6 columns", AT);
+			} else {
+				//6 columns exist
+				if (tmpvec.at(0) == stationname){
+					parseMetaDataLine(tmpvec, sd);
+					return(true);
+				}
+			}
+		}
+		return(false);
+	} catch(std::exception& e){
+		cleanup();
+		throw;
+	}
+}
+
 void SNIO::readMetaData(unsigned int& nrOfStations)
 {
-	string stationname, metafile, inpath;
-	cfg.getValue("METAFILE", "Input", metafile);
+	string stationname, metafile="", inpath;
+	cfg.getValue("METAFILE", "Input", metafile, Config::nothrow);
 	cfg.getValue("METEOPATH", "Input", inpath);
 	stringstream meta_with_path;
 	meta_with_path << inpath << "/" << metafile;
@@ -147,56 +190,20 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 	
 	//Loop over all stations
 	for (unsigned int ii=0; ii<nrOfStations; ii++){
-		string line="";
 		stringstream snum;
 		snum << ii+1;
-		bool station_found=false;
 
 		cfg.getValue("STATION" + snum.str(), "Input", stationname);
 
-		fin.open (meta_with_path.str().c_str(), std::ifstream::in);
-		if (fin.fail())
-			throw FileAccessException(meta_with_path.str(), AT);
-		
-		try{
-			char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-			
-			unsigned int linenr = 0;
-			vector<string> tmpvec;
-			stringstream ss;
-
-			while (!fin.eof()){
-				getline(fin, line, eoln); //read complete line of data
-				
-				linenr++;
-				ss.str("");
-				ss << linenr;
-			
-				unsigned int ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
-
-				if (ncols==0){
-					//Ignore empty lines
-				} else if ((ncols<6) || (ncols>6)){
-					throw InvalidFormatException(meta_with_path.str()+":"+ss.str() + " each line must have 6 columns", AT);
-				} else {
-					//6 columns exist
-					if (tmpvec.at(0) == stationname){
-						StationData sd;
-						parseMetaDataLine(tmpvec, sd);
-						vecAllStations.push_back(sd);
-						station_found=true;
-					}
-				}
-			}
-			if(station_found==false) {
+		StationData sd;
+		if(metafile!="") { //a metafile has been provided, so get metadata
+			if( readStationMetaData(meta_with_path.str(), stationname, sd)==false) {
 				stringstream ss;
-				ss << "No metadata found for station " << stationname << " in " << meta_with_path.str();
+				ss << "No metadata found for station " << stationname << " in " << metafile;
 				throw NoAvailableDataException(ss.str(), AT);
 			}
-		} catch(std::exception& e){
-			cleanup();
-			throw;
 		}
+		vecAllStations.push_back(sd);
 		cleanup();
 	}
 }

@@ -15,6 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef MSVC
+	#define _USE_MATH_DEFINES
+#endif
+#include <cmath>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/Config.h>    // to avoid forward declaration hell
@@ -22,6 +26,9 @@
 
 #ifdef _WIN32
 	#include <windows.h>
+	//removing two macros defined in windows.h
+	#undef max
+	#undef min
 	#include <strsafe.h>
 #else
 	#include <dirent.h>
@@ -155,7 +162,8 @@ bool IOUtils::validFileName(const std::string& filename)
 #ifdef _WIN32
 bool IOUtils::fileExists(const std::string& filename)
 {
-	return ( GetFileAttributes( (CString)filename ) != INVALID_FILE_ATTRIBUTES );
+	CString CSfilename(filename.c_str());
+	return ( GetFileAttributes( CSfilename ) != INVALID_FILE_ATTRIBUTES );
 }
 
 void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
@@ -385,20 +393,21 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& time_
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	(void)f;
-	unsigned int year, month, day, hour, minute, second;
+	int year;
+	unsigned int month, day, hour, minute, second;
 	char rest[32] = "";
 
 	//HACK: we read the seconds, but we ignore them...
-	if (sscanf(s.c_str(), "%u-%u-%u %u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
+	if (sscanf(s.c_str(), "%d-%u-%u %u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
 		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
+	} else if (sscanf(s.c_str(), "%d-%u-%uT%u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
 		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%u-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
+	} else if (sscanf(s.c_str(), "%d-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
 		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%u-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
+	} else if (sscanf(s.c_str(), "%d-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
 		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%u-%u-%u%31s", &year, &month, &day, rest) >= 3) {
-		t.setDate(year, month, day, 0, 0, time_zone);
+	} else if (sscanf(s.c_str(), "%d-%u-%u%31s", &year, &month, &day, rest) >= 3) {
+		t.setDate(year, month, day, (unsigned)0, (unsigned)0, time_zone);
 	} else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
 		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. , time_zone);
 	} else {

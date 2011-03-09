@@ -23,7 +23,6 @@
 #include <string>
 #include <sstream>
 #include <utility>
-#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <ctime>
@@ -100,7 +99,8 @@ class Date {
 		void setFromSys();
 		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
 		void setDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
-		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& _dst=false);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const time_t& in_time, const bool& _dst=false);
 		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
 		void setUnixDate(const time_t& in_time, const bool& _dst=false);

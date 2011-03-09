@@ -17,6 +17,7 @@
 */
 #include <meteoio/libinterpol1D.h>
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -53,7 +54,6 @@ double Interpol1D::linearInterpolation(const double& d1, const double& d2, const
 	} else {
 		return (d1 - tmp*weight); 
 	}
-	return 0;
 }
 
 
@@ -96,7 +96,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 		return IOUtils::nodata;
 	
 	const unsigned int vecSize = vecTemp.size();
-	const unsigned int middle = (unsigned int)(vecSize/2);
+	const int middle = (int)(vecSize/2);
 	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
 	if ((vecSize % 2) == 1){ //uneven

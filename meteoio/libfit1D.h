@@ -22,7 +22,6 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/Matrix.h>
 
-//#include <cmath>
 #include <vector>
 
 namespace mio {

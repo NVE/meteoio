@@ -24,7 +24,6 @@
 #include <meteoio/IOUtils.h>
 
 #include <iostream>
-#include <cmath>
 
 namespace mio {
 

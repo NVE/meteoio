@@ -72,6 +72,7 @@ class SNIO : public IOInterface {
 		void convertUnitsBack(MeteoData& meteo);
 		double cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness );
 		void parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, MeteoData& md);
+		bool readStationMetaData(const std::string& metafile, const std::string& stationname, StationData& sd);
 		void readMetaData(unsigned int& nrOfStations);
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
 		void cleanup() throw();

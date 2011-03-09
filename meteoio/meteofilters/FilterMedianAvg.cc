@@ -90,7 +90,7 @@ double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector
 		return IOUtils::nodata;
 	
 	const unsigned int size_of_vec = vecTemp.size();
-	const unsigned int middle = (unsigned int)(size_of_vec/2);
+	const int middle = (int)(size_of_vec/2);
 	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
 	if ((size_of_vec % 2) == 1){ //uneven

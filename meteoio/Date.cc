@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/Date.h>
+#include <cmath>
 
 using namespace std;
 
@@ -186,6 +187,11 @@ void Date::setDate(const int& _year, const int& _month, const int& _day, const i
 		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 
+}
+
+void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false)
+{
+	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, in_timezone, in_dst);
 }
 
 /**

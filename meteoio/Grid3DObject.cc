@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/Grid3DObject.h>
+#include <cmath>
 
 using namespace std;
 
@@ -115,9 +116,9 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const {
 		if(i<0) i=0;
 		if(j<0) j=0;
 		if(k<0) k=0;
-		if(i>(signed)ncols) i=ncols;
-		if(j>(signed)nrows) j=nrows;
-		if(k>(signed)ndepth) k=ndepth;
+		if(i>(signed)ncols) i=(signed)ncols;
+		if(j>(signed)nrows) j=(signed)nrows;
+		if(k>(signed)ndepth) k=(signed)ndepth;
 		point.setGridIndex(i, j, k, false);
 		return false;
 	}
@@ -171,7 +172,7 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const {
 		error_code=false;
 	}
 	if(i>(signed)ncols) {
-		i=ncols;
+		i=(signed)ncols;
 		error_code=false;
 	}
 	if(j<0) {
@@ -179,7 +180,7 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const {
 		error_code=false;
 	}
 	if(j>(signed)nrows) {
-		j=nrows;
+		j=(signed)nrows;
 		error_code=false;
 	}
 	if(k<0) {
@@ -187,7 +188,7 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const {
 		error_code=false;
 	}
 	if(k>(signed)ndepth) {
-		k=ndepth;
+		k=(signed)ndepth;
 		error_code=false;
 	}
 
