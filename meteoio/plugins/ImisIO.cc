@@ -301,21 +301,19 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		// Retrieve the station IDs - this only needs to be done once per instance
 		string stat_abk = "", stao_nr = "", station_name = "";
 		parseStationID(vecStationID[ii], stat_abk, stao_nr);
-		if (vecStationID[ii].at(0) != '*') {
-			vector<string> stnIDs;
-			string drift_stat_abk = "", drift_stao_nr = "";
-			getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, conn);
-			if(stnIDs.size()<3)
-				throw ConversionFailedException("Error while converting station IDs for station "+stat_abk+stao_nr, AT);
-			IOUtils::convertString(station_name, stnIDs.at(0));
-			IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
-			IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
-			const string drift_stationID = drift_stat_abk + drift_stao_nr;
-			if (drift_stationID != "") {
-				mapDriftStation[vecStationID[ii]] = drift_stationID;
-			} else {
-				throw ConversionFailedException("Error! No drift station for station "+stat_abk+stao_nr, AT);
-			}
+		vector<string> stnIDs;
+		string drift_stat_abk = "", drift_stao_nr = "";
+		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, conn);
+		if(stnIDs.size()<3)
+			throw ConversionFailedException("Error while converting station IDs for station "+stat_abk+stao_nr, AT);
+		IOUtils::convertString(station_name, stnIDs.at(0));
+		IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
+		IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
+		const string drift_stationID = drift_stat_abk + drift_stao_nr;
+		if (drift_stationID != "") {
+			mapDriftStation[vecStationID[ii]] = drift_stationID;
+		} else {
+			throw ConversionFailedException("Error! No drift station for station "+stat_abk+stao_nr, AT);
 		}
 
 		// Retrieve the station meta data - this only needs to be done once per instance
@@ -403,7 +401,11 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
 		std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
-		vecStationID.push_back(stationname);
+		if (!isdigit(stationname[0])) {
+			vecStationID.push_back(stationname);
+		} else {
+			std::cout << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!" << std::endl;
+		}
 	}
 }
 
@@ -777,6 +779,14 @@ unsigned int ImisIO::getStationIDs(const std::string& station_code, const std::s
 			for (unsigned int ii=1; ii<=cols.size(); ii++) {
 				vecStationIDs.push_back(rs->getString(ii));
 			}
+		}
+
+		if (vecStationIDs.size() < 3) {
+			string stat_abk="", stao_nr="";
+			parseStationID(station_code, stat_abk, stao_nr);
+			vecStationIDs.push_back(station_code);
+			vecStationIDs.push_back(stat_abk);
+			vecStationIDs.push_back(stao_nr);
 		}
 
 		stmt->closeResultSet(rs);
