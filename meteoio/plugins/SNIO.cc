@@ -356,8 +356,8 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	md.setData(MeteoData::RSWR, tmpdata[9]);
 	
 	if ((tmpdata[10] <= 1) && (tmpdata[10] != plugin_nodata)){
-		if ((md.ta == plugin_nodata) || (md.rh == plugin_nodata)){
-			tmpdata[10] = Atmosphere::Omstedt_ilwr(md.rh, md.ta, tmpdata[10]); //calculate ILWR from cloudiness
+		if ((md.ta != plugin_nodata) && (md.rh != plugin_nodata)){
+			tmpdata[10] = Atmosphere::Omstedt_ilwr(md.rh/100., C_TO_K(md.ta), tmpdata[10]); //calculate ILWR from cloudiness
 		} else {
 			tmpdata[10] = plugin_nodata;
 		}

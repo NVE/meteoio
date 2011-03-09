@@ -296,7 +296,6 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 {
 	vector<string> vecStationID;
 	readStationIDs(vecStationID);
-	bool converted=true;
 
 	for (unsigned int ii=0; ii<vecStationID.size(); ii++) {
 		// Retrieve the station IDs - this only needs to be done once per instance
@@ -306,18 +305,16 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 			vector<string> stnIDs;
 			string drift_stat_abk = "", drift_stao_nr = "";
 			getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, conn);
-			converted = IOUtils::convertString(station_name, stnIDs.at(0));
-			converted = IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
-			converted = IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
-			string drift_stationID = "";
-			drift_stationID += drift_stat_abk + drift_stao_nr;
+			if(stnIDs.size()<3)
+				throw ConversionFailedException("Error while converting station IDs for station "+stat_abk+stao_nr, AT);
+			IOUtils::convertString(station_name, stnIDs.at(0));
+			IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
+			IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
+			const string drift_stationID = drift_stat_abk + drift_stao_nr;
 			if (drift_stationID != "") {
 				mapDriftStation[vecStationID[ii]] = drift_stationID;
 			} else {
 				throw ConversionFailedException("Error! No drift station for station "+stat_abk+stao_nr, AT);
-			}
-			if (!converted) {
-				throw ConversionFailedException("Error while converting station IDs for station "+stat_abk+stao_nr, AT);
 			}
 		}
 
@@ -325,15 +322,13 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		vector<string> stationMetaData;
 		double east, north, alt;
 		string stao_name = "";
-		converted=true;
 		getStationMetaData(stat_abk, stao_nr, sqlQueryStationMetaData, stationMetaData, conn);
-		converted = IOUtils::convertString(stao_name, stationMetaData.at(0));
-		converted = IOUtils::convertString(east, stationMetaData.at(1), std::dec);
-		converted = IOUtils::convertString(north, stationMetaData.at(2), std::dec);
-		converted = IOUtils::convertString(alt, stationMetaData.at(3), std::dec);
-		if (!converted) {
+		if(stationMetaData.size()<4)
 			throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
-		}
+		IOUtils::convertString(stao_name, stationMetaData.at(0));
+		IOUtils::convertString(east, stationMetaData.at(1), std::dec);
+		IOUtils::convertString(north, stationMetaData.at(2), std::dec);
+		IOUtils::convertString(alt, stationMetaData.at(3), std::dec);
 
 		// HACK to obtain a valid station_name w/o spaces within
 		if (station_name == "") {

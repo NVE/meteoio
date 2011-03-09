@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
 
 	Date now;
 	now.setFromSys();
-	now.setTimeZone(TZ);
+	//now.setTimeZone(TZ);
 	std::cout << "now=" << now;
 	now.rnd(1800., Date::DOWN);
 	std::cout << "Rounded now=" << now;

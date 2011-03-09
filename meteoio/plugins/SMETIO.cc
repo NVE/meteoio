@@ -786,7 +786,7 @@ void SMETIO::setFormatting(const MeteoData::Parameters& paramindex)
 {
 	if ((paramindex == MeteoData::TA) || (paramindex == MeteoData::TSS) || (paramindex == MeteoData::TSG))
 		fout << setw(8) << setprecision(2);
-	else if (paramindex == MeteoData::VW)
+	else if ((paramindex == MeteoData::VW) || (paramindex == MeteoData::VW_MAX))
 		fout << setw(6) << setprecision(1);
 	else if (paramindex == MeteoData::DW)
 		fout << setw(5) << setprecision(0);
