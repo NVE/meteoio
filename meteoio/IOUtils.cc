@@ -75,6 +75,25 @@ void IOUtils::stripComments(std::string& str)
 	}
 }
 
+void IOUtils::copy_file(const std::string& src, const std::string& dest)
+{
+	if (src == dest) return; //copying to the same file doesn't make sense, but is no crime either
+
+	std::ifstream fin(src.c_str(), std::ios::binary);
+	if (fin.fail()) throw FileAccessException(src, AT);
+
+	std::ofstream fout(dest.c_str(), std::ios::binary);
+	if (fout.fail()) {
+		fin.close();
+		throw FileAccessException(dest, AT);
+	}
+
+	fout << fin.rdbuf();
+
+	fin.close();
+	fout.close();
+}
+
 std::string IOUtils::cleanPath(const std::string& in_path) {
 	std::string out_path(in_path);
 

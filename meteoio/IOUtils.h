@@ -90,6 +90,14 @@ namespace IOUtils {
 	unsigned int seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
 
 	/**
+	 * @brief Copies a files from one location to another
+	 * @author Thomas Egger
+	 * @param src  The filename of the file to be copied
+	 * @param dest The filename of the file to copy to (will be created or overwritten)
+	 */
+	void copy_file(const std::string& src, const std::string& dest);
+
+	/**
 	* @brief Converts a compass bearing to a trigonometric angle
 	* @param bearing compass bearing (0° on top, clockwise, in [0°, 360°[)
 	* @return trigonometric angle (0° on the right, counterclockwise, in [0, 2PI[)
