@@ -155,32 +155,32 @@ void Date::setTimeZone(const double& in_timezone, const bool& in_dst) {
 /**
 * @brief Set date by elements.
 * All values are checked for plausibility.
-* @param _year in 4 digits
-* @param _month please keep in mind that first month of the year is 1 (ie: not 0!)
-* @param _day please keep in mind that first day of the month is 1 (ie: not 0!)
-* @param _hour
-* @param _minute
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param i_year in 4 digits
+* @param i_month please keep in mind that first month of the year is 1 (ie: not 0!)
+* @param i_day please keep in mind that first day of the month is 1 (ie: not 0!)
+* @param i_hour
+* @param i_minute
+* @param i_timezone timezone as an offset to GMT (in hours, optional)
+* @param i_dst is it DST? (default: no)
 */
-void Date::setDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute, const double& _timezone, const bool& _dst)
+void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_timezone, const bool& i_dst)
 {
-	plausibilityCheck(_year, _month, _day, _hour, _minute);
+	plausibilityCheck(i_year, i_month, i_day, i_hour, i_minute);
 	undef = false;
-	setTimeZone(_timezone, _dst);
+	setTimeZone(i_timezone, i_dst);
 
 	if(timezone==0 && dst==false) {
 		//data is GMT and no DST
 		//setting values and computing GMT julian date
-		gmt_year = _year;
-		gmt_month = _month;
-		gmt_day = _day;
-		gmt_hour = _hour;
-		gmt_minute = _minute;
+		gmt_year = i_year;
+		gmt_month = i_month;
+		gmt_day = i_day;
+		gmt_hour = i_hour;
+		gmt_minute = i_minute;
 		gmt_julian = calculateJulianDate(gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	} else {
 		//computing local julian date
-		const double local_julian = calculateJulianDate(_year, _month, _day, _hour, _minute);
+		const double local_julian = calculateJulianDate(i_year, i_month, i_day, i_hour, i_minute);
 		//converting local julian date to GMT julian date
 		gmt_julian = localToGMT(local_julian);
 		//updating values to GMT
@@ -219,12 +219,12 @@ void Date::setDate(const time_t& _time, const bool& _dst) {
 /**
 * @brief Set date from a modified julian date (MJD).
 * @param julian_in julian date to set
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param i_timezone timezone as an offset to GMT (in hours, optional)
+* @param i_dst is it DST? (default: no)
 */
-void Date::setModifiedJulianDate(const double& julian_in, const double& _timezone, const bool& _dst) {
-	const double _julian = julian_in + MJD_offset;
-	setDate(_julian, _timezone, _dst);
+void Date::setModifiedJulianDate(const double& julian_in, const double& i_timezone, const bool& i_dst) {
+	const double tmp_julian = julian_in + MJD_offset;
+	setDate(tmp_julian, i_timezone, i_dst);
 }
 
 /**
@@ -240,25 +240,25 @@ void Date::setUnixDate(const time_t& in_time, const bool& in_dst) {
 /**
 * @brief Set date from an Excel date.
 * @param excel_in Excel date to set
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param i_timezone timezone as an offset to GMT (in hours, optional)
+* @param i_dst is it DST? (default: no)
 */
-void Date::setExcelDate(const double excel_in, const double& _timezone, const bool& _dst) {
+void Date::setExcelDate(const double excel_in, const double& i_timezone, const bool& i_dst) {
 	//TODO: handle date < 1900-01-00 and date before 1900-03-01
 	//see http://www.mathworks.com/help/toolbox/finance/x2mdate.html
-	const double _julian = excel_in + Excel_offset;
-	setDate(_julian, _timezone, _dst);
+	const double tmp_julian = excel_in + Excel_offset;
+	setDate(tmp_julian, i_timezone, i_dst);
 }
 
 /**
 * @brief Set date from an Matlab date.
 * @param matlab_in Matlab date to set
-* @param _timezone timezone as an offset to GMT (in hours, optional)
-* @param _dst is it DST? (default: no)
+* @param i_timezone timezone as an offset to GMT (in hours, optional)
+* @param i_dst is it DST? (default: no)
 */
-void Date::setMatlabDate(const double matlab_in, const double& _timezone, const bool& _dst) {
-	const double _julian = matlab_in + Matlab_offset;
-	setDate(_julian, _timezone, _dst);
+void Date::setMatlabDate(const double matlab_in, const double& i_timezone, const bool& i_dst) {
+	const double tmp_julian = matlab_in + Matlab_offset;
+	setDate(tmp_julian, i_timezone, i_dst);
 }
 
 

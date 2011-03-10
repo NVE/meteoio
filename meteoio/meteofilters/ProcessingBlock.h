@@ -60,10 +60,10 @@ class ProcessingBlock {
 		friend std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data);
 
 	protected:
-		std::string block_name;
 		ProcessingBlock(const std::string& name); ///< protected constructor only to be called by children
 
 		ProcessingProperties properties;
+		std::string block_name;
 };
 
 class BlockFactory {

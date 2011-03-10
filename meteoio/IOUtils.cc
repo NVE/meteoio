@@ -159,8 +159,7 @@ bool IOUtils::validFileName(const std::string& filename)
 #ifdef _WIN32
 bool IOUtils::fileExists(const std::string& filename)
 {
-	CString CSfilename(filename.c_str());
-	return ( GetFileAttributes( CSfilename ) != INVALID_FILE_ATTRIBUTES );
+	return ( GetFileAttributes( filename ) != INVALID_FILE_ATTRIBUTES );
 }
 
 void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
@@ -174,7 +173,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
-	hFind = FindFirstFile((LPCSTR)(path+"\\"+pattern), &ffd);
+	hFind = FindFirstFile(path+"\\"+pattern, &ffd);
 	if (INVALID_HANDLE_VALUE == hFind) {
 		throw FileAccessException("Error opening directory " + path, AT);
 	}

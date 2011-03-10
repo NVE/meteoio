@@ -28,7 +28,7 @@ using namespace mio; //HACK for POPC
 
 namespace mio {
 
-typedef std::map<std::string, IOPlugin::IOPlugin>::iterator PLUGIN_ITERATOR; //HACK for POPC
+typedef std::map<std::string, IOPlugin>::iterator PLUGIN_ITERATOR; //HACK for POPC
 //This one line above does absolutely nothing, but if removed, popc does not compile the file....
 
 

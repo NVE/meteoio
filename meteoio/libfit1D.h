@@ -81,7 +81,7 @@ class Fit1D {
 		const std::vector<double>& Y; //Y of input data set to fit
 
 		std::vector<double> Lambda; //parameters of the fit
-		std::map<std::string, RegModel::RegModel> mapRegs;
+		std::map<std::string, RegModel> mapRegs;
 
 		void registerRegressions();
 		void initLambda();

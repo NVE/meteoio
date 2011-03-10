@@ -120,7 +120,7 @@ IOHandler::~IOHandler(){
 IOHandler::~IOHandler() throw(){
 #endif
 	// Get rid of the objects
-	std::map<std::string, IOPlugin::IOPlugin>::iterator mapit;
+	std::map<std::string, IOPlugin>::iterator mapit;
 	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); mapit++){
 		deletePlugin((mapit->second).dynLibrary, (mapit->second).io);
 	}
@@ -183,7 +183,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	std::string op_src="";
 	cfg.getValue(cfgkey, cfgsection, op_src);
 
-	std::map<std::string, IOPlugin::IOPlugin>::iterator mapit = mapPlugins.find(op_src);
+	std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
 		throw IOException("Can not find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has its developer declared it in IOHandler::registerPlugins?", AT);
 
@@ -300,7 +300,7 @@ std::string IOHandler::toString() const
 
 	os << "<mapPlugins>\n";
 	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";
-	std::map<std::string, IOPlugin::IOPlugin>::const_iterator it1;
+	std::map<std::string, IOPlugin>::const_iterator it1;
 	for (it1=mapPlugins.begin(); it1 != mapPlugins.end(); it1++){
 		os << setw(10) << it1->first << " = " <<  it1->second;
 	}

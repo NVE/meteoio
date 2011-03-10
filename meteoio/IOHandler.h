@@ -75,7 +75,7 @@ class IOHandler : public IOInterface {
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
 		Config cfg;
-		std::map<std::string, IOPlugin::IOPlugin> mapPlugins;
+		std::map<std::string, IOPlugin> mapPlugins;
 		A3DIO fileio;
 };
 
