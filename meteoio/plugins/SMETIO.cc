@@ -249,30 +249,32 @@ void SMETIO::parseInputOutputSection()
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
 	std::string inpath="", in_meteo="";
-	cfg.getValue("METEO", "Input", in_meteo);
-	if(in_meteo=="SMET") //keep it synchronized with IOHandler.cc for plugin mapping!!
+	cfg.getValue("METEO", "Input", in_meteo, Config::nothrow);
+	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
-	unsigned int counter = 1;
-	string filename = "";
-	do {
-		stringstream ss;
-		filename = "";
+		unsigned int counter = 1;
+		string filename = "";
+
+		do {
+			stringstream ss;
+			filename = "";
+			
+			ss << "STATION" << counter;
+			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
+			
+			if (filename != ""){
+				stringstream file_and_path;
+				file_and_path << inpath << "/" << filename;
+				if (!IOUtils::validFileName(file_and_path.str())) //Check whether filename is valid
+					throw InvalidFileNameException(file_and_path.str(), AT);
+				
+				vecFiles.push_back(file_and_path.str());
+			}
+			counter++;
+		} while (filename != "");
 		
-		ss << "STATION" << counter;
-		cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
-
-		if (filename != ""){
-			stringstream file_and_path;
-			file_and_path << inpath << "/" << filename;
-			if (!IOUtils::validFileName(file_and_path.str())) //Check whether filename is valid
-				throw InvalidFileNameException(file_and_path.str(), AT);
-
-			vecFiles.push_back(file_and_path.str());
-		}
-		counter++;
-	} while (filename != "");
-
-	nr_stations = counter - 1;
+		nr_stations = counter - 1;
+	}
 
 	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
 	outpath = "";
