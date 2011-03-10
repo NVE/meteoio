@@ -95,9 +95,9 @@ double Timer::getCurrentTime() {
 	uli.LowPart = fileTime.dwLowDateTime;
 	uli.HighPart = fileTime.dwHighDateTime;
 
-	ULONGLONG units_convert = 10000*1000; //it gives the time since 1 January 1601 (UTC) in units of 100ns
-	return (double)(uli.QuadPart/units_convert - 11644473600L); //offset in seconds to Unix epoch
-	//this is 134774 days * 24*3600
+	const ULONGLONG units_convert = 10000*1000; //it gives the time since 1 January 1601 (UTC) in units of 100ns
+	const ULONGLONG offset_to_epoch = 11644473600; //offset in seconds to Unix epoch, 134774 days * 24*3600
+	return (double)(uli.QuadPart/units_convert - offset_to_epoch);
 }
 #else
 double Timer::getCurrentTime() {

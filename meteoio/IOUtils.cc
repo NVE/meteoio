@@ -26,7 +26,6 @@
 	//removing two macros defined in windows.h
 	#undef max
 	#undef min
-	#include <strsafe.h>
 #else
 	#include <dirent.h>
 	#include <sys/stat.h>

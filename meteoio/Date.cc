@@ -20,7 +20,7 @@
 
 using namespace std;
 
-#ifdef _WIN32
+#ifdef MSVC
 //This is C99, Microsoft should move on and suppport it, it is almost 15 years old!!
 double round(const double& x) {
 	//middle value point test
