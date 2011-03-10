@@ -32,7 +32,9 @@ class Atmosphere {
 	public:
 
 		static double stdAirPressure(const double& altitude);
+		static double stdDryAirDensity(const double& altitude, const double& temperature);
 		static double waterSaturationPressure(const double& T);
+		static double waterVaporDensity(const double& Temperature, const double& VaporPressure);
 		static double wetBulbTemperature(const double& T, const double& RH, const double& altitude);
 
 		static double Omstedt_emissivity(const double& e0, const double& cloudiness);
@@ -42,6 +44,8 @@ class Atmosphere {
 
 		static double RhtoDewPoint(double RH, double TA, const bool& force_water);
 		static double DewPointtoRh(double TD, double TA, const bool& force_water);
+		static double specToRelHumidity(const double& altitude, const double& TA, const double& qi);
+		static double relToSpecHumidity(const double& altitude, const double& TA, const double& RH);
 
 		static double blkBody_Emissivity(const double& lwr, const double& T);
 		static double blkBody_Radiation(const double& ea, const double& T);

@@ -148,7 +148,7 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 
 bool IOUtils::validFileName(const std::string& filename)
 {
-	size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
+	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
 	if((startpos!=0) || (filename==".") || (filename=="..")) {
 		return false;
 	}
@@ -159,7 +159,7 @@ bool IOUtils::validFileName(const std::string& filename)
 #ifdef _WIN32
 bool IOUtils::fileExists(const std::string& filename)
 {
-	return ( GetFileAttributes( filename ) != INVALID_FILE_ATTRIBUTES );
+	return ( GetFileAttributes( filename.c_str() ) != INVALID_FILE_ATTRIBUTES );
 }
 
 void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
@@ -167,13 +167,14 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 	WIN32_FIND_DATA ffd;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
 
-	size_t path_length = path.length();
+	const size_t path_length = path.length();
 	if (path_length > (MAX_PATH - 3)) {
 		std::cout << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
-	hFind = FindFirstFile(path+"\\"+pattern, &ffd);
+	const std::string filepath = path+"\\"+pattern;
+	hFind = FindFirstFile(filepath.c_str(), &ffd);
 	if (INVALID_HANDLE_VALUE == hFind) {
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
@@ -217,12 +218,12 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 	}
 
 	while ((dirp = readdir(dp)) != NULL) {
-		std::string tmp = std::string(dirp->d_name);
+		const std::string tmp = std::string(dirp->d_name);
 		if( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
 			if (pattern=="") {
 				dirlist.push_back(tmp);
 			} else {
-				size_t pos = tmp.find(pattern);
+				const size_t pos = tmp.find(pattern);
 				if (pos!=std::string::npos) {
 					dirlist.push_back(tmp);
 				}

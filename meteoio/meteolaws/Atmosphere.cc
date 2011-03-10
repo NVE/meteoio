@@ -62,6 +62,26 @@ double Atmosphere::stdAirPressure(const double& altitude) {
 }
 
 /**
+* @brief Standard dry air pressure
+* @param altitude altitude above sea level (m)
+* @param temperature air temperature (K)
+* @return standard pressure (Pa)
+*/
+double Atmosphere::stdDryAirDensity(const double& altitude, const double& temperature) {
+	return stdAirPressure(altitude)/(Cst::gaz_constant_dry_air*temperature);
+}
+
+/**
+* @brief Calculates the water vapor density, for a given temperature and vapor pressure
+* @param temperature air temperature (K)
+* @param VaporPressure water vapor pressure (Pa)
+* @return water vapor density (kg/m^3)
+*/
+double Atmosphere::waterVaporDensity(const double& Temperature, const double& VaporPressure) {
+	return (Cst::water_molecular_mass*VaporPressure)/(Cst::gaz_constant*Temperature);
+}
+
+/**
 * @brief Standard atmosphere wet bulb temperature. 
 * This gives the lowest temperature that could be reached by water evaporation. It is therefore linked to
 * relative humidity. This implementation assumes a standard atmosphere for pressure and saturation pressure.
@@ -278,6 +298,36 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 	} else {
 		return Rh;
 	}
+}
+
+/**
+* @brief Calculate the relative Humidity (RH) from specific humidity. 
+* @param altitude altitude over sea level (m)
+* @param TA air temperature (K)
+* @param qi specific humidity 
+* @return relative humidity between 0 and 1
+*/
+double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, const double& qi)
+{//HACK: should we check that RH in [0;1]?
+	const double SatVaporDensity = waterVaporDensity(TA, waterSaturationPressure(TA));
+	const double RH = (qi/(1.-qi))*stdDryAirDensity(altitude, TA)/SatVaporDensity;
+
+	return RH;
+}
+
+/**
+* @brief Calculate the specific Humidity from relative humidity (RH). 
+* @param altitude altitude over sea level (m)
+* @param TA air temperature (K)
+* @param RH relative humidity (between 0 and 1)
+* @return specific humidity
+*/
+double Atmosphere::relToSpecHumidity(const double& altitude, const double& TA, const double& RH)
+{
+	const double dryAir_density = stdDryAirDensity(altitude, TA);
+	const double wetAir_density = RH * waterVaporDensity(TA,waterSaturationPressure(TA));
+	const double qi = 1./( dryAir_density/wetAir_density+1. );
+	return qi;
 }
 
 } //namespace
