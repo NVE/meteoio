@@ -57,6 +57,7 @@ void FilterMinMax::process(const unsigned int& index, const std::vector<MeteoDat
 void FilterMinMax::parse_args(std::vector<std::string> vec_args)
 {
 	vector<double> filter_args;
+	is_soft = false;
 
 	if (vec_args.size() > 2){
 		is_soft = FilterBlock::is_soft(vec_args);
