@@ -23,9 +23,6 @@
 #include <meteoio/Grid2DObject.h>
 #include <meteoio/IOUtils.h>
 
-#ifdef MSVC
-	#define _USE_MATH_DEFINES
-#endif
 #include <cmath>
 #include <limits>
 
@@ -123,8 +120,8 @@ class DEMObject : public Grid2DObject {
 		void getNeighbours(const unsigned int i, const unsigned int j, double A[4][4]);
 		double safeGet(const int i, const int j);
 
-		slope_type dflt_algorithm;
 		int update_flag;
+		slope_type dflt_algorithm;
 		unsigned int slope_failures; ///<contains the number of points that have an elevation but no slope
 		unsigned int curvature_failures; ///<contains the number of points that have an elevation but no curvature
 

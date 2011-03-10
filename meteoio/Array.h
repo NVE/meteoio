@@ -72,6 +72,7 @@ template<class T> class Array {
 		const T operator ()(const unsigned int& index) const;
 
 		Array<T>& operator =(const Array<T>&);
+		Array<T>& operator =(const T& value);
 		
 		Array<T>& operator+=(const T& rhs);
 		const Array<T> operator+(const T& rhs);
@@ -264,6 +265,12 @@ template<class T> Array<T>& Array<T>::operator=(const Array<T>& source) {
 		vecData = source.vecData;
 		nx = source.nx;
 	}
+	return *this;
+}
+
+template<class T> Array<T>& Array<T>::operator=(const T& value) {
+	//reset every single member of the Array3D<T>
+	std::fill(vecData.begin(), vecData.end(), value);
 	return *this;
 }
 

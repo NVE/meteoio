@@ -189,7 +189,7 @@ void Date::setDate(const int& _year, const int& _month, const int& _day, const i
 
 }
 
-void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false)
+void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst)
 {
 	setDate(year, (signed)month, (signed)day, (signed)hour, (signed)minute, in_timezone, in_dst);
 }

@@ -128,13 +128,18 @@ class Grid3DObject{
 		* @return (bool) true if same geolocalization
 		*/
 		bool isSameGeolocalization(const Grid3DObject& target);
-		
+
+		/**
+		* @brief Extract a 2D grid for a given height
+		* @param z layer to extract
+		* @param layer extracted 2D grid
+		*/
 		void extractLayer(const unsigned int& z, Grid2DObject& layer);
 
 		Array3D<double> grid3D;
-		unsigned int ncols, nrows, ndepth;
 		double cellsize;
 		Coords llcorner;
+		unsigned int ncols, nrows, ndepth;
 		//NOTE: the altitude is understood as above sea level,
 		//that is we curently don't support altitude as above the local ground
 		//std::vector<double> thickness;

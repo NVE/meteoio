@@ -139,6 +139,7 @@ class Coords {
 	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
 
  private:
+	double ref_latitude, ref_longitude;
 	double altitude; ///<altitude of the point (the altitude is currently NOT dependant on the projection)
 	double latitude; ///<latitude of the point
 	double longitude; ///<longitude of the point
@@ -147,7 +148,6 @@ class Coords {
 	int grid_i; ///<grid index i (please notice that this index is NOT automatically regenerated NOR checked)
 	int grid_j; ///<grid index j (please notice that this index is NOT automatically regenerated NOR checked)
 	int grid_k; ///<grid index k (please notice that this index is NOT automatically regenerated NOR checked)
-	double ref_latitude, ref_longitude;
 
 	static const bool __init;    ///<helper variable to enable the init of static collection data
 	static bool initializeMaps();

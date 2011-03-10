@@ -123,6 +123,7 @@ class BufferedIOHandler : public IOInterface {
 		friend class IOManager;
 
 	private:
+		//private methods
 		const std::vector<METEO_TIMESERIE>& get_complete_buffer(Date& start, Date& end);
 
 		void push_meteo_data(const Date& date_start, const Date& date_end,
@@ -131,16 +132,17 @@ class BufferedIOHandler : public IOInterface {
 		void setDfltBufferProperties();
 		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo);
 
+		//private members
 		IOHandler& iohandler;
 		const Config& cfg;
+
+		std::vector< METEO_TIMESERIE > vec_buffer_meteo;
+		std::map<std::string, Grid2DObject> mapBufferedGrids;
 
 		Date buffer_start, buffer_end;
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer
 		unsigned int chunks; ///< How many chuncks to buffer
-
-		std::vector< METEO_TIMESERIE > vec_buffer_meteo;
-		std::map<std::string, Grid2DObject> mapBufferedGrids;
 };
 } //end namespace
 #endif

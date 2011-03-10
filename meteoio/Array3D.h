@@ -166,6 +166,7 @@ template<class T> class Array3D {
 		Array3DProxy<T> operator[](const unsigned int& i);
 
 		Array3D<T>& operator =(const Array3D<T>&);
+		Array3D<T>& operator =(const T& value);
 		
 		Array3D<T>& operator+=(const T& rhs);
 		const Array3D<T> operator+(const T& rhs);
@@ -420,6 +421,19 @@ template<class T> Array3D<T>& Array3D<T>::operator=(const Array3D<T>& source) {
 		nxny = source.nxny;
 		vecData = source.vecData;
 	}
+	return *this;
+}
+
+template<class T> Array3D<T>& Array3D<T>::operator=(const T& value) {
+	//reset every single member of the Array3D<T>
+	/*for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			for(unsigned int kk=0; kk<nz; kk++) {
+				operator()(ii,jj,kk) = value;
+			}
+		}
+	}*/
+	std::fill(vecData.begin(), vecData.end(), value);
 	return *this;
 }
 

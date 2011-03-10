@@ -22,10 +22,12 @@
 
 #ifndef USE_PRECOMPILED_HEADERS
 #ifdef WIN32
-#include <direct.h>
-#include <windows.h>
+	#include <direct.h>
+	#include <windows.h>
+	#undef max
+	#undef min
 #else
-#include <dlfcn.h>
+	#include <dlfcn.h>
 #endif
 #include <iostream>
 #include <sstream>

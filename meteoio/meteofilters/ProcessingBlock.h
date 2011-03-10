@@ -27,18 +27,19 @@ namespace mio {
 
 class ProcessingProperties {
 	public:
-		ProcessingProperties() : for_second_pass(false), time_before(0., 0.), time_after(0., 0.),
-		                         points_before(0), points_after(0) {}
+		ProcessingProperties() : time_before(0., 0.), time_after(0., 0.),
+		                         points_before(0), points_after(0),
+		                         for_second_pass(false) {}
 
 		friend std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data);
-
-		bool for_second_pass;
 
 		Duration time_before;
 		Duration time_after;
 
 		unsigned int points_before;
 		unsigned int points_after;
+
+		bool for_second_pass;
 };
 
 /**

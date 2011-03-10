@@ -137,6 +137,7 @@ template<class T> class Array2D {
 		Array2DProxy<T> operator[](const unsigned int& i);
 
 		Array2D<T>& operator =(const Array2D<T>&);
+		Array2D<T>& operator =(const T& value);
 
 		Array2D<T>& operator+=(const T& rhs);
 		const Array2D<T> operator+(const T& rhs);
@@ -358,6 +359,17 @@ template<class T> Array2D<T>& Array2D<T>::operator=(const Array2D<T>& source) {
 		ny = source.ny;
 		vecData = source.vecData;
 	}
+	return *this;
+}
+
+template<class T> Array2D<T>& Array2D<T>::operator=(const T& value) {
+	//reset every single member of the Array3D<T>
+	/*for (unsigned int ii=0; ii<nx; ii++) {
+		for (unsigned int jj=0; jj<ny; jj++) {
+			operator()(ii,jj) = value;
+		}
+	}*/
+	std::fill(vecData.begin(), vecData.end(), value);
 	return *this;
 }
 

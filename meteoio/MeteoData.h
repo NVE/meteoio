@@ -155,20 +155,22 @@ class MeteoData {
 
 		unsigned int getNrOfParameters() const;
  private:
+		//static methods
 		static std::map<unsigned int, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname 
 
-		unsigned int nrOfAllParameters;
+		//private methods
+		void initAllParameters();
+		void associateMemberVariables();
+		void initParameterMap();     ///<initializes the meteoparam map that allows sequential access to meteo parameters
 
 		std::map<std::string, double> extraparameters; ///<All non-standard meteo parameters will end up in this map
 		std::map<std::string, double*> mapParameterByName; ///<Associate name and meteo parameter
 		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
 		std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
 
-		void initAllParameters();
-		void associateMemberVariables();
-		void initParameterMap();     ///<initializes the meteoparam map that allows sequential access to meteo parameters
+		unsigned int nrOfAllParameters;
 		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
 

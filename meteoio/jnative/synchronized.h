@@ -9,10 +9,12 @@
 #define _Included_SYNCHRONIZED_H_
 
 #ifdef WIN32
-/* link to kernel32.dll */
-#include <windows.h>
+	/* link to kernel32.dll */
+	#include <windows.h>
+	#undef max
+	#undef min
 #else //assumes it's a Unix/Linux system
-#include <pthread.h>
+	#include <pthread.h>
 #endif
 
 /**
