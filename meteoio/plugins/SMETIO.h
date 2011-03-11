@@ -100,6 +100,7 @@ class SMETIO : public IOInterface {
 		std::string outpath;                //read from the Config [Output] section
 		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section
 		double in_dflt_TZ, out_dflt_TZ;     //default time zones
+		double plugin_nodata;
 
 		Config cfg;
 		std::ifstream fin; //Input file streams

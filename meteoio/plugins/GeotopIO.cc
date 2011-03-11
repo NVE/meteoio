@@ -48,22 +48,22 @@ const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 GeotopIO::GeotopIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
 }
 
 GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
 }
 
 GeotopIO::GeotopIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
 }
 
 GeotopIO::~GeotopIO() throw()

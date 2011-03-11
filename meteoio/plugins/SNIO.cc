@@ -58,24 +58,24 @@ SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cf
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
 }
 
 SNIO::SNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
 }
 
 SNIO::SNIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
-	cfg.getValue("TZ","Output",out_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
 }
 
 SNIO::~SNIO() throw()

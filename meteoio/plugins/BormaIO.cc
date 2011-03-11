@@ -54,21 +54,21 @@ BormaIO::BormaIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delOb
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = default_tz;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
 }
 
 BormaIO::BormaIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = default_tz;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
 }
 
 BormaIO::BormaIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = default_tz;
-	cfg.getValue("TZ","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
 }
 
 BormaIO::~BormaIO() throw()

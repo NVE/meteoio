@@ -241,8 +241,8 @@ void SMETIO::parseInputOutputSection()
 {
 	//default timezones
 	in_dflt_TZ = out_dflt_TZ = IOUtils::nodata;
-	cfg.getValue("TZ","Input",in_dflt_TZ,Config::nothrow);
-	cfg.getValue("TZ","Output",out_dflt_TZ,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_dflt_TZ,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_dflt_TZ,Config::nothrow);
 
 	// Parse the [Input] and [Output] sections within Config object cfg
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -554,6 +554,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	}
 
 	//Now extract info from mapHeader
+	IOUtils::getValueForKey(mapHeader, "nodata", plugin_nodata);
 	IOUtils::getValueForKey(mapHeader, "station_id", sd.stationID);
 	IOUtils::getValueForKey(mapHeader, "station_name", sd.stationName, IOUtils::nothrow);
 	timezone = in_dflt_TZ;
