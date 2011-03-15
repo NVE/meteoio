@@ -269,9 +269,9 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 		mesg << "[W] only two points for linear regression!\n";
 	}
 	if(nb_pts<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
-		mesg << "[E] Not enough data point for linear regression!\n";
+		mesg << "[E] Not enough data points for linear regression!\n";
 		A=0.;
-		B=in_X[1];
+		if(in_X.size()>0) B=in_X[1]; else B=0.;
 		R=1.;
 		return EXIT_FAILURE;
 	}

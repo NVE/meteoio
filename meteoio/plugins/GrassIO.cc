@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "GrassIO.h"
+#include "exports.h"
 
 using namespace std;
 
@@ -274,12 +275,12 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 #ifndef _METEOIO_JNI
 extern "C"
 {
-	void deleteObject(void* obj) {
+	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
 
-	void* loadObject(const string& classname, const Config& cfg) {
+	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "GrassIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new GrassIO(deleteObject, cfg);

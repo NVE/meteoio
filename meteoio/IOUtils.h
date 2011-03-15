@@ -194,6 +194,7 @@ namespace IOUtils {
 	// fully specialized template functions (implementation must not be in header)
 	template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
+	template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 
 	bool convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&) = std::dec);
@@ -207,7 +208,7 @@ namespace IOUtils {
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-								    const std::string& key, T& t, const unsigned int& options=IOUtils::dothrow){
+	                                       const std::string& key, T& t, const unsigned int& options=IOUtils::dothrow){
 		if (key == "") {
 			throw InvalidArgumentException("Empty key", AT);
 		}

@@ -15,7 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/plugins/CosmoXMLIO.h>
+#include "exports.h"
+#include "CosmoXMLIO.h"
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <sstream>
 
@@ -34,6 +35,7 @@ namespace mio {
  * The files are outputted in Grib format and preprocessed by FieldExtra (MeteoSwiss)
  * to get XML files.
  * It requires libxml to compile and run.
+ * When writing files, it creates one file per station nammed as {stationID}_{numerical date}.xml
  *
  * @section cosmoxml_units Units
  * The units are assumed to be the following:
@@ -473,7 +475,13 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 		writeFooter(XMLdata);
 
 		//Save file
-		filename = meteopath_out + "/Station_" + vecMeteo[ii][0].meta.getStationID() + ".xml";
+		std::string stat_id = vecMeteo[ii][0].meta.getStationID();
+		if(stat_id=="") {
+			stringstream ss;
+			ss << "station" << ii;
+			stat_id = ss.str();
+		}
+		filename = meteopath_out + "/" + stat_id + "_" + vecMeteo[ii][0].date.toString(Date::NUM) + ".xml";
 		fout.open(filename.c_str());
 		fout << XMLdata.str();
 		fout.close();
@@ -500,11 +508,11 @@ void CosmoXMLIO::cleanup() throw()
 #ifndef _METEOIO_JNI
 extern "C"
 {
-	void deleteObject(void* obj) {
+	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const Config& cfg) {
+	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "CosmoXMLIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new CosmoXMLIO(deleteObject, cfg);

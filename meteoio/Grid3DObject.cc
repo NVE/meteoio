@@ -52,8 +52,8 @@ Grid3DObject::Grid3DObject(const Grid3DObject& _grid3Dobj,
 	llcorner = _grid3Dobj.llcorner;
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
 		llcorner.setXY( llcorner.getEasting()+_nx*_grid3Dobj.cellsize,
-				llcorner.getNorthing()+_ny*_grid3Dobj.cellsize,
-				llcorner.getAltitude()+_nz*_grid3Dobj.cellsize );
+		                llcorner.getNorthing()+_ny*_grid3Dobj.cellsize,
+		                llcorner.getAltitude()+_nz*_grid3Dobj.cellsize );
 	}
 }
 

@@ -73,7 +73,7 @@ double Atmosphere::stdDryAirDensity(const double& altitude, const double& temper
 
 /**
 * @brief Calculates the water vapor density, for a given temperature and vapor pressure
-* @param temperature air temperature (K)
+* @param Temperature air temperature (K)
 * @param VaporPressure water vapor pressure (Pa)
 * @return water vapor density (kg/m^3)
 */

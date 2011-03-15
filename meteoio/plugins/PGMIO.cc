@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "PGMIO.h"
+#include "exports.h"
 
 using namespace std;
 
@@ -270,11 +271,11 @@ void PGMIO::cleanup() throw()
 #ifndef _METEOIO_JNI
 extern "C"
 {
-	void deleteObject(void* obj) {
+	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const Config& cfg) {
+	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "PGMIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new PGMIO(deleteObject, cfg);

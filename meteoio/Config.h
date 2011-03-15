@@ -132,7 +132,7 @@ class Config {
 		}
 
 		template <typename T> std::vector<T> getValue(const std::string& key, const std::string& section,
-                                                        const Options& opt=Config::dothrow) const
+		                                              const Options& opt=Config::dothrow) const
 		{
 			std::vector<T> tmp;
 			getValue(key, section, tmp, opt);
@@ -150,8 +150,8 @@ class Config {
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
 		template <typename T> void getValue(const std::string& key,
-								   std::vector<T>& vecT,
-								   const Options& opt=Config::dothrow) const
+		                                    std::vector<T>& vecT,
+		                                    const Options& opt=Config::dothrow) const
 		{
 			getValue(key, "GENERAL", vecT, opt);
 		}

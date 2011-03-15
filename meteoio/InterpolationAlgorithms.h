@@ -290,7 +290,8 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
  * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
  * The closest n stations (n being given as an extra argument of <i>"idw_lapse"</i>) to each pixel are
  * used to compute the local lapse rate, allowing to project the contributions of these n stations to the
- * local pixel with an inverse distance weight.
+ * local pixel with an inverse distance weight. We also assume a two segments regression for altitude detrending with
+ * a fixed 1200m above sea level inflection point. 
  */
 class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:

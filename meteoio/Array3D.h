@@ -280,14 +280,7 @@ template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigne
 
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
 	resize(anx, any, anz);
-
-	for (unsigned int ii=0; ii<nz; ii++) { 
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int kk=0; kk<nx; kk++) {
-				operator()(kk,jj,ii) = init; //Running through the vector in order of memory alignment
-			}
-		}
-	}
+	std::fill(vecData.begin(), vecData.end(), init);
 }
 
 template<class T> void Array3D<T>::size(unsigned int& anx, unsigned int& any, unsigned int& anz) const {
@@ -425,14 +418,6 @@ template<class T> Array3D<T>& Array3D<T>::operator=(const Array3D<T>& source) {
 }
 
 template<class T> Array3D<T>& Array3D<T>::operator=(const T& value) {
-	//reset every single member of the Array3D<T>
-	/*for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) = value;
-			}
-		}
-	}*/
 	std::fill(vecData.begin(), vecData.end(), value);
 	return *this;
 }

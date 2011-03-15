@@ -253,9 +253,9 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 #endif
 
 void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
-				  std::istream& fin,
-				  const unsigned int& linecount,
-				  const std::string& delimiter)
+                                 std::istream& fin,
+                                 const unsigned int& linecount,
+                                 const std::string& delimiter)
 {
 	int linenr = 0;
 	std::string line="";
@@ -400,6 +400,33 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, st
 	}
 
 	return true;
+}
+
+template<> bool IOUtils::convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+{
+	std::string s = str;
+	trim(s); //delete trailing and leading whitespaces and tabs
+	if (s.size() == 0) {
+		t = unodata;
+		return true;
+	} else {
+		std::istringstream iss(s);
+		iss.setf(std::ios::fixed);
+		iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
+		iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
+		if (iss.fail()) {
+			//Conversion failed
+			return false;
+		}
+		std::string tmp="";
+		getline(iss,  tmp); //get rest of line, if any
+		trim(tmp);
+		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {
+			//if line holds more than one value it's invalid
+			return false;
+		}
+		return true;
+	}
 }
 
 bool IOUtils::convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))

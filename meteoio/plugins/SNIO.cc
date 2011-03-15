@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "SNIO.h"
+#include "exports.h"
 #include <meteoio/meteolaws/Atmosphere.h>
 
 using namespace std;
@@ -361,16 +362,20 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	md.setData(MeteoData::DW, tmpdata[7]);
 	md.setData(MeteoData::ISWR, tmpdata[8]);
 	md.setData(MeteoData::RSWR, tmpdata[9]);
-	
-	if ((tmpdata[10] <= 1) && (tmpdata[10] != plugin_nodata)){
-		if ((md.ta != plugin_nodata) && (md.rh != plugin_nodata)){
-			tmpdata[10] = Atmosphere::Omstedt_ilwr(md.rh/100., C_TO_K(md.ta), tmpdata[10]); //calculate ILWR from cloudiness
+
+	double& ea = tmpdata[10];
+	if ((ea <= 1) && (ea != plugin_nodata)){
+		if ((md.ta != plugin_nodata) && (md.rh != plugin_nodata)) {
+			if(ea==0.)
+				ea = Atmosphere::Brutsaert_ilwr(md.rh/100., C_TO_K(md.ta));
+			else
+				ea = Atmosphere::Omstedt_ilwr(md.rh/100., C_TO_K(md.ta), ea); //calculate ILWR from cloudiness
 		} else {
-			tmpdata[10] = plugin_nodata;
+			ea = plugin_nodata;
 		}
 	}
 
-	md.setData(MeteoData::ILWR, tmpdata[10]);
+	md.setData(MeteoData::ILWR, ea);
 	md.setData(MeteoData::TSS, tmpdata[11]);
 	md.setData(MeteoData::TSG, tmpdata[12]);
 	md.setData(MeteoData::HNW, tmpdata[13]);
@@ -586,11 +591,11 @@ void SNIO::convertUnits(MeteoData& meteo)
 #ifndef _METEOIO_JNI
 extern "C"
 {
-	void deleteObject(void* obj) {
+	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const string& classname, const Config& cfg) {
+	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
 		if(classname == "SNIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new SNIO(deleteObject, cfg);

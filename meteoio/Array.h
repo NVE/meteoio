@@ -282,8 +282,8 @@ template<class T> Array<T>& Array<T>::operator+=(const Array<T>& rhs)
 
 	//Add to every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) += rhs(ii);
-	}	
+		operator()(ii) += rhs(ii);
+	}
 
 	return *this;
 }
@@ -300,7 +300,7 @@ template<class T> Array<T>& Array<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) += rhs;
+		operator()(ii) += rhs;
 	}
 
 	return *this;
@@ -322,7 +322,7 @@ template<class T> Array<T>& Array<T>::operator-=(const Array<T>& rhs)
 
 	//Substract to every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) -= rhs(ii);
+		operator()(ii) -= rhs(ii);
 	}
 
 	return *this;
@@ -340,7 +340,7 @@ template<class T> Array<T>& Array<T>::operator-=(const T& rhs)
 {
 	//Substract to every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) -= rhs;
+		operator()(ii) -= rhs;
 	}
 
 	return *this;
@@ -362,7 +362,7 @@ template<class T> Array<T>& Array<T>::operator*=(const Array<T>& rhs)
 
 	//Add to every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) *= rhs(ii);
+		operator()(ii) *= rhs(ii);
 	}
 
 	return *this;
@@ -380,7 +380,7 @@ template<class T> Array<T>& Array<T>::operator*=(const T& rhs)
 {
 	//Add to every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) *= rhs;
+		operator()(ii) *= rhs;
 	}
 
 	return *this;
@@ -402,7 +402,7 @@ template<class T> Array<T>& Array<T>::operator/=(const Array<T>& rhs)
 
 	//Divide every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) /= rhs(ii);
+		operator()(ii) /= rhs(ii);
 	}
 
 	return *this;
@@ -420,7 +420,7 @@ template<class T> Array<T>& Array<T>::operator/=(const T& rhs)
 {
 	//Divide every single member of the Array<T>
 	for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) /= rhs;
+		operator()(ii) /= rhs;
 	}
 
 	return *this;

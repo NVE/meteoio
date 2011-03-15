@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "GeotopIO.h"
+#include "exports.h"
 
 using namespace std;
 
@@ -540,11 +541,11 @@ void GeotopIO::convertUnits(MeteoData& meteo)
 #ifndef _METEOIO_JNI
 extern "C"
 {
-	void deleteObject(void* obj) {
+	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const std::string& classname, const Config& cfg) {
+	METEOIO_EXPORT void* loadObject(const std::string& classname, const Config& cfg) {
 		if(classname == "GeotopIO") {
 			//cerr << "Creating dynamic handle for " << classname << endl;
 			return new GeotopIO(deleteObject, cfg);

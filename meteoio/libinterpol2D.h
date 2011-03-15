@@ -76,11 +76,15 @@ class Interpol2D {
 		                           const std::vector<double>& coeffs);
 		static double LinProject(const double& value, const double& altitude, const double& new_altitude, 
 		                         const std::vector<double>& coeffs);
+		static double BiLinProject(const double& value, const double& altitude, const double& new_altitude,
+		                           const std::vector<double>& coeffs);
 		static double FracProject(const double& value, const double& altitude, const double& new_altitude,
 		                          const std::vector<double>& coeffs);
 
 		static int LinRegression(const std::vector<double>& data_in, 
 		                         const std::vector<double>& elevations, std::vector<double>& coeffs);
+		static int BiLinRegression(const std::vector<double>& data_in,
+		                           const std::vector<double>& elevations, std::vector<double>& coeffs);
 
 	private:
 		//generic functions
@@ -94,8 +98,6 @@ class Interpol2D {
 		                         std::vector< std::pair<double, unsigned int> >& list);
 		
 		//core methods
-		static void LinRegressionCore(const std::vector<double>& X, const std::vector<double>& Y,
-		                              const unsigned int imax, double& a, double& b, double& r);
 		static double IDWCore(const double& x, const double& y,
 		                      const std::vector<double>& vecData_in,
 		                      const std::vector<StationData>& vecStations_in);
@@ -116,8 +118,9 @@ class Interpol2D {
 
 	private:
 		//static members
-		const static double wind_ys; ///coefficient for wind dependency on slope
-		const static double wind_yc; ///coefficient for wind dependency on curvature
+		const static double wind_ys; ///<coefficient for wind dependency on slope
+		const static double wind_yc; ///<coefficient for wind dependency on curvature
+		const static double bilin_inflection; ///<bilinear inflection point (m above sea level)
 };
 } //end namespace
 
