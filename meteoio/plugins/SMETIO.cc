@@ -137,16 +137,19 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 SMETIO::SMETIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	parseInputOutputSection();
+	plugin_nodata = IOUtils::nodata;
 }
 
 SMETIO::SMETIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	parseInputOutputSection();
+	plugin_nodata = IOUtils::nodata;
 }
 
 SMETIO::SMETIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	parseInputOutputSection();
+	plugin_nodata = IOUtils::nodata;
 }
 
 SMETIO::~SMETIO() throw()
@@ -164,7 +167,7 @@ void SMETIO::cleanup() throw()
 	}
 	if (fout.is_open()) {//close fout if open
 		fout.close();
-	}		
+	}
 }
 
 void SMETIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
@@ -437,7 +440,10 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 					alt = val;
 					poscounter++;
 				} else {
-					SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
+					if(val==plugin_nodata)
+						SMETIO::getParameter(vecDataSequence[ii], md) = IOUtils::nodata;
+					else
+						SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
 				}
 			}
 		}
@@ -447,8 +453,12 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 		if (c != '\n')
 			throw InvalidFormatException("Corrupted data in section [DATA]", AT);
 
-		if (poscounter == 3)
+		if (poscounter == 3) {
+			lat=IOUtils::standardizeNodata(lat, plugin_nodata);
+			lon=IOUtils::standardizeNodata(lon, plugin_nodata);
+			alt=IOUtils::standardizeNodata(alt, plugin_nodata);
 			tmpsd.position.setLatLon(lat, lon, alt);
+		}
 
 		if (md.date >= dateStart){
 			md.meta = tmpsd;
@@ -484,7 +494,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 
 		MeteoData md;
 		StationData tmpsd = sd;
-		double lat, lon, alt;
+		double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;
 		unsigned int poscounter = 0;
 		for (unsigned int ii=0; ii<nrOfColumns; ii++){
 			if (vecDataSequence[ii] == "timestamp"){
@@ -511,12 +521,19 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 				double val;
 				if (!IOUtils::convertString(val, tmpvec[ii]))
 					throw InvalidFormatException("In "+filename+": Invalid value for param", AT);
-				SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
+				if(val==plugin_nodata)
+					SMETIO::getParameter(vecDataSequence[ii], md) = IOUtils::nodata;
+				else
+					SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
 			}
 		}
 
-		if (poscounter == 3)
+		if (poscounter == 3) {
+			lat=IOUtils::standardizeNodata(lat, plugin_nodata);
+			lon=IOUtils::standardizeNodata(lon, plugin_nodata);
+			alt=IOUtils::standardizeNodata(alt, plugin_nodata);
 			tmpsd.position.setLatLon(lat, lon, alt);
+		}
 
 		if (md.date >= dateStart){
 			md.meta = tmpsd;
@@ -560,6 +577,8 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	IOUtils::getValueForKey(mapHeader, "station_name", sd.stationName, IOUtils::nothrow);
 	timezone = in_dflt_TZ;
 	IOUtils::getValueForKey(mapHeader, "tz", timezone, IOUtils::nothrow);
+	if(timezone==plugin_nodata) //if a nodata was given in the header, we replace it with the io.ini timezone
+		timezone = in_dflt_TZ;
 	sd.position.setProj(coordin, coordinparam); //set the default projection from config file
 
 	//trying to read easting/northing
@@ -571,9 +590,12 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	}
 	
 	IOUtils::getValueForKey(mapHeader, "easting", easting, IOUtils::nothrow);
+	easting=IOUtils::standardizeNodata(easting, plugin_nodata);
 	if (easting != IOUtils::nodata){
 		IOUtils::getValueForKey(mapHeader, "northing", northing);
 		IOUtils::getValueForKey(mapHeader, "altitude", alt);
+		northing=IOUtils::standardizeNodata(northing, plugin_nodata);
+		alt=IOUtils::standardizeNodata(alt, plugin_nodata);
 		sd.position.setXY(easting, northing, alt);
 		locationInHeader = true;
 	} else {
@@ -583,9 +605,12 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	//now trying to read lat/long (second, so that it has precedence over east/north coordinates)
 	double lat=IOUtils::nodata, lon=IOUtils::nodata;
 	IOUtils::getValueForKey(mapHeader, "latitude", lat, IOUtils::nothrow);
+	lat=IOUtils::standardizeNodata(lat, plugin_nodata);
 	if (lat != IOUtils::nodata){ 
 		IOUtils::getValueForKey(mapHeader, "longitude", lon);
 		IOUtils::getValueForKey(mapHeader, "altitude", alt);
+		lon=IOUtils::standardizeNodata(lon, plugin_nodata);
+		alt=IOUtils::standardizeNodata(alt, plugin_nodata);
 		sd.position.setLatLon(lat, lon, alt);
 		locationInHeader = true;
 	}
