@@ -212,6 +212,11 @@ void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
 	grid2D = _grid2D;
 }
 
+void Grid2DObject::size(unsigned int& o_ncols, unsigned int& o_nrows) const {
+	o_ncols = ncols;
+	o_nrows = nrows;
+}
+
 void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows,
 				const double& _cellsize)
 {

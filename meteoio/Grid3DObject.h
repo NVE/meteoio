@@ -68,12 +68,12 @@ class Grid3DObject{
 		*/
 		Grid3DObject(const Grid3DObject& _grid3Dobj,
 				   const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-				   const unsigned int& _nwidth, const unsigned int& _nheight, const unsigned int& _ndepth);
+				   const unsigned int& _nwidths, const unsigned int& _nheights, const unsigned int& _ndepths);
 
-		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
+		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
 				const double& cellsize, const Coords& _llcorner);
 
-		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
+		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
 			const double& cellsize, const Coords& _llcorner, const Array3D<double>& grid3D);
 
 		/**
@@ -84,7 +84,7 @@ class Grid3DObject{
 		* @param cellsize (double&) value for cellsize in grid3D
 		* @param _llcorner lower left corner coordinates
 		*/
-		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& depth,
+		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& depths,
 			const double& cellsize, const Coords& _llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double> 
@@ -97,8 +97,10 @@ class Grid3DObject{
 		* @param _llcorner lower left corner coordinates
 		* @param grid3D_in (Array\<double\>&) grid to be copied by value
 		*/
-		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
+		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
 			const double& cellsize, const Coords& _llcorner, const Array3D<double>& grid3D_in);
+
+		void size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const;
 
 		/**
 		* @brief Compute the positional parameters that are not already known
@@ -139,15 +141,15 @@ class Grid3DObject{
 		Array3D<double> grid3D;
 		double cellsize;
 		Coords llcorner;
-		unsigned int ncols, nrows, ndepth;
+		unsigned int ncols, nrows, ndepths;
 		//NOTE: the altitude is understood as above sea level,
 		//that is we curently don't support altitude as above the local ground
 		//std::vector<double> thickness;
 
  protected:
-		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
+		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
 			const double& cellsize);
-		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepth,
+		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
 			const double& cellsize, const Coords& _llcorner);
 
 		/**

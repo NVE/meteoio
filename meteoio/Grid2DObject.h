@@ -126,6 +126,8 @@ class Grid2DObject {
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 		         const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
 
+		void size(unsigned int& o_ncols, unsigned int& o_nrows) const;
+
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
 		* as another Grid2DObject (as well as same cells). The grid coordinates (xllcorner & yllcorner) are NOT

@@ -27,7 +27,7 @@ Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
 		grid3D = source.grid3D;
 		ncols = source.ncols;
 		nrows = source.nrows;
-		ndepth = source.ndepth;
+		ndepths = source.ndepths;
 		cellsize = source.cellsize;
 		llcorner = source.llcorner;
 	}
@@ -36,16 +36,16 @@ Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
 
 Grid3DObject::Grid3DObject() : grid3D() //using Array3D default constructor
 {
-	ncols = nrows = ndepth = 0;
+	ncols = nrows = ndepths = 0;
 	cellsize = 0.0;
 }
 
 Grid3DObject::Grid3DObject(const Grid3DObject& _grid3Dobj,
 				const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-				const unsigned int& _nwidth, const unsigned int& _nheight, const unsigned int& _ndepth) 
-	: grid3D(_grid3Dobj.grid3D, _nx,_ny,_nz, _nwidth,_nheight,_ndepth)
+				const unsigned int& _nwidths, const unsigned int& _nheights, const unsigned int& _ndepths) 
+	: grid3D(_grid3Dobj.grid3D, _nx,_ny,_nz, _nwidths,_nheights,_ndepths)
 {
-	setValues(_nwidth, _nheight, _ndepth, _grid3Dobj.cellsize);
+	setValues(_nwidths, _nheights, _ndepths, _grid3Dobj.cellsize);
 
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
@@ -57,16 +57,16 @@ Grid3DObject::Grid3DObject(const Grid3DObject& _grid3Dobj,
 	}
 }
 
-Grid3DObject::Grid3DObject(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth,
-				const double& _cellsize, const Coords& _llcorner) : grid3D(_ncols, _nrows, _ndepth, IOUtils::nodata)
+Grid3DObject::Grid3DObject(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
+				const double& _cellsize, const Coords& _llcorner) : grid3D(_ncols, _nrows, _ndepths, IOUtils::nodata)
 {
-	setValues(_ncols, _nrows, _ndepth, _cellsize, _llcorner);
+	setValues(_ncols, _nrows, _ndepths, _cellsize, _llcorner);
 }
 
-Grid3DObject::Grid3DObject(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth,
+Grid3DObject::Grid3DObject(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
 					  const double& _cellsize, const Coords& _llcorner, const Array3D<double>& _grid3D) : grid3D()
 {
-	set(_ncols, _nrows, _ndepth, _cellsize, _llcorner, _grid3D);
+	set(_ncols, _nrows, _ndepths, _cellsize, _llcorner, _grid3D);
 }
 
 bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const {
@@ -110,7 +110,7 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const {
 		return false;
 	}
 
-	if(i>(signed)ncols || i<0 || j>(signed)nrows || j<0 || k>(signed)ndepth || k<0) {
+	if(i>(signed)ncols || i<0 || j>(signed)nrows || j<0 || k>(signed)ndepths || k<0) {
 		//the point is outside the grid, we reset the indices to the closest values
 		//still fitting in the grid and return an error
 		if(i<0) i=0;
@@ -118,7 +118,7 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const {
 		if(k<0) k=0;
 		if(i>(signed)ncols) i=(signed)ncols;
 		if(j>(signed)nrows) j=(signed)nrows;
-		if(k>(signed)ndepth) k=(signed)ndepth;
+		if(k>(signed)ndepths) k=(signed)ndepths;
 		point.setGridIndex(i, j, k, false);
 		return false;
 	}
@@ -187,8 +187,8 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const {
 		k=0;
 		error_code=false;
 	}
-	if(k>(signed)ndepth) {
-		k=(signed)ndepth;
+	if(k>(signed)ndepths) {
+		k=(signed)ndepths;
 		error_code=false;
 	}
 
@@ -196,46 +196,52 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const {
 	return error_code;
 }
 
-void Grid3DObject::set(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth,
+void Grid3DObject::set(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
 				const double& _cellsize, const Coords& _llcorner)
 {
-	setValues(_ncols, _nrows, _ndepth, _cellsize, _llcorner);
-	grid3D.resize(ncols, nrows, ndepth, IOUtils::nodata);	
+	setValues(_ncols, _nrows, _ndepths, _cellsize, _llcorner);
+	grid3D.resize(ncols, nrows, ndepths, IOUtils::nodata);	
 }
 
-void Grid3DObject::set(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth,
+void Grid3DObject::set(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
 				const double& _cellsize, const Coords& _llcorner, const Array3D<double>& _grid3D)
 {
 	//Test for equality in size: Only compatible Array3D<double> grids are permitted
 	unsigned int nx, ny, nz;
 	_grid3D.size(nx, ny, nz);
-	if ((_ncols != nx) || (_nrows != ny) || (_ndepth != nz)) {
+	if ((_ncols != nx) || (_nrows != ny) || (_ndepths != nz)) {
 		throw IOException("Mismatch in size of Array3D<double> parameter grid3D and size of Grid3DObject", AT);
 	}
 
-	setValues(_ncols, _nrows, _ndepth, _cellsize, _llcorner);
+	setValues(_ncols, _nrows, _ndepths, _cellsize, _llcorner);
 	grid3D = _grid3D; //copy by value
 }
 
-void Grid3DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth,
+void Grid3DObject::size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const {
+	o_ncols = ncols;
+	o_nrows = nrows;
+	o_ndepths = ndepths;
+}
+
+void Grid3DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
 				const double& _cellsize)
 {
 	ncols = _ncols;
 	nrows = _nrows;
-	ndepth = _ndepth;
+	ndepths = _ndepths;
 	cellsize = _cellsize;
 }
 
-void Grid3DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth,
+void Grid3DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
 				const double& _cellsize, const Coords& _llcorner)
 {
-	setValues(_ncols, _nrows, _ndepth, _cellsize);
+	setValues(_ncols, _nrows, _ndepths, _cellsize);
 	llcorner = _llcorner;
 }
 
 bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 {
-	if( ncols==target.ncols && nrows==target.nrows && ndepth==target.ndepth &&
+	if( ncols==target.ncols && nrows==target.nrows && ndepths==target.ndepths &&
 		cellsize==target.cellsize && llcorner==target.llcorner) {
 		return true;
 	} else {
@@ -257,7 +263,7 @@ std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
 {
 	os << "<Grid3DObject>\n";
 	os << grid.llcorner;
-	os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepth << " @ " << grid.cellsize << "m\n";
+	os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepths << " @ " << grid.cellsize << "m\n";
 	os << grid.grid3D;
 	os << "</Grid3DObject>\n";
 	return os;
@@ -274,7 +280,7 @@ void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 	{
 		buf.Pack(&ncols,1);
 		buf.Pack(&nrows,1);
-		buf.Pack(&ndepth,1);
+		buf.Pack(&ndepths,1);
 		buf.Pack(&cellsize,1);
 		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
 		//unsigned int x,y,z;
@@ -285,7 +291,7 @@ void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 	{
 		buf.UnPack(&ncols,1);
 		buf.UnPack(&nrows,1);
-		buf.UnPack(&ndepth,1);
+		buf.UnPack(&ndepths,1);
 		buf.UnPack(&cellsize,1);
 		marshal_Coords(buf, llcorner, 0, !FLAG_MARSHAL, NULL);
 		//grid3D.clear();//if(grid2D!=NULL)delete(grid2D);
