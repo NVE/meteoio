@@ -566,7 +566,7 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
                            const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
                            std::vector< std::vector<double> >& vec_of_psums)
 {
-	unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulianDate(true) - dateStart.getJulianDate(true) + 0.00001) * 4.0) + 1;
+	const unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulianDate(true) - dateStart.getJulianDate(true) + 0.00001) * 4.0) + 1;
 
 	for (unsigned int ii=0; ii<vecMeteoAnetz.size(); ii++){
 		double tmp_psum = 0.0;
@@ -670,16 +670,6 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	dateE.setTimeZone(in_tz);
 	dateS.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
 	dateE.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
-
-	//Oracle can't deal with an integer for the hour of 24, hence the following workaround
-	if (datestart[3] == 24){
-		Date tmpDate = dateS + 3.0/(24.*3600.); //add three seconds to omit 24 for 00
-		tmpDate.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
-	}
-	if (dateend[3] == 24){
-		Date tmpDate = dateE + 3.0/(24.*3600.); //add three seconds to omit 24 for 00
-		tmpDate.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
-	}
 
 	//get data for one specific station
 	std::vector<std::string> vecHts1;
