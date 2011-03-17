@@ -63,7 +63,7 @@ const string ImisIO::sqlQuerySensorDepths = "SELECT hts1_1, hts1_2, hts1_3 FROM 
 
 const string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') AS thedate, a.ta, a.iswr, a.vw, a.dw, a.vw_max, a.rh, a.ilwr, a.hnw, a.tsg, a.tss, a.hs, a.rswr, b.vw AS vw_drift, b.dw AS dw_drift, a.ts1, a.ts2, a.ts3 FROM (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4) a LEFT OUTER JOIN (SELECT case when to_char(datum,'MI')=40 then trunc(datum,'HH24')+0.5/24 else datum end as datum, vw, dw FROM ams.v_ams_raw WHERE stat_abk=:5 AND stao_nr=:6 AND datum>=:3 AND datum<=:4) b ON a.datum=b.datum ORDER BY thedate"; ///< C. Marty's Data query with wind drift station; gets wind from enet stations for imis snow station too! [2010-02-24]
 
-const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, rh, ilwr, hnw, tsg, tss, hs, rswr, vw_max, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
+const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, vw_max, rh, ilwr, hnw, tsg, tss, hs, rswr, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
 
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 const bool ImisIO::__init = ImisIO::initStaticData();
