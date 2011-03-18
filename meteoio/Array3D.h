@@ -161,6 +161,9 @@ template<class T> class Array3D {
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array3D<P>& array);
+		
+		T& operator ()(const unsigned int& i);
+		const T operator ()(const unsigned int& i) const;
 		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
 		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
 		Array3DProxy<T> operator[](const unsigned int& i);
@@ -195,6 +198,14 @@ template<class T> class Array3D {
 		unsigned int nz;
 		unsigned int nxny; //nx times ny
 };
+
+template<class T> T& Array3D<T>::operator()(const unsigned int& i) {
+	return vecData[i];
+}
+
+template<class T> const T Array3D<T>::operator()(const unsigned int& i) const {
+	return vecData[i];
+}
 
 template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) {
 #ifndef NOSAFECHECKS
@@ -312,25 +323,18 @@ template<class T> std::ostream& operator<<(std::ostream& os, const Array3D<T>& a
 template<class T> T Array3D<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {
 
 	T min = std::numeric_limits<T>::max();
-
+	const unsigned int nxyz = ny*nx*nz;
+	
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
-				for (unsigned int kk=0; kk<nx; kk++) {
-					const T val = vecData[ii + jj*nx + kk*nxny];
-					if(val<min) min=val;
-				}
-			}
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			const T val = operator()(jj);
+			if(val<min) min=val;
 		}
 		return min;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
-				for (unsigned int kk=0; kk<nx; kk++) {
-					const T val = vecData[ii + jj*nx + kk*nxny];
-					if(val!=IOUtils::nodata && val<min) min=val;
-				}
-			}
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			const T val = operator()(jj);
+			if(val!=IOUtils::nodata && val<min) min=val;
 		}
 		if(min!=std::numeric_limits<T>::max()) return min;
 		else return (T)IOUtils::nodata;
@@ -342,25 +346,18 @@ template<class T> T Array3D<T>::getMin(const IOUtils::nodata_handling flag_nodat
 template<class T> T Array3D<T>::getMax(const IOUtils::nodata_handling flag_nodata) const {
 
 	T max = -std::numeric_limits<T>::max();
-
+	const unsigned int nxyz = ny*nx*nz;
+	
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
-				for (unsigned int kk=0; kk<nx; kk++) {
-					const T val = vecData[ii + jj*nx + kk*nxny];
-					if(val>max) max=val;
-				}
-			}
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			const T val = operator()(jj);
+			if(val>max) max=val;
 		}
 		return max;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
-				for (unsigned int kk=0; kk<nx; kk++) {
-					const T val = vecData[ii + jj*nx + kk*nxny];
-					if(val!=IOUtils::nodata && val>max) max=val;
-				}
-			}
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			const T val = operator()(jj);
+			if(val!=IOUtils::nodata && val>max) max=val;
 		}
 		if(max!=-std::numeric_limits<T>::max()) return max;
 		else return (T)IOUtils::nodata;
@@ -372,30 +369,22 @@ template<class T> T Array3D<T>::getMax(const IOUtils::nodata_handling flag_nodat
 template<class T> T Array3D<T>::getMean(const IOUtils::nodata_handling flag_nodata) const {
 
 	T mean = 0;
-
+	const unsigned int nxyz = nx*ny*nz;
+	
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
-				for (unsigned int kk=0; kk<nx; kk++) { //TODO: check this index...
-					const T val = vecData[ii + jj*nx + kk*nxny];
-					mean += val;
-				}
-			}
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			const T val = operator()(jj);
+			mean += val;
 		}
-		const unsigned int count = nx*ny*nz;
-		if(count>0) return mean/(T)(count);
+		if(nxyz>0) return mean/(T)(nxyz);
 		else return (T)0;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
 		unsigned int count = 0;
-		for (unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
-				for (unsigned int kk=0; kk<nx; kk++) { //TODO: check this index...
-					const T val = vecData[ii + jj*nx + kk*nxny];
-					if(val!=IOUtils::nodata) {
-						mean += val;
-						count++;
-					}
-				}
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			const T val = operator()(jj);
+			if(val!=IOUtils::nodata) {
+				mean += val;
+				count++;
 			}
 		}
 		if(count>0) return mean/(T)(count);

@@ -323,18 +323,17 @@ template<class T> T Array2D<T>::getMax(const IOUtils::nodata_handling flag_nodat
 template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_nodata) const {
 
 	T mean = 0;
-
+	const unsigned int nxy = nx*ny;
+	
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		const unsigned int count = nx*ny;
-		for (unsigned int jj=0; jj<count; jj++) {
+		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
 			mean += val;
 		}
-		if(count>0) return mean/(T)(count);
+		if(nxy>0) return mean/(T)(nxy);
 		else return (T)0;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
 		unsigned int count = 0;
-		const unsigned int nxy = nx*ny;
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
 			if(val!=IOUtils::nodata) {
