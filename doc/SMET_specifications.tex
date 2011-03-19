@@ -2,7 +2,7 @@
 
 %%TODO: GSN has trouble with space delimited formats, it needs comma delimited...
 %opening
-\title{Format specification for the SMET Weather Station Meteorological Data Format\\version 1.0}
+\title{Format specification for the SMET Weather Station Meteorological Data Format\\version 1.1}
 \author{Mathias Bavay}
 
 \begin{document}
@@ -11,6 +11,8 @@
 
 \begin{abstract}
 The goal of this data format is to ease the exchange of meteorological point measurements by providing both the data and the metadata in an easy to interpret and to manipulate format. Data manipulations should be possible manually using a standard text editor or using some tools (shell scripting, awk, perl, as well as spreadsheets, R, as well as stadard programing languages). The format is versioned, which means that format updates could break backward compatibility if necessary.
+
+Compared to specification 1.0, when using a unit offset/multiplier, the multiplier is now applied \emph{before} the offset so that it is possible to easily force a whole column to nodata.
 \end{abstract}
 
 \section{Requirements}
@@ -96,7 +98,7 @@ The following are optional:
 	\item creation: timestamp of the file's creation date (ISO 8601 Combined date and time formatted)
 	\item source: string describing the origin of the file
 	\item units\_offset: a vector of decimal numbers to add to each value of the matching column in order to get back to MKSA
-	\item units\_multiplier: a vector of decimal numbers to mutiply each value of the matching column (\emph{after} potential offset addition) in order to get back to MKSA
+	\item units\_multiplier: a vector of decimal numbers to mutiply each value of the matching column (\emph{before} potential offset addition) in order to get back to MKSA
 	\item comment: a free string to write any comment
 \end{itemize}
 

@@ -46,7 +46,6 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg) : cfg(in_cfg) {
 	}
 	if (window_size <= 0.01)
 		throw IOException("WINDOW_SIZE not valid", AT);
-
 }
 
 void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties)

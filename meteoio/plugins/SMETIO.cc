@@ -51,7 +51,7 @@ namespace mio {
 
 //TODO: keep a pointer to last read position, so we can fseek for the next read?
 
-const std::string SMETIO::smet_version = "1.0";
+const std::string SMETIO::smet_version = "1.1";
 const unsigned int SMETIO::buffer_reserve = 23*24*2; //kind of average size of a buffer for optimizing vectors
 map<string, MeteoData::Parameters> SMETIO::mapParameterByName;
 const bool SMETIO::__init = SMETIO::initStaticData();
@@ -443,7 +443,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 					if(val==plugin_nodata)
 						SMETIO::getParameter(vecDataSequence[ii], md) = IOUtils::nodata;
 					else
-						SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
+						SMETIO::getParameter(vecDataSequence[ii], md) = (val * vecUnitsMultiplier[ii]) + vecUnitsOffset[ii];
 				}
 			}
 		}
@@ -524,7 +524,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 				if(val==plugin_nodata)
 					SMETIO::getParameter(vecDataSequence[ii], md) = IOUtils::nodata;
 				else
-					SMETIO::getParameter(vecDataSequence[ii], md) = (val + vecUnitsOffset[ii]) * vecUnitsMultiplier[ii];
+					SMETIO::getParameter(vecDataSequence[ii], md) = (val * vecUnitsMultiplier[ii]) + vecUnitsOffset[ii];
 			}
 		}
 
@@ -667,8 +667,12 @@ void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const 
 		throw InvalidFormatException("The signature of file " + filename + " is invalid", AT);
 
 	std::string version = vecSignature[1];
-	if ((version != "0.9") && (version != "0.95") && (version != "0.99") && (version != smet_version))
+	if ((version != "0.9") && (version != "0.95") && (version != "0.99") && (version != "1.0") && (version != smet_version))
 		throw InvalidFormatException("Unsupported file format version for file " + filename, AT);
+
+	if(version=="0.9" || version=="0.95" || version=="0.99" || version=="1.0") {
+		std::cout << "[W] SMET specification 1.1 changes the priorities of units_multiplier and units_offset. Please check/update your files and bring them to 1.1!!\n";
+	}
 
 	const std::string type = vecSignature[2];
 	if (type == "ASCII")
@@ -783,6 +787,7 @@ void SMETIO::writeDataAscii(const bool& writeLocationInHeader, const std::vector
 	fout << "[DATA]" << endl;
 	fout.fill(' ');
 	fout << right;
+	fout << fixed;
 	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
 		if(out_dflt_TZ!=IOUtils::nodata) {
 			Date tmp_date(vecMeteo[ii].date);
@@ -837,8 +842,8 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
 	if (sd.getStationName() != "")
 		fout << "station_name = " << sd.getStationName() << endl;
 
+	fout << fixed;
 	if (writeLocationInHeader){ //TODO: only write if != nodata
-		fout << fixed;
 		fout << "latitude     = " << setw(14) << setprecision(6) << sd.position.getLat() << "\n";
 		fout << "longitude    = " << setw(14) << setprecision(6) << sd.position.getLon() << "\n";
 		fout << "altitude     = " << setw(9)  << setprecision(1) << sd.position.getAltitude() << "\n";

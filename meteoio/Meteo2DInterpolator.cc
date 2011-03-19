@@ -118,6 +118,8 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
 	} else if (meteoparam == MeteoData::HS){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
+	} else if (meteoparam == MeteoData::VW){
+		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
 	}
 }
 

@@ -170,12 +170,8 @@ void ImisIO::getDBParameters()
 	cfg.getValue("DBUSER", "Input", oracleUserName_in);
 	cfg.getValue("DBPASS", "Input", oraclePassword_in);
 
-	string tmp = cfg.get("USEANETZ", "Input", Config::nothrow);
-	if (tmp != "") {
-		cfg.getValue("USEANETZ", "Input", useAnetz);
-	} else {
-		useAnetz = false;
-	}
+	useAnetz = false;
+	cfg.getValue("USEANETZ", "Input", useAnetz, Config::nothrow);
 
 	/*cfg.getValue("DBNAME", "Output", oracleDBName_out);
 	cfg.getValue("DBUSER", "Output", oracleUserName_out);
