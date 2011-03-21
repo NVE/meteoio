@@ -242,26 +242,23 @@ namespace IOUtils {
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
-					    const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow){
-		if (key == "") {
-			throw InvalidArgumentException("Empty key", AT);
-		}
+					    const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow)
+	{
+		if (key == "") throw InvalidArgumentException("Empty key", AT);
 
-		std::map<std::string, std::string>::const_iterator it;
-		it = properties.find(key);
-
-		if (it == properties.end()){
-			if (options == IOUtils::nothrow)
+		std::map<std::string, std::string>::const_iterator it = properties.find(key);
+		if (it == properties.end()) {
+			if (options == IOUtils::nothrow) {
 				return;
-			else 
+			} else { 
 				throw UnknownValueException("No value for key " + key, AT);
+			}
 		}
 		const std::string value = it->second;
 
 		//split value string 
 		std::vector<std::string> vecUnconvertedValues;
 		unsigned int counter = readLineToVec(value, vecUnconvertedValues);
-
 		for (unsigned int ii=0; ii<counter; ii++){
 			T myvar;
 			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec)){

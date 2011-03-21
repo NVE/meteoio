@@ -59,10 +59,8 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties)
 
 unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
 {
-	if (vecM.size() == 0){ //Deal with case of the empty vector
-		vecM.push_back(MeteoData(date));
-		return 0; //nothing left to do
-	}
+	if (vecM.size() == 0) //Deal with case of the empty vector
+		return IOUtils::npos; //nothing left to do
 
 	//Find element in the vector, or insert it at the appropriate position
 	unsigned int position = IOUtils::seek(date, vecM, false);
@@ -121,7 +119,6 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 	 * 1D interpolation of meteo parameters. It also extracts any possible 
 	 * arguments for that specific algorithm.
 	 */
-
 	vecArguments.clear();
 	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, Config::nothrow);
 

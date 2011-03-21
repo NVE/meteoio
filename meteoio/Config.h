@@ -172,11 +172,11 @@ class Config {
 		{
 			try {
 				vecT.clear();
-				std::string _key(key);
-				std::string _section(section);
-				IOUtils::toUpper(_key);
-				IOUtils::toUpper(_section);
-				IOUtils::getValueForKey<T>(properties, _section + "::" + _key, vecT);
+				std::string new_key(key);
+				std::string new_section(section);
+				IOUtils::toUpper(new_key);
+				IOUtils::toUpper(new_section);
+				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, vecT);
 			} catch(std::exception& e){
 				if (opt != Config::nothrow) {
 					std::stringstream ss;

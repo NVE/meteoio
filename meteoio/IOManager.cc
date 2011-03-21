@@ -222,7 +222,9 @@ unsigned int IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMet
 		if ((IOManager::resampled & processing_level) == IOManager::resampled){
 			//cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
 			unsigned int position = meteoprocessor.resample(i_date, vec_cache[ii]);
-			vecMeteo.push_back(vec_cache[ii][position]);
+
+			if (position != IOUtils::npos)
+				vecMeteo.push_back(vec_cache[ii][position]);
 		} else { //only filtering activated
 			unsigned int index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)
