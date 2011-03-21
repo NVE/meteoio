@@ -159,6 +159,9 @@ template<class T> class Array2D {
 		Array2D<T>& operator/=(const Array2D<T>& rhs);
 		const Array2D<T> operator/(const Array2D<T>& rhs);
 
+		void abs();
+		const Array2D<T> getAbs() const;
+
 	protected:
 		std::vector<T> vecData;
 		unsigned int nx;
@@ -235,15 +238,10 @@ template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned in
 }
 
 template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigned int& any) {
-	clear();
-
-	if ((anx > 0) && (any > 0)) {
-		vecData.resize(anx*any);
-		nx = anx;
-		ny = any;
-	} else {
-		throw IndexOutOfBoundsException("Can not resize a 2D array to negative sizes!", AT);
-	}
+	clear(); //we won't be able to "rescue" old values, so we reset the whole vector
+	vecData.resize(anx*any);
+	nx = anx;
+	ny = any;
 }
 
 template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigned int& any, const T& init) {
@@ -519,6 +517,24 @@ template<class T> const Array2D<T> Array2D<T>::operator/(const T& rhs)
 {
 	Array2D<T> result = *this;
 	result /= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> void Array2D<T>::abs() {
+	if(std::numeric_limits<T>::is_signed) {
+		const unsigned int nxy = nx*ny;
+		for (unsigned int ii=0; ii<nxy; ii++) {
+			T& val = operator()(ii);
+			if(val<0) val=-val;
+		}
+	}
+}
+
+
+template<class T> const Array2D<T> Array2D<T>::getAbs() const {
+	Array2D<T> result = *this; //make a copy
+	result.abs(); //already implemented
 
 	return result;
 }

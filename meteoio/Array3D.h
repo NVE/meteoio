@@ -191,6 +191,9 @@ template<class T> class Array3D {
 		Array3D<T>& operator/=(const Array3D<T>& rhs);
 		const Array3D<T> operator/(const Array3D<T>& rhs);
 
+		void abs();
+		const Array3D<T> getAbs() const;
+
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
 		unsigned int nx;
@@ -276,17 +279,12 @@ template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned in
 }
 
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
-	clear();
-
-	if ((anx > 0) && (any > 0) && (anz > 0)) {
-		vecData.resize(anx*any*anz);
-		nx = anx;
-		ny = any;
-		nz = anz;
-		nxny = nx*ny;
-	} else {
-		throw IndexOutOfBoundsException("", AT);    
-	}
+	clear();  //we won't be able to "rescue" old values, so we reset the whole vector
+	vecData.resize(anx*any*anz);
+	nx = anx;
+	ny = any;
+	nz = anz;
+	nxny = nx*ny;
 }
 
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
@@ -599,6 +597,24 @@ template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
 {
 	Array3D<T> result = *this;
 	result /= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> void Array3D<T>::abs() {
+	if(std::numeric_limits<T>::is_signed) {
+		const unsigned int nxyz = nx*ny*nz;
+		for (unsigned int ii=0; ii<nxyz; ii++) {
+			T& val = operator()(ii);
+			if(val<0) val=-val;
+		}
+	}
+}
+
+
+template<class T> const Array3D<T> Array3D<T>::getAbs() const {
+	Array3D<T> result = *this; //make a copy
+	result.abs(); //already implemented
 
 	return result;
 }

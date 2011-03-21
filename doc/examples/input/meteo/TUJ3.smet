@@ -1,4 +1,4 @@
-SMET 0.99 ASCII
+SMET 1.1 ASCII
 [HEADER]
 station_id   = TUJ3
 station_name = Nual
@@ -12,6 +12,7 @@ nodata       =    -999
 tz           =       1
 fields       = timestamp TA RH VW DW OSWR HS PSUM TSG TSS
 units_multiplier = 1 1 1 1 1 1 0.01 1 1 1
+units_offset = 0 0 0 0 0 0 0 0 0 0
 [DATA]
 2008-12-01T00:00   265.95   0.988    0.0   335       0   142.000  0.000   273.55   264.45 
 2008-12-01T01:00   265.95   0.987    0.0   196       0   142.000  0.000   273.55   264.25 

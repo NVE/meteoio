@@ -18,12 +18,12 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include <meteoio/IOUtils.h>
-#include <meteoio/IOExceptions.h>
-
 #include <vector>
 #include <limits>
 #include <iostream>
+
+#include <meteoio/IOUtils.h>
+#include <meteoio/IOExceptions.h>
 
 #define NOSAFECHECKS
 namespace mio {
@@ -41,8 +41,16 @@ template<class T> class Array {
 	public:
 		Array(const unsigned int& asize=0);
 
+		/**
+		* A constructor that creates an array filled with constant values
+		* @param asize size of the new array
+		* @param init initial value to fill the array with
+		*/
+		Array(const unsigned int& asize, const T& init);
+
 		unsigned int size();
 		void resize(const unsigned int& asize);
+		void resize(const unsigned int& asize, const T& init);
 		void clear();
 		void insertAt(const int& index, T e);
 		void removeAt(const unsigned int& index);
@@ -94,6 +102,8 @@ template<class T> class Array {
 		Array<T>& operator/=(const Array<T>& rhs);
 		const Array<T> operator/(const Array<T>& rhs);
 
+		void abs();
+		const Array<T> getAbs() const;
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
@@ -102,7 +112,10 @@ template<class T> class Array {
 
 template<class T> Array<T>::Array(const unsigned int& asize) {
 	resize(asize);
-	nx = asize;
+}
+
+template<class T> Array<T>::Array(const unsigned int& asize, const T& init) {
+	resize(asize, init);
 }
 
 template<class T> unsigned int Array<T>::size() {
@@ -110,11 +123,15 @@ template<class T> unsigned int Array<T>::size() {
 }
 
 template<class T> void Array<T>::resize(const unsigned int& asize) {
-	if (asize != vecData.size()) {
-		vecData.resize(asize);
-		nx = asize;
-	}
+	vecData.resize(asize);
+	nx = asize;
 }
+
+template<class T> void Array<T>::resize(const unsigned int& asize, const T& init) {
+	resize(asize);
+	std::fill(vecData.begin(), vecData.end(), init);
+}
+
 
 template<class T> T& Array<T>::operator()(const unsigned int& index) {
 #ifndef NOSAFECHECKS
@@ -430,6 +447,23 @@ template<class T> const Array<T> Array<T>::operator/(const T& rhs)
 {
 	Array<T> result = *this;
 	result /= rhs; //already implemented
+
+	return result;
+}
+
+template<class T> void Array<T>::abs() {
+	if(std::numeric_limits<T>::is_signed) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			T& val = operator()(ii);
+			if(val<0) val=-val;
+		}
+	}
+}
+
+
+template<class T> const Array<T> Array<T>::getAbs() const {
+	Array<T> result = *this; //make a copy
+	result.abs(); //already implemented
 
 	return result;
 }
