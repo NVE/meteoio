@@ -32,140 +32,140 @@ namespace mio {
 /**
 * @brief Default constructor.
 * Initializes all variables to 0, except lat/long which are initialized to IOUtils::nodata
-* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
+* @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const slope_type& _algorithm) : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz()
+DEMObject::DEMObject(const slope_type& i_algorithm) : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 	slope_failures = curvature_failures = 0;
 	update_flag = INT_MAX;
-	setDefaultAlgorithm(_algorithm);
+	setDefaultAlgorithm(i_algorithm);
 }
 
 /**
 * @brief Constructor that sets variables.
-* @param _ncols (unsigned int) number of colums in the grid2D
-* @param _nrows (unsigned int) number of rows in the grid2D
-* @param _cellsize (double) value for cellsize in grid2D
-* @param _llcorner lower lower corner point
-* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
+* @param i_ncols (unsigned int) number of colums in the grid2D
+* @param i_nrows (unsigned int) number of rows in the grid2D
+* @param i_cellsize (double) value for cellsize in grid2D
+* @param i_llcorner lower lower corner point
+* @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
-                     const double& _cellsize, const Coords& _llcorner, const slope_type& _algorithm)
-	: Grid2DObject(_ncols, _nrows, _cellsize, _llcorner),
+DEMObject::DEMObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                     const double& i_cellsize, const Coords& i_llcorner, const slope_type& i_algorithm)
+	: Grid2DObject(i_ncols, i_nrows, i_cellsize, i_llcorner),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	min_altitude = min_slope = min_curvature = std::numeric_limits<double>::max();
 	max_altitude = max_slope = max_curvature = -std::numeric_limits<double>::max();
 	slope_failures = curvature_failures = 0;
 	update_flag = INT_MAX;
-	setDefaultAlgorithm(_algorithm);
+	setDefaultAlgorithm(i_algorithm);
 }
 
 /**
 * @brief Constructor that sets variables.
-* @param _ncols (unsigned int) number of colums in the grid2D
-* @param _nrows (unsigned int) number of rows in the grid2D
-* @param _cellsize (double) value for cellsize in grid2D
-* @param _llcorner lower lower corner point
-* @param _altitude (Array2D\<double\>&) grid2D of elevations
-* @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
-* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
+* @param i_ncols (unsigned int) number of colums in the grid2D
+* @param i_nrows (unsigned int) number of rows in the grid2D
+* @param i_cellsize (double) value for cellsize in grid2D
+* @param i_llcorner lower lower corner point
+* @param i_altitude (Array2D\<double\>&) grid2D of elevations
+* @param i_update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const unsigned int& _ncols, const unsigned int& _nrows,
-                     const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _altitude,
-                     const bool& _update, const slope_type& _algorithm)
-	: Grid2DObject(_ncols, _nrows, _cellsize, _llcorner, _altitude),
+DEMObject::DEMObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                     const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_altitude,
+                     const bool& i_update, const slope_type& i_algorithm)
+	: Grid2DObject(i_ncols, i_nrows, i_cellsize, i_llcorner, i_altitude),
 	  slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
 	update_flag = INT_MAX;
-	setDefaultAlgorithm(_algorithm);
-	if(_update==false) {
+	setDefaultAlgorithm(i_algorithm);
+	if(i_update==false) {
 		updateAllMinMax();
 	} else {
-		update(_algorithm);
+		update(i_algorithm);
 	}
 }
 
 /**
 * @brief Constructor that sets variables from a Grid2DObject
-* @param _dem (Grid2DObject&) grid contained in a Grid2DObject
-* @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
-* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
+* @param i_dem (Grid2DObject&) grid contained in a Grid2DObject
+* @param i_update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const Grid2DObject& _dem, const bool& _update, const slope_type& _algorithm)
-  : Grid2DObject(_dem.ncols, _dem.nrows, _dem.cellsize, _dem.llcorner, _dem.grid2D),
+DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slope_type& i_algorithm)
+  : Grid2DObject(i_dem.ncols, i_dem.nrows, i_dem.cellsize, i_dem.llcorner, i_dem.grid2D),
     slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
 	slope_failures = curvature_failures = 0;
 	update_flag = INT_MAX;
-	setDefaultAlgorithm(_algorithm);
-	if(_update==false) {
+	setDefaultAlgorithm(i_algorithm);
+	if(i_update==false) {
 		updateAllMinMax();
 	} else {
-		update(_algorithm);
+		update(i_algorithm);
 	}
 }
 
 /**
 * @brief Constructor that sets variables from a subset of another DEMObject, 
 * given an origin (X,Y) (first index being 0) and a number of columns and rows
-* @param _dem (DEMObject&) dem contained in a DEMDObject
-* @param _nx (unsigned int&) X coordinate of the new origin
-* @param _ny (unsigned int&) Y coordinate of the new origin
-* @param _ncols (unsigned int&) number of columns for the subset dem
-* @param _nrows (unsigned int&) number of rows for the subset dem
-* @param _update (bool) also update slope/normals/curvatures and their min/max? (default=true)
-* @param _algorithm specify the default algorithm to use for slope computation (default=DFLT)
+* @param i_dem (DEMObject&) dem contained in a DEMDObject
+* @param i_nx (unsigned int&) X coordinate of the new origin
+* @param i_ny (unsigned int&) Y coordinate of the new origin
+* @param i_ncols (unsigned int&) number of columns for the subset dem
+* @param i_nrows (unsigned int&) number of rows for the subset dem
+* @param i_update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const DEMObject& _dem, const unsigned int& _nx, const unsigned int& _ny, 
-                     const unsigned int& _ncols, const unsigned int& _nrows,
-                     const bool& _update, const slope_type& _algorithm)
-                     : Grid2DObject(_dem, _nx,_ny, _ncols,_nrows),
+DEMObject::DEMObject(const DEMObject& i_dem, const unsigned int& i_nx, const unsigned int& i_ny,
+                     const unsigned int& i_ncols, const unsigned int& i_nrows,
+                     const bool& i_update, const slope_type& i_algorithm)
+                     : Grid2DObject(i_dem, i_nx,i_ny, i_ncols,i_nrows),
                        slope(), azi(), curvature(), Nx(), Ny(), Nz()
 {
-	if ((_ncols==0) || (_nrows==0)) {
+	if ((i_ncols==0) || (i_nrows==0)) {
 		throw InvalidArgumentException("requesting a subset of 0 columns or rows for DEMObject", AT);
 	}
 	
 	//handling of the update properties
 	slope_failures = curvature_failures = 0;
-	update_flag = _dem.getUpdatePpt();
-	setDefaultAlgorithm(_algorithm);
-	if(_update==true) {
+	update_flag = i_dem.getUpdatePpt();
+	setDefaultAlgorithm(i_algorithm);
+	if(i_update==true) {
 		//if the object is in automatic update, then we only process the arrays according to
 		//the update_flag
-		update(_algorithm);
+		update(i_algorithm);
 	} else {
 		//if the object is NOT in automatic update, we manually copy all non-empty arrays
 		//from the original set
 		unsigned int nx, ny;
 		
-		_dem.slope.size(nx, ny);
+		i_dem.slope.size(nx, ny);
 		if(nx>0 && ny>0) {
-			slope.subset(_dem.slope,_nx,_ny, _ncols,_nrows);
+			slope.subset(i_dem.slope,i_nx,i_ny, i_ncols,i_nrows);
 		}
-		_dem.azi.size(nx, ny);
+		i_dem.azi.size(nx, ny);
 		if(nx>0 && ny>0) {
-			azi.subset(_dem.azi,_nx,_ny, _ncols,_nrows);
+			azi.subset(i_dem.azi,i_nx,i_ny, i_ncols,i_nrows);
 		}
-		_dem.curvature.size(nx, ny);
+		i_dem.curvature.size(nx, ny);
 		if(nx>0 && ny>0) {
-			curvature.subset(_dem.curvature,_nx,_ny, _ncols,_nrows);
+			curvature.subset(i_dem.curvature,i_nx,i_ny, i_ncols,i_nrows);
 		}
-		_dem.Nx.size(nx, ny);
+		i_dem.Nx.size(nx, ny);
 		if(nx>0 && ny>0) {
-			Nx.subset(_dem.Nx,_nx,_ny, _ncols,_nrows);
+			Nx.subset(i_dem.Nx,i_nx,i_ny, i_ncols,i_nrows);
 		}
-		_dem.Ny.size(nx, ny);
+		i_dem.Ny.size(nx, ny);
 		if(nx>0 && ny>0) {
-			Ny.subset(_dem.Ny,_nx,_ny, _ncols,_nrows);
+			Ny.subset(i_dem.Ny,i_nx,i_ny, i_ncols,i_nrows);
 		}
-		_dem.Nz.size(nx, ny);
+		i_dem.Nz.size(nx, ny);
 		if(nx>0 && ny>0) {
-			Nz.subset(_dem.Nz,_nx,_ny, _ncols,_nrows);
+			Nz.subset(i_dem.Nz,i_nx,i_ny, i_ncols,i_nrows);
 		}
 
 		updateAllMinMax();
@@ -258,14 +258,14 @@ void DEMObject::update(const std::string& algorithm) {
 
 /**
 * @brief Sets the default slope calculation algorithm
-* @param _algorithm specify the default algorithm to use for slope computation
+* @param i_algorithm specify the default algorithm to use for slope computation
 */
-void DEMObject::setDefaultAlgorithm(const slope_type& _algorithm) {
+void DEMObject::setDefaultAlgorithm(const slope_type& i_algorithm) {
 //This method MUST be called by each constructor!
-	if(_algorithm==DFLT) {
+	if(i_algorithm==DFLT) {
 		dflt_algorithm = CORR;
 	} else {
-		dflt_algorithm = _algorithm;
+		dflt_algorithm = i_algorithm;
 	}
 }
 
@@ -615,8 +615,8 @@ void DEMObject::getHorizon(const Coords& point, const double& increment, std::ve
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
-	double _slope, _azi, _curvature;
-	double _Nx, _Ny, _Nz;
+	double new_slope, new_azi, new_curvature;
+	double new_Nx, new_Ny, new_Nz;
 
 	if(algorithm==DFLT) {
 		algorithm = dflt_algorithm;
@@ -642,30 +642,30 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			if( grid2D(i,j) == IOUtils::nodata ) {
 				if(update_flag&SLOPE) {
-					_slope = _azi = IOUtils::nodata;
+					new_slope = new_azi = IOUtils::nodata;
 				}
 				if(update_flag&CURVATURE) {
-					_curvature = IOUtils::nodata;
+					new_curvature = IOUtils::nodata;
 				}
 				if(update_flag&NORMAL) {
-					_Nx = _Ny = _Nz = IOUtils::nodata;
+					new_Nx = new_Ny = new_Nz = IOUtils::nodata;
 				}
 			} else {
 				getNeighbours(i, j, A);
-				(this->*CalculateSlope)(A, _slope, _Nx, _Ny, _Nz);
-				_azi = CalculateAspect(_Nx, _Ny, _Nz, _slope);
-				_curvature = getCurvature(A);
+				(this->*CalculateSlope)(A, new_slope, new_Nx, new_Ny, new_Nz);
+				new_azi = CalculateAspect(new_Nx, new_Ny, new_Nz, new_slope);
+				new_curvature = getCurvature(A);
 				if(update_flag&SLOPE) {
-					slope(i,j) = _slope;
-					azi(i,j) = _azi;
+					slope(i,j) = new_slope;
+					azi(i,j) = new_azi;
 				}
 				if(update_flag&CURVATURE) {
-					curvature(i,j) = _curvature;
+					curvature(i,j) = new_curvature;
 				}
 				if(update_flag&NORMAL) {
-					Nx(i,j) = _Nx;
-					Ny(i,j) = _Ny;
-					Nz(i,j) = _Nz;
+					Nx(i,j) = new_Nx;
+					Ny(i,j) = new_Ny;
+					Nz(i,j) = new_Nz;
 				}
 			}
 		}

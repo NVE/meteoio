@@ -585,9 +585,9 @@ bool Coords::isSameProj(const Coords& target) const {
 /**
 * @brief Copy the projection parameters of another Coords object
 * @param source source object to copy the projection from
-* @param _update should the necessary coordinates be updated? (default=true)
+* @param i_update should the necessary coordinates be updated? (default=true)
 */
-void Coords::copyProj(const Coords& source, const bool _update) {
+void Coords::copyProj(const Coords& source, const bool i_update) {
 	if(!isSameProj(source)) {
 		//we only do a copy if we are not already using the same projection
 		if(source.coordsystem=="LOCAL") {
@@ -601,7 +601,7 @@ void Coords::copyProj(const Coords& source, const bool _update) {
 		}
 		setFunctionPointers();
 
-		if(_update==true) {
+		if(i_update==true) {
 			if((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
 				convert_from_WGS84(latitude, longitude, easting, northing);
 			} else {
@@ -880,50 +880,50 @@ void Coords::CH1903_to_WGS84(double east_in, double north_in, double& lat_out, d
 	*/
 }
 
-int Coords::getUTMZone(const double _latitude, const double _longitude, std::string& zone_out) const
+int Coords::getUTMZone(const double i_latitude, const double i_longitude, std::string& zone_out) const
 {//This routine determines the correct UTM letter designator for the given latitude
 //UTM limits its coverage to [80S , 84N], outside of this, returns Y/Z/A/B for the zone
 
 	//computing zone number, assuming longitude in [-180. ; 180[
-	int ZoneNumber = int((_longitude + 180.)/6.) + 1;
+	int ZoneNumber = int((i_longitude + 180.)/6.) + 1;
 
 	// Special zones for Scandinavia
-	if( _latitude >= 72.0 && _latitude < 84.0 ) {
-		if(      _longitude >= 0.0  && _longitude <  9.0 ) ZoneNumber = 31;
-		else if( _longitude >= 9.0  && _longitude < 21.0 ) ZoneNumber = 33;
-		else if( _longitude >= 21.0 && _longitude < 33.0 ) ZoneNumber = 35;
-		else if( _longitude >= 33.0 && _longitude < 42.0 ) ZoneNumber = 37;
+	if( i_latitude >= 72.0 && i_latitude < 84.0 ) {
+		if(      i_longitude >= 0.0  && i_longitude <  9.0 ) ZoneNumber = 31;
+		else if( i_longitude >= 9.0  && i_longitude < 21.0 ) ZoneNumber = 33;
+		else if( i_longitude >= 21.0 && i_longitude < 33.0 ) ZoneNumber = 35;
+		else if( i_longitude >= 33.0 && i_longitude < 42.0 ) ZoneNumber = 37;
 	 }
-	if( latitude >= 56.0 && _latitude < 64.0 && _longitude >= 3.0 && _longitude < 12.0 ) {
+	if( latitude >= 56.0 && i_latitude < 64.0 && i_longitude >= 3.0 && i_longitude < 12.0 ) {
 		ZoneNumber = 32;
 	}
 
 	//getting zone letter
 	char zoneLetter='Z';
-	if     ((0 >= _longitude) && (_latitude >  84)) zoneLetter = 'Y';
-	else if((0 <  _longitude) && (_latitude >  84)) zoneLetter = 'Z';
-	else if((84 >= _latitude) && (_latitude >= 72)) zoneLetter = 'X';
-	else if((72 > _latitude) && (_latitude >= 64)) zoneLetter = 'W';
-	else if((64 > _latitude) && (_latitude >= 56)) zoneLetter = 'V';
-	else if((56 > _latitude) && (_latitude >= 48)) zoneLetter = 'U';
-	else if((48 > _latitude) && (_latitude >= 40)) zoneLetter = 'T';
-	else if((40 > _latitude) && (_latitude >= 32)) zoneLetter = 'S';
-	else if((32 > _latitude) && (_latitude >= 24)) zoneLetter = 'R';
-	else if((24 > _latitude) && (_latitude >= 16)) zoneLetter = 'Q';
-	else if((16 > _latitude) && (_latitude >= 8)) zoneLetter = 'P';
-	else if(( 8 > _latitude) && (_latitude >= 0)) zoneLetter = 'N';
-	else if(( 0 > _latitude) && (_latitude >= -8)) zoneLetter = 'M';
-	else if((-8 > _latitude) && (_latitude >= -16)) zoneLetter = 'L';
-	else if((-16 > _latitude) && (_latitude >= -24)) zoneLetter = 'K';
-	else if((-24 > _latitude) && (_latitude >= -32)) zoneLetter = 'J';
-	else if((-32 > _latitude) && (_latitude >= -40)) zoneLetter = 'H';
-	else if((-40 > _latitude) && (_latitude >= -48)) zoneLetter = 'G';
-	else if((-48 > _latitude) && (_latitude >= -56)) zoneLetter = 'F';
-	else if((-56 > _latitude) && (_latitude >= -64)) zoneLetter = 'E';
-	else if((-64 > _latitude) && (_latitude >= -72)) zoneLetter = 'D';
-	else if((-72 > _latitude) && (_latitude >= -80)) zoneLetter = 'C';
-	else if((0 >= _longitude) && (latitude <= -80)) zoneLetter = 'A';
-	else if((0 <  _longitude) && (latitude <= -80)) zoneLetter = 'B';
+	if     ((0 >= i_longitude) && (i_latitude >  84)) zoneLetter = 'Y';
+	else if((0 <  i_longitude) && (i_latitude >  84)) zoneLetter = 'Z';
+	else if((84 >= i_latitude) && (i_latitude >= 72)) zoneLetter = 'X';
+	else if((72 > i_latitude) && (i_latitude >= 64)) zoneLetter = 'W';
+	else if((64 > i_latitude) && (i_latitude >= 56)) zoneLetter = 'V';
+	else if((56 > i_latitude) && (i_latitude >= 48)) zoneLetter = 'U';
+	else if((48 > i_latitude) && (i_latitude >= 40)) zoneLetter = 'T';
+	else if((40 > i_latitude) && (i_latitude >= 32)) zoneLetter = 'S';
+	else if((32 > i_latitude) && (i_latitude >= 24)) zoneLetter = 'R';
+	else if((24 > i_latitude) && (i_latitude >= 16)) zoneLetter = 'Q';
+	else if((16 > i_latitude) && (i_latitude >= 8)) zoneLetter = 'P';
+	else if(( 8 > i_latitude) && (i_latitude >= 0)) zoneLetter = 'N';
+	else if(( 0 > i_latitude) && (i_latitude >= -8)) zoneLetter = 'M';
+	else if((-8 > i_latitude) && (i_latitude >= -16)) zoneLetter = 'L';
+	else if((-16 > i_latitude) && (i_latitude >= -24)) zoneLetter = 'K';
+	else if((-24 > i_latitude) && (i_latitude >= -32)) zoneLetter = 'J';
+	else if((-32 > i_latitude) && (i_latitude >= -40)) zoneLetter = 'H';
+	else if((-40 > i_latitude) && (i_latitude >= -48)) zoneLetter = 'G';
+	else if((-48 > i_latitude) && (i_latitude >= -56)) zoneLetter = 'F';
+	else if((-56 > i_latitude) && (i_latitude >= -64)) zoneLetter = 'E';
+	else if((-64 > i_latitude) && (i_latitude >= -72)) zoneLetter = 'D';
+	else if((-72 > i_latitude) && (i_latitude >= -80)) zoneLetter = 'C';
+	else if((0 >=  i_longitude) && (i_latitude <= -80)) zoneLetter = 'A';
+	else if((0 <   i_longitude) && (i_latitude <= -80)) zoneLetter = 'B';
 
 	std::stringstream zone;
 	zone << ZoneNumber << zoneLetter;

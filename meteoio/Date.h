@@ -98,14 +98,14 @@ class Date {
 
 		void setFromSys();
 		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
-		void setDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
+		void setDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false);
-		void setDate(const time_t& in_time, const bool& _dst=false);
-		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& _dst=false);
-		void setUnixDate(const time_t& in_time, const bool& _dst=false);
-		void setExcelDate(const double excel_in, const double& in_timezone, const bool& _dst=false);
-		void setMatlabDate(const double excel_in, const double& in_timezone, const bool& _dst=false);
+		void setDate(const time_t& in_time, const bool& in_dst=false);
+		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
+		void setUnixDate(const time_t& in_time, const bool& in_dst=false);
+		void setExcelDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
+		void setMatlabDate(const double excel_in, const double& in_timezone, const bool& in_dst=false);
 		void setUndef(const bool& flag);
 
 		bool isUndef() const;
@@ -164,7 +164,7 @@ class Date {
 		double localToGMT(const double& in_julian)const;
 		double GMTToLocal(const double& in_gmt_julian) const;
 		double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
-		void calculateValues(const double& julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute) const;
+		void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute) const;
 		long getJulianDayNumber(const int&, const int&, const int&) const;
 		bool isLeapYear(const int&) const;
 		void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;

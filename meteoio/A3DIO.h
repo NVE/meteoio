@@ -65,7 +65,7 @@ class A3DIO : public IOInterface {
 		void read2DStations(const Date& timestamp, std::vector<StationData>& vecStation);
 		void read2DMeteo(std::vector< std::vector<MeteoData> >&);
 
-		void constructMeteo2DFilenames(const Date& _startDate, const Date& _endDate, std::vector<std::string>& _filenames);
+		void constructMeteo2DFilenames(const Date& i_startDate, const Date& i_endDate, std::vector<std::string>& i_filenames);
 		bool readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string filename);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();

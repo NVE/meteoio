@@ -72,9 +72,9 @@ class DynamicLibrary {
 	protected:
 		// The handle to the shared library that was opened
 #ifdef WIN32
-		HINSTANCE _objFile;
+		HINSTANCE i_objFile;
 #else
-		void *_objFile;
+		void *i_objFile;
 #endif
 
 		// Since an instance of DynamicLibrary manages lifetime of an open 

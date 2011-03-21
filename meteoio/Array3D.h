@@ -42,12 +42,12 @@ template <class T> class Array3DProxy2;
 template <class T> class Array3DProxy {
  	public:
 		friend class Array3D<T>;
-		Array3DProxy2<T> operator[](const unsigned int& _any) {
-			return Array3DProxy2<T>(array3D, anx, _any); 
+		Array3DProxy2<T> operator[](const unsigned int& i_any) {
+			return Array3DProxy2<T>(array3D, anx, i_any);
 		}
 
  	private:
- 		Array3DProxy(Array3D<T>& _array3D, const unsigned int& _anx) : array3D(_array3D), anx(_anx){}
+ 		Array3DProxy(Array3D<T>& i_array3D, const unsigned int& i_anx) : array3D(i_array3D), anx(i_anx){}
 		Array3D<T>& array3D;
 		const unsigned int anx;
 };
@@ -62,13 +62,13 @@ template <class T> class Array3DProxy {
 template <class T> class Array3DProxy2 {
  	public:
 		friend class Array3DProxy<T>;
-		T& operator[](const unsigned int& _anz) {
-			return array3D(anx, any, _anz);
+		T& operator[](const unsigned int& i_anz) {
+			return array3D(anx, any, i_anz);
 		}
 
 	private:
- 		Array3DProxy2(Array3D<T>& _array3D, const unsigned int& _anx, 
-				    const unsigned int& _any) : array3D(_array3D), anx(_anx), any(_any){}
+ 		Array3DProxy2(Array3D<T>& i_array3D, const unsigned int& i_anx,
+				    const unsigned int& i_any) : array3D(i_array3D), anx(i_anx), any(i_any){}
 		Array3D<T>& array3D;
 		const unsigned int anx;
 		const unsigned int any;
@@ -89,19 +89,19 @@ template<class T> class Array3D {
 
 		/**
 		* A constructor that can be used to create an Array3D object that is contained in the
-		* one passed as _array3D argument. The resulting Array3D object is a by value copy of
-		* a subvolume of the volume spanned by the _array3D
-		* @param _array3D array containing to extract the values from
-		* @param _nx lower left corner cell X index
-		* @param _ny lower left corner cell Y index
-		* @param _nz lower left corner cell Z index
-		* @param _ncols number of columns of the new array
-		* @param _nrows number of rows of the new array
-		* @param _ndepth number of depths of the new array
+		* one passed as i_array3D argument. The resulting Array3D object is a by value copy of
+		* a subvolume of the volume spanned by the i_array3D
+		* @param i_array3D array containing to extract the values from
+		* @param i_nx lower left corner cell X index
+		* @param i_ny lower left corner cell Y index
+		* @param i_nz lower left corner cell Z index
+		* @param i_ncols number of columns of the new array
+		* @param i_nrows number of rows of the new array
+		* @param i_ndepth number of depths of the new array
 		*/
-		Array3D(const Array3D<T>& _array3D,
-		        const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-		        const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth);
+		Array3D(const Array3D<T>& i_array3D,
+		        const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+		        const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
 
 		/**
 		* A constructor that creates an array of a given size
@@ -122,19 +122,19 @@ template<class T> class Array3D {
 
 		/**
 		* A method that can be used to create an Array3D object that is contained in the
-		* one passed as _array3D argument. The resulting Array3D object is a by value copy of
-		* a subvolume of the volume spanned by the _array3D
-		* @param _array3D array containing to extract the values from
-		* @param _nx lower left corner cell X index
-		* @param _ny lower left corner cell Y index
-		* @param _nz lower left corner cell Z index
-		* @param _ncols number of columns of the new array
-		* @param _nrows number of rows of the new array
-		* @param _ndepth number of depths of the new array
+		* one passed as i_array3D argument. The resulting Array3D object is a by value copy of
+		* a subvolume of the volume spanned by the i_array3D
+		* @param i_array3D array containing to extract the values from
+		* @param i_nx lower left corner cell X index
+		* @param i_ny lower left corner cell Y index
+		* @param i_nz lower left corner cell Z index
+		* @param i_ncols number of columns of the new array
+		* @param i_nrows number of rows of the new array
+		* @param i_ndepth number of depths of the new array
 		*/
-		void subset(const Array3D<T>& _array3D,
-		            const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-		            const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth);
+		void subset(const Array3D<T>& i_array3D,
+		            const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+		            const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
 
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
@@ -239,32 +239,32 @@ template<class T> Array3D<T>::Array3D() {
 	nx = ny = nz = nxny = 0;
 }
 
-template<class T> Array3D<T>::Array3D(const Array3D<T>& _array3D,
-                                      const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-                                      const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth)
+template<class T> Array3D<T>::Array3D(const Array3D<T>& i_array3D,
+                                      const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+                                      const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
 {
-	subset(_array3D, _nx, _ny, _nz, _ncols, _nrows, _ndepth);
+	subset(i_array3D, i_nx, i_ny, i_nz, i_ncols, i_nrows, i_ndepth);
 }
 
-template<class T> void Array3D<T>::subset(const Array3D<T>& _array3D,
-                                     const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-                                     const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepth)
+template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
+                                     const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+                                     const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
 {
 	
-	if (((_nx+_ncols) > _array3D.nx) || ((_ny+_nrows) > _array3D.ny) || ((_nz+_ndepth) > _array3D.nz))
+	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz))
 		throw IndexOutOfBoundsException("", AT);
 
-	if ((_ncols == 0) || (_nrows == 0) || (_ndepth == 0)) //the space has to make sense
+	if ((i_ncols == 0) || (i_nrows == 0) || (i_ndepth == 0)) //the space has to make sense
 		throw IndexOutOfBoundsException("", AT);
 
-	resize(_ncols, _nrows, _ndepth); //create new Array3D object
+	resize(i_ncols, i_nrows, i_ndepth); //create new Array3D object
 
 	//Copy by value subspace
 	for (unsigned int ii=0; ii<nz; ii++) { 
 		for (unsigned int jj=0; jj<ny; jj++) {
 			for (unsigned int kk=0; kk<nx; kk++) {
 				//Running through the vector in order of memory alignment
-				operator()(kk,jj,ii) = _array3D(_nx+kk, _ny+jj, _nz+ii); 
+				operator()(kk,jj,ii) = i_array3D(i_nx+kk, i_ny+jj, i_nz+ii);
 			}
 		}
 	}

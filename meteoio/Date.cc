@@ -203,11 +203,11 @@ void Date::setDate(const double& julian_in, const double& in_timezone, const boo
 
 /**
 * @brief Set date from a Unix date.
-* @param _time unix time (ie: as number of seconds since Unix Epoch, always UTC)
-* @param _dst is it DST? (default: no)
+* @param i_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
+* @param i_dst is it DST? (default: no)
 */
-void Date::setDate(const time_t& _time, const bool& _dst) {
-	setUnixDate(_time, _dst);
+void Date::setDate(const time_t& i_time, const bool& i_dst) {
+	setUnixDate(i_time, i_dst);
 }
 
 /**
@@ -822,19 +822,19 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 }
 
 // PRIVATE METHODS
-double Date::calculateJulianDate(const int& _year, const int& _month, const int& _day, const int& _hour, const int& _minute) const
+double Date::calculateJulianDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute) const
 {
-	const long julday = getJulianDayNumber(_year, _month, _day);
-	const double frac = (_hour-12.)/24. + _minute/(24.*60.); //the julian date reference is at 12:00
+	const long julday = getJulianDayNumber(i_year, i_month, i_day);
+	const double frac = (i_hour-12.)/24. + i_minute/(24.*60.); //the julian date reference is at 12:00
 
 	return (((double)julday) + frac);
 }
 
-void Date::calculateValues(const double& _julian, int& _year, int& _month, int& _day, int& _hour, int& _minute) const
+void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, int& o_day, int& o_hour, int& o_minute) const
 { //given a julian day, calculate the year, month, day, hours and minutes
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097 
 	long t1;
-	const long julday = (long) floor(_julian+0.5);
+	const long julday = (long) floor(i_julian+0.5);
 
 	t1 = julday + 68569L;
 	const long t2 = 4L * t1 / 146097L;
@@ -843,34 +843,34 @@ void Date::calculateValues(const double& _julian, int& _year, int& _month, int& 
 	t1 = t1 - 1461L * yr / 4L + 31L;
 	const long mo = 80L * t1 / 2447L;
 
-	_day = (int) ( t1 - 2447L * mo / 80L );
+	o_day = (int) ( t1 - 2447L * mo / 80L );
 	t1 = mo / 11L;
-	_month = (int) ( mo + 2L - 12L * t1 );
-	_year = (int) ( 100L * ( t2 - 49L ) + yr + t1 );
+	o_month = (int) ( mo + 2L - 12L * t1 );
+	o_year = (int) ( 100L * ( t2 - 49L ) + yr + t1 );
 
 	// Correct for BC years -> astronomical year, that is from year -1 to year 0
-	if ( _year <= 0 ) {
-		_year--;
+	if ( o_year <= 0 ) {
+		o_year--;
 	}
 
-	const double frac = (_julian + 0.5) - floor(_julian+0.5); //the julian date reference is at 12:00
-	_minute = ((int)round(frac*((double)24.0*60.0))) % 60;
-	_hour = (int) round((((double)1440.0)*frac-(double)_minute)/(double)60.0);
+	const double frac = (i_julian + 0.5) - floor(i_julian+0.5); //the julian date reference is at 12:00
+	o_minute = ((int)round(frac*((double)24.0*60.0))) % 60;
+	o_hour = (int) round((((double)1440.0)*frac-(double)o_minute)/(double)60.0);
 }
 
-bool Date::isLeapYear(const int& _year) const
+bool Date::isLeapYear(const int& i_year) const
 {
 	long jd1, jd2;
-	jd1 = getJulianDayNumber( _year, 2, 28 );
-	jd2 = getJulianDayNumber( _year, 3, 1 );
+	jd1 = getJulianDayNumber( i_year, 2, 28 );
+	jd2 = getJulianDayNumber( i_year, 3, 1 );
 	return ( (jd2-jd1) > 1 );
 }
 
-long Date::getJulianDayNumber(const int& _year, const int& _month, const int& _day) const
+long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day) const
 { //given year, month, day, calculate the matching julian day
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097 
-	const long lmonth = (long) _month, lday = (long) _day;
-	long lyear = (long) _year;
+	const long lmonth = (long) i_month, lday = (long) i_day;
+	long lyear = (long) i_year;
 
 	// Correct for BC years -> astronomical year, that is from year -1 to year 0
 	if ( lyear < 0 ) {
@@ -906,19 +906,19 @@ void Date::plausibilityCheck(const int& in_year, const int& in_month, const int&
 	}
 }
 
-double Date::localToGMT(const double& _julian) const {
+double Date::localToGMT(const double& i_julian) const {
 	if(dst) {
-		return (_julian - timezone/24. - DST_shift/24.);
+		return (i_julian - timezone/24. - DST_shift/24.);
 	} else {
-		return (_julian - timezone/24.);
+		return (i_julian - timezone/24.);
 	}
 }
 
-double Date::GMTToLocal(const double& _gmt_julian) const {
+double Date::GMTToLocal(const double& i_gmt_julian) const {
 	if(dst) {
-		return (_gmt_julian + timezone/24. + DST_shift/24.);
+		return (i_gmt_julian + timezone/24. + DST_shift/24.);
 	} else {
-		return (_gmt_julian + timezone/24.);
+		return (i_gmt_julian + timezone/24.);
 	}
 }
 

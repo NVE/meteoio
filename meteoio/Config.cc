@@ -177,15 +177,15 @@ unsigned int Config::findKeys(std::vector<std::string>& vecResult, std::string k
 
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keystart);
-	string _keystart = section + "::" + keystart;
+	string tmp_keystart = section + "::" + keystart;
 
 	//Loop through keys, look for substring match - push it into vecResult
 	map<string,string>::const_iterator it;
 	for (it=properties.begin(); it != properties.end(); it++){
 		string tmp = (*it).first;
-		tmp = tmp.substr(0, _keystart.length());
+		tmp = tmp.substr(0, tmp_keystart.length());
 
-		int matchcount = _keystart.compare(tmp);
+		int matchcount = tmp_keystart.compare(tmp);
 
 		if (matchcount == 0){ //perfect match
 			string tmp2 = it->first;

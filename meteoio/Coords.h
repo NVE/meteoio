@@ -100,7 +100,7 @@ class Coords {
 	void check();
 	double distance(const Coords& destination) const;
 	bool isSameProj(const Coords& target) const;
-	void copyProj(const Coords& source, const bool _update=true);
+	void copyProj(const Coords& source, const bool i_update=true);
 
 	//Static helper methods
 	static double dms_to_decimal(const std::string& dms);

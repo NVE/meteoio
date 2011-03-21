@@ -46,7 +46,7 @@ template <class T> class Array2DProxy {
 		}
 
 	private:
-		Array2DProxy(Array2D<T>& _array2D, const unsigned int& _anx) : array2D(_array2D), anx(_anx){}
+		Array2DProxy(Array2D<T>& i_array2D, const unsigned int& i_anx) : array2D(i_array2D), anx(i_anx){}
 		Array2D<T>& array2D;
 		const unsigned int anx;
 };
@@ -80,29 +80,29 @@ template<class T> class Array2D {
 
 		/**
 		* A constructor that can be used to create an Array2D object that is contained in the
-		* one passed as _array2D argument. The resulting Array2D object is a by value copy of
-		* a subplane of the plane spanned by the _array2D
-		* @param _array2D array containing to extract the values from
-		* @param _nx lower left corner cell X index
-		* @param _ny lower left corner cell Y index
-		* @param _ncols number of columns of the new array
-		* @param _nrows number of rows of the new array
+		* one passed as i_array2D argument. The resulting Array2D object is a by value copy of
+		* a subplane of the plane spanned by the i_array2D
+		* @param i_array2D array containing to extract the values from
+		* @param i_nx lower left corner cell X index
+		* @param i_ny lower left corner cell Y index
+		* @param i_ncols number of columns of the new array
+		* @param i_nrows number of rows of the new array
 		*/
-		Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
-			    const unsigned int& _ncols, const unsigned int& _nrows);
+		Array2D(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
+			    const unsigned int& i_ncols, const unsigned int& i_nrows);
 
 		/**
 		* @brief A method that can be used to cut out a subplane of an existing Array2D object
-		* that is passed as _array2D argument. The resulting Array2D object is a by value copy of
-		* a subplane of the plane spanned by the _array2D
-		* @param _array2D array containing to extract the values from
-		* @param _nx lower left corner cell X index
-		* @param _ny lower left corner cell Y index
-		* @param _ncols number of columns of the new array
-		* @param _nrows number of rows of the new array
+		* that is passed as i_array2D argument. The resulting Array2D object is a by value copy of
+		* a subplane of the plane spanned by the i_array2D
+		* @param i_array2D array containing to extract the values from
+		* @param i_nx lower left corner cell X index
+		* @param i_ny lower left corner cell Y index
+		* @param i_ncols number of columns of the new array
+		* @param i_nrows number of rows of the new array
 		*/
-		void subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
-		            const unsigned int& _ncols, const unsigned int& _nrows);
+		void subset(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
+		            const unsigned int& i_ncols, const unsigned int& i_nrows);
 
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
@@ -202,27 +202,27 @@ template<class T> Array2D<T>::Array2D() {
 	nx = ny = 0;
 }
 
-template<class T> Array2D<T>::Array2D(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
-			    const unsigned int& _ncols, const unsigned int& _nrows)
+template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
+                                      const unsigned int& i_ncols, const unsigned int& i_nrows)
 {
-	subset(_array2D, _nx, _ny, _ncols, _nrows);
+	subset(i_array2D, i_nx, i_ny, i_ncols, i_nrows);
 }
 
-template<class T> void Array2D<T>::subset(const Array2D<T>& _array2D, const unsigned int& _nx, const unsigned int& _ny,
-                                          const unsigned int& _ncols, const unsigned int& _nrows)
+template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
+                                          const unsigned int& i_ncols, const unsigned int& i_nrows)
 {
-	if (((_nx+_ncols) > _array2D.nx) || ((_ny+_nrows) > _array2D.ny))
+	if (((i_nx+i_ncols) > i_array2D.nx) || ((i_ny+i_nrows) > i_array2D.ny))
 		throw IndexOutOfBoundsException("Trying to cut an array to a size bigger than its original size!", AT);
 
-	if ((_ncols == 0) || (_nrows == 0)) //the plane to copy has to make sense
+	if ((i_ncols == 0) || (i_nrows == 0)) //the plane to copy has to make sense
 		throw IndexOutOfBoundsException("Copying an array into a null sized array!", AT);
 
-	resize(_ncols, _nrows); //create new Array2D object
+	resize(i_ncols, i_nrows); //create new Array2D object
 
 	//Copy by value subspace
 	for (unsigned int jj=0; jj<ny; jj++) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii,jj) = _array2D(_nx+ii, _ny+jj);
+			operator()(ii,jj) = i_array2D(i_nx+ii, i_ny+jj);
 		}
 	}
 }

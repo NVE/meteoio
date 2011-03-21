@@ -232,11 +232,11 @@ class Config {
                                               const Options& opt=Config::dothrow) const
 		{
 			try {
-				std::string _key(key);
-				std::string _section(section);
-				IOUtils::toUpper(_key);
-				IOUtils::toUpper(_section);
-				IOUtils::getValueForKey<T>(properties, _section + "::" + _key, t);
+				std::string tmp_key(key);
+				std::string tmp_section(section);
+				IOUtils::toUpper(tmp_key);
+				IOUtils::toUpper(tmp_section);
+				IOUtils::getValueForKey<T>(properties, tmp_section + "::" + tmp_key, t);
 			} catch(std::exception& e){
 				if (opt != Config::nothrow) {
 					std::stringstream ss;

@@ -80,7 +80,7 @@ class Grid3DObject{
 		* @brief Set all variables in one go.
 		* @param ncols (unsigned int&) number of colums in the grid3D (1st dimension)
 		* @param nrows (unsigned int&) number of rows in the grid3D (2nd dimension)
-		* @param depth (unsigned int&) number of depth in the grid3D (3rd dimension)
+		* @param depths (unsigned int&) number of depth in the grid3D (3rd dimension)
 		* @param cellsize (double&) value for cellsize in grid3D
 		* @param _llcorner lower left corner coordinates
 		*/
@@ -92,7 +92,7 @@ class Grid3DObject{
 		*
 		* @param ncols (unsigned int&) number of colums in the grid3D
 		* @param nrows (unsigned int&) number of rows in the grid3D
-		* @param ndepth (unsigned int&) number of depth in the grid3D (3rd dimension)
+		* @param ndepths (unsigned int&) number of depth in the grid3D (3rd dimension)
 		* @param cellsize (double&) value for cellsize in grid3D
 		* @param _llcorner lower left corner coordinates
 		* @param grid3D_in (Array\<double\>&) grid to be copied by value
