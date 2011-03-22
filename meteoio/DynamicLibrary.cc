@@ -19,7 +19,7 @@
 
 namespace mio {
 
-#ifdef WIN32
+#ifdef _WIN32
 DynamicLibrary::DynamicLibrary(HINSTANCE objFile) : i_objFile(objFile){}
 #else
 DynamicLibrary::DynamicLibrary(void* objFile) : i_objFile(objFile){}
@@ -27,7 +27,7 @@ DynamicLibrary::DynamicLibrary(void* objFile) : i_objFile(objFile){}
 
 DynamicLibrary::~DynamicLibrary(void)
 {
-#ifdef WIN32
+#ifdef _WIN32
     FreeLibrary(i_objFile);
 #else
     dlclose(i_objFile);
@@ -42,7 +42,7 @@ PluginObject* DynamicLibrary::newObject(const std::string& name, const Config& c
 	}
 
 	// Get the loadObject() function.  If it doesn't exist, return NULL.
-#ifdef WIN32
+#ifdef _WIN32
 	#pragma warning(disable:4191) //GetProcAddress does NOT return a FARPROC, the warning misses it...
 	const void (*loadSym)(const std::string&, const Config&) = (const void (*)(const std::string&, const Config&))GetProcAddress(i_objFile, "loadObject");
 #else
@@ -64,7 +64,7 @@ __extension__
 
 DynamicLibrary* DynamicLoader::loadObjectFile(const std::string& file)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	HINSTANCE objFile = LoadLibrary(TEXT(file.c_str()));
 #else
 	void* objFile = dlopen(file.c_str(), RTLD_NOW);
@@ -78,7 +78,7 @@ DynamicLibrary* DynamicLoader::loadObjectFile(const std::string& file)
 }
 
 std::string DynamicLoader::getErrorMessage(){
-#ifdef WIN32
+#ifdef _WIN32
 	std::stringstream ss;
 	ss << GetLastError();
 	return ss.str();

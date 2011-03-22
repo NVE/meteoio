@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
 SET(VERSION_MINOR 0 CACHE INTERNAL "")
-SET(VERSION_PATCH 0 CACHE INTERNAL "")
+SET(VERSION_PATCH 1 CACHE INTERNAL "")
 
 PROJECT(meteoio)
 ADD_SUBDIRECTORY(meteoio)
@@ -189,6 +189,8 @@ if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
 endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 
 ###########################################################
+## CPACK section
+###########################################################
 set(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
 set(CPACK_PACKAGE_NAME "MeteoIO")
@@ -251,8 +253,8 @@ IF(UNIX)
 		set(CPACK_GENERATOR "DEB;RPM;TGZ")
 		set(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
 		set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6, libproj0")
-		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6, libproj0") #objdump -p lib/libmeteoio.so | grep NEEDED | tr -s ' ' | cut -d' ' -f3 | tr '\n' ','
+		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386") #dpkg --print-architecture
 		set(CPACK_RPM_PACKAGE_NAME "meteoio")
 		set(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
 		set(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6, libproj4")

@@ -21,7 +21,7 @@
 #include <meteoio/Config.h>
 
 #ifndef USE_PRECOMPILED_HEADERS
-#ifdef WIN32
+#ifdef _WIN32
 	#include <direct.h>
 	#include <windows.h>
 	#undef max
@@ -71,7 +71,7 @@ class PluginObject {
 class DynamicLibrary {
 	protected:
 		// The handle to the shared library that was opened
-#ifdef WIN32
+#ifdef _WIN32
 		HINSTANCE i_objFile;
 #else
 		void *i_objFile;
@@ -86,7 +86,7 @@ class DynamicLibrary {
 		// Creates a new library, with the object file handle that is passed 
 		// in. Protected so that only the DynamicLoader can create an 
 		// instance (since it is declared friend.
-#ifdef WIN32
+#ifdef _WIN32
 		DynamicLibrary(HINSTANCE objFile);
 #else
 		DynamicLibrary(void* objFile);

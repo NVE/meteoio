@@ -8,7 +8,7 @@
 #ifndef _Included_SYNCHRONIZED_H_
 #define _Included_SYNCHRONIZED_H_
 
-#ifdef WIN32
+#ifdef _WIN32
 	/* link to kernel32.dll */
 	#include <windows.h>
 	#undef max
@@ -58,7 +58,7 @@ public:
 
     Mutex()
     {
-#ifdef WIN32
+#ifdef _WIN32
         InitializeCriticalSection(&m_criticalSection);
 #else
         pthread_mutex_init(&m_criticalSection, NULL);
@@ -69,7 +69,7 @@ public:
 
     ~Mutex()
     {
-#ifdef WIN32
+#ifdef _WIN32
         DeleteCriticalSection(&m_criticalSection);
 #else
         pthread_mutex_destroy( &m_criticalSection );
@@ -80,7 +80,7 @@ public:
 
     void lock()
     {
-#ifdef WIN32
+#ifdef _WIN32
         EnterCriticalSection(&m_criticalSection);
 #else
         pthread_mutex_lock( &m_criticalSection );
@@ -91,7 +91,7 @@ public:
 
     void unlock()
     {
-#ifdef WIN32
+#ifdef _WIN32
         LeaveCriticalSection(&m_criticalSection);
 #else
         pthread_mutex_unlock( &m_criticalSection );
@@ -103,7 +103,7 @@ private:
 	 * Critical section Object.
 	 * Initialized at runtime, when Mutex instance is created
 	 */
-#ifdef WIN32
+#ifdef _WIN32
     CRITICAL_SECTION m_criticalSection;
 #else //assumes it's a Unix/Linux system
     pthread_mutex_t m_criticalSection;

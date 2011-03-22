@@ -15,6 +15,7 @@ int main(int /*argc*/, char** argv) {
 
 	//we assume that the time given on the command line is in TZ=+1
 	IOUtils::convertString(d1,argv[1], 1.);
+	//io.setProcessingLevel(IOManager::raw); //set the processing level: raw, filtered or resampled
 	io.getMeteoData(d1, vecMeteo);
 
 	//writing some data out in order to prove that it really worked!

@@ -53,7 +53,7 @@ namespace mio {
 
 void IOHandler::registerPlugins()
 {
-#if defined(WIN32)
+#if defined(_WIN32)
 	const std::string libsuffix = ".dll";
 #elif defined(APPLE)
 	const std::string libsuffix = ".dylib";
