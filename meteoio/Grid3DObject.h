@@ -63,18 +63,18 @@ class Grid3DObject{
 
 		/**
 		* A constructor that can be used to create a Grid3DObject that is contained in the
-		* one passed as _grid3Dobj argument. The resulting Grid3DObject is a by value copy of
-		* a subspace of the space spanned by the _grid3Dobj
+		* one passed as i_grid3Dobj argument. The resulting Grid3DObject is a by value copy of
+		* a subspace of the space spanned by the i_grid3Dobj
 		*/
-		Grid3DObject(const Grid3DObject& _grid3Dobj,
-				   const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-				   const unsigned int& _nwidths, const unsigned int& _nheights, const unsigned int& _ndepths);
+		Grid3DObject(const Grid3DObject& i_grid3Dobj,
+				   const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+				   const unsigned int& i_nwidths, const unsigned int& i_nheights, const unsigned int& i_ndepths);
 
 		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
-				const double& cellsize, const Coords& _llcorner);
+				const double& cellsize, const Coords& i_llcorner);
 
 		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
-			const double& cellsize, const Coords& _llcorner, const Array3D<double>& grid3D);
+			const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D);
 
 		/**
 		* @brief Set all variables in one go.
@@ -82,10 +82,10 @@ class Grid3DObject{
 		* @param nrows (unsigned int&) number of rows in the grid3D (2nd dimension)
 		* @param depths (unsigned int&) number of depth in the grid3D (3rd dimension)
 		* @param cellsize (double&) value for cellsize in grid3D
-		* @param _llcorner lower left corner coordinates
+		* @param i_llcorner lower left corner coordinates
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& depths,
-			const double& cellsize, const Coords& _llcorner);
+			const double& cellsize, const Coords& i_llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double> 
 		* will be destroyed and recreated to size ncols x nrows.
@@ -94,11 +94,11 @@ class Grid3DObject{
 		* @param nrows (unsigned int&) number of rows in the grid3D
 		* @param ndepths (unsigned int&) number of depth in the grid3D (3rd dimension)
 		* @param cellsize (double&) value for cellsize in grid3D
-		* @param _llcorner lower left corner coordinates
+		* @param i_llcorner lower left corner coordinates
 		* @param grid3D_in (Array\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
-			const double& cellsize, const Coords& _llcorner, const Array3D<double>& grid3D_in);
+			const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D_in);
 
 		void size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const;
 
@@ -150,7 +150,7 @@ class Grid3DObject{
 		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
 			const double& cellsize);
 		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
-			const double& cellsize, const Coords& _llcorner);
+			const double& cellsize, const Coords& i_llcorner);
 
 		/**
 		* @brief Converts WGS84 coordinates into grid coordinates (i,j)

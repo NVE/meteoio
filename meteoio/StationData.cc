@@ -26,17 +26,17 @@ namespace mio {
 StationData::StationData() : position("NULL", "NULL"), stationID(""), stationName(""),
                              slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
-StationData::StationData(const Coords& _position, const std::string& _id, const std::string& _name)
+StationData::StationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
 {
-	setStationData(_position, _id, _name);
+	setStationData(i_position, i_id, i_name);
 	setSlope(IOUtils::nodata, IOUtils::nodata);
 }
 
-void StationData::setStationData(const Coords& _position, const std::string& _id, const std::string& _name)
+void StationData::setStationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
 {
-	position    = _position;
-	stationID   = _id;
-	stationName = _name;
+	position    = i_position;
+	stationID   = i_id;
+	stationName = i_name;
 }
 
 void StationData::setSlope(const double& in_slope_angle, const double& in_azimuth)

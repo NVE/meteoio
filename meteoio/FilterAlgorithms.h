@@ -82,10 +82,10 @@ class FilterAlgorithms {
 		                                       bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out);
 		static unsigned int getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
                                                   const unsigned int& pos, 
-                                                  const std::vector<std::string>& _vecArgs, std::vector<MeteoData>& vecResult);
+                                                  const std::vector<std::string>& i_vecArgs, std::vector<MeteoData>& vecResult);
 		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
 		                          const unsigned int& pos,
-		                          const Date& date, const std::vector<std::string>& _vecArgs,
+		                          const Date& date, const std::vector<std::string>& i_vecArgs,
 		                          const unsigned int& paramindex, std::vector<double>& vecWindow,
 		                          std::vector<Date> *vecDate = NULL);
 

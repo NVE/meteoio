@@ -53,11 +53,11 @@ class StationData {
 
 		/**
 		* @brief A constructor that takes three to six arguments
-		* @param _position Position of the station
-		* @param _id Station's id (short identification)
-		* @param _name Full name of the station (default "")
+		* @param i_position Position of the station
+		* @param i_id Station's id (short identification)
+		* @param i_name Full name of the station (default "")
 		*/
-		StationData(const Coords& _position, const std::string& _id="", const std::string& _name="");
+		StationData(const Coords& i_position, const std::string& i_id="", const std::string& i_name="");
 
 		//Specific getter functions
 		std::string getStationID() const;
@@ -78,11 +78,11 @@ class StationData {
 		
 		/**
 		* @brief General setter function
-		* @param _position Position of the station
-		* @param _id Station's id (short identification)
-		* @param _name Name of the station (default "")
+		* @param i_position Position of the station
+		* @param i_id Station's id (short identification)
+		* @param i_name Name of the station (default "")
 		*/
-		void setStationData(const Coords& _position, const std::string& _id="", const std::string& _name="");
+		void setStationData(const Coords& i_position, const std::string& i_id="", const std::string& i_name="");
 
 		/**
 		* @brief Slope information setter

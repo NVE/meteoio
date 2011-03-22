@@ -198,10 +198,10 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	return (mapit->second).io;
 }
 
-void IOHandler::read2DGrid(Grid2DObject& out_grid, const std::string& _filename)
+void IOHandler::read2DGrid(Grid2DObject& out_grid, const std::string& i_filename)
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");
-	plugin->read2DGrid(out_grid, _filename);
+	plugin->read2DGrid(out_grid, i_filename);
 }
 
 void IOHandler::readDEM(DEMObject& dem_out)

@@ -36,7 +36,7 @@ class FilterProperties {
 		funcptr filterfunc;
 		
  		FilterProperties() : checkonly(false), filterfunc(NULL){}
- 		FilterProperties(const bool& _co, const funcptr& _ptr ) : checkonly(_co), filterfunc(_ptr){}
+ 		FilterProperties(const bool& i_co, const funcptr& i_ptr ) : checkonly(i_co), filterfunc(i_ptr){}
 };
 
 } //end namespace mio

@@ -107,7 +107,7 @@ void FilterAlgorithms::parseWindowFilterArguments(const std::string& filtername,
 
 bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
                                      const unsigned int& pos,
-                                     const Date& date, const std::vector<std::string>& _vecArgs,
+                                     const Date& date, const std::vector<std::string>& i_vecArgs,
                                      const unsigned int& paramindex, std::vector<double>& vecWindow,
                                      std::vector<Date> *vecDate)
 {
@@ -115,7 +115,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 	bool isSoft = false;
 	std::string windowposition = "center"; //the default is a centered window
 	std::vector<double> vecArgs;
-	parseWindowFilterArguments(filtername, _vecArgs, 2, 2, isSoft, windowposition, vecArgs);
+	parseWindowFilterArguments(filtername, i_vecArgs, 2, 2, isSoft, windowposition, vecArgs);
 
 	if (vecArgs[0] < 1) //the window size has to be at least 1
 		throw InvalidArgumentException("Number of data points in window of " +filtername+ " filter cannot be < 1", AT);
@@ -346,14 +346,14 @@ bool FilterAlgorithms::compareMeteoData (const MeteoData& m1, const MeteoData& m
 
 unsigned int FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM, 
                                              const unsigned int& pos,
-                                             const std::vector<std::string>& _vecArgs, std::vector<MeteoData>& vecResult)
+                                             const std::vector<std::string>& i_vecArgs, std::vector<MeteoData>& vecResult)
 {
 	Date date(vecM.at(pos).date);
 	vecResult.clear();
 	bool isSoft = false;
 	std::string windowposition = "center"; //the default is a centered window
 	std::vector<double> vecArgs;
-	parseWindowFilterArguments(filtername, _vecArgs, 2, 2, isSoft, windowposition, vecArgs);
+	parseWindowFilterArguments(filtername, i_vecArgs, 2, 2, isSoft, windowposition, vecArgs);
 
 	if (vecArgs[0] < 1) //the window size has to be at least 1
 		throw InvalidArgumentException("Number of data points in window of " +filtername+ " filter cannot be < 1", AT);

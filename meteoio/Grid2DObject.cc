@@ -44,31 +44,31 @@ Grid2DObject::Grid2DObject() : grid2D()
 	cellsize = 0.0;
 }
 
-Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _cellsize, const Coords& _llcorner) : grid2D(_ncols, _nrows, IOUtils::nodata)
+Grid2DObject::Grid2DObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                           const double& i_cellsize, const Coords& i_llcorner) : grid2D(i_ncols, i_nrows, IOUtils::nodata)
 {
 	//set metadata, grid2D already successfully created
-	setValues(_ncols, _nrows, _cellsize, _llcorner);
+	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
-Grid2DObject::Grid2DObject(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _grid2D) : grid2D()
+Grid2DObject::Grid2DObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                           const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D) : grid2D()
 {
-	set(_ncols, _nrows, _cellsize, _llcorner, _grid2D);
+	set(i_ncols, i_nrows, i_cellsize, i_llcorner, i_grid2D);
 }
 
-Grid2DObject::Grid2DObject(const Grid2DObject& _grid2Dobj, const unsigned int& _nx, const unsigned int& _ny,
-				const unsigned int& _ncols, const unsigned int& _nrows)
-	: grid2D(_grid2Dobj.grid2D, _nx,_ny, _ncols,_nrows)
+Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const unsigned int& i_nx, const unsigned int& i_ny,
+                           const unsigned int& i_ncols, const unsigned int& i_nrows)
+	: grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows)
 {
-	setValues(_ncols, _nrows, _grid2Dobj.cellsize);
+	setValues(i_ncols, i_nrows, i_grid2Dobj.cellsize);
 
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
-	llcorner = _grid2Dobj.llcorner;
+	llcorner = i_grid2Dobj.llcorner;
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
-		llcorner.setXY( llcorner.getEasting()+_nx*_grid2Dobj.cellsize,
-				llcorner.getNorthing()+_ny*_grid2Dobj.cellsize, IOUtils::nodata);
+		llcorner.setXY( llcorner.getEasting()+i_nx*i_grid2Dobj.cellsize,
+		                llcorner.getNorthing()+i_ny*i_grid2Dobj.cellsize, IOUtils::nodata);
 	}
 }
 
@@ -189,27 +189,27 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 	return error_code;
 }
 
-void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
-			const double& _cellsize, const Coords& _llcorner)
+void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                       const double& i_cellsize, const Coords& i_llcorner)
 {
-	setValues(_ncols, _nrows, _cellsize, _llcorner);
+	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 	grid2D.resize(ncols, nrows, IOUtils::nodata);
 }
 
-void Grid2DObject::set(const unsigned int& _ncols, const unsigned int& _nrows,
-			const double& _cellsize, const Coords& _llcorner, const Array2D<double>& _grid2D)
+void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                       const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
 {
 	//Test for equality in size: Only compatible Array2D<double> grids are permitted
 	unsigned int nx,ny;
-	_grid2D.size(nx,ny);
-	if ((_ncols != nx) || (_nrows != ny)) {
+	i_grid2D.size(nx,ny);
+	if ((i_ncols != nx) || (i_nrows != ny)) {
 		throw IOException("Mismatch in size of Array2D<double> parameter _grid2D and size of Grid2DObject", AT);
 	}
 
-	setValues(_ncols, _nrows, _cellsize, _llcorner);
+	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 
 	//Copy by value, after destroying the old grid
-	grid2D = _grid2D;
+	grid2D = i_grid2D;
 }
 
 void Grid2DObject::size(unsigned int& o_ncols, unsigned int& o_nrows) const {
@@ -217,19 +217,19 @@ void Grid2DObject::size(unsigned int& o_ncols, unsigned int& o_nrows) const {
 	o_nrows = nrows;
 }
 
-void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _cellsize)
+void Grid2DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                             const double& i_cellsize)
 {
-	ncols = _ncols;
-	nrows = _nrows;
-	cellsize = _cellsize;
+	ncols = i_ncols;
+	nrows = i_nrows;
+	cellsize = i_cellsize;
 }
 
-void Grid2DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows,
-				const double& _cellsize, const Coords& _llcorner)
+void Grid2DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                             const double& i_cellsize, const Coords& i_llcorner)
 {
-	setValues(_ncols, _nrows, _cellsize);
-	llcorner = _llcorner;
+	setValues(i_ncols, i_nrows, i_cellsize);
+	llcorner = i_llcorner;
 }
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const

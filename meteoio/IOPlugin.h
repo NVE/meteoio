@@ -44,12 +44,12 @@ class IOPlugin {
 		/**
 		 * @brief The main constructor for the IOPlugin class
 		 *
-		 * @param _s1 A std::string representing the file to be opened (or "" if plugin is statically linked)
-		 * @param _s2 A std::string that is the classname of the object to be loaded (e.g. "A3DIO", "GSNIO")
+		 * @param i_s1 A std::string representing the file to be opened (or "" if plugin is statically linked)
+		 * @param i_s2 A std::string that is the classname of the object to be loaded (e.g. "A3DIO", "GSNIO")
 		 * @param p1  A pointer to the loaded object of type IOInterface (or NULL)
 		 * @param p2  A pointer to the loaded dynamic library (or NULL)
 		 */
-		IOPlugin(std::string _s1, std::string _s2, IOInterface *p1, DynamicLibrary *p2) : libname(_s1), classname(_s2), io(p1), dynLibrary(p2){}
+		IOPlugin(std::string i_s1, std::string i_s2, IOInterface *p1, DynamicLibrary *p2) : libname(i_s1), classname(i_s2), io(p1), dynLibrary(p2){}
 		IOPlugin() : libname(""), classname(""), io(NULL), dynLibrary(NULL){}
 
 		friend std::ostream& operator<<(std::ostream& os, const IOPlugin& data);

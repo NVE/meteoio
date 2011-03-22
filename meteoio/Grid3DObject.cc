@@ -40,36 +40,37 @@ Grid3DObject::Grid3DObject() : grid3D() //using Array3D default constructor
 	cellsize = 0.0;
 }
 
-Grid3DObject::Grid3DObject(const Grid3DObject& _grid3Dobj,
-				const unsigned int& _nx, const unsigned int& _ny, const unsigned int& _nz,
-				const unsigned int& _nwidths, const unsigned int& _nheights, const unsigned int& _ndepths) 
-	: grid3D(_grid3Dobj.grid3D, _nx,_ny,_nz, _nwidths,_nheights,_ndepths)
+Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3Dobj,
+                           const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+                           const unsigned int& i_nwidths, const unsigned int& i_nheights, const unsigned int& i_ndepths)
+	: grid3D(i_grid3Dobj.grid3D, i_nx,i_ny,i_nz, i_nwidths,i_nheights,i_ndepths)
 {
-	setValues(_nwidths, _nheights, _ndepths, _grid3Dobj.cellsize);
+	setValues(i_nwidths, i_nheights, i_ndepths, i_grid3Dobj.cellsize);
 
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
-	llcorner = _grid3Dobj.llcorner;
+	llcorner = i_grid3Dobj.llcorner;
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
-		llcorner.setXY( llcorner.getEasting()+_nx*_grid3Dobj.cellsize,
-		                llcorner.getNorthing()+_ny*_grid3Dobj.cellsize,
-		                llcorner.getAltitude()+_nz*_grid3Dobj.cellsize );
+		llcorner.setXY( llcorner.getEasting()+i_nx*i_grid3Dobj.cellsize,
+		                llcorner.getNorthing()+i_ny*i_grid3Dobj.cellsize,
+		                llcorner.getAltitude()+i_nz*i_grid3Dobj.cellsize );
 	}
 }
 
-Grid3DObject::Grid3DObject(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
-				const double& _cellsize, const Coords& _llcorner) : grid3D(_ncols, _nrows, _ndepths, IOUtils::nodata)
+Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                           const double& i_cellsize, const Coords& i_llcorner) : grid3D(i_ncols, i_nrows, i_ndepths, IOUtils::nodata)
 {
-	setValues(_ncols, _nrows, _ndepths, _cellsize, _llcorner);
+	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
-Grid3DObject::Grid3DObject(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
-					  const double& _cellsize, const Coords& _llcorner, const Array3D<double>& _grid3D) : grid3D()
+Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                           const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D) : grid3D()
 {
-	set(_ncols, _nrows, _ndepths, _cellsize, _llcorner, _grid3D);
+	set(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner, i_grid3D);
 }
 
-bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const {
+bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
+{
 	bool status=true;
 
 	std::vector<Coords>::iterator v_Itr = vec_points.begin();
@@ -85,7 +86,8 @@ bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const {
 	return status;
 }
 
-bool Grid3DObject::gridify(Coords& point) const {
+bool Grid3DObject::gridify(Coords& point) const
+{
 	std::string proj_type, proj_args;
 	point.getProj(proj_type, proj_args);
 	if(proj_type=="NULL") {
@@ -102,7 +104,8 @@ bool Grid3DObject::gridify(Coords& point) const {
 	}
 }
 
-bool Grid3DObject::grid_to_WGS84(Coords& point) const {
+bool Grid3DObject::grid_to_WGS84(Coords& point) const
+{
 	int i=point.getGridI(), j=point.getGridJ(), k=point.getGridK();
 
 	if(i==IOUtils::inodata || j==IOUtils::inodata || k==IOUtils::inodata) {
@@ -142,10 +145,11 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const {
 	return true;
 }
 
-bool Grid3DObject::WGS84_to_grid(Coords point) const {
+bool Grid3DObject::WGS84_to_grid(Coords point) const
+{
 	if(point.getLat()==IOUtils::nodata || point.getLon()==IOUtils::nodata || point.getAltitude()==IOUtils::nodata) {
-			//if the point is invalid, there is nothing we can do
-			return false;
+		//if the point is invalid, there is nothing we can do
+		return false;
 	}
 
 	bool error_code=true;
@@ -196,47 +200,48 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const {
 	return error_code;
 }
 
-void Grid3DObject::set(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
-				const double& _cellsize, const Coords& _llcorner)
+void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                       const double& i_cellsize, const Coords& i_llcorner)
 {
-	setValues(_ncols, _nrows, _ndepths, _cellsize, _llcorner);
-	grid3D.resize(ncols, nrows, ndepths, IOUtils::nodata);	
+	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
+	grid3D.resize(ncols, nrows, ndepths, IOUtils::nodata);
 }
 
-void Grid3DObject::set(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
-				const double& _cellsize, const Coords& _llcorner, const Array3D<double>& _grid3D)
+void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                       const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
 {
 	//Test for equality in size: Only compatible Array3D<double> grids are permitted
 	unsigned int nx, ny, nz;
-	_grid3D.size(nx, ny, nz);
-	if ((_ncols != nx) || (_nrows != ny) || (_ndepths != nz)) {
+	i_grid3D.size(nx, ny, nz);
+	if ((i_ncols != nx) || (i_nrows != ny) || (i_ndepths != nz)) {
 		throw IOException("Mismatch in size of Array3D<double> parameter grid3D and size of Grid3DObject", AT);
 	}
 
-	setValues(_ncols, _nrows, _ndepths, _cellsize, _llcorner);
-	grid3D = _grid3D; //copy by value
+	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
+	grid3D = i_grid3D; //copy by value
 }
 
-void Grid3DObject::size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const {
+void Grid3DObject::size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const
+{
 	o_ncols = ncols;
 	o_nrows = nrows;
 	o_ndepths = ndepths;
 }
 
-void Grid3DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
-				const double& _cellsize)
+void Grid3DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                             const double& i_cellsize)
 {
-	ncols = _ncols;
-	nrows = _nrows;
-	ndepths = _ndepths;
-	cellsize = _cellsize;
+	ncols = i_ncols;
+	nrows = i_nrows;
+	ndepths = i_ndepths;
+	cellsize = i_cellsize;
 }
 
-void Grid3DObject::setValues(const unsigned int& _ncols, const unsigned int& _nrows, const unsigned int& _ndepths,
-				const double& _cellsize, const Coords& _llcorner)
+void Grid3DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                             const double& i_cellsize, const Coords& i_llcorner)
 {
-	setValues(_ncols, _nrows, _ndepths, _cellsize);
-	llcorner = _llcorner;
+	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize);
+	llcorner = i_llcorner;
 }
 
 bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)

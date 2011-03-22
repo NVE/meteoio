@@ -67,22 +67,22 @@ class Grid2DObject {
 		*/
 		Grid2DObject();
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-		             const double& cellsize, const Coords& _llcorner);
+		             const double& cellsize, const Coords& i_llcorner);
 
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
-		             const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in);
+		             const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
 		/**
 		* @brief constructs an object as a subset of another grid object
-		* @param _grid2Dobj (const Grid2DObject&) initial grid object
-		* @param _nx (const unsigned int) starting column of the subset
-		* @param _ny (const unsigned int) starting row of the subset
-		* @param _ncols (const unsigned int) number of columns of the subset
-		* @param _nrows (const unsigned int) number of rows of the subset
+		* @param i_grid2Dobj (const Grid2DObject&) initial grid object
+		* @param i_nx (const unsigned int) starting column of the subset
+		* @param i_ny (const unsigned int) starting row of the subset
+		* @param i_ncols (const unsigned int) number of columns of the subset
+		* @param i_nrows (const unsigned int) number of rows of the subset
 		*/
-		Grid2DObject(const Grid2DObject& _grid2Dobj,
-		             const unsigned int& _nx, const unsigned int& _ny, //Point in the plane
-		             const unsigned int& _ncols, const unsigned int& _nrows); //dimensions of the sub-plane
+		Grid2DObject(const Grid2DObject& i_grid2Dobj,
+		             const unsigned int& i_nx, const unsigned int& i_ny, //Point in the plane
+		             const unsigned int& i_ncols, const unsigned int& i_nrows); //dimensions of the sub-plane
 
 		/**
 		* @brief Compute the positional parameters that are not already known
@@ -110,21 +110,21 @@ class Grid2DObject {
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
 		* @param cellsize (double) value for cellsize in grid2D
-		* @param _llcorner lower left corner point
+		* @param i_llcorner lower left corner point
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-		         const double& cellsize, const Coords& _llcorner);
+		         const double& cellsize, const Coords& i_llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid2D of type
 		* Array2D\<double\> will be destroyed and recreated to size ncols x nrows.
 		* @param ncols (unsigned int) number of colums in the grid2D
 		* @param nrows (unsigned int) number of rows in the grid2D
 		* @param cellsize (double) value for cellsize in grid2D
-		* @param _llcorner lower left corner point
+		* @param i_llcorner lower left corner point
 		* @param grid2D_in (CArray\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
-		         const double& cellsize, const Coords& _llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
+		         const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
 
 		void size(unsigned int& o_ncols, unsigned int& o_nrows) const;
 
@@ -157,9 +157,9 @@ class Grid2DObject {
 
  protected:
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,
-		               const double& cellsize, const Coords& _llcorner);
-		void setValues(const unsigned int& _ncols, const unsigned int& _nrows,
-		               const double& _cellsize);
+		               const double& cellsize, const Coords& i_llcorner);
+		void setValues(const unsigned int& i_ncols, const unsigned int& i_nrows,
+		               const double& i_cellsize);
 
 		/**
 		* @brief Converts WGS84 coordinates into grid coordinates (i,j)

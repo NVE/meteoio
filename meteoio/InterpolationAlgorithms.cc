@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 std::set<std::string> AlgorithmFactory::setAlgorithms;
-const bool AlgorithmFactory::__init = AlgorithmFactory::initStaticData();
+const bool AlgorithmFactory::flag_init = AlgorithmFactory::initStaticData();
 
 bool AlgorithmFactory::initStaticData()
 {
@@ -51,14 +51,12 @@ bool AlgorithmFactory::initStaticData()
 }
 
 //HACK: do not build a new object at every time step!!
-InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algoname, 
-                                                       Meteo2DInterpolator& _mi,
-											const Date& date,
-                                                       const DEMObject& _dem,
-                                                       const std::vector<std::string>& _vecArgs,
-											IOManager& iom)
+InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algoname,
+                                                       Meteo2DInterpolator& i_mi, const Date& date,
+                                                       const DEMObject& i_dem,
+                                                       const std::vector<std::string>& i_vecArgs, IOManager& iom)
 {
-	std::string algoname(_algoname);
+	std::string algoname(i_algoname);
 	IOUtils::toUpper(algoname);
 
 	//Check whether algorithm theoretically exists
@@ -66,27 +64,27 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 		throw UnknownValueException("The interpolation algorithm '"+algoname+"' does not exist" , AT);
 
 	if (algoname == "CST"){
-		return new ConstAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new ConstAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "STD_PRESS"){
-		return new StandardPressureAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new StandardPressureAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "CST_LAPSE"){
-		return new ConstLapseRateAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new ConstLapseRateAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "IDW"){
-		return new IDWAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new IDWAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "IDW_LAPSE"){
-		return new IDWLapseAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new IDWLapseAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "LIDW_LAPSE"){
-		return new LocalIDWLapseAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new LocalIDWLapseAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "RH"){
-		return new RHAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new RHAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "WIND_CURV"){
-		return new SimpleWindInterpolationAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new SimpleWindInterpolationAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ODKRIG"){
-		return new OrdinaryKrigingAlgorithm(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new OrdinaryKrigingAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "USER"){
-		return new USERInterpolation(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new USERInterpolation(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "HNW_SNOW"){
-		return new SnowHNWInterpolation(_mi, date, _dem, _vecArgs, _algoname, iom);
+		return new SnowHNWInterpolation(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -95,10 +93,10 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& _algon
 }
 
 InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi, 
-									  const Date& i_date,
-									  const DEMObject& i_dem,
-									  const std::vector<std::string>& i_vecArgs,
-									  const std::string& i_algo, IOManager& iom)
+                                               const Date& i_date,
+                                               const DEMObject& i_dem,
+                                               const std::vector<std::string>& i_vecArgs,
+                                               const std::string& i_algo, IOManager& iom)
 	: mi(i_mi), date(i_date), dem(i_dem), vecArgs(i_vecArgs), algo(i_algo), iomanager(iom) 
 {
 	nrOfMeasurments = 0;
