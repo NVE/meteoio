@@ -287,7 +287,7 @@ char IOUtils::getEoln(std::istream& fin)
 	char tmp = '0';
 	int chars = 0;
 
-	int position = fin.tellg();
+	const std::streampos position = fin.tellg();
 
 	do {
 		fin.get(tmp);

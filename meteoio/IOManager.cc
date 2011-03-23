@@ -343,7 +343,7 @@ std::string IOManager::toString() const {
 	//display meteocache
 	unsigned int count=0;
 	unsigned int min_stations=std::numeric_limits<unsigned int>::max();
-	unsigned int max_stations=-std::numeric_limits<unsigned int>::max();
+	unsigned int max_stations=0;
 	std::map<Date, std::vector<MeteoData> >::const_iterator iter = resampled_cache.begin();
 	for (; iter != resampled_cache.end(); iter++) {
 		const unsigned int nb_stations = iter->second.size();

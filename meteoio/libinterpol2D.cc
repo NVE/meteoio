@@ -63,6 +63,10 @@ inline float fastSqrt_Q3(const float x) {
 	return x * invSqrt(x);
 }
 
+inline double fastSqrt_Q3(const double x) {
+	return x * invSqrt(x);
+}
+
 const double Interpol2D::wind_ys = 0.58;
 const double Interpol2D::wind_yc = 0.42;
 const double Interpol2D::bilin_inflection = 1200.;
