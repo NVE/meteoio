@@ -149,8 +149,8 @@ namespace IOUtils {
 					  const std::string& keyprefix="", const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
-	unsigned int readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
-	unsigned int readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
+	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
+	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	void readKeyValueHeader(std::map<std::string, std::string>& headermap, 
 				    std::istream& bs,
 				    const unsigned int& linecount=1, 

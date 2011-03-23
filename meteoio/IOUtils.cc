@@ -122,7 +122,7 @@ void IOUtils::trim(std::string& str)
 
 void IOUtils::toUpper(std::string& str){
 	for(unsigned int t=0; t<str.length(); t++) {
-		str[t] = toupper(str[t]);
+		str[t] = (char)toupper(str[t]);
 	}
 }
 
@@ -325,7 +325,7 @@ void IOUtils::skipLines(std::istream& fin, const unsigned int& nbLines, const ch
 	}
 }
 
-unsigned int IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
+size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
 {
 	vecString.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
@@ -343,7 +343,7 @@ unsigned int IOUtils::readLineToVec(const std::string& line_in, std::vector<std:
 	return vecString.size();
 }
 
-unsigned int IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
+size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
 {
 	vecString.clear();
 	std::string tmp_string;

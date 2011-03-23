@@ -88,8 +88,6 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
-
-	return NULL;
 }
 
 InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi, 

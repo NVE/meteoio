@@ -1070,7 +1070,7 @@ void Coords::parseUTMZone(const std::string& zone_info, char& zoneLetter, short 
 		(sscanf(zone_info.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
 			throw InvalidFormatException("Can not parse given UTM zone: "+zone_info,AT);
 	}
-	zoneLetter = toupper(zoneLetter); //just in case... (sorry for the pun!)
+	zoneLetter = (char)toupper(zoneLetter); //just in case... (sorry for the pun!)
 	if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
 			//Special zones for the poles: we should NOT use UTM in these regions!
 			throw InvalidFormatException("Invalid UTM zone: "+zone_info+" (trying to use UTM in polar regions)",AT);

@@ -46,7 +46,7 @@ class IOManager {
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 		//end legacy support
 
-		unsigned int getStationData(const Date& date, STATION_TIMESERIE& vecStation);
+		size_t getStationData(const Date& date, STATION_TIMESERIE& vecStation);
 
 		/**
 		* @brief Fill vecMeteo with a time series of objects
@@ -72,8 +72,8 @@ class IOManager {
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
 		* @return            Number of stations for which data has been found in the interval
 		*/
-		unsigned int getMeteoData(const Date& dateStart, const Date& dateEnd,
-		                          std::vector< METEO_TIMESERIE >& vecMeteo);
+		size_t getMeteoData(const Date& dateStart, const Date& dateEnd,
+		                    std::vector< METEO_TIMESERIE >& vecMeteo);
 
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
@@ -95,7 +95,7 @@ class IOManager {
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
 		 * @return            Number of stations for which data has been found in the interval
 		 */
-		unsigned int getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo);
+		size_t getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo);
 
 		/**
 		 * @brief Push a vector of time series of MeteoData objects into the IOManager. This overwrites

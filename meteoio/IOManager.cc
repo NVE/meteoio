@@ -73,7 +73,7 @@ void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_s
 	}
 }
 
-unsigned int IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation)
+size_t IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation)
 {
 	vecStation.clear();
 
@@ -88,7 +88,7 @@ unsigned int IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecS
 
 
 //for an interval of data: decide whether data should be filtered or raw
-unsigned int IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, 
+size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
                                      std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	vecMeteo.clear();
@@ -188,7 +188,7 @@ void IOManager::add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo
 }
 
 //data can be raw or processed (filtered, resampled)
-unsigned int IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
+size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 {
 	vecMeteo.clear();
 

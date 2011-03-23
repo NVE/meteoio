@@ -13,20 +13,34 @@ ADD_SUBDIRECTORY(meteoio/plugins/gsn)
 ADD_SUBDIRECTORY(meteoio/meteolaws)
 ADD_SUBDIRECTORY(meteoio/meteofilters)
 
-# require proper c++
-set(DEBUG_ARITHM ON CACHE BOOL "Use the debug flags -DDEBUG_ARITHM to catch arithmetic exceptions")
-set(WARNINGS "-Wall")
-set(PROFILING "-pg -fprofile-arcs")
-set(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
-
-IF(DEBUG_ARITHM)
-	LIST(APPEND CFLAGS "-DDEBUG_ARITHM")
-ENDIF(DEBUG_ARITHM)
-
 SET(POPCC popcc)
 
 ###########################################################
-#platform specific
+#platform specific. First, compiler specific flags, then system specific flags
+IF(CMAKE_COMPILER_IS_GNUCXX)
+	set(WARNINGS "-Wall")
+	set(PROFILING "-pg -fprofile-arcs")
+	set(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
+	set(DEBUG_ARITHM ON CACHE BOOL "Use the debug flags -DDEBUG_ARITHM to catch arithmetic exceptions")
+	IF(DEBUG_ARITHM)
+		LIST(APPEND CFLAGS "-DDEBUG_ARITHM")
+	ENDIF(DEBUG_ARITHM)
+	set(OPTIM "-g -O3 -DNDEBUG")
+	set(ARCH_OPTIM  "-march=pentium4 -mtune=native")
+	set(ARCH_SAFE  "-march=pentium4")
+	set(DEBUG "-g -O0 -D__DEBUG")
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+
+IF(MSVC)
+	# for linker, "/MD /MDd"?
+	set(WARNINGS "/W4")
+	set(EXTRA_WARNINGS "/Wp64") #/Wall
+	set(OPTIM "/O2 /Vmb")
+	set(ARCH_OPTIM "/arch:SSE2")
+	set(ARCH_SAFE "")
+	set(DEBUG "/Z7 /Od -D__DEBUG")
+ENDIF(MSVC)
+
 IF(UNIX)
 	IF(APPLE)
 		set(PLATFORM "-DAPPLE")
@@ -35,9 +49,7 @@ IF(UNIX)
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
-		set(PLATFORM "-DWIN32 -U__STRICT_ANSI__ -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNING")
-		# see IF(MSVC) "/MD /MDd"
-		set(EXTRA_WARNINGS "-ansi")
+		set(PLATFORM "-U__STRICT_ANSI__ -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS")
 	ENDIF(WIN32)
 ENDIF(UNIX)
 
@@ -50,42 +62,32 @@ endif(NOT CMAKE_BUILD_TYPE)
 ###########################################################
 #targets providing sets of compiler options
 if(NOT DEST)
-	set(DEST "safe" CACHE STRING "Choose safe, optimized, hera, or par, hera_par (with popc)" FORCE)
+	set(DEST "safe" CACHE STRING "Choose safe, optimized, hera, par or hera_par (with popc)" FORCE)
 endif(NOT DEST)
 
-if (DEST STREQUAL "par")
-	set(EXTRA_WARNINGS "-Wextra ")
-	set(OPTIM "-g -O3 -DNDEBUG")
-	set(ARCH  "-mtune=native")
-	set(DEBUG "-g -O0 -D__DEBUG")
-endif(DEST STREQUAL "par")
-
-if (DEST STREQUAL "hera_par")
-	set(EXTRA_WARNINGS "-Wextra ")
-	set(OPTIM "-g -O3 -DNDEBUG")
+if (DEST STREQUAL "hera_par") #only g++ is supported on hera
 	#required for AMD64: amdfam10 or fPIC, even for static libs
 	set(ARCH "-march=amdfam10 -fPIC")
-	set(DEBUG "-g -O0 -D__DEBUG")
 endif(DEST STREQUAL "hera_par")
 
+if (DEST STREQUAL "hera")
+	set(ARCH  "-march=amdfam10")
+endif(DEST STREQUAL "hera")
+
+if (DEST STREQUAL "par")
+	set(ARCH  "${ARCH_OPTIM}")
+endif(DEST STREQUAL "par")
+
 if (DEST STREQUAL "safe")
-	set(OPTIM "-g -O3 -DNDEBUG")
-	set(ARCH  "")
-	set(DEBUG "-g -O0 -D__DEBUG")
+	set(ARCH  "${ARCH_SAFE}")
 endif(DEST STREQUAL "safe")
 
 IF(DEST STREQUAL "optimized")
-	SET(OPTIM "-g -O3 -DNDEBUG")
-	SET(ARCH  "-march=pentium4 -mtune=native")
-	SET(DEBUG "-g -O0 -D__DEBUG")
+	SET(ARCH  "${ARCH_OPTIM}")
 ENDIF(DEST STREQUAL "optimized")
 
-if (DEST STREQUAL "hera")
-	set(OPTIM "-g -O3 -DNDEBUG")
-	set(ARCH  "-march=amdfam10")
-	set(DEBUG "-g -O0 -D__DEBUG")
-endif(DEST STREQUAL "hera")
-
+###########################################################
+#finally, set compile flags
 set(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${ARCH} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 
