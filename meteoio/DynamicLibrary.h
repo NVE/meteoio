@@ -49,10 +49,10 @@ namespace mio {
 class PluginObject {
 	private:
 		// Callback function that should be called to delete dynamic object
-		void (*_deleteObject)(void*);
+		void (*deleteObject)(void*);
 	public:
 		// The constructor sets the callback function to use
-		PluginObject(void (*delObj)(void*));
+		PluginObject(void (*i_delObj)(void*));
 
 		// The destructor
 		virtual ~PluginObject(void);
@@ -72,9 +72,9 @@ class DynamicLibrary {
 	protected:
 		// The handle to the shared library that was opened
 #ifdef _WIN32
-		HINSTANCE i_objFile;
+		HINSTANCE objFile;
 #else
-		void *i_objFile;
+		void *objFile;
 #endif
 
 		// Since an instance of DynamicLibrary manages lifetime of an open 
@@ -87,9 +87,9 @@ class DynamicLibrary {
 		// in. Protected so that only the DynamicLoader can create an 
 		// instance (since it is declared friend.
 #ifdef _WIN32
-		DynamicLibrary(HINSTANCE objFile);
+		DynamicLibrary(HINSTANCE i_objFile);
 #else
-		DynamicLibrary(void* objFile);
+		DynamicLibrary(void* i_objFile);
 #endif
 
 	public:

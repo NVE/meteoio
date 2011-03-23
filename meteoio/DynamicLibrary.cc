@@ -20,33 +20,33 @@
 namespace mio {
 
 #ifdef _WIN32
-DynamicLibrary::DynamicLibrary(HINSTANCE objFile) : i_objFile(objFile){}
+DynamicLibrary::DynamicLibrary(HINSTANCE i_objFile) : objFile(i_objFile){}
 #else
-DynamicLibrary::DynamicLibrary(void* objFile) : i_objFile(objFile){}
+DynamicLibrary::DynamicLibrary(void* i_objFile) : objFile(i_objFile){}
 #endif
 
 DynamicLibrary::~DynamicLibrary(void)
 {
 #ifdef _WIN32
-    FreeLibrary(i_objFile);
+    FreeLibrary(objFile);
 #else
-    dlclose(i_objFile);
+    dlclose(objFile);
 #endif
 }
 
 PluginObject* DynamicLibrary::newObject(const std::string& name, const Config& cfg)
 {
   // If there is no valid library, return null
-	if(i_objFile == NULL) {
+	if(objFile == NULL) {
 		return NULL;
 	}
 
 	// Get the loadObject() function.  If it doesn't exist, return NULL.
 #ifdef _WIN32
 	#pragma warning(disable:4191) //GetProcAddress does NOT return a FARPROC, the warning misses it...
-	const void (*loadSym)(const std::string&, const Config&) = (const void (*)(const std::string&, const Config&))GetProcAddress(i_objFile, "loadObject");
+	const void (*loadSym)(const std::string&, const Config&) = (const void (*)(const std::string&, const Config&))GetProcAddress(objFile, "loadObject");
 #else
-	const void* loadSym = dlsym(i_objFile, "loadObject");
+	const void* loadSym = dlsym(objFile, "loadObject");
 #endif
 
 	if(loadSym == NULL) {
@@ -87,13 +87,13 @@ std::string DynamicLoader::getErrorMessage(){
 #endif
 }
 
-PluginObject::PluginObject(void (*delObj)(void*)) : _deleteObject(delObj){}
+PluginObject::PluginObject(void (*i_delObj)(void*)) : deleteObject(i_delObj){}
 
 PluginObject::~PluginObject(void){}
 
 void PluginObject::deleteSelf(void)
 {
-	(*_deleteObject)(reinterpret_cast<void*>(this));
+	(*deleteObject)(reinterpret_cast<void*>(this));
 }
 
 } //namespace

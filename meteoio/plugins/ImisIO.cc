@@ -16,7 +16,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "ImisIO.h"
-#include "exports.h"
 
 using namespace std;
 using namespace oracle;
@@ -988,6 +987,9 @@ void ImisIO::cleanup() throw()
 #ifndef _METEOIO_JNI
 extern "C"
 {
+#define COMPILE_PLUGIN
+#include "exports.h"
+
 	//using namespace MeteoIO;
 	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);

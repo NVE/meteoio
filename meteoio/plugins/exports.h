@@ -18,7 +18,7 @@
 #if defined(_MSC_VER)
 	#if defined(OSG_LIBRARY_STATIC)
 		#define METEOIO_EXPORT
-	#elif defined(METEOIO_LIBRARY)
+	#elif defined(COMPILE_PLUGIN)
 		#define METEOIO_EXPORT   __declspec(dllexport)
 	#else
 		#define METEOIO_EXPORT   __declspec(dllimport)

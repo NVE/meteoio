@@ -15,7 +15,6 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "exports.h"
 #include "CosmoXMLIO.h"
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <sstream>
@@ -508,6 +507,9 @@ void CosmoXMLIO::cleanup() throw()
 #ifndef _METEOIO_JNI
 extern "C"
 {
+#define COMPILE_PLUGIN
+#include "exports.h"
+
 	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}

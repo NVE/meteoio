@@ -16,7 +16,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "SNIO.h"
-#include "exports.h"
 #include <meteoio/meteolaws/Atmosphere.h>
 
 using namespace std;
@@ -591,6 +590,9 @@ void SNIO::convertUnits(MeteoData& meteo)
 #ifndef _METEOIO_JNI
 extern "C"
 {
+#define COMPILE_PLUGIN
+#include "exports.h"
+
 	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}

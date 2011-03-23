@@ -16,7 +16,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "GSNIO.h"
-#include "exports.h"
 
 using namespace std;
 
@@ -405,6 +404,9 @@ void GSNIO::convertUnits(MeteoData& meteo)
 
 extern "C"
 {
+#define COMPILE_PLUGIN
+#include "exports.h"
+
 	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}

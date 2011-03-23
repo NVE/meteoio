@@ -16,7 +16,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "ARPSIO.h"
-#include "exports.h"
 
 using namespace std;
 
@@ -378,6 +377,9 @@ void ARPSIO::moveToMarker(const std::string& marker)
 #ifndef _METEOIO_JNI
 extern "C"
 {
+#define COMPILE_PLUGIN
+#include "exports.h"
+
 	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}

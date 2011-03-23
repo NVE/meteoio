@@ -16,7 +16,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "SMETIO.h"
-#include "exports.h"
 #include <meteoio/IOUtils.h>
 
 using namespace std;
@@ -919,6 +918,9 @@ void SMETIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*n
 #ifndef _METEOIO_JNI
 extern "C"
 {
+#define COMPILE_PLUGIN
+#include "exports.h"
+
 	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
