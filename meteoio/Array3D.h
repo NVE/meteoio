@@ -159,6 +159,19 @@ template<class T> class Array3D {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief returns the sum of values contained in the grid
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @return sum
+		*/
+		T getSum(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief returns the grid of the absolute value of values contained in the grid
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @return grid of abs(grid)
+		*/
+		const Array3D<T> getAbs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		void abs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA);
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array3D<P>& array);
 		
@@ -190,9 +203,6 @@ template<class T> class Array3D {
 		const Array3D<T> operator/(const T& rhs);
 		Array3D<T>& operator/=(const Array3D<T>& rhs);
 		const Array3D<T> operator/(const Array3D<T>& rhs);
-
-		void abs();
-		const Array3D<T> getAbs() const;
 
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
@@ -390,6 +400,59 @@ template<class T> T Array3D<T>::getMean(const IOUtils::nodata_handling flag_noda
 	} else {
 		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
+}
+
+template<class T> T Array3D<T>::getSum(const IOUtils::nodata_handling flag_nodata) const {
+
+	T sum = 0;
+	const unsigned int nxyz = nx*ny*nz;
+
+	if(flag_nodata==IOUtils::RAW_NODATA) {
+		for (unsigned int ii=0; ii<nxyz; ii++) {
+			sum += vecData[ii];
+		}
+		return sum;
+	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		bool empty=true;
+		for (unsigned int ii=0; ii<nxyz; ii++) {
+			const T val = vecData[ii];
+			if(val!=IOUtils::nodata) {
+				sum += val;
+				empty=false;
+			}
+		}
+		if(!empty) return sum;
+		else return (T)IOUtils::nodata;
+	} else {
+		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
+	}
+}
+
+template<class T> void Array3D<T>::abs(const IOUtils::nodata_handling flag_nodata) {
+	if(std::numeric_limits<T>::is_signed) {
+		const unsigned int nxyz = nx*ny*nz;
+		if(flag_nodata==IOUtils::RAW_NODATA) {
+			for (unsigned int ii=0; ii<nxyz; ii++) {
+				T& val = operator()(ii);
+				if(val<0) val=-val;
+			}
+		} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+			for (unsigned int ii=0; ii<nxyz; ii++) {
+				T& val = operator()(ii);
+				if(val<0 && val!=IOUtils::nodata) val=-val;
+			}
+		} else {
+			throw InvalidArgumentException("Unknown nodata_handling flag",AT);
+		}
+	}
+}
+
+
+template<class T> const Array3D<T> Array3D<T>::getAbs(const IOUtils::nodata_handling flag_nodata) const {
+	Array3D<T> result = *this; //make a copy
+	result.abs(flag_nodata); //already implemented
+
+	return result;
 }
 
 //arithmetic operators
@@ -597,24 +660,6 @@ template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
 {
 	Array3D<T> result = *this;
 	result /= rhs; //already implemented
-
-	return result;
-}
-
-template<class T> void Array3D<T>::abs() {
-	if(std::numeric_limits<T>::is_signed) {
-		const unsigned int nxyz = nx*ny*nz;
-		for (unsigned int ii=0; ii<nxyz; ii++) {
-			T& val = operator()(ii);
-			if(val<0) val=-val;
-		}
-	}
-}
-
-
-template<class T> const Array3D<T> Array3D<T>::getAbs() const {
-	Array3D<T> result = *this; //make a copy
-	result.abs(); //already implemented
 
 	return result;
 }

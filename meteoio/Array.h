@@ -72,6 +72,20 @@ template<class T> class Array {
 		* @return mean value
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief returns the sum of values contained in the grid
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @return sum
+		*/
+		T getSum(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		/**
+		* @brief returns the grid of the absolute value of values contained in the grid
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @return grid of abs(grid)
+		*/
+		const Array<T> getAbs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		void abs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA);
+
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array<P>& array);
 		T& operator [](const unsigned int& index);
@@ -101,9 +115,6 @@ template<class T> class Array {
 		const Array<T> operator/(const T& rhs);
 		Array<T>& operator/=(const Array<T>& rhs);
 		const Array<T> operator/(const Array<T>& rhs);
-
-		void abs();
-		const Array<T> getAbs() const;
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
@@ -274,6 +285,57 @@ template<class T> T Array<T>::getMean(const IOUtils::nodata_handling flag_nodata
 	} else {
 		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
+}
+
+template<class T> T Array<T>::getSum(const IOUtils::nodata_handling flag_nodata) const {
+
+	T sum = 0;
+
+	if(flag_nodata==IOUtils::RAW_NODATA) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			sum += vecData[ii];
+		}
+		return sum;
+	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		bool empty=true;
+		for (unsigned int ii=0; ii<nx; ii++) {
+			const T val = vecData[ii];
+			if(val!=IOUtils::nodata) {
+				sum += val;
+				empty=false;
+			}
+		}
+		if(!empty) return sum;
+		else return (T)IOUtils::nodata;
+	} else {
+		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
+	}
+}
+
+template<class T> void Array<T>::abs(const IOUtils::nodata_handling flag_nodata) {
+	if(std::numeric_limits<T>::is_signed) {
+		if(flag_nodata==IOUtils::RAW_NODATA) {
+			for (unsigned int ii=0; ii<nx; ii++) {
+				T& val = operator()(ii);
+				if(val<0) val=-val;
+			}
+		} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+			for (unsigned int ii=0; ii<nx; ii++) {
+				T& val = operator()(ii);
+				if(val<0 && val!=IOUtils::nodata) val=-val;
+			}
+		} else {
+			throw InvalidArgumentException("Unknown nodata_handling flag",AT);
+		}
+	}
+}
+
+
+template<class T> const Array<T> Array<T>::getAbs(const IOUtils::nodata_handling flag_nodata) const {
+	Array<T> result = *this; //make a copy
+	result.abs(flag_nodata); //already implemented
+
+	return result;
 }
 
 //arithmetic operators
@@ -447,23 +509,6 @@ template<class T> const Array<T> Array<T>::operator/(const T& rhs)
 {
 	Array<T> result = *this;
 	result /= rhs; //already implemented
-
-	return result;
-}
-
-template<class T> void Array<T>::abs() {
-	if(std::numeric_limits<T>::is_signed) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			T& val = operator()(ii);
-			if(val<0) val=-val;
-		}
-	}
-}
-
-
-template<class T> const Array<T> Array<T>::getAbs() const {
-	Array<T> result = *this; //make a copy
-	result.abs(); //already implemented
 
 	return result;
 }
