@@ -58,7 +58,7 @@ class SNIO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
 		                           const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
@@ -83,7 +83,8 @@ class SNIO : public IOInterface {
 		std::ofstream fout;//Output file streams
 		static const int sn_julian_offset;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters		
+		static const unsigned int min_nr_meteoData; // minimal number of parameters on data input lines
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecAllStations;
 };
 

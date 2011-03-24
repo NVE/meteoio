@@ -396,7 +396,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 
 		tmp_stream << (ii+1); //needed to construct key name
 		cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
-		std::cout << "\tRead io.ini stationname: '" << stationname << "'" << std::endl;
+		std::cout << "\tRead stationname " << tmp_stream.str() << ": '" << stationname << "'" << std::endl;
 		if (!isdigit(stationname[0])) {
 			vecStationID.push_back(stationname);
 		} else {
@@ -659,7 +659,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	vector<int> datestart = vector<int>(5);
 	vector<int> dateend   = vector<int>(5);
 
-	//IMIS is in TZ=+1, so moving back to this timezone
+	// Moving back to the IMIS timezone (UTC+1)
 	Date dateS(dateStart), dateE(dateEnd);
 	dateS.setTimeZone(in_tz);
 	dateE.setTimeZone(in_tz);
@@ -667,10 +667,10 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	dateE.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 
 	//get data for one specific station
-	std::vector<std::string> vecHts1;
+	std::vector<std::string> vecHTS1;
 	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
-	getSensorDepths(stat_abk, stao_nr, sqlQuerySensorDepths, vecHts1, conn);
-	bool fullStation = getStationData(stat_abk, stao_nr, datestart, dateend, vecHts1, vecResult, env, conn);
+	getSensorDepths(stat_abk, stao_nr, sqlQuerySensorDepths, vecHTS1, conn);
+	bool fullStation = getStationData(stat_abk, stao_nr, datestart, dateend, vecHTS1, vecResult, env, conn);
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
@@ -710,7 +710,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
 	IOUtils::convertString(md.param(MeteoData::ILWR),   i_meteo.at(7),  std::dec);
 	IOUtils::convertString(md.param(MeteoData::HNW),    i_meteo.at(8),  std::dec);
 	IOUtils::convertString(md.param(MeteoData::TSG),    i_meteo.at(9),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::TSS),    i_meteo.at(10),  std::dec);
+	IOUtils::convertString(md.param(MeteoData::TSS),    i_meteo.at(10), std::dec);
 	IOUtils::convertString(md.param(MeteoData::HS),     i_meteo.at(11), std::dec);
 	IOUtils::convertString(md.param(MeteoData::RSWR),   i_meteo.at(12), std::dec);
 
@@ -723,19 +723,19 @@ void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
 	}
 
 	// additional snow station parameters
-	if (!md.param_exists("ts1")) md.addParameter("ts1");
-	IOUtils::convertString(md.param("ts1"), i_meteo.at(ii++), std::dec);
-	if (!md.param_exists("ts2")) md.addParameter("ts2");
-	IOUtils::convertString(md.param("ts2"), i_meteo.at(ii++), std::dec);
-	if (!md.param_exists("ts3")) md.addParameter("ts3");
-	IOUtils::convertString(md.param("ts3"), i_meteo.at(ii++), std::dec);
+	if (!md.param_exists("TS1")) md.addParameter("TS1");
+	IOUtils::convertString(md.param("TS1"), i_meteo.at(ii++), std::dec);
+	if (!md.param_exists("TS2")) md.addParameter("TS2");
+	IOUtils::convertString(md.param("TS2"), i_meteo.at(ii++), std::dec);
+	if (!md.param_exists("TS3")) md.addParameter("TS3");
+	IOUtils::convertString(md.param("TS3"), i_meteo.at(ii++), std::dec);
 	if (fullStation) {
-		if (!md.param_exists("hts1_1")) md.addParameter("hts1_1");
-		IOUtils::convertString(md.param("hts1_1"), i_meteo.at(ii++), std::dec);
-		if (!md.param_exists("hts1_2")) md.addParameter("hts1_2");
-		IOUtils::convertString(md.param("hts1_2"), i_meteo.at(ii++), std::dec);
-		if (!md.param_exists("hts1_3")) md.addParameter("hts1_3");
-		IOUtils::convertString(md.param("hts1_3"), i_meteo.at(ii++), std::dec);
+		if (!md.param_exists("HTS1")) md.addParameter("HTS1");
+		IOUtils::convertString(md.param("HTS1"), i_meteo.at(ii++), std::dec);
+		if (!md.param_exists("HTS2")) md.addParameter("HTS2");
+		IOUtils::convertString(md.param("HTS2"), i_meteo.at(ii++), std::dec);
+		if (!md.param_exists("HTS3")) md.addParameter("HTS3");
+		IOUtils::convertString(md.param("HTS3"), i_meteo.at(ii++), std::dec);
 	}
 }
 
@@ -787,15 +787,15 @@ unsigned int ImisIO::getStationIDs(const std::string& station_code, const std::s
  * @brief This function gets IDs from table station2.v_snow_drift_standort and fills vecStationIDs
  * @param stat_abk a string key of table station2
  * @param stao_nr  a string key of table station2
- * @param veHts1   vector of string to retieve sensor depths
+ * @param vecHTS1   vector of string to retieve sensor depths
  * @param conn     create connection to SDB
  * @param return number of columns retrieved
  */
 unsigned int ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
-                                     const std::string& sqlQuery, std::vector<std::string>& vecHts1,
+                                     const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
                                      oracle::occi::Connection*& conn)
 {
-	vecHts1.clear();
+	vecHTS1.clear();
 
 	try {
 		Statement *stmt = conn->createStatement(sqlQuery);
@@ -809,7 +809,7 @@ unsigned int ImisIO::getSensorDepths(const std::string& stat_abk, const std::str
 
 		while (rs->next() == true) {
 			for (unsigned int ii=1; ii<=cols.size(); ii++) {
-				vecHts1.push_back(rs->getString(ii));
+				vecHTS1.push_back(rs->getString(ii));
 			}
 		}
 
@@ -873,7 +873,7 @@ unsigned int ImisIO::getStationMetaData(const std::string& stat_abk, const std::
  */
 bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao_nr,
                             const std::vector<int>& datestart, const std::vector<int>& dateend,
-                            const std::vector<std::string>& vecHts1,
+                            const std::vector<std::string>& vecHTS1,
                             std::vector< std::vector<std::string> >& vecMeteoData,
                             oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
@@ -914,8 +914,8 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 				vecData.push_back(rs->getString(ii));
 			}
 			if (fullStation) {
-				for (unsigned int ii=0; ii<vecHts1.size(); ii++) {
-					vecData.push_back(vecHts1.at(ii));
+				for (unsigned int ii=0; ii<vecHTS1.size(); ii++) {
+					vecData.push_back(vecHTS1.at(ii));
 				}
 			}
 			vecMeteoData.push_back(vecData);
@@ -972,12 +972,12 @@ void ImisIO::convertUnits(MeteoData& meteo)
 		meteo.hs /= 100.0;
 
 	//convert extra parameters (if present) //HACK TODO: find a dynamic way...
-	convertSnowTemperature(meteo, "ts1");
-	convertSnowTemperature(meteo, "ts2");
-	convertSnowTemperature(meteo, "ts3");
-	convertSensorDepth(meteo, "hts1_1");
-	convertSensorDepth(meteo, "hts1_2");
-	convertSensorDepth(meteo, "hts1_3");
+	convertSnowTemperature(meteo, "TS1");
+	convertSnowTemperature(meteo, "TS2");
+	convertSnowTemperature(meteo, "TS3");
+	convertSensorDepth(meteo, "HTS1");
+	convertSensorDepth(meteo, "HTS2");
+	convertSensorDepth(meteo, "HTS3");
 }
 
 void ImisIO::cleanup() throw()

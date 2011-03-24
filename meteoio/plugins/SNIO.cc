@@ -34,10 +34,10 @@ namespace mio {
  * (like a merge).
  *
  * @section snowpack_units Units
- * - temperatures in celsius (input and output) or in kelvin (input only)
+ * - temperatures in degrees Celsius (input and output) or in kelvins (input only)
  * - relative humidity in % (input and output) or in [0;1] (input only)
  * - wind speed in m/s
- * - precipitations in mm/h
+ * - precipitations in mm/h (kg/m²)
  * - radiation in W/m²
  *
  * @section snowpack_keywords Keywords
@@ -49,10 +49,17 @@ namespace mio {
  * - STATION#: station name as listed in the METAFILE, e.g. STATION1, STATION2; [Input] section
  * - METAFILE: filename of the meta data file (in METEOPATH); [Input] section (optional but recommended)
  * - NROFSTATIONS: integer, the number of stations for which meteo files are provided; [Input] section
+ * - optional, data must follow order given below but may be missing:
+ * 	- NUMBER_MEAS_TEMPERATURES: integer, the number of measured snow temperatures provided; [Input] section \n
+ * 		The depths of the sensors can be given under FIXED_SENSOR_DEPTHS (default: 0.25, 0.5, 1.0, 1.5, -0.1 m)
+ * 	- NUMBER_OF_SOLUTES: integer, the number of solutes for which input data are provided; [Input] section
+ * 	- VW_DRIFT: bool, a wind velocity to use for blowing and drifting snow is provided; [Input] section
+ * 	- RHO_HN: bool, measured new snow density is provided; [Input] section
  */
 
 const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
+const unsigned int SNIO::min_nr_meteoData = 15;
 
 SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -177,15 +184,10 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 
 void SNIO::readMetaData(unsigned int& nrOfStations)
 {
-	string stationname, metafile="", inpath;
+	string stationID, metafile="", inpath;
 	cfg.getValue("METAFILE", "Input", metafile, Config::nothrow);
 	cfg.getValue("METEOPATH", "Input", inpath);
-	stringstream meta_with_path;
-	meta_with_path << inpath << "/" << metafile;
-	if ( !IOUtils::validFileName(meta_with_path.str()) )
-		throw InvalidFileNameException(meta_with_path.str(), AT);
-	if ( !IOUtils::fileExists(meta_with_path.str()) )
-		throw FileNotFoundException(meta_with_path.str(), AT);
+
 	fin.clear();
 	
 	//Loop over all stations
@@ -193,13 +195,19 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 		stringstream snum;
 		snum << ii+1;
 
-		cfg.getValue("STATION" + snum.str(), "Input", stationname);
+		cfg.getValue("STATION" + snum.str(), "Input", stationID);
 
 		StationData sd;
 		if(metafile!="") { //a metafile has been provided, so get metadata
-			if( readStationMetaData(meta_with_path.str(), stationname, sd)==false) {
+			stringstream meta_with_path;
+			meta_with_path << inpath << "/" << metafile;
+			if ( !IOUtils::validFileName(meta_with_path.str()) )
+				throw InvalidFileNameException(meta_with_path.str(), AT);
+			if ( !IOUtils::fileExists(meta_with_path.str()) )
+				throw FileNotFoundException(meta_with_path.str(), AT);
+			if( readStationMetaData(meta_with_path.str(), stationID, sd)==false) {
 				stringstream ss;
-				ss << "No metadata found for station " << stationname << " in " << metafile;
+				ss << "No metadata found for station " << stationID << " in " << metafile;
 				throw NoAvailableDataException(ss.str(), AT);
 			}
 		}
@@ -226,12 +234,12 @@ void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationDat
 }
 
 
-void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, 
-                         const unsigned int&)
+void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
+                         std::vector< std::vector<MeteoData> >& vecMeteo, const unsigned int&)
 {
 	/*
 	 * Read the meteorological snowpack input file, formatted as follows:
-	 * M Date(ISO) Date(Julian) TA RH VW VDir ISWR RSWR ILWR TSS TSG HNW HS 
+	 * M Date Time Date(Julian) TA RH VW DW ISWR RSWR ILWR TSS TSG HNW HS (TS1 TS2 ... TSN CONC0 CONC1 ... CONCM rho_hn)
 	 * The first line may be a comment, it won't start with "M", but with "MTO"
 	 * The meteo data is terminated by a singular "END" on a line of its own
 	 */
@@ -267,14 +275,14 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
   
 		fin.clear();
 		fin.open (file_with_path.str().c_str(), std::ifstream::in);
-	
+
 		if (fin.fail())
 			throw FileAccessException(file_with_path.str(), AT);
 		if (fin.eof())
 			throw InvalidFileNameException(file_with_path.str() + ": Empty file", AT);
 	
 		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-		
+
 		try {
 			getline(fin, line, eoln);      //read complete line meta information, ignore it
 			if (line.length()>=3){
@@ -283,7 +291,6 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 			}else {
 				throw InvalidFormatException(file_with_path.str() + ": first line in invalid format", AT);
 			}
-		
 
 			unsigned int linenr = 0;
 
@@ -296,7 +303,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 
 				unsigned int ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
 			
-				if (ncols >= 15){//valid length for MeteoData
+				if (ncols >= min_nr_meteoData){
 					MeteoData md;
 					md.meta = vecAllStations[ii];
 					parseMeteoLine(tmpvec, file_with_path.str() + ":" + ss.str(), md);
@@ -320,7 +327,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector
 		} catch (std::exception& e){
 			cleanup();
 			throw;
-		}	
+		}
 		cleanup();
 	}
 }
@@ -331,37 +338,39 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	 * This function takes a meteo line, extracts the date (ignores Julian) and then converts
 	 * all meteo parameters to doubles and finally copies them into the MeteoData object md
 	 */
-	if (vecLine.size() < 15)
-		throw InvalidFormatException("At " + filepos + " line is too short", AT);
+	std::string err_msg("");
+	try {
+		if (vecLine.size() < min_nr_meteoData)
+			throw err_msg = " line is too short\n";
 
-	if (vecLine[0] != "M")
-		throw InvalidFormatException("At " + filepos + " meteo input lines must start with 'M'", AT);
+		if (vecLine[0] != "M")
+			throw err_msg = " meteo input lines must start with 'M'\n";
 
-	//deal with the date
-	if (vecLine[1].length() != 10)
-		throw InvalidFormatException("At " + filepos + " date format must be DD.MM.YYYY", AT);
-	const string year  = vecLine[1].substr(6,4);
-	const string month = vecLine[1].substr(3,2);
-	const string day   = vecLine[1].substr(0,2);
+		//deal with the date
+		if (vecLine[1].length() != 10)
+			throw err_msg = " date format must be DD.MM.YYYY\n";
+		const string year  = vecLine[1].substr(6,4);
+		const string month = vecLine[1].substr(3,2);
+		const string day   = vecLine[1].substr(0,2);
 	
-	if (!IOUtils::convertString(md.date, year+"-"+month+"-"+day+"T"+vecLine[2], in_tz, std::dec))
-		throw InvalidFormatException("At " + filepos + " date format invalid", AT);
+		if (!IOUtils::convertString(md.date, year+"-"+month+"-"+day+"T"+vecLine[2], in_tz, std::dec))
+			throw err_msg = " date format invalid\n";
 	
-	//Extract all data as double values
-	vector<double> tmpdata = vector<double>(vecLine.size());
-	for (unsigned int ii=4; ii<vecLine.size(); ii++) {
-		if (!IOUtils::convertString(tmpdata[ii], vecLine[ii], std::dec))
-			throw ConversionFailedException("At " + filepos, AT);
-	}
+		//Extract all data as double values
+		vector<double> tmpdata = vector<double>(vecLine.size());
+		for (unsigned int ii=4; ii<vecLine.size(); ii++) {
+			if (!IOUtils::convertString(tmpdata[ii], vecLine[ii], std::dec))
+				throw err_msg = " Conversion failed!\n";
+		}
 
-	//Copy data into MeteoData object
-	md.setData(MeteoData::TA, tmpdata[4]);
-	md.setData(MeteoData::RH, tmpdata[5]);
-	md.setData(MeteoData::VW, tmpdata[6]);
-	md.setData(MeteoData::DW, tmpdata[7]);
-	md.setData(MeteoData::ISWR, tmpdata[8]);
-	md.setData(MeteoData::RSWR, tmpdata[9]);
-
+		//Copy data into MeteoData object
+		md.setData(MeteoData::TA, tmpdata[4]);
+		md.setData(MeteoData::RH, tmpdata[5]);
+		md.setData(MeteoData::VW, tmpdata[6]);
+		md.setData(MeteoData::DW, tmpdata[7]);
+		md.setData(MeteoData::ISWR, tmpdata[8]);
+		md.setData(MeteoData::RSWR, tmpdata[9]);
+	
 	double& ea = tmpdata[10];
 	if ((ea <= 1) && (ea != plugin_nodata)){
 		if ((md.ta != plugin_nodata) && (md.rh != plugin_nodata)) {
@@ -375,31 +384,72 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	}
 
 	md.setData(MeteoData::ILWR, ea);
-	md.setData(MeteoData::TSS, tmpdata[11]);
-	md.setData(MeteoData::TSG, tmpdata[12]);
-	md.setData(MeteoData::HNW, tmpdata[13]);
-	md.setData(MeteoData::HS, tmpdata[14]);
+		md.setData(MeteoData::TSS, tmpdata[11]);
+		md.setData(MeteoData::TSG, tmpdata[12]);
+		md.setData(MeteoData::HNW, tmpdata[13]);
+		md.setData(MeteoData::HS, tmpdata[14]);
 
-	//All the rest of the values ought to be ts[ii] values
-	stringstream ss;
-	for (unsigned int ii=15; ii<tmpdata.size(); ii++){
-		ss.str("");
-		ss << "TS" << (ii-15);
-		md.addParameter(ss.str());		
-		md.param(ss.str()) = tmpdata[ii];
+	// Read optional values
+	 	// TS[]: snow temperatures
+		unsigned int ii = min_nr_meteoData, jj;
+		unsigned int number_meas_temperatures = 0;
+		cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
+		if (vecLine.size() < min_nr_meteoData + number_meas_temperatures)
+			throw err_msg = ": Not enough measured temperatures data\n";
+		stringstream ss("");
+		for (jj=1; jj<=number_meas_temperatures; jj++) {
+			ss.str("");
+			ss << "TS" << (jj);
+			md.addParameter(ss.str());
+			md.param(ss.str()) = tmpdata[ii++];
+		}
+		// CONC[]: solute concentrations
+		unsigned int number_of_solutes = 0;
+		cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
+		if (vecLine.size() < min_nr_meteoData + number_meas_temperatures + number_of_solutes)
+			throw err_msg = ": Not enough solute data\n";
+		jj = 0;
+		for (jj = 0 ; jj<number_of_solutes; jj++) {
+			ss.str("");
+			ss << "CONC" << jj;
+			md.addParameter(ss.str());
+			md.param(ss.str()) = tmpdata[ii++];
+		}
+		// VW_DRIFT: optional wind velocity for blowing and drifting snow
+		bool vw_drift = false;
+		cfg.getValue("VW_DRIFT", "Input", vw_drift, Config::nothrow);
+		if (vw_drift) {
+			if (vecLine.size() < ii)
+				throw err_msg = ": No data for vw_drift\n";
+			md.addParameter("VW_DRIFT");
+			md.param("VW_DRIFT") = tmpdata[ii++];
+		}
+		// RHO_HN: measured new snow density
+		bool rho_hn = false;
+		cfg.getValue("RHO_HN", "Input", rho_hn, Config::nothrow);
+		if (rho_hn) {
+			if (vecLine.size() < ii)
+				throw err_msg = ": No data for rho_hn\n";
+			md.addParameter("RHO_HN");
+			md.param("RHO_HN") = tmpdata[ii++];
+		}
+		if (vecLine.size() > ii)
+			throw err_msg = ": Too many data\n";
+	} catch(string& str) {
+		throw InvalidFormatException("At " + filepos + str, AT);
 	}
 }
 
 void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
-	string path="";
-	cfg.getValue("METEOPATH", "Output", path);
+	string outpath="";
+	cfg.getValue("METEOPATH", "Output", outpath);
 
 	for(unsigned int ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].size() > 0) {
 			std::string station_id = vecMeteo[ii][0].meta.getStationID();
 			if (station_id == "") station_id = "UNKNOWN";
-			const std::string output_name = path + "/" + station_id + ".inp";
+			const std::string output_name = outpath + "/" + station_id + ".inp";
 			if( !IOUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());
 				writeStationHeader(vecMeteo[ii], station_id);
@@ -412,34 +462,35 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	}
 }
 
-void SNIO::writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string station_id)
+void SNIO::writeStationHeader(const std::vector<MeteoData>& vecmd, const std::string station_id)
 {
 	//writing the (very basic) metadata
-	fout << "MTO <" << station_id << "> " << Meteo.size() << "\n";
+	fout << "MTO <" << station_id << "> " << vecmd.size() << "\n";
 }
 
-void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name)
+void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::string& file_name)
 { //write out the data for 1 station
 	unsigned int failure_count = 0;
 	unsigned int Dirichlet_failure_count = 0;
+	unsigned int optional_failure_count = 0;
 
-	for(unsigned int ii=0; ii<Meteo.size(); ii++) {
+	for(unsigned int jj=0; jj<vecmd.size(); jj++) {
 		int YYYY, MM, DD, HH, MI;
-		Date tmp_date(Meteo[ii].date);
+		Date tmp_date(vecmd[jj].date);
 		tmp_date.setTimeZone(out_tz);
 		tmp_date.getDate(YYYY, MM, DD, HH, MI);
 		const double sn_julian = tmp_date.getJulianDate() - sn_julian_offset + 0.5;
-		const double ta = Meteo[ii].ta;
-		const double rh = Meteo[ii].rh;
-		const double hnw = Meteo[ii].hnw;
-		const double vw = Meteo[ii].vw;
-		const double dw = Meteo[ii].dw;
-		const double iswr = Meteo[ii].iswr;
-		const double rswr = Meteo[ii].rswr;
-		const double ilwr = Meteo[ii].ilwr;
-		const double tss = Meteo[ii].tss;
-		const double tsg = Meteo[ii].tsg;
-		const double hs = Meteo[ii].hs;
+		const double ta = vecmd[jj].ta;
+		const double rh = vecmd[jj].rh;
+		const double hnw = vecmd[jj].hnw;
+		const double vw = vecmd[jj].vw;
+		const double dw = vecmd[jj].dw;
+		const double iswr = vecmd[jj].iswr;
+		const double rswr = vecmd[jj].rswr;
+		const double ilwr = vecmd[jj].ilwr;
+		const double tss = vecmd[jj].tss;
+		const double tsg = vecmd[jj].tsg;
+		const double hs = vecmd[jj].hs;
 
 		fout.fill('0');
 		fout << "M " << setw(2) << DD << "." << setw(2) << MM << "." << setw(4) << YYYY << " " << setw(2) << HH << ":" << setw(2) << MI << " ";
@@ -447,7 +498,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 		fout << setprecision(6) << setw(12) << sn_julian << " ";
 
 		//default formatting parameters for the measurements
-		fout.flags ( ios::fixed );
+		fout.flags(ios::fixed);
 		fout.fill(' ');
 		fout.width(6);
 
@@ -475,32 +526,32 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 		//ISWR, RSWR
 		if(iswr==IOUtils::nodata && rswr==IOUtils::nodata) {
 			failure_count++;
-			fout << setw(4) << setprecision(0) << iswr << " " << setprecision(0) << rswr << " ";
+			fout << setw(6) << setprecision(0) << iswr << " " << setprecision(0) << rswr << " ";
 		} else {
 			if(iswr==IOUtils::nodata)
-				fout << setw(4) << setprecision(1) << "0.0" << " ";
+				fout << setw(6) << setprecision(1) << "0.0" << " ";
 			else
-				fout << setw(4) << setprecision(0) << iswr << " ";
+				fout << setw(6) << setprecision(1) << iswr << " ";
 			if(rswr==IOUtils::nodata)
-				fout << setw(4) << setprecision(1) << "0.0" << " ";
+				fout << setw(6) << setprecision(1) << "0.0" << " ";
 			else
-				fout << setw(4) << setprecision(0) << rswr << " ";
+				fout << setw(6) << setprecision(1) << rswr << " ";
 		}
 
 		//LWR
 		if(ilwr==IOUtils::nodata) {
 			failure_count++;
-			fout << setw(4) << setprecision(1) << "0.0" << " ";
+			fout << setw(5) << setprecision(1) << "0.0" << " ";
 		} else {
-			fout << setw(4) << setprecision(0) << ilwr << " ";
+			fout << setw(5) << setprecision(1) << ilwr << " ";
 		}
 
 		//TSS, TSG (only required for Dirichlet)
 		if(tss==IOUtils::nodata) {
 			Dirichlet_failure_count++;
-			fout << setw(6) << setprecision(1) << "0.0" << " ";
+			fout << setw(7) << setprecision(1) << "0.0" << " ";
 		} else {
-			fout << setw(6) << setprecision(2) << K_TO_C(tss) << " ";
+			fout << setw(7) << setprecision(2) << K_TO_C(tss) << " ";
 		}
 		if(tsg==IOUtils::nodata) {
 			Dirichlet_failure_count++;
@@ -512,29 +563,82 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::str
 		//HNW, HS
 		if(hnw==IOUtils::nodata && hs==IOUtils::nodata) {
 			failure_count++;
-			fout << setw(5) << setprecision(2) << hnw << " " << setprecision(3) << hs << " ";
+			fout << setw(7) << setprecision(2) << hnw << " " << setw(6) << setprecision(3) << hs << " ";
 		} else {
 			if(hnw==IOUtils::nodata)
-				fout << setw(5) << setprecision(1) << "0.0" << " ";
+				fout << setw(7) << setprecision(1) << "0.0" << " ";
 			else
-				fout << setw(5) << setprecision(2) << hnw << " ";
+				fout << setw(7) << setprecision(4) << hnw << " ";
 			if(hs==IOUtils::nodata)
-				fout << setw(5) << setprecision(1) << "0.0";
+				fout << setw(6) << setprecision(1) << "0.0";
 			else
-				fout << setw(5) << setprecision(3) << hs;
+				fout << setw(6) << setprecision(3) << hs;
 		}
 
-		//we don't write any snow depth temperatures.
-		//we can not write wind velocity at the wind station, but since it is optional...
+		// Write optional values
+		//TS[]: snow temperatures
+		stringstream ss;
+		for (unsigned int kk=1; kk<100; kk++) {
+			ss.str("");
+			ss << "TS" << kk;
+			if (vecmd[jj].param_exists(ss.str())){
+				const double ts = vecmd[jj].param(ss.str());
+				if (ts == IOUtils::nodata) {
+					optional_failure_count++;
+					fout << setw(7) << setprecision(0) << ts << " ";
+				} else {
+					fout << setw(7) << setprecision(2) << K_TO_C(ts) << " ";
+				}
+			} else {
+				break;
+			}
+		}
+		//CONC[]: solute concentrations
+		for (unsigned int kk=0; kk<100; kk++) {
+			ss.str("");
+			ss << "CONC" << kk;
+			if (vecmd[jj].param_exists(ss.str())) {
+				const double conc = vecmd[jj].param(ss.str());
+				if (conc == IOUtils::nodata) {
+					optional_failure_count++;
+					fout << setw(6) << setprecision(0) << conc << " ";
+				} else {
+					fout << setw(6) << setprecision(4) << conc << " ";
+				}
+			} else {
+				break;
+			}
+		}
+		// VW_DRIFT: optional wind velocity for blowing and drifting snow
+		if (vecmd[jj].param_exists("VW_DRIFT")) {
+			const double vw_drift = vecmd[jj].param("VW_DRIFT");
+			if (vw_drift == IOUtils::nodata) {
+				optional_failure_count++;
+				fout << setw(4) << setprecision(0) << vw_drift << " ";
+			} else {
+				fout << setw(4) << setprecision(1) << vw_drift << " ";
+			}
+		}
+		// RHO_HN: measured new snow density
+		if (vecmd[jj].param_exists("RHO_HN")) {
+			const double rho_hn = vecmd[jj].param("RHO_HN");
+			if (rho_hn == IOUtils::nodata) {
+				optional_failure_count++;
+				fout << setw(6) << setprecision(0) << rho_hn << " ";
+			} else {
+				fout << setw(6) << setprecision(1) << rho_hn << " ";
+			}
+		}
 
 		fout << endl;
 	}
 
 	fout << "END" << endl;
 
-	if(failure_count>0 || Dirichlet_failure_count>0) {
-		std::cout << "[W] " << failure_count << " (and potentially " << Dirichlet_failure_count <<
-		" more) errors found when writing " << file_name << std::endl;
+	if ((failure_count > 0) || (Dirichlet_failure_count > 0) || (optional_failure_count > 0)) {
+		std::cout << "[W] " << failure_count << " basic input data, " << Dirichlet_failure_count <<
+				" Dirichlet boundary condition data, and " << optional_failure_count <<
+				" optional data found missing when writing " << file_name << std::endl;
 	}
 }
 
@@ -575,7 +679,7 @@ void SNIO::convertUnits(MeteoData& meteo)
 	}
 
 	stringstream ss;
-	for (unsigned int ii=0; ii<100; ii++){
+	for (unsigned int ii=1; ii<50; ii++){
 		ss.str("");
 		ss << "TS" << ii;
 		if (meteo.param_exists(ss.str())){
@@ -583,7 +687,7 @@ void SNIO::convertUnits(MeteoData& meteo)
 			value = C_TO_K(value);
 		} else {
 			break;
-		}		
+		}
 	}
 }
 

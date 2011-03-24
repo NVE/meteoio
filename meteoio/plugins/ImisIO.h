@@ -117,11 +117,11 @@ class ImisIO : public IOInterface {
 		                                const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
 		                                oracle::occi::Connection*& conn);
 		unsigned int getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
-		                             const std::string& sqlQuery, std::vector<std::string>& vecHts1,
+		                             const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
 		                             oracle::occi::Connection*& conn);
 		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,
 		                    const std::vector<int>& datestart, const std::vector<int>& dateend,
-		                    const std::vector<std::string>& i_vecHts,
+		                    const std::vector<std::string>& i_vecHTS1,
 		                    std::vector< std::vector<std::string> >& vecMeteoData,
 		                    oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 
@@ -155,7 +155,7 @@ class ImisIO : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecStationMetaData;
 		std::map<std::string, std::string> mapDriftStation;
-		std::vector<double> vecHts;
+		std::vector<double> vecHTS1; // vector of sensor depths
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string sqlQueryStationIDs;
 		static const std::string sqlQueryStationMetaData;
@@ -166,9 +166,9 @@ class ImisIO : public IOInterface {
 		std::string oraclePassword_in;
 		std::string oracleDBName_in;
 		bool useAnetz;
-		/*std::string oracleUserName_out;
-		std::string oraclePassword_out;
-		std::string oracleDBName_out;*/
+		//std::string oracleUserName_out;
+		//std::string oraclePassword_out;
+		//std::string oracleDBName_out;
 
 		static std::map<std::string, AnetzData> mapAnetz;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
