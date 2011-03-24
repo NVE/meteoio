@@ -87,6 +87,7 @@ bool Coords::initializeMaps() {
 
 /**
 * @brief Equality operator that checks that lat/lon match. This currently does NOT compare the altitudes!
+* If both objects have nodata coordinates, then they are equal (even if the internal projections might be set to different systems).
 * @param[in] in Coord object to compare to
 * @return true or false
 */
@@ -111,7 +112,9 @@ bool Coords::operator==(const Coords& in) const {
 		const bool comparison = ( grid_i==in.grid_i && grid_j==in.grid_j && grid_k==in.grid_k );
 		return comparison;
 	}
-	return false;
+	//every field is nodata... the objects can only be equal if both are nodata
+	if(in.isNodata()==true) return true;
+	else return false;
 }
 
 /**
@@ -141,6 +144,16 @@ Coords& Coords::operator=(const Coords& source) {
 		setFunctionPointers();
 	}
 	return *this;
+}
+
+bool Coords::isNodata() const {
+	if( latitude==IOUtils::nodata && longitude==IOUtils::nodata &&
+	    easting==IOUtils::nodata && northing==IOUtils::nodata &&
+	    altitude==IOUtils::nodata &&
+	    grid_i==IOUtils::nodata && grid_j==IOUtils::nodata && grid_k==IOUtils::nodata) {
+		return true;
+	}
+	return false;
 }
 
 /**

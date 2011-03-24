@@ -15,15 +15,19 @@ ADD_SUBDIRECTORY(meteoio/meteofilters)
 
 SET(POPCC popcc)
 
+set(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
+set(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
+
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
+set(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
+
 IF(CMAKE_COMPILER_IS_GNUCXX)
 	set(WARNINGS "-Wall")
 	set(PROFILING "-pg -fprofile-arcs")
 	set(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
-	set(DEBUG_ARITHM ON CACHE BOOL "Use the debug flags -DDEBUG_ARITHM to catch arithmetic exceptions")
 	IF(DEBUG_ARITHM)
-		LIST(APPEND CFLAGS "-DDEBUG_ARITHM")
+		LIST(APPEND CFLAGS " -DDEBUG_ARITHM ")
 	ENDIF(DEBUG_ARITHM)
 	set(OPTIM "-g -O3 -DNDEBUG")
 	set(ARCH_OPTIM  "-march=pentium4 -mtune=native")
@@ -39,6 +43,10 @@ IF(MSVC)
 	set(ARCH_OPTIM "/arch:SSE2")
 	set(ARCH_SAFE "")
 	set(DEBUG "/Z7 /Od -D__DEBUG")
+	LIST(APPEND CFLAGS " -D_CRT_SECURE_NO_WARNINGS ")
+	IF(DEBUG_ARITHM)
+		LIST(APPEND CFLAGS " /EHa ")
+	ENDIF(DEBUG_ARITHM)
 ENDIF(MSVC)
 
 IF(UNIX)
@@ -49,7 +57,7 @@ IF(UNIX)
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
-		set(PLATFORM "-U__STRICT_ANSI__ -D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS")
+		set(PLATFORM "-U__STRICT_ANSI__ -D_USE_MATH_DEFINES")
 	ENDIF(WIN32)
 ENDIF(UNIX)
 

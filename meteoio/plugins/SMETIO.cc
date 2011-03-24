@@ -895,8 +895,12 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 		sd = vecMeteo[0].meta;
 
 	for (unsigned int ii=1; ii<vecMeteo.size(); ii++){
-		if (vecMeteo[ii].meta.position != vecMeteo[ii-1].meta.position)
-			return false; //BUG: if one is nodata -> we consider that positions are not consistent
+		const Coords& p1 = vecMeteo[ii-1].meta.position;
+		const Coords& p2 = vecMeteo[ii].meta.position;
+		if (p1 != p2) {
+			//we don't mind if p1==nodata or p2==nodata
+			if(p1.isNodata()==false && p2.isNodata()==false) return false;
+		}
 	}
 
 	return true;

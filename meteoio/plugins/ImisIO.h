@@ -166,9 +166,6 @@ class ImisIO : public IOInterface {
 		std::string oraclePassword_in;
 		std::string oracleDBName_in;
 		bool useAnetz;
-		//std::string oracleUserName_out;
-		//std::string oraclePassword_out;
-		//std::string oracleDBName_out;
 
 		static std::map<std::string, AnetzData> mapAnetz;
 		static const bool __init;    ///<helper variable to enable the init of static collection data

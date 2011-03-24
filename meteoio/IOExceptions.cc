@@ -36,10 +36,10 @@ IOException::IOException(const std::string& message, const std::string& position
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	size_t tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
-	msg += "\n";
+	msg += "\n\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
 	for (unsigned int ii=1; ii<tracesize; ii++)
 		msg += "\tat " + string(symbols[ii]) + "\n";
-	
+	msg += "\033[0m"; //back to normal color
 	free(symbols);
 #endif
 #ifdef _POPC_

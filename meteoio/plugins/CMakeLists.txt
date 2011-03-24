@@ -6,6 +6,7 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 set(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
+set(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 
 IF(DEST MATCHES "par")
   SET(CMAKE_CXX_OUTPUT_EXTENSION "popc.o")

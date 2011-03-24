@@ -171,10 +171,6 @@ void ImisIO::getDBParameters()
 
 	useAnetz = false;
 	cfg.getValue("USEANETZ", "Input", useAnetz, Config::nothrow);
-
-	/*cfg.getValue("DBNAME", "Output", oracleDBName_out);
-	cfg.getValue("DBUSER", "Output", oracleUserName_out);
-	cfg.getValue("DBPASS", "Output", oraclePassword_out);*/
 }
 
 ImisIO::ImisIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
@@ -260,7 +256,6 @@ void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Co
 	}
 }
 
-// HACK Deprecated ??
 void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();

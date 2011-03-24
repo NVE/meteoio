@@ -160,11 +160,13 @@ template<class T> class Array3D {
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
 		/**
-		* @brief returns the sum of values contained in the grid
+		* @brief returns the number of points contained in the grid. 
+		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid. 
+		* If flag_nodata==IOUtils::PARSE_NODATA, then it is the number of non-nodata values in the grid
 		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
-		* @return sum
+		* @return count
 		*/
-		T getSum(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		size_t getCount(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
 		/**
 		* @brief returns the grid of the absolute value of values contained in the grid
 		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
@@ -402,27 +404,18 @@ template<class T> T Array3D<T>::getMean(const IOUtils::nodata_handling flag_noda
 	}
 }
 
-template<class T> T Array3D<T>::getSum(const IOUtils::nodata_handling flag_nodata) const {
-
-	T sum = 0;
+template<class T> size_t Array3D<T>::getCount(const IOUtils::nodata_handling flag_nodata) const
+{
 	const unsigned int nxyz = nx*ny*nz;
 
 	if(flag_nodata==IOUtils::RAW_NODATA) {
-		for (unsigned int ii=0; ii<nxyz; ii++) {
-			sum += vecData[ii];
-		}
-		return sum;
+		return (size_t)nxyz;
 	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
-		bool empty=true;
+		size_t count = 0;
 		for (unsigned int ii=0; ii<nxyz; ii++) {
-			const T val = vecData[ii];
-			if(val!=IOUtils::nodata) {
-				sum += val;
-				empty=false;
-			}
+			if(vecData[ii]!=IOUtils::nodata) count++;
 		}
-		if(!empty) return sum;
-		else return (T)IOUtils::nodata;
+		return count;
 	} else {
 		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
