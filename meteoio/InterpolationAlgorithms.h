@@ -76,6 +76,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
  * - LIDW_LAPSE: IDW_LAPSE restrictited to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
+ * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2010) (see SnowHNWInterpolation)
  * - ODKRIG: ordinary kriging THIS IS NOT YET USABLE
@@ -328,6 +329,31 @@ class RHAlgorithm : public InterpolationAlgorithm {
 	private:
 		std::vector<double> vecDataTA, vecDataRH; ///<vectors of extracted TA and RH
 };
+
+/**
+ * @class ILWRAlgorithm
+ * @brief Incoming Long Wave Radiation interpolation algorithm.
+ * Each ILWR is converted to an emissivity (using the local air temperature), interpolated using CST_LAPSE or IDW_LAPSE with
+ * a fixed lapse rate and reconverted to ILWR.
+ *
+ * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for 
+ * emissivity to ILWR conversion)
+ */
+class ILWRAlgorithm : public InterpolationAlgorithm {
+	public:
+		ILWRAlgorithm(Meteo2DInterpolator& i_mi,
+					const Date& date,
+					const DEMObject& i_dem,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, IOManager& iom)
+			: InterpolationAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algo, iom) {}
+		virtual void initialize(const MeteoData::Parameters& in_param);
+		virtual double getQualityRating();
+		virtual void calculate(Grid2DObject& grid);
+	private:
+		std::vector<double> vecDataEA; ///<vectors of extracted emissivities
+};
+
 
 /**
  * @class SimpleWindInterpolationAlgorithm

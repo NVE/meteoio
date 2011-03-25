@@ -93,7 +93,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 
 		//finally execute the algorithm with the best quality rating or throw an exception
 		if (bestalgorithm.get() == NULL) {
-			throw IOException("No interpolation algorithm with quality rating >0 found", AT);
+			throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+MeteoData::getParameterName(meteoparam), AT);
 		}
 		bestalgorithm->calculate(result);
 		InfoString = bestalgorithm->getInfo();

@@ -42,6 +42,7 @@ bool AlgorithmFactory::initStaticData()
 	setAlgorithms.insert("IDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill
 	setAlgorithms.insert("LIDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
 	setAlgorithms.insert("RH");        // relative humidity interpolation
+	setAlgorithms.insert("ILWR");        // long wave radiation interpolation
 	setAlgorithms.insert("WIND_CURV"); // wind velocity interpolation (using a heuristic terrain effect)
 	setAlgorithms.insert("HNW_SNOW"); // precipitation interpolation according to (Magnusson, 2010)
 	setAlgorithms.insert("ODKRIG"); // ordinary kriging
@@ -77,6 +78,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new LocalIDWLapseAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "RH"){
 		return new RHAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+	} else if (algoname == "ILWR"){
+		return new ILWRAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "WIND_CURV"){
 		return new SimpleWindInterpolationAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ODKRIG"){
@@ -477,6 +480,90 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 		}
 	}
 }
+
+void ILWRAlgorithm::initialize(const MeteoData::Parameters& in_param) {
+	param = in_param;
+
+	nrOfMeasurments = 0;
+	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+		if ((vecMeteo[ii].ilwr != IOUtils::nodata) && (vecMeteo[ii].ta != IOUtils::nodata)){
+			vecDataEA.push_back( Atmosphere::blkBody_Emissivity( vecMeteo[ii].ilwr, vecMeteo[ii].ta) );
+			vecMeta.push_back(vecMeteo[ii].meta);
+			nrOfMeasurments++;
+		}
+	}
+}
+
+double ILWRAlgorithm::getQualityRating()
+{
+	//This algorithm is only valid for RH
+	if (param != MeteoData::ILWR)
+		return 0.0;
+
+	if (vecDataEA.size() == 0)
+		return 0.0;
+
+	return 0.9;
+}
+
+void ILWRAlgorithm::calculate(Grid2DObject& grid)
+{		
+	//This algorithm is only valid for RH
+	if (param != MeteoData::ILWR)
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
+	if (vecDataEA.size() == 0) //No matching data
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
+
+	vector<double> vecAltitudes;
+	getStationAltitudes(vecMeta, vecAltitudes);
+	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;
+
+	Grid2DObject ta;
+	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
+
+	//Krieging on Td
+	std::vector<double> vecCoefficients;
+	vecCoefficients.resize(4, 0.0);
+
+	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
+	if (vecArgs.size() == 0) {
+		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
+	} else if (vecArgs.size() == 1) {
+		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+	} else if (vecArgs.size() == 2) {
+		std::string extraArg;
+		IOUtils::convertString(extraArg, vecArgs[1]);
+		if(extraArg=="soft") { //soft
+			if(Interpol2D::LinRegression(vecAltitudes, vecDataEA, vecCoefficients) != EXIT_SUCCESS) {
+				vecCoefficients.assign(4, 0.0);
+				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+			}
+		} else if(extraArg=="frac") {
+			funcptr = &Interpol2D::FracProject;
+			IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+		} else {
+			std::stringstream os;
+			os << "Unknown argument \"" << extraArg << "\" supplied for the ILWR algorithm";
+			throw InvalidArgumentException(os.str(), AT);
+		}
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the ILWR algorithm", AT);
+	}
+
+	//run algorithm
+	info << "r^2=" << IOUtils::pow2( vecCoefficients[3] );
+
+	//run algorithm
+	Interpol2D::LapseIDW(vecDataEA, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
+
+	//Recompute Rh from the interpolated td
+	for (unsigned int jj=0; jj<grid.nrows; jj++) {
+		for (unsigned int ii=0; ii<grid.ncols; ii++) {
+			grid.grid2D(ii,jj) = Atmosphere::blkBody_Radiation(grid.grid2D(ii,jj), ta.grid2D(ii,jj));
+		}
+	}
+}
+
 
 
 void SimpleWindInterpolationAlgorithm::initialize(const MeteoData::Parameters& in_param) {

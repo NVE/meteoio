@@ -125,19 +125,21 @@ double Atmosphere::waterSaturationPressure(const double& T) {
 * @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
 * This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
 * Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
-* @param e0 water vapor pressure (Pa)
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
 * @return emissivity (between 0 and 1)
 */
-double Atmosphere::Omstedt_emissivity(const double& e0, const double& cloudiness) {
+double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
 	const double eps_w = 0.97;
 	const double a1 = 0.68;
 	const double a2 = 0.0036;
 	const double a3 = 0.18;
 
-	double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
+	const double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
 	if(ea > 1.0) 
-		ea = 1.0;
+		return 1.0;
 
 	return ea;
 }
@@ -152,12 +154,9 @@ double Atmosphere::Omstedt_emissivity(const double& e0, const double& cloudiness
 * @return long wave radiation (W/m^2)
 */
 double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) {
-	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
-	const double ea = Omstedt_emissivity(e0, cloudiness);
-
+	const double ea = Omstedt_emissivity(RH, TA, cloudiness);
 	return blkBody_Radiation(ea, TA);
 }
-
 
 /**
  * @brief Evaluate the atmosphere emissivity for clear sky. 
@@ -165,11 +164,12 @@ double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double
  * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
  * Research, Vol. 11, No. 5, October 1975, pp 742-744.
  * Alternative: Satterlund (1979): Water Resources Research, 15, 1649-1650.
- * @param e0 Water vapor saturation pressure (Pa)
+ * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @return clear sky emissivity
  */
-double Atmosphere::Brutsaert_emissivity(const double& e0, const double& TA) {
+double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
+	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
 	const double e0_mBar = 0.01 * e0;
 	const double exponent = 1./7.;
 
@@ -187,9 +187,7 @@ double Atmosphere::Brutsaert_emissivity(const double& e0, const double& TA) {
  * @return long wave radiation (W/m^2)
 */
 double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
-	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
-	const double ea = Brutsaert_emissivity(e0, TA);
-
+	const double ea = Brutsaert_emissivity(RH, TA);
 	return blkBody_Radiation(ea, TA);
 }
 
