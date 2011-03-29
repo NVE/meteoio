@@ -832,9 +832,13 @@ double Date::calculateJulianDate(const int& i_year, const int& i_month, const in
 
 void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, int& o_day, int& o_hour, int& o_minute) const
 { //given a julian day, calculate the year, month, day, hours and minutes
- //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097 
+ //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
+	//we round the given julian date to the closest minute since this is our current resolution
+	const double rnd_factor = (60.*24.);
+	const double tmp_julian = round(i_julian*rnd_factor) / rnd_factor;
+
 	long t1;
-	const long julday = (long) floor(i_julian+0.5);
+	const long julday = (long) floor(tmp_julian+0.5);
 
 	t1 = julday + 68569L;
 	const long t2 = 4L * t1 / 146097L;
@@ -853,7 +857,7 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 		o_year--;
 	}
 
-	const double frac = (i_julian + 0.5) - floor(i_julian+0.5); //the julian date reference is at 12:00
+	const double frac = (tmp_julian + 0.5) - floor(tmp_julian+0.5); //the julian date reference is at 12:00
 	o_minute = ((int)round(frac*((double)24.0*60.0))) % 60;
 	o_hour = (int) round((((double)1440.0)*frac-(double)o_minute)/(double)60.0);
 }
