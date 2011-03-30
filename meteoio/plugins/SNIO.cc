@@ -141,7 +141,7 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation = vecAllStations; //vecAllStations is a global vector that holds all meta data
 }
 
-bool SNIO::readStationMetaData(const std::string& metafile, const std::string& stationname, StationData& sd)
+bool SNIO::readStationMetaData(const std::string& metafile, const std::string& stationID, StationData& sd)
 {
 	fin.open (metafile.c_str(), std::ifstream::in);
 	if (fin.fail())
@@ -169,7 +169,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 				throw InvalidFormatException(metafile+":"+ss.str() + " each line must have 6 columns", AT);
 			} else {
 				//6 columns exist
-				if (tmpvec.at(0) == stationname){
+				if (tmpvec.at(0) == stationID){
 					parseMetaDataLine(tmpvec, sd);
 					return(true);
 				}
@@ -198,14 +198,14 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 		cfg.getValue("STATION" + snum.str(), "Input", stationID);
 
 		StationData sd;
-		if(metafile!="") { //a metafile has been provided, so get metadata
+		if (metafile!="") { //a metafile has been provided, so get metadata
 			stringstream meta_with_path;
 			meta_with_path << inpath << "/" << metafile;
-			if ( !IOUtils::validFileName(meta_with_path.str()) )
+			if (!IOUtils::validFileName(meta_with_path.str()))
 				throw InvalidFileNameException(meta_with_path.str(), AT);
-			if ( !IOUtils::fileExists(meta_with_path.str()) )
+			if (!IOUtils::fileExists(meta_with_path.str()))
 				throw FileNotFoundException(meta_with_path.str(), AT);
-			if( readStationMetaData(meta_with_path.str(), stationID, sd)==false) {
+			if (readStationMetaData(meta_with_path.str(), stationID, sd) == false) {
 				stringstream ss;
 				ss << "No metadata found for station " << stationID << " in " << metafile;
 				throw NoAvailableDataException(ss.str(), AT);
