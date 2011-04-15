@@ -32,17 +32,17 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 	set(OPTIM "-g -O3 -DNDEBUG")
 	set(ARCH_OPTIM  "-march=pentium4 -mtune=native")
 	set(ARCH_SAFE  "-march=pentium4")
-	set(DEBUG "-g -O0 -D__DEBUG")
+	set(DEBUG "-g3 -O0 -D__DEBUG")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 IF(MSVC)
-	# for linker, "/MD /MDd"?
+	#set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
 	set(WARNINGS "/W4")
 	set(EXTRA_WARNINGS "/Wp64") #/Wall
-	set(OPTIM "/O2 /Vmb")
+	set(OPTIM "/O2 /Vmb /DNDEBUG /MD")
 	set(ARCH_OPTIM "/arch:SSE2")
 	set(ARCH_SAFE "")
-	set(DEBUG "/Z7 /Od /D__DEBUG")
+	set(DEBUG "/Z7 /Od /D__DEBUG /MDd")
 	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /D_USE_MATH_DEFINES") #Za: strict ansi
 	IF(DEBUG_ARITHM)
 		LIST(APPEND CFLAGS " /EHa ")
@@ -52,12 +52,18 @@ ENDIF(MSVC)
 IF(UNIX)
 	IF(APPLE)
 		set(PLATFORM "-DAPPLE")
+		set(DLL_EXT "dylib")
+		set(STAT_EXT "a")
 	ELSE(APPLE)
 		set(PLATFORM "-DLINUX")
+		set(DLL_EXT "so")
+		set(STAT_EXT "a")
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
-		#set(PLATFORM "-U__STRICT_ANSI__ -D_USE_MATH_DEFINES")
+		set(PLATFORM "-D_WIN32")
+		set(DLL_EXT "dll")
+		set(STAT_EXT "a")
 	ENDIF(WIN32)
 ENDIF(UNIX)
 
@@ -65,6 +71,7 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "release" CACHE STRING
 	"Choose the type of build, options are: debug release "
 	FORCE)
+	set(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 endif(NOT CMAKE_BUILD_TYPE)
 
 ###########################################################
@@ -133,14 +140,18 @@ INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include/meteoio COMPONENT headers
 INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT headers)
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
 
-FILE(GLOB solibs "${PROJECT_SOURCE_DIR}/lib/libmeteoio*.so*")
-FILE(GLOB plugins "${PROJECT_SOURCE_DIR}/lib/plugins/lib*.so*")
-FILE(GLOB alibs "${PROJECT_SOURCE_DIR}/lib/*.a*")
+IF(WIN32) #handle the special case of WIN32 needing import libraries
+	FILE(GLOB importlibs "${CMAKE_CURRENT_BINARY_DIR}/libmeteoio*.lib*")
+ENDIF(WIN32)
+
+FILE(GLOB solibs "${CMAKE_BINARY_DIR}/lib/libmeteoio*.${DLL_EXT}*")
+FILE(GLOB plugins "${CMAKE_BINARY_DIR}/lib/plugins/lib*.${DLL_EXT}*")
+FILE(GLOB alibs "${CMAKE_BINARY_DIR}/lib/*.${STAT_EXT}*")
 IF(DEST MATCHES "par")
-	FILE(GLOB modules "${PROJECT_SOURCE_DIR}/lib/*.module")
+	FILE(GLOB modules "${CMAKE_BINARY_DIR}/lib/*.module")
 	INSTALL(FILES ${modules} DESTINATION lib/meteoio COMPONENT libraries)
 ENDIF(DEST MATCHES "par")
-INSTALL(FILES ${solibs} ${alibs} DESTINATION lib COMPONENT libraries)
+INSTALL(FILES ${solibs} ${importlibs} ${alibs} DESTINATION lib COMPONENT libraries)
 INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins COMPONENT plugins)
 
 
