@@ -142,11 +142,16 @@ INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT
 
 IF(WIN32) #handle the special case of WIN32 needing import libraries
 	FILE(GLOB importlibs "${CMAKE_CURRENT_BINARY_DIR}/libmeteoio*.lib*")
+	FILE(GLOB solibs "${CMAKE_BINARY_DIR}/meteoio/libmeteoio*.${DLL_EXT}*")
+	FILE(GLOB plugins "${CMAKE_BINARY_DIR}/meteoio/plugins/lib*.${DLL_EXT}*")
+	FILE(GLOB alibs "${CMAKE_BINARY_DIR}/meteoio/*.${STAT_EXT}*")
+ELSE(WIN32)
+	FILE(GLOB solibs "${CMAKE_BINARY_DIR}/lib/libmeteoio*.${DLL_EXT}*")
+	FILE(GLOB plugins "${CMAKE_BINARY_DIR}/lib/plugins/lib*.${DLL_EXT}*")
+	FILE(GLOB alibs "${CMAKE_BINARY_DIR}/lib/*.${STAT_EXT}*")
 ENDIF(WIN32)
 
-FILE(GLOB solibs "${CMAKE_BINARY_DIR}/lib/libmeteoio*.${DLL_EXT}*")
-FILE(GLOB plugins "${CMAKE_BINARY_DIR}/lib/plugins/lib*.${DLL_EXT}*")
-FILE(GLOB alibs "${CMAKE_BINARY_DIR}/lib/*.${STAT_EXT}*")
+
 IF(DEST MATCHES "par")
 	FILE(GLOB modules "${CMAKE_BINARY_DIR}/lib/*.module")
 	INSTALL(FILES ${modules} DESTINATION lib/meteoio COMPONENT libraries)

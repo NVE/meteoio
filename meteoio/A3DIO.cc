@@ -242,15 +242,17 @@ void A3DIO::read1DStation(std::string& file_1d, StationData& sd)
 		try {
 			location.check();
 		} catch(...) {
-			std::cerr << "[E] Error in geographic coordinates in file " << file_1d << " trapped at " << AT << std::endl;
-			throw;
+			std::stringstream msg;
+			msg << "[E] Inconsistent geographic coordinates in file " << file_1d;
+			throw InvalidArgumentException(msg.str(), AT);
 		}
 
 		sd.setStationData(location, "meteo1d", "Meteo1D station");
 	} catch(...) {
-		std::cout << "[E] " << AT << ": "<< std::endl;
 		cleanup();
-		throw;
+		std::stringstream msg;
+		msg << "[E] Error processing header of file " << file_1d;
+		throw InvalidFormatException(msg.str(), AT);
 	}
 }
 
@@ -313,9 +315,10 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector<
 			convertUnits(tmpdata);
 		}
 	} catch(...) {
-		std::cout << "[E] " << AT << ": "<< std::endl;
 		cleanup();
-		throw;
+		std::stringstream msg;
+		msg << "[E] Error processing data section of file " << file_1d << " possibly at line \"" << line << "\"";
+		throw InvalidFormatException(msg.str(), AT);
 	}
 
 	cleanup();
@@ -552,8 +555,8 @@ unsigned int A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::ma
 }
 
 void A3DIO::read2DMeteoData(const std::string& filename, const std::string& parameter,
-					std::map<std::string,unsigned int>& hashStations,
-					std::vector< std::vector<MeteoData> >& vecM, unsigned int& bufferindex)
+                            std::map<std::string,unsigned int>& hashStations,
+                            std::vector< std::vector<MeteoData> >& vecM, unsigned int& bufferindex)
 {
 
 	std::string line_in = "";
@@ -642,7 +645,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 }
 
 void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,unsigned int>& hashStations,
-						std::vector<StationData>& vecS)
+                              std::vector<StationData>& vecS)
 {
 	std::string line_in = "";
 	unsigned int columns = 0;

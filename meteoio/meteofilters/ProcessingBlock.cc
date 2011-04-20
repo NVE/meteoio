@@ -24,6 +24,7 @@
 #include <meteoio/meteofilters/FilterWindAvg.h>
 #include <meteoio/meteofilters/FilterStdDev.h>
 #include <meteoio/meteofilters/RateFilter.h>
+#include <meteoio/meteofilters/FilterTukey.h>
 
 namespace mio {
 /**
@@ -63,7 +64,7 @@ namespace mio {
  * - MAX: maximum check filter, see FilterMax
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterAlgorithms::StandardDeviationFilter
  * - mad: median absolute deviation, see FilterAlgorithms::MedianAbsoluteDeviationFilter
- * - Tukey53H: Tukey53H spike detection, based on median, see FilterAlgorithms::Tukey53HFilter
+ * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  *
  * A few data transformations are also supported besides filtering:
  * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
@@ -87,6 +88,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("WIND_AVG");
 	availableBlocks.insert("STD_DEV");
 	availableBlocks.insert("RATE");
+	availableBlocks.insert("TUKEY");
 
 	return true;
 }
@@ -114,6 +116,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterStdDev(vec_args);
 	} else if (blockname == "RATE"){
 		return new RateFilter(vec_args);
+	} else if (blockname == "TUKEY"){
+		return new FilterTukey(vec_args);
 	} else {
 		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);		
 	}

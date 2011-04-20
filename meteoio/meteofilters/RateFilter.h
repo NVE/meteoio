@@ -27,15 +27,18 @@ namespace mio {
 /**
  * @class  RateFilter
  * @ingroup processing
- * @author Thomas Egger
- * @date   2011-01-26
+ * @author Thomas Egger - Mathias Bavay
+ * @date   2011-04-19
  * @brief Rate of change filter.
- * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point. Remarks:
- * - the maximum permissible rate of change (per seconds) has to be provided as an argument
+ * Calculate the change rate (ie: slope) between two points, if it is above a user given value, reject the point.
+ *  - If one argument is provided, it is interpreted as the absolute value of the maximum permissible rate of change (per seconds). This means that
+ *    every point where <em>|local_rate_of_change| \> argument</em> is rejected
+ *  - If two arguments are provided, they are interpreted as the minimum and the maximum (respectively) permissible rate of change (per seconds). This means that
+ *    every point where <em>local_rate_of_change \< argument1 AND local_rate_of_change \> argument2</em> is rejected
  *
  * @code
  * TA::filter1	= rate
- * TA::arg1	= 0.01
+ * TA::arg1	= -0.01 0.015
  * @endcode
  */
 class RateFilter : public FilterBlock {
@@ -43,11 +46,11 @@ class RateFilter : public FilterBlock {
 		RateFilter(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-						 std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
-		double max_rate_of_change;
+		double min_rate_of_change, max_rate_of_change;
 };
 
 } //end namespace

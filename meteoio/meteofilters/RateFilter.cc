@@ -59,7 +59,7 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 
 		const double local_rate = (curr_value-prev_value) / ((curr_time-prev_time)*24.*3600.); //per seconds
 
-		if (abs(local_rate) > max_rate_of_change ) {
+		if( local_rate>max_rate_of_change || local_rate<min_rate_of_change ) {
 			curr_value = IOUtils::nodata;
 		} else {
 			last_good = ii;
@@ -69,9 +69,18 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 
 void RateFilter::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
-	FilterBlock::convert_args(1, 1, vec_args, filter_args);
+	FilterBlock::convert_args(1, 2, vec_args, filter_args);
 
-	max_rate_of_change = filter_args[0];
+	const unsigned int nb_args = filter_args.size();
+	if (nb_args == 2) {
+		min_rate_of_change = filter_args[0];
+		max_rate_of_change = filter_args[1];
+	} else if(nb_args == 1) {
+		min_rate_of_change = -filter_args[0];
+		max_rate_of_change = filter_args[0];
+	} else
+		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 1 or 2 arguments!", AT); 
+
 }
 
 } 

@@ -83,16 +83,15 @@ void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoDat
 	}
 }
 
-void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, const unsigned int& index, double& stddev, double& mean) {
+void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, const unsigned int& paramindex, double& stddev, double& mean) {
 	unsigned int count=0;
-	double sum=0., sum_sq=0.;
+	double sum=0.;
 	unsigned int n = vec_window.size();
 
 	for(unsigned int ii=0; ii<n; ii++) {
-		const double& value = (*vec_window[ii]).param(index);
+		const double& value = (*vec_window[ii]).param(paramindex);
 		if(value!=IOUtils::nodata) {
 			sum += value;
-			sum_sq += value*value;
 			count++;
 		}
 	}
@@ -101,8 +100,17 @@ void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, cons
 		mean = IOUtils::nodata;
 		stddev = IOUtils::nodata;
 	} else {
+		//compensated variance algorithm, see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance
 		mean = sum/(double)count;
-		const double variance = (sum_sq - sum*mean)/((double)count-1.);
+		double sum2=0., sum3=0.;
+		for(unsigned int ii=0; ii<n; ii++) {
+			const double& value = (*vec_window[ii]).param(paramindex);
+			if(value!=IOUtils::nodata) {
+				sum2 = sum2 + (value - mean)*(value - mean);
+				sum3 = sum3 + (value - mean);
+			}
+		}
+		const double variance = (sum2 - sum3*sum3/count) / (count - 1);
 		stddev = sqrt(variance);
 	}
 }

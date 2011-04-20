@@ -131,7 +131,9 @@ double Interpol1D::getMedianAverageDeviation(const std::vector<double>& vecData)
 }
 
 double Interpol1D::variance(const std::vector<double>& X)
-{
+{//The variance is computed using a compensated variance algorithm,
+//(see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance)
+//in order to be more robust to small variations around the mean.
 	const unsigned int n = X.size();
 
 	unsigned int count=0;
@@ -147,8 +149,18 @@ double Interpol1D::variance(const std::vector<double>& X)
 	}
 
 	if(count<=1) return IOUtils::nodata;
+
 	const double mean = sum/(double)count;
-	return (sum_sq - sum*mean)/((double)count-1.);
+	double sum2=0., sum3=0.;
+	for(unsigned int i=0; i<n; i++) {
+		const double value=X[i];
+		if(value!=IOUtils::nodata) {
+			sum2 = sum2 + (value - mean)*(value - mean);
+			sum3 = sum3 + (value - mean);
+		}
+	}
+	const double variance = (sum2 - sum3*sum3/count) / (count - 1);
+	return variance;
 }
 
 double Interpol1D::std_dev(const std::vector<double>& X)
@@ -157,7 +169,7 @@ double Interpol1D::std_dev(const std::vector<double>& X)
 }
 
 double Interpol1D::covariance(const std::vector<double>& X, const std::vector<double>& Y)
-{
+{//HACK: we should use a compensated formula here, similarly to the variance computation!
 	if(X.size()!=Y.size())
 		throw IOException("Vectors should have the same size for covariance!", AT);
 	const unsigned int n = X.size();
