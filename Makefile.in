@@ -62,7 +62,7 @@ export prefix		= @prefix@
 export exec_prefix	= @exec_prefix@
 
 LIBS		= -lc -ldl -lm -lstdc++
-LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoio 
+LDFLAGS_SEQ	= -L$(LIBDIR) -lmeteoio
 LD_POPC		= -L$(LIBDIR) -lmeteoiopopc
 LDFLAGS_POPC	= $(LD_POPC)
 LDFLAGS		= $(LIBS) -rdynamic
@@ -108,6 +108,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteofilters/FilterMeanAvg.o \
 		$(SRCDIR)/meteofilters/FilterWindAvg.o \
 		$(SRCDIR)/meteofilters/FilterStdDev.o \
+		$(SRCDIR)/meteofilters/FilterTukey.o \
 		$(SRCDIR)/meteofilters/RateFilter.o \
 		$(SRCDIR)/meteofilters/FilterBlock.o \
 		$(SRCDIR)/meteofilters/WindowedFilter.o \
@@ -115,7 +116,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteofilters/ProcessingStack.o \
 		$(SRCDIR)/meteolaws/Atmosphere.o \
 		$(SRCDIR)/meteolaws/Suntrajectory.o \
-		$(SRCDIR)/meteolaws/Sun.o 
+		$(SRCDIR)/meteolaws/Sun.o
 
 METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
 		$(SRCDIR)/marshal_meteoio_par.o \
@@ -153,6 +154,7 @@ METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
 		$(SRCDIR)/meteofilters/FilterMeanAvg_par.o \
 		$(SRCDIR)/meteofilters/FilterWindAvg_par.o \
 		$(SRCDIR)/meteofilters/FilterStdDev_par.o \
+		$(SRCDIR)/meteofilters/FilterTukey_par.o \
 		$(SRCDIR)/meteofilters/RateFilter_par.o \
 		$(SRCDIR)/meteofilters/FilterBlock_par.o \
 		$(SRCDIR)/meteofilters/WindowedFilter_par.o \
@@ -160,17 +162,17 @@ METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
 		$(SRCDIR)/meteofilters/ProcessingStack_par.o \
 		$(SRCDIR)/meteolaws/Atmosphere_par.o \
 		$(SRCDIR)/meteolaws/Suntrajectory_par.o \
-		$(SRCDIR)/meteolaws/Sun_par.o 
+		$(SRCDIR)/meteolaws/Sun_par.o
 
 TOOLS_OBJ =	$(TOOLSDIR)/createA3DFiles.o
 
 ####### Build rules SEQ
 
-all: seq 
+all: seq
 	@echo -e "*** MeteoIO compiled as \033[36m$(MODE)\033[0m"
 
 help:
-	@echo -e "MeteoIO Makefile targets:" 
+	@echo -e "MeteoIO Makefile targets:"
 	@echo -e " \033[36mseq\033[0m"
 	@echo -e " \033[36mcreateA3DFiles\033[0m"
 	@echo -e " \033[36mpar\033[0m"
@@ -188,7 +190,7 @@ build_dynamiclibs: $(LIBDIR)/plugins/libbormaio.so \
 			$(LIBDIR)/plugins/libsnio.so \
 			$(LIBDIR)/plugins/libsmetio.so \
 			$(LIBDIR)/plugins/libarcio.so \
-			$(LIBDIR)/plugins/libgrassio.so 
+			$(LIBDIR)/plugins/libgrassio.so
 
 ############## POPC ##############
 par: $(LIBDIR)/libmeteoiopopc.a  build_dynamiclibs_par meteoIO_module_par
@@ -198,7 +200,7 @@ build_dynamiclibs_par:  $(LIBDIR)/plugins/libarciopopc.so \
 			$(LIBDIR)/plugins/libsmetiopopc.so \
 			$(LIBDIR)/plugins/libsniopopc.so \
 			$(LIBDIR)/plugins/libimisiopopc.so \
-			$(LIBDIR)/plugins/libgrassiopopc.so 
+			$(LIBDIR)/plugins/libgrassiopopc.so
 
 meteoIO_module_par: $(LIBDIR)/meteoio.module
 ##############  END  ##############
@@ -264,7 +266,7 @@ endif
 $(LIBDIR)/plugins/libgeotopio.so:$(PLUGINDIR)/GeotopIO.cc $(PLUGINDIR)/GeotopIO.h $(LIBDIR)/libmeteoio.a
 ifeq ($(GEOTOPIO),yes)
 	@echo **** Compiling GeoTOP plugin
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GeotopIO.o $(PLUGINDIR)/GeotopIO.cc 
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GeotopIO.o $(PLUGINDIR)/GeotopIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgeotopio.so -o $@ $(PLUGINDIR)/GeotopIO.o $(LDFLAGS)
 endif
 
@@ -285,14 +287,14 @@ endif
 $(LIBDIR)/plugins/libarcio.so:$(PLUGINDIR)/ARCIO.cc $(PLUGINDIR)/ARCIO.h $(LIBDIR)/libmeteoio.a
 ifeq ($(ARCIO),yes)
 	@echo **** Compiling ARC file plugin
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/ARCIO.o $(PLUGINDIR)/ARCIO.cc 
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/ARCIO.o $(PLUGINDIR)/ARCIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libarcio.so -o $@ $(PLUGINDIR)/ARCIO.o $(LDFLAGS)
 endif
 
 $(LIBDIR)/plugins/libgrassio.so:$(PLUGINDIR)/GrassIO.cc $(PLUGINDIR)/GrassIO.h $(LIBDIR)/libmeteoio.a
 ifeq ($(GRASSIO),yes)
 	@echo **** Compiling GRASS file plugin
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GrassIO.o $(PLUGINDIR)/GrassIO.cc 
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GrassIO.o $(PLUGINDIR)/GrassIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgrassio.so -o $@ $(PLUGINDIR)/GrassIO.o $(LDFLAGS)
 endif
 
@@ -300,8 +302,8 @@ $(LIBDIR)/plugins/libgsnio.so:$(PLUGINDIR)/GSNIO.cc $(PLUGINDIR)/GSNIO.h $(LIBDI
 ifeq ($(GSNIO),yes)
 	@echo **** Compiling GSN plugin
 	cd $(PLUGINDIR)/gsn; make
-	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @GSOAPPP_CFLAGS@ -c -o $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/GSNIO.cc 
-	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgsnio.so -o $@ $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/gsn/soapA3DWebServiceSoap12BindingProxy.o $(PLUGINDIR)/gsn/soapC.o $(LDFLAGS) @GSOAPPP_LIBS@ 
+	$(CXX) $(CCFLAGS) -fPIC $(INCLUDE) @GSOAPPP_CFLAGS@ -c -o $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/GSNIO.cc
+	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgsnio.so -o $@ $(PLUGINDIR)/GSNIO.o $(PLUGINDIR)/gsn/soapA3DWebServiceSoap12BindingProxy.o $(PLUGINDIR)/gsn/soapC.o $(LDFLAGS) @GSOAPPP_LIBS@
 endif
 
 $(LIBDIR)/plugins/libimisio.so: $(PLUGINDIR)/ImisIO.cc $(PLUGINDIR)/ImisIO.h $(LIBDIR)/libmeteoio.a
@@ -315,14 +317,14 @@ endif
 $(LIBDIR)/plugins/libgrassiopopc.so:$(PLUGINDIR)/GrassIO.cc $(PLUGINDIR)/GrassIO.h $(LIBDIR)/libmeteoiopopc.a
 ifeq ($(GRASSIO),yes)
 	@echo **** Compiling GRASS file plugin
-	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GrassIO.o $(PLUGINDIR)/GrassIO.cc 
+	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/GrassIO.o $(PLUGINDIR)/GrassIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libgrassio.so -o $@ $(PLUGINDIR)/GrassIO.o $(LDFLAGS_POPC) $(LDFLAGS)
 endif
 
 $(LIBDIR)/plugins/libarciopopc.so:$(PLUGINDIR)/ARCIO.cc $(PLUGINDIR)/ARCIO.h $(LIBDIR)/libmeteoiopopc.a
 ifeq ($(ARCIO),yes)
 	@echo **** Compiling ARC file plugin
-	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/ARCIO.o $(PLUGINDIR)/ARCIO.cc 
+	$(POPCC) $(CCFLAGS) -fPIC $(INCLUDE) -c -o $(PLUGINDIR)/ARCIO.o $(PLUGINDIR)/ARCIO.cc
 	$(CXX) $(CCFLAGS) -rdynamic -shared -Wl,-soname,libarcio.so -o $@ $(PLUGINDIR)/ARCIO.o $(LDFLAGS_POPC) $(LDFLAGS)
 endif
 

@@ -27,7 +27,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 	set(PROFILING "-pg -fprofile-arcs")
 	set(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
 	IF(DEBUG_ARITHM)
-		LIST(APPEND CFLAGS " -DDEBUG_ARITHM ")
+		LIST(APPEND CFLAGS " -DDEBUG_ARITHM -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
 	ENDIF(DEBUG_ARITHM)
 	set(OPTIM "-g -O3 -DNDEBUG")
 	set(ARCH_OPTIM  "-march=pentium4 -mtune=native")

@@ -21,7 +21,7 @@ if test "$COLORGCC" == "yes"
 then
 	AC_MSG_NOTICE([Compiling using colorgcc])
 	CC=colorgcc
-	CXX=colorgcc
+	#CXX=colorgcc
 fi
 
 #AC_PROG_LIBTOOL
@@ -94,7 +94,7 @@ AC_ARG_ENABLE(debug, [  --enable-debug	  Enable debug mode], [debug=yes])
 if test "$debug" == "yes"
 then
    AC_SUBST(MODE,debug)
-else 
+else
    AC_SUBST(MODE,release)
 fi
 
@@ -148,7 +148,7 @@ fi
 if test "$with_gsnio" == "yes"
 then
 	AC_MSG_NOTICE([GSNIO enabled. Checking for prerequisites...])
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, no) 
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 	if test "$PKG_CONFIG" == "no"; then
 		echo "*** The pkg-config script could not be found. Make sure it is"
 		echo "*** in your path, or set the PKG_CONFIG environment variable"
@@ -163,13 +163,13 @@ then
 	AC_SUBST(GSOAPPP_CFLAGS)
 	AC_SUBST(GSOAPPP_LIBS)
 
-	AC_SUBST(GSNIO,yes)	
+	AC_SUBST(GSNIO,yes)
 fi
 
 if test "$with_bormaio" == "yes"
 then
 	AC_MSG_NOTICE([BormaIO enabled. Checking for prerequisites...])
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, no) 
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 	if test "$PKG_CONFIG" == "no"; then
 		echo "*** The pkg-config script could not be found. Make sure it is"
 		echo "*** in your path, or set the PKG_CONFIG environment variable"
@@ -207,6 +207,6 @@ AC_SUBST(LDFLAGS,$LDFLAGSOLD)
 AC_SUBST(prefix)
 AC_SUBST(execprefix)
 
-echo 
+echo
 AC_OUTPUT(Makefile)
 echo "Run 'make' to compile the meteoio library"
