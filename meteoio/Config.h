@@ -104,7 +104,7 @@ class Config {
 		void deleteKey(std::string key, std::string section=Config::defaultSection);
 
 		/**
-		 * @brief Add a specific key/value pair to the internal key/value map object. 
+		 * @brief Add a specific key/value pair to the internal key/value map object.
 		 *        key and section are case insensitive
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
@@ -168,7 +168,7 @@ class Config {
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
 		template <typename T> void getValue(const std::string& key, const std::string& section,
-								      std::vector<T>& vecT, const Options& opt=Config::dothrow) const 
+		                                    std::vector<T>& vecT, const Options& opt=Config::dothrow) const
 		{
 			try {
 				vecT.clear();
@@ -281,15 +281,15 @@ class ConfigProxy {
 	const std::string& section;
      const Config::Options& opt;
 
-	ConfigProxy(const Config& i_cfg, const std::string& i_key, 
-			  const std::string& i_section, const Config::Options& i_opt) 
+	ConfigProxy(const Config& i_cfg, const std::string& i_key,
+			  const std::string& i_section, const Config::Options& i_opt)
 			: proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
-			
+
 	template<typename T> operator T()
-		{ 
+		{
 			T tmp;
 			proxycfg.getValue(key, section, tmp, opt);
-			return tmp; 
+			return tmp;
 		}
 };
 

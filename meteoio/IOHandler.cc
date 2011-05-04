@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifdef _POPC_
+/*#ifdef _POPC_
 	#include <meteoio/IOHandler.ph>
 	#ifdef DEBUG_ARITHM
 		#ifndef _GNU_SOURCE
@@ -25,7 +25,9 @@
 	#endif
 #else
 	#include <meteoio/IOHandler.h>
-#endif
+#endif*/
+
+#include <meteoio/IOHandler.h>
 
 using namespace std;
 
@@ -81,11 +83,11 @@ void IOHandler::registerPlugins()
 }
 
 #ifdef _POPC_
-IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile){
+IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile)
 #else
 IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile)
-{
 #endif
+{
 	registerPlugins();
 }
 
@@ -108,17 +110,18 @@ IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), fileio(cfgreader
 IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader)
 #endif
 {
-#if defined(_POPC_) && defined(DEBUG_ARITHM)
+/*#if defined(_POPC_) && defined(DEBUG_ARITHM)
 	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW );
-#endif
+#endif*/
 	registerPlugins();
 }
 
 #ifdef _POPC_
-IOHandler::~IOHandler(){
+IOHandler::~IOHandler()
 #else
-IOHandler::~IOHandler() throw(){
+IOHandler::~IOHandler() throw()
 #endif
+{
 	// Get rid of the objects
 	std::map<std::string, IOPlugin>::iterator mapit;
 	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); mapit++){
@@ -246,18 +249,14 @@ void IOHandler::readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo)
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
                               std::vector<METEO_TIMESERIE>& vecMeteo,
-                              const unsigned& stationindex)
+                              const unsigned int& stationindex)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
 }
-#ifdef _POPC_
-void IOHandler::writeMeteoData(std::vector<METEO_TIMESERIE>& vecMeteo,
-                               const std::string& name)
-#else
+
 void IOHandler::writeMeteoData(const std::vector<METEO_TIMESERIE>& vecMeteo,
                                const std::string& name)
-#endif
 {
 	IOInterface *plugin = getPlugin("METEO", "Output");
 	plugin->writeMeteoData(vecMeteo, name);

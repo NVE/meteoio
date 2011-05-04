@@ -18,9 +18,9 @@
 #ifndef __IOHANDLER_H__
 #define __IOHANDLER_H__
 
-#ifdef _POPC_
+/*#ifdef _POPC_
 #error
-#endif
+#endif*/
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/A3DIO.h>
@@ -39,12 +39,20 @@ namespace mio {
 * and it follows the interface defined by the IOInterface class with the addition of
 * a few convenience methods.
 */
+#ifdef _POPC_
+class IOHandler {
+#else
 class IOHandler : public IOInterface {
+#endif
 	public:
 		IOHandler(const std::string& configfile);
 		IOHandler(const IOHandler&);
 		IOHandler(const Config&);
+		#ifdef _POPC_
+		~IOHandler();
+		#else
 		~IOHandler() throw();
+		#endif
 
 		//methods defined in the IOInterface class
 		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
@@ -56,7 +64,7 @@ class IOHandler : public IOInterface {
 		                            const std::string& name="");
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector<METEO_TIMESERIE>& vecMeteo,
-		                           const unsigned& stationindex=IOUtils::npos);
+		                           const unsigned int& stationindex=IOUtils::npos);
 		void readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo);
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
@@ -64,13 +72,22 @@ class IOHandler : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 		friend std::ostream& operator<<(std::ostream& os, const IOHandler& data);
+
+		#ifdef _POPC_
+		std::string toString();
+		#else
 		std::string toString() const;
+		#endif
 
 	private:
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname,
 		                DynamicLibrary*& dynLibrary, IOInterface*& io);
+		#ifdef _POPC_
+		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io);
+		#else
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
+		#endif
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 

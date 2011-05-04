@@ -72,12 +72,12 @@ template <class T> class Array3DProxy2 {
 		Array3D<T>& array3D;
 		const unsigned int anx;
 		const unsigned int any;
-}; 
+};
 
 
 /**
  * @class Array3D
- * @brief The template class Array3D is a 3D Array (Tensor) able to hold any type of object as datatype. 
+ * @brief The template class Array3D is a 3D Array (Tensor) able to hold any type of object as datatype.
  * It relies on the Array3DProxy2 class to provide the [][][] operator (slower than the (i,j,k) call).
  * @ingroup data_str
  * @date  2009-07-19
@@ -136,6 +136,22 @@ template<class T> class Array3D {
 		            const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
 		            const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
 
+		/**
+		* @brief A method that can be used to insert a subplane into an existing Array2D object
+		* that is passed as i_array2D argument. This is exactly the opposite of the subset method
+		* an can be used to rebuild an array from subsets.
+		* @param i_array3D array containing to extract the values from
+		* @param i_nx lower left corner cell X index
+		* @param i_ny lower left corner cell Y index
+		* @param i_nz lower left corner cell Z index
+		* @param i_ncols number of columns of the new array
+		* @param i_nrows number of rows of the new array
+		* @param i_ndepth number of depths of the new array
+		*/
+		void fill(const Array3D<T>& i_array3D,
+		          const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+		          const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
+
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
 		void size(unsigned int& anx, unsigned int& any, unsigned int& anz) const;
@@ -160,8 +176,8 @@ template<class T> class Array3D {
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
 		/**
-		* @brief returns the number of points contained in the grid. 
-		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid. 
+		* @brief returns the number of points contained in the grid.
+		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid.
 		* If flag_nodata==IOUtils::PARSE_NODATA, then it is the number of non-nodata values in the grid
 		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return count
@@ -176,7 +192,7 @@ template<class T> class Array3D {
 		void abs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA);
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array3D<P>& array);
-		
+
 		T& operator ()(const unsigned int& i);
 		const T operator ()(const unsigned int& i) const;
 		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
@@ -185,7 +201,7 @@ template<class T> class Array3D {
 
 		Array3D<T>& operator =(const Array3D<T>&);
 		Array3D<T>& operator =(const T& value);
-		
+
 		Array3D<T>& operator+=(const T& rhs);
 		const Array3D<T> operator+(const T& rhs);
 		Array3D<T>& operator+=(const Array3D<T>& rhs);
@@ -243,7 +259,7 @@ template<class T> const T Array3D<T>::operator()(const unsigned int& x, const un
 }
 
 template<class T> Array3DProxy<T> Array3D<T>::operator[](const unsigned int& i) {
-	return Array3DProxy<T>(*this, i); 
+	return Array3DProxy<T>(*this, i);
 }
 
 
@@ -262,17 +278,17 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
                                      const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
                                      const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
 {
-	
+
 	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz))
-		throw IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("Trying to cut an array to a size bigger than its original size!", AT);
 
 	if ((i_ncols == 0) || (i_nrows == 0) || (i_ndepth == 0)) //the space has to make sense
-		throw IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException("Copying an array into a null sized array!", AT);
 
 	resize(i_ncols, i_nrows, i_ndepth); //create new Array3D object
 
 	//Copy by value subspace
-	for (unsigned int ii=0; ii<nz; ii++) { 
+	for (unsigned int ii=0; ii<nz; ii++) {
 		for (unsigned int jj=0; jj<ny; jj++) {
 			for (unsigned int kk=0; kk<nx; kk++) {
 				//Running through the vector in order of memory alignment
@@ -281,6 +297,31 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 		}
 	}
 }
+
+template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
+                                     const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+                                     const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
+{
+
+	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz))
+		throw IndexOutOfBoundsException("Trying to insert an array whose size is too big!", AT);
+
+	if ((i_ncols == 0) || (i_nrows == 0) || (i_ndepth == 0)) //the space has to make sense
+		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
+
+	//Copy by value subspace
+	for (unsigned int ii=i_nz; ii<(i_nz+i_ndepth); ii++) {
+		for (unsigned int jj=i_ny; jj<(i_ny+i_nrows); jj++) {
+			for (unsigned int kk=i_nx; kk<(i_nx+i_ncols); kk++) {
+				const unsigned int ix = kk-i_nx;
+				const unsigned int iy = jj-i_ny;
+				const unsigned int iz = ii-i_nz;
+				operator()(kk,jj,ii) = i_array3D(ix, iy, iz);
+			}
+		}
+	}
+}
+
 
 template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
 	resize(anx, any, anz);
@@ -334,7 +375,7 @@ template<class T> T Array3D<T>::getMin(const IOUtils::nodata_handling flag_nodat
 
 	T min = std::numeric_limits<T>::max();
 	const unsigned int nxyz = ny*nx*nz;
-	
+
 	if(flag_nodata==IOUtils::RAW_NODATA) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
@@ -357,7 +398,7 @@ template<class T> T Array3D<T>::getMax(const IOUtils::nodata_handling flag_nodat
 
 	T max = -std::numeric_limits<T>::max();
 	const unsigned int nxyz = ny*nx*nz;
-	
+
 	if(flag_nodata==IOUtils::RAW_NODATA) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
@@ -380,7 +421,7 @@ template<class T> T Array3D<T>::getMean(const IOUtils::nodata_handling flag_noda
 
 	T mean = 0;
 	const unsigned int nxyz = nx*ny*nz;
-	
+
 	if(flag_nodata==IOUtils::RAW_NODATA) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);

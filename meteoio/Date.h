@@ -35,11 +35,11 @@ namespace mio {
  * This class handles conversion between different time display formats (ISO, numeric) as well as different
  * time representation (julian date, modified julian date, etc). It also handles time zones as well as
  * very basic Daylight Saving Time (DST). Since the activation dates of DST are political and not technical,
- * it can not be automatically calculated. Therefore, it has to be provided by the caller: when the dst flag 
+ * it can not be automatically calculated. Therefore, it has to be provided by the caller: when the dst flag
  * is set, the dst time shift is automatically applied. When the dst flag ceases to be set, the dst time shift
  * is no longer applied. This is very crude, but please keep in mind that using DST for monitoring data is
  * usually a bad idea...
- * 
+ *
  * Internally, the date is stored as true julian date in GMT.
  * The maximal precision is 1 minute (that can be easily brought to 1 seconds if
  * it would appear necessary/useful, with the limitation that leap seconds are currently not handled).
@@ -65,7 +65,7 @@ class Date : POPBase {
 		void Serialize(POPBuffer &buf, bool pack);
 #else
 class Date {
-#endif  
+#endif
 	public:
 		///Keywords for selecting the date formats
 		typedef enum {
@@ -98,6 +98,7 @@ class Date {
 
 		void setFromSys();
 		void setTimeZone(const double& in_timezone, const bool& in_dst=false);
+		void setDate(const Date& in_date);
 		void setDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false);
@@ -141,7 +142,7 @@ class Date {
 		bool operator<=(const Date&) const;
 		bool operator>(const Date&) const;
 		bool operator>=(const Date&) const;
-		
+
 		///Intervals arithmetic
 		///Can be used to add an interval to an existing Date object.
 		///Construct a Date object representing the interval e.g. Date(1.0) for 1 day and add that to another Date object.

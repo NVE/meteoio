@@ -22,7 +22,7 @@ using namespace std;
 namespace mio {
 
 #ifdef _POPC_
-IOException::IOException(const std::string& message, const std::string& position):POPException(STD_EXCEPTION)
+IOException::IOException(const std::string& message, const std::string& position) : POPException(STD_EXCEPTION)
 #else
 IOException::IOException(const std::string& message, const std::string& position)
 #endif
@@ -43,7 +43,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	free(symbols);
 #endif
 #ifdef _POPC_
-//	printf("IOException(%d): %s\n",Code(),msg.c_str());
+	//printf("IOException(%d): %s\n",Code(),msg.c_str());
 	SetExtra(msg.c_str());
 #endif
 }

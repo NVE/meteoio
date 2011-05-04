@@ -89,13 +89,7 @@ Date::Date(const Date& in_date) : paroc_base()
 Date::Date(const Date& in_date)
 #endif
 {
-	if(in_date.isUndef()) {
-		dst = false;
-		setDate(0., 0., false);
-		undef = true;
-	} else {
-		setDate(in_date.getJulianDate(), in_date.getTimeZone(), in_date.getDST());
-	}
+	setDate(in_date);
 }
 
 /**
@@ -150,6 +144,21 @@ void Date::setTimeZone(const double& in_timezone, const bool& in_dst) {
 
 	timezone = in_timezone;
 	dst = in_dst;
+}
+
+/**
+* @brief Copy setter.
+* @param in_date Date object to copy
+*/
+void Date::setDate(const Date& in_date)
+{
+	if(in_date.isUndef()) {
+		dst = false;
+		setDate(0., 0., false);
+		undef = true;
+	} else {
+		setDate(in_date.getJulianDate(), in_date.getTimeZone(), in_date.getDST());
+	}
 }
 
 /**
@@ -323,7 +332,7 @@ double Date::getModifiedJulianDate(const bool& gmt) const {
 /**
 * @brief Return truncated julian date (TJD).
 * The truncated julian date is defined as the julian day shifted to start at 00:00 and modulo 10000 days.
-* The last origin (ie: 0) was 1995-10-10T00:00 
+* The last origin (ie: 0) was 1995-10-10T00:00
 * (definition by National Institute of Standards and Technology).
 * @param gmt convert returned value to GMT? (default: false)
 * @return truncated julian date in the current timezone / in GMT depending on the gmt parameter
@@ -387,7 +396,7 @@ double Date::getExcelDate(const bool& gmt) const {
 }
 
 /**
-* @brief Return Matlab date. 
+* @brief Return Matlab date.
 * This is the number of days since 0000-01-01T00:00:00. See http://www.mathworks.com/help/techdoc/ref/datenum.html
 * @param gmt convert returned value to GMT? (default: false)
 * @return Matlab date in the current timezone / in GMT depending on the gmt parameter
@@ -785,21 +794,21 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 
 	stringstream tmpstr;
 	if(type==ISO) {
-			tmpstr 
+			tmpstr
 			<< setw(4) << setfill('0') << year_out << "-"
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out;
 	} else if(type==NUM) {
-			tmpstr 
+			tmpstr
 			<< setw(4) << setfill('0') << year_out
 			<< setw(2) << setfill('0') << month_out
 			<< setw(2) << setfill('0') << day_out
 			<< setw(2) << setfill('0') << hour_out
 			<< setw(2) << setfill('0') << minute_out ;
 	} else if(type==FULL) {
-			tmpstr 
+			tmpstr
 			<< setw(4) << setfill('0') << year_out << "-"
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out << "T"
@@ -808,7 +817,7 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setprecision(10) << julian_out << ") GMT"
 			<< setw(2) << setfill('0') << showpos << timezone << noshowpos;
 	} else if(type==DIN) {
-			tmpstr 
+			tmpstr
 			<< setw(2) << setfill('0') << day_out << "."
 			<< setw(2) << setfill('0') << month_out << "."
 			<< setw(4) << setfill('0') << year_out << " "
@@ -872,7 +881,7 @@ bool Date::isLeapYear(const int& i_year) const
 
 long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day) const
 { //given year, month, day, calculate the matching julian day
- //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097 
+ //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
 	const long lmonth = (long) i_month, lday = (long) i_day;
 	long lyear = (long) i_year;
 
@@ -891,10 +900,10 @@ long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& 
 
 void Date::plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const {
 	if ((in_year < -4713) || (in_year >3000)
-	    || (in_month < 1) || (in_month > 12) 
-	    || (in_day < 1) || ((in_day > daysNonLeapYear[in_month-1]) && !isLeapYear(in_year)) 
-	    || ((in_day > daysLeapYear[in_month-1]) && isLeapYear(in_year)) 
-	    || (in_hour < 0) || (in_hour > 24) 
+	    || (in_month < 1) || (in_month > 12)
+	    || (in_day < 1) || ((in_day > daysNonLeapYear[in_month-1]) && !isLeapYear(in_year))
+	    || ((in_day > daysLeapYear[in_month-1]) && isLeapYear(in_year))
+	    || (in_hour < 0) || (in_hour > 24)
 	    || (in_minute < 0) || (in_minute > 59)) {
 		stringstream ss;
 		ss << "Invalid Date requested: " << in_year << " " << in_month;

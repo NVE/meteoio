@@ -16,14 +16,26 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*#ifdef _POPC_
+#include <meteoio/IOManager.ph>
+#else
 #include <meteoio/IOManager.h>
+#endif*/
 
+#include <meteoio/IOManager.h>
 using namespace std;
 
 namespace mio {
 
+#ifndef _POPC_
+const unsigned int raw=1, filtered=2, resampled=3, num_of_levels=3;
+#endif
+
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(i_cfg), bufferedio(rawio, i_cfg), meteoprocessor(i_cfg)
 {
+	/*#ifdef _POPC_
+	raw=1; filtered=2; resampled=3; num_of_levels=3;
+	#endif*/
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
 
 	fcache_start = fcache_end = Date(0.0, 0.); //this should not matter, since 0 is still way back before any real data...
@@ -36,7 +48,7 @@ void IOManager::setProcessingLevel(const unsigned int& i_level)
 	if (i_level >= IOManager::num_of_levels)
 		throw InvalidArgumentException("The processing level is invalid", AT);
 
-	if (((i_level & IOManager::raw) == IOManager::raw) 
+	if (((i_level & IOManager::raw) == IOManager::raw)
 	    && ((i_level & IOManager::filtered) == IOManager::filtered))
 		throw InvalidArgumentException("The processing level is invalid (raw and filtered at the same time)", AT);
 
@@ -52,8 +64,8 @@ double IOManager::getAvgSamplingRate()
 	}
 }
 
-void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end, 
-						  const std::vector< METEO_TIMESERIE >& vecMeteo)
+void IOManager::push_meteo_data(const unsigned int& level, const Date& date_start, const Date& date_end,
+                                const std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	//perform check on date_start and date_end
 	if (date_end < date_start)
@@ -94,13 +106,13 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
 	vecMeteo.clear();
 
 	if (processing_level == IOManager::raw){
-		rawio.readMeteoData(dateStart, dateEnd, vecMeteo);
+		rawio.readMeteoData(dateStart, dateEnd, vecMeteo, IOUtils::npos);
 	} else {
 		bool success = read_filtered_cache(dateStart, dateEnd, vecMeteo);
 
 		if (!success){
 			vector< vector<MeteoData> > tmp_meteo;
-			bufferedio.readMeteoData(dateStart, dateEnd, tmp_meteo);
+			bufferedio.readMeteoData(dateStart, dateEnd, tmp_meteo, IOUtils::npos);
 
 			//now it needs to be secured that the data is actually filtered, if configured
 			if ((IOManager::filtered & processing_level) == IOManager::filtered){
@@ -172,7 +184,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -202,7 +214,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
 		}
-		
+
 		return vecMeteo.size();
 	}
 
@@ -238,12 +250,12 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 	return vecMeteo.size();
 }
 #ifdef _POPC_ //HACK popc
-void IOManager::writeMeteoData(/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, /*const*/ std::string& name)
+void IOManager::writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo, std::string& name)
 #else
 void IOManager::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, const std::string& name)
 #endif
 {
-	if (processing_level == IOManager::raw){
+	if (processing_level == IOManager::raw) {
 		rawio.writeMeteoData(vecMeteo, name);
 	} else {
 		bufferedio.writeMeteoData(vecMeteo, name);
@@ -251,10 +263,10 @@ void IOManager::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, c
 }
 
 #ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
+void IOManager::interpolate(Date& date, DEMObject& dem, MeteoData::Parameters meteoparam,
                             Grid2DObject& result)
 #else
-void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             Grid2DObject& result)
 #endif
 {
@@ -263,7 +275,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 }
 
 #ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
+void IOManager::interpolate(Date& date, DEMObject& dem, MeteoData::Parameters meteoparam,
                             Grid2DObject& result, std::string& info_string)
 #else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,

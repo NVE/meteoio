@@ -63,7 +63,7 @@ class IOException : public POPException {
 class FileNotFoundException : public IOException {
 	public:
 		FileNotFoundException(const std::string& filename="",
-					const std::string& position="") : IOException("FileNotFoundException: " + filename,position){}
+		                      const std::string& position="") : IOException("FileNotFoundException: " + filename, position){}
 };
 
 /**
@@ -75,7 +75,7 @@ class FileNotFoundException : public IOException {
 class FileAccessException : public IOException {
 	public:
 		FileAccessException(const std::string& filename="",
-			   		const std::string& position="") : IOException("FileAccessException: " + filename,position){}
+		                    const std::string& position="") : IOException("FileAccessException: " + filename, position){}
 };
 
 /**
@@ -87,7 +87,7 @@ class FileAccessException : public IOException {
 class InvalidFileNameException : public IOException {
 	public:
 		InvalidFileNameException(const std::string& filename="",
-					   const std::string& position="") : IOException("InvalidFileNameException: " + filename, position){}
+		                         const std::string& position="") : IOException("InvalidFileNameException: " + filename, position){}
 };
 
 /**
@@ -99,7 +99,7 @@ class InvalidFileNameException : public IOException {
 class InvalidFormatException : public IOException {
 	public:
 		InvalidFormatException(const std::string& message="",
-				 	const std::string& position="") : IOException("InvalidFormatException: " + message, position){}
+		                       const std::string& position="") : IOException("InvalidFormatException: " + message, position){}
 };
 
 /**
@@ -111,7 +111,7 @@ class InvalidFormatException : public IOException {
 class IndexOutOfBoundsException : public IOException {
 	public:
 		IndexOutOfBoundsException(const std::string& message="",
-				    		const std::string& position="") : IOException("IndexOutOfBoundsException: " + message, position){}
+		                          const std::string& position="") : IOException("IndexOutOfBoundsException: " + message, position){}
 };
 
 /**
@@ -123,7 +123,7 @@ class IndexOutOfBoundsException : public IOException {
 class ConversionFailedException : public IOException {
 	public:
 		ConversionFailedException(const std::string& message="",
-				    const std::string& position="") : IOException("ConversionFailedException: " + message, position){}
+		                          const std::string& position="") : IOException("ConversionFailedException: " + message, position){}
 };
 
 /**
@@ -135,7 +135,7 @@ class ConversionFailedException : public IOException {
 class InvalidArgumentException : public IOException {
 	public:
 		InvalidArgumentException(const std::string& message="",
-				 		const std::string& position="") : IOException("InvalidArgumentException: " + message, position){}
+		                         const std::string& position="") : IOException("InvalidArgumentException: " + message, position){}
 };
 
 /**
@@ -147,12 +147,12 @@ class InvalidArgumentException : public IOException {
 class UnknownValueException : public IOException {
 	public:
 		UnknownValueException(const std::string& message="",
-					const std::string& position="") : IOException("UnknownValueException: " + message, position){}
+		                      const std::string& position="") : IOException("UnknownValueException: " + message, position){}
 };
 
 /**
  * @class NoAvailableDataException
- * @brief thrown when no data is available 
+ * @brief thrown when no data is available
  *
  * @author Florian Hof
  */
@@ -160,7 +160,7 @@ class NoAvailableDataException : public IOException
 {
 	public:
 		NoAvailableDataException(const std::string& message="",
-						const std::string& position="") : IOException("NoAvailableDataException: " + message, position){}
+		                         const std::string& position="") : IOException("NoAvailableDataException: " + message, position){}
 };
 } //end namespace
 

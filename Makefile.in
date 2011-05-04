@@ -118,7 +118,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteolaws/Suntrajectory.o \
 		$(SRCDIR)/meteolaws/Sun.o
 
-METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
+METEOIO_OBJ_POPC =$(SRCDIR)/IOManager.stub.o \
 		$(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/IOManager_par.o \
 		$(SRCDIR)/Matrix_par.o \

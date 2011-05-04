@@ -123,7 +123,7 @@ namespace IOUtils {
 	std::string cleanPath(const std::string& in_path);
 
 	/**
-	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string. 
+	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
 	* @param s The reference of the string to trim (in/out parameter)
 	*/
 	void trim(std::string &s);
@@ -143,31 +143,31 @@ namespace IOUtils {
 	* @param setToUpperCase If set to true the key will be put into upper case (for case insensitivity)
 	* @return (bool) true when line is empty
 	*/
-	bool readKeyValuePair(const std::string& in_line, 
-					  const std::string& delimiter, 
-					  std::map<std::string,std::string>& out_map,
-					  const std::string& keyprefix="", const bool& setToUpperCase=false);
+	bool readKeyValuePair(const std::string& in_line,
+	                      const std::string& delimiter,
+	                      std::map<std::string,std::string>& out_map,
+	                      const std::string& keyprefix="", const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
-	void readKeyValueHeader(std::map<std::string, std::string>& headermap, 
-				    std::istream& bs,
-				    const unsigned int& linecount=1, 
-				    const std::string& delimiter="=");
+	void readKeyValueHeader(std::map<std::string, std::string>& headermap,
+	                        std::istream& bs,
+	                        const unsigned int& linecount=1,
+	                        const std::string& delimiter="=");
 
 
-	/** 
-	* @brief Convert a string to the requested type (template function). 
-	* @tparam T   [in] The type wanted for the return value (template type parameter). 
-	* @param t   [out] The value converted to the requested type. 
-	* @param str   [in] The input string to convert; trailling whitespaces are ignored, 
-	*              comment after non-string values are allowed, but multiple values are not allowed. 
+	/**
+	* @brief Convert a string to the requested type (template function).
+	* @tparam T   [in] The type wanted for the return value (template type parameter).
+	* @param t   [out] The value converted to the requested type.
+	* @param str   [in] The input string to convert; trailling whitespaces are ignored,
+	*              comment after non-string values are allowed, but multiple values are not allowed.
 	* @param f   [in] The radix for reading numbers, such as std::dec or std::oct; default is std::dec.
 	* @return true if everything went fine, false otherwise
 	*/
 	template <class T> bool convertString(T& t, const std::string& str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
-		std::string s = str; 
+		std::string s = str;
 		trim(s); //delete trailing and leading whitespaces and tabs
 		if (s.size() == 0) {
 			t = static_cast<T> (nodata);
@@ -222,7 +222,7 @@ namespace IOUtils {
 		if (it == properties.end()){
 			if (options == IOUtils::nothrow)
 				return;
-			else 
+			else
 				throw UnknownValueException("No value for key " + key, AT);
 		}
 		const std::string value = it->second;
@@ -241,7 +241,7 @@ namespace IOUtils {
 	* @param[out] vecT        The vector of values associated to the key, each value is converted to the requested type
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
-	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties, 
+	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 					    const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow)
 	{
 		if (key == "") throw InvalidArgumentException("Empty key", AT);
@@ -250,13 +250,13 @@ namespace IOUtils {
 		if (it == properties.end()) {
 			if (options == IOUtils::nothrow) {
 				return;
-			} else { 
+			} else {
 				throw UnknownValueException("No value for key " + key, AT);
 			}
 		}
 		const std::string value = it->second;
 
-		//split value string 
+		//split value string
 		std::vector<std::string> vecUnconvertedValues;
 		unsigned int counter = readLineToVec(value, vecUnconvertedValues);
 		for (unsigned int ii=0; ii<counter; ii++){
@@ -290,7 +290,7 @@ namespace IOUtils {
 	* @param[out] coordout The coordinate system to be used for output data
 	* @param[out] coordoutparam The coordinate system parameters to be used for output data
 	*/
-	void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam, 
+	void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
 						    std::string& coordout, std::string& coordoutparam);
 
 	/**

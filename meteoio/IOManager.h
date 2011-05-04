@@ -18,10 +18,15 @@
 #ifndef __IOMANAGER_H__
 #define __IOMANAGER_H__
 
+#include <meteoio/IOHandler.h>
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/MeteoData.h>
+
+/*#ifdef _POPC_
+#error
+#endif*/
 
 namespace mio {
 
@@ -34,7 +39,6 @@ class IOManager {
 			resampled     = 1 << 2,
 			num_of_levels = 1 << 3
 		};
-
 		IOManager(const Config& i_cfg);
 
 		//Legacy support to support functionality of the IOInterface superclass:
@@ -53,12 +57,12 @@ class IOManager {
 		* corresponding to the interval indicated by dateStart and dateEnd.
 		* Depending on the ProcessingLevel for the instance of the IOManager
 		* the data returned will be either raw (read directly from the IOHandler)
-		* or processed (read from an BufferedIOHandler and filtered through the 
+		* or processed (read from an BufferedIOHandler and filtered through the
 		* MeteoProcessor
 		*
 		* vecMeteo will be empty if no datasets were retrieved in the interval defined
 		* by dateStart and dateEnd
-		*    
+		*
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
@@ -78,8 +82,8 @@ class IOManager {
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
 		 * corresponding to the instant indicated by a Date object. Each MeteoData
-		 * instance within the vector represents the data for one station at the given 
-		 * instant. Depending on the ProcessingLevel configured data will be either 
+		 * instance within the vector represents the data for one station at the given
+		 * instant. Depending on the ProcessingLevel configured data will be either
 		 * raw (read directly from the IOHandler)
 		 *
 		 * NOTE:
@@ -101,29 +105,29 @@ class IOManager {
 		 * @brief Push a vector of time series of MeteoData objects into the IOManager. This overwrites
 		 *        any internal buffers that are used and subsequent calls to getMeteoData or interpolate
 		 *        will be performed upon this data. This method is a way to bypass the internal reading
-		 *        of MeteoData from a certain source and is useful in case the user is only interested 
-		 *        in data processing and interpolation performed by the IOManager object. 
+		 *        of MeteoData from a certain source and is useful in case the user is only interested
+		 *        in data processing and interpolation performed by the IOManager object.
 		 * @param level Level of processing that has already been performed on the data (raw XOR filtered)
 		 * @param date_start Representing the beginning of the data
 		 * @param date_end Representing the end of the data
 		 * @param vecMeteo The actual data being pushed into the IOManager object
 		 */
-		void push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end, 
+		void push_meteo_data(const unsigned int& level, const Date& date_start, const Date& date_end,
 		                     const std::vector< METEO_TIMESERIE >& vecMeteo);
 
 #ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
+		void interpolate(Date& date, DEMObject& dem, MeteoData::Parameters meteoparam,
 		                 Grid2DObject& result);
 #else
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result);
 #endif
 
 #ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
+		void interpolate(Date& date, DEMObject& dem, MeteoData::Parameters meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 #else
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 #endif
 
@@ -144,7 +148,7 @@ class IOManager {
 		double getAvgSamplingRate();
 
 #ifdef _POPC_ //HACK popc
-		void writeMeteoData(/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, /*const*/ std::string& name/*=""*/);
+		void writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo, std::string& name/*=""*/);
 #else
 		void writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, const std::string& name="");
 #endif
@@ -168,6 +172,12 @@ class IOManager {
 		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
 		unsigned int processing_level;
+
+		/*#ifdef _POPC_
+		unsigned int raw, filtered, resampled, num_of_levels;
+		#else
+		static const unsigned int raw, filtered, resampled, num_of_levels;
+		#endif*/
 };
 } //end namespace
 #endif

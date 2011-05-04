@@ -53,7 +53,7 @@ template <class T> class Array2DProxy {
 
 /**
  * @class Array2D
- * @brief The template class Array2D is a 2D Array (Matrix) able to hold any type of object as datatype. 
+ * @brief The template class Array2D is a 2D Array (Matrix) able to hold any type of object as datatype.
  * It relies on the Array2DProxy class to provide the [][] operator (slower than the (i,j) call).
  *
  * @ingroup data_str
@@ -104,6 +104,19 @@ template<class T> class Array2D {
 		void subset(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
 		            const unsigned int& i_ncols, const unsigned int& i_nrows);
 
+		/**
+		* @brief A method that can be used to insert a subplane into an existing Array2D object
+		* that is passed as i_array2D argument. This is exactly the opposite of the subset method
+		* an can be used to rebuild an array from subsets.
+		* @param i_array2D array containing to subset values
+		* @param i_nx lower left corner cell X index
+		* @param i_ny lower left corner cell Y index
+		* @param i_ncols number of columns of the new array
+		* @param i_nrows number of rows of the new array
+		*/
+		void fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
+		            const unsigned int& i_ncols, const unsigned int& i_nrows);
+
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void size(unsigned int& nx, unsigned int& ny) const;
@@ -127,8 +140,8 @@ template<class T> class Array2D {
 		*/
 		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
 		/**
-		* @brief returns the number of points contained in the grid. 
-		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid. 
+		* @brief returns the number of points contained in the grid.
+		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid.
 		* If flag_nodata==IOUtils::PARSE_NODATA, then it is the number of non-nodata values in the grid
 		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return count
@@ -240,6 +253,24 @@ template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const uns
 	}
 }
 
+template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
+                                        const unsigned int& i_ncols, const unsigned int& i_nrows)
+{
+	if (((i_nx+i_ncols) > nx) || ((i_ny+i_nrows) > ny))
+		throw IndexOutOfBoundsException("Trying to insert an array whose size is too big!", AT);
+
+	if ((i_ncols == 0) || (i_nrows == 0)) //the plane to copy has to make sense
+		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
+
+	for(unsigned int jj=i_ny; jj<(i_ny+i_nrows); jj++) {
+		for(unsigned int ii=i_nx; ii<(i_nx+i_ncols); ii++) {
+			const unsigned int ix = ii-i_nx;
+			const unsigned int iy = jj-i_ny;
+			operator()(ii,jj) = i_array2D(ix, iy);
+		}
+	}
+}
+
 template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any, const T& init) {
 	nx = ny = 0;
 	resize(anx,any,init);
@@ -335,7 +366,7 @@ template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_noda
 
 	T mean = 0;
 	const unsigned int nxy = nx*ny;
-	
+
 	if(flag_nodata==IOUtils::RAW_NODATA) {
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
@@ -414,7 +445,8 @@ template<class T> Array2D<T>& Array2D<T>::operator=(const Array2D<T>& source) {
 }
 
 template<class T> Array2D<T>& Array2D<T>::operator=(const T& value) {
-	std::fill(vecData.begin(), vecData.end(), value);
+	//std::fill(vecData.begin(), vecData.end(), value);
+	for(unsigned int i=0; i<vecData.size(); i++) vecData[i] = value;
 	return *this;
 }
 

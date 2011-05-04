@@ -42,7 +42,7 @@ class SunObject {
 		typedef enum POSITION_ALGO {
 			MEEUS ///<Jean Meeus' algorithm (Meeus, j. "Astronomical Algorithms", second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA)
 		} position_algo;
-	
+
 		SunObject(const position_algo alg=MEEUS);
 		SunObject(const double& _latitude, const double& _longitude, const double& _altitude);
 		SunObject(const double& _latitude, const double& _longitude, const double& _altitude, const double& _julian, const double& TZ=0.);
@@ -57,6 +57,7 @@ class SunObject {
 		void getBeamRadiation(double& R_toa, double& R_direct, double& R_diffuse) const;
 		void getHorizontalRadiation(double& R_toa, double& R_direct, double& R_diffuse) const;
 		void getSlopeRadiation(const double& slope_azi, const double& slope_elev, double& R_toa, double& R_direct, double& R_diffuse) const;
+		double getElevationThresh() const;
 
 		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
 

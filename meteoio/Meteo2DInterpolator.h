@@ -63,7 +63,7 @@ class IOManager; //forward declaration
  * stations that have this meteorological parameter available by calling getData(param, vecData, vecMeta), which
  * also fills the vectors vecData and vecMeta with the available data (as double) and metadata (as StationData).
  * Custom data preparation can obviously be done in this method.
- * 
+ *
  * The calculate method must properly erase and reste the grid that it receives before filling it. If necessary,
  * (as is the case for precipitation, relative humidity and snow height, for example) the grid can be checked for min/max by
  * calling checkMinMax() at the end of Meteo2DInterpolator::interpolate.It can also add extra information about the
@@ -103,17 +103,16 @@ class Meteo2DInterpolator {
 		/**
 		* @brief Constructor.
 		*/
-		//Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem, 
-		//				const std::vector<MeteoData>& _vecMeteo);
+		//Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem,
+		//                    const std::vector<MeteoData>& _vecMeteo);
 		Meteo2DInterpolator(const Config& i_cfg, IOManager& iomanager);
-
 
 		/**
 		 * @brief A generic function that can interpolate for any given MeteoData member variable
 		 *
 		 * @param date date for which to interpolate
 		 * @param dem Digital Elevation Model on which to perform the interpolation
-		 * @param meteoparam Any MeteoData member variable as specified in the 
+		 * @param meteoparam Any MeteoData member variable as specified in the
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
 		 */
@@ -125,7 +124,7 @@ class Meteo2DInterpolator {
 		 *
 		 * @param date date for which to interpolate
 		 * @param dem Digital Elevation Model on which to perform the interpolation
-		 * @param meteoparam Any MeteoData member variable as specified in the 
+		 * @param meteoparam Any MeteoData member variable as specified in the
 		 * 				 enum MeteoData::Parameters (e.g. MeteoData::TA)
 		 * @param result A Grid2DObject that will be filled with the interpolated data
 		 * @param InfoString some information about the interpolation process (useful for GUIs)
@@ -147,7 +146,7 @@ class Meteo2DInterpolator {
 		 * @param algorithm the desired algorithm
 		 * @param vecArgs a vector of strings containing the arguments
 		 */
-		unsigned int getArgumentsForAlgorithm(const MeteoData::Parameters& param, 
+		unsigned int getArgumentsForAlgorithm(const MeteoData::Parameters& param,
 		                                      const std::string& algorithm,
 		                                      std::vector<std::string>& vecArgs) const;
 
@@ -158,7 +157,7 @@ class Meteo2DInterpolator {
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		IOManager& iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
-		
+
 		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
 
 		unsigned int getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);

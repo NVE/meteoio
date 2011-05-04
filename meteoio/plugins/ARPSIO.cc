@@ -157,7 +157,7 @@ void ARPSIO::readStationData(const Date&, std::vector<StationData>& /*vecStation
 }
 
 void ARPSIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-					  std::vector< std::vector<MeteoData> >& /*vecMeteo*/, 
+					  std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
 					  const unsigned int&)
 {
 	//Nothing so far
@@ -364,12 +364,18 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 void ARPSIO::moveToMarker(const std::string& marker)
 {
 	char dummy[ARPS_MAX_LINE_LENGTH];
+	int nb_elems=0;
 	do {
-		fscanf(fin," %[^\t\n] ",dummy);
-	} while (!feof(fin) && strcmp(dummy,marker.c_str()) != 0);
+		nb_elems=fscanf(fin," %[^\t\n] ",dummy);
+	} while (!feof(fin) && strcmp(dummy,marker.c_str()) != 0 && nb_elems!=0);
 	if(feof(fin)) {
 		cleanup();
 		const std::string message = "End of file "+filename+" should NOT have been reached when looking for "+marker;
+		throw InvalidFormatException(message, AT);
+	}
+	if(nb_elems==0) {
+		cleanup();
+		const std::string message = "Matching failure in file "+filename+" when looking for "+marker;
 		throw InvalidFormatException(message, AT);
 	}
 }

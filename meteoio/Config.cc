@@ -34,12 +34,12 @@ Config::Config(const std::string& i_filename)
 	addFile(i_filename);
 }
 
-ConfigProxy Config::get(const std::string& key, const Options& opt) const 
+ConfigProxy Config::get(const std::string& key, const Options& opt) const
 {
 	return ConfigProxy(*this, key, Config::defaultSection, opt);
 }
 
-ConfigProxy Config::get(const std::string& key, const std::string& section, const Options& opt) const 
+ConfigProxy Config::get(const std::string& key, const std::string& section, const Options& opt) const
 {
 	return ConfigProxy(*this, key, section, opt);
 }
@@ -100,16 +100,16 @@ void Config::parseFile(const std::string& filename)
 	std::ifstream fin; //Input file streams
 	unsigned int linenr = 0;
 	std::string line="", section=defaultSection;
-	
+
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename,AT);
 	}
-  
+
 	//Check whether file exists
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}
-  
+
 	//Open file
 	fin.open (filename.c_str(), ifstream::in);
 	if (fin.fail()) {
@@ -117,7 +117,7 @@ void Config::parseFile(const std::string& filename)
 	}
 
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-	
+
 	try {
 		do {
 			getline(fin, line, eoln); //read complete line
@@ -143,7 +143,7 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 
 	stringstream tmp;       //stringstream to convert the unsigned int linenr into a string
 	if (line[0] == '['){
-		size_t endpos = line.find_last_of(']');
+		const size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))){
 			tmp << linenr;
 			throw IOException("Section header corrupt in line " + tmp.str(), AT);
@@ -157,7 +157,7 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 	//At this point line can only be a key value pair
 	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::", true)){
 		tmp << linenr;
-		throw InvalidFormatException("Error reading key value pair in " + sourcename + " line:" + tmp.str(), AT);    
+		throw InvalidFormatException("Error reading key value pair in " + sourcename + " line:" + tmp.str(), AT);
 	}
 }
 
@@ -167,8 +167,8 @@ std::string Config::getSourceName()
 	return sourcename;
 }
 
-unsigned int Config::findKeys(std::vector<std::string>& vecResult, std::string keystart, 
-						std::string section) const
+unsigned int Config::findKeys(std::vector<std::string>& vecResult, std::string keystart,
+                              std::string section) const
 {
 	vecResult.clear();
 
@@ -177,19 +177,16 @@ unsigned int Config::findKeys(std::vector<std::string>& vecResult, std::string k
 
 	IOUtils::toUpper(section);
 	IOUtils::toUpper(keystart);
-	string tmp_keystart = section + "::" + keystart;
+	const string tmp_keystart = section + "::" + keystart;
 
 	//Loop through keys, look for substring match - push it into vecResult
 	map<string,string>::const_iterator it;
 	for (it=properties.begin(); it != properties.end(); it++){
-		string tmp = (*it).first;
-		tmp = tmp.substr(0, tmp_keystart.length());
-
+		const string tmp = (it->first).substr(0, tmp_keystart.length());
 		int matchcount = tmp_keystart.compare(tmp);
 
 		if (matchcount == 0){ //perfect match
-			string tmp2 = it->first;
-			tmp2 = tmp2.substr(section.length() + 2);
+			const string tmp2 = (it->first).substr(section.length() + 2);
 			vecResult.push_back(tmp2);
 		}
 	}
@@ -211,10 +208,10 @@ std::string Config::extract_section(std::string& key)
 
 void Config::write(const std::string& filename)
 {
-	
+
 	std::ofstream fout;
 	fout.open(filename.c_str());
-	if (fout.fail()) 
+	if (fout.fail())
 		throw FileAccessException(filename, AT);
 
 	try {
@@ -223,7 +220,7 @@ void Config::write(const std::string& filename)
 		unsigned int sectioncount = 0;
 		for (it=properties.begin(); it != properties.end(); it++){
 			string tmp = it->first;
-			string section = extract_section(tmp);
+			const string section = extract_section(tmp);
 
 			if (current_section != section){
 				current_section = section;

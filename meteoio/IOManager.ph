@@ -57,28 +57,24 @@ parclass IOManager {
 		                          [out, proc=marshal_vector_METEO_TIMESERIE]std::vector< METEO_TIMESERIE >& vecMeteo);
 
 		unsigned int getMeteoData([in]const Date& i_date, [out, proc=marshal_METEO_TIMESERIE]METEO_TIMESERIE& vecMeteo);
-		
-		void interpolate([in]const Date& date, [in]const DEMObject& dem, [in, proc=marshal_MeteoParameters]/*const*/ MeteoData::Parameters& meteoparam,
+
+		void push_meteo_data([in] const unsigned int& level, [in] const Date& date_start, [in] const Date& date_end,
+		                     [in] const std::vector< METEO_TIMESERIE >& vecMeteo);
+
+		void interpolate([in] Date& date, [in] DEMObject& dem, [in, proc=marshal_MeteoParameters] MeteoData::Parameters& meteoparam,
 		                 [out]Grid2DObject& result, [out]std::string& info_string);
-		
-		void interpolate([in]const Date& date, [in]const DEMObject& dem, [in, proc=marshal_MeteoParameters]/*const*/ MeteoData::Parameters& meteoparam,
+
+		void interpolate([in] Date& date, [in] DEMObject& dem, [in, proc=marshal_MeteoParameters] MeteoData::Parameters& meteoparam,
 		                 [out]Grid2DObject& result); //HACK popc
-		
+
 		void setProcessingLevel([in]const unsigned int& i_level);
 
 		double getAvgSamplingRate();
 
-		void writeMeteoData([in ,proc=marshal_vector_METEO_TIMESERIE]/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, [in]const std::string& name=""); //HACK popc
+		void writeMeteoData([in ,proc=marshal_vector_METEO_TIMESERIE] std::vector< METEO_TIMESERIE >& vecMeteo, [in] std::string name=""); //HACK popc
 
 		std::string toString() /*const*/; //HACK popc
 		//friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
-
-		enum ProcessingLevel { //HACK BUG popc
-			raw           = 1,
-			filtered      = 1 << 1,
-			resampled     = 1 << 2,
-			num_of_levels = 1 << 3
-		};
 
 	private:
 		void add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo);
@@ -95,8 +91,10 @@ parclass IOManager {
 
 		std::map<Date, METEO_TIMESERIE > resampled_cache;  ///< stores already resampled data points
 		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals
-		Date fcache_start, fcache_end;
+		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
 		unsigned int processing_level;
+
+		unsigned int raw, filtered, resampled, num_of_levels; //HACK POPC
 };
 
 } //end namespace

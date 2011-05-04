@@ -78,6 +78,10 @@ void SunObject::setElevationThresh(const double& _elevation_threshold) {
 	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
 }
 
+double SunObject::getElevationThresh() const {
+	return elevation_threshold;
+}
+
 double SunObject::getJulian(const double& TZ) {
 	return (julian_gmt+TZ/24.);
 }
@@ -113,6 +117,12 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 	const double beta = 0.03;
 	const double to_rad = M_PI/180.;
 
+	if(ta==IOUtils::nodata || rh==IOUtils::nodata || pressure==IOUtils::nodata || mean_albedo==IOUtils::nodata) {
+		R_toa = IOUtils::nodata;
+		R_direct = IOUtils::nodata;
+		R_diffuse = IOUtils::nodata;
+		return;
+	}
 	if(sun_elevation<0.) { //the Sun is below the horizon, our formulas don't apply
 		R_toa = 0.;
 		R_direct = 0.;
@@ -264,7 +274,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 	position.getHorizontalCoordinates(azimuth, elevation);
 
 	if( elevation < elevation_threshold ) {
-		//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending 
+		//when the Sun is low above the horizon, Mt is getting abnormaly too large pretending
 		// this is a clear sky day when almost all the radiation should be diffuse
 		// no matter how the sky is
 		splitting_coef = 1.0;
@@ -272,7 +282,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 		// clear sky index (ratio global measured to top of atmosphere radiation)
 		const double Mt = iswr_measured / iswr_modeled; // should be <=1.2
 		const double clear_sky = 0.147;
-		
+
 		// diffuse fraction: hourly ratio of diffuse to global radiation incident on a horizontal surface
 		// splitting according to a combination of Reindl et al.(1990)'s models (Mt-model and Mt&Psolar->elev-model):
 		if( Mt >= 0.78 ) { // Mt in [0.78;1] -> clear day

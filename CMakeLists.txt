@@ -30,8 +30,11 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 		LIST(APPEND CFLAGS " -DDEBUG_ARITHM -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
 	ENDIF(DEBUG_ARITHM)
 	set(OPTIM "-g -O3 -DNDEBUG")
-	set(ARCH_OPTIM  "-march=pentium4 -mtune=native")
-	set(ARCH_SAFE  "-march=pentium4")
+	execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	if (GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
+		set(ARCH_OPTIM  "-march=native -mtune=native")
+	endif()
+	set(ARCH_SAFE  "")
 	set(DEBUG "-g3 -O0 -D__DEBUG")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 

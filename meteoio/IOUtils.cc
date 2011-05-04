@@ -108,9 +108,9 @@ std::string IOUtils::cleanPath(const std::string& in_path) {
 
 void IOUtils::trim(std::string& str)
 {
-	const std::string whitespaces (" \t\f\v\n\r");
-	size_t startpos = str.find_first_not_of(whitespaces); // Find the first character position after excluding leading blank spaces
-	size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af
+	const std::string whitespaces(" \t\f\v\n\r");
+	const size_t startpos = str.find_first_not_of(whitespaces); // Find the first character position after excluding leading blank spaces
+	const size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	// if all spaces or empty return an empty string
 	if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
@@ -455,7 +455,7 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& time_
 	} else {
 		//try to read purely numerical date, potentially surrounded by other chars
 		const unsigned int in_len = str.length();
-		size_t beg = str.find_first_of(NUM);
+		const size_t beg = str.find_first_of(NUM);
 		if(beg==npos || beg==in_len) return false;
 		size_t end = str.find_first_not_of(NUM, beg+1);
 		if(end==npos) end = in_len;
@@ -483,7 +483,7 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& time_
 					return false;
 			}
 		}
-		
+
 		t.setDate( year, month, day, hour, minute, time_zone );
 	}
 
