@@ -77,13 +77,15 @@ class SNIO : public IOInterface {
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
 		void cleanup() throw();
 
-		double in_tz, out_tz;
 		Config cfg;
+		double in_tz, out_tz;
+		bool iswr_inp, rswr_inp;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		static const int sn_julian_offset;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const unsigned int min_nr_meteoData; // minimal number of parameters on data input lines
+		unsigned int nr_meteoData; // number of parameters on data input lines, excluding optional ones
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecAllStations;
 };
