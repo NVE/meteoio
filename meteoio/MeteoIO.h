@@ -72,7 +72,7 @@
 #include <meteoio/Timer.h>
 
 #ifdef _POPC_
-#include <meteoio/IOHandler.h>  //HACK
+#include <meteoio/IOHandler.ph>
 #include <meteoio/IOManager.h> //HACK
 #include <meteoio/marshal_meteoio.h>
 #else

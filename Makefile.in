@@ -24,12 +24,12 @@ PROJ4		= @PROJ4@
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
 
-CC		= @CC@ -DGNU
-CXX		= @CXX@
+CC		= @CC@ -DGNU -DLINUX -D_USE_MATH_DEFINES
+CXX		= @CXX@ -DGNU -DLINUX -D_USE_MATH_DEFINES
 LINKER		= @CXX@ -DGNU
 POPCC		= popcc
 
-DEBUG		= -g -O0 -D__DEBUG #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr
+DEBUG		= -g -O0 #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr
 debug_arithm	= -DDEBUG_ARITHM -g
 WARNING		= @WARNING@ @EXTRA_WARN@ #-Weffc++ #-pedantic-errors #-Werror
 ARCH		= @ARCH@
@@ -118,7 +118,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteolaws/Suntrajectory.o \
 		$(SRCDIR)/meteolaws/Sun.o
 
-METEOIO_OBJ_POPC =$(SRCDIR)/IOManager.stub.o \
+METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
 		$(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/IOManager_par.o \
 		$(SRCDIR)/Matrix_par.o \
@@ -206,7 +206,10 @@ meteoIO_module_par: $(LIBDIR)/meteoio.module
 ##############  END  ##############
 
 clean:
-	-rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(TOOLSDIR)/*.o $(PLUGINDIR)/*.o
+	-rm -f $(SRCDIR)/*~ $(SRCDIR)/*.o $(TOOLSDIR)/*.o
+	-rm -f $(PLUGINDIR)/*~ $(PLUGINDIR)/*.o
+	-rm -f $(SRCDIR)/meteolaws/*~ $(SRCDIR)/meteolaws/*.o
+	-rm -f $(SRCDIR)/meteofilters/*~ $(SRCDIR)/meteofilters/*.o
 #	cd $(PLUGINDIR)/gsn; make clean
 
 distclean: clean

@@ -15,9 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-//#include <meteoio/IOHandler.ph>
+#include <meteoio/IOHandler.ph>
 //#include <meteoio/IOManager.ph>
 
 //@pack(IOHandler, IOManager)
-//@pack(IOManager)
-//@pack(IOHandler)
+@pack(IOHandler)
