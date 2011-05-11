@@ -98,7 +98,7 @@ The format is the following:
     0.000000000000 (rotation term for column)
     -5.000000000000 (size of pixel in y direction)
     492169.690845528910 (x coordinate of centre of upper left pixel in map units)
-    5426523.318065105000 (y coordinate of centre of upper left pixel in map units) 
+    5426523.318065105000 (y coordinate of centre of upper left pixel in map units)
 */
 
 ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
@@ -279,14 +279,13 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		throw FileAccessException(name, AT);
 	}
 
-	Coords llcorner=grid_in.llcorner;
-	//we want to make sure that we are using the provided projection parameters
-	//so that we output is done in the same system as the inputs
-	llcorner.setProj(coordout, coordoutparam);
-
-	fout << fixed << showpoint << setprecision(6);
-
 	try {
+		Coords llcorner=grid_in.llcorner;
+		//we want to make sure that we are using the provided projection parameters
+		//so that we output is done in the same system as the inputs
+		llcorner.setProj(coordout, coordoutparam);
+
+		fout << fixed << showpoint << setprecision(6);
 		fout << "ncols " << setw(23-6) << grid_in.ncols << endl;
 		fout << "nrows " << setw(23-6) << grid_in.nrows << endl;
 		fout << "xllcorner " << setw(23-10) << setprecision(3) << llcorner.getEasting() << endl;

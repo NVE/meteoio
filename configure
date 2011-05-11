@@ -3557,7 +3557,7 @@ if test "$COLORGCC" == "yes"
 then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: Compiling using colorgcc" >&5
 $as_echo "$as_me: Compiling using colorgcc" >&6;}
-	CC=colorgcc
+	#CC=colorgcc
 	#CXX=colorgcc
 fi
 
@@ -3947,69 +3947,7 @@ case ".$ax_cv_cflags_gcc_option__O3" in
  ;;
 esac
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking OPTIM for gcc -ftree-vectorize" >&5
-$as_echo_n "checking OPTIM for gcc -ftree-vectorize... " >&6; }
-if test "${ax_cv_cflags_gcc_option__ftree_vectorize+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ax_cv_cflags_gcc_option__ftree_vectorize="no, unknown"
-
- ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
- ac_save_CFLAGS="$CFLAGS"
-for ac_arg in "-pedantic -Werror % -ftree-vectorize"     "-pedantic % -ftree-vectorize %% no, obsolete"     #
-do CFLAGS="$ac_save_CFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
-   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-return 0;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ax_cv_cflags_gcc_option__ftree_vectorize=`echo $ac_arg | sed -e 's,.*% *,,'` ; break
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-done
- CFLAGS="$ac_save_CFLAGS"
- ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_cflags_gcc_option__ftree_vectorize" >&5
-$as_echo "$ax_cv_cflags_gcc_option__ftree_vectorize" >&6; }
-case ".$ax_cv_cflags_gcc_option__ftree_vectorize" in
-     .ok|.ok,*)  ;;
-   .|.no|.no,*)  ;;
-   *)
-   if echo " $OPTIM " | grep " $ax_cv_cflags_gcc_option__ftree_vectorize " 2>&1 >/dev/null
-   then { { $as_echo "$as_me:${as_lineno-$LINENO}: : OPTIM does contain \$ax_cv_cflags_gcc_option__ftree_vectorize"; } >&5
-  (: OPTIM does contain $ax_cv_cflags_gcc_option__ftree_vectorize) 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }
-   else { { $as_echo "$as_me:${as_lineno-$LINENO}: : OPTIM=\"\$OPTIM \$ax_cv_cflags_gcc_option__ftree_vectorize\""; } >&5
-  (: OPTIM="$OPTIM $ax_cv_cflags_gcc_option__ftree_vectorize") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }
-                      OPTIM="$OPTIM $ax_cv_cflags_gcc_option__ftree_vectorize"
-   fi
- ;;
-esac
-
+	#AX_CFLAGS_GCC_OPTION(-ftree-vectorize, OPTIM)
 
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking MAKE_OPTIM for gcc -combine" >&5

@@ -442,7 +442,7 @@ void Coords::setGridIndex(const int in_grid_i, const int in_grid_j, const int in
 }
 
 /**
-* @brief Set altitude at a given value. 
+* @brief Set altitude at a given value.
 * If the i,j,k indices were set, reset them to inodata,
 * except if specified otherwise with in_update=false.
 * @param[in] in_altitude altitude above sea level, in meters
@@ -1294,10 +1294,17 @@ void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const d
 	const double lat_ref_rad = lat_ref*to_rad;
 	const double bearing_rad = bearing*to_rad;
 
+	if(IOUtils::checkEpsilonEquality(distance, 0., .01)) {
+		//distance is too small, it could create numerical problems
+		lat = lat_ref;
+		lon = lon_ref;
+		return;
+	}
+
 	lat = asin( sin(lat_ref_rad)*cos(distance/Rearth) +
-				cos(lat_ref_rad)*sin(distance/Rearth)*cos(bearing_rad) );
+	            cos(lat_ref_rad)*sin(distance/Rearth)*cos(bearing_rad) );
 	lon = lon_ref*to_rad + atan2( sin(bearing_rad)*sin(distance/Rearth)*cos(lat_ref_rad) ,
-					cos(distance/Rearth) - sin(lat_ref_rad)*sin(lat) );
+	                              cos(distance/Rearth) - sin(lat_ref_rad)*sin(lat) );
 	lon = fmod(lon+M_PI, 2.*M_PI) - M_PI;
 
 	lat *= to_deg;
@@ -1316,6 +1323,12 @@ void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const d
 */
 double Coords::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const
 {
+	if(lat1==lat2 && lon1==lon2) {
+		//distance is zero, it creates numerical problems -> skip calculation
+		alpha = 0.;
+		return 0.;
+	}
+
 	const double Rearth = 6371.e3;
 	const double to_rad = M_PI / 180.0;
 	const double d = acos(

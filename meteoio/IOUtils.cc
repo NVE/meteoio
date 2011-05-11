@@ -127,7 +127,7 @@ void IOUtils::toUpper(std::string& str){
 }
 
 bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& delimiter,
-						 std::map<std::string,std::string>& out_map, const std::string& keyprefix, const bool& setToUpperCase)
+                               std::map<std::string,std::string>& out_map, const std::string& keyprefix, const bool& setToUpperCase)
 {
 	//size_t pos = in_line.find(delimiter); //first occurence of '='
 
