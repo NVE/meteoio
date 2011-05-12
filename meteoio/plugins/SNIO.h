@@ -71,7 +71,8 @@ class SNIO : public IOInterface {
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		double cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness );
-		void parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, MeteoData& md);
+		void parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, 
+						const Date& dateStart, const Date& dateEnd, MeteoData& md);
 		bool readStationMetaData(const std::string& metafile, const std::string& stationname, StationData& sd);
 		void readMetaData(unsigned int& nrOfStations);
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
@@ -88,6 +89,7 @@ class SNIO : public IOInterface {
 		unsigned int nr_meteoData; // number of parameters on data input lines, excluding optional ones
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecAllStations;
+		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
 };
 
 } //namespace
