@@ -578,7 +578,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 	columns = IOUtils::readLineToVec(line_in, vec_names);
 	if (columns < 4) {
 		cleanup();
-		throw InvalidFormatException("[E] Premature end of line in file " + filename, AT);
+		throw InvalidFormatException("[E] Premature end of line in file " + filename + " (line does not even contain full timestamp)", AT);
 	}
 
 	MeteoData& lastMeteoData = vecM[0][vecM[0].size()-1]; //last time stamp in buffer of 1D meteo
@@ -592,17 +592,20 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 			break;
 		}
 
-		if (IOUtils::readLineToVec(line_in, tmpvec)!=columns) { //Every station has to have its own column
+		const unsigned int cols_found = IOUtils::readLineToVec(line_in, tmpvec);
+		if (cols_found!=columns) { //Every station has to have its own column
 			cleanup();
-			throw InvalidFormatException("[E] Premature End of Line or no data for date "
-			                             + vecM[0][bufferindex].date.toString(Date::FULL) + " found in File "
-			                             + filename, AT);
+			std::stringstream ss;
+			ss << "[E] Premature End of Line or no data for date " << vecM[0][bufferindex].date.toString(Date::FULL);
+			ss << " in file " << filename;
+			ss << " (expected data for " << columns << " stations, found " << cols_found << " data fields instead)";
+			throw InvalidFormatException(ss.str(), AT);
 		}
 
 		for (unsigned int ii=0; ii<4; ii++) {
 			if (!IOUtils::convertString(tmp_ymdh[ii], tmpvec[ii], std::dec)) {
 				cleanup();
-				throw InvalidFormatException("[E] Check date columns in " + filename, AT);
+				throw InvalidFormatException("[E] Check date columns in " + filename + " at line " + line_in, AT);
 			}
 		}
 		tmp_date.setDate(tmp_ymdh[0],tmp_ymdh[1],tmp_ymdh[2],tmp_ymdh[3],0, in_tz);
@@ -677,19 +680,19 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	getline(fin, line_in, eoln); //xcoord
 	if (IOUtils::readLineToVec(line_in, vec_xcoord) != columns) {
 		cleanup();
-		throw InvalidFormatException("Column count doesn't match from line to line in " + filename, AT);
+		throw InvalidFormatException("Column count doesn't match from line to line in " + filename + " at line " + line_in, AT);
 	}
 
 	getline(fin, line_in, eoln); //ycoord
 	if (IOUtils::readLineToVec(line_in, vec_ycoord) != columns) {
 		cleanup();
-		throw InvalidFormatException("Column count doesn't match from line to line in " + filename, AT);
+		throw InvalidFormatException("Column count doesn't match from line to line in " + filename + " at line " + line_in, AT);
 	}
 
 	getline(fin, line_in, eoln); //names
 	if (IOUtils::readLineToVec(line_in, vec_names) != columns) {
 		cleanup();
-		throw InvalidFormatException("Column count doesn't match from line to line in " + filename, AT);
+		throw InvalidFormatException("Column count doesn't match from line to line in " + filename + " at line " + line_in, AT);
 	}
 
 	cleanup();
