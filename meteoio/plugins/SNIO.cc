@@ -357,7 +357,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			}
 
 			//save stream position and the corresponding end date
-			if (current_fpointer != -1) vec_streampos.at(ii)[dateEnd] = current_fpointer;
+			if (current_fpointer != ((ifstream::pos_type)-1)) vec_streampos.at(ii)[dateEnd] = current_fpointer;
 		} catch (std::exception& e){
 			cleanup();
 			throw;
