@@ -33,7 +33,7 @@
 namespace mio {
 
 /**
-* @brief Default constructor. 
+* @brief Default constructor.
 * Initialize internal variables. It does NOT start timing.
 */
 Timer::Timer() {
@@ -43,7 +43,7 @@ Timer::Timer() {
 }
 
 /**
-* @brief Start the timer. 
+* @brief Start the timer.
 */
 void Timer::start() {
 	if (!isRunning) {
@@ -53,7 +53,15 @@ void Timer::start() {
 }
 
 /**
-* @brief Stop the timer. 
+* @brief Reset and start the timer.
+*/
+void Timer::restart() {
+	reset();
+	isRunning=true;
+}
+
+/**
+* @brief Stop the timer.
 * It can be restarted afterward, adding time to what was already timed.
 */
 void Timer::stop() {
@@ -72,11 +80,11 @@ void Timer::reset() {
 }
 
 /**
-* @brief Get total elapsed time. 
+* @brief Get total elapsed time.
 * It returns the sum of all the elapsed time between all the start/stop sessions since
 * the timer was created or the last call to reset. Time is in seconds with microsecond resolution.
 */
-double Timer::getElapsed() {
+double Timer::getElapsed() const {
 	if (isRunning) {
 		return elapsed+getCurrentTime()-start_point;
 	}
@@ -84,7 +92,7 @@ double Timer::getElapsed() {
 }
 
 #ifdef _WIN32
-double Timer::getCurrentTime() {
+double Timer::getCurrentTime() const {
 	SYSTEMTIME systemTime;
 	GetSystemTime( &systemTime );
 
@@ -100,7 +108,7 @@ double Timer::getCurrentTime() {
 	return (double)(uli.QuadPart/units_convert - offset_to_epoch);
 }
 #else
-double Timer::getCurrentTime() {
+double Timer::getCurrentTime() const {
 	timeval tp;
 	gettimeofday(&tp,NULL);
 	const double t=tp.tv_sec+double(tp.tv_usec)*1.0e-6;

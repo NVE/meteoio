@@ -44,11 +44,12 @@ class Timer {
 public:
 	Timer();
 	void start();
+	void restart();
 	void stop();
 	void reset();
-	double getElapsed();
+	double getElapsed() const;
 protected:
-	double getCurrentTime();
+	double getCurrentTime() const;
 
 	double start_point;
 	double elapsed;
