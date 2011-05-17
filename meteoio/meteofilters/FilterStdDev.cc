@@ -40,7 +40,7 @@ void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoDat
 {
 	ovec.clear();
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
 		double& value = ovec[ii].param(index);
 
@@ -49,7 +49,7 @@ void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoDat
 		//Calculate deviation
 		double mean     = IOUtils::nodata;
 		double std_dev  = IOUtils::nodata;
-		
+
 		try {
 			/*vector<double> dbl_vec;
 			extract_dbl_vector(index,vec_window, dbl_vec);
@@ -84,11 +84,11 @@ void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoDat
 }
 
 void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, const unsigned int& paramindex, double& stddev, double& mean) {
-	unsigned int count=0;
+	size_t count=0;
 	double sum=0.;
-	unsigned int n = vec_window.size();
+	const size_t n = vec_window.size();
 
-	for(unsigned int ii=0; ii<n; ii++) {
+	for(size_t ii=0; ii<n; ii++) {
 		const double& value = (*vec_window[ii]).param(paramindex);
 		if(value!=IOUtils::nodata) {
 			sum += value;
@@ -103,7 +103,7 @@ void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, cons
 		//compensated variance algorithm, see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance
 		mean = sum/(double)count;
 		double sum2=0., sum3=0.;
-		for(unsigned int ii=0; ii<n; ii++) {
+		for(size_t ii=0; ii<n; ii++) {
 			const double& value = (*vec_window[ii]).param(paramindex);
 			if(value!=IOUtils::nodata) {
 				sum2 = sum2 + (value - mean)*(value - mean);
@@ -125,15 +125,15 @@ void FilterStdDev::parse_args(std::vector<std::string> vec_args)
 
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-	
+
 	FilterBlock::convert_args(2, 2, vec_args, filter_args);
 
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT); 
+		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
 	}
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
-} 
+}
 
 }

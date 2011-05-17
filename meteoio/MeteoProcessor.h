@@ -48,23 +48,23 @@ class MeteoProcessor {
 		~MeteoProcessor();
 
 		/**
-		 * @brief A function that executes all the filters for all meteo parameters 
+		 * @brief A function that executes all the filters for all meteo parameters
 		 *        configuered by the user
 		 * @param[in] ivec The raw sequence of MeteoData objects for all stations
 		 * @param[in] ovec The filtered output of MeteoData object for all stations
 		 * @param[in] second_pass Whether this is the second pass (check only filters)
 		 */
-		void process(const std::vector< std::vector<MeteoData> >& ivec, 
+		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
-		unsigned int resample(const Date& date, std::vector<MeteoData>& ivec);
+		size_t resample(const Date& date, std::vector<MeteoData>& ivec);
 
 		void getWindowSize(ProcessingProperties& o_properties);
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
 
  	private:
-		unsigned int get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
+		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
 		void compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current);
 
 		std::map<std::string, ProcessingStack*> processing_stack;

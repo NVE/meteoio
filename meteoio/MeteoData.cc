@@ -137,10 +137,10 @@ void MeteoData::addParameter(const std::string& i_paramname)
 	mapParameterByName[i_paramname] = &extraparameters[i_paramname];
 
 	//Increase nrOfAllParameters
-	nrOfAllParameters++;	
+	nrOfAllParameters++;
 }
 
-unsigned int MeteoData::getNrOfParameters() const
+size_t MeteoData::getNrOfParameters() const
 {
 	return nrOfAllParameters;
 }
@@ -216,7 +216,7 @@ void MeteoData::reset()
 	std::map<unsigned int, double*>::iterator it;
 	for (it=meteoparam.begin(); it!=meteoparam.end(); it++){
 		*it->second = IOUtils::nodata;
-	}	
+	}
 }
 
 void MeteoData::setData(const MeteoData::Parameters& param, const double& value)
@@ -268,7 +268,7 @@ double& MeteoData::param(const unsigned int& parindex)
 #ifndef NOSAFECHECKS
 	if (parindex >= getNrOfParameters())
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
-#endif	
+#endif
 	return *(meteoparam[parindex]);
 }
 
@@ -292,7 +292,7 @@ double& MeteoData::param(const std::string& parname)
 #ifndef NOSAFECHECKS
 	if (it == mapParameterByName.end())
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
-#endif	
+#endif
 	return *(it->second);
 }
 
@@ -322,7 +322,7 @@ bool MeteoData::param_exists(const std::string& parname) const
 {
 	std::map<std::string, double*>::const_iterator it;
 	it = mapParameterByName.find(parname);
-	if (it != mapParameterByName.end()) 
+	if (it != mapParameterByName.end())
 		return true;
 
 	return false;

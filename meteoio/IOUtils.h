@@ -63,7 +63,7 @@ namespace IOUtils {
 	const unsigned int unodata = (unsigned int)-1;
 	const int inodata = -999;
 	const short int snodata = -999;
-	const unsigned int npos    = (unsigned int)-1;  ///<npos is the out-of-range value
+	const size_t npos    = (size_t)-1;  ///<npos is the out-of-range value
 
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
 	const double lon_epsilon = grid_epsilon / Cst::earth_R0; ///<in degrees. Small angle for longitudes, so sin(x)=x
@@ -87,7 +87,7 @@ namespace IOUtils {
 	double pow3(const double& val);
 	double pow4(const double& val);
 
-	unsigned int seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
+	size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
 
 	/**
 	 * @brief Copies a files from one location to another
@@ -132,7 +132,7 @@ namespace IOUtils {
 
 	char getEoln(std::istream& fin);
 
-	void skipLines(std::istream& fin, const unsigned int& nbLines, const char& eoln='\n');
+	void skipLines(std::istream& fin, const size_t& nbLines, const char& eoln='\n');
 
 	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
@@ -153,7 +153,7 @@ namespace IOUtils {
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	void readKeyValueHeader(std::map<std::string, std::string>& headermap,
 	                        std::istream& bs,
-	                        const unsigned int& linecount=1,
+	                        const size_t& linecount=1,
 	                        const std::string& delimiter="=");
 
 
@@ -258,8 +258,8 @@ namespace IOUtils {
 
 		//split value string
 		std::vector<std::string> vecUnconvertedValues;
-		unsigned int counter = readLineToVec(value, vecUnconvertedValues);
-		for (unsigned int ii=0; ii<counter; ii++){
+		size_t counter = readLineToVec(value, vecUnconvertedValues);
+		for (size_t ii=0; ii<counter; ii++){
 			T myvar;
 			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec)){
 				std::cerr << "[E] When reading \"" << key << "\" = \"" << myvar << "\"\n";
@@ -291,7 +291,7 @@ namespace IOUtils {
 	* @param[out] coordoutparam The coordinate system parameters to be used for output data
 	*/
 	void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
-						    std::string& coordout, std::string& coordoutparam);
+	                             std::string& coordout, std::string& coordoutparam);
 
 	/**
 	* @brief A function that parses a Config object for the time_zone keyword and returns the timezone

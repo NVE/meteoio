@@ -34,7 +34,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * @page interpol2d Spatial interpolations
  * Using the vectors of MeteoData and StationData as filled by the IOInterface::readMeteoData call
  * as well as a grid of elevations (DEM, stored as a DEMObject), it is possible to get spatially
- * interpolated parameters. 
+ * interpolated parameters.
  *
  * First, an interpolation method has to be selected for each variable which needs interpolation. Then the class computes
  * the interpolation for each 2D grid point, combining the inputs provided by the available data sources.
@@ -55,15 +55,15 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * [Interpolations2D]
  * TA::algorithms = IDW_LAPSE CST_LAPSE
  * TA::cst_lapse = -0.008
- * 
+ *
  * RH::algorithms = RH IDW_LAPSE CST_LAPSE CST
- * 
+ *
  * HNW::algorithms = HNW_SNOW IDW_LAPSE CST_LAPSE CST
  * HNW::hnw_snow = cst_lapse
  * HNW::cst_lapse = 0.0005 frac
- * 
+ *
  * VW::algorithms = IDW_LAPSE CST_LAPSE
- * 
+ *
  * P::algorithms = STD_PRESS
  * @endcode
  *
@@ -91,20 +91,20 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * kept. If the final correlation coefficient is less than 0.7, a warning is displayed.
  *
  * @section dev_use Developer usage
- * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its 
+ * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its
  * IOManager::interpolate method.
  * @code
  * 	Config cfg("io.ini");
  * 	IOManager io(cfg);
- * 	
+ *
  * 	//reading the dem (necessary for several spatial interpolations algoritms)
  * 	DEMObject dem;
  * 	io.readDEM(dem);
- * 	
+ *
  *	//performing spatial interpolations
  * 	Grid2DObject param;
  *	io.interpolate(date, dem, MeteoData::TA, param);
- *	
+ *
  * @endcode
  *
  * @section biblio Bibliography
@@ -115,7 +115,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Matthias Huss, Daniel Farinotti, Andreas Bauder and Martin Funk, Hydrological Processes, <b>22</b>, 3888-3902, 2008.
  * - <i>"Geostatistics for Natural Resources Evaluation"</i>, Pierre Goovaerts, Oxford University Press, Applied Geostatistics Series, 1997, 483 p., ISBN 0-19-511538-4
  * - <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, 900 p.
- * 
+ *
  * @author Mathias Bavay
  * @date   2010-04-12
  */
@@ -151,16 +151,16 @@ class InterpolationAlgorithm {
 
 		MeteoData::Parameters param; ///<the parameter that we will interpolate
 
-		unsigned int nrOfMeasurments; ///<the available number of measurements
+		size_t nrOfMeasurments; ///<the available number of measurements
 		std::vector<MeteoData> vecMeteo;
 		std::vector<double> vecData; ///<store the measurement for the given parameter
 		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
 		std::stringstream info; ///<to store some extra information about the interoplation process
 
-		unsigned int getData(const MeteoData::Parameters& param, std::vector<double>& vecData) const;
-		unsigned int getData(const MeteoData::Parameters& param, 
-		                     std::vector<double>& vecData, std::vector<StationData>& vecMeta) const;
-		unsigned int getStationAltitudes(const std::vector<StationData>& vecMeta, std::vector<double>& vecData) const;
+		size_t getData(const MeteoData::Parameters& param, std::vector<double>& vecData) const;
+		size_t getData(const MeteoData::Parameters& param,
+		               std::vector<double>& vecData, std::vector<StationData>& vecMeta) const;
+		size_t getStationAltitudes(const std::vector<StationData>& vecMeta, std::vector<double>& vecData) const;
 };
 
 class AlgorithmFactory {
@@ -177,7 +177,7 @@ class AlgorithmFactory {
 
 /**
  * @class ConstAlgorithm
- * @brief Constant filling interpolation algorithm. 
+ * @brief Constant filling interpolation algorithm.
  * Fill the grid with the average of the inputs for this parameter.
  */
 class ConstAlgorithm : public InterpolationAlgorithm {
@@ -290,7 +290,7 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
  * The closest n stations (n being given as an extra argument of <i>"idw_lapse"</i>) to each pixel are
  * used to compute the local lapse rate, allowing to project the contributions of these n stations to the
  * local pixel with an inverse distance weight. We also assume a two segments regression for altitude detrending with
- * a fixed 1200m above sea level inflection point. 
+ * a fixed 1200m above sea level inflection point.
  */
 class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
@@ -336,7 +336,7 @@ class RHAlgorithm : public InterpolationAlgorithm {
  * Each ILWR is converted to an emissivity (using the local air temperature), interpolated using CST_LAPSE or IDW_LAPSE with
  * a fixed lapse rate and reconverted to ILWR.
  *
- * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for 
+ * As a side effect, the user must have defined algorithms to be used for air temperature (since this is needed for
  * emissivity to ILWR conversion)
  */
 class ILWRAlgorithm : public InterpolationAlgorithm {
@@ -392,7 +392,7 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
  * TA::algorithms = USER
  * TA::user = ./meteo_grids
  * @endcode
- * 
+ *
  */
 class USERInterpolation : public InterpolationAlgorithm {
 	public:
@@ -415,7 +415,7 @@ class USERInterpolation : public InterpolationAlgorithm {
  * The precipitation distribution is initialized using a specified algorithm (IDW_LAPSE by default, see IDWLapseAlgorithm).
  * An optional parameter can be given to specify which algorithm has to be used for initializing the grid.
  * Please do not forget to provide the arguments of the chosen algorithm itself if necessary!
- * 
+ *
  * After this initialization, the pixels whose air temperatures are below or at freezing are modified according
  * to the method described in <i>"Quantitative evaluation of different hydrological modelling approaches
  * in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review and

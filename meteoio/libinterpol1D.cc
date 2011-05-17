@@ -32,7 +32,7 @@ namespace mio {
  * @param x3 x-coordinate of desired point
  * @return y-coordinate of desired point
  */
-double Interpol1D::linearInterpolation(const double& x1, const double& y1, 
+double Interpol1D::linearInterpolation(const double& x1, const double& y1,
                                        const double& x2, const double& y2, const double& x3)
 {
 	if (x1 == x2)
@@ -48,11 +48,11 @@ double Interpol1D::linearInterpolation(const double& x1, const double& y1,
 double Interpol1D::linearInterpolation(const double& d1, const double& d2, const double& weight)
 {
 	double tmp = abs(d1 - d2);
-	
+
 	if (d1 < d2) {
 		return (d1 + tmp*weight);
 	} else {
-		return (d1 - tmp*weight); 
+		return (d1 - tmp*weight);
 	}
 }
 
@@ -84,9 +84,9 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 // as much more efficient than full sorting (O(n) compared to O(n log(n))
 	if (vecData.size() == 0)
 		throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
-	
+
 	vector<double> vecTemp;
-	for(unsigned int i=0; i<vecData.size(); i++) {
+	for(size_t i=0; i<vecData.size(); i++) {
 		const double& value=vecData[i];
 		if(value!=IOUtils::nodata)
 			vecTemp.push_back(value);
@@ -94,8 +94,8 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 
 	if (vecTemp.size() == 0)
 		return IOUtils::nodata;
-	
-	const unsigned int vecSize = vecTemp.size();
+
+	const size_t vecSize = vecTemp.size();
 	const int middle = (int)(vecSize/2);
 	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
@@ -110,22 +110,22 @@ double Interpol1D::getMedianAverageDeviation(const std::vector<double>& vecData)
 {
 	if (vecData.size() == 0)
 		throw NoAvailableDataException("Trying to calculate MAD with no data points", AT);
-	
+
 	vector<double> vecWindow(vecData);
 
-	double median = Interpol1D::getMedian(vecWindow);
+	const double median = Interpol1D::getMedian(vecWindow);
 	if(median==IOUtils::nodata)
 		return IOUtils::nodata;
 
 	//Calculate vector of deviations and write each value back into the vecWindow
-	for(unsigned int ii=0; ii<vecWindow.size(); ii++){
+	for(size_t ii=0; ii<vecWindow.size(); ii++){
 		double& value=vecWindow[ii];
 		if(value!=IOUtils::nodata)
 			value = std::abs(value - median);
 	}
 
 	//Calculate the median of the deviations
-	double mad = Interpol1D::getMedian(vecWindow);
+	const double mad = Interpol1D::getMedian(vecWindow);
 
 	return mad;
 }
@@ -134,12 +134,12 @@ double Interpol1D::variance(const std::vector<double>& X)
 {//The variance is computed using a compensated variance algorithm,
 //(see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance)
 //in order to be more robust to small variations around the mean.
-	const unsigned int n = X.size();
+	const size_t n = X.size();
 
-	unsigned int count=0;
+	size_t count=0;
 	double sum=0., sum_sq=0.;
 
-	for(unsigned int i=0; i<n; i++) {
+	for(size_t i=0; i<n; i++) {
 		const double value=X[i];
 		if(value!=IOUtils::nodata) {
 			sum += value;
@@ -152,7 +152,7 @@ double Interpol1D::variance(const std::vector<double>& X)
 
 	const double mean = sum/(double)count;
 	double sum2=0., sum3=0.;
-	for(unsigned int i=0; i<n; i++) {
+	for(size_t i=0; i<n; i++) {
 		const double value=X[i];
 		if(value!=IOUtils::nodata) {
 			sum2 = sum2 + (value - mean)*(value - mean);
@@ -172,7 +172,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 {//HACK: we should use a compensated formula here, similarly to the variance computation!
 	if(X.size()!=Y.size())
 		throw IOException("Vectors should have the same size for covariance!", AT);
-	const unsigned int n = X.size();
+	const size_t n = X.size();
 	if(n==0) return IOUtils::nodata;
 
 	const double X_mean = Interpol1D::arithmeticMean(X);
@@ -180,9 +180,9 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 	if(X_mean==IOUtils::nodata || Y_mean==IOUtils::nodata)
 		return IOUtils::nodata;
 
-	unsigned int count=0;
+	size_t count=0;
 	double sum=0.;
-	for(unsigned int i=0; i<n; i++) {
+	for(size_t i=0; i<n; i++) {
 		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
 			sum += (X[i] - X_mean) * (Y[i] - Y_mean);
 			count++;
@@ -204,7 +204,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 */
 void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {	//check arguments
-	const unsigned int n=X.size();
+	const size_t n=X.size();
 	if(n==0)
 		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
 	if(n!=Y.size())
@@ -212,8 +212,8 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 	//computing x_avg and y_avg
 	double x_avg=0., y_avg=0.;
-	unsigned int count=0;
-	for (unsigned int i=0; i<n; i++) {
+	size_t count=0;
+	for (size_t i=0; i<n; i++) {
 		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
 			x_avg += X[i];
 			y_avg += Y[i];
@@ -227,7 +227,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 	//computing sx, sy, sxy
 	double sx=0., sy=0., sxy=0.;
-	for (unsigned int i=0; i<n; i++) {
+	for (size_t i=0; i<n; i++) {
 		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
 			sx += (X[i]-x_avg) * (X[i]-x_avg);
 			sy += (Y[i]-y_avg) * (Y[i]-y_avg);
@@ -274,7 +274,7 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 	//we want at least 4 points AND 85% of the initial data set kept in the regression
 	const unsigned int min_dataset=(unsigned int)floor(0.85*(double)in_X.size());
 	const unsigned int min_pts=(min_dataset>4)?min_dataset:4;
-	const unsigned int nb_pts = in_X.size();
+	const size_t nb_pts = in_X.size();
 	double a,b,r;
 
 	if (nb_pts==2) {
@@ -293,13 +293,13 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 		return EXIT_SUCCESS;
 
 	std::vector<double> X(in_X), Y(in_Y);
-	unsigned int nb_valid_pts=nb_pts;
+	size_t nb_valid_pts=nb_pts;
 
 	while(R<r_thres && nb_valid_pts>min_pts) {
 		//we try to remove the one point in the data set that is the worst
 		R=0.;
-		unsigned int index_bad=0;
-		for (unsigned int i=0; i<nb_pts; i++) {
+		size_t index_bad=0;
+		for (size_t i=0; i<nb_pts; i++) {
 			//invalidating alternatively each point
 			const double Y_tmp=Y[i]; Y[i]=IOUtils::nodata;
 			Interpol1D::LinRegression(X, Y, a, b, r, mesg);
@@ -365,7 +365,7 @@ void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<d
 {
 	std::vector<double> y;
 
-	for(unsigned int i=0; i<Y.size(); i++) {
+	for(size_t i=0; i<Y.size(); i++) {
 		const double val = Y[i];
 		if(val!=IOUtils::nodata) {
 			y.push_back( log(val) );

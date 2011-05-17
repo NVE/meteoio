@@ -32,11 +32,11 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
-	unsigned int last_good = IOUtils::npos;
-	
+	size_t last_good = IOUtils::npos;
+
 	//Find first point that is not IOUtils::nodata
-	for (unsigned int ii=0; ii<ivec.size(); ii++){
-		ovec.push_back(ivec[ii]);		
+	for (size_t ii=0; ii<ivec.size(); ii++){
+		ovec.push_back(ivec[ii]);
 		if (ovec[ii].param(index) != IOUtils::nodata){
 			last_good = ii;
 			break;
@@ -44,9 +44,9 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 	}
 
 	if (last_good == IOUtils::npos) //can not find a good point to start
-		return; 
+		return;
 
-	for (unsigned int ii=(last_good+1); ii<ivec.size(); ii++) {
+	for (size_t ii=(last_good+1); ii<ivec.size(); ii++) {
 		ovec.push_back(ivec[ii]);
 
 		double& curr_value       = ovec[ii].param(index);
@@ -65,13 +65,13 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 			last_good = ii;
 		}
 	}
-}	
+}
 
 void RateFilter::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 	FilterBlock::convert_args(1, 2, vec_args, filter_args);
 
-	const unsigned int nb_args = filter_args.size();
+	const size_t nb_args = filter_args.size();
 	if (nb_args == 2) {
 		min_rate_of_change = filter_args[0];
 		max_rate_of_change = filter_args[1];
@@ -79,8 +79,8 @@ void RateFilter::parse_args(std::vector<std::string> vec_args) {
 		min_rate_of_change = -filter_args[0];
 		max_rate_of_change = filter_args[0];
 	} else
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 1 or 2 arguments!", AT); 
+		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 1 or 2 arguments!", AT);
 
 }
 
-} 
+}

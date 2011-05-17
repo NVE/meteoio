@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg) 
+MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg)
 {
 	//Parse [Filters] section, create processing stack for each configured parameter
 	set<string> set_of_used_parameters;
@@ -40,12 +40,12 @@ MeteoProcessor::~MeteoProcessor()
 		delete it->second;
 }
 
-unsigned int MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
+size_t MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
 	std::vector<std::string> vec_keys;
 	cfg.findKeys(vec_keys, "", "Filters");
 
-	for (unsigned int ii=0; ii<vec_keys.size(); ii++){
+	for (size_t ii=0; ii<vec_keys.size(); ii++){
 		size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
 			string tmp = vec_keys[ii].substr(0,found);
@@ -75,15 +75,15 @@ void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, Proc
 {
 	current.points_before = MAX(current.points_before, newprop.points_before);
 	current.points_after = MAX(current.points_after, newprop.points_after);
-	
+
 	if (newprop.time_before > current.time_before)
 		current.time_before = newprop.time_before;
-	
+
 	if (newprop.time_after > current.time_after)
 		current.time_after = newprop.time_after;
 }
 
-void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec, 
+void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
                              std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
 	//call the different processing stacks
@@ -102,7 +102,7 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
 		ovec = ivec;
 }
 
-unsigned int MeteoProcessor::resample(const Date& date, std::vector<MeteoData>& ivec)
+size_t MeteoProcessor::resample(const Date& date, std::vector<MeteoData>& ivec)
 {
 	return mi1d.resampleData(date, ivec);
 }
@@ -112,7 +112,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
 	os << "<MeteoProcessor>\n";
 	os << data.mi1d;
 	os << "Processing stacks:\n";
-	for (map<string, ProcessingStack*>::const_iterator it=data.processing_stack.begin(); 
+	for (map<string, ProcessingStack*>::const_iterator it=data.processing_stack.begin();
 		it != data.processing_stack.end(); it++){
 		//os << setw(10) << it->first << "::"; //the processing stack already contains it
 		os << (*it->second);

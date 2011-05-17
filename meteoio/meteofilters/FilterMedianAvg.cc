@@ -38,7 +38,7 @@ void FilterMedianAvg::process(const unsigned int& index, const std::vector<Meteo
 {
 	ovec.clear();
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
 		double& value = ovec[ii].param(index);
 
@@ -70,7 +70,7 @@ void FilterMedianAvg::process(const unsigned int& index, const std::vector<Meteo
  * @brief Actual algorithm to calculate the average value for all values in vec_window.param(index)
  * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
  * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
- * @return A double either representing the average or IOUtils::nodata if averaging fails 
+ * @return A double either representing the average or IOUtils::nodata if averaging fails
  */
 double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
 {
@@ -78,7 +78,7 @@ double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector
 		return IOUtils::nodata;
 
 	vector<double> vecTemp;
-	for(unsigned int ii=0; ii<vec_window.size(); ii++){ //get rid of nodata elements
+	for(size_t ii=0; ii<vec_window.size(); ii++){ //get rid of nodata elements
 		const double& value = (*vec_window[ii]).param(index);
 		if (value != IOUtils::nodata)
 			vecTemp.push_back(value);
@@ -88,8 +88,8 @@ double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector
 
 	if (vecTemp.size() == 0)
 		return IOUtils::nodata;
-	
-	const unsigned int size_of_vec = vecTemp.size();
+
+	const size_t size_of_vec = vecTemp.size();
 	const int middle = (int)(size_of_vec/2);
 	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
@@ -98,7 +98,7 @@ double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector
 	} else { //use arithmetic mean of element n/2 and n/2-1
 		return Interpol1D::linearInterpolation( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
 	}
-}	
+}
 
 void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 {
@@ -110,15 +110,15 @@ void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-	
+
 	FilterBlock::convert_args(2, 2, vec_args, filter_args);
 
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT); 
+		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
 	}
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
-} 
+}
 
 }

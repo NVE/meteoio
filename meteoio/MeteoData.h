@@ -48,7 +48,7 @@ class MeteoData {
 #endif
 	public:
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
-		enum Parameters {firstparam=0, 
+		enum Parameters {firstparam=0,
 		                 TA=firstparam, ///< Air temperature
 		                 RH, ///< Relative humidity
 		                 VW, ///< Wind velocity
@@ -99,7 +99,7 @@ class MeteoData {
 		void setDate(const Date& in_date);
 
 		/**
-		* @brief Add another variable to the MeteoData object, 
+		* @brief Add another variable to the MeteoData object,
 		*        a double value will be added and the nrOfParameters increased
 		* @param i_paramname A parameter name, e.g. "VSWR"
 		*/
@@ -153,12 +153,12 @@ class MeteoData {
 		double hs; ///<Snow height (m)
 		double p;  ///<Atmospheric pressure (Pa)
 
-		unsigned int getNrOfParameters() const;
+		size_t getNrOfParameters() const;
  private:
 		//static methods
 		static std::map<unsigned int, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
 		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname 
+		static bool initStaticData();///<initialize the static map meteoparamname
 
 		//private methods
 		void initAllParameters();
@@ -170,7 +170,7 @@ class MeteoData {
 		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
 		std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
 
-		unsigned int nrOfAllParameters;
+		size_t nrOfAllParameters;
 		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
 

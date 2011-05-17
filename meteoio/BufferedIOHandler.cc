@@ -22,10 +22,10 @@ using namespace std;
 namespace mio {
 
 #ifdef _POPC_
-BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg) 
+BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg)
 	: iohandler(in_iohandler), cfg(in_cfg), mapBufferedGrids()
 #else
-BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg) 
+BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg)
 	  : IOInterface(NULL), iohandler(in_iohandler), cfg(in_cfg), mapBufferedGrids()
 #endif
 {
@@ -43,10 +43,10 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string
 {
 	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(in_filename);
 	if (it != mapBufferedGrids.end()) { //already in map
-		in_grid2Dobj = (*it).second; 
+		in_grid2Dobj = (*it).second;
 		return;
 	}
-	
+
 	Grid2DObject tmpgrid2D;
 	iohandler.read2DGrid(tmpgrid2D, in_filename);
 	mapBufferedGrids[in_filename] = tmpgrid2D;
@@ -68,7 +68,7 @@ void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)
 		}
 		return;
 	}
-	
+
 	DEMObject tmpgrid2D;
 	 //copy the updating policy of the destination
 	tmpgrid2D.setUpdatePpt((DEMObject::update_type)in_grid2Dobj.getUpdatePpt());
@@ -81,10 +81,10 @@ void BufferedIOHandler::readLanduse(Grid2DObject& in_grid2Dobj)
 {
 	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:LANDUSE");
 	if (it != mapBufferedGrids.end()) { //already in map
-		in_grid2Dobj = (*it).second; 
+		in_grid2Dobj = (*it).second;
 		return;
 	}
-	
+
 	Grid2DObject tmpgrid2D;
 	iohandler.readLanduse(tmpgrid2D);
 	mapBufferedGrids["/:LANDUSE"] = tmpgrid2D;
@@ -95,10 +95,10 @@ void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& 
 {
 	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + in_date.toString(Date::FULL));
 	if (it != mapBufferedGrids.end()) { //already in map
-		in_grid2Dobj = (*it).second; 
+		in_grid2Dobj = (*it).second;
 		return;
 	}
-	
+
 	Grid2DObject tmpgrid2D;
 	iohandler.readAssimilationData(in_date, tmpgrid2D);
 	mapBufferedGrids["/:ASSIMILATIONDATA" + in_date.toString(Date::FULL)] = tmpgrid2D;
@@ -113,7 +113,7 @@ void BufferedIOHandler::readStationData(const Date& date, STATION_TIMESERIE& vec
 #ifdef _POPC_
 void BufferedIOHandler::writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo,
                                        const std::string& name)
-#else 
+#else
 void BufferedIOHandler::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo,
                                        const std::string& name)
 #endif
@@ -154,10 +154,10 @@ void BufferedIOHandler::setDfltBufferProperties()
 double BufferedIOHandler::getAvgSamplingRate()
 {
 	if (vec_buffer_meteo.size() > 0){
-		unsigned int sum = 0;
-		for (unsigned int ii=0; ii<vec_buffer_meteo.size(); ii++){
+		unsigned long sum = 0;
+		for (size_t ii=0; ii<vec_buffer_meteo.size(); ii++){
 			//count all data
-			sum += vec_buffer_meteo[ii].size();
+			sum += (unsigned long)vec_buffer_meteo[ii].size();
 		}
 		if (sum > 0){
 			double days = buffer_end.getJulianDate() - buffer_start.getJulianDate();
@@ -176,7 +176,7 @@ const std::vector< METEO_TIMESERIE >& BufferedIOHandler::get_complete_buffer(Dat
 	return vec_buffer_meteo; //return reference
 }
 
-void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end, 
+void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end,
                                       std::vector< METEO_TIMESERIE >& vecMeteo,
                                       const unsigned int& /*stationindex*/)
 {
@@ -192,7 +192,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 	if (vec_buffer_meteo.size() == 0) //init
 		bufferData(new_buffer_start, new_buffer_end, vec_buffer_meteo);
 
-	unsigned int buffer_size = vec_buffer_meteo.size();
+	size_t buffer_size = vec_buffer_meteo.size();
 
 	//1. Check whether data is in buffer already, and buffer it if not
 	if ((date_start < buffer_start) || (date_end > buffer_end)){
@@ -209,10 +209,10 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 
 			if (tmp_meteo_buffer.size() != buffer_size)
 				throw IOException("The number of stations changed over time, this is not handled yet!", AT);
-			
+
 			//Loop through stations and append data
-			for (unsigned int ii=0; ii<buffer_size; ii++){
-				unsigned int station_size = vec_buffer_meteo[ii].size();
+			for (size_t ii=0; ii<buffer_size; ii++){
+				size_t station_size = vec_buffer_meteo[ii].size();
 
 				if ((station_size > 0) && (tmp_meteo_buffer[ii].size() > 0)){
 					//check if the last element equals the first one
@@ -228,23 +228,23 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 	}
 
 	//2. Copy appropriate data into vecMeteo
-	for (unsigned int ii=0; ii<buffer_size; ii++){
+	for (size_t ii=0; ii<buffer_size; ii++){
 		vecMeteo.push_back(vector<MeteoData>()); //insert one empty vector of MeteoData
 
 		if (vec_buffer_meteo[ii].size() == 0) continue; //no data in buffer for this station
 
-		unsigned int pos_start = IOUtils::seek(date_start, vec_buffer_meteo[ii], false);
+		size_t pos_start = IOUtils::seek(date_start, vec_buffer_meteo[ii], false);
 		if (pos_start == IOUtils::npos) pos_start = 0;
 
-		unsigned int pos_end = IOUtils::seek(date_end, vec_buffer_meteo[ii], false);//HACK:: edit IOUtils::seek to accept an offset
+		size_t pos_end = IOUtils::seek(date_end, vec_buffer_meteo[ii], false);//HACK:: edit IOUtils::seek to accept an offset
 		if (pos_end == IOUtils::npos)	pos_end = vec_buffer_meteo[ii].size() - 1; //just copy until the end of the buffer
-		//cout << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl; 
+		//cout << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
 		if (vec_buffer_meteo[ii][pos_end].date > date_end){
 			if (pos_end > pos_start)	pos_end--;
 		} else {
 			pos_end++;
 		}
-		//cout << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl; 
+		//cout << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
 		vecMeteo[ii].insert(vecMeteo[ii].begin(), vec_buffer_meteo[ii].begin()+pos_start, vec_buffer_meteo[ii].begin()+pos_end);
 	}
 }
@@ -258,7 +258,7 @@ void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end,
 }
 
 /**
- * @brief Push a vector of time series of MeteoData objects into the local buffer. 
+ * @brief Push a vector of time series of MeteoData objects into the local buffer.
  *        This overwrites the local buffer. This method is a way to bypass the internal reading
  *        of MeteoData from a certain source.
  * @param date_start Representing the beginning of the data
@@ -298,11 +298,11 @@ std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 	os << "IOHandler &iohandler = " << hex << &data.iohandler << dec << "\n";
 
 	os << "Buffering " << data.chunks << " chunk(s) of " <<data.chunk_size.getJulianDate() << " days\n";
-	
-	os << "Current buffer content (" << data.vec_buffer_meteo.size() << " stations, " 
+
+	os << "Current buffer content (" << data.vec_buffer_meteo.size() << " stations, "
 	   << data.mapBufferedGrids.size() << " grids):\n";
 
-	for(unsigned int ii=0; ii<data.vec_buffer_meteo.size(); ii++) {
+	for(size_t ii=0; ii<data.vec_buffer_meteo.size(); ii++) {
 		if (data.vec_buffer_meteo[ii].size() > 0){
 			os << std::setw(10) << data.vec_buffer_meteo[ii][0].meta.stationID << " = "
 			   << data.vec_buffer_meteo[ii][0].date.toString(Date::ISO) << " - "

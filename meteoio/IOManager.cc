@@ -36,7 +36,7 @@ void IOManager::setProcessingLevel(const unsigned int& i_level)
 	if (i_level >= IOManager::num_of_levels)
 		throw InvalidArgumentException("The processing level is invalid", AT);
 
-	if (((i_level & IOManager::raw) == IOManager::raw) 
+	if (((i_level & IOManager::raw) == IOManager::raw)
 	    && ((i_level & IOManager::filtered) == IOManager::filtered))
 		throw InvalidArgumentException("The processing level is invalid (raw and filtered at the same time)", AT);
 
@@ -52,7 +52,7 @@ double IOManager::getAvgSamplingRate()
 	}
 }
 
-void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end, 
+void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end,
 						  const std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	//perform check on date_start and date_end
@@ -158,7 +158,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 
 			if (startpos != IOUtils::npos){
 				vec_meteo.push_back(vector<MeteoData>());
-				unsigned int index = vec_meteo.size()-1;
+				size_t index = vec_meteo.size()-1;
 				for (unsigned int jj=startpos; jj<filtered_cache[ii].size(); jj++){
 					const MeteoData& md = filtered_cache[ii][jj];
 					if (md.date <= end_date){
@@ -172,7 +172,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -202,7 +202,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
 		}
-		
+
 		return vecMeteo.size();
 	}
 
@@ -254,7 +254,7 @@ void IOManager::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, c
 void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
                             Grid2DObject& result)
 #else
-void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             Grid2DObject& result)
 #endif
 {
@@ -341,12 +341,12 @@ std::string IOManager::toString() const {
 	os << "Processing level = " << processing_level << "\n";
 
 	//display meteocache
-	unsigned int count=0;
-	unsigned int min_stations=std::numeric_limits<unsigned int>::max();
-	unsigned int max_stations=0;
+	size_t count=0;
+	size_t min_stations=std::numeric_limits<size_t>::max();
+	size_t max_stations=0;
 	std::map<Date, std::vector<MeteoData> >::const_iterator iter = resampled_cache.begin();
 	for (; iter != resampled_cache.end(); iter++) {
-		const unsigned int nb_stations = iter->second.size();
+		const size_t nb_stations = iter->second.size();
 		if(nb_stations>max_stations) max_stations=nb_stations;
 		if(nb_stations<min_stations) min_stations=nb_stations;
 		count++;
@@ -380,7 +380,7 @@ std::string IOManager::toString() const {
 
 	//display filtered_cache
 	os << "Filteredcache content (" << filtered_cache.size() << " stations)\n";
-	for(unsigned int ii=0; ii<filtered_cache.size(); ii++) {
+	for(size_t ii=0; ii<filtered_cache.size(); ii++) {
 		if (filtered_cache[ii].size() > 0){
 			os << std::setw(10) << filtered_cache[ii][0].meta.stationID << " = "
 			   << filtered_cache[ii][0].date.toString(Date::ISO) << " - "

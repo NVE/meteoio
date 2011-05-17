@@ -259,8 +259,8 @@ class Config {
 		 *  unsigned int nrOfMatches = getKeys(myVec, "TA::", "Filters");
 		 * @endcode
 		 */
-		unsigned int findKeys(std::vector<std::string>& vecResult,
-						  std::string keystart, std::string section="GENERAL") const;
+		size_t findKeys(std::vector<std::string>& vecResult,
+		               std::string keystart, std::string section="GENERAL") const;
 
 		static const std::string defaultSection;
 
@@ -279,7 +279,7 @@ class ConfigProxy {
 	const Config& proxycfg;
 	const std::string& key;
 	const std::string& section;
-     const Config::Options& opt;
+	const Config::Options& opt;
 
 	ConfigProxy(const Config& i_cfg, const std::string& i_key,
 			  const std::string& i_section, const Config::Options& i_opt)

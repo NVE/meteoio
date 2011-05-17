@@ -41,13 +41,13 @@ void FilterTukey::process(const unsigned int& index, const std::vector<MeteoData
 {
 	ovec.clear();
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
 		double& value = ovec[ii].param(index);
-		
+
 		//Calculate std deviation
 		const double std_dev  = getStdDev(ivec, ii, index); //HACK: we need to start at ii=0 for getWindow
-		
+
 		const double u3 = getU3(ivec, ii, index);
 		if(std_dev!=IOUtils::nodata && u3!=IOUtils::nodata) {
 			if( abs(value-u3) > k*std_dev ) {
@@ -59,12 +59,12 @@ void FilterTukey::process(const unsigned int& index, const std::vector<MeteoData
 }
 
 double FilterTukey::getStdDev(const std::vector<MeteoData>& ivec, const unsigned int& ii, const unsigned int& paramindex) {
-	unsigned int count=0;
+	size_t count=0;
 	double sum=0.;
 	const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
-	unsigned int n = vec_window.size();
+	const size_t n = vec_window.size();
 
-	for(unsigned int ii=0; ii<n; ii++) {
+	for(size_t ii=0; ii<n; ii++) {
 		const double& value = (*vec_window[ii]).param(paramindex);
 		if(value!=IOUtils::nodata) {
 			sum += value;
@@ -79,7 +79,7 @@ double FilterTukey::getStdDev(const std::vector<MeteoData>& ivec, const unsigned
 	//compensated variance algorithm, see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance
 	const double mean = sum/(double)count;
 	double sum2=0., sum3=0.;
-	for(unsigned int ii=0; ii<n; ii++) {
+	for(size_t ii=0; ii<n; ii++) {
 		const double& value = (*vec_window[ii]).param(paramindex);
 		if(value!=IOUtils::nodata) {
 			sum2 = sum2 + (value - mean)*(value - mean);
@@ -104,7 +104,7 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int
 		for(int j=-1; j<=1; j++) {
 			std::vector<double> u;
 			for(int k=-2; k<=2; k++) {
-				const int index = ii + k + j + i;
+				const size_t index = ii + k + j + i;
 				const double value = ivec[index].param(paramindex);
 				if(value!=IOUtils::nodata)
 					u.push_back( value );
@@ -121,7 +121,7 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int
 	//compute the variance u3
 	//u3 = 1/4*( u2[0] + 2.*u2[1] + u2[2] )
 	double u3=0.;
-	unsigned int count=0;
+	size_t count=0;
 	if(u2[0]!=IOUtils::nodata) {
 		u3 += u2[0];
 		count++;
@@ -151,15 +151,15 @@ void FilterTukey::parse_args(std::vector<std::string> vec_args)
 
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-	
+
 	FilterBlock::convert_args(2, 2, vec_args, filter_args);
 
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT); 
+		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
 	}
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
-} 
+}
 
 }

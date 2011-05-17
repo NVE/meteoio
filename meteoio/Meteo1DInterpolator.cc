@@ -54,13 +54,13 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties)
 	o_properties.time_after    = Duration(window_size/2.0, 0.);
 }
 
-unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
+size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
 {
 	if (vecM.size() == 0) //Deal with case of the empty vector
 		return IOUtils::npos; //nothing left to do
 
 	//Find element in the vector, or insert it at the appropriate position
-	unsigned int position = IOUtils::seek(date, vecM, false);
+	size_t position = IOUtils::seek(date, vecM, false);
 
 	MeteoData tmpmd(vecM.at(0)); //create a clone of one of the elements
 	tmpmd.reset(); //set all values to IOUtils::nodata
@@ -79,7 +79,7 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 		vecM.insert(vecM.begin()+position, tmpmd);
 	}
 
-	unsigned int ii = 0;
+	size_t ii = 0;
 
 	for (ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
 		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
@@ -96,8 +96,8 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 		map<string, pair<string, vector<string> > >::const_iterator it = extended_tasklist.find(parametername);
 		if (it == extended_tasklist.end()){
 			vector<string> taskarg; //vector to be filled with taskarguments
-			const string algo = getInterpolationForParameter(parametername, taskarg);			
-			
+			const string algo = getInterpolationForParameter(parametername, taskarg);
+
 			extended_tasklist[parametername] = pair<string, vector<string> > (algo, taskarg);
 			it = extended_tasklist.find(parametername);
 		}
@@ -105,15 +105,15 @@ unsigned int Meteo1DInterpolator::resampleData(const Date& date, std::vector<Met
 		if (it->second.first != "no") //resampling can be disabled by stating e.g. TA::resample = no
 			ResamplingAlgorithms::getAlgorithm(it->second.first)(position, ii, it->second.second, vecM);
 	}
-	
+
 	return position; //the position of the resampled MeteoData object within vecM
 }
 
 string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments)
 {
 	/*
-	 * This function retrieves the resampling algorithm to be used for the 
-	 * 1D interpolation of meteo parameters. It also extracts any possible 
+	 * This function retrieves the resampling algorithm to be used for the
+	 * 1D interpolation of meteo parameters. It also extracts any possible
 	 * arguments for that specific algorithm.
 	 */
 	vecArguments.clear();

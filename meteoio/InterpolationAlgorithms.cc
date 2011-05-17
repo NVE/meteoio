@@ -27,10 +27,10 @@ const bool AlgorithmFactory::flag_init = AlgorithmFactory::initStaticData();
 
 bool AlgorithmFactory::initStaticData()
 {
-	/* 
-	 * Keywords for selecting the spatial interpolation algorithm among the 
-	 * available methods for single source and multiple sources interpolations. 
-	 * More details about some of these algorithms can be found in "A Meteorological 
+	/*
+	 * Keywords for selecting the spatial interpolation algorithm among the
+	 * available methods for single source and multiple sources interpolations.
+	 * More details about some of these algorithms can be found in "A Meteorological
 	 * Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, 2006.
 	 * Please don't forget to document InterpolationAlgorithms.h for the available algorithms!
 	 */
@@ -93,27 +93,27 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 	}
 }
 
-InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi, 
+InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
                                                const Date& i_date,
                                                const DEMObject& i_dem,
                                                const std::vector<std::string>& i_vecArgs,
                                                const std::string& i_algo, IOManager& iom)
-	: mi(i_mi), date(i_date), dem(i_dem), vecArgs(i_vecArgs), algo(i_algo), iomanager(iom) 
+	: mi(i_mi), date(i_date), dem(i_dem), vecArgs(i_vecArgs), algo(i_algo), iomanager(iom)
 {
 	nrOfMeasurments = 0;
 	param = MeteoData::firstparam; //this is a stupid default value, but since we never check it...
 	iomanager.getMeteoData(date, vecMeteo);
 }
 
-unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param, 
+size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
                                              std::vector<double>& vecData) const
 {
 	vector<StationData> vecMeta;
 	return getData(param, vecData, vecMeta);
-	
+
 }
 
-unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param, 
+size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
                                              std::vector<double>& vecData, std::vector<StationData>& vecMeta) const
 {
 	if (vecData.size() > 0)
@@ -122,7 +122,7 @@ unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
 	if (vecMeta.size() > 0)
 		vecMeta.clear();
 
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		const double& val = vecMeteo[ii].param(param);
 		if (val != IOUtils::nodata){
 			vecData.push_back(val);
@@ -133,10 +133,10 @@ unsigned int InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
 	return vecData.size();
 }
 
-unsigned int InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& vecMeta,
+size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& vecMeta,
                                                          std::vector<double>& vecData) const
 {
-	for (unsigned int ii=0; ii<vecMeta.size(); ii++){
+	for (size_t ii=0; ii<vecMeta.size(); ii++){
 		const double& val = vecMeta[ii].position.getAltitude();
 		if (val != IOUtils::nodata)
 			vecData.push_back(val);
@@ -418,7 +418,7 @@ void RHAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 	param = in_param;
 
 	nrOfMeasurments = 0;
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii].rh != IOUtils::nodata) && (vecMeteo[ii].ta != IOUtils::nodata)){
 			vecDataTA.push_back(vecMeteo[ii].ta);
 			vecDataRH.push_back(vecMeteo[ii].rh);
@@ -436,14 +436,14 @@ double RHAlgorithm::getQualityRating()
 
 	if (vecDataTA.size() == 0)
 		return 0.0;
-	if( ( nrOfMeasurments<(unsigned int)(0.5*vecDataRH.size()) ) || ( nrOfMeasurments<2 ) )
+	if( ( nrOfMeasurments<(size_t)(0.5*vecDataRH.size()) ) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;
 }
 
 void RHAlgorithm::calculate(Grid2DObject& grid)
-{		
+{
 	//This algorithm is only valid for RH
 	if (param != MeteoData::RH)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -461,10 +461,10 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 	std::vector<double> vecTd(vecDataRH.size(), 0.0); // init to 0.0
 
 	//Compute dew point temperatures at stations
-	for (unsigned int ii=0; ii<vecDataRH.size(); ii++){
+	for (size_t ii=0; ii<vecDataRH.size(); ii++){
 		vecTd[ii] = Atmosphere::RhtoDewPoint(vecDataRH[ii], vecDataTA[ii], 1);
 	}
-			
+
 	//Krieging on Td
 	std::vector<double> vecCoefficients;
 	vecCoefficients.resize(4, 0.0);
@@ -485,7 +485,7 @@ void ILWRAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 	param = in_param;
 
 	nrOfMeasurments = 0;
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii].ilwr != IOUtils::nodata) && (vecMeteo[ii].ta != IOUtils::nodata)){
 			vecDataEA.push_back( Atmosphere::blkBody_Emissivity( vecMeteo[ii].ilwr, vecMeteo[ii].ta) );
 			vecMeta.push_back(vecMeteo[ii].meta);
@@ -507,7 +507,7 @@ double ILWRAlgorithm::getQualityRating()
 }
 
 void ILWRAlgorithm::calculate(Grid2DObject& grid)
-{		
+{
 	//This algorithm is only valid for RH
 	if (param != MeteoData::ILWR)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -570,7 +570,7 @@ void SimpleWindInterpolationAlgorithm::initialize(const MeteoData::Parameters& i
 	param = in_param;
 
 	nrOfMeasurments = 0;
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii].vw != IOUtils::nodata) && (vecMeteo[ii].dw != IOUtils::nodata)){
 			vecDataVW.push_back(vecMeteo[ii].vw);
 			vecDataDW.push_back(vecMeteo[ii].dw);
@@ -596,14 +596,14 @@ double SimpleWindInterpolationAlgorithm::getQualityRating()
 
 	if (vecDataVW.size() == 0)
 		return 0.0;
-	if( ( nrOfMeasurments<(unsigned int)(0.5*vecDataVW.size()) ) || ( nrOfMeasurments<2 ) )
+	if( ( nrOfMeasurments<(size_t)(0.5*vecDataVW.size()) ) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;
 }
 
 void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
-{		
+{
 	//This algorithm is only valid for VW
 	if (param != MeteoData::VW)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -612,16 +612,16 @@ void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
 
 	getStationAltitudes(vecMeta, vecAltitudes);
 
-	if( vecDataDW.size() == 0) 
+	if( vecDataDW.size() == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject dw;
 	mi.interpolate(date, dem, MeteoData::DW, dw); //get DW interpolation from call back to Meteo2DInterpolator
-	
+
 	//Krieging
 	std::vector<double> vecCoefficients;
 	vecCoefficients.resize(4, 0.0);
-	
+
 	Interpol2D::LinRegression(vecAltitudes, vecDataVW, vecCoefficients);
 	Interpol2D::LapseIDW(vecDataVW, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
@@ -647,7 +647,7 @@ std::string USERInterpolation::getGridFileName()
 	} else {
 		gridname = gridname + std::string("Default") + std::string("_") + MeteoData::getParameterName(param) + ext;
 	}
-	
+
 	return gridname;
 }
 
@@ -753,7 +753,7 @@ double OrdinaryKrigingAlgorithm::computeVariogram(const std::vector<StationData>
 {
 	//return variogramm fit of covariance between stations i and j
 	//HACK: todo!
-	
+
 	return 1.;
 }
 

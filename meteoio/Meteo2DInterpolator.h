@@ -146,9 +146,9 @@ class Meteo2DInterpolator {
 		 * @param algorithm the desired algorithm
 		 * @param vecArgs a vector of strings containing the arguments
 		 */
-		unsigned int getArgumentsForAlgorithm(const MeteoData::Parameters& param,
-		                                      const std::string& algorithm,
-		                                      std::vector<std::string>& vecArgs) const;
+		size_t getArgumentsForAlgorithm(const MeteoData::Parameters& param,
+		                                const std::string& algorithm,
+		                                std::vector<std::string>& vecArgs) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Meteo2DInterpolator& mi);
 
@@ -160,7 +160,7 @@ class Meteo2DInterpolator {
 
 		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
 
-		unsigned int getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);
+		size_t getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);
 
 };
 } //end namespace

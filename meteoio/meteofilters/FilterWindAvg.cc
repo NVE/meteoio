@@ -43,7 +43,7 @@ void FilterWindAvg::process(const unsigned int& index, const std::vector<MeteoDa
 	}
 	ovec.clear();
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
 		double& value = ovec[ii].param(index);
 
@@ -69,11 +69,11 @@ void FilterWindAvg::process(const unsigned int& index, const std::vector<MeteoDa
  * @brief Actual algorithm to calculate the average value for all values in vec_window.param(index)
  * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
  * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
- * @return A double either representing the average or IOUtils::nodata if averaging fails 
+ * @return A double either representing the average or IOUtils::nodata if averaging fails
  */
 double FilterWindAvg::calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
 {
-		unsigned int vecSize = vec_window.size();
+		const size_t vecSize = vec_window.size();
 		double meanspeed     = IOUtils::nodata;
 		double meandirection = IOUtils::nodata;
 
@@ -82,7 +82,7 @@ double FilterWindAvg::calc_avg(const unsigned int& index, const std::vector<cons
 		} else {
 			//calculate ve and vn
 			double ve=0.0, vn=0.0;
-			for (unsigned int jj=0; jj<vecSize; jj++){
+			for (size_t jj=0; jj<vecSize; jj++){
 				ve += vec_window[jj]->vw * sin(vec_window[jj]->dw * M_PI / 180.); //turn into radians
 				vn += vec_window[jj]->vw * cos(vec_window[jj]->dw * M_PI / 180.); //turn into radians
 			}
@@ -109,15 +109,15 @@ void FilterWindAvg::parse_args(std::vector<std::string> vec_args)
 
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-	
+
 	FilterBlock::convert_args(2, 2, vec_args, filter_args);
 
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT); 
+		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
 	}
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
-} 
+}
 
 }

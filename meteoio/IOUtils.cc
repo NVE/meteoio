@@ -121,7 +121,7 @@ void IOUtils::trim(std::string& str)
 }
 
 void IOUtils::toUpper(std::string& str){
-	for(unsigned int t=0; t<str.length(); t++) {
+	for(size_t t=0; t<str.length(); t++) {
 		str[t] = (char)toupper(str[t]);
 	}
 }
@@ -254,16 +254,16 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 
 void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
                                  std::istream& fin,
-                                 const unsigned int& linecount,
+                                 const size_t& linecount,
                                  const std::string& delimiter)
 {
-	int linenr = 0;
+	size_t linenr = 0;
 	std::string line="";
 
 	//make a test for end of line encoding:
 	char eol = IOUtils::getEoln(fin);
 
-	for (unsigned int ii=0; ii< linecount; ii++){
+	for (size_t ii=0; ii< linecount; ii++){
 		if (std::getline(fin, line, eol)) {
 			//cout << line <<endl;
 			linenr++;
@@ -315,10 +315,10 @@ char IOUtils::getEoln(std::istream& fin)
 	return '\n';
 }
 
-void IOUtils::skipLines(std::istream& fin, const unsigned int& nbLines, const char& eoln)
+void IOUtils::skipLines(std::istream& fin, const size_t& nbLines, const char& eoln)
 {
 	std::string dummy;
-	for (unsigned int ii=0; ii<nbLines; ii++) {
+	for (size_t ii=0; ii<nbLines; ii++) {
 		if(!getline(fin, dummy, eoln)) {
 			throw InvalidFormatException("Premature EOF while skipping lines", AT);
 		}
@@ -454,14 +454,14 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& time_
 		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. , time_zone);
 	} else {
 		//try to read purely numerical date, potentially surrounded by other chars
-		const unsigned int in_len = str.length();
+		const size_t in_len = str.length();
 		const size_t beg = str.find_first_of(NUM);
 		if(beg==npos || beg==in_len) return false;
 		size_t end = str.find_first_not_of(NUM, beg+1);
 		if(end==npos) end = in_len;
 
 		const std::string datum = str.substr(beg, end-beg);
-		const unsigned int d_len = datum.length();
+		const size_t d_len = datum.length();
 		if(d_len<8 || d_len>14) return false;
 		if( convertString(year,datum.substr(0,4))==false ) return false;
 		if( convertString(month,datum.substr(4,2))==false ) return false;
@@ -551,11 +551,11 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
 	//HACK: would it be better to create a timeseries object and call vector's binary search on it?
 	if (exactmatch){
-		unsigned int first = 1, last = vecM.size()-1;
+		size_t first = 1, last = vecM.size()-1;
 
 		//perform binary search
 		while (first <= last) {
-			unsigned int mid = (first + last) / 2;  // compute mid point
+			size_t mid = (first + last) / 2;  // compute mid point
 			if (soughtdate > vecM[mid].date)
 				first = mid + 1;                   // repeat search in top half
 			else if (soughtdate < vecM[mid].date)
@@ -564,11 +564,11 @@ unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>&
 				return mid;                        // found it. return position
 		}
 	} else {
-		unsigned int first = 0, last = vecM.size()-1;
+		size_t first = 0, last = vecM.size()-1;
 
 		//perform binary search
 		while (first <= last) {
-			unsigned int mid = (first + last) / 2;  // compute mid point
+			size_t mid = (first + last) / 2;  // compute mid point
 
 			if (mid < (vecM.size()-1))
 				if ((soughtdate > vecM[mid].date) && (soughtdate < vecM[mid+1].date))

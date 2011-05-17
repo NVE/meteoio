@@ -167,8 +167,8 @@ std::string Config::getSourceName()
 	return sourcename;
 }
 
-unsigned int Config::findKeys(std::vector<std::string>& vecResult, std::string keystart,
-                              std::string section) const
+size_t Config::findKeys(std::vector<std::string>& vecResult, std::string keystart,
+                        std::string section) const
 {
 	vecResult.clear();
 

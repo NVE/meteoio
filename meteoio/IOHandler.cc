@@ -172,8 +172,10 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 			}
 		}
 	} catch (std::exception& e) {
+	#ifndef _POPC_ //HACK: this line causes a segfault in the parallel version for unknown reasons, lwk
 		if (dynLibrary != NULL)
 			delete dynLibrary;
+	#endif
 		std::cerr << "\t" << e.what() << std::endl;
 	}
 }

@@ -72,7 +72,7 @@ Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const 
 }
 
 /**
-* @brief Calculate a value using the computed least square fit. 
+* @brief Calculate a value using the computed least square fit.
 * The fit has to be computed before.
 * @param x abscissa
 * @return f(x) using the computed least square fit
@@ -86,7 +86,7 @@ double Fit1D::getF(const double& x) {
 }
 
 /**
-* @brief Return a string of information about the fit. 
+* @brief Return a string of information about the fit.
 * The fit has to be computed before.
 * @return info string
 */
@@ -99,7 +99,7 @@ std::string Fit1D::getInfo() {
 }
 
 void Fit1D::setGuess(const std::vector<double> lambda_in) {
-	const unsigned int nGuess = lambda_in.size();
+	const size_t nGuess = lambda_in.size();
 
 	if(nGuess!=nParam) {
 		stringstream ss;
@@ -107,7 +107,7 @@ void Fit1D::setGuess(const std::vector<double> lambda_in) {
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	for(unsigned int i=0; i<nGuess; i++) {
+	for(size_t i=0; i<nGuess; i++) {
 		Lambda.push_back( lambda_in[i] );
 	}
 	fit_ready = false;
@@ -162,7 +162,7 @@ bool Fit1D::leastSquareFit(std::vector<double>& coefficients) {
 
 	Matrix A(nPts, nParam);
 	Matrix dBeta(nPts,(unsigned)1);
-	
+
 	unsigned int iter = 0;
 	do {
 		iter++;

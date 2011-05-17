@@ -44,7 +44,7 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 {
 	//check that the stations are using the same projection as the dem
 	for (unsigned int i=0; i<(unsigned int)vec_meteo.size(); i++) {
-		const StationData& meta = vec_meteo[i].meta; 
+		const StationData& meta = vec_meteo[i].meta;
 		if(!meta.position.isSameProj(dem.llcorner)) {
 			std::stringstream os;
 			std::string type, args;
@@ -69,7 +69,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 {
 	//Show algorithms to be used for this parameter
 	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
-	
+
 	if (it != mapAlgorithms.end()){
 		double maxQualityRating = 0.0;
 		auto_ptr<InterpolationAlgorithm> bestalgorithm(NULL);
@@ -78,7 +78,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		for (unsigned int ii=0; ii < it->second.size(); ii++){
 			const string& algoname = it->second.at(ii);
 			getArgumentsForAlgorithm(meteoparam, algoname, vecArgs);
-			
+
 			//Get the configured algorithm
 			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, date, dem, vecArgs, iomanager));
 			//Get the quality rating and compare to previously computed quality ratings
@@ -101,9 +101,9 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		std::cout << " (" << InfoString << ") " << std::endl;
 	} else {
 		//Some default message, that interpolation for this parameter needs configuration
-		throw IOException("You need to configure the interpolation algorithms for parameter " + 
+		throw IOException("You need to configure the interpolation algorithms for parameter " +
 					   MeteoData::getParameterName(meteoparam), AT);
-		
+
 	}
 
 	//check that the output grid is using the same projection as the dem
@@ -123,10 +123,10 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	}
 }
 
-unsigned int Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms)
+size_t Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms)
 {
-	/* 
-	 * This function retrieves the user defined interpolation algorithms for 
+	/*
+	 * This function retrieves the user defined interpolation algorithms for
 	 * parameter 'parname' by querying the Config object
 	 */
 	std::vector<std::string> vecKeys;
@@ -146,7 +146,7 @@ unsigned int Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& p
 	return vecAlgorithms.size();
 }
 
-unsigned int Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Parameters& param, 
+size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Parameters& param,
                                                            const std::string& algorithm,
                                                            std::vector<std::string>& vecArgs) const
 {
