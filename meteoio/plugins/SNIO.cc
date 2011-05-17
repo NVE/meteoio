@@ -62,7 +62,7 @@ namespace mio {
 
 const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
-const unsigned int SNIO::min_nr_meteoData = 15;
+const size_t SNIO::min_nr_meteoData = 15;
 
 SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -149,7 +149,7 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	//the meta data cannot change for the stations in dependence of time
 	string strNrOfStations="";
-	unsigned int nrOfStations = 0;
+	size_t nrOfStations = 0;
 	vecStation.clear();
 
 	cfg.getValue("NROFSTATIONS", "Input", strNrOfStations);
@@ -172,7 +172,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 		string line="";
 		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
-		unsigned int linenr = 0;
+		size_t linenr = 0;
 		vector<string> tmpvec;
 
 		while (!fin.eof()) {
@@ -182,7 +182,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 			stringstream ss;
 			ss << linenr;
 
-			unsigned int ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
+			const size_t ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
 
 			if (ncols==0) {
 				//Ignore empty lines
@@ -203,7 +203,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 	}
 }
 
-void SNIO::readMetaData(unsigned int& nrOfStations)
+void SNIO::readMetaData(size_t& nrOfStations)
 {
 	string stationID, metafile="", inpath;
 	cfg.getValue("METAFILE", "Input", metafile, Config::nothrow);
@@ -212,7 +212,7 @@ void SNIO::readMetaData(unsigned int& nrOfStations)
 	fin.clear();
 
 	//Loop over all stations
-	for (unsigned int ii=0; ii<nrOfStations; ii++){
+	for (size_t ii=0; ii<nrOfStations; ii++){
 		stringstream snum;
 		snum << ii+1;
 
@@ -244,7 +244,7 @@ void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationDat
 
 	//Extract all data as double values
 	vector<double> tmpdata = vector<double>(vecLine.size());
-	for (unsigned int ii=2; ii<5; ii++) {
+	for (size_t ii=2; ii<5; ii++) {
 		if (!IOUtils::convertString(tmpdata[ii], vecLine[ii], std::dec))
 			throw ConversionFailedException("While reading meta data for station " + vecLine[0], AT);
 	}
@@ -267,7 +267,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	vector<string> tmpvec;
 	string strNrOfStations, inpath;
-	unsigned int nrOfStations = 0;
+	size_t nrOfStations = 0;
 
 	cfg.getValue("NROFSTATIONS", "Input", strNrOfStations);
 	cfg.getValue("METEOPATH", "Input", inpath);
@@ -283,7 +283,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
 		vec_streampos = vector< map<Date, std::streampos> >(vecAllStations.size());
 
-	for (unsigned int ii=0; ii<vecAllStations.size(); ii++){
+	for (size_t ii=0; ii<vecAllStations.size(); ii++){
 		string filename="", line="";
 		stringstream ss, file_with_path;
 
@@ -304,7 +304,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		if (fin.eof())
 			throw InvalidFileNameException(file_with_path.str() + ": Empty file", AT);
 
-		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 		try {
 			getline(fin, line, eoln);      //read complete line meta information, ignore it
@@ -315,13 +315,13 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				throw InvalidFormatException(file_with_path.str() + ": first line in invalid format", AT);
 			}
 
-			unsigned int linenr = 0;
+			size_t linenr = 0;
 
 			//The following 4 lines are an optimization to jump to the correct position in the file
 			streampos current_fpointer = -1;  //the filepointer for the current valid date
 			map<Date,streampos>::const_iterator it = vec_streampos.at(ii).find(dateStart);
 			if (it != vec_streampos.at(ii).end())
-				fin.seekg(it->second); //jump to position in the file 
+				fin.seekg(it->second); //jump to position in the file
 
 			while (!fin.eof()){
 				streampos tmp_fpointer = fin.tellg();
@@ -331,7 +331,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				linenr++;
 				ss << linenr;
 
-				unsigned int ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
+				const size_t ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
 
 				if (ncols >= nr_meteoData){
 					MeteoData md;
@@ -366,7 +366,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos, 
+void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos,
                           const Date& dateStart, const Date& dateEnd, MeteoData& md)
 {
 	/*
@@ -394,13 +394,13 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 
 	//Extract all data as double values
 	vector<double> tmpdata = vector<double>(vecLine.size());
-	for (unsigned int ii=4; ii<vecLine.size(); ii++) {
+	for (size_t ii=4; ii<vecLine.size(); ii++) {
 		if (!IOUtils::convertString(tmpdata[ii], vecLine[ii], std::dec))
 			throw ConversionFailedException("Reading station "+md.meta.stationID+", at "+filepos+": can not convert  '"+vecLine[ii]+"' to double", AT);
 	}
 
 	//Copy data into MeteoData object
-	unsigned int ii = 4;
+	size_t ii = 4;
 	md.setData(MeteoData::TA, tmpdata[ii++]);
 	md.setData(MeteoData::RH, tmpdata[ii++]);
 	md.setData(MeteoData::VW, tmpdata[ii++]);
@@ -433,9 +433,9 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	md.setData(MeteoData::HS, tmpdata[ii++]); // nr_meteoData
 
 	// Read optional values
-	unsigned int jj;
+	size_t jj;
 	// TS[]: snow temperatures
-	unsigned int number_meas_temperatures = 0;
+	size_t number_meas_temperatures = 0;
 	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
 	if (vecLine.size() < nr_meteoData + number_meas_temperatures)
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": not enough measured temperatures data", AT);
@@ -447,7 +447,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		md.param(ss.str()) = tmpdata[ii++];
 	}
 	// CONC[]: solute concentrations
-	unsigned int number_of_solutes = 0;
+	size_t number_of_solutes = 0;
 	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
 	if (vecLine.size() < nr_meteoData + number_meas_temperatures + number_of_solutes)
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": not enough solute data", AT);
@@ -482,7 +482,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		ss << "Looking for " << nr_meteoData << " standard fields + " << number_meas_temperatures << " snow temperatures + ";
 		ss << number_of_solutes << " solutes";
 
-		unsigned int nb_fields = nr_meteoData + number_meas_temperatures + number_of_solutes;
+		size_t nb_fields = nr_meteoData + number_meas_temperatures + number_of_solutes;
 		if(vw_drift) {
 			ss << " + 1 VW_DRIFT";
 			nb_fields++;
@@ -502,7 +502,7 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	string outpath="";
 	cfg.getValue("METEOPATH", "Output", outpath);
 
-	for(unsigned int ii=0; ii<vecMeteo.size(); ii++) {
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
 		if (vecMeteo[ii].size() > 0) {
 			std::string station_id = vecMeteo[ii][0].meta.getStationID();
 			if (station_id == "") station_id = "UNKNOWN";
@@ -531,7 +531,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 	unsigned int Dirichlet_failure_count = 0;
 	unsigned int optional_failure_count = 0;
 
-	for(unsigned int jj=0; jj<vecmd.size(); jj++) {
+	for(size_t jj=0; jj<vecmd.size(); jj++) {
 		int YYYY, MM, DD, HH, MI;
 		Date tmp_date(vecmd[jj].date);
 		tmp_date.setTimeZone(out_tz);

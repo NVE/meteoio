@@ -82,7 +82,7 @@ double& SMETIO::getParameter(const std::string& columnName, MeteoData& md)
 void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const bool& locationInHeader)
 {
 	/*
-	 * This function checks whether the sequence of keywords specified in the 
+	 * This function checks whether the sequence of keywords specified in the
 	 * [HEADER] section (key 'fields') is valid
 	 */
 	vector<unsigned int> paramcounter = vector<unsigned int>(MeteoData::nrOfParameters, 0);
@@ -101,17 +101,17 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 			map<string, MeteoData::Parameters>::iterator it = mapParameterByName.find(column);
 			if (it == mapParameterByName.end())
 				throw InvalidFormatException("Key 'fields' specified in [HEADER] section contains invalid names", AT);
-			
+
 			paramcounter.at(mapParameterByName[column])++;
 		}
 	}
-	
+
 	//Check for multiple usages of parameters
 	for (unsigned int ii=0; ii<paramcounter.size(); ii++){
 		if (paramcounter[ii] > 1)
 			throw InvalidFormatException("In 'fields': Multiple use of " + MeteoData::getParameterName(ii), AT);
 	}
-	
+
 	//If there is no location information in the [HEADER] section, then
 	//location information must be part of fields
 	if (!locationInHeader){
@@ -203,7 +203,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	for (unsigned int ii=0; ii<nr_stations; ii++){
 		bool isAscii = true;
 		string filename = vecFiles.at(ii); //filename of current station
-		
+
 		if (!IOUtils::fileExists(filename))
 			throw FileNotFoundException(filename, AT);
 
@@ -261,27 +261,27 @@ void SMETIO::parseInputOutputSection()
 		do {
 			stringstream ss;
 			filename = "";
-			
+
 			ss << "STATION" << counter;
 			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
-			
+
 			if (filename != ""){
 				stringstream file_and_path;
 				file_and_path << inpath << "/" << filename;
 				if (!IOUtils::validFileName(file_and_path.str())) //Check whether filename is valid
 					throw InvalidFileNameException(file_and_path.str(), AT);
-				
+
 				vecFiles.push_back(file_and_path.str());
 			}
 			counter++;
 		} while (filename != "");
-		
+
 		nr_stations = counter - 1;
 	}
 
 	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
 	outpath = "";
-	outputIsAscii = true; 
+	outputIsAscii = true;
 	outputIsGzipped = false;
 
 	vector<string> vecArgs;
@@ -301,7 +301,7 @@ void SMETIO::parseInputOutputSection()
 		outputIsAscii = false;
 	else if (vecArgs[0] == "ASCII")
 		outputIsAscii = true;
-	else 
+	else
 		throw InvalidFormatException("The first value for key METEOPARAM may only be ASCII or BINARY", AT);
 
 	if (vecArgs.size() == 2){
@@ -318,14 +318,14 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            const unsigned int& stationindex)
 {
 	//Make sure that vecMeteo have the correct dimension and stationindex is valid
-	unsigned int startindex=0, endindex=vecFiles.size();	
+	size_t startindex=0, endindex=vecFiles.size();
 	if (stationindex != IOUtils::npos){
 		if ((stationindex < vecFiles.size()) || (stationindex < vecMeteo.size())){
 			startindex = stationindex;
 			endindex = stationindex+1;
 		} else {
 			throw IndexOutOfBoundsException("Invalid stationindex", AT);
-		} 
+		}
 
 		vecMeteo[stationindex].clear();
 	} else {
@@ -335,10 +335,10 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 
 	//Now loop through all requested stations, open the respective files and parse them
-	for (unsigned int ii=startindex; ii<endindex; ii++){
+	for (size_t ii=startindex; ii<endindex; ii++){
 		bool isAscii = true;
 		string filename = vecFiles.at(ii); //filename of current station
-		
+
 		if (!IOUtils::fileExists(filename))
 			throw FileNotFoundException(filename, AT);
 
@@ -347,7 +347,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		if (fin.fail())
 			throw FileAccessException(filename, AT);
 
-		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 		//Go through file, save key value pairs
 		string line="";
@@ -383,7 +383,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			} else {
 				streampos currpos = fin.tellg();
 				fin.close();
-				fin.open (filename.c_str(), ios::in|ios::binary);				
+				fin.open (filename.c_str(), ios::in|ios::binary);
 				if (fin.fail()) throw FileAccessException(filename, AT);
 				fin.seekg(currpos); //jump to binary data section
 
@@ -403,7 +403,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
                             const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
                             const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo)
 {
-	const unsigned int nrOfColumns = vecDataSequence.size();
+	const size_t nrOfColumns = vecDataSequence.size();
 
 	vecMeteo.reserve(buffer_reserve);
 
@@ -411,9 +411,9 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 		MeteoData md;
 		StationData tmpsd = sd;
 		double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;
-		unsigned int poscounter = 0;
+		size_t poscounter = 0;
 
-		for (unsigned int ii=0; ii<nrOfColumns; ii++){
+		for (size_t ii=0; ii<nrOfColumns; ii++){
 			if (vecDataSequence[ii] == "timestamp"){
 				double tmpval;
 				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(double));
@@ -426,7 +426,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 					return;
 			} else {
 				float tmpval;
-				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(float));			
+				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(float));
 				double val = (double)tmpval;
 
 				if (vecDataSequence[ii] == "latitude"){
@@ -463,7 +463,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 			md.meta = tmpsd;
 			vecMeteo.push_back(md);
 		}
-	}	
+	}
 }
 
 void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
@@ -473,7 +473,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 {
 	string line = "";
 	vector<string> tmpvec;
-	const unsigned int nrOfColumns = vecDataSequence.size();
+	const size_t nrOfColumns = vecDataSequence.size();
 
 	tmpvec.reserve(nrOfColumns);
 	vecMeteo.reserve(buffer_reserve);
@@ -486,7 +486,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 		IOUtils::trim(line);
 		if (line == "") continue; //Pure comment lines and empty lines are ignored
 
-		unsigned int ncols = IOUtils::readLineToVec(line, tmpvec);
+		const size_t ncols = IOUtils::readLineToVec(line, tmpvec);
 
 		if (ncols != nrOfColumns)
 			throw InvalidFormatException("In "+ filename + ": Invalid amount of data in data line "+line, AT);
@@ -494,8 +494,8 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 		MeteoData md;
 		StationData tmpsd = sd;
 		double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;
-		unsigned int poscounter = 0;
-		for (unsigned int ii=0; ii<nrOfColumns; ii++){
+		size_t poscounter = 0;
+		for (size_t ii=0; ii<nrOfColumns; ii++){
 			if (vecDataSequence[ii] == "timestamp"){
 				if (!IOUtils::convertString(md.date, tmpvec[ii], timezone, std::dec))
 					throw InvalidFormatException("In "+filename+": Timestamp "+tmpvec[ii]+" invalid in data line", AT);
@@ -505,15 +505,15 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 					return;
 
 			} else if (vecDataSequence[ii] == "latitude"){
-				if (!IOUtils::convertString(lat, tmpvec[ii])) 
+				if (!IOUtils::convertString(lat, tmpvec[ii]))
 					throw InvalidFormatException("In "+filename+": Latitude invalid", AT);
 				poscounter++;
 			} else if (vecDataSequence[ii] == "longitude"){
-				if (!IOUtils::convertString(lon, tmpvec[ii])) 
+				if (!IOUtils::convertString(lon, tmpvec[ii]))
 					throw InvalidFormatException("In "+filename+": Longitude invalid", AT);
 				poscounter++;
 			} else if (vecDataSequence[ii] == "altitude"){
-				if (!IOUtils::convertString(alt, tmpvec[ii])) 
+				if (!IOUtils::convertString(alt, tmpvec[ii]))
 					throw InvalidFormatException("In "+filename+": Altitude invalid", AT);
 				poscounter++;
 			} else {
@@ -548,7 +548,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	string line="";
 	while (!fin.eof() && (fin.peek() != '['))
 		getline(fin, line, eoln);
-	
+
 	getline(fin, line, eoln);
 	IOUtils::stripComments(line);
 	IOUtils::trim(line);
@@ -587,7 +587,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	if(epsg!=IOUtils::snodata) {
 		sd.position.setEPSG(epsg);
 	}
-	
+
 	IOUtils::getValueForKey(mapHeader, "easting", easting, IOUtils::nothrow);
 	easting=IOUtils::standardizeNodata(easting, plugin_nodata);
 	if (easting != IOUtils::nodata){
@@ -605,7 +605,7 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	double lat=IOUtils::nodata, lon=IOUtils::nodata;
 	IOUtils::getValueForKey(mapHeader, "latitude", lat, IOUtils::nothrow);
 	lat=IOUtils::standardizeNodata(lat, plugin_nodata);
-	if (lat != IOUtils::nodata){ 
+	if (lat != IOUtils::nodata){
 		IOUtils::getValueForKey(mapHeader, "longitude", lon);
 		IOUtils::getValueForKey(mapHeader, "altitude", alt);
 		lon=IOUtils::standardizeNodata(lon, plugin_nodata);
@@ -621,10 +621,10 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	IOUtils::getValueForKey(mapHeader, "units_offset", vecTmp, IOUtils::nothrow); //TODO: implement these!!
 	vecUnitsOffset.clear();
 	if(vecTmp.size()==0) {
-		for(unsigned int i=0; i<vecDataSequence.size(); i++)
+		for(size_t i=0; i<vecDataSequence.size(); i++)
 			vecUnitsOffset.push_back(0.);
 	} else if(vecTmp.size()==vecDataSequence.size()) {
-		for(unsigned int i=0; i<vecDataSequence.size(); i++) {
+		for(size_t i=0; i<vecDataSequence.size(); i++) {
 			double tmp;
 			IOUtils::convertString(tmp, vecTmp[i]);
 			vecUnitsOffset.push_back(tmp);
@@ -638,10 +638,10 @@ void SMETIO::readHeader(const char& eoln, const std::string& filename, bool& loc
 	IOUtils::getValueForKey(mapHeader, "units_multiplier", vecTmp, IOUtils::nothrow);
 	vecUnitsMultiplier.clear();
 	if(vecTmp.size()==0) {
-		for(unsigned int i=0; i<vecDataSequence.size(); i++)
+		for(size_t i=0; i<vecDataSequence.size(); i++)
 			vecUnitsMultiplier.push_back(1.);
 	} else if(vecTmp.size()==vecDataSequence.size()) {
-		for(unsigned int i=0; i<vecDataSequence.size(); i++) {
+		for(size_t i=0; i<vecDataSequence.size(); i++) {
 			double tmp;
 			IOUtils::convertString(tmp, vecTmp[i]);
 			vecUnitsMultiplier.push_back(tmp);
@@ -678,19 +678,19 @@ void SMETIO::checkSignature(const std::vector<std::string>& vecSignature, const 
 		isAscii = true;
 	else if (type == "BINARY")
 		isAscii = false;
-	else 
+	else
 		throw InvalidFormatException("The 3rd column in the signature of file " + filename + " must be either ASCII or BINARY", AT);
 }
 
 void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
 	//Loop through all stations
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		//1. check consitency of station data position -> write location in header or data section
 		StationData sd;
 		sd.position.setProj(coordout, coordoutparam);
 		bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);
-		
+
 		if (sd.stationID == ""){
 			stringstream ss;
 			ss << "Station" << ii+1;
@@ -709,11 +709,11 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			fout << "SMET " << smet_version << " ";
 			if (outputIsAscii)
 				fout << "ASCII" << endl;
-			else 
+			else
 				fout << "BINARY" << endl;
 
 			//2. write header, but first check which meteo parameter fields are actually in use
-			vector<bool> vecParamInUse = vector<bool>(MeteoData::nrOfParameters, false); 
+			vector<bool> vecParamInUse = vector<bool>(MeteoData::nrOfParameters, false);
 			double timezone = IOUtils::nodata;
 			checkForUsedParameters(vecMeteo[ii], timezone, vecParamInUse);
 			if(out_dflt_TZ!=IOUtils::nodata) {
@@ -721,7 +721,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			} else {
 				writeHeaderSection(isConsistent, sd, timezone, vecParamInUse);
 			}
-			
+
 			//3. write data depending on ASCII/BINARY
 			if (outputIsAscii) {
 				writeDataAscii(isConsistent, vecMeteo[ii], vecParamInUse);
@@ -732,7 +732,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				if (fout.fail()) throw FileAccessException(filename.c_str(), AT);
 				writeDataBinary(isConsistent, vecMeteo[ii], vecParamInUse);
 			}
-			
+
 			cleanup();
 
 			//4. gzip file or not
@@ -746,9 +746,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 void SMETIO::writeDataBinary(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
                              const std::vector<bool>& vecParamInUse)
 {
-	char eoln = '\n';
+	const char eoln = '\n';
 
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		float val = 0;
 
 		double julian;
@@ -758,7 +758,7 @@ void SMETIO::writeDataBinary(const bool& writeLocationInHeader, const std::vecto
 			julian = tmp_date.getJulianDate();
 		} else {
 			julian = vecMeteo[ii].date.getJulianDate();
-		}		
+		}
 		fout.write((char*)&julian, sizeof(double));
 
 		if (!writeLocationInHeader){ //Meta data changes
@@ -770,7 +770,7 @@ void SMETIO::writeDataBinary(const bool& writeLocationInHeader, const std::vecto
 			fout.write((char*)&val, sizeof(float));
 		}
 
-		for (unsigned int jj=0; jj<MeteoData::nrOfParameters; jj++){
+		for (size_t jj=0; jj<MeteoData::nrOfParameters; jj++){
 			if (vecParamInUse[jj]){
 				val = (float)vecMeteo[ii].param(jj);
 				fout.write((char*)&val, sizeof(float));
@@ -787,7 +787,7 @@ void SMETIO::writeDataAscii(const bool& writeLocationInHeader, const std::vector
 	fout.fill(' ');
 	fout << right;
 	fout << fixed;
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if(out_dflt_TZ!=IOUtils::nodata) {
 			Date tmp_date(vecMeteo[ii].date);
 			tmp_date.setTimeZone(out_dflt_TZ);
@@ -802,7 +802,7 @@ void SMETIO::writeDataAscii(const bool& writeLocationInHeader, const std::vector
 			fout << " " << setw(8)  << setprecision(2) << vecMeteo[ii].meta.position.getAltitude();
 		}
 
-		for (unsigned int jj=0; jj<MeteoData::nrOfParameters; jj++){
+		for (size_t jj=0; jj<MeteoData::nrOfParameters; jj++){
 			fout << " ";
 			if (vecParamInUse[jj]){
 				setFormatting(MeteoData::Parameters(jj));
@@ -852,7 +852,7 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
 	}
 
 	fout << "nodata       = " << setw(7) << setprecision(0) << IOUtils::nodata << "\n";
-	
+
 	if ((timezone != IOUtils::nodata) && (timezone != 0.0))
 		fout << "tz           = " << setw(7)  << setprecision(0) << timezone << "\n";
 
@@ -862,7 +862,7 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
 		fout << " latitude longitude altitude";
 	}
 
-	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
+	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){
 		if (vecParamInUse[ii]) {
 			std::string column=MeteoData::getParameterName(ii);
 			if(column=="RSWR") column="OSWR";
@@ -877,13 +877,13 @@ void SMETIO::writeHeaderSection(const bool& writeLocationInHeader, const Station
 void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
                                     std::vector<bool>& vecParamInUse)
 {
-	for (unsigned int ii=0; ii<vecMeteo.size(); ii++){
-		for (unsigned int jj=0; jj<MeteoData::nrOfParameters; jj++){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		for (size_t jj=0; jj<MeteoData::nrOfParameters; jj++){
 			if (!vecParamInUse[jj])
 				if (vecMeteo[ii].param(jj) != IOUtils::nodata)
 					vecParamInUse[jj] = true;
 		}
-	}	
+	}
 
 	if (vecMeteo.size() > 0)
 		timezone = vecMeteo[0].date.getTimeZone();
@@ -894,7 +894,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 	if (vecMeteo.size() > 0) //HACK to get the station data even when encoutering bug 87
 		sd = vecMeteo[0].meta;
 
-	for (unsigned int ii=1; ii<vecMeteo.size(); ii++){
+	for (size_t ii=1; ii<vecMeteo.size(); ii++){
 		const Coords& p1 = vecMeteo[ii-1].meta.position;
 		const Coords& p2 = vecMeteo[ii].meta.position;
 		if (p1 != p2) {

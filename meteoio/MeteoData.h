@@ -167,8 +167,8 @@ class MeteoData {
 
 		std::map<std::string, double> extraparameters; ///<All non-standard meteo parameters will end up in this map
 		std::map<std::string, double*> mapParameterByName; ///<Associate name and meteo parameter
-		std::map<unsigned int, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
-		std::map<unsigned int, std::string> meteoparamname; ///<Associate a name with every meteo parameter
+		std::map<size_t, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
+		std::map<size_t, std::string> meteoparamname; ///<Associate a name with every meteo parameter
 
 		size_t nrOfAllParameters;
 		bool resampled;              ///<set this to true if MeteoData is result of resampling

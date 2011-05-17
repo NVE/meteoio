@@ -27,7 +27,7 @@ namespace mio {
 //Quake3 fast 1/x² approximation
 // For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
 // Credited to Greg Walsh.
-// 32  Bit float magic number 
+// 32  Bit float magic number
 #define SQRT_MAGIC_D 0x5f3759df
 #define SQRT_MAGIC_F 0x5f375a86
 
@@ -35,7 +35,7 @@ namespace mio {
 //on a large scale interpolation test on TA, max relative error is 1e-6
 inline float invSqrt(const float x) {
 	const float xhalf = 0.5f*x;
-	
+
 	union {
 		// get bits for floating value
 		float x;
@@ -48,7 +48,7 @@ inline float invSqrt(const float x) {
 
 inline double invSqrt(const double x) {
 	const double xhalf = 0.5f*x;
-	
+
 	union {
 		// get bits for floating value
 		float x;
@@ -77,7 +77,7 @@ double Interpol2D::getReferenceAltitude(const DEMObject& dem)
 
 	if(dem.min_altitude!=IOUtils::nodata && dem.max_altitude!=IOUtils::nodata) {
 		//we use the median elevation as the reference elevation for reprojections
-		ref_altitude = 0.5 * (dem.min_altitude+dem.max_altitude); 
+		ref_altitude = 0.5 * (dem.min_altitude+dem.max_altitude);
 	} else {
 		//since there is nothing else that we can do, we use an arbitrary elevation
 		ref_altitude = 1500.;
@@ -148,7 +148,7 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
                               std::vector< std::pair<double, unsigned int> >& list)
 {
 	if(list.size()>0) list.clear();
-	
+
 	for(unsigned int i=0; i<vecStations.size(); i++) {
 		const Coords& position = vecStations[i].position;
 		const double DX = x-position.getEasting();
@@ -246,7 +246,7 @@ int Interpol2D::BiLinRegression(const std::vector<double>& in_X, const std::vect
 //Now, the core interpolation functions: they project a given parameter to a reference altitude, given a constant lapse rate
 //example: Ta projected to 1500m with a rate of -0.0065K/m
 /**
-* @brief Projects a given parameter to another elevation: 
+* @brief Projects a given parameter to another elevation:
 * This implementation keeps the value constant as a function of the elevation.
 * This interface has to follow the interface of *LapseRateProjectPtr
 * @param value original value
@@ -261,7 +261,7 @@ double Interpol2D::ConstProject(const double& value, const double&, const double
 }
 
 /**
-* @brief Projects a given parameter to another elevation: 
+* @brief Projects a given parameter to another elevation:
 * This implementation assumes a linear dependency of the value as a function of the elevation.
 * This interface has to follow the interface of *LapseRateProjectPtr
 * @param value original value
@@ -280,7 +280,7 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 }
 
 /**
-* @brief Projects a given parameter to another elevation: 
+* @brief Projects a given parameter to another elevation:
 * This implementation assumes a 2 segments linear dependency of the value as a function of the elevation.
 * It uses Interpol2D::bilin_inflection as the inflection point altitude. This interface has to follow the interface of *LapseRateProjectPtr
 * @param value original value
@@ -302,7 +302,7 @@ double Interpol2D::BiLinProject(const double& value, const double& altitude, con
 }
 
 /**
-* @brief Projects a given parameter to another elevation: 
+* @brief Projects a given parameter to another elevation:
 * This implementation assumes that the value increases by a given fraction as a function of the elevation.
 * This interface has to follow the interface of *LapseRateProjectPtr
 * @param value original value
@@ -322,7 +322,7 @@ double Interpol2D::FracProject(const double& value, const double& altitude, cons
 
 //Filling Functions
 /**
-* @brief Grid filling function: 
+* @brief Grid filling function:
 * This implementation builds a standard air pressure as a function of the elevation
 * @param dem array of elevations (dem)
 * @param grid 2D array to fill
@@ -367,7 +367,7 @@ void Interpol2D::constantGrid2DFill(const double& value, const DEMObject& dem, G
 }
 
 /**
-* @brief Grid filling function: 
+* @brief Grid filling function:
 * This implementation fills a flat grid with a constant value and then reprojects it to the terrain's elevation.
 * for example, the air temperature measured at one point at 1500m would be given as value, the 1500m as altitude and the dem would allow to reproject this temperature on the full DEM using the detrending function provided as pointer (with its previously calculated coefficients).
 * @param value value to put in the grid
@@ -377,7 +377,7 @@ void Interpol2D::constantGrid2DFill(const double& value, const DEMObject& dem, G
 * @param funcptr detrending function pointer (that uses the detrending coefficients)
 * @param grid 2D array to fill
 */
-void Interpol2D::constantLapseGrid2DFill(const double& value, const double& altitude, 
+void Interpol2D::constantLapseGrid2DFill(const double& value, const double& altitude,
                                          const DEMObject& dem, const std::vector<double>& vecCoefficients,
                                          const LapseRateProjectPtr& funcptr, Grid2DObject& grid)
 {
@@ -401,11 +401,11 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
                            const std::vector<StationData>& vecStations_in)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
-	const unsigned int n_stations=vecStations_in.size();
+	const size_t n_stations=vecStations_in.size();
 	double parameter=0., norm=0.;
 	const double scale = 1.e6;
-	
-	for (unsigned int i=0; i<n_stations; i++) {
+
+	for (size_t i=0; i<n_stations; i++) {
 		/*const double weight=1./(HorizontalDistance(x, y, vecStations_in[i].position.getEasting(),
 		       vecStations_in[i].position.getNorthing()) + 1e-6);*/
 		const Coords& position = vecStations_in[i].position;
@@ -420,7 +420,7 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 }
 
 /**
-* @brief Grid filling function: 
+* @brief Grid filling function:
 * This implementation fills a flat grid using Inverse Distance Weighting and then reproject it to the terrain's elevation.
 * for example, the air temperatures measured at several stations would be given as values, the stations altitude and positions
 * as positions and projected to a flat grid. Afterward, the grid would be reprojected to the correct elevation as given
@@ -438,13 +438,13 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
                           Grid2DObject& grid)
 {	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
 	const double ref_altitude = getReferenceAltitude(dem);
-	const unsigned int n_stations=vecStations_in.size();
+	const size_t n_stations=vecStations_in.size();
 
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	std::vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
-	
-	for (unsigned int i=0; i<n_stations; i++) {
-		vecTref[i] = funcptr(vecData_in[i], vecStations_in[i].position.getAltitude(), 
+
+	for (size_t i=0; i<n_stations; i++) {
+		vecTref[i] = funcptr(vecData_in[i], vecStations_in[i].position.getAltitude(),
 		                     ref_altitude, vecCoefficients);
 	}
 
@@ -467,9 +467,9 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 }
 
 /**
-* @brief Grid filling function: 
+* @brief Grid filling function:
 * Similar to Interpol2D::LapseIDW but using a limited number of stations for each cell. We also assume a two segments regression for altitude detrending with
-* a fixed 1200m above sea level inflection point. 
+* a fixed 1200m above sea level inflection point.
 * @param vecData_in input values to use for the IDW
 * @param vecStations_in position of the "values" (altitude and coordinates)
 * @param dem array of elevations (dem)
@@ -565,7 +565,7 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 }
 
 /**
-* @brief Grid filling function: 
+* @brief Grid filling function:
 * This implementation fills a grid using Inverse Distance Weighting.
 * for example, the air temperatures measured at several stations would be given as values, the stations positions
 * as positions and projected to a grid. No elevation detrending is performed, the DEM is only used for checking if a grid point is "nodata".
@@ -596,7 +596,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 }
 
 /**
-* @brief Grid filling function: 
+* @brief Grid filling function:
 * This implementation fills a grid using a curvature and slope algorithm, as described in "A Meteorological
 * Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, 2006.
 * @param dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
@@ -624,7 +624,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	const double to_rad = M_PI/180.;
 	const double dem_min_slope=dem.min_slope*to_rad, dem_range_slope=(dem.max_slope-dem_min_slope)*to_rad;
 	const double dem_min_curvature=dem.min_curvature, dem_range_curvature=(dem.max_curvature-dem_min_curvature);
-	
+
 	for (unsigned int j=0;j<VW.nrows-1;j++) {
 		for (unsigned int i=0;i<VW.ncols-1;i++){
 			// Get input data
@@ -641,7 +641,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				//convert direction to rad
 				dir *= ((M_PI) / 180.);
 				//Speed and direction converted to zonal et meridional
-				//components 
+				//components
 				u = (-1.) * (speed * sin(dir));
 				v = (-1.) * (speed * cos(dir));
 
@@ -649,7 +649,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				speed = sqrt(u*u + v*v);
 				dir = (1.5 * M_PI) - atan(v/u);
 
-				//normalize curvature and beta. 
+				//normalize curvature and beta.
 				//Note: it should be slopeDir instead of beta, but beta is more efficient
 				//to compute (only once for each dem) and it should not be that different...
 				beta = (beta - dem_min_slope)/dem_range_slope - 0.5;
@@ -657,7 +657,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 
 				// Calculate the slope in the direction of the wind
 				slopeDir = beta * cos(dir - azi);
-		
+
 				// Calculate the wind weighting factor
 				Ww = 1. + wind_ys * slopeDir + wind_yc * curvature;
 
@@ -681,7 +681,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 * @brief Distribute precipitation in a way that reflects snow redistribution on the ground, according to (Huss, 2008)
 * This method modifies the solid precipitation distribution according to the local slope and curvature. See
 * <i>"Quantitative evaluation of different hydrological modelling approaches in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review.
-* and 
+* and
 * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
 * @param dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
 * @param ta array of air temperatures used to determine if precipitation is rain or snow
@@ -726,7 +726,7 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 
 /**
 * @brief Ordinary Kriging matrix formulation
-* This implements the matrix formulation of Ordinary Kriging, as shown (for example) in 
+* This implements the matrix formulation of Ordinary Kriging, as shown (for example) in
 * <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, pp122.
 * @param vecData vector containing the values as measured at the stations
 * @param vecStations vector of stations
@@ -808,7 +808,7 @@ double Interpol2D::varioFit(const double& /*distance*/)
 {
 	//return variogramm fit of covariance between stations i and j
 	//HACK: todo!
-	
+
 	return 1.;
 }
 

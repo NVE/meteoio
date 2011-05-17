@@ -24,8 +24,8 @@ namespace mio {
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : param_name(parname)
 {
 	vector<string> vec_filters;
-	unsigned int nr_of_filters = getFiltersForParameter(cfg, param_name, vec_filters);
-	for (unsigned int ii=0; ii<nr_of_filters; ii++){
+	const size_t nr_of_filters = getFiltersForParameter(cfg, param_name, vec_filters);
+	for (size_t ii=0; ii<nr_of_filters; ii++){
 		//create a processing block for each filter
 		string block_name = vec_filters[ii];
 		IOUtils::toUpper(block_name);
@@ -41,7 +41,7 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 ProcessingStack::~ProcessingStack() {
 	//this is suboptimal, shared_ptr<> would be the preference
 	//it's unfortunately a part of boost only
-	for (unsigned int ii=0; ii<filter_stack.size(); ii++)
+	for (size_t ii=0; ii<filter_stack.size(); ii++)
 		delete filter_stack[ii];
 }
 
@@ -51,7 +51,7 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) {
 	o_properties.time_after = Duration(0.0, 0.);
 	o_properties.time_before = Duration(0.0, 0.);
 
-	for (unsigned int jj=0; jj<filter_stack.size(); jj++){
+	for (size_t jj=0; jj<filter_stack.size(); jj++){
 		const ProcessingProperties& properties = (*filter_stack[jj]).getProperties();
 
 		o_properties.points_before = MAX(o_properties.points_before, properties.points_before);
@@ -65,17 +65,17 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) {
 	}
 }
 
-unsigned int ProcessingStack::getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters)
+size_t ProcessingStack::getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters)
 {
-	/* 
-	 * This function retrieves the filter sequence for parameter 'parname' 
+	/*
+	 * This function retrieves the filter sequence for parameter 'parname'
 	 * by querying the Config object
 	 */
 	std::vector<std::string> vecKeys;
 	std::string tmp;
 	cfg.findKeys(vecKeys, parname+"::filter", "Filters");
 
-	for (unsigned int ii=0; ii<vecKeys.size(); ii++){
+	for (size_t ii=0; ii<vecKeys.size(); ii++){
 		cfg.getValue(vecKeys[ii], "Filters", tmp, Config::nothrow);
 		vecFilters.push_back(tmp);
 	}
@@ -83,7 +83,7 @@ unsigned int ProcessingStack::getFiltersForParameter(const Config& cfg, const st
 	return vecFilters.size();
 }
 
-unsigned int ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
+size_t ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
                                                     std::vector<std::string>& vecArguments)
 {
 	/*
@@ -99,17 +99,17 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 	ovec.clear();
 	ovec.insert(ovec.begin(), ivec.size(), vector<MeteoData>());
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every station
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every station
 		if (ivec[ii].size() > 0){
 			//pick one element and check whether the param_name parameter exists
-			unsigned int index = ivec[ii][0].getParameterIndex(param_name);
+			const size_t index = ivec[ii][0].getParameterIndex(param_name);
 
 			if (index != IOUtils::npos){
 				std::vector<MeteoData> tmp = ivec[ii];
 
 				//Now call the filters in a row
 				bool appliedFilter = false;
-				for (unsigned int jj=0; jj<filter_stack.size(); jj++){
+				for (size_t jj=0; jj<filter_stack.size(); jj++){
 					//cout << param_name << ": processing filter " << (*filter_stack[jj]).getName() << endl;
 					if (second_pass){
 						if (!(*filter_stack[jj]).getProperties().for_second_pass)
@@ -121,7 +121,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 
 					if (tmp.size() == ovec[ii].size()){
 						if ((jj+1) != filter_stack.size()){//after the last filter not necessary
-							for (unsigned int jj=0; jj<ovec[ii].size(); jj++){
+							for (size_t jj=0; jj<ovec[ii].size(); jj++){
 								tmp[jj].param(index) = ovec[ii][jj].param(index);
 							}
 						}
@@ -143,7 +143,7 @@ std::ostream& operator<<(std::ostream& os, const ProcessingStack& data) {
 	//os << "<ProcessingStack>";
 	os << setw(10) << data.param_name << "::";
 
-	for(unsigned int ii=0; ii<data.filter_stack.size(); ii++) {
+	for(size_t ii=0; ii<data.filter_stack.size(); ii++) {
 		os << setw(10) << *(data.filter_stack[ii]);
 	}
 

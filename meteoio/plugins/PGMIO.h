@@ -59,7 +59,7 @@ class PGMIO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
 		                           const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
@@ -70,7 +70,7 @@ class PGMIO : public IOInterface {
 
 	private:
 		void cleanup() throw();
-		int getNextHeader(std::vector<std::string>& vecString, const std::string& filename);
+		size_t getNextHeader(std::vector<std::string>& vecString, const std::string& filename);
 
 		Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

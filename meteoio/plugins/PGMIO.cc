@@ -24,7 +24,7 @@ namespace mio {
  * @page pgmio PGMIO
  * @section pgmio_format Format
  * This reads a grid file in PGM format (see http://www.fileformat.info/format/pbm/egff.htm). This is a graphic format that is supported by a wide range of graphics programs (Gimp, Irfanview, Paint Shop Pro, gqview, etc). This allows to write a grid as an image (one pixel equals one cell), read an image as a grid (useful for creating synthetic DEMs). Since there is no geolocalization information in this format, such data is either encoded as a comment (when writing a file) a read from io.ini (for reading).
- * 
+ *
  * Please keep in mind that only a finite number of greyscales are used, making a discretization of the data. Moreover, we consider that a color of "0" is NODATA.
  *
  * @section pgmio_units Units
@@ -60,10 +60,10 @@ PGMIO::PGMIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 
 PGMIO::~PGMIO() throw()
 {
-	
+
 }
 
-int PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::string& filename) {
+size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::string& filename) {
 	std::string line="";
 
 	while(!fin.eof()) {
@@ -98,7 +98,7 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		throw FileAccessException(filename, AT);
 	}
 
-	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 	//Go through file, save key value pairs
 	try {
@@ -188,7 +188,7 @@ void PGMIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*
 }
 
 void PGMIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-					 std::vector< std::vector<MeteoData> >& /*vecMeteo*/, 
+					 std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
 					 const unsigned int&)
 {
 	//Nothing so far

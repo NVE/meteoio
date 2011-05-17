@@ -146,8 +146,8 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 {
 	if ((start_date >= fcache_start) && (end_date <= fcache_end)){
 		//it's already in the filtered_cache, so just copy the requested slice
-		for (unsigned int ii=0; ii<filtered_cache.size(); ii++){
-			unsigned int startpos = IOUtils::seek(start_date, filtered_cache[ii], false);
+		for (size_t ii=0; ii<filtered_cache.size(); ii++){
+			size_t startpos = IOUtils::seek(start_date, filtered_cache[ii], false);
 			if (startpos == IOUtils::npos){
 				if (filtered_cache[ii].size() > 0){
 					if (filtered_cache[ii][0].date <= end_date){
@@ -158,8 +158,8 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 
 			if (startpos != IOUtils::npos){
 				vec_meteo.push_back(vector<MeteoData>());
-				size_t index = vec_meteo.size()-1;
-				for (unsigned int jj=startpos; jj<filtered_cache[ii].size(); jj++){
+				const size_t index = vec_meteo.size()-1;
+				for (size_t jj=startpos; jj<filtered_cache[ii].size(); jj++){
 					const MeteoData& md = filtered_cache[ii][jj];
 					if (md.date <= end_date){
 						vec_meteo[index].push_back(md);
@@ -197,8 +197,8 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 	//1. Check whether user wants raw data or processed data
 	if (processing_level == IOManager::raw){
 		rawio.readMeteoData(i_date-Duration(0.001, 0.), i_date+Duration(0.001, 0.), vec_cache);
-		for (unsigned int ii=0; ii<vec_cache.size(); ii++){
-			unsigned int index = IOUtils::seek(i_date, vec_cache[ii], true);
+		for (size_t ii=0; ii<vec_cache.size(); ii++){
+			const size_t index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
 		}
@@ -218,15 +218,15 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 	getMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, vec_cache);
 	//vec_cache is either filtered or unfiltered, in any case it is wise to buffer it
 
-	for (unsigned int ii=0; ii<vec_cache.size(); ii++){//resampling for every station
+	for (size_t ii=0; ii<vec_cache.size(); ii++){//resampling for every station
 		if ((IOManager::resampled & processing_level) == IOManager::resampled){
 			//cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
-			unsigned int position = meteoprocessor.resample(i_date, vec_cache[ii]);
+			const size_t position = meteoprocessor.resample(i_date, vec_cache[ii]);
 
 			if (position != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][position]);
 		} else { //only filtering activated
-			unsigned int index = IOUtils::seek(i_date, vec_cache[ii], true);
+			const size_t index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
 		}

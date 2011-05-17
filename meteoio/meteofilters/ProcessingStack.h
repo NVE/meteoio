@@ -28,7 +28,7 @@ namespace mio {
 
 /**
  * @class  ProcessingStack
- * @brief  
+ * @brief
  * @author Thomas Egger
  * @date   2011-01-11
  */
@@ -40,7 +40,7 @@ class ProcessingStack {
 		ProcessingStack(const Config& cfg, const std::string& param_name);
 		~ProcessingStack();
 
-		void process(const std::vector< std::vector<MeteoData> >& ivec, 
+		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
 		void getWindowSize(ProcessingProperties& o_properties);
@@ -48,8 +48,8 @@ class ProcessingStack {
 		friend std::ostream& operator<<(std::ostream& os, const ProcessingStack& data);
 
 	private:
-		unsigned int getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters);
-		unsigned int getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments);
+		size_t getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters);
+		size_t getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments);
 
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
 		std::string param_name;

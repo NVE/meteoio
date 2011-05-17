@@ -46,11 +46,11 @@ class A3DIO : public IOInterface {
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 			                   std::vector< std::vector<MeteoData> >& vecMeteo,
 			                   const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");
 
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
@@ -69,19 +69,19 @@ class A3DIO : public IOInterface {
 		bool readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string filename);
 		void convertUnits(MeteoData& meteo);
 		void cleanup() throw();
-		void read2DMeteoData(const std::string&, const std::string&, std::map<std::string,unsigned int>& hashStations, 
-		                     std::vector< std::vector<MeteoData> >&, unsigned int& bufferindex);
-		void read2DMeteoHeader(const std::string& filename, std::map<std::string, unsigned int>& hashStations, 
+		void read2DMeteoData(const std::string&, const std::string&, std::map<std::string,size_t>& hashStations,
+		                     std::vector< std::vector<MeteoData> >&, size_t& bufferindex);
+		void read2DMeteoHeader(const std::string& filename, std::map<std::string, size_t>& hashStations,
 		                       std::vector<StationData>&);
-		unsigned int getNrOfStations(std::vector<std::string>& filenames, 
-		                             std::map<std::string, unsigned int>& hashStations);
+		size_t getNrOfStations(std::vector<std::string>& filenames,
+		                       std::map<std::string, size_t>& hashStations);
 
 		int create1DFile(const std::vector< std::vector<MeteoData> >& data);
 		int writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& stations, const std::string parameter_name);
 		void open2DFile(const std::vector< std::vector<MeteoData> >& stations,
 		                const std::string& fileprefix, const std::string& label, const double& year,
 		                std::ofstream& file);
-		int write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const unsigned int& parindex, 
+		int write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const unsigned int& parindex,
 						 const std::string& filename, const std::string& label);
 		void write2DMeteo(const std::vector< std::vector<MeteoData> >& data);
 
