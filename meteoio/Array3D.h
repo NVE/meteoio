@@ -152,6 +152,8 @@ template<class T> class Array3D {
 		          const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
 		          const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
 
+		void fill(const Array3D<T>& i_array3D, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz);
+
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
 		void size(unsigned int& anx, unsigned int& any, unsigned int& anz) const;
@@ -296,6 +298,13 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 			}
 		}
 	}
+}
+
+template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz)
+{
+	unsigned int i_ncols, i_nrows, i_ndepth;
+	i_array3D.size(i_ncols, i_nrows, i_ndepth);
+	fill(i_array3D, i_nx, i_ny, i_nz, i_ncols, i_nrows, i_ndepth);
 }
 
 template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,

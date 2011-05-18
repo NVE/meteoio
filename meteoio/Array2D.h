@@ -117,6 +117,8 @@ template<class T> class Array2D {
 		void fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
 		            const unsigned int& i_ncols, const unsigned int& i_nrows);
 
+		void fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny);
+
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void size(unsigned int& nx, unsigned int& ny) const;
@@ -251,6 +253,13 @@ template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const uns
 			operator()(ii,jj) = i_array2D(i_nx+ii, i_ny+jj);
 		}
 	}
+}
+
+template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny)
+{
+	unsigned int i_ncols, i_nrows;
+	i_array2D.size(i_ncols, i_nrows);
+	fill(i_array2D, i_nx, i_ny, i_ncols, i_nrows);
 }
 
 template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,

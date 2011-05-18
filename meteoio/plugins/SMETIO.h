@@ -52,7 +52,7 @@ class SMETIO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
 		                           const unsigned int& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
@@ -64,16 +64,16 @@ class SMETIO : public IOInterface {
 		static const unsigned int buffer_reserve; //for optimizing vectors (ie: avoid unecessary resizing)
 		static std::map<std::string, MeteoData::Parameters> mapParameterByName; ///<Associate name and meteo parameter
 		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname 
+		static bool initStaticData();///<initialize the static map meteoparamname
 		static double& getParameter(const std::string& columnName, MeteoData& md);
 		static void checkColumnNames(const std::vector<std::string>& vecColumns, const bool& locationInHeader);
 
 		void cleanup() throw();
 		void parseInputOutputSection();
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
-		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone, 
+		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
                                       std::vector<bool>& vecParamInUse);
-		void writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd, 
+		void writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd,
                                   const double& timezone, const std::vector<bool>& vecParamInUse);
 		void writeDataAscii(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
                               const std::vector<bool>& vecParamInUse);
@@ -86,7 +86,7 @@ class SMETIO : public IOInterface {
 		void readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
 		                   const StationData& sd, const std::vector<std::string>& vecDataSequence,
 		                   const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
-		                   const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo);
+		                   const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stat_idx);
 		void readDataBinary(const char& eoln, const std::string& filename, const double& timezone,
 		                    const StationData& sd, const std::vector<std::string>& vecDataSequence,
 		                    const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
@@ -106,6 +106,7 @@ class SMETIO : public IOInterface {
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
+		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
 };
 
 } //namespace

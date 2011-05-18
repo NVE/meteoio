@@ -279,6 +279,9 @@ void SMETIO::parseInputOutputSection()
 		nr_stations = counter - 1;
 	}
 
+	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
+		vec_streampos = vector< map<Date, std::streampos> >(nr_stations);
+
 	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
 	outpath = "";
 	outputIsAscii = true;
@@ -379,7 +382,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			//3. Read DATA
 			if (isAscii){
 				readDataAscii(eoln, filename, timezone, sd, vecDataSequence, vecUnitsOffset,
-			                      vecUnitsMultiplier, dateStart, dateEnd, vecMeteo[ii]);
+			                      vecUnitsMultiplier, dateStart, dateEnd, vecMeteo[ii], ii);
 			} else {
 				streampos currpos = fin.tellg();
 				fin.close();
@@ -469,7 +472,7 @@ void SMETIO::readDataBinary(const char&, const std::string&, const double& timez
 void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
                            const StationData& sd, const std::vector<std::string>& vecDataSequence,
                            const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
-                           const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo)
+                           const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stat_idx)
 {
 	string line = "";
 	vector<string> tmpvec;
@@ -478,9 +481,14 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 	tmpvec.reserve(nrOfColumns);
 	vecMeteo.reserve(buffer_reserve);
 
+	//The following 4 lines are an optimization to jump to the correct position in the file
+	streampos current_fpointer = -1;  //the filepointer for the current valid date
+	map<Date,streampos>::const_iterator it = vec_streampos.at(stat_idx).find(dateStart);
+	if (it != vec_streampos.at(stat_idx).end())
+		fin.seekg(it->second); //jump to position in the file
+
 	while (!fin.eof()){
-		//HACK nodata mapping is NOT done!!!!!!
-		//something like lat = IOUtils::standardizeNodata(lat, plugin_nodata); should be done
+		streampos tmp_fpointer = fin.tellg();
 		getline(fin, line, eoln);
 		IOUtils::stripComments(line);
 		IOUtils::trim(line);
@@ -501,8 +509,11 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 					throw InvalidFormatException("In "+filename+": Timestamp "+tmpvec[ii]+" invalid in data line", AT);
 				if (md.date < dateStart)
 					continue;
-				if (md.date > dateEnd)
+				if (md.date > dateEnd) {
+					//save stream position and the corresponding end date
+					if (current_fpointer != ((ifstream::pos_type)-1)) vec_streampos.at(stat_idx)[dateEnd] = current_fpointer;
 					return;
+				}
 
 			} else if (vecDataSequence[ii] == "latitude"){
 				if (!IOUtils::convertString(lat, tmpvec[ii]))
@@ -537,6 +548,7 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 		if (md.date >= dateStart){
 			md.meta = tmpsd;
 			vecMeteo.push_back(md);
+			current_fpointer = tmp_fpointer; //save this file pointer, it's a valid one for sure
 		}
 	}
 }
@@ -689,16 +701,15 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		//1. check consitency of station data position -> write location in header or data section
 		StationData sd;
 		sd.position.setProj(coordout, coordoutparam);
-		bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);
+		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);
 
 		if (sd.stationID == ""){
 			stringstream ss;
 			ss << "Station" << ii+1;
-
 			sd.stationID = ss.str();
 		}
 
-		string filename = outpath + "/" + sd.stationID + ".smet";
+		const string filename = outpath + "/" + sd.stationID + ".smet";
 		if (!IOUtils::validFileName(filename)) //Check whether filename is valid
 			throw InvalidFileNameException(filename, AT);
 
