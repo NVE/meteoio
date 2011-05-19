@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
  /**
  * @page resampling Resampling overview
- * The resampling infrastructure is described in ResamplingAlgorithms (for its API). 
+ * The resampling infrastructure is described in ResamplingAlgorithms (for its API).
  * The goal of this page is to give an overview of the available resampling algorithms and their usage.
  *
  * @section resampling_section Resampling section
@@ -34,12 +34,12 @@ namespace mio {
  * @code
  * [Interpolations1D]
  * TA::resample    = linear
- * 
+ *
  * RH::resample    = linear
- * 
+ *
  * VW::resample    = nearest_neighbour
  * VW::args        = extrapolate
- * 
+ *
  * HNW::resample   = linear
  * @endcode
  *
@@ -95,7 +95,7 @@ void ResamplingAlgorithms::NoResampling(const unsigned int& /*pos*/, const unsig
 
 
 /**
- * @brief Nearest Neighbour data resampling: Find the nearest neighbour of a desired data point 
+ * @brief Nearest Neighbour data resampling: Find the nearest neighbour of a desired data point
  *        that is not IOUtils::nodata and copy that value into the desired data point
  *        - If the data point itself is not IOUtils::nodata, nothing needs to be done
  *        - If two points have the same distance from the data point to be resampled, calculate mean and return it
@@ -155,10 +155,10 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsig
 }
 
 /**
- * @brief Linear data resampling: If a point is requested that is in between two input data points, 
- *        the requested value is automatically calculated using a linear interpolation. Furthermore 
+ * @brief Linear data resampling: If a point is requested that is in between two input data points,
+ *        the requested value is automatically calculated using a linear interpolation. Furthermore
  *        if the argument extrapolate is provided there will be an attempt made to extrapolate the
- *        point if the interpolation fails, by solving the line equation y = kx + d 
+ *        point if the interpolation fails, by solving the line equation y = kx + d
  * @code
  * [Interpolations1D]
  * TA::resample = linear
@@ -181,27 +181,27 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 
 	//Now find two points within the vecM (before and aft, that are not IOUtils::nodata)
 	//If that condition cannot be met, simply add nodata for the resampled value (exception: extrapolate)
-	unsigned int indexP1=IOUtils::npos, indexP2=IOUtils::npos;
+	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	bool foundP1=false, foundP2=false;
 
 	for (unsigned int ii=pos; (ii--) > 0; ){
 		if (vecM[ii].param(paramindex) != IOUtils::nodata){
-			indexP1=ii;
+			indexP1 = (size_t)ii;
 			foundP1 = true;
 			break;
 		}
-	}		
+	}
 
 	for (unsigned int ii=pos+1; ii<vecM.size(); ii++){
 		if (vecM[ii].param(paramindex) != IOUtils::nodata){
-			indexP2 = ii;
+			indexP2 = (size_t)ii;
 			foundP2 = true;
 			break;
 		}
 	}
 
 	//do nothing if we can't interpolate, and extrapolation is not explicitly activated
-	if ((!extrapolate) && ((!foundP1) || (!foundP2))) 
+	if ((!extrapolate) && ((!foundP1) || (!foundP2)))
 		return;
 
 	//do nothing if not at least one value different from IOUtils::nodata has been found
@@ -216,7 +216,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 				foundP1 = true;
 				break;
 			}
-		}		
+		}
 	} else if (foundP1 && !foundP2){ //only nodata found after pos, try looking before indexP1
 		for (unsigned int ii=indexP1; (ii--) > 0; ){
 			if (vecM[ii].param(paramindex) != IOUtils::nodata){
@@ -224,7 +224,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 				foundP2 = true;
 				break;
 			}
-		}		
+		}
 	}
 
 	if (!foundP1 || !foundP2) //now at least two points need to be present
@@ -274,7 +274,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 		tmp << "Please provide accumulation period (in seconds) for param" << vecM.at(0).getNameForParameter(paramindex);
 		throw InvalidArgumentException(tmp.str(), AT);
 	}
-	
+
 	//find start of accumulation period
 	bool found_start=false;
 	unsigned int start_idx = pos+1;
@@ -294,17 +294,17 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 		vecM[pos].param(paramindex) = IOUtils::nodata;
 		return;
 	}
-	
+
 	//resample the starting point
 	//HACK: we consider nodata to be 0. In fact, we should try to interpolate from valid points
 	//if they are not too far away
 
 	unsigned int interval_end   = start_idx + 1;
-	
+
 	double valstart = funcval(vecM, start_idx, dateStart, paramindex);
 	double valend   = funcval(vecM, interval_end, vecM[interval_end].date, paramindex);
 	double sum = IOUtils::nodata;
-	
+
 	if ((valend == IOUtils::nodata) || (valstart == IOUtils::nodata)){
 		sum = 0.0; //HACK maybe it should be set it to IOUtils::nodata
 	} else {
@@ -335,7 +335,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 	}
 
 	valend = funcval(vecM, pos, vecM[pos].date, paramindex);
-	
+
 	if (valend != IOUtils::nodata)
 		sum += valend;
 

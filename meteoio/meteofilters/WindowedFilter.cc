@@ -21,8 +21,8 @@ using namespace std;
 
 namespace mio {
 
-WindowedFilter::WindowedFilter(const std::string& name) 
-	: FilterBlock(name), is_soft(false), min_data_points(1), min_time_span(0.0, 0.), 
+WindowedFilter::WindowedFilter(const std::string& name)
+	: FilterBlock(name), is_soft(false), min_data_points(1), min_time_span(0.0, 0.),
 	  centering(WindowedFilter::center), elements_left(0), elements_right(0), last_index(IOUtils::npos)
 {}
 
@@ -39,7 +39,7 @@ unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args) {
 			return WindowedFilter::center;
 		}
 	}
-	
+
 	return WindowedFilter::center; //the default
 }
 
@@ -51,7 +51,7 @@ unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args) {
  * @param index The index of the element in ivec that requires a window
  * @param ivec The original sequence of data points
  */
-const std::vector<const MeteoData*>& WindowedFilter::get_window(const unsigned int& index, 
+const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& index,
                                                                 const std::vector<MeteoData>& ivec)
 {
 	//cout << "Requesting index " << index << endl;
@@ -60,8 +60,8 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const unsigned i
 		vec_window.clear();
 		elements_left = elements_right = 0;
 
-		if ((centering == WindowedFilter::right) || (is_soft)){	
-			for (unsigned int kk=0; kk<min_data_points; kk++){
+		if ((centering == WindowedFilter::right) || (is_soft)){
+			for (size_t kk=0; kk<min_data_points; kk++){
 				if (ivec.size() > kk) {
 					elements_right++;
 					vec_window.push_back(&ivec[kk]);
@@ -77,7 +77,7 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const unsigned i
 		}
 
 		//cout << "Init: " << elements_left << "/" << elements_right << endl;
-		
+
 		last_index = 0;
 
 		return vec_window;
@@ -100,7 +100,7 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const unsigned i
 			} else if (centering == WindowedFilter::left){
 				if (index >= (vec_window.size())){
 					if (ivec.size() > index){ //otherwise don't touch the whole thing
-						vec_window.erase(vec_window.begin());						
+						vec_window.erase(vec_window.begin());
 						vec_window.push_back(&ivec[index]);
 					}
 				} else {
@@ -145,24 +145,24 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const unsigned i
 			} else {
 				if (ivec.size() > index) { //broaden window
 					vec_window.push_back(&ivec[index]);
-					elements_left++; 
+					elements_left++;
 				}
 			}
 		} else if (centering == WindowedFilter::center){
 			if ((elements_left + elements_right - 1) >= min_data_points){
 				vec_window.erase(vec_window.begin());
 				if (elements_right > 0) elements_right--;
-					
+
 				if (ivec.size() > (index+elements_left-1)) { //shift window one point to the right
 					vec_window.push_back(&ivec[index+elements_left-1]);
-					elements_right++; //elements_left will stay at a constant 
+					elements_right++; //elements_left will stay at a constant
 				}
 			} else {
 				if (ivec.size() > (index+elements_left-1)) { //shift window one point to the right
 					vec_window.push_back(&ivec[index+elements_left-1]);
 					elements_left++;
 				}
-					
+
 				if ((elements_left + elements_right - 1) < min_data_points){
 					if (ivec.size() > (index+elements_left-1)){ //shift window one point to the right
 						vec_window.push_back(&ivec[index+elements_left-1]);

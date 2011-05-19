@@ -64,8 +64,8 @@ class MeteoData {
 		                 P, ///< Air pressure
 		                 lastparam=P};
 
-		static const unsigned int nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
-		static const std::string& getParameterName(const unsigned int& parindex);
+		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
+		static const std::string& getParameterName(const size_t& parindex);
 
 		/**
 		 * @brief The default constructor initializing every double attribute to nodata and the Date to julian==0.0
@@ -123,12 +123,12 @@ class MeteoData {
 
 		void standardizeNodata(const double& plugin_nodata);
 
-		double& param(const unsigned int& parindex);
-		const double& param(const unsigned int& parindex) const;
+		double& param(const size_t& parindex);
+		const double& param(const size_t& parindex) const;
 		double& param(const std::string& parname);
 		const double& param(const std::string& parname) const;
-		const std::string& getNameForParameter(const unsigned int& parindex) const;
-		unsigned int getParameterIndex(const std::string& parname) const;
+		const std::string& getNameForParameter(const size_t& parindex) const;
+		size_t getParameterIndex(const std::string& parname) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 
@@ -156,7 +156,7 @@ class MeteoData {
 		size_t getNrOfParameters() const;
  private:
 		//static methods
-		static std::map<unsigned int, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
+		static std::map<size_t, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname
 

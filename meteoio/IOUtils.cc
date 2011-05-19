@@ -527,7 +527,7 @@ void IOUtils::getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz
 	cfg.getValue("TIME_ZONE", "Output", tz_out, Config::nothrow);
 }
 
-unsigned int IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch){
+size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch){
 	//returns index of element, if element does not exist it returns closest index after soughtdate
 	//the element needs to be an exact hit or embedded between two measurments
 

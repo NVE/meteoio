@@ -85,7 +85,7 @@ class SNIO : public IOInterface {
 		std::ofstream fout;//Output file streams
 		static const int sn_julian_offset;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const unsigned int min_nr_meteoData; // minimal number of parameters on data input lines
+		static const size_t min_nr_meteoData; // minimal number of parameters on data input lines
 		unsigned int nr_meteoData; // number of parameters on data input lines, excluding optional ones
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecAllStations;

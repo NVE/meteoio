@@ -57,7 +57,7 @@ const bool SMETIO::__init = SMETIO::initStaticData();
 
 bool SMETIO::initStaticData()
 {
-	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){
+	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){
 		mapParameterByName[MeteoData::getParameterName(ii)] = MeteoData::Parameters(ii);
 	}
 
@@ -85,9 +85,9 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 	 * This function checks whether the sequence of keywords specified in the
 	 * [HEADER] section (key 'fields') is valid
 	 */
-	vector<unsigned int> paramcounter = vector<unsigned int>(MeteoData::nrOfParameters, 0);
+	vector<size_t> paramcounter = vector<size_t>(MeteoData::nrOfParameters, 0);
 
-	for (unsigned int ii=0; ii<vecColumns.size(); ii++){
+	for (size_t ii=0; ii<vecColumns.size(); ii++){
 		std::string column = vecColumns[ii];
 
 		//column names mapping
@@ -107,7 +107,7 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 	}
 
 	//Check for multiple usages of parameters
-	for (unsigned int ii=0; ii<paramcounter.size(); ii++){
+	for (size_t ii=0; ii<paramcounter.size(); ii++){
 		if (paramcounter[ii] > 1)
 			throw InvalidFormatException("In 'fields': Multiple use of " + MeteoData::getParameterName(ii), AT);
 	}
@@ -115,8 +115,8 @@ void SMETIO::checkColumnNames(const std::vector<std::string>& vecColumns, const 
 	//If there is no location information in the [HEADER] section, then
 	//location information must be part of fields
 	if (!locationInHeader){
-		unsigned int latcounter = 0, loncounter=0, altcounter=0;
-		for (unsigned int ii=0; ii<vecColumns.size(); ii++){
+		size_t latcounter = 0, loncounter=0, altcounter=0;
+		for (size_t ii=0; ii<vecColumns.size(); ii++){
 			if (vecColumns[ii] == "longitude")
 				loncounter++;
 			else if (vecColumns[ii] == "latitude")
@@ -200,7 +200,7 @@ void SMETIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation.reserve(nr_stations);
 
 	//Now loop through all requested stations, open the respective files and parse them
-	for (unsigned int ii=0; ii<nr_stations; ii++){
+	for (size_t ii=0; ii<nr_stations; ii++){
 		bool isAscii = true;
 		string filename = vecFiles.at(ii); //filename of current station
 
@@ -255,7 +255,7 @@ void SMETIO::parseInputOutputSection()
 	cfg.getValue("METEO", "Input", in_meteo, Config::nothrow);
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
-		unsigned int counter = 1;
+		size_t counter = 1;
 		string filename = "";
 
 		do {
@@ -322,7 +322,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	//Make sure that vecMeteo have the correct dimension and stationindex is valid
 	size_t startindex=0, endindex=vecFiles.size();
-	if (stationindex != IOUtils::npos){
+	if (stationindex != (unsigned int)IOUtils::npos){ //HACK do we really still need stationindex??
 		if ((stationindex < vecFiles.size()) || (stationindex < vecMeteo.size())){
 			startindex = stationindex;
 			endindex = stationindex+1;

@@ -24,8 +24,8 @@ namespace mio {
 /************************************************************
  * static section                                           *
  ************************************************************/
-const unsigned int MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
-map<unsigned int, string> MeteoData::static_meteoparamname;
+const size_t MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
+map<size_t, string> MeteoData::static_meteoparamname;
 const bool MeteoData::__init = MeteoData::initStaticData();
 
 bool MeteoData::initStaticData()
@@ -48,7 +48,7 @@ bool MeteoData::initStaticData()
 	return true;
 }
 
-const std::string& MeteoData::getParameterName(const unsigned int& parindex)
+const std::string& MeteoData::getParameterName(const size_t& parindex)
 {
 	if (parindex >= MeteoData::nrOfParameters)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist", AT);
@@ -61,9 +61,9 @@ const std::string& MeteoData::getParameterName(const unsigned int& parindex)
  * non-static section                                       *
  ************************************************************/
 
-const std::string& MeteoData::getNameForParameter(const unsigned int& parindex) const
+const std::string& MeteoData::getNameForParameter(const size_t& parindex) const
 {
-	std::map<unsigned int, std::string>::const_iterator it;
+	std::map<size_t, std::string>::const_iterator it;
 	it = meteoparamname.find(parindex);
 
 #ifndef NOSAFECHECKS
@@ -113,7 +113,7 @@ void MeteoData::initParameterMap()
 	nrOfAllParameters = meteoparam.size();
 
 	//Go through all parameters in <int,string> map and store them into <string,double*> map
-	map<unsigned int, string>::const_iterator tmpit;
+	map<size_t, string>::const_iterator tmpit;
 	for (tmpit = meteoparamname.begin(); tmpit != meteoparamname.end(); tmpit++)
 		mapParameterByName[tmpit->second] = meteoparam[tmpit->first];
 
@@ -180,8 +180,8 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 
 	associateMemberVariables(); //sets the pointers for the standard parameters in the meteoparam map
 
-	std::map<unsigned int, double*>::const_iterator tmpit;
-	for (unsigned int ii=0; ii<=MeteoData::lastparam; ii++) {
+	std::map<size_t, double*>::const_iterator tmpit;
+	for (size_t ii=0; ii<=MeteoData::lastparam; ii++) {
 		//go through meteoparameters and copy them by value
 		double* val = meteoparam[ii];
 		tmpit = rhs.meteoparam.find(ii);
@@ -189,7 +189,7 @@ MeteoData& MeteoData::operator=(const MeteoData& rhs)
 		mapParameterByName[meteoparamname[ii]] = val; //copy pointer into mapParameterByName
 	}
 
-	for (unsigned int ii=MeteoData::lastparam+1; ii<rhs.getNrOfParameters(); ii++) {
+	for (size_t ii=MeteoData::lastparam+1; ii<rhs.getNrOfParameters(); ii++) {
 		//for the extraparameters other measures are necessary
 		const string& name = meteoparamname[ii];  //get the name of that extra parameter
 		double* val = &extraparameters[name];     //copy the pointer
@@ -213,7 +213,7 @@ void MeteoData::setDate(const Date& in_date)
 
 void MeteoData::reset()
 {
-	std::map<unsigned int, double*>::iterator it;
+	std::map<size_t, double*>::iterator it;
 	for (it=meteoparam.begin(); it!=meteoparam.end(); it++){
 		*it->second = IOUtils::nodata;
 	}
@@ -229,7 +229,7 @@ void MeteoData::setData(const MeteoData::Parameters& param, const double& value)
 * The plugin-specific nodata values are replaced by MeteoIO's internal nodata value
 */
 void MeteoData::standardizeNodata(const double& plugin_nodata) {
-	for(unsigned int ii=0; ii<nrOfParameters; ii++){
+	for(size_t ii=0; ii<nrOfParameters; ii++){
 		//loop through all meteo params and check whether they're nodata values
 		if (param(ii)<=plugin_nodata)
 			param(ii) = IOUtils::nodata;
@@ -251,7 +251,7 @@ bool MeteoData::operator==(const MeteoData& in) const
 	//An object is equal if the date is equal and all meteo parameters are equal
 	bool eval = (date==in.date);
 
-	for (unsigned int ii=0; ii<in.getNrOfParameters(); ii++){
+	for (size_t ii=0; ii<in.getNrOfParameters(); ii++){
 		eval &= (param(ii) == in.param(ii));
 	}
 
@@ -263,7 +263,7 @@ bool MeteoData::operator!=(const MeteoData& in) const
 	return !(*this==in);
 }
 
-double& MeteoData::param(const unsigned int& parindex)
+double& MeteoData::param(const size_t& parindex)
 {
 #ifndef NOSAFECHECKS
 	if (parindex >= getNrOfParameters())
@@ -272,9 +272,9 @@ double& MeteoData::param(const unsigned int& parindex)
 	return *(meteoparam[parindex]);
 }
 
-const double& MeteoData::param(const unsigned int& parindex) const
+const double& MeteoData::param(const size_t& parindex) const
 {
-	std::map<unsigned int, double*>::const_iterator it;
+	std::map<size_t, double*>::const_iterator it;
 	it = meteoparam.find(parindex);
 
 #ifndef NOSAFECHECKS
@@ -308,9 +308,9 @@ const double& MeteoData::param(const std::string& parname) const
 	return *(it->second);
 }
 
-unsigned int MeteoData::getParameterIndex(const std::string& parname) const
+size_t MeteoData::getParameterIndex(const std::string& parname) const
 {
-	for (map<unsigned int, string>::const_iterator it=meteoparamname.begin(); it!=meteoparamname.end(); it++){
+	for (map<size_t, string>::const_iterator it=meteoparamname.begin(); it!=meteoparamname.end(); it++){
 		if (it->second == parname)
 			return it->first;
 	}
@@ -335,7 +335,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 	os << data.meta;
 	os << data.date.toString(Date::FULL) << "\n";
 
-	std::map<unsigned int, double*>::const_iterator it1;
+	std::map<size_t, double*>::const_iterator it1;
 	for (it1=data.meteoparam.begin(); it1 != data.meteoparam.end(); it1++){
 		if( (*it1->second) != IOUtils::nodata ) {
 			os << setw(8) << data.getNameForParameter(it1->first) << ":" << setw(15) << *it1->second << "\n";
@@ -348,7 +348,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 
 void MeteoData::initAllParameters()
 {
-	std::map<unsigned int, double*>::iterator it;
+	std::map<size_t, double*>::iterator it;
 	for (it=meteoparam.begin(); it!=meteoparam.end(); it++){
 		*meteoparam[it->first] = IOUtils::nodata;
 	}

@@ -26,7 +26,7 @@ namespace mio {
 
 /**
  * @class  WindowedFilter
- * @brief  
+ * @brief
  * @author Thomas Egger
  * @date   2011-01-22
  */
@@ -42,20 +42,20 @@ class WindowedFilter : public FilterBlock {
 		WindowedFilter(const std::string& name);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec) = 0;
+		                     std::vector<MeteoData>& ovec) = 0; //HACK: index should be size_t
 
 		static unsigned int get_centering(std::vector<std::string>& vec_args);
 
 	protected:
-		const std::vector<const MeteoData*>& get_window(const unsigned int& index,
+		const std::vector<const MeteoData*>& get_window(const size_t& index,
 		                                                const std::vector<MeteoData>& ivec);
 
 		bool is_soft;
-		unsigned int min_data_points;
+		size_t min_data_points;
 		Duration min_time_span;
 		Centering centering;
 
-		unsigned int elements_left, elements_right, last_index;
+		size_t elements_left, elements_right, last_index;
 
 	private:
 		std::vector<const MeteoData*> vec_window;
