@@ -32,9 +32,9 @@ namespace mio {
  * @author Mathias Bavay
  * @date   2011-02-07
  * @brief Tukey 53H method
- * A smooth time sequence is generated from the median, substracted from the original signal and compared with the standard deviation. 
+ * A smooth time sequence is generated from the median, substracted from the original signal and compared with the standard deviation.
  * see <i>"Despiking Acoustic Doppler Velocimeter Data"</i>, Derek G. Goring and Vladimir L. Nikora, Journal of Hydraulic Engineering, <b>128</b>, 1, 2002
- * THIS CODE IS NOT ACTIVE YET
+ * The deviation factor coeffecient is currently hard-coded as k=1.5
  * @code
  * Valid examples for the io.ini file:
  *          TA::filter1 = Tukey

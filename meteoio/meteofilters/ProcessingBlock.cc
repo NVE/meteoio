@@ -42,12 +42,12 @@ namespace mio {
  * [Filters]
  * TA::filter1	= min_max
  * TA::arg1	= 230 330
- * 
+ *
  * RH::filter1	= min_max
  * RH::arg1	= -0.2 1.2
  * RH::filter2	= min_max
  * RH::arg2	= soft 0.0 1.0
- * 
+ *
  * HNW::filter1	= min
  * HNW::arg1	= -0.1
  * HNW::filter2	= min
@@ -62,7 +62,7 @@ namespace mio {
  * - MIN_MAX: range check filter, see FilterMinMax
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
- * - STD_DEV: reject data outside mean +/- k*stddev, see FilterAlgorithms::StandardDeviationFilter
+ * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - mad: median absolute deviation, see FilterAlgorithms::MedianAbsoluteDeviationFilter
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  *
@@ -99,7 +99,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	if (availableBlocks.find(blockname) == availableBlocks.end())
 		throw UnknownValueException("The processing block '"+blockname+"' does not exist" , AT);
 
-	
+
 	if (blockname == "MIN"){
 		return new FilterMin(vec_args);
 	} else if (blockname == "MAX"){
@@ -119,7 +119,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "TUKEY"){
 		return new FilterTukey(vec_args);
 	} else {
-		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);		
+		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);
 	}
 
 	//return NULL; //unreachable code
