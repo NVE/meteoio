@@ -58,6 +58,15 @@ namespace mio {
  * 		- NUMBER_OF_SOLUTES: integer, the number of solutes for which input data are provided; [Input] section
  * 		- VW_DRIFT: bool, a wind velocity to use for blowing and drifting snow is provided; [Input] section
  * 		- RHO_HN: bool, measured new snow density is provided; [Input] section
+ *
+ * @section snowpack_errors Errors
+ * When writing in Snowpack format, potential errors in the data set are written out. The error count is split between the different
+ * types of errors:
+ *	- basic input data: each mandatory parameter that is missing at a timestep increments this counter;
+ *	- Dirichlet boundary condition data: each TSS or TSG parameter that is missing at a timestep increments this counter;
+ *	- optional data: each snow temperature, solutes, snow density, wind drift optional parameter that is missing (if it
+ *	 was previously written out) increments this counter;
+ * Overall, this means that the count of basic errors should be zero while Dirichlet errors might be tolerable as well as optional data errors.
  */
 
 const int SNIO::sn_julian_offset = 2415021;
