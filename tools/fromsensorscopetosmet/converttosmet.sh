@@ -317,24 +317,24 @@ do
 
 
   #Create header of SMET
-  echo "#SMET 1.1 ASCII, adapted for VWC" > ${soilmoisturefilename}
-  echo "#[HEADER]" >> ${soilmoisturefilename}
-  echo "#station_id   = ${stn}" >> ${soilmoisturefilename}
+  echo "SMET 1.1 ASCII" > ${soilmoisturefilename}
+  echo "[HEADER]" >> ${soilmoisturefilename}
+  echo "station_id   = ${stn}" >> ${soilmoisturefilename}
   if [ ! -z "${station_name}" ]; then
-	echo "#station_name = ${station_name}" >> ${smetfilename}
+	echo "station_name = ${station_name}" >> ${soilmoisturefilename}
   else
-	echo "#station_name = ${stn}" >> ${smetfilename}
+	echo "station_name = ${stn}" >> ${soilmoisturefilename}
   fi
-  echo "#latitude     = ${latitude}" >> ${soilmoisturefilename}
-  echo "#longitude    = ${longitude}" >> ${soilmoisturefilename}
-  echo "#altitude     = ${altitude}" >> ${soilmoisturefilename}
-  echo "#easting      = ${easting}" >> ${soilmoisturefilename}
-  echo "#northing     = ${northing}" >> ${soilmoisturefilename}
-  echo "#epsg         = ${epsg}" >> ${soilmoisturefilename}
-  echo "#nodata       = ${nodata}" >> ${soilmoisturefilename}
-  echo "#tz           = ${tz}" >> ${soilmoisturefilename}
-  echo "#${soilmoisturefields}" >> ${soilmoisturefilename}
-  echo "#[DATA]" >> ${soilmoisturefilename}
+  echo "latitude     = ${latitude}" >> ${soilmoisturefilename}
+  echo "longitude    = ${longitude}" >> ${soilmoisturefilename}
+  echo "altitude     = ${altitude}" >> ${soilmoisturefilename}
+  echo "easting      = ${easting}" >> ${soilmoisturefilename}
+  echo "northing     = ${northing}" >> ${soilmoisturefilename}
+  echo "epsg         = ${epsg}" >> ${soilmoisturefilename}
+  echo "nodata       = ${nodata}" >> ${soilmoisturefilename}
+  echo "tz           = ${tz}" >> ${soilmoisturefilename}
+  echo "${soilmoisturefields}" >> ${soilmoisturefilename}
+  echo "[DATA]" >> ${soilmoisturefilename}
 
 
   #Now read meteo data from file
@@ -487,16 +487,16 @@ do
 	echo "Merging vwc files..."
 
 	#First check if structure is the same (note that we here can anticipate to the use of # for grepping the header)
-  	if (( `cat ${soilmoisturefilename} ${mergedsoilmoisturefilename} | sort | grep ^#fields | uniq | wc -l` != 1 )); then
+  	if (( `cat ${soilmoisturefilename} ${mergedsoilmoisturefilename} | sort | grep fields | uniq | wc -l` != 1 )); then
 		echo "ERROR: cannot merge, because fields are not the same!"
 	else
 
 		#Then write out header (take the newest one)
-		cat ${soilmoisturefilename} | grep ^# >> ${soilmoisturefilename}.tmp1
+		cat ${soilmoisturefilename} | grep -v ^[0-9] >> ${soilmoisturefilename}.tmp1
 
 		#Then write out data from both files, including a time stamp, and a 0 to denote the new data and a 1 to denote old data (this is used to select the newer data in case there is different data for the same time stamp). The sed transforms YYYY-MM-DDTHH:mm to YYYYMMDDHHmm, which makes direct comparison/sorting possible. 
-		cat ${soilmoisturefilename} | grep -v ^# | awk '{print $1, 0, $0}' | sed 's/\([0-9][0-9][0-9][0-9]\)-\([0-9][0-9]\)-\([0-9][0-9]\)T\([0-9][0-9]\)\:\([0-9][0-9]\)/\1\2\3\4\5/1' > ${soilmoisturefilename}.tmp2
-		cat ${mergedsoilmoisturefilename} | grep -v ^# | awk '{print $1, 1, $0}' | sed 's/\([0-9][0-9][0-9][0-9]\)-\([0-9][0-9]\)-\([0-9][0-9]\)T\([0-9][0-9]\)\:\([0-9][0-9]\)/\1\2\3\4\5/1' > ${soilmoisturefilename}.tmp3
+		cat ${soilmoisturefilename} | grep ^[0-9] | awk '{print $1, 0, $0}' | sed 's/\([0-9][0-9][0-9][0-9]\)-\([0-9][0-9]\)-\([0-9][0-9]\)T\([0-9][0-9]\)\:\([0-9][0-9]\)/\1\2\3\4\5/1' > ${soilmoisturefilename}.tmp2
+		cat ${mergedsoilmoisturefilename} | grep ^[0-9] | awk '{print $1, 1, $0}' | sed 's/\([0-9][0-9][0-9][0-9]\)-\([0-9][0-9]\)-\([0-9][0-9]\)T\([0-9][0-9]\)\:\([0-9][0-9]\)/\1\2\3\4\5/1' > ${soilmoisturefilename}.tmp3
   
 		#Then merge files and sort:
 		cat ${soilmoisturefilename}.tmp2 ${soilmoisturefilename}.tmp3 | sort -n -k 1 -k 2 > ${soilmoisturefilename}.tmp4
