@@ -59,6 +59,9 @@ lasttimestamp=`cat ${filename} | grep ^[0-9] | tail -1 | sed 's/[-T:]/ /g' | awk
 nodatavalue=`cat ${filename} | grep ^nodata | head -1 | awk -F= '{print $NF}' | sed 's/ //g'`
 nsensors=`cat ${filename} | grep ^[0-9] | head -1 | awk '{print NF-1}'`
 col_psum=`cat ${filename} | grep ^fields | head -1 | awk -F= '{print $NF}' | tr ' ' '\n' | grep -v ^$ | grep -n PSUM | awk -F: '{print $1}'`
+if [ -z "${col_psum}" ]; then
+	col_psum=-1
+fi
 
 # If time resolution of file is larger than requested resolution, just give the output, and send error message to stdout
 if (( $timeresolution > ${resolution} )); then
