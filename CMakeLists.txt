@@ -125,8 +125,8 @@ SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
 SET(PLUGIN_COSMOXMLIO OFF CACHE BOOL "Compilation COSMOXMLIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 
-#SET(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
-#SET(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+#SET(LIBRARY_OUTPUT_DIRECTORY lib)
+#SET(ARCHIVE_OUTPUT_DIRECTORY lib)
 
 #some cmake specific things //HACK: should it not be in the plugin Cmake?
 IF (GSOAPPP AND NOT EXISTS ${GSOAPPP})
@@ -150,7 +150,7 @@ INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT
 
 IF(WIN32) #handle the special case of WIN32 needing import libraries
 	FILE(GLOB importlibs "lib/libmeteoio*.lib*")
-ELSE(WIN32)
+ENDIF(WIN32)
 FILE(GLOB solibs "lib/libmeteoio*.${DLL_EXT}*")
 FILE(GLOB plugins "lib/plugins/lib*.${DLL_EXT}*")
 FILE(GLOB alibs "lib/*.${STAT_EXT}*")
