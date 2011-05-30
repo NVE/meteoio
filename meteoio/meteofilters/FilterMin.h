@@ -18,7 +18,7 @@
 #ifndef __FILTERMIN_H__
 #define __FILTERMIN_H__
 
-//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember)) 
+//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -35,7 +35,7 @@ namespace mio {
  * Reject all values smaller than the min. Remarks:
  * - the minimum permissible value has to be provided has an argument (in SI)
  * - the keyword "soft" maybe added, in such a case all data smaller than the min would be assigned
- * the minimum permissible value
+ * either the minimum permissible value or another value given as an extra argument
  * @code
  * TA::filter1	= min
  * TA::arg1	= 230

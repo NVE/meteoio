@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.4)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
@@ -15,37 +15,37 @@ ADD_SUBDIRECTORY(meteoio/meteofilters)
 
 SET(POPCC popcc)
 
-set(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
-set(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
+SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
+SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
-set(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
+SET(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-	set(WARNINGS "-Wall")
-	set(PROFILING "-pg -fprofile-arcs")
-	set(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
+	SET(WARNINGS "-Wall")
+	SET(PROFILING "-pg -fprofile-arcs")
+	SET(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
 	IF(DEBUG_ARITHM)
 		LIST(APPEND CFLAGS " -DDEBUG_ARITHM -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
 	ENDIF(DEBUG_ARITHM)
-	set(OPTIM "-g -O3 -DNDEBUG")
-	execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-	if (GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
-		set(ARCH_OPTIM  "-march=native -mtune=native")
-	endif()
-	set(ARCH_SAFE  "")
-	set(DEBUG "-g3 -O0 -D__DEBUG")
+	SET(OPTIM "-g -O3 -DNDEBUG")
+	EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	IF (GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
+		SET(ARCH_OPTIM  "-march=native -mtune=native")
+	ENDIF()
+	SET(ARCH_SAFE  "")
+	SET(DEBUG "-g3 -O0 -D__DEBUG")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 IF(MSVC)
-	#set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-	set(WARNINGS "/W4")
-	set(EXTRA_WARNINGS "/Wp64") #/Wall
-	set(OPTIM "/O2 /Vmb /DNDEBUG /MD")
-	set(ARCH_OPTIM "/arch:SSE2")
-	set(ARCH_SAFE "")
-	set(DEBUG "/Z7 /Od /D__DEBUG /MDd")
+	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
+	SET(WARNINGS "/W4")
+	SET(EXTRA_WARNINGS "/Wp64") #/Wall
+	SET(OPTIM "/O2 /Vmb /DNDEBUG /MD")
+	SET(ARCH_OPTIM "/arch:SSE2")
+	SET(ARCH_SAFE "")
+	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
 	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /D_USE_MATH_DEFINES") #Za: strict ansi
 	IF(DEBUG_ARITHM)
 		LIST(APPEND CFLAGS " /EHa ")
@@ -54,116 +54,112 @@ ENDIF(MSVC)
 
 IF(UNIX)
 	IF(APPLE)
-		set(PLATFORM "-DAPPLE")
-		set(DLL_EXT "dylib")
-		set(STAT_EXT "a")
+		SET(PLATFORM "-DAPPLE")
+		SET(DLL_EXT "dylib")
+		SET(STAT_EXT "a")
 	ELSE(APPLE)
-		set(PLATFORM "-DLINUX")
-		set(DLL_EXT "so")
-		set(STAT_EXT "a")
+		SET(PLATFORM "-DLINUX")
+		SET(DLL_EXT "so")
+		SET(STAT_EXT "a")
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
-		set(PLATFORM "-D_WIN32")
-		set(DLL_EXT "dll")
-		set(STAT_EXT "a")
+		SET(PLATFORM "-D_WIN32")
+		SET(DLL_EXT "dll")
+		SET(STAT_EXT "a")
 	ENDIF(WIN32)
 ENDIF(UNIX)
 
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "release" CACHE STRING
-	"Choose the type of build, options are: debug release "
-	FORCE)
-	set(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
-endif(NOT CMAKE_BUILD_TYPE)
+IF(NOT CMAKE_BUILD_TYPE)
+	SET(CMAKE_BUILD_TYPE "release" CACHE STRING "Choose the type of build, options are: debug release " FORCE)
+	SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
+ENDIF(NOT CMAKE_BUILD_TYPE)
 
 ###########################################################
-#targets providing sets of compiler options
-if(NOT DEST)
-	set(DEST "safe" CACHE STRING "Choose safe, optimized, hera, par or hera_par (with popc)" FORCE)
-endif(NOT DEST)
+#targets providing SETs of compiler options
+IF(NOT DEST)
+	SET(DEST "safe" CACHE STRING "Choose safe, optimized, hera, par or hera_par (with popc)" FORCE)
+ENDIF(NOT DEST)
 
-if (DEST STREQUAL "hera_par") #only g++ is supported on hera
+IF (DEST STREQUAL "hera_par") #only g++ is supported on hera
 	#required for AMD64: amdfam10 or fPIC, even for static libs
-	set(ARCH "-march=amdfam10 -fPIC")
-endif(DEST STREQUAL "hera_par")
+	SET(ARCH "-march=amdfam10 -fPIC")
+ENDIF(DEST STREQUAL "hera_par")
 
-if (DEST STREQUAL "hera")
-	set(ARCH  "-march=amdfam10")
-endif(DEST STREQUAL "hera")
+IF (DEST STREQUAL "hera")
+	SET(ARCH  "-march=amdfam10")
+ENDIF(DEST STREQUAL "hera")
 
-if (DEST STREQUAL "par")
-	set(ARCH  "${ARCH_OPTIM}")
-endif(DEST STREQUAL "par")
+IF (DEST STREQUAL "par")
+	SET(ARCH  "${ARCH_OPTIM}")
+ENDIF(DEST STREQUAL "par")
 
-if (DEST STREQUAL "safe")
-	set(ARCH  "${ARCH_SAFE}")
-endif(DEST STREQUAL "safe")
+IF (DEST STREQUAL "safe")
+	SET(ARCH  "${ARCH_SAFE}")
+ENDIF(DEST STREQUAL "safe")
 
 IF(DEST STREQUAL "optimized")
 	SET(ARCH  "${ARCH_OPTIM}")
 ENDIF(DEST STREQUAL "optimized")
 
 ###########################################################
-#finally, set compile flags
-set(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${ARCH} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
+#finally, SET compile flags
+SET(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${ARCH} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 
-message(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
-message(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
+MESSAGE(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
+MESSAGE(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
 
 ###########################################################
 #plugins
-set(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
-set(PLUGIN_ARPSIO ON CACHE BOOL "Compilation ARPSIO ON or OFF")
-set(PLUGIN_PGMIO ON CACHE BOOL "Compilation PGMIO ON or OFF")
-set(PLUGIN_BORMAIO OFF CACHE BOOL "Compilation BORMAIO ON or OFF")
-set(PLUGIN_GEOTOPIO ON CACHE BOOL "Compilation GEOTOPIO ON or OFF")
-set(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
-set(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
-set(PLUGIN_GRASSIO ON CACHE BOOL "Compilation GRASSIO ON or OFF")
-set(PLUGIN_GSNIO OFF CACHE BOOL "Compilation GSNIO ON or OFF")
-set(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
-set(PLUGIN_COSMOXMLIO OFF CACHE BOOL "Compilation COSMOXMLIO ON or OFF")
-set(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
+SET(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
+SET(PLUGIN_ARPSIO ON CACHE BOOL "Compilation ARPSIO ON or OFF")
+SET(PLUGIN_PGMIO ON CACHE BOOL "Compilation PGMIO ON or OFF")
+SET(PLUGIN_BORMAIO OFF CACHE BOOL "Compilation BORMAIO ON or OFF")
+SET(PLUGIN_GEOTOPIO ON CACHE BOOL "Compilation GEOTOPIO ON or OFF")
+SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
+SET(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
+SET(PLUGIN_GRASSIO ON CACHE BOOL "Compilation GRASSIO ON or OFF")
+SET(PLUGIN_GSNIO OFF CACHE BOOL "Compilation GSNIO ON or OFF")
+SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
+SET(PLUGIN_COSMOXMLIO OFF CACHE BOOL "Compilation COSMOXMLIO ON or OFF")
+SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 
-set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
-set(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+#SET(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+#SET(ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+
+#some cmake specific things //HACK: should it not be in the plugin Cmake?
+IF (GSOAPPP AND NOT EXISTS ${GSOAPPP})
+	SET(GSOAPPP NOTFOUND CACHE FORCE)
+ENDIF(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 
 ###########################################################
 #for the install target
-FILE(GLOB hfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.h")
-FILE(GLOB hlawsfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/meteolaws/*.h")
-FILE(GLOB hfilterfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/meteofilters/*.h")
+FILE(GLOB hfiles "meteoio/*.h")
+FILE(GLOB hlawsfiles "meteoio/meteolaws/*.h")
+FILE(GLOB hfilterfiles "meteoio/meteofilters/*.h")
 
 IF(DEST MATCHES "par")
 	FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.ph")
+	FILE(GLOB modules "${CMAKE_BINARY_DIR}/lib/*.module")
+	INSTALL(FILES ${modules} DESTINATION lib/meteoio COMPONENT libraries)
 ENDIF(DEST MATCHES "par")
 INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include/meteoio COMPONENT headers)
 INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT headers)
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
 
 IF(WIN32) #handle the special case of WIN32 needing import libraries
-	FILE(GLOB importlibs "${CMAKE_CURRENT_BINARY_DIR}/libmeteoio*.lib*")
-	FILE(GLOB solibs "${CMAKE_BINARY_DIR}/meteoio/libmeteoio*.${DLL_EXT}*")
-	FILE(GLOB plugins "${CMAKE_BINARY_DIR}/meteoio/plugins/lib*.${DLL_EXT}*")
-	FILE(GLOB alibs "${CMAKE_BINARY_DIR}/meteoio/*.${STAT_EXT}*")
+	FILE(GLOB importlibs "lib/libmeteoio*.lib*")
 ELSE(WIN32)
-	FILE(GLOB solibs "${CMAKE_BINARY_DIR}/lib/libmeteoio*.${DLL_EXT}*")
-	FILE(GLOB plugins "${CMAKE_BINARY_DIR}/lib/plugins/lib*.${DLL_EXT}*")
-	FILE(GLOB alibs "${CMAKE_BINARY_DIR}/lib/*.${STAT_EXT}*")
-ENDIF(WIN32)
+FILE(GLOB solibs "lib/libmeteoio*.${DLL_EXT}*")
+FILE(GLOB plugins "lib/plugins/lib*.${DLL_EXT}*")
+FILE(GLOB alibs "lib/*.${STAT_EXT}*")
 
-
-IF(DEST MATCHES "par")
-	FILE(GLOB modules "${CMAKE_BINARY_DIR}/lib/*.module")
-	INSTALL(FILES ${modules} DESTINATION lib/meteoio COMPONENT libraries)
-ENDIF(DEST MATCHES "par")
 INSTALL(FILES ${solibs} ${importlibs} ${alibs} DESTINATION lib COMPONENT libraries)
 INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins COMPONENT plugins)
 
 
-add_custom_target(distclean make clean
+ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake meteoio/cmake_install.cmake meteoio/plugins/cmake_install.cmake meteoio/plugins/gsn/cmake_install.cmake
 	COMMAND cmake -E remove_directory CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/CMakeFiles
@@ -173,148 +169,139 @@ add_custom_target(distclean make clean
 ###########################################################
 #for the uninstall target
 CONFIGURE_FILE(
-  "${PROJECT_SOURCE_DIR}/tools/cmake/cmake_uninstall.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-  IMMEDIATE @ONLY)
+	"${PROJECT_SOURCE_DIR}/tools/cmake/cmake_uninstall.cmake.in"
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+	IMMEDIATE @ONLY)
 
-ADD_CUSTOM_TARGET(uninstall
-  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 #Build the documentation if doxygen is found
-include(FindDoxygen)
+INCLUDE(FindDoxygen)
 FIND_PACKAGE(Doxygen)
 if (DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(documentation "doxygen" ${PROJECT_SOURCE_DIR}/meteoio/config.dox)
-	get_target_property(DOC_TARGET doc TYPE)
-	if(NOT DOC_TARGET)
-		add_custom_target(doc)
-	endif(NOT DOC_TARGET)
-	add_dependencies(doc documentation)
-endif (DOXYGEN_FOUND)
+	GET_TARGET_PROPERTY(DOC_TARGET doc TYPE)
+	IF(NOT DOC_TARGET)
+		ADD_CUSTOM_TARGET(doc)
+	ENDIF(NOT DOC_TARGET)
+	ADD_DEPENDENCIES(doc documentation)
+ENDIF (DOXYGEN_FOUND)
 #Install the documentation if the user desires it
-set(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
-if(INSTALL_DOC)
-	if(WIN32)
-		set(DOC_PATH "doc")
-	else(WIN32)
-		set(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
-	endif(WIN32)
-	if (DOXYGEN_FOUND)
-		install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html DESTINATION ${DOC_PATH} COMPONENT documentation)
-	else (DOXYGEN_FOUND)
-		message("Doxygen has not been found and is needed to build online documentation. Please either install doxygen or download a documentation-only package!")
-	endif (DOXYGEN_FOUND)
-	set(DOC_FILES License.txt doc/SMET_specifications.pdf ${CMAKE_SOURCE_DIR}/meteoio/icons/icon.ico)
-	install(FILES ${DOC_FILES} DESTINATION ${DOC_PATH} COMPONENT documentation)
-	install(DIRECTORY "${PROJECT_SOURCE_DIR}/doc/examples"
-		DESTINATION "${DOC_PATH}"
-		COMPONENT examples
-		PATTERN ".svn" EXCLUDE)
-endif(INSTALL_DOC)
-
-#some cmake specific things
-if (GSOAPPP AND NOT EXISTS ${GSOAPPP})
-	set(GSOAPPP NOTFOUND CACHE FORCE)
-endif(GSOAPPP AND NOT EXISTS ${GSOAPPP})
+SET(INSTALL_DOC OFF CACHE BOOL "Install documentation ON or OFF")
+IF(INSTALL_DOC)
+	IF(WIN32)
+		SET(DOC_PATH "doc")
+	ELSE(WIN32)
+		SET(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
+	ENDIF(WIN32)
+	IF (DOXYGEN_FOUND)
+		INSTALL(DIRECTORY doc/html DESTINATION ${DOC_PATH} COMPONENT documentation)
+	ELSE (DOXYGEN_FOUND)
+		MESSAGE("Doxygen has not been found and is needed to build online documentation. Please either install doxygen or download a documentation-only package!")
+	ENDIF (DOXYGEN_FOUND)
+	SET(DOC_FILES License.txt doc/SMET_specifications.pdf meteoio/icons/icon.ico)
+	INSTALL(FILES ${DOC_FILES} DESTINATION ${DOC_PATH} COMPONENT documentation)
+	install(DIRECTORY doc/examples DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".svn" EXCLUDE)
+ENDIF(INSTALL_DOC)
 
 ###########################################################
 ## CPACK section
 ###########################################################
-set(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
-set(CPACK_PACKAGE_NAME "MeteoIO")
-set(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
-set(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
-set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons\\\\icon.ico")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
+SET(CPACK_PACKAGE_DESCRIPTION "Meteorological preprocessing library")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing library: it covers data retrieval, data filtering, data transformations and spatial interpolations. Please refer to the included documentation and the included code examples!")
+SET(CPACK_PACKAGE_NAME "MeteoIO")
+SET(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
+SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
+SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons\\\\icon.ico")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
 
-if (DEST MATCHES "par")
-	set(PACKAGE_EXTRA "-par")
-endif(DEST MATCHES "par")
-set(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
-set(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
-set(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-#set(CPACK_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
-set(CPACK_ARCH "i386")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}-${CPACK_ARCH}")
+IF (DEST MATCHES "par")
+	SET(PACKAGE_EXTRA "-par")
+ENDIF(DEST MATCHES "par")
+SET(CPACK_PACKAGE_VERSION_MAJOR "${VERSION_MAJOR}")
+SET(CPACK_PACKAGE_VERSION_MINOR "${VERSION_MINOR}")
+SET(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
+SET(VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+#SET(CPACK_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+SET(CPACK_ARCH "i386")
+SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}-${CPACK_ARCH}")
 
 #installation by components for formats that support it
-#set(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
-set(CPACK_COMPONENTS_ALL libraries headers plugins documentation examples)
-set(CPACK_COMPONENT_libraries_DISPLAY_NAME "MeteoIO library")
-set(CPACK_COMPONENT_libraries_DESCRIPTION "The MeteoIO library itself")
-set(CPACK_COMPONENT_libraries_GROUP Runtime)
-set(CPACK_COMPONENT_headers_DISPLAY_NAME "Header files")
-set(CPACK_COMPONENT_headers_DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO")
-set(CPACK_COMPONENT_headers_GROUP Development)
-set(CPACK_COMPONENT_headers_DEPENDS libraries)
-set(CPACK_COMPONENT_plugins_DISPLAY_NAME "Input/Output Plugins")
-set(CPACK_COMPONENT_plugins_DESCRIPTION "Various plugins for supporting various data formats/protocols")
-set(CPACK_COMPONENT_plugins_GROUP Runtime)
-set(CPACK_COMPONENT_plugins_DEPENDS libraries)
-set(CPACK_COMPONENT_documentation_DISPLAY_NAME "Documentation")
-set(CPACK_COMPONENT_documentation_DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
-set(CPACK_COMPONENT_examples_DISPLAY_NAME "Examples")
-set(CPACK_COMPONENT_examples_DESCRIPTION "C++ Source code of various simple examples of applications with their example data")
-set(CPACK_COMPONENT_examples_GROUP Development)
-set(CPACK_COMPONENT_examples_DEPENDS libraries headers)
+#SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
+SET(CPACK_COMPONENTS_ALL libraries headers plugins documentation examples)
+SET(CPACK_COMPONENT_libraries_DISPLAY_NAME "MeteoIO library")
+SET(CPACK_COMPONENT_libraries_DESCRIPTION "The MeteoIO library itself")
+SET(CPACK_COMPONENT_libraries_GROUP Runtime)
+SET(CPACK_COMPONENT_headers_DISPLAY_NAME "Header files")
+SET(CPACK_COMPONENT_headers_DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO")
+SET(CPACK_COMPONENT_headers_GROUP Development)
+SET(CPACK_COMPONENT_headers_DEPENDS libraries)
+SET(CPACK_COMPONENT_plugins_DISPLAY_NAME "Input/Output Plugins")
+SET(CPACK_COMPONENT_plugins_DESCRIPTION "Various plugins for supporting various data formats/protocols")
+SET(CPACK_COMPONENT_plugins_GROUP Runtime)
+SET(CPACK_COMPONENT_plugins_DEPENDS libraries)
+SET(CPACK_COMPONENT_documentation_DISPLAY_NAME "Documentation")
+SET(CPACK_COMPONENT_documentation_DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
+SET(CPACK_COMPONENT_examples_DISPLAY_NAME "Examples")
+SET(CPACK_COMPONENT_examples_DESCRIPTION "C++ Source code of various simple examples of applications with their example data")
+SET(CPACK_COMPONENT_examples_GROUP Development)
+SET(CPACK_COMPONENT_examples_DEPENDS libraries headers)
 
-set(CPACK_COMPONENT_Runtime_GROUP "Runtime")
-set(CPACK_COMPONENT_GROUP_Runtime_DESCRIPTION "What you need to run an application based on MeteoIO")
-set(CPACK_COMPONENT_Development_GROUP "Development")
-set(CPACK_COMPONENT_GROUP_Development_DESCRIPTION "What you need to develop an application based on MeteoIO")
+SET(CPACK_COMPONENT_Runtime_GROUP "Runtime")
+SET(CPACK_COMPONENT_GROUP_Runtime_DESCRIPTION "What you need to run an application based on MeteoIO")
+SET(CPACK_COMPONENT_Development_GROUP "Development")
+SET(CPACK_COMPONENT_GROUP_Development_DESCRIPTION "What you need to develop an application based on MeteoIO")
 
-#cpack_add_component(libraries DISPLAY_NAME "MeteoIO library" DESCRIPTION "The MeteoIO library itself" GROUP Runtime)
-# cpack_add_component(headers DISPLAY_NAME "Header files" DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO" DEPENDS libraries GROUP Development)
-# cpack_add_component(plugins DISPLAY_NAME "Input/Output Plugins" DESCRIPTION "Various plugins for supporting various data formats/protocols" DEPENDS libraries GROUP Runtime)
-# cpack_add_component(documentation DISPLAY_NAME "Documentation" DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
-# cpack_add_component(examples DISPLAY_NAME "Examples" DESCRIPTION "C++ Source code of various simple examples of applications with their example data" DEPENDS "libraries;headers" GROUP Development)
+#CPACK_ADD_COMPONENT(libraries DISPLAY_NAME "MeteoIO library" DESCRIPTION "The MeteoIO library itself" GROUP Runtime)
+# CPACK_ADD_COMPONENT(headers DISPLAY_NAME "Header files" DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO" DEPENDS libraries GROUP Development)
+# CPACK_ADD_COMPONENT(plugins DISPLAY_NAME "Input/Output Plugins" DESCRIPTION "Various plugins for supporting various data formats/protocols" DEPENDS libraries GROUP Runtime)
+# CPACK_ADD_COMPONENT(documentation DISPLAY_NAME "Documentation" DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
+# CPACK_ADD_COMPONENT(examples DISPLAY_NAME "Examples" DESCRIPTION "C++ Source code of various simple examples of applications with their example data" DEPENDS "libraries;headers" GROUP Development)
 
-# cpack_add_component_group(Runtime EXPANDED DESCRIPTION "What you need to run an application based on MeteoIO")
-# cpack_add_component_group(Development EXPANDED DESCRIPTION "What you need to develop an application based on MeteoIO")
+# CPACK_ADD_COMPONENT_GROUP(Runtime EXPANDED DESCRIPTION "What you need to run an application based on MeteoIO")
+# CPACK_ADD_COMPONENT_GROUP(Development EXPANDED DESCRIPTION "What you need to develop an application based on MeteoIO")
 
 IF(UNIX)
 	IF(APPLE)
-		set(CPACK_GENERATOR "PackageMaker")
-		#set(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/Welcome.txt")
+		SET(CPACK_GENERATOR "PackageMaker")
+		#SET(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/Welcome.txt")
 	ELSE(APPLE)
-		set(CPACK_GENERATOR "DEB;RPM;TGZ")
-		set(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
-		set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6, libproj0") #objdump -p lib/libmeteoio.so | grep NEEDED | tr -s ' ' | cut -d' ' -f3 | tr '\n' ','
-		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386") #dpkg --print-architecture
-		set(CPACK_RPM_PACKAGE_NAME "meteoio")
-		set(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
-		set(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6, libproj4")
-		set(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
-		set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+		SET(CPACK_GENERATOR "DEB;RPM;TGZ")
+		SET(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
+		SET(CPACK_DEBIAN_PACKAGE_SECTION "devel")
+		SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6, libproj0") #objdump -p lib/libmeteoio.so | grep NEEDED | tr -s ' ' | cut -d' ' -f3 | tr '\n' ','
+		SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386") #dpkg --print-architecture
+		SET(CPACK_RPM_PACKAGE_NAME "meteoio")
+		SET(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
+		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6, libproj4")
+		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
+		SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 	ENDIF(APPLE)
 ELSE(UNIX)
 	IF(WIN32)
-		set(CPACK_GENERATOR "NSIS")
-		set(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
-		set(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
-		set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}-${VERSION}")
-		set(CPACK_NSIS_MENU_LINKS
+		SET(CPACK_GENERATOR "NSIS")
+		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
+		SET(CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
+		SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}-${VERSION}")
+		SET(CPACK_NSIS_MENU_LINKS
 			"${DOC_PATH}/html/index.html" "MeteoIO documentation"
 			"${DOC_PATH}/examples" "MeteoIO examples"
 			"https://slfsmm.indefero.net/p/meteoio/" "Home page")
 		#info for the add/uninstall software administration
-		set(CPACK_NSIS_INSTALLED_ICON_NAME "${DOC_PATH}\\\\icon.ico")
-		set(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		set(CPACK_NSIS_HELP_LINK "https://slfsmm.indefero.net/p/meteoio")
-		set(CPACK_NSIS_CONTACT "Mathias.Bavay@wsl.ch")
+		SET(CPACK_NSIS_INSTALLED_ICON_NAME "${DOC_PATH}\\\\icon.ico")
+		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
+		SET(CPACK_NSIS_HELP_LINK "https://slfsmm.indefero.net/p/meteoio")
+		SET(CPACK_NSIS_CONTACT "Mathias.Bavay@wsl.ch")
 	ENDIF(WIN32)
 ENDIF(UNIX)
 
 
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}" CACHE INTERNAL "tarball basename")
-set(CPACK_SOURCE_GENERATOR TGZ)
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${VERSION}" CACHE INTERNAL "tarball basename")
+SET(CPACK_SOURCE_GENERATOR TGZ)
 # The following components are regex's to match anywhere (unless anchored)
 # in absolute path + filename to find files or directories to be excluded
 # from source tarball.
-set(CPACK_SOURCE_IGNORE_FILES
+SET(CPACK_SOURCE_IGNORE_FILES
 	"~$"
 	"\\\\.svn/"
 	"/CMakeFiles/"

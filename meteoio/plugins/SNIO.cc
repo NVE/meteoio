@@ -33,6 +33,9 @@ namespace mio {
  * If no such metadata file is provided, the metadata will be left nodata. This only makes sense
  * if the metadata would be later filled by another way (like a merge).
  *
+ * Finally, when writing to a file, the header line will only be created if the file does not already exist. If the
+ * file already exists on the disk, new data will be appended without attempting to write a header line.
+ *
  * @section snowpack_units Units
  * - temperatures in degrees Celsius (input and output) or in kelvins (input only)
  * - relative humidity in % (input and output) or in [0;1] (input only)

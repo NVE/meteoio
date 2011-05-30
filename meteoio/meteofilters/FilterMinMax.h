@@ -18,7 +18,7 @@
 #ifndef __FILTERMINMAX_H__
 #define __FILTERMINMAX_H__
 
-//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember)) 
+//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -36,11 +36,14 @@ namespace mio {
  * - two arguments have to be provided, min and max (in SI)
  * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
  * the maximum permissible value and all data smaller than the min would be assigned the minimum permissible value
+ * or an optional extra set of two user provided values (see example below)
  * @code
  * TA::filter1	= min_max
  * TA::arg1	= 230 330
+ * ISWR::filter1	= min_max
+ * ISWR::arg1	= soft 8 1500 0 1498
  * @endcode
- * 
+ *
  */
 
 class FilterMinMax : public FilterBlock {

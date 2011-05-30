@@ -18,7 +18,7 @@
 #ifndef __FILTERMAX_H__
 #define __FILTERMAX_H__
 
-//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember)) 
+//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -35,10 +35,10 @@ namespace mio {
  * Reject all values greater than the max. Remarks:
  * - the maximum permissible value has to be provided has an argument (in SI)
  * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
- * the maximum permissible value
+ * either the maximum permissible value or another value given as an extra argument (350 in the example below)
  * @code
  * TA::filter1	= max
- * TA::arg1	= 330
+ * TA::arg1	= soft 330 350
  * @endcode
  */
 
