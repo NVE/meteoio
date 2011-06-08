@@ -25,7 +25,7 @@
 
 #Basic settings
 #Sensor mapping: this maps the SMET variables to the SensorScope variables
-nametimestamp="GMT Time"
+nametimestamp="Time"
 nameTA="Air Temperature (TNX)"
 nameRH="Humidity (SHT75)"
 nameVW="Wind Speed (Davis)"
@@ -104,6 +104,14 @@ fi
 
 
 #Identify in which column the time stamps are:
+colnr_for_EPOCHtime=`gzip -dc ${datafilename} | head -1 | tr ',' '\n' | grep -n ^Time | awk -F\: '{print $1}'`
+if [ -z ${colnr_for_EPOCHtime} ]; then
+	echo "ERROR: No field <Time> found in file..."
+	exit
+fi
+
+
+#Identify in which column the GMT time stamps are (this we need to correctly set TZ in SMET file):
 colnr_for_GMTtime=`gzip -dc ${datafilename} | head -1 | tr ',' '\n' | grep -n GMT\ Time | awk -F\: '{print $1}'`
 if [ -z ${colnr_for_GMTtime} ]; then
 	echo "ERROR: No field <GMT Time> found in file..."
@@ -154,7 +162,8 @@ do
 
   #Determine TZ
   tz=`gzip -dc ${datafilename} | grep ^${stn} | awk -FGMT '{print $2}' | awk '{print $1}' | sort -u | head -1`
-
+  export TZ="UTC"					#Set the environment variable to UTC time. This is for a correct working of awk's strftime.
+  tz_shift=`echo ${tz} | awk '{print $1*60*60}'`	#This shifts the timestamp by an interval tz (given in hours, so +1), but then converted to seconds.
 
   #Construction of SMET-file structure
   fields="fields       = "		#Output fields line
@@ -339,9 +348,8 @@ do
 
   #Now read meteo data from file
   #First create executecommand. We will construct an executecommand, which will be evaluated and does everything necessary.
-  executecommand="gzip -dc ${datafilename} | grep ^${stn} | sed 's/nan/${nodata}/g' | awk -F, '{print substr(\$${input_output_colnr[1]}, 1, 4), substr(\$${input_output_colnr[1]}, 6, 2), substr(\$${input_output_colnr[1]}, 9, 2), substr(\$${input_output_colnr[1]}, 12, 2), substr(\$${input_output_colnr[1]}, 15, 2)"
+  executecommand="gzip -dc ${datafilename} | grep ^${stn} | sed 's/nan/${nodata}/g' | awk -F, '{print strftime(\"%Y %m %d %H %M\", \$${input_output_colnr[1]}+${tz_shift})"
   #               ^^ open file		     ^^ select station     ^^ change nan to nodata      ^^ brake up date, into YYYY MM DD HH mm. We force this to be the first field above, so we can use index [1] here.
-
   #Now we already adressed the 1st column in the output file (the time stamp), now cycle through all remaining columns and add to the 
   for i in `seq 2 ${columns}`
   do
@@ -387,7 +395,7 @@ do
 
   #Now read soil moisture data from file
   #First create executecommand. We will construct an executecommand, which will be evaluated and does everything necessary.
-  executecommand="gzip -dc ${datafilename} | grep ^${stn} | sed 's/nan/${nodata}/g' | awk -F, '{print substr(\$${input_output_colnr[1]}, 1, 4), substr(\$${input_output_colnr[1]}, 6, 2), substr(\$${input_output_colnr[1]}, 9, 2), substr(\$${input_output_colnr[1]}, 12, 2), substr(\$${input_output_colnr[1]}, 15, 2)"
+  executecommand="gzip -dc ${datafilename} | grep ^${stn} | sed 's/nan/${nodata}/g' | awk -F, '{print strftime(\"%Y %m %d %H %M\", \$${input_output_colnr[1]}+${tz_shift})"
   #               ^^ open file		     ^^ select station     ^^ change nan to nodata      ^^ brake up date, into YYYY MM DD HH mm. We force this to be the first field above, so we can use index [1] here.
 
   #Now we already adressed the 1st column in the output file (the time stamp), now cycle through all remaining columns and add to the 
@@ -525,5 +533,5 @@ do
 	fi	
   fi
 
-
+  unset TZ	#Unset the time zone, which was set to UTC.
 done
