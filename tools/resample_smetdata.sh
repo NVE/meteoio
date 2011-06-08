@@ -33,7 +33,7 @@ if [ -z "${filename}" ]; then
 	echo "  <-m>: optional, if -m is added, the mean values are taken, else it is just resampled. PSUM is always a sum."
 	echo "Output is written to std out."
 	echo "Note: - holes in the data are filled with nodata values, and then resampled."
-	echo "      - DST is a problem."
+	echo "      - script assumes UTC time zone (without DST)."
 	exit
 fi
 
@@ -45,9 +45,11 @@ if [ -z "${resolution}" ]; then
 	echo "  <-m>: optional, if -m is added, the mean values are taken, else it is just resampled. PSUM is always a sum."
 	echo "Output is written to std out."
 	echo "Note: - holes in the data are filled with nodata values, and then resampled."
-	echo "      - DST is a problem."
+	echo "      - script assumes UTC time zone (without DST)."
 	exit
 fi
+
+export TZ=UTC				  		# Set shell time to UTC, to allow correct parsing by awk-mktime
 
 # Dump header
 cat ${filename} | grep -v ^[0-9]
@@ -106,3 +108,7 @@ if (( ${resamplemethod} == 0 )); then
 	#awk: this is the actual resampling.
 	cat ${filename} | grep ^[0-9] | awk '{print 0, $0} END {for(j='${firsttimestamp}'; j<='${lasttimestamp}'; j=j+'${timeresolution}') {printf "1 %s", strftime("%Y-%m-%dT%H:%M", j); for (i=1; i<='${nsensors}'; i++) {printf " %s", '${nodatavalue}'} printf "\n"}}' | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 | awk '{for(k=2; k<=NF; k++) {if($k!='${nodatavalue}') {if(k=='${col_psum}') {sum[k]+=$k; n[k]=1} else {sum[k]=$k; n[k]=1;}}};     if((substr($1, 9, 2)*60*24+substr($1, 12, 2)*60+substr($1, 15, 2))%'${resolution_minutes}'==0) {{printf "%s", $1; for (k=2; k<=NF; k++) {printf " %s", (n[k]>0)?sum[k]/n[k]:'${nodatavalue}'; sum[k]=0; n[k]=0}; printf "\n"}}}'
 fi
+
+
+
+unset TZ
