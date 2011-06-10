@@ -2,7 +2,7 @@
 #
 # This script can resample SMET data to lower resolutions.
 #
-# General recipe: PSUM is always summed, other variables can be averaged with the switch -m, or else they are just taken on the resampled time stamp.
+# General recipe: PSUM is always an average (to keep [mm/h]), other variables can be averaged with the switch -m, or else they are just taken on the resampled time stamp.
 #
 # Use bash resample_smetdata.sh <filename> <resolution> <-m>
 #
@@ -30,10 +30,11 @@ if [ -z "${filename}" ]; then
 	echo "Use: bash resample_smetdata.sh <filename> <resolution> <-m>"
 	echo "  <filename>: SMET file"
 	echo "  <resolution>: new resolution in seconds. (minimum 2 minutes, maximum 1 day)"
-	echo "  <-m>: optional, if -m is added, the mean values are taken, else it is just resampled. PSUM is always a sum."
+	echo "  <-m>: optional, if -m is added, the mean values are taken, else it is just resampled. PSUM is always an average."
 	echo "Output is written to std out."
 	echo "Note: - holes in the data are filled with nodata values, and then resampled."
 	echo "      - script assumes UTC time zone (without DST)."
+	echo "      - when an error is encountered, the script tries to output the SMET file at the original resolution."
 	exit
 fi
 
@@ -42,14 +43,16 @@ if [ -z "${resolution}" ]; then
 	echo "Use: bash resample_smetdata.sh <filename> <resolution> <-m>"
 	echo "  <filename>: SMET file"
 	echo "  <resolution>: new resolution in seconds. (minimum 2 minutes, maximum 1 day)"
-	echo "  <-m>: optional, if -m is added, the mean values are taken, else it is just resampled. PSUM is always a sum."
+	echo "  <-m>: optional, if -m is added, the mean values are taken, else it is just resampled. PSUM is always an average."
 	echo "Output is written to std out."
 	echo "Note: - holes in the data are filled with nodata values, and then resampled."
 	echo "      - script assumes UTC time zone (without DST)."
+	echo "      - when an error is encountered, the script tries to output the SMET file at the original resolution."
 	exit
 fi
 
-export TZ=UTC				  		# Set shell time to UTC, to allow correct parsing by awk-mktime
+# Set shell time to UTC, to allow correct parsing by awk-mktime
+export TZ=UTC
 
 # Dump header
 cat ${filename} | grep -v ^[0-9]
@@ -85,6 +88,21 @@ if (( $resolution > 86400 )); then
 	exit
 fi
 
+# Resample, just plain resampling
+if (( ${resamplemethod} == 0 )); then
+	#cat: start pipe
+	#grep: only select data rows from SMET
+	#awk: add a 0 in the first column to mark original data. Then, add the resolution of the SMET file nodata values, marked by a 1 in the first column.
+	#sort: then sort, first for the timestamp, then for the first column, such that when original data is available, it is appearing first, before the nodata values.
+	#cut: removes the first column, which contains the flag.
+	#uniq: now take unique timestamps. Because this selects the first occurrence of the time stamp, the way we sorted it, makes the original data selected first (if available), and then the nodata values.
+	#awk: this is the actual resampling.
+	#     note that the awk constuction is very similar. The trick is that for resampling {sum[k]=$k; n[k]=1;} is used, where for taking the mean {sum[k]+=$k; n[k]+=1;} is used.
+	#     note that the psum also should be calculated as a mean, else it makes no sense. So for calculating the mean, the if-statement {if(k=='${col_psum}')} is actually superfluous (both the if and
+	#     the else block do exactly the same), but it is kept for coherence.
+	cat ${filename} | grep ^[0-9] | awk '{print 0, $0} END {for(j='${firsttimestamp}'; j<='${lasttimestamp}'; j=j+'${timeresolution}') {printf "1 %s", strftime("%Y-%m-%dT%H:%M", j); for (i=1; i<='${nsensors}'; i++) {printf " %s", '${nodatavalue}'} printf "\n"}}' | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 | awk '{for(k=2; k<=NF; k++) {if($k!='${nodatavalue}') {if(k=='${col_psum}') {sum[k]+=$k; n[k]+=1} else {sum[k]=$k; n[k]=1;}}};     if((substr($1, 9, 2)*60*24+substr($1, 12, 2)*60+substr($1, 15, 2))%'${resolution_minutes}'==0) {{printf "%s", $1; for (k=2; k<=NF; k++) {printf " %s", (n[k]>0)?sum[k]/n[k]:'${nodatavalue}'; sum[k]=0; n[k]=0}; printf "\n"}}}'
+fi
+
 # Resample, calculating mean values
 if (( ${resamplemethod} == 1 )); then
 	#cat: start pipe
@@ -94,21 +112,11 @@ if (( ${resamplemethod} == 1 )); then
 	#cut: removes the first column, which contains the flag.
 	#uniq: now take unique timestamps. Because this selects the first occurrence of the time stamp, the way we sorted it, makes the original data selected first (if available), and then the nodata values.
 	#awk: this is the actual resampling.
-	cat ${filename} | grep ^[0-9] | awk '{print 0, $0} END {for(j='${firsttimestamp}'; j<='${lasttimestamp}'; j=j+'${timeresolution}') {printf "1 %s", strftime("%Y-%m-%dT%H:%M", j); for (i=1; i<='${nsensors}'; i++) {printf " %s", '${nodatavalue}'} printf "\n"}}' | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 | awk '{for(k=2; k<=NF; k++) {if($k!='${nodatavalue}') {sum[k]+=$k; n[k]++; if(k=='${col_psum}') {n[k]=1}}};     if((substr($1, 9, 2)*60*24+substr($1, 12, 2)*60+substr($1, 15, 2))%'${resolution_minutes}'==0) {{printf "%s", $1; for (k=2; k<=NF; k++) {printf " %s", (n[k]>0)?sum[k]/n[k]:'${nodatavalue}'; sum[k]=0; n[k]=0}; printf "\n"}}}'
+	#     note that the awk constuction is very similar. The trick is that for resampling {sum[k]=$k; n[k]=1;} is used, where for taking the mean {sum[k]+=$k; n[k]+=1;} is used.
+	#     note that the psum also should be calculated as a mean, else it makes no sense. So for calculating the mean, the if-statement {if(k=='${col_psum}')} is actually superfluous (both the if and
+	#     the else block do exactly the same), but it is kept for coherence.
+	cat ${filename} | grep ^[0-9] | awk '{print 0, $0} END {for(j='${firsttimestamp}'; j<='${lasttimestamp}'; j=j+'${timeresolution}') {printf "1 %s", strftime("%Y-%m-%dT%H:%M", j); for (i=1; i<='${nsensors}'; i++) {printf " %s", '${nodatavalue}'} printf "\n"}}' | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 | awk '{for(k=2; k<=NF; k++) {if($k!='${nodatavalue}') {if(k=='${col_psum}') {sum[k]+=$k; n[k]+=1} else {sum[k]+=$k; n[k]+=1;}}};     if((substr($1, 9, 2)*60*24+substr($1, 12, 2)*60+substr($1, 15, 2))%'${resolution_minutes}'==0) {{printf "%s", $1; for (k=2; k<=NF; k++) {printf " %s", (n[k]>0)?sum[k]/n[k]:'${nodatavalue}'; sum[k]=0; n[k]=0}; printf "\n"}}}'
 fi
 
-# Or resample, just resampling
-if (( ${resamplemethod} == 0 )); then
-	#cat: start pipe
-	#grep: only select data rows from SMET
-	#awk: add a 0 in the first column to mark original data. Then, add the resolution of the SMET file nodata values, marked by a 1 in the first column.
-	#sort: then sort, first for the timestamp, then for the first column, such that when original data is available, it is appearing first, before the nodata values.
-	#cut: removes the first column, which contains the flag.
-	#uniq: now take unique timestamps. Because this selects the first occurrence of the time stamp, the way we sorted it, makes the original data selected first (if available), and then the nodata values.
-	#awk: this is the actual resampling.
-	cat ${filename} | grep ^[0-9] | awk '{print 0, $0} END {for(j='${firsttimestamp}'; j<='${lasttimestamp}'; j=j+'${timeresolution}') {printf "1 %s", strftime("%Y-%m-%dT%H:%M", j); for (i=1; i<='${nsensors}'; i++) {printf " %s", '${nodatavalue}'} printf "\n"}}' | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 | awk '{for(k=2; k<=NF; k++) {if($k!='${nodatavalue}') {if(k=='${col_psum}') {sum[k]+=$k; n[k]=1} else {sum[k]=$k; n[k]=1;}}};     if((substr($1, 9, 2)*60*24+substr($1, 12, 2)*60+substr($1, 15, 2))%'${resolution_minutes}'==0) {{printf "%s", $1; for (k=2; k<=NF; k++) {printf " %s", (n[k]>0)?sum[k]/n[k]:'${nodatavalue}'; sum[k]=0; n[k]=0}; printf "\n"}}}'
-fi
-
-
-
+#Reset time zone
 unset TZ
