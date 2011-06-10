@@ -165,6 +165,7 @@ do
   export TZ="UTC"					#Set the environment variable to UTC time. This is for a correct working of awk's strftime.
   tz_shift=`echo ${tz} | awk '{print $1*60*60}'`	#This shifts the timestamp by an interval tz (given in hours, so +1), but then converted to seconds.
 
+
   #Construction of SMET-file structure
   fields="fields       = "		#Output fields line
   soilmoisturefields="fields       = "	#Output fields line
@@ -197,6 +198,9 @@ do
 		output_colnr_for_timestamp=${columns}
 		input_output_colnr[columns]=${i}
 		todo_with_var[columns]=""
+		#Determine file resolution (this is used to correct precipitation amounts. It determines resolution by picking out time stamps, doubling them (except first row), putting them next together and taking the differences. Then look for the difference that occurs most often (which will be the measurement resolution).
+		inputfile_resolution=`gzip -dc ${datafilename} | grep ^${stn} | awk -F, '{print $'${input_output_colnr[columns]}'}' | awk '{if (NR==1) {printf "%s\n", $1} else {printf "%s\n%s\n", $1, $1}}' | sed '$!N;s/\n/ /' | awk '{print $2-$1}' | sort -n | uniq -c | sort -nrk1 | awk '(NR==1) {print $2}'`
+		echo Resolution: ${inputfile_resolution} s.
 	fi
   done
   #Then the sensors
@@ -268,7 +272,7 @@ do
 		fields=`echo ${fields} PSUM`
 		output_colnr_for_PSUM=${columns}
 		input_output_colnr[columns]=${i}
-		todo_with_var[columns]=""
+		todo_with_var[columns]="*(3600.0/${inputfile_resolution}.0)"		#This translate [mm/time step] into [mm/hour]
 	fi
 
 	if [ "${sensor}" == "${nameTSS}" ]; then
