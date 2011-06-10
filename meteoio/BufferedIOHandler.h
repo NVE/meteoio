@@ -18,14 +18,8 @@
 #ifndef __BUFFEREDIOHANDLER_H__
 #define __BUFFEREDIOHANDLER_H__
 
-#ifdef _POPC_
-#include <meteoio/IOHandler.ph>
-#else
 #include <meteoio/IOHandler.h>
-#endif
-
 #include <meteoio/Config.h>
-
 #include <map>
 #include <vector>
 #include <string>
@@ -47,8 +41,8 @@ namespace mio {
  *                   (10% by default)
  * - BUFF_BEFORE: alternate way of buffer centering: When rebuffering, the new date will be located BUFF_BEFORE days from the
  *                begining of the buffer (therefore, it takes a value in days); [General] section, optional. Only one of
- *                two centering option can be used. 
- * 
+ *                two centering option can be used.
+ *
  * @author Thomas Egger
  * @date   2009-07-25
  */
@@ -88,7 +82,7 @@ class BufferedIOHandler : public IOInterface {
 		} buffer_policy;
 
 		/**
-		 * @brief Read the metadata for a given date. 
+		 * @brief Read the metadata for a given date.
 		 * @param date date for which to read the metadata
 		 * @param vecStation vector of metadata
 		 */

@@ -420,6 +420,14 @@ class USERInterpolation : public InterpolationAlgorithm {
  * to the method described in <i>"Quantitative evaluation of different hydrological modelling approaches
  * in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review and
  * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
+ *
+ * An example using this algorithm, initializing the grid with a constant lapse rate fill using +0.05% precipitation increase per meter of elevation, is given below:
+ * @code
+ * HNW::algorithms = HNW_SNOW
+ * HNW::hnw_snow = cst_lapse
+ * HNW::cst_lapse = 0.0005 frac
+ * @endcode
+ *
  * @author Florian Kobierska, Jan Magnusson and Mathias Bavay
  */
 class SnowHNWInterpolation : public InterpolationAlgorithm {

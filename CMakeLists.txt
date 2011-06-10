@@ -21,6 +21,7 @@ SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
 SET(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
+OPTION( BUILD_SHARED_LIBS "Set to OFF to build only static libraries" ON )
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
 	SET(WARNINGS "-Wall")

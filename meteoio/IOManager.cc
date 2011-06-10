@@ -25,9 +25,7 @@ namespace mio {
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(i_cfg), bufferedio(rawio, i_cfg), meteoprocessor(i_cfg)
 {
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
-
 	fcache_start = fcache_end = Date(0.0, 0.); //this should not matter, since 0 is still way back before any real data...
-
 	meteoprocessor.getWindowSize(proc_properties);
 }
 
@@ -53,7 +51,7 @@ double IOManager::getAvgSamplingRate()
 }
 
 void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end,
-						  const std::vector< METEO_TIMESERIE >& vecMeteo)
+                                const std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	//perform check on date_start and date_end
 	if (date_end < date_start)
@@ -89,7 +87,7 @@ size_t IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation
 
 //for an interval of data: decide whether data should be filtered or raw
 size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
-                                     std::vector< METEO_TIMESERIE >& vecMeteo)
+                               std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	vecMeteo.clear();
 
@@ -127,10 +125,7 @@ void IOManager::fill_filtered_cache()
 	if ((IOManager::filtered & processing_level) == IOManager::filtered){
 		//ask the bufferediohandler for the whole buffer
 		const vector< METEO_TIMESERIE >& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
-
-		//cout << "Now filtering ... data for " << buffer.size() << " stations" << endl; clock_t cstart = std::clock();
 		meteoprocessor.process(buffer, filtered_cache);
-		//cout << "Filtering: " << ( std::clock() - cstart ) / (double)CLOCKS_PER_SEC << " seconds" << endl;
 	}
 }
 

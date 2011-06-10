@@ -36,9 +36,9 @@
 #include <meteoio/Grid3DObject.h>
 #include <meteoio/InterpolationAlgorithms.h>
 #include <meteoio/IOExceptions.h>
-//#include <meteoio/IOHandler.h> //special case for popc
+#include <meteoio/IOHandler.h>
 #include <meteoio/IOInterface.h>
-//#include <meteoio/IOManager.h> //special case for popc
+#include <meteoio/IOManager.h>
 #include <meteoio/IOPlugin.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/libfit1D.h>
@@ -72,12 +72,7 @@
 #include <meteoio/Timer.h>
 
 #ifdef _POPC_
-#include <meteoio/IOHandler.ph>
-#include <meteoio/IOManager.h> //HACK
 #include <meteoio/marshal_meteoio.h>
-#else
-#include <meteoio/IOHandler.h>
-#include <meteoio/IOManager.h>
 #endif
 
 #endif

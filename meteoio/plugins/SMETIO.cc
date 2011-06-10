@@ -529,8 +529,12 @@ void SMETIO::readDataAscii(const char& eoln, const std::string& filename, const 
 				poscounter++;
 			} else {
 				double val;
-				if (!IOUtils::convertString(val, tmpvec[ii]))
-					throw InvalidFormatException("In "+filename+": Invalid value for param", AT);
+				if (!IOUtils::convertString(val, tmpvec[ii])) {
+					std::stringstream ss;
+					ss << "In " << filename << ":" << md.date.toString(Date::ISO);
+					ss << " Invalid value for " << vecDataSequence[ii] << " = \"" << tmpvec[ii] << "\" ";
+					throw InvalidFormatException(ss.str(), AT);
+				}
 				if(val==plugin_nodata)
 					SMETIO::getParameter(vecDataSequence[ii], md) = IOUtils::nodata;
 				else

@@ -18,9 +18,9 @@
 #ifndef __IOHANDLER_H__
 #define __IOHANDLER_H__
 
-#ifdef _POPC_
+/*#ifdef _POPC_
 #error
-#endif
+#endif*/
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/A3DIO.h>
@@ -39,12 +39,22 @@ namespace mio {
 * and it follows the interface defined by the IOInterface class with the addition of
 * a few convenience methods.
 */
+#ifdef _POPC_
+class IOHandler {
+#else
 class IOHandler : public IOInterface {
+#endif
 	public:
 		IOHandler(const std::string& configfile);
+	#ifndef _POPC_
 		IOHandler(const IOHandler&);
+	#endif
 		IOHandler(const Config&);
+	#ifdef _POPC_
+		~IOHandler();
+	#else
 		~IOHandler() throw();
+	#endif
 
 		//methods defined in the IOInterface class
 		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
@@ -52,8 +62,13 @@ class IOHandler : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readStationData(const Date& date,
 		                             STATION_TIMESERIE& vecStation);
+	#ifdef _POPC_
+		virtual void writeMeteoData(std::vector<METEO_TIMESERIE>& vecMeteo,
+		                            const std::string& name="");
+	#else
 		virtual void writeMeteoData(const std::vector<METEO_TIMESERIE>& vecMeteo,
 		                            const std::string& name="");
+	#endif
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector<METEO_TIMESERIE>& vecMeteo,
 		                           const unsigned& stationindex=IOUtils::npos);
@@ -63,14 +78,24 @@ class IOHandler : public IOInterface {
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
+	#ifndef _POPC_
 		friend std::ostream& operator<<(std::ostream& os, const IOHandler& data);
+	#endif
+	#ifdef _POPC_
+		std::string toString();
+	#else
 		std::string toString() const;
+	#endif
 
 	private:
 		void loadDynamicPlugins();
 		void loadPlugin(const std::string& libname, const std::string& classname,
 		                DynamicLibrary*& dynLibrary, IOInterface*& io);
+	#ifdef _POPC_
+		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io);
+	#else
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
+	#endif
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 

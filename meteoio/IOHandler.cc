@@ -15,17 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifdef _POPC_
-	#include <meteoio/IOHandler.ph>
-	#ifdef DEBUG_ARITHM
-		#ifndef _GNU_SOURCE
-			#define _GNU_SOURCE
-		#endif
-		#include <fenv.h>
-	#endif
-#else
-	#include <meteoio/IOHandler.h>
-#endif
+
+#include <meteoio/IOHandler.h>
 
 using namespace std;
 
@@ -83,8 +74,7 @@ void IOHandler::registerPlugins()
 #ifdef _POPC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile){
 #else
-IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile)
-{
+IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile){
 #endif
 	registerPlugins();
 }
@@ -108,9 +98,6 @@ IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), fileio(cfgreader
 IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader)
 #endif
 {
-#if defined(_POPC_) && defined(DEBUG_ARITHM)
-	feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW );
-#endif
 	registerPlugins();
 }
 
