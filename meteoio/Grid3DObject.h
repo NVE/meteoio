@@ -44,7 +44,7 @@ class Grid3DObject : POPBase {
 		void Serialize(POPBuffer &buf, bool pack);
 #else
 class Grid3DObject{
-#endif  
+#endif
 	public:
 		typedef struct GRID_POINT_3D { //TODO: this potentially conflicts with the definition in Grid2DObject
 			unsigned int ix; ///<grid index along X
@@ -53,6 +53,9 @@ class Grid3DObject{
 		} grid_point_3d;
 
 		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
+		double& operator ()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz);
+		const double operator ()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) const;
+
 		friend std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid);
 
 		/**
@@ -87,7 +90,7 @@ class Grid3DObject{
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& depths,
 			const double& cellsize, const Coords& i_llcorner);
 		/**
-		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double> 
+		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double>
 		* will be destroyed and recreated to size ncols x nrows.
 		*
 		* @param ncols (unsigned int&) number of colums in the grid3D
@@ -104,7 +107,7 @@ class Grid3DObject{
 
 		/**
 		* @brief Compute the positional parameters that are not already known
-		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* This means that the Coords::point object that is given either contains geographic coordinates or
 		* grid indices. This method will calculate the missing ones (so that (i,j,k) match with (lat,lon,alt)
 		* and (east,north,alt).
 		* @param point coordinate to convert
@@ -114,7 +117,7 @@ class Grid3DObject{
 
 		/**
 		* @brief Compute the positional parameters that are not already known
-		* This means that the Coords::point object that is given either contains geographic coordinates or 
+		* This means that the Coords::point object that is given either contains geographic coordinates or
 		* grid indices. This method will calculate the missing ones (so that (i,j) match with (lat,lon)
 		* and (east,north)). Any point that is either invalid or outside the grid is removed from the vector.
 		* @param vec_points vector containing the coordinates to convert

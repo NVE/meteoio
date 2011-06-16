@@ -266,7 +266,13 @@ bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const s
 	return true;
 }
 
+double& Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy) {
+	return grid2D(ix,iy);
+}
 
+const double Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy) const {
+	return grid2D(ix,iy);
+}
 
 std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
 {

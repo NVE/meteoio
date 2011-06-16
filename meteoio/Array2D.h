@@ -119,43 +119,44 @@ template<class T> class Array2D {
 
 		void fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny);
 
+		/**
+		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		*/
+		void setNodataHandling(const IOUtils::nodata_handling flag_nodata);
+
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void size(unsigned int& nx, unsigned int& ny) const;
 
 		/**
 		* @brief returns the minimum value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return minimum value
 		*/
-		T getMin(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMin() const;
 		/**
 		* @brief returns the maximum value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return maximum value
 		*/
-		T getMax(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMax() const;
 		/**
 		* @brief returns the mean value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return mean value
 		*/
-		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMean() const;
 		/**
 		* @brief returns the number of points contained in the grid.
-		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid.
-		* If flag_nodata==IOUtils::PARSE_NODATA, then it is the number of non-nodata values in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* If setNodataHandling(IOUtils::RAW_NODATA), then the number of points is the size of the grid.
+		* If setNodataHandling(IOUtils::PARSE_NODATA), then it is the number of non-nodata values in the grid
 		* @return count
 		*/
-		size_t getCount(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		size_t getCount() const;
 		/**
 		* @brief returns the grid of the absolute value of values contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return grid of abs(grid)
 		*/
-		const Array2D<T> getAbs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
-		void abs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA);
+		const Array2D<T> getAbs() const;
+		void abs();
 
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
@@ -194,6 +195,7 @@ template<class T> class Array2D {
 		std::vector<T> vecData;
 		unsigned int nx;
 		unsigned int ny;
+		bool keep_nodata;
 };
 
 template<class T> T& Array2D<T>::operator()(const unsigned int& i) {
@@ -228,6 +230,7 @@ template<class T> Array2DProxy<T> Array2D<T>::operator[](const unsigned int& i) 
 
 template<class T> Array2D<T>::Array2D() {
 	nx = ny = 0;
+	keep_nodata = true;
 }
 
 template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
@@ -246,6 +249,8 @@ template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const uns
 		throw IndexOutOfBoundsException("Copying an array into a null sized array!", AT);
 
 	resize(i_ncols, i_nrows); //create new Array2D object
+	if(i_array2D.keep_nodata==false)
+		setNodataHandling(IOUtils::RAW_NODATA);
 
 	//Copy by value subspace
 	for (unsigned int jj=0; jj<ny; jj++) {
@@ -271,6 +276,9 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsig
 	if ((i_ncols == 0) || (i_nrows == 0)) //the plane to copy has to make sense
 		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
 
+	if(i_array2D.keep_nodata==false)
+		setNodataHandling(IOUtils::RAW_NODATA);
+
 	for(unsigned int jj=i_ny; jj<(i_ny+i_nrows); jj++) {
 		for(unsigned int ii=i_nx; ii<(i_nx+i_ncols); ii++) {
 			const unsigned int ix = ii-i_nx;
@@ -282,12 +290,21 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsig
 
 template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any, const T& init) {
 	nx = ny = 0;
+	keep_nodata = true;
 	resize(anx,any,init);
 }
 
 template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any) {
 	nx = ny = 0;
+	keep_nodata = true;
 	resize(anx,any);
+}
+
+template<class T> void Array2D<T>::setNodataHandling(const IOUtils::nodata_handling flag_nodata) {
+	if(flag_nodata==IOUtils::RAW_NODATA)
+		keep_nodata=false;
+	else
+		keep_nodata=true;
 }
 
 template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigned int& any) {
@@ -325,65 +342,61 @@ template<class T> std::ostream& operator<<(std::ostream& os, const Array2D<T>& a
 	return os;
 }
 
-template<class T> T Array2D<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array2D<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();
 
 	const unsigned int nxy = ny*nx;
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
 			if(val<min) min=val;
 		}
 		return min;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
 			if(val!=IOUtils::nodata && val<min) min=val;
 		}
 		if(min!=std::numeric_limits<T>::max()) return min;
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> T Array2D<T>::getMax(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array2D<T>::getMax() const {
 
 	T max = -std::numeric_limits<T>::max();
 
 	const unsigned int nxy = ny*nx;
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
 			if(val>max) max=val;
 		}
 		return max;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
 			if(val!=IOUtils::nodata && val>max) max=val;
 		}
 		if(max!=-std::numeric_limits<T>::max()) return max;
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array2D<T>::getMean() const {
 
 	T mean = 0;
 	const unsigned int nxy = nx*ny;
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
 			mean += val;
 		}
 		if(nxy>0) return mean/(T)(nxy);
 		else return (T)0;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		unsigned int count = 0;
 		for (unsigned int jj=0; jj<nxy; jj++) {
 			const T val = operator()(jj);
@@ -394,50 +407,44 @@ template<class T> T Array2D<T>::getMean(const IOUtils::nodata_handling flag_noda
 		}
 		if(count>0) return mean/(T)(count);
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> size_t Array2D<T>::getCount(const IOUtils::nodata_handling flag_nodata) const
+template<class T> size_t Array2D<T>::getCount() const
 {
 	const unsigned int nxy = nx*ny;
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		return (size_t)nxy;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		size_t count = 0;
 		for (unsigned int ii=0; ii<nxy; ii++) {
 			if(vecData[ii]!=IOUtils::nodata) count++;
 		}
 		return count;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> void Array2D<T>::abs(const IOUtils::nodata_handling flag_nodata) {
+template<class T> void Array2D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
 		const unsigned int nxy = nx*ny;
-		if(flag_nodata==IOUtils::RAW_NODATA) {
+		if(keep_nodata==false) {
 			for (unsigned int ii=0; ii<nxy; ii++) {
 				T& val = operator()(ii);
 				if(val<0) val=-val;
 			}
-		} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		} else {
 			for (unsigned int ii=0; ii<nxy; ii++) {
 				T& val = operator()(ii);
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
-		} else {
-			throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 		}
 	}
 }
 
-template<class T> const Array2D<T> Array2D<T>::getAbs(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> const Array2D<T> Array2D<T>::getAbs() const {
 	Array2D<T> result = *this; //make a copy
-	result.abs(flag_nodata); //already implemented
+	result.abs(); //already implemented
 
 	return result;
 }
@@ -446,6 +453,7 @@ template<class T> const Array2D<T> Array2D<T>::getAbs(const IOUtils::nodata_hand
 //arithmetic operators
 template<class T> Array2D<T>& Array2D<T>::operator=(const Array2D<T>& source) {
 	if(this != &source) {
+		keep_nodata = source.keep_nodata;
 		nx = source.nx;
 		ny = source.ny;
 		vecData = source.vecData;
@@ -467,8 +475,17 @@ template<class T> Array2D<T>& Array2D<T>::operator+=(const Array2D<T>& rhs)
 
 	const unsigned int nxy = nx*ny;
 	//Add to every single member of the Array2D<T>
-	for (unsigned int jj=0; jj<nxy; jj++)
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
 			operator()(jj) += rhs(jj);
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) += rhs(jj);
+		}
+	}
 
 	return *this;
 }
@@ -485,8 +502,16 @@ template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
-	for (unsigned int jj=0; jj<nxy; jj++)
-		operator()(jj) += rhs;
+
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) += rhs;
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) += rhs;
+		}
+	}
 
 	return *this;
 }
@@ -507,8 +532,18 @@ template<class T> Array2D<T>& Array2D<T>::operator-=(const Array2D<T>& rhs)
 
 	//Substract to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
-	for (unsigned int jj=0; jj<nxy; jj++)
-		operator()(jj) -= rhs(jj);
+
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) -= rhs(jj);
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) -= rhs(jj);
+		}
+	}
 
 	return *this;
 }
@@ -525,9 +560,16 @@ template<class T> Array2D<T>& Array2D<T>::operator-=(const T& rhs)
 {
 	//Substract to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
-	for (unsigned int jj=0; jj<nxy; jj++)
-		operator()(jj) -= rhs;
 
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) -= rhs;
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) -= rhs;
+		}
+	}
 	return *this;
 }
 
@@ -547,8 +589,18 @@ template<class T> Array2D<T>& Array2D<T>::operator*=(const Array2D<T>& rhs)
 
 	//Add to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
-	for (unsigned int jj=0; jj<nxy; jj++)
-		operator()(jj) *= rhs(jj);
+
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) *= rhs(jj);
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) *= rhs(jj);
+		}
+	}
 
 	return *this;
 }
@@ -565,8 +617,16 @@ template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
 {
 	//Add to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
-	for (unsigned int jj=0; jj<nxy; jj++)
+
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
 			operator()(jj) *= rhs;
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) *= rhs;
+		}
+	}
 
 	return *this;
 }
@@ -587,8 +647,18 @@ template<class T> Array2D<T>& Array2D<T>::operator/=(const Array2D<T>& rhs)
 
 	//Divide every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
-	for (unsigned int jj=0; jj<nxy; jj++)
-		operator()(jj) /= rhs(jj);
+
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) /= rhs(jj);
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) /= rhs(jj);
+		}
+	}
 
 	return *this;
 }
@@ -608,6 +678,16 @@ template<class T> Array2D<T>& Array2D<T>::operator/=(const T& rhs)
 	for (unsigned int jj=0; jj<nxy; jj++)
 		operator()(jj) /= rhs;
 
+
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxy; jj++)
+			operator()(jj) /= rhs;
+	} else {
+		for (unsigned int jj=0; jj<nxy; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) /= rhs;
+		}
+	}
 	return *this;
 }
 

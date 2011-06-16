@@ -78,13 +78,13 @@ Date::Date(const time_t& in_time, const bool& in_dst) {
 	dst = false;
 	setDate(in_time, in_dst);
 }
-//HACK: is it needed? Why paroc_base instead of POPC??
+
 /**
 * @brief Copy constructor.
 * @param in_date Date object to copy
 */
 #ifdef _POPC_
-Date::Date(const Date& in_date) : paroc_base()
+Date::Date(const Date& in_date) : pop_base() //HACK: do we really need this inheritance?
 #else
 Date::Date(const Date& in_date)
 #endif

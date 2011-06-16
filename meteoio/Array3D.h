@@ -154,6 +154,12 @@ template<class T> class Array3D {
 
 		void fill(const Array3D<T>& i_array3D, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz);
 
+		/**
+		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		*/
+		void setNodataHandling(const IOUtils::nodata_handling flag_nodata);
+
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
 		void size(unsigned int& anx, unsigned int& any, unsigned int& anz) const;
@@ -161,37 +167,32 @@ template<class T> class Array3D {
 
 		/**
 		* @brief returns the minimum value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return minimum value
 		*/
-		T getMin(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMin() const;
 		/**
 		* @brief returns the maximum value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return maximum value
 		*/
-		T getMax(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMax() const;
 		/**
 		* @brief returns the mean value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return mean value
 		*/
-		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMean() const;
 		/**
 		* @brief returns the number of points contained in the grid.
-		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid.
-		* If flag_nodata==IOUtils::PARSE_NODATA, then it is the number of non-nodata values in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* If setNodataHandling(IOUtils::RAW_NODATA), then the number of points is the size of the grid.
+		* If setNodataHandling(IOUtils::PARSE_NODATA), then it is the number of non-nodata values in the grid
 		* @return count
 		*/
-		size_t getCount(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		size_t getCount() const;
 		/**
 		* @brief returns the grid of the absolute value of values contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return grid of abs(grid)
 		*/
-		const Array3D<T> getAbs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
-		void abs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA);
+		const Array3D<T> getAbs() const;
+		void abs();
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array3D<P>& array);
 
@@ -230,6 +231,7 @@ template<class T> class Array3D {
 		unsigned int ny;
 		unsigned int nz;
 		unsigned int nxny; //nx times ny
+		bool keep_nodata;
 };
 
 template<class T> T& Array3D<T>::operator()(const unsigned int& i) {
@@ -267,6 +269,7 @@ template<class T> Array3DProxy<T> Array3D<T>::operator[](const unsigned int& i) 
 
 template<class T> Array3D<T>::Array3D() {
 	nx = ny = nz = nxny = 0;
+	keep_nodata = true;
 }
 
 template<class T> Array3D<T>::Array3D(const Array3D<T>& i_array3D,
@@ -288,6 +291,8 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 		throw IndexOutOfBoundsException("Copying an array into a null sized array!", AT);
 
 	resize(i_ncols, i_nrows, i_ndepth); //create new Array3D object
+	if(i_array3D.keep_nodata==false)
+		setNodataHandling(IOUtils::RAW_NODATA);
 
 	//Copy by value subspace
 	for (unsigned int ii=0; ii<nz; ii++) {
@@ -318,6 +323,9 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 	if ((i_ncols == 0) || (i_nrows == 0) || (i_ndepth == 0)) //the space has to make sense
 		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
 
+	if(i_array3D.keep_nodata==false)
+		setNodataHandling(IOUtils::RAW_NODATA);
+
 	//Copy by value subspace
 	for (unsigned int ii=i_nz; ii<(i_nz+i_ndepth); ii++) {
 		for (unsigned int jj=i_ny; jj<(i_ny+i_nrows); jj++) {
@@ -334,10 +342,12 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 
 template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
 	resize(anx, any, anz);
+	keep_nodata = true;
 }
 
 template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
 	resize(anx, any, anz, init);
+	keep_nodata = true;
 }
 
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
@@ -380,65 +390,61 @@ template<class T> std::ostream& operator<<(std::ostream& os, const Array3D<T>& a
 	return os;
 }
 
-template<class T> T Array3D<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array3D<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();
 	const unsigned int nxyz = ny*nx*nz;
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
 			if(val<min) min=val;
 		}
 		return min;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
 			if(val!=IOUtils::nodata && val<min) min=val;
 		}
 		if(min!=std::numeric_limits<T>::max()) return min;
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> T Array3D<T>::getMax(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array3D<T>::getMax() const {
 
 	T max = -std::numeric_limits<T>::max();
 	const unsigned int nxyz = ny*nx*nz;
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
 			if(val>max) max=val;
 		}
 		return max;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
 			if(val!=IOUtils::nodata && val>max) max=val;
 		}
 		if(max!=-std::numeric_limits<T>::max()) return max;
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> T Array3D<T>::getMean(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array3D<T>::getMean() const {
 
 	T mean = 0;
 	const unsigned int nxyz = nx*ny*nz;
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
 			mean += val;
 		}
 		if(nxyz>0) return mean/(T)(nxyz);
 		else return (T)0;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		unsigned int count = 0;
 		for (unsigned int jj=0; jj<nxyz; jj++) {
 			const T val = operator()(jj);
@@ -449,51 +455,45 @@ template<class T> T Array3D<T>::getMean(const IOUtils::nodata_handling flag_noda
 		}
 		if(count>0) return mean/(T)(count);
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> size_t Array3D<T>::getCount(const IOUtils::nodata_handling flag_nodata) const
+template<class T> size_t Array3D<T>::getCount() const
 {
 	const unsigned int nxyz = nx*ny*nz;
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		return (size_t)nxyz;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		size_t count = 0;
 		for (unsigned int ii=0; ii<nxyz; ii++) {
 			if(vecData[ii]!=IOUtils::nodata) count++;
 		}
 		return count;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> void Array3D<T>::abs(const IOUtils::nodata_handling flag_nodata) {
+template<class T> void Array3D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
 		const unsigned int nxyz = nx*ny*nz;
-		if(flag_nodata==IOUtils::RAW_NODATA) {
+		if(keep_nodata==false) {
 			for (unsigned int ii=0; ii<nxyz; ii++) {
 				T& val = operator()(ii);
 				if(val<0) val=-val;
 			}
-		} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		} else {
 			for (unsigned int ii=0; ii<nxyz; ii++) {
 				T& val = operator()(ii);
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
-		} else {
-			throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 		}
 	}
 }
 
 
-template<class T> const Array3D<T> Array3D<T>::getAbs(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> const Array3D<T> Array3D<T>::getAbs() const {
 	Array3D<T> result = *this; //make a copy
-	result.abs(flag_nodata); //already implemented
+	result.abs(); //already implemented
 
 	return result;
 }
@@ -501,6 +501,7 @@ template<class T> const Array3D<T> Array3D<T>::getAbs(const IOUtils::nodata_hand
 //arithmetic operators
 template<class T> Array3D<T>& Array3D<T>::operator=(const Array3D<T>& source) {
 	if(this != &source) {
+		keep_nodata = source.keep_nodata;
 		nx = source.nx;
 		ny = source.ny;
 		nz = source.nz;
@@ -522,11 +523,17 @@ template<class T> Array3D<T>& Array3D<T>::operator+=(const Array3D<T>& rhs)
 		throw IOException("Trying to add two Array3D objects with different dimensions", AT);
 
 	//Add to every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) += rhs(ii,jj,kk);
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) += rhs(jj);
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) += rhs(jj);
 		}
 	}
 
@@ -544,11 +551,15 @@ template<class T> const Array3D<T> Array3D<T>::operator+(const Array3D<T>& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) += rhs;
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) += rhs;
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) += rhs;
 		}
 	}
 
@@ -570,11 +581,17 @@ template<class T> Array3D<T>& Array3D<T>::operator-=(const Array3D<T>& rhs)
 		throw IOException("Trying to substract two Array3D objects with different dimensions", AT);
 
 	//Substract to every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) -= rhs(ii,jj,kk);
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) -= rhs(jj);
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) -= rhs(jj);
 		}
 	}
 
@@ -592,11 +609,15 @@ template<class T> const Array3D<T> Array3D<T>::operator-(const Array3D<T>& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator-=(const T& rhs)
 {
 	//Substract to every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) -= rhs;
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) -= rhs;
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) -= rhs;
 		}
 	}
 
@@ -618,11 +639,17 @@ template<class T> Array3D<T>& Array3D<T>::operator*=(const Array3D<T>& rhs)
 		throw IOException("Trying to multiply two Array3D objects with different dimensions", AT);
 
 	//Multiply every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) *= rhs(ii,jj,kk);
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) *= rhs(jj);
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) *= rhs(jj);
 		}
 	}
 
@@ -640,11 +667,15 @@ template<class T> const Array3D<T> Array3D<T>::operator*(const Array3D<T>& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator*=(const T& rhs)
 {
 	//Multiply every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) *= rhs;
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) *= rhs;
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) *= rhs;
 		}
 	}
 
@@ -666,11 +697,17 @@ template<class T> Array3D<T>& Array3D<T>::operator/=(const Array3D<T>& rhs)
 		throw IOException("Trying to divide two Array3D objects with different dimensions", AT);
 
 	//Divide every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) /= rhs(ii,jj,kk);
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) /= rhs(jj);
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				operator()(jj) = IOUtils::nodata;
+			else
+				operator()(jj) /= rhs(jj);
 		}
 	}
 
@@ -688,11 +725,15 @@ template<class T> const Array3D<T> Array3D<T>::operator/(const Array3D<T>& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator/=(const T& rhs)
 {
 	//Divide every single member of the Array3D<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for(unsigned int kk=0; kk<nz; kk++) {
-				operator()(ii,jj,kk) /= rhs;
-			}
+	const unsigned int nxyz = nx*ny*nz;
+	if(keep_nodata==false) {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			operator()(jj) /= rhs;
+		}
+	} else {
+		for (unsigned int jj=0; jj<nxyz; jj++) {
+			if(operator()(jj)!=IOUtils::nodata)
+				operator()(jj) /= rhs;
 		}
 	}
 

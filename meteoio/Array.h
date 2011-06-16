@@ -48,6 +48,12 @@ template<class T> class Array {
 		*/
 		Array(const unsigned int& asize, const T& init);
 
+		/**
+		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
+		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		*/
+		void setNodataHandling(const IOUtils::nodata_handling flag_nodata);
+
 		unsigned int size();
 		void resize(const unsigned int& asize);
 		void resize(const unsigned int& asize, const T& init);
@@ -56,37 +62,32 @@ template<class T> class Array {
 		void removeAt(const unsigned int& index);
 		/**
 		* @brief returns the minimum value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return minimum value
 		*/
-		T getMin(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMin() const;
 		/**
 		* @brief returns the maximum value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return maximum value
 		*/
-		T getMax(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMax() const;
 		/**
 		* @brief returns the mean value contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return mean value
 		*/
-		T getMean(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		T getMean() const;
 		/**
-		* @brief returns the number of points contained in the grid. 
-		* If flag_nodata==IOUtils::RAW_NODATA, then the number of points is the size of the grid. 
-		* If flag_nodata==IOUtils::PARSE_NODATA, then it is the number of non-nodata values in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @brief returns the number of points contained in the grid.
+		* If setNodataHandling(IOUtils::RAW_NODATA), then the number of points is the size of the grid.
+		* If setNodataHandling(IOUtils::PARSE_NODATA), then it is the number of non-nodata values in the grid
 		* @return count
 		*/
-		size_t getCount(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
+		size_t getCount() const;
 		/**
 		* @brief returns the grid of the absolute value of values contained in the grid
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
 		* @return grid of abs(grid)
 		*/
-		const Array<T> getAbs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA) const;
-		void abs(const IOUtils::nodata_handling flag_nodata=IOUtils::PARSE_NODATA);
+		const Array<T> getAbs() const;
+		void abs();
 
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array<P>& array);
@@ -97,7 +98,7 @@ template<class T> class Array {
 
 		Array<T>& operator =(const Array<T>&);
 		Array<T>& operator =(const T& value);
-		
+
 		Array<T>& operator+=(const T& rhs);
 		const Array<T> operator+(const T& rhs);
 		Array<T>& operator+=(const Array<T>& rhs);
@@ -121,6 +122,7 @@ template<class T> class Array {
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
 		unsigned int nx; ///<this is introduced to omit the costly vecData.size()
+		bool keep_nodata;
 };
 
 template<class T> Array<T>::Array(const unsigned int& asize) {
@@ -129,6 +131,13 @@ template<class T> Array<T>::Array(const unsigned int& asize) {
 
 template<class T> Array<T>::Array(const unsigned int& asize, const T& init) {
 	resize(asize, init);
+}
+
+template<class T> void Array<T>::setNodataHandling(const IOUtils::nodata_handling flag_nodata) {
+	if(flag_nodata==IOUtils::RAW_NODATA)
+		keep_nodata=false;
+	else
+		keep_nodata=true;
 }
 
 template<class T> unsigned int Array<T>::size() {
@@ -170,7 +179,7 @@ template<class T> T& Array<T>::operator [](const unsigned int& index) {
 		throw IndexOutOfBoundsException("", AT);
 	}
 #endif
-	
+
 	return vecData[index];
 }
 
@@ -217,55 +226,51 @@ template<class T> void Array<T>::removeAt(const unsigned int& index) {
 	}
 }
 
-template<class T> T Array<T>::getMin(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val<min) min=val;
 		}
 		return min;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val!=IOUtils::nodata && val<min) min=val;
 		}
 		if(min!=std::numeric_limits<T>::max()) return min;
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> T Array<T>::getMax(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array<T>::getMax() const {
 
 	T max = -std::numeric_limits<T>::max();
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val>max) max=val;
 		}
 		return max;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val!=IOUtils::nodata && val>max) max=val;
 		}
 		if(max!=-std::numeric_limits<T>::max()) return max;
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> T Array<T>::getMean(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> T Array<T>::getMean() const {
 
 	T mean = 0;
 
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			mean += val;
@@ -273,7 +278,7 @@ template<class T> T Array<T>::getMean(const IOUtils::nodata_handling flag_nodata
 		const unsigned int count = nx;
 		if(count>0) return mean/(T)(count);
 		else return (T)0;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		unsigned int count = 0;
 		for (unsigned int ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
@@ -284,48 +289,42 @@ template<class T> T Array<T>::getMean(const IOUtils::nodata_handling flag_nodata
 		}
 		if(count>0) return mean/(T)(count);
 		else return (T)IOUtils::nodata;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> size_t Array<T>::getCount(const IOUtils::nodata_handling flag_nodata) const
+template<class T> size_t Array<T>::getCount() const
 {
-	if(flag_nodata==IOUtils::RAW_NODATA) {
+	if(keep_nodata==false) {
 		return (size_t)nx;
-	} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+	} else {
 		size_t count = 0;
 		for (unsigned int ii=0; ii<nx; ii++) {
 			if(vecData[ii]!=IOUtils::nodata) count++;
 		}
 		return count;
-	} else {
-		throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 	}
 }
 
-template<class T> void Array<T>::abs(const IOUtils::nodata_handling flag_nodata) {
+template<class T> void Array<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
-		if(flag_nodata==IOUtils::RAW_NODATA) {
+		if(keep_nodata==false) {
 			for (unsigned int ii=0; ii<nx; ii++) {
 				T& val = operator()(ii);
 				if(val<0) val=-val;
 			}
-		} else if(flag_nodata==IOUtils::PARSE_NODATA) {
+		} else {
 			for (unsigned int ii=0; ii<nx; ii++) {
 				T& val = operator()(ii);
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
-		} else {
-			throw InvalidArgumentException("Unknown nodata_handling flag",AT);
 		}
 	}
 }
 
 
-template<class T> const Array<T> Array<T>::getAbs(const IOUtils::nodata_handling flag_nodata) const {
+template<class T> const Array<T> Array<T>::getAbs() const {
 	Array<T> result = *this; //make a copy
-	result.abs(flag_nodata); //already implemented
+	result.abs(); //already implemented
 
 	return result;
 }
@@ -335,12 +334,13 @@ template<class T> Array<T>& Array<T>::operator=(const Array<T>& source) {
 	if(this != &source) {
 		vecData = source.vecData;
 		nx = source.nx;
+		keep_nodata = source.keep_nodata;
 	}
 	return *this;
 }
 
 template<class T> Array<T>& Array<T>::operator=(const T& value) {
-	//reset every single member of the Array3D<T>
+	//reset every single member of the Array<T>
 	std::fill(vecData.begin(), vecData.end(), value);
 	return *this;
 }
@@ -352,8 +352,17 @@ template<class T> Array<T>& Array<T>::operator+=(const Array<T>& rhs)
 		throw IOException("Trying to add two Array objects with different dimensions", AT);
 
 	//Add to every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) += rhs(ii);
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) += rhs(ii);
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				operator()(ii) = IOUtils::nodata;
+			else
+				operator()(ii) += rhs(ii);
+		}
 	}
 
 	return *this;
@@ -370,8 +379,15 @@ template<class T> const Array<T> Array<T>::operator+(const Array<T>& rhs)
 template<class T> Array<T>& Array<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) += rhs;
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) += rhs;
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)!=IOUtils::nodata)
+				operator()(ii) += rhs;
+		}
 	}
 
 	return *this;
@@ -392,8 +408,17 @@ template<class T> Array<T>& Array<T>::operator-=(const Array<T>& rhs)
 		throw IOException("Trying to substract two Array objects with different dimensions", AT);
 
 	//Substract to every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) -= rhs(ii);
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) -= rhs(ii);
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				operator()(ii) = IOUtils::nodata;
+			else
+				operator()(ii) -= rhs(ii);
+		}
 	}
 
 	return *this;
@@ -410,8 +435,15 @@ template<class T> const Array<T> Array<T>::operator-(const Array<T>& rhs)
 template<class T> Array<T>& Array<T>::operator-=(const T& rhs)
 {
 	//Substract to every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) -= rhs;
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) -= rhs;
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)!=IOUtils::nodata)
+				operator()(ii) -= rhs;
+		}
 	}
 
 	return *this;
@@ -431,9 +463,18 @@ template<class T> Array<T>& Array<T>::operator*=(const Array<T>& rhs)
 	if (rhs.nx != nx)
 		throw IOException("Trying to multiply two Array objects with different dimensions", AT);
 
-	//Add to every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) *= rhs(ii);
+	//Multiply every single member of the Array<T>
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) *= rhs(ii);
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				operator()(ii) = IOUtils::nodata;
+			else
+				operator()(ii) *= rhs(ii);
+		}
 	}
 
 	return *this;
@@ -449,9 +490,16 @@ template<class T> const Array<T> Array<T>::operator*(const Array<T>& rhs)
 
 template<class T> Array<T>& Array<T>::operator*=(const T& rhs)
 {
-	//Add to every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) *= rhs;
+	//Multiply every single member of the Array<T>
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) *= rhs;
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)!=IOUtils::nodata)
+				operator()(ii) *= rhs;
+		}
 	}
 
 	return *this;
@@ -472,8 +520,17 @@ template<class T> Array<T>& Array<T>::operator/=(const Array<T>& rhs)
 		throw IOException("Trying to divide two Array objects with different dimensions", AT);
 
 	//Divide every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) /= rhs(ii);
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) /= rhs(ii);
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				operator()(ii) = IOUtils::nodata;
+			else
+				operator()(ii) /= rhs(ii);
+		}
 	}
 
 	return *this;
@@ -490,8 +547,15 @@ template<class T> const Array<T> Array<T>::operator/(const Array<T>& rhs)
 template<class T> Array<T>& Array<T>::operator/=(const T& rhs)
 {
 	//Divide every single member of the Array<T>
-	for (unsigned int ii=0; ii<nx; ii++) {
-		operator()(ii) /= rhs;
+	if(keep_nodata==false) {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			operator()(ii) /= rhs;
+		}
+	} else {
+		for (unsigned int ii=0; ii<nx; ii++) {
+			if(operator()(ii)!=IOUtils::nodata)
+				operator()(ii) /= rhs;
+		}
 	}
 
 	return *this;

@@ -110,7 +110,7 @@ DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slop
 }
 
 /**
-* @brief Constructor that sets variables from a subset of another DEMObject, 
+* @brief Constructor that sets variables from a subset of another DEMObject,
 * given an origin (X,Y) (first index being 0) and a number of columns and rows
 * @param i_dem (DEMObject&) dem contained in a DEMDObject
 * @param i_nx (unsigned int&) X coordinate of the new origin
@@ -129,7 +129,7 @@ DEMObject::DEMObject(const DEMObject& i_dem, const unsigned int& i_nx, const uns
 	if ((i_ncols==0) || (i_nrows==0)) {
 		throw InvalidArgumentException("requesting a subset of 0 columns or rows for DEMObject", AT);
 	}
-	
+
 	//handling of the update properties
 	slope_failures = curvature_failures = 0;
 	update_flag = i_dem.getUpdatePpt();
@@ -142,7 +142,7 @@ DEMObject::DEMObject(const DEMObject& i_dem, const unsigned int& i_nx, const uns
 		//if the object is NOT in automatic update, we manually copy all non-empty arrays
 		//from the original set
 		unsigned int nx, ny;
-		
+
 		i_dem.slope.size(nx, ny);
 		if(nx>0 && ny>0) {
 			slope.subset(i_dem.slope,i_nx,i_ny, i_ncols,i_nrows);
@@ -192,12 +192,12 @@ int DEMObject::getUpdatePpt() const {
 
 /**
 * @brief Force the computation of the local slope, azimuth, normal vector and curvature.
-* It has to be called manually since it can require some time to compute. Without this call, 
+* It has to be called manually since it can require some time to compute. Without this call,
 * the above mentionned parameters are NOT up to date.
 * @param algorithm (slope_type&) algorithm to use for computing slope, azimuth and normals
 */
 void DEMObject::update(const slope_type& algorithm) {
-//This method recomputes the attributes that are not read as parameters 
+//This method recomputes the attributes that are not read as parameters
 //(such as slope, azimuth, normal vector)
 
 	// Creating tables
@@ -220,7 +220,7 @@ void DEMObject::update(const slope_type& algorithm) {
 
 /**
 * @brief Force the computation of the local slope, azimuth, normal vector and curvature.
-* It has to be called manually since it can require some time to compute. Without this call, 
+* It has to be called manually since it can require some time to compute. Without this call,
 * the above mentionned parameters are NOT up to date.
 * @param algorithm (const string&) algorithm to use for computing slope, azimuth and normals
 * it is either:
@@ -229,11 +229,11 @@ void DEMObject::update(const slope_type& algorithm) {
 * - CORRIPIO that uses the surface normal vector using the two triangle method given in Corripio (2002)
 * and the eight-neighbor algorithm of Horn (1981) for border cells.
 * - D8 uses CORRIPIO but discretizes the resulting azimuth to 8 cardinal directions and the slope is rounded to the nearest degree. Curvature and normals are left untouched.
-* 
+*
 * The azimuth is always computed using the Hodgson (1998) algorithm.
 */
 void DEMObject::update(const std::string& algorithm) {
-//This method recomputes the attributes that are not read as parameters 
+//This method recomputes the attributes that are not read as parameters
 //(such as slope, azimuth, normal vector)
 	slope_type type;
 
@@ -252,7 +252,7 @@ void DEMObject::update(const std::string& algorithm) {
 	} else {
 		throw InvalidArgumentException("Chosen slope algorithm " + algorithm + " not available", AT);
 	}
-	
+
 	update(type);
 }
 
@@ -276,16 +276,16 @@ void DEMObject::setDefaultAlgorithm(const slope_type& i_algorithm) {
 void DEMObject::updateAllMinMax() {
 //updates the min/max parameters of all 2D tables
 	if(update_flag&SLOPE) {
-		min_slope = slope.getMin(IOUtils::PARSE_NODATA);
-		max_slope = slope.getMax(IOUtils::PARSE_NODATA);
+		min_slope = slope.getMin();
+		max_slope = slope.getMax();
 	}
 	if(update_flag&CURVATURE) {
-		min_curvature = curvature.getMin(IOUtils::PARSE_NODATA);
-		max_curvature = curvature.getMax(IOUtils::PARSE_NODATA);
+		min_curvature = curvature.getMin();
+		max_curvature = curvature.getMax();
 	}
 
-	min_altitude = grid2D.getMin(IOUtils::PARSE_NODATA);
-	max_altitude = grid2D.getMax(IOUtils::PARSE_NODATA);
+	min_altitude = grid2D.getMin();
+	max_altitude = grid2D.getMax();
 }
 
 /**
@@ -513,7 +513,7 @@ void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std
 	const double bear=fmod(bearing+360., 360.); //this should not be needed, but as safety...
 	const double a = tan( IOUtils::bearing_to_angle(bear) ); //to get trigonometric angle
 	const double b = y0 - a * x0;
-		
+
 	//looking which point is on the limit of the grid and not outside
 	Coords pointlim;
 	pointlim.copyProj(llcorner); //we use the same projection parameters as the DEM
@@ -544,7 +544,7 @@ void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std
         		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
 		else
         		pointlim.setXY((x2*cellsize)+llcorner.getEasting(),(ylim*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
-	} else {	
+	} else {
 		if (y2 <= ylim)
         		pointlim.setXY((xlim*cellsize)+llcorner.getEasting(),(y2*cellsize)+llcorner.getNorthing() , IOUtils::nodata);
 		else
@@ -884,9 +884,9 @@ double DEMObject::lineGradient(const double& A1, const double& A2, const double&
 		delta = A3 - A1;
 	} else {
 		if(A2!=IOUtils::nodata) {
-			if(A3!=IOUtils::nodata) 
+			if(A3!=IOUtils::nodata)
 				delta = (A3 - A2) * 2.;
-			if(A1!=IOUtils::nodata) 
+			if(A1!=IOUtils::nodata)
 				delta = (A2 - A1) * 2.;
 		}
 	}
@@ -972,7 +972,7 @@ void DEMObject::getNeighbours(const unsigned int i, const unsigned int j, double
 }
 
 double DEMObject::safeGet(const int i, const int j)
-{//this function would allow reading the value of *any* point, 
+{//this function would allow reading the value of *any* point,
 //that is, even for coordinates outside of the grid (where it would return nodata)
 //this is to make implementing the slope/curvature computation easier for edges, holes, etc
 
@@ -982,7 +982,7 @@ double DEMObject::safeGet(const int i, const int j)
 	if(j<0 || j>=(signed)nrows) {
 		return IOUtils::nodata;
 	}
-	
+
 	return grid2D((unsigned)i, (unsigned)j);
 }
 

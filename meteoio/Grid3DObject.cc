@@ -254,7 +254,7 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 	}
 }
 
-void Grid3DObject::extractLayer(const unsigned int& z, Grid2DObject& layer) 
+void Grid3DObject::extractLayer(const unsigned int& z, Grid2DObject& layer)
 {
 	layer.set(ncols, nrows, cellsize, llcorner);
 	for(unsigned int jj=0; jj<nrows; jj++) {
@@ -262,6 +262,14 @@ void Grid3DObject::extractLayer(const unsigned int& z, Grid2DObject& layer)
 			layer.grid2D(ii,jj) = grid3D(ii,jj,z);
 		}
 	}
+}
+
+double& Grid3DObject::operator()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) {
+	return grid3D(ix,iy,iz);
+}
+
+const double Grid3DObject::operator()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) const {
+	return grid3D(ix,iy,iz);
 }
 
 std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
