@@ -60,7 +60,7 @@ class Grid2DObject {
 
 		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
 		double& operator ()(const unsigned int& ix, const unsigned int& iy);
-		const double operator ()(const unsigned int& ix, const unsigned int& iy) const;
+		double operator ()(const unsigned int& ix, const unsigned int& iy) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid);
 

@@ -268,7 +268,7 @@ double& Grid3DObject::operator()(const unsigned int& ix, const unsigned int& iy,
 	return grid3D(ix,iy,iz);
 }
 
-const double Grid3DObject::operator()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) const {
+double Grid3DObject::operator()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) const {
 	return grid3D(ix,iy,iz);
 }
 

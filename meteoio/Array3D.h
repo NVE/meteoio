@@ -350,6 +350,13 @@ template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned in
 	keep_nodata = true;
 }
 
+template<class T> void Array3D<T>::setNodataHandling(const IOUtils::nodata_handling flag_nodata) {
+	if(flag_nodata==IOUtils::RAW_NODATA)
+		keep_nodata=false;
+	else
+		keep_nodata=true;
+}
+
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
 	clear();  //we won't be able to "rescue" old values, so we reset the whole vector
 	vecData.resize(anx*any*anz);

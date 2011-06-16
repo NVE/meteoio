@@ -270,7 +270,7 @@ double& Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy)
 	return grid2D(ix,iy);
 }
 
-const double Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy) const {
+double Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy) const {
 	return grid2D(ix,iy);
 }
 
