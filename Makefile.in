@@ -118,8 +118,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteolaws/Suntrajectory.o \
 		$(SRCDIR)/meteolaws/Sun.o
 
-METEOIO_OBJ_POPC = $(SRCDIR)/IOHandler.stub.o \
-		$(SRCDIR)/marshal_meteoio_par.o \
+METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/IOManager_par.o \
 		$(SRCDIR)/Matrix_par.o \
 		$(SRCDIR)/IOPlugin_par.o \
@@ -202,7 +201,7 @@ build_dynamiclibs_par:  $(LIBDIR)/plugins/libarciopopc.so \
 			$(LIBDIR)/plugins/libimisiopopc.so \
 			$(LIBDIR)/plugins/libgrassiopopc.so
 
-meteoIO_module_par: $(LIBDIR)/meteoio.module
+meteoIO_module_par: #$(LIBDIR)/meteoio.module
 ##############  END  ##############
 
 clean:
@@ -230,7 +229,7 @@ install:
 	cp ${SRCDIR}/meteolaws/*.h @includedir@/meteoio/meteolaws
 	-cp lib/libmeteoio* @libdir@
 	-cp lib/plugins/*.so @libdir@/meteoio/plugins
-	-cp lib/*.module @libdir@/meteoio
+	#-cp lib/*.module @libdir@/meteoio
 
 documentation:
 	doxygen $(SRCDIR)/config.dox
