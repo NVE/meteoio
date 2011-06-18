@@ -308,6 +308,18 @@ namespace IOUtils {
 	*/
 	std::string printFractionalDay(const double& fractional);
 
+	/**
+	* @brief Returns the parameters for splitting an array in several, balanced sub-arrays.
+	* This is mostly usefull for parallel calculations, where an array will be split and sent to different
+	* workers.
+	* @param[in] dimx number of cells in the desired dimension
+	* @param[in] nbworkers total number of slices
+	* @param[in] wk current slice index
+	* @param[out] startx calculated start index for the current slice
+	* @param[out] nx calculated number of cells (in the desired dimension) of the current slice
+	*/
+	void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers, const unsigned int &wk, unsigned int& startx, unsigned int& nx);
+
 } //end namespace IOUtils
 
 } //end namespace mio

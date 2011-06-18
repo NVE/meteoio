@@ -601,4 +601,24 @@ std::string IOUtils::printFractionalDay(const double& fractional) {
 	return tmp.str();
 }
 
+void IOUtils::getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers, const unsigned int &wk, unsigned int& startx, unsigned int& nx)
+{
+	if(nbworkers>dimx) {
+		std::stringstream ss;
+		ss << "Can not split " << dimx << " columns in " << nbworkers << " bands!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	const unsigned int nx_avg = dimx / nbworkers;
+	const unsigned int remainder = dimx % nbworkers;
+
+	if(wk<=remainder) { //distribute remainder, 1 extra column per worker, on first workers
+		nx = nx_avg+1;
+		startx = (wk-1)*nx;
+	} else { //all remainder has been distributed, we now attribute a normal number of columns
+		nx = nx_avg;
+		startx = remainder*(nx+1) + (wk-1-remainder)*nx;
+	}
+}
+
 } //namespace
