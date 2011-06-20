@@ -156,9 +156,16 @@ template<class T> class Array3D {
 
 		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @param i_keep_nodata true means that NODATA is interpreted as NODATA, false means that it is a normal number
+		By default, arrays keep nodata.
 		*/
-		void setNodataHandling(const IOUtils::nodata_handling flag_nodata);
+		void setKeepNodata(const bool i_keep_nodata);
+
+		/**
+		* @brief get how to process nodata values (ie: as nodata or as normal numbers)
+		* @return true means that NODATA is interpreted as NODATA, false means that it is a normal number
+		*/
+		bool getKeepNodata();
 
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
@@ -292,7 +299,7 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 
 	resize(i_ncols, i_nrows, i_ndepth); //create new Array3D object
 	if(i_array3D.keep_nodata==false)
-		setNodataHandling(IOUtils::RAW_NODATA);
+		setKeepNodata(false);
 
 	//Copy by value subspace
 	for (unsigned int ii=0; ii<nz; ii++) {
@@ -324,7 +331,7 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
 
 	if(i_array3D.keep_nodata==false)
-		setNodataHandling(IOUtils::RAW_NODATA);
+		setKeepNodata(false);
 
 	//Copy by value subspace
 	for (unsigned int ii=i_nz; ii<(i_nz+i_ndepth); ii++) {
@@ -350,11 +357,12 @@ template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned in
 	keep_nodata = true;
 }
 
-template<class T> void Array3D<T>::setNodataHandling(const IOUtils::nodata_handling flag_nodata) {
-	if(flag_nodata==IOUtils::RAW_NODATA)
-		keep_nodata=false;
-	else
-		keep_nodata=true;
+template<class T> void Array3D<T>::setKeepNodata(const bool i_keep_nodata) {
+	keep_nodata = i_keep_nodata;
+}
+
+template<class T> bool Array3D<T>::getKeepNodata() {
+	return keep_nodata;
 }
 
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {

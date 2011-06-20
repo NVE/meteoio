@@ -50,9 +50,16 @@ template<class T> class Array {
 
 		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @param i_keep_nodata true means that NODATA is interpreted as NODATA, false means that it is a normal number
+		By default, arrays keep nodata.
 		*/
-		void setNodataHandling(const IOUtils::nodata_handling flag_nodata);
+		void setKeepNodata(const bool i_keep_nodata);
+
+		/**
+		* @brief get how to process nodata values (ie: as nodata or as normal numbers)
+		* @return true means that NODATA is interpreted as NODATA, false means that it is a normal number
+		*/
+		bool getKeepNodata();
 
 		unsigned int size();
 		void resize(const unsigned int& asize);
@@ -133,12 +140,14 @@ template<class T> Array<T>::Array(const unsigned int& asize, const T& init) {
 	resize(asize, init);
 }
 
-template<class T> void Array<T>::setNodataHandling(const IOUtils::nodata_handling flag_nodata) {
-	if(flag_nodata==IOUtils::RAW_NODATA)
-		keep_nodata=false;
-	else
-		keep_nodata=true;
+template<class T> void Array<T>::setKeepNodata(const bool i_keep_nodata) {
+	keep_nodata = i_keep_nodata;
 }
+
+template<class T> bool Array<T>::getKeepNodata() {
+	return keep_nodata;
+}
+
 
 template<class T> unsigned int Array<T>::size() {
 	return nx;

@@ -69,11 +69,6 @@ namespace IOUtils {
 	const double lon_epsilon = grid_epsilon / Cst::earth_R0; ///<in degrees. Small angle for longitudes, so sin(x)=x
 	const double lat_epsilon = lon_epsilon/2.; ///<in degrees. Small angle for latitudes. Since for longitudes it is for 360deg, it has to be 180deg for latitudes
 
-	typedef enum NODATA_HANLDING {
-		RAW_NODATA, ///< no special handling of nodata
-		PARSE_NODATA ///< process nodata as "no data"
-	} nodata_handling;
-
 	/**
 	* @brief Check whether two values are equal regarding a certain epsilon environment (within certain radius of each other)
 	* @param val1
@@ -314,7 +309,7 @@ namespace IOUtils {
 	* workers.
 	* @param[in] dimx number of cells in the desired dimension
 	* @param[in] nbworkers total number of slices
-	* @param[in] wk current slice index
+	* @param[in] wk current slice index (starting at 1)
 	* @param[out] startx calculated start index for the current slice
 	* @param[out] nx calculated number of cells (in the desired dimension) of the current slice
 	*/

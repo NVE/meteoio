@@ -112,7 +112,7 @@ void marshal_METEO_TIMESERIE(POPBuffer &buf, METEO_TIMESERIE &data, int maxsize,
 	} else {
 		int n=0;
 		buf.UnPack(&n,1);
-		data.clear();  
+		data.clear();
 		for(int i=0;i<n;i++) {
 			MeteoData obj;
 			obj.Serialize(buf,false);
@@ -308,7 +308,7 @@ void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data
 		buf.UnPack(&n,1);
 		data.clear();
 		for(int i=0;i<n;i++) {
-			Grid2DObject obj; 
+			Grid2DObject obj;
       //buf.UnPack(&obj,1);
 			obj.Serialize(buf,false);
       //marshal_Grid2DObject(buf, *obj, 0, flag, NULL);
@@ -326,16 +326,23 @@ void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data, int maxsize, int flag, POP
 		data.size(nx,ny);
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
+		bool keep_nodata = data.getKeepNodata();
+		buf.Pack(&keep_nodata,1);
 		if (nx>0 && ny>0) {
-			for (unsigned int i=0;i<ny;i++) buf.Pack(&data(0,i), nx);
+			const unsigned int nxy=nx*ny;
+			buf.Pack(&data(0,0), nxy);
 		}
 	} else {
 		unsigned int nx,ny;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
+		bool keep_nodata;
+		buf.UnPack(&keep_nodata,1);
+		data.setKeepNodata(keep_nodata);
 		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-			for (unsigned int i=0;i<ny;i++) buf.UnPack(&data(0,i),nx);
+			const unsigned int nxy=nx*ny;
+			buf.UnPack(&data(0,0),nxy);
 		} else
 			data.clear();
 	}
@@ -351,21 +358,24 @@ void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data, int maxsize, int flag, POP
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
 		buf.Pack(&nz,1);
+		bool keep_nodata = data.getKeepNodata();
+		buf.Pack(&keep_nodata,1);
 		if (nx>0 && ny>0 && nz>0) {
-			for (unsigned int i=0;i<nx;i++) {
-				for (unsigned int j=0;j<ny;j++) buf.Pack(&data(i,j,0),nz);
-			}
+			const unsigned int nxyz=nx*ny*nz;
+			buf.Pack(&data(0,0,0),nxyz);
 		}
 	} else {
 		unsigned int nx,ny,nz;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
 		buf.UnPack(&nz,1);
+		bool keep_nodata;
+		buf.UnPack(&keep_nodata,1);
+		data.setKeepNodata(keep_nodata);
 		if (nx>0 && ny>0 && nz>0) {
 			data.resize(nx,ny,nz);
-			for (unsigned int i=0;i<nx;i++) {
-				for (unsigned int j=0;j<ny;j++) buf.UnPack(&data(i,j,0),nz);
-			}
+			const unsigned int nxyz=nx*ny*nz;
+			buf.UnPack(&data(0,0,0),nxyz);
 		} else
 			data.clear();
 	}
@@ -380,16 +390,23 @@ void marshal_INT2D(POPBuffer &buf, INT2D &data, int maxsize, int flag, POPMemspo
 		data.size(nx,ny);
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
+		bool keep_nodata = data.getKeepNodata();
+		buf.Pack(&keep_nodata,1);
 		if (nx>0 && ny>0) {
-			for (unsigned int i=0;i<ny;i++) buf.Pack(&data(0,i),nx);
+			const unsigned int nxy=nx*ny;
+			buf.Pack(&data(0,0), nxy);
 		}
 	} else {
 		unsigned int nx,ny;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
+		bool keep_nodata;
+		buf.UnPack(&keep_nodata,1);
+		data.setKeepNodata(keep_nodata);
 		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-			for (unsigned int i=0;i<ny;i++) buf.UnPack(&data(0,i),nx);
+			const unsigned int nxy=nx*ny;
+			buf.UnPack(&data(0,0), nxy);
 		} else
 			data.clear();
 	}

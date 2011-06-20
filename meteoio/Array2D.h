@@ -121,9 +121,16 @@ template<class T> class Array2D {
 
 		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
-		* @param flag_nodata specify how to process nodata values (see NODATA_HANLDING)
+		* @param i_keep_nodata true means that NODATA is interpreted as NODATA, false means that it is a normal number
+		By default, arrays keep nodata.
 		*/
-		void setNodataHandling(const IOUtils::nodata_handling flag_nodata);
+		void setKeepNodata(const bool i_keep_nodata);
+
+		/**
+		* @brief get how to process nodata values (ie: as nodata or as normal numbers)
+		* @return true means that NODATA is interpreted as NODATA, false means that it is a normal number
+		*/
+		bool getKeepNodata();
 
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
@@ -157,7 +164,6 @@ template<class T> class Array2D {
 		*/
 		const Array2D<T> getAbs() const;
 		void abs();
-
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
 
@@ -250,7 +256,7 @@ template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const uns
 
 	resize(i_ncols, i_nrows); //create new Array2D object
 	if(i_array2D.keep_nodata==false)
-		setNodataHandling(IOUtils::RAW_NODATA);
+		setKeepNodata(false);
 
 	//Copy by value subspace
 	for (unsigned int jj=0; jj<ny; jj++) {
@@ -277,7 +283,7 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsig
 		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
 
 	if(i_array2D.keep_nodata==false)
-		setNodataHandling(IOUtils::RAW_NODATA);
+		setKeepNodata(false);
 
 	for(unsigned int jj=i_ny; jj<(i_ny+i_nrows); jj++) {
 		for(unsigned int ii=i_nx; ii<(i_nx+i_ncols); ii++) {
@@ -300,11 +306,12 @@ template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned in
 	resize(anx,any);
 }
 
-template<class T> void Array2D<T>::setNodataHandling(const IOUtils::nodata_handling flag_nodata) {
-	if(flag_nodata==IOUtils::RAW_NODATA)
-		keep_nodata=false;
-	else
-		keep_nodata=true;
+template<class T> void Array2D<T>::setKeepNodata(const bool i_keep_nodata) {
+	keep_nodata = i_keep_nodata;
+}
+
+template<class T> bool Array2D<T>::getKeepNodata() {
+	return keep_nodata;
 }
 
 template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigned int& any) {
