@@ -150,11 +150,11 @@ INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT head
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
 
 IF(WIN32) #handle the special case of WIN32 needing import libraries
-	FILE(GLOB importlibs "lib/libmeteoio*.lib*")
+	FILE(GLOB_RECURSE importlibs "lib/libmeteoio*.lib*")
 ENDIF(WIN32)
-FILE(GLOB solibs "lib/libmeteoio*.${DLL_EXT}*")
-FILE(GLOB plugins "lib/plugins/lib*.${DLL_EXT}*")
-FILE(GLOB alibs "lib/*.${STAT_EXT}*")
+FILE(GLOB_RECURSE solibs "lib/libmeteoio*.${DLL_EXT}*")
+FILE(GLOB_RECURSE plugins "lib/plugins/lib*.${DLL_EXT}*")
+FILE(GLOB_RECURSE alibs "lib/*.${STAT_EXT}*")
 
 INSTALL(FILES ${solibs} ${importlibs} ${alibs} DESTINATION lib COMPONENT libraries)
 INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins COMPONENT plugins)
