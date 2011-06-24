@@ -271,7 +271,7 @@ void DEMObject::setDefaultAlgorithm(const slope_type& i_algorithm) {
 
 /**
 * @brief Recomputes the min/max of altitude, slope and curvature
-* It return +/- std::numeric_limits\<double\>::max() for a given parameter if its grid was empty/undefined
+* It return +/- std::numeric_limits\<double\>\:\:max() for a given parameter if its grid was empty/undefined
 */
 void DEMObject::updateAllMinMax() {
 //updates the min/max parameters of all 2D tables
