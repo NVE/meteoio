@@ -20,16 +20,19 @@ SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
-SET(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
+#SET(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
 OPTION( BUILD_SHARED_LIBS "Set to OFF to build only static libraries" ON )
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
 	SET(WARNINGS "-Wall")
 	SET(PROFILING "-pg -fprofile-arcs")
 	SET(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
-	IF(DEBUG_ARITHM)
-		LIST(APPEND CFLAGS " -DDEBUG_ARITHM -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
-	ENDIF(DEBUG_ARITHM)
+	IF(WIN32)
+		LIST(APPEND CFLAGS " -D_USE_MATH_DEFINES") #USE_MATH_DEFINES needed for Win32
+	ENDIF(WIN32)
+	#IF(DEBUG_ARITHM)
+	#	LIST(APPEND CFLAGS " -DDEBUG_ARITHM")
+	#ENDIF(DEBUG_ARITHM)
 	SET(OPTIM "-g -O3 -DNDEBUG")
 	EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 	IF (GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
@@ -48,9 +51,9 @@ IF(MSVC)
 	SET(ARCH_SAFE "")
 	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
 	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /D_USE_MATH_DEFINES") #Za: strict ansi
-	IF(DEBUG_ARITHM)
-		LIST(APPEND CFLAGS " /EHa ")
-	ENDIF(DEBUG_ARITHM)
+	#IF(DEBUG_ARITHM)
+	#	LIST(APPEND CFLAGS " /EHa ")
+	#ENDIF(DEBUG_ARITHM)
 ENDIF(MSVC)
 
 IF(UNIX)

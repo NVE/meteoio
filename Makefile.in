@@ -79,6 +79,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/IOPlugin.o \
 		$(SRCDIR)/MeteoProcessor.o \
 		$(SRCDIR)/ResamplingAlgorithms.o \
+		$(SRCDIR)/ResamplingAlgorithms2D.o \
 		$(SRCDIR)/Meteo1DInterpolator.o \
 		$(SRCDIR)/InterpolationAlgorithms.o \
 		$(SRCDIR)/A3DIO.o \

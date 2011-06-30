@@ -33,6 +33,23 @@
 
 namespace mio {
 
+#ifdef _MSC_VER
+//This is C99, Microsoft should move on and suppport it, it is almost 15 years old!!
+double round(const double& x) {
+	//middle value point test
+	if (ceil(x+0.5) == floor(x+0.5)) {
+		const int a = (int)ceil(x);
+		if (a%2 == 0) {
+			return ceil(x);
+		} else {
+			return floor(x);
+		}
+	} else {
+		return floor(x+0.5);
+	}
+}
+#endif
+
 bool IOUtils::checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon)
 {
 	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {

@@ -21,6 +21,7 @@ SET(meteoio_sources
 	IOPlugin.cc
 	MeteoProcessor.cc
 	ResamplingAlgorithms.cc
+	ResamplingAlgorithms2D.cc
 	Meteo1DInterpolator.cc
 	InterpolationAlgorithms.cc
 	A3DIO.cc

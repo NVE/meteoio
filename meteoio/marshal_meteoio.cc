@@ -349,7 +349,7 @@ void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data, int maxsize, int flag, POP
 }
 
 void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data, int maxsize, int flag, POPMemspool *temp)
-{//HACK: this marshalling is sub-optimal!!
+{
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {

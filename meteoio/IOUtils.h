@@ -51,6 +51,10 @@
 
 namespace mio {
 
+#ifdef _MSC_VER
+double round(const double& x);
+#endif
+
 class MeteoData;
 class Coords;
 class Config;

@@ -169,7 +169,7 @@ double Interpol1D::std_dev(const std::vector<double>& X)
 }
 
 double Interpol1D::covariance(const std::vector<double>& X, const std::vector<double>& Y)
-{//HACK: we should use a compensated formula here, similarly to the variance computation!
+{//this is a simple but still compensated covariance computation (see the notes on the variance)
 	if(X.size()!=Y.size())
 		throw IOException("Vectors should have the same size for covariance!", AT);
 	const size_t n = X.size();
