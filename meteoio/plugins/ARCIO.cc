@@ -202,13 +202,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 				if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
 					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
 				}
-
-				if(tmp_val<=plugin_nodata) {
-					//replace file's nodata by uniform, internal nodata
-					grid_out.grid2D(ll, kk) = IOUtils::nodata;
-				} else {
-					grid_out.grid2D(ll, kk) = tmp_val;
-				}
+				grid_out.grid2D(ll, kk) = IOUtils::standardizeNodata(tmp_val, plugin_nodata);
 			}
 		}
 	} catch(std::exception& e) {

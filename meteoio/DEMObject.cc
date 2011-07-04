@@ -615,8 +615,6 @@ void DEMObject::getHorizon(const Coords& point, const double& increment, std::ve
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
-	double new_slope, new_azi, new_curvature;
-	double new_Nx, new_Ny, new_Nz;
 
 	if(algorithm==DFLT) {
 		algorithm = dflt_algorithm;
@@ -642,19 +640,23 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			if( grid2D(i,j) == IOUtils::nodata ) {
 				if(update_flag&SLOPE) {
-					new_slope = new_azi = IOUtils::nodata;
+					//new_slope = new_azi = IOUtils::nodata;
+					slope(i,j) = azi(i,j) = IOUtils::nodata;
 				}
 				if(update_flag&CURVATURE) {
-					new_curvature = IOUtils::nodata;
+					//new_curvature = IOUtils::nodata;
+					curvature(i,j) = IOUtils::nodata;
 				}
 				if(update_flag&NORMAL) {
-					new_Nx = new_Ny = new_Nz = IOUtils::nodata;
+					//new_Nx = new_Ny = new_Nz = IOUtils::nodata;
+					Nx(i,j) = Ny(i,j) = Nz(i,j) = IOUtils::nodata;
 				}
 			} else {
 				getNeighbours(i, j, A);
+				double new_slope, new_Nx, new_Ny, new_Nz;
 				(this->*CalculateSlope)(A, new_slope, new_Nx, new_Ny, new_Nz);
-				new_azi = CalculateAspect(new_Nx, new_Ny, new_Nz, new_slope);
-				new_curvature = getCurvature(A);
+				const double new_azi = CalculateAspect(new_Nx, new_Ny, new_Nz, new_slope);
+				const double new_curvature = getCurvature(A);
 				if(update_flag&SLOPE) {
 					slope(i,j) = new_slope;
 					azi(i,j) = new_azi;
