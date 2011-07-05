@@ -30,7 +30,7 @@ LINKER		= @CXX@ -DGNU
 POPCC		= popcc
 
 DEBUG		= -g -O0 #-D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC #-dr
-debug_arithm	= -DDEBUG_ARITHM -g
+#debug_arithm	= -DDEBUG_ARITHM -g
 WARNING		= @WARNING@ @EXTRA_WARN@ #-Weffc++ #-pedantic-errors #-Werror
 ARCH		= @ARCH@
 OPTIM		= @OPTIM@
@@ -125,6 +125,7 @@ METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/IOPlugin_par.o \
 		$(SRCDIR)/MeteoProcessor_par.o \
 		$(SRCDIR)/ResamplingAlgorithms_par.o \
+		$(SRCDIR)/ResamplingAlgorithms2D_par.o \
 		$(SRCDIR)/Meteo1DInterpolator_par.o \
 		$(SRCDIR)/InterpolationAlgorithms_par.o \
 		$(SRCDIR)/A3DIO_par.o \
