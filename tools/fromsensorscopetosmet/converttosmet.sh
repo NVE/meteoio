@@ -1,8 +1,8 @@
 #!/bin/bash
 # This script converts downloaded sensorscope data into SMET files for use with SNOWPACK.
-# Data should be downloaded from www.climaps.com, with the settings as shown in sensorscope_downloadsettings.png
+# Data should be downloaded from www.climaps.com, with the settings as shown in sensorscope_downloadsettings.png. Then unpack the zip file downloaded from www.climaps.com
 # The script works as follows
-#    1 - First it scans the file to check which stations are in
+#    1 - First it scans the given directory to check which stations are in (station_XXXX.csv files)
 #    2 - It converts meteo data to SMET format
 #    3 - It converts soil moisture data to a SMET like format.
 #    4 - If files already exist in the working directory, the files are merged with the new data.
@@ -25,15 +25,15 @@
 
 #Basic settings
 #Sensor mapping: this maps the SMET variables to the SensorScope variables
-nametimestamp="Time"
-nameTA="Air Temperature (TNX)"
-nameRH="Humidity (SHT75)"
-nameVW="Wind Speed (Davis)"
-nameDW="Wind Direction (Davis)"
-nameOSWR="Radiation (SP-212)"
-nameISWR="Radiation (SP-212)2"
-namePSUM="Rain (Davis)"
-nameTSS="Surface Temperature (TNX)"
+nametimestamp="Epoch"
+nameTA="SHT75 / Temperature"
+nameRH="SHT75 / Humidity"
+nameVW="Davis / Wind Speed"
+nameDW="Davis / Wind Direction"
+nameOSWR="SP-212 / Radiation"
+nameISWR="SP-212 / Radiation [2]"
+namePSUM="Davis / Rain"
+nameTSS="TNX / Surface Temperature"
 
 #Files:
 stationinfo_file=""
@@ -62,7 +62,7 @@ tz=1
 
 
 #Read command line parameters
-datafilename=$1
+directory=$1
 smetfileprefix=$2
 #Command line parameters overwrite default values:
 for var in $(echo $* |  sed 's/\s/\n/g' |grep -e "="); do 
@@ -70,11 +70,12 @@ for var in $(echo $* |  sed 's/\s/\n/g' |grep -e "="); do
 done
 
 #Check for valid command line parameters
-if [ -z ${datafilename} ]; then
+if [ -z ${directory} ]; then
 	echo "ERROR: no smet output file name specified..."
-	echo "use: bash converttosmet <filename.csv> <smetfile_prefix> <additional_option=value>"
-	echo "     example: bash converttosmet.sh exampledata.csv.gz sensorscope station_name=\"sensorscope\" nodata=-999"
-	echo "              bash converttosmet.sh exampledata.csv.gz \"\" station_name=\"\" nodata=-999 stationinfo_file=\"sensorscope_stn.info\""
+	echo "use: bash converttosmet <directory> <smetfile_prefix> <additional_option=value>"
+	echo "     example: bash converttosmet.sh ~/Downloads/ sensorscope station_name=\"sensorscope\" nodata=-999"
+	echo "              bash converttosmet.sh ~/Downloads/ \"\" station_name=\"\" nodata=-999 stationinfo_file=\"sensorscope_stn.info\""
+	echo "     The <directory> should contain station_XXXX.csv files. Use ./ to use the current working directory. Always end the directory specification with a \"/\"!"
 	echo "  additional_options are for SMET file. Defaults:"
 	echo "    station_name=${stations_name}    (if left empty, station_name is taken equal to station_id)"
 	echo "    nodata=${nodata}"
@@ -95,43 +96,45 @@ fi
 #Inform user
 echo "Analysing: $1..."
 
-#Identify in which column the station ids are:
-colnr_for_station_ids=`gzip -dc ${datafilename} | head -1 | tr ',' '\n' | grep -n Station\ ID | awk -F\: '{print $1}'`
-if [ -z ${colnr_for_station_ids} ]; then
-	echo "ERROR: No field <Station ID> found in file..."
+#Look for stations
+list_of_stns=`find ${directory}station*csv -printf %f\\\\n 2> /dev/null | sed 's/station_//' | sed 's/.csv//'`
+if [ -z "${list_of_stns}" ]; then
+	echo "ERROR: no stations found in directory: ${directory}"
+	echo "   Did you put a "/" at the end of the directory specification?"
 	exit
 fi
-
-
-#Identify in which column the time stamps are:
-colnr_for_EPOCHtime=`gzip -dc ${datafilename} | head -1 | tr ',' '\n' | grep -n ^Time | awk -F\: '{print $1}'`
-if [ -z ${colnr_for_EPOCHtime} ]; then
-	echo "ERROR: No field <Time> found in file..."
-	exit
-fi
-
-
-#Identify in which column the GMT time stamps are (this we need to correctly set TZ in SMET file):
-colnr_for_GMTtime=`gzip -dc ${datafilename} | head -1 | tr ',' '\n' | grep -n GMT\ Time | awk -F\: '{print $1}'`
-if [ -z ${colnr_for_GMTtime} ]; then
-	echo "ERROR: No field <GMT Time> found in file..."
-	exit
-fi
-
-
-#Get list of stns
-list_of_stns=`gzip -dc ${datafilename} | grep ^[0-9] | awk -F, '{print $'${colnr_for_station_ids}'}' | sort -u | awk '{printf "%s ", $1}'`
-echo "-- stations found: ${list_of_stns}"
-
-
-#Get header, to extract variables in file
-header=`gzip -dc ${datafilename} | head -1 | tr ' ' '_' | tr ',' ' '`
-
+echo "-- stations found: `echo ${list_of_stns} | tr '\n' ' '`"
 
 #Create SMET file per stn
 for stn in ${list_of_stns}
 do
   echo "Parsing $stn..."
+
+
+  #Determine input data file name
+  datafilename=`echo ${directory}station_${stn}.csv`
+
+
+  #Identify in which column the time stamps are:
+  colnr_for_EPOCHtime=`cat ${datafilename} | head -1 | tr ',' '\n' | grep -n ^Epoch | awk -F\: '{print $1}'`
+  if [ -z ${colnr_for_EPOCHtime} ]; then
+	echo "ERROR: No field <Time> found in file..."
+	exit
+  fi
+
+
+  #Identify in which column the GMT time stamps are (this we need to correctly set TZ in SMET file):
+  #NOTE: in the new format, this is not possible anymore. So, we assume: tz="+1", without DST.
+  #colnr_for_GMTtime=`cat ${datafilename} | head -1 | tr ',' '\n' | grep -n GMT\ Time | awk -F\: '{print $1}'`
+  #if [ -z ${colnr_for_GMTtime} ]; then
+  #	echo "ERROR: No field <GMT Time> found in file..."
+  #	exit
+  #fi
+
+
+  #Get header, to extract variables in file
+  header=`cat ${datafilename} | head -1 | tr ' ' '_' | tr ',' ' '`
+
 
   #Determine SMET file name
   if [ ! -z "${smetfileprefix}" ]; then
@@ -161,7 +164,8 @@ do
 
 
   #Determine TZ
-  tz=`gzip -dc ${datafilename} | grep ^${stn} | awk -FGMT '{print $2}' | awk '{print $1}' | sort -u | head -1`
+  #tz=`cat ${datafilename} | awk -FGMT '{print $2}' | awk '{print $1}' | sort -u | head -1`
+  tz="+1"
   export TZ="UTC"					#Set the environment variable to UTC time. This is for a correct working of awk's strftime.
   tz_shift=`echo ${tz} | awk '{print $1*60*60}'`	#This shifts the timestamp by an interval tz (given in hours, so +1), but then converted to seconds.
 
@@ -199,7 +203,7 @@ do
 		input_output_colnr[columns]=${i}
 		todo_with_var[columns]=""
 		#Determine file resolution (this is used to correct precipitation amounts. It determines resolution by picking out time stamps, doubling them (except first row), putting them next together and taking the differences. Then look for the difference that occurs most often (which will be the measurement resolution).
-		inputfile_resolution=`gzip -dc ${datafilename} | grep ^${stn} | awk -F, '{print $'${input_output_colnr[columns]}'}' | awk '{if (NR==1) {printf "%s\n", $1} else {printf "%s\n%s\n", $1, $1}}' | sed '$!N;s/\n/ /' | awk '{print $2-$1}' | sort -n | uniq -c | sort -nrk1 | awk '(NR==1) {print $2}'`
+		inputfile_resolution=`cat ${datafilename} | grep ^[0-9] | awk -F, '{print $'${input_output_colnr[columns]}'}' | awk '{if (NR==1) {printf "%s\n", $1} else {printf "%s\n%s\n", $1, $1}}' | sed '$!N;s/\n/ /' | awk '{print $2-$1}' | sort -n | uniq -c | sort -nrk1 | awk '(NR==1) {print $2}'`
 		echo Resolution: ${inputfile_resolution} s.
 	fi
   done
@@ -283,7 +287,7 @@ do
 		todo_with_var[columns]="+273.15"
 	fi
 
-	if [ "`echo ${sensor} | awk '{print $1}'`" == "VWC" ]; then
+	if [ "`echo ${sensor} | awk '{print $3}'`" == "VWC" ]; then
 		let nsoilsensors=${nsoilsensors}+1
 		soilsensor[nsoilsensors]=`echo ${sensor} | sed 's/ /_/g'`
 		soilmoisturefields="${soilmoisturefields} ${soilsensor[nsoilsensors]}"
@@ -295,12 +299,12 @@ do
   #Check if stationinfo-file is present
   if [ -e "${stationinfo_file}" ]; then
 	#Read station info
-	station_name=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $2}'`
-	easting=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $3}'`
-	northing=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $4}'`
-	latitude=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $5}'`
-	longitude=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $6}'`
-	altitude=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $7}'`
+	station_name=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $2}'`
+	easting=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $3}'`
+	northing=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $4}'`
+	latitude=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $5}'`
+	longitude=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $6}'`
+	altitude=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $7}'`
 	if [ -z "${easting}" ]; then easting=${nodata}; fi
 	if [ -z "${northing}" ]; then northing=${nodata}; fi
 	if [ -z "${latitude}" ]; then latitude=${nodata}; fi
@@ -352,8 +356,8 @@ do
 
   #Now read meteo data from file
   #First create executecommand. We will construct an executecommand, which will be evaluated and does everything necessary.
-  executecommand="gzip -dc ${datafilename} | grep ^${stn} | sed 's/nan/${nodata}/g' | awk -F, '{print strftime(\"%Y %m %d %H %M\", \$${input_output_colnr[1]}+${tz_shift})"
-  #               ^^ open file		     ^^ select station     ^^ change nan to nodata      ^^ brake up date, into YYYY MM DD HH mm. We force this to be the first field above, so we can use index [1] here.
+  executecommand="cat ${datafilename} | grep ^[0-9] | sed 's/nan/${nodata}/g' | awk -F, '{print strftime(\"%Y %m %d %H %M\", \$${input_output_colnr[1]}+${tz_shift})"
+  #               ^^ open file		              ^^ change nan to nodata      ^^ brake up date, into YYYY MM DD HH mm. We force this to be the first field above, so we can use index [1] here.
   #Now we already adressed the 1st column in the output file (the time stamp), now cycle through all remaining columns and add to the 
   for i in `seq 2 ${columns}`
   do
@@ -378,13 +382,13 @@ do
   # ^^^ we now constructed an command which does the translation. With eval it is executed. use echo ${executecommand} to view what it is actually doing.
 
 
-  #Because some times, one sensor give the data later, but within the same minute merge this data to one time stamp:
+  #Because sometimes, one sensor give the data later, but within the same minute merge this data to one time stamp:
   cat ${smetfilename}.tmp1 | cut -d\  -f2- | uniq -w16 -dD | tr '\n' ' ' | awk '{ for(j=1; j<=NF; j+='${columns}') if($j==$(j+'${columns}')) {print $j; for(i=j+1;i<j+'${columns}'; i++){print (($i==-999 && $(i+'${columns}')==-999) || ($i!=-999 && $(i+'${columns}') !=-999))?($i+$(i+'${columns}'))/2.0:($i+$(i+'${columns}')+999)}}}' | tr '\n' ' ' | awk '{for (i=1; i<=NF; i++) {printf "%s ", $i; if (i%'${columns}'==0) printf "\n"}}' | awk '{print 0, $0}' | sed 's/ $//' > ${smetfilename}.tmp2
   # ^^^ start pipe           ^^^ remove first column ^^^ select only timestamps which occur multiple times
   #                                                           ^^^ put everything in a row   ^^^ cycle through all blocks of data (per timestamp)
   #															^^^ if two succeeding blocks match ...
   #																		^^^ print time stamp and  ...                  ^^^^  when not only one of them is nodata                                          ^^^ print average (is nodata when both are nodata, or mean value if both are valid values.
-  #																																					   ^^^ or print a single value. This construction is because we don't know which value (first or second) is valid and which one not.
+ #																																					   ^^^ or print a single value. This construction is because we don't know which value (first or second) is valid and which one not.
   #																																									    ^^^ make a single row		^^^^ make one timestamp per row, making use of the number of columns in the file
   #																																																						  ^^^ print 0 in first column, to identify modified data.   ^^^ The final sed removes a white space at the end of the line. It is there, because of the print-loops in awk.
   cat ${smetfilename}.tmp1 ${smetfilename}.tmp2 | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 >> ${smetfilename}
@@ -398,51 +402,52 @@ do
 
 
   #Now read soil moisture data from file
-  #First create executecommand. We will construct an executecommand, which will be evaluated and does everything necessary.
-  executecommand="gzip -dc ${datafilename} | grep ^${stn} | sed 's/nan/${nodata}/g' | awk -F, '{print strftime(\"%Y %m %d %H %M\", \$${input_output_colnr[1]}+${tz_shift})"
-  #               ^^ open file		     ^^ select station     ^^ change nan to nodata      ^^ brake up date, into YYYY MM DD HH mm. We force this to be the first field above, so we can use index [1] here.
+  if (( ${nsoilsensors}>0 )); then
+	#First create executecommand. We will construct an executecommand, which will be evaluated and does everything necessary.
+  	executecommand="cat ${datafilename} | grep ^[0-9] | sed 's/nan/${nodata}/g' | awk -F, '{print strftime(\"%Y %m %d %H %M\", \$${input_output_colnr[1]}+${tz_shift})"
+  	#               ^^ open file		              ^^ change nan to nodata      ^^ brake up date, into YYYY MM DD HH mm. We force this to be the first field above, so we can use index [1] here.
 
-  #Now we already adressed the 1st column in the output file (the time stamp), now cycle through all remaining columns and add to the 
-  for i in `seq 1 ${nsoilsensors}`
-  do
-	executecommand="${executecommand}, (\$${input_output_colnr_soilmoisture[i]}==${nodata})?${nodata}:\$${input_output_colnr_soilmoisture[i]}${todo_with_var_soilmoisture[i]}"
-	#       ^^^ add to executecommand         ^^^ to don't mess up todo_with_var with nodata (like conversion to kelvin of nodata: -999+273.15), make separation whether column is no data or not.
-  done
-  executecommand="${executecommand}}' | sed -e 's/ /-/' -e 's/ /-/' -e 's/ /T/' -e 's/ /\:/' | awk '("
-  #   ^^^ add to executecommand         ^^^ This set-statement translates the time stamp to SMET format     ^^^ This opens an awk statement to prevent lines with only nodata values to appear in the SMET-file.
+  	#Now we already adressed the 1st column in the output file (the time stamp), now cycle through all remaining columns and add to the 
+  	for i in `seq 1 ${nsoilsensors}`
+  	do
+		executecommand="${executecommand}, (\$${input_output_colnr_soilmoisture[i]}==${nodata})?${nodata}:\$${input_output_colnr_soilmoisture[i]}${todo_with_var_soilmoisture[i]}"
+		#       ^^^ add to executecommand         ^^^ to don't mess up todo_with_var with nodata (like conversion to kelvin of nodata: -999+273.15), make separation whether column is no data or not.
+  	done
+  	executecommand="${executecommand}}' | sed -e 's/ /-/' -e 's/ /-/' -e 's/ /T/' -e 's/ /\:/' | awk '("
+  	#   ^^^ add to executecommand         ^^^ This set-statement translates the time stamp to SMET format     ^^^ This opens an awk statement to prevent lines with only nodata values to appear in the SMET-file.
 
-  for i in `seq 1 ${nsoilsensors}`
-  do
-	#This part constructs the awk statement like: awk '($2!=nodata || $3!=nodata || $4 != nodata)'. This only needs to be done for columns 2 and higher, as the timestamp will never be nodata.
-	if (( i==1 )); then
-		executecommand="${executecommand}\$(${i}+1)!=${nodata}"
-	else
-		executecommand="${executecommand} || \$(${i}+1)!=${nodata}"
-	fi
-  done
-  executecommand="${executecommand})' | awk '{print 1, \$'0'}'"
-  #                 ^^^ finish awk-statement     ^^^ add a 1 as first column, to identify orginal data.
-  eval ${executecommand} >> ${soilmoisturefilename}.tmp1
-  # ^^^ we now constructed an command which does the translation. With eval it is executed. use echo ${executecommand} to view what it is actually doing.
+  	for i in `seq 1 ${nsoilsensors}`
+  	do
+		#This part constructs the awk statement like: awk '($2!=nodata || $3!=nodata || $4 != nodata)'. This only needs to be done for columns 2 and higher, as the timestamp will never be nodata.
+		if (( i==1 )); then
+			executecommand="${executecommand}\$(${i}+1)!=${nodata}"
+		else
+			executecommand="${executecommand} || \$(${i}+1)!=${nodata}"
+		fi
+  	done
+  	executecommand="${executecommand})' | awk '{print 1, \$'0'}'"
+  	#                 ^^^ finish awk-statement     ^^^ add a 1 as first column, to identify orginal data.
+  	eval ${executecommand} >> ${soilmoisturefilename}.tmp1
+  	# ^^^ we now constructed an command which does the translation. With eval it is executed. use echo ${executecommand} to view what it is actually doing.
+  
 
+  	#Because sometimes, one sensor give the data later, but within the same minute merge this data to one time stamp:
+  	#  note: in this part, nsoilsensors+1 is used to determine the number of columns. This is because $columns for meteo data contains time stamp, but $nsoilsensors not.
+  	cat ${soilmoisturefilename}.tmp1 | cut -d\  -f2- | uniq -w16 -dD | tr '\n' ' ' | awk '{ for(j=1; j<=NF; j+='${nsoilsensors}'+1) if($j==$(j+'${nsoilsensors}'+1)) {print $j; for(i=j+1;i<j+'${nsoilsensors}'+1; i++){print (($i==-999 && $(i+'${nsoilsensors}'+1)==-999) || ($i!=-999 && $(i+'${nsoilsensors}'+1) !=-999))?($i+$(i+'${nsoilsensors}'+1))/2.0:($i+$(i+'${nsoilsensors}'+1)+999)}}}' | tr '\n' ' ' | awk '{for (i=1; i<=NF; i++) {printf "%s ", $i; if (i%('${nsoilsensors}'+1)==0) printf "\n"}}' | awk '{print 0, $0}' | sed 's/ $//' > ${soilmoisturefilename}.tmp2
+  	# ^^^ start pipe           ^^^ remove first column ^^^ select only timestamps which occur multiple times
+  	#                                                           ^^^ put everything in a row   ^^^ cycle through all blocks of data (per timestamp)
+  	#															^^^ if two succeeding blocks match ...
+  	#																		^^^ print time stamp and  ...                  ^^^^  when not only one of them is nodata                                          ^^^ print average (is nodata when both are nodata, or mean value if both are valid values.
+	#																																					   ^^^ or print a single value. This construction is because we don't know which value (first or second) is valid and which one not.
+  	#																																									    ^^^ make a single row		^^^^ make one timestamp per row, making use of the number of columns in the file
+  	#																																																						  ^^^ print 0 in first column, to identify modified data.   ^^^ The final sed removes a white space at the end of the line. It is there, because of the print-loops in awk.
+	cat ${soilmoisturefilename}.tmp1 ${soilmoisturefilename}.tmp2 | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 >> ${soilmoisturefilename}
+  	#Put now both files in the pipe		  ^^^ sort first on date, and then on first column, which contains the identifier for being original or modified data
+  	#							           ^^^ remove identifier in first column   and the uniq now selects single timestamps. When multiple timestamps are found, only the first occurrence is written out, which is modified data when available (because of the sorting on the first column). The output is added to the file, which already contains the header.
 
-  #Because some times, one sensor give the data later, but within the same minute merge this data to one time stamp:
-  #  note: in this part, nsoilsensors+1 is used to determine the number of columns. This is because $columns for meteo data contains time stamp, but $nsoilsensors not.
-  cat ${soilmoisturefilename}.tmp1 | cut -d\  -f2- | uniq -w16 -dD | tr '\n' ' ' | awk '{ for(j=1; j<=NF; j+='${nsoilsensors}'+1) if($j==$(j+'${nsoilsensors}'+1)) {print $j; for(i=j+1;i<j+'${nsoilsensors}'+1; i++){print (($i==-999 && $(i+'${nsoilsensors}'+1)==-999) || ($i!=-999 && $(i+'${nsoilsensors}'+1) !=-999))?($i+$(i+'${nsoilsensors}'+1))/2.0:($i+$(i+'${nsoilsensors}'+1)+999)}}}' | tr '\n' ' ' | awk '{for (i=1; i<=NF; i++) {printf "%s ", $i; if (i%('${nsoilsensors}'+1)==0) printf "\n"}}' | awk '{print 0, $0}' | sed 's/ $//' > ${soilmoisturefilename}.tmp2
-  # ^^^ start pipe           ^^^ remove first column ^^^ select only timestamps which occur multiple times
-  #                                                           ^^^ put everything in a row   ^^^ cycle through all blocks of data (per timestamp)
-  #															^^^ if two succeeding blocks match ...
-  #																		^^^ print time stamp and  ...                  ^^^^  when not only one of them is nodata                                          ^^^ print average (is nodata when both are nodata, or mean value if both are valid values.
-  #																																					   ^^^ or print a single value. This construction is because we don't know which value (first or second) is valid and which one not.
-  #																																									    ^^^ make a single row		^^^^ make one timestamp per row, making use of the number of columns in the file
-  #																																																						  ^^^ print 0 in first column, to identify modified data.   ^^^ The final sed removes a white space at the end of the line. It is there, because of the print-loops in awk.
-  cat ${soilmoisturefilename}.tmp1 ${soilmoisturefilename}.tmp2 | sort -k 2 -k 1 | cut -d\  -f2- | uniq -w16 >> ${soilmoisturefilename}
-  #Put now both files in the pipe		  ^^^ sort first on date, and then on first column, which contains the identifier for being original or modified data
-  #							           ^^^ remove identifier in first column   and the uniq now selects single timestamps. When multiple timestamps are found, only the first occurrence is written out, which is modified data when available (because of the sorting on the first column). The output is added to the file, which already contains the header.
-
-  #Remove temporary files
-  rm ${soilmoisturefilename}.tmp1 ${soilmoisturefilename}.tmp2
-
+	#Remove temporary files
+	rm ${soilmoisturefilename}.tmp1 ${soilmoisturefilename}.tmp2
+  fi
 
 
 
