@@ -100,7 +100,7 @@ echo "Analysing: $1..."
 list_of_stns=`find ${directory}station*csv -printf %f\\\\n 2> /dev/null | sed 's/station_//' | sed 's/.csv//'`
 if [ -z "${list_of_stns}" ]; then
 	echo "ERROR: no stations found in directory: ${directory}"
-	echo "   Did you put a "/" at the end of the directory specification?"
+	echo "   Did you put a \"/\" at the end of the directory specification?"
 	exit
 fi
 echo "-- stations found: `echo ${list_of_stns} | tr '\n' ' '`"
@@ -299,12 +299,12 @@ do
   #Check if stationinfo-file is present
   if [ -e "${stationinfo_file}" ]; then
 	#Read station info
-	station_name=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $2}'`
-	easting=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $3}'`
-	northing=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $4}'`
-	latitude=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $5}'`
-	longitude=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $6}'`
-	altitude=`cat ${stationinfo_file} |grep ^${stn} | sed 's/^ *//' | awk '{print $7}'`
+	station_name=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $2}'`
+	easting=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $3}'`
+	northing=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $4}'`
+	latitude=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $5}'`
+	longitude=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $6}'`
+	altitude=`cat ${stationinfo_file} | sed 's/^ *//' | grep ^${stn} | awk '{print $7}'`
 	if [ -z "${easting}" ]; then easting=${nodata}; fi
 	if [ -z "${northing}" ]; then northing=${nodata}; fi
 	if [ -z "${latitude}" ]; then latitude=${nodata}; fi
