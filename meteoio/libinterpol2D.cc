@@ -31,6 +31,8 @@ namespace mio {
 #define SQRT_MAGIC_D 0x5f3759df
 #define SQRT_MAGIC_F 0x5f375a86
 
+#pragma warning( push ) //for Visual C++
+#pragma warning(disable:4244) //Visual C++ righhtfully complains... but this behavior is what we want!
 //maximum relative error is <1.7% while computation time for sqrt is <1/4. At 0, returns a large number
 //on a large scale interpolation test on TA, max relative error is 1e-6
 inline float invSqrt(const float x) {
@@ -58,6 +60,7 @@ inline double invSqrt(const double x) {
 	u.i = SQRT_MAGIC_D - (u.i >> 1);  // gives initial guess y0
 	return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
 }
+#pragma warning( pop ) //for Visual C++, restore previous warnings behavior
 
 inline float fastSqrt_Q3(const float x) {
 	return x * invSqrt(x);

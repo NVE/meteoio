@@ -198,14 +198,16 @@ IF(INSTALL_DOC)
 	ELSE(WIN32)
 		SET(DOC_PATH "share/doc/${CMAKE_PROJECT_NAME}")
 	ENDIF(WIN32)
+	SET(DOC_FILES License.txt doc/SMET_specifications.pdf meteoio/icons/icon.ico)
 	IF (DOXYGEN_FOUND)
 		INSTALL(DIRECTORY doc/html DESTINATION ${DOC_PATH} COMPONENT documentation)
+		LIST(APPEND DOC_FILES doc/MeteoIO_doc.html)
 	ELSE (DOXYGEN_FOUND)
 		MESSAGE("Doxygen has not been found and is needed to build online documentation. Please either install doxygen or download a documentation-only package!")
 	ENDIF (DOXYGEN_FOUND)
-	SET(DOC_FILES License.txt doc/SMET_specifications.pdf meteoio/icons/icon.ico)
+
 	INSTALL(FILES ${DOC_FILES} DESTINATION ${DOC_PATH} COMPONENT documentation)
-	install(DIRECTORY doc/examples DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".svn" EXCLUDE)
+	INSTALL(DIRECTORY doc/examples DESTINATION ${DOC_PATH} COMPONENT examples PATTERN ".svn" EXCLUDE)
 ENDIF(INSTALL_DOC)
 
 ###########################################################
@@ -260,15 +262,6 @@ SET(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "What you need to run an applicati
 SET(CPACK_COMPONENT_DEVELOPMENT_GROUP "Development")
 SET(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "What you need to develop an application based on MeteoIO")
 
-#CPACK_ADD_COMPONENT(libraries DISPLAY_NAME "MeteoIO library" DESCRIPTION "The MeteoIO library itself" GROUP Runtime)
-# CPACK_ADD_COMPONENT(headers DISPLAY_NAME "Header files" DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO" DEPENDS libraries GROUP Development)
-# CPACK_ADD_COMPONENT(plugins DISPLAY_NAME "Input/Output Plugins" DESCRIPTION "Various plugins for supporting various data formats/protocols" DEPENDS libraries GROUP Runtime)
-# CPACK_ADD_COMPONENT(documentation DISPLAY_NAME "Documentation" DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
-# CPACK_ADD_COMPONENT(examples DISPLAY_NAME "Examples" DESCRIPTION "C++ Source code of various simple examples of applications with their example data" DEPENDS "libraries;headers" GROUP Development)
-
-# CPACK_ADD_COMPONENT_GROUP(Runtime EXPANDED DESCRIPTION "What you need to run an application based on MeteoIO")
-# CPACK_ADD_COMPONENT_GROUP(Development EXPANDED DESCRIPTION "What you need to develop an application based on MeteoIO")
-
 IF(UNIX)
 	IF(APPLE)
 		SET(CPACK_GENERATOR "PackageMaker")
@@ -292,7 +285,7 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_NSIS_MENU_LINKS
-			"${DOC_PATH}/html/index.html" "MeteoIO documentation"
+			"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
 			"${DOC_PATH}/examples" "MeteoIO examples"
 			"https://slfsmm.indefero.net/p/meteoio/" "Home page")
 		#info for the add/uninstall software administration
