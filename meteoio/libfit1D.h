@@ -19,35 +19,44 @@
 #define __LIBFIT1D_H__
 
 #include <meteoio/IOExceptions.h>
-#include <meteoio/IOUtils.h>
-#include <meteoio/Matrix.h>
+#include <meteoio/libfit1DCore.h>
 
 #include <vector>
 
 namespace mio {
 
-class Fit1D;
-
-typedef double (Fit1D::*FitFctPtr)(const double& X);
-
-class RegModel {
+class SphericVario : public FitLeastSquare {
 	public:
-		std::string name; ///< A string representing the regression model
-		FitFctPtr fitFct; ///< The pointer to the regression model
-		unsigned int nb_param; ///< Number of parameters of the model
-		unsigned int min_nb_pts; ///< Minimum number of data points required to use the model
-		
-		RegModel(const std::string in_name, FitFctPtr in_fitFct, const unsigned int& in_nb_param, const unsigned int& in_min_nb_pts) : name(in_name), fitFct(in_fitFct), nb_param(in_nb_param), min_nb_pts(in_min_nb_pts){}
-		RegModel() : name(""), fitFct(NULL), nb_param(0), min_nb_pts(0){}
-
-		friend std::ostream& operator<<(std::ostream& os, const RegModel& data);
-		static const std::string header; //to contain a helpful header for understanding the output of <<
-
+		SphericVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "SphericVario";};
+		void setDefaultGuess();
+		double f(const double& x);
 };
+
+class LinVario : public FitLeastSquare {
+	public:
+		LinVario() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinVario";};
+		void setDefaultGuess();
+		double f(const double& x);
+};
+
+class LinearLS : public FitLeastSquare {
+	public:
+		LinearLS() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinearLS";};
+		void setDefaultGuess();
+		double f(const double& x);
+};
+
+class Quadratic : public FitLeastSquare {
+	public:
+		Quadratic() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "Quadratic";};
+		void setDefaultGuess();
+		double f(const double& x);
+};
+
 
 /**
  * @class Fit1D
- * @brief A class to perform non-linear least square fitting.
+ * @brief A class to perform 1D regressions
  * It works on a time serie and uses matrix arithmetic to perform an arbitrary fit.
  *
  * @ingroup stats
@@ -56,46 +65,58 @@ class RegModel {
  */
 class Fit1D {
  	public:
+		/**
+		* @brief Constructor.
+		* @param regType regression model to use
+		* @param in_X vector of data points abscissae
+		* @param in_Y vector of data points ordinates
+		*/
 		Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y);
 
-		void setGuess(const std::vector<double> lambda_in);
-		bool leastSquareFit(std::vector<double>& coefficients);
-		bool leastSquareFit();
-		double getF(const double& x);
-		std::string getInfo();
+		~Fit1D();
+
+		/**
+		* @brief Provide a set of initial values for the model parameters.
+		* @param lambda_in one initial value per model parameter
+		*/
+		void setGuess(const std::vector<double> lambda_in) {fit->setGuess(lambda_in);};
+
+		/**
+		* @brief Compute the regression parameters
+		* @return false if could not find the parameters
+		*/
+		bool initFit() {return fit->initFit();};
+
+		/**
+		* @brief Calculate a value using the computed least square fit.
+		* The fit has to be computed before.
+		* @param x abscissa
+		* @return f(x) using the computed least square fit
+		*/
+		double f(const double& x) {return fit->f(x);};
+
+		/**
+		* @brief Calculate the parameters of the fit.
+		* The fit has to be computed before.
+		* @param coefficients vector containing the coefficients
+		*/
+		void getParams(std::vector<double>& coefficients) {fit->getParams(coefficients);};
+
+		/**
+		* @brief Return the name of the fit model.
+		* @return model name
+		*/
+		std::string getModel() {return fit->getModel();};
+
+		/**
+		* @brief Return a string of information about the fit.
+		* The fit has to be computed before.
+		* @return info string
+		*/
+		std::string getInfo() {return fit->getInfo();};
 
 	private:
-		static const double lambda_init; //initial default guess
-		static const double delta_init_abs; //initial delta, absolute
-		static const double delta_init_rel; //initial delta, relative
-		static const double eps_conv; //convergence criteria
-		static const unsigned int max_iter; //maximum number of iterations
-
-	private:
-		FitFctPtr fitFct; //fit function pointer
-		unsigned int nPts, nParam; //number of data points, number of parameters
-		std::string regname; //human readable regression model name
-		bool fit_ready;
-		std::string infoString;
-		const std::vector<double>& X; //X of input data set to fit
-		const std::vector<double>& Y; //Y of input data set to fit
-
-		std::vector<double> Lambda; //parameters of the fit
-		std::map<std::string, RegModel> mapRegs;
-
-		void registerRegressions();
-		void initLambda();
-		void initDLambda(Matrix& dLambda) const;
-		double getDelta(const double& var) const;
-		double DDer(const double& x, const unsigned int& index);
-
-		//various fit models
-		double LinFit(const double& x);
-		double SqFit(const double& x);
-
-		//variogram fit models
-		double LinVario(const double& x);
-		double SphericVario(const double& x);
+		FitModel *fit;
 };
 
 } //end namespace

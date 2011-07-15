@@ -94,6 +94,7 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/Grid3DObject.o \
 		$(SRCDIR)/IOInterface.o \
 		$(SRCDIR)/libinterpol1D.o \
+		$(SRCDIR)/libfit1DCore.o \
 		$(SRCDIR)/libfit1D.o \
 		$(SRCDIR)/StationData.o \
 		$(SRCDIR)/Config.o \
@@ -140,6 +141,7 @@ METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/Grid3DObject_par.o \
 		$(SRCDIR)/IOInterface_par.o \
 		$(SRCDIR)/libinterpol1D_par.o \
+		$(SRCDIR)/libfit1DCore_par.o \
 		$(SRCDIR)/libfit1D_par.o \
 		$(SRCDIR)/StationData_par.o \
 		$(SRCDIR)/Config_par.o \

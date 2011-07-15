@@ -36,6 +36,7 @@ SET(meteoio_sources
 	Grid3DObject.cc
 	IOInterface.cc
 	libinterpol1D.cc
+	libfit1DCore.cc
 	libfit1D.cc
 	StationData.cc
 	Config.cc

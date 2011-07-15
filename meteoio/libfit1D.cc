@@ -16,232 +16,31 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/libfit1D.h>
+#include <meteoio/libinterpol1D.h>
 #include <cmath>
-//#include <algorithm>
+#include <algorithm>
 
 using namespace std;
 
 namespace mio {
 
-const std::string RegModel::header="<RegModel>              name, fitFctPtr,    nb_param,      min_nb_pts</RegModel>";
-
-std::ostream& operator<<(std::ostream& os, const RegModel& data) {
-	os << "<RegModel>" << std::setw(21) << data.name << "," << std::setw(10) << std::showbase << data.fitFct;
-	os << "," << data.nb_param;
-	os << "," << data.min_nb_pts << "</RegModel>\n";
-	return os;
-}
-
-/////////////////// Begining of the Fit1D class
-const double Fit1D::lambda_init = 1.; //initial default guess
-const double Fit1D::delta_init_abs = 1.; //initial delta, absolute
-const double Fit1D::delta_init_rel = 0.2; //initial delta, relative
-const double Fit1D::eps_conv = 1e-6; //convergence criteria
-const unsigned int Fit1D::max_iter = 10; //maximum number of iterations
-
-void Fit1D::registerRegressions() {
-	mapRegs["LIN"]        = RegModel("linear",              &Fit1D::LinFit,       2, 2);
-	mapRegs["SQ"]         = RegModel("quadratic",           &Fit1D::SqFit,        3, 3);
-	mapRegs["VARIO_LIN"]  = RegModel("linear variogram",    &Fit1D::LinVario,     2, 2);
-	mapRegs["VARIO_SPH"]  = RegModel("spherical variogram", &Fit1D::SphericVario, 3, 3);
-}
-
 //default constructor
-Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) : X(in_X), Y(in_Y) {
-	if( X.size()!=Y.size() ) {
-		stringstream ss;
-		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) {
+	if(regType=="SphericVario") fit=new SphericVario;
+	if(regType=="LinVario") fit=new LinVario;
+	if(regType=="LinearLS") fit=new LinearLS;
+	if(regType=="Quadratic") fit=new Quadratic;
 
-	registerRegressions();
-	nParam = mapRegs[regType].nb_param;
-	regname = mapRegs[regType].name;
-	const unsigned int min_nb_pts = mapRegs[regType].min_nb_pts;
-	nPts=X.size();
-
-	if(nPts<min_nb_pts) {
-		stringstream ss;
-		ss << "Only " << nPts << " data points for " << regname << " regression model.";
-		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
-	fitFct = mapRegs[regType].fitFct;
-	fit_ready = false;
+	fit->setData(in_X, in_Y);
 }
 
-/**
-* @brief Calculate a value using the computed least square fit.
-* The fit has to be computed before.
-* @param x abscissa
-* @return f(x) using the computed least square fit
-*/
-double Fit1D::getF(const double& x) {
-	if(fit_ready==true) {
-		return (this->*(fitFct))(x);
-	} else {
-		throw InvalidArgumentException("The regression has not yet being computed!", AT);
-	}
+Fit1D::~Fit1D() {
+	delete fit;
 }
 
-/**
-* @brief Return a string of information about the fit.
-* The fit has to be computed before.
-* @return info string
-*/
-std::string Fit1D::getInfo() {
-	if(fit_ready==true) {
-		return infoString;
-	} else {
-		throw InvalidArgumentException("The regression has not yet being computed!", AT);
-	}
-}
-
-void Fit1D::setGuess(const std::vector<double> lambda_in) {
-	const size_t nGuess = lambda_in.size();
-
-	if(nGuess!=nParam) {
-		stringstream ss;
-		ss << "Provided " << nGuess << " guesses for " << nParam << " parameters!";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
-	for(size_t i=0; i<nGuess; i++) {
-		Lambda.push_back( lambda_in[i] );
-	}
-	fit_ready = false;
-}
-
-void Fit1D::initLambda() {
-	if(Lambda.size()==0) //else, setGuess has been called
-		Lambda.resize(nParam, lambda_init);
-}
-
-void Fit1D::initDLambda(Matrix& dLambda) const {
-	dLambda.resize(nParam,1);
-	for(unsigned int m=1; m<=nParam; m++) {
-		const double var = Lambda[m-1]; //Lambda is a vector
-		if(var==0) {
-			dLambda(m,1) = delta_init_abs * 0.5;
-		} else {
-			dLambda(m,1) = delta_init_rel * var * 0.5;
-		}
-	}
-}
-
-double Fit1D::getDelta(const double& var) const {
-//calculate a sensible delta for the partial derivative
-	if(var==0) {
-		return (delta_init_abs * 0.5);
-	} else {
-		return (delta_init_rel * var * 0.5);
-	}
-}
-
-double Fit1D::DDer(const double& x, const unsigned int& index) {
-	const double var = Lambda[index-1]; //Lambda is a vector
-	const double delta = getDelta(var);
-	const double v1 = var - delta;
-	const double v2 = var + delta;
-
-	Lambda[index-1] = v1;
-	const double y1 = (this->*(fitFct))(x);
-	Lambda[index-1] = v2;
-	const double y2 = (this->*(fitFct))(x);
-	Lambda[index-1] = var;
-
-	return (y2-y1)/(v2-v1);
-}
-
-bool Fit1D::leastSquareFit(std::vector<double>& coefficients) {
-	double max_delta = std::numeric_limits<double>::max();
-	initLambda();
-	Matrix dLambda; //parameters variations
-	initDLambda(dLambda);
-
-	Matrix A(nPts, nParam);
-	Matrix dBeta(nPts,(unsigned)1);
-
-	unsigned int iter = 0;
-	do {
-		iter++;
-		//set A matrix
-		for(unsigned int m=1; m<=nPts; m++) {
-			for(unsigned int n=1; n<=nParam; n++) {
-				const double value = DDer( X[m-1], n ); //X is a vector
-				A(m,n) = value;
-			}
-		}
-
-		//set dBeta matrix
-		for(unsigned int m=1; m<=nPts; m++) {
-			dBeta(m,1) = Y[m-1] - (this->*(fitFct))(X[m-1]); //X and Y are vectors
-		}
-
-		//calculate parameters deltas
-		const Matrix a = A.getT() * A;
-		const Matrix b = A.getT() * dBeta;
-		Matrix::solve(a, b, dLambda);
-
-		//apply the deltas to the parameters, record maximum delta
-		max_delta = 0.;
-		for(unsigned int m=1; m<=nParam; m++) {
-			Lambda[m-1] += dLambda(m,1); //Lambda is a vector
-			if( fabs(dLambda(m,1))>max_delta ) max_delta=fabs(dLambda(m,1));
-		}
-
-	} while (max_delta>eps_conv && iter<max_iter);
-
-	//compute R2
-	const double R2 = Matrix::dot(dBeta, dBeta);
-
-	//building infoString
-	stringstream ss;
-	ss << "Computed regression with " << regname << " model ";
-	ss << "- Sum of square residuals = " << R2 << " , max_delta = " << max_delta;
-	infoString = ss.str();
-
-	coefficients = Lambda;
-
-	if(max_delta>eps_conv) { //it did not converge
-		fit_ready = false;
-		return false;
-	} else {		 //it did converge
-		fit_ready = true;
-		return true;
-	}
-}
-
-bool Fit1D::leastSquareFit() {
-	vector<double> coefficients;
-	return leastSquareFit(coefficients);
-}
-
-double Fit1D::LinFit(const double& x) {
-	const double y = Lambda.at(0)*x + Lambda.at(1); //Lambda is a vector
-	return y;
-}
-
-double Fit1D::SqFit(const double& x) {
-	const double y = Lambda.at(0)*x*x + Lambda.at(1)*x + Lambda.at(2); //Lambda is a vector
-	return y;
-}
-
-//variogram models
-double Fit1D::LinVario(const double& x) {
-	const double c0 = Lambda.at(0);
-	const double bl = Lambda.at(1);
-
-	if(x==0) {
-		return 0;
-	} else {
-		const double y = c0 + bl * fabs(x);
-		return y;
-	}
-}
-
-double Fit1D::SphericVario(const double& x) {
+//////////////////////////////////////////////////////////////
+// regression models
+double SphericVario::f(const double& x) {
 	const double c0 = Lambda.at(0);
 	const double cs = Lambda.at(1);
 	const double as = Lambda.at(2);
@@ -256,6 +55,74 @@ double Fit1D::SphericVario(const double& x) {
 	} else {
 		return (c0+cs);
 	}
+}
+
+void SphericVario::setDefaultGuess() {
+	Lambda.push_back( *min_element(Y.begin(), Y.end()) );
+	Lambda.push_back( *max_element(Y.begin(), Y.end()) );
+	Lambda.push_back( *max_element(X.begin(), X.end()) );
+}
+
+double LinVario::f(const double& x) {
+	const double c0 = Lambda.at(0);
+	const double bl = Lambda.at(1);
+
+	if(x==0) {
+		return 0;
+	} else {
+		const double y = c0 + bl * abs(x);
+		return y;
+	}
+}
+
+void LinVario::setDefaultGuess() {
+	double xzero=X[0];
+	unsigned int xzero_idx=0;
+	for(unsigned int i=1; i<X.size(); i++) {
+		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
+	}
+	const double slope = Interpol1D::arithmeticMean( Interpol1D::derivative(X, Y) );
+	Lambda.push_back( Y[xzero_idx] );
+	Lambda.push_back( slope );
+}
+
+double LinearLS::f(const double& x) {
+	const double y = Lambda.at(0)*x + Lambda.at(1); //Lambda is a vector
+	return y;
+}
+
+void LinearLS::setDefaultGuess() {
+	double xzero=X[0];
+	unsigned int xzero_idx=0;
+	for(unsigned int i=1; i<X.size(); i++) {
+		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
+	}
+
+	const double slope = Interpol1D::arithmeticMean( Interpol1D::derivative(X, Y) );
+	Lambda.push_back( slope );
+	Lambda.push_back( Y[xzero_idx] );
+}
+
+double Quadratic::f(const double& x) {
+	const double y = Lambda.at(0)*x*x + Lambda.at(1)*x + Lambda.at(2); //Lambda is a vector
+	return y;
+}
+
+void Quadratic::setDefaultGuess() {
+	std::vector<double> der = Interpol1D::derivative(X, Y);
+	const double acc = 0.5 * Interpol1D::arithmeticMean( Interpol1D::derivative(X, der) );
+	double xzero=der[0];
+	unsigned int xzero_idx=0;
+	for(unsigned int i=1; i<der.size(); i++) {
+		if(abs(der[i])<xzero) { xzero=der[i]; xzero_idx=i;}
+	}
+
+	Lambda.push_back( acc ); //0
+	Lambda.push_back( der[xzero_idx] ); //1
+	if(acc>0.)
+		Lambda.push_back( *( std::min_element( Y.begin(), Y.end() ) ) );
+	else
+		Lambda.push_back( *( std::max_element( Y.begin(), Y.end() ) ) );
 }
 
 } //namespace

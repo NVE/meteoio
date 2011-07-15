@@ -359,7 +359,7 @@ double Matrix::dot(const Matrix& A, const Matrix& B) {
 	for(unsigned int i=1; i<=Arows; i++) {
 		sum += A(i,1)*B(i,1);
 	}
-	
+
 	return sum;
 }
 
@@ -395,7 +395,7 @@ double Matrix::det() const {
 
 	double product=1.;
 	for(unsigned int i=1; i<=nrows; i++) product *= U(i,i);
-	
+
 	return product;
 }
 
@@ -610,7 +610,6 @@ Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 	return X;
 }
 
-
 bool Matrix::isIdentity() const {
 	if(nrows!=ncols) {
 		std::stringstream tmp;
@@ -618,7 +617,7 @@ bool Matrix::isIdentity() const {
 		tmp << "(" << nrows << "," << ncols << ") can not be the identity matrix!";
 		throw IOException(tmp.str(), AT);
 	}
-	
+
 	bool is_identity=true;
 	for(unsigned int i=1; i<=nrows; i++) {
 		for(unsigned int j=1; j<=ncols; j++) {
@@ -642,6 +641,83 @@ bool Matrix::isIdentity() const {
 
 bool Matrix::isIdentity(const Matrix& A) {
 	return A.isIdentity();
+}
+
+void Matrix::partialPivoting(std::vector<unsigned int>& pivot_idx) {
+	pivot_idx.clear();
+
+	//bad luck: if a row has several elements that are max of their columns,
+	//we don't optimize its position. Ie: we can end up with a small element
+	//on the diagonal
+	for(unsigned int j=1; j<=ncols; j++) {
+		const unsigned int old_i = j;
+		const unsigned int new_i = findMaxInCol(j);
+		if(new_i!=j) { //ie: pivoting needed
+			swapRows(old_i, new_i);
+			pivot_idx.push_back(new_i);
+		} else
+			pivot_idx.push_back(old_i);
+	}
+}
+
+void Matrix::partialPivoting() {
+	std::vector<unsigned int> pivot_idx;
+	partialPivoting(pivot_idx);
+}
+
+void Matrix::maximalPivoting() {
+	std::vector<unsigned int> pivot_idx;
+	Matrix tmp( *this );
+
+	for(unsigned int i=1; i<=nrows; i++) {
+		const double scale = operator()(i,findMaxInRow(i));
+		for(unsigned int j=1; j<=ncols; j++) {
+			operator()(i,j) /= scale;
+		}
+	}
+	tmp.partialPivoting(pivot_idx);
+
+	//pivot on original matrix //HACK: not finished yet!
+	throw IOException("Method not implemented yet!!", AT);
+}
+
+//return the index of the line containing the highest absolute value at column col
+unsigned int Matrix::findMaxInCol(const unsigned int &col) {
+	unsigned int row_idx = 0;
+	double max_val=0.;
+
+	for(unsigned int i=1; i<=nrows; i++) {
+		const double val = abs( operator()(i,col) );
+		if( val>max_val) {
+			max_val=val;
+			row_idx=i;
+		}
+	}
+	return row_idx;
+}
+
+//return the index of the line containing the highest absolute value at column col
+unsigned int Matrix::findMaxInRow(const unsigned int &row) {
+	unsigned int col_idx = 0;
+	double max_val=0.;
+
+	for(unsigned int j=1; j<=ncols; j++) {
+		const double val = abs( operator()(row,j) );
+		if( val>max_val) {
+			max_val=val;
+			col_idx=j;
+		}
+	}
+	return col_idx;
+}
+
+
+void Matrix::swapRows(const unsigned int &i1, const unsigned int &i2) {
+	for(unsigned int j=1; j<=ncols; j++) {
+		const double tmp = operator()(i2,j);
+		operator()(i2,j) = operator()(i1,j);
+		operator()(i1,j) = tmp;
+	}
 }
 
 } //end namespace

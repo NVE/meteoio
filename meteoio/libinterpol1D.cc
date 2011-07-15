@@ -56,6 +56,80 @@ double Interpol1D::linearInterpolation(const double& d1, const double& d2, const
 	}
 }
 
+/**
+ * @brief This function returns the vector of local derivatives, given a vector of abscissae and ordinates.
+ * The vectors must be sorted by ascending x. The derivatives will be centered if possible, left or right otherwise or nodata
+ * if nothing else can be computed.
+ * @param X vector of abscissae
+ * @param Y vector of ordinates
+ * @return vector of local derivatives
+ */
+std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const std::vector<double>& Y)
+{
+	if(X.size()!=Y.size()) {
+		stringstream ss;
+		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	std::vector<double> der;
+	double right, centered, left, Dx_r, Dx_c, Dx_l;
+	unsigned int i=0;
+	//right hand derivative
+	Dx_r=X[i+1]-X[i];
+	if(Y[i]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_r!=0.) der.push_back( (Y[i+1]-Y[i])/Dx_r );
+		else der.push_back(IOUtils::nodata);
+
+	//centered derivative if possible
+	i++;
+	for(; i<(X.size()-1); i++) {
+		Dx_r=X[i-1]-X[i]; Dx_c=X[i+1]-X[i-1]; Dx_l=X[i]-X[i-1];
+
+		if(Y[i]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_r!=0.) right=(Y[i+1]-Y[i])/Dx_r; else right=IOUtils::nodata;
+		if(Y[i]!=IOUtils::nodata && Y[i-1]!=IOUtils::nodata && Dx_l!=0.) left=(Y[i]-Y[i-1])/Dx_l; else left=IOUtils::nodata;
+		if(Y[i-1]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_c!=0.) centered=(Y[i+1]-Y[i-1])/Dx_c; else centered=IOUtils::nodata;
+
+		if(centered!=IOUtils::nodata) der.push_back(centered);
+		else if(right!=IOUtils::nodata) der.push_back(right);
+		else if(left!=IOUtils::nodata) der.push_back(left);
+		else der.push_back( IOUtils::nodata );
+	}
+
+	//left hand derivative
+	Dx_l=X[i]-X[i-1];
+	if(Y[i]!=IOUtils::nodata && Y[i-1]!=IOUtils::nodata && Dx_l!=0.) der.push_back( (Y[i]-Y[i-1])/Dx_l );
+		else der.push_back(IOUtils::nodata);
+
+	return der;
+}
+
+void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
+{
+	if(X.size()!=Y.size()) {
+		stringstream ss;
+		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	std::vector< std::pair<double,double> > new_vec;
+	new_vec.reserve(X.size());
+	for(unsigned int i=0; i<X.size(); i++) {
+		const std::pair<double,double> tmp(X[i],Y[i]);
+		new_vec.push_back(tmp);
+	}
+
+	std::sort( new_vec.begin(), new_vec.end(), pair_comparator );
+
+	for(unsigned int i=0; i<new_vec.size(); i++) {
+		X[i] = new_vec[i].first;
+		Y[i] = new_vec[i].second;
+	}
+}
+
+bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r) {
+	return l.first < r.first;
+}
+
 
 double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 {

@@ -33,7 +33,7 @@ namespace mio {
  * @brief This class implements the basic operations on matrices.
  * Elements are access in matrix notation: that is A(1,2) represents the second element of the
  * first line. Index go from 1 to nrows/ncols.
- * 
+ *
  * It might not be the best ever such implementation, but the goal is to provide a standalone matrix class.
  * It might be later possible to chose between using the embedded implementation or to act as a
  * front end to BLAS for those who have it installed on their system.
@@ -127,7 +127,7 @@ class Matrix {
 		void T();
 
 		/**
-		* @brief matrix invert. 
+		* @brief matrix invert.
 		* It first performs LU decomposition and then computes the inverse by
 		* backward and forward solving of LU * A-1 = I
 		* see Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
@@ -163,8 +163,8 @@ class Matrix {
 		double det() const;
 
 		/**
-		* @brief matrix LU decomposition. 
-		* Perform LU decomposition by the Dolittle algorithm, 
+		* @brief matrix LU decomposition.
+		* Perform LU decomposition by the Dolittle algorithm,
 		* (cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html)
 		* HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 		* @param L lower diagonal matrix
@@ -172,6 +172,17 @@ class Matrix {
 		* @return false if the decomposition can not be performed (division by zero)
 		*/
 		bool LU(Matrix& L, Matrix& U) const;
+
+		/**
+		* @brief matrix partial pivoting.
+		* This reorders the rows so that each diagonal element is the maximum in its column
+		* (see https://secure.wikimedia.org/wikipedia/en/wiki/Pivot_element)
+		* @param pivot_idx new indices (to apply when solving A * X = B, for example
+		*/
+		void partialPivoting(std::vector<unsigned int>& pivot_idx);
+		void partialPivoting();
+
+		void maximalPivoting();
 
 		friend std::ostream& operator<<(std::ostream& os, const Matrix& data);
 
@@ -208,6 +219,10 @@ class Matrix {
 		unsigned int ncols;
 		unsigned int nrows;
 		static const double epsilon, epsilon_mtr;
+
+		unsigned int findMaxInCol(const unsigned int &col);
+		unsigned int findMaxInRow(const unsigned int &row);
+		void swapRows(const unsigned int &i1, const unsigned int &i2);
 };
 
 } //end namespace
