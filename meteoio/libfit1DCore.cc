@@ -23,6 +23,21 @@ using namespace std;
 
 namespace mio {
 
+void FitModel::getParams(std::vector<double>& o_coefficients) {
+	if(fit_ready!=true) {
+		throw InvalidArgumentException("The regression has not yet being computed!", AT);
+	}
+	o_coefficients = Lambda;
+}
+
+std::string FitModel::getInfo() {
+	if(fit_ready==true) {
+		return infoString;
+	} else {
+		throw InvalidArgumentException("The regression has not yet being computed!", AT);
+	}
+}
+
 const double FitLeastSquare::lambda_init = 1.; //initial default guess
 const double FitLeastSquare::delta_init_abs = 1.; //initial delta, absolute
 const double FitLeastSquare::delta_init_rel = 0.2; //initial delta, relative
@@ -53,18 +68,6 @@ void FitLeastSquare::setDefaultGuess() {
 	}
 }
 
-std::string FitLeastSquare::getInfo() {
-	if(fit_ready==true) {
-		return infoString;
-	} else {
-		throw InvalidArgumentException("The regression has not yet being computed!", AT);
-	}
-}
-
-std::string FitLeastSquare::getModel() {
-	return regname;
-}
-
 void FitLeastSquare::setGuess(const std::vector<double> lambda_in) {
 	const size_t nGuess = lambda_in.size();
 
@@ -82,10 +85,6 @@ void FitLeastSquare::setGuess(const std::vector<double> lambda_in) {
 
 bool FitLeastSquare::initFit() {
 	return computeFit();
-}
-
-void FitLeastSquare::getParams(std::vector<double>& o_coefficients) {
-	o_coefficients = Lambda;
 }
 
 ////////////////////////////////////////////////////////////

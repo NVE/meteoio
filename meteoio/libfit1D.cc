@@ -26,6 +26,8 @@ namespace mio {
 
 //default constructor
 Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) {
+	if(regType=="SimpleLinear") fit=new SimpleLinear;
+	if(regType=="NoisyLinear") fit=new NoisyLinear;
 	if(regType=="SphericVario") fit=new SphericVario;
 	if(regType=="LinVario") fit=new LinVario;
 	if(regType=="LinearLS") fit=new LinearLS;
@@ -40,6 +42,59 @@ Fit1D::~Fit1D() {
 
 //////////////////////////////////////////////////////////////
 // regression models
+void SimpleLinear::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) {
+	X = in_X;
+	Y = in_Y;
+
+	//check input data consistency
+	if( X.size()!=Y.size() ) {
+		stringstream ss;
+		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	const double nPts=X.size();
+	if(nPts<min_nb_pts) {
+		stringstream ss;
+		ss << "Only " << nPts << " data points for " << regname << " regression model.";
+		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	fit_ready = false;
+}
+
+double SimpleLinear::f(const double& x) {
+	return Lambda.at(0)*x + Lambda.at(1);
+}
+
+bool SimpleLinear::initFit() {
+	Lambda.clear();
+	double a,b,r;
+	std::stringstream mesg;
+	Interpol1D::LinRegression(X, Y, a, b, r, mesg);
+	Lambda.push_back(a);
+	Lambda.push_back(b);
+	mesg << "Computed regression with " << regname << " model - r=" << r;
+	infoString = mesg.str();
+	fit_ready = true;
+	return true;
+}
+
+bool NoisyLinear::initFit() {
+	Lambda.clear();
+	double a,b,r;
+	std::stringstream mesg;
+	Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
+	Lambda.push_back(a);
+	Lambda.push_back(b);
+	mesg << "Computed regression with " << regname << " model - r=" << r;
+	infoString = mesg.str();
+	fit_ready = true;
+	return true;
+}
+
+//regression models using the standard least square algorithm
 double SphericVario::f(const double& x) {
 	const double c0 = Lambda.at(0);
 	const double cs = Lambda.at(1);

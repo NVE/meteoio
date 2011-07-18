@@ -34,14 +34,15 @@ class FitModel {
 		virtual void setGuess(const std::vector<double> lambda_in) = 0;
 		virtual bool initFit() = 0;
 		virtual double f(const double& x) = 0;
-		virtual void getParams(std::vector<double>& o_coefficients) = 0;
-		virtual std::string getModel() = 0;
-		virtual std::string getInfo() = 0;
+		void getParams(std::vector<double>& o_coefficients);
+		std::string getModel() {return regname;};
+		std::string getInfo();
 	protected:
 		std::string regname; //model name
 		unsigned int nParam; //number of parameters
 		unsigned int min_nb_pts; //minimum number of data points
 		bool fit_ready;
+		std::string infoString;
 		std::vector<double> Lambda; //parameters of the fit
 		std::vector<double> X; //X of input data set to fit
 		std::vector<double> Y; //Y of input data set to fit
@@ -63,17 +64,12 @@ class FitLeastSquare : public FitModel {
 		void setGuess(const std::vector<double> lambda_in);
 		bool initFit();
 		virtual double f(const double& x) = 0;
-		void getParams(std::vector<double>& o_coefficients);
-		std::string getModel();
-		std::string getInfo();
 
 	protected:
 		virtual void setDefaultGuess(); //set defaults guess values. Called by setData
 
 	private:
 		unsigned int nPts; //number of data points
-		std::string infoString;
-
 		void checkInputs();
 		void initLambda();
 		void initDLambda(Matrix& dLambda) const;

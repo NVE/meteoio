@@ -25,6 +25,21 @@
 
 namespace mio {
 
+class SimpleLinear : public FitModel {
+	public:
+		SimpleLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
+		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
+		void setGuess(const std::vector<double> /*lambda_in*/) {};
+		bool initFit();
+		double f(const double& x);
+};
+
+class NoisyLinear : public SimpleLinear {
+	public:
+		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "NoisyLinear";};
+		bool initFit();
+};
+
 class SphericVario : public FitLeastSquare {
 	public:
 		SphericVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "SphericVario";};
