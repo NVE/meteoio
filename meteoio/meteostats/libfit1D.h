@@ -19,7 +19,7 @@
 #define __LIBFIT1D_H__
 
 #include <meteoio/IOExceptions.h>
-#include <meteoio/libfit1DCore.h>
+#include <meteoio/meteostats/libfit1DCore.h>
 
 #include <vector>
 

@@ -21,7 +21,7 @@
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
 #include <meteoio/Config.h>
-#include <meteoio/libinterpol1D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 #include <meteoio/FilterProperties.h>
 
 #include <algorithm>
@@ -81,7 +81,7 @@ class FilterAlgorithms {
 		                                       const unsigned int& minArgs, const unsigned int& maxArgs,
 		                                       bool& isSoft, std::string& windowposition, std::vector<double>& vecArgs_out);
 		static unsigned int getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
-                                                  const unsigned int& pos, 
+                                                  const unsigned int& pos,
                                                   const std::vector<std::string>& i_vecArgs, std::vector<MeteoData>& vecResult);
 		static bool getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
 		                          const unsigned int& pos,
@@ -89,7 +89,7 @@ class FilterAlgorithms {
 		                          const unsigned int& paramindex, std::vector<double>& vecWindow,
 		                          std::vector<Date> *vecDate = NULL);
 
-		static double ExpSmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo, 
+		static double ExpSmoothingAlgorithm(const std::vector<MeteoData>& vecMeteo,
 		                                    const unsigned int& paramindex, const double& alpha);
 		static double WMASmoothingAlgorithm(const std::vector<MeteoData>& vecMyMeteo, const unsigned int& paramindex);
 

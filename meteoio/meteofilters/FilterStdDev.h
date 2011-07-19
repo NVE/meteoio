@@ -19,7 +19,7 @@
 #define __FILTERSTDDEV_H__
 
 #include <meteoio/meteofilters/WindowedFilter.h>
-#include <meteoio/libinterpol1D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 #include <vector>
 #include <string>
 #include <algorithm>

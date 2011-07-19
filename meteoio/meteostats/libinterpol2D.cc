@@ -17,7 +17,7 @@
 */
 #include <cmath>
 
-#include <meteoio/libinterpol2D.h>
+#include <meteoio/meteostats/libinterpol2D.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 
 using namespace std;

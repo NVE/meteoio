@@ -41,9 +41,10 @@
 #include <meteoio/IOManager.h>
 #include <meteoio/IOPlugin.h>
 #include <meteoio/IOUtils.h>
-#include <meteoio/libfit1D.h>
-#include <meteoio/libinterpol1D.h>
-#include <meteoio/libinterpol2D.h>
+#include <meteoio/meteostats/libfit1D.h>
+//#include <meteoio/meteostats/libfit1DCore.h>
+#include <meteoio/meteostats/libinterpol1D.h>
+#include <meteoio/meteostats/libinterpol2D.h>
 //#include <meteoio/MainPage.h> //only for doxygen
 //#include <meteoio/marshal_meteoio.h> //only for popc
 #include <meteoio/Matrix.h>

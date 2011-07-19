@@ -12,6 +12,7 @@ IF(PROJ4)
 ENDIF(PROJ4)
 
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteostats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
 #	FilterAlgorithms.cc obsoleted
@@ -35,17 +36,14 @@ SET(meteoio_sources
 	DEMObject.cc
 	Grid3DObject.cc
 	IOInterface.cc
-	libinterpol1D.cc
-	libfit1DCore.cc
-	libfit1D.cc
 	StationData.cc
 	Config.cc
 	DynamicLibrary.cc
 	IOExceptions.cc
 	IOUtils.cc
-	libinterpol2D.cc
 	MeteoData.cc
 	${meteolaws_sources}
+	${meteostats_sources}
 	${meteofilters_sources}
 )
 

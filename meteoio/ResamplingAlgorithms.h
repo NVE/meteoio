@@ -20,7 +20,7 @@
 
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
-#include <meteoio/libinterpol1D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 
 #include <algorithm>
 #include <iostream>
@@ -51,14 +51,14 @@ class ResamplingAlgorithms {
 		                         const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 		static void LinearResampling(const unsigned int& position, const unsigned int& paramindex,
 		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
-		static void NearestNeighbour(const unsigned int& position, const unsigned int& paramindex, 
+		static void NearestNeighbour(const unsigned int& position, const unsigned int& paramindex,
 		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 
 		static void Accumulate(const unsigned int& pos, const unsigned int& paramindex,
 		                       const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
-		
+
  	private:
-		static double funcval(const std::vector<MeteoData>& vecM, const unsigned int& index, 
+		static double funcval(const std::vector<MeteoData>& vecM, const unsigned int& index,
 		                      const Date& date, const unsigned int& paramindex);
 
 		static std::map<std::string, resamplingptr> algorithmMap;

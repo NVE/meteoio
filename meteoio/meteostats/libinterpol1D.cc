@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/libinterpol1D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 #include <algorithm>
 #include <cmath>
 

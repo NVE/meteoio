@@ -19,7 +19,7 @@
 #define __INTERPOLATIONALGORITHMS_H__
 
 #include <meteoio/MeteoIO.h>
-#include <meteoio/libinterpol1D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 
 #include <vector>
 #include <string>
