@@ -277,10 +277,10 @@ void SMETIO::parseInputOutputSection()
 		} while (filename != "");
 
 		nr_stations = counter - 1;
-	}
 
-	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
-		vec_streampos = vector< map<Date, std::streampos> >(nr_stations);
+		if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
+			vec_streampos = vector< map<Date, std::streampos> >(nr_stations);
+	}
 
 	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
 	outpath = "";
