@@ -76,6 +76,7 @@ class GeotopIO : public IOInterface {
 		double in_tz, out_tz;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
+		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

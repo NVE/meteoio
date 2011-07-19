@@ -227,8 +227,10 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	 * at what locations they are and what column headers to use
 	 */
 	readMetaData(myStations, vecColumnNames, path + "/" + prefix + ".txt");
+	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
+		vec_streampos = vector< map<Date, std::streampos> >(myStations.size());
 
-	std::cout << "[I] GEOtopIO: Found " << myStations.size() << " station(s)" << std::endl;
+	std::cout << "[i] GEOtopIO: Found " << myStations.size() << " station(s)" << std::endl;
 
 	for (unsigned int ii=0; ii<myStations.size(); ii++) {
 		vecMeteo.push_back( vector<MeteoData>() );
@@ -266,7 +268,15 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			std::vector<double> tmpdata = std::vector<double>(ncols+1); //one extra for nodata value
 			std::vector<int> ymdh = std::vector<int>(4);
+
+			//The following 4 lines are an optimization to jump to the correct position in the file
+			streampos current_fpointer = -1;  //the filepointer for the current date
+			map<Date,streampos>::const_iterator it = vec_streampos.at(ii).find(dateStart);
+			if (it != vec_streampos.at(ii).end())
+				fin.seekg(it->second); //jump to position in the file 
+
 			while (!fin.eof()){
+				streampos tmp_fpointer = fin.tellg();
 				getline(fin, line, eoln); //read complete line of data
 
 				MeteoData md;
@@ -279,26 +289,33 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				//tmpvec[0] holds the date in many possible formats -> needs to be parsed
 				parseDate(tmpvec.at(0), filename+": "+line, md.date);
 
-				for (unsigned int jj=1; jj<ncols; jj++) {
-					if (!IOUtils::convertString(tmpdata[jj], tmpvec.at(jj), std::dec))
-						throw InvalidFormatException(filename + ": " + line, AT);
-				}
-				tmpdata[ncols] = IOUtils::nodata;
-
-				md.setData(MeteoData::TA, tmpdata[mapHeader["ta"]]);
-				md.setData(MeteoData::ISWR, tmpdata[mapHeader["iswr"]]);
-				md.setData(MeteoData::VW, tmpdata[mapHeader["vw"]]);
-				md.setData(MeteoData::DW, tmpdata[mapHeader["dw"]]);
-				md.setData(MeteoData::RH, tmpdata[mapHeader["rh"]]);
-				md.setData(MeteoData::ILWR, tmpdata[mapHeader["ilwr"]]);
-				md.setData(MeteoData::HNW, tmpdata[mapHeader["hnw"]]);
-				md.setData(MeteoData::P, tmpdata[mapHeader["p"]]);
-
 				if ((md.date >= dateStart) && (md.date <= dateEnd)){
+					current_fpointer = tmp_fpointer;
+
+					for (unsigned int jj=1; jj<ncols; jj++) {
+						if (!IOUtils::convertString(tmpdata[jj], tmpvec.at(jj), std::dec))
+							throw InvalidFormatException(filename + ": " + line, AT);
+					}
+					tmpdata[ncols] = IOUtils::nodata;
+
+					md.setData(MeteoData::TA, tmpdata[mapHeader["ta"]]);
+					md.setData(MeteoData::ISWR, tmpdata[mapHeader["iswr"]]);
+					md.setData(MeteoData::VW, tmpdata[mapHeader["vw"]]);
+					md.setData(MeteoData::DW, tmpdata[mapHeader["dw"]]);
+					md.setData(MeteoData::RH, tmpdata[mapHeader["rh"]]);
+					md.setData(MeteoData::ILWR, tmpdata[mapHeader["ilwr"]]);
+					md.setData(MeteoData::HNW, tmpdata[mapHeader["hnw"]]);
+					md.setData(MeteoData::P, tmpdata[mapHeader["p"]]);
+
 					convertUnits(md);
 					vecMeteo[ii].push_back(md);
+				} else if (md.date > dateEnd) {
+					break;
 				}
 			}
+
+			//save stream position and the corresponding end date
+			if (current_fpointer != -1) vec_streampos.at(ii)[dateEnd] = current_fpointer;
 		} catch(std::exception& e) {
 			cleanup();
 			throw;
