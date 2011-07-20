@@ -38,6 +38,23 @@ std::string FitModel::getInfo() {
 	}
 }
 
+void FitModel::setGuess(const std::vector<double> lambda_in) {
+	const size_t nGuess = lambda_in.size();
+	if(nGuess!=nParam) {
+		stringstream ss;
+		ss << "Provided " << nGuess << " guesses for " << nParam << " parameters ";
+		ss << "for regression model " << regname << "!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	for(size_t i=0; i<nGuess; i++) {
+		Lambda.push_back( lambda_in[i] );
+	}
+	fit_ready = true;
+}
+
+////////////////////////////////////////////////////////////
+//// Least square fit class
 const double FitLeastSquare::lambda_init = 1.; //initial default guess
 const double FitLeastSquare::delta_init_abs = 1.; //initial delta, absolute
 const double FitLeastSquare::delta_init_rel = 0.2; //initial delta, relative
@@ -56,8 +73,7 @@ void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<
 	X = in_X;
 	Y = in_Y;
 	checkInputs();
-	//sort the data by increasing X
-	Interpol1D::sort(X, Y);
+	Interpol1D::sort(X, Y); //sort the data by increasing X
 	setDefaultGuess();
 	fit_ready = false;
 }
@@ -68,22 +84,7 @@ void FitLeastSquare::setDefaultGuess() {
 	}
 }
 
-void FitLeastSquare::setGuess(const std::vector<double> lambda_in) {
-	const size_t nGuess = lambda_in.size();
-
-	if(nGuess!=nParam) {
-		stringstream ss;
-		ss << "Provided " << nGuess << " guesses for " << nParam << " parameters!";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
-	for(size_t i=0; i<nGuess; i++) {
-		Lambda.push_back( lambda_in[i] );
-	}
-	fit_ready = false;
-}
-
-bool FitLeastSquare::initFit() {
+bool FitLeastSquare::fit() {
 	return computeFit();
 }
 

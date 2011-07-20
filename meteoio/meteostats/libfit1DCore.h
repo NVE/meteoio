@@ -31,11 +31,11 @@ class FitModel {
 	public:
 		FitModel() {};
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
-		virtual void setGuess(const std::vector<double> lambda_in) = 0;
-		virtual bool initFit() = 0;
+		void setGuess(const std::vector<double> lambda_in);
+		virtual bool fit() = 0;
 		virtual double f(const double& x) = 0;
 		void getParams(std::vector<double>& o_coefficients);
-		std::string getModel() {return regname;};
+		std::string getName() {return regname;};
 		std::string getInfo();
 	protected:
 		std::string regname; //model name
@@ -61,8 +61,7 @@ class FitLeastSquare : public FitModel {
  	public:
 		FitLeastSquare();
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
-		void setGuess(const std::vector<double> lambda_in);
-		bool initFit();
+		bool fit();
 		virtual double f(const double& x) = 0;
 
 	protected:

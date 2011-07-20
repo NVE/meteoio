@@ -145,7 +145,7 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsig
 		Duration diff2 = vecM[pos].date - m2.date; //calculate time interval to element at pos
 
 		if (IOUtils::checkEpsilonEquality(diff1.getJulianDate(true), diff2.getJulianDate(true), 0.1/1440)){ //within 6 seconds
-			vecM[pos].param(paramindex) = Interpol1D::linearInterpolation(m1.param(paramindex), m2.param(paramindex), 0.5);
+			vecM[pos].param(paramindex) = Interpol1D::weightedMean(m1.param(paramindex), m2.param(paramindex), 0.5);
 		} else if (diff1 < diff2){
 			vecM[pos].param(paramindex) = m1.param(paramindex);
 		} else if (diff1 > diff2){
@@ -233,9 +233,9 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 	//At this point indexP1 and indexP2 point to values that are different from IOUtils::nodata
 	const double& val1 = vecM[indexP1].param(paramindex);
 	const double& val2 = vecM[indexP2].param(paramindex);
-	vecM[pos].param(paramindex) = Interpol1D::linearInterpolation(vecM[indexP1].date.getJulianDate(true), val1,
-	                              vecM[indexP2].date.getJulianDate(true), val2,
-	                              vecM[pos].date.getJulianDate(true));
+	vecM[pos].param(paramindex) = linearInterpolation(vecM[indexP1].date.getJulianDate(true), val1,
+	                                                  vecM[indexP2].date.getJulianDate(true), val2,
+	                                                  vecM[pos].date.getJulianDate(true));
 }
 
 /**
@@ -371,12 +371,34 @@ double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const u
 		if (valend == IOUtils::nodata)
 			return IOUtils::nodata;
 
-		return Interpol1D::linearInterpolation(vecM[start].date.getJulianDate(true), 0.0,
-		                                       vecM[end].date.getJulianDate(true), valend,
-		                                       date.getJulianDate(true));
+		return linearInterpolation(vecM[start].date.getJulianDate(true), 0.0,
+		                           vecM[end].date.getJulianDate(true), valend,
+		                           date.getJulianDate(true));
 	}
 
 	return IOUtils::nodata;
+}
+
+/**
+ * @brief This function solves the equation y = kx + d for two given points and returns y for a given x
+ * @param x1 x-coordinate of first point
+ * @param y1 y-coordinate of first point
+ * @param x2 x-coordinate of second point
+ * @param y2 y-coordinate of second point
+ * @param x3 x-coordinate of desired point
+ * @return y-coordinate of desired point
+ */
+double ResamplingAlgorithms::linearInterpolation(const double& x1, const double& y1,
+                                       const double& x2, const double& y2, const double& x3)
+{
+	if (x1 == x2)
+		throw IOException("Attempted division by null", AT);
+
+	//Solving y = kx +d
+	double k = (y1 - y2) / (x1 - x2);
+	double d = y2 - k*x2;
+
+	return (k*x3 + d);
 }
 
 } //namespace

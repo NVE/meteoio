@@ -203,50 +203,14 @@ int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector
 	return code;
 }
 
-/**
-* @brief Computes the bi-linear regression coefficients fitting the points given as X and Y in two vectors
-* We consider that the regression can be made with 2 linear segments with a fixed inflection point (Interpol2D::bilin_inflection). It relies on Interpol1D::NoisyLinRegression.
-* @param in_X vector of X coordinates
-* @param in_Y vector of Y coordinates (same order as X)
-* @param coeffs a,b,r coefficients in a vector
-* @return EXIT_SUCCESS or EXIT_FAILURE
-*/
+//temporary solution while we migrate the regression classes
 int Interpol2D::BiLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, std::vector<double>& coeffs)
 {
-	//build segments
-	std::vector<double> X1, Y1, X2, Y2;
-	for(unsigned int ii=0; ii<in_X.size(); ii++) {
-		if(in_X[ii]<bilin_inflection) { //first segment
-			X1.push_back( in_X[ii] );
-			Y1.push_back( in_Y.at(ii) );
-		} else if(in_X[ii]>bilin_inflection) { //second segment
-			X2.push_back( in_X[ii] );
-			Y2.push_back( in_Y.at(ii) );
-		} else { //point belongs to both segments
-			X1.push_back( in_X[ii] );
-			Y1.push_back( in_Y.at(ii) );
-			X2.push_back( in_X[ii] );
-			Y2.push_back( in_Y.at(ii) );
-		}
-	}
-
-	//first segment
-	std::stringstream mesg1;
-	const int code1 = Interpol1D::NoisyLinRegression(X1, Y1, coeffs[1], coeffs[2], coeffs[3], mesg1);
-
-	//second segment
-	std::stringstream mesg2;
-	const int code2 = Interpol1D::NoisyLinRegression(X2, Y2, coeffs[4], coeffs[5], coeffs[6], mesg2);
-
-	/*if(mesg1.str()!="")
-		std::cout << "[E] In Bilinear reg segment1, " << mesg1.str() << std::endl;
-	if(mesg2.str()!="")
-		std::cout << "[E] In Bilinear reg segment2, " << mesg2.str() << std::endl;*/
-
-	if(code1==EXIT_FAILURE && code2==EXIT_FAILURE)
-		return EXIT_FAILURE;
-	else
-		return EXIT_SUCCESS;
+	std::vector<double> params;
+	const int code = Interpol1D::twoLinRegression(in_X, in_Y, Interpol2D::bilin_inflection, params);
+	coeffs[1] = params[1]; coeffs[2] = params[2]; coeffs[3] = 1.;
+	coeffs[4] = params[3]; coeffs[5] = params[4]; coeffs[6] = 1.;
+	return code;
 }
 
 

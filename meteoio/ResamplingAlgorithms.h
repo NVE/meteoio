@@ -60,6 +60,8 @@ class ResamplingAlgorithms {
  	private:
 		static double funcval(const std::vector<MeteoData>& vecM, const unsigned int& index,
 		                      const Date& date, const unsigned int& paramindex);
+		static double linearInterpolation(const double& x1, const double& y1,
+		                                  const double& x2, const double& y2, const double& x3);
 
 		static std::map<std::string, resamplingptr> algorithmMap;
 		static const bool __init;    ///<helper variable to enable the init of static collection data

@@ -26,18 +26,18 @@ namespace mio {
 
 //default constructor
 Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) {
-	if(regType=="SimpleLinear") fit=new SimpleLinear;
-	if(regType=="NoisyLinear") fit=new NoisyLinear;
-	if(regType=="SphericVario") fit=new SphericVario;
-	if(regType=="LinVario") fit=new LinVario;
-	if(regType=="LinearLS") fit=new LinearLS;
-	if(regType=="Quadratic") fit=new Quadratic;
+	if(regType=="SimpleLinear") model=new SimpleLinear;
+	if(regType=="NoisyLinear") model=new NoisyLinear;
+	if(regType=="SphericVario") model=new SphericVario;
+	if(regType=="LinVario") model=new LinVario;
+	if(regType=="LinearLS") model=new LinearLS;
+	if(regType=="Quadratic") model=new Quadratic;
 
-	fit->setData(in_X, in_Y);
+	model->setData(in_X, in_Y);
 }
 
 Fit1D::~Fit1D() {
-	delete fit;
+	delete model;
 }
 
 //////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ double SimpleLinear::f(const double& x) {
 	return Lambda.at(0)*x + Lambda.at(1);
 }
 
-bool SimpleLinear::initFit() {
+bool SimpleLinear::fit() {
 	Lambda.clear();
 	double a,b,r;
 	std::stringstream mesg;
@@ -81,7 +81,7 @@ bool SimpleLinear::initFit() {
 	return true;
 }
 
-bool NoisyLinear::initFit() {
+bool NoisyLinear::fit() {
 	Lambda.clear();
 	double a,b,r;
 	std::stringstream mesg;
@@ -96,6 +96,7 @@ bool NoisyLinear::initFit() {
 
 //regression models using the standard least square algorithm
 double SphericVario::f(const double& x) {
+	//c0>=0, cs>=0, as>=0
 	const double c0 = Lambda.at(0);
 	const double cs = Lambda.at(1);
 	const double as = Lambda.at(2);
@@ -119,6 +120,7 @@ void SphericVario::setDefaultGuess() {
 }
 
 double LinVario::f(const double& x) {
+	//c0>=0, b1>=0
 	const double c0 = Lambda.at(0);
 	const double bl = Lambda.at(1);
 
@@ -139,6 +141,56 @@ void LinVario::setDefaultGuess() {
 	const double slope = Interpol1D::arithmeticMean( Interpol1D::derivative(X, Y) );
 	Lambda.push_back( Y[xzero_idx] );
 	Lambda.push_back( slope );
+}
+
+double ExpVario::f(const double& x) {
+	//c0>=0, ce>=0, ae>=0
+	const double c0 = Lambda.at(0);
+	const double ce = Lambda.at(1);
+	const double ae = Lambda.at(2);
+
+	if(x==0) {
+		return 0;
+	} else {
+		const double y = c0 + ce * (1. - exp(-abs(x)/ae) );
+		return y;
+	}
+}
+
+void ExpVario::setDefaultGuess() {
+	double xzero=X[0];
+	unsigned int xzero_idx=0;
+	for(unsigned int i=1; i<X.size(); i++) {
+		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
+	}
+	Lambda.push_back( Y[xzero_idx] );
+	Lambda.push_back( Y[Y.size()-1] - Y[xzero_idx] );
+	Lambda.push_back( 1. );
+}
+
+double RatQuadVario::f(const double& x) {
+	//c0>=0, cr>=0, ar>=0
+	const double c0 = Lambda.at(0);
+	const double cr = Lambda.at(1);
+	const double ar = Lambda.at(2);
+
+	if(x==0) {
+		return 0;
+	} else {
+		const double y = c0 + cr*x*x / (1. + x*x/ar);
+		return y;
+	}
+}
+
+void RatQuadVario::setDefaultGuess() {
+	double xzero=X[0];
+	unsigned int xzero_idx=0;
+	for(unsigned int i=1; i<X.size(); i++) {
+		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
+	}
+	Lambda.push_back( Y[xzero_idx] );
+	Lambda.push_back( *( std::max_element( Y.begin(), Y.end() ) ) );
+	Lambda.push_back( 1. );
 }
 
 double LinearLS::f(const double& x) {

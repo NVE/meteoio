@@ -24,39 +24,6 @@ using namespace std;
 namespace mio {
 
 /**
- * @brief This function solves the equation y = kx + d for two given points and returns y for a given x
- * @param x1 x-coordinate of first point
- * @param y1 y-coordinate of first point
- * @param x2 x-coordinate of second point
- * @param y2 y-coordinate of second point
- * @param x3 x-coordinate of desired point
- * @return y-coordinate of desired point
- */
-double Interpol1D::linearInterpolation(const double& x1, const double& y1,
-                                       const double& x2, const double& y2, const double& x3)
-{
-	if (x1 == x2)
-		throw IOException("Attempted division by null", AT);
-
-	//Solving y = kx +d
-	double k = (y1 - y2) / (x1 - x2);
-	double d = y2 - k*x2;
-
-	return (k*x3 + d);
-}
-
-double Interpol1D::linearInterpolation(const double& d1, const double& d2, const double& weight)
-{
-	double tmp = abs(d1 - d2);
-
-	if (d1 < d2) {
-		return (d1 + tmp*weight);
-	} else {
-		return (d1 - tmp*weight);
-	}
-}
-
-/**
  * @brief This function returns the vector of local derivatives, given a vector of abscissae and ordinates.
  * The vectors must be sorted by ascending x. The derivatives will be centered if possible, left or right otherwise or nodata
  * if nothing else can be computed.
@@ -130,15 +97,70 @@ bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::
 	return l.first < r.first;
 }
 
+/**
+ * @brief This function returns the weighted aritmetic mean of two numbers.
+ * A weight of 0 returns d1, a weight of 1 returns d2, a weight of 0.5 returns a centered mean.
+ * See https://secure.wikimedia.org/wikipedia/en/wiki/Weighted_mean for more...
+ * @param d1 first value
+ * @param d2 second value
+ * @param weight weight to apply to the mean
+ * @return weighted aritmetic mean
+ */
+double Interpol1D::weightedMean(const double& d1, const double& d2, const double& weight)
+{
+	double tmp = abs(d1 - d2);
+
+	if (d1 < d2) {
+		return (d1 + tmp*weight);
+	} else {
+		return (d1 - tmp*weight);
+	}
+}
+
+/**
+ * @brief This function returns the weighted aritmetic mean of two a vector.
+ * See https://secure.wikimedia.org/wikipedia/en/wiki/Weighted_mean for more...
+ * @param vecData vector of values
+ * @param weight weights to apply to the mean
+ * @return weighted aritmetic mean
+ */
+double Interpol1D::weightedMean(const std::vector<double>& vecData, const std::vector<double>& weight)
+{
+	const size_t nPts = vecData.size();
+	if (nPts == 0)
+		throw NoAvailableDataException("Trying to calculate an arithmetic mean with no data points", AT);
+	if(nPts != weight.size()) {
+		std::stringstream ss;
+		ss << "Computing weighted mean of a vector of size " << nPts;
+		ss << " with vector of weights of size " << weight.size();
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	double sum = 0., count = 0.;
+	for (size_t ii=0; ii<nPts; ii++){
+		const double value=vecData[ii];
+		if(value!=IOUtils::nodata) {
+			const double w = weight[ii];
+			sum += vecData[ii]*w;
+			count += w;
+		}
+	}
+
+	if(count>0.)
+		return (sum/count);
+	else
+		return IOUtils::nodata;
+}
 
 double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 {
-	if (vecData.size() == 0)
+	const size_t nPts = vecData.size();
+	if (nPts == 0)
 		throw NoAvailableDataException("Trying to calculate an arithmetic mean with no data points", AT);
 
 	unsigned int count=0;
 	double sum = 0.0;
-	for (unsigned int ii=0; ii<vecData.size(); ii++){
+	for (size_t ii=0; ii<nPts; ii++){
 		const double value=vecData[ii];
 		if(value!=IOUtils::nodata) {
 			sum += vecData[ii];
@@ -166,17 +188,17 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 			vecTemp.push_back(value);
 	}
 
-	if (vecTemp.size() == 0)
+	const size_t vecSize = vecTemp.size();
+	if (vecSize == 0)
 		return IOUtils::nodata;
 
-	const size_t vecSize = vecTemp.size();
 	const int middle = (int)(vecSize/2);
 	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
 	if ((vecSize % 2) == 1){ //uneven
 		return *(vecTemp.begin()+middle);
 	} else { //use arithmetic mean of element n/2 and n/2-1
-		return Interpol1D::linearInterpolation( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
+		return weightedMean( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
 	}
 }
 
@@ -362,7 +384,7 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 		return EXIT_FAILURE;
 	}
 
-	Interpol1D::LinRegression(in_X, in_Y, A, B, R, mesg);
+	LinRegression(in_X, in_Y, A, B, R, mesg);
 	if(R>=r_thres)
 		return EXIT_SUCCESS;
 
@@ -376,7 +398,7 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 		for (size_t i=0; i<nb_pts; i++) {
 			//invalidating alternatively each point
 			const double Y_tmp=Y[i]; Y[i]=IOUtils::nodata;
-			Interpol1D::LinRegression(X, Y, a, b, r, mesg);
+			LinRegression(X, Y, a, b, r, mesg);
 			Y[i]=Y_tmp;
 
 			if (fabs(r)>fabs(R)) {
@@ -396,6 +418,57 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 		mesg << "[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
 	}
 
+	return EXIT_SUCCESS;
+}
+
+/**
+* @brief Computes the bi-linear regression coefficients fitting the points given as X and Y in two vectors
+* We consider that the regression can be made with 2 linear segments with a fixed inflection point. It relies on Interpol1D::NoisyLinRegression.
+* @param in_X vector of X coordinates
+* @param in_Y vector of Y coordinates (same order as X)
+* @param bilin_inflection inflection point absissa
+* @param coeffs a,b,r coefficients in a vector
+* @return EXIT_SUCCESS or EXIT_FAILURE
+*/
+int Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, const double& bilin_inflection, std::vector<double>& coeffs)
+{
+	//build segments
+	std::vector<double> X1, Y1, X2, Y2;
+	for(unsigned int ii=0; ii<in_X.size(); ii++) {
+		if(in_X[ii]<bilin_inflection) { //first segment
+			X1.push_back( in_X[ii] );
+			Y1.push_back( in_Y.at(ii) );
+		} else if(in_X[ii]>bilin_inflection) { //second segment
+			X2.push_back( in_X[ii] );
+			Y2.push_back( in_Y.at(ii) );
+		} else { //point belongs to both segments
+			X1.push_back( in_X[ii] );
+			Y1.push_back( in_Y.at(ii) );
+			X2.push_back( in_X[ii] );
+			Y2.push_back( in_Y.at(ii) );
+		}
+	}
+
+	double a1, b1, r1;
+	double a2, b2, r2;
+	//first segment
+	std::stringstream mesg1;
+	const int code1 = NoisyLinRegression(X1, Y1, a1, b1, r1, mesg1);
+
+	//second segment
+	std::stringstream mesg2;
+	const int code2 = NoisyLinRegression(X2, Y2, a2, b2, r2, mesg2);
+
+	/*if(mesg1.str()!="")
+		std::cout << "[E] In Bilinear reg segment1, " << mesg1.str() << std::endl;
+	if(mesg2.str()!="")
+		std::cout << "[E] In Bilinear reg segment2, " << mesg2.str() << std::endl;*/
+
+	if(code1==EXIT_FAILURE && code2==EXIT_FAILURE)
+		return EXIT_FAILURE;
+
+	coeffs.push_back(a1); coeffs.push_back(b1);
+	coeffs.push_back(a2); coeffs.push_back(b2);
 	return EXIT_SUCCESS;
 }
 

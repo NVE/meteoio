@@ -74,6 +74,7 @@ void FilterMedianAvg::process(const unsigned int& index, const std::vector<Meteo
  */
 double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
 {
+	//HACK: once we would filter on vectors of double, directly call the proper stats method
 	if (vec_window.size() == 0)
 		return IOUtils::nodata;
 
@@ -82,21 +83,19 @@ double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector
 		const double& value = (*vec_window[ii]).param(index);
 		if (value != IOUtils::nodata)
 			vecTemp.push_back(value);
-
-		//cout << "Adding value: " << value << endl;
 	}
 
-	if (vecTemp.size() == 0)
+	const size_t size_of_vec = vecTemp.size();
+	if (size_of_vec == 0)
 		return IOUtils::nodata;
 
-	const size_t size_of_vec = vecTemp.size();
 	const int middle = (int)(size_of_vec/2);
 	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 
 	if ((size_of_vec % 2) == 1){ //uneven
 		return *(vecTemp.begin()+middle);
 	} else { //use arithmetic mean of element n/2 and n/2-1
-		return Interpol1D::linearInterpolation( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
+		return Interpol1D::weightedMean( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
 	}
 }
 

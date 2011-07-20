@@ -29,15 +29,14 @@ class SimpleLinear : public FitModel {
 	public:
 		SimpleLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
-		void setGuess(const std::vector<double> /*lambda_in*/) {};
-		bool initFit();
+		bool fit();
 		double f(const double& x);
 };
 
 class NoisyLinear : public SimpleLinear {
 	public:
 		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "NoisyLinear";};
-		bool initFit();
+		bool fit();
 };
 
 class SphericVario : public FitLeastSquare {
@@ -50,6 +49,20 @@ class SphericVario : public FitLeastSquare {
 class LinVario : public FitLeastSquare {
 	public:
 		LinVario() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinVario";};
+		void setDefaultGuess();
+		double f(const double& x);
+};
+
+class ExpVario : public FitLeastSquare {
+	public:
+		ExpVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "ExpVario";};
+		void setDefaultGuess();
+		double f(const double& x);
+};
+
+class RatQuadVario : public FitLeastSquare {
+	public:
+		RatQuadVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "RatQuadVario";};
 		void setDefaultGuess();
 		double f(const double& x);
 };
@@ -92,15 +105,17 @@ class Fit1D {
 
 		/**
 		* @brief Provide a set of initial values for the model parameters.
+		* The model can be used right after providing the guesses, and it would use those guesses as parameters,
+		* thus allowing the user to force his model parameters.
 		* @param lambda_in one initial value per model parameter
 		*/
-		void setGuess(const std::vector<double> lambda_in) {fit->setGuess(lambda_in);};
+		void setGuess(const std::vector<double> lambda_in) {model->setGuess(lambda_in);};
 
 		/**
 		* @brief Compute the regression parameters
 		* @return false if could not find the parameters
 		*/
-		bool initFit() {return fit->initFit();};
+		bool fit() {return model->fit();};
 
 		/**
 		* @brief Calculate a value using the computed least square fit.
@@ -108,30 +123,30 @@ class Fit1D {
 		* @param x abscissa
 		* @return f(x) using the computed least square fit
 		*/
-		double f(const double& x) {return fit->f(x);};
+		double f(const double& x) {return model->f(x);};
 
 		/**
 		* @brief Calculate the parameters of the fit.
 		* The fit has to be computed before.
 		* @param coefficients vector containing the coefficients
 		*/
-		void getParams(std::vector<double>& coefficients) {fit->getParams(coefficients);};
+		void getParams(std::vector<double>& coefficients) {model->getParams(coefficients);};
 
 		/**
 		* @brief Return the name of the fit model.
 		* @return model name
 		*/
-		std::string getModel() {return fit->getModel();};
+		std::string getName() {return model->getName();};
 
 		/**
 		* @brief Return a string of information about the fit.
 		* The fit has to be computed before.
 		* @return info string
 		*/
-		std::string getInfo() {return fit->getInfo();};
+		std::string getInfo() {return model->getInfo();};
 
 	private:
-		FitModel *fit;
+		FitModel *model;
 };
 
 } //end namespace

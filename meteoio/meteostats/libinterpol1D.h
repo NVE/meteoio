@@ -37,11 +37,10 @@ namespace mio {
  */
 class Interpol1D {
  	public:
-		static double linearInterpolation(const double& x1, const double& y1,
-                                            const double& x2, const double& y2, const double& x3);
-  		static double linearInterpolation(const double& d1, const double& d2, const double& weight=1.0);
 		static std::vector<double> derivative(const std::vector<double>& X, const std::vector<double>& Y);
 		static void sort(std::vector<double>& X, std::vector<double>& Y);
+		static double weightedMean(const double& d1, const double& d2, const double& weight=1.);
+		static double weightedMean(const std::vector<double>& vecData, const std::vector<double>& weight);
 		static double arithmeticMean(const std::vector<double>& vecData);
 		static double getMedian(const std::vector<double>& vecData);
 		static double getMedianAverageDeviation(const std::vector<double>& vecData);
@@ -51,6 +50,7 @@ class Interpol1D {
 
 		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 		static int NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::stringstream& mesg);
+		static int twoLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, const double& bilin_inflection, std::vector<double>& coeffs);
 		static void LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 		static void ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 
