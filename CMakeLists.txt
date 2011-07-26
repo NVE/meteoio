@@ -142,6 +142,7 @@ ENDIF(GSOAPPP AND NOT EXISTS ${GSOAPPP})
 FILE(GLOB hfiles "meteoio/*.h")
 FILE(GLOB hlawsfiles "meteoio/meteolaws/*.h")
 FILE(GLOB hfilterfiles "meteoio/meteofilters/*.h")
+FILE(GLOB hstatsfiles "meteoio/meteostats/*.h")
 
 IF(DEST MATCHES "par")
 	FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.ph")
@@ -151,6 +152,7 @@ ENDIF(DEST MATCHES "par")
 INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include/meteoio COMPONENT headers)
 INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT headers)
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
+INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteostats COMPONENT headers)
 
 IF(WIN32) #handle the special case of WIN32 needing import libraries
 	FILE(GLOB_RECURSE importlibs "lib/libmeteoio*.lib*")
