@@ -109,6 +109,14 @@ namespace IOUtils {
 	*/
 	double angle_to_bearing(const double& angle);
 
+	/**
+	* @brief Build a list of file in a given directory.
+	* The matching is very primitive: it only looks for the substring "pattern" in the file names.
+	* If this substrings exists, the file matches.
+	* @param path directory containing the files
+	* @param dirlist list of mathcing file names
+	* @param pattern optional pattern that must be part of the file names
+	*/
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern = "");
 
 	bool validFileName(const std::string& filename);

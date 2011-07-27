@@ -523,19 +523,26 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, i
 }
 
 /**
-* @brief Return year, month, day.
+* @brief Return the julian day for the current date.
 * Return the day of the year index for the current Date object
+* @param gmt convert returned value to GMT? (default: false)
 * @return julian day number
 */
-int Date::getJulianDayNumber() const {
+int Date::getJulianDayNumber(const bool& gmt) const {
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	//this is quite inefficient... we might want to deal with leap years with their rule + days arrays instead
-	int local_year, local_month, local_day, local_hour, local_minute;
-	getDate(local_year, local_month, local_day, local_hour, local_minute);
-
-	return (getJulianDayNumber(local_year, local_month, local_day));
+	if(gmt) {
+		const double first_day_of_year = getJulianDayNumber(gmt_year, 1, 1);
+		return (gmt_julian - first_day_of_year + 1);
+	} else {
+		const double local_julian = GMTToLocal(gmt_julian);
+		int local_year, local_month, local_day, local_hour, local_minute;
+		calculateValues(local_julian, local_year, local_month, local_day, local_hour, local_minute);
+		const double in_day_offset = 1./24.*((double)local_hour+1./60.*(double)local_minute) - 0.5;
+		const double first_day_of_year = static_cast<double>(getJulianDayNumber(local_year, 1, 1)) + in_day_offset;
+		return (local_julian - first_day_of_year + 1);
+	}
 }
 
 /**

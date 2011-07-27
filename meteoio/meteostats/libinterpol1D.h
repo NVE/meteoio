@@ -37,6 +37,7 @@ namespace mio {
  */
 class Interpol1D {
  	public:
+		static std::vector<double> quantiles(const std::vector<double>& X, const std::vector<double>& quartiles);
 		static std::vector<double> derivative(const std::vector<double>& X, const std::vector<double>& Y);
 		static void sort(std::vector<double>& X, std::vector<double>& Y);
 		static double weightedMean(const double& d1, const double& d2, const double& weight=1.);

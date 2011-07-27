@@ -39,6 +39,16 @@ BufferedIOHandler::~BufferedIOHandler() throw()
 #endif
 {}
 
+void BufferedIOHandler::bufferGrid(const Grid2DObject& in_grid2Dobj, const std::string& in_filename)
+{
+	if(IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid
+		mapBufferedGrids.erase( mapBufferedGrids.find( IndexBufferedGrids[0] ) );
+		IndexBufferedGrids.erase( IndexBufferedGrids.begin() );
+	}
+	mapBufferedGrids[in_filename] = in_grid2Dobj;
+	IndexBufferedGrids.push_back( in_filename  );
+}
+
 void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string& in_filename)
 {
 	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(in_filename);
@@ -49,7 +59,7 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string
 
 	Grid2DObject tmpgrid2D;
 	iohandler.read2DGrid(tmpgrid2D, in_filename);
-	mapBufferedGrids[in_filename] = tmpgrid2D;
+	bufferGrid(tmpgrid2D, in_filename);
 	in_grid2Dobj = tmpgrid2D;
 }
 
@@ -91,6 +101,7 @@ void BufferedIOHandler::readLanduse(Grid2DObject& in_grid2Dobj)
 	in_grid2Dobj = tmpgrid2D;
 }
 
+//HACK: manage buffering of assimilation grids! Why not considering them normal grids?
 void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& in_grid2Dobj)
 {
 	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + in_date.toString(Date::FULL));
@@ -149,6 +160,9 @@ void BufferedIOHandler::setDfltBufferProperties()
 			buff_before = chunk_size * 0.1; //10% centering by default
 		}
 	}
+
+	max_grids = 10; //default number of grids to keep in buffer
+	cfg.getValue("BUFF_GRIDS", "General", max_grids, Config::nothrow);
 }
 
 double BufferedIOHandler::getAvgSamplingRate()

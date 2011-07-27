@@ -81,11 +81,24 @@ class Quadratic : public FitLeastSquare {
 		double f(const double& x);
 };
 
+//HACK: write copy constructor for Fit1D!!! needed to pass a Fit1D object by copy
 
 /**
  * @class Fit1D
  * @brief A class to perform 1D regressions
- * It works on a time serie and uses matrix arithmetic to perform an arbitrary fit.
+ * It works on a time serie and uses either ad-hoc methods or matrix arithmetic to perform an arbitrary fit.
+ * Currently, the following models are supported:
+ * - SimpleLinear
+ * - NoisyLinear
+ * - SphericVario
+ * - LinVario
+ * - ExpVario
+ * - RatQuadVario
+ * - LinearLS
+ * - Quadratic
+ *
+ * However, the current way of specifying which model to use by providing the constructor with a string WILL change to
+ * an enum.
  *
  * @ingroup stats
  * @author Mathias Bavay

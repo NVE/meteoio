@@ -42,6 +42,8 @@ namespace mio {
  * - BUFF_BEFORE: alternate way of buffer centering: When rebuffering, the new date will be located BUFF_BEFORE days from the
  *                begining of the buffer (therefore, it takes a value in days); [General] section, optional. Only one of
  *                two centering option can be used.
+ * - BUFF_GRIDS: how many grids to keep in the buffer. If more grids have to be read, the oldest ones will be removed from
+ *               the buffer. (10 by default)
  *
  * @author Thomas Egger
  * @date   2009-07-25
@@ -125,6 +127,7 @@ class BufferedIOHandler : public IOInterface {
 
 		void setDfltBufferProperties();
 		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo);
+		void bufferGrid(const Grid2DObject& in_grid2Dobj, const std::string& in_filename);
 
 		//private members
 		IOHandler& iohandler;
@@ -132,11 +135,13 @@ class BufferedIOHandler : public IOInterface {
 
 		std::vector< METEO_TIMESERIE > vec_buffer_meteo;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
+		std::vector<std::string> IndexBufferedGrids;
 
 		Date buffer_start, buffer_end;
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer
 		unsigned int chunks; ///< How many chuncks to buffer
+		unsigned int max_grids; ///< How many grids to buffer (grids, dems, landuse and assimilation grids together)
 };
 } //end namespace
 #endif

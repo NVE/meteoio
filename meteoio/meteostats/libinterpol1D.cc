@@ -24,6 +24,62 @@ using namespace std;
 namespace mio {
 
 /**
+ * @brief This function returns a vector of quantiles.
+ * The vector does not have to be sorted. See https://secure.wikimedia.org/wikipedia/en/wiki/Quartile for more.
+ * This code is heavily inspired by Ken Wilder, https://sites.google.com/site/jivsoft/Home/compute-ranks-of-elements-in-a-c---array-or-vector
+ * (quantile method, replacing the nth-element call by direct access to a sorted vector).
+ * @param X vector to classify
+ * @param quartiles vector of quartiles, between 0 and 1
+ * @return vector of ordinates of the quantiles
+ */
+std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const std::vector<double>& quartiles)
+{
+	const size_t Xsize = X.size();
+	const size_t Qsize = quartiles.size();
+	if (Xsize == 0)
+		throw NoAvailableDataException("Trying to calculate quantiles with no data points", AT);
+	if (Qsize == 0)
+		throw NoAvailableDataException("No quantiles specified", AT);
+
+	//in order to properly escape nodata points, we need to copy in a temporary vector
+	vector<double> vecTemp;
+	for(size_t i=0; i<Xsize; i++) {
+		const double& value=X[i];
+		if(value!=IOUtils::nodata)
+			vecTemp.push_back(value);
+	}
+	std::sort( vecTemp.begin(), vecTemp.end()); //since we will process several values, we sort the vector
+
+	//we will store results in a new vector
+	std::vector<double> vecResults(Qsize, IOUtils::nodata);
+
+	const size_t vecSize = vecTemp.size();
+	if (vecSize == 0) {
+		return vecResults; //ie: nodata values
+	}
+	if(vecSize == 1) {
+		std::fill(vecResults.begin(), vecResults.end(), vecTemp[0]);
+		return vecResults;
+	}
+
+	//compute quantiles
+	for(size_t ii=0; ii<Qsize; ii++) {
+		const double q = quartiles[ii];
+		if(q<=0.) vecResults[ii] = vecTemp[0];
+		else if(q>=1.) vecResults[ii] = vecTemp[vecSize-1];
+		else {
+			const double pos = static_cast<double>(vecSize - 1) * q;
+			const unsigned int ind = static_cast<unsigned int>(pos);
+			const double delta = pos - static_cast<double>(ind);
+			const double i1 = vecTemp[ind];
+			const double i2 = vecTemp[ind+1];
+			vecResults[ii] = i1 * (1.0 - delta) + i2 * delta;
+		}
+	}
+	return vecResults;
+}
+
+/**
  * @brief This function returns the vector of local derivatives, given a vector of abscissae and ordinates.
  * The vectors must be sorted by ascending x. The derivatives will be centered if possible, left or right otherwise or nodata
  * if nothing else can be computed.
@@ -118,7 +174,7 @@ double Interpol1D::weightedMean(const double& d1, const double& d2, const double
 }
 
 /**
- * @brief This function returns the weighted aritmetic mean of two a vector.
+ * @brief This function returns the weighted aritmetic mean of a vector.
  * See https://secure.wikimedia.org/wikipedia/en/wiki/Weighted_mean for more...
  * @param vecData vector of values
  * @param weight weights to apply to the mean

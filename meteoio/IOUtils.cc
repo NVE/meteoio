@@ -479,7 +479,7 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& time_
 
 		const std::string datum = str.substr(beg, end-beg);
 		const size_t d_len = datum.length();
-		if(d_len<8 || d_len>14) return false;
+		if(d_len<10 || d_len>14) return false;
 		if( convertString(year,datum.substr(0,4))==false ) return false;
 		if( convertString(month,datum.substr(4,2))==false ) return false;
 		if( convertString(day,datum.substr(6,2))==false ) return false;

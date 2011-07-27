@@ -125,7 +125,7 @@ class Date {
 		void getDate(int& year, int& month, int& day, int& hour, int& minute, const bool& gmt=false) const;
 		int getYear(const bool& gmt=false) const;
 
-		int getJulianDayNumber() const;
+		int getJulianDayNumber(const bool& gmt=false) const;
 		bool isLeapYear() const;
 
 		void rnd(const double& precision, const RND& type=CLOSEST);
