@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
+#include <meteoio/libsmet.h>
 
 #include <string>
 
@@ -60,40 +61,17 @@ class SMETIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
 	private:
-		static const std::string smet_version;
-		static const unsigned int buffer_reserve; //for optimizing vectors (ie: avoid unecessary resizing)
-		static std::map<std::string, MeteoData::Parameters> mapParameterByName; ///<Associate name and meteo parameter
-		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname
-		static double& getParameter(const std::string& columnName, MeteoData& md);
-		static void checkColumnNames(const std::vector<std::string>& vecColumns, const bool& locationInHeader);
+		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
+		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes, 
+						 bool& julian_present, MeteoData& md);
+		void copy_data(const smet::SMETReader& myreader, const std::vector<std::string>& timestamps, 
+ 		               const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo);
 
-		void cleanup() throw();
 		void parseInputOutputSection();
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
                                       std::vector<bool>& vecParamInUse);
-		void writeHeaderSection(const bool& writeLocationInHeader, const StationData& sd,
-                                  const double& timezone, const std::vector<bool>& vecParamInUse);
-		void writeDataAscii(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
-                              const std::vector<bool>& vecParamInUse);
-		void writeDataBinary(const bool& writeLocationInHeader, const std::vector<MeteoData>& vecMeteo,
-                               const std::vector<bool>& vecParamInUse);
-
-		void readHeader(const char& eoln, const std::string& filename, bool& locationInHeader,
-                                double& timezone, StationData& sd, std::vector<std::string>& vecDataSequence,
-		                std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier);
-		void readDataAscii(const char& eoln, const std::string& filename, const double& timezone,
-		                   const StationData& sd, const std::vector<std::string>& vecDataSequence,
-		                   const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
-		                   const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stat_idx);
-		void readDataBinary(const char& eoln, const std::string& filename, const double& timezone,
-		                    const StationData& sd, const std::vector<std::string>& vecDataSequence,
-		                    const std::vector<double>& vecUnitsOffset, std::vector<double>& vecUnitsMultiplier,
-		                    const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo);
-
-		void checkSignature(const std::vector<std::string>& vecSignature, const std::string& filename, bool& isAscii);
-		void setFormatting(const MeteoData::Parameters& paramindex);
+		void getFormatting(const size_t& param, size_t& prec, size_t& width);
 
 		unsigned int nr_stations; //number of stations to read from
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
@@ -103,10 +81,8 @@ class SMETIO : public IOInterface {
 		double plugin_nodata;
 
 		Config cfg;
-		std::ifstream fin; //Input file streams
-		std::ofstream fout; //Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
-		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
+		std::vector<smet::SMETReader> vec_smet_reader;
 };
 
 } //namespace

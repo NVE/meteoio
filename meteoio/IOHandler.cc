@@ -181,7 +181,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	}
 
 	if ((mapit->second).io == NULL) {
-		throw IOException("Requesting to read/write data with plugin for " + cfgkey + ", but plugin is not loaded", AT);
+		throw IOException("Requesting to read/write data with plugin '" + op_src + "', but plugin is not loaded", AT);
 	}
 
 	return (mapit->second).io;

@@ -18,6 +18,7 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 #	FilterAlgorithms.cc obsoleted
 SET(meteoio_sources
 	IOManager.cc
+	libsmet.cc
 	Matrix.cc
 	IOPlugin.cc
 	MeteoProcessor.cc
