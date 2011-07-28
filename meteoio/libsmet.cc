@@ -974,6 +974,14 @@ void SMETReader::read(std::vector<double>& vec_data)
 	
 	try {
 		fin.seekg(data_start_fpointer); //jump to data start position in the file
+		if (julian_interval && julian_present){
+			map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
+			if ( it != map_julian_streampos.end())
+				fin.seekg(it->second);
+		}
+
+		if (fin.fail() || fin.bad())
+			fin.seekg(data_start_fpointer);
 
 		if (isAscii)
 			read_data_ascii(fin, tmp_vec, vec_data);
@@ -1049,7 +1057,9 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 
 void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_data)
 {
+	streampos current_fpointer = -1;
 	while (!fin.eof()){
+		streampos tmp_fpointer = fin.tellg();
 		double julian = -1.0;
 		for (size_t ii=0; ii<nr_of_fields; ii++){
 			if (julian_present && (ii == julian_field)){
@@ -1077,6 +1087,10 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 				for (size_t ii=0; ii<nr_of_fields; ii++){
 					vec_data.pop_back();
 				}
+
+				if (julian > julian_end) break; //skip the rest of the file
+			} else {//we have a valid date
+				current_fpointer = tmp_fpointer;
 			}
 		}
 
@@ -1085,6 +1099,11 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 		if (c != '\n')
 			throw SMETException("Corrupted data in section [DATA]", SMET_AT);
 	}
+
+	if (current_fpointer != -1){
+		if (julian_interval && julian_present)
+			map_julian_streampos[julian_end] = current_fpointer;
+	}				
 }
 
 double SMETReader::get_header_doublevalue(const std::string& key) const
