@@ -203,26 +203,26 @@ class SMETReader {
 		void process_header();
 
 		std::streampos data_start_fpointer;
-		char eoln;
+		char eoln; //end of line character for this file
 
 		std::string filename;
-		size_t nr_of_fields;
+		size_t nr_of_fields; //is always the number of fields minus the timestamp field, if present
 		bool timestamp_present, julian_present;
-		size_t timestamp_field, julian_field;
-		bool isAscii;
+		size_t timestamp_field, julian_field; //index of the timestamp and julian column, if present
+		bool isAscii; //true if the file is in SMET ASCII format, false if it is in binary format
 		char location_wgs84, location_epsg, location_data_wgs84, location_data_epsg;
-		double nodata_value;
-		bool mksa;
-		bool timestamp_interval, julian_interval;
-		double julian_start, julian_end;
-		std::string timestamp_start, timestamp_end;
+		double nodata_value; //The nodata value as seen in the header section of the SMET file
+		bool mksa; //true if MKSA converted values have to be returned
+		bool timestamp_interval, julian_interval; //true if data shall only be read for a time interval
+		double julian_start, julian_end; //the beginning and end date of the current julian_interval
+		std::string timestamp_start, timestamp_end; //the beginning and end date of the current timestamp_interval
 
-		std::vector<double> vec_offset;
-		std::vector<double> vec_multiplier;
-		std::vector<std::string> vec_fieldnames;
-		std::map< std::string, std::string > header;
+		std::vector<double> vec_offset;              //an offset for every column, except timestamp
+		std::vector<double> vec_multiplier;          //a multiplier for every column, except timestamp
+		std::vector<std::string> vec_fieldnames;     //holds the column names, except for timestamp column
+		std::map< std::string, std::string > header; //holds the header
 		std::map<std::string, std::streampos> map_timestamp_streampos; //in order to save file pointers
-		std::map<double, std::streampos> map_julian_streampos; //in order to save file pointers
+		std::map<double, std::streampos> map_julian_streampos;         //in order to save file pointers
 };
 
 /**
