@@ -273,8 +273,8 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 		double north = myreader.get_header_doublevalue("northing");
 		double alt   = myreader.get_header_doublevalue("altitude");
 		short int epsg  = (short int)(floor(myreader.get_header_doublevalue("epsg") + 0.1));
+		meta.position.setEPSG(epsg); //this needs to be set before calling setXY(...)
 		meta.position.setXY(east, north, alt);
-		meta.position.setEPSG(epsg);
 	}
 	
 	meta.stationID = myreader.get_header_value("station_id");
@@ -409,7 +409,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		vector<double> mydata; //sequentially store all data in the smet file
 		vector<string> mytimestamps;
-		
+
 		if (myreader.contains_timestamp()){
 			myreader.read(dateStart.toString(Date::ISO), dateEnd.toString(Date::ISO), mytimestamps, mydata);
 		} else {

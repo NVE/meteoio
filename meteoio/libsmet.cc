@@ -943,7 +943,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 
 		if (fin.fail() || fin.bad())
 			fin.seekg(data_start_fpointer);
-	
+
 		if (isAscii)
 			read_data_ascii(fin, vec_timestamp, vec_data);
 		else
@@ -1008,14 +1008,18 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 			size_t shift = 0;
 			if (julian_interval && julian_present){
 				double current_julian = SMETCommon::convert_to_double(tmp_vec[julian_field]);
-				if ((current_julian < julian_start) || (current_julian > julian_end))
+				if (current_julian < julian_start) 
 					continue; //skip lines that don't hold the dates we're interested in
+				else if (current_julian > julian_end)
+					break; //skip the rest of the file
 			}
 
 			if (timestamp_interval && timestamp_present){
 				const string& current_timestamp = tmp_vec[timestamp_field];
-				if (( current_timestamp< timestamp_start) || (current_timestamp > timestamp_end))
+				if (current_timestamp < timestamp_start)
 					continue; //skip lines that don't hold the dates we're interested in
+				else if (current_timestamp > timestamp_end)
+					break; //skip the rest of the file
 			}
 
 			for (size_t ii=0; ii<tmp_vec.size(); ii++){
