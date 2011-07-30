@@ -72,6 +72,7 @@
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/StationData.h>
 #include <meteoio/Timer.h>
+#include <meteoio/libsmet.h>
 
 #ifdef _POPC_
 #include <meteoio/marshal_meteoio.h>

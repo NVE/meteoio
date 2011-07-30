@@ -85,6 +85,15 @@ double SMETCommon::convert_to_double(const std::string& in_string)
 	return value;
 }
 
+int SMETCommon::convert_to_int(const std::string& in_string)
+{
+	istringstream ss(in_string);
+	int value;
+	if (!(ss >> value)) throw SMETException("Value '" + in_string + "' cannot be converted to int", SMET_AT);
+
+	return value;
+}
+
 void SMETCommon::trim(std::string& str)
 {
 	const std::string whitespaces(" \t\f\v\n\r");
@@ -250,7 +259,10 @@ void SMETWriter::set_header_value(const std::string& key, const double& value)
 
 		set_header_value(key, ss.str());
 	} else {
-		throw SMETException("Trying to set a decimal value when a non-decimal is expected", SMET_AT);
+		//It's a non-standard header value
+		stringstream ss;
+		ss << value; //for nodata
+		set_header_value(key, ss.str());
 	}
 }
 
@@ -259,6 +271,10 @@ void SMETWriter::set_header_value(const std::string& key, const std::string& val
 	//check if header key/value pair is valid
 	if (valid_header_pair(key, value)){
 		header[key] = value;		
+
+		if ((SMETCommon::all_optional_header_keys.find(key) == SMETCommon::all_optional_header_keys.end())
+		    && (SMETCommon::all_mandatory_header_keys.find(key) == SMETCommon::all_mandatory_header_keys.end()))
+			other_header_keys.push_back(key);
 	} else {
 		throw SMETException("Invalid, inconsistent or unknown key/value pair: " + key + " = " + value, SMET_AT);
 	}
@@ -266,15 +282,12 @@ void SMETWriter::set_header_value(const std::string& key, const std::string& val
 
 bool SMETWriter::valid_header_pair(const std::string& key, const std::string& value)
 {
-	bool key_ok = false;
+	bool key_ok = true;
 
 	if (SMETCommon::all_mandatory_header_keys.find(key) != SMETCommon::all_mandatory_header_keys.end()){
 		mandatory_header_keys.insert(key);
 		key_ok = true;
 	}
-
-	//if (SMETCommon::all_optional_header_keys.find(key) != SMETCommon::all_optional_header_keys.end())
-	key_ok = true; //it doesn't matter if key is mandatory or optional
 
 	//nodata value needs extra treatment
 	if (key == "nodata"){
@@ -328,7 +341,7 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 	} else {
 		nr_of_fields = counter;
 	}
-	
+
 	size_t count_wgs84 = 0, count_epsg = 0;
 	if (key == "fields"){
 		//set<string> fieldnames; //this will help us locate duplicate fields
@@ -543,6 +556,10 @@ void SMETWriter::write_header()
 	it = header.find("comment");
 	if (it != header.end()) 
 		fout << "comment          = " << it->second << endl;
+
+	for (size_t ii=0; ii<other_header_keys.size(); ii++){
+		fout << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << endl;
+	}
 
 	fout << "fields           = " << header["fields"] << endl;
 	fout << "[DATA]" << endl;
@@ -762,13 +779,9 @@ void SMETReader::process_header()
 		else if (it->first == "altitude") location_epsg |= 4;
 		else if (it->first == "epsg")     location_epsg |= 8;
 
-		//Now do some value checks
-		if (it->first == "epsg"){
-			istringstream ss(it->second);
-			int intvalue;
-			if (!(ss >> intvalue)) 
-				throw SMETException("In " + filename + ": EPSG code not an integer number", SMET_AT);
-		}	
+		//Now do a value check on EPSG
+		if (it->first == "epsg")
+			SMETCommon::convert_to_int(it->second);
 	}
 
 	if (get_header_value("units_offset") != ""){
@@ -1115,6 +1128,15 @@ double SMETReader::get_header_doublevalue(const std::string& key) const
 	return nodata_value;
 }
 
+int SMETReader::get_header_intvalue(const std::string& key) const
+{
+	map<string,string>::const_iterator it = header.find(key);
+	if (it != header.end())
+		return SMETCommon::convert_to_int(it->second);
+
+	return floor(nodata_value + 0.1);
+}
+
 std::string SMETReader::get_header_value(const std::string& key) const
 {
 	map<string,string>::const_iterator it = header.find(key);
@@ -1127,6 +1149,11 @@ std::string SMETReader::get_header_value(const std::string& key) const
 bool SMETReader::contains_timestamp() const
 {
 	return timestamp_present;
+}
+
+std::string SMETReader::get_filename() const
+{
+	return filename;
 }
 
 } //end namespace

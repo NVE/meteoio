@@ -18,6 +18,7 @@
 #ifndef __LIBSMET_H__
 #define __LIBSMET_H__
 
+#include <cmath>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -60,6 +61,7 @@ class SMETException : public std::exception {
 class SMETCommon {
 	public:
 		static double convert_to_double(const std::string& in_string);
+		static int convert_to_int(const std::string& in_string);
 		static void stripComments(std::string& str);
 		static char getEoln(std::istream& fin);
 		static void trim(std::string& str);
@@ -143,6 +145,13 @@ class SMETReader {
 		 * @return The value for the key, if the key is not present return nodata
 		 */
 		double get_header_doublevalue(const std::string& key) const;
+
+		/**
+		 * @brief Get an int value for a header key in a SMET file
+		 * @param[in] key A key in the header section of a SMET file
+		 * @return The value for the key, if the key is not present return (int)nodata
+		 */
+		int get_header_intvalue(const std::string& key) const;
 		
 		/**
 		 * @brief Check whether timestamp is a part of the fields
@@ -193,6 +202,12 @@ class SMETReader {
 		 * @param[in] in_mksa True if the user wants MKSA values returned, false otherwise (default)
 		 */
 		void convert_to_MKSA(const bool& in_mksa);
+
+		/**
+		 * @brief Retrieve the filename that this reader operates upon
+		 * @return a std::string representing the filename
+		 */
+		std::string get_filename() const;
 
 	private:
 		void read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
@@ -314,6 +329,7 @@ class SMETWriter {
 		bool file_is_binary;
 		char location_wgs84, location_epsg;
 
+		std::vector<std::string> other_header_keys; //this vector is used to preserve the sequence of header keys
 		std::vector<size_t> ascii_precision, ascii_width;
 		std::map< std::string, std::string > header;
 		std::set<std::string> mandatory_header_keys;
