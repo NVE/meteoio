@@ -25,19 +25,29 @@ using namespace std;
 namespace mio {
 
 //default constructor
-Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) {
-	if(regType=="SimpleLinear") model=new SimpleLinear;
-	if(regType=="NoisyLinear") model=new NoisyLinear;
-	if(regType=="SphericVario") model=new SphericVario;
-	if(regType=="LinVario") model=new LinVario;
-	if(regType=="LinearLS") model=new LinearLS;
-	if(regType=="Quadratic") model=new Quadratic;
+Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) {
+	if(regType==SIMPLE_LINEAR) model=new SimpleLinear;
+	if(regType==NOISYLINEAR) model=new NoisyLinear;
+	if(regType==LINVARIO) model=new LinVario;
+	if(regType==EXPVARIO) model=new ExpVario;
+	if(regType==SPHERICVARIO) model=new SphericVario;
+	if(regType==RATQUADVARIO) model=new RatQuadVario;
+	if(regType==LINEARLS) model=new LinearLS;
+	if(regType==QUADRATIC) model=new Quadratic;
 
 	model->setData(in_X, in_Y);
 }
 
-Fit1D::~Fit1D() {
-	delete model;
+Fit1D::Fit1D(const Fit1D& i_fit) {
+	*this = i_fit;
+}
+
+Fit1D& Fit1D::operator=(const Fit1D& source) {
+	if(this != &source) {
+		model = new SimpleLinear; //this is only for memory allocation
+		*model = *(source.model); //copy what is pointed to
+	}
+	return *this;
 }
 
 //////////////////////////////////////////////////////////////
@@ -53,7 +63,7 @@ void SimpleLinear::setData(const std::vector<double>& in_X, const std::vector<do
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	const double nPts=X.size();
+	nPts=X.size();
 	if(nPts<min_nb_pts) {
 		stringstream ss;
 		ss << "Only " << nPts << " data points for " << regname << " regression model.";

@@ -30,6 +30,7 @@ namespace mio {
 class FitModel {
 	public:
 		FitModel() {};
+		FitModel(const FitModel& source);
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
 		void setGuess(const std::vector<double> lambda_in);
 		virtual bool fit() = 0;
@@ -37,7 +38,9 @@ class FitModel {
 		void getParams(std::vector<double>& o_coefficients);
 		std::string getName() {return regname;};
 		std::string getInfo();
+		FitModel& operator =(const FitModel& source);
 	protected:
+		unsigned int nPts; //number of data points
 		std::string regname; //model name
 		unsigned int nParam; //number of parameters
 		unsigned int min_nb_pts; //minimum number of data points
@@ -68,7 +71,6 @@ class FitLeastSquare : public FitModel {
 		virtual void setDefaultGuess(); //set defaults guess values. Called by setData
 
 	private:
-		unsigned int nPts; //number of data points
 		void checkInputs();
 		void initLambda();
 		void initDLambda(Matrix& dLambda) const;

@@ -88,14 +88,16 @@ class Quadratic : public FitLeastSquare {
  * @brief A class to perform 1D regressions
  * It works on a time serie and uses either ad-hoc methods or matrix arithmetic to perform an arbitrary fit.
  * Currently, the following models are supported:
- * - SimpleLinear
- * - NoisyLinear
- * - SphericVario
- * - LinVario
- * - ExpVario
- * - RatQuadVario
- * - LinearLS
- * - Quadratic
+ * - Specific fits:
+ *    - SimpleLinear:
+ *    - NoisyLinear
+ * - Least Square fits:
+ *    - SphericVario
+ *    - LinVario
+ *    - ExpVario
+ *    - RatQuadVario
+ *    - LinearLS
+ *    - Quadratic
  *
  * However, the current way of specifying which model to use by providing the constructor with a string WILL change to
  * an enum.
@@ -106,15 +108,33 @@ class Quadratic : public FitLeastSquare {
  */
 class Fit1D {
  	public:
+		///Keywords for regression model
+		typedef enum REGRESSION {
+			SIMPLE_LINEAR, ///< basic, cheap linear fit
+			NOISYLINEAR, ///< same as SIMPLE_LINEAR but trying to remove outliers
+			LINVARIO, ///< linear variogram
+			EXPVARIO, ///< exponential variogram
+			SPHERICVARIO, ///< spherical variogram
+			RATQUADVARIO, ///< rational quadratic variogram
+			LINEARLS, ///< linear, using least squares
+			QUADRATIC ///< quadratic
+		} regression;
+
 		/**
 		* @brief Constructor.
-		* @param regType regression model to use
+		* @param i_regType regression model to use
 		* @param in_X vector of data points abscissae
 		* @param in_Y vector of data points ordinates
 		*/
-		Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y);
+		Fit1D(const regression& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y);
 
-		~Fit1D();
+		/**
+		* @brief Copy constructor.
+		* @param i_fit Object to copy
+		*/
+		Fit1D(const Fit1D& i_fit);
+
+		~Fit1D() {delete model;};
 
 		/**
 		* @brief Provide a set of initial values for the model parameters.
@@ -157,6 +177,8 @@ class Fit1D {
 		* @return info string
 		*/
 		std::string getInfo() {return model->getInfo();};
+
+		Fit1D& operator =(const Fit1D& source);
 
 	private:
 		FitModel *model;

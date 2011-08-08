@@ -23,6 +23,10 @@ using namespace std;
 
 namespace mio {
 
+FitModel::FitModel(const FitModel& source) {
+	*this = source;
+}
+
 void FitModel::getParams(std::vector<double>& o_coefficients) {
 	if(fit_ready!=true) {
 		throw InvalidArgumentException("The regression has not yet being computed!", AT);
@@ -51,6 +55,21 @@ void FitModel::setGuess(const std::vector<double> lambda_in) {
 		Lambda.push_back( lambda_in[i] );
 	}
 	fit_ready = true;
+}
+
+FitModel& FitModel::operator =(const FitModel& source) {
+	if(this != &source) {
+		nPts = source.nPts;
+		regname = source.regname;
+		nParam = source.nParam;
+		min_nb_pts = source.min_nb_pts;
+		fit_ready = source.fit_ready;
+		infoString = source.infoString;
+		Lambda = source.Lambda;
+		X = source.X;
+		Y = source.Y;
+	}
+	return *this;
 }
 
 ////////////////////////////////////////////////////////////

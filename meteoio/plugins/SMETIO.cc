@@ -187,7 +187,7 @@ void SMETIO::parseInputOutputSection()
 
 }
 
-void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes, 
+void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
                              bool& julian_present, MeteoData& md)
 {
 	/*
@@ -203,9 +203,9 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 	 * If a paramter is unknown in the fields section, then it is added as separate field to MeteoData
 	 */
 	for (size_t ii=0; ii<fields.size(); ii++){
-		if (fields[ii] == "TA") { 
+		if (fields[ii] == "TA") {
 			indexes.push_back(md.getParameterIndex("TA"));
-		} else if (fields[ii] == "TSS") { 
+		} else if (fields[ii] == "TSS") {
 			indexes.push_back(md.getParameterIndex("TSS"));
 		} else if (fields[ii] == "TSG") {
 			indexes.push_back(md.getParameterIndex("TSG"));
@@ -266,7 +266,7 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 		double lon = myreader.get_header_doublevalue("longitude");
 		double alt = myreader.get_header_doublevalue("altitude");
 		meta.position.setLatLon(lat, lon, alt);
-	} 
+	}
 
 	if (myreader.location_in_header(smet::EPSG)){
 		double east  = myreader.get_header_doublevalue("easting");
@@ -276,7 +276,7 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 		meta.position.setEPSG(epsg); //this needs to be set before calling setXY(...)
 		meta.position.setXY(east, north, alt);
 	}
-	
+
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
 
@@ -291,9 +291,9 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 	}
 }
 
-void SMETIO::copy_data(const smet::SMETReader& myreader, 
-				   const std::vector<std::string>& timestamps, 
-				   const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo)
+void SMETIO::copy_data(const smet::SMETReader& myreader,
+                       const std::vector<std::string>& timestamps,
+                       const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo)
 {
 	/*
 	 * This function parses the data read from a SMETReader object, a vector<double>,
@@ -309,7 +309,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	identify_fields(fields, indexes, julian_present, md);
 
 	if ((timestamps.size() == 0) && (!julian_present)) return; //nothing to do
-	
+
 	bool data_wgs84 = myreader.location_in_data(smet::WGS84);
 	bool data_epsg = myreader.location_in_data(smet::EPSG);
 
@@ -334,7 +334,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 		vecMeteo.push_back(md);
 		MeteoData& tmp_md = vecMeteo.back();
-		
+
 		//Copy data points
 		for (size_t jj=0; jj<indexes.size(); jj++){
 			const double& current_data = mydata[current_index];
@@ -359,7 +359,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 			} else {
 				if (current_data == nodata_value)
 					tmp_md.param(indexes[jj]) = IOUtils::nodata;
-				else 
+				else
 					tmp_md.param(indexes[jj]) = current_data;
 			}
 
@@ -448,7 +448,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		try {
 			smet::SMETType type = smet::ASCII;
 			if (!outputIsAscii) type = smet::BINARY;
-				
+
 			smet::SMETWriter mywriter(filename, type, outputIsGzipped);
 			mywriter.set_header_value("station_id", sd.stationID);
 			if (sd.stationName != "")
@@ -459,7 +459,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 			if (outputIsAscii) {
 				ss << "timestamp";
-			} else { 
+			} else {
 				ss << "julian";
 				myprecision.push_back(8);
 				mywidth.push_back(16);
@@ -513,7 +513,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 						vec_timestamp.push_back(tmp_date.toString(Date::ISO));
 					} else {
 						vec_timestamp.push_back(vecMeteo[ii][jj].date.toString(Date::ISO));
-					}					
+					}
 				} else {
 					double julian;
 					if(out_dflt_TZ!=IOUtils::nodata) {
@@ -537,7 +537,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 						vec_data.push_back(vecMeteo[ii][jj].param(kk)); //add data value
 				}
 			}
-			
+
 			if (outputIsAscii) mywriter.write(vec_timestamp, vec_data);
 			else mywriter.write(vec_data);
 
