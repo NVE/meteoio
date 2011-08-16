@@ -702,32 +702,46 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 * @param vecData vector containing the values as measured at the stations
 * @param vecStations vector of stations
 * @param dem digital elevation model
+* @param variogram variogram regression model
 * @param grid 2D array of precipitation to fill
 * @author Mathias Bavay
 */
-void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector<StationData>& vecStations, const DEMObject& dem, Grid2DObject& grid)
+void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector<StationData>& vecStations, const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid)
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	unsigned int nrOfMeasurments = vecStations.size();
+
 	Matrix G(nrOfMeasurments, nrOfMeasurments);
-	Matrix gamma((unsigned int)1, nrOfMeasurments);
-	const Matrix One((unsigned int)1, nrOfMeasurments, 1.);
+	Matrix gamma(nrOfMeasurments, (unsigned int)1);
+	const Matrix One(nrOfMeasurments, (unsigned int)1, 1.);
 	const Matrix One_T = One.getT();
 
+	//precompute various coordinates in the grid
+	const double llcorner_x = grid.llcorner.getEasting();
+	const double llcorner_y = grid.llcorner.getNorthing();
+	const double cellsize = grid.cellsize;
+
 	//fill the G matrix
-	for(unsigned int i=1; i<=nrOfMeasurments; i++) {
-		const Coords& st1 = vecStations[i].position;
+	//HACK: are we filling with the proper values? A covariance matrix would be different...
+	for(unsigned int j=1; j<=nrOfMeasurments; j++) {
+		const Coords& st1 = vecStations[j-1].position;
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
 
-		for(unsigned int j=1; j<=nrOfMeasurments; j++) {
+		for(unsigned int i=1; i<=j; i++) {
 			//compute distance between stations
-			const Coords& st2 = vecStations[j].position;
+			const Coords& st2 = vecStations[i-1].position;
 			const double DX = x1-st2.getEasting();
 			const double DY = y1-st2.getNorthing();
 			const double distance = fastSqrt_Q3(DX*DX + DY*DY);
-
-			G(i,j) = varioFit(distance);
+			G(i,j) = variogram.f(distance);
+		}
+		//G(j,j)=1.; //HACK what should we put on the diagonal?
+	}
+	//fill the upper half (an exact copy of the lower half)
+	for(unsigned int j=1; j<=nrOfMeasurments; j++) {
+		for(unsigned int i=j+1; i<=nrOfMeasurments; i++) {
+			G(i,j) = G(j,i);
 		}
 	}
 
@@ -739,48 +753,32 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	const double denom = Matrix::scalar( OneT_Ginv * One );
 
 	//now, calculate each point
-	for(unsigned int i=1; i<=grid.ncols; i++) {
-		for(unsigned int j=1; j<=grid.nrows; j++) {
-			const double x = grid.llcorner.getEasting()+i*grid.cellsize;
-			const double y = grid.llcorner.getNorthing()+j*grid.cellsize;
+	for(unsigned int j=0; j<grid.nrows; j++) {
+		for(unsigned int i=0; i<grid.ncols; i++) {
+			const double x = llcorner_x+i*cellsize;
+			const double y = llcorner_y+j*cellsize;
 
 			//fill gamma
-			for(unsigned int st=1; st<=nrOfMeasurments; st++) {
+			for(unsigned int st=0; st<nrOfMeasurments; st++) {
 				//compute distance between cell and each station
 				const Coords& position = vecStations[st].position;
 				const double DX = x-position.getEasting();
 				const double DY = y-position.getNorthing();
 				const double distance = fastSqrt_Q3(DX*DX + DY*DY);
 
-				gamma(1,st) = varioFit(distance);
+				gamma(st+1,1) = variogram.f(distance); //matrix starts at 1
 			}
 
-			const Matrix lambda = Matrix::T(gamma + One * ((1. - Matrix::scalar(OneT_Ginv*gamma)) / denom) ) * Ginv;
+			const Matrix lambdaT = Matrix::T(gamma + One * ((1. - Matrix::scalar(OneT_Ginv*gamma)) / denom) ) * Ginv;
 
 			//calculate local parameter interpolation
 			double p = 0.;
-			for(unsigned int st=1; st<=nrOfMeasurments; st++) {
-				p += lambda(1,st) * vecData[st-1]; //because the vector starts at 0
+			for(unsigned int st=0; st<nrOfMeasurments; st++) {
+				p += lambdaT(1,st+1) * vecData[st]; //matrix starts at 1
 			}
 			grid.grid2D(i,j) = p;
 		}
 	}
-}
-
-/**
-* @brief Return the fitted variogram value for a given distance
-* The various variogram models can be found in
-* <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, pp63.
-* @param distance distance to the measured value
-* @return variogram fit
-* @author Mathias Bavay
-*/
-double Interpol2D::varioFit(const double& /*distance*/)
-{
-	//return variogramm fit of covariance between stations i and j
-	//HACK: todo!
-
-	return 1.;
 }
 
 } //namespace

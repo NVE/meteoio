@@ -213,6 +213,8 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 			indexes.push_back(md.getParameterIndex("RH"));
 		} else if (fields[ii] == "VW") {
 			indexes.push_back(md.getParameterIndex("VW"));
+		} else if (fields[ii] == "VW_MAX") {
+			indexes.push_back(md.getParameterIndex("VW_MAX"));
 		} else if (fields[ii] == "DW") {
 			indexes.push_back(md.getParameterIndex("DW"));
 		} else if (fields[ii] == "ISWR") {

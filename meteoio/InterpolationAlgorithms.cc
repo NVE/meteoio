@@ -735,25 +735,51 @@ void OrdinaryKrigingAlgorithm::initialize(const MeteoData::Parameters& in_param)
 
 double OrdinaryKrigingAlgorithm::getQualityRating()
 {
-	throw IOException("ODKRIG interpolation algorithm not yet implemented...", AT);
-
 	if(nrOfMeasurments>=20) return 0.9;
-	return 0.;
+	return 0.1;
 }
 
 
 void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 {
-//optimization: getrange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
+	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
+	//or, get max range from io.ini, build variogram from this user defined max range
 	throw IOException("ODKRIG interpolation algorithm not yet implemented...", AT);
-	Interpol2D::ODKriging(vecData, vecMeta, dem, grid);
+	computeVariogram(); //only refresh once a month, or once a week, etc
+	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 }
 
-double OrdinaryKrigingAlgorithm::computeVariogram(const std::vector<StationData>& /*vecStations*/) const
-{
-	//return variogramm fit of covariance between stations i and j
-	//HACK: todo!
+double OrdinaryKrigingAlgorithm::computeVariogram()
+{//return variogram fit of covariance between stations i and j
+	/*std::vector<double> alti;
+	for(unsigned int j=0; j<nrOfMeasurments; j++) {
+		alti.push_back( vecMeta[j].position.getAltitude() );
+	}
+	Fit1D trend(Fit1D::NOISYLINEAR, alti, vecData); //HACK*/
 
+	//give data to compute the variogram
+	std::vector<double> dist, vari;
+	for(unsigned int j=0; j<nrOfMeasurments; j++) {
+		const Coords& st1 = vecMeta[j].position;
+		const double x1 = st1.getEasting();
+		const double y1 = st1.getNorthing();
+		const double val1 = vecData[j] /*- trend.f(st1.getAltitude())*/;
+
+		for(unsigned int i=0; i<j; i++) {
+			//compute distance between stations
+			const Coords& st2 = vecMeta[i].position;
+			const double val2 = vecData[i] /*- trend.f(st2.getAltitude())*/;
+			const double DX = x1-st2.getEasting();
+			const double DY = y1-st2.getNorthing();
+			//const double distance = fastSqrt_Q3(DX*DX + DY*DY);
+			const double distance = sqrt(DX*DX + DY*DY);
+
+			dist.push_back(distance);
+			vari.push_back( 0.5*(val1-val2)*(val1-val2) );
+		}
+	}
+
+	variogram.setModel(Fit1D::SPHERICVARIO, dist, vari);
 	return 1.;
 }
 

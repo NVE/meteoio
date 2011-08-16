@@ -609,7 +609,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 
 		//LWR
 		if(ilwr==IOUtils::nodata) {
-			failure_count++;
+			if(tss==IOUtils::nodata) failure_count++; //if we have tss, we can compute the local ilwr
 			fout << setw(5) << setprecision(1) << "0.0" << " ";
 		} else {
 			fout << setw(5) << setprecision(1) << ilwr << " ";

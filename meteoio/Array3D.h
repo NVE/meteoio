@@ -25,8 +25,6 @@
 #include <limits>
 #include <iostream>
 
-#define NOSAFECHECKS
-
 namespace mio {
 
 template <class T> class Array3D;
@@ -79,6 +77,7 @@ template <class T> class Array3DProxy2 {
  * @class Array3D
  * @brief The template class Array3D is a 3D Array (Tensor) able to hold any type of object as datatype.
  * It relies on the Array3DProxy2 class to provide the [][][] operator (slower than the (i,j,k) call).
+ * If the compilation flag NOSAFECHECKS is used, bounds check is turned off (leading to increased performances).
  * @ingroup data_str
  * @date  2009-07-19
  * @author Thomas Egger

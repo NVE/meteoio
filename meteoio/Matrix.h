@@ -26,8 +26,6 @@
 
 namespace mio {
 
-#define NOSAFECHECKS
-
 /**
  * @class Matrix
  * @brief This class implements the basic operations on matrices.
@@ -37,6 +35,8 @@ namespace mio {
  * It might not be the best ever such implementation, but the goal is to provide a standalone matrix class.
  * It might be later possible to chose between using the embedded implementation or to act as a
  * front end to BLAS for those who have it installed on their system.
+ *
+ * If the compilation flag NOSAFECHECKS is used, bounds check is turned off (leading to increased performances).
  *
  * @ingroup data_str
  * @author Mathias Bavay

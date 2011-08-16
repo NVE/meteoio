@@ -102,8 +102,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	} else {
 		//Some default message, that interpolation for this parameter needs configuration
 		throw IOException("You need to configure the interpolation algorithms for parameter " +
-					   MeteoData::getParameterName(meteoparam), AT);
-
+		                  MeteoData::getParameterName(meteoparam), AT);
 	}
 
 	//check that the output grid is using the same projection as the dem

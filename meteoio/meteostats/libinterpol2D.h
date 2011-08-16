@@ -30,7 +30,7 @@ namespace mio {
 /**
  * @class Interpol2D
  * @brief A class to perform 2D spatial interpolations.
- * Each parameter to be interpolated declares which interpolation method to use. 
+ * Each parameter to be interpolated declares which interpolation method to use.
  * Then the class computes the interpolation for each 2D grid point,
  * combining the inputs provided by the available data sources.
  *
@@ -39,9 +39,9 @@ namespace mio {
  * @date   2009-01-20
  */
 
-typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude, 
+typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude,
                                       const double& new_altitude, const std::vector<double>& coeffs);
- 
+
 class Interpol2D {
 	public:
 		///Keywords for selecting the regression algorithm to use
@@ -49,10 +49,10 @@ class Interpol2D {
 			R_CST, ///< no elevation dependence (ie: constant)
 			R_LIN ///< linear elevation dependence
 		} reg_types;
-		
+
 		static void stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid);
 		static void constantGrid2DFill(const double& value, const DEMObject& dem, Grid2DObject& grid);
-		static void constantLapseGrid2DFill(const double& value, const double& altitude, 
+		static void constantLapseGrid2DFill(const double& value, const double& altitude,
                                                     const DEMObject& dem, const std::vector<double>& vecCoefficients,
                                                     const LapseRateProjectPtr& funcptr, Grid2DObject& grid);
 		static void LapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
@@ -69,19 +69,19 @@ class Interpol2D {
 		static void PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void ODKriging(const std::vector<double>& vecData,
 		                      const std::vector<StationData>& vecStations,
-		                      const DEMObject& dem, Grid2DObject& grid);
+		                      const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid);
 
 		//projections functions
 		static double ConstProject(const double& value, const double& altitude, const double& new_altitude,
 		                           const std::vector<double>& coeffs);
-		static double LinProject(const double& value, const double& altitude, const double& new_altitude, 
+		static double LinProject(const double& value, const double& altitude, const double& new_altitude,
 		                         const std::vector<double>& coeffs);
 		static double BiLinProject(const double& value, const double& altitude, const double& new_altitude,
 		                           const std::vector<double>& coeffs);
 		static double FracProject(const double& value, const double& altitude, const double& new_altitude,
 		                          const std::vector<double>& coeffs);
 
-		static int LinRegression(const std::vector<double>& data_in, 
+		static int LinRegression(const std::vector<double>& data_in,
 		                         const std::vector<double>& elevations, std::vector<double>& coeffs);
 		static int BiLinRegression(const std::vector<double>& data_in,
 		                           const std::vector<double>& elevations, std::vector<double>& coeffs);
@@ -90,13 +90,13 @@ class Interpol2D {
 		//generic functions
 		static double InvHorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
 		static double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
-		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j, 
+		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j,
 		                                 const double& X2, const double& Y2);
 		static double getReferenceAltitude(const DEMObject& dem);
 		static void getNeighbors(const double& x, const double& y,
 		                         const std::vector<StationData>& vecStations,
 		                         std::vector< std::pair<double, unsigned int> >& list);
-		
+
 		//core methods
 		static double IDWCore(const double& x, const double& y,
 		                      const std::vector<double>& vecData_in,
@@ -112,9 +112,6 @@ class Interpol2D {
 		static double weightInvDist2(const double& d2);
 		double weightInvDistN(const double& d2);
 		double dist_pow; //power for the weighting method weightInvDistN
-
-		//variogram methods
-		static double varioFit(const double& distance);
 
 	private:
 		//static members

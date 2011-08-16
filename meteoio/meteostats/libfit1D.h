@@ -25,6 +25,14 @@
 
 namespace mio {
 
+class Zero : public FitModel {
+	public:
+		Zero() {fit_ready = true; nParam = 0; min_nb_pts = 0; regname = "Zero";};
+		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) { };
+		bool fit() { return true;};
+		double f(const double& /*x*/) {return 0.;};
+};
+
 class SimpleLinear : public FitModel {
 	public:
 		SimpleLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
@@ -99,8 +107,9 @@ class Quadratic : public FitLeastSquare {
  *    - LinearLS
  *    - Quadratic
  *
- * However, the current way of specifying which model to use by providing the constructor with a string WILL change to
- * an enum.
+ * The various variogram models can be found in
+ * <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, pp63.
+ *
  *
  * @ingroup stats
  * @author Mathias Bavay
@@ -110,6 +119,7 @@ class Fit1D {
  	public:
 		///Keywords for regression model
 		typedef enum REGRESSION {
+			ZERO, ///< always return zero (this is a way to disable detrending)
 			SIMPLE_LINEAR, ///< basic, cheap linear fit
 			NOISYLINEAR, ///< same as SIMPLE_LINEAR but trying to remove outliers
 			LINVARIO, ///< linear variogram
@@ -121,12 +131,19 @@ class Fit1D {
 		} regression;
 
 		/**
+		* @brief Empty Constructor. The model must be set afterwards.
+		* If the model has not been set before calling other methods, a NULL pointer exception will be thrown.
+		*/
+		Fit1D();
+
+		/**
 		* @brief Constructor.
-		* @param i_regType regression model to use
+		* @param regType regression model to use
 		* @param in_X vector of data points abscissae
 		* @param in_Y vector of data points ordinates
+		* @param updatefit should the fit be redone? (default=true, otherwise you must manually call fit())
 		*/
-		Fit1D(const regression& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y);
+		Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
 
 		/**
 		* @brief Copy constructor.
@@ -135,6 +152,15 @@ class Fit1D {
 		Fit1D(const Fit1D& i_fit);
 
 		~Fit1D() {delete model;};
+
+		/**
+		* @brief Set or reset the regression model.
+		* @param i_regType regression model to use
+		* @param in_X vector of data points abscissae
+		* @param in_Y vector of data points ordinates
+		* @param updatefit should the fit be redone? (default=true, otherwise you must manually call fit())
+		*/
+		void setModel(const regression& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
 
 		/**
 		* @brief Provide a set of initial values for the model parameters.
@@ -156,27 +182,27 @@ class Fit1D {
 		* @param x abscissa
 		* @return f(x) using the computed least square fit
 		*/
-		double f(const double& x) {return model->f(x);};
+		double f(const double& x) const {return model->f(x);};
 
 		/**
 		* @brief Calculate the parameters of the fit.
 		* The fit has to be computed before.
 		* @param coefficients vector containing the coefficients
 		*/
-		void getParams(std::vector<double>& coefficients) {model->getParams(coefficients);};
+		void getParams(std::vector<double>& coefficients) const {model->getParams(coefficients);};
 
 		/**
 		* @brief Return the name of the fit model.
 		* @return model name
 		*/
-		std::string getName() {return model->getName();};
+		std::string getName() const {return model->getName();};
 
 		/**
 		* @brief Return a string of information about the fit.
 		* The fit has to be computed before.
 		* @return info string
 		*/
-		std::string getInfo() {return model->getInfo();};
+		std::string getInfo() const {return model->getInfo();};
 
 		Fit1D& operator =(const Fit1D& source);
 

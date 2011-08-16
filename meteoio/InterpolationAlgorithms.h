@@ -20,6 +20,7 @@
 
 #include <meteoio/MeteoIO.h>
 #include <meteoio/meteostats/libinterpol1D.h>
+#include <meteoio/meteostats/libfit1D.h>
 
 #include <vector>
 #include <string>
@@ -460,7 +461,8 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
 	private:
-		double computeVariogram(const std::vector<StationData>& vecStations) const;
+		double computeVariogram();
+		Fit1D variogram;
 };
 
 } //end namespace mio

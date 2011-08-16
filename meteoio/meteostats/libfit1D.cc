@@ -24,18 +24,14 @@ using namespace std;
 
 namespace mio {
 
-//default constructor
-Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y) {
-	if(regType==SIMPLE_LINEAR) model=new SimpleLinear;
-	if(regType==NOISYLINEAR) model=new NoisyLinear;
-	if(regType==LINVARIO) model=new LinVario;
-	if(regType==EXPVARIO) model=new ExpVario;
-	if(regType==SPHERICVARIO) model=new SphericVario;
-	if(regType==RATQUADVARIO) model=new RatQuadVario;
-	if(regType==LINEARLS) model=new LinearLS;
-	if(regType==QUADRATIC) model=new Quadratic;
+Fit1D::Fit1D() {
+	model = NULL;
+}
 
-	model->setData(in_X, in_Y);
+//default constructor
+Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
+	model=NULL;
+	setModel(regType, in_X, in_Y, updatefit);
 }
 
 Fit1D::Fit1D(const Fit1D& i_fit) {
@@ -48,6 +44,23 @@ Fit1D& Fit1D::operator=(const Fit1D& source) {
 		*model = *(source.model); //copy what is pointed to
 	}
 	return *this;
+}
+
+void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
+	if(model!=NULL) delete model;
+
+	if(regType==ZERO) model=new Zero;
+	if(regType==SIMPLE_LINEAR) model=new SimpleLinear;
+	if(regType==NOISYLINEAR) model=new NoisyLinear;
+	if(regType==LINVARIO) model=new LinVario;
+	if(regType==EXPVARIO) model=new ExpVario;
+	if(regType==SPHERICVARIO) model=new SphericVario;
+	if(regType==RATQUADVARIO) model=new RatQuadVario;
+	if(regType==LINEARLS) model=new LinearLS;
+	if(regType==QUADRATIC) model=new Quadratic;
+
+	model->setData(in_X, in_Y);
+	if(updatefit) fit();
 }
 
 //////////////////////////////////////////////////////////////

@@ -25,12 +25,12 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/IOExceptions.h>
 
-#define NOSAFECHECKS
 namespace mio {
 
 /**
  * @class Array
- * @brief The template class Array is a 1D array (vector) able to hold any type of object as datatype
+ * @brief The template class Array is a 1D array (vector) able to hold any type of object as datatype.
+ * If the compilation flag NOSAFECHECKS is used, bounds check is turned off (leading to increased performances).
  *
  * @ingroup data_str
  * @author Thomas Egger

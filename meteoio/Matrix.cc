@@ -116,7 +116,9 @@ void Matrix::random(const double& range) {
 double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
-		throw IndexOutOfBoundsException("", AT);
+		std::stringstream ss;
+		ss << "Trying to access matrix[" << i << "," << j << "]";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	return vecData[(j-1) + (i-1)*ncols];
@@ -125,7 +127,9 @@ double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
 double Matrix::operator ()(const unsigned int& i, const unsigned int& j) const {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
-		throw IndexOutOfBoundsException("", AT);
+		std::stringstream ss;
+		ss << "Trying to access matrix[" << i << "," << j << "]";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	return vecData[(j-1) + (i-1)*ncols];
@@ -591,6 +595,7 @@ void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	X.resize(n,m); //we need to ensure that X has the correct dimensions
 	for(unsigned int i=n; i>=1; i--) { //lines
 		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
+			std::cout << "Matrix A=" << A;
 			throw IOException("The given matrix is singular and can not be inversed", AT);
 		}
 		for(unsigned int j=1; j<=m; j++) {
