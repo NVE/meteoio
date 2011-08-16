@@ -204,16 +204,26 @@ template<class T> class Array2D {
 };
 
 template<class T> T& Array2D<T>::operator()(const unsigned int& i) {
+#ifndef NOSAFECHECKS
+	return vecData.at(i);
+#else
 	return vecData[i];
+#endif
 }
 
 template<class T> const T Array2D<T>::operator()(const unsigned int& i) const {
+#ifndef NOSAFECHECKS
+	return vecData.at(i);
+#else
 	return vecData[i];
+#endif
 }
 template<class T> T& Array2D<T>::operator()(const unsigned int& x, const unsigned int& y) {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny)) {
-		throw IndexOutOfBoundsException("", AT);
+		std::stringstream ss;
+		ss << "Trying to access array(" << x << "," << y << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	//ROW-MAJOR alignment of the vector: fully C-compatible memory layout
@@ -223,7 +233,9 @@ template<class T> T& Array2D<T>::operator()(const unsigned int& x, const unsigne
 template<class T> const T Array2D<T>::operator()(const unsigned int& x, const unsigned int& y) const {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny)) {
-		throw IndexOutOfBoundsException("", AT);
+		std::stringstream ss;
+		ss << "Trying to access array(" << x << "," << y << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	return vecData[x + y*nx];
@@ -247,11 +259,15 @@ template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const unsigne
 template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
                                           const unsigned int& i_ncols, const unsigned int& i_nrows)
 {
-	if (((i_nx+i_ncols) > i_array2D.nx) || ((i_ny+i_nrows) > i_array2D.ny))
-		throw IndexOutOfBoundsException("Trying to cut an array to a size bigger than its original size!", AT);
+	if (((i_nx+i_ncols) > i_array2D.nx) || ((i_ny+i_nrows) > i_array2D.ny)) {
+		std::stringstream ss;
+		ss << "Trying to cut an array of size (" << nx << "," << ny << ") ";
+		ss << "to size (" << i_ncols << "," << i_nrows << ") starting at (" << i_nx << "," << i_ny << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
 
 	if ((i_ncols == 0) || (i_nrows == 0)) //the plane to copy has to make sense
-		throw IndexOutOfBoundsException("Copying an array into a null sized array!", AT);
+		throw IndexOutOfBoundsException("Trying to cut an array into a null sized array!", AT);
 
 	resize(i_ncols, i_nrows); //create new Array2D object
 	if(i_array2D.keep_nodata==false)
@@ -275,11 +291,16 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsig
 template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
                                         const unsigned int& i_ncols, const unsigned int& i_nrows)
 {
-	if (((i_nx+i_ncols) > nx) || ((i_ny+i_nrows) > ny))
-		throw IndexOutOfBoundsException("Trying to insert an array whose size is too big!", AT);
+	if (((i_nx+i_ncols) > nx) || ((i_ny+i_nrows) > ny)) {
+		std::stringstream ss;
+		ss << "Filling an array of size (" << nx << "," << ny << ") ";
+		ss << "with an array of size (" << i_ncols << "," << i_nrows << ") ";
+		ss << "starting at (" << i_nx << "," << i_ny << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
 
 	if ((i_ncols == 0) || (i_nrows == 0)) //the plane to copy has to make sense
-		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
+		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
 
 	if(i_array2D.keep_nodata==false)
 		setKeepNodata(false);
@@ -476,8 +497,12 @@ template<class T> Array2D<T>& Array2D<T>::operator=(const T& value) {
 template<class T> Array2D<T>& Array2D<T>::operator+=(const Array2D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny))
-		throw IOException("Trying to add two Array2D objects with different dimensions", AT);
+	if ((rhs.nx != nx) || (rhs.ny != ny)) {
+		std::stringstream ss;
+		ss << "Trying to add two Array2D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << ") + (" << rhs.nx << "," << rhs.ny << ")";
+		throw IOException(ss.str(), AT);
+	}
 
 	const unsigned int nxy = nx*ny;
 	//Add to every single member of the Array2D<T>
@@ -533,9 +558,12 @@ template<class T> const Array2D<T> Array2D<T>::operator+(const T& rhs)
 template<class T> Array2D<T>& Array2D<T>::operator-=(const Array2D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny))
-		throw IOException("Trying to substract two Array2D objects with different dimensions", AT);
-
+	if ((rhs.nx != nx) || (rhs.ny != ny)){
+		std::stringstream ss;
+		ss << "Trying to substract two Array2D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << ") - (" << rhs.nx << "," << rhs.ny << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Substract to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
 
@@ -590,9 +618,12 @@ template<class T> const Array2D<T> Array2D<T>::operator-(const T& rhs)
 template<class T> Array2D<T>& Array2D<T>::operator*=(const Array2D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny))
-		throw IOException("Trying to multiply two Array2D objects with different dimensions", AT);
-
+	if ((rhs.nx != nx) || (rhs.ny != ny)){
+		std::stringstream ss;
+		ss << "Trying to multiply two Array2D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << ") * (" << rhs.nx << "," << rhs.ny << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Add to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
 
@@ -648,9 +679,12 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const T& rhs)
 template<class T> Array2D<T>& Array2D<T>::operator/=(const Array2D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny))
-		throw IOException("Trying to divide two Array2D objects with different dimensions", AT);
-
+	if ((rhs.nx != nx) || (rhs.ny != ny)){
+		std::stringstream ss;
+		ss << "Trying to divide two Array2D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << ") / (" << rhs.nx << "," << rhs.ny << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Divide every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
 

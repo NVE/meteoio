@@ -595,7 +595,6 @@ void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	X.resize(n,m); //we need to ensure that X has the correct dimensions
 	for(unsigned int i=n; i>=1; i--) { //lines
 		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
-			std::cout << "Matrix A=" << A;
 			throw IOException("The given matrix is singular and can not be inversed", AT);
 		}
 		for(unsigned int j=1; j<=m; j++) {

@@ -241,17 +241,27 @@ template<class T> class Array3D {
 };
 
 template<class T> T& Array3D<T>::operator()(const unsigned int& i) {
+#ifndef NOSAFECHECKS
+	return vecData.at(i);
+#else
 	return vecData[i];
+#endif
 }
 
 template<class T> const T Array3D<T>::operator()(const unsigned int& i) const {
+#ifndef NOSAFECHECKS
+	return vecData.at(i);
+#else
 	return vecData[i];
+#endif
 }
 
 template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) {
 #ifndef NOSAFECHECKS
-	if ((x >= nx) || (y >= ny) || (z >= nz)) {
-		throw IndexOutOfBoundsException("", AT);
+	if ((x >= nx) || (y >= ny) || (z >= nz))  {
+		std::stringstream ss;
+		ss << "Trying to access array(" << x << "," << y << "," << z << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 
@@ -261,8 +271,10 @@ template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigne
 
 template<class T> const T Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const {
 #ifndef NOSAFECHECKS
-	if ((x >= nx) || (y >= ny) || (z >= nz)) {
-		throw IndexOutOfBoundsException("", AT);
+	if ((x >= nx) || (y >= ny) || (z >= nz))  {
+		std::stringstream ss;
+		ss << "Trying to access array(" << x << "," << y << "," << z << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	return vecData[x + y*nx + z*nxny];
@@ -290,11 +302,16 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
                                      const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
 {
 
-	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz))
-		throw IndexOutOfBoundsException("Trying to cut an array to a size bigger than its original size!", AT);
+	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz)) {
+		std::stringstream ss;
+		ss << "Trying to cut an array of size (" << nx << "," << ny << "," << nz << ") ";
+		ss << "to size (" << i_ncols << "," << i_nrows << "," << i_ndepth << ") ";
+		ss << "starting at (" << i_nx << "," << i_ny << "," << i_nz << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
 
 	if ((i_ncols == 0) || (i_nrows == 0) || (i_ndepth == 0)) //the space has to make sense
-		throw IndexOutOfBoundsException("Copying an array into a null sized array!", AT);
+		throw IndexOutOfBoundsException("Trying to cut an array into a null sized array!", AT);
 
 	resize(i_ncols, i_nrows, i_ndepth); //create new Array3D object
 	if(i_array3D.keep_nodata==false)
@@ -323,11 +340,16 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
                                      const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
 {
 
-	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz))
-		throw IndexOutOfBoundsException("Trying to insert an array whose size is too big!", AT);
+	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz)) {
+		std::stringstream ss;
+		ss << "Filling an array of size (" << nx << "," << ny << "," << nz << ") ";
+		ss << "with an array of size (" << i_ncols << "," << i_nrows << "," << i_ndepth << ") ";
+		ss << "starting at (" << i_nx << "," << i_ny << "," << i_nz << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
 
 	if ((i_ncols == 0) || (i_nrows == 0) || (i_ndepth == 0)) //the space has to make sense
-		throw IndexOutOfBoundsException("Copying a null sized array!", AT);
+		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
 
 	if(i_array3D.keep_nodata==false)
 		setKeepNodata(false);
@@ -533,9 +555,12 @@ template<class T> Array3D<T>& Array3D<T>::operator=(const T& value) {
 template<class T> Array3D<T>& Array3D<T>::operator+=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
-		throw IOException("Trying to add two Array3D objects with different dimensions", AT);
-
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
+		std::stringstream ss;
+		ss << "Trying to add two Array3D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << "," << nz << ") + (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Add to every single member of the Array3D<T>
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
@@ -591,9 +616,12 @@ template<class T> const Array3D<T> Array3D<T>::operator+(const T& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator-=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
-		throw IOException("Trying to substract two Array3D objects with different dimensions", AT);
-
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
+		std::stringstream ss;
+		ss << "Trying to substract two Array3D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << "," << nz << ") - (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Substract to every single member of the Array3D<T>
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
@@ -649,9 +677,12 @@ template<class T> const Array3D<T> Array3D<T>::operator-(const T& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator*=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
-		throw IOException("Trying to multiply two Array3D objects with different dimensions", AT);
-
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
+		std::stringstream ss;
+		ss << "Trying to multiply two Array3D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << "," << nz << ") * (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Multiply every single member of the Array3D<T>
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
@@ -707,9 +738,12 @@ template<class T> const Array3D<T> Array3D<T>::operator*(const T& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator/=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
-	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz))
-		throw IOException("Trying to divide two Array3D objects with different dimensions", AT);
-
+	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
+		std::stringstream ss;
+		ss << "Trying to divide two Array3D objects with different dimensions: ";
+		ss << "(" << nx << "," << ny << "," << nz << ") / (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Divide every single member of the Array3D<T>
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {

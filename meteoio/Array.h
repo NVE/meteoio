@@ -167,7 +167,9 @@ template<class T> void Array<T>::resize(const unsigned int& asize, const T& init
 template<class T> T& Array<T>::operator()(const unsigned int& index) {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
-		throw IndexOutOfBoundsException("", AT);
+		std::stringstream ss;
+		ss << "Trying to access array(" << index << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	return vecData[index];
@@ -176,7 +178,9 @@ template<class T> T& Array<T>::operator()(const unsigned int& index) {
 template<class T> const T Array<T>::operator()(const unsigned int& index) const {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
-		throw IndexOutOfBoundsException("", AT);
+		std::stringstream ss;
+		ss << "Trying to access array(" << index << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
 	return vecData[index];
@@ -184,22 +188,18 @@ template<class T> const T Array<T>::operator()(const unsigned int& index) const 
 
 template<class T> T& Array<T>::operator [](const unsigned int& index) {
 #ifndef NOSAFECHECKS
-	if (index >= nx) {
-		throw IndexOutOfBoundsException("", AT);
-	}
-#endif
-
+	return vecData.at(index);
+#else
 	return vecData[index];
+#endif
 }
 
 template<class T> const T Array<T>::operator [](const unsigned int& index) const {
 #ifndef NOSAFECHECKS
-	if (index >= nx) {
-		throw IndexOutOfBoundsException("", AT);
-	}
-#endif
-
+	return vecData.at(index);
+#else
 	return vecData[index];
+#endif
 }
 
 template<class T> void Array<T>::clear() {
@@ -224,7 +224,9 @@ template<class T> void Array<T>::insertAt(const int& index, T e) {
 		vecData.insert(vecData.begin() + index, e);
 		nx++;
 	} else {
-		throw IndexOutOfBoundsException("", AT);
+		std::stringstream ss;
+		ss << "Inserting an element at (" << index << ") in an array of size (" << nx << ")";
+		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 }
 
@@ -357,8 +359,12 @@ template<class T> Array<T>& Array<T>::operator=(const T& value) {
 template<class T> Array<T>& Array<T>::operator+=(const Array<T>& rhs)
 {
 	//They have to have equal size
-	if (rhs.nx != nx)
-		throw IOException("Trying to add two Array objects with different dimensions", AT);
+	if (rhs.nx != nx) {
+		std::stringstream ss;
+		ss << "Trying to add two Array objects with different dimensions: ";
+		ss << "(" << nx << ") + (" << rhs.nx << ")";
+		throw IOException(ss.str(), AT);
+	}
 
 	//Add to every single member of the Array<T>
 	if(keep_nodata==false) {
@@ -413,8 +419,12 @@ template<class T> const Array<T> Array<T>::operator+(const T& rhs)
 template<class T> Array<T>& Array<T>::operator-=(const Array<T>& rhs)
 {
 	//They have to have equal size
-	if (rhs.nx != nx)
-		throw IOException("Trying to substract two Array objects with different dimensions", AT);
+	if (rhs.nx != nx) {
+		std::stringstream ss;
+		ss << "Trying to substract two Array objects with different dimensions: ";
+		ss << "(" << nx << ") - (" << rhs.nx << ")";
+		throw IOException(ss.str(), AT);
+	}
 
 	//Substract to every single member of the Array<T>
 	if(keep_nodata==false) {
@@ -469,9 +479,12 @@ template<class T> const Array<T> Array<T>::operator-(const T& rhs)
 template<class T> Array<T>& Array<T>::operator*=(const Array<T>& rhs)
 {
 	//They have to have equal size
-	if (rhs.nx != nx)
-		throw IOException("Trying to multiply two Array objects with different dimensions", AT);
-
+	if (rhs.nx != nx){
+		std::stringstream ss;
+		ss << "Trying to multiply two Array objects with different dimensions: ";
+		ss << "(" << nx << ") * (" << rhs.nx << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Multiply every single member of the Array<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
@@ -525,9 +538,12 @@ template<class T> const Array<T> Array<T>::operator*(const T& rhs)
 template<class T> Array<T>& Array<T>::operator/=(const Array<T>& rhs)
 {
 	//They have to have equal size
-	if (rhs.nx != nx)
-		throw IOException("Trying to divide two Array objects with different dimensions", AT);
-
+	if (rhs.nx != nx){
+		std::stringstream ss;
+		ss << "Trying to divide two Array objects with different dimensions: ";
+		ss << "(" << nx << ") / (" << rhs.nx << ")";
+		throw IOException(ss.str(), AT);
+	}
 	//Divide every single member of the Array<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
