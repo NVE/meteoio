@@ -38,8 +38,6 @@ namespace mio {
 class SunTrajectory {
 	public:
 		SunTrajectory() {};
-		/*SunTrajectory(const double& _latitude, const double& _longitude) {};
-		SunTrajectory(const double& _latitude, const double& _longitude, const double& _julian, const double& TZ=0.) {};*/ //HACK!!!!
 		virtual ~SunTrajectory() {};
 
 		/** @brief Set the date and time

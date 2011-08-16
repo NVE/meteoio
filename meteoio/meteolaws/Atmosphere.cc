@@ -55,9 +55,9 @@ double Atmosphere::stdAirPressure(const double& altitude) {
 	const double sea_level_temp = 288.15; // K
 	const double expo = Cst::gravity / (lapse_rate * Cst::gaz_constant_dry_air);
 	const double R0 = Cst::earth_R0; // Earth's radius in m
-	
+
 	const double p = p0 * pow( 1. - ( (lapse_rate * R0 * altitude) / (sea_level_temp * (R0 + altitude)) ), expo );
-	
+
 	return(p);
 }
 
@@ -82,7 +82,7 @@ double Atmosphere::waterVaporDensity(const double& Temperature, const double& Va
 }
 
 /**
-* @brief Standard atmosphere wet bulb temperature. 
+* @brief Standard atmosphere wet bulb temperature.
 * This gives the lowest temperature that could be reached by water evaporation. It is therefore linked to
 * relative humidity. This implementation assumes a standard atmosphere for pressure and saturation pressure.
 * @param T air temperature (K)
@@ -138,14 +138,14 @@ double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const 
 	const double a3 = 0.18;
 
 	const double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
-	if(ea > 1.0) 
+	if(ea > 1.0)
 		return 1.0;
 
 	return ea;
 }
 
 /**
-* @brief Evaluate the long wave radiation from RH, TA and cloudiness. 
+* @brief Evaluate the long wave radiation from RH, TA and cloudiness.
 * This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
 * Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
 * @param RH relative humidity (between 0 and 1)
@@ -159,7 +159,7 @@ double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double
 }
 
 /**
- * @brief Evaluate the atmosphere emissivity for clear sky. 
+ * @brief Evaluate the atmosphere emissivity for clear sky.
  * This uses the formula from Brutsaert -- "On a Derivable
  * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
  * Research, Vol. 11, No. 5, October 1975, pp 742-744.
@@ -177,7 +177,7 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
 }
 
 /**
- * @brief Evaluate the long wave radiation for clear sky. 
+ * @brief Evaluate the long wave radiation for clear sky.
  * This uses the formula from Brutsaert -- "On a Derivable
  * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
  * Research, Vol. 11, No. 5, October 1975, pp 742-744.
@@ -192,7 +192,7 @@ double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
 }
 
 /**
-* @brief Convert a relative humidity to a dew point temperature. 
+* @brief Convert a relative humidity to a dew point temperature.
 * @param RH relative humidity between 0 and 1
 * @param TA air temperature (K)
 * @param force_water if set to true, compute over water. Otherwise, a smooth transition between over ice and over water is computed.
@@ -238,7 +238,7 @@ double Atmosphere::RhtoDewPoint(double RH, double TA, const bool& force_water)
 }
 
 /**
-* @brief Convert a dew point temperature to a relative humidity.  
+* @brief Convert a dew point temperature to a relative humidity.
 * @param TD dew point temperature (K)
 * @param TA air temperature (K)
 * @param force_water if set to true, compute over water. Otherwise, a smooth transition between over ice and over water is computed.
@@ -299,22 +299,23 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 }
 
 /**
-* @brief Calculate the relative Humidity (RH) from specific humidity. 
+* @brief Calculate the relative Humidity (RH) from specific humidity.
 * @param altitude altitude over sea level (m)
 * @param TA air temperature (K)
-* @param qi specific humidity 
+* @param qi specific humidity
 * @return relative humidity between 0 and 1
 */
 double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, const double& qi)
-{//HACK: should we check that RH in [0;1]?
+{
 	const double SatVaporDensity = waterVaporDensity(TA, waterSaturationPressure(TA));
 	const double RH = (qi/(1.-qi))*stdDryAirDensity(altitude, TA)/SatVaporDensity;
 
-	return RH;
+	if(RH>1.) return 1.;
+	else return RH;
 }
 
 /**
-* @brief Calculate the specific Humidity from relative humidity (RH). 
+* @brief Calculate the specific Humidity from relative humidity (RH).
 * @param altitude altitude over sea level (m)
 * @param TA air temperature (K)
 * @param RH relative humidity (between 0 and 1)

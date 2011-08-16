@@ -26,7 +26,7 @@ namespace mio {
 /**
  * @page imis IMIS
  * @section imis_format Format
- * This plugin reads data directly from the IMIS network database (Oracle database). 
+ * This plugin reads data directly from the IMIS network database (Oracle database).
  * It retrieves standard IMIS data as well as ENETZ and ANETZ data.
  *
  * @section imis_units Units
@@ -319,7 +319,7 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		IOUtils::convertString(north, stationMetaData.at(2), std::dec);
 		IOUtils::convertString(alt, stationMetaData.at(3), std::dec);
 
-		// HACK to obtain a valid station_name w/o spaces within
+		//obtain a valid station_name w/o spaces within
 		if (station_name == "") {
 			if (stao_name != "") {
 				station_name += vecStationID[ii] + ":" + stao_name;
@@ -470,7 +470,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		closeDBConnection(env, conn);
 	} catch (exception& e){
-		closeDBConnection(env, conn);		
+		closeDBConnection(env, conn);
 		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
@@ -496,10 +496,10 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 		}
 
 		if (counter >= current_station_psum.size()) { break; } //should never happen
-		
-		//cout << "Current slice date: " << current_slice_date.toString(Date::ISO) 
+
+		//cout << "Current slice date: " << current_slice_date.toString(Date::ISO)
 		//	<< "  value: " << current_station_psum.at(counter) << endl;
-		
+
 		double& hnw = vecMeteo[stationindex][jj].hnw;
 		//cout << vecMeteo[stationindex][jj].date.toString(Date::ISO) << ": " << hnw;
 		if ((hnw == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(hnw, 0.0, 0.001))){
@@ -526,7 +526,7 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsign
 		for (unsigned int kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
 			double sum = 0.0;
 			for (unsigned int ii=0; ii<ad.nrOfCoefficients; ii++){
-				sum += ad.coeffs[ii] * vec_of_psums.at(vecIndex[ii])[kk]; 
+				sum += ad.coeffs[ii] * vec_of_psums.at(vecIndex[ii])[kk];
 			}
 			psum.push_back(sum/12.0);
 
@@ -681,7 +681,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 					tmpmd.hnw /= 2; //half hour accumulated value for IMIS stations only
 		}
 
-		vecMeteo.at(stationindex).push_back(tmpmd); //Now insert tmpmd 
+		vecMeteo.at(stationindex).push_back(tmpmd); //Now insert tmpmd
 	}
 }
 
@@ -795,7 +795,7 @@ unsigned int ImisIO::getSensorDepths(const std::string& stat_abk, const std::str
 	try {
 		Statement *stmt = conn->createStatement(sqlQuery);
 		ResultSet *rs = NULL;
-		
+
 		stmt->setString(1, stat_abk); // set 1st variable's value
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 

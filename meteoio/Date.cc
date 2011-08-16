@@ -352,24 +352,19 @@ double Date::getTruncatedJulianDate(const bool& gmt) const {
 /**
 * @brief Return Unix time (or POSIX time).
 * The Unix time is defined as the number of seconds since 1970-01-01T00:00 UTC (Unix Epoch).
+* It is therefore ALWAYS in GMT.
 * (defined as IEEE P1003.1 POSIX. See http://www.mail-archive.com/leapsecs@rom.usno.navy.mil/msg00109.html
 * for some technical, historical and funny insight into the standardization process)
-* @param gmt convert returned value to GMT? (default: false)
 * @return Unix time in the current timezone / in GMT depending on the gmt parameter
 */
-time_t Date::getUnixDate(const bool& gmt) const { //HACK: should Unix date always be GMT?
+time_t Date::getUnixDate() const {
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
 	if (gmt_julian < Unix_offset)
-			throw IOException("Dates before 1970 cannot be displayed in Unix epoch time", AT);
+		throw IOException("Dates before 1970 cannot be displayed in Unix epoch time", AT);
 
-	if(gmt) {
-		return ( (time_t)floor( (gmt_julian - Unix_offset) * (24*60*60) ));
-	} else {
-		const double local_julian = GMTToLocal(gmt_julian);
-		return ( (time_t)floor( (local_julian - Unix_offset) * (24*60*60) ));
-	}
+	return ( (time_t)floor( (gmt_julian - Unix_offset) * (24*60*60) ));
 }
 
 /**

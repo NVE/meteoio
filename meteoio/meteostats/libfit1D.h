@@ -89,8 +89,6 @@ class Quadratic : public FitLeastSquare {
 		double f(const double& x);
 };
 
-//HACK: write copy constructor for Fit1D!!! needed to pass a Fit1D object by copy
-
 /**
  * @class Fit1D
  * @brief A class to perform 1D regressions

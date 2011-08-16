@@ -115,7 +115,7 @@ class Date {
 		double getJulianDate(const bool& gmt=false) const;
 		double getModifiedJulianDate(const bool& gmt=false) const;
 		double getTruncatedJulianDate(const bool& gmt=false) const;
-		time_t getUnixDate(const bool& gmt=false) const;
+		time_t getUnixDate() const;
 		double getExcelDate(const bool& gmt=false) const;
 		double getMatlabDate(const bool& gmt=false) const;
 

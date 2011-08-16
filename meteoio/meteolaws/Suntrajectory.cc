@@ -250,7 +250,7 @@ void SunMeeus::getEquatorialSunVector(double& sunx, double& suny, double& sunz) 
 	double azi_Sacw;
 
 	// Convert to angle measured from South, counterclockwise (rad)
-	if ( SolarAzimuthAngle <= 90. ) { //HACK: to check!
+	if ( SolarAzimuthAngle <= 90. ) {
 		azi_Sacw = M_PI - SolarAzimuthAngle*to_rad;
 	} else {
 		azi_Sacw = 3.*M_PI - SolarAzimuthAngle*to_rad;

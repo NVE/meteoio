@@ -69,7 +69,6 @@ class SunObject {
 		friend std::ostream& operator<<(std::ostream& os, const SunObject& data);
 	private:
 		void update();
-		double lw_SaturationPressure(const double& T); //HACK: remove it in final library to use the meteolaws version of it
 		void getBeamPotential(const double& sun_elevation, const double& Eccentricity_corr,
 		                  const double& ta, const double& rh, const double& pressure, const double& mean_albedo,
 		                  double& R_toa, double& R_direct, double& R_diffuse);

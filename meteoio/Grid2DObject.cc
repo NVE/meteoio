@@ -140,7 +140,6 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 		point.copyProj(tmp_proj); //back to the original projection -> reproject the coordinates
 	}
 
-	//HACK: when calling setXY, we reset i,j to nodata
 	point.setGridIndex(i, j, IOUtils::unodata, false);
 	return true;
 }
