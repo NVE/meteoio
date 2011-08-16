@@ -1,4 +1,3 @@
-#OPTION( BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 SET(meteostats_sources

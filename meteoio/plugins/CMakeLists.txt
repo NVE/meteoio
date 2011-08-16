@@ -4,8 +4,6 @@ if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-set(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
-set(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 set(PLUGIN_DIR ${PROJECT_SOURCE_DIR}/lib/plugins)
 
 IF(DEST MATCHES "par")
@@ -40,8 +38,6 @@ ELSE(DEST)
 	SET(COSMOXMLIONAME cosmoxmlio)
 	SET(SHAREDNAME ${PROJECT_NAME})
 ENDIF(DEST MATCHES "par")
-
-#LINK_DIRECTORIES(lib)
 
 IF(PLUGIN_SMETIO)
 	ADD_LIBRARY(${SMETIONAME} SMETIO.cc)

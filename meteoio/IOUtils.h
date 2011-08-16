@@ -59,6 +59,12 @@ class MeteoData;
 class Coords;
 class Config;
 
+/**
+* @brief Return the library version
+* @return library version string
+*/
+std::string getLibVersion();
+
 namespace IOUtils {
 	const unsigned int nothrow = 0;
 	const unsigned int dothrow = 1;

@@ -4,7 +4,11 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
 SET(VERSION_MINOR 1 CACHE INTERNAL "")
-SET(VERSION_PATCH 0 CACHE INTERNAL "")
+SET(VERSION_PATCH 1 CACHE INTERNAL "")
+
+SET(POPCC popcc)
+SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
+SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 
 PROJECT(meteoio)
 ADD_SUBDIRECTORY(meteoio)
@@ -13,15 +17,12 @@ ADD_SUBDIRECTORY(meteoio/plugins/gsn)
 ADD_SUBDIRECTORY(meteoio/meteolaws)
 ADD_SUBDIRECTORY(meteoio/meteofilters)
 
-SET(POPCC popcc)
-
-SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
-SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
-
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
 #SET(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
 OPTION( BUILD_SHARED_LIBS "Set to OFF to build only static libraries" ON )
+INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
+BuildVersion()
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
 	SET(WARNINGS "-Wall")
@@ -40,6 +41,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 	ENDIF()
 	SET(ARCH_SAFE  "")
 	SET(DEBUG "-g3 -O0 -D__DEBUG")
+	SET(_VERSION "-D_VERSION=\\\"${_versionString}\\\"")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 IF(MSVC)
@@ -54,6 +56,7 @@ IF(MSVC)
 	#IF(DEBUG_ARITHM)
 	#	LIST(APPEND CFLAGS " /EHa ")
 	#ENDIF(DEBUG_ARITHM)
+	SET(_VERSION "/D_VERSION=\\\"${_versionString}\\\"")
 ENDIF(MSVC)
 
 IF(UNIX)
@@ -108,8 +111,8 @@ ENDIF(DEST STREQUAL "optimized")
 
 ###########################################################
 #finally, SET compile flags
-SET(CMAKE_CXX_FLAGS_RELEASE "${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
-SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${ARCH} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_RELEASE "${_VERSION} ${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${_VERSION} ${ARCH} ${CFLAGS} ${PLATFORM} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 
 MESSAGE(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
@@ -128,9 +131,6 @@ SET(PLUGIN_GSNIO OFF CACHE BOOL "Compilation GSNIO ON or OFF")
 SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
 SET(PLUGIN_COSMOXMLIO OFF CACHE BOOL "Compilation COSMOXMLIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
-
-#SET(LIBRARY_OUTPUT_DIRECTORY lib)
-#SET(ARCHIVE_OUTPUT_DIRECTORY lib)
 
 #some cmake specific things //HACK: should it not be in the plugin Cmake?
 IF (GSOAPPP AND NOT EXISTS ${GSOAPPP})

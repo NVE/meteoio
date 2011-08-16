@@ -50,6 +50,12 @@ double round(const double& x) {
 }
 #endif
 
+std::string getLibVersion() {
+	std::stringstream ss;
+	ss << _VERSION << " compiled on " << __DATE__ << " " << __TIME__;
+	return ss.str();
+}
+
 bool IOUtils::checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon)
 {
 	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {
