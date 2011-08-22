@@ -85,7 +85,7 @@ CosmoXMLIO::CosmoXMLIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgread
 
 CosmoXMLIO::~CosmoXMLIO() throw()
 {
-	
+
 }
 
 void CosmoXMLIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
@@ -118,26 +118,26 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 	string meteopath = "", station_path="";
  	cfg.getValue("METEOPATH", "Input", meteopath);
 	if (meteopath == "")
-		throw ConversionFailedException("Error while reading value for METEOPATH", AT);	
+		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
 	const string pattern = "xml";
 	list<string> dirlist;
 	IOUtils::readDirectory(meteopath, dirlist, pattern);
 	dirlist.sort();
-	
+
 	vecStation.clear();	//Initialize Station Vector
 
 	list<string>::iterator itr;	//To loop in the stations list
-	
+
 	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	//Loop over all stations in the meteopath directory
 		station_path = meteopath + "/" + *itr;
-		
+
 		StationData sd;
 		//Initialize variables
 		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
 		string station_name="", station_ID="";
 		bool is_first=true;
 		Date first_date=IOUtils::nodata, last_date=IOUtils::nodata, date_read=IOUtils::nodata;
-		
+
 		//Read station and meteo data
 		xmlpp::TextReader reader(station_path);
 		while(reader.read()) {
@@ -172,7 +172,7 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 				//End of date test
 			}
 		}
-		
+
 		//Write station data if the given date is in the station data interval
 		if ((station_date > first_date) && (station_date < last_date)) {
 			sd.stationName = station_name;
@@ -180,7 +180,7 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 			sd.position.setLatLon(latitude, longitude, altitude);
 			vecStation.push_back(sd);	//Store results in vecStation
 		}
-		
+
 		//Write station data for any date
 // 		sd.stationName = station_name;
 // 		sd.stationID = station_ID;
@@ -241,7 +241,7 @@ Date CosmoXMLIO::getDateValue(xmlpp::TextReader& reader) {
 }
 
 //Converts dew point to humidity and writes station position
-void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, const double& altitude, 
+void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, const double& altitude,
                              double& dew_point, MeteoData& meteo) {
 	// Set position
 	if(altitude!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
@@ -249,12 +249,12 @@ void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, co
 	} else {
 		throw InvalidFormatException("Meteo data found, but no position information", AT);
 	}
-	
+
 	//Set RH
 	if(meteo.ta!=IOUtils::nodata && dew_point!=IOUtils::nodata) {
 		meteo.rh=Atmosphere::DewPointtoRh(dew_point, meteo.ta,TRUE);
 	}
-	
+
 	//Reset dew_point
 	dew_point = IOUtils::nodata;
 }
@@ -262,34 +262,34 @@ void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, co
 //----------> Read Station and Meteo data, uses all stations in the "meteopath" directory <----------
 void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                                std::vector< std::vector<MeteoData> >& vecMeteo,
-                               const unsigned int&)
-{	
+                               const size_t&)
+{
 	//Get all files from directory
 	string meteopath = "", station_path="";
  	cfg.getValue("METEOPATH", "Input", meteopath);
 	if (meteopath == "")
-		throw ConversionFailedException("Error while reading value for METEOPATH", AT);	
+		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
 	const string pattern = "xml";
 	list<string> dirlist;
 	IOUtils::readDirectory(meteopath, dirlist, pattern);
 	dirlist.sort();
-	
+
 	vecMeteo.clear();	//Initialize Meteo Vector
 
 	vecMeteo.insert(vecMeteo.begin(), dirlist.size(), std::vector<MeteoData>());	//Allocation for the vectors
 	list<string>::iterator itr;	//To loop in the stations list
-	
+
 	unsigned int ii=0;	//Declare and initialize counter (to know which station we are dealing with)
 	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	//Loop over all stations in the meteopath directory
 		station_path = meteopath + "/" + *itr;
-		
+
 		MeteoData meteo;
 		//Initialize variables
 		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
 		double dew_point=IOUtils::nodata;
 		bool is_first=true;
 		bool next_station = false;
-		
+
 		//Read station and meteo data
 		xmlpp::TextReader reader(station_path);
 		while(reader.read()) {
@@ -306,7 +306,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	// 			if(key=="model_station_latitude") latitude = getDoubleValue(reader);
 	// 			if(key=="model_station_longitude") longitude = getDoubleValue(reader);
  				if(key=="missing_value_code") plugin_nodata = getDoubleValue(reader);
-				
+
 				//MeteoData
 				if(key=="T_2M") meteo.ta = c2k( getDoubleValue(reader) );
 				if(key=="TD_2M") dew_point = c2k( getDoubleValue(reader) );
@@ -372,12 +372,12 @@ void CosmoXMLIO::writeHeader(std::stringstream& XMLdata)
 }
 
 //Writes station data
-void CosmoXMLIO::writeLocationHeader(const StationData& station, std::stringstream& XMLdata) 
+void CosmoXMLIO::writeLocationHeader(const StationData& station, std::stringstream& XMLdata)
 {
 		XMLdata << "<col>\n<ttable id=\"data\">\n<row>" << endl;
 		XMLdata << "<col id=\"identifier\">" << station.getStationName() << "</col>\n";
 		XMLdata << "<col id=\"station_abbreviation\">" << station.getStationID() << "</col>\n";
-		
+
 		//Same altitude, latitude and longitude data for station and model.
 		XMLdata << "<col id=\"station.height\">" << station.position.getAltitude() << "</col>\n";
 		XMLdata << "<col id=\"station.latitude\">" << station.position.getLat() << "</col>\n";
@@ -419,14 +419,14 @@ void CosmoXMLIO::writeMeteo(const std::vector<MeteoData>& vecMeteo, std::strings
 		tmp_date.setTimeZone(out_tz);
 		XMLdata << "<col id=\"reference_ts\">" << tmp_date.toString(Date::NUM) << "</col>\n";
 		XMLdata << "<col id=\"T_2M\">" << k2c(vecMeteo[jj].ta) << "</col>\n";
-		
+
 		if (vecMeteo[jj].rh==IOUtils::nodata || vecMeteo[jj].ta==IOUtils::nodata) {
 			XMLdata << "<col id=\"TD_2M\">" << IOUtils::nodata << "</col>\n";
 		} else {
 			const double dew_point=Atmosphere::RhtoDewPoint(vecMeteo[jj].rh, vecMeteo[jj].ta, TRUE);
 			XMLdata << "<col id=\"TD_2M\">" << k2c(dew_point) << "</col>\n";
 		}
-		
+
 		XMLdata << "<col id=\"GLOB\">" << vecMeteo[jj].iswr << "</col>\n";
 		XMLdata << "<col id=\"TOT_PREC\">" << vecMeteo[jj].hnw << "</col>\n";
 		XMLdata << "<col id=\"FF_10M\">" << vecMeteo[jj].vw << "</col>\n";
@@ -455,12 +455,12 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 			std::cout << "[E] Station " << ii+1 << " exists but contains no data! Skip writing it...\n";
 			continue;
 		}
-		
+
 		XMLdata.str("");	//Initialize XMLdata stringstream
-		
+
 		//Write the first part of the XML file (header and station data description)
 		writeHeader(XMLdata);
-	
+
 		//Insert station data
 		writeLocationHeader( vecMeteo[ii][0].meta, XMLdata );
 
@@ -501,7 +501,7 @@ void CosmoXMLIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string&
 
 void CosmoXMLIO::cleanup() throw()
 {
-	
+
 }
 
 #ifndef _METEOIO_JNI

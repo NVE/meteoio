@@ -380,11 +380,11 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<MeteoData> >& vecMeteo,
-                           const unsigned int& stationindex)
+                           const size_t& stationindex)
 {
 	//Make sure that vecMeteo have the correct dimension and stationindex is valid
 	size_t startindex=0, endindex=vecFiles.size();
-	if (stationindex != (unsigned int)IOUtils::npos){ //HACK do we really still need stationindex??
+	if (stationindex != (size_t)IOUtils::npos){ //HACK do we really still need stationindex??
 		if ((stationindex < vecFiles.size()) || (stationindex < vecMeteo.size())){
 			startindex = stationindex;
 			endindex = stationindex+1;
@@ -467,7 +467,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				mywidth.push_back(16);
 			}
 
-			if (isConsistent){
+			if (isConsistent) {
 				mywriter.set_header_value("latitude", sd.position.getLat());
 				mywriter.set_header_value("longitude", sd.position.getLon());
 				mywriter.set_header_value("easting", sd.position.getEasting());

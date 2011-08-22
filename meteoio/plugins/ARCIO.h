@@ -56,10 +56,10 @@ class ARCIO : public IOInterface {
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-							  std::vector< std::vector<MeteoData> >& vecMeteo,
-							  const unsigned int& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           const size_t& stationindex=IOUtils::npos);
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-							   const std::string& name="");
+		                            const std::string& name="");
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);

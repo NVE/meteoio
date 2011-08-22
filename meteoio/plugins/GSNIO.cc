@@ -94,7 +94,7 @@ void GSNIO::initGSNConnection(){
 
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
-	
+
 	cfg.getValue("ENDPOINT", "INPUT", endpoint, Config::nothrow);
 	if (endpoint != ""){
 		gsn.soap_endpoint = endpoint.c_str();
@@ -291,7 +291,7 @@ void GSNIO::convertStringToDouble(double& d, const std::string& in_string, const
 }
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-                     const StationData& sd, const unsigned int& stationindex)
+                     const StationData& sd, const size_t& stationindex)
 {
 	_ns1__getMeteoData meteodata_req;
 	_ns1__getMeteoDataResponse meteodata;

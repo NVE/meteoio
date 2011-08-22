@@ -51,7 +51,7 @@ class SMETIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const unsigned int& stationindex=IOUtils::npos);
+		                           const size_t& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");
@@ -62,9 +62,9 @@ class SMETIO : public IOInterface {
 
 	private:
 		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
-		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes, 
-						 bool& julian_present, MeteoData& md);
-		void copy_data(const smet::SMETReader& myreader, const std::vector<std::string>& timestamps, 
+		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
+		                     bool& julian_present, MeteoData& md);
+		void copy_data(const smet::SMETReader& myreader, const std::vector<std::string>& timestamps,
  		               const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo);
 
 		void parseInputOutputSection();
@@ -73,7 +73,7 @@ class SMETIO : public IOInterface {
                                       std::vector<bool>& vecParamInUse);
 		void getFormatting(const size_t& param, size_t& prec, size_t& width);
 
-		unsigned int nr_stations; //number of stations to read from
+		size_t nr_stations; //number of stations to read from
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
 		std::string outpath;                //read from the Config [Output] section
 		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section

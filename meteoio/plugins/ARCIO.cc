@@ -248,7 +248,7 @@ void ARCIO::readStationData(const Date&, std::vector<StationData>&)
 }
 
 void ARCIO::readMeteoData(const Date&, const Date&, std::vector< std::vector<MeteoData> >&,
-					 const unsigned int&)
+                          const size_t&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

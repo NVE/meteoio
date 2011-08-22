@@ -188,15 +188,15 @@ void PGMIO::readStationData(const Date&, std::vector<StationData>& /*vecStation*
 }
 
 void PGMIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-					 std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-					 const unsigned int&)
+                          std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
+                          const size_t&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
 void PGMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-					  const std::string&)
+                           const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

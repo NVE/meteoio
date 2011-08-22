@@ -268,7 +268,7 @@ void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationDat
 
 
 void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                         std::vector< std::vector<MeteoData> >& vecMeteo, const unsigned int&)
+                         std::vector< std::vector<MeteoData> >& vecMeteo, const size_t&)
 {
 	/*
 	 * Read the meteorological snowpack input file, formatted as follows:
@@ -647,7 +647,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		// Write optional values
 		//TS[]: snow temperatures
 		stringstream ss;
-		for (unsigned int kk=1; kk<100; kk++) {
+		for (size_t kk=1; kk<100; kk++) {
 			ss.str("");
 			ss << "TS" << kk;
 			if (vecmd[jj].param_exists(ss.str())){
@@ -663,7 +663,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 			}
 		}
 		//CONC[]: solute concentrations
-		for (unsigned int kk=0; kk<100; kk++) {
+		for (size_t kk=0; kk<100; kk++) {
 			ss.str("");
 			ss << "CONC" << kk;
 			if (vecmd[jj].param_exists(ss.str())) {
@@ -748,7 +748,7 @@ void SNIO::convertUnits(MeteoData& meteo)
 	}
 
 	stringstream ss;
-	for (unsigned int ii=1; ii<50; ii++){
+	for (size_t ii=1; ii<50; ii++){
 		ss.str("");
 		ss << "TS" << ii;
 		if (meteo.param_exists(ss.str())){

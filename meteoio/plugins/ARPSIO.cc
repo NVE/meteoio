@@ -158,7 +158,7 @@ void ARPSIO::readStationData(const Date&, std::vector<StationData>& /*vecStation
 
 void ARPSIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
                            std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                           const unsigned int&)
+                           const size_t&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

@@ -57,12 +57,12 @@ class BormaIO : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  const unsigned int& stationindex=IOUtils::npos);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
+		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           const size_t& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::string& name="");
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
+		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
@@ -87,7 +87,7 @@ class BormaIO : public IOInterface {
 		void getFiles(const std::string& stationsname, const Date& start_date, const Date& end_date,
 		              std::vector<std::string>& vecFiles, std::vector<Date>& vecDate);
 		void readStationNames(void);
-		bool bufferData(const Date& dateStart, const Date& dateEnd, 
+		bool bufferData(const Date& dateStart, const Date& dateEnd,
 		                std::vector< std::vector<MeteoData> >& vecMeteo,
 		                const unsigned int& stationnr);
 

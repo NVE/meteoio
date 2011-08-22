@@ -44,7 +44,7 @@ namespace mio {
  * 	throw IOException("Nothing implemented here", AT);
  * }
  * @endcode
- * 
+ *
  * It is the responsibility of the plugin to properly convert the units toward the SI as used in MeteoIO (see the MeteoData class for a list of parameters and their units). This includes converting the nodata value used internally in the plugin (as could be defined in the data itself) into the unified IOUtils::nodata nodata value. Moreover, it is required by the BufferedIOHandler that each plugin that implements readMeteoData @em also implements the readStationData method. This is required so that the metadata is available even if not data exists for the requested time period.
  *
  * Finally, plugins must properly handle time zones. The Date class provides everything that is necessary, but the plugin developer must still properly set the time zone to each Date object (using the "TZ" key in the io.ini configuration file at least as a default value and afterwards overwriting with a plugin specified time zone specification if available). The time zone should be set \em before setting the date (so that the date that is given is understood as a date within the specified time zone).
@@ -52,13 +52,13 @@ namespace mio {
  * The meteorological data must be returned in a vector of vectors of MeteoData (and similarly, of StationData in order to provide the metadata). This consists of building a vector of MeteoData objects, each containing a set of measurements for a given timestamp, at a given location. This vector that contains the time series at one specific location is then added to a vector (pushed) that will then contain all locations.
  * \image html vector_vector.png "vector of vector structure"
  * \image latex vector_vector.eps "vector of vector structure" width=0.9\textwidth
- * 
+ *
  * Various classes from MeteoIO can prove convenient for use by plugins: for example the Coords class should be used for geographic coordinates conversions, while the Config class should be used for getting configuration information from the user's configuration file. Please do NOT implement your own version of this kind of feature in your plugin but exclusively rely on the matching classes of MeteoIO, extending them if necessary.
  * A template for writing a plugin class is available in the plugin directory under the name template.cc and template.h. Simply copy these two files under a new name and fill the methods that you want to implement. Some easy example implementation can be found in ARCIO or A3DIO.
- * 
+ *
  * @section plugins_registration Plugins registration
  * Once a plugin has been written, it must be "registered" so that it is known by the rest of the library. This is done in IOHandler::registerPlugins by adding a plugin key (that will be used by the user in the configuration file when he wants to use the said plugin), the name of the dynamic library that the plugin is bunddled in (knowing that CMake adds "lib" to prefix all library names, which means that you should expect a file name to look like "libmyplugin"), the name of its implementation class, a pointer to the implementation class (use NULL and it will be properly initialized), and a pointer to the dynamicl library (again, set as NULL and the proper initialization will take place). For more information, see the IOPlugin class.
- * 
+ *
  * Finally, the build system has to be updated so that it offers the plugin to be build: a local file (<a href="../../meteoio/plugins/CMakeLists.txt">meteoio/plugins/CMakeLists.txt</a>) has to be edited so that the plugin is really built, then the toplevel file has to be modified so the user can choose to build the plugin if he wishes (<a href="../../CMakeLists.txt">CMakeLists.txt</a>). Please keep in mind that all plugins should be optional (ie: they should not prevent the build of MeteoIO without them) and please call your plugin compilation flag similarly as the other plugins (ie: PLUGIN_MYNAME).
  *
  * @section plugins_documentation Plugins documentation
@@ -66,7 +66,7 @@ namespace mio {
  * - format, for describing the data format
  * - units, expressing what the input units should be
  * - keywords, listing (with a brief description) the keywords that are recognized by the plugin for its configuration
- * 
+ *
  * The internal documentation of the plugin can remain as normal C++ comments (since they are addressed to the maintainer of the plugin).
  *
  * @section plugins_testing Plugins testing and validation
@@ -81,7 +81,7 @@ namespace mio {
 /**
  * @class IOInterface
  * @brief An abstract class representing the IO Layer of the software Alpine3D. For each type of IO (File, DB, Webservice, etc)
- * a derived class is to be created that holds the specific implementation of the purely virtual member funtions. 
+ * a derived class is to be created that holds the specific implementation of the purely virtual member funtions.
  * The IOHandler class is a wrapper class that is able to deal with all above implementations of the IOInterface abstract base class.
  *
  * @ingroup plugins
@@ -95,16 +95,16 @@ class IOInterface : public PluginObject {
 		virtual ~IOInterface();
 
 		/**
-		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the 
+		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the
 		* specific 2D grid to be parsed into the Grid2DObject.
-		* @param grid_out A Grid2DObject instance 
+		* @param grid_out A Grid2DObject instance
 		* @param parameter A std::string representing some information for the function on what grid to retrieve
-		*/ 
+		*/
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="") = 0;
 
 		/**
 		* @brief Parse the DEM (Digital Elevation Model) into the Grid2DObject
-		*    
+		*
 		* Example Usage:
 		* @code
 		* Grid2DObject dem;
@@ -117,7 +117,7 @@ class IOInterface : public PluginObject {
 
 		/**
 		* @brief Parse the landuse model into the Grid2DObject
-		*    
+		*
 		* Example Usage:
 		* @code
 		* Grid2DObject landuse;
@@ -129,7 +129,7 @@ class IOInterface : public PluginObject {
 		virtual void readLanduse(Grid2DObject& landuse_out) = 0;
 
 		/**
-		* @brief Fill vecStation with StationData objects for a certain date of interest  
+		* @brief Fill vecStation with StationData objects for a certain date of interest
 		*
 		* Example Usage:
 		* @code
@@ -152,7 +152,7 @@ class IOInterface : public PluginObject {
 		* - if dateStart > dateEnd: return first data set with date > dateStart
 		* - read in all data starting with dateStart until dateEnd
 		* - if there is no data at all then the vectors will be empty, no exception will be thrown
-		*    
+		*
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
@@ -166,9 +166,9 @@ class IOInterface : public PluginObject {
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
 		* @param stationindex (optional) update only the station given by this index
 		*/
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const unsigned int& stationindex=IOUtils::npos) = 0;
+		                           const size_t& stationindex=IOUtils::npos) = 0;
 
 		/**
 		* @brief Write vecMeteo time series to a certain destination
@@ -191,14 +191,14 @@ class IOInterface : public PluginObject {
 		* @endcode
 		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
 		* @param name        (optional string) Identifier usefull for the output plugin (it could become part
-		*                    of a file name, a db table, etc) 
+		*                    of a file name, a db table, etc)
 		*/
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="") = 0;
 
 		/**
 		* @brief Parse the assimilation data into a Grid2DObject for a certain date represented by the Date object
-		*    
+		*
 		* Example Usage:
 		* @code
 		* Grid2DObject adata;

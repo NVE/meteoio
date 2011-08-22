@@ -49,9 +49,9 @@ class GeotopIO : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  const unsigned int& stationindex=IOUtils::npos);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
+							  std::vector< std::vector<MeteoData> >& vecMeteo,
+							  const size_t& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
 
@@ -64,8 +64,8 @@ class GeotopIO : public IOInterface {
 		void initParamNames(std::map<std::string, unsigned int>& mapParam);
 		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
 					   const std::string& metafile);
-		void makeColumnMap(const std::vector<std::string>& tmpvec, 
-					    const std::vector<std::string>& vecColumnNames, 
+		void makeColumnMap(const std::vector<std::string>& tmpvec,
+					    const std::vector<std::string>& vecColumnNames,
 					    std::map<std::string, unsigned int>& mapHeader);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);

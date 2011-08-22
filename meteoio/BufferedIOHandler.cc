@@ -192,7 +192,7 @@ const std::vector< METEO_TIMESERIE >& BufferedIOHandler::get_complete_buffer(Dat
 
 void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end,
                                       std::vector< METEO_TIMESERIE >& vecMeteo,
-                                      const unsigned int& /*stationindex*/)
+                                      const size_t& /*stationindex*/)
 {
 	vecMeteo.clear();
 	const Date new_buffer_start(date_start-buff_before); //taking centering into account

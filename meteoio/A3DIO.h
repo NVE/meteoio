@@ -48,7 +48,7 @@ class A3DIO : public IOInterface {
 
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 			                   std::vector< std::vector<MeteoData> >& vecMeteo,
-			                   const unsigned int& stationindex=IOUtils::npos);
+			                   const size_t& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");

@@ -235,7 +235,7 @@ void IOHandler::readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo)
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
                               std::vector<METEO_TIMESERIE>& vecMeteo,
-                              const unsigned& stationindex)
+                              const size_t& stationindex)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);

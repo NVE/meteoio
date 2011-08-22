@@ -71,7 +71,7 @@ class IOHandler : public IOInterface {
 	#endif
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector<METEO_TIMESERIE>& vecMeteo,
-		                           const unsigned& stationindex=IOUtils::npos);
+		                           const size_t& stationindex=IOUtils::npos);
 		void readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo);
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);

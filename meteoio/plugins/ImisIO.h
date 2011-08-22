@@ -47,9 +47,9 @@ class AnetzData{
 			coeffs.push_back(IOUtils::nodata);
 		}
 
-		AnetzData(const unsigned int& nr_anetz,
+		AnetzData(const size_t& nr_anetz,
 		          const std::string& i_anetz1, const std::string& i_anetz2, const std::string& i_anetz3,
-		          const unsigned int& nr_coeffs,
+		          const size_t& nr_coeffs,
 		          const double& coeff1, const double& coeff2, const double& coeff3)
 		          : nrOfAnetzStations(nr_anetz), nrOfCoefficients(nr_coeffs)
 		{
@@ -62,7 +62,7 @@ class AnetzData{
 		}
 
 		std::string anetzstation1, anetzstation2, anetzstation3;
-		unsigned int nrOfAnetzStations, nrOfCoefficients;
+		size_t nrOfAnetzStations, nrOfCoefficients;
 		std::vector<double> coeffs;
 		std::vector<std::string> anetzstations;
 };
@@ -93,7 +93,7 @@ class ImisIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const unsigned int& stationindex=IOUtils::npos);
+		                           const size_t& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");
@@ -110,13 +110,13 @@ class ImisIO : public IOInterface {
 		void closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void getDBParameters();
 
-		unsigned int getStationIDs(const std::string& stat_code,
+		size_t getStationIDs(const std::string& stat_code,
 		                           const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
 		                           oracle::occi::Connection*& conn);
-		unsigned int getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
+		size_t getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
 		                                const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
 		                                oracle::occi::Connection*& conn);
-		unsigned int getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
+		size_t getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
 		                             const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
 		                             oracle::occi::Connection*& conn);
 		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,
@@ -127,24 +127,24 @@ class ImisIO : public IOInterface {
 
 		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md, bool& _fullStation);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-		              const unsigned int& stationindex, const std::vector<StationData>& vecStationID,
+		              const size_t& stationindex, const std::vector<StationData>& vecStationID,
 		              oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void readStationIDs(std::vector<std::string>& vecStationID);
 		void parseStationID(const std::string& stationID, std::string& stnAbbrev, std::string& stnNumber);
-		
+
 		void readStationMetaData(oracle::occi::Connection*& conn);
 		void convertSnowTemperature(MeteoData& meteo, const std::string& parameter);
 		void convertSensorDepth(MeteoData& meteo, const std::string& parameter);
 		void convertUnits(MeteoData& meteo);
 
 		//helper functions for the Anetz coefficient mangling:
-		void findAnetzStations(const unsigned int& indexStart, const unsigned int& indexEnd,
-		                       std::map<std::string, unsigned int>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
-		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames,
+		void findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
+		                       std::map<std::string, size_t>& mapAnetzNames, std::vector<StationData>& vecAnetzStation);
+		void getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
 		                 const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum);
 		void assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 		                         const std::vector< std::vector<double> > vec_of_psums,
-		                         const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
+		                         const std::map<std::string, size_t>& mapAnetzNames, const size_t& stationindex,
 		                         std::vector< std::vector<MeteoData> >& vecMeteo);
 		void calculatePsum(const Date& dateStart, const Date& dateEnd,
                        const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
@@ -169,7 +169,7 @@ class ImisIO : public IOInterface {
 
 		static std::map<std::string, AnetzData> mapAnetz;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static map meteoparamname 
+		static bool initStaticData();///<initialize the static map meteoparamname
 };
 
 } //end namespace mio

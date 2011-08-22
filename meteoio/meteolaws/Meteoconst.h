@@ -29,7 +29,7 @@ namespace Cst {
 	const double gaz_constant_water_vapor = 461.9; // (J kg-1 K-1)
 	const double gaz_constant = 8.31451; // (J mol-1 K-1)
 
-	const double p_water_triple_pt = 610.78; // (Pa)
+	const double p_water_triple_pt = 611.73; // (Pa)
 	const double t_water_freezing_pt = 273.15; // (K)
 	const double t_water_triple_pt = 273.16; // (K)
 	const double l_water_sublimation = 2.838e6; // (J Kg-1)

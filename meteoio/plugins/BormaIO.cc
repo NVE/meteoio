@@ -118,7 +118,7 @@ void BormaIO::readStationData(const Date&, std::vector<StationData>&)
 
 void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                             std::vector< std::vector<MeteoData> >& vecMeteo,
-                            const unsigned int& stationindex)
+                            const size_t& stationindex)
 {
 	if (vecStationName.size() == 0)
 		readStationNames(); //reads station names into vector<string> vecStationName

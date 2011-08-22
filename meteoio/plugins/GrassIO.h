@@ -55,12 +55,12 @@ class GrassIO : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
-		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd, 
-							  std::vector< std::vector<MeteoData> >& vecMeteo, 
-							  const unsigned int& stationindex=IOUtils::npos);
+		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
+		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           const size_t& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, 
-							   const std::string& name="");
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
+		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);

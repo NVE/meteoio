@@ -113,7 +113,7 @@ void GeotopIO::initParamNames(std::map<std::string, unsigned int>& mapParam)
 
 
 void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-						const std::string&)
+                              const std::string&)
 {
 	string path="";
 	vector<string> vecSequence;
@@ -209,8 +209,8 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecStation
 }
 
 void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-					    std::vector< std::vector<MeteoData> >& vecMeteo,
-					    const unsigned int& stationindex)
+                             std::vector< std::vector<MeteoData> >& vecMeteo,
+                             const size_t& stationindex)
 {
 	vector<std::string> tmpvec, vecColumnNames;
 	string line="", filename="", path="", prefix="";
@@ -273,7 +273,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			streampos current_fpointer = -1;  //the filepointer for the current date
 			map<Date,streampos>::const_iterator it = vec_streampos.at(ii).find(dateStart);
 			if (it != vec_streampos.at(ii).end())
-				fin.seekg(it->second); //jump to position in the file 
+				fin.seekg(it->second); //jump to position in the file
 
 			while (!fin.eof()){
 				streampos tmp_fpointer = fin.tellg();

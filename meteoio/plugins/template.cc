@@ -54,7 +54,7 @@ TEMPLATE::TEMPLATE(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 
 TEMPLATE::~TEMPLATE() throw()
 {
-	
+
 }
 
 void TEMPLATE::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
@@ -88,15 +88,15 @@ void TEMPLATE::readStationData(const Date&, std::vector<StationData>& /*vecStati
 }
 
 void TEMPLATE::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-					    std::vector< std::vector<MeteoData> >& /*vecMeteo*/, 
-					    const unsigned int&)
+                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
+                             const size_t&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
 void TEMPLATE::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-						const std::string&)
+                              const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -116,7 +116,7 @@ void TEMPLATE::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /
 
 void TEMPLATE::cleanup() throw()
 {
-	
+
 }
 
 #ifndef _METEOIO_JNI

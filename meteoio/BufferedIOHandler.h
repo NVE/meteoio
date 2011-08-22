@@ -102,7 +102,7 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< METEO_TIMESERIE >& vecMeteo,
-		                           const unsigned int& stationindex=IOUtils::npos);
+		                           const size_t& stationindex=IOUtils::npos);
 #ifdef _POPC_
 		virtual void writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo,
 		                            const std::string& name="");
@@ -140,8 +140,8 @@ class BufferedIOHandler : public IOInterface {
 		Date buffer_start, buffer_end;
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer
-		unsigned int chunks; ///< How many chuncks to buffer
-		unsigned int max_grids; ///< How many grids to buffer (grids, dems, landuse and assimilation grids together)
+		size_t chunks; ///< How many chuncks to buffer
+		size_t max_grids; ///< How many grids to buffer (grids, dems, landuse and assimilation grids together)
 };
 } //end namespace
 #endif

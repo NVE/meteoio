@@ -401,7 +401,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 }
 
 void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                           std::vector< std::vector<MeteoData> >& vecMeteo, const unsigned int& stationindex)
+                           std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& stationindex)
 {
 	Environment *env = NULL;
 	Connection *conn = NULL;
@@ -477,7 +477,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
                                  const std::vector< std::vector<double> > vec_of_psums,
-                                 const std::map<std::string, unsigned int>& mapAnetzNames, const unsigned int& stationindex,
+                                 const std::map<std::string, unsigned int>& mapAnetzNames, const size_t& stationindex,
                                  std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	//Do coefficient calculation (getHNW) for every single station and data point
@@ -510,22 +510,22 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 	}
 }
 
-void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsigned int>& mapAnetzNames,
+void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
                          const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum)
 {
-	map<string, unsigned int>::const_iterator it;
+	map<string, size_t>::const_iterator it;
 
-	vector<unsigned int> vecIndex; //this vector will hold up to three indexes for the Anetz stations (position in vec_of_psums)
-	for (unsigned int ii=0; ii<ad.nrOfAnetzStations; ii++){
+	vector<size_t> vecIndex; //this vector will hold up to three indexes for the Anetz stations (position in vec_of_psums)
+	for (size_t ii=0; ii<ad.nrOfAnetzStations; ii++){
 		it = mapAnetzNames.find(ad.anetzstations[ii]);
 		vecIndex.push_back(it->second);
 	}
 
 	if (ad.nrOfAnetzStations == ad.nrOfCoefficients){
 		//1, 2, or 3 ANETZ stations without interaction
-		for (unsigned int kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
+		for (size_t kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
 			double sum = 0.0;
-			for (unsigned int ii=0; ii<ad.nrOfCoefficients; ii++){
+			for (size_t ii=0; ii<ad.nrOfCoefficients; ii++){
 				sum += ad.coeffs[ii] * vec_of_psums.at(vecIndex[ii])[kk];
 			}
 			psum.push_back(sum/12.0);
@@ -537,7 +537,7 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, unsign
 			throw IOException("Misconfiguration in ANETZ data", AT);
 
 		// Exactly two ANETZ stations with one interaction term
-		for (unsigned int kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
+		for (size_t kk=0; kk<vec_of_psums.at(vecIndex.at(0)).size(); kk++){
 			double sum = 0.0;
 			const double& hnw0 = vec_of_psums.at(vecIndex.at(0))[kk];
 			const double& hnw1 = vec_of_psums.at(vecIndex.at(1))[kk];
@@ -558,14 +558,14 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 {
 	const unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulianDate(true) - dateStart.getJulianDate(true) + 0.00001) * 4.0) + 1;
 
-	for (unsigned int ii=0; ii<vecMeteoAnetz.size(); ii++){
+	for (size_t ii=0; ii<vecMeteoAnetz.size(); ii++){
 		double tmp_psum = 0.0;
 		Date current_date = dateStart;
 		current_date.setTimeZone(in_tz);
 
 		vector<double> vec_current_station;
-		unsigned int counter_of_elements = 0;
-		for (unsigned int jj=0; jj<vecMeteoAnetz[ii].size(); jj++){
+		size_t counter_of_elements = 0;
+		for (size_t jj=0; jj<vecMeteoAnetz[ii].size(); jj++){
 			const Date& anetzdate = vecMeteoAnetz[ii][jj].date;
 			const double& hnw = vecMeteoAnetz[ii][jj].hnw;
 
@@ -594,35 +594,35 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 
 		vec_current_station.push_back(tmp_psum);
 
-		for (unsigned int jj=vec_current_station.size(); jj<nr_of_slices; jj++){ //To fill up the vector
+		for (size_t jj=vec_current_station.size(); jj<nr_of_slices; jj++){ //To fill up the vector
 			vec_current_station.push_back(0.0);
 		}
 
 		vec_of_psums.push_back(vec_current_station);
 	}
 
-	for (unsigned int ii=1; ii<vec_of_psums.size(); ii++){
+	for (size_t ii=1; ii<vec_of_psums.size(); ii++){
 		if (vec_of_psums[ii].size() != vec_of_psums[ii-1].size())
 			throw IOException("Error while summing up the precipitation data for the ANETZ stations", AT);
 	}
 }
 
-void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned int& indexEnd,
-                               std::map<std::string, unsigned int>& mapAnetzNames,
+void ImisIO::findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
+                               std::map<std::string, size_t>& mapAnetzNames,
                                std::vector<StationData>& vecAnetzStation)
 {
 	set<string> uniqueStations;
 
-	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		map<string, AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
 		if (it != mapAnetz.end()){
-			for (unsigned int jj=0; jj<it->second.nrOfAnetzStations; jj++){
+			for (size_t jj=0; jj<it->second.nrOfAnetzStations; jj++){
 				uniqueStations.insert(it->second.anetzstations[jj]);
 			}
 		}
 	}
 
-	unsigned int pp = 0;
+	size_t pp = 0;
 	for (set<string>::const_iterator ii=uniqueStations.begin(); ii!=uniqueStations.end(); ii++){
 		mapAnetzNames[*ii] = pp;
 		pp++;
@@ -644,7 +644,7 @@ void ImisIO::findAnetzStations(const unsigned int& indexStart, const unsigned in
  * @param conn          Create connection to SDB
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-                      const unsigned int& stationindex, const std::vector<StationData>& vecStationIDs,
+                      const size_t& stationindex, const std::vector<StationData>& vecStationIDs,
                       oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	vecMeteo.at(stationindex).clear();
@@ -669,7 +669,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
-	for (unsigned int ii=0; ii<vecResult.size(); ii++){
+	for (size_t ii=0; ii<vecResult.size(); ii++){
 		parseDataSet(vecResult[ii], tmpmd, fullStation);
 		convertUnits(tmpmd);
 
@@ -757,7 +757,7 @@ unsigned int ImisIO::getStationIDs(const std::string& station_code, const std::s
 		vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
-			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+			for (size_t ii=1; ii<=cols.size(); ii++) {
 				vecStationIDs.push_back(rs->getString(ii));
 			}
 		}
@@ -786,7 +786,7 @@ unsigned int ImisIO::getStationIDs(const std::string& station_code, const std::s
  * @param conn     create connection to SDB
  * @param return number of columns retrieved
  */
-unsigned int ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
+size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
                                      const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
                                      oracle::occi::Connection*& conn)
 {
@@ -803,7 +803,7 @@ unsigned int ImisIO::getSensorDepths(const std::string& stat_abk, const std::str
 		vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
-			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+			for (size_t ii=1; ii<=cols.size(); ii++) {
 				vecHTS1.push_back(rs->getString(ii));
 			}
 		}
@@ -825,7 +825,7 @@ unsigned int ImisIO::getSensorDepths(const std::string& stat_abk, const std::str
  * @param conn               create connection to SDB
  * @param return             number of columns retrieved
  */
-unsigned int ImisIO::getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
+size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
                                         const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
                                         oracle::occi::Connection*& conn)
 {
@@ -842,7 +842,7 @@ unsigned int ImisIO::getStationMetaData(const std::string& stat_abk, const std::
 		vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
-			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+			for (size_t ii=1; ii<=cols.size(); ii++) {
 				vecStationMetaData.push_back(rs->getString(ii));
 			}
 		}
@@ -905,11 +905,11 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		vector<string> vecData;
 		while (rs->next() == true) {
 			vecData.clear();
-			for (unsigned int ii=1; ii<=cols.size(); ii++) {
+			for (size_t ii=1; ii<=cols.size(); ii++) {
 				vecData.push_back(rs->getString(ii));
 			}
 			if (fullStation) {
-				for (unsigned int ii=0; ii<vecHTS1.size(); ii++) {
+				for (size_t ii=0; ii<vecHTS1.size(); ii++) {
 					vecData.push_back(vecHTS1.at(ii));
 				}
 			}
@@ -927,7 +927,7 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 void ImisIO::convertSnowTemperature(MeteoData& meteo, const std::string& parameter)
 {
 	if (meteo.param_exists(parameter)) {
-		const unsigned int idx = meteo.getParameterIndex(parameter);
+		const size_t idx = meteo.getParameterIndex(parameter);
 		if(meteo.param(idx)!=IOUtils::nodata)
 			meteo.param(idx) += Cst::t_water_freezing_pt; //C_TO_K
 	}

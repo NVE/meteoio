@@ -56,7 +56,7 @@ class SNIO : public IOInterface {
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
-		                           const unsigned int& stationindex=IOUtils::npos);
+		                           const size_t& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 		                            const std::string& name="");
@@ -72,7 +72,7 @@ class SNIO : public IOInterface {
 		void convertUnitsBack(MeteoData& meteo);
 		double cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness );
 		void parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos,
-						const Date& dateStart, const Date& dateEnd, MeteoData& md);
+		                    const Date& dateStart, const Date& dateEnd, MeteoData& md);
 		bool readStationMetaData(const std::string& metafile, const std::string& stationname, StationData& sd);
 		void readMetaData(size_t& nrOfStations);
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
@@ -86,7 +86,7 @@ class SNIO : public IOInterface {
 		static const int sn_julian_offset;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const size_t min_nr_meteoData; // minimal number of parameters on data input lines
-		unsigned int nr_meteoData; // number of parameters on data input lines, excluding optional ones
+		size_t nr_meteoData; // number of parameters on data input lines, excluding optional ones
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecAllStations;
 		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
