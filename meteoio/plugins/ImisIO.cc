@@ -417,7 +417,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			return;
 		}
 
-		unsigned int indexStart=0, indexEnd=vecStationMetaData.size();
+		size_t indexStart=0, indexEnd=vecStationMetaData.size();
 
 		//The following part decides whether all the stations are rebuffered or just one station
 		if (stationindex == IOUtils::npos) {
@@ -435,14 +435,14 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		if ((env == NULL) || (conn == NULL))
 			openDBConnection(env, conn);
 
-		for (unsigned int ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
+		for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
 			readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, conn);
 		}
 
 		if (useAnetz) { //Important: we don't care about the metadata for ANETZ stations
 			vector<StationData> vecAnetzStation;       //holds the unique ANETZ stations that need to be read
 			vector< vector<MeteoData> > vecMeteoAnetz; //holds the meteo data of the ANETZ stations
-			map<string, unsigned int> mapAnetzNames;   //associates an ANETZ station with an index within vecMeteoAnetz
+			map<string, size_t> mapAnetzNames;   //associates an ANETZ station with an index within vecMeteoAnetz
 
 			findAnetzStations(indexStart, indexEnd, mapAnetzNames, vecAnetzStation);
 			vecMeteoAnetz.insert(vecMeteoAnetz.begin(), vecAnetzStation.size(), vector<MeteoData>());
@@ -454,14 +454,14 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			date_anetz_end.setTimeZone(in_tz);
 
 			//read Anetz Data
-			for (unsigned int ii=0; ii<vecAnetzStation.size(); ii++)
+			for (size_t ii=0; ii<vecAnetzStation.size(); ii++)
 				readData(date_anetz_start, dateEnd, vecMeteoAnetz, ii, vecAnetzStation, env, conn);
 
 			//We got all the data, now calc psum for all ANETZ stations
 			vector< vector<double> > vec_of_psums; //6 hour accumulations of hnw
 			calculatePsum(date_anetz_start, date_anetz_end, vecMeteoAnetz, vec_of_psums);
 
-			for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through relevant stations
+			for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through relevant stations
 				map<string,AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
 				if (it != mapAnetz.end())
 					assimilateAnetzData(date_anetz_start, it->second, vec_of_psums, mapAnetzNames, ii, vecMeteo);
@@ -477,17 +477,17 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
                                  const std::vector< std::vector<double> > vec_of_psums,
-                                 const std::map<std::string, unsigned int>& mapAnetzNames, const size_t& stationindex,
+                                 const std::map<std::string, size_t>& mapAnetzNames, const size_t& stationindex,
                                  std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	//Do coefficient calculation (getHNW) for every single station and data point
 	vector<double> current_station_psum;
 	getAnetzHNW(ad, mapAnetzNames, vec_of_psums, current_station_psum);
 
-	unsigned int counter = 0;
+	size_t counter = 0;
 	Date current_slice_date = dateStart;
 	current_slice_date.setTimeZone(in_tz);
-	for (unsigned int jj=0; jj<vecMeteo[stationindex].size(); jj++){
+	for (size_t jj=0; jj<vecMeteo[stationindex].size(); jj++){
 		while (vecMeteo[stationindex][jj].date > (current_slice_date+0.2485)){
 			counter++;
 			double julian = floor((current_slice_date.getJulianDate(true) +0.25001) * 4.0) / 4.0;
@@ -741,7 +741,7 @@ void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
  * @param conn          create connection to SDB
  * @param return number of columns retrieved
  */
-unsigned int ImisIO::getStationIDs(const std::string& station_code, const std::string& sqlQuery,
+size_t ImisIO::getStationIDs(const std::string& station_code, const std::string& sqlQuery,
                                    std::vector<std::string>& vecStationIDs,
                                    oracle::occi::Connection*& conn)
 {
