@@ -312,6 +312,8 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 	if ((timestamps.size() == 0) && (!julian_present)) return; //nothing to do
 
+	bool olwr_present = md.param_exists("OLWR");
+
 	bool data_wgs84 = myreader.location_in_data(smet::WGS84);
 	bool data_epsg = myreader.location_in_data(smet::EPSG);
 
@@ -373,9 +375,18 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 			current_index++;
 		}
+		
+		if ((olwr_present) && (md.tss == IOUtils::nodata))
+			calc_tss(md);
+
 		//cout << tmp_md << endl;
 		//cout << endl;
 	}
+}
+
+void SMETIO::calc_tss(MeteoData& /*md*/)
+{
+	//HACK: Insert code to calculate TSS from OLWR here
 }
 
 void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
