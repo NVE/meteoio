@@ -375,18 +375,19 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 			current_index++;
 		}
-		
-		if ((olwr_present) && (md.tss == IOUtils::nodata))
-			calc_tss(md);
+
+		if ((olwr_present) && (md.tss == IOUtils::nodata)) //HACK
+			md.tss = olwr_to_tss(md.param("OLWR"));
 
 		//cout << tmp_md << endl;
 		//cout << endl;
 	}
 }
 
-void SMETIO::calc_tss(MeteoData& /*md*/)
-{
-	//HACK: Insert code to calculate TSS from OLWR here
+double SMETIO::olwr_to_tss(const double& olwr) {
+	const double ea = 1.;
+	if(olwr==IOUtils::nodata) return IOUtils::nodata;
+	return pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
 }
 
 void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,

@@ -40,10 +40,10 @@ class FitModel {
 		std::string getInfo();
 		FitModel& operator =(const FitModel& source);
 	protected:
-		unsigned int nPts; //number of data points
+		size_t nPts; //number of data points
 		std::string regname; //model name
-		unsigned int nParam; //number of parameters
-		unsigned int min_nb_pts; //minimum number of data points
+		size_t nParam; //number of parameters
+		size_t min_nb_pts; //minimum number of data points
 		bool fit_ready;
 		std::string infoString;
 		std::vector<double> Lambda; //parameters of the fit
@@ -75,7 +75,7 @@ class FitLeastSquare : public FitModel {
 		void initLambda();
 		void initDLambda(Matrix& dLambda) const;
 		double getDelta(const double& var) const;
-		double DDer(const double& x, const unsigned int& index);
+		double DDer(const double& x, const size_t& index);
 		bool computeFit();
 
 		static const double lambda_init; //initial default guess

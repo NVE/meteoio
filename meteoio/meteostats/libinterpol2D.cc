@@ -709,7 +709,7 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector<StationData>& vecStations, const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid)
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
-	unsigned int nrOfMeasurments = vecStations.size();
+	size_t nrOfMeasurments = vecStations.size();
 
 	Matrix G(nrOfMeasurments, nrOfMeasurments);
 	Matrix gamma(nrOfMeasurments, (unsigned int)1);
@@ -723,12 +723,12 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 
 	//fill the G matrix
 	//HACK: are we filling with the proper values? A covariance matrix would be different...
-	for(unsigned int j=1; j<=nrOfMeasurments; j++) {
+	for(size_t j=1; j<=nrOfMeasurments; j++) {
 		const Coords& st1 = vecStations[j-1].position;
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
 
-		for(unsigned int i=1; i<=j; i++) {
+		for(size_t i=1; i<=j; i++) {
 			//compute distance between stations
 			const Coords& st2 = vecStations[i-1].position;
 			const double DX = x1-st2.getEasting();
@@ -739,8 +739,8 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 		//G(j,j)=1.; //HACK what should we put on the diagonal?
 	}
 	//fill the upper half (an exact copy of the lower half)
-	for(unsigned int j=1; j<=nrOfMeasurments; j++) {
-		for(unsigned int i=j+1; i<=nrOfMeasurments; i++) {
+	for(size_t j=1; j<=nrOfMeasurments; j++) {
+		for(size_t i=j+1; i<=nrOfMeasurments; i++) {
 			G(i,j) = G(j,i);
 		}
 	}
@@ -753,13 +753,13 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	const double denom = Matrix::scalar( OneT_Ginv * One );
 
 	//now, calculate each point
-	for(unsigned int j=0; j<grid.nrows; j++) {
-		for(unsigned int i=0; i<grid.ncols; i++) {
+	for(size_t j=0; j<grid.nrows; j++) {
+		for(size_t i=0; i<grid.ncols; i++) {
 			const double x = llcorner_x+i*cellsize;
 			const double y = llcorner_y+j*cellsize;
 
 			//fill gamma
-			for(unsigned int st=0; st<nrOfMeasurments; st++) {
+			for(size_t st=0; st<nrOfMeasurments; st++) {
 				//compute distance between cell and each station
 				const Coords& position = vecStations[st].position;
 				const double DX = x-position.getEasting();
@@ -773,7 +773,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 
 			//calculate local parameter interpolation
 			double p = 0.;
-			for(unsigned int st=0; st<nrOfMeasurments; st++) {
+			for(size_t st=0; st<nrOfMeasurments; st++) {
 				p += lambdaT(1,st+1) * vecData[st]; //matrix starts at 1
 			}
 			grid.grid2D(i,j) = p;

@@ -282,8 +282,8 @@ class ConfigProxy {
 	const Config::Options& opt;
 
 	ConfigProxy(const Config& i_cfg, const std::string& i_key,
-			  const std::string& i_section, const Config::Options& i_opt)
-			: proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
+	            const std::string& i_section, const Config::Options& i_opt)
+	            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
 
 	template<typename T> operator T()
 		{

@@ -30,8 +30,8 @@
 
 namespace mio {
 
-typedef void(*resamplingptr)(const unsigned int& position, const unsigned int& paramindex,
-					    const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
+typedef void(*resamplingptr)(const size_t& position, const size_t& paramindex,
+                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 
 /**
  * @class ResamplingAlgorithms
@@ -47,19 +47,19 @@ class ResamplingAlgorithms {
 		static const resamplingptr& getAlgorithm(const std::string& algorithmname);
 
 		//Available algorithms
-		static void NoResampling(const unsigned int& position, const unsigned int& paramindex,
+		static void NoResampling(const size_t& position, const size_t& paramindex,
 		                         const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
-		static void LinearResampling(const unsigned int& position, const unsigned int& paramindex,
+		static void LinearResampling(const size_t& position, const size_t& paramindex,
 		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
-		static void NearestNeighbour(const unsigned int& position, const unsigned int& paramindex,
+		static void NearestNeighbour(const size_t& position, const size_t& paramindex,
 		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 
-		static void Accumulate(const unsigned int& pos, const unsigned int& paramindex,
+		static void Accumulate(const size_t& position, const size_t& paramindex,
 		                       const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
 
  	private:
-		static double funcval(const std::vector<MeteoData>& vecM, const unsigned int& index,
-		                      const Date& date, const unsigned int& paramindex);
+		static double funcval(const std::vector<MeteoData>& vecM, const size_t& index,
+		                      const Date& date, const size_t& paramindex);
 		static double linearInterpolation(const double& x1, const double& y1,
 		                                  const double& x2, const double& y2, const double& x3);
 

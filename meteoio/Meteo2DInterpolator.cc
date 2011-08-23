@@ -30,10 +30,10 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) 
 	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
 	 * for configuration of interpolation algorithms within the Config object.
 	 */
-	for (unsigned int ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
+	for (size_t ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpAlgorithms;
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
-		unsigned int nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
+		size_t nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
 
 		if (nrOfAlgorithms > 0)
 			mapAlgorithms[parname] = tmpAlgorithms;
@@ -43,7 +43,7 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) 
 void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo)
 {
 	//check that the stations are using the same projection as the dem
-	for (unsigned int i=0; i<(unsigned int)vec_meteo.size(); i++) {
+	for (size_t i=0; i<vec_meteo.size(); i++) {
 		const StationData& meta = vec_meteo[i].meta;
 		if(!meta.position.isSameProj(dem.llcorner)) {
 			std::stringstream os;
@@ -75,7 +75,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		auto_ptr<InterpolationAlgorithm> bestalgorithm(NULL);
 		vector<string> vecArgs;
 
-		for (unsigned int ii=0; ii < it->second.size(); ii++){
+		for (size_t ii=0; ii < it->second.size(); ii++){
 			const string& algoname = it->second.at(ii);
 			getArgumentsForAlgorithm(meteoparam, algoname, vecArgs);
 
@@ -146,8 +146,8 @@ size_t Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname
 }
 
 size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Parameters& param,
-                                                           const std::string& algorithm,
-                                                           std::vector<std::string>& vecArgs) const
+                                                     const std::string& algorithm,
+                                                     std::vector<std::string>& vecArgs) const
 {
 	vecArgs.clear();
 	const string keyname = MeteoData::getParameterName(param) +"::"+ algorithm;

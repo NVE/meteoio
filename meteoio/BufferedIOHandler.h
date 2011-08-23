@@ -143,5 +143,6 @@ class BufferedIOHandler : public IOInterface {
 		size_t chunks; ///< How many chuncks to buffer
 		size_t max_grids; ///< How many grids to buffer (grids, dems, landuse and assimilation grids together)
 };
+
 } //end namespace
 #endif

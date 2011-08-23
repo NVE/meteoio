@@ -157,8 +157,8 @@ double LinVario::f(const double& x) {
 
 void LinVario::setDefaultGuess() {
 	double xzero=X[0];
-	unsigned int xzero_idx=0;
-	for(unsigned int i=1; i<X.size(); i++) {
+	size_t xzero_idx=0;
+	for(size_t i=1; i<X.size(); i++) {
 		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
 	}
 	const double slope = Interpol1D::arithmeticMean( Interpol1D::derivative(X, Y) );
@@ -182,8 +182,8 @@ double ExpVario::f(const double& x) {
 
 void ExpVario::setDefaultGuess() {
 	double xzero=X[0];
-	unsigned int xzero_idx=0;
-	for(unsigned int i=1; i<X.size(); i++) {
+	size_t xzero_idx=0;
+	for(size_t i=1; i<X.size(); i++) {
 		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
 	}
 	Lambda.push_back( Y[xzero_idx] );
@@ -207,8 +207,8 @@ double RatQuadVario::f(const double& x) {
 
 void RatQuadVario::setDefaultGuess() {
 	double xzero=X[0];
-	unsigned int xzero_idx=0;
-	for(unsigned int i=1; i<X.size(); i++) {
+	size_t xzero_idx=0;
+	for(size_t i=1; i<X.size(); i++) {
 		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
 	}
 	Lambda.push_back( Y[xzero_idx] );
@@ -223,8 +223,8 @@ double LinearLS::f(const double& x) {
 
 void LinearLS::setDefaultGuess() {
 	double xzero=X[0];
-	unsigned int xzero_idx=0;
-	for(unsigned int i=1; i<X.size(); i++) {
+	size_t xzero_idx=0;
+	for(size_t i=1; i<X.size(); i++) {
 		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
 	}
 
@@ -242,8 +242,8 @@ void Quadratic::setDefaultGuess() {
 	std::vector<double> der = Interpol1D::derivative(X, Y);
 	const double acc = 0.5 * Interpol1D::arithmeticMean( Interpol1D::derivative(X, der) );
 	double xzero=der[0];
-	unsigned int xzero_idx=0;
-	for(unsigned int i=1; i<der.size(); i++) {
+	size_t xzero_idx=0;
+	for(size_t i=1; i<der.size(); i++) {
 		if(abs(der[i])<xzero) { xzero=der[i]; xzero_idx=i;}
 	}
 

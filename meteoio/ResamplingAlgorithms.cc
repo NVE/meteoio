@@ -87,7 +87,7 @@ const resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algon
  * @endcode
  */
 
-void ResamplingAlgorithms::NoResampling(const unsigned int& /*pos*/, const unsigned int& /*paramindex*/,
+void ResamplingAlgorithms::NoResampling(const size_t& /*pos*/, const size_t& /*paramindex*/,
                                         const std::vector<std::string>& /*taskargs*/, std::vector<MeteoData>& /*vecM*/)
 {
 	return;
@@ -106,7 +106,7 @@ void ResamplingAlgorithms::NoResampling(const unsigned int& /*pos*/, const unsig
  * @endcode
  */
 
-void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsigned int& paramindex,
+void ResamplingAlgorithms::NearestNeighbour(const size_t& pos, const size_t& paramindex,
                                             const std::vector<std::string>& /*taskargs*/, std::vector<MeteoData>& vecM)
 {
 	if (pos >= vecM.size())
@@ -119,7 +119,7 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsig
 	//Try to find the nearest neighbour, if there are two equally distant, then return the arithmetic mean
 	MeteoData m1, m2;
 	bool found1=false, found2=false;
-	for (unsigned int ii=pos+1; ii<vecM.size(); ii++){
+	for (size_t ii=pos+1; ii<vecM.size(); ii++){
 		if (vecM[ii].param(paramindex) != IOUtils::nodata){
 			m1 = vecM[ii];
 			found1 = true;
@@ -127,7 +127,7 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsig
 		}
 	}
 
-	for (unsigned int ii=0; ii<(unsigned int)pos; ii++){
+	for (size_t ii=0; ii<pos; ii++){
 		if (vecM[ii].param(paramindex) != IOUtils::nodata){
 			m2 = vecM[ii];
 			found2 = true;
@@ -165,7 +165,7 @@ void ResamplingAlgorithms::NearestNeighbour(const unsigned int& pos, const unsig
  * TA::args     = extrapolate
  * @endcode
  */
-void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsigned int& paramindex,
+void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& paramindex,
                                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM)
 {
 	if (pos >= vecM.size())
@@ -184,7 +184,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	bool foundP1=false, foundP2=false;
 
-	for (unsigned int ii=pos; (ii--) > 0; ){
+	for (size_t ii=pos; (ii--) > 0; ){
 		if (vecM[ii].param(paramindex) != IOUtils::nodata){
 			indexP1 = (size_t)ii;
 			foundP1 = true;
@@ -192,7 +192,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 		}
 	}
 
-	for (unsigned int ii=pos+1; ii<vecM.size(); ii++){
+	for (size_t ii=pos+1; ii<vecM.size(); ii++){
 		if (vecM[ii].param(paramindex) != IOUtils::nodata){
 			indexP2 = (size_t)ii;
 			foundP2 = true;
@@ -210,7 +210,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 
 	//At this point we either have a valid indexP1 or indexP2 and we can at least try to extrapolate
 	if (!foundP1 && foundP2){ //only nodata values found before pos, try looking after indexP2
-		for (unsigned int ii=indexP2+1; ii<vecM.size(); ii++){
+		for (size_t ii=indexP2+1; ii<vecM.size(); ii++){
 			if (vecM[ii].param(paramindex) != IOUtils::nodata){
 				indexP1 = ii;
 				foundP1 = true;
@@ -218,7 +218,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
 			}
 		}
 	} else if (foundP1 && !foundP2){ //only nodata found after pos, try looking before indexP1
-		for (unsigned int ii=indexP1; (ii--) > 0; ){
+		for (size_t ii=indexP1; (ii--) > 0; ){
 			if (vecM[ii].param(paramindex) != IOUtils::nodata){
 				indexP2=ii;
 				foundP2 = true;
@@ -249,7 +249,7 @@ void ResamplingAlgorithms::LinearResampling(const unsigned int& pos, const unsig
  * HNW::arg1	 = 3600
  * @endcode
  */
-void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned int& paramindex,
+void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paramindex,
                                       const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM)
 {
 	/*
@@ -277,7 +277,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 
 	//find start of accumulation period
 	bool found_start=false;
-	unsigned int start_idx = pos+1;
+	size_t start_idx = pos+1;
 	Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.), vecM[pos].date.getTimeZone());
 
 	for (start_idx=pos+1; (start_idx--) > 0; ){
@@ -299,7 +299,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 	//HACK: we consider nodata to be 0. In fact, we should try to interpolate from valid points
 	//if they are not too far away
 
-	unsigned int interval_end   = start_idx + 1;
+	size_t interval_end   = start_idx + 1;
 
 	double valstart = funcval(vecM, start_idx, dateStart, paramindex);
 	double valend   = funcval(vecM, interval_end, vecM[interval_end].date, paramindex);
@@ -327,7 +327,7 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 		vecM[pos].param(paramindex) = sum;
 		return;
 	} else {
-		for (unsigned int ii=interval_end+1; ii<pos; ii++){
+		for (size_t ii=interval_end+1; ii<pos; ii++){
 			const double& val = vecM[ii].param(paramindex);
 			if (val != IOUtils::nodata)
 				sum += val;
@@ -343,10 +343,10 @@ void ResamplingAlgorithms::Accumulate(const unsigned int& pos, const unsigned in
 	//TODO:check if at least one point has been summed. If not -> nodata
 }
 
-double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const unsigned int& index,
-                                     const Date& date, const unsigned int& paramindex)
+double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const size_t& index,
+                                     const Date& date, const size_t& paramindex)
 {
-	unsigned int start = index;
+	size_t start = index;
 	if (vecM[start].isResampled()){
 		if (start > 0){
 			start--;
@@ -355,7 +355,7 @@ double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const u
 		}
 	}
 
-	unsigned int end   = index+1;
+	size_t end   = index+1;
 	const double& valstart = vecM[start].param(paramindex);
 
 	if (!vecM[index].isResampled() && (vecM[index].date == date))

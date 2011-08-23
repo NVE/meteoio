@@ -139,15 +139,15 @@ bool FitLeastSquare::computeFit() {
 	do {
 		iter++;
 		//set A matrix
-		for(unsigned int m=1; m<=nPts; m++) {
-			for(unsigned int n=1; n<=nParam; n++) {
+		for(size_t m=1; m<=nPts; m++) {
+			for(size_t n=1; n<=nParam; n++) {
 				const double value = DDer( X[m-1], n ); //X is a vector
 				A(m,n) = value;
 			}
 		}
 
 		//set dBeta matrix
-		for(unsigned int m=1; m<=nPts; m++) {
+		for(size_t m=1; m<=nPts; m++) {
 			dBeta(m,1) = Y[m-1] - f(X[m-1]); //X and Y are vectors
 		}
 
@@ -158,7 +158,7 @@ bool FitLeastSquare::computeFit() {
 
 		//apply the deltas to the parameters, record maximum delta
 		max_delta = 0.;
-		for(unsigned int m=1; m<=nParam; m++) {
+		for(size_t m=1; m<=nParam; m++) {
 			Lambda[m-1] += dLambda(m,1); //Lambda is a vector
 			if( fabs(dLambda(m,1))>max_delta ) max_delta=fabs(dLambda(m,1));
 		}
@@ -191,7 +191,7 @@ void FitLeastSquare::initLambda() {
 
 void FitLeastSquare::initDLambda(Matrix& dLambda) const {
 	dLambda.resize(nParam,1);
-	for(unsigned int m=1; m<=nParam; m++) {
+	for(size_t m=1; m<=nParam; m++) {
 		const double var = Lambda[m-1]; //Lambda is a vector
 		if(var==0) {
 			dLambda(m,1) = delta_init_abs * 0.5;
@@ -210,7 +210,7 @@ double FitLeastSquare::getDelta(const double& var) const {
 	}
 }
 
-double FitLeastSquare::DDer(const double& x, const unsigned int& index) {
+double FitLeastSquare::DDer(const double& x, const size_t& index) {
 	const double var = Lambda[index-1]; //Lambda is a vector
 	const double delta = getDelta(var);
 	const double v1 = var - delta;
