@@ -50,8 +50,8 @@ class GeotopIO : public IOInterface {
 
 		virtual void readStationData(const Date& date, std::vector<StationData>& vecStation);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-							  std::vector< std::vector<MeteoData> >& vecMeteo,
-							  const size_t& stationindex=IOUtils::npos);
+		                           std::vector< std::vector<MeteoData> >& vecMeteo,
+		                           const size_t& stationindex=IOUtils::npos);
 
 		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
 
@@ -61,12 +61,12 @@ class GeotopIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
-		void initParamNames(std::map<std::string, unsigned int>& mapParam);
+		void initParamNames(std::map<std::string, size_t>& mapParam);
 		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
-					   const std::string& metafile);
+		                  const std::string& metafile);
 		void makeColumnMap(const std::vector<std::string>& tmpvec,
-					    const std::vector<std::string>& vecColumnNames,
-					    std::map<std::string, unsigned int>& mapHeader);
+		                   const std::vector<std::string>& vecColumnNames,
+		                   std::map<std::string, size_t>& mapHeader);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		void cleanup() throw();

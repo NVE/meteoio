@@ -627,12 +627,12 @@ void SMETWriter::check_formatting()
 	}
 }
 
-void SMETWriter::set_width(const std::vector<size_t>& vec_width)
+void SMETWriter::set_width(const std::vector<int>& vec_width)
 {
 	ascii_width = vec_width;
 }
 
-void SMETWriter::set_precision(const std::vector<size_t>& vec_precision)
+void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 {
 	ascii_precision = vec_precision;
 }

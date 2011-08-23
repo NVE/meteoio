@@ -84,7 +84,7 @@ class SMETCommon {
 
 /**
  * @class SMETReader
- * @brief The SMETReader class enables to read a SMET formatted file. 
+ * @brief The SMETReader class enables to read a SMET formatted file.
  *        Data and header info can be extracted through this class.
  *
  * @author Thomas Egger
@@ -107,7 +107,7 @@ class SMETReader {
 		 * @param[out] vec_timestamp A vector of string to hold the timestamp of each line
 		 * @param[out] vec_data A vector of double holding all double values of all lines sequentially
 		 */
-		void read(const std::string& timestamp_start, const std::string& timestamp_end, 
+		void read(const std::string& timestamp_start, const std::string& timestamp_end,
 				std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 
 		/**
@@ -152,7 +152,7 @@ class SMETReader {
 		 * @return The value for the key, if the key is not present return (int)nodata
 		 */
 		int get_header_intvalue(const std::string& key) const;
-		
+
 		/**
 		 * @brief Check whether timestamp is a part of the fields
 		 * @return true if timestamp is a column in the SMET file, false otherwise
@@ -197,7 +197,7 @@ class SMETReader {
 		void get_units_conversion(std::vector<double>& offset, std::vector<double>& multiplier) const;
 
 		/**
-		 * @brief Set whether the values returned should be converted according to 
+		 * @brief Set whether the values returned should be converted according to
 		 *        unit_offset and multiplier or whether the user should get the raw data returned
 		 * @param[in] in_mksa True if the user wants MKSA values returned, false otherwise (default)
 		 */
@@ -242,7 +242,7 @@ class SMETReader {
 
 /**
  * @class SMETWriter
- * @brief The SMETWriter class that enables to write a SMET formatted file. 
+ * @brief The SMETWriter class that enables to write a SMET formatted file.
  *        The user constructs a SMETWriter class and fills in the header values
  *        Finally the user may call write(...) and pass the data to be written
  *
@@ -278,8 +278,8 @@ class SMETWriter {
 		 * @brief Write a SMET file, providing ASCII ISO formatted timestamps and data
 		 * @param[in] vec_timestamp A vector with one ASCII date/time combined string for each line
 		 * @param[in] data All the data to be written sequentially into the columns, the data
-		 *            is aligned sequentially, not per line; Total size of the vector: 
-		 *            Total size of the vector: vec_timestamp.size() * nr_of_fields 
+		 *            is aligned sequentially, not per line; Total size of the vector:
+		 *            Total size of the vector: vec_timestamp.size() * nr_of_fields
 		 *            (timestamp is not counted as field)
 		 */
 		void write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data);
@@ -297,7 +297,7 @@ class SMETWriter {
 		 * @param[in] vec_precision Set the precision for every column to be written
 		 *            (timestamp is not counted if present)
 		 */
-		void set_precision(const std::vector<size_t>& vec_precision);
+		void set_precision(const std::vector<int>& vec_precision);
 
 		/**
 		 * @brief Set width for each field (except timestamp), otherwise a default
@@ -305,7 +305,7 @@ class SMETWriter {
 		 * @param[in] vec_width Set the width for every column to be written
 		 *            (timestamp is not counted if present)
 		 */
-		void set_width(const std::vector<size_t>& vec_width);
+		void set_width(const std::vector<int>& vec_width);
 
 	private:
 		void cleanup() throw();
@@ -330,7 +330,7 @@ class SMETWriter {
 		char location_wgs84, location_epsg;
 
 		std::vector<std::string> other_header_keys; //this vector is used to preserve the sequence of header keys
-		std::vector<size_t> ascii_precision, ascii_width;
+		std::vector<int> ascii_precision, ascii_width;
 		std::map< std::string, std::string > header;
 		std::set<std::string> mandatory_header_keys;
 		std::ofstream fout; //Output file streams

@@ -1,5 +1,9 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
+SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
+SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
+OPTION( BUILD_SHARED_LIBS "Set to OFF to build only static libraries" ON )
+
 IF(PROJ4)
 	FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
 	FIND_LIBRARY(LIBPROJ proj)

@@ -469,7 +469,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				mywriter.set_header_value("station_name", sd.stationName);
 			mywriter.set_header_value("nodata", IOUtils::nodata);
 
-			vector<size_t> myprecision, mywidth; //set meaningful precision/width for each column
+			vector<int> myprecision, mywidth; //set meaningful precision/width for each column
 
 			if (outputIsAscii) {
 				ss << "timestamp";
@@ -500,7 +500,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			}
 
 			//Add all other used parameters
-			size_t tmpwidth, tmpprecision;
+			int tmpwidth, tmpprecision;
 			for (size_t ll=0; ll<MeteoData::nrOfParameters; ll++){
 				if (vecParamInUse[ll]) {
 					std::string column=MeteoData::getParameterName(ll);
@@ -561,7 +561,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	}
 }
 
-void SMETIO::getFormatting(const size_t& param, size_t& prec, size_t& width)
+void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 {
 	if ((param == MeteoData::TA) || (param == MeteoData::TSS) || (param == MeteoData::TSG)){
 		prec = 2;

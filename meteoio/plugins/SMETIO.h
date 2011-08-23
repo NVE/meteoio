@@ -71,7 +71,7 @@ class SMETIO : public IOInterface {
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
                                       std::vector<bool>& vecParamInUse);
-		void getFormatting(const size_t& param, size_t& prec, size_t& width);
+		void getFormatting(const size_t& param, int& prec, int& width);
 		double olwr_to_tss(const double& olwr);
 
 		size_t nr_stations; //number of stations to read from
