@@ -155,7 +155,7 @@ namespace mio {
  *
  * You first need to create the various sections:
  * - [General] : The documentation about this section is found in ??. It currently contains the PLUGIN_PATH key that
- *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler). 
+ *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler).
  * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
  *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for special points
  *             (key=SPECIALPTS), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
@@ -164,16 +164,16 @@ namespace mio {
  *             system should often be specified, as explained in \ref coords .
  *
  *  - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
- * 
+ *
  *  - [Filters] : This section lists the pre-processing that has to be performed on the incoming meteorological data.
  *                It builds a stack of processing elements one after the other one, for each meteorological parameter.
- *                See \ref processing for more information. It also contains 
+ *                See \ref processing for more information. It also contains
  *
  *  - [Interpolations1D] : This section deals with temporal resampling of the incoming meteorological data. The goal is
  *                         to be able to take in data at any sampling rate and to extract values at any user given time step
  *                         according to the resampling specifications of the user. The search window size can be given with
  *                         key WINDOW_SIZE that expresses (in seconds) how far a valid point can be searched for when
- *                         re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point). 
+ *                         re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point).
  *                         See \ref resampling .
  *
  *  - [Interpolations2D] : This section deals with the spatial interpolation of meteorological data, based on a provided
@@ -182,7 +182,7 @@ namespace mio {
  *                         See \ref interpol2d .
  *
  * The application that you are using might also need its own section(s), check this with your application.
- * 
+ *
  */
 
  /**
@@ -264,9 +264,9 @@ namespace mio {
  * @page dev_processing Processing elements developer's guide
  *
  * In order to add a new filter/processing element to the already existing set of components, the developer only needs to
- * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteofilters. 
+ * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteofilters.
  * It is important to understand that the processing elements operate on a "per parameter" basis.
- * This means that an element might be executed for the parameter TA and another one for the parameter HNW, so the 
+ * This means that an element might be executed for the parameter TA and another one for the parameter HNW, so the
  * algorithm only has to deal with a generic processing method based on double values.
  *
  * To implement a new processing element, the following steps are necessary:
@@ -326,7 +326,7 @@ namespace mio {
  * TA::arg1    = soft 280 260
  * @endcode
  * Which will replace any value greater than 280 Kelvin by 260 Kelvin.
- * 
+ *
  */
 
 /**
@@ -347,14 +347,14 @@ namespace mio {
  * 	try {
  * 		mio::Config cfg("io.ini");
  * 		io = new mio::IOManager(cfg);
- * 	} catch (IOException& e){
+ * 	} catch (const IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
  *
  * 	try {
  * 		mio::IOUtils::convertString(d1,argv[1]);
  * 		io->readMeteoData(d1, vecMeteo);
- * 	} catch (IOException& e){
+ * 	} catch (const IOException& e){
  * 		std::cout << "Problem when reading data, cause: " << e.what() << std::endl;
  * 	}
  *
@@ -384,7 +384,7 @@ namespace mio {
  * 	try {
  * 		cfg = new mio::Config("io.ini");
  * 		io = new mio::IOManager(cfg);
- * 	} catch (IOException& e){
+ * 	} catch (const IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
  * 	io->readDEM(dem);
@@ -408,24 +408,24 @@ namespace mio {
  *
  * int main(void) {
  * 	mio::Date d1;
- * 
+ *
  * 	//initializing the io handlers according to the config file
  * 	mio::Config cfg("io.ini");
  * 	mio::IOManager io(cfg);
- * 
+ *
  * 	//reading the dem (necessary for several spatial interpolations algoritms)
  * 	mio::DEMObject dem;
  * 	io.readDEM(dem);
- * 
+ *
  * 	//we assume that the time given on the command line is in TZ=+1
  * 	d1.setTimeZone(1.);
  * 	mio::IOUtils::convertString(d1,argv[1]);
- * 
+ *
  * 	//performing spatial interpolations
  * 	mio::Grid2DObject ta_grid;
  * 	io.interpolate(d1, dem, MeteoData::TA, ta_grid);
  * 	io.write2DGrid(param,"ta.asc");
- * 
+ *
  * 	return 0;
  * }
  * \endcode

@@ -76,7 +76,7 @@ void FilterAlgorithms::parseFilterArguments(const std::string& filtername, const
 
 		if ((vecArgs_out.size() < minArgs) || (vecArgs_out.size() > maxArgs))
 			throw InvalidArgumentException("Wrong number of arguments for filter " + filtername, AT);
-	} catch(std::exception& e){
+	} catch(const std::exception& e){
 		std::cerr << "[E] While processing arguments for filter " << filtername << std::endl;
 		throw;
 	}
@@ -216,7 +216,7 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
  * s_0 = x_0
  * s_n = alpha*x_(t-1) + (1-alpha)*s_t-1
  * - http://en.wikipedia.org/wiki/Exponential_smoothing
- * - alpha needs to be provided as argument, as well as the window size and centering 
+ * - alpha needs to be provided as argument, as well as the window size and centering
  * - nodata values are excluded from the moving average calculation
  * - Three arguments expected (all have to be present and valid for the algorithm to start operating):
  *   - minimal number of points in window
@@ -242,7 +242,7 @@ void FilterAlgorithms::ExpSmoothingProcess(const std::vector<MeteoData>& vecM, c
 
 	//Take away the last argument (alpha value) and check validity
 	double alpha = 0.5;
-	IOUtils::convertString(alpha, myArgs.at(myArgs.size()-1)); 
+	IOUtils::convertString(alpha, myArgs.at(myArgs.size()-1));
 	if ((alpha <= 0) || (alpha >= 1))
 		throw InvalidArgumentException("ExpSmoothingFilter: alpha must be in [0;1]", AT);
 
@@ -280,7 +280,7 @@ void FilterAlgorithms::ExpSmoothingProcess(const std::vector<MeteoData>& vecM, c
 				vecWindowM[ii].param(paramindex) = ExpSmoothingAlgorithm(vecTmpWindow, paramindex, alpha);
 				//cout << "ExpSmoothing: " << vecWindowM[ii].param(paramindex) << endl;
 			}
-		}	
+		}
 	}
 }
 
@@ -335,16 +335,16 @@ void FilterAlgorithms::WMASmoothingProcess(const std::vector<MeteoData>& vecM, c
 				vecWindowM[ii].param(paramindex) = WMASmoothingAlgorithm(vecTmpWindow, paramindex);
 				//cout << "WMASmoothing: " << vecWindowM[ii].param(paramindex) << endl;
 			}
-		}	
+		}
 	}
 }
 
 bool FilterAlgorithms::compareMeteoData (const MeteoData& m1, const MeteoData& m2)
-{ 
+{
 	return (m1.date>m2.date);
 }
 
-unsigned int FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM, 
+unsigned int FilterAlgorithms::getWindowData(const std::string& filtername, const std::vector<MeteoData>& vecM,
                                              const unsigned int& pos,
                                              const std::vector<std::string>& i_vecArgs, std::vector<MeteoData>& vecResult)
 {
@@ -502,7 +502,7 @@ double FilterAlgorithms::WMASmoothingAlgorithm(const std::vector<MeteoData>& vec
 	}
 
 	if ((wma != IOUtils::nodata) && (counter > 0))
-		wma /= (counter*(counter+1)/2); 
+		wma /= (counter*(counter+1)/2);
 
 	return wma;
 }
@@ -689,7 +689,7 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 		std::vector<double> vecWindow;
 		if (!getWindowData("mad", vecM, pos, vecWindowM[ii].date, vecArgs, paramindex, vecWindow))
 			return; //Not enough data to meet user configuration
-	
+
 		//Calculate MAD
 		const double K = 1. / 0.6745;
 		double mad     = IOUtils::nodata;
@@ -698,7 +698,7 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 		try {
 			median = Interpol1D::getMedian(vecWindow);
 			mad    = Interpol1D::getMedianAverageDeviation(vecWindow);
-		} catch(exception& e){
+		} catch(const exception& e){
 			return;
 		}
 
@@ -735,7 +735,7 @@ void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vec
 		std::vector<double> vecWindow;
 		if (!getWindowData("stddev", vecM, pos, vecWindowM[ii].date, vecArgs, paramindex, vecWindow))
 			return; //Not enough data to meet user configuration
-	
+
 		//Calculate deviation
 		double mean     = IOUtils::nodata;
 		double std_dev  = IOUtils::nodata;
@@ -743,7 +743,7 @@ void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vec
 		try {
 			mean = Interpol1D::arithmeticMean(vecWindow);
 			std_dev = Interpol1D::std_dev(vecWindow);
-		} catch(exception& e){
+		} catch(const exception& e){
 			return;
 		}
 
@@ -755,7 +755,7 @@ void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vec
 
 /**
  * @brief Tukey 53H method
- * A smooth time sequence is generated from the median, substracted from the original signal and compared with the standard deviation. 
+ * A smooth time sequence is generated from the median, substracted from the original signal and compared with the standard deviation.
  * see <i>"Despiking Acoustic Doppler Velocimeter Data"</i>, Derek G. Goring and Vladimir L. Nikora, Journal of Hydraulic Engineering, <b>128</b>, 1, 2002
  * THIS CODE IS NOT ACTIVE YET
  * @code
@@ -825,7 +825,7 @@ void FilterAlgorithms::Tukey53HFilter(const std::vector<MeteoData>& vecM, const 
 					value = IOUtils::nodata;
 				}
 			}
-		} catch(exception& e){
+		} catch(const exception& e){
 			return;
 		}
 
@@ -926,7 +926,7 @@ void FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, cons
 		try {
 			median = Interpol1D::getMedian(vecWindow);
 			vecWindowM[ii].param(paramindex) = median;
-		} catch(exception& e){
+		} catch(const exception& e){
 			continue; //the median calculation did not work out, filter is not applied, value unchanged
 		}
 	}
@@ -974,7 +974,7 @@ void FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
 		try {
 			mean = Interpol1D::arithmeticMean(vecWindow);
 			vecWindowM[ii].param(paramindex) = mean;
-		} catch(exception& e){
+		} catch(const exception& e){
 			continue; //the mean calculation did not work out, filter is not applied, value unchanged
 		}
 	}
@@ -1012,7 +1012,7 @@ void FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const 
 	//
 	for (unsigned int ii=0; ii<vecWindowM.size(); ii++){
 		unsigned int pos = IOUtils::seek(vecWindowM[ii].date, vecM);
-		
+
 		if (pos == IOUtils::npos)
 			continue;
 

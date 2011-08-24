@@ -56,7 +56,7 @@ void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoDat
 			mean = Interpol1D::arithmeticMean(dbl_vec);
 			std_dev = Interpol1D::std_dev(dbl_vec);*/
 			getStat(vec_window, index, std_dev, mean);
-		} catch(exception& e){
+		} catch(const exception& e){
 			continue;
 		}
 

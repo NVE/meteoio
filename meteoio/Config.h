@@ -177,7 +177,7 @@ class Config {
 				IOUtils::toUpper(new_key);
 				IOUtils::toUpper(new_section);
 				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, vecT);
-			} catch(std::exception& e){
+			} catch(const std::exception& e){
 				if (opt != Config::nothrow) {
 					std::stringstream ss;
 					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
@@ -237,7 +237,7 @@ class Config {
 				IOUtils::toUpper(tmp_key);
 				IOUtils::toUpper(tmp_section);
 				IOUtils::getValueForKey<T>(properties, tmp_section + "::" + tmp_key, t);
-			} catch(std::exception& e){
+			} catch(const std::exception& e){
 				if (opt != Config::nothrow) {
 					std::stringstream ss;
 					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
@@ -275,18 +275,17 @@ class Config {
 }; //end class definition Config
 
 class ConfigProxy {
- public:
-	const Config& proxycfg;
-	const std::string& key;
-	const std::string& section;
-	const Config::Options& opt;
+	public:
+		const Config& proxycfg;
+		const std::string& key;
+		const std::string& section;
+		const Config::Options& opt;
 
-	ConfigProxy(const Config& i_cfg, const std::string& i_key,
-	            const std::string& i_section, const Config::Options& i_opt)
-	            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
+		ConfigProxy(const Config& i_cfg, const std::string& i_key,
+		            const std::string& i_section, const Config::Options& i_opt)
+		            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
 
-	template<typename T> operator T()
-		{
+		template<typename T> operator T() {
 			T tmp;
 			proxycfg.getValue(key, section, tmp, opt);
 			return tmp;

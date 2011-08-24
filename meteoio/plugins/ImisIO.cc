@@ -251,7 +251,7 @@ void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Co
 		if (conn != NULL)
 			env->terminateConnection(conn);
 		Environment::terminateEnvironment(env); // static OCCI function
-	} catch (exception& e){
+	} catch (const exception& e){
 		Environment::terminateEnvironment(env); // static OCCI function
 	}
 }
@@ -270,7 +270,7 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 			readStationMetaData(conn); //reads all the station meta data into the vecStationMetaData (member vector)
 
 			closeDBConnection(env, conn);
-		} catch (exception& e){
+		} catch (const exception& e){
 			closeDBConnection(env, conn);
 			throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 		}
@@ -469,7 +469,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 
 		closeDBConnection(env, conn);
-	} catch (exception& e){
+	} catch (const exception& e){
 		closeDBConnection(env, conn);
 		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
@@ -773,7 +773,7 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		return cols.size();
-	} catch (exception& e){
+	} catch (const exception& e){
 		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
@@ -811,7 +811,7 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		return cols.size();
-	} catch (exception& e){
+	} catch (const exception& e){
 		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
@@ -850,7 +850,7 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		return cols.size();
-	} catch (exception& e){
+	} catch (const exception& e){
 		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
@@ -919,7 +919,7 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 		return fullStation;
-	} catch (exception& e){
+	} catch (const exception& e){
 		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }

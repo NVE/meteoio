@@ -555,7 +555,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			if (outputIsAscii) mywriter.write(vec_timestamp, vec_data);
 			else mywriter.write(vec_data);
 
-		} catch(exception& e) {
+		} catch(const exception& e) {
 			throw;
 		}
 	}

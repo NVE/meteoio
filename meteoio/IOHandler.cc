@@ -158,7 +158,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 				std::cout << "[i] Success loading dynamic plugin " << classname << " from " << filename << std::endl;
 			}
 		}
-	} catch (std::exception& e) {
+	} catch (const std::exception& e) {
 	#ifndef _POPC_ //HACK: this line causes a segfault in the parallel version for unknown reasons, lwk
 		if (dynLibrary != NULL)
 			delete dynLibrary;

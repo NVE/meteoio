@@ -19,6 +19,12 @@
 #ifndef __METEOIO_H__
 #define __METEOIO_H__
 
+#ifdef _MSC_VER
+//VC++ complains that it can not generate an assignment operator
+//for some classes (those having CONST members)
+	#pragma warning (disable:4512)
+#endif
+
 //list in alphabetical order
 #include <meteoio/A3DIO.h>
 #include <meteoio/Array2D.h>

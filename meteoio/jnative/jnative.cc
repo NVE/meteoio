@@ -211,7 +211,7 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 		Meteo2DInterpolator mi(cfg, dem, vecData, vecStation);
 		mi.interpolate(interpolation_type, p);
 	}
-	catch(IOException e){
+	catch(const IOException e){
 		std::cout << "Interpolation failed " << std::endl;
 		success = false;
 	}

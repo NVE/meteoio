@@ -160,7 +160,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 				}
 			}
 		}
-	} catch(std::exception& e) {
+	} catch(const std::exception& e) {
 		cleanup();
 		throw;
 	}
@@ -262,7 +262,7 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			}
 			fout << std::endl;
 		}
-	} catch(std::exception& e) {
+	} catch(const std::exception& e) {
 		std::cout << "[E] " << AT << ": " << e.what() << std::endl;
 		cleanup();
 		throw;

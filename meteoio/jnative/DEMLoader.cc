@@ -62,7 +62,7 @@ IOInterface* DEMLoader::generateIOInterface(
 			io = new GrassIO(cfg);
 		else
 			io = new ARCIO(cfg); //default IOinterface
-	}catch (IOException& e){
+	}catch (const IOException& e){
 		std::cout << "Problem with IOInterface ganeration in DEMLoader singleton, cause: "
 					<< e.what() << std::endl;
 		return NULL ;
@@ -127,7 +127,7 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 					delete io;
 				}
 			}
-		}catch (IOException& e){
+		}catch (const IOException& e){
 			std::cout << "Problem while extracting subDEM in DEMLoader, cause: "
 						<< e.what() << std::endl;
 			DEMObject dem;
@@ -168,7 +168,7 @@ const DEMObject& DEMLoader::internal_loadFullDEM(const std::string  cDemFile,
 					std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
 					delete io;
 				}
-			}catch (IOException& e){
+			}catch (const IOException& e){
 				std::cout << "Problem while reading dem file in DEMLoader, cause: "
 							<< e.what() << std::endl;
 				DEMObject dem;

@@ -124,7 +124,7 @@ void Config::parseFile(const std::string& filename)
 			parseLine(linenr++, line, section);
 		} while(!fin.eof());
 		fin.close();
-	} catch(std::exception& e){
+	} catch(const std::exception& e){
 		if (fin.is_open()) {//close fin if open
 			fin.close();
 		}
