@@ -62,7 +62,7 @@ IOInterface* DEMLoader::generateIOInterface(
 			io = new GrassIO(cfg);
 		else
 			io = new ARCIO(cfg); //default IOinterface
-	}catch (const IOException& e){
+	}catch (const IOException&){
 		std::cout << "Problem with IOInterface ganeration in DEMLoader singleton, cause: "
 					<< e.what() << std::endl;
 		return NULL ;

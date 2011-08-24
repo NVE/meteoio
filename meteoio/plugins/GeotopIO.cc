@@ -314,7 +314,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//save stream position and the corresponding end date
 			if (current_fpointer != static_cast<streampos>(-1)) vec_streampos.at(ii)[dateEnd] = current_fpointer;
-		} catch(const std::exception& e) {
+		} catch(const std::exception&) {
 			cleanup();
 			throw;
 		}
@@ -484,7 +484,7 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 				}
 			}
 		}
-	} catch(const std::exception& e) {
+	} catch(const std::exception&) {
 		cleanup();
 		throw;
 	}

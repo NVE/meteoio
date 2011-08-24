@@ -540,7 +540,7 @@ template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str
 	double lat, lon;
 	try {
 		Coords::parseLatLon(s,lat, lon);
-	} catch(const IOException &e) {
+	} catch(const IOException&) {
 		return false;
 	}
 	t.setLatLon(lat, lon, nodata);

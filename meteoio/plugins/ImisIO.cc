@@ -251,7 +251,7 @@ void ImisIO::closeDBConnection(oracle::occi::Environment*& env, oracle::occi::Co
 		if (conn != NULL)
 			env->terminateConnection(conn);
 		Environment::terminateEnvironment(env); // static OCCI function
-	} catch (const exception& e){
+	} catch (const exception&){
 		Environment::terminateEnvironment(env); // static OCCI function
 	}
 }

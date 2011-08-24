@@ -160,7 +160,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 				}
 			}
 		}
-	} catch(const std::exception& e) {
+	} catch(const std::exception&) {
 		cleanup();
 		throw;
 	}

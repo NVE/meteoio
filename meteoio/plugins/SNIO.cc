@@ -209,7 +209,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 			}
 		}
 		return(false);
-	} catch(const std::exception& e){
+	} catch(const std::exception&){
 		cleanup();
 		throw;
 	}
@@ -370,7 +370,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//save stream position and the corresponding end date
 			if (current_fpointer != ((ifstream::pos_type)-1)) vec_streampos.at(ii)[dateEnd] = current_fpointer;
-		} catch (const std::exception& e){
+		} catch (const std::exception&){
 			cleanup();
 			throw;
 		}

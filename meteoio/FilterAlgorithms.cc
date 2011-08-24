@@ -76,7 +76,7 @@ void FilterAlgorithms::parseFilterArguments(const std::string& filtername, const
 
 		if ((vecArgs_out.size() < minArgs) || (vecArgs_out.size() > maxArgs))
 			throw InvalidArgumentException("Wrong number of arguments for filter " + filtername, AT);
-	} catch(const std::exception& e){
+	} catch(const std::exception&){
 		std::cerr << "[E] While processing arguments for filter " << filtername << std::endl;
 		throw;
 	}
@@ -698,7 +698,7 @@ void FilterAlgorithms::MedianAbsoluteDeviationFilter(const std::vector<MeteoData
 		try {
 			median = Interpol1D::getMedian(vecWindow);
 			mad    = Interpol1D::getMedianAverageDeviation(vecWindow);
-		} catch(const exception& e){
+		} catch(const exception&){
 			return;
 		}
 
@@ -743,7 +743,7 @@ void FilterAlgorithms::StandardDeviationFilter(const std::vector<MeteoData>& vec
 		try {
 			mean = Interpol1D::arithmeticMean(vecWindow);
 			std_dev = Interpol1D::std_dev(vecWindow);
-		} catch(const exception& e){
+		} catch(const exception&){
 			return;
 		}
 
@@ -825,7 +825,7 @@ void FilterAlgorithms::Tukey53HFilter(const std::vector<MeteoData>& vecM, const 
 					value = IOUtils::nodata;
 				}
 			}
-		} catch(const exception& e){
+		} catch(const exception&){
 			return;
 		}
 
@@ -926,7 +926,7 @@ void FilterAlgorithms::MedianAvgProcess(const std::vector<MeteoData>& vecM, cons
 		try {
 			median = Interpol1D::getMedian(vecWindow);
 			vecWindowM[ii].param(paramindex) = median;
-		} catch(const exception& e){
+		} catch(const exception&){
 			continue; //the median calculation did not work out, filter is not applied, value unchanged
 		}
 	}
@@ -974,7 +974,7 @@ void FilterAlgorithms::MeanAvgProcess(const std::vector<MeteoData>& vecM, const 
 		try {
 			mean = Interpol1D::arithmeticMean(vecWindow);
 			vecWindowM[ii].param(paramindex) = mean;
-		} catch(const exception& e){
+		} catch(const exception&){
 			continue; //the mean calculation did not work out, filter is not applied, value unchanged
 		}
 	}
