@@ -275,6 +275,18 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 }
 #endif
 
+std::string IOUtils::getLogName() {
+	char *logname;
+	logname = getenv("USERNAME"); //Windows & Unix
+	if(logname!=NULL) return std::string(logname);
+	logname = getenv("LOGNAME"); //Unix
+	if(logname!=NULL) return std::string(logname);
+	logname = getenv("USER"); //Windows & Unix
+	if(logname!=NULL) return std::string(logname);
+
+	return "N/A";
+}
+
 void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
                                  std::istream& fin,
                                  const size_t& linecount,

@@ -130,6 +130,13 @@ namespace IOUtils {
 	bool fileExists(const std::string& filename);
 
 	/**
+	* @brief Retrieve the user name
+	* This checks various environment variables (USERNAME, USER, LOGNAME).
+	* @return user name
+	*/
+	std::string getLogName();
+
+	/**
 	* @brief Replace "\" by "/" in a string so that a path string is cross plateform
 	* @param in_path the path string to cleanup
 	*/
