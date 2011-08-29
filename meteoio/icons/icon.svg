@@ -17,11 +17,11 @@
    xml:space="preserve"
    id="svg1"
    sodipodi:version="0.32"
-   inkscape:version="0.47pre4 r22446"
+   inkscape:version="0.47 r22583"
    sodipodi:docname="icon.svg"
-   inkscape:export-filename="/home/bavay/alpine3d/meteoio/trunk/doc/images/icon16.png"
-   inkscape:export-xdpi="8.9440994"
-   inkscape:export-ydpi="8.9440994"
+   inkscape:export-filename="/home/bavay/alpine3d/meteoio/trunk/meteoio/icons/icon24.png"
+   inkscape:export-xdpi="13.398197"
+   inkscape:export-ydpi="13.398197"
    version="1.1"
    style="display:inline;overflow:visible"><defs
    id="defs168"><inkscape:perspective
@@ -3994,6 +3994,8 @@
      x="5.8092213"
      y="122.39871">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:10.10656261px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4005,6 +4007,8 @@
      id="tspan14324"
      x="4.8750377"
      y="98.62899">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4018,6 +4022,8 @@
      x="0.13159604"
      y="112.19329">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:13.19471359px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4029,6 +4035,8 @@
      id="tspan14336"
      x="1.200495"
      y="119.57677">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4042,6 +4050,8 @@
      x="-0.81456125"
      y="118.47024">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:13.19471264px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4053,6 +4063,8 @@
      id="tspan14344"
      x="11.471975"
      y="125.34425">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4066,6 +4078,8 @@
      x="25.334846"
      y="48.964184">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:5.26265144px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4077,6 +4091,8 @@
      id="tspan14108"
      x="30.468243"
      y="46.05275">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4090,6 +4106,8 @@
      x="34.237549"
      y="46.974495">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:5.28228378px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4101,6 +4119,8 @@
      id="tspan14116"
      x="34.264343"
      y="51.420578">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4114,6 +4134,8 @@
      x="36.466606"
      y="52.310299">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:5.28228378px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4125,6 +4147,8 @@
      id="tspan14124"
      x="38.602276"
      y="53.088913">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4138,6 +4162,8 @@
      x="45.255623"
      y="49.842121">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:5.6612196px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4149,6 +4175,8 @@
      id="tspan14132"
      x="50.589184"
      y="49.405701">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4162,6 +4190,8 @@
      x="49.322742"
      y="52.39603">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:6.34914351px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4173,6 +4203,8 @@
      id="tspan14140"
      x="40.660946"
      y="61.511024">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4186,6 +4218,8 @@
      x="40.684273"
      y="55.486378">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:5.66121483px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4197,6 +4231,8 @@
      id="tspan14152"
      x="36.960732"
      y="56.283871">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4210,6 +4246,8 @@
      x="38.701206"
      y="62.192894">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:6.34914684px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4221,6 +4259,8 @@
      id="tspan14160"
      x="29.424866"
      y="65.147591">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4234,6 +4274,8 @@
      x="27.203798"
      y="66.283989">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:6.34914684px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4245,6 +4287,8 @@
      id="tspan14168"
      x="24.329432"
      y="67.193138">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4258,6 +4302,8 @@
      x="22.626215"
      y="63.628735">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:6.55681181px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4269,6 +4315,8 @@
      id="tspan14180"
      x="18.049393"
      y="64.683014">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4282,6 +4330,8 @@
      x="12.896598"
      y="72.495361">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:7.41393185px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4293,6 +4343,8 @@
      id="tspan14188"
      x="9.9369936"
      y="73.879921">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4306,6 +4358,8 @@
      x="6.9775448"
      y="75.495354">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:7.67757511px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4317,6 +4371,8 @@
      id="tspan14196"
      x="4.0502095"
      y="68.708366">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4330,6 +4386,8 @@
      x="1.8935525"
      y="71.857986">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:9.17118168px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4341,6 +4399,8 @@
      id="tspan14204"
      x="5.509882"
      y="83.197289">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4354,6 +4414,8 @@
      x="8.6678076"
      y="84.291595">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:8.46463585px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4365,6 +4427,8 @@
      id="tspan14216"
      x="14.560459"
      y="76.353912">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4378,6 +4442,8 @@
      x="20.128996"
      y="77.175072">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:9.17117882px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4389,6 +4455,8 @@
      id="tspan14228"
      x="22.331013"
      y="87.516891">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4402,6 +4470,8 @@
      x="25.940123"
      y="88.208031">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:9.17117882px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4413,6 +4483,8 @@
      id="tspan14236"
      x="29.291489"
      y="89.014351">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4426,6 +4498,8 @@
      x="32.771725"
      y="90.051048">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:9.37485409px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4437,6 +4511,8 @@
      id="tspan14244"
      x="41.619141"
      y="82.161232">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4450,6 +4526,8 @@
      x="47.643276"
      y="83.196342">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:10.31584358px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4461,6 +4539,8 @@
      id="tspan14256"
      x="47.512959"
      y="94.134026">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4474,6 +4554,8 @@
      x="50.987118"
      y="95.345642">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:10.3158474px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4485,6 +4567,8 @@
      id="tspan14264"
      x="54.074974"
      y="97.076462">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4498,6 +4582,8 @@
      x="63.850792"
      y="89.821495">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:9.37484741px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4509,6 +4595,8 @@
      id="tspan14272"
      x="58.543949"
      y="93.237602">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4522,6 +4610,8 @@
      x="50.13541"
      y="100.82737">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:10.71127701px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4533,6 +4623,8 @@
      id="tspan14284"
      x="46.394466"
      y="101.43846">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4546,6 +4638,8 @@
      x="45.870434"
      y="92.818604">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:10.10655594px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4557,6 +4651,8 @@
      id="tspan14296"
      x="39.258499"
      y="93.576645">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4570,6 +4666,8 @@
      x="32.646255"
      y="94.385025">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:10.10655594px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4581,6 +4679,8 @@
      id="tspan14304"
      x="25.88711"
      y="95.294456">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4594,6 +4694,8 @@
      x="18.769623"
      y="105.61042">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:11.93495464px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4605,6 +4707,8 @@
      id="tspan14316"
      x="14.889209"
      y="106.49817">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4618,6 +4722,8 @@
      x="11.722281"
      y="95.431648">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:13.19471264px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4629,6 +4735,8 @@
      id="tspan14348"
      x="19.297991"
      y="128.37978">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4642,6 +4750,8 @@
      x="26.687366"
      y="124.87626">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:15.25602341px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4653,6 +4763,8 @@
      id="tspan14356"
      x="33.556812"
      y="130.54979">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4666,6 +4778,8 @@
      x="43.576828"
      y="132.12643">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:17.4508152px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4677,6 +4791,8 @@
      id="tspan14368"
      x="49.221375"
      y="141.86984">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4690,6 +4806,8 @@
      x="62.016594"
      y="128.64349">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:18.53361702px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4701,6 +4819,8 @@
      id="tspan14376"
      x="68.302963"
      y="134.9064">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4714,6 +4834,8 @@
      x="82.03167"
      y="135.12097">0</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:19.09182167px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4725,6 +4847,8 @@
      id="tspan14384"
      x="95.995033"
      y="134.83812">0</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4738,6 +4862,8 @@
      x="104.02018"
      y="139.62823">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:19.71670151px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4749,6 +4875,8 @@
      id="tspan14392"
      x="117.48843"
      y="134.36978">I</tspan></text>
+
+
 
 <text
    xml:space="preserve"
@@ -4762,6 +4890,8 @@
      x="129.57852"
      y="132.32677">I</tspan></text>
 
+
+
 <text
    xml:space="preserve"
    style="font-size:21.39305115px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;writing-mode:lr-tb;text-anchor:middle;fill:#00005f;fill-opacity:1;stroke:none;font-family:Arial Black"
@@ -4773,6 +4903,8 @@
      id="tspan14400"
      x="132.50896"
      y="141.76665">0</tspan></text>
+
+
 
 </g></g><g
    inkscape:groupmode="layer"
@@ -5199,6 +5331,8 @@
      id="tspan9224"
      sodipodi:role="line">0</tspan></text>
 
+
+
 <text
    sodipodi:linespacing="125%"
    transform="scale(0.76356319,1.3096493)"
@@ -5212,6 +5346,8 @@
      x="47.71447"
      y="55.502476">I</tspan></text>
 
+
+
 <text
    sodipodi:linespacing="125%"
    transform="scale(0.76356319,1.3096493)"
@@ -5224,6 +5360,8 @@
      x="37.527782"
      id="tspan9224-2"
      sodipodi:role="line">0</tspan></text>
+
+
 
 </g><g
      id="g9347"
@@ -5240,6 +5378,8 @@
      x="84.990128"
      y="47.502583">I</tspan></text>
 
+
+
 <text
    sodipodi:linespacing="125%"
    transform="scale(0.76356319,1.3096493)"
@@ -5253,6 +5393,8 @@
      id="tspan9224-4-1"
      sodipodi:role="line">0</tspan></text>
 
+
+
 <text
    sodipodi:linespacing="125%"
    transform="scale(0.76356319,1.3096493)"
@@ -5265,6 +5407,8 @@
      sodipodi:role="line"
      x="64.150391"
      y="67.821732">I</tspan></text>
+
+
 
 </g><g
      id="g9355"
@@ -5281,6 +5425,8 @@
      id="tspan9224-8"
      sodipodi:role="line">0</tspan></text>
 
+
+
 <text
    sodipodi:linespacing="125%"
    transform="scale(0.76356319,1.3096493)"
@@ -5294,6 +5440,8 @@
      x="99.340752"
      y="57.833202">I</tspan></text>
 
+
+
 <text
    sodipodi:linespacing="125%"
    transform="scale(0.76356319,1.3096493)"
@@ -5306,5 +5454,7 @@
      sodipodi:role="line"
      x="89.15406"
      y="68.361656">I</tspan></text>
+
+
 
 </g></g></svg>
