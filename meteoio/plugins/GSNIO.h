@@ -18,8 +18,8 @@
 #ifndef __GSNIO_H__
 #define __GSNIO_H__
 
-#include "gsn/soapA3DWebServiceSoap12BindingProxy.h"
-#include "gsn/A3DWebServiceSoap12Binding.nsmap"
+#include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
+#include "gsn/GSNWebServiceSoap12Binding.nsmap"
 
 #include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
@@ -32,6 +32,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 namespace mio {
 
@@ -69,22 +70,25 @@ class GSNIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
 	private:
+		void listSensors(std::vector<std::string>& vec_names);
 		void parseString(const std::string& in_string, MeteoData& md);
 		void convertStringToDouble(double& d, const std::string& in_string, const std::string& in_parname);
 		void convertUnits(MeteoData& meteo);
 		void initGSNConnection();
 		void readStationNames();
-		void readStationMetaData(StationData& sd, const unsigned int& stationindex);
-		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
-				    const StationData& sd, const unsigned int& stationindex);
+		void readMetaData();
+		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
+		void map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field, std::vector<size_t>& index);
 
-		A3DWebServiceSoap12BindingProxy gsn;
+		GSNWebServiceSoap12BindingProxy gsn;
 		Config cfg;
 		std::vector<std::string> vecStationName;
+		std::vector<StationData> vecMeta;
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
-		int proxyport;                              ///< Variable for proxy configuration
+		int proxyport;                                        ///< Variable for proxy configuration
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		double default_timezone;
 };
 
 } //end namespace mio

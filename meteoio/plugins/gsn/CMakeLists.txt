@@ -8,14 +8,14 @@ IF(PLUGIN_GSNIO)
 	FIND_LIBRARY(GSOAPPP gsoap++)
 
 	ADD_CUSTOM_TARGET(wsdl2cpp
-		wsdl2h -g A3DWebService.wsdl
-		COMMAND soapcpp2 -2 -C -L -x -w -i A3DWebService.h
-		COMMAND cmake -E remove *Soap11*
+		#wsdl2h -g A3DWebService.wsdl
+		#COMMAND soapcpp2 -2 -C -L -x -w -i A3DWebService.h
+		#COMMAND cmake -E remove *Soap11*
 		command echo ${GSOAPPP_LIBRARIES}
 	)
 
-	SET_SOURCE_FILES_PROPERTIES(soapC.cpp PROPERTIES GENERATED TRUE)
-	SET_SOURCE_FILES_PROPERTIES(soapA3DWebServiceSoap12BindingProxy.cpp PROPERTIES GENERATED TRUE)
+	#SET_SOURCE_FILES_PROPERTIES(soapC.cpp PROPERTIES GENERATED TRUE)
+	#SET_SOURCE_FILES_PROPERTIES(soapA3DWebServiceSoap12BindingProxy.cpp PROPERTIES GENERATED TRUE)
 
 	#ADD_EXECUTABLE(gsnclient gsnclient.cc soapA3DWebServiceSoap12BindingProxy.cpp soapC.cpp)
 	#TARGET_LINK_LIBRARIES(gsnclient ${GSOAPPP} stdc++)
