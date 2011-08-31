@@ -53,7 +53,6 @@ const float Date::Matlab_offset = 1721058.5; ///<offset between julian date and 
 */
 Date::Date() {
 	dst = false;
-	setDate(0., 0., false);
 	undef = true;
 }
 
@@ -154,7 +153,6 @@ void Date::setDate(const Date& in_date)
 {
 	if(in_date.isUndef()) {
 		dst = false;
-		setDate(0., 0., false);
 		undef = true;
 	} else {
 		setDate(in_date.getJulianDate(), in_date.getTimeZone(), in_date.getDST());
