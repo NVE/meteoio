@@ -711,7 +711,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	size_t nrOfMeasurments = vecStations.size();
 
-	Matrix G(nrOfMeasurments, nrOfMeasurments);
+	Matrix G((unsigned int)nrOfMeasurments, (unsigned int)nrOfMeasurments);
 	Matrix gamma(nrOfMeasurments, (unsigned int)1);
 	const Matrix One(nrOfMeasurments, (unsigned int)1, 1.);
 	const Matrix One_T = One.getT();

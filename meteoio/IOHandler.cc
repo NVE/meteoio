@@ -163,7 +163,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		if (dynLibrary != NULL)
 			delete dynLibrary;
 	#endif
-		std::cerr << "\t" << e.what() << std::endl;
+		std::cerr << AT << ": [E] failed while loading plugin - " << e.what() << std::endl;
 	}
 }
 
