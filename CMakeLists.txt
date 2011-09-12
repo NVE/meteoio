@@ -12,7 +12,6 @@ SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 
 PROJECT(meteoio)
 ADD_SUBDIRECTORY(meteoio/plugins)
-ADD_SUBDIRECTORY(meteoio/plugins/gsn)
 ADD_SUBDIRECTORY(meteoio/meteolaws)
 ADD_SUBDIRECTORY(meteoio/meteofilters)
 ADD_SUBDIRECTORY(meteoio)
