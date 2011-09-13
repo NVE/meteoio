@@ -454,74 +454,25 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			throw InvalidFileNameException(filename, AT);
 
 		//2. check which meteo parameter fields are actually in use
-		vector<bool> vecParamInUse = vector<bool>(MeteoData::nrOfParameters, false);
+		size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
+		vector<bool> vecParamInUse = vector<bool>(nr_of_parameters, false);
+		vector<string> vecColumnName = vector<string>(nr_of_parameters, "NULL");
 		double timezone = IOUtils::nodata;
-		checkForUsedParameters(vecMeteo[ii], timezone, vecParamInUse);
+		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, timezone, vecParamInUse, vecColumnName);
 
-		stringstream ss;
 		try {
 			smet::SMETType type = smet::ASCII;
 			if (!outputIsAscii) type = smet::BINARY;
 
 			smet::SMETWriter mywriter(filename, type, outputIsGzipped);
-			mywriter.set_header_value("station_id", sd.stationID);
-			if (sd.stationName != "")
-				mywriter.set_header_value("station_name", sd.stationName);
-			mywriter.set_header_value("nodata", IOUtils::nodata);
-
-			vector<int> myprecision, mywidth; //set meaningful precision/width for each column
-
-			if (outputIsAscii) {
-				ss << "timestamp";
-			} else {
-				ss << "julian";
-				myprecision.push_back(8);
-				mywidth.push_back(16);
-			}
-
-			if (isConsistent) {
-				mywriter.set_header_value("latitude", sd.position.getLat());
-				mywriter.set_header_value("longitude", sd.position.getLon());
-				mywriter.set_header_value("easting", sd.position.getEasting());
-				mywriter.set_header_value("northing", sd.position.getNorthing());
-				mywriter.set_header_value("altitude", sd.position.getAltitude());
-				mywriter.set_header_value("epsg", (double)sd.position.getEPSG());
-
-				if ((timezone != IOUtils::nodata) && (timezone != 0.0))
-					mywriter.set_header_value("tz", timezone);
-			} else {
-				ss << " latitude longitude altitude";
-				myprecision.push_back(8); //for latitude
-				mywidth.push_back(11);    //for latitude
-				myprecision.push_back(8); //for longitude
-				mywidth.push_back(11);    //for longitude
-				myprecision.push_back(1); //for altitude
-				mywidth.push_back(7);     //for altitude
-			}
-
-			//Add all other used parameters
-			int tmpwidth, tmpprecision;
-			for (size_t ll=0; ll<MeteoData::nrOfParameters; ll++){
-				if (vecParamInUse[ll]) {
-					std::string column=MeteoData::getParameterName(ll);
-					if(column=="RSWR") column="OSWR";
-					if(column=="HNW") column="PSUM";
-					ss << " " << column;
-
-					getFormatting(ll, tmpprecision, tmpwidth);
-					myprecision.push_back(tmpprecision);
-					mywidth.push_back(tmpwidth);
-				}
-			}
-			mywriter.set_header_value("fields", ss.str());
-			mywriter.set_width(mywidth);
-			mywriter.set_precision(myprecision);
+			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone, 
+						    nr_of_parameters, vecParamInUse, vecColumnName, mywriter);
 
 			vector<string> vec_timestamp;
 			vector<double> vec_data;
-			for (size_t jj=0; jj<vecMeteo[ii].size(); jj++){
+			for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
 				if (outputIsAscii){
-					if(out_dflt_TZ!=IOUtils::nodata) {
+					if (out_dflt_TZ != IOUtils::nodata) {
 						Date tmp_date(vecMeteo[ii][jj].date);
 						tmp_date.setTimeZone(out_dflt_TZ);
 						vec_timestamp.push_back(tmp_date.toString(Date::ISO));
@@ -540,13 +491,13 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					vec_data.push_back(julian);
 				}
 
-				if (!isConsistent){ //Meta data changes
+				if (!isConsistent) { //Meta data changes
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLat());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getLon());
 					vec_data.push_back(vecMeteo[ii][jj].meta.position.getAltitude());
 				}
 
-				for (size_t kk=0; kk<MeteoData::nrOfParameters; kk++){
+				for (size_t kk=0; kk<nr_of_parameters; kk++) {
 					if (vecParamInUse[kk])
 						vec_data.push_back(vecMeteo[ii][jj].param(kk)); //add data value
 				}
@@ -555,14 +506,91 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			if (outputIsAscii) mywriter.write(vec_timestamp, vec_data);
 			else mywriter.write(vec_data);
 
-		} catch(const exception&) {
+		} catch(exception&) {
 			throw;
 		}
 	}
 }
 
+void SMETIO::generateHeaderInfo(const StationData& sd, const bool& outputIsAscii, const bool& isConsistent,
+						  const double& timezone, const size_t& nr_of_parameters, 
+						  const std::vector<bool>& vecParamInUse, const std::vector<std::string>& vecColumnName,
+						  smet::SMETWriter& mywriter)
+{
+	/**
+	 * This procedure sets all relevant information for the header in the SMETWriter object mywriter
+	 * The following key/value pairs are set for the header:
+	 * - station_id, station_name (if present)
+	 * - nodata (set to IOUtils::nodata)
+	 * - fields (depending on ASCII/BINARY format and whether the meta data is part of the header or data)
+	 * - timezone
+	 * - meta data (lat/lon/alt or east/north/alt/epsg if not part of data section)
+	 */
+	stringstream ss;
+
+	mywriter.set_header_value("station_id", sd.stationID);
+	if (sd.stationName != "")
+		mywriter.set_header_value("station_name", sd.stationName);
+	mywriter.set_header_value("nodata", IOUtils::nodata);
+
+	vector<int> myprecision, mywidth; //set meaningful precision/width for each column
+
+	if (outputIsAscii) {
+		ss << "timestamp";
+	} else {
+		ss << "julian";
+		myprecision.push_back(8);
+		mywidth.push_back(16);
+	}
+
+	if (isConsistent) {
+		mywriter.set_header_value("latitude", sd.position.getLat());
+		mywriter.set_header_value("longitude", sd.position.getLon());
+		mywriter.set_header_value("easting", sd.position.getEasting());
+		mywriter.set_header_value("northing", sd.position.getNorthing());
+		mywriter.set_header_value("altitude", sd.position.getAltitude());
+		mywriter.set_header_value("epsg", (double)sd.position.getEPSG());
+			
+		if ((timezone != IOUtils::nodata) && (timezone != 0.0))
+			mywriter.set_header_value("tz", timezone);
+	} else {
+		ss << " latitude longitude altitude";
+		myprecision.push_back(8); //for latitude
+		mywidth.push_back(11);    //for latitude
+		myprecision.push_back(8); //for longitude
+		mywidth.push_back(11);    //for longitude
+		myprecision.push_back(1); //for altitude
+		mywidth.push_back(7);     //for altitude
+	}
+
+	//Add all other used parameters
+	int tmpwidth, tmpprecision;
+	for (size_t ll=0; ll<nr_of_parameters; ll++) {
+		if (vecParamInUse[ll]) {
+			string column = vecColumnName.at(ll);
+			if (column == "RSWR") column = "OSWR";
+			if (column == "HNW")  column = "PSUM";
+			ss << " " << column;
+				
+			getFormatting(ll, tmpprecision, tmpwidth);
+			myprecision.push_back(tmpprecision);
+			mywidth.push_back(tmpwidth);
+		}
+	}
+
+	mywriter.set_header_value("fields", ss.str());
+	mywriter.set_width(mywidth);
+	mywriter.set_precision(myprecision);
+}
+
 void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 {
+	/**
+	 * When writing a SMET file, different meteo parameters require a different
+	 * format with regard to precision and width when printing. 
+	 * This procedure sets the precision and width for each known parameter and 
+	 * defaults to a width of 8 and precision of 3 digits for each unknown parameter.
+	 */
 	if ((param == MeteoData::TA) || (param == MeteoData::TSS) || (param == MeteoData::TSG)){
 		prec = 2;
 		width = 8;
@@ -590,14 +618,57 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 	}
 }
 
-void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
-                                    std::vector<bool>& vecParamInUse)
+size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo)
 {
+	/**
+	 * This function loops through all MeteoData objects present in vecMeteo and returns the 
+	 * number of meteo parameters that the MeteoData objects have. If there is an inconsistency
+	 * in the number of meteo parameters in use within the vector of MeteoData then a warning
+	 * is printed and MeteoData::nrOfParameters is returned, thus all additional meteo parameters
+	 * that might be in use are ignored.
+	 */
+
+	size_t actual_nr_of_parameters = IOUtils::npos;
+	bool has_one_element = false;
+
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		for (size_t jj=0; jj<MeteoData::nrOfParameters; jj++){
-			if (!vecParamInUse[jj])
-				if (vecMeteo[ii].param(jj) != IOUtils::nodata)
+		has_one_element = true;
+		size_t current_size = vecMeteo[ii].getNrOfParameters();
+
+		if (actual_nr_of_parameters == IOUtils::npos){
+			actual_nr_of_parameters = current_size;
+		} else if (actual_nr_of_parameters != current_size){
+			//There is an inconsistency in the fields, print out a warning and proceed
+			cout << "[w] While writing SMET file: Inconsistency in number of meteo "
+				<< "parameters for station " << stationname << endl;
+			actual_nr_of_parameters = MeteoData::nrOfParameters;
+			break;
+		}
+	}
+
+	if (!has_one_element)
+		return MeteoData::nrOfParameters;
+
+	return actual_nr_of_parameters;
+}
+
+void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& timezone,
+                                    std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName)
+{
+	/**
+	 * This procedure loops through all MeteoData objects present in vecMeteo and finds out which
+	 * meteo parameters are actually in use, i. e. have at least one value that differs from IOUtils::nodata.
+	 * If a parameter is in use, then vecParamInUse[index_of_parameter] is set to true and the column
+	 * name is set in vecColumnName[index_of_parameter]
+	 */
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		for (size_t jj=0; jj<nr_parameters; jj++){
+			if (!vecParamInUse[jj]){
+				if (vecMeteo[ii].param(jj) != IOUtils::nodata){
 					vecParamInUse[jj] = true;
+					vecColumnName.at(jj) = vecMeteo[ii].getNameForParameter(jj);
+				}
+			}
 		}
 	}
 
@@ -607,6 +678,12 @@ void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, doub
 
 bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd)
 {
+	/**
+	 * This function checks whether all the MeteoData elements in vecMeteo are consistent
+	 * regarding their meta data (position information, station name). If they are consistent
+	 * true is returned, otherwise false
+	 */
+
 	if (vecMeteo.size() > 0) //HACK to get the station data even when encoutering bug 87
 		sd = vecMeteo[0].meta;
 

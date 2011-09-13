@@ -69,10 +69,16 @@ class SMETIO : public IOInterface {
 
 		void parseInputOutputSection();
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
-		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, double& timezone,
-                                      std::vector<bool>& vecParamInUse);
+		size_t getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo);
+		void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, const size_t& nr_parameters, double& tz,
+		                            std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName);
 		void getFormatting(const size_t& param, int& prec, int& width);
 		double olwr_to_tss(const double& olwr);
+		void generateHeaderInfo(const StationData& sd, const bool& outputIsAscii, const bool& isConsistent,
+						    const double& timezone, const size_t& nr_of_parameters, 
+						    const std::vector<bool>& vecParamInUse, 
+						    const std::vector<std::string>& vecColumnName,
+						    smet::SMETWriter& mywriter);
 
 		size_t nr_stations; //number of stations to read from
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
