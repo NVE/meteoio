@@ -348,6 +348,12 @@ void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*
 			index.push_back(md.getParameterIndex("OLWR"));
 		} else if (field_name == "SNOW_HEIGHT"){
 			index.push_back(MeteoData::HS);
+		} else if (field_name == "RAIN_METER"){
+			index.push_back(MeteoData::HNW);
+		} else if (field_name == "SURFACE_TEMP"){
+			index.push_back(MeteoData::TSS);
+		} else if (field_name == "SOLAR_RAD"){
+			index.push_back(MeteoData::ISWR);
 		} else {
 			index.push_back(IOUtils::npos);
 		}
