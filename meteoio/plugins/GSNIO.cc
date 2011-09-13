@@ -397,7 +397,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		for (size_t ii=0; ii < data.queryResult.at(0)->streamElements.size(); ii++) {
 			double tt;
 			IOUtils::convertString(tt, *data.queryResult.at(0)->streamElements.at(ii)->timed);
-			tmpmeteo.date.setUnixDate(tt/1000.0);
+			tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
 			tmpmeteo.date.setTimeZone(default_timezone);
 
 			for (size_t jj=0; jj < data.queryResult.at(0)->streamElements.at(ii)->field.size(); jj++){
@@ -434,7 +434,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 			for (size_t ii=0; ii < responseNext.queryResult.at(0)->streamElements.size(); ii++) {
 				double tt;
 				IOUtils::convertString(tt, *responseNext.queryResult.at(0)->streamElements.at(ii)->timed);
-				tmpmeteo.date.setUnixDate(tt/1000.0);
+				tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
 				tmpmeteo.date.setTimeZone(default_timezone);
 				
 				for (size_t jj=0; jj < responseNext.queryResult.at(0)->streamElements.at(ii)->field.size(); jj++) {
