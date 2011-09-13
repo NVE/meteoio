@@ -78,7 +78,9 @@ class GSNIO : public IOInterface {
 		void readStationNames();
 		void readMetaData();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field, std::vector<size_t>& index);
+		void map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field, MeteoData& md,
+		                    std::vector<size_t>& index);
+		double olwr_to_tss(const double& olwr);
 
 		GSNWebServiceSoap12BindingProxy gsn;
 		Config cfg;

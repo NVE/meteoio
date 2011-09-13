@@ -319,7 +319,8 @@ void GSNIO::parseString(const std::string& in_string, MeteoData& md){
 }
 */
 
-void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field, std::vector<size_t>& index)
+void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field,
+                           MeteoData& md, std::vector<size_t>& index)
 {
 	for (size_t ii=0; ii<field.size(); ii++) {
 		string field_name = *field.at(ii)->name;
@@ -341,12 +342,11 @@ void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*
 			index.push_back(MeteoData::ILWR);
 		} else if (field_name == "OUTGOING_SHORTWAVE_RADIATION"){
 			index.push_back(MeteoData::RSWR);
-		//} else if (field_name == "OUTGOING_LONGWAVE_RADIATION"){
-		//   index.push_back(MeteoData::OLWR);
+		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION"){ //is used to calculate TSS
+			md.addParameter("OLWR");
+			index.push_back(md.getParameterIndex("OLWR"));
 		} else if (field_name == "SNOW_HEIGHT"){
 			index.push_back(MeteoData::HS);
-			//} else if (field_name == ""){
-			//index.push_back(MeteoData::TA);
 		} else {
 			index.push_back(IOUtils::npos);
 		}
@@ -372,7 +372,6 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	current_station.vsname = vecStationName.at(stationindex);
 	data_req.fieldSelector.push_back(&current_station);
 
-
 	data_req.from = &start_date;
 	data_req.to   = &end_date;
 	//int nb = 1005; //this is a way to set the maximum amount of rows read
@@ -387,12 +386,14 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		throw IOException("Incompatible data format retrieved for " + current_station.vsname, AT);
 
 	MeteoData tmpmeteo;
+	bool olwr_present = false;
 	tmpmeteo.meta = vecMeta.at(stationindex);
 	vector<size_t> index;
 
 	if (data.queryResult.at(0)->format != NULL){ //data arrived
 		multipage = data.queryResult[0]->hasNext;
-		map_parameters(data.queryResult[0]->format->field, index);
+		map_parameters(data.queryResult[0]->format->field, tmpmeteo, index);
+		olwr_present = tmpmeteo.param_exists("OLWR");
 
 		for (size_t ii=0; ii < data.queryResult.at(0)->streamElements.size(); ii++) {
 			double tt;
@@ -413,8 +414,12 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 				}
 			}
 			convertUnits(tmpmeteo);
+			if ((olwr_present) && (tmpmeteo.tss == IOUtils::nodata))
+				tmpmeteo.tss = olwr_to_tss(tmpmeteo.param("OLWR"));
+
 			//cout << endl << tmpmeteo << endl;
 			vecMeteo.push_back(tmpmeteo);
+			tmpmeteo.tss = IOUtils::nodata;
 		}
 	}
 	
@@ -451,10 +456,22 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 				}
 				//cout << endl << tmpmeteo << endl;
 				convertUnits(tmpmeteo);
+				if ((olwr_present) && (tmpmeteo.tss == IOUtils::nodata))
+					tmpmeteo.tss = olwr_to_tss(tmpmeteo.param("OLWR"));
+
 				vecMeteo.push_back(tmpmeteo);
+				tmpmeteo.tss = IOUtils::nodata;
 			}
 		}		
 	}			
+}
+
+double GSNIO::olwr_to_tss(const double& olwr) {
+	const double ea = 1.;
+	if (olwr == IOUtils::nodata) 
+		return IOUtils::nodata;
+
+	return pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
 }
 
 void GSNIO::readStationNames()
@@ -528,15 +545,15 @@ void GSNIO::convertUnits(MeteoData& meteo)
 
 	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
 	if(meteo.ta != IOUtils::nodata) {
-		meteo.ta=C_TO_K(meteo.ta);
+		meteo.ta = C_TO_K(meteo.ta);
 	}
 
 	if(meteo.tsg != IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tsg);
+		meteo.tsg = C_TO_K(meteo.tsg);
 	}
 
 	if(meteo.tss != IOUtils::nodata) {
-		meteo.tss=C_TO_K(meteo.tss);
+		meteo.tss = C_TO_K(meteo.tss);
 	}
 
 	if(meteo.rh != IOUtils::nodata) {
