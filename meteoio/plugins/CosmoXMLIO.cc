@@ -251,8 +251,8 @@ void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, co
 	}
 
 	//Set RH
-	if(meteo.ta!=IOUtils::nodata && dew_point!=IOUtils::nodata) {
-		meteo.rh=Atmosphere::DewPointtoRh(dew_point, meteo.ta,TRUE);
+	if ((meteo(MeteoData::TA) != IOUtils::nodata) && (dew_point != IOUtils::nodata)) {
+		meteo(MeteoData::RH) = Atmosphere::DewPointtoRh(dew_point, meteo(MeteoData::TA), TRUE);
 	}
 
 	//Reset dew_point
@@ -308,12 +308,12 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
  				if(key=="missing_value_code") plugin_nodata = getDoubleValue(reader);
 
 				//MeteoData
-				if(key=="T_2M") meteo.ta = c2k( getDoubleValue(reader) );
+				if(key=="T_2M") meteo(MeteoData::TA) = c2k( getDoubleValue(reader) );
 				if(key=="TD_2M") dew_point = c2k( getDoubleValue(reader) );
-				if(key=="GLOB") meteo.iswr = getDoubleValue(reader);
-				if(key=="TOT_PREC") meteo.hnw = getDoubleValue(reader);
-				if(key=="FF_10M") meteo.vw = getDoubleValue(reader);
-				if(key=="VMAX_10M") meteo.vw_max = getDoubleValue(reader);
+				if(key=="GLOB") meteo(MeteoData::ISWR) = getDoubleValue(reader);
+				if(key=="TOT_PREC") meteo(MeteoData::HNW) = getDoubleValue(reader);
+				if(key=="FF_10M") meteo(MeteoData::VW) = getDoubleValue(reader);
+				if(key=="VMAX_10M") meteo(MeteoData::VW_MAX) = getDoubleValue(reader);
 				if(key=="reference_ts") {
 					if(!is_first) {
 						//We can finish our object and push it.
@@ -418,19 +418,19 @@ void CosmoXMLIO::writeMeteo(const std::vector<MeteoData>& vecMeteo, std::strings
 		Date tmp_date(vecMeteo[jj].date);
 		tmp_date.setTimeZone(out_tz);
 		XMLdata << "<col id=\"reference_ts\">" << tmp_date.toString(Date::NUM) << "</col>\n";
-		XMLdata << "<col id=\"T_2M\">" << k2c(vecMeteo[jj].ta) << "</col>\n";
+		XMLdata << "<col id=\"T_2M\">" << k2c(vecMeteo[jj](MeteoData::TA)) << "</col>\n";
 
-		if (vecMeteo[jj].rh==IOUtils::nodata || vecMeteo[jj].ta==IOUtils::nodata) {
+		if ((vecMeteo[jj](MeteoData::RH) == IOUtils::nodata) || (vecMeteo[jj](MeteoData::TA) == IOUtils::nodata)) {
 			XMLdata << "<col id=\"TD_2M\">" << IOUtils::nodata << "</col>\n";
 		} else {
-			const double dew_point=Atmosphere::RhtoDewPoint(vecMeteo[jj].rh, vecMeteo[jj].ta, TRUE);
+			const double dew_point=Atmosphere::RhtoDewPoint(vecMeteo[jj](MeteoData::RH), vecMeteo[jj](MeteoData::TA), TRUE);
 			XMLdata << "<col id=\"TD_2M\">" << k2c(dew_point) << "</col>\n";
 		}
 
-		XMLdata << "<col id=\"GLOB\">" << vecMeteo[jj].iswr << "</col>\n";
-		XMLdata << "<col id=\"TOT_PREC\">" << vecMeteo[jj].hnw << "</col>\n";
-		XMLdata << "<col id=\"FF_10M\">" << vecMeteo[jj].vw << "</col>\n";
-		XMLdata << "<col id=\"VMAX_10M\">" << vecMeteo[jj].vw_max << "</col>\n";
+		XMLdata << "<col id=\"GLOB\">" << vecMeteo[jj](MeteoData::ISWR) << "</col>\n";
+		XMLdata << "<col id=\"TOT_PREC\">" << vecMeteo[jj](MeteoData::HNW) << "</col>\n";
+		XMLdata << "<col id=\"FF_10M\">" << vecMeteo[jj](MeteoData::VW) << "</col>\n";
+		XMLdata << "<col id=\"VMAX_10M\">" << vecMeteo[jj](MeteoData::VW_MAX) << "</col>\n";
 		XMLdata << "</row>\n";
 	}
 }
