@@ -639,12 +639,12 @@ void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 
 
 SMETReader::SMETReader(const std::string& in_fname) : filename(in_fname), nr_of_fields(0), timestamp_present(false),
-										    julian_present(false), timestamp_field(0), julian_field(0),
-										    isAscii(true), location_wgs84(0), location_epsg(0),
-										    location_data_wgs84(0), location_data_epsg(0), mksa(true), nodata_value(-999.),
-										    timestamp_interval(false), julian_interval(false),
-										    timestamp_start("-4714-11-24T00:00"),
-										    timestamp_end("9999-12-31T00:00")
+                                                      julian_present(false), timestamp_field(0), julian_field(0),
+                                                      isAscii(true), location_wgs84(0), location_epsg(0),
+                                                      location_data_wgs84(0), location_data_epsg(0), nodata_value(-999.), mksa(true),
+                                                      timestamp_interval(false), julian_interval(false),
+                                                      timestamp_start("-4714-11-24T00:00"),
+                                                      timestamp_end("9999-12-31T00:00")
 {
 	std::ifstream fin; //Input file streams
 	fin.clear();
