@@ -37,7 +37,7 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 	//Find first point that is not IOUtils::nodata
 	for (size_t ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);
-		if (ovec[ii].param(index) != IOUtils::nodata){
+		if (ovec[ii](index) != IOUtils::nodata){
 			last_good = ii;
 			break;
 		}
@@ -49,8 +49,8 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 	for (size_t ii=(last_good+1); ii<ivec.size(); ii++) {
 		ovec.push_back(ivec[ii]);
 
-		double& curr_value       = ovec[ii].param(index);
-		const double& prev_value = ovec[last_good].param(index);
+		double& curr_value       = ovec[ii](index);
+		const double& prev_value = ovec[last_good](index);
 		const double curr_time   = ovec[ii].date.getJulianDate();
 		const double prev_time   = ovec[last_good].date.getJulianDate();
 

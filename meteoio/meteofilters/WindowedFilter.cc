@@ -90,12 +90,10 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 	if (is_soft){
 		if (vec_window.size() > 0){
 			if (centering == WindowedFilter::right){
-				if (vec_window.size() > 0){
-					//Try to move right, if it doesn't work, don't change anything
-					if (ivec.size() > (index+vec_window.size()-1)) { //shift window one point to the right
-						vec_window.push_back(&ivec[index+vec_window.size()-1]);
-						vec_window.erase(vec_window.begin());
-					}
+				//Try to move right, if it doesn't work, don't change anything
+				if (ivec.size() > (index+vec_window.size()-1)) { //shift window one point to the right
+					vec_window.push_back(&ivec[index+vec_window.size()-1]);
+					vec_window.erase(vec_window.begin());
 				}
 			} else if (centering == WindowedFilter::left){
 				if (index >= (vec_window.size())){
@@ -174,7 +172,219 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 	}
 
 	last_index = index;
+
 	return vec_window;
+}
+
+void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned int& ivec_size,
+							  unsigned int& index_start, unsigned int& index_end)
+{
+	//cout << "Requesting index " << index << endl;
+
+	if ((ivec_size == 0) || (ivec_size <= index)){
+		index_end = 0;
+		index_start = 1;		
+	}
+
+	if ((index == 0) || (last_index > index)){ //reset global variables
+		elements_left = elements_right = 0;
+
+		if ((centering == WindowedFilter::right) || (is_soft)){	
+			for (unsigned int kk=0; kk<min_data_points; kk++){
+				if (ivec_size > kk) elements_right++;
+			}
+
+			if (elements_right > 0) elements_left = 1;
+		} else if ((centering == WindowedFilter::left) || (centering == WindowedFilter::center)){
+			if (ivec_size > 0) {
+				elements_left = elements_right = 1;
+			}
+		}
+
+		//cout << "Init: " << elements_left << "/" << elements_right << endl;
+		
+		last_index = 0;
+		
+		startIndex = index_start = index + 1 - elements_left;
+		endIndex = index_end = index + elements_right - 1;
+
+		return;
+	}
+
+	if (index != (last_index+1))
+		throw IOException("get_window function only to be used with increments of 1 for the index", AT);
+
+	unsigned int window_size = endIndex - startIndex + 1;
+
+	//check whether a window is available
+	if (is_soft){
+		if (startIndex <= endIndex){
+			if (centering == WindowedFilter::right){
+				//Try to move right, if it doesn't work, don't change anything
+				if (ivec_size > (index + window_size - 1)) { //shift window one point to the right
+					endIndex++;
+					startIndex++;
+				}
+			} else if (centering == WindowedFilter::left){
+				if (index >= window_size){
+					if (ivec_size > index){ //otherwise don't touch the whole thing
+						startIndex++;
+						endIndex++;
+					}
+				} else {
+					elements_left++;
+					elements_right--;
+				}
+			} else if (centering == WindowedFilter::center){
+				if (elements_right <= elements_left){
+					if (ivec_size > (index+elements_right-1)){ //otherwise don't touch the whole thing
+						endIndex = index+elements_right-1;
+						startIndex++;
+					} else {
+						elements_right--;
+						elements_left++;
+					}
+				} else {
+					elements_right--;
+					elements_left++;
+				}
+			}
+		}
+		index_start = startIndex;
+		index_end = endIndex;
+	} else { //!is_soft
+		if (centering == WindowedFilter::right){
+			if (elements_right >= min_data_points){
+				startIndex++;
+				elements_right--;
+
+				if (ivec_size > (index+min_data_points-1)) { //shift window one point to the right
+					endIndex++;
+					elements_right++; //elements_left will stay at a constant 1
+				}
+			} 
+		} else if (centering == WindowedFilter::left){
+			if (elements_left >= min_data_points){
+				startIndex++;
+				elements_left--;
+
+				if (ivec_size > index) { //shift window one point to the right
+					endIndex++;
+					elements_left++; //elements_left will stay at a constant 1
+				}
+			} else {
+				if (ivec_size > index) { //broaden window
+					endIndex++;
+					elements_left++; 
+				}
+			}
+		} else if (centering == WindowedFilter::center){
+			if ((elements_left + elements_right - 1) >= min_data_points){
+				startIndex++;
+				if (elements_right > 0) elements_right--;
+					
+				if (ivec_size > (index+elements_left-1)) { //shift window one point to the right
+					endIndex++;
+					elements_right++; //elements_left will stay at a constant 
+				}
+			} else {
+				if (ivec_size > (index+elements_left-1)) { //shift window one point to the right
+					endIndex++;
+					elements_left++;
+				}
+					
+				if ((elements_left + elements_right - 1) < min_data_points){
+					if (ivec_size > (index+elements_left-1)){ //shift window one point to the right
+						endIndex++;
+						elements_right++;
+					}
+				}
+			}
+		}
+
+		if ((elements_left + elements_right - 1) >= min_data_points){
+			index_start = startIndex;
+			index_end = endIndex;
+		} else {
+			index_end = 0;
+			index_start = 1;
+		}
+	}
+
+	last_index = index;
+}
+
+void WindowedFilter::get_window(const unsigned int& index, const unsigned int& ivec_size,
+                                unsigned int& index_start, unsigned int& index_end)
+{
+	if ((centering == WindowedFilter::right)){
+		index_end   = index + min_data_points - 1;
+		index_start = index;
+
+		if (index_end >= ivec_size){
+			if (is_soft){
+				index_end = ivec_size - 1;
+				if (ivec_size >= min_data_points){
+					index_start = ivec_size + 1 - min_data_points;
+				} else {
+					index_start = 0;
+				}
+			} else {
+				index_start = index_end + 1;
+			}
+		}
+
+		return;
+	}
+
+	if ((centering == WindowedFilter::left)){
+		index_end = index;
+
+		if (index <= min_data_points){
+			if (is_soft){
+				index_start = 0;
+				index_end = MIN(min_data_points - 1, ivec_size - 1); 
+			} else {
+				index_start = index_end + 1;
+			}
+		} else {
+			index_start = index + 1 - min_data_points;
+		}
+
+		return;
+	}
+
+	if ((centering == WindowedFilter::center)){
+		unsigned int el_left = min_data_points / 2;
+		index_start = index_end = index;
+
+		//first calc index_start
+		if (el_left > index){
+			if (is_soft){
+				index_start = 0;
+			} else {
+				index_start = index_end + 1;
+				return;
+			}
+		} else {
+			index_start -= el_left;
+		}
+
+		if ((index_end - index_start + 1) == min_data_points) return; //Nothing more to do
+
+		index_end = index_start + min_data_points - 1;
+		if (index_end >= ivec_size){
+			if (is_soft){
+				index_end = ivec_size - 1;
+				while ((index_start != 0) && ((index_end - index_start + 1) < min_data_points)){
+					index_start--;
+				}
+			} else {
+				index_start = index_end + 1;
+				return;
+			}
+		}
+	}
 }
 
 }

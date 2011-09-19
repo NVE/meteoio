@@ -73,13 +73,6 @@ class MeteoData {
 		MeteoData(void);
 
 		/**
-		 * @brief The copy constructor is required because of the pointers that are stored int mapparam
-		 */
-		MeteoData(const MeteoData&);
-
-		MeteoData& operator=(const MeteoData&);
-
-		/**
 		* @brief A constructor that sets the measurment time
 		* @param in_date A Date object representing the time of the measurement
 		*/
@@ -123,12 +116,14 @@ class MeteoData {
 
 		void standardizeNodata(const double& plugin_nodata);
 
-		double& param(const size_t& parindex);
-		const double& param(const size_t& parindex) const;
-		double& param(const std::string& parname);
-		const double& param(const std::string& parname) const;
+		double& operator()(const size_t& parindex);
+		const double& operator()(const size_t& parindex) const;
+		double& operator()(const std::string& parname);
+		const double& operator()(const std::string& parname) const;
+
 		const std::string& getNameForParameter(const size_t& parindex) const;
 		size_t getParameterIndex(const std::string& parname) const;
+		size_t getNrOfParameters() const;
 
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 
@@ -139,37 +134,17 @@ class MeteoData {
 		//direct access allowed
 		Date date; ///<Timestamp of the measurement
 		StationData meta; ///<The meta data of the measurement
-		double ta; ///<Air temperature (K)
-		double vw; ///<Wind velocity (m s-1)
-		double dw; ///<Wind direction in degrees
-		double vw_max; ///<Maximum wind velocity (m s-1)
-		double rh; ///<Relative humidity between 0 and 1 (1)
-		double hnw; ///<Precipitations in mm h-1, that is (kg m-2)
-		double iswr; ///<Incoming shortwave radiation (W m-2)
-		double rswr; ///<Reflected Short Wave Radiation (W m-2)
-		double ilwr; ///<Incoming Long wave radiation (W m-2)
-		double tsg; ///<Soil or snow bottom temperature (K)
-		double tss; ///<Soil or snow surface temperature (K)
-		double hs; ///<Snow height (m)
-		double p;  ///<Atmospheric pressure (Pa)
 
-		size_t getNrOfParameters() const;
  private:
 		//static methods
 		static std::map<size_t, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
+		static std::vector<std::string> s_default_paramname;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname
 
-		//private methods
-		void initAllParameters();
-		void associateMemberVariables();
-		void initParameterMap();     ///<initializes the meteoparam map that allows sequential access to meteo parameters
-
-		std::map<std::string, double> extraparameters; ///<All non-standard meteo parameters will end up in this map
-		std::map<std::string, double*> mapParameterByName; ///<Associate name and meteo parameter
-		std::map<size_t, double*> meteoparam; ///<Associate an unsigned int with every meteo parameter
-		std::map<size_t, std::string> meteoparamname; ///<Associate a name with every meteo parameter
-
+		//private data members
+		std::vector<std::string> param_name;
+		std::vector<double> data;
 		size_t nrOfAllParameters;
 		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };

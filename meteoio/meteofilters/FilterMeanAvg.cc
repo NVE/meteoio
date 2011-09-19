@@ -40,7 +40,7 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
 
 	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii].param(index);
+		double& value = ovec[ii](index);
 
 		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
 
@@ -67,7 +67,7 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
 }
 
 /**
- * @brief Actual algorithm to calculate the average value for all values in vec_window.param(index)
+ * @brief Actual algorithm to calculate the average value for all values in vec_window(index)
  * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
  * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
  * @return A double either representing the average or IOUtils::nodata if averaging fails 
@@ -80,7 +80,7 @@ double FilterMeanAvg::calc_avg(const unsigned int& index, const std::vector<cons
 	double sum = 0;
 	unsigned int counter = 0;
 	for (unsigned int ii=0; ii<vec_window.size(); ii++){
-		const double& value = (*vec_window[ii]).param(index);
+		const double& value = (*vec_window[ii])(index);
 		if (value != IOUtils::nodata){
 			sum += value;
 			counter++;

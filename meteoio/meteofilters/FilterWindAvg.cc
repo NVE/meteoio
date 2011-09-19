@@ -45,7 +45,7 @@ void FilterWindAvg::process(const unsigned int& index, const std::vector<MeteoDa
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii].param(index);
+		double& value = ovec[ii](index);
 
 		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
 
@@ -66,7 +66,7 @@ void FilterWindAvg::process(const unsigned int& index, const std::vector<MeteoDa
 }
 
 /**
- * @brief Actual algorithm to calculate the average value for all values in vec_window.param(index)
+ * @brief Actual algorithm to calculate the average value for all values in vec_window(index)
  * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
  * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
  * @return A double either representing the average or IOUtils::nodata if averaging fails
@@ -83,8 +83,8 @@ double FilterWindAvg::calc_avg(const unsigned int& index, const std::vector<cons
 			//calculate ve and vn
 			double ve=0.0, vn=0.0;
 			for (size_t jj=0; jj<vecSize; jj++){
-				ve += vec_window[jj]->vw * sin(vec_window[jj]->dw * M_PI / 180.); //turn into radians
-				vn += vec_window[jj]->vw * cos(vec_window[jj]->dw * M_PI / 180.); //turn into radians
+				ve += vec_window[jj]->operator()(MeteoData::VW) * sin(vec_window[jj]->operator()(MeteoData::DW) * M_PI / 180.); //turn into radians
+				vn += vec_window[jj]->operator()(MeteoData::VW) * cos(vec_window[jj]->operator()(MeteoData::DW) * M_PI / 180.); //turn into radians
 			}
 			ve /= vecSize;
 			vn /= vecSize;

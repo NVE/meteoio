@@ -500,7 +500,7 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 		//cout << "Current slice date: " << current_slice_date.toString(Date::ISO)
 		//	<< "  value: " << current_station_psum.at(counter) << endl;
 
-		double& hnw = vecMeteo[stationindex][jj].hnw;
+		double& hnw = vecMeteo[stationindex][jj](MeteoData::HNW);
 		//cout << vecMeteo[stationindex][jj].date.toString(Date::ISO) << ": " << hnw;
 		if ((hnw == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(hnw, 0.0, 0.001))){
 			//replace by psum if there is no own value measured
@@ -567,7 +567,7 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 		size_t counter_of_elements = 0;
 		for (size_t jj=0; jj<vecMeteoAnetz[ii].size(); jj++){
 			const Date& anetzdate = vecMeteoAnetz[ii][jj].date;
-			const double& hnw = vecMeteoAnetz[ii][jj].hnw;
+			const double& hnw = vecMeteoAnetz[ii][jj](MeteoData::HNW);
 
 			if ((current_date < anetzdate) && ((current_date+0.25) > anetzdate)){
 				;
@@ -677,8 +677,8 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		//divide it by two to conjure the accumulated value for the half hour
 		if (tmpmd.meta.stationID.length() > 0){
 			if (tmpmd.meta.stationID[0] != '*') //excludes ANETZ stations, they come in hourly sampling
-				if (tmpmd.hnw != IOUtils::nodata)
-					tmpmd.hnw /= 2; //half hour accumulated value for IMIS stations only
+				if (tmpmd(MeteoData::HNW) != IOUtils::nodata)
+					tmpmd(MeteoData::HNW) /= 2; //half hour accumulated value for IMIS stations only
 		}
 
 		vecMeteo.at(stationindex).push_back(tmpmd); //Now insert tmpmd
@@ -696,41 +696,41 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md, bool& fullStation)
 {
 	IOUtils::convertString(md.date, i_meteo.at(0), in_tz, dec);
-	IOUtils::convertString(md.param(MeteoData::TA),     i_meteo.at(1),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::ISWR),   i_meteo.at(2),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::VW),     i_meteo.at(3),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::DW),     i_meteo.at(4),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::VW_MAX), i_meteo.at(5),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::RH),     i_meteo.at(6),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::ILWR),   i_meteo.at(7),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::HNW),    i_meteo.at(8),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::TSG),    i_meteo.at(9),  std::dec);
-	IOUtils::convertString(md.param(MeteoData::TSS),    i_meteo.at(10), std::dec);
-	IOUtils::convertString(md.param(MeteoData::HS),     i_meteo.at(11), std::dec);
-	IOUtils::convertString(md.param(MeteoData::RSWR),   i_meteo.at(12), std::dec);
+	IOUtils::convertString(md(MeteoData::TA),     i_meteo.at(1),  std::dec);
+	IOUtils::convertString(md(MeteoData::ISWR),   i_meteo.at(2),  std::dec);
+	IOUtils::convertString(md(MeteoData::VW),     i_meteo.at(3),  std::dec);
+	IOUtils::convertString(md(MeteoData::DW),     i_meteo.at(4),  std::dec);
+	IOUtils::convertString(md(MeteoData::VW_MAX), i_meteo.at(5),  std::dec);
+	IOUtils::convertString(md(MeteoData::RH),     i_meteo.at(6),  std::dec);
+	IOUtils::convertString(md(MeteoData::ILWR),   i_meteo.at(7),  std::dec);
+	IOUtils::convertString(md(MeteoData::HNW),    i_meteo.at(8),  std::dec);
+	IOUtils::convertString(md(MeteoData::TSG),    i_meteo.at(9),  std::dec);
+	IOUtils::convertString(md(MeteoData::TSS),    i_meteo.at(10), std::dec);
+	IOUtils::convertString(md(MeteoData::HS),     i_meteo.at(11), std::dec);
+	IOUtils::convertString(md(MeteoData::RSWR),   i_meteo.at(12), std::dec);
 
 	unsigned int ii = 13;
 	if (fullStation) {
 		if (!md.param_exists("VW_DRIFT")) md.addParameter("VW_DRIFT");
-		IOUtils::convertString(md.param("VW_DRIFT"), i_meteo.at(ii++), std::dec);
+		IOUtils::convertString(md("VW_DRIFT"), i_meteo.at(ii++), std::dec);
 		if (!md.param_exists("DW_DRIFT")) md.addParameter("DW_DRIFT");
-		IOUtils::convertString(md.param("DW_DRIFT"), i_meteo.at(ii++), std::dec);
+		IOUtils::convertString(md("DW_DRIFT"), i_meteo.at(ii++), std::dec);
 	}
 
 	// additional snow station parameters
 	if (!md.param_exists("TS1")) md.addParameter("TS1");
-	IOUtils::convertString(md.param("TS1"), i_meteo.at(ii++), std::dec);
+	IOUtils::convertString(md("TS1"), i_meteo.at(ii++), std::dec);
 	if (!md.param_exists("TS2")) md.addParameter("TS2");
-	IOUtils::convertString(md.param("TS2"), i_meteo.at(ii++), std::dec);
+	IOUtils::convertString(md("TS2"), i_meteo.at(ii++), std::dec);
 	if (!md.param_exists("TS3")) md.addParameter("TS3");
-	IOUtils::convertString(md.param("TS3"), i_meteo.at(ii++), std::dec);
+	IOUtils::convertString(md("TS3"), i_meteo.at(ii++), std::dec);
 	if (fullStation) {
 		if (!md.param_exists("HTS1")) md.addParameter("HTS1");
-		IOUtils::convertString(md.param("HTS1"), i_meteo.at(ii++), std::dec);
+		IOUtils::convertString(md("HTS1"), i_meteo.at(ii++), std::dec);
 		if (!md.param_exists("HTS2")) md.addParameter("HTS2");
-		IOUtils::convertString(md.param("HTS2"), i_meteo.at(ii++), std::dec);
+		IOUtils::convertString(md("HTS2"), i_meteo.at(ii++), std::dec);
 		if (!md.param_exists("HTS3")) md.addParameter("HTS3");
-		IOUtils::convertString(md.param("HTS3"), i_meteo.at(ii++), std::dec);
+		IOUtils::convertString(md("HTS3"), i_meteo.at(ii++), std::dec);
 	}
 }
 
@@ -928,8 +928,8 @@ void ImisIO::convertSnowTemperature(MeteoData& meteo, const std::string& paramet
 {
 	if (meteo.param_exists(parameter)) {
 		const size_t idx = meteo.getParameterIndex(parameter);
-		if(meteo.param(idx)!=IOUtils::nodata)
-			meteo.param(idx) += Cst::t_water_freezing_pt; //C_TO_K
+		if(meteo(idx)!=IOUtils::nodata)
+			meteo(idx) += Cst::t_water_freezing_pt; //C_TO_K
 	}
 }
 
@@ -937,8 +937,8 @@ void ImisIO::convertSensorDepth(MeteoData& meteo, const std::string& parameter)
 {
 	if (meteo.param_exists(parameter)) {
 		const unsigned int idx = meteo.getParameterIndex(parameter);
-		if(meteo.param(idx)!=IOUtils::nodata)
-			meteo.param(idx) /= 100.; // centimetre to metre
+		if(meteo(idx)!=IOUtils::nodata)
+			meteo(idx) /= 100.; // centimetre to metre
 	}
 }
 
@@ -946,25 +946,26 @@ void ImisIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts degC to kelvin, converts ilwr to ea, converts RH to [0,1], cm to m
-	if(meteo.ta!=IOUtils::nodata) {
-		meteo.ta=C_TO_K(meteo.ta);
-	}
+	//converts C to Kelvin, converts RH to [0,1]
+	double& ta = meteo(MeteoData::TA);
+	if (ta != IOUtils::nodata)
+		ta = C_TO_K(ta);
 
-	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tsg);
-	}
+	double& tsg = meteo(MeteoData::TSG);
+	if (tsg != IOUtils::nodata)
+		tsg = C_TO_K(tsg);
 
-	if(meteo.tss!=IOUtils::nodata) {
-		meteo.tss=C_TO_K(meteo.tss);
-	}
+	double& tss = meteo(MeteoData::TSS);
+	if (tss != IOUtils::nodata)
+		tss = C_TO_K(tss);
 
-	if(meteo.rh!=IOUtils::nodata) {
-		meteo.rh /= 100.;
-	}
+	double& rh = meteo(MeteoData::RH);
+	if (rh != IOUtils::nodata)
+		rh /= 100.;
 
-	if(meteo.hs!=IOUtils::nodata)
-		meteo.hs /= 100.0;
+	double& hs = meteo(MeteoData::HS);
+	if (hs != IOUtils::nodata)
+		hs /= 100.0;
 
 	//convert extra parameters (if present) //HACK TODO: find a dynamic way...
 	convertSnowTemperature(meteo, "TS1");

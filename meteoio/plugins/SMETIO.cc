@@ -362,9 +362,9 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 				}
 			} else {
 				if (current_data == nodata_value)
-					tmp_md.param(indexes[jj]) = IOUtils::nodata;
+					tmp_md(indexes[jj]) = IOUtils::nodata;
 				else
-					tmp_md.param(indexes[jj]) = current_data;
+					tmp_md(indexes[jj]) = current_data;
 			}
 
 			if (data_epsg)
@@ -376,8 +376,8 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 			current_index++;
 		}
 
-		if ((olwr_present) && (md.tss == IOUtils::nodata)) //HACK
-			md.tss = olwr_to_tss(md.param("OLWR"));
+		if ((olwr_present) && (md(MeteoData::TSS) == IOUtils::nodata)) //HACK
+			md(MeteoData::TSS) = olwr_to_tss(md("OLWR"));
 
 		//cout << tmp_md << endl;
 		//cout << endl;
@@ -499,7 +499,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 				for (size_t kk=0; kk<nr_of_parameters; kk++) {
 					if (vecParamInUse[kk])
-						vec_data.push_back(vecMeteo[ii][jj].param(kk)); //add data value
+						vec_data.push_back(vecMeteo[ii][jj](kk)); //add data value
 				}
 			}
 
@@ -664,7 +664,7 @@ void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, cons
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		for (size_t jj=0; jj<nr_parameters; jj++){
 			if (!vecParamInUse[jj]){
-				if (vecMeteo[ii].param(jj) != IOUtils::nodata){
+				if (vecMeteo[ii](jj) != IOUtils::nodata){
 					vecParamInUse[jj] = true;
 					vecColumnName.at(jj) = vecMeteo[ii].getNameForParameter(jj);
 				}

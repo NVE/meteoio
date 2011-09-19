@@ -54,7 +54,7 @@ void FilterBlock::extract_dbl_vector(const unsigned int& index, const std::vecto
 {
 	ovec.clear();
 	for(unsigned int ii=0; ii<ivec.size(); ii++) {
-		ovec.push_back( ivec[ii].param(index) );
+		ovec.push_back( ivec[ii](index) );
 	}
 }
 
@@ -63,7 +63,7 @@ void FilterBlock::extract_dbl_vector(const unsigned int& index, const std::vecto
 {
 	ovec.clear();
 	for(unsigned int ii=0; ii<ivec.size(); ii++) {
-		const double& value = (*ivec[ii]).param(index);
+		const double& value = (*ivec[ii])(index);
 		ovec.push_back( value );
 	}
 }

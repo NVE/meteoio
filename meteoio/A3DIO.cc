@@ -201,15 +201,17 @@ void A3DIO::convertUnits(MeteoData& meteo)
 	meteo.standardizeNodata(plugin_nodata);
 
 	//converts C to Kelvin, converts RH to [0,1]
-	if(meteo.ta!=IOUtils::nodata) {
-		meteo.ta=C_TO_K(meteo.ta);
-	}
-	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tsg);
-	}
-	if(meteo.rh!=IOUtils::nodata) {
-		meteo.rh /= 100.;
-	}
+	double& ta = meteo(MeteoData::TA);
+	if (ta != IOUtils::nodata)
+		ta = C_TO_K(ta);
+
+	double& tsg = meteo(MeteoData::TSG);
+	if (tsg != IOUtils::nodata)
+		tsg = C_TO_K(tsg);
+
+	double& rh = meteo(MeteoData::RH);
+	if (rh != IOUtils::nodata)
+		rh /= 100.;
 }
 
 void A3DIO::read1DStation(std::string& file_1d, StationData& sd)
@@ -617,30 +619,30 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 				tmpmd.date = tmp_date;
 
 				if (parameter == "nswc") {
-					if (!IOUtils::convertString(tmpmd.hnw, tmpvec[ii], std::dec)) {
+					if (!IOUtils::convertString(tmpmd(MeteoData::HNW), tmpvec[ii], std::dec)) {
 						cleanup();
 						throw ConversionFailedException("For hnw value in " + filename + "  for date " + tmpmd.date.toString(Date::FULL), AT);
 					}
 
 				} else if (parameter == "rh") {
-					if (!IOUtils::convertString(tmpmd.rh, tmpvec[ii], std::dec)) {
+					if (!IOUtils::convertString(tmpmd(MeteoData::RH), tmpvec[ii], std::dec)) {
 						cleanup();
 						throw ConversionFailedException("For rh value in " + filename + "  for date " + tmpmd.date.toString(Date::FULL), AT);
 					}
 
 				} else if (parameter == "ta") {
-					if (!IOUtils::convertString(tmpmd.ta, tmpvec[ii], std::dec)) {
+					if (!IOUtils::convertString(tmpmd(MeteoData::TA), tmpvec[ii], std::dec)) {
 						cleanup();
 						throw ConversionFailedException("For ta value in " + filename + "  for date " + tmpmd.date.toString(Date::FULL), AT);
 					}
 
 				} else if (parameter == "vw") {
-					if (!IOUtils::convertString(tmpmd.vw, tmpvec[ii], std::dec)) {
+					if (!IOUtils::convertString(tmpmd(MeteoData::VW), tmpvec[ii], std::dec)) {
 						cleanup();
 						throw ConversionFailedException("For vw value in " + filename + "  for date " + tmpmd.date.toString(Date::FULL), AT);
 					}
 				} else if (parameter == "dw") {
-					if (!IOUtils::convertString(tmpmd.dw, tmpvec[ii], std::dec)) {
+					if (!IOUtils::convertString(tmpmd(MeteoData::DW), tmpvec[ii], std::dec)) {
 						cleanup();
 						throw ConversionFailedException("For dw value in " + filename + "  for date " + tmpmd.date.toString(Date::FULL), AT);
 					}
@@ -807,30 +809,30 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 				file.fill('0');
 				file << setw(4) << yyyy << " " << setw(2) << mm << " " << setw(2) << dd << " " << setw(2) << hh << " ";
 				file.fill(' ');
-				if(data[ii][j].ta == IOUtils::nodata)
+				if(data[ii][j](MeteoData::TA) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) <<  IOUtils::nodata << " ";
 				else
-					file << setw(6) << setprecision(2) <<  K_TO_C(data[ii][j].ta) << " ";
-				if(data[ii][j].iswr == IOUtils::nodata)
+					file << setw(6) << setprecision(2) <<  K_TO_C(data[ii][j](MeteoData::TA)) << " ";
+				if(data[ii][j](MeteoData::ISWR) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
 				else
-					file << setw(6) << setprecision(2) << data[ii][j].iswr << " ";
-				if(data[ii][j].vw == IOUtils::nodata)
+					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::ISWR) << " ";
+				if(data[ii][j](MeteoData::VW) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
 				else
-					file << setw(6) << setprecision(2) << data[ii][j].vw << " ";
-				if(data[ii][j].rh == IOUtils::nodata)
+					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::VW) << " ";
+				if(data[ii][j](MeteoData::RH) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
 				else
-					file << setw(6) << setprecision(2) << data[ii][j].rh * 100. << " ";
-				if(data[ii][j].ilwr == IOUtils::nodata)
+					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::RH) * 100. << " ";
+				if(data[ii][j](MeteoData::ILWR) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << " ";
 				else
-					file << setw(6) << setprecision(2) << data[ii][j].ilwr << " ";
-				if(data[ii][j].hnw == IOUtils::nodata)
+					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::ILWR) << " ";
+				if(data[ii][j](MeteoData::HNW) == IOUtils::nodata)
 					file << setw(6) << setprecision(0) << IOUtils::nodata << "\n";
 				else
-					file << setw(6) << setprecision(2) << data[ii][j].hnw << "\n";
+					file << setw(6) << setprecision(2) << data[ii][j](MeteoData::HNW) << "\n";
 			}
 			file.close();
 		}
@@ -917,7 +919,7 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 		file << setw(4) << year << " " << setw(2) << month << " " << setw(2) << day << " " << setw(2) << hour;
 		file.fill(' ');
 		for(size_t j=0; j<sta_nr; j++) {
-			double value = data[j][ii].param(parindex);
+			double value = data[j][ii](parindex);
 			if(value==IOUtils::nodata) {
 				file << " " << setw(7) << setprecision(0) << IOUtils::nodata;
 			} else {

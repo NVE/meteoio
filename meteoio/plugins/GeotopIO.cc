@@ -183,10 +183,10 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 				}
 
 				//Write all the data, make sure to transform the nodata values correctly
-				if (tmpmd.param(mapParam[vecSequence[kk]]) == IOUtils::nodata)
+				if (tmpmd(mapParam[vecSequence[kk]]) == IOUtils::nodata)
 					ss << ", " << plugin_nodata;
 				else
-					ss << ", " << setprecision(7) << tmpmd.param(mapParam[vecSequence[kk]]);
+					ss << ", " << setprecision(7) << tmpmd(mapParam[vecSequence[kk]]);
 			}
 			fout << ss.str() << endl;
 		}
@@ -513,43 +513,43 @@ void GeotopIO::write2DGrid(const Grid2DObject&, const std::string& name)
 void GeotopIO::convertUnitsBack(MeteoData& meteo)
 {
 	//converts Kelvin to C, converts RH to [0,100]
-	if(meteo.ta!=IOUtils::nodata) {
-		meteo.ta=K_TO_C(meteo.ta);
-	}
+	double& ta = meteo(MeteoData::TA);
+	if (ta != IOUtils::nodata)
+		ta = K_TO_C(ta);
 
-	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=K_TO_C(meteo.tsg);
-	}
+	double& tsg = meteo(MeteoData::TSG);
+	if (tsg != IOUtils::nodata)
+		tsg = K_TO_C(tsg);
 
-	if(meteo.tss!=IOUtils::nodata) {
-		meteo.tss=K_TO_C(meteo.tss);
-	}
+	double& tss = meteo(MeteoData::TSS);
+	if (tss != IOUtils::nodata)
+		tss = K_TO_C(tss);
 
-	if(meteo.rh!=IOUtils::nodata) {
-		meteo.rh *= 100.;
-	}
+	double& rh = meteo(MeteoData::RH);
+	if (rh != IOUtils::nodata)
+		rh *= 100.;
 }
 
 void GeotopIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
-	if(meteo.ta!=IOUtils::nodata) {
-		meteo.ta=C_TO_K(meteo.ta);
-	}
+	//converts C to Kelvin, converts RH to [0,1]
+	double& ta = meteo(MeteoData::TA);
+	if (ta != IOUtils::nodata)
+		ta = C_TO_K(ta);
 
-	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tsg);
-	}
+	double& tsg = meteo(MeteoData::TSG);
+	if (tsg != IOUtils::nodata)
+		tsg = C_TO_K(tsg);
 
-	if(meteo.tss!=IOUtils::nodata) {
-		meteo.tss=C_TO_K(meteo.tss);
-	}
+	double& tss = meteo(MeteoData::TSS);
+	if (tss != IOUtils::nodata)
+		tss = C_TO_K(tss);
 
-	if(meteo.rh!=IOUtils::nodata) {
-		meteo.rh /= 100.;
-	}
+	double& rh = meteo(MeteoData::RH);
+	if (rh != IOUtils::nodata)
+		rh /= 100.;
 }
 
 #ifndef _METEOIO_JNI

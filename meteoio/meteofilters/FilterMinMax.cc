@@ -35,7 +35,7 @@ void FilterMinMax::process(const unsigned int& index, const std::vector<MeteoDat
 	for (unsigned int ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);
 		
-		double& tmp = ovec[ii].param(index);
+		double& tmp = ovec[ii](index);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
 		if (tmp < min_val){

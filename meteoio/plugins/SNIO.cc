@@ -428,11 +428,11 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 
 	double& ea = tmpdata[ii++];
 	if ((ea <= 1) && (ea != plugin_nodata)){
-		if ((md.ta != plugin_nodata) && (md.rh != plugin_nodata)) {
+		if ((md(MeteoData::TA) != plugin_nodata) && (md(MeteoData::RH) != plugin_nodata)) {
 			if(ea==0.)
-				ea = Atmosphere::Brutsaert_ilwr(md.rh/100., C_TO_K(md.ta));
+				ea = Atmosphere::Brutsaert_ilwr(md(MeteoData::RH)/100., C_TO_K(md(MeteoData::TA)));
 			else
-				ea = Atmosphere::Omstedt_ilwr(md.rh/100., C_TO_K(md.ta), ea); //calculate ILWR from cloudiness
+				ea = Atmosphere::Omstedt_ilwr(md(MeteoData::RH)/100., C_TO_K(md(MeteoData::TA)), ea); //calculate ILWR from cloudiness
 		} else {
 			ea = plugin_nodata;
 		}
@@ -456,7 +456,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		ss.str("");
 		ss << "TS" << (jj);
 		md.addParameter(ss.str());
-		md.param(ss.str()) = tmpdata[ii++];
+		md(ss.str()) = tmpdata[ii++];
 	}
 	// CONC[]: solute concentrations
 	size_t number_of_solutes = 0;
@@ -468,7 +468,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		ss.str("");
 		ss << "CONC" << jj;
 		md.addParameter(ss.str());
-		md.param(ss.str()) = tmpdata[ii++];
+		md(ss.str()) = tmpdata[ii++];
 	}
 	// VW_DRIFT: optional wind velocity for blowing and drifting snow
 	bool vw_drift = false;
@@ -477,7 +477,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		if (vecLine.size() < ii+1)
 			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": no data for vw_drift", AT);
 		md.addParameter("VW_DRIFT");
-		md.param("VW_DRIFT") = tmpdata[ii++];
+		md("VW_DRIFT") = tmpdata[ii++];
 	}
 	// RHO_HN: measured new snow density
 	bool rho_hn = false;
@@ -486,7 +486,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		if (vecLine.size() < ii+1)
 			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": no data for rho_hn", AT);
 		md.addParameter("RHO_HN");
-		md.param("RHO_HN") = tmpdata[ii++];
+		md("RHO_HN") = tmpdata[ii++];
 	}
 	if (vecLine.size() > ii) {
 		std::stringstream ss;
@@ -549,17 +549,17 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		tmp_date.setTimeZone(out_tz);
 		tmp_date.getDate(YYYY, MM, DD, HH, MI);
 		const double sn_julian = tmp_date.getJulianDate() - sn_julian_offset + 0.5;
-		const double ta = vecmd[jj].ta;
-		const double rh = vecmd[jj].rh;
-		const double hnw = vecmd[jj].hnw;
-		const double vw = vecmd[jj].vw;
-		const double dw = vecmd[jj].dw;
-		const double iswr = vecmd[jj].iswr;
-		const double rswr = vecmd[jj].rswr;
-		const double ilwr = vecmd[jj].ilwr;
-		const double tss = vecmd[jj].tss;
-		const double tsg = vecmd[jj].tsg;
-		const double hs = vecmd[jj].hs;
+		const double ta = vecmd[jj](MeteoData::TA);
+		const double rh = vecmd[jj](MeteoData::RH);
+		const double hnw = vecmd[jj](MeteoData::HNW);
+		const double vw = vecmd[jj](MeteoData::VW);
+		const double dw = vecmd[jj](MeteoData::DW);
+		const double iswr = vecmd[jj](MeteoData::ISWR);
+		const double rswr = vecmd[jj](MeteoData::RSWR);
+		const double ilwr = vecmd[jj](MeteoData::ILWR);
+		const double tss = vecmd[jj](MeteoData::TSS);
+		const double tsg = vecmd[jj](MeteoData::TSG);
+		const double hs = vecmd[jj](MeteoData::HS);
 
 		fout.fill('0');
 		fout << "M " << setw(2) << DD << "." << setw(2) << MM << "." << setw(4) << YYYY << " " << setw(2) << HH << ":" << setw(2) << MI << " ";
@@ -651,7 +651,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 			ss.str("");
 			ss << "TS" << kk;
 			if (vecmd[jj].param_exists(ss.str())){
-				const double ts = vecmd[jj].param(ss.str());
+				const double ts = vecmd[jj](ss.str());
 				if (ts == IOUtils::nodata) {
 					optional_failure_count++;
 					fout << setw(7) << setprecision(0) << ts << " ";
@@ -667,7 +667,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 			ss.str("");
 			ss << "CONC" << kk;
 			if (vecmd[jj].param_exists(ss.str())) {
-				const double conc = vecmd[jj].param(ss.str());
+				const double conc = vecmd[jj](ss.str());
 				if (conc == IOUtils::nodata) {
 					optional_failure_count++;
 					fout << setw(6) << setprecision(0) << conc << " ";
@@ -680,7 +680,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		}
 		// VW_DRIFT: optional wind velocity for blowing and drifting snow
 		if (vecmd[jj].param_exists("VW_DRIFT")) {
-			const double vw_drift = vecmd[jj].param("VW_DRIFT");
+			const double vw_drift = vecmd[jj]("VW_DRIFT");
 			if (vw_drift == IOUtils::nodata) {
 				optional_failure_count++;
 				fout << setw(4) << setprecision(0) << vw_drift << " ";
@@ -690,7 +690,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		}
 		// RHO_HN: measured new snow density
 		if (vecmd[jj].param_exists("RHO_HN")) {
-			const double rho_hn = vecmd[jj].param("RHO_HN");
+			const double rho_hn = vecmd[jj]("RHO_HN");
 			if (rho_hn == IOUtils::nodata) {
 				optional_failure_count++;
 				fout << setw(6) << setprecision(0) << rho_hn << " ";
@@ -727,24 +727,28 @@ void SNIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*nam
 void SNIO::convertUnits(MeteoData& meteo)
 {
 	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
-	if(meteo.ta!=IOUtils::nodata){
-		if (meteo.ta < 100)
-			meteo.ta=C_TO_K(meteo.ta);
+	double& ta = meteo(MeteoData::TA);
+	if (ta != IOUtils::nodata) {
+		if (ta < 100)
+			ta = C_TO_K(ta);
 	}
 
-	if(meteo.tsg!=IOUtils::nodata){
-		if (meteo.tsg < 100)
-			meteo.tsg=C_TO_K(meteo.tsg);
+	double& tsg = meteo(MeteoData::TSG);
+	if ( tsg != IOUtils::nodata) {
+		if (tsg < 100)
+			tsg = C_TO_K(tsg);
 	}
 
-	if(meteo.tss!=IOUtils::nodata){
-		if (meteo.tss < 100)
-			meteo.tss=C_TO_K(meteo.tss);
+	double& tss = meteo(MeteoData::TSS);
+	if (tss != IOUtils::nodata) {
+		if (tss < 100)
+			tss = C_TO_K(tss);
 	}
 
-	if (meteo.rh!=IOUtils::nodata){
-		if (meteo.rh>1.2)
-			meteo.rh /= 100;
+	double& rh = meteo(MeteoData::RH);
+	if (rh != IOUtils::nodata) {
+		if (rh > 1.2)
+			rh /= 100;
 	}
 
 	stringstream ss;
@@ -752,7 +756,7 @@ void SNIO::convertUnits(MeteoData& meteo)
 		ss.str("");
 		ss << "TS" << ii;
 		if (meteo.param_exists(ss.str())){
-			double& value = meteo.param(ss.str());
+			double& value = meteo(ss.str());
 			value = C_TO_K(value);
 		} else {
 			break;

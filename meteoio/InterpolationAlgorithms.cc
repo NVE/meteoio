@@ -123,7 +123,7 @@ size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
 		vecMeta.clear();
 
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		const double& val = vecMeteo[ii].param(param);
+		const double& val = vecMeteo[ii](param);
 		if (val != IOUtils::nodata){
 			vecData.push_back(val);
 			vecMeta.push_back(vecMeteo[ii].meta);
@@ -419,9 +419,9 @@ void RHAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 
 	nrOfMeasurments = 0;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		if ((vecMeteo[ii].rh != IOUtils::nodata) && (vecMeteo[ii].ta != IOUtils::nodata)){
-			vecDataTA.push_back(vecMeteo[ii].ta);
-			vecDataRH.push_back(vecMeteo[ii].rh);
+		if ((vecMeteo[ii](MeteoData::RH) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::TA) != IOUtils::nodata)){
+			vecDataTA.push_back(vecMeteo[ii](MeteoData::TA));
+			vecDataRH.push_back(vecMeteo[ii](MeteoData::RH));
 			vecMeta.push_back(vecMeteo[ii].meta);
 			nrOfMeasurments++;
 		}
@@ -486,8 +486,8 @@ void ILWRAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 
 	nrOfMeasurments = 0;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		if ((vecMeteo[ii].ilwr != IOUtils::nodata) && (vecMeteo[ii].ta != IOUtils::nodata)){
-			vecDataEA.push_back( Atmosphere::blkBody_Emissivity( vecMeteo[ii].ilwr, vecMeteo[ii].ta) );
+		if ((vecMeteo[ii](MeteoData::ILWR) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::TA) != IOUtils::nodata)){
+			vecDataEA.push_back( Atmosphere::blkBody_Emissivity( vecMeteo[ii](MeteoData::ILWR), vecMeteo[ii](MeteoData::TA)) );
 			vecMeta.push_back(vecMeteo[ii].meta);
 			nrOfMeasurments++;
 		}
@@ -571,9 +571,9 @@ void SimpleWindInterpolationAlgorithm::initialize(const MeteoData::Parameters& i
 
 	nrOfMeasurments = 0;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		if ((vecMeteo[ii].vw != IOUtils::nodata) && (vecMeteo[ii].dw != IOUtils::nodata)){
-			vecDataVW.push_back(vecMeteo[ii].vw);
-			vecDataDW.push_back(vecMeteo[ii].dw);
+		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
+			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
+			vecDataDW.push_back(vecMeteo[ii](MeteoData::DW));
 			vecMeta.push_back(vecMeteo[ii].meta);
 			nrOfMeasurments++;
 		}

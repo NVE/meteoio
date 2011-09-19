@@ -43,7 +43,7 @@ void FilterTukey::process(const unsigned int& index, const std::vector<MeteoData
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii].param(index);
+		double& value = ovec[ii](index);
 
 		//Calculate std deviation
 		const double std_dev  = getStdDev(ivec, ii, index); //HACK: we need to start at ii=0 for getWindow
@@ -65,7 +65,7 @@ double FilterTukey::getStdDev(const std::vector<MeteoData>& ivec, const unsigned
 	const size_t n = vec_window.size();
 
 	for(size_t ii=0; ii<n; ii++) {
-		const double& value = (*vec_window[ii]).param(paramindex);
+		const double& value = (*vec_window[ii])(paramindex);
 		if(value!=IOUtils::nodata) {
 			sum += value;
 			count++;
@@ -80,7 +80,7 @@ double FilterTukey::getStdDev(const std::vector<MeteoData>& ivec, const unsigned
 	const double mean = sum/(double)count;
 	double sum2=0., sum3=0.;
 	for(size_t ii=0; ii<n; ii++) {
-		const double& value = (*vec_window[ii]).param(paramindex);
+		const double& value = (*vec_window[ii])(paramindex);
 		if(value!=IOUtils::nodata) {
 			sum2 = sum2 + (value - mean)*(value - mean);
 			sum3 = sum3 + (value - mean);
@@ -105,7 +105,7 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int
 			std::vector<double> u;
 			for(int k=-2; k<=2; k++) {
 				const size_t index = ii + k + j + i;
-				const double value = ivec[index].param(paramindex);
+				const double value = ivec[index](paramindex);
 				if(value!=IOUtils::nodata)
 					u.push_back( value );
 			}

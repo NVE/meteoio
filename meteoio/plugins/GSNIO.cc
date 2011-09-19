@@ -414,19 +414,19 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 				//cout << value << "  ";
 				if (index[jj] != IOUtils::npos){
 					if (value != "NULL"){
-						IOUtils::convertString(tmpmeteo.param(index[jj]), value);
+						IOUtils::convertString(tmpmeteo(index[jj]), value);
 					} else {
-						tmpmeteo.param(index[jj]) = IOUtils::nodata;
+						tmpmeteo(index[jj]) = IOUtils::nodata;
 					}
 				}
 			}
 			convertUnits(tmpmeteo);
-			if ((olwr_present) && (tmpmeteo.tss == IOUtils::nodata))
-				tmpmeteo.tss = olwr_to_tss(tmpmeteo.param("OLWR"));
+			if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
+				tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
 
 			//cout << endl << tmpmeteo << endl;
 			vecMeteo.push_back(tmpmeteo);
-			tmpmeteo.tss = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
+			tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
 		}
 	}
 	
@@ -455,19 +455,19 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 					//cout << value << "  ";
 					if (index[jj] != IOUtils::npos){
 						if (value != "NULL"){
-							IOUtils::convertString(tmpmeteo.param(index[jj]), value);
+							IOUtils::convertString(tmpmeteo(index[jj]), value);
 						} else {
-							tmpmeteo.param(index[jj]) = IOUtils::nodata;
+							tmpmeteo(index[jj]) = IOUtils::nodata;
 						}
 					}
 				}
 				//cout << endl << tmpmeteo << endl;
 				convertUnits(tmpmeteo);
-				if ((olwr_present) && (tmpmeteo.tss == IOUtils::nodata))
-					tmpmeteo.tss = olwr_to_tss(tmpmeteo.param("OLWR"));
+				if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
+					tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
 
 				vecMeteo.push_back(tmpmeteo);
-				tmpmeteo.tss = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
+				tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
 			}
 		}		
 	}			
@@ -550,22 +550,22 @@ void GSNIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
-	if(meteo.ta != IOUtils::nodata) {
-		meteo.ta = C_TO_K(meteo.ta);
-	}
+	//converts C to Kelvin, converts RH to [0,1]
+	double& ta = meteo(MeteoData::TA);
+	if (ta != IOUtils::nodata)
+		ta = C_TO_K(ta);
 
-	if(meteo.tsg != IOUtils::nodata) {
-		meteo.tsg = C_TO_K(meteo.tsg);
-	}
+	double& tsg = meteo(MeteoData::TSG);
+	if (tsg != IOUtils::nodata)
+		tsg = C_TO_K(tsg);
 
-	if(meteo.tss != IOUtils::nodata) {
-		meteo.tss = C_TO_K(meteo.tss);
-	}
+	double& tss = meteo(MeteoData::TSS);
+	if (tss != IOUtils::nodata)
+		tss = C_TO_K(tss);
 
-	if(meteo.rh != IOUtils::nodata) {
-		meteo.rh /= 100.;
-	}
+	double& rh = meteo(MeteoData::RH);
+	if (rh != IOUtils::nodata)
+		rh /= 100.;
 }
 
 extern "C"

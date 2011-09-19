@@ -42,7 +42,7 @@ void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoDat
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii].param(index);
+		double& value = ovec[ii](index);
 
 		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
 
@@ -89,7 +89,7 @@ void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, cons
 	const size_t n = vec_window.size();
 
 	for(size_t ii=0; ii<n; ii++) {
-		const double& value = (*vec_window[ii]).param(paramindex);
+		const double& value = (*vec_window[ii])(paramindex);
 		if(value!=IOUtils::nodata) {
 			sum += value;
 			count++;
@@ -104,7 +104,7 @@ void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, cons
 		mean = sum/(double)count;
 		double sum2=0., sum3=0.;
 		for(size_t ii=0; ii<n; ii++) {
-			const double& value = (*vec_window[ii]).param(paramindex);
+			const double& value = (*vec_window[ii])(paramindex);
 			if(value!=IOUtils::nodata) {
 				sum2 = sum2 + (value - mean)*(value - mean);
 				sum3 = sum3 + (value - mean);
