@@ -113,13 +113,13 @@ size_t MeteoData::getNrOfParameters() const
 	return nrOfAllParameters;
 }
 
-MeteoData::MeteoData() : date(0.0, 0.), resampled(false), nrOfAllParameters(MeteoData::nrOfParameters)
+MeteoData::MeteoData() : date(0.0, 0.), meta(), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 {
 	param_name = s_default_paramname;
 	data = vector<double>(nrOfAllParameters, IOUtils::nodata);
 }
 
-MeteoData::MeteoData(const Date& date_in) : date(date_in), resampled(false), nrOfAllParameters(MeteoData::nrOfParameters)
+MeteoData::MeteoData(const Date& date_in) : date(date_in), meta(), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 {
 	param_name = s_default_paramname;
 	data = vector<double>(nrOfAllParameters, IOUtils::nodata);
@@ -135,11 +135,6 @@ void MeteoData::reset()
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		data[ii] = IOUtils::nodata;
 	}
-}
-
-void MeteoData::setData(const MeteoData::Parameters& param, const double& value)
-{
-	data[param] = value;
 }
 
 /**

@@ -296,14 +296,14 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 					}
 					tmpdata[ncols] = IOUtils::nodata;
 
-					md.setData(MeteoData::TA, tmpdata[mapHeader["ta"]]);
-					md.setData(MeteoData::ISWR, tmpdata[mapHeader["iswr"]]);
-					md.setData(MeteoData::VW, tmpdata[mapHeader["vw"]]);
-					md.setData(MeteoData::DW, tmpdata[mapHeader["dw"]]);
-					md.setData(MeteoData::RH, tmpdata[mapHeader["rh"]]);
-					md.setData(MeteoData::ILWR, tmpdata[mapHeader["ilwr"]]);
-					md.setData(MeteoData::HNW, tmpdata[mapHeader["hnw"]]);
-					md.setData(MeteoData::P, tmpdata[mapHeader["p"]]);
+					md(MeteoData::TA)   = tmpdata[mapHeader["ta"]];
+					md(MeteoData::ISWR) = tmpdata[mapHeader["iswr"]];
+					md(MeteoData::VW)   = tmpdata[mapHeader["vw"]];
+					md(MeteoData::DW)   = tmpdata[mapHeader["dw"]];
+					md(MeteoData::RH)   = tmpdata[mapHeader["rh"]];
+					md(MeteoData::ILWR) = tmpdata[mapHeader["ilwr"]];
+					md(MeteoData::HNW)  = tmpdata[mapHeader["hnw"]];
+					md(MeteoData::P)    = tmpdata[mapHeader["p"]];
 
 					convertUnits(md);
 					vecMeteo[ii].push_back(md);

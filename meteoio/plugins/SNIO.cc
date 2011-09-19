@@ -413,18 +413,18 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 
 	//Copy data into MeteoData object
 	size_t ii = 4;
-	md.setData(MeteoData::TA, tmpdata[ii++]);
-	md.setData(MeteoData::RH, tmpdata[ii++]);
-	md.setData(MeteoData::VW, tmpdata[ii++]);
-	md.setData(MeteoData::DW, tmpdata[ii++]);
+	md(MeteoData::TA) = tmpdata[ii++];
+	md(MeteoData::RH) = tmpdata[ii++];
+	md(MeteoData::VW) = tmpdata[ii++];
+	md(MeteoData::DW) = tmpdata[ii++];
 	if (iswr_inp)
-		md.setData(MeteoData::ISWR, tmpdata[ii++]);
+		md(MeteoData::ISWR) = tmpdata[ii++];
 	else
-		md.setData(MeteoData::ISWR, IOUtils::nodata);
+		md(MeteoData::ISWR) = IOUtils::nodata;
 	if (rswr_inp)
-		md.setData(MeteoData::RSWR, tmpdata[ii++]);
+		md(MeteoData::RSWR) = tmpdata[ii++];
 	else
-		md.setData(MeteoData::RSWR, IOUtils::nodata);
+		md(MeteoData::RSWR) = IOUtils::nodata;
 
 	double& ea = tmpdata[ii++];
 	if ((ea <= 1) && (ea != plugin_nodata)){
@@ -437,12 +437,12 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 			ea = plugin_nodata;
 		}
 	}
-	md.setData(MeteoData::ILWR, ea);
 
-	md.setData(MeteoData::TSS, tmpdata[ii++]);
-	md.setData(MeteoData::TSG, tmpdata[ii++]);
-	md.setData(MeteoData::HNW, tmpdata[ii++]);
-	md.setData(MeteoData::HS, tmpdata[ii++]); // nr_meteoData
+	md(MeteoData::ILWR) = ea;
+	md(MeteoData::TSS)  = tmpdata[ii++];
+	md(MeteoData::TSG)  = tmpdata[ii++];
+	md(MeteoData::HNW)  = tmpdata[ii++];
+	md(MeteoData::HS)   = tmpdata[ii++]; // nr_meteoData
 
 	// Read optional values
 	size_t jj;

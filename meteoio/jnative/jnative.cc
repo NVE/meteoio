@@ -75,18 +75,18 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 			throw InvalidArgumentException("Invalid interpolation algorithm selected!", AT);
 		}
 		MeteoData meteo(date_in);
-		meteo.setData(MeteoData::TA, ta);
-		meteo.setData(MeteoData::ISWR, iswr);
-		meteo.setData(MeteoData::VW, vw);
-		meteo.setData(MeteoData::DW, dw);
-		meteo.setData(MeteoData::RH, rh);
-		meteo.setData(MeteoData::ILWR, ilwr);
-		meteo.setData(MeteoData::HNW, hnw);
-		meteo.setData(MeteoData::TSG, tsg);
-		meteo.setData(MeteoData::TSS, tss);
-		meteo.setData(MeteoData::HS, hs);
-		meteo.setData(MeteoData::RSWR, rswr);
-		meteo.setData(MeteoData::P, p);
+		meteo(MeteoData::TA)   = ta;
+		meteo(MeteoData::ISWR) = iswr;
+		meteo(MeteoData::VW)   = vw;
+		meteo(MeteoData::DW)   = dw;
+		meteo(MeteoData::RH)   = rh;
+		meteo(MeteoData::ILWR) = ilwr;
+		meteo(MeteoData::HNW)  = hnw;
+		meteo(MeteoData::TSG)  = tsg;
+		meteo(MeteoData::TSS)  = tss;
+		meteo(MeteoData::HS)   = hs;
+		meteo(MeteoData::RSWR) = rswr;
+		meteo(MeteoData::P)    = p;
 		vecData.push_back(meteo);
 	}
 }

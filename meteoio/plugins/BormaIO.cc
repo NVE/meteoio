@@ -340,17 +340,17 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		xmlParseStringToDouble(str_sh, hs, "sh");
 
 		md.setDate(date_in);
-		md.setData(MeteoData::TA, ta);
-		md.setData(MeteoData::ISWR, iswr);
-		md.setData(MeteoData::VW, vw);
-		md.setData(MeteoData::DW, dw);
-		md.setData(MeteoData::RH, rh);
-		md.setData(MeteoData::ILWR, ilwr);
-		md.setData(MeteoData::HNW, hnw);
-		md.setData(MeteoData::TSG, tsg);
-		md.setData(MeteoData::TSS, tss);
-		md.setData(MeteoData::HS, hs);
-		md.setData(MeteoData::RSWR, rswr);
+		md(MeteoData::TA)   = ta;
+		md(MeteoData::ISWR) = iswr;
+		md(MeteoData::VW)   = vw;
+		md(MeteoData::DW)   = dw;
+		md(MeteoData::RH)   = rh;
+		md(MeteoData::ILWR) = ilwr;
+		md(MeteoData::HNW)  = hnw;
+		md(MeteoData::TSG)  = tsg;
+		md(MeteoData::TSS)  = tss;
+		md(MeteoData::HS)   = hs;
+		md(MeteoData::RSWR) = rswr;
 
 		convertUnits(md);
 
@@ -508,22 +508,22 @@ void BormaIO::convertUnits(MeteoData& meteo)
 {
 	meteo.standardizeNodata(plugin_nodata);
 
-	//converts C to Kelvin, converts ilwr to ea, converts RH to [0,1]
-	if(meteo.ta!=IOUtils::nodata) {
-		meteo.ta=C_TO_K(meteo.ta);
-	}
+	//converts C to Kelvin, converts RH to [0,1]
+	double& ta = meteo(MeteoData::TA);
+	if (ta != IOUtils::nodata)
+		ta = C_TO_K(ta);
 
-	if(meteo.tsg!=IOUtils::nodata) {
-		meteo.tsg=C_TO_K(meteo.tss);
-	}
+	double& tsg = meteo(MeteoData::TSG);
+	if (tsg != IOUtils::nodata)
+		tsg = C_TO_K(tsg);
 
-	if(meteo.tss!=IOUtils::nodata) {
-		meteo.tss=C_TO_K(meteo.tss);
-	}
+	double& tss = meteo(MeteoData::TSS);
+	if (tss != IOUtils::nodata)
+		tss = C_TO_K(tss);
 
-	if(meteo.rh!=IOUtils::nodata) {
-		meteo.rh /= 100.;
-	}
+	double& rh = meteo(MeteoData::RH);
+	if (rh != IOUtils::nodata)
+		rh /= 100.;
 }
 
 #ifndef _METEOIO_JNI

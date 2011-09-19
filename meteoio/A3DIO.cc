@@ -355,12 +355,12 @@ bool A3DIO::readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string
 	}
 
 	tmpdata.setDate(tmp_date);
-	tmpdata.setData(MeteoData::TA, tmp_values[0]);
-	tmpdata.setData(MeteoData::ISWR, tmp_values[1]);
-	tmpdata.setData(MeteoData::VW, tmp_values[2]);
-	tmpdata.setData(MeteoData::RH, tmp_values[3]);
-	tmpdata.setData(MeteoData::ILWR, tmp_values[4]);
-	tmpdata.setData(MeteoData::HNW, tmp_values[5]);
+	tmpdata(MeteoData::TA)   = tmp_values[0];
+	tmpdata(MeteoData::ISWR) = tmp_values[1];
+	tmpdata(MeteoData::VW)   = tmp_values[2];
+	tmpdata(MeteoData::RH)   = tmp_values[3];
+	tmpdata(MeteoData::ILWR) = tmp_values[4];
+	tmpdata(MeteoData::HNW)  = tmp_values[5];
 
 	return false;
 }

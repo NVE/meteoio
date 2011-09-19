@@ -79,13 +79,6 @@ class MeteoData {
 		MeteoData(const Date& in_date);
 
 		/**
-		* @brief General setter function, requires one to eight arguments
-		* @param param One element out of the Parameters enum, e.g. MeteoData::TA
-		* @param value A double value to be assigned to the respective variable denoted in the first argument
-		*/
-		void setData(const MeteoData::Parameters& param, const double& value);
-
-		/**
 		* @brief A setter function for the measurement date
 		* @param in_date A Date object representing the time of the measurement
 		*/
