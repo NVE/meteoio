@@ -179,7 +179,7 @@ void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                           std::vector< std::vector<MeteoData> >& vecMeteo,
-                          const unsigned int& stationindex)
+                          const size_t& stationindex)
 {
 	if (vecMeta.size() == 0)
 		readMetaData();
