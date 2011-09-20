@@ -278,8 +278,13 @@ void GSNIO::readMetaData()
 		current_coord.setLatLon(lat, lon, alt);
 		StationData sd(current_coord, vecStationName[ii], vecStationName[ii]);
 		
-		if (slope_angle != IOUtils::nodata)
-			sd.setSlope(slope_angle, IOUtils::nodata);
+		if (slope_angle != IOUtils::nodata){
+			if (slope_angle == 0) {
+				sd.setSlope(slope_angle, 0); //expostion: north assumed
+			} else {
+				sd.setSlope(slope_angle, IOUtils::nodata);
+			}
+		}
 
 		vecMeta.push_back(sd);
 	}
