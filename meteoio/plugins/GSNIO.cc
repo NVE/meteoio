@@ -68,8 +68,6 @@ namespace mio {
  * THE SOFTWARE IN THIS PRODUCT WAS IN PART PROVIDED BY GENIVIA INC AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const double GSNIO::plugin_nodata = -999.0; //plugin specific nodata value
-
 GSNIO::GSNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -219,9 +217,10 @@ void GSNIO::readMetaData()
 	if (vecStationName.size() == 0)
 		readStationNames(); //reads station names into vector<string> vecStationName
 	
-	for (size_t ii=0; ii<vecStationName.size(); ii++){
+	for (size_t ii=0; ii<vecStationName.size(); ii++) {
 		//retrieve meta info current station
 		double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;
+		double slope_angle = IOUtils::nodata;
 		size_t info_complete = 0; //this variable stores whether lat,lon,alt were successfully read
 		_ns1__getVirtualSensorsDetailsResponse metadata;
 		_ns1__getVirtualSensorsDetails metadata_req;
@@ -246,16 +245,18 @@ void GSNIO::readMetaData()
 					IOUtils::toUpper(field_name);
 					IOUtils::toUpper(field_val);
 
-					if (field_val != "NULL"){
-						if (field_name == "LATITUDE"){
+					if (field_val != "NULL") {
+						if (field_name == "LATITUDE") {
 							IOUtils::convertString(lat, field_val);
 							info_complete |= 1;
-						} else if (field_name == "LONGITUDE"){
+						} else if (field_name == "LONGITUDE") {
 							IOUtils::convertString(lon, field_val);
 							info_complete |= 2;
-						} else if (field_name == "ALTITUDE"){
+						} else if (field_name == "ALTITUDE") {
 							IOUtils::convertString(alt, field_val);
 							info_complete |= 4;
+						} else if (field_name == "SLOPE") {
+							IOUtils::convertString(slope_angle, field_val);
 						}
 					}
 
@@ -276,49 +277,13 @@ void GSNIO::readMetaData()
 		Coords current_coord(coordin, coordinparam);
 		current_coord.setLatLon(lat, lon, alt);
 		StationData sd(current_coord, vecStationName[ii], vecStationName[ii]);
+		
+		if (slope_angle != IOUtils::nodata)
+			sd.setSlope(slope_angle, IOUtils::nodata);
 
 		vecMeta.push_back(sd);
 	}
 }
-/*
-void GSNIO::parseString(const std::string& in_string, MeteoData& md){
-	std::stringstream ss(in_string);
-	std::string tmpstring;
-
-	while (std::getline(ss, tmpstring, ';')){
-		std::stringstream data(tmpstring);
-		while (std::getline(data, tmpstring, '=')){
-			const string key = tmpstring;
-			if (!(std::getline(data, tmpstring, '=')))
-				throw InvalidFormatException("",AT);
-
-			if (key == "LIGHT") convertStringToDouble(md.iswr, tmpstring, "ISWR");
-			else if (key == "AIR_TEMP") convertStringToDouble(md.ta, tmpstring, "Air Temperature");
-			else if (key == "WIND_SPEED") convertStringToDouble(md.vw, tmpstring, "Wind Velocity");
-			else if (key == "WIND_DIRECTION") convertStringToDouble(md.dw, tmpstring, "Wind Velocity");
-			else if (key == "INCOMING_RADIATION") {
-				convertStringToDouble(md.iswr, tmpstring, "incoming_radiation");
-				//convertStringToDouble(md.ilwr, tmpstring, "solar_rad");
-			}
-			else if (key == "RELATIVE_HUMIDITY") convertStringToDouble(md.rh, tmpstring, "relative_humidity");
-			else if (key == "SURFACE_TEMP") convertStringToDouble(md.tss, tmpstring, "soil_temp");
-			else if (key == "GROUND_TEMP_TNX") convertStringToDouble(md.tsg, tmpstring, "ground_temp_tnx");
-			else if (key == "RAIN_METER") convertStringToDouble(md.hnw, tmpstring, "rain_meter");
-			else if (key == "TIMED") {
-				tmpstring = tmpstring.substr(0,tmpstring.length()-3); //cut away the seconds
-				time_t measurementTime;
-				if (!IOUtils::convertString(measurementTime, tmpstring, std::dec)) {
-					stringstream ss;
-					ss << "Conversion failed for value TIMED=" << tmpstring;
-					throw ConversionFailedException(ss.str(), AT);
-				}
-				md.date.setDate(measurementTime);
-				md.date.rnd(60., Date::CLOSEST); //HACK: round to closest minute
-			}
-		}
-	}
-}
-*/
 
 void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field,
                            MeteoData& md, std::vector<size_t>& index)
@@ -403,30 +368,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		olwr_present = tmpmeteo.param_exists("OLWR");
 
 		for (size_t ii=0; ii < data.queryResult.at(0)->streamElements.size(); ii++) {
-			double tt;
-			IOUtils::convertString(tt, *data.queryResult.at(0)->streamElements.at(ii)->timed);
-			tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
-			tmpmeteo.date.setTimeZone(default_timezone);
-
-			for (size_t jj=0; jj < data.queryResult.at(0)->streamElements.at(ii)->field.size(); jj++){
-				string value = data.queryResult.at(0)->streamElements.at(ii)->field.at(jj)->__item;
-				IOUtils::toUpper(value);
-				//cout << value << "  ";
-				if (index[jj] != IOUtils::npos){
-					if (value != "NULL"){
-						IOUtils::convertString(tmpmeteo(index[jj]), value);
-					} else {
-						tmpmeteo(index[jj]) = IOUtils::nodata;
-					}
-				}
-			}
-			convertUnits(tmpmeteo);
-			if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
-				tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
-
-			//cout << endl << tmpmeteo << endl;
-			vecMeteo.push_back(tmpmeteo);
-			tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
+			parse_streamElement(index, olwr_present, vecMeteo, tmpmeteo, data.queryResult.at(0)->streamElements.at(ii));
 		}
 	}
 	
@@ -444,33 +386,46 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 			still_pages = responseNext.queryResult.at(0)->hasNext;
 			
 			for (size_t ii=0; ii < responseNext.queryResult.at(0)->streamElements.size(); ii++) {
-				double tt;
-				IOUtils::convertString(tt, *responseNext.queryResult.at(0)->streamElements.at(ii)->timed);
-				tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
-				tmpmeteo.date.setTimeZone(default_timezone);
-				
-				for (size_t jj=0; jj < responseNext.queryResult.at(0)->streamElements.at(ii)->field.size(); jj++) {
-					string value = responseNext.queryResult.at(0)->streamElements.at(ii)->field.at(jj)->__item;
-					IOUtils::toUpper(value);
-					//cout << value << "  ";
-					if (index[jj] != IOUtils::npos){
-						if (value != "NULL"){
-							IOUtils::convertString(tmpmeteo(index[jj]), value);
-						} else {
-							tmpmeteo(index[jj]) = IOUtils::nodata;
-						}
-					}
-				}
-				//cout << endl << tmpmeteo << endl;
-				convertUnits(tmpmeteo);
-				if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
-					tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
-
-				vecMeteo.push_back(tmpmeteo);
-				tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
+				parse_streamElement(index, olwr_present, vecMeteo, tmpmeteo, responseNext.queryResult.at(0)->streamElements.at(ii));
 			}
 		}		
 	}			
+}
+
+void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present, 
+                                std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo, ns2__GSNWebService_USCOREStreamElement* streamElement)
+{
+	/**
+	 * This procedure takes a streamElement pointer from either the _ns1__getNextDataResponse
+	 * or _ns1__getMultiDataResponse and parses the field elements into a MeteoData object
+	 * (tmpmeteo). Finally it adjusts the units and calculates TSS from OLWR if necessary and
+	 * possible.
+	 */
+	double tt;
+	IOUtils::convertString(tt, *streamElement->timed);
+	tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
+	tmpmeteo.date.setTimeZone(default_timezone);
+
+	for (size_t jj=0; jj < streamElement->field.size(); jj++){
+		string value = streamElement->field.at(jj)->__item;
+		IOUtils::toUpper(value);
+		//cout << value << "  ";
+		if (index[jj] != IOUtils::npos){
+			if (value != "NULL"){
+				IOUtils::convertString(tmpmeteo(index[jj]), value);
+			} else {
+				tmpmeteo(index[jj]) = IOUtils::nodata;
+			}
+		}
+	}
+
+	convertUnits(tmpmeteo);
+	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
+		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
+
+	//cout << endl << tmpmeteo << endl;
+	vecMeteo.push_back(tmpmeteo);
+	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
 }
 
 double GSNIO::olwr_to_tss(const double& olwr) {
@@ -483,6 +438,11 @@ double GSNIO::olwr_to_tss(const double& olwr) {
 
 void GSNIO::readStationNames()
 {
+	/**
+	 * Parse through the io.ini file and copy the desired station names STATION#
+	 * into vecStationName, if no stations are configured explicitly simply take
+	 * all stations that are available in the current GSN instance
+	 */
 	vecStationName.clear();
 
 	//cfg.getValue("NROFSTATIONS", "Input", str_stations, Config::nothrow);
@@ -511,6 +471,9 @@ void GSNIO::readStationNames()
 
 void GSNIO::listSensors(std::vector<std::string>& vec_names)
 {
+	/**
+	 * Retrieve all station names, that are available in the current GSN instance
+	 */
 	_ns1__listVirtualSensorNamesResponse sensor_names;
 	_ns1__listVirtualSensorNames sensor_req;
 
@@ -548,8 +511,6 @@ void GSNIO::write2DGrid(const Grid2DObject&, const std::string& name)
 
 void GSNIO::convertUnits(MeteoData& meteo)
 {
-	meteo.standardizeNodata(plugin_nodata);
-
 	//converts C to Kelvin, converts RH to [0,1]
 	double& ta = meteo(MeteoData::TA);
 	if (ta != IOUtils::nodata)

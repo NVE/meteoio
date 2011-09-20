@@ -75,8 +75,6 @@ class GSNIO : public IOInterface {
 
 	private:
 		void listSensors(std::vector<std::string>& vec_names);
-		void parseString(const std::string& in_string, MeteoData& md);
-		void convertStringToDouble(double& d, const std::string& in_string, const std::string& in_parname);
 		void convertUnits(MeteoData& meteo);
 		void initGSNConnection();
 		void readStationNames();
@@ -85,6 +83,8 @@ class GSNIO : public IOInterface {
 		void map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field, MeteoData& md,
 		                    std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);
+		void parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present, 
+				  std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo, ns2__GSNWebService_USCOREStreamElement* streamElement);
 
 		GSNWebServiceSoap12BindingProxy gsn;
 		Config cfg;
@@ -92,7 +92,6 @@ class GSNIO : public IOInterface {
 		std::vector<StationData> vecMeta;
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                                        ///< Variable for proxy configuration
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double default_timezone;
 };
