@@ -216,21 +216,23 @@ void GSNIO::readMetaData()
 
 	if (vecStationName.size() == 0)
 		readStationNames(); //reads station names into vector<string> vecStationName
-	
+
 	for (size_t ii=0; ii<vecStationName.size(); ii++) {
 		//retrieve meta info current station
+		std::string name;
 		double lat=IOUtils::nodata, lon=IOUtils::nodata, alt=IOUtils::nodata;
 		double slope_angle = IOUtils::nodata;
+		double slope_azi = IOUtils::nodata;
 		size_t info_complete = 0; //this variable stores whether lat,lon,alt were successfully read
 		_ns1__getVirtualSensorsDetailsResponse metadata;
 		_ns1__getVirtualSensorsDetails metadata_req;
-		
+
 		//Set up the SOAP request for addressing information about this virtual sensor
 		ns2__GSNWebService_USCOREFieldSelector tmp;
 		tmp.vsname = vecStationName[ii];
 		metadata_req.detailsType.push_back(ns2__GSNWebService_USCOREDetailsType__ADDRESSING);
 		metadata_req.fieldSelector.push_back(&tmp);
-		
+
 		if (gsn.getVirtualSensorsDetails(&metadata_req, &metadata) == SOAP_OK){
 			size_t details = metadata.virtualSensorDetails.size();
 
@@ -246,25 +248,34 @@ void GSNIO::readMetaData()
 					IOUtils::toUpper(field_val);
 
 					if (field_val != "NULL") {
-						if (field_name == "LATITUDE") {
-							IOUtils::convertString(lat, field_val);
+						if (field_name == "NAME") {
+							IOUtils::convertString(name, field_val);
 							info_complete |= 1;
+						} else if (field_name == "LATITUDE") {
+							IOUtils::convertString(lat, field_val);
+							info_complete |= 2;
 						} else if (field_name == "LONGITUDE") {
 							IOUtils::convertString(lon, field_val);
-							info_complete |= 2;
+							info_complete |= 4;
 						} else if (field_name == "ALTITUDE") {
 							IOUtils::convertString(alt, field_val);
-							info_complete |= 4;
+							info_complete |= 8;
 						} else if (field_name == "SLOPE") {
 							IOUtils::convertString(slope_angle, field_val);
+						} else if (field_name == "EXPOSITION") {
+							std::string tmp;
+							IOUtils::convertString(tmp, field_val);
+							if(IOUtils::isNumeric(tmp)) IOUtils::convertString(slope_azi, field_val);
+							else slope_azi=IOUtils::bearing(tmp);
+							info_complete |= 16;
 						}
 					}
 
-					//cout << metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->name << " -> " 
+					//cout << metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->name << " -> "
 					//	<< metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->__item  << endl;
 				}
 
-				if (info_complete != 7){
+				if (info_complete != 31){
 					;//throw IOException("Incomplete meta data (location info) for sensor " + vecStationName[ii], AT);
 				}
 			}
@@ -276,13 +287,13 @@ void GSNIO::readMetaData()
 		//Save the meta data in StationData objects
 		Coords current_coord(coordin, coordinparam);
 		current_coord.setLatLon(lat, lon, alt);
-		StationData sd(current_coord, vecStationName[ii], vecStationName[ii]);
-		
+		StationData sd(current_coord, vecStationName[ii], name);
+
 		if (slope_angle != IOUtils::nodata){
-			if (slope_angle == 0) {
-				sd.setSlope(slope_angle, 0); //expostion: north assumed
+			if (slope_angle==0. && slope_azi==IOUtils::nodata) {
+				sd.setSlope(slope_angle, 0.); //expostion: north assumed
 			} else {
-				sd.setSlope(slope_angle, IOUtils::nodata);
+				sd.setSlope(slope_angle, slope_azi);
 			}
 		}
 
@@ -341,7 +352,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	bool multipage = false; //there are multiple pages if there are more than 1000 tuples returned
 	LONG64 start_date(dateStart.getUnixDate());
 	LONG64 end_date(dateEnd.getUnixDate());
-			
+
 	start_date *= 1000; //GSN is using ms, not seconds
 	end_date   *= 1000; //GSN is using ms, not seconds
 
@@ -376,7 +387,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 			parse_streamElement(index, olwr_present, vecMeteo, tmpmeteo, data.queryResult.at(0)->streamElements.at(ii));
 		}
 	}
-	
+
 	if (multipage) {
 		string sid = data.queryResult.at(0)->sid;
 		_ns1__getNextData requestNext;
@@ -385,19 +396,19 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		requestNext.sid = sid;
 		bool still_pages = true;
 		int result = SOAP_OK;
-		
+
 		while (still_pages && (result == SOAP_OK)){
 			result = gsn.getNextData(&requestNext, &responseNext);
 			still_pages = responseNext.queryResult.at(0)->hasNext;
-			
+
 			for (size_t ii=0; ii < responseNext.queryResult.at(0)->streamElements.size(); ii++) {
 				parse_streamElement(index, olwr_present, vecMeteo, tmpmeteo, responseNext.queryResult.at(0)->streamElements.at(ii));
 			}
-		}		
-	}			
+		}
+	}
 }
 
-void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present, 
+void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present,
                                 std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo, ns2__GSNWebService_USCOREStreamElement* streamElement)
 {
 	/**
@@ -435,7 +446,7 @@ void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& ol
 
 double GSNIO::olwr_to_tss(const double& olwr) {
 	const double ea = 1.;
-	if (olwr == IOUtils::nodata) 
+	if (olwr == IOUtils::nodata)
 		return IOUtils::nodata;
 
 	return pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
@@ -458,11 +469,11 @@ void GSNIO::readStationNames()
 		current_station = "";
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);	
+		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
 		if (current_station != ""){
 			vecStationName.push_back(current_station); //add station name to vector of all station names
-			cout << "\tRead io.ini stationname: '" << current_station << "'" << endl;	
+			cout << "\tRead io.ini stationname: '" << current_station << "'" << endl;
 		}
 
 		current_stationnr++;

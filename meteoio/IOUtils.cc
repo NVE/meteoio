@@ -90,6 +90,33 @@ double IOUtils::angle_to_bearing(const double& angle) {
 	return (fmod( 90.-angle*to_deg+360. , 360. ));
 }
 
+double IOUtils::bearing(const std::string& bearing_str)
+{
+	std::string s=bearing_str;
+	trim(s);
+	toUpper(s);
+
+	if(s=="N") return 0.;
+	if(s=="NNE") return 22.5;
+	if(s=="NE") return 45.;
+	if(s=="ENE") return 67.5;
+	if(s=="E") return 90.;
+	if(s=="ESE") return 112.5;
+	if(s=="SE") return 135.;
+	if(s=="SSE") return 157.5;
+	if(s=="S") return 180.;
+	if(s=="SSW") return 202.5;
+	if(s=="SW") return 225.;
+	if(s=="WSW") return 247.5;
+	if(s=="W") return 270.;
+	if(s=="WNW") return 292.5;
+	if(s=="NW") return 315.;
+	if(s=="NNW") return 337.5;
+
+	//no match
+	return nodata;
+}
+
 void IOUtils::stripComments(std::string& str)
 {
 	size_t found = str.find_first_of("#;");
@@ -147,6 +174,27 @@ void IOUtils::toUpper(std::string& str){
 	for(size_t t=0; t<str.length(); t++) {
 		str[t] = (char)toupper(str[t]);
 	}
+}
+
+bool IOUtils::isNumeric(const std::string& str, const unsigned int& nBase)
+{
+	std::string s = str;
+	trim(s); //delete trailing and leading whitespaces and tabs
+	std::istringstream iss(s);
+
+	if( nBase == 10 ) {
+		double tmp;
+		iss >> tmp;
+	} else if( nBase == 8 || nBase == 16 ) {
+		int tmp;
+		iss >> ( ( nBase == 8 ) ? std::oct : std::hex ) >> tmp;
+	} else
+		return false;
+
+	if( !iss ) //the conversion failed
+		return false;
+
+	return ( iss.rdbuf()->in_avail() == 0 ); //true if nothing was left after conversion
 }
 
 bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& delimiter,

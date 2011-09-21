@@ -19,7 +19,7 @@ ADD_SUBDIRECTORY(meteoio)
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
 #SET(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
-OPTION( BUILD_SHARED_LIBS "Set to OFF to build only static libraries" ON )
+OPTION( BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON )
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersion()
 

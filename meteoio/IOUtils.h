@@ -114,6 +114,12 @@ namespace IOUtils {
 	* @return bearing (0° on top, clockwise, in [0°, 360°[)
 	*/
 	double angle_to_bearing(const double& angle);
+	/**
+	* @brief Converts a string bearing to a compass bearing
+	* @param bearing_str as N, NE, SSW, etc
+	* @return bearing (0° on top, clockwise, in [0°, 360°[)
+	*/
+	double bearing(const std::string& bearing_str);
 
 	/**
 	* @brief Build a list of file in a given directory.
@@ -169,6 +175,7 @@ namespace IOUtils {
 	                      const std::string& keyprefix="", const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
+	bool isNumeric(const std::string& input, const unsigned int& nBase=10);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	void readKeyValueHeader(std::map<std::string, std::string>& headermap,
