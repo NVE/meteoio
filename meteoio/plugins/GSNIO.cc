@@ -213,11 +213,12 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
-		reverse(vecMeteo[ii].begin(), vecMeteo[ii].end());
-		//cout << "vecMeteo[" <<ii << "].size() = " <<  vecMeteo[ii].size() << endl;
+		reverse(vecMeteo[ii].begin(), vecMeteo[ii].end()); //this is necessary because GSN data comes sorted descending by date
+		/*//The following block can be commented in for testing purposes
+		cout << "vecMeteo[" <<ii << "].size() = " <<  vecMeteo[ii].size() << endl;
 		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++){
-			//cout << vecMeteo[ii][jj] << endl;
-		}
+			cout << vecMeteo[ii][jj] << endl;
+		}*/
 	}
 }
 
@@ -276,7 +277,7 @@ void GSNIO::readMetaData()
 						} else if (field_name == "EXPOSITION") {
 							std::string tmp;
 							IOUtils::convertString(tmp, field_val);
-							if(IOUtils::isNumeric(tmp)) IOUtils::convertString(slope_azi, field_val);
+							if (IOUtils::isNumeric(tmp)) IOUtils::convertString(slope_azi, field_val);
 							else slope_azi=IOUtils::bearing(tmp);
 							info_complete |= 16;
 						}
@@ -301,7 +302,7 @@ void GSNIO::readMetaData()
 		StationData sd(current_coord, vecStationName[ii], name);
 
 		if (slope_angle != IOUtils::nodata){
-			if (slope_angle==0. && slope_azi==IOUtils::nodata) {
+			if ((slope_angle==0.) && (slope_azi==IOUtils::nodata)) {
 				sd.setSlope(slope_angle, 0.); //expostion: north assumed
 			} else {
 				sd.setSlope(slope_angle, slope_azi);
