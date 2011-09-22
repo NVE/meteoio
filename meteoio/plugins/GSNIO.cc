@@ -26,17 +26,26 @@ namespace mio {
  * This plugin reads meteorological data from GSN (Global Sensor Network, see <a href="http://sourceforge.net/apps/trac/gsn/"> GSN home page</a>) as a web service. It therefore requires GSoap.
  * @subsection gsn_fields Field mapping
  * The following GSN fields are read from GSN and mapped to MeteoData attributes:
- * RELATIVE_HUMIDITY mapped to MeteoData::RH
- * AIR_TEMPERATURE mapped to MeteoData::TA
- * WIND_DIRECTION mapped to MeteoData::DW
- * WIND_SPEED_MAX mapped to MeteoData::VW_MAX
- * WIND_SPEED_SCALAR_AV to MeteoData::VW
- * INCOMING_SHORTWAVE_RADIATION mapped to MeteoData::ISWR
- * INCOMING_LONGWAVE_RADIATION mapped to MeteoData::ILWR
- * OUTGOING_SHORTWAVE_RADIATION mapped to MeteoData::RSWR
- * OUTGOING_LONGWAVE_RADIATION mapped to parameter named "OLWR"
- * SNOW_HEIGHT mapped to MeteoData::HS
- * HACK: CURRENTLY NOTHING is mapped to MeteoData::HNW
+ * <center><table border="0">
+ * <tr><td>
+ * <table border="1">
+ * <tr><th>GSN attribute</th><th>MeteoData field</th></tr>
+ * <tr><td>RELATIVE_HUMIDITY</td><td>MeteoData::RH</td></tr>
+ * <tr><td>AIR_TEMPERATURE</td><td>MeteoData::TA</td></tr>
+ * <tr><td>WIND_DIRECTION</td><td>MeteoData::DW</td></tr>
+ * <tr><td>WIND_SPEED_MAX</td><td>MeteoData::VW_MAX</td></tr>
+ * <tr><td>WIND_SPEED_SCALAR_AV</td><td>MeteoData::VW</td></tr>
+ * <tr><td>INCOMING_SHORTWAVE_RADIATION</td><td>MeteoData::ISWR</td></tr>
+ * <tr><td>INCOMING_LONGWAVE_RADIATION</td><td>MeteoData::ILWR</td></tr>
+ * <tr><td>OUTGOING_SHORTWAVE_RADIATION</td><td>MeteoData::RSWR</td></tr>
+ * <tr><td>OUTGOING_LONGWAVE_RADIATION</td><td>equivalent MeteoData::TSS</td></tr>
+ * <tr><td>SNOW_HEIGHT</td><td>MeteoData::HS</td></tr>
+ * <tr><td>RAIN_METER</td><td>MeteoData::HNW</td></tr>
+ * <tr><td>SURFACE_TEMP</td><td>MeteoData::TSS</td></tr>
+ * <tr><td>SOLAR_RAD</td><td>MeteoData::ISWR</td></tr>
+ * </table></td></tr>
+ * </table></center>
+ * Please keep in mind that the names in GSN have currently not been standardized. This means that any sensor that does not use the above names will not be properly supported (some fields might be missing)!
  *
  * @section gsn_units Units
  * The units are assumed to be the following:
@@ -53,12 +62,14 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - ENDPOINT: The URL of the web service e.g. http://192.33.210.10:22201/services/A3DWebService/
+ * - ENDPOINT: The URL of the web service e.g. http://planetdata.epfl.ch:22001/services/GSNWebService/
  * - PROXY: an IP address or a resolveable hostname
  * - PROXYPORT: the port the proxy is listening on
  * - PROXYUSER: (if necessary) a proxy username
  * - PROXYPASS: (if necessary) a proxy password
  * - STATION#: station code for the given number #
+ *
+ * If no STATION keys are given, the full list of ALL stations in GSN will be printed out and used.
  *
  * @section license Licensing
  * This software is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -237,7 +248,7 @@ void GSNIO::readMetaData()
 			size_t details = metadata.virtualSensorDetails.size();
 
 			if (details == 0)
-				throw IOException("No meta data for sensor " + vecStationName[ii], AT);
+				throw IOException("No meta data for sensor " + vecStationName[ii] + ". Is it a valid sensor?", AT);
 
 			for (size_t jj=0; jj<details; jj++){
 				size_t predicates = metadata.virtualSensorDetails[jj]->addressing->predicates.size();
@@ -473,7 +484,7 @@ void GSNIO::readStationNames()
 
 		if (current_station != ""){
 			vecStationName.push_back(current_station); //add station name to vector of all station names
-			cout << "\tRead io.ini stationname: '" << current_station << "'" << endl;
+			cout << "\tRead stationname '" << current_station << "'" << endl;
 		}
 
 		current_stationnr++;
@@ -494,10 +505,9 @@ void GSNIO::listSensors(std::vector<std::string>& vec_names)
 	_ns1__listVirtualSensorNames sensor_req;
 
 	if (gsn.listVirtualSensorNames(&sensor_req, &sensor_names) == SOAP_OK){
-		cout << "Number of sensors accessible thorugh GSN: " << sensor_names.virtualSensorName.size() << endl;
-
+		cout << "[I] No STATIONS specified... Using all " << sensor_names.virtualSensorName.size() << " sensors available through GSN" << endl;
 		for (size_t ii=0; ii<sensor_names.virtualSensorName.size(); ii++){
-			cout << "\tRead GSN sensor " << ii << "  name: " << sensor_names.virtualSensorName[ii] << endl;
+			cout << "\tSTATION" << ii+1 << " = " << sensor_names.virtualSensorName[ii] << endl;
 			vec_names.push_back(sensor_names.virtualSensorName[ii]);
 		}
 	} else {
