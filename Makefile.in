@@ -23,6 +23,7 @@ PROJ4		= @PROJ4@
 ####### COMPILERS AND OPTIONS
 #SVNREV_GEN	= $(shell main/version.sh)
 #SVNREV		= $(eval SVNREV := $(SVNREV_GEN))$(SVNREV)
+SVNREV		= 0.0
 
 CC		= @CC@ -DGNU -DLINUX -D_USE_MATH_DEFINES
 CXX		= @CXX@ -DGNU -DLINUX -D_USE_MATH_DEFINES
@@ -46,6 +47,7 @@ else				#for release
 	FFLAGS	 = $(debug_arithm) $(MAKE_OPTIM) $(FFOPTIM) $(WARNING)
 endif
 #CCFLAGS += -DSVNREV="\"$(SVNREV)\""
+CCFLAGS += -D_VERSION="\"$(SVNREV)\""
 
 #################################################
 # END USER OPTIONS
@@ -93,15 +95,11 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/DEMObject.o \
 		$(SRCDIR)/Grid3DObject.o \
 		$(SRCDIR)/IOInterface.o \
-		$(SRCDIR)/libinterpol1D.o \
-		$(SRCDIR)/libfit1DCore.o \
-		$(SRCDIR)/libfit1D.o \
 		$(SRCDIR)/StationData.o \
 		$(SRCDIR)/Config.o \
 		$(SRCDIR)/DynamicLibrary.o \
 		$(SRCDIR)/IOExceptions.o \
 		$(SRCDIR)/IOUtils.o \
-		$(SRCDIR)/libinterpol2D.o \
 		$(SRCDIR)/MeteoData.o \
 		$(SRCDIR)/meteofilters/FilterMin.o \
 		$(SRCDIR)/meteofilters/FilterMax.o \
@@ -118,7 +116,11 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteofilters/ProcessingStack.o \
 		$(SRCDIR)/meteolaws/Atmosphere.o \
 		$(SRCDIR)/meteolaws/Suntrajectory.o \
-		$(SRCDIR)/meteolaws/Sun.o
+		$(SRCDIR)/meteolaws/Sun.o \
+		$(SRCDIR)/meteostats/libfit1D.o \
+		$(SRCDIR)/meteostats/libfit1DCore.o \
+		$(SRCDIR)/meteostats/libinterpol1D.o \
+		$(SRCDIR)/meteostats/libinterpol2D.o
 
 METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/IOManager_par.o \
@@ -140,15 +142,11 @@ METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/DEMObject_par.o \
 		$(SRCDIR)/Grid3DObject_par.o \
 		$(SRCDIR)/IOInterface_par.o \
-		$(SRCDIR)/libinterpol1D_par.o \
-		$(SRCDIR)/libfit1DCore_par.o \
-		$(SRCDIR)/libfit1D_par.o \
 		$(SRCDIR)/StationData_par.o \
 		$(SRCDIR)/Config_par.o \
 		$(SRCDIR)/DynamicLibrary_par.o \
 		$(SRCDIR)/IOExceptions_par.o \
 		$(SRCDIR)/IOUtils_par.o \
-		$(SRCDIR)/libinterpol2D_par.o \
 		$(SRCDIR)/MeteoData_par.o \
 		$(SRCDIR)/meteofilters/FilterMin_par.o \
 		$(SRCDIR)/meteofilters/FilterMax_par.o \
@@ -165,7 +163,11 @@ METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/meteofilters/ProcessingStack_par.o \
 		$(SRCDIR)/meteolaws/Atmosphere_par.o \
 		$(SRCDIR)/meteolaws/Suntrajectory_par.o \
-		$(SRCDIR)/meteolaws/Sun_par.o
+		$(SRCDIR)/meteolaws/Sun_par.o \
+		$(SRCDIR)/meteostats/libfit1D_par.o \
+		$(SRCDIR)/meteostats/libfit1DCore_par.o \
+		$(SRCDIR)/meteostats/libinterpol1D_par.o \
+		$(SRCDIR)/meteostats/libinterpol2D_par.o
 
 TOOLS_OBJ =	$(TOOLSDIR)/createA3DFiles.o
 
@@ -213,6 +215,7 @@ clean:
 	-rm -f $(PLUGINDIR)/*~ $(PLUGINDIR)/*.o
 	-rm -f $(SRCDIR)/meteolaws/*~ $(SRCDIR)/meteolaws/*.o
 	-rm -f $(SRCDIR)/meteofilters/*~ $(SRCDIR)/meteofilters/*.o
+	-rm -f $(SRCDIR)/meteostats/*~ $(SRCDIR)/meteostats/*.o
 #	cd $(PLUGINDIR)/gsn; make clean
 
 distclean: clean
@@ -225,12 +228,14 @@ install:
 	mkdir -p @includedir@/meteoio
 	mkdir -p @includedir@/meteoio/meteofilters
 	mkdir -p @includedir@/meteoio/meteolaws
+	mkdir -p @includedir@/meteoio/meteostats
 	mkdir -p @libdir@
 	mkdir -p @libdir@/meteoio/plugins
 	cp ${SRCDIR}/*.h @includedir@/meteoio
 	cp ${SRCDIR}/*.ph @includedir@/meteoio
 	cp ${SRCDIR}/meteofilters/*.h @includedir@/meteoio/meteofilters
 	cp ${SRCDIR}/meteolaws/*.h @includedir@/meteoio/meteolaws
+	cp ${SRCDIR}/meteostats/*.h @includedir@/meteoio/meteostats
 	-cp lib/libmeteoio* @libdir@
 	-cp lib/plugins/*.so @libdir@/meteoio/plugins
 	#-cp lib/*.module @libdir@/meteoio

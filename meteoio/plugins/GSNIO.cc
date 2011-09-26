@@ -170,7 +170,7 @@ void GSNIO::readLanduse(Grid2DObject&)
 }
 
 void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
-					  const std::string&)
+                           const std::string&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

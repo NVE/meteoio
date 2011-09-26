@@ -222,7 +222,7 @@ size_t MeteoData::getParameterIndex(const std::string& parname) const
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
 		if (param_name[ii] == parname)
 			return ii;
-	}	
+	}
 
 	return IOUtils::npos; //parameter not a part of MeteoData
 }
@@ -256,40 +256,16 @@ void MeteoData::Serialize(POPBuffer &buf, bool pack)
 		date.Serialize(buf,true);
 		meta.Serialize(buf,true);
 		buf.Pack(&nrOfAllParameters,1);
-		buf.Pack(&ta,1);
-		buf.Pack(&vw,1);
-		buf.Pack(&dw,1);
-		buf.Pack(&vw_max,1);
-		buf.Pack(&rh,1);
-		buf.Pack(&hnw,1);
-		buf.Pack(&iswr,1);
-		buf.Pack(&rswr,1);
-		buf.Pack(&ilwr,1);
-		buf.Pack(&tsg,1);
-		buf.Pack(&tss,1);
-		buf.Pack(&hs,1);
-		buf.Pack(&p,1);
-		marshal_map_str_dbl(buf, extraparameters, 0, FLAG_MARSHAL, NULL);
+		buf.Pack(&param_name,1);
+		buf.Pack(&data,1);
 	} else {
 		buf.UnPack(&resampled,1);
 		date.Serialize(buf,false);
 		meta.Serialize(buf,false);
 		buf.UnPack(&nrOfAllParameters,1);
-		buf.UnPack(&ta,1);
-		buf.UnPack(&vw,1);
-		buf.UnPack(&dw,1);
-		buf.UnPack(&vw_max,1);
-		buf.UnPack(&rh,1);
-		buf.UnPack(&hnw,1);
-		buf.UnPack(&iswr,1);
-		buf.UnPack(&rswr,1);
-		buf.UnPack(&ilwr,1);
-		buf.UnPack(&tsg,1);
-		buf.UnPack(&tss,1);
-		buf.UnPack(&hs,1);
-		buf.UnPack(&p,1);
-		marshal_map_str_dbl(buf, extraparameters, 0, !FLAG_MARSHAL, NULL);
-		initParameterMap();
+		buf.UnPack(&param_name,1);
+		buf.UnPack(&data,1);
+		initStaticData();
 	}
 }
 #endif
