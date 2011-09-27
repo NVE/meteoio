@@ -70,6 +70,7 @@ const bool ImisIO::__init = ImisIO::initStaticData();
 bool ImisIO::initStaticData()
 {
 	//Associate string with AnetzData
+	//map[station ID] = (#stations, STA1, STA2, STA3, #coeffs, coeff1, coeff2, coeff3)
 	mapAnetz["AMD2"] = AnetzData(2,"*GLA","*SAE","",3,1.2417929,0.548411708,-0.0692799);
 	mapAnetz["ANV2"] = AnetzData(2,"*EVO","*MVE","",2,0.7920454,0.771111962,IOUtils::nodata);
 	mapAnetz["ANV3"] = AnetzData(1,"*EVO","","",1,1.6468,IOUtils::nodata,IOUtils::nodata);
@@ -156,6 +157,7 @@ bool ImisIO::initStaticData()
 	mapAnetz["VDS2"] = AnetzData(1,"*MVE","","",1,1.8282525,IOUtils::nodata,IOUtils::nodata);
 	mapAnetz["VIN2"] = AnetzData(1,"*SCU","","",1,0.8245,IOUtils::nodata,IOUtils::nodata);
 	mapAnetz["VLS2"] = AnetzData(2,"*DIS","*HIR","",2,0.5764952,0.613916765,IOUtils::nodata);
+	mapAnetz["WFJ2"] = AnetzData(1,"*WFJ","","",1,1.,IOUtils::nodata,IOUtils::nodata);
 	mapAnetz["ZER2"] = AnetzData(2,"*ZER","*EVO","",2,0.8707182,0.988158355,IOUtils::nodata);
 	mapAnetz["ZER4"] = AnetzData(2,"*ZER","*EVO","",2,0.8707182,0.988158355,IOUtils::nodata);
 	mapAnetz["ZNZ2"] = AnetzData(1,"*WFJ","","",1,0.9980525,IOUtils::nodata,IOUtils::nodata);
