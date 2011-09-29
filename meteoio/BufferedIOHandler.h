@@ -118,6 +118,16 @@ class BufferedIOHandler : public IOInterface {
 
 		friend class IOManager;
 
+		/**
+		 * @brief Set buffer window properties requirements as known to the application itself.
+		 * This will compare these requirements with the ones expressed by the end user and keep the max between them.
+		 * The method can be called several times, it will NOT reset the calculated buffer's requirements but keep
+		 * on merging with new submissions. Any parameter given as IOUtils::nodata will be ignored.
+		 * @param i_chunk_size buffer size in days
+		 * @param i_buff_before buffer centering in days
+		 */
+		void setMinBufferRequirements(const double& i_chunk_size, const double& i_buff_before);
+
 	private:
 		//private methods
 		const std::vector<METEO_TIMESERIE>& get_complete_buffer(Date& start, Date& end);

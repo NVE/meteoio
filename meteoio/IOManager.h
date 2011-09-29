@@ -53,12 +53,12 @@ class IOManager {
 		* corresponding to the interval indicated by dateStart and dateEnd.
 		* Depending on the ProcessingLevel for the instance of the IOManager
 		* the data returned will be either raw (read directly from the IOHandler)
-		* or processed (read from an BufferedIOHandler and filtered through the 
+		* or processed (read from an BufferedIOHandler and filtered through the
 		* MeteoProcessor
 		*
 		* vecMeteo will be empty if no datasets were retrieved in the interval defined
 		* by dateStart and dateEnd
-		*    
+		*
 		* Example Usage:
 		* @code
 		* vector< vector<MeteoData> > vecMeteo;      //empty vector
@@ -78,8 +78,8 @@ class IOManager {
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
 		 * corresponding to the instant indicated by a Date object. Each MeteoData
-		 * instance within the vector represents the data for one station at the given 
-		 * instant. Depending on the ProcessingLevel configured data will be either 
+		 * instance within the vector represents the data for one station at the given
+		 * instant. Depending on the ProcessingLevel configured data will be either
 		 * raw (read directly from the IOHandler)
 		 *
 		 * NOTE:
@@ -101,21 +101,21 @@ class IOManager {
 		 * @brief Push a vector of time series of MeteoData objects into the IOManager. This overwrites
 		 *        any internal buffers that are used and subsequent calls to getMeteoData or interpolate
 		 *        will be performed upon this data. This method is a way to bypass the internal reading
-		 *        of MeteoData from a certain source and is useful in case the user is only interested 
-		 *        in data processing and interpolation performed by the IOManager object. 
+		 *        of MeteoData from a certain source and is useful in case the user is only interested
+		 *        in data processing and interpolation performed by the IOManager object.
 		 * @param level Level of processing that has already been performed on the data (raw XOR filtered)
 		 * @param date_start Representing the beginning of the data
 		 * @param date_end Representing the end of the data
 		 * @param vecMeteo The actual data being pushed into the IOManager object
 		 */
-		void push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end, 
+		void push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end,
 		                     const std::vector< METEO_TIMESERIE >& vecMeteo);
 
 #ifdef _POPC_ //HACK popc
 		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
 		                 Grid2DObject& result);
 #else
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result);
 #endif
 
@@ -123,7 +123,7 @@ class IOManager {
 		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 #else
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, 
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
 #endif
 
@@ -140,6 +140,16 @@ class IOManager {
 		 * @param i_level The ProcessingLevel values that shall be used to process data
 		 */
 		void setProcessingLevel(const unsigned int& i_level);
+
+		/**
+		 * @brief Set buffer window properties requirements as known to the application itself.
+		 * This will compare these requirements with the ones expressed by the end user and keep the max between them.
+		 * The method can be called several times, it will NOT reset the calculated buffer's requirements but keep
+		 * on merging with new submissions. Any parameter given as IOUtils::nodata will be ignored.
+		 * @param buffer_size buffer size in days
+		 * @param buff_before buffer centering in days
+		 */
+		void setMinBufferRequirements(const double& buffer_size, const double& buff_before);
 
 		double getAvgSamplingRate();
 
@@ -162,7 +172,7 @@ class IOManager {
 		IOHandler rawio;
 		BufferedIOHandler bufferedio;
 		MeteoProcessor meteoprocessor;
-		ProcessingProperties proc_properties;
+		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
 
 		std::map<Date, METEO_TIMESERIE > resampled_cache;  ///< stores already resampled data points
 		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals

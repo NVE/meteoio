@@ -41,6 +41,10 @@ void IOManager::setProcessingLevel(const unsigned int& i_level)
 	processing_level = i_level;
 }
 
+void IOManager::setMinBufferRequirements(const double& buffer_size, const double& buff_before) {
+	bufferedio.setMinBufferRequirements(buffer_size, buff_before);
+}
+
 double IOManager::getAvgSamplingRate()
 {
 	if (processing_level == IOManager::raw){
@@ -191,7 +195,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 
 	//1. Check whether user wants raw data or processed data
 	if (processing_level == IOManager::raw){
-		rawio.readMeteoData(i_date-Duration(0.001, 0.), i_date+Duration(0.001, 0.), vec_cache);
+		rawio.readMeteoData(i_date-Duration(1./(24.*3600.), 0.), i_date+Duration(1./(24.*3600.), 0.), vec_cache);
 		for (size_t ii=0; ii<vec_cache.size(); ii++){
 			const size_t index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)

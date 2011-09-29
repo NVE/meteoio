@@ -161,8 +161,28 @@ void BufferedIOHandler::setDfltBufferProperties()
 		}
 	}
 
+	//if buff_before>chunk_size, we will have a problem (ie: we won't ever read the whole data we need)
+	if(buff_before>chunk_size) chunk_size = buff_before;
+	//BUG: if we do this, we still have the meteo1d window in the way
+	//-> we end up not reading enough data and rebuffering...
+
 	max_grids = 10; //default number of grids to keep in buffer
 	cfg.getValue("BUFF_GRIDS", "General", max_grids, Config::nothrow);
+}
+
+void BufferedIOHandler::setMinBufferRequirements(const double& i_chunk_size, const double& i_buff_before)
+{
+	if(i_buff_before!=IOUtils::nodata) {
+		const Duration app_buff_before(i_buff_before, 0);
+		if(app_buff_before>buff_before) buff_before = app_buff_before;
+	}
+	if(i_chunk_size!=IOUtils::nodata) {
+		const Duration app_chunk_size(i_chunk_size, 0);
+		if(app_chunk_size>chunk_size) chunk_size = app_chunk_size;
+	}
+
+	//if buff_before>chunk_size, we will have a problem (ie: we won't ever read the whole data we need)
+	if(buff_before>chunk_size) chunk_size = buff_before;
 }
 
 double BufferedIOHandler::getAvgSamplingRate()
@@ -311,7 +331,8 @@ std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 	os << "Config& cfg = " << hex << &data.cfg << dec << "\n";
 	os << "IOHandler &iohandler = " << hex << &data.iohandler << dec << "\n";
 
-	os << "Buffering " << data.chunks << " chunk(s) of " <<data.chunk_size.getJulianDate() << " days\n";
+	os << "Buffering " << data.chunks << " chunk(s) of " <<data.chunk_size.getJulianDate() << " day(s) with "
+	   << data.buff_before.getJulianDate() << " day(s) pre-buffering\n";
 
 	os << "Current buffer content (" << data.vec_buffer_meteo.size() << " stations, "
 	   << data.mapBufferedGrids.size() << " grids):\n";
