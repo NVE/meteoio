@@ -99,9 +99,14 @@ class IOHandler : public IOInterface {
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
+		void parse_copy_config();
+		void copy_parameters(const size_t& stationindex, std::vector< METEO_TIMESERIE >& vecMeteo) const;
 		Config cfg;
 		std::map<std::string, IOPlugin> mapPlugins;
 		A3DIO fileio;
+
+		bool enable_copying;
+		std::vector<std::string> copy_parameter, copy_name;
 };
 
 } //namespace

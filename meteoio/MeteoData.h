@@ -88,8 +88,9 @@ class MeteoData {
 		* @brief Add another variable to the MeteoData object,
 		*        a double value will be added and the nrOfParameters increased
 		* @param i_paramname A parameter name, e.g. "VSWR"
+		* @return A size_t denoting the index of the the parameter added
 		*/
-		void addParameter(const std::string& i_paramname);
+		size_t addParameter(const std::string& i_paramname);
 
 		/**
 		* @brief Check whether a certain parameter is a part of this MeteoData instance

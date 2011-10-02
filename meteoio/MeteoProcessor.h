@@ -45,6 +45,11 @@ class MeteoProcessor {
 		 * @param[in] cfg Config object that holds the config of the filters in the [Filters] section
 		 */
 		MeteoProcessor(const Config& cfg);
+
+		/**
+		 * @brief The destructor - It is necessary because the ProcessingStack objects referenced in
+		 *        the map<string, ProcessingStack*> processing_stack have to be freed from the heap
+		 */
 		~MeteoProcessor();
 
 		/**
@@ -67,9 +72,8 @@ class MeteoProcessor {
 		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
 		void compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current);
 
-		std::map<std::string, ProcessingStack*> processing_stack;
-
 		Meteo1DInterpolator mi1d;
+		std::map<std::string, ProcessingStack*> processing_stack;
 };
 } //end namespace
 

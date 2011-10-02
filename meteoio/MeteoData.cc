@@ -94,11 +94,12 @@ bool MeteoData::param_exists(const std::string& i_paramname) const
 	return false;
 }
 
-void MeteoData::addParameter(const std::string& i_paramname)
+size_t MeteoData::addParameter(const std::string& i_paramname)
 {
 	//check if name is already taken
-	if (param_exists(i_paramname))
-		return; //do nothing
+	size_t current_index = getParameterIndex(i_paramname);
+	if (current_index != IOUtils::npos)
+		return current_index; //do nothing, because parameter is already present
 
 	//add parameter
 	param_name.push_back(i_paramname);
@@ -106,6 +107,8 @@ void MeteoData::addParameter(const std::string& i_paramname)
 
 	//Increase nrOfAllParameters
 	nrOfAllParameters++;
+
+	return (nrOfAllParameters - 1);
 }
 
 size_t MeteoData::getNrOfParameters() const

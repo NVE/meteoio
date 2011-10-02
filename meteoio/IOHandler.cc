@@ -68,15 +68,17 @@ void IOHandler::registerPlugins()
 	mapPlugins["ARPS"]      = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
 	mapPlugins["PGM"]       = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
 	mapPlugins["SMET"]      = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
-	mapPlugins["COSMOXML"]      = IOPlugin("libcosmoxmlio"+popc_extra+libsuffix, "CosmoXMLIO", NULL, NULL);
+	mapPlugins["COSMOXML"]  = IOPlugin("libcosmoxmlio"+popc_extra+libsuffix, "CosmoXMLIO", NULL, NULL);
 }
 
 #ifdef _POPC_
-IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile){
+IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile), enable_copying(false) {
 #else
-IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile){
+IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile), 
+                                                      enable_copying(false) {
 #endif
 	registerPlugins();
+	parse_copy_config();
 }
 
 //Copy constructor
@@ -85,7 +87,7 @@ IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(con
 	//Nothing else so far //HACK for POPC
 //}
 #else
-IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fileio(aio.cfg)
+IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fileio(aio.cfg), enable_copying(false)
 {
 	//Nothing else so far
 	//TODO: Deal with the IOInterface* pointers, e.g. bormaio
@@ -93,12 +95,13 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 #endif
 
 #ifdef _POPC_
-IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), fileio(cfgreader)
+IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), fileio(cfgreader), enable_copying(false)
 #else
-IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader)
+IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader), enable_copying(false)
 #endif
 {
 	registerPlugins();
+	parse_copy_config();
 }
 
 #ifdef _POPC_
@@ -239,6 +242,8 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
+
+	copy_parameters(stationindex, vecMeteo);
 }
 #ifdef _POPC_
 void IOHandler::writeMeteoData(std::vector<METEO_TIMESERIE>& vecMeteo,
@@ -267,6 +272,77 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Output");
 	plugin->write2DGrid(grid_in, name);
+}
+
+void IOHandler::parse_copy_config()
+{
+	/**
+	 * Parse [Input] section for potential parameters that the user wants 
+	 * duplicated (starting with 'COPY::')
+	 */
+	vector<string> copy_keys;
+	size_t nrOfMatches = cfg.findKeys(copy_keys, "COPY::", "Input");
+
+	for (size_t ii=0; ii<nrOfMatches; ii++) {
+		string initial_name = "";
+		string name_of_copy = copy_keys[ii].substr(6);
+		cfg.getValue(copy_keys[ii], "Input", initial_name);
+
+		if ((name_of_copy.length() > 0) && (initial_name.length() > 0)){
+			copy_parameter.push_back(initial_name);
+			copy_name.push_back(name_of_copy);
+			//cout << "Param: " << initial_name << " copied to name: " << name_of_copy << endl;
+			enable_copying = true;
+		}
+	}
+}
+
+void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_TIMESERIE >& vecMeteo) const
+{
+	/**
+	 * This procedure runs through the MeteoData objects in vecMeteo and according to user
+	 * configuration copies a certain present meteo parameter to another one, named by the
+	 * user in the [Input] section of the io.ini, e.g.
+	 * [Input]
+	 * COPY::TA2 = TA
+	 * means that TA2 will be the name of a new parameter in MeteoData with the copied value
+	 * of the meteo parameter MeteoData::TA
+	 */
+	if (!enable_copying) return; //Nothing configured
+	
+	size_t station_start=0, station_end=vecMeteo.size();
+	if (stationindex != IOUtils::npos) {
+		if (stationindex < vecMeteo.size()) {
+			station_start = stationindex;
+			station_end   = stationindex+1;
+		} else {
+			throw IndexOutOfBoundsException("Accessing stationindex in readMeteoData that is out of bounds", AT);
+		}		
+	}
+
+	size_t nr_of_params = copy_parameter.size();
+	vector<size_t> indices; //will hold the indices of the parameters to be copied
+
+	for (size_t ii=station_start; ii<station_end; ii++) { //for each station
+		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) { //for each MeteoData object of one station
+
+			if (jj==0) { //buffer the index numbers
+				for (size_t kk=0; kk<nr_of_params; kk++) {
+					size_t param_index = vecMeteo[ii][jj].getParameterIndex(copy_parameter[kk]);
+					if (param_index == IOUtils::npos)
+						throw InvalidArgumentException("Parameter to copy" +copy_parameter[kk]+ " not present", AT);
+
+					indices.push_back(param_index);
+				}
+			}
+
+			for (size_t kk=0; kk<nr_of_params; kk++) {
+				size_t newindex = vecMeteo[ii][jj].addParameter(copy_name[kk]);
+				vecMeteo[ii][jj](newindex) = vecMeteo[ii][jj](indices[kk]);
+			}
+		}
+		indices.clear(); //may change for every station
+	}
 }
 
 #ifndef _POPC_

@@ -256,7 +256,7 @@ class Config {
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
 		 * @code
 		 *  vector<string> myVec;
-		 *  unsigned int nrOfMatches = getKeys(myVec, "TA::", "Filters");
+		 *  size_t nrOfMatches = findKeys(myVec, "TA::", "Filters");
 		 * @endcode
 		 */
 		size_t findKeys(std::vector<std::string>& vecResult,
