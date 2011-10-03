@@ -74,7 +74,7 @@ void IOHandler::registerPlugins()
 #ifdef _POPC_
 IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile), enable_copying(false) {
 #else
-IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile), 
+IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile),
                                                       enable_copying(false) {
 #endif
 	registerPlugins();
@@ -277,7 +277,7 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 void IOHandler::parse_copy_config()
 {
 	/**
-	 * Parse [Input] section for potential parameters that the user wants 
+	 * Parse [Input] section for potential parameters that the user wants
 	 * duplicated (starting with 'COPY::')
 	 */
 	vector<string> copy_keys;
@@ -309,7 +309,7 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_T
 	 * of the meteo parameter MeteoData::TA
 	 */
 	if (!enable_copying) return; //Nothing configured
-	
+
 	size_t station_start=0, station_end=vecMeteo.size();
 	if (stationindex != IOUtils::npos) {
 		if (stationindex < vecMeteo.size()) {
@@ -317,7 +317,7 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_T
 			station_end   = stationindex+1;
 		} else {
 			throw IndexOutOfBoundsException("Accessing stationindex in readMeteoData that is out of bounds", AT);
-		}		
+		}
 	}
 
 	size_t nr_of_params = copy_parameter.size();
@@ -329,8 +329,12 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_T
 			if (jj==0) { //buffer the index numbers
 				for (size_t kk=0; kk<nr_of_params; kk++) {
 					size_t param_index = vecMeteo[ii][jj].getParameterIndex(copy_parameter[kk]);
-					if (param_index == IOUtils::npos)
-						throw InvalidArgumentException("Parameter to copy" +copy_parameter[kk]+ " not present", AT);
+					if (param_index == IOUtils::npos) {
+						std::stringstream ss;
+						ss << "At " << vecMeteo[ii][jj].date.toString(Date::ISO) << ", station " << vecMeteo[ii][jj].meta.stationID;
+						ss << " has no parameter \"" << copy_parameter[kk] << "\" to copy!\n";
+						throw InvalidArgumentException(ss.str(), AT);
+					}
 
 					indices.push_back(param_index);
 				}
