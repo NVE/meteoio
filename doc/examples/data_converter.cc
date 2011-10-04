@@ -21,12 +21,13 @@ int main(int argc, char** argv) {
 
 	Config cfg("io.ini");
 	IOManager io(cfg);
+	//io.setProcessingLevel(IOManager::raw);
 	std::vector< std::vector<MeteoData> > vecMeteo;
 
 	std::cout << "Reading input data" << std::endl;
 
 	//Very basic conversion: get the whole data set at once, with its original sampling rate
-	//io.readMeteoData(d1, d2, vecMeteo);
+	//io.getMeteoData(d1, d2, vecMeteo);
 
 	//More elaborate conversion: sample the data to a specific rate
 	//by looping over the time and calling readMeteoData for each timestep
