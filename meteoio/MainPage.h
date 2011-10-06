@@ -161,7 +161,8 @@ namespace mio {
  *             (key=SPECIALPTS), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
- *             system should often be specified, as explained in \ref coords .
+ *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also
+ *             possible to copy one parameter into a new one, as shown in \ref data_generators.
  *
  *  - [Output] : This section is very similar to the [Input] section, but (obviously) for outputing the data.
  *

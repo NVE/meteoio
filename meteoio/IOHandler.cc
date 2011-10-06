@@ -40,6 +40,15 @@ namespace mio {
  * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
  * - \subpage smetio "SMETIO" for reading SMET meteo data files (no extra requirements)
  *
+ * @section data_generators Data generators
+ * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
+ * COPY::new_name = existing_parameter. For example:
+ * @code
+ * COPY::VW_avg = VW
+ * @endcode
+ * This creates a new parameter VW_avg that starts as an exact copy of the raw data of VW, for each station. This newly created parameter is
+ * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
+ * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
  */
 
 void IOHandler::registerPlugins()
