@@ -652,7 +652,7 @@ template<class T> const Array2D<T> Array2D<T>::operator*(const Array2D<T>& rhs)
 
 template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
 {
-	//Add to every single member of the Array2D<T>
+	//Multiply to every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
 
 	if(keep_nodata==false) {
@@ -715,9 +715,6 @@ template<class T> Array2D<T>& Array2D<T>::operator/=(const T& rhs)
 {
 	//Divide every single member of the Array2D<T>
 	const unsigned int nxy = nx*ny;
-	for (unsigned int jj=0; jj<nxy; jj++)
-		operator()(jj) /= rhs;
-
 
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxy; jj++)
