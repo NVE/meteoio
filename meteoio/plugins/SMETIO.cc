@@ -320,7 +320,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	read_meta_data(myreader, md.meta);
 
 	double nodata_value = myreader.get_header_doublevalue("nodata");
-	double current_timezone = myreader.get_header_doublevalue("timezone");
+	double current_timezone = myreader.get_header_doublevalue("tz");
 	if (current_timezone == nodata_value)
 		current_timezone = in_dflt_TZ;
 
@@ -465,7 +465,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			if (!outputIsAscii) type = smet::BINARY;
 
 			smet::SMETWriter mywriter(filename, type, outputIsGzipped);
-			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone, 
+			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
 						    nr_of_parameters, vecParamInUse, vecColumnName, mywriter);
 
 			vector<string> vec_timestamp;
@@ -513,7 +513,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 }
 
 void SMETIO::generateHeaderInfo(const StationData& sd, const bool& outputIsAscii, const bool& isConsistent,
-						  const double& timezone, const size_t& nr_of_parameters, 
+						  const double& timezone, const size_t& nr_of_parameters,
 						  const std::vector<bool>& vecParamInUse, const std::vector<std::string>& vecColumnName,
 						  smet::SMETWriter& mywriter)
 {
@@ -550,7 +550,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& outputIsAscii
 		mywriter.set_header_value("northing", sd.position.getNorthing());
 		mywriter.set_header_value("altitude", sd.position.getAltitude());
 		mywriter.set_header_value("epsg", (double)sd.position.getEPSG());
-			
+
 		if ((timezone != IOUtils::nodata) && (timezone != 0.0))
 			mywriter.set_header_value("tz", timezone);
 	} else {
@@ -571,7 +571,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& outputIsAscii
 			if (column == "RSWR") column = "OSWR";
 			if (column == "HNW")  column = "PSUM";
 			ss << " " << column;
-				
+
 			getFormatting(ll, tmpprecision, tmpwidth);
 			myprecision.push_back(tmpprecision);
 			mywidth.push_back(tmpwidth);
@@ -587,8 +587,8 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 {
 	/**
 	 * When writing a SMET file, different meteo parameters require a different
-	 * format with regard to precision and width when printing. 
-	 * This procedure sets the precision and width for each known parameter and 
+	 * format with regard to precision and width when printing.
+	 * This procedure sets the precision and width for each known parameter and
 	 * defaults to a width of 8 and precision of 3 digits for each unknown parameter.
 	 */
 	if ((param == MeteoData::TA) || (param == MeteoData::TSS) || (param == MeteoData::TSG)){
@@ -621,7 +621,7 @@ void SMETIO::getFormatting(const size_t& param, int& prec, int& width)
 size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vector<MeteoData>& vecMeteo)
 {
 	/**
-	 * This function loops through all MeteoData objects present in vecMeteo and returns the 
+	 * This function loops through all MeteoData objects present in vecMeteo and returns the
 	 * number of meteo parameters that the MeteoData objects have. If there is an inconsistency
 	 * in the number of meteo parameters in use within the vector of MeteoData then a warning
 	 * is printed and MeteoData::nrOfParameters is returned, thus all additional meteo parameters

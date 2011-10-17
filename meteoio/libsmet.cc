@@ -109,7 +109,7 @@ void SMETCommon::trim(std::string& str)
 }
 
 bool SMETCommon::readKeyValuePair(const std::string& in_line, const std::string& delimiter,
-						    std::map<std::string,std::string>& out_map)
+                                  std::map<std::string,std::string>& out_map)
 {
 	//size_t pos = in_line.find(delimiter); //first occurence of '='
 
@@ -219,11 +219,11 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 }
 
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type, const bool& in_gzip)
-	: filename(in_filename), smet_type(in_type), gzip(in_gzip), nr_of_fields(0),
-	  julian_field(0), timestamp_field(0), nodata_value(-999.), nodata_string(""),
-	  location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-	  timestamp_present(false), julian_present(false), file_is_binary(false),
-	  location_wgs84(0), location_epsg(0)
+           : filename(in_filename), smet_type(in_type), gzip(in_gzip), nr_of_fields(0),
+             julian_field(0), timestamp_field(0), nodata_value(-999.), nodata_string(""),
+             location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
+             timestamp_present(false), julian_present(false), file_is_binary(false),
+             location_wgs84(0), location_epsg(0)
 {
 
 }
