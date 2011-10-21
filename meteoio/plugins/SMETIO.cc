@@ -132,7 +132,8 @@ void SMETIO::parseInputOutputSection()
 			stringstream ss;
 			filename = "";
 
-			ss << "STATION" << counter;
+			//ss << "STATION" << counter;
+			ss << "METEOFILE" << counter;
 			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
 
 			if (filename != ""){
@@ -438,7 +439,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 {
 	//Loop through all stations
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		//1. check consitency of station data position -> write location in header or data section
+		//1. check consistency of station data position -> write location in header or data section
 		StationData sd;
 		sd.position.setProj(coordout, coordoutparam);
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);

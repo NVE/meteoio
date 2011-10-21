@@ -75,10 +75,10 @@ class SMETIO : public IOInterface {
 		void getFormatting(const size_t& param, int& prec, int& width);
 		double olwr_to_tss(const double& olwr);
 		void generateHeaderInfo(const StationData& sd, const bool& outputIsAscii, const bool& isConsistent,
-					const double& timezone, const size_t& nr_of_parameters, 
-					const std::vector<bool>& vecParamInUse, 
-					const std::vector<std::string>& vecColumnName,
-					smet::SMETWriter& mywriter);
+		                        const double& timezone, const size_t& nr_of_parameters,
+		                        const std::vector<bool>& vecParamInUse,
+		                        const std::vector<std::string>& vecColumnName,
+		                        smet::SMETWriter& mywriter);
 
 		size_t nr_stations; //number of stations to read from
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
