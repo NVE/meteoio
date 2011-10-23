@@ -230,7 +230,7 @@ void SNIO::readMetaData(size_t& nrOfStations)
 
 		cfg.getValue("STATION" + snum.str(), "Input", stationID);
 
-		StationData sd;
+		StationData sd(Coords(), stationID);
 		if (metafile!="") { //a metafile has been provided, so get metadata
 			stringstream meta_with_path;
 			meta_with_path << inpath << "/" << metafile;
