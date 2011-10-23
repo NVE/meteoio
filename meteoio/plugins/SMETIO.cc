@@ -132,8 +132,7 @@ void SMETIO::parseInputOutputSection()
 			stringstream ss;
 			filename = "";
 
-			//ss << "STATION" << counter;
-			ss << "METEOFILE" << counter;
+			ss << "STATION" << counter;
 			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
 
 			if (filename != ""){

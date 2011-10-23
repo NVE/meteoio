@@ -40,7 +40,7 @@ namespace mio {
  *                   begining of the buffer (therefore, it takes a value between 0 and 1); [General] section, optional
  *                   (10% by default)
  * - BUFF_BEFORE: alternate way of buffer centering: When rebuffering, the new date will be located BUFF_BEFORE days from the
- *                begining of the buffer (therefore, it takes a value in days); [General] section, optional. Only one of
+ *                beginning of the buffer (therefore, it takes a value in days); [General] section, optional. Only one of
  *                two centering option can be used.
  * - BUFF_GRIDS: how many grids to keep in the buffer. If more grids have to be read, the oldest ones will be removed from
  *               the buffer. (10 by default)
