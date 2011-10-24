@@ -46,7 +46,6 @@ namespace mio {
  * - DBNAME: name of the database to use (exemple: sdbo)
  * - DBUSER: user name to use when connecting to the database
  * - DBPASS: password to use when connecting to the database
- * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station code for the given number #
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations
  */
@@ -375,31 +374,25 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 {
 	vecStationID.clear();
 
-	//Read in the StationIDs
-	string xmlpath="", str_stations="";
-	unsigned int stations=0;
+	size_t current_stationnr = 1;
+	string current_station;
+	do {
+		current_station = "";
+		stringstream ss;
+		ss << "STATION" << current_stationnr;
+		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
-	cfg.getValue("NROFSTATIONS", "Input", str_stations);
-
-	if (str_stations == "")
-		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
-
-	if (!IOUtils::convertString(stations, str_stations, std::dec))
-		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
-
-	for (unsigned int ii=0; ii<stations; ii++) {
-		stringstream tmp_stream;
-		string stationname="", tmp_file="";
-
-		tmp_stream << (ii+1); //needed to construct key name
-		cfg.getValue(string("STATION"+tmp_stream.str()), "Input", stationname);
-		std::cout << "\tRead stationname " << tmp_stream.str() << ": '" << stationname << "'" << std::endl;
-		if (!isdigit(stationname[0])) {
-			vecStationID.push_back(stationname);
-		} else {
-			std::cout << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!" << std::endl;
+		if (current_station != "") {
+			cout << "\tRead stationname " << ss.str() << ": '" << current_station << "'" << endl;
+			if (!isdigit(current_station[0])) {
+				vecStationID.push_back(current_station);
+			} else {
+				cout << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!" << endl;
+			}
 		}
-	}
+
+		current_stationnr++;
+	} while (current_station != "");
 }
 
 void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
