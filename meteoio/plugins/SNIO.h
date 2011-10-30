@@ -74,7 +74,8 @@ class SNIO : public IOInterface {
 		void parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos,
 		                    const Date& dateStart, const Date& dateEnd, MeteoData& md);
 		bool readStationMetaData(const std::string& metafile, const std::string& stationname, StationData& sd);
-		void readMetaData(size_t& nrOfStations);
+		void readMetaData();
+		std::string getStationID(const std::string& filename);
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
 		void cleanup() throw();
 
