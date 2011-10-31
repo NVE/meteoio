@@ -656,7 +656,7 @@ double USERInterpolation::getQualityRating()
 	const std::string filename = getGridFileName();
 
 	if (!IOUtils::validFileName(filename)) {
-		std::cout << "[E] Invalid grid filename for USER interpolation algorithm: " << filename << "\n";
+		cout << "[E] Invalid grid filename for USER interpolation algorithm: " << filename << "\n";
 		return 0.0;
 	}
 	if(IOUtils::fileExists(filename)) {

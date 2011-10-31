@@ -452,7 +452,7 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
 		//Test existence of element 0
 		if(vecMeteo[ii].size()==0) {
-			std::cout << "[E] Station " << ii+1 << " exists but contains no data! Skip writing it...\n";
+			cout << "[E] Station " << ii+1 << " exists but contains no data! Skip writing it...\n";
 			continue;
 		}
 

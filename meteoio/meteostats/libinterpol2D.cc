@@ -199,7 +199,7 @@ int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector
 {
 	std::stringstream mesg;
 	const int code = Interpol1D::NoisyLinRegression(in_X, in_Y, coeffs[1], coeffs[2], coeffs[3], mesg);
-	std::cout << mesg.str();
+	cout << mesg.str();
 	return code;
 }
 

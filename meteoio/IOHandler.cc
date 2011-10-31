@@ -157,17 +157,17 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		dynLibrary = DynamicLoader::loadObjectFile(filename);
 
 		if(dynLibrary == NULL) {
-			std::cout << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << std::endl;
-			std::cout << "\t" << DynamicLoader::getErrorMessage() << std::endl;
-			std::cout << "Please check your PLUGINPATH in your configuration file!" << std::endl;
+			cout << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << std::endl;
+			cout << "\t" << DynamicLoader::getErrorMessage() << std::endl;
+			cout << "Please check your PLUGINPATH in your configuration file!" << std::endl;
 		} else {
 			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg));
 
 			if(io == NULL) {
-				std::cout << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << "(NULL pointer to plugin's class)" << std::endl;
+				cout << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << "(NULL pointer to plugin's class)" << std::endl;
 				//delete dynLibrary; This causes a segfault !!
 			} else {
-				std::cout << "[i] Success loading dynamic plugin " << classname << " from " << filename << std::endl;
+				cout << "[i] Success loading dynamic plugin " << classname << " from " << filename << std::endl;
 			}
 		}
 	} catch (const std::exception& e) {

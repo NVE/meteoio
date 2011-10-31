@@ -172,7 +172,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 	if (!IOUtils::fileExists(metafile))
 		throw FileNotFoundException(metafile, AT);
 
-	fin.clear();	
+	fin.clear();
 	fin.open (metafile.c_str(), std::ifstream::in);
 	if (fin.fail())
 		throw FileAccessException(metafile, AT);
@@ -222,7 +222,7 @@ std::string SNIO::getStationID(const std::string& filename)
 		throw InvalidFileNameException(filename, AT);
 	if ( !IOUtils::fileExists(filename) )
 		throw FileNotFoundException(filename, AT);
-	
+
 	fin.clear();
 	fin.open (filename.c_str(), std::ifstream::in);
 
@@ -244,11 +244,11 @@ std::string SNIO::getStationID(const std::string& filename)
 			throw InvalidFormatException(filename + ": first line in invalid format", AT);
 
 		//Now get the 2nd column looking something like <{STATIONNAME}Data>
-		station_id = tmpvec[1].substr(1, tmpvec[1].length()-1); //leaving away the 
+		station_id = tmpvec[1].substr(1, tmpvec[1].length()-1); //leaving away the
 		size_t pos = station_id.find("Data");
 		if (pos != string::npos) {
 			station_id = station_id.substr(0, pos);
-		} else { 
+		} else {
 			throw InvalidFormatException(filename + ": first line in invalid format", AT);
 		}
 	} catch (...) {
@@ -277,7 +277,7 @@ void SNIO::readMetaData()
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
-		
+
 		if ((current_stationnr == 1) && (current_station == ""))
 			throw InvalidFormatException("Missing key 'STATION1' in config: Please specify a SNOWPACK formatted meteo data file", AT);
 
@@ -750,9 +750,9 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 	fout << "END" << endl;
 
 	if ((failure_count > 0) || (Dirichlet_failure_count > 0) || (optional_failure_count > 0)) {
-		std::cout << "[W] " << failure_count << " basic input data, " << Dirichlet_failure_count <<
-				" Dirichlet boundary condition data, and " << optional_failure_count <<
-				" optional data found missing when writing " << file_name << std::endl;
+		cout << "[W] " << failure_count << " basic input data, " << Dirichlet_failure_count <<
+		        " Dirichlet boundary condition data, and " << optional_failure_count <<
+		        " optional data found missing when writing " << file_name << std::endl;
 	}
 }
 

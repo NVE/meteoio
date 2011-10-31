@@ -228,7 +228,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
 		vec_streampos = vector< map<Date, std::streampos> >(myStations.size());
 
-	std::cout << "[i] GEOtopIO: Found " << myStations.size() << " station(s)" << std::endl;
+	cout << "[i] GEOtopIO: Found " << myStations.size() << " station(s)" << std::endl;
 
 	for (size_t ii=0; ii<myStations.size(); ii++) {
 		vecMeteo.push_back( vector<MeteoData>() );
