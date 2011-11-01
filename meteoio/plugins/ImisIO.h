@@ -111,14 +111,14 @@ class ImisIO : public IOInterface {
 		void getDBParameters();
 
 		size_t getStationIDs(const std::string& stat_code,
-		                           const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
-		                           oracle::occi::Connection*& conn);
+		                     const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
+		                     oracle::occi::Connection*& conn);
 		size_t getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
-		                                const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
-		                                oracle::occi::Connection*& conn);
+		                          const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
+		                          oracle::occi::Connection*& conn);
 		size_t getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
-		                             const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
-		                             oracle::occi::Connection*& conn);
+		                       const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
+		                       oracle::occi::Connection*& conn);
 		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,
 		                    const std::vector<int>& datestart, const std::vector<int>& dateend,
 		                    const std::vector<std::string>& i_vecHTS1,
@@ -147,8 +147,8 @@ class ImisIO : public IOInterface {
 		                         const std::map<std::string, size_t>& mapAnetzNames, const size_t& stationindex,
 		                         std::vector< std::vector<MeteoData> >& vecMeteo);
 		void calculatePsum(const Date& dateStart, const Date& dateEnd,
-                       const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
-                       std::vector< std::vector<double> >& vec_of_psums);
+		                   const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
+		                   std::vector< std::vector<double> >& vec_of_psums);
 
 		static const double in_tz; //timezone
 		Config cfg;

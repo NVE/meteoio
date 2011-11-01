@@ -466,7 +466,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 			smet::SMETWriter mywriter(filename, type, outputIsGzipped);
 			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
-						    nr_of_parameters, vecParamInUse, vecColumnName, mywriter);
+                               nr_of_parameters, vecParamInUse, vecColumnName, mywriter);
 
 			vector<string> vec_timestamp;
 			vector<double> vec_data;
@@ -513,9 +513,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 }
 
 void SMETIO::generateHeaderInfo(const StationData& sd, const bool& outputIsAscii, const bool& isConsistent,
-						  const double& timezone, const size_t& nr_of_parameters,
-						  const std::vector<bool>& vecParamInUse, const std::vector<std::string>& vecColumnName,
-						  smet::SMETWriter& mywriter)
+                                const double& timezone, const size_t& nr_of_parameters,
+                                const std::vector<bool>& vecParamInUse, const std::vector<std::string>& vecColumnName,
+                                smet::SMETWriter& mywriter)
 {
 	/**
 	 * This procedure sets all relevant information for the header in the SMETWriter object mywriter

@@ -169,8 +169,11 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 	if (!IOUtils::validFileName(metafile))
 		throw InvalidFileNameException(metafile, AT);
 
-	if (!IOUtils::fileExists(metafile))
-		throw FileNotFoundException(metafile, AT);
+	if (!IOUtils::fileExists(metafile)) {
+		stringstream msg;
+		cout << "\t[i] " << metafile << " not found! Read metadata from *.sno[old]" << endl;
+		return true;
+	}
 
 	fin.clear();
 	fin.open (metafile.c_str(), std::ifstream::in);
@@ -222,7 +225,7 @@ std::string SNIO::getStationID(const std::string& filename)
 		throw InvalidFileNameException(filename, AT);
 	if ( !IOUtils::fileExists(filename) )
 		throw FileNotFoundException(filename, AT);
-
+	
 	fin.clear();
 	fin.open (filename.c_str(), std::ifstream::in);
 
