@@ -170,13 +170,18 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 bool SNIO::readStationMetaData(const std::string& metafile, const std::string& stationID, StationData& sd)
 {
-	if (!IOUtils::validFileName(metafile))
+	if (!IOUtils::validFileName(metafile)) {
+		std::stringstream ss;
+		ss << "\"" << metafile << "\" is not a valid file name. Please check your METAFILE key!";
 		throw InvalidFileNameException(metafile, AT);
+	}
 
 	if (!IOUtils::fileExists(metafile)) {
-		cout << "[i] " << metafile << " not found! Read metadata from *.sno[old]" << endl;
-		return true;
+		std::stringstream ss;
+		ss << "File \"" << metafile << "\" does not exist. Please check your METAFILE key!";
+		throw FileNotFoundException(ss.str(), AT);
 	}
+
 
 	fin.clear();
 	fin.open (metafile.c_str(), std::ifstream::in);

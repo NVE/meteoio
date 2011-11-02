@@ -132,9 +132,9 @@ void ARPSIO::readDEM(DEMObject& dem_out)
 	cfg.getValue("DEMFILE", "Input", _filename);
 	openGridFile(_filename);
 	if(is_true_arps) {
-		readGridLayer(std::string("zp coordinat"), 1 ,dem_out);
+		readGridLayer(std::string("zp coordinat"), 2 ,dem_out);
 	} else {
-		readGridLayer(std::string("zp_coordinat"), 1 ,dem_out);
+		readGridLayer(std::string("zp_coordinat"), 2 ,dem_out);
 	}
 }
 
@@ -347,8 +347,8 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 	}
 
 	//read the data we are interested in
-	for (unsigned int ix = 0; ix < dimx; ix++) {
-		for (unsigned int iy = 0; iy < dimy; iy++) {
+	for (unsigned int iy = 0; iy < dimy; iy++) {
+		for (unsigned int ix = 0; ix < dimx; ix++) {
 			double tmp;
 			if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
 				grid.grid2D(ix,iy) = tmp;
