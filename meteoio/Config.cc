@@ -157,7 +157,7 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 	//At this point line can only be a key value pair
 	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::", true)){
 		tmp << linenr;
-		throw InvalidFormatException("Error reading key value pair in " + sourcename + " line:" + tmp.str(), AT);
+		throw InvalidFormatException("Error reading key value pair in \"" + sourcename + "\" at line " + tmp.str(), AT);
 	}
 }
 

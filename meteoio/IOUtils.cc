@@ -156,6 +156,19 @@ std::string IOUtils::cleanPath(const std::string& in_path) {
 	return out_path;
 }
 
+std::string IOUtils::getExtension(const std::string& filename)
+{
+	const std::string whitespaces(" \t\f\v\n\r");
+	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
+	const size_t startpos = filename.find_last_of('.');
+	if( startpos==std::string::npos ) return std::string("");
+	if( start_basename!=std::string::npos && startpos<start_basename ) return std::string("");
+
+	const size_t endpos = filename.find_last_not_of(whitespaces); // Find the first character position from reverse af
+
+	return filename.substr(startpos+1, endpos-startpos);
+}
+
 void IOUtils::trim(std::string& str)
 {
 	const std::string whitespaces(" \t\f\v\n\r");

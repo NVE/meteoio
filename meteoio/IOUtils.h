@@ -149,6 +149,15 @@ namespace IOUtils {
 	std::string cleanPath(const std::string& in_path);
 
 	/**
+	* @brief returns the extension part of a given filename.
+	* The extension is defined as all the non-whitespace characters after the last '.'
+	* in the filename.
+	* @param filename filename to extract the extension from
+	* @return extension
+	*/
+	std::string getExtension(const std::string& filename);
+
+	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
 	* @param s The reference of the string to trim (in/out parameter)
 	*/

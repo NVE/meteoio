@@ -48,6 +48,8 @@ namespace mio {
  * @endcode
  */
 
+const std::string SMETIO::dflt_extension = ".smet";
+
 SMETIO::SMETIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	parseInputOutputSection();
@@ -136,6 +138,7 @@ void SMETIO::parseInputOutputSection()
 			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
 
 			if (filename != ""){
+				if(IOUtils::getExtension(filename)=="") filename += dflt_extension; //default extension
 				stringstream file_and_path;
 				file_and_path << inpath << "/" << filename;
 				if (!IOUtils::validFileName(file_and_path.str())) //Check whether filename is valid

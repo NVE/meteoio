@@ -650,7 +650,7 @@ SMETReader::SMETReader(const std::string& in_fname) : filename(in_fname), nr_of_
 	fin.clear();
 	fin.open (filename.c_str(), ios::in);
 	if (fin.fail())
-		throw SMETException("Could not open file '" + filename + "' for reading", SMET_AT);
+		throw SMETException("Could not open file '" + filename + "' for reading. Please check file existence and permissions!", SMET_AT);
 
 	try {
 		eoln = SMETCommon::getEoln(fin); //get the end of line character for the file

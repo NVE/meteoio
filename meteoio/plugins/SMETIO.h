@@ -86,6 +86,7 @@ class SMETIO : public IOInterface {
 		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section
 		double in_dflt_TZ, out_dflt_TZ;     //default time zones
 		double plugin_nodata;
+		static const std::string dflt_extension;
 
 		Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters

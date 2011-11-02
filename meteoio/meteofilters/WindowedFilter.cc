@@ -26,7 +26,8 @@ WindowedFilter::WindowedFilter(const std::string& name)
 	  centering(WindowedFilter::center), elements_left(0), elements_right(0), last_index(IOUtils::npos)
 {}
 
-unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args) {
+unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
+{
 	if (vec_args.size() > 0){
 		if (vec_args[0] == "left"){
 			vec_args.erase(vec_args.begin());
@@ -55,7 +56,6 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
                                                                 const std::vector<MeteoData>& ivec)
 {
 	//cout << "Requesting index " << index << endl;
-
 	if ((index == 0) || (last_index > index)){ //reset global variables
 		vec_window.clear();
 		elements_left = elements_right = 0;
@@ -75,11 +75,9 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 				vec_window.push_back(&ivec[0]);
 			}
 		}
-
 		//cout << "Init: " << elements_left << "/" << elements_right << endl;
 
 		last_index = 0;
-
 		return vec_window;
 	}
 
@@ -177,19 +175,19 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 }
 
 void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned int& ivec_size,
-							  unsigned int& index_start, unsigned int& index_end)
+                                     unsigned int& index_start, unsigned int& index_end)
 {
 	//cout << "Requesting index " << index << endl;
 
 	if ((ivec_size == 0) || (ivec_size <= index)){
 		index_end = 0;
-		index_start = 1;		
+		index_start = 1;
 	}
 
 	if ((index == 0) || (last_index > index)){ //reset global variables
 		elements_left = elements_right = 0;
 
-		if ((centering == WindowedFilter::right) || (is_soft)){	
+		if ((centering == WindowedFilter::right) || (is_soft)){
 			for (unsigned int kk=0; kk<min_data_points; kk++){
 				if (ivec_size > kk) elements_right++;
 			}
@@ -202,9 +200,9 @@ void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned i
 		}
 
 		//cout << "Init: " << elements_left << "/" << elements_right << endl;
-		
+
 		last_index = 0;
-		
+
 		startIndex = index_start = index + 1 - elements_left;
 		endIndex = index_end = index + elements_right - 1;
 
@@ -262,7 +260,7 @@ void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned i
 					endIndex++;
 					elements_right++; //elements_left will stay at a constant 1
 				}
-			} 
+			}
 		} else if (centering == WindowedFilter::left){
 			if (elements_left >= min_data_points){
 				startIndex++;
@@ -275,24 +273,24 @@ void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned i
 			} else {
 				if (ivec_size > index) { //broaden window
 					endIndex++;
-					elements_left++; 
+					elements_left++;
 				}
 			}
 		} else if (centering == WindowedFilter::center){
 			if ((elements_left + elements_right - 1) >= min_data_points){
 				startIndex++;
 				if (elements_right > 0) elements_right--;
-					
+
 				if (ivec_size > (index+elements_left-1)) { //shift window one point to the right
 					endIndex++;
-					elements_right++; //elements_left will stay at a constant 
+					elements_right++; //elements_left will stay at a constant
 				}
 			} else {
 				if (ivec_size > (index+elements_left-1)) { //shift window one point to the right
 					endIndex++;
 					elements_left++;
 				}
-					
+
 				if ((elements_left + elements_right - 1) < min_data_points){
 					if (ivec_size > (index+elements_left-1)){ //shift window one point to the right
 						endIndex++;
@@ -343,7 +341,7 @@ void WindowedFilter::get_window(const unsigned int& index, const unsigned int& i
 		if (index <= min_data_points){
 			if (is_soft){
 				index_start = 0;
-				index_end = MIN(min_data_points - 1, ivec_size - 1); 
+				index_end = MIN(min_data_points - 1, ivec_size - 1);
 			} else {
 				index_start = index_end + 1;
 			}

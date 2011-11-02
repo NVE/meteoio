@@ -25,6 +25,7 @@
 #include <meteoio/meteofilters/FilterStdDev.h>
 #include <meteoio/meteofilters/RateFilter.h>
 #include <meteoio/meteofilters/FilterTukey.h>
+#include <meteoio/meteofilters/FilterMAD.h>
 
 namespace mio {
 /**
@@ -33,6 +34,14 @@ namespace mio {
  *
  * @section processing_modes Modes of operation
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
+ *
+ * Several filter take arguments describing a processing window (for example, FilterStdDev). In such a case, two values are given:
+ * - the time span of the window
+ * - the minimum number of points in the window
+ *
+ * The ProcessingBlock will walk through the data, starting at the current point and adding points to the processing window.  As soon as one of these criteria is met,
+ * the window is accepted. This means that a window defined as "6 21600" is a window that contains 6 points minimum OR spans 21600 seconds, depending on
+ * which condition is met first. (THIS BEHAVIOR MIGHT CHANGE IN THE FUTURE TO BECOME A "AND" CONDITION)
  *
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
@@ -63,7 +72,7 @@ namespace mio {
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
- * - mad: median absolute deviation, see FilterAlgorithms::MedianAbsoluteDeviationFilter
+ * - mad: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  *
  * A few data transformations are also supported besides filtering:
@@ -89,7 +98,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("STD_DEV");
 	availableBlocks.insert("RATE");
 	availableBlocks.insert("TUKEY");
-
+	availableBlocks.insert("MAD");
 	return true;
 }
 
@@ -118,6 +127,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new RateFilter(vec_args);
 	} else if (blockname == "TUKEY"){
 		return new FilterTukey(vec_args);
+	} else if (blockname == "MAD"){
+		return new FilterMAD(vec_args);
 	} else {
 		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);
 	}
@@ -136,7 +147,7 @@ ProcessingBlock::~ProcessingBlock() {}
 
 std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data) {
 	os << "[" << data.block_name << " ";
-	//os << data.properties;
+	os << data.properties;
 	os << "]";
 	return os;
 }
@@ -147,11 +158,16 @@ const ProcessingProperties& ProcessingBlock::getProperties() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data) {
-	os << "{-" << data.time_before.getJulianDate()*3600. << " +";
-	os << data.time_after.getJulianDate()*3600. << " h ; ";
-	os << "-" << data.points_before << " +" << data.points_after << " pts";
+	const double h_before = data.time_before.getJulianDate()*24.;
+	const double h_after = data.time_after.getJulianDate()*24.;
+	const unsigned int p_before = data.points_before;
+	const unsigned int p_after = data.points_after;
+
+	os << "{";
+	if(h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
+	if(p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
 	if(data.for_second_pass==true)
-		os << " ; 2nd pass";
+		os << "p²";
 	os << "}";
 	return os;
 }

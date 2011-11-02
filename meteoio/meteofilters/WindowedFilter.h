@@ -51,9 +51,9 @@ class WindowedFilter : public FilterBlock {
 		                                                const std::vector<MeteoData>& ivec);
 
 		void get_window(const unsigned int& index, const unsigned int& ivec_size,
-					 unsigned int& index_start, unsigned int& index_end);
+		                unsigned int& index_start, unsigned int& index_end);
 		void get_window_fast(const unsigned int& index, const unsigned int& ivec_size,
-						 unsigned int& index_start, unsigned int& index_end);
+		                     unsigned int& index_start, unsigned int& index_end);
 
 		bool is_soft;
 		size_t min_data_points;

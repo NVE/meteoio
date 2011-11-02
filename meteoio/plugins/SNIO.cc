@@ -24,14 +24,17 @@ namespace mio {
 /**
  * @page snowpack SNIO
  * @section snowpack_format Format
- * This is for reading meteo data in the SNOWPACK meteo format. The metadata has to be provided
- * in a separate file that might contain multiple stations, one per line. Each line has the following structure:
+ * This is for reading meteo data in the SNOWPACK meteo format. The metadata might be provided
+ * in a separate file that can contain multiple stations, one per line. Each line has the following structure:
  * - ALI2 Allieres:Chenau 1767 6.993 46.489 1.22 \n
+ *
  * where the first field is the short name, followed by the fullname and the location, then the elevation,
  * the longitude, the latitude and a wind coefficient (unused by MeteoIO). The short name is used for
  * identifying the station (stationID) and matching it with the data file (name given in io.ini).
  * If no such metadata file is provided, the metadata will be left nodata. This only makes sense
  * if the metadata would be later filled by another way (like a merge).
+ *
+ * In any case, the header line of the data file MUST contain a short name suitable to be used as station_id.
  *
  * Finally, when writing to a file, the header line will only be created if the file does not already exist. If the
  * file already exists on the disk, new data will be appended without attempting to write a header line.
@@ -73,6 +76,7 @@ namespace mio {
 const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 const size_t SNIO::min_nr_meteoData = 15;
+const std::string SNIO::dflt_extension = ".inp";
 
 SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -170,8 +174,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 		throw InvalidFileNameException(metafile, AT);
 
 	if (!IOUtils::fileExists(metafile)) {
-		stringstream msg;
-		cout << "\t[i] " << metafile << " not found! Read metadata from *.sno[old]" << endl;
+		cout << "[i] " << metafile << " not found! Read metadata from *.sno[old]" << endl;
 		return true;
 	}
 
@@ -225,7 +228,7 @@ std::string SNIO::getStationID(const std::string& filename)
 		throw InvalidFileNameException(filename, AT);
 	if ( !IOUtils::fileExists(filename) )
 		throw FileNotFoundException(filename, AT);
-	
+
 	fin.clear();
 	fin.open (filename.c_str(), std::ifstream::in);
 
@@ -285,6 +288,7 @@ void SNIO::readMetaData()
 			throw InvalidFormatException("Missing key 'STATION1' in config: Please specify a SNOWPACK formatted meteo data file", AT);
 
 		if (current_station != ""){
+			if(IOUtils::getExtension(current_station)=="") current_station += dflt_extension; //default extension
 			string station_id = getStationID(inpath+ "/" +current_station);
 
 			StationData sd(Coords(), station_id);
@@ -349,6 +353,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		ss << ii+1;
 		cfg.getValue("STATION"+ss.str(), "Input", filename);
+		if(IOUtils::getExtension(filename)=="") filename += dflt_extension; //default extension
 		file_with_path << inpath << "/" << filename;
 
 		if ( !IOUtils::validFileName(file_with_path.str()) )

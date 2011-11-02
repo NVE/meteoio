@@ -6,6 +6,7 @@ SET(meteofilters_sources
 	meteofilters/FilterMinMax.cc
 	meteofilters/FilterMedianAvg.cc
 	meteofilters/FilterMeanAvg.cc
+	meteofilters/FilterMAD.cc
 	meteofilters/FilterWindAvg.cc
 	meteofilters/FilterStdDev.cc
 	meteofilters/FilterTukey.cc
