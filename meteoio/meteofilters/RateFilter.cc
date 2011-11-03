@@ -32,6 +32,7 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
+	ovec.reserve(ivec.size());
 	size_t last_good = IOUtils::npos;
 
 	//Find first point that is not IOUtils::nodata

@@ -42,6 +42,7 @@ void FilterWindAvg::process(const unsigned int& index, const std::vector<MeteoDa
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 	ovec.clear();
+	ovec.reserve(ivec.size());
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);

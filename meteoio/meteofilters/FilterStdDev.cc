@@ -39,6 +39,7 @@ void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoDat
                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
+	ovec.reserve(ivec.size());
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);

@@ -31,10 +31,11 @@ void FilterMinMax::process(const unsigned int& index, const std::vector<MeteoDat
                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
+	ovec.reserve(ivec.size());
 
 	for (unsigned int ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);
-		
+
 		double& tmp = ovec[ii](index);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
@@ -62,16 +63,16 @@ void FilterMinMax::parse_args(std::vector<std::string> vec_args)
 	if (vec_args.size() > 2){
 		is_soft = FilterBlock::is_soft(vec_args);
 	}
-	
+
 	FilterBlock::convert_args(2, 4, vec_args, filter_args);
 
 	if (filter_args.size() == 3)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT); 
+		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
 	if (filter_args.size() >= 2){
 		if (filter_args[0] > filter_args[1])
-			throw InvalidArgumentException("Minimum should be smaller than maximum for filter " + getName(), AT); 
-		
+			throw InvalidArgumentException("Minimum should be smaller than maximum for filter " + getName(), AT);
+
 		min_val = filter_args[0];
 		max_val = filter_args[1];
 	}

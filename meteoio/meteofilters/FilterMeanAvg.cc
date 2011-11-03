@@ -37,6 +37,7 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
 					   std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
+	ovec.reserve(ivec.size());
 
 	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
@@ -70,7 +71,7 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
  * @brief Actual algorithm to calculate the average value for all values in vec_window(index)
  * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
  * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
- * @return A double either representing the average or IOUtils::nodata if averaging fails 
+ * @return A double either representing the average or IOUtils::nodata if averaging fails
  */
 double FilterMeanAvg::calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
 {
@@ -95,7 +96,7 @@ double FilterMeanAvg::calc_avg(const unsigned int& index, const std::vector<cons
 	}
 
 	return (sum / (double)counter);
-}	
+}
 
 void FilterMeanAvg::parse_args(std::vector<std::string> vec_args)
 {
@@ -107,15 +108,15 @@ void FilterMeanAvg::parse_args(std::vector<std::string> vec_args)
 
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
-	
+
 	FilterBlock::convert_args(2, 2, vec_args, filter_args);
 
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
-		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT); 
+		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
 	}
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
-} 
+}
 
 }

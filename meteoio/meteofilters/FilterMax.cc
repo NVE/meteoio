@@ -30,10 +30,11 @@ void FilterMax::process(const unsigned int& index, const std::vector<MeteoData>&
                         std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
+	ovec.reserve(ivec.size());
 
 	for (unsigned int ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);
-		
+
 		double& tmp = ovec[ii](index);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
@@ -51,14 +52,15 @@ void FilterMax::process(const unsigned int& index, const std::vector<MeteoData>&
 void FilterMax::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 
+	is_soft = false;
 	if (vec_args.size() > 1){
 		is_soft = FilterBlock::is_soft(vec_args);
 	}
-	
+
 	FilterBlock::convert_args(1, 2, vec_args, filter_args);
 
 	if (filter_args.size() > 2)
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT); 
+		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
 	max_val = filter_args[0];
 
