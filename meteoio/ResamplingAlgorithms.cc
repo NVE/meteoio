@@ -43,6 +43,9 @@ namespace mio {
  * HNW::resample   = linear
  * @endcode
  *
+ * The search window size can be given with key WINDOW_SIZE that expresses (in seconds) how far a valid point can be searched for when
+ * re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point, ie the search window is centered).
+ *
  * @section algorithms_available Available Resampling Algorithms
  * Two algorithms for the resampling are implemented:
  * - none: do not perform resampling, see ResamplingAlgorithms::NoResampling

@@ -28,6 +28,7 @@ namespace mio {
  * @brief Calculate the black body emissivity
  * @param lwr longwave radiation emitted by the body (W m-2)
  * @param T   surface temperature of the body (K)
+ * @return black body emissivity (0-1)
  */
 double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
 	const double T2 = T*T;
@@ -38,6 +39,7 @@ double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
  * @brief Calculates the black body long wave radiation knowing its emissivity
  * @param ea emissivity of the body (0-1)
  * @param T   surface temperature of the body (K)
+ * @return black body radiation (W/m^2)
  */
 double Atmosphere::blkBody_Radiation(const double& ea, const double& T) {
 	const double T2 = T*T;
@@ -100,7 +102,6 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 	return ( T - (RH*Vp - Vp) * mixing_ratio * L / p / Cst::specific_heat_air );
 }
 
-
 /**
 * @brief Standard water vapor saturation
 * @param T air temperature (K)
@@ -119,6 +120,19 @@ double Atmosphere::waterSaturationPressure(const double& T) {
 	const double exp_p_sat = c2 *  (T - 273.16) / (T - c3); //exponent
 
 	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
+}
+
+/**
+* @brief Virtual temperature multiplying factor.
+* In order to get a virtual temperature, multiply the original temperature by this factor. Note:
+* since e/p is actually used, both pressures only need to have the same units.
+* @param e vapor pressure (Pa)
+* @param p air pressure (Pa)
+* @return virtual temperature multiplying coefficient
+*/
+double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
+	const double epsilon = 0.622;
+	return 1. / (1.-(1.-epsilon)*e/p);
 }
 
 /**

@@ -879,7 +879,7 @@ void SMETReader::read_header(std::ifstream& fin)
 void SMETReader::checkSignature(const std::vector<std::string>& vecSignature, bool& isAscii)
 {
 	if ((vecSignature.size() != 3) || (vecSignature[0] != "SMET"))
-		throw SMETException("The signature of file " + filename + " is invalid", SMET_AT);
+		throw SMETException("The signature of file " + filename + " is invalid. Is it really a SMET file?", SMET_AT);
 
 	std::string version = vecSignature[1];
 	if ((version != "0.9") && (version != "0.95") && (version != "0.99")

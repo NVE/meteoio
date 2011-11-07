@@ -315,21 +315,20 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 	if ((timestamps.size() == 0) && (!julian_present)) return; //nothing to do
 
-	bool olwr_present = md.param_exists("OLWR");
+	const bool olwr_present = md.param_exists("OLWR");
 
-	bool data_wgs84 = myreader.location_in_data(smet::WGS84);
-	bool data_epsg = myreader.location_in_data(smet::EPSG);
+	const bool data_wgs84 = myreader.location_in_data(smet::WGS84);
+	const bool data_epsg = myreader.location_in_data(smet::EPSG);
 
 	read_meta_data(myreader, md.meta);
 
-	double nodata_value = myreader.get_header_doublevalue("nodata");
+	const double nodata_value = myreader.get_header_doublevalue("nodata");
 	double current_timezone = myreader.get_header_doublevalue("tz");
 	if (current_timezone == nodata_value)
 		current_timezone = in_dflt_TZ;
+	const bool timestamp_present = myreader.contains_timestamp();
 
-	Date tmp_date;
 	size_t nr_of_lines = mydata.size() / indexes.size();
-	bool timestamp_present = myreader.contains_timestamp();
 
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
@@ -379,8 +378,9 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 			current_index++;
 		}
 
-		if ((olwr_present) && (md(MeteoData::TSS) == IOUtils::nodata)) //HACK
-			md(MeteoData::TSS) = olwr_to_tss(md("OLWR"));
+		if ((olwr_present) && (tmp_md(MeteoData::TSS) == IOUtils::nodata)) {//HACK
+			tmp_md(MeteoData::TSS) = olwr_to_tss(tmp_md("OLWR"));
+		}
 
 		//cout << tmp_md << endl;
 		//cout << endl;

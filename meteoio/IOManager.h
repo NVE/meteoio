@@ -151,6 +151,11 @@ class IOManager {
 		 */
 		void setMinBufferRequirements(const double& buffer_size, const double& buff_before);
 
+		/**
+		 * @brief Returns the average sampling rate in the data.
+		 * This computes the average sampling rate from the data that is contained in the buffer.
+		 * @return average sampling rate in seconds, nodata if the buffer is empty
+		 */
 		double getAvgSamplingRate();
 
 #ifdef _POPC_ //HACK popc

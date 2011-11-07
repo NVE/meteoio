@@ -112,6 +112,11 @@ class BufferedIOHandler : public IOInterface {
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 
+		/**
+		 * @brief Returns the average sampling rate in the data.
+		 * This computes the average sampling rate from the data that is contained in the buffer.
+		 * @return average sampling rate in seconds, nodata if the buffer is empty
+		 */
 		double getAvgSamplingRate();
 
 		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
