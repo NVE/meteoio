@@ -145,10 +145,10 @@ double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const 
 }
 
 /**
-* @brief Build the list of (stations index, distance to grid cell) ordered by their distance to a grid cell
+* @brief Build the list of (distance to grid cell, stations index) ordered by their distance to a grid cell
 * @param x x coordinate of cell
 * @param y y coordinate of cell
-* @param list list of pairs (stations index, distance to grid cell)
+* @param list list of pairs (distance to grid cell, stations index)
 */
 void Interpol2D::getNeighbors(const double& x, const double& y,
                               const std::vector<StationData>& vecStations,
@@ -491,7 +491,8 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 	const double x = dem.llcorner.getEasting()+i*dem.cellsize;
 	const double y = dem.llcorner.getNorthing()+j*dem.cellsize;
 	getNeighbors(x, y, vecStations_in, list);
-	for(unsigned int st=0; st<nrOfNeighbors; st++) {
+	const unsigned int max_stations = std::min(list.size(), nrOfNeighbors);
+	for(unsigned int st=0; st<max_stations; st++) {
 		const unsigned int st_index=list[st].second;
 		const double value = vecData_in[st_index];
 		const double alt = vecStations_in[st_index].position.getAltitude();
@@ -515,7 +516,7 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 	unsigned int count=0;
 	double pixel_value=0., norm=0.;
 	const double scale=0.;
-	for(unsigned int st=0; st<nrOfNeighbors; st++) {
+	for(unsigned int st=0; st<max_stations; st++) {
 		const unsigned int st_index=list[st].second;
 		const double value = vecData_in[st_index];
 		const double alt = vecStations_in[st_index].position.getAltitude();
