@@ -205,9 +205,11 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 				grid_out.grid2D(ll, kk) = IOUtils::standardizeNodata(tmp_val, plugin_nodata);
 			}
 		}
-	} catch(const std::exception&) {
+	} catch(const std::exception& e) {
 		cleanup();
-		throw;
+		std::stringstream msg;
+		msg << "[E] Error while reading file " << filename << ": " << e.what();
+		throw InvalidFormatException(msg.str(), AT);
 	}
 	cleanup();
 }

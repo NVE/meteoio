@@ -250,10 +250,10 @@ void A3DIO::read1DStation(std::string& file_1d, StationData& sd)
 		}
 
 		sd.setStationData(location, "meteo1d", "Meteo1D station");
-	} catch(...) {
+	} catch(const std::exception& e) {
 		cleanup();
 		std::stringstream msg;
-		msg << "[E] Error processing header of file " << file_1d;
+		msg << "[E] Error while reading header of file " << file_1d << ": " << e.what();
 		throw InvalidFormatException(msg.str(), AT);
 	}
 }
