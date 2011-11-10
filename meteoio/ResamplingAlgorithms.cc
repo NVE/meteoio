@@ -243,7 +243,7 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
 
 /**
  * @brief Accumulation over a user given period.
- * The input data is accumulated over a given time interval (given as filter argument, in minutes).
+ * The input data is accumulated over a given time interval (given as filter argument, in seconds).
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
  * hourly precipitation measurements. Remarks:
  * - the accumulation period has to be provided as an argument (in seconds)

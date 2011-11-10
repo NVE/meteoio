@@ -29,10 +29,9 @@ namespace mio {
  * @ingroup processing
  * @date   2011-11-01
  * @brief Median Absolute Deviation.
- * Values outside of median ± 3 σ_MAD are rejected. The σ_MAD is calculated as follow:\n
+ * Values outside of median ± 3 σ_MAD are rejected. The σ_MAD is calculated as follows:\n
  * <center>\f$ \sigma_{MAD} = K \cdot \mathop{median_i} \left( \left| X_i - \mathop{median_j} ( X_j ) \right| \right) \f$ with \f$ K = \Phi^{-1}; \Phi = 0.6745 \f$ </center>\n
- * See http://en.wikipedia.org/wiki/Median_absolute_deviation
- * for more information about the Mean Absolute Deviation.
+ * See http://en.wikipedia.org/wiki/Median_absolute_deviation for more information about the Mean Absolute Deviation.
  * @code
  * Valid examples for the io.ini file:
  *          TA::filter1 = mad

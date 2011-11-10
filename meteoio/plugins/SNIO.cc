@@ -58,7 +58,6 @@ namespace mio {
  *                        will be valid for all stations.
  * 	- additional data must follow order given below but may be missing:
  * 		- NUMBER_MEAS_TEMPERATURES: integer, the number of measured snow temperatures provided; [Input] section \n
- * 		- The depths of the sensors can be given under FIXED_SENSOR_DEPTHS (default: 0.25, 0.5, 1.0, 1.5, -0.1 m)
  * 		- NUMBER_OF_SOLUTES: integer, the number of solutes for which input data are provided; [Input] section
  * 		- VW_DRIFT: bool, a wind velocity to use for blowing and drifting snow is provided; [Input] section
  * 		- RHO_HN: bool, measured new snow density is provided; [Input] section
