@@ -184,6 +184,13 @@ class Matrix {
 
 		void maximalPivoting();
 
+		/**
+		* @brief matrix bidiagonalization
+		* This uses Householder's reduction, see Golub, 1970.
+		* (see https://secure.wikimedia.org/wikipedia/en/wiki/Bidiagonalization)
+		*/
+		//void bidiagonalize();
+
 		friend std::ostream& operator<<(std::ostream& os, const Matrix& data);
 
 		Matrix& operator+=(const Matrix& rhs);

@@ -34,6 +34,11 @@ Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const s
 	setModel(regType, in_X, in_Y, updatefit);
 }
 
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
+	model=NULL;
+	setModel(regType, in_X, in_Y, updatefit);
+}
+
 Fit1D::Fit1D(const Fit1D& i_fit) {
 	*this = i_fit;
 }
@@ -44,6 +49,24 @@ Fit1D& Fit1D::operator=(const Fit1D& source) {
 		*model = *(source.model); //copy what is pointed to
 	}
 	return *this;
+}
+
+void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
+	regression regType;
+	if(i_regType=="ZERO") regType=ZERO;
+	else if(i_regType=="SIMPLE_LINEAR") regType=SIMPLE_LINEAR;
+	else if(i_regType=="NOISYLINEAR") regType=NOISYLINEAR;
+	else if(i_regType=="LINVARIO") regType=LINVARIO;
+	else if(i_regType=="EXPVARIO") regType=EXPVARIO;
+	else if(i_regType=="SPHERICVARIO") regType=SPHERICVARIO;
+	else if(i_regType=="RATQUADVARIO") regType=RATQUADVARIO;
+	else if(i_regType=="LINEARLS") regType=LINEARLS;
+	else if(i_regType=="QUADRATIC") regType=QUADRATIC;
+	else {
+		throw IOException("The regression algorithm '"+i_regType+"' is not implemented" , AT);
+	}
+
+	setModel(regType, in_X, in_Y, updatefit);
 }
 
 void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {

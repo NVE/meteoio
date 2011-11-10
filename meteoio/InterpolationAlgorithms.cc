@@ -564,8 +564,6 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	}
 }
 
-
-
 void SimpleWindInterpolationAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 	param = in_param;
 
@@ -727,7 +725,6 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	if(new_mean!=0.) grid.grid2D *= orig_mean/new_mean;
 }
 
-
 void OrdinaryKrigingAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 	param = in_param;
 	nrOfMeasurments = getData(param, vecData, vecMeta);
@@ -743,13 +740,21 @@ void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 {
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
-	throw IOException("ODKRIG interpolation algorithm not yet implemented...", AT);
 	computeVariogram(); //only refresh once a month, or once a week, etc
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 }
 
 double OrdinaryKrigingAlgorithm::computeVariogram()
 {//return variogram fit of covariance between stations i and j
+	std::string vario_model;
+	if (vecArgs.size() == 0){
+		vario_model=std::string("LINVARIO");
+	} else if (vecArgs.size() == 1){
+		IOUtils::convertString(vario_model, vecArgs[0]);
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the ODKRIG algorithm", AT);
+	}
+
 	/*std::vector<double> alti;
 	for(unsigned int j=0; j<nrOfMeasurments; j++) {
 		alti.push_back( vecMeta[j].position.getAltitude() );
@@ -778,7 +783,15 @@ double OrdinaryKrigingAlgorithm::computeVariogram()
 		}
 	}
 
-	variogram.setModel(Fit1D::SPHERICVARIO, dist, vari);
+	try {
+		variogram.setModel(vario_model, dist, vari);
+	} catch(const IOException&) {
+		cout << "[E] Variogram data points:\n";
+		for(unsigned int ii=0; ii<dist.size(); ii++) {
+			cout << dist[ii] << " " << vari[ii] << endl;
+		}
+		throw IOException("The variogram model "+variogram.getName()+" could not be fitted to the available data!", AT);
+	}
 	return 1.;
 }
 

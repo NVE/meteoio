@@ -144,6 +144,15 @@ class Fit1D {
 		Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
 
 		/**
+		* @brief Constructor for user provided model type.
+		* @param regType regression model to use
+		* @param in_X vector of data points abscissae
+		* @param in_Y vector of data points ordinates
+		* @param updatefit should the fit be redone? (default=true, otherwise you must manually call fit())
+		*/
+		Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
+
+		/**
 		* @brief Copy constructor.
 		* @param i_fit Object to copy
 		*/
@@ -159,6 +168,15 @@ class Fit1D {
 		* @param updatefit should the fit be redone? (default=true, otherwise you must manually call fit())
 		*/
 		void setModel(const regression& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
+
+		/**
+		* @brief Set or reset the regression model.
+		* @param i_regType regression model to use
+		* @param in_X vector of data points abscissae
+		* @param in_Y vector of data points ordinates
+		* @param updatefit should the fit be redone? (default=true, otherwise you must manually call fit())
+		*/
+		void setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
 
 		/**
 		* @brief Provide a set of initial values for the model parameters.

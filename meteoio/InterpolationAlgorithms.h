@@ -80,7 +80,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2010) (see SnowHNWInterpolation)
- * - ODKRIG: ordinary kriging THIS IS NOT YET USABLE
+ * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  *
  * @section lapse Lapse rates
@@ -355,7 +355,6 @@ class ILWRAlgorithm : public InterpolationAlgorithm {
 		std::vector<double> vecDataEA; ///<vectors of extracted emissivities
 };
 
-
 /**
  * @class SimpleWindInterpolationAlgorithm
  * @brief Curvature/slope influenced  wind interpolation algorithm.
@@ -446,7 +445,25 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
 
 /**
  * @class OrdinaryKrigingAlgorithm
- * @brief Ordinary kriging THIS IS NOT USABLE YET
+ * @brief Ordinary kriging.
+ * this implements ordinary krigging (see https://secure.wikimedia.org/wikipedia/en/wiki/Kriging)
+ * with user-selectable variogram model (see https://secure.wikimedia.org/wikipedia/en/wiki/Variogram).
+ * The variogram and krigging
+ * coefficients are re-computed fresh for each new grid (or time step). There is currently no fallback
+ * mechanism for variogram fit failures, which makes the whole thing not very robust.
+ * Therefore, USE IT AT YOUR OWN RISK!
+ *
+ * The variogram is currently computed with the current data (as 1/2*(X1-X2)^2), which makes it quite
+ * uninteresting... The next improvement will consist in calculating the covariances (used to build the
+ * variogram) from time series (thus reflecting the time-correlation between stations).
+ *
+ * The available variogram models are found in Fit1D::regression and written capitalized as optional arguments
+ * (by default, LINVARIO is used):
+ * @code
+ * TA::algorithms = ODKRIG
+ * TA::odkrig = SPHERICVARIO
+ * @endcode
+ *
  * @author Mathias Bavay
  */
 class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {

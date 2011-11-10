@@ -711,19 +711,14 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	size_t nrOfMeasurments = vecStations.size();
-
-	Matrix G((unsigned int)nrOfMeasurments, (unsigned int)nrOfMeasurments);
-	Matrix gamma(nrOfMeasurments, (unsigned int)1);
-	const Matrix One(nrOfMeasurments, (unsigned int)1, 1.);
-	const Matrix One_T = One.getT();
-
 	//precompute various coordinates in the grid
 	const double llcorner_x = grid.llcorner.getEasting();
 	const double llcorner_y = grid.llcorner.getNorthing();
 	const double cellsize = grid.cellsize;
 
-	//fill the G matrix
-	//HACK: are we filling with the proper values? A covariance matrix would be different...
+	Matrix Ginv((unsigned int)(nrOfMeasurments+1), (unsigned int)(nrOfMeasurments+1));
+
+	//fill the Ginv matrix
 	for(size_t j=1; j<=nrOfMeasurments; j++) {
 		const Coords& st1 = vecStations[j-1].position;
 		const double x1 = st1.getEasting();
@@ -735,24 +730,24 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 			const double DX = x1-st2.getEasting();
 			const double DY = y1-st2.getNorthing();
 			const double distance = fastSqrt_Q3(DX*DX + DY*DY);
-			G(i,j) = variogram.f(distance);
+			Ginv(i,j) = variogram.f(distance);
 		}
-		//G(j,j)=1.; //HACK what should we put on the diagonal?
+		Ginv(j,j)=1.; //HACK diagonal should contain the nugget...
+		Ginv(nrOfMeasurments+1,j) = 1.; //last line filled with 1s
 	}
 	//fill the upper half (an exact copy of the lower half)
 	for(size_t j=1; j<=nrOfMeasurments; j++) {
 		for(size_t i=j+1; i<=nrOfMeasurments; i++) {
-			G(i,j) = G(j,i);
+			Ginv(i,j) = Ginv(j,i);
 		}
 	}
+	//add last column of 1's and a zero
+	for(size_t i=1; i<=nrOfMeasurments; i++) Ginv(i,nrOfMeasurments+1) = 1.;
+	Ginv(nrOfMeasurments+1,nrOfMeasurments+1) = 0.;
+	//invert the matrix
+	Ginv.inv();
 
-	//G inverse matrix
-	const Matrix Ginv = G.getInv();
-
-	//calculate constant denominator
-	const Matrix OneT_Ginv = One_T * Ginv;
-	const double denom = Matrix::scalar( OneT_Ginv * One );
-
+	Matrix G0((unsigned int)(nrOfMeasurments+1), (unsigned int)1);
 	//now, calculate each point
 	for(size_t j=0; j<grid.nrows; j++) {
 		for(size_t i=0; i<grid.ncols; i++) {
@@ -767,15 +762,16 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 				const double DY = y-position.getNorthing();
 				const double distance = fastSqrt_Q3(DX*DX + DY*DY);
 
-				gamma(st+1,1) = variogram.f(distance); //matrix starts at 1
+				G0(st+1,1) = variogram.f(distance); //matrix starts at 1, not 0
 			}
+			G0(nrOfMeasurments+1,1) = 1.; //last value is always 1
 
-			const Matrix lambdaT = Matrix::T(gamma + One * ((1. - Matrix::scalar(OneT_Ginv*gamma)) / denom) ) * Ginv;
+			const Matrix lambda = Ginv*G0;
 
 			//calculate local parameter interpolation
 			double p = 0.;
 			for(size_t st=0; st<nrOfMeasurments; st++) {
-				p += lambdaT(1,st+1) * vecData[st]; //matrix starts at 1
+				p += lambda(st+1,1) * vecData[st]; //matrix starts at 1, not 0
 			}
 			grid.grid2D(i,j) = p;
 		}

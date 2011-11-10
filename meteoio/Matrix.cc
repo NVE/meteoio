@@ -595,7 +595,9 @@ void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	X.resize(n,m); //we need to ensure that X has the correct dimensions
 	for(unsigned int i=n; i>=1; i--) { //lines
 		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
-			throw IOException("The given matrix is singular and can not be inversed", AT);
+			std::stringstream ss;
+			ss << "The given " << Ancols << "*" << Anrows << " matrix is singular and can not be inversed";
+			throw IOException(ss.str(), AT);
 		}
 		for(unsigned int j=1; j<=m; j++) {
 			double sum = 0.;
@@ -684,6 +686,17 @@ void Matrix::maximalPivoting() {
 	//pivot on original matrix //HACK: not finished yet!
 	throw IOException("Method not implemented yet!!", AT);
 }
+
+/*void Matrix::bidiagonalize() {
+	//Matrix e(1,ncols);
+	std::vector<double> e(ncols+1); //so we remain compatible with matrix index
+	double g=0., x=0.;
+
+	for(unsigned int i=1; i<=ncols; i++) {
+		e[i]=g; s=0.; l=i+1;
+		for(unsigned int j=i; j<=m; j++) s += ( operator()(i,j)*operator()(i,j) );
+	}
+}*/
 
 //return the index of the line containing the highest absolute value at column col
 unsigned int Matrix::findMaxInCol(const unsigned int &col) {
