@@ -391,7 +391,7 @@ double LocalIDWLapseAlgorithm::getQualityRating()
 
 void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
 {
-	unsigned int nrOfNeighbors=0;
+	size_t nrOfNeighbors=0;
 
 	if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -738,7 +738,6 @@ double OrdinaryKrigingAlgorithm::getQualityRating()
 	if(nrOfMeasurments>=20) return 0.9;
 	return 0.1;
 }
-
 
 void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 {

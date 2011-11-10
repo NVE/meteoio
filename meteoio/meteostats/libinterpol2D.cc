@@ -152,16 +152,16 @@ double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const 
 */
 void Interpol2D::getNeighbors(const double& x, const double& y,
                               const std::vector<StationData>& vecStations,
-                              std::vector< std::pair<double, unsigned int> >& list)
+                              std::vector< std::pair<double, size_t> >& list)
 {
 	if(list.size()>0) list.clear();
 
-	for(unsigned int i=0; i<vecStations.size(); i++) {
+	for(size_t i=0; i<vecStations.size(); i++) {
 		const Coords& position = vecStations[i].position;
 		const double DX = x-position.getEasting();
 		const double DY = y-position.getNorthing();
 		const double d2 = (DX*DX + DY*DY);
-		const std::pair <double, unsigned int> tmp(d2,i);
+		const std::pair <double, size_t> tmp(d2,i);
 		list.push_back(tmp);
 	}
 
@@ -449,7 +449,7 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 * @param r2 average r² coefficient of the lapse rate regressions
 */
 void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                               const DEMObject& dem, const unsigned int& nrOfNeighbors,
+                               const DEMObject& dem, const size_t& nrOfNeighbors,
                                Grid2DObject& grid, double& r2)
 {
 	unsigned int count=0;
@@ -478,22 +478,22 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 //calculate a local pixel for LocalLapseIDW
 double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
                                 const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                                const DEMObject& dem, const unsigned int& nrOfNeighbors, double& r2)
+                                const DEMObject& dem, const size_t& nrOfNeighbors, double& r2)
 {
 	const double& cell_altitude=dem.grid2D(i,j);
 	if(cell_altitude==IOUtils::nodata)
 		return IOUtils::nodata;
 
-	std::vector< std::pair<double, unsigned int> > list;
+	std::vector< std::pair<double, size_t> > list;
 	std::vector<double> X, Y, coeffs;
 
 	//fill vectors with appropriate neighbors
 	const double x = dem.llcorner.getEasting()+i*dem.cellsize;
 	const double y = dem.llcorner.getNorthing()+j*dem.cellsize;
 	getNeighbors(x, y, vecStations_in, list);
-	const unsigned int max_stations = std::min(list.size(), nrOfNeighbors);
-	for(unsigned int st=0; st<max_stations; st++) {
-		const unsigned int st_index=list[st].second;
+	const size_t max_stations = std::min(list.size(), nrOfNeighbors);
+	for(size_t st=0; st<max_stations; st++) {
+		const size_t st_index=list[st].second;
 		const double value = vecData_in[st_index];
 		const double alt = vecStations_in[st_index].position.getAltitude();
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
@@ -516,8 +516,8 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 	unsigned int count=0;
 	double pixel_value=0., norm=0.;
 	const double scale=0.;
-	for(unsigned int st=0; st<max_stations; st++) {
-		const unsigned int st_index=list[st].second;
+	for(size_t st=0; st<max_stations; st++) {
+		const size_t st_index=list[st].second;
 		const double value = vecData_in[st_index];
 		const double alt = vecStations_in[st_index].position.getAltitude();
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
