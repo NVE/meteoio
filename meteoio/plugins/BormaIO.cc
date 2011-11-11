@@ -434,55 +434,6 @@ bool BormaIO::validFilename(const std::string& tmp) const
 	return true;
 }
 
-void BormaIO::read2DMeteo(const Date& date_in, std::vector<MeteoData>& meteo_out)
-{
-	std::vector<StationData> vecStation;
-	read2DMeteo(date_in, meteo_out, vecStation);
-}
-
-void BormaIO::read2DMeteo(const Date& date_in, std::vector<MeteoData>& vecMeteo, std::vector<StationData>& vecStation)
-{
-	vecMeteo.clear();
-	vecStation.clear();
-
-	//Read in the StationNames
-	std::string xmlpath="", str_stations="";
-	int stations=0;
-
-	cfg.getValue("NROFSTATIONS", "Input", str_stations);
-	cfg.getValue("METEOPATH", "Input", xmlpath);
-
-	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
-		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
-	}
-
-	for (int ii=0; ii<stations; ii++) {
-		std::stringstream tmp_stream;
-		std::string stationname="", tmp_file="";
-		Date tmp_date(0.0, 0.); //not a problem, the date will be overwritten
-		MeteoData md;
-		StationData sd;
-
-		tmp_stream << (ii+1); //needed to construct key name
-		cfg.getValue(std::string("STATION"+tmp_stream.str()), "Input", stationname);
-
-		checkForMeteoFiles(xmlpath, stationname, date_in, tmp_file, tmp_date);
-		//Check whether file was found
-		if (tmp_date<date_in) {
-			stringstream ss;
-			ss << "No XML file in path '" << xmlpath << "' found for date ";
-			ss << date_in.toString(Date::ISO) << " for station " << stationname;
-			throw FileNotFoundException(ss.str(), AT);
-		}
-
-		//Read in data from XML File
-		xmlExtractData(xmlpath+"/"+tmp_file, tmp_date, md, sd);
-
-		vecMeteo.push_back(md);
-		vecStation.push_back(sd);
-	}
-}
-
 void BormaIO::readAssimilationData(const Date&, Grid2DObject&)
 {
 	//Nothing so far

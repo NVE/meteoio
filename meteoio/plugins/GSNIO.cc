@@ -473,8 +473,6 @@ void GSNIO::readStationNames()
 	 */
 	vecStationName.clear();
 
-	//cfg.getValue("NROFSTATIONS", "Input", str_stations, Config::nothrow);
-
 	size_t current_stationnr = 1;
 	string current_station;
 	do {

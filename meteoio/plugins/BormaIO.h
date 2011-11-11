@@ -69,9 +69,6 @@ class BormaIO : public IOInterface {
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 
-		void read2DMeteo(const Date&, std::vector<MeteoData>&); ///< No buffering
-		void read2DMeteo(const Date&, std::vector<MeteoData>&, std::vector<StationData>&); ///<No buffering
-
 	private:
 		void convertUnits(MeteoData& meteo);
 		void checkForMeteoFiles(const std::string& xmlpath, const std::string& stationname, const Date& date_in,
