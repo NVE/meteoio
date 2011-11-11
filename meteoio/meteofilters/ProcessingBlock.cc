@@ -23,7 +23,8 @@
 #include <meteoio/meteofilters/FilterMedianAvg.h>
 #include <meteoio/meteofilters/FilterWindAvg.h>
 #include <meteoio/meteofilters/FilterStdDev.h>
-#include <meteoio/meteofilters/RateFilter.h>
+#include <meteoio/meteofilters/FilterRate.h>
+#include <meteoio/meteofilters/FilterHNWMelt.h>
 #include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/FilterMAD.h>
 
@@ -67,13 +68,14 @@ namespace mio {
  * The filters are being ported to the new filtering infrastructure. Only the filters whose key is capitalized have been
  * ported and are ready to use in the current version.
  * The filters that are currently available are the following:
- * - RATE: rate of change filter, see RateFilter
+ * - RATE: rate of change filter, see FilterRate
  * - MIN_MAX: range check filter, see FilterMinMax
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - mad: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
+ * - HNW_MELT: detection of snow melting in a rain gauge, see FilterHNWMelt
  *
  * A few data transformations are also supported besides filtering:
  * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
@@ -99,6 +101,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("RATE");
 	availableBlocks.insert("TUKEY");
 	availableBlocks.insert("MAD");
+	availableBlocks.insert("HNW_MELT");
 	return true;
 }
 
@@ -124,11 +127,13 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "STD_DEV"){
 		return new FilterStdDev(vec_args);
 	} else if (blockname == "RATE"){
-		return new RateFilter(vec_args);
+		return new FilterRate(vec_args);
 	} else if (blockname == "TUKEY"){
 		return new FilterTukey(vec_args);
 	} else if (blockname == "MAD"){
 		return new FilterMAD(vec_args);
+	} else if (blockname == "HNW_MELT"){
+		return new FilterHNWMelt(vec_args);
 	} else {
 		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);
 	}

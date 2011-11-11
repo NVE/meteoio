@@ -75,7 +75,7 @@ class BormaIO : public IOInterface {
 	private:
 		void convertUnits(MeteoData& meteo);
 		void checkForMeteoFiles(const std::string& xmlpath, const std::string& stationname, const Date& date_in,
-						    std::string& filename_out, Date& date_out);
+		                        std::string& filename_out, Date& date_out);
 		void xmlParseStringToDouble(const std::string& str_in, double& d_out, const std::string& parname);
 		std::string xmlGetNodeContent(xmlpp::Node* pNode, const std::string& nodename);
 		void xmlExtractData(const std::string& filename, const Date& date_in, MeteoData& md, StationData& sd);
@@ -91,14 +91,17 @@ class BormaIO : public IOInterface {
 		                std::vector< std::vector<MeteoData> >& vecMeteo,
 		                const unsigned int& stationnr);
 
-		Config cfg;
+		size_t nr_stations; //number of stations to read from
 		double in_tz;
 		std::ifstream fin; //Input file streams
 		std::vector<std::string> vecStationName;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double default_tz; //default timezone
 		static const double pivot_year; //pivot year for Y2K suppport
+		static const std::string dflt_extension;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+
+		Config cfg;
 };
 
 } //end namespace mio

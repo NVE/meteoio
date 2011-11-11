@@ -67,6 +67,7 @@ namespace mio {
 
 const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
 const double CosmoXMLIO::out_tz = 0.; //Plugin specific time zone
+const std::string CosmoXMLIO::dflt_extension = ".xml";
 
 CosmoXMLIO::CosmoXMLIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -119,16 +120,15 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
  	cfg.getValue("METEOPATH", "Input", meteopath);
 	if (meteopath == "")
 		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
-	const string pattern = "xml";
+	const string pattern = dflt_extension;
 	list<string> dirlist;
 	IOUtils::readDirectory(meteopath, dirlist, pattern);
 	dirlist.sort();
 
-	vecStation.clear();	//Initialize Station Vector
+	vecStation.clear(); //Initialize Station Vector
 
-	list<string>::iterator itr;	//To loop in the stations list
-
-	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	//Loop over all stations in the meteopath directory
+	for( list<string>::iterator itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {
+		//Loop over all stations in the meteopath directory
 		station_path = meteopath + "/" + *itr;
 
 		StationData sd;
@@ -443,7 +443,7 @@ void CosmoXMLIO::writeFooter(std::stringstream& XMLdata)
 }
 
 void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
-						const std::string&)
+                                const std::string&)
 {
 	ofstream fout;
 	string filename="", meteopath_out = "", line;

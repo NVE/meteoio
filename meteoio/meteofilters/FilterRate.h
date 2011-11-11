@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __RATEFILTER_H__
-#define __RATEFILTER_H__
+#ifndef __FILTERRATE_H__
+#define __FILTERRATE_H__
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -25,7 +25,7 @@
 namespace mio {
 
 /**
- * @class  RateFilter
+ * @class  FilterRate
  * @ingroup processing
  * @author Thomas Egger - Mathias Bavay
  * @date   2011-04-19
@@ -41,9 +41,9 @@ namespace mio {
  * TA::arg1	= -0.01 0.015
  * @endcode
  */
-class RateFilter : public FilterBlock {
+class FilterRate : public FilterBlock {
 	public:
-		RateFilter(const std::vector<std::string>& vec_args);
+		FilterRate(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

@@ -10,7 +10,8 @@ SET(meteofilters_sources
 	meteofilters/FilterWindAvg.cc
 	meteofilters/FilterStdDev.cc
 	meteofilters/FilterTukey.cc
-	meteofilters/RateFilter.cc
+	meteofilters/FilterRate.cc
+	meteofilters/FilterHNWMelt.cc
 	meteofilters/FilterBlock.cc
 	meteofilters/WindowedFilter.cc
 	meteofilters/ProcessingBlock.cc

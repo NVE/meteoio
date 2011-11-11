@@ -42,13 +42,13 @@ namespace mio {
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - METEOPATH: string containing the path to the xml files
- * - NROFSTATIONS: total number of stations listed for use
  * - STATION#: station id for the given number #
  */
 
 const double BormaIO::plugin_nodata = -999.0; //plugin specific nodata value
 const double BormaIO::default_tz = +1.; //default timezone
 const double BormaIO::pivot_year = 80.; //pivot year for Y2K suppport
+const std::string BormaIO::dflt_extension = ".xml";
 
 BormaIO::BormaIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -147,25 +147,23 @@ void BormaIO::readStationNames()
 {
 	vecStationName.clear();
 
-	//Read in the StationNames
-	std::string xmlpath="", str_stations="";
-	int stations=0;
+	size_t counter = 1;
+	string stationname = "";
 
-	cfg.getValue("NROFSTATIONS", "Input", str_stations);
+	do {
+		stringstream ss;
+		stationname = "";
 
-	if (!IOUtils::convertString(stations, str_stations, std::dec)) {
-		throw ConversionFailedException("Error while reading value for NROFSTATIONS", AT);
-	}
+		ss << "STATION" << counter;
+		cfg.getValue(ss.str(), "Input", stationname, Config::nothrow);
 
-	for (int ii=0; ii<stations; ii++) {
-		std::stringstream tmp_stream;
-		std::string stationname="", tmp_file="";
+		if (stationname != ""){
+			vecStationName.push_back(stationname);
+		}
+		counter++;
+	} while (stationname != "");
 
-		tmp_stream << (ii+1); //needed to construct key name
-		cfg.getValue(std::string("STATION"+tmp_stream.str()), "Input", stationname);
-
-		vecStationName.push_back(stationname);
-	}
+	nr_stations = counter - 1;
 }
 
 void BormaIO::getFiles(const std::string& stationname, const Date& start_date, const Date& end_date,
@@ -176,7 +174,7 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
 
 	cfg.getValue("METEOPATH", "Input", xmlpath);
 	vecFiles.clear();
-	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + ".xml");
+	IOUtils::readDirectory(xmlpath, dirlist, "_" + stationname + dflt_extension);
 	dirlist.sort();
 
 	//Check date in every filename

@@ -15,20 +15,20 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteofilters/RateFilter.h>
+#include <meteoio/meteofilters/FilterRate.h>
 #include <cmath>
 
 using namespace std;
 
 namespace mio {
 
-RateFilter::RateFilter(const std::vector<std::string>& vec_args) : FilterBlock("RATE")
+FilterRate::FilterRate(const std::vector<std::string>& vec_args) : FilterBlock("RATE")
 {
 	parse_args(vec_args);
 	properties.for_second_pass = true; //for the rest: default values
 }
 
-void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterRate::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
@@ -68,7 +68,7 @@ void RateFilter::process(const unsigned int& index, const std::vector<MeteoData>
 	}
 }
 
-void RateFilter::parse_args(std::vector<std::string> vec_args) {
+void FilterRate::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 	FilterBlock::convert_args(1, 2, vec_args, filter_args);
 

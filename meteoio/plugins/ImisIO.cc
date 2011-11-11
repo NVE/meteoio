@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "ImisIO.h"
+#include <meteoio/meteolaws/Meteoconst.h>
 
 using namespace std;
 using namespace oracle;
@@ -48,6 +49,7 @@ namespace mio {
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations
+ * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, winter conditions are detected by looking at TA and TSS and used to accept (or refuse) a precipitation measurement. If set to true, this should always be followed by the FilterHNWMelt filter to detect snow melting in the rain gauge.
  */
 
 const double ImisIO::plugin_nodata = -999.; ///< plugin specific nodata value
@@ -172,6 +174,8 @@ void ImisIO::getDBParameters()
 
 	useAnetz = false;
 	cfg.getValue("USEANETZ", "Input", useAnetz, Config::nothrow);
+	use_hnw_imis = false;
+	cfg.getValue("USE_IMIS_HNW", "Input", use_hnw_imis, Config::nothrow);
 }
 
 ImisIO::ImisIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
@@ -671,9 +675,29 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		//For IMIS stations the hnw value is a rate (kg m-2 h-1), therefore we need to
 		//divide it by two to conjure the accumulated value for the half hour
 		if (tmpmd.meta.stationID.length() > 0){
-			if (tmpmd.meta.stationID[0] != '*') //excludes ANETZ stations, they come in hourly sampling
-				if (tmpmd(MeteoData::HNW) != IOUtils::nodata)
-					tmpmd(MeteoData::HNW) /= 2; //half hour accumulated value for IMIS stations only
+			if (tmpmd.meta.stationID[0] != '*') { //only consider IMIS stations (ie: not ANETZ)
+				if(use_hnw_imis==false) {
+					tmpmd(MeteoData::HNW) = IOUtils::nodata;
+				} else {
+					//IMIS stations don't have heated rain gauge, so they are NOT reliable in winter conditions
+					const double ta = tmpmd(MeteoData::TA);
+					const double tss = tmpmd(MeteoData::TSS);
+					double& hnw = tmpmd(MeteoData::HNW);
+
+					if(hnw!=IOUtils::nodata) {
+						if(ta!=IOUtils::nodata && ta<=Cst::t_water_freezing_pt) {
+							hnw = IOUtils::nodata;
+						} else if(tss!=IOUtils::nodata && tss<=Cst::t_water_freezing_pt) {
+							hnw = IOUtils::nodata;
+						} else if(ta==IOUtils::nodata && tss==IOUtils::nodata) {
+							//if we could not check that it is not freezing, we invalidate
+							//the measurement for safety
+							hnw = IOUtils::nodata;
+						} else
+							hnw /= 2.; //half hour accumulated value for IMIS stations only
+					}
+				}
+			}
 		}
 
 		vecMeteo.at(stationindex).push_back(tmpmd); //Now insert tmpmd

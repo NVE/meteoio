@@ -64,7 +64,8 @@
 //#include <meteoio/meteofilters/FilterMinMax.h>
 #include <meteoio/meteofilters/ProcessingBlock.h>
 #include <meteoio/meteofilters/ProcessingStack.h>
-//#include <meteoio/meteofilters/RateFilter.h>
+//#include <meteoio/meteofilters/FilterRate.h>
+//#include <meteoio/meteofilters/FilterHNWMelt.h>
 //#include <meteoio/meteofilters/FilterStdDev.h>
 //#include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/WindowedFilter.h>

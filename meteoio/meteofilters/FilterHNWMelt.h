@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERMAX_H__
-#define __FILTERMAX_H__
+#ifndef __FILTERHNWMELT_H__
+#define __FILTERHNWMELT_H__
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -25,34 +25,33 @@
 namespace mio {
 
 /**
- * @class  FilterMax
+ * @class  FilterHNWMelt
  * @ingroup processing
- * @author Thomas Egger - Mathias Bavay
- * @date   2011-01-02
- * @brief Max range filter.
- * Reject all values greater than the max. Remarks:
- * - the maximum permissible value has to be provided has an argument (in SI)
- * - the keyword "soft" maybe added, in such a case all data greater than the max would be assigned
- * either the maximum permissible value or another value given as an extra argument (350 in the example below)
+ * @author Mathias Bavay
+ * @date   2011-11-11
+ * @brief Filters out snow melting in an unheated rain gauge.
+ * This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place
+ * when the relative humidity is greater than 0.5 and abs(TA-TSS) < 3, otherwise they get rest to 0.
+ * It can take two optional arguments overwriting these thresholds.
+ *
  * @code
- * TA::filter1	= max
- * TA::arg1	= soft 330 350
+ * HNW::filter2	= hnw_melt
+ * HNW::arg2	= 0.5 3.
  * @endcode
  */
 
-class FilterMax : public FilterBlock {
+class FilterHNWMelt : public FilterBlock {
 	public:
-		FilterMax(const std::vector<std::string>& vec_args);
+		FilterHNWMelt(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-						 std::vector<MeteoData>& ovec);
+		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
 
-		bool is_soft;
-		double max_val;
-		double max_soft;
+		double thresh_rh;
+		double thresh_Dt;
 };
 
 } //end namespace

@@ -83,7 +83,8 @@ namespace mio {
 			void writeFooter(std::stringstream& XMLdata);	//Write the last lines of the XML output file
 
 			Config cfg;
-			double plugin_nodata;	//plugin specific no data value
+			static const std::string dflt_extension;
+			double plugin_nodata; //plugin specific no data value
 			static const double in_tz, out_tz; //plugin specific time zones
 			std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 	};

@@ -109,7 +109,8 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteofilters/FilterWindAvg.o \
 		$(SRCDIR)/meteofilters/FilterStdDev.o \
 		$(SRCDIR)/meteofilters/FilterTukey.o \
-		$(SRCDIR)/meteofilters/RateFilter.o \
+		$(SRCDIR)/meteofilters/FilterRate.o \
+		$(SRCDIR)/meteofilters/FilterHNWMelt.o \
 		$(SRCDIR)/meteofilters/FilterBlock.o \
 		$(SRCDIR)/meteofilters/WindowedFilter.o \
 		$(SRCDIR)/meteofilters/ProcessingBlock.o \
@@ -156,7 +157,8 @@ METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/meteofilters/FilterWindAvg_par.o \
 		$(SRCDIR)/meteofilters/FilterStdDev_par.o \
 		$(SRCDIR)/meteofilters/FilterTukey_par.o \
-		$(SRCDIR)/meteofilters/RateFilter_par.o \
+		$(SRCDIR)/meteofilters/FilterRate_par.o \
+		$(SRCDIR)/meteofilters/FilterHNWMelt_par.o \
 		$(SRCDIR)/meteofilters/FilterBlock_par.o \
 		$(SRCDIR)/meteofilters/WindowedFilter_par.o \
 		$(SRCDIR)/meteofilters/ProcessingBlock_par.o \
