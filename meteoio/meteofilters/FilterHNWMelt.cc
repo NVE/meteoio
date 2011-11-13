@@ -29,6 +29,11 @@ FilterHNWMelt::FilterHNWMelt(const std::vector<std::string>& vec_args) : FilterB
 void FilterHNWMelt::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
+	if(index!=MeteoData::HNW) {
+		stringstream ss;
+		ss << "Can not use " << getName() << " processing on " << MeteoData::getParameterName(index);
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 	ovec.clear();
 	ovec.reserve(ivec.size());
 
@@ -44,9 +49,11 @@ void FilterHNWMelt::process(const unsigned int& index, const std::vector<MeteoDa
 			const double tss = ivec[ii](MeteoData::TSS);
 
 			if (rh!=IOUtils::nodata &&  rh<thresh_rh) //not enough humidity for precipitation
-				tmp = IOUtils::nodata;
+				tmp = 0.;
 			if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)>thresh_Dt ) //clear sky condition
-				tmp = IOUtils::nodata;
+				tmp = 0.;
+                        if ( rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
+                                tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
 		}
 	}
 }

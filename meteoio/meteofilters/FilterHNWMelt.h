@@ -31,8 +31,9 @@ namespace mio {
  * @date   2011-11-11
  * @brief Filters out snow melting in an unheated rain gauge.
  * This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place
- * when the relative humidity is greater than 0.5 and abs(TA-TSS) < 3, otherwise they get rest to 0.
- * It can take two optional arguments overwriting these thresholds.
+ * when the relative humidity is greater than 0.5 and (TA-TSS) < 3, otherwise they get reset to 0.
+ * It can take two optional arguments overwriting these thresholds. If none of these conditions could be tested
+ * (for lack of data), then the precipitation is reset to nodata.
  *
  * @code
  * HNW::filter2	= hnw_melt
