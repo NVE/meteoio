@@ -23,8 +23,8 @@
 #include <iostream>
 #include <stdlib.h>
 
-#ifdef LINUX
-#include <execinfo.h> //needed for the backtracing of the stack
+#if defined(LINUX) && !defined(ANDROID)
+	#include <execinfo.h> //needed for the backtracing of the stack
 #endif
 
 #define STRINGIFY(x) #x
