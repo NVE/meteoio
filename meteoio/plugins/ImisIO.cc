@@ -49,7 +49,7 @@ namespace mio {
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations
- * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, winter conditions are detected by looking at TA and TSS and used to accept (or refuse) a precipitation measurement. If set to true, this should always be followed by the FilterHNWMelt filter to detect snow melting in the rain gauge.
+ * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the FilterHNWMelt filter to detect snow melting in the rain gauge as well as winter conditions detection (no such filter implemented yet).
  */
 
 const double ImisIO::plugin_nodata = -999.; ///< plugin specific nodata value
@@ -679,22 +679,9 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 				if(use_hnw_imis==false) {
 					tmpmd(MeteoData::HNW) = IOUtils::nodata;
 				} else {
-					//IMIS stations don't have heated rain gauge, so they are NOT reliable in winter conditions
-					const double ta = tmpmd(MeteoData::TA);
-					const double tss = tmpmd(MeteoData::TSS);
 					double& hnw = tmpmd(MeteoData::HNW);
-
 					if(hnw!=IOUtils::nodata) {
-						if(ta!=IOUtils::nodata && ta<=Cst::t_water_freezing_pt) {
-							hnw = IOUtils::nodata;
-						} else if(tss!=IOUtils::nodata && tss<=Cst::t_water_freezing_pt) {
-							hnw = IOUtils::nodata;
-						} else if(ta==IOUtils::nodata && tss==IOUtils::nodata) {
-							//if we could not check that it is not freezing, we invalidate
-							//the measurement for safety
-							hnw = IOUtils::nodata;
-						} else
-							hnw /= 2.; //half hour accumulated value for IMIS stations only
+						hnw /= 2.; //half hour accumulated value for IMIS stations only
 					}
 				}
 			}
