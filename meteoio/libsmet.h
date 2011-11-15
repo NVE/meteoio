@@ -67,7 +67,7 @@ class SMETCommon {
 		static void trim(std::string& str);
 		static void toUpper(std::string& str);
 		static bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
-							    std::map<std::string,std::string>& out_map);
+		                             std::map<std::string,std::string>& out_map);
 
 		static size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vec_string);
 		static bool is_decimal(const std::string& value);
@@ -108,7 +108,7 @@ class SMETReader {
 		 * @param[out] vec_data A vector of double holding all double values of all lines sequentially
 		 */
 		void read(const std::string& timestamp_start, const std::string& timestamp_end,
-				std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
+		          std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 
 		/**
 		 * @brief Read the data in a SMET file for a given interval of time

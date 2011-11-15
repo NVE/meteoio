@@ -429,13 +429,13 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	}
 
 	if (!timestamp_present)
-		throw SMETException("No timestamp present, use write(const vector<double>& data)", SMET_AT);
+		throw SMETException("No timestamp present when writing file '"+filename+"', use write(const vector<double>& data)", SMET_AT);
 
 	const size_t nr_of_data_fields = nr_of_fields - 1;
 
 	size_t nr_of_lines = data.size() / (nr_of_fields-1);
 	if ((nr_of_lines != vec_timestamp.size()) || ((data.size() % (nr_of_fields-1)) != 0))
-		throw SMETException("Inconsistency between vec_timestamp and data detected, recheck your data", SMET_AT);
+		throw SMETException("Inconsistency between vec_timestamp and data detected in file '"+filename+"', recheck your data", SMET_AT);
 
 	std::vector<double> current_data;
 	current_data.resize(nr_of_fields-1); //HACK: check if nr_of_fields>0
@@ -470,7 +470,7 @@ void SMETWriter::write(const std::vector<double>& data)
 
 	size_t nr_of_lines = data.size() / nr_of_fields;
 	if ((data.size() % nr_of_fields) != 0)
-		throw SMETException("Inconsistency between data and header fields detected, recheck your data", SMET_AT);
+		throw SMETException("Inconsistency between data and header fields detected in file '"+filename+"', recheck your data", SMET_AT);
 
 	std::vector<double> current_data;
 	current_data.resize(nr_of_fields);
@@ -500,7 +500,7 @@ void SMETWriter::write_header()
 	map<string,string>::iterator it;
 
 	if (!valid_header())
-		throw SMETException("The header data you supplied is not valid, file cannot be written", SMET_AT);
+		throw SMETException("The header data you supplied is not valid, file '"+filename+"' cannot be written", SMET_AT);
 
 	write_signature();
 
@@ -685,7 +685,7 @@ std::string SMETReader::get_field_name(const size_t& nr_of_field)
 	if (nr_of_field < nr_of_fields){
 		return vec_fieldnames[nr_of_fields];
 	} else {
-		throw SMETException("The field you're trying to access is out of bounds", SMET_AT);
+		throw SMETException("The field you're trying to access in file '"+filename+"' is out of bounds", SMET_AT);
 	}
 }
 
@@ -819,13 +819,13 @@ void SMETReader::process_header()
 	}
 
 	if (obligatory_keys.size() != SMETCommon::all_mandatory_header_keys.size())
-		throw SMETException("Not a valid SMET file, mandatory information in header is missing", SMET_AT);
+		throw SMETException("'"+filename+"' is not a valid SMET file, mandatory information in header is missing", SMET_AT);
 
 	if ((location_wgs84 == 7) || (location_epsg == 15) || (location_data_wgs84 == 7)
 	    || ((location_epsg == 8) && (location_data_epsg == 7))){
 		//location info present somewhere
 	} else {
-		throw SMETException("Not a valid SMET file, mandatory location info is missing (header and data)", SMET_AT);
+		throw SMETException("'"+filename+"' is not a valid SMET file, mandatory location info is missing (header and data)", SMET_AT);
 	}
 }
 
@@ -859,7 +859,7 @@ void SMETReader::read_header(std::ifstream& fin)
 
 		if (line != "") {
 			if (!SMETCommon::readKeyValuePair(line, "=", header))
-				throw SMETException("Invalid key value pair in section [Header]: " + line, SMET_AT);
+				throw SMETException("Invalid key value pair in file '"+filename+"', in [Header] section: " + line, SMET_AT);
 		}
 
 	}
@@ -934,7 +934,7 @@ void SMETReader::read(const double& i_julian_start, const double& i_julian_end, 
 void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data)
 {
 	if (!timestamp_present)
-		throw SMETException("Requesting to read timestamp when there is none present", SMET_AT);
+		throw SMETException("Requesting to read timestamp when there is none present in '"+filename+"'", SMET_AT);
 
 	ifstream fin;
 	fin.clear();
@@ -960,7 +960,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 		if (isAscii)
 			read_data_ascii(fin, vec_timestamp, vec_data);
 		else
-			throw SMETException("Binary SMET file has no field timestamp, only julian date", SMET_AT);
+			throw SMETException("Binary SMET file '"+filename+"' has no field timestamp, only julian date", SMET_AT);
 	} catch(...) {
 		cleanup(fin);
 		throw;
@@ -972,7 +972,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 void SMETReader::read(std::vector<double>& vec_data)
 {
 	if (timestamp_present)
-		SMETException("Requesting not to read timestamp when there is one present", SMET_AT);
+		SMETException("Requesting not to read timestamp when there is one present in '"+filename+"'", SMET_AT);
 
 	vector<string> tmp_vec;
 
@@ -1110,7 +1110,7 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 		char c;
 		fin.read(&c, sizeof(char));
 		if (c != '\n')
-			throw SMETException("Corrupted data in section [DATA]", SMET_AT);
+			throw SMETException("Corrupted data in section [DATA] of binary SMET file '"+filename+"'", SMET_AT);
 	}
 
 	if (current_fpointer != static_cast<streampos>(-1)){
