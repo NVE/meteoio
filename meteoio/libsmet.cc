@@ -827,6 +827,16 @@ void SMETReader::process_header()
 	} else {
 		throw SMETException("'"+filename+"' is not a valid SMET file, mandatory location info is missing (header and data)", SMET_AT);
 	}
+
+	const size_t nr_offset = vec_offset.size();
+	const size_t nr_multiplier = vec_multiplier.size();
+	if ((nr_offset>0 && nr_offset!=nr_of_fields) || (nr_multiplier>0 && nr_multiplier!=nr_of_fields)) {
+		std::stringstream ss;
+		ss << "File \'" << filename << "\' has " << nr_of_fields << " data fields, but specifies ";
+		ss << nr_offset << " offsets and " << nr_multiplier << " multipliers. ";
+		ss << "The number of offsets and multipliers MUST fit the number of fields, including the (optional) timestamp column.";
+		throw SMETException(ss.str(), SMET_AT);
+	}
 }
 
 void SMETReader::read_header(std::ifstream& fin)
@@ -1057,6 +1067,11 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 				}
 			}
 			current_fpointer = tmp_fpointer;
+		} else {
+			std::stringstream ss;
+			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
+			ss << "but this does not match the following line:\n" << line;
+			throw SMETException(ss.str(), SMET_AT);
 		}
 	}
 
