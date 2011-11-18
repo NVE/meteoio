@@ -192,7 +192,6 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln); //read complete line
-			//cout << "k:" << kk << "\n" << line << endl;
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
 				throw InvalidFormatException("Premature End " + filename, AT);
@@ -224,7 +223,7 @@ void ARCIO::readDEM(DEMObject& dem_out)
 void ARCIO::readLanduse(Grid2DObject& landuse_out)
 {
 	string filename="";
-	cfg.getValue("LANDUSEFILE", "Input", filename); // cout << tmp << endl;
+	cfg.getValue("LANDUSEFILE", "Input", filename);
 	read2DGrid(landuse_out, filename);
 }
 
@@ -234,7 +233,7 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	date_in.getDate(yyyy, MM, dd, hh, mm);
 	string filepath="";
 
-	cfg.getValue("DAPATH", "Input", filepath); // cout << tmp << endl;
+	cfg.getValue("DAPATH", "Input", filepath);
 
 	stringstream ss;
 	ss.fill('0');
@@ -282,18 +281,18 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		llcorner.setProj(coordout, coordoutparam);
 
 		fout << fixed << showpoint << setprecision(6);
-		fout << "ncols " << setw(23-6) << grid_in.ncols << endl;
-		fout << "nrows " << setw(23-6) << grid_in.nrows << endl;
-		fout << "xllcorner " << setw(23-10) << setprecision(3) << llcorner.getEasting() << endl;
-		fout << "yllcorner " << setw(23-10) << setprecision(3) << llcorner.getNorthing() << endl;
-		fout << "cellsize " << setw(23-9) << setprecision(3) << grid_in.cellsize << endl;
-		fout << "NODATA_value " << (int)(IOUtils::nodata) << endl;
+		fout << "ncols " << setw(23-6) << grid_in.ncols << "\n";
+		fout << "nrows " << setw(23-6) << grid_in.nrows << "\n";
+		fout << "xllcorner " << setw(23-10) << setprecision(3) << llcorner.getEasting() << "\n";
+		fout << "yllcorner " << setw(23-10) << setprecision(3) << llcorner.getNorthing() << "\n";
+		fout << "cellsize " << setw(23-9) << setprecision(3) << grid_in.cellsize << "\n";
+		fout << "NODATA_value " << (int)(IOUtils::nodata) << "\n";
 
 		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 			for (unsigned int ll=0; ll < grid_in.ncols; ll++){
 				fout << grid_in.grid2D(ll, kk) << " ";
 			}
-			fout << endl;
+			fout << "\n";
 		}
 	} catch(...) {
 		cout << "[E] " << AT << ": "<< endl;

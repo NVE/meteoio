@@ -179,7 +179,7 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 				if (jj==0){ //This is for writing the header
 					if (kk==0) fout << "Date";
 					fout << "," << vecSequence[kk];
-					if (kk==(vecSequence.size()-1)) fout << endl;
+					if (kk==(vecSequence.size()-1)) fout << "\n";
 				}
 
 				//Write all the data, make sure to transform the nodata values correctly
@@ -188,7 +188,7 @@ void GeotopIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 				else
 					ss << ", " << setprecision(7) << tmpmd(mapParam[vecSequence[kk]]);
 			}
-			fout << ss.str() << endl;
+			fout << ss.str() << "\n";
 		}
 
 		fout.close();
@@ -220,10 +220,9 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	cfg.getValue("METEOPREFIX", "Input", prefix);
 
 	vector<StationData> myStations;
-	/*
-	 * read _meteo.txt to find out how many stations exist
-	 * at what locations they are and what column headers to use
-	 */
+
+	//read _meteo.txt to find out how many stations exist
+	//at what locations they are and what column headers to use
 	readMetaData(myStations, vecColumnNames, path + "/" + prefix + ".txt");
 	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
 		vec_streampos = vector< map<Date, std::streampos> >(myStations.size());
@@ -238,7 +237,6 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		ss << path << "/" << prefix << setw(4) << (ii+1) << ".txt";
 
 		filename = ss.str();
-		//cout << ss.str() << endl;
 
 		if (!IOUtils::validFileName(filename))
 			throw InvalidFileNameException(filename, AT);

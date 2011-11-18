@@ -381,9 +381,6 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 		if ((olwr_present) && (tmp_md(MeteoData::TSS) == IOUtils::nodata)) {//HACK
 			tmp_md(MeteoData::TSS) = olwr_to_tss(tmp_md("OLWR"));
 		}
-
-		//cout << tmp_md << endl;
-		//cout << endl;
 	}
 }
 

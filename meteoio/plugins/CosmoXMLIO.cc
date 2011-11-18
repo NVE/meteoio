@@ -374,7 +374,7 @@ void CosmoXMLIO::writeHeader(std::stringstream& XMLdata)
 //Writes station data
 void CosmoXMLIO::writeLocationHeader(const StationData& station, std::stringstream& XMLdata)
 {
-		XMLdata << "<col>\n<ttable id=\"data\">\n<row>" << endl;
+		XMLdata << "<col>\n<ttable id=\"data\">\n<row>" << "\n";
 		XMLdata << "<col id=\"identifier\">" << station.getStationName() << "</col>\n";
 		XMLdata << "<col id=\"station_abbreviation\">" << station.getStationID() << "</col>\n";
 

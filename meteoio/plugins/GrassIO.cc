@@ -137,7 +137,6 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln); //read complete line
-			//cout << "k:" << kk << "\n" << line << endl;
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
 				throw InvalidFormatException("Premature End " + filename, AT);
@@ -177,7 +176,7 @@ void GrassIO::readDEM(DEMObject& dem_out)
 void GrassIO::readLanduse(Grid2DObject& landuse_out)
 {
 	string filename="";
-	cfg.getValue("LANDUSEFILE", "Input", filename); // cout << tmp << endl;
+	cfg.getValue("LANDUSEFILE", "Input", filename);
 	read2DGrid(landuse_out, filename);
 }
 
@@ -187,7 +186,7 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	date_in.getDate(yyyy, MM, dd, hh, mm);
 	string filepath="";
 
-	cfg.getValue("DAPATH", "Input", filepath); // cout << tmp << endl;
+	cfg.getValue("DAPATH", "Input", filepath);
 
 	stringstream ss;
 	ss.fill('0');
@@ -237,12 +236,12 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	fout << setprecision(6) << fixed;
 
 	try {
-		fout << "north:" << (llcorner.getNorthing()+grid_in.cellsize*grid_in.nrows) << std::endl;
-		fout << "south:" << llcorner.getNorthing() << std::endl;
-		fout << "east:"  << (llcorner.getEasting()+grid_in.cellsize*grid_in.ncols)  << std::endl;
-		fout << "west:"  << llcorner.getEasting() << std::endl;
-		fout << "rows:"  << grid_in.nrows << std::endl;
-		fout << "cols:"  << grid_in.ncols << std::endl;
+		fout << "north:" << (llcorner.getNorthing()+grid_in.cellsize*grid_in.nrows) << "\n";
+		fout << "south:" << llcorner.getNorthing() << "\n";
+		fout << "east:"  << (llcorner.getEasting()+grid_in.cellsize*grid_in.ncols)  << "\n";
+		fout << "west:"  << llcorner.getEasting() << "\n";
+		fout << "rows:"  << grid_in.nrows << "\n";
+		fout << "cols:"  << grid_in.ncols << "\n";
 
 		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 			unsigned int ll = 0;
@@ -260,7 +259,7 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			} else {
 				fout << grid_in.grid2D(ll, kk);
 			}
-			fout << std::endl;
+			fout << "\n";
 		}
 	} catch(const std::exception& e) {
 		cout << "[E] " << AT << ": " << e.what() << std::endl;

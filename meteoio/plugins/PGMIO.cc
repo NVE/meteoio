@@ -136,7 +136,6 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln); //read complete line
-			//cout << "k:" << kk << "\n" << line << endl;
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
 				throw InvalidFormatException("Premature End " + filename, AT);
@@ -246,7 +245,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 				else
 					fout << "0" << " ";
 			}
-			fout << endl;
+			fout << "\n";
 		}
 	} catch(...) {
 		cout << "[E] " << AT << ": "<< endl;

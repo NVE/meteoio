@@ -390,9 +390,9 @@ void SMETWriter::write_signature()
 {
 	fout << "SMET " << SMETCommon::smet_version << " ";
 	if (smet_type == ASCII)
-		fout << "ASCII" << endl;
+		fout << "ASCII" << "\n";
 	else
-		fout << "BINARY" << endl;
+		fout << "BINARY" << "\n";
 }
 
 bool SMETWriter::valid_header()
@@ -504,64 +504,64 @@ void SMETWriter::write_header()
 
 	write_signature();
 
-	fout << "[HEADER]" << endl;
-	fout << "station_id       = " << header["station_id"] << endl;
+	fout << "[HEADER]" << "\n";
+	fout << "station_id       = " << header["station_id"] << "\n";
 
 	it = header.find("station_name");
 	if (it != header.end())
-		fout << "station_name     = " << it->second << endl;
+		fout << "station_name     = " << it->second << "\n";
 
 	if (location_in_header){
 		if (location_wgs84 == 7){
-			fout << "latitude         = " << header["latitude"]  << endl;
-			fout << "longitude        = " << header["longitude"] << endl;
-			fout << "altitude         = " << header["altitude"]  << endl;
+			fout << "latitude         = " << header["latitude"]  << "\n";
+			fout << "longitude        = " << header["longitude"] << "\n";
+			fout << "altitude         = " << header["altitude"]  << "\n";
 		}
 
 		if (location_epsg == 15){
-			fout << "easting          = " << header["easting"]   << endl;
-			fout << "northing         = " << header["northing"]  << endl;
+			fout << "easting          = " << header["easting"]   << "\n";
+			fout << "northing         = " << header["northing"]  << "\n";
 			if (location_wgs84 != 7)
-				fout << "altitude         = " << header["altitude"]  << endl;
-			fout << "epsg             = " << header["epsg"]  << endl;
+				fout << "altitude         = " << header["altitude"]  << "\n";
+			fout << "epsg             = " << header["epsg"]  << "\n";
 		}
 	} else {
 		if (location_in_data_epsg)
-			fout << "epsg             = " << header["epsg"]      << endl;
+			fout << "epsg             = " << header["epsg"]      << "\n";
 	}
 
-	fout << "nodata           = " << header["nodata"] << endl;
+	fout << "nodata           = " << header["nodata"] << "\n";
 
 	//Optional header keys:
 	it = header.find("tz");
 	if (it != header.end())
-		fout << "tz               = " << it->second << endl;
+		fout << "tz               = " << it->second << "\n";
 
 	it = header.find("creation");
 	if (it != header.end())
-		fout << "creation         = " << it->second << endl;
+		fout << "creation         = " << it->second << "\n";
 
 	it = header.find("source");
 	if (it != header.end())
-		fout << "source           = " << it->second << endl;
+		fout << "source           = " << it->second << "\n";
 
 	it = header.find("units_offset");
 	if (it != header.end())
-		fout << "units_offset     = " << it->second << endl;
+		fout << "units_offset     = " << it->second << "\n";
 
 	it = header.find("units_multiplier");
 	if (it != header.end())
-		fout << "units_multiplier = " << it->second << endl;
+		fout << "units_multiplier = " << it->second << "\n";
 
 	it = header.find("comment");
 	if (it != header.end())
-		fout << "comment          = " << it->second << endl;
+		fout << "comment          = " << it->second << "\n";
 
 	for (size_t ii=0; ii<other_header_keys.size(); ii++){
-		fout << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << endl;
+		fout << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
 	}
 
-	fout << "fields           = " << header["fields"] << endl;
+	fout << "fields           = " << header["fields"] << "\n";
 	fout << "[DATA]" << endl;
 }
 
@@ -608,7 +608,7 @@ void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::
 		if (data[ii] == nodata_value) fout << nodata_string; //to have a nicer representation
 		else fout << data[ii];
 	}
-	fout << endl;
+	fout << "\n";
 }
 
 void SMETWriter::check_formatting()

@@ -387,11 +387,11 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
 		if (current_station != "") {
-			cout << "\tRead stationname " << ss.str() << ": '" << current_station << "'" << endl;
+			cout << "\tRead stationname " << ss.str() << ": '" << current_station << "'\n";
 			if (!isdigit(current_station[0])) {
 				vecStationID.push_back(current_station);
 			} else {
-				cout << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!" << endl;
+				cout << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!\n";
 			}
 		}
 
@@ -497,7 +497,7 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 		if (counter >= current_station_psum.size()) { break; } //should never happen
 
 		//cout << "Current slice date: " << current_slice_date.toString(Date::ISO)
-		//	<< "  value: " << current_station_psum.at(counter) << endl;
+		//	<< "  value: " << current_station_psum.at(counter) << "\n";
 
 		double& hnw = vecMeteo[stationindex][jj](MeteoData::HNW);
 		//cout << vecMeteo[stationindex][jj].date.toString(Date::ISO) << ": " << hnw;
@@ -505,7 +505,7 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 			//replace by psum if there is no own value measured
 			hnw = current_station_psum.at(counter);
 		}
-		//cout << "  ---> " << hnw << endl;
+		//cout << "  ---> " << hnw << "\n";
 	}
 }
 
@@ -528,8 +528,6 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t
 				sum += ad.coeffs[ii] * vec_of_psums.at(vecIndex[ii])[kk];
 			}
 			psum.push_back(sum/12.0);
-
-			//cout << kk << " --> sum: " << sum/12 << endl;
 		}
 	} else {
 		if (ad.nrOfCoefficients != 3)
@@ -540,8 +538,8 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t
 			double sum = 0.0;
 			const double& hnw0 = vec_of_psums.at(vecIndex.at(0))[kk];
 			const double& hnw1 = vec_of_psums.at(vecIndex.at(1))[kk];
-			//cout << "0: Using " << ad.anetzstations[0] << " with hnw: " << hnw0 << endl;
-			//cout << "1: Using " << ad.anetzstations[1] << " with hnw: " << hnw1 << endl;
+			//cout << "0: Using " << ad.anetzstations[0] << " with hnw: " << hnw0 << "\n";
+			//cout << "1: Using " << ad.anetzstations[1] << " with hnw: " << hnw1 << "\n";
 			sum += ad.coeffs[0] * hnw0;
 			sum += ad.coeffs[1] * hnw1;
 			sum += ad.coeffs[2] * hnw0 * hnw1;

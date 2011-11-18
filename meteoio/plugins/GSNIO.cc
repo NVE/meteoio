@@ -118,7 +118,7 @@ void GSNIO::initGSNConnection(){
 	cfg.getValue("ENDPOINT", "INPUT", endpoint, Config::nothrow);
 	if (endpoint != ""){
 		gsn.soap_endpoint = endpoint.c_str();
-		cout << "\tUsing GSN Endpoint: " << endpoint << endl;
+		cout << "\tUsing GSN Endpoint: " << endpoint << "\n";
 	}
 
 	/*
@@ -215,9 +215,9 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 		reverse(vecMeteo[ii].begin(), vecMeteo[ii].end()); //this is necessary because GSN data comes sorted descending by date
 		/*//The following block can be commented in for testing purposes
-		cout << "vecMeteo[" <<ii << "].size() = " <<  vecMeteo[ii].size() << endl;
+		cout << "vecMeteo[" <<ii << "].size() = " <<  vecMeteo[ii].size() << "\n";
 		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++){
-			cout << vecMeteo[ii][jj] << endl;
+			cout << vecMeteo[ii][jj] << "\n";
 		}*/
 	}
 }
@@ -451,7 +451,6 @@ void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& ol
 	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
 		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
 
-	//cout << endl << tmpmeteo << endl;
 	vecMeteo.push_back(tmpmeteo);
 	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
 }
@@ -483,7 +482,7 @@ void GSNIO::readStationNames()
 
 		if (current_station != ""){
 			vecStationName.push_back(current_station); //add station name to vector of all station names
-			cout << "\tRead stationname '" << current_station << "'" << endl;
+			cout << "\tRead stationname '" << current_station << "'\n";
 		}
 
 		current_stationnr++;
@@ -504,9 +503,9 @@ void GSNIO::listSensors(std::vector<std::string>& vec_names)
 	_ns1__listVirtualSensorNames sensor_req;
 
 	if (gsn.listVirtualSensorNames(&sensor_req, &sensor_names) == SOAP_OK){
-		cout << "[I] No STATIONS specified... Using all " << sensor_names.virtualSensorName.size() << " sensors available through GSN" << endl;
+		cout << "[I] No STATIONS specified... Using all " << sensor_names.virtualSensorName.size() << " sensors available through GSN\n";
 		for (size_t ii=0; ii<sensor_names.virtualSensorName.size(); ii++){
-			cout << "\tSTATION" << ii+1 << " = " << sensor_names.virtualSensorName[ii] << endl;
+			cout << "\tSTATION" << ii+1 << " = " << sensor_names.virtualSensorName[ii] << "\n";
 			vec_names.push_back(sensor_names.virtualSensorName[ii]);
 		}
 	} else {
