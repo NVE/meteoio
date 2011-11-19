@@ -62,7 +62,7 @@ void FilterHNWMelt::process(const unsigned int& index, const std::vector<MeteoDa
 void FilterHNWMelt::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 
-	FilterBlock::convert_args(1, 2, vec_args, filter_args);
+	FilterBlock::convert_args(0, 2, vec_args, filter_args);
 
 	const size_t nb_args = filter_args.size();
 	if (nb_args == 0) {
