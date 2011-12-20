@@ -25,33 +25,33 @@ using namespace std;
 namespace mio {
 
 const unsigned int legend::text_chars_nb = 9; //each label will contain 9 chars
-const unsigned int legend::char_width = 3+1; //3 pixels wide + 1 pixel space
+const unsigned int legend::char_width = 6+1; //6 pixels wide + 1 pixel space
 const unsigned int legend::text_width = legend::text_chars_nb*legend::char_width; //whole text line
-const unsigned int legend::sample_width = 3*2; //color sample 2 chars wide
-const unsigned int legend::sample_text_space = 2;
-const unsigned int legend::legend_plot_space = 3*2;
+const unsigned int legend::sample_width = legend::char_width*1; //color sample 2 chars wide
+const unsigned int legend::sample_text_space = 6;
+const unsigned int legend::legend_plot_space = legend::char_width*1;
 const unsigned int legend::total_width = legend::legend_plot_space+legend::sample_width+legend::sample_text_space+legend::text_width;
 
-const unsigned int legend::char_height = 5;
+const unsigned int legend::char_height = 10;
 const unsigned int legend::interline = 5;
-const unsigned int legend::label_height = legend::char_height+legend::interline; //1 char + 2 pixels interline
+const unsigned int legend::label_height = legend::char_height+legend::interline; //1 char + interline
 const unsigned int legend::nb_labels = 11; //every decile + 0 level
 const unsigned int legend::total_height = legend::nb_labels*legend::label_height;
 
-const unsigned int legend::font_0[5][3] = {{1,1,1}, {1,0,1}, {1,0,1}, {1,0,1}, {1,1,1}};
-const unsigned int legend::font_1[5][3] = {{0,0,1}, {0,1,1}, {0,0,1}, {0,0,1}, {0,0,1}};
-const unsigned int legend::font_2[5][3] = {{1,1,1}, {0,0,1}, {1,1,1}, {1,0,0}, {1,1,1}};
-const unsigned int legend::font_3[5][3] = {{1,1,1}, {0,0,1}, {0,1,1}, {0,0,1}, {1,1,1}};
-const unsigned int legend::font_4[5][3] = {{1,0,0}, {1,0,1}, {1,1,1}, {0,0,1}, {0,0,1}};
-const unsigned int legend::font_5[5][3] = {{1,1,1}, {1,0,0}, {1,1,0}, {0,0,1}, {1,1,0}};
-const unsigned int legend::font_6[5][3] = {{1,1,0}, {1,0,0}, {1,1,1}, {1,0,1}, {1,1,1}};
-const unsigned int legend::font_7[5][3] = {{1,1,1}, {0,0,1}, {0,0,1}, {0,0,1}, {0,0,1}};
-const unsigned int legend::font_8[5][3] = {{1,1,1}, {1,0,1}, {1,1,1}, {1,0,1}, {1,1,1}};
-const unsigned int legend::font_9[5][3] = {{1,1,1}, {1,0,1}, {1,1,1}, {0,0,1}, {1,1,1}};
-const unsigned int legend::font_plus[5][3] = {{0,0,0}, {0,1,0}, {1,1,1}, {0,1,0}, {0,0,0}};
-const unsigned int legend::font_minus[5][3] = {{0,0,0}, {0,0,0}, {1,1,1}, {0,0,0}, {0,0,0}};
-const unsigned int legend::font_dot[5][3] = {{0,0,0}, {0,0,0}, {0,0,0}, {0,1,0}, {0,0,0}};
-const unsigned int legend::font_E[5][3] = {{1,1,1}, {1,0,0}, {1,1,1}, {1,0,0}, {1,1,1}};
+const unsigned int legend::font_0[10][6] = {{0,0,1,1,0,0}, {0,1,0,0,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,0,1,1,0,1}, {1,0,0,0,0,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,1,0,0,1,0}, {0,0,1,1,0,0}};
+const unsigned int legend::font_1[10][6] = {{0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,1,1,1,0,0}, {1,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,1,1,1,1,0}};
+const unsigned int legend::font_2[10][6] = {{0,0,1,1,1,0}, {0,1,0,0,0,1}, {0,0,0,0,0,1}, {0,0,0,0,0,1}, {0,0,0,0,1,1}, {0,0,0,1,1,0}, {0,0,1,1,0,0}, {0,1,1,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,1,1}};
+const unsigned int legend::font_3[10][6] = {{0,0,1,1,1,0}, {0,1,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,1,1,1,0}, {0,0,0,0,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,1,1,1,1,0}};
+const unsigned int legend::font_4[10][6] = {{0,0,0,1,1,0}, {0,0,1,1,1,0}, {0,1,1,1,1,0}, {1,1,0,1,1,0}, {1,0,0,1,1,0}, {1,1,1,1,1,1}, {0,0,0,1,1,0}, {0,0,0,1,1,0}, {0,0,0,1,1,0}, {0,0,1,1,1,1}};
+const unsigned int legend::font_5[10][6] = {{1,1,1,1,1,1}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,0,0}, {0,0,0,0,1,0}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {1,0,0,0,1,0}, {0,1,1,1,0,0}};
+const unsigned int legend::font_6[10][6] = {{0,1,1,1,1,0}, {1,1,0,0,1,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,0,0}};
+const unsigned int legend::font_7[10][6] = {{1,1,1,1,1,1}, {0,0,0,0,1,1}, {0,0,0,1,1,0}, {0,0,0,1,0,0}, {0,0,1,1,0,0}, {0,0,1,0,0,0}, {0,1,1,0,0,0}, {0,1,0,0,0,0}, {1,1,0,0,0,0}, {1,1,0,0,0,0}};
+const unsigned int legend::font_8[10][6] = {{0,0,1,1,0,0}, {0,1,0,0,1,0}, {0,1,0,0,1,0}, {0,1,0,0,1,0}, {0,0,1,1,0,0}, {0,1,0,0,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,1,0,0,1,0}, {0,0,1,1,0,0}};
+const unsigned int legend::font_9[10][6] = {{0,0,1,1,0,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,0,1,1,1,1}, {0,0,0,0,1,1}, {0,0,0,0,1,1}, {0,1,0,0,1,1}, {0,1,1,1,1,0}};
+const unsigned int legend::font_plus[10][6] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {1,1,1,1,1,1}, {1,1,1,1,1,1}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}};
+const unsigned int legend::font_minus[10][6] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {1,1,1,1,1,1}, {1,1,1,1,1,1}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}};
+const unsigned int legend::font_dot[10][6] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}};
+const unsigned int legend::font_E[10][6] = {{0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,0,0,0,0,0}, {0,1,1,1,0,0}, {1,1,0,0,1,0}, {1,1,1,1,1,0}, {1,1,0,0,0,0}, {1,1,0,0,1,0}, {0,1,1,1,0,0}};
 
 //create a legend of given height
 //if hight is insufficient, we don't generate any content, only transparent pixels
@@ -106,13 +106,13 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 	}
 }
 
-void legend::writeChar(const unsigned int i_char[5][3], const double& color, const unsigned int& px_col, const unsigned int& px_row)
+void legend::writeChar(const unsigned int i_char[10][6], const double& color, const unsigned int& px_col, const unsigned int& px_row)
 {
-	for(unsigned int jj=0; jj<5; jj++) {
-		for(unsigned int ii=0; ii<3; ii++) {
-			const unsigned int char_px = i_char[4-jj][ii]; //we need to swap vertically each char
+	for(unsigned int jj=0; jj<10; jj++) {
+		for(unsigned int ii=0; ii<6; ii++) {
+			const unsigned int char_px = i_char[9-jj][ii]; //we need to swap vertically each char
 			if(char_px==0)
-				grid(ii+px_col,jj+px_row) = IOUtils::nodata;
+				grid(ii+px_col,jj+px_row+interline) = IOUtils::nodata;
 			else
 				grid(ii+px_col,jj+px_row+interline) = color;
 		}
@@ -140,7 +140,7 @@ const Array2D<double> legend::getLegend()
  */
 
 const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
-const double PNGIO::factor = 1.0; //image scale factor
+const double PNGIO::factor = 2.0; //image scale factor
 const bool PNGIO::autoscale = true;
 const bool PNGIO::has_legend = true;
 

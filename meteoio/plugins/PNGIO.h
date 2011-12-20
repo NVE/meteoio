@@ -34,7 +34,7 @@ class legend {
 	private:
 		Array2D<double> grid;
 		void writeLine(const double& val, const unsigned int& px_row);
-		void writeChar(const unsigned int i_char[5][3], const double& color, const unsigned int& px_col, const unsigned int& px_row);
+		void writeChar(const unsigned int i_char[10][6], const double& color, const unsigned int& px_col, const unsigned int& px_row);
 
 		static const unsigned int text_chars_nb; //each label will contain 9 chars
 		static const unsigned int char_width; //3 pixels wide + 1 pixel space
@@ -50,9 +50,9 @@ class legend {
 		static const unsigned int nb_labels; //every decile + 0 level
 		static const unsigned int total_height;
 
-		static const unsigned int font_0[5][3], font_1[5][3], font_2[5][3], font_3[5][3], font_4[5][3];
-		static const unsigned int font_5[5][3], font_6[5][3], font_7[5][3], font_8[5][3], font_9[5][3];
-		static const unsigned int font_plus[5][3], font_minus[5][3], font_dot[5][3], font_E[5][3];
+		static const unsigned int font_0[10][6], font_1[10][6], font_2[10][6], font_3[10][6], font_4[10][6];
+		static const unsigned int font_5[10][6], font_6[10][6], font_7[10][6], font_8[10][6], font_9[10][6];
+		static const unsigned int font_plus[10][6], font_minus[10][6], font_dot[10][6], font_E[10][6];
 };
 
 /**
