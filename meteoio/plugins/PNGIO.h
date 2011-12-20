@@ -26,6 +26,35 @@
 
 namespace mio {
 
+class legend {
+	public:
+		legend(const unsigned int &height, const double &minimum, const double &maximum);
+		const Array2D<double> getLegend();
+
+	private:
+		Array2D<double> grid;
+		void writeLine(const double& val, const unsigned int& px_row);
+		void writeChar(const unsigned int i_char[5][3], const double& color, const unsigned int& px_col, const unsigned int& px_row);
+
+		static const unsigned int text_chars_nb; //each label will contain 9 chars
+		static const unsigned int char_width; //3 pixels wide + 1 pixel space
+		static const unsigned int text_width; //nb chars, 3 pixels wide + 1 pixel space
+		static const unsigned int sample_width; //color sample 2 chars wide
+		static const unsigned int sample_text_space;
+		static const unsigned int legend_plot_space;
+		static const unsigned int total_width;
+
+		static const unsigned int char_height;
+		static const unsigned int interline;
+		static const unsigned int label_height; //1 char + 2 pixels interline
+		static const unsigned int nb_labels; //every decile + 0 level
+		static const unsigned int total_height;
+
+		static const unsigned int font_0[5][3], font_1[5][3], font_2[5][3], font_3[5][3], font_4[5][3];
+		static const unsigned int font_5[5][3], font_6[5][3], font_7[5][3], font_8[5][3], font_9[5][3];
+		static const unsigned int font_plus[5][3], font_minus[5][3], font_dot[5][3], font_E[5][3];
+};
+
 /**
  * @class PNGIO
  * @brief This (empty) class is to be used as a template for developing new plugins
@@ -61,8 +90,7 @@ class PNGIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 
 	private:
-		void setRGB(const double val, png_byte *ptr);
-		void setRGB2(const double val, png_byte *ptr);
+		void setRGB(double val, const double& min, const double& max, png_byte *ptr);
 		void RGBtoHSV(const double r, const double g, const double b, double &h, double &s, double &v);
 		void HSVtoRGB(const double h, const double s, const double v, double &r, double &g, double &b);
 		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
@@ -71,6 +99,7 @@ class PNGIO : public IOInterface {
 
 		Config cfg;
 		static const bool autoscale;
+		static const bool has_legend;
 		static const double factor;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters

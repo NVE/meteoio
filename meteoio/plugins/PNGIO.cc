@@ -23,6 +23,107 @@
 using namespace std;
 
 namespace mio {
+
+const unsigned int legend::text_chars_nb = 9; //each label will contain 9 chars
+const unsigned int legend::char_width = 3+1; //3 pixels wide + 1 pixel space
+const unsigned int legend::text_width = legend::text_chars_nb*legend::char_width; //whole text line
+const unsigned int legend::sample_width = 3*2; //color sample 2 chars wide
+const unsigned int legend::sample_text_space = 2;
+const unsigned int legend::legend_plot_space = 3*2;
+const unsigned int legend::total_width = legend::legend_plot_space+legend::sample_width+legend::sample_text_space+legend::text_width;
+
+const unsigned int legend::char_height = 5;
+const unsigned int legend::interline = 5;
+const unsigned int legend::label_height = legend::char_height+legend::interline; //1 char + 2 pixels interline
+const unsigned int legend::nb_labels = 11; //every decile + 0 level
+const unsigned int legend::total_height = legend::nb_labels*legend::label_height;
+
+const unsigned int legend::font_0[5][3] = {{1,1,1}, {1,0,1}, {1,0,1}, {1,0,1}, {1,1,1}};
+const unsigned int legend::font_1[5][3] = {{0,0,1}, {0,1,1}, {0,0,1}, {0,0,1}, {0,0,1}};
+const unsigned int legend::font_2[5][3] = {{1,1,1}, {0,0,1}, {1,1,1}, {1,0,0}, {1,1,1}};
+const unsigned int legend::font_3[5][3] = {{1,1,1}, {0,0,1}, {0,1,1}, {0,0,1}, {1,1,1}};
+const unsigned int legend::font_4[5][3] = {{1,0,0}, {1,0,1}, {1,1,1}, {0,0,1}, {0,0,1}};
+const unsigned int legend::font_5[5][3] = {{1,1,1}, {1,0,0}, {1,1,0}, {0,0,1}, {1,1,0}};
+const unsigned int legend::font_6[5][3] = {{1,1,0}, {1,0,0}, {1,1,1}, {1,0,1}, {1,1,1}};
+const unsigned int legend::font_7[5][3] = {{1,1,1}, {0,0,1}, {0,0,1}, {0,0,1}, {0,0,1}};
+const unsigned int legend::font_8[5][3] = {{1,1,1}, {1,0,1}, {1,1,1}, {1,0,1}, {1,1,1}};
+const unsigned int legend::font_9[5][3] = {{1,1,1}, {1,0,1}, {1,1,1}, {0,0,1}, {1,1,1}};
+const unsigned int legend::font_plus[5][3] = {{0,0,0}, {0,1,0}, {1,1,1}, {0,1,0}, {0,0,0}};
+const unsigned int legend::font_minus[5][3] = {{0,0,0}, {0,0,0}, {1,1,1}, {0,0,0}, {0,0,0}};
+const unsigned int legend::font_dot[5][3] = {{0,0,0}, {0,0,0}, {0,0,0}, {0,1,0}, {0,0,0}};
+const unsigned int legend::font_E[5][3] = {{1,1,1}, {1,0,0}, {1,1,1}, {1,0,0}, {1,1,1}};
+
+//create a legend of given height
+//if hight is insufficient, we don't generate any content, only transparent pixels
+legend::legend(const unsigned int &height, const double &minimum, const double &maximum)
+{
+	grid.resize(total_width, height, IOUtils::nodata);
+	const double level_inc = (maximum-minimum)/(double)(nb_labels-1); //the infamous interval thing...
+
+	if(height>=total_height) {
+		const unsigned int free_space = height-total_height;
+		const unsigned int start_legend = free_space/2; //we will start from the bottom
+		for(unsigned int l=0; l<nb_labels; l++) {
+			const double level_val = level_inc*l+minimum;
+			const unsigned int px_row = l*label_height+start_legend;
+			writeLine(level_val, px_row);
+		}
+	}
+}
+
+void legend::writeLine(const double& val, const unsigned int& px_row)
+{
+	std::stringstream ss;
+	ss << scientific << showpoint << setprecision(2) << val << endl;
+
+	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
+
+	//write legend colored square
+	for(unsigned int j=(px_row+interline); j<(px_row+label_height); j++) {
+		for(unsigned int i=legend_plot_space; i<(legend_plot_space+sample_width); i++) {
+			grid(i,j) = val;
+		}
+	}
+
+	for(size_t i=0; i<ss.str().size(); i++) {
+		char c=ss.str()[i];
+		const unsigned int px_col = i*char_width+x_offset;
+		if(c=='0') writeChar(font_0, val, px_col, px_row);
+		if(c=='1') writeChar(font_1, val, px_col, px_row);
+		if(c=='2') writeChar(font_2, val, px_col, px_row);
+		if(c=='3') writeChar(font_3, val, px_col, px_row);
+		if(c=='4') writeChar(font_4, val, px_col, px_row);
+		if(c=='5') writeChar(font_5, val, px_col, px_row);
+		if(c=='6') writeChar(font_6, val, px_col, px_row);
+		if(c=='7') writeChar(font_7, val, px_col, px_row);
+		if(c=='8') writeChar(font_8, val, px_col, px_row);
+		if(c=='9') writeChar(font_9, val, px_col, px_row);
+		if(c=='+') writeChar(font_plus, val, px_col, px_row);
+		if(c=='-') writeChar(font_minus, val, px_col, px_row);
+		if(c=='.') writeChar(font_dot, val, px_col, px_row);
+		if(c=='e') writeChar(font_E, val, px_col, px_row);
+		if(c=='E') writeChar(font_E, val, px_col, px_row);
+	}
+}
+
+void legend::writeChar(const unsigned int i_char[5][3], const double& color, const unsigned int& px_col, const unsigned int& px_row)
+{
+	for(unsigned int jj=0; jj<5; jj++) {
+		for(unsigned int ii=0; ii<3; ii++) {
+			const unsigned int char_px = i_char[4-jj][ii]; //we need to swap vertically each char
+			if(char_px==0)
+				grid(ii+px_col,jj+px_row) = IOUtils::nodata;
+			else
+				grid(ii+px_col,jj+px_row+interline) = color;
+		}
+	}
+}
+
+const Array2D<double> legend::getLegend()
+{
+	return grid;
+}
+
 /**
  * @page template PNGIO
  * @section template_format Format
@@ -39,8 +140,9 @@ namespace mio {
  */
 
 const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
-const double PNGIO::factor = 2.0; //image scale factor
+const double PNGIO::factor = 1.0; //image scale factor
 const bool PNGIO::autoscale = true;
+const bool PNGIO::has_legend = true;
 
 PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -123,13 +225,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	//scale input image
 	Grid2DObject grid = ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
 	const double ncols = grid.ncols, nrows = grid.nrows;
-
-	if(autoscale) {
-		const double min = grid.grid2D.getMin();
-		const double max = grid.grid2D.getMax();
-		grid.grid2D -= min;
-		grid.grid2D /= (max-min);
-	}
+	const double min = grid.grid2D.getMin();
+	const double max = grid.grid2D.getMax();
 
 	// Open file for writing (binary mode)
 	if (!IOUtils::validFileName(filename)) {
@@ -163,20 +260,32 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	png_init_io(png_ptr, fp);
 
+	unsigned int full_width=ncols;
+	Array2D<double> legend_array;
+	if(has_legend) {
+		legend leg(nrows, min, max);
+		legend_array = leg.getLegend();
+		unsigned int nx, ny;
+		legend_array.size(nx,ny);
+		full_width += nx;
+	}
 	// Write header (8 bit colour depth)
-	png_set_IHDR(png_ptr, info_ptr, ncols, nrows,
+	png_set_IHDR(png_ptr, info_ptr, full_width, nrows,
 	             8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
 	             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 	writeMetadata(png_ptr, info_ptr);
 	png_write_info(png_ptr, info_ptr);
 
 	// Allocate memory for one row (4 bytes per pixel - RGBA)
-	row = (png_bytep) malloc(4 * ncols * sizeof(png_byte));
+	row = (png_bytep) malloc(4 * full_width * sizeof(png_byte));
 
 	// Write image data
-	for (int y=nrows-1 ; y>=0 ; y--) {
-		for (unsigned int x=0 ; x<ncols ; x++) {
-			setRGB2( grid(x,y), &(row[x*4]) );
+	for(int y=nrows-1 ; y>=0 ; y--) {
+		for(unsigned int x=0 ; x<ncols ; x++) {
+			setRGB( grid(x,y), min, max, &(row[x*4]) );
+		}
+		for(unsigned int x=ncols; x<full_width; x++) {
+			setRGB( legend_array(x-ncols,y), min, max, &(row[x*4]) );
 		}
 		png_write_row(png_ptr, row);
 	}
@@ -192,7 +301,7 @@ void PNGIO::cleanup() throw()
 
 //val between 0 and 1
 //return values between 0 and 255 per channel
-void PNGIO::setRGB(const double val, png_byte *ptr)
+void PNGIO::setRGB(double val, const double& min, const double& max, png_byte *ptr)
 {
 	if(val==IOUtils::nodata) {
 		ptr[0]=0; ptr[1]=0; ptr[2]=0; ptr[3]=0;
@@ -200,32 +309,8 @@ void PNGIO::setRGB(const double val, png_byte *ptr)
 	}
 
 	ptr[3]=255; //no alpha for valid values
-	int v = (int)(val * 768);
-	if (v < 0) v = 0;
-	if (v > 768) v = 768;
-	int offset = v % 256;
 
-	if (v<256) {
-		ptr[0]=0; ptr[1]=0; ptr[2]=offset;
-	}
-	else if (v<512) {
-		ptr[0]=0; ptr[1]=offset; ptr[2]=255-offset;
-	}
-	else {
-		ptr[0]=offset; ptr[1]=255-offset; ptr[2]=0;
-	}
-}
-
-//val between 0 and 1
-//return values between 0 and 255 per channel
-void PNGIO::setRGB2(const double val, png_byte *ptr)
-{
-	if(val==IOUtils::nodata) {
-		ptr[0]=0; ptr[1]=0; ptr[2]=0; ptr[3]=0;
-		return;
-	}
-
-	ptr[3]=255; //no alpha for valid values
+	if(autoscale) val = (val-min)/(max-min);
 
 	const double h = 240. * (1.-val);
 	const double v = val*0.75+0.25;
