@@ -476,7 +476,9 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 	//Recompute Rh from the interpolated td
 	for (unsigned int jj=0; jj<grid.nrows; jj++) {
 		for (unsigned int ii=0; ii<grid.ncols; ii++) {
-			grid.grid2D(ii,jj) = Atmosphere::DewPointtoRh(grid.grid2D(ii,jj), ta.grid2D(ii,jj), 1);
+			double &value = grid.grid2D(ii,jj);
+			if(value!=IOUtils::nodata)
+				value = Atmosphere::DewPointtoRh(value, ta.grid2D(ii,jj), 1);
 		}
 	}
 }

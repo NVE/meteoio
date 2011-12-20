@@ -110,6 +110,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
                                  const double& ta, const double& rh, const double& pressure, const double& mean_albedo,
                                  double& R_toa, double& R_direct, double& R_diffuse)
 {
+//TODO: find a suitable replacement for pow(): these pow cost us a lot here
 	const double olt = 0.32;      // ozone layer thickness (cm) U.S.standard = 0.34 cm
 	const double w0 = 0.9;        // fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
 	const double fc = 0.84;       // fraction of forward scattering to total scattering (Bird and Hulstrom(1981))

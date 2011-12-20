@@ -38,6 +38,7 @@ namespace mio {
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
  * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
  * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
+ * - \subpage pngio "PNGIO" for reading PNG grid files (requires libpng)
  * - \subpage smetio "SMETIO" for reading SMET meteo data files (no extra requirements)
  *
  * @section data_generators Data generators
@@ -76,6 +77,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["GRASS"]     = IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
 	mapPlugins["ARPS"]      = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
 	mapPlugins["PGM"]       = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
+	mapPlugins["PNG"]       = IOPlugin("libpngio"+popc_extra+libsuffix, "PNGIO", NULL, NULL);
 	mapPlugins["SMET"]      = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
 	mapPlugins["COSMOXML"]  = IOPlugin("libcosmoxmlio"+popc_extra+libsuffix, "CosmoXMLIO", NULL, NULL);
 }
