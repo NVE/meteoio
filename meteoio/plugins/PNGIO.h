@@ -31,10 +31,13 @@ class legend {
 		legend(const unsigned int &height, const double &minimum, const double &maximum);
 		const Array2D<double> getLegend();
 
+		static const int bg_color; //marker for solid background
+		static const int text_color; //marker for solid text
+
 	private:
 		Array2D<double> grid;
 		void writeLine(const double& val, const unsigned int& px_row);
-		void writeChar(const unsigned int i_char[10][6], const double& color, const unsigned int& px_col, const unsigned int& px_row);
+		void writeChar(const unsigned int i_char[10][6], const unsigned int& px_col, const unsigned int& px_row);
 
 		static const unsigned int text_chars_nb; //each label will contain 9 chars
 		static const unsigned int char_width; //3 pixels wide + 1 pixel space

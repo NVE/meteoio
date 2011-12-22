@@ -24,6 +24,9 @@ using namespace std;
 
 namespace mio {
 
+const int legend::bg_color = IOUtils::nodata-1;
+const int legend::text_color = IOUtils::nodata-2;
+
 const unsigned int legend::text_chars_nb = 9; //each label will contain 9 chars
 const unsigned int legend::char_width = 6+1; //6 pixels wide + 1 pixel space
 const unsigned int legend::text_width = legend::text_chars_nb*legend::char_width; //whole text line
@@ -36,7 +39,7 @@ const unsigned int legend::char_height = 10;
 const unsigned int legend::interline = 5;
 const unsigned int legend::label_height = legend::char_height+legend::interline; //1 char + interline
 const unsigned int legend::nb_labels = 11; //every decile + 0 level
-const unsigned int legend::total_height = legend::nb_labels*legend::label_height;
+const unsigned int legend::total_height = legend::nb_labels*legend::label_height+legend::interline;
 
 const unsigned int legend::font_0[10][6] = {{0,0,1,1,0,0}, {0,1,0,0,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,0,1,1,0,1}, {1,0,0,0,0,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,1,0,0,1,0}, {0,0,1,1,0,0}};
 const unsigned int legend::font_1[10][6] = {{0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,1,1,1,0,0}, {1,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,0,1,1,0,0}, {0,1,1,1,1,0}};
@@ -63,6 +66,13 @@ legend::legend(const unsigned int &height, const double &minimum, const double &
 	if(height>=total_height) {
 		const unsigned int free_space = height-total_height;
 		const unsigned int start_legend = free_space/2; //we will start from the bottom
+
+		//fill the background
+		for(unsigned int jj=start_legend; jj<(start_legend+total_height); jj++) {
+			for(unsigned int ii=0; ii<total_width; ii++)
+				grid(ii,jj) = bg_color;
+		}
+
 		for(unsigned int l=0; l<nb_labels; l++) {
 			const double level_val = level_inc*l+minimum;
 			const unsigned int px_row = l*label_height+start_legend;
@@ -74,7 +84,7 @@ legend::legend(const unsigned int &height, const double &minimum, const double &
 void legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::stringstream ss;
-	ss << scientific << showpoint << setprecision(2) << val << endl;
+	ss << setfill (' ') << setw (9) << left << setprecision(3) << val << endl;
 
 	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
 
@@ -88,33 +98,33 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 	for(size_t i=0; i<ss.str().size(); i++) {
 		char c=ss.str()[i];
 		const unsigned int px_col = i*char_width+x_offset;
-		if(c=='0') writeChar(font_0, val, px_col, px_row);
-		if(c=='1') writeChar(font_1, val, px_col, px_row);
-		if(c=='2') writeChar(font_2, val, px_col, px_row);
-		if(c=='3') writeChar(font_3, val, px_col, px_row);
-		if(c=='4') writeChar(font_4, val, px_col, px_row);
-		if(c=='5') writeChar(font_5, val, px_col, px_row);
-		if(c=='6') writeChar(font_6, val, px_col, px_row);
-		if(c=='7') writeChar(font_7, val, px_col, px_row);
-		if(c=='8') writeChar(font_8, val, px_col, px_row);
-		if(c=='9') writeChar(font_9, val, px_col, px_row);
-		if(c=='+') writeChar(font_plus, val, px_col, px_row);
-		if(c=='-') writeChar(font_minus, val, px_col, px_row);
-		if(c=='.') writeChar(font_dot, val, px_col, px_row);
-		if(c=='e') writeChar(font_E, val, px_col, px_row);
-		if(c=='E') writeChar(font_E, val, px_col, px_row);
+		if(c=='0') writeChar(font_0, px_col, px_row);
+		if(c=='1') writeChar(font_1, px_col, px_row);
+		if(c=='2') writeChar(font_2, px_col, px_row);
+		if(c=='3') writeChar(font_3, px_col, px_row);
+		if(c=='4') writeChar(font_4, px_col, px_row);
+		if(c=='5') writeChar(font_5, px_col, px_row);
+		if(c=='6') writeChar(font_6, px_col, px_row);
+		if(c=='7') writeChar(font_7, px_col, px_row);
+		if(c=='8') writeChar(font_8, px_col, px_row);
+		if(c=='9') writeChar(font_9, px_col, px_row);
+		if(c=='+') writeChar(font_plus, px_col, px_row);
+		if(c=='-') writeChar(font_minus, px_col, px_row);
+		if(c=='.') writeChar(font_dot, px_col, px_row);
+		if(c=='e') writeChar(font_E, px_col, px_row);
+		if(c=='E') writeChar(font_E, px_col, px_row);
 	}
 }
 
-void legend::writeChar(const unsigned int i_char[10][6], const double& color, const unsigned int& px_col, const unsigned int& px_row)
+void legend::writeChar(const unsigned int i_char[10][6], const unsigned int& px_col, const unsigned int& px_row)
 {
 	for(unsigned int jj=0; jj<10; jj++) {
 		for(unsigned int ii=0; ii<6; ii++) {
 			const unsigned int char_px = i_char[9-jj][ii]; //we need to swap vertically each char
 			if(char_px==0)
-				grid(ii+px_col,jj+px_row+interline) = IOUtils::nodata;
+				grid(ii+px_col,jj+px_row+interline) = bg_color;
 			else
-				grid(ii+px_col,jj+px_row+interline) = color;
+				grid(ii+px_col,jj+px_row+interline) = text_color;
 		}
 	}
 }
@@ -307,6 +317,14 @@ void PNGIO::setRGB(double val, const double& min, const double& max, png_byte *p
 		ptr[0]=0; ptr[1]=0; ptr[2]=0; ptr[3]=0;
 		return;
 	}
+	if(val==legend::bg_color) {
+		ptr[0]=255; ptr[1]=255; ptr[2]=255; ptr[3]=255;
+		return;
+	}
+	if(val==legend::text_color) {
+		ptr[0]=0; ptr[1]=0; ptr[2]=0; ptr[3]=255;
+		return;
+	}
 
 	ptr[3]=255; //no alpha for valid values
 
@@ -322,6 +340,7 @@ void PNGIO::setRGB(double val, const double& min, const double& max, png_byte *p
 }
 
 //values between 0 and 1
+//see http://www.cs.rit.edu/~ncs/color/t_convert.html or https://secure.wikimedia.org/wikipedia/en/wiki/HSL_and_HSV#Conversion_from_HSL_to_RGB
 void PNGIO::RGBtoHSV(const double r, const double g, const double b,
                      double &h, double &s, double &v)
 {
@@ -418,7 +437,8 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 	info_text[2].key = (char*)"Software";
 	info_text[2].text = version_c;
 	info_text[2].compression = PNG_TEXT_COMPRESSION_NONE;
-	//TODO: add geolocalization
+	//TODO: add geolocalization tags: latitude, longitude, altitude, cellsize + indicator of position: llcorner
+	//add data set timestamp
 	png_set_text(png_ptr, info_ptr, info_text, 3);
 }
 
