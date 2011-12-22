@@ -4,7 +4,7 @@
 using namespace mio; //The MeteoIO namespace is called mio
 
 //This is the a basic example of spatial interpolations. It does not check any exceptions, it only tries to be as c-like as possible
-//provide date as ISO formatted, for example 2008-12-01T15:35:00 and 
+//provide date as ISO formatted, for example 2008-12-01T15:35:00 and
 //it will retrieve and interpolate the data for this date according to the io.ini configuration file
 int main(int /*argc*/, char** argv) {
 	Date d1;
@@ -23,13 +23,13 @@ int main(int /*argc*/, char** argv) {
 	//performing spatial interpolations
 	Grid2DObject param;
 	io.interpolate(d1, dem, MeteoData::TA, param);
-	io.write2DGrid(param,"ta.asc");
+	io.write2DGrid(param, MeteoGrids::TA, d1);
 	io.interpolate(d1, dem, MeteoData::HNW, param);
-	io.write2DGrid(param,"hnw.asc");
+	io.write2DGrid(param, MeteoGrids::HNW, d1);
 	io.interpolate(d1, dem, MeteoData::RH, param);
-	io.write2DGrid(param,"rh.asc");
+	io.write2DGrid(param, MeteoGrids::RH, d1);
 	io.interpolate(d1, dem, MeteoData::ILWR, param);
-	io.write2DGrid(param,"ilwr.asc");
+	io.write2DGrid(param, MeteoGrids::ILWR, d1);
 
 	return 0;
 }

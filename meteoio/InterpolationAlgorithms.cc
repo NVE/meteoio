@@ -634,6 +634,7 @@ void USERInterpolation::initialize(const MeteoData::Parameters& in_param) {
 
 std::string USERInterpolation::getGridFileName()
 {
+//HACK: use read2DGrid(grid, MeteoGrid::Parameters, Date) instead?
 	const std::string ext=std::string(".asc");
 	if (vecArgs.size() != 1){
 		throw InvalidArgumentException("Please provide the path to the grids for the USER interpolation algorithm", AT);
