@@ -103,6 +103,15 @@ class IOInterface : public PluginObject {
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="") = 0;
 
 		/**
+		* @brief Read the given meteo parameter into a Grid2DObject.
+		* Each plugin has its own logic for finding the requested meteo parameter grid.
+		* @param grid_out A Grid2DObject instance
+		* @param parameter The meteo parameter grid type to return (ie: air temperature, wind component, etc)
+		* @param date date of the data to read
+		*/
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date) = 0;
+
+		/**
 		* @brief Parse the DEM (Digital Elevation Model) into the Grid2DObject
 		*
 		* Example Usage:
@@ -224,6 +233,14 @@ class IOInterface : public PluginObject {
 		* @param options (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
 		*/
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="") = 0;
+
+		/**
+		* @brief Write a Grid2DObject comtaining a known meteorological parameter
+		* @param grid_in (Grid2DObject) The grid to write
+		* @param parameter The meteo parameter grid type of the provided grid object (ie: air temperature, wind component, etc)
+		* @param date date of the data to write
+		*/
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date) = 0;
 };
 } //end namespace
 

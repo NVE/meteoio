@@ -90,6 +90,11 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& /*_name*/)
 	throw IOException("Nothing implemented here", AT);
 }
 
+void ARPSIO::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/) {
+	//Nothing so far... TODO
+	throw IOException("Nothing implemented here", AT);
+}
+
 void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& /*in_name*/)
 {
 	std::string meteopathname;
@@ -178,6 +183,12 @@ void ARPSIO::readSpecialPoints(std::vector<Coords>&)
 }
 
 void ARPSIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+void ARPSIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

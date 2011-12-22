@@ -282,6 +282,15 @@ void IOManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)
 	}
 }
 
+void IOManager::read2DGrid(Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	if (processing_level == IOManager::raw){
+		rawio.read2DGrid(grid2D, parameter, date);
+	} else {
+		bufferedio.read2DGrid(grid2D, parameter, date);
+	}
+}
+
 void IOManager::readDEM(DEMObject& grid2D)
 {
 	if (processing_level == IOManager::raw){
@@ -324,6 +333,15 @@ void IOManager::write2DGrid(const Grid2DObject& grid2D, const std::string& name)
 		rawio.write2DGrid(grid2D, name);
 	} else {
 		bufferedio.write2DGrid(grid2D, name);
+	}
+}
+
+void IOManager::write2DGrid(const Grid2DObject& grid2D, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	if (processing_level == IOManager::raw){
+		rawio.write2DGrid(grid2D, parameter, date);
+	} else {
+		bufferedio.write2DGrid(grid2D, parameter, date);
 	}
 }
 

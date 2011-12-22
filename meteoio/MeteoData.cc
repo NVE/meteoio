@@ -24,6 +24,44 @@ namespace mio {
 /************************************************************
  * static section                                           *
  ************************************************************/
+const size_t MeteoGrids::nrOfParameters =  MeteoGrids::lastparam - MeteoGrids::firstparam + 1;
+std::vector<std::string> MeteoGrids::paramname;
+const bool MeteoGrids::__init = MeteoGrids::initStaticData();
+
+bool MeteoGrids::initStaticData()
+{
+	//the order must be the same as in the enum
+	paramname.push_back("TA");
+	paramname.push_back("RH");
+	paramname.push_back("VW");
+	paramname.push_back("DW");
+	paramname.push_back("VW_MAX");
+	paramname.push_back("ISWR");
+	paramname.push_back("RSWR");
+	paramname.push_back("ILWR");
+	paramname.push_back("HS");
+	paramname.push_back("HNW");
+	paramname.push_back("TSG");
+	paramname.push_back("TSS");
+	paramname.push_back("P");
+	paramname.push_back("U");
+	paramname.push_back("V");
+	paramname.push_back("W");
+
+	return true;
+}
+
+const std::string& MeteoGrids::getParameterName(const size_t& parindex)
+{
+	if (parindex >= MeteoGrids::nrOfParameters)
+		throw IndexOutOfBoundsException("Trying to get name for parameter that does not exist", AT);
+
+	return paramname[parindex];
+}
+
+/************************************************************
+ * static section                                           *
+ ************************************************************/
 const size_t MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
 map<size_t, string> MeteoData::static_meteoparamname;
 std::vector<std::string> MeteoData::s_default_paramname;

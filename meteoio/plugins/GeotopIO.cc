@@ -81,10 +81,15 @@ void GeotopIO::cleanup() throw()
 	}
 }
 
-void GeotopIO::read2DGrid(Grid2DObject&, const std::string& filename)
+void GeotopIO::read2DGrid(Grid2DObject&, const std::string&)
 {
 	//Nothing so far
-	(void)filename;
+	throw IOException("Nothing implemented here", AT);
+}
+
+void GeotopIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
@@ -501,10 +506,15 @@ void GeotopIO::readSpecialPoints(std::vector<Coords>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GeotopIO::write2DGrid(const Grid2DObject&, const std::string& name)
+void GeotopIO::write2DGrid(const Grid2DObject&, const std::string&)
 {
 	//Nothing so far
-	(void)name;
+	throw IOException("Nothing implemented here", AT);
+}
+
+void GeotopIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 

@@ -83,10 +83,15 @@ void BormaIO::cleanup() throw()
 	}
 }
 
-void BormaIO::read2DGrid(Grid2DObject&, const std::string& filename)
+void BormaIO::read2DGrid(Grid2DObject&, const std::string&)
 {
 	//Nothing so far
-	(void)filename;
+	throw IOException("Nothing implemented here", AT);
+}
+
+void BormaIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
@@ -446,10 +451,15 @@ void BormaIO::readSpecialPoints(std::vector<Coords>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void BormaIO::write2DGrid(const Grid2DObject&, const std::string& name)
+void BormaIO::write2DGrid(const Grid2DObject&, const std::string&)
 {
 	//Nothing so far
-	(void)name;
+	throw IOException("Nothing implemented here", AT);
+}
+
+void BormaIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 

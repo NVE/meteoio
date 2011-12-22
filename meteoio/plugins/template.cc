@@ -63,6 +63,12 @@ void TEMPLATE::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name
 	throw IOException("Nothing implemented here", AT);
 }
 
+void TEMPLATE::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
 void TEMPLATE::readDEM(DEMObject& /*dem_out*/)
 {
 	//Nothing so far
@@ -109,6 +115,12 @@ void TEMPLATE::readSpecialPoints(std::vector<Coords>&)
 }
 
 void TEMPLATE::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+void TEMPLATE::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

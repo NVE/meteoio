@@ -50,6 +50,7 @@ class PGMIO : public IOInterface {
 		~PGMIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
@@ -65,6 +66,7 @@ class PGMIO : public IOInterface {
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name);
 

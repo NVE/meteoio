@@ -63,6 +63,13 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string
 	in_grid2Dobj = tmpgrid2D;
 }
 
+void BufferedIOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	std::stringstream ss;
+	ss << MeteoGrids::getParameterName(parameter) << "::" << date.toString(Date::ISO);
+	read2DGrid(grid_out, ss.str());
+}
+
 void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)
 {
 	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
@@ -316,9 +323,14 @@ void BufferedIOHandler::readSpecialPoints(std::vector<Coords>& in_cpa)
 	iohandler.readSpecialPoints(in_cpa);
 }
 
-void BufferedIOHandler::write2DGrid(const Grid2DObject& in_grid2Dobj, const std::string& in_name)
+void BufferedIOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& in_name)
 {
-	iohandler.write2DGrid(in_grid2Dobj, in_name);
+	iohandler.write2DGrid(grid_in, in_name);
+}
+
+void BufferedIOHandler::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	iohandler.write2DGrid(grid_in, parameter, date);
 }
 
 void BufferedIOHandler::clearBuffer(){

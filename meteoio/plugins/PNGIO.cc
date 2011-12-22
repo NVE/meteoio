@@ -138,6 +138,7 @@ const Array2D<double> legend::getLegend()
  * @page template PNGIO
  * @section template_format Format
  * *Put here the informations about the standard format that is implemented*
+ * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.png
  *
  * @section template_units Units
  *
@@ -174,7 +175,13 @@ PNGIO::~PNGIO() throw()
 
 }
 
-void PNGIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
+void PNGIO::read2DGrid(Grid2DObject&, const std::string&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+void PNGIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters& , const Date&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -302,6 +309,13 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	png_write_end(png_ptr, NULL);
 	cleanup(fp, png_ptr, info_ptr, row);
+}
+
+void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	std::stringstream ss;
+	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".png";
+	write2DGrid(grid_in, ss.str());
 }
 
 void PNGIO::cleanup() throw()

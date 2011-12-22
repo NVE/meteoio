@@ -79,6 +79,12 @@ void SMETIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/
 	throw IOException("Nothing implemented here", AT);
 }
 
+void SMETIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
 void SMETIO::readDEM(DEMObject& /*dem_out*/)
 {
 	//Nothing so far
@@ -706,6 +712,12 @@ void SMETIO::readSpecialPoints(std::vector<Coords>&)
 }
 
 void SMETIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+void SMETIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

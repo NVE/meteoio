@@ -67,11 +67,13 @@ class GSNIO : public IOInterface {
 							   const std::string& name="");
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
 		void listSensors(std::vector<std::string>& vec_names);
@@ -83,7 +85,7 @@ class GSNIO : public IOInterface {
 		void map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field, MeteoData& md,
 		                    std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);
-		void parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present, 
+		void parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present,
 				  std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo, ns2__GSNWebService_USCOREStreamElement* streamElement);
 
 		GSNWebServiceSoap12BindingProxy gsn;

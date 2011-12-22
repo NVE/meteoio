@@ -44,11 +44,13 @@ parclass IOManager {
 
 		//Legacy support to support functionality of the IOInterface superclass:
 		void read2DGrid([out]Grid2DObject& grid_out, [in]const std::string& parameter="");
+		void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		void readDEM([out]DEMObject& dem_out);
 		void readAssimilationData([in]const Date& date_in, [out]Grid2DObject& da_out);
 		void readLanduse([out]Grid2DObject& landuse_out);
 		void readSpecialPoints([out]std::vector<Coords>& pts);
 		void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& options="");
+		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 		//end legacy support
 
 		unsigned int getStationData([in]const Date& date, [out, proc=marshal_STATION_TIMESERIE]STATION_TIMESERIE& vecStation);
@@ -57,13 +59,13 @@ parclass IOManager {
 		                          [out, proc=marshal_vector_METEO_TIMESERIE]std::vector< METEO_TIMESERIE >& vecMeteo);
 
 		unsigned int getMeteoData([in]const Date& i_date, [out, proc=marshal_METEO_TIMESERIE]METEO_TIMESERIE& vecMeteo);
-		
+
 		void interpolate([in]const Date& date, [in]const DEMObject& dem, [in, proc=marshal_MeteoParameters]/*const*/ MeteoData::Parameters& meteoparam,
 		                 [out]Grid2DObject& result, [out]std::string& info_string);
-		
+
 		void interpolate([in]const Date& date, [in]const DEMObject& dem, [in, proc=marshal_MeteoParameters]/*const*/ MeteoData::Parameters& meteoparam,
 		                 [out]Grid2DObject& result); //HACK popc
-		
+
 		void setProcessingLevel([in]const unsigned int& i_level);
 
 		double getAvgSamplingRate();

@@ -31,6 +31,8 @@ namespace mio {
  *
  * These specifications should reflect commonly accepted practise.
  *
+ * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.asc
+ *
  * @section lus_format Land Use Format
  * The landuse codes are coming from PREVAH and have the format 1LLDC where:
  * - LL is the land use code as given in the table given below
@@ -213,6 +215,13 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	cleanup();
 }
 
+void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	std::stringstream ss;
+	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".asc";
+	read2DGrid(grid_out, ss.str());
+}
+
 void ARCIO::readDEM(DEMObject& dem_out)
 {
 	string filename="";
@@ -301,6 +310,13 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	}
 
 	cleanup();
+}
+
+void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	std::stringstream ss;
+	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".asc";
+	write2DGrid(grid_in, ss.str());
 }
 
 #ifndef _METEOIO_JNI

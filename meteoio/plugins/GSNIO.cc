@@ -150,10 +150,15 @@ void GSNIO::initGSNConnection(){
 	}
 }
 
-void GSNIO::read2DGrid(Grid2DObject&, const std::string& filename)
+void GSNIO::read2DGrid(Grid2DObject&, const std::string&)
 {
 	//Nothing so far
-	(void)filename;
+	throw IOException("Nothing implemented here", AT);
+}
+
+void GSNIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 
@@ -526,10 +531,15 @@ void GSNIO::readSpecialPoints(std::vector<Coords>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::write2DGrid(const Grid2DObject&, const std::string& name)
+void GSNIO::write2DGrid(const Grid2DObject&, const std::string&)
 {
 	//Nothing so far
-	(void)name;
+	throw IOException("Nothing implemented here", AT);
+}
+
+void GSNIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
 

@@ -50,6 +50,7 @@ parclass IOHandler {
 
 		//methods defined in the IOInterface class
 		virtual void read2DGrid([out]Grid2DObject& out_grid, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		virtual void readDEM([out]DEMObject& dem_out);
 		virtual void readLanduse([out]Grid2DObject& landuse_out);
 		virtual void readStationData([in]const Date& date,
@@ -63,13 +64,14 @@ parclass IOHandler {
 		virtual void readAssimilationData([in] const Date&,[out] Grid2DObject& da_out);
 		virtual void readSpecialPoints([out,proc=marshal_vec_coords]std::vector<Coords>& pts);
 		virtual void write2DGrid([in]const Grid2DObject& grid_in, [in]const std::string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		//friend std::ostream& operator<<(std::ostream& os, const IOHandler& data); //not "friends" in a parclass!
 		std::string toString()/* const*/; //HACK for POPC
 
 	private:
 		void loadDynamicPlugins();
-		void loadPlugin(const std::string& libname, const std::string& classname, 
+		void loadPlugin(const std::string& libname, const std::string& classname,
 		                DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io);
 		void registerPlugins();

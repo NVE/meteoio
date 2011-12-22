@@ -44,6 +44,7 @@ class GeotopIO : public IOInterface {
 		~GeotopIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
@@ -59,6 +60,7 @@ class GeotopIO : public IOInterface {
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
 		void initParamNames(std::map<std::string, size_t>& mapParam);

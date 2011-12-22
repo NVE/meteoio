@@ -201,10 +201,16 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	return (mapit->second).io;
 }
 
-void IOHandler::read2DGrid(Grid2DObject& out_grid, const std::string& i_filename)
+void IOHandler::read2DGrid(Grid2DObject& grid_out, const std::string& i_filename)
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");
-	plugin->read2DGrid(out_grid, i_filename);
+	plugin->read2DGrid(grid_out, i_filename);
+}
+
+void IOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	IOInterface *plugin = getPlugin("GRID2D", "Input");
+	plugin->read2DGrid(grid_out, parameter, date);
 }
 
 void IOHandler::readDEM(DEMObject& dem_out)
@@ -283,6 +289,12 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Output");
 	plugin->write2DGrid(grid_in, name);
+}
+
+void IOHandler::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	IOInterface *plugin = getPlugin("GRID2D", "Output");
+	plugin->write2DGrid(grid_in, parameter, date);
 }
 
 void IOHandler::parse_copy_config()

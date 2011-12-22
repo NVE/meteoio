@@ -31,6 +31,47 @@
 namespace mio {
 
 /**
+ * @class MeteoGrids
+ * @brief A class to represent the meteorological parameters that could be contained in a grid.
+ * This should be very close to MeteoData with a few additions (like the wind u,v,w)
+ * @ingroup data_str
+ * @author Mathias Bavay
+ * @date   2011-12-22
+ */
+
+class MeteoGrids {
+	public:
+		/// \anchor meteogrids this enum provides names for possible meteogrids (from an ARPS file, etc)
+		enum Parameters {firstparam=0,
+		                 TA=firstparam, ///< Air temperature
+		                 RH, ///< Relative humidity
+		                 VW, ///< Wind velocity
+		                 DW, ///< Wind direction
+		                 VW_MAX, ///< Maximum wind velocity
+		                 ISWR, ///< Incoming short wave radiation
+		                 RSWR, ///< Reflected short wave radiation
+		                 ILWR, ///< Incoming long wave radiation
+		                 HS, ///< Snow height
+		                 HNW, ///< New water equivalent height
+		                 TSG, ///< Temperature ground surface
+		                 TSS, ///< Temperature snow surface
+		                 P, ///< Air pressure
+		                 U, ///< East component of wind
+		                 V, ///< North component of wind
+		                 W, ///< Vertical component of wind
+		                 lastparam=W};
+
+		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
+		static const std::string& getParameterName(const size_t& parindex);
+
+	private:
+		//static methods
+		static std::vector<std::string> paramname;
+		static const bool __init;    ///<helper variable to enable the init of static collection data
+		static bool initStaticData();///<initialize the static map meteoparamname
+};
+
+/**
  * @class MeteoData
  * @brief A class to represent a singular measurement received from one station at a certain time (represented by the Date object)
  *
@@ -129,7 +170,7 @@ class MeteoData {
 		Date date; ///<Timestamp of the measurement
 		StationData meta; ///<The meta data of the measurement
 
- private:
+	private:
 		//static methods
 		static std::map<size_t, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
 		static std::vector<std::string> s_default_paramname;

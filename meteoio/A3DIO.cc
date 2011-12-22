@@ -100,6 +100,12 @@ void A3DIO::read2DGrid(Grid2DObject&, const std::string&)
 	throw IOException("Nothing implemented here", AT);
 }
 
+void A3DIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
 void A3DIO::readDEM(DEMObject& dem_out)
 {
 	//Nothing so far
@@ -123,6 +129,12 @@ void A3DIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 }
 
 void A3DIO::write2DGrid(const Grid2DObject&, const std::string&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+void A3DIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

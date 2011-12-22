@@ -166,6 +166,13 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	cleanup();
 }
 
+void GrassIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+
 void GrassIO::readDEM(DEMObject& dem_out)
 {
 	string filename="";
@@ -268,6 +275,12 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	}
 
 	cleanup();
+}
+
+void GrassIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
 }
 
 #ifndef _METEOIO_JNI

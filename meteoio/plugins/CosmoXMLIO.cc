@@ -95,6 +95,12 @@ void CosmoXMLIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_na
 	throw IOException("Nothing implemented here", AT);
 }
 
+void CosmoXMLIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
 void CosmoXMLIO::readDEM(DEMObject& /*dem_out*/)
 {
 	//Nothing so far
@@ -494,6 +500,12 @@ void CosmoXMLIO::readSpecialPoints(std::vector<Coords>&)
 }
 
 void CosmoXMLIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)
+{
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+}
+
+void CosmoXMLIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, const Date&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
