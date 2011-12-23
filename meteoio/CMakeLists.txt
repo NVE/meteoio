@@ -38,6 +38,7 @@ SET(meteoio_sources
 	Grid2DObject.cc
 	IOHandler.cc
 	Coords.cc
+	Graphics.cc
 	Meteo2DInterpolator.cc
 	BufferedIOHandler.cc
 	DEMObject.cc
