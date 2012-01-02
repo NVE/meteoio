@@ -28,6 +28,7 @@ namespace mio {
  * @page template PNGIO
  * @section template_format Format
  * *Put here the informations about the standard format that is implemented*
+ * No data read, only write (because of gradients)
  * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.png
  *
  * @section template_units Units
@@ -35,29 +36,108 @@ namespace mio {
  *
  * @section template_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
+ * - png_legend: plot legend on the side of the graph? (default: true)
+ * - png_min_size: guarantee that a 2D plot will have at least the given size
+ * - png_max_size: guarantee that a 2D plot will have at most the given size
  * - etc
+ *
+ * The size are specified as width followed by height, with the separator being either a space, 'x' or '*'. If a minimum and a maximum size are given, the average of the smallest and largest permissible sizes will be used.
+ *
+ * @code
+ * GRID2D = PNG
+ * png_legend = false
+ * png_min_size = 400x400
+ * png_max_size = 1366*768
+ * @endcode
  */
 
 const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
-const double PNGIO::factor = 2.0; //image scale factor
-const bool PNGIO::autoscale = true;
-const bool PNGIO::has_legend = true;
 
 PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	setOptions();
 }
 
 PNGIO::PNGIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	setOptions();
 }
 
 PNGIO::PNGIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	setOptions();
+}
+
+void PNGIO::setOptions()
+{
+	//get size specifications
+	std::string min_size, max_size;
+	min_w = min_h = max_w = max_h = IOUtils::unodata;
+	cfg.getValue("png_min_size", "Output", min_size, Config::nothrow);
+	if(min_size!="") parse_size(min_size, min_w, min_h);
+	cfg.getValue("png_max_size", "Output", max_size, Config::nothrow);
+	if(max_size!="") parse_size(max_size, max_w, max_h);
+	
+	autoscale = true;
+	cfg.getValue("png_autoscale", "Output", autoscale, Config::nothrow);
+	has_legend = true;
+	cfg.getValue("png_legend", "Output", has_legend, Config::nothrow);
+
+	if(has_legend) { //we need to save room for the legend
+		if(min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
+		if(max_w!=IOUtils::unodata) max_w -= legend::getLegendWidth();
+	}
+}
+
+void PNGIO::parse_size(const std::string& size_spec, unsigned int& width, unsigned int& height)
+{
+	char rest[32] = "";
+	if(sscanf(size_spec.c_str(), "%u %u%31s", &width, &height, rest) < 2)
+	if(sscanf(size_spec.c_str(), "%u*%u%31s", &width, &height, rest) < 2)
+	if(sscanf(size_spec.c_str(), "%ux%u%31s", &width, &height, rest) < 2) {
+		std::stringstream ss;
+		ss << "Can not parse PNGIO size specification \"" << size_spec << "\"";
+		throw InvalidFormatException(ss.str(), AT);
+	}
+	std::string tmp(rest);
+	IOUtils::trim(tmp);
+	if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
+		std::stringstream ss;
+		ss << "Invalid PNGIO size specification \"" << size_spec << "\"";
+		throw InvalidFormatException(ss.str(), AT);
+	}
+}
+
+double PNGIO::getScaleFactor(const double& grid_w, const double& grid_h)
+{
+	if(grid_w==0 || grid_h==0) {
+		return 1.;
+	}
+
+	double min_factor = IOUtils::nodata;
+	if(min_w!=IOUtils::unodata) { //min_w & min_w are read together
+		const double min_w_factor = (double)min_w / (double)grid_w;
+		const double min_h_factor = (double)min_h / (double)grid_h;
+		min_factor = std::max(min_w_factor, min_h_factor);
+	}
+	
+	double max_factor = IOUtils::nodata;
+	if(max_w!=IOUtils::unodata) { //max_w & max_h are read together
+		const double max_w_factor = (double)max_w / (double)grid_w;
+		const double max_h_factor = (double)max_h / (double)grid_h;
+		max_factor = std::min(max_w_factor, max_h_factor);
+	}
+
+	if(min_factor==IOUtils::nodata && max_factor==IOUtils::nodata)
+		return 1.; //no user given specification
+	if(min_factor!=IOUtils::nodata && max_factor!=IOUtils::nodata)
+		return (min_factor+max_factor)/2.; //both min & max -> average
+
+	//only one size specification provided -> return its matching factor
+	if(min_factor!=IOUtils::nodata)
+		return min_factor;
+	else
+		return max_factor;
 }
 
 PNGIO::~PNGIO() throw()
@@ -130,7 +210,9 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	png_bytep row=NULL;
 
 	//scale input image
+	const double factor = getScaleFactor(grid_in.ncols, grid_in.nrows);
 	Grid2DObject grid = ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
+	//Grid2DObject grid = ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
 	const double ncols = grid.ncols, nrows = grid.nrows;
 	const double min = grid.grid2D.getMin();
 	const double max = grid.grid2D.getMax();
@@ -180,7 +262,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	png_set_IHDR(png_ptr, info_ptr, full_width, nrows,
 	             8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
 	             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-	writeMetadata(grid, png_ptr, info_ptr);
+	createMetadata(grid);
+	writeMetadata(png_ptr, info_ptr);
 	png_write_info(png_ptr, info_ptr);
 
 	// Allocate memory for one row (4 bytes per pixel - RGBA)
@@ -221,41 +304,93 @@ void PNGIO::cleanup() throw()
 
 }
 
-void PNGIO::writeMetadata(const Grid2DObject& grid, png_structp &png_ptr, png_infop &info_ptr)
+void PNGIO::createMetadata(const Grid2DObject& grid)
 {
-	const std::string version = "MeteoIO "+getLibVersion();
-	char version_c[79]=""; strncpy(version_c, version.c_str(), 79);
-	const std::string logname = IOUtils::getLogName();
-	char logname_c[79]=""; strncpy(logname_c, logname.c_str(), 79);
-	char latitude[12]=""; snprintf(latitude, 12, "%.6f", grid.llcorner.getLat());
-	char longitude[12]=""; snprintf(longitude, 12, "%.6f", grid.llcorner.getLon());
-	char cellsize[12]=""; snprintf(cellsize, 12, "%.2f", (grid.cellsize*factor)); //HACK: not working...
+	const double lat = grid.llcorner.getLat();
+	const double lon = grid.llcorner.getLon();
+	stringstream ss;
+
+	metadata_key.push_back("Title");
+	metadata_text.push_back("Gridded data"); //HACK: write meteogrid parameter, date
+	metadata_key.push_back("Author");
+	metadata_text.push_back(IOUtils::getLogName());
+	metadata_key.push_back("Software");
+	metadata_text.push_back("MeteoIO "+getLibVersion());
+	metadata_key.push_back("Position");
+	metadata_text.push_back("llcorner");
+	metadata_key.push_back("Cellsize");
+	ss.str(""); ss << fixed << setprecision(2) << grid.cellsize;
+	metadata_text.push_back(ss.str());
+	metadata_key.push_back("Latitude");
+	ss.str(""); ss << fixed << setprecision(6) << lat;
+	metadata_text.push_back(ss.str());
+	metadata_key.push_back("Longitude");
+	ss.str(""); ss << fixed << setprecision(6) << lon;
+	metadata_text.push_back(ss.str());
 	
-	png_text info_text[7];
-	info_text[0].key = (char*)"Title";
-	info_text[0].text = (char*)"Gridded data"; //HACK: write meteogrid parameter
-	info_text[0].compression = PNG_TEXT_COMPRESSION_NONE;
-	info_text[1].key = (char*)"Author";
-	info_text[1].text = logname_c;
-	info_text[1].compression = PNG_TEXT_COMPRESSION_NONE;
-	info_text[2].key = (char*)"Software";
-	info_text[2].text = version_c;
-	info_text[2].compression = PNG_TEXT_COMPRESSION_NONE;
-	info_text[3].key = (char*)"Position"; //HACK: see exif key
-	info_text[3].text = (char*)"llcorner";
-	info_text[3].compression = PNG_TEXT_COMPRESSION_NONE;
-	info_text[4].key = (char*)"Latitude"; //HACK: see exif key
-	info_text[4].text = latitude;
-	info_text[4].compression = PNG_TEXT_COMPRESSION_NONE;
-	info_text[5].key = (char*)"Longitude";
-	info_text[5].text = longitude;
-	info_text[5].compression = PNG_TEXT_COMPRESSION_NONE;
-	info_text[6].key = (char*)"Cellsize";
-	info_text[6].text = cellsize;
-	info_text[6].compression = PNG_TEXT_COMPRESSION_NONE;
-	//TODO: add geolocalization tags: latitude, longitude, altitude, cellsize + indicator of position: llcorner
+	if(lat<0.) {
+		metadata_key.push_back("LatitudeRef");
+		metadata_text.push_back("S");
+		metadata_key.push_back("GPSLatitude");
+		metadata_text.push_back(decimal_to_dms(-lat));
+	} else {
+		metadata_key.push_back("LatitudeRef");
+		metadata_text.push_back("N");
+		metadata_key.push_back("GPSLatitude");
+		metadata_text.push_back(decimal_to_dms(lat));
+	}
+	if(lon<0.) {
+		metadata_key.push_back("LongitudeRef");
+		metadata_text.push_back("W");
+		metadata_key.push_back("GPSLongitude");
+		metadata_text.push_back(decimal_to_dms(-lon));
+	} else {
+		metadata_key.push_back("LongitudeRef");
+		metadata_text.push_back("E");
+		metadata_key.push_back("GPSLongitude");
+		metadata_text.push_back(decimal_to_dms(lon));
+	}
+	
 	//add data set timestamp
-	png_set_text(png_ptr, info_ptr, info_text, 7);
+}
+
+void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
+{
+	const size_t nr = metadata_key.size();
+	png_text *info_text;
+	info_text = (png_text *)calloc(sizeof(png_text), nr);
+	char **key, **text;
+	key = (char**)calloc(sizeof(char)*80, nr);
+	text = (char**)calloc(sizeof(char)*80, nr);
+
+	for(size_t ii=0; ii<nr; ii++) {
+		key[ii] = (char *)calloc(sizeof(char), 80);
+		text[ii] = (char *)calloc(sizeof(char), 80);
+		strncpy(key[ii], metadata_key[ii].c_str(), 80);
+		strncpy(text[ii], metadata_text[ii].c_str(), 80);
+		info_text[ii].key = key[ii];
+		info_text[ii].text = text[ii];
+		info_text[ii].compression = PNG_TEXT_COMPRESSION_NONE;
+	}
+	
+	png_set_text(png_ptr, info_ptr, info_text, nr);
+	free(info_text);
+	for(size_t ii=0; ii<nr; ii++) {
+		free(key[ii]);
+		free(text[ii]);
+	}
+	free(key);
+	free(text);
+}
+
+std::string PNGIO::decimal_to_dms(const double& decimal) {
+	std::stringstream dms;
+	const int d = static_cast<int>( floor(decimal) );
+	const double m = floor( ((decimal - (double)d)*60.)*100. ) / 100.;
+	const double s = 3600.*(decimal - (double)d) - 60.*m;
+
+	dms << d << "/1 " << static_cast<int>(m*100) << "/100 " << fixed << setprecision(6) << s << "/1";
+	return dms.str();
 }
 
 void PNGIO::cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr, png_bytep row)

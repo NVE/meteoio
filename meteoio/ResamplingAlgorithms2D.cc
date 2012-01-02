@@ -37,7 +37,21 @@ const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject
 	return o_grid;
 }
 
-void ResamplingAlgorithms2D::NearestNeighbor(Grid2DObject &o_grid, const Grid2DObject &i_grid)
+const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &i_grid, const double &factor)
+{
+	const double cellsize = i_grid.cellsize/factor;
+	const unsigned int ncols = (unsigned int)round( i_grid.ncols*factor );
+	const unsigned int nrows = (unsigned int)round( i_grid.nrows*factor );
+	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
+
+	NearestNeighbour(o_grid, i_grid); //GridObjects always keep nodata
+	return o_grid;
+}
+
+///////////////////////////////////////////////////////////////////////
+//Private Methods
+///////////////////////////////////////////////////////////////////////
+void ResamplingAlgorithms2D::NearestNeighbour(Grid2DObject &o_grid, const Grid2DObject &i_grid)
 {
 	const unsigned int org_ncols = i_grid.ncols;
 	const unsigned int org_nrows = i_grid.nrows;
@@ -46,11 +60,11 @@ void ResamplingAlgorithms2D::NearestNeighbor(Grid2DObject &o_grid, const Grid2DO
 
 	for (unsigned int jj=0; jj<o_grid.nrows; jj++) {
 		unsigned int org_jj = (unsigned int) round( (double)jj/scale_y );
-		if(org_jj>=org_nrows) org_jj=org_nrows;
+		if(org_jj>=org_nrows) org_jj=org_nrows-1;
 
 		for (unsigned int ii=0; ii<o_grid.ncols; ii++) {
 			unsigned int org_ii = (unsigned int) round( (double)ii/scale_x );
-			if(org_ii>=org_ncols) org_ii=org_ncols;
+			if(org_ii>=org_ncols) org_ii=org_ncols-1;
 			o_grid(ii,jj) = i_grid(org_ii, org_jj);
 		}
 	}

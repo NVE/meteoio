@@ -38,6 +38,7 @@ namespace mio {
 class legend {
 	public:
 		legend(const unsigned int &height, const double &minimum, const double &maximum);
+		static double getLegendWidth();
 		const Array2D<double> getLegend();
 
 		static const int bg_color; //marker for solid background

@@ -62,16 +62,24 @@ class PNGIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		void writeMetadata(const Grid2DObject& grid, png_structp &png_ptr, png_infop &info_ptr);
+		void setOptions();
+		void parse_size(const std::string& size_spec, unsigned int& width, unsigned int& height);
+		double getScaleFactor(const double& grid_w, const double& grid_h);
+		void createMetadata(const Grid2DObject& grid);
+		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
 		void cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr, png_bytep row);
 		void cleanup() throw();
+		std::string decimal_to_dms(const double& decimal);
 
 		Config cfg;
-		static const bool autoscale;
-		static const bool has_legend;
-		static const double factor;
+		bool autoscale;
+		bool has_legend;
+		unsigned int min_w, min_h, max_w, max_h;
+		//plus bg and fg colors
+
+		std::vector<std::string> metadata_key, metadata_text;
+		
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 
 } //namespace

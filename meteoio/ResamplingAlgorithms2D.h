@@ -35,13 +35,13 @@ namespace mio {
 class ResamplingAlgorithms2D {
 	public:
 		//Available algorithms
-		//static void NearestNeighbour(const Grid2DObject &i_grid, const double &factor);
+		static const Grid2DObject NearestNeighbour(const Grid2DObject &i_grid, const double &factor);
 		static const Grid2DObject BilinearResampling(const Grid2DObject &i_grid, const double &factor);
 
 	private:
 		static void Bilinear_raw(Grid2DObject &o_grid, const Grid2DObject &i_grid);
 		static void Bilinear_nodata(Grid2DObject &o_grid, const Grid2DObject &i_grid);
-		static void NearestNeighbor(Grid2DObject &o_grid, const Grid2DObject &i_grid);
+		static void NearestNeighbour(Grid2DObject &o_grid, const Grid2DObject &i_grid);
 };
 } //end namespace
 
