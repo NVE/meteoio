@@ -59,7 +59,10 @@ class MeteoGrids {
 		                 U, ///< East component of wind
 		                 V, ///< North component of wind
 		                 W, ///< Vertical component of wind
-		                 lastparam=W};
+		                 DEM, ///< Digital Elevation Model
+		                 SLOPE, ///< DEM slope angle
+		                 AZI, ///< DEM slope azimuth
+		                 lastparam=AZI};
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static const std::string& getParameterName(const size_t& parindex);

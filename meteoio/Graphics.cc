@@ -23,6 +23,10 @@ using namespace std;
 
 namespace mio {
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// Legend class
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 const int legend::bg_color = IOUtils::nodata-1;
 const int legend::text_color = IOUtils::nodata-2;
 
@@ -145,6 +149,10 @@ const Array2D<double> legend::getLegend()
 	return grid;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// Color class
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 //values between 0 and 1
 //see http://www.cs.rit.edu/~ncs/color/t_convert.html or https://secure.wikimedia.org/wikipedia/en/wiki/HSL_and_HSV#Conversion_from_HSL_to_RGB
 void Color::RGBtoHSV(const double r, const double g, const double b,
@@ -227,14 +235,18 @@ void Color::HSVtoRGB(const double h, const double s, const double v, double &r, 
 	}
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// Gradient class
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
-Gradient::Gradient(const Type& type, const double& i_min_val, const double& i_max_val)
+Gradient::Gradient(const Type& type, const double& i_min, const double& i_max)
 {
-	min_val = i_min_val;
-	max_val = i_max_val;
-	delta_val = (max_val-min_val);
+	delta_val = i_max - i_min;
 
-	//if(type==Type::terrain) {}
+	if(type==terrain) model = new terrain_gradient(i_min, i_max);
+	else if(type==slope) model = new slope_gradient(i_min, i_max);
+	else if(type==heat) model = new heat_gradient(i_min, i_max);
+	//else if(type==water) model = new water_gradient(i_min, i_max);
 }
 
 //val between min_val and max_val
@@ -260,47 +272,18 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 	}
 
 	//get the rgba components by providing val between 0 and 1
-	getHeat((val-min_val)/delta_val, r, g, b, a);
-	//getTerrain((val-min_val)/delta_val, r, g, b, a);
+	model->getColor(val, r, g, b, a);
 }
 
-//val must be between 0 and 1
-void Gradient::getHeat(const double& val, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a)
+void Gradient_model::setMinMax(const double& i_min, const double& i_max)
 {
-	const double h = 240. * (1.-val);
-	const double v = val*0.75+0.25;
-	const double s = 1-val*0.3;
-
-	double r_d, g_d, b_d;
-	Color::HSVtoRGB(h, s, v, r_d, g_d, b_d);
-	r = static_cast<unsigned char>(r_d*255);
-	g = static_cast<unsigned char>(g_d*255);
-	b = static_cast<unsigned char>(b_d*255);
-	a = 255; //no alpha for valid values
-}
-
-void Gradient::getTerrain(const double& val, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a)
-{
-	std::vector<double> values;
-	std::vector<double> v_h,v_s,v_v;
-
-	values.push_back(0.); v_h.push_back(240.); v_s.push_back(1.); v_v.push_back(0.25);
-	values.push_back(0.5); v_h.push_back(230.); v_s.push_back(0.9); v_v.push_back(0.5);
-	values.push_back(1.); v_h.push_back(0.); v_s.push_back(0.7); v_v.push_back(1.);
-	const double h = getInterpol(val, values, v_h);
-	const double s = getInterpol(val, values, v_s);
-	const double v = getInterpol(val, values, v_v);
-
-	double r_d, g_d, b_d;
-	Color::HSVtoRGB(h, s, v, r_d, g_d, b_d);
-	r = static_cast<unsigned char>(r_d*255);
-	g = static_cast<unsigned char>(g_d*255);
-	b = static_cast<unsigned char>(b_d*255);
-	a = 255; //no alpha for valid values
+	min_val = i_min;
+	max_val = i_max;
+	delta_val = (max_val-min_val);
 }
 
 //we assume that the vectors are sorted by X
-double Gradient::getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y)
+double Gradient_model::getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y)
 {
 	if(X.size()!=Y.size()) {
 		std::stringstream ss;
@@ -313,10 +296,77 @@ double Gradient::getInterpol(const double& val, const std::vector<double>& X, co
 
 	if(X[i]==val) return Y[i];
 	if(i==0) return Y[0];
-	//if(i==Y.size()) return Y[ Y.size() ]; // not necessary, treated by the formula
+	if(i==Y.size()) return Y[ Y.size()-1 ];
 
 	const double y = Y[i-1] + (val-X[i-1])/(X[i]-X[i-1]) * (Y[i]-Y[i-1]);
 	return y;
+}
+
+void Gradient_model::HSV2RGB(const double& h, const double& s, const double& v, unsigned char &r, unsigned char &g, unsigned char &b)
+{
+	double r_d, g_d, b_d;
+	Color::HSVtoRGB(h, s, v, r_d, g_d, b_d);
+	r = static_cast<unsigned char>(r_d*255);
+	g = static_cast<unsigned char>(g_d*255);
+	b = static_cast<unsigned char>(b_d*255);
+}
+
+void heat_gradient::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
+{
+	const double auto_val = (val-min_val)/delta_val; //autoscale
+
+	const double h = 240. * (1.-auto_val);
+	const double v = auto_val*0.75+0.25;
+	const double s = 1-auto_val*0.3;
+
+	HSV2RGB(h, s, v, r, g, b);
+	a = 255; //no alpha for valid values
+}
+
+terrain_gradient::terrain_gradient(const double& i_min, const double& i_max) {
+	setMinMax(i_min, i_max);
+
+	//write gradient control points
+	X.push_back(-1.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
+	X.push_back(0.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
+	X.push_back(0.); v_h.push_back(144.); v_s.push_back(.58); v_v.push_back(.39); //sea level, dark green
+	X.push_back(1200.); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow
+	X.push_back(2200.); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
+	X.push_back(2700.); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
+	X.push_back(3000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.82); //white
+}
+
+void terrain_gradient::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
+{
+	const double h = getInterpol(val, X, v_h);
+	const double s = getInterpol(val, X, v_s);
+	const double v = getInterpol(val, X, v_v);
+
+	HSV2RGB(h, s, v, r, g, b);
+	a = 255; //no alpha for valid values
+}
+
+slope_gradient::slope_gradient(const double& i_min, const double& i_max) {
+	setMinMax(i_min, i_max);
+
+	//write gradient control points
+	X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.91); //light blue
+	X.push_back(25.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
+	X.push_back(30.); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
+	X.push_back(35.); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
+	X.push_back(40.); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
+	X.push_back(45.); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red
+	X.push_back(50.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
+}
+
+void slope_gradient::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
+{
+	const double h = getInterpol(val, X, v_h);
+	const double s = getInterpol(val, X, v_s);
+	const double v = getInterpol(val, X, v_v);
+
+	HSV2RGB(h, s, v, r, g, b);
+	a = 255; //no alpha for valid values
 }
 
 } //namespace
