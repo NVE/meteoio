@@ -25,7 +25,7 @@ using namespace std;
 
 namespace mio {
 /**
- * @page template PNGIO
+ * @page pngio PNGIO
  * @section template_format Format
  * *Put here the informations about the standard format that is implemented*
  * No data read, only write (because of gradients)
@@ -77,7 +77,7 @@ void PNGIO::setOptions()
 	if(min_size!="") parse_size(min_size, min_w, min_h);
 	cfg.getValue("png_max_size", "Output", max_size, Config::nothrow);
 	if(max_size!="") parse_size(max_size, max_w, max_h);
-	
+
 	autoscale = true;
 	cfg.getValue("png_autoscale", "Output", autoscale, Config::nothrow);
 	has_legend = true;
@@ -120,7 +120,7 @@ double PNGIO::getScaleFactor(const double& grid_w, const double& grid_h)
 		const double min_h_factor = (double)min_h / (double)grid_h;
 		min_factor = std::max(min_w_factor, min_h_factor);
 	}
-	
+
 	double max_factor = IOUtils::nodata;
 	if(max_w!=IOUtils::unodata) { //max_w & max_h are read together
 		const double max_w_factor = (double)max_w / (double)grid_w;
@@ -327,7 +327,7 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 	metadata_key.push_back("Longitude");
 	ss.str(""); ss << fixed << setprecision(6) << lon;
 	metadata_text.push_back(ss.str());
-	
+
 	if(lat<0.) {
 		metadata_key.push_back("LatitudeRef");
 		metadata_text.push_back("S");
@@ -350,7 +350,7 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 		metadata_key.push_back("GPSLongitude");
 		metadata_text.push_back(decimal_to_dms(lon));
 	}
-	
+
 	//add data set timestamp
 }
 
@@ -372,7 +372,7 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 		info_text[ii].text = text[ii];
 		info_text[ii].compression = PNG_TEXT_COMPRESSION_NONE;
 	}
-	
+
 	png_set_text(png_ptr, info_ptr, info_text, nr);
 	free(info_text);
 	for(size_t ii=0; ii<nr; ii++) {

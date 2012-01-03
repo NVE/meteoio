@@ -41,26 +41,28 @@ class legend {
 		static double getLegendWidth();
 		const Array2D<double> getLegend();
 
-		static const int bg_color; //marker for solid background
-		static const int text_color; //marker for solid text
+		static const int bg_color; ///<marker for solid background
+		static const int text_color; ///<marker for solid text
 
 	private:
 		Array2D<double> grid;
+		void drawLegend(const unsigned int &height, const double &minimum, const double &maximum);
 		void writeLine(const double& val, const unsigned int& px_row);
 		void writeChar(const unsigned int i_char[10][6], const unsigned int& px_col, const unsigned int& px_row);
 
-		static const unsigned int text_chars_nb; //each label will contain 9 chars
-		static const unsigned int char_width; //3 pixels wide + 1 pixel space
-		static const unsigned int text_width; //nb chars, 3 pixels wide + 1 pixel space
-		static const unsigned int sample_width; //color sample 2 chars wide
+		static const unsigned int text_chars_nb;
+		static const unsigned int char_width;
+		static const unsigned int char_space;
+		static const unsigned int text_width;
+		static const unsigned int sample_width;
 		static const unsigned int sample_text_space;
 		static const unsigned int legend_plot_space;
 		static const unsigned int total_width;
 
 		static const unsigned int char_height;
 		static const unsigned int interline;
-		static const unsigned int label_height; //1 char + 2 pixels interline
-		static const unsigned int nb_labels; //every decile + 0 level
+		static const unsigned int label_height;
+		static const unsigned int nb_labels;
 		static const unsigned int total_height;
 
 		static const unsigned int font_0[10][6], font_1[10][6], font_2[10][6], font_3[10][6], font_4[10][6];
