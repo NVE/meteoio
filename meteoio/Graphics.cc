@@ -99,7 +99,7 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::stringstream ss;
 	const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
-	ss << setfill (' ') << setw(text_chars_nb) << left << setprecision(precision) << val << endl;
+	ss << setfill (' ') << setw(text_chars_nb) << left << setprecision(precision) << val << endl; //improve this format...
 
 	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
 
@@ -241,6 +241,11 @@ void Color::HSVtoRGB(const double h, const double s, const double v, double &r, 
 
 Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
+	set(type, i_min, i_max, i_autoscale);
+}
+
+void Gradient::set(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
+{
 	delta_val = i_max - i_min;
 
 	if(type==terrain) model = new terrain_gradient(i_min, i_max, i_autoscale);
@@ -252,7 +257,7 @@ Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, c
 
 //val between min_val and max_val
 //return values between 0 and 255 per channel
-void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a)
+void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a) const
 {
 	if(val==IOUtils::nodata) {
 		r=0; g=0; b=0; a=0;
@@ -285,7 +290,7 @@ void Gradient_model::setMinMax(const double& i_min, const double& i_max, const b
 }
 
 //we assume that the vectors are sorted by X
-double Gradient_model::getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y)
+double Gradient_model::getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const
 {
 	if(X.size()!=Y.size()) {
 		std::stringstream ss;
@@ -293,9 +298,12 @@ double Gradient_model::getInterpol(const double& val, const std::vector<double>&
 		ss << "There are " << X.size() << " abscissa for " << Y.size() << " ordinates.";
 		throw IOException(ss.str(), AT);
 	}
-	size_t i=0;
-	while(X[i]<val && i<X.size()) i++;
+	if(X.size()==0) {
+		throw IOException("Empty vector of control points for color gradient interpolation", AT);
+	}
 
+	size_t i=0;
+	while(i<X.size() && X[i]<val) i++;
 	if(X[i]==val) return Y[i];
 	if(i==0) return Y[0];
 	if(i==Y.size()) return Y[ Y.size()-1 ];
@@ -304,7 +312,7 @@ double Gradient_model::getInterpol(const double& val, const std::vector<double>&
 	return y;
 }
 
-void Gradient_model::HSV2RGB(const double& h, const double& s, const double& v, unsigned char &r, unsigned char &g, unsigned char &b)
+void Gradient_model::HSV2RGB(const double& h, const double& s, const double& v, unsigned char &r, unsigned char &g, unsigned char &b) const
 {
 	double r_d, g_d, b_d;
 	Color::HSVtoRGB(h, s, v, r_d, g_d, b_d);
@@ -313,7 +321,7 @@ void Gradient_model::HSV2RGB(const double& h, const double& s, const double& v, 
 	b = static_cast<unsigned char>(b_d*255);
 }
 
-void Gradient_model::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
+void Gradient_model::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
 {
 	double val;
 	if(autoscale)
@@ -329,7 +337,7 @@ void Gradient_model::getColor(const double &i_val, unsigned char &r, unsigned ch
 	a = 255; //no alpha for valid values
 }
 
-void heat_gradient::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
+void heat_gradient::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
 {
 	const double val = (i_val-min_val)/delta_val; //autoscale
 
@@ -345,24 +353,27 @@ water_gradient::water_gradient(const double& i_min, const double& i_max, const b
 	setMinMax(i_min, i_max, i_autoscale);
 
 	//write gradient control points
-	if(autoscale) {
-		X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //
-		X.push_back(.1429); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99); //
-		X.push_back(.2857); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97); //
-		X.push_back(.429); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94); //
-		X.push_back(.5714); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91); //
-		X.push_back(.7143); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88); //
-		X.push_back(.857); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85); //
-		X.push_back(1.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8); //
-	} else {
-		X.push_back(5.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //
-		X.push_back(10.); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99); //
-		X.push_back(20.); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97); //
-		X.push_back(50.); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94); //
-		X.push_back(80.); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91); //
-		X.push_back(120.); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88); //
-		X.push_back(200.); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85); //
-		X.push_back(200.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8); //
+	//if(autoscale) {
+		X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99);
+		X.push_back(.1429); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99);
+		X.push_back(.2857); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97);
+		X.push_back(.429); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94);
+		X.push_back(.5714); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91);
+		X.push_back(.7143); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88);
+		X.push_back(.857); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85);
+		X.push_back(1.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8);
+	/*} else {
+		X.push_back(5.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99);
+		X.push_back(10.); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99);
+		X.push_back(20.); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97);
+		X.push_back(50.); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94);
+		X.push_back(80.); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91);
+		X.push_back(120.); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88);
+		X.push_back(200.); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85);
+		X.push_back(200.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8);
+	}*/
+	if(!autoscale) {
+		for(size_t i=0; i<X.size(); i++) X[i] *= i_max;
 	}
 }
 

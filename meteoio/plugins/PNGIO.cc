@@ -206,30 +206,22 @@ void PNGIO::readSpecialPoints(std::vector<Coords>&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
-{
-	FILE *fp;
-	png_structp png_ptr=NULL;
-	png_infop info_ptr=NULL;
-	png_bytep row=NULL;
-
-	//scale input image
+Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
+{ //scale input image
 	const double factor = getScaleFactor(grid_in.ncols, grid_in.nrows);
-	Grid2DObject grid;
 	if(scaling=="nearest")
-		grid = ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
+		return ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
 	else if(scaling=="bilinear")
-		grid = ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
+		return ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
 	else {
 		stringstream ss;
 		ss << "Grid scaling algorithm \"" << scaling << "\" unknown";
 		throw UnknownValueException(ss.str(), AT);
 	}
+}
 
-	const double ncols = grid.ncols, nrows = grid.nrows;
-	const double min = grid.grid2D.getMin();
-	const double max = grid.grid2D.getMax();
-
+void PNGIO::setFile(const std::string& filename, FILE *fp, png_structp& png_ptr, png_infop& info_ptr, const unsigned int &width, const unsigned int &height)
+{
 	// Open file for writing (binary mode)
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename, AT);
@@ -256,43 +248,49 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	// Setup Exception handling
 	if (setjmp(png_jmpbuf(png_ptr))) {
-		cleanup(fp, png_ptr, info_ptr, row);
+		cleanup(fp, png_ptr, info_ptr);
 		throw IOException("Error during png creation", AT);
 	}
 
 	png_init_io(png_ptr, fp);
 
-	unsigned int full_width=ncols;
-	Array2D<double> legend_array;
+	// Write header (8 bit colour depth)
+	png_set_IHDR(png_ptr, info_ptr, width, height,
+	             8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+	             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+}
+
+unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array)
+{
 	if(has_legend) {
 		legend leg(nrows, min, max);
 		legend_array = leg.getLegend();
 		unsigned int nx, ny;
 		legend_array.size(nx,ny);
-		full_width += nx;
+		return (ncols+nx);
+	} else {
+		return ncols;
 	}
-	// Write header (8 bit colour depth)
-	png_set_IHDR(png_ptr, info_ptr, full_width, nrows,
-	             8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
-	             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-	createMetadata(grid);
-	writeMetadata(png_ptr, info_ptr);
-	png_write_info(png_ptr, info_ptr);
+}
+
+void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, png_structp &png_ptr)
+{
+	const double ncols = grid.ncols, nrows = grid.nrows;
 
 	// Allocate memory for one row (4 bytes per pixel - RGBA)
+	png_bytep row=NULL;
 	row = (png_bytep) malloc(4 * full_width * sizeof(png_byte));
 
 	// Write image data
-	Gradient gradient(Gradient::terrain, min, max, autoscale);
 	for(int y=nrows-1 ; y>=0 ; y--) {
-		for(unsigned int x=0 ; x<ncols ; x++) {
+		//unsigned int x=0;
+		for(unsigned int x=0; x<ncols ; x++) {
 			const unsigned int i=x*4;
 			unsigned char r,g,b,a;
 			gradient.getColor(grid(x,y), r,g,b,a);
 			row[i]=r; row[i+1]=g; row[i+2]=b; row[i+3]=a;
 		}
 		for(unsigned int x=ncols; x<full_width; x++) {
-			//setRGB( legend_array(x-ncols,y), min, max, &(row[x*4]) );
 			const unsigned int i=x*4;
 			unsigned char r,g,b,a;
 			gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
@@ -301,20 +299,89 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 		png_write_row(png_ptr, row);
 	}
 
+	free(row);
+}
+
+void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
+{
+	FILE *fp=NULL;
+	png_structp png_ptr=NULL;
+	png_infop info_ptr=NULL;
+
+	//scale input image
+	const Grid2DObject grid = scaleGrid(grid_in);
+	const double ncols = grid.ncols, nrows = grid.nrows;
+	const double min = grid.grid2D.getMin();
+	const double max = grid.grid2D.getMax();
+
+	Gradient gradient(Gradient::heat, min, max, autoscale);
+
+	Array2D<double> legend_array; //it will remain empty if there is no legend
+	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
+
+	setFile(filename, fp, png_ptr, info_ptr, full_width, nrows);
+
+	createMetadata(grid);
+	metadata_key.push_back("Title"); //adding generic title
+	metadata_text.push_back("Unknown Gridded data");
+	writeMetadata(png_ptr, info_ptr);
+
+	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
+
 	png_write_end(png_ptr, NULL);
-	cleanup(fp, png_ptr, info_ptr, row);
+	cleanup(fp, png_ptr, info_ptr);
 }
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::stringstream ss;
-	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".png";
-	write2DGrid(grid_in, ss.str());
-}
+	const std::string filename = date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
 
-void PNGIO::cleanup() throw()
-{
+	FILE *fp=NULL;
+	png_structp png_ptr=NULL;
+	png_infop info_ptr=NULL;
 
+	//scale input image
+	Grid2DObject grid = scaleGrid(grid_in);
+	const double ncols = grid.ncols, nrows = grid.nrows;
+	double min = grid.grid2D.getMin();
+	double max = grid.grid2D.getMax();
+
+	Gradient gradient;
+	if(parameter==MeteoGrids::DEM) {
+		gradient.set(Gradient::terrain, min, max, autoscale);
+	} else if(parameter==MeteoGrids::SLOPE) {
+		gradient.set(Gradient::slope, min, max, autoscale);
+	} else if(parameter==MeteoGrids::AZI) {
+		gradient.set(Gradient::azi, min, max, autoscale);
+	} else if(parameter==MeteoGrids::HS) {
+		if(!autoscale) gradient.set(Gradient::water, 0., 3.5, autoscale);
+		else gradient.set(Gradient::water, min, max, autoscale);
+	} else if(parameter==MeteoGrids::TA) {
+		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
+		min -= Cst::t_water_freezing_pt;
+		max -= Cst::t_water_freezing_pt;
+		gradient.set(Gradient::heat, min, max, autoscale);
+	} else if(parameter==MeteoGrids::RH) {
+		if(!autoscale) gradient.set(Gradient::water, 0., 1., autoscale);
+		else gradient.set(Gradient::water, min, max, autoscale);
+	} else {
+		gradient.set(Gradient::heat, min, max, autoscale);
+	}
+
+	Array2D<double> legend_array; //it will remain empty if there is no legend
+	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array); //set different scales for different params! TODO
+
+	setFile(filename, fp, png_ptr, info_ptr, full_width, nrows);
+
+	createMetadata(grid);
+	metadata_key.push_back("Title"); //adding title
+	metadata_text.push_back( MeteoGrids::getParameterName(parameter)+" on "+date.toString(Date::ISO) );
+	writeMetadata(png_ptr, info_ptr);
+
+	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
+
+	png_write_end(png_ptr, NULL);
+	cleanup(fp, png_ptr, info_ptr);
 }
 
 void PNGIO::createMetadata(const Grid2DObject& grid)
@@ -323,8 +390,10 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 	const double lon = grid.llcorner.getLon();
 	stringstream ss;
 
-	metadata_key.push_back("Title");
-	metadata_text.push_back("Gridded data"); //HACK: write meteogrid parameter, date
+	metadata_key.push_back("Creation Time");
+	Date cr_date;
+	cr_date.setFromSys();
+	metadata_text.push_back( cr_date.toString(Date::ISO) );
 	metadata_key.push_back("Author");
 	metadata_text.push_back(IOUtils::getLogName());
 	metadata_key.push_back("Software");
@@ -394,6 +463,8 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 	}
 	free(key);
 	free(text);
+
+	png_write_info(png_ptr, info_ptr);
 }
 
 std::string PNGIO::decimal_to_dms(const double& decimal) {
@@ -406,12 +477,11 @@ std::string PNGIO::decimal_to_dms(const double& decimal) {
 	return dms.str();
 }
 
-void PNGIO::cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr, png_bytep row)
+void PNGIO::cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr)
 {
 	if (fp != NULL) fclose(fp);
 	if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 	if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-	if (row != NULL) free(row);
 }
 
 #ifndef _METEOIO_JNI

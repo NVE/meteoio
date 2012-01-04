@@ -59,6 +59,7 @@ class MeteoGrids {
 		                 U, ///< East component of wind
 		                 V, ///< North component of wind
 		                 W, ///< Vertical component of wind
+		                 SWE, ///< Snow Water Equivalent
 		                 DEM, ///< Digital Elevation Model
 		                 SLOPE, ///< DEM slope angle
 		                 AZI, ///< DEM slope azimuth

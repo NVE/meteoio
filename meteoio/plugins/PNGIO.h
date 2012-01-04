@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
+#include <meteoio/Graphics.h>
 
 #include <string>
 #include <png.h>
@@ -67,8 +68,11 @@ class PNGIO : public IOInterface {
 		double getScaleFactor(const double& grid_w, const double& grid_h);
 		void createMetadata(const Grid2DObject& grid);
 		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
-		void cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr, png_bytep row);
-		void cleanup() throw();
+		Grid2DObject scaleGrid(const Grid2DObject& grid_in);
+		void setFile(const std::string& filename, FILE *fp, png_structp& png_ptr, png_infop& info_ptr, const unsigned int &width, const unsigned int &height);
+		unsigned int setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array);
+		void writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, png_structp &png_ptr);
+		void cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr);
 		std::string decimal_to_dms(const double& decimal);
 
 		Config cfg;

@@ -47,6 +47,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("U");
 	paramname.push_back("V");
 	paramname.push_back("W");
+	paramname.push_back("SWE");
 	paramname.push_back("DEM");
 	paramname.push_back("SLOPE");
 	paramname.push_back("AZI");
