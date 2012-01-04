@@ -99,7 +99,7 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::stringstream ss;
 	const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
-	ss << setfill (' ') << setw(text_chars_nb) << left << setprecision(precision) << val << endl; //improve this format...
+	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val << std::endl; //improve this format...
 
 	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
 
@@ -321,14 +321,8 @@ void Gradient_model::HSV2RGB(const double& h, const double& s, const double& v, 
 	b = static_cast<unsigned char>(b_d*255);
 }
 
-void Gradient_model::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
+void Gradient_model::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
 {
-	double val;
-	if(autoscale)
-	 	val = (i_val-min_val)/delta_val;
-	else
-		val = i_val;
-
 	const double h = getInterpol(val, X, v_h);
 	const double s = getInterpol(val, X, v_s);
 	const double v = getInterpol(val, X, v_v);
@@ -339,7 +333,7 @@ void Gradient_model::getColor(const double &i_val, unsigned char &r, unsigned ch
 
 void heat_gradient::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
 {
-	const double val = (i_val-min_val)/delta_val; //autoscale
+	const double val = (i_val-min_val)/delta_val; //autoscale HACK: do autoscale, new way!!
 
 	const double h = 240. * (1.-val);
 	const double v = val*0.75+0.25;
@@ -353,28 +347,16 @@ water_gradient::water_gradient(const double& i_min, const double& i_max, const b
 	setMinMax(i_min, i_max, i_autoscale);
 
 	//write gradient control points
-	//if(autoscale) {
-		X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99);
-		X.push_back(.1429); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99);
-		X.push_back(.2857); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97);
-		X.push_back(.429); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94);
-		X.push_back(.5714); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91);
-		X.push_back(.7143); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88);
-		X.push_back(.857); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85);
-		X.push_back(1.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8);
-	/*} else {
-		X.push_back(5.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99);
-		X.push_back(10.); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99);
-		X.push_back(20.); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97);
-		X.push_back(50.); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94);
-		X.push_back(80.); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91);
-		X.push_back(120.); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88);
-		X.push_back(200.); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85);
-		X.push_back(200.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8);
-	}*/
-	if(!autoscale) {
-		for(size_t i=0; i<X.size(); i++) X[i] *= i_max;
-	}
+	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //5
+	X.push_back(.16667); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99); //10
+	X.push_back(.33334); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97); //20
+	X.push_back(.5); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94); //50
+	X.push_back(.66667); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91); //80
+	X.push_back(.83335); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88); //120
+	X.push_back(1.); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85); //200
+	X.push_back(1.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8); //200
+
+	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
 terrain_gradient::terrain_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
@@ -387,6 +369,8 @@ terrain_gradient::terrain_gradient(const double& i_min, const double& i_max, con
 		X.push_back(.5); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
 		X.push_back(.75); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
 		X.push_back(1.); v_h.push_back(22.); v_s.push_back(.2); v_v.push_back(.5); //light maroon
+
+		for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 	} else {
 		X.push_back(-1.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
 		X.push_back(0.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
@@ -395,8 +379,10 @@ terrain_gradient::terrain_gradient(const double& i_min, const double& i_max, con
 		X.push_back(2200.); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
 		X.push_back(2700.); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
 		X.push_back(2950.); v_h.push_back(22.); v_s.push_back(.36); v_v.push_back(.79); //light maroon
-		X.push_back(3000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.7); //light gray
-		X.push_back(4000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white
+		X.push_back(3000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.7); //light gray == permanent snow line
+
+		for(size_t i=0; i<X.size(); i++) X[i] = X[i]/3000.*delta_val + min_val; //snow line is the reference
+		X.push_back(max_val+600.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white == fully glaciated line
 	}
 }
 
@@ -404,22 +390,16 @@ slope_gradient::slope_gradient(const double& i_min, const double& i_max, const b
 	setMinMax(i_min, i_max, i_autoscale);
 
 	//write gradient control points
-	if(autoscale) {
-		X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
-		X.push_back(.2); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
-		X.push_back(.4); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
-		X.push_back(.6); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
-		X.push_back(.8); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
-		X.push_back(1.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
-	} else {
-		X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
-		X.push_back(25.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
-		X.push_back(30.); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
-		X.push_back(35.); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
-		X.push_back(40.); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
-		X.push_back(45.); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red
-		X.push_back(50.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
-	}
+	//usually, between 0 and 50
+	X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
+	X.push_back(.5); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
+	X.push_back(.6); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
+	X.push_back(.7); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
+	X.push_back(.8); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
+	X.push_back(.9); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red
+	X.push_back(1.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
+
+	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
 azi_gradient::azi_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
@@ -431,12 +411,14 @@ azi_gradient::azi_gradient(const double& i_min, const double& i_max, const bool&
 		X.push_back(1.); v_h.push_back(360.); v_s.push_back(.66); v_v.push_back(.91); //light red
 	} else {
 		X.push_back(0.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //blue
-		X.push_back(90.); v_h.push_back(310.); v_s.push_back(.78); v_v.push_back(1.); //magenta
-		X.push_back(180.); v_h.push_back(360.); v_s.push_back(.78); v_v.push_back(1.); //red, increasing hue
-		X.push_back(180.); v_h.push_back(0.); v_s.push_back(.78); v_v.push_back(1.); //red, back to hue=0
-		X.push_back(270.); v_h.push_back(28.); v_s.push_back(.78); v_v.push_back(1.); //orange
-		X.push_back(360.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //back to blue
+		X.push_back(.25); v_h.push_back(310.); v_s.push_back(.78); v_v.push_back(1.); //magenta
+		X.push_back(.5); v_h.push_back(360.); v_s.push_back(.78); v_v.push_back(1.); //red, increasing hue
+		X.push_back(.5); v_h.push_back(0.); v_s.push_back(.78); v_v.push_back(1.); //red, back to hue=0
+		X.push_back(.75); v_h.push_back(28.); v_s.push_back(.78); v_v.push_back(1.); //orange
+		X.push_back(1.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //back to blue
 	}
+
+	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
 } //namespace

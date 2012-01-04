@@ -98,6 +98,8 @@ class Gradient_model {
 		std::vector<double> X, v_h,v_s,v_v; ///<control points: vector of X and associated hues, saturations and values. They must be in X ascending order
 };
 
+//getColor: take value between min & max, as defined in the constructor (use min/max for rescaling gradient control points). Use autoscale bool only for specific adjustments (ie: remove sea level blue color in autoscale, etc) ie: autoscaling is done purely by the caller, who specifies the min/max for the gradient (and that should be enough)
+
 class heat_gradient : public Gradient_model {
 	public:
 		heat_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};

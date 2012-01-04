@@ -348,22 +348,27 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 	Gradient gradient;
 	if(parameter==MeteoGrids::DEM) {
-		gradient.set(Gradient::terrain, min, max, autoscale);
+		if(!autoscale) gradient.set(Gradient::terrain, 0., 3000., false); //for Terrain, 3000 is the snow line
+		else gradient.set(Gradient::terrain, min, max, true);
 	} else if(parameter==MeteoGrids::SLOPE) {
 		gradient.set(Gradient::slope, min, max, autoscale);
 	} else if(parameter==MeteoGrids::AZI) {
 		gradient.set(Gradient::azi, min, max, autoscale);
 	} else if(parameter==MeteoGrids::HS) {
-		if(!autoscale) gradient.set(Gradient::water, 0., 3.5, autoscale);
-		else gradient.set(Gradient::water, min, max, autoscale);
+		if(!autoscale) gradient.set(Gradient::water, 0., 3.5, false);
+		else gradient.set(Gradient::water, min, max, true);
 	} else if(parameter==MeteoGrids::TA) {
 		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
 		min -= Cst::t_water_freezing_pt;
 		max -= Cst::t_water_freezing_pt;
-		gradient.set(Gradient::heat, min, max, autoscale);
+		if(!autoscale) gradient.set(Gradient::heat, -20., 20., false);
+		else gradient.set(Gradient::heat, min, max, true);
 	} else if(parameter==MeteoGrids::RH) {
-		if(!autoscale) gradient.set(Gradient::water, 0., 1., autoscale);
-		else gradient.set(Gradient::water, min, max, autoscale);
+		if(!autoscale) gradient.set(Gradient::water, 0., 1., false);
+		else gradient.set(Gradient::water, min, max, true);
+	} else if(parameter==MeteoGrids::SWE) {
+		if(!autoscale) gradient.set(Gradient::water, 0., 2000., false);
+		else gradient.set(Gradient::water, min, max, true);
 	} else {
 		gradient.set(Gradient::heat, min, max, autoscale);
 	}
@@ -376,6 +381,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	createMetadata(grid);
 	metadata_key.push_back("Title"); //adding title
 	metadata_text.push_back( MeteoGrids::getParameterName(parameter)+" on "+date.toString(Date::ISO) );
+	metadata_key.push_back("Simulation Date");
+	metadata_text.push_back( date.toString(Date::ISO) );
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
