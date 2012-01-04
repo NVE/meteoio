@@ -74,11 +74,12 @@ class PNGIO : public IOInterface {
 		Config cfg;
 		bool autoscale;
 		bool has_legend;
+		std::string scaling;
 		unsigned int min_w, min_h, max_w, max_h;
 		//plus bg and fg colors
 
 		std::vector<std::string> metadata_key, metadata_text;
-		
+
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 

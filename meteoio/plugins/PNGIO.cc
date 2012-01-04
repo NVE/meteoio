@@ -39,6 +39,8 @@ namespace mio {
  * - png_legend: plot legend on the side of the graph? (default: true)
  * - png_min_size: guarantee that a 2D plot will have at least the given size
  * - png_max_size: guarantee that a 2D plot will have at most the given size
+ * - png_scaling: scaling algorithm, either nearest or bilinear (default=bilinear)
+ * - png_autoscale: autoscale for the color gradient? (default= true)
  * - etc
  *
  * The size are specified as width followed by height, with the separator being either a space, 'x' or '*'. If a minimum and a maximum size are given, the average of the smallest and largest permissible sizes will be used.
@@ -82,6 +84,8 @@ void PNGIO::setOptions()
 	cfg.getValue("png_autoscale", "Output", autoscale, Config::nothrow);
 	has_legend = true;
 	cfg.getValue("png_legend", "Output", has_legend, Config::nothrow);
+	scaling = "bilinear";
+	cfg.getValue("png_scaling", "Output", scaling, Config::nothrow);
 
 	if(has_legend) { //we need to save room for the legend
 		if(min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
@@ -211,8 +215,17 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	//scale input image
 	const double factor = getScaleFactor(grid_in.ncols, grid_in.nrows);
-	Grid2DObject grid = ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
-	//Grid2DObject grid = ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
+	Grid2DObject grid;
+	if(scaling=="nearest")
+		grid = ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
+	else if(scaling=="bilinear")
+		grid = ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
+	else {
+		stringstream ss;
+		ss << "Grid scaling algorithm \"" << scaling << "\" unknown";
+		throw UnknownValueException(ss.str(), AT);
+	}
+
 	const double ncols = grid.ncols, nrows = grid.nrows;
 	const double min = grid.grid2D.getMin();
 	const double max = grid.grid2D.getMax();
@@ -270,7 +283,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	row = (png_bytep) malloc(4 * full_width * sizeof(png_byte));
 
 	// Write image data
-	Gradient gradient(Gradient::heat, min, max);
+	Gradient gradient(Gradient::terrain, min, max, autoscale);
 	for(int y=nrows-1 ; y>=0 ; y--) {
 		for(unsigned int x=0 ; x<ncols ; x++) {
 			const unsigned int i=x*4;

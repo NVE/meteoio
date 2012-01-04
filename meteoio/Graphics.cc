@@ -239,14 +239,15 @@ void Color::HSVtoRGB(const double h, const double s, const double v, double &r, 
 // Gradient class
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-Gradient::Gradient(const Type& type, const double& i_min, const double& i_max)
+Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
 	delta_val = i_max - i_min;
 
-	if(type==terrain) model = new terrain_gradient(i_min, i_max);
-	else if(type==slope) model = new slope_gradient(i_min, i_max);
-	else if(type==heat) model = new heat_gradient(i_min, i_max);
-	//else if(type==water) model = new water_gradient(i_min, i_max);
+	if(type==terrain) model = new terrain_gradient(i_min, i_max, i_autoscale);
+	else if(type==slope) model = new slope_gradient(i_min, i_max, i_autoscale);
+	else if(type==azi) model = new azi_gradient(i_min, i_max, i_autoscale);
+	else if(type==heat) model = new heat_gradient(i_min, i_max, i_autoscale);
+	else if(type==water) model = new water_gradient(i_min, i_max, i_autoscale);
 }
 
 //val between min_val and max_val
@@ -275,11 +276,12 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 	model->getColor(val, r, g, b, a);
 }
 
-void Gradient_model::setMinMax(const double& i_min, const double& i_max)
+void Gradient_model::setMinMax(const double& i_min, const double& i_max, const bool& i_autoscale)
 {
 	min_val = i_min;
 	max_val = i_max;
 	delta_val = (max_val-min_val);
+	autoscale = i_autoscale;
 }
 
 //we assume that the vectors are sorted by X
@@ -311,33 +313,14 @@ void Gradient_model::HSV2RGB(const double& h, const double& s, const double& v, 
 	b = static_cast<unsigned char>(b_d*255);
 }
 
-void heat_gradient::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
+void Gradient_model::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
 {
-	const double auto_val = (val-min_val)/delta_val; //autoscale
+	double val;
+	if(autoscale)
+	 	val = (i_val-min_val)/delta_val;
+	else
+		val = i_val;
 
-	const double h = 240. * (1.-auto_val);
-	const double v = auto_val*0.75+0.25;
-	const double s = 1-auto_val*0.3;
-
-	HSV2RGB(h, s, v, r, g, b);
-	a = 255; //no alpha for valid values
-}
-
-terrain_gradient::terrain_gradient(const double& i_min, const double& i_max) {
-	setMinMax(i_min, i_max);
-
-	//write gradient control points
-	X.push_back(-1.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
-	X.push_back(0.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
-	X.push_back(0.); v_h.push_back(144.); v_s.push_back(.58); v_v.push_back(.39); //sea level, dark green
-	X.push_back(1200.); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow
-	X.push_back(2200.); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
-	X.push_back(2700.); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
-	X.push_back(3000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.82); //white
-}
-
-void terrain_gradient::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
-{
 	const double h = getInterpol(val, X, v_h);
 	const double s = getInterpol(val, X, v_s);
 	const double v = getInterpol(val, X, v_v);
@@ -346,27 +329,103 @@ void terrain_gradient::getColor(const double &val, unsigned char &r, unsigned ch
 	a = 255; //no alpha for valid values
 }
 
-slope_gradient::slope_gradient(const double& i_min, const double& i_max) {
-	setMinMax(i_min, i_max);
-
-	//write gradient control points
-	X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.91); //light blue
-	X.push_back(25.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
-	X.push_back(30.); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
-	X.push_back(35.); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
-	X.push_back(40.); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
-	X.push_back(45.); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red
-	X.push_back(50.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
-}
-
-void slope_gradient::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
+void heat_gradient::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a)
 {
-	const double h = getInterpol(val, X, v_h);
-	const double s = getInterpol(val, X, v_s);
-	const double v = getInterpol(val, X, v_v);
+	const double val = (i_val-min_val)/delta_val; //autoscale
+
+	const double h = 240. * (1.-val);
+	const double v = val*0.75+0.25;
+	const double s = 1.-val*0.3;
 
 	HSV2RGB(h, s, v, r, g, b);
 	a = 255; //no alpha for valid values
+}
+
+water_gradient::water_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	if(autoscale) {
+		X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //
+		X.push_back(.1429); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99); //
+		X.push_back(.2857); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97); //
+		X.push_back(.429); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94); //
+		X.push_back(.5714); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91); //
+		X.push_back(.7143); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88); //
+		X.push_back(.857); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85); //
+		X.push_back(1.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8); //
+	} else {
+		X.push_back(5.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //
+		X.push_back(10.); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99); //
+		X.push_back(20.); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97); //
+		X.push_back(50.); v_h.push_back(205.); v_s.push_back(.43); v_v.push_back(.94); //
+		X.push_back(80.); v_h.push_back(219.); v_s.push_back(.55); v_v.push_back(.91); //
+		X.push_back(120.); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88); //
+		X.push_back(200.); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85); //
+		X.push_back(200.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8); //
+	}
+}
+
+terrain_gradient::terrain_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	if(autoscale) {
+		X.push_back(0.); v_h.push_back(144.); v_s.push_back(.50); v_v.push_back(.39); //sea level, dark green
+		X.push_back(.25); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow
+		X.push_back(.5); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
+		X.push_back(.75); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
+		X.push_back(1.); v_h.push_back(22.); v_s.push_back(.2); v_v.push_back(.5); //light maroon
+	} else {
+		X.push_back(-1.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
+		X.push_back(0.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
+		X.push_back(0.); v_h.push_back(144.); v_s.push_back(.50); v_v.push_back(.39); //sea level, dark green
+		X.push_back(1200.); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow
+		X.push_back(2200.); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
+		X.push_back(2700.); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
+		X.push_back(2950.); v_h.push_back(22.); v_s.push_back(.36); v_v.push_back(.79); //light maroon
+		X.push_back(3000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.7); //light gray
+		X.push_back(4000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white
+	}
+}
+
+slope_gradient::slope_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	if(autoscale) {
+		X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
+		X.push_back(.2); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
+		X.push_back(.4); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
+		X.push_back(.6); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
+		X.push_back(.8); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
+		X.push_back(1.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
+	} else {
+		X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
+		X.push_back(25.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
+		X.push_back(30.); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
+		X.push_back(35.); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
+		X.push_back(40.); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
+		X.push_back(45.); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red
+		X.push_back(50.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
+	}
+}
+
+azi_gradient::azi_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	if(autoscale) {
+		X.push_back(0.); v_h.push_back(113.); v_s.push_back(.66); v_v.push_back(.91); //light green
+		X.push_back(1.); v_h.push_back(360.); v_s.push_back(.66); v_v.push_back(.91); //light red
+	} else {
+		X.push_back(0.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //blue
+		X.push_back(90.); v_h.push_back(310.); v_s.push_back(.78); v_v.push_back(1.); //magenta
+		X.push_back(180.); v_h.push_back(360.); v_s.push_back(.78); v_v.push_back(1.); //red, increasing hue
+		X.push_back(180.); v_h.push_back(0.); v_s.push_back(.78); v_v.push_back(1.); //red, back to hue=0
+		X.push_back(270.); v_h.push_back(28.); v_s.push_back(.78); v_v.push_back(1.); //orange
+		X.push_back(360.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //back to blue
+	}
 }
 
 } //namespace

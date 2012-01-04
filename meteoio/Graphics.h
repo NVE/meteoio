@@ -81,38 +81,51 @@ namespace Color {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 class Gradient_model {
 	public:
-		Gradient_model() {setMinMax(0., 0.);}; //do not use this constructor!
-		Gradient_model(const double& i_min, const double& i_max) {setMinMax(i_min, i_max);};
+		Gradient_model() {setMinMax(0., 0., true);}; //do not use this constructor!
+		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
 		//setBgColor()
 		//setFgColor()
 
 		//val must be between 0 and 1 -> check + in doc? TODO
-		virtual void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) = 0;
+		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
 	protected:
 		double getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y);
-		void setMinMax(const double& i_min, const double& i_max);
+		void setMinMax(const double& i_min, const double& i_max, const bool& i_autoscale);
 		void HSV2RGB(const double& h, const double& s, const double& v, unsigned char &r, unsigned char &g, unsigned char &b);
 
 		double max_val, min_val, delta_val;
+		bool autoscale;
 		std::vector<double> X, v_h,v_s,v_v; ///<control points: vector of X and associated hues, saturations and values. They must be in X ascending order
 };
 
 class heat_gradient : public Gradient_model {
 	public:
-		heat_gradient(const double& i_min, const double& i_max) {setMinMax(i_min, i_max);};
-		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
+		heat_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
+		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
+};
+
+class water_gradient : public Gradient_model {
+	public:
+		water_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
+		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
 };
 
 class terrain_gradient : public Gradient_model {
 	public:
-		terrain_gradient(const double& i_min, const double& i_max);
-		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
+		terrain_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
+		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
 };
 
 class slope_gradient : public Gradient_model {
 	public:
-		slope_gradient(const double& i_min, const double& i_max);
-		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
+		slope_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
+		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
+};
+
+class azi_gradient : public Gradient_model {
+	public:
+		azi_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
+		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
 };
 
 class Gradient {
@@ -121,12 +134,13 @@ class Gradient {
 		typedef enum TYPE {
 		            terrain,
 		            slope,
+		            azi,
 		            heat,
 		            water
 		} Type;
 
 		Gradient() {model=NULL; delta_val=0.;}; //do not use this empty constructor!
-		Gradient(const Type& type, const double& min_val, const double &max_val);
+		Gradient(const Type& type, const double& min_val, const double &max_val, const bool& i_autoscale);
 		~Gradient() {delete model;};
 		//setBgColor()
 		//setFgColor()
