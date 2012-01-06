@@ -104,7 +104,7 @@ namespace Color {
 	* @param v value (between 0 and 1)
 	* @ingroup graphics
 	*/
-	void RGBtoHSV(const double r, const double g, const double b, double &h, double &s, double &v);
+	void RGBtoHSV(const double& r, const double& g, const double& b, double &h, double &s, double &v);
 
 	/**
 	* @brief convert HSV to RGB.
@@ -119,7 +119,7 @@ namespace Color {
 	* @param b blue (between 0 and 1)
 	* @ingroup graphics
 	*/
-	void HSVtoRGB(const double h, const double s, const double v, double &r, double &g, double &b);
+	void HSVtoRGB(const double& h, const double& s, const double& v, double &r, double &g, double &b);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,6 +166,9 @@ class Gradient_model {
  * - setting min/max to fixed values (so the gradient will be rescaled between these fixed boundaries)
  * - passing i_autoscale=false so the gradient might be able to set so fix points (like sea and snow line)
  *
+ * For some interesting discussion on how to define color gradients, see Bernice E. Rogowitz, Lloyd A. Treinish
+ * "Why Should Engineers and Scientists Be Worried About Color?"
+ * http://www.research.ibm.com/people/l/lloydt/color/color.HTM
  * @ingroup graphics
  * @author Mathias Bavay
  * @date   2012-01-06
@@ -181,6 +184,7 @@ class Gradient {
 		            freeze, ///< two, two-color gradients with a sharp transition at 0
 		            blue_pink, ///< blue to pink gradient
 		            pastel, ///< same color scale as "slope" but linear
+		            bg_isomorphic, ///< drak-blue to light-green isomorphic gradient
 		            blue ///< white to slightly violet gradient. This is similar to the one used for the SLF avalanche bulletin
 		} Type;
 
@@ -254,6 +258,11 @@ class gr_freeze : public Gradient_model {
 class gr_blue : public Gradient_model {
 	public:
 		gr_blue(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_bg_isomorphic : public Gradient_model {
+	public:
+		gr_bg_isomorphic(const double& i_min, const double& i_max, const bool& i_autoscale);
 };
 
 class gr_terrain : public Gradient_model {

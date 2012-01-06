@@ -155,7 +155,7 @@ const Array2D<double> legend::getLegend()
 
 //values between 0 and 1
 //see http://www.cs.rit.edu/~ncs/color/t_convert.html or https://secure.wikimedia.org/wikipedia/en/wiki/HSL_and_HSV#Conversion_from_HSL_to_RGB
-void Color::RGBtoHSV(const double r, const double g, const double b,
+void Color::RGBtoHSV(const double& r, const double& g, const double& b,
                      double &h, double &s, double &v)
 {
 	const double minimum = min( min(r,g), b);
@@ -184,7 +184,7 @@ void Color::RGBtoHSV(const double r, const double g, const double b,
 		h += 360;
 }
 
-void Color::HSVtoRGB(const double h, const double s, const double v, double &r, double &g, double &b)
+void Color::HSVtoRGB(const double& h, const double& s, const double& v, double &r, double &g, double &b)
 {
 	if( s==0 ) { //achromatic (grey)
 		r = g = b = v;
@@ -242,6 +242,7 @@ void Gradient::set(const Type& type, const double& i_min, const double& i_max, c
 	else if(type==blue) model = new gr_blue(i_min, i_max, i_autoscale);
 	else if(type==blue_pink) model = new gr_blue_pink(i_min, i_max, i_autoscale);
 	else if(type==pastel) model = new gr_pastel(i_min, i_max, i_autoscale);
+	else if(type==bg_isomorphic) model = new gr_bg_isomorphic(i_min, i_max, i_autoscale);
 }
 
 //val between min_val and max_val
@@ -266,7 +267,7 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 		r=0; g=0; b=0; a=255;
 		return;
 	}
-	if(autoscale && delta_val==0) { //constant data through the grid & autoscale are no friends...
+	if(autoscale && delta_val==0) { //constant data throughout the grid & autoscale are no friends...
 		r=g=b=125; a=255;
 		return;
 	}
@@ -285,21 +286,25 @@ void Gradient_model::setMinMax(const double& i_min, const double& i_max, const b
 //we assume that the vectors are sorted by X
 double Gradient_model::getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const
 {
-	if(X.size()!=Y.size()) {
+	const size_t nr = X.size();
+#ifndef NOSAFECHECKS
+	if(Y.size()!=nr) {
 		std::stringstream ss;
 		ss << "For color gradients interpolations, both X and Y vectors must have the same size! ";
 		ss << "There are " << X.size() << " abscissa for " << Y.size() << " ordinates.";
 		throw IOException(ss.str(), AT);
 	}
-	if(X.size()==0) {
+	if(nr==0) {
 		throw IOException("Empty vector of control points for color gradient interpolation", AT);
 	}
+#endif
 
 	size_t i=0;
-	while(i<X.size() && X[i]<val) i++;
-	if(X[i]==val) return Y[i];
+	while(i<nr && X[i]<val) i++; //find index of first element greater than val
+
 	if(i==0) return Y[0];
-	if(i==Y.size()) return Y[ Y.size()-1 ];
+	if(i>=nr) return Y[ nr-1 ];
+	if(X[i]==val) return Y[i];
 
 	const double y = Y[i-1] + (val-X[i-1])/(X[i]-X[i-1]) * (Y[i]-Y[i-1]);
 	return y;
@@ -394,6 +399,17 @@ gr_blue::gr_blue(const double& i_min, const double& i_max, const bool& i_autosca
 	X.push_back(.83335); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88); //120
 	X.push_back(1.); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85); //200
 	X.push_back(1.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8); //200
+
+	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
+}
+
+gr_bg_isomorphic::gr_bg_isomorphic(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	X.push_back(0.); v_h.push_back(47.); v_s.push_back(.92); v_v.push_back(0.); //black
+	X.push_back(.5); v_h.push_back(178.); v_s.push_back(.58); v_v.push_back(.67); //light blue
+	X.push_back(1.); v_h.push_back(84.); v_s.push_back(.67); v_v.push_back(1.); //light green
 
 	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }

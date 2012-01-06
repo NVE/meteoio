@@ -429,7 +429,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min -= Cst::t_water_freezing_pt;
 			max -= Cst::t_water_freezing_pt;
 		}
-		gradient.set(Gradient::freeze, min, max, autoscale);
+		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if(parameter==MeteoGrids::TSS) {
 		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
 		if(!autoscale) {
@@ -443,7 +443,12 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		if(!autoscale) {
 			min = 0.; max = 1.;
 		}
-		gradient.set(Gradient::blue_pink, min, max, autoscale);
+		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
+	} else if(parameter==MeteoGrids::ALB) {
+		if(!autoscale) {
+			min = 0.; max = 1.;
+		}
+		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
 	} else if(parameter==MeteoGrids::SWE) {
 		if(!autoscale) {
 			min = 0.; max = 2000.;

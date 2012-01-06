@@ -111,12 +111,12 @@ void ResamplingAlgorithms2D::Bilinear_nodata(Grid2DObject &o_grid, const Grid2DO
 
 	for (unsigned int jj=0; jj<o_grid.nrows; jj++) {
 		const double org_y = (double)jj/scale_y;
-		const unsigned int org_jj = (unsigned int) floor(org_y);
+		const unsigned int org_jj = static_cast<unsigned int>( org_y );
 		const double y = org_y - (double)org_jj; //normalized y, between 0 and 1
 
 		for (unsigned int ii=0; ii<o_grid.ncols; ii++) {
 			const double org_x = (double)ii/scale_x;
-			const unsigned int org_ii = (unsigned int) floor(org_x);
+			const unsigned int org_ii = static_cast<unsigned int>( org_x );
 			const double x = org_x - (double)org_ii; //normalized x, between 0 and 1
 
 			if(org_jj>=(org_nrows-1) || org_ii>=(org_ncols-1)) {
@@ -148,12 +148,14 @@ void ResamplingAlgorithms2D::Bilinear_nodata(Grid2DObject &o_grid, const Grid2DO
 				avg_count++;
 			}
 
-			if(avg_count<=2) {
-				o_grid(ii,jj) = IOUtils::nodata;
-				continue;
-			}
 			if(avg_count==4) {
 				o_grid(ii,jj) = f_0_0 * (1.-x)*(1.-y) + f_1_0 * x*(1.-y) + f_0_1 * (1.-x)*y + f_1_1 *x*y;
+				continue;
+			}
+
+			//special cases: less than two neighbours or three neighbours
+			if(avg_count<=2) {
+				o_grid(ii,jj) = IOUtils::nodata;
 				continue;
 			}
 
