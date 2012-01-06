@@ -40,6 +40,10 @@ namespace mio {
    Documentation for available data structures.
 */
 
+/*! \defgroup graphics Graphical elements and operations
+   Documentation for available classes and methods for dealing with graphical elements, color conversions, etc
+*/
+
  /**
  * @mainpage Welcome to MeteoIO
  * @section intro_sec Introduction

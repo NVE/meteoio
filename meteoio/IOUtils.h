@@ -158,6 +158,15 @@ namespace IOUtils {
 	std::string getExtension(const std::string& filename);
 
 	/**
+	* @brief remove the extension part of a given filename.
+	* The extension is defined as all the non-whitespace characters after the last '.'
+	* in the filename.
+	* @param filename filename to remove the extension from
+	* @return filename without extension (the '.' is also removed)
+	*/
+	std::string removeExtension(const std::string& filename);
+
+	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
 	* @param s The reference of the string to trim (in/out parameter)
 	*/
@@ -184,6 +193,7 @@ namespace IOUtils {
 	                      const std::string& keyprefix="", const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
+	void toLower(std::string& str);
 	bool isNumeric(const std::string& input, const unsigned int& nBase=10);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);

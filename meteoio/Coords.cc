@@ -156,6 +156,29 @@ bool Coords::isNodata() const {
 	return false;
 }
 
+///< move the point by the specified distance (in m) along easting and northing
+void Coords::moveByXY(const double& x_displacement, const double& y_displacement) {
+	setXY(easting+x_displacement, northing+y_displacement, altitude, true);
+}
+
+///< move the point by the specified bearing and distance (in m)
+void Coords::moveByBearing(const double& bearing, const double& distance) {
+	double new_lat, new_lon;
+
+	switch(distance_algo) {
+		case GEO_COSINE:
+			cosineInverse(latitude, longitude, distance, bearing, new_lat, new_lon);
+			break;
+		case GEO_VINCENTY:
+			VincentyInverse(latitude, longitude, distance, bearing, new_lat, new_lon);
+			break;
+		default:
+			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
+	}
+
+	setLatLon(new_lat, new_lon, altitude, true);
+}
+
 /**
 * @brief Simple merge strategy.
 * If some fields of the first argument are empty, they will be filled by the macthing field from the

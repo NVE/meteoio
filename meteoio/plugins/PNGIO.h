@@ -70,6 +70,7 @@ class PNGIO : public IOInterface {
 		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
 		Grid2DObject scaleGrid(const Grid2DObject& grid_in);
 		void setFile(const std::string& filename, FILE *fp, png_structp& png_ptr, png_infop& info_ptr, const unsigned int &width, const unsigned int &height);
+		void writeWorldFile(const Grid2DObject& grid_in, const std::string& filename);
 		unsigned int setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array);
 		void writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, png_structp &png_ptr);
 		void cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr);
@@ -78,9 +79,11 @@ class PNGIO : public IOInterface {
 		Config cfg;
 		bool autoscale;
 		bool has_legend;
+		bool has_world_file; ///< create world file with each file?
+		std::string coordout, coordoutparam; //projection parameters
+
 		std::string scaling;
 		unsigned int min_w, min_h, max_w, max_h;
-		//plus bg and fg colors
 
 		std::vector<std::string> metadata_key, metadata_text;
 

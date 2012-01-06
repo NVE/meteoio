@@ -169,6 +169,17 @@ std::string IOUtils::getExtension(const std::string& filename)
 	return filename.substr(startpos+1, endpos-startpos);
 }
 
+std::string IOUtils::removeExtension(const std::string& filename)
+{
+	const std::string whitespaces(" \t\f\v\n\r");
+	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
+	const size_t startpos = filename.find_last_of('.');
+	if( startpos==std::string::npos ) return filename;
+	if( start_basename!=std::string::npos && startpos<start_basename ) return filename;
+
+	return filename.substr(0, startpos);
+}
+
 void IOUtils::trim(std::string& str)
 {
 	const std::string whitespaces(" \t\f\v\n\r");
@@ -186,6 +197,12 @@ void IOUtils::trim(std::string& str)
 void IOUtils::toUpper(std::string& str){
 	for(size_t t=0; t<str.length(); t++) {
 		str[t] = (char)toupper(str[t]);
+	}
+}
+
+void IOUtils::toLower(std::string& str){
+	for(size_t t=0; t<str.length(); t++) {
+		str[t] = (char)tolower(str[t]);
 	}
 }
 

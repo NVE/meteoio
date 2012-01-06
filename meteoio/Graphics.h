@@ -37,8 +37,27 @@ namespace mio {
  */
 class legend {
 	public:
+		/**
+		* @brief Constructor.
+		* @param height available height of the plot (for centering the legend)
+		* @param minimum start value of the legend
+		* @param maximum end value of the legend
+		*/
 		legend(const unsigned int &height, const double &minimum, const double &maximum);
+
+		/**
+		* @brief Get the actual width of the legend
+		* This is constant but depends on various parameters of the legend: font size, number of characters, spacing etc.
+		* @return width of the legend
+		*/
 		static double getLegendWidth();
+
+		/**
+		* @brief Get the legend in an array
+		* The legend is coded as values between min and max (+background and text colors) in an array. This array can then be used
+		* alongside the data array to build the full plot
+		* @return legend array
+		*/
 		const Array2D<double> getLegend();
 
 		static const int bg_color; ///<marker for solid background
@@ -72,13 +91,41 @@ class legend {
 };
 
 namespace Color {
+	/**
+	* @brief convert RGB to HSV.
+	* This converts Red-Green-Blue values to Hue-Saturation-Value.
+	* See https://secure.wikimedia.org/wikipedia/en/wiki/HSL_and_HSV
+	* or http://www.cs.rit.edu/~ncs/color/t_convert.html
+	* @param r red (between 0 and 1)
+	* @param g green (between 0 and 1)
+	* @param b blue (between 0 and 1)
+	* @param h hue (between 0 and 360)
+	* @param s saturation (between 0 and 1)
+	* @param v value (between 0 and 1)
+	* @ingroup graphics
+	*/
 	void RGBtoHSV(const double r, const double g, const double b, double &h, double &s, double &v);
+
+	/**
+	* @brief convert HSV to RGB.
+	* This converts Hue-Saturation-Value to Red-Green-Blue values.
+	* See https://secure.wikimedia.org/wikipedia/en/wiki/HSL_and_HSV
+	* or http://www.cs.rit.edu/~ncs/color/t_convert.html
+	* @param h hue (between 0 and 360)
+	* @param s saturation (between 0 and 1)
+	* @param v value (between 0 and 1)
+	* @param r red (between 0 and 1)
+	* @param g green (between 0 and 1)
+	* @param b blue (between 0 and 1)
+	* @ingroup graphics
+	*/
 	void HSVtoRGB(const double h, const double s, const double v, double &r, double &g, double &b);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Gradient class
 /////////////////////////////////////////////////////////////////////////////////////////////////
+//This class is the base class for the various gradients
 class Gradient_model {
 	public:
 		Gradient_model() {setMinMax(0., 0., true);}; //do not use this constructor!
@@ -86,7 +133,6 @@ class Gradient_model {
 		//setBgColor()
 		//setFgColor()
 
-		//val must be between 0 and 1 -> check + in doc? TODO
 		virtual void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
 	protected:
 		double getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const;
@@ -98,59 +144,136 @@ class Gradient_model {
 		std::vector<double> X, v_h,v_s,v_v; ///<control points: vector of X and associated hues, saturations and values. They must be in X ascending order
 };
 
-//getColor: take value between min & max, as defined in the constructor (use min/max for rescaling gradient control points). Use autoscale bool only for specific adjustments (ie: remove sea level blue color in autoscale, etc) ie: autoscaling is done purely by the caller, who specifies the min/max for the gradient (and that should be enough)
-
-class heat_gradient : public Gradient_model {
-	public:
-		heat_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
-		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
-};
-
-class water_gradient : public Gradient_model {
-	public:
-		water_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
-};
-
-class terrain_gradient : public Gradient_model {
-	public:
-		terrain_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
-};
-
-class slope_gradient : public Gradient_model {
-	public:
-		slope_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
-};
-
-class azi_gradient : public Gradient_model {
-	public:
-		azi_gradient(const double& i_min, const double& i_max, const bool& i_autoscale);
-};
-
+/**
+ * @class Gradient
+ * @brief This converts numeric values into rgba values.
+ * The object is initialized with the range that the gradient should cover and the gradient type. Then each numeric value
+ * that is given will be converted into rgba values from the selected gradient. Data out of range are converted to either
+ * the minimum or the maximum of the gradient. Alpha channel is ONLY used by special pixels.
+ *
+ * Some special pixels are recognized:
+ * - IOUtils::nodata returns a transparent pixel
+ * - legend::bg_color returns a white pixel
+ * - legend::text_color returns a black pixel
+ *
+ * The autoscale is handled both by the object and its caller: if "autoscale==true", the gradient might adjust its control points, for
+ * example removing sea and snow lines in the terrain gradient. The min and max values are used to scale the gradient: all values less than min
+ * will receive the start color while all values greater than max will receive the end color. Therefore true autoscale is acheived by:
+ * - setting min/max to the data min/max
+ * - passing i_autoscale=true so the gradient might receive some specific adjustments
+ *
+ * On the other hand, fixed scale is acheived by:
+ * - setting min/max to fixed values (so the gradient will be rescaled between these fixed boundaries)
+ * - passing i_autoscale=false so the gradient might be able to set so fix points (like sea and snow line)
+ *
+ * @ingroup graphics
+ * @author Mathias Bavay
+ * @date   2012-01-06
+ */
 class Gradient {
 	public:
 		/// This enum provides names for possible color gradients
 		typedef enum TYPE {
-		            terrain,
-		            slope,
-		            azi,
-		            heat,
-		            water
+		            terrain, ///< suitable for DEM. if autoscale, then sea and snow line are turned off
+		            slope, ///< suitable to represent slope
+		            azi, ///< suitable to represent slope azimuth. In autoscale, it becomes a two color gradient
+		            heat, ///< the traditional heat gradient (with all its associated shortcomings)
+		            freeze, ///< two, two-color gradients with a sharp transition at 0
+		            blue_pink, ///< blue to pink gradient
+		            pastel, ///< same color scale as "slope" but linear
+		            blue ///< white to slightly violet gradient. This is similar to the one used for the SLF avalanche bulletin
 		} Type;
 
+		/**
+		* @brief Default Constructor.
+		* This should be followed by a call to set() before calling getColor
+		*/
 		Gradient() {model=NULL; delta_val=0.;};
+
+		/**
+		* @brief Constructor.
+		* The object will associate to each numeric value RGB values. See class description for more...
+		* @param type set the color gradient to use, from the enum Gradient::Type
+		* @param min_val start value of the gradient
+		* @param max_val end value of the gradient
+		* @param i_autoscale do autoscale for setting the colors?
+		*/
 		Gradient(const Type& type, const double& min_val, const double &max_val, const bool& i_autoscale);
+
 		~Gradient() {delete model;};
 
+		/**
+		* @brief Setter
+		* See class description for more...
+		* @param type set the color gradient to use, from the enum Gradient::Type
+		* @param min_val start value of the gradient
+		* @param max_val end value of the gradient
+		* @param i_autoscale do autoscale for setting the colors?
+		*/
 		void set(const Type& type, const double& min_val, const double &max_val, const bool& i_autoscale);
 		//setBgColor()
 		//setFgColor()
 
-		//val must be between 0 and 1 -> check + in doc? TODO
+		/**
+		* @brief Get RGB values for a given numeric value
+		* See class description for more explanations on the implementation/behavior
+		* @param val numerical value to convert
+		* @param r red (between 0 and 255)
+		* @param g green (between 0 and 255)
+		* @param b blue (between 0 and 255)
+		* @param a alpha (between 0 and 255)
+		*/
 		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
 
 	private:
 		double delta_val;
+		bool autoscale;
 		Gradient_model *model;
+};
+
+class gr_heat : public Gradient_model {
+	public:
+		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
+		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
+};
+
+class gr_blue_pink : public Gradient_model {
+	public:
+		gr_blue_pink(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_freeze : public Gradient_model {
+	public:
+		gr_freeze(const double& i_min, const double& i_max, const bool& i_autoscale);
+		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
+	private:
+		//This gradient is interpolated in RGB color space
+		std::vector<double> X, v_r,v_g,v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order
+};
+
+class gr_blue : public Gradient_model {
+	public:
+		gr_blue(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_terrain : public Gradient_model {
+	public:
+		gr_terrain(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_slope : public Gradient_model {
+	public:
+		gr_slope(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_azi : public Gradient_model {
+	public:
+		gr_azi(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_pastel : public Gradient_model {
+	public:
+		gr_pastel(const double& i_min, const double& i_max, const bool& i_autoscale);
 };
 
 } //namespace

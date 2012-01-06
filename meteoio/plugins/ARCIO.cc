@@ -87,35 +87,37 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
+ * - A3D_view: use Alpine3D's grid viewer naming scheme (default=false)? [Input] and [Output] sections.
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
-/* World file format: This is the geolocalization file going alongside graphics output (tiff, png, jpg) By convention,
- the file has the same name as the image file, with the third letter of the extension jammed with a w: tif->tfw, jpg->jqw.
-The format is the following:
-    5.000000000000 (size of pixel in x direction)
-    0.000000000000 (rotation term for row)
-    0.000000000000 (rotation term for column)
-    -5.000000000000 (size of pixel in y direction)
-    492169.690845528910 (x coordinate of centre of upper left pixel in map units)
-    5426523.318065105000 (y coordinate of centre of upper left pixel in map units)
-*/
-
 ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	a3d_view_in = false;
+	cfg.getValue("A3D_view", "Input", a3d_view_in, Config::nothrow);
+	a3d_view_out = false;
+	cfg.getValue("A3D_view", "Output", a3d_view_out, Config::nothrow);
 }
 
 ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	a3d_view_in = false;
+	cfg.getValue("A3D_view", "Input", a3d_view_in, Config::nothrow);
+	a3d_view_out = false;
+	cfg.getValue("A3D_view", "Output", a3d_view_out, Config::nothrow);
 }
 
 ARCIO::ARCIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	a3d_view_in = false;
+	cfg.getValue("A3D_view", "Input", a3d_view_in, Config::nothrow);
+	a3d_view_out = false;
+	cfg.getValue("A3D_view", "Output", a3d_view_out, Config::nothrow);
 }
 
 ARCIO::~ARCIO() throw()
@@ -217,9 +219,12 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::stringstream ss;
-	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".asc";
-	read2DGrid(grid_out, ss.str());
+	if(a3d_view_in) {
+		string ext = MeteoGrids::getParameterName(parameter);
+		IOUtils::toLower(ext);
+		read2DGrid(grid_out, date.toString(Date::NUM)+"."+ext );
+	} else
+		read2DGrid(grid_out, date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
 }
 
 void ARCIO::readDEM(DEMObject& dem_out)
@@ -304,7 +309,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			fout << "\n";
 		}
 	} catch(...) {
-		cout << "[E] " << AT << ": "<< endl;
+		cout << "[E] error when writing ARC grid \"" << name << "\" " << AT << ": "<< endl;
 		cleanup();
 		throw;
 	}
@@ -314,9 +319,12 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 
 void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::stringstream ss;
-	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".asc";
-	write2DGrid(grid_in, ss.str());
+	if(a3d_view_out) {
+		string ext = MeteoGrids::getParameterName(parameter);
+		IOUtils::toLower(ext);
+		write2DGrid(grid_in, date.toString(Date::NUM)+"."+ext );
+	} else
+		write2DGrid(grid_in, date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
 }
 
 #ifndef _METEOIO_JNI

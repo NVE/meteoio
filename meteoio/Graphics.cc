@@ -184,53 +184,38 @@ void Color::RGBtoHSV(const double r, const double g, const double b,
 		h += 360;
 }
 
-//values between 0 and 1
-//h between 0 and 360
 void Color::HSVtoRGB(const double h, const double s, const double v, double &r, double &g, double &b)
 {
-	if( s==0 ) {
-		// achromatic (grey)
+	if( s==0 ) { //achromatic (grey)
 		r = g = b = v;
 		return;
 	}
 
-	const double h_p = h/60;	// sector 0 to 5
-	const int i = (int)floor(h_p); //HACK: replace by static_cast<int>
-	const double f = h_p - i;	// factorial part of h
-	const double p = v * ( 1 - s );
-	const double q = v * ( 1 - s * f );
-	const double t = v * ( 1 - s * ( 1 - f ) );
+	const double h_p = h/60.; //sector 0 to 5
+	const int i = static_cast<int>(h_p);
+	const double f = h_p - i; //factorial part of h
+	const double p = v * ( 1. - s );
+	const double q = v * ( 1. - s * f );
+	const double t = v * ( 1. - s * ( 1. - f ) );
 
 	switch( i ) {
 		case 0:
-			r = v;
-			g = t;
-			b = p;
+			r = v; g = t; b = p;
 			break;
 		case 1:
-			r = q;
-			g = v;
-			b = p;
+			r = q; g = v; b = p;
 			break;
 		case 2:
-			r = p;
-			g = v;
-			b = t;
+			r = p; g = v; b = t;
 			break;
 		case 3:
-			r = p;
-			g = q;
-			b = v;
+			r = p; g = q; b = v;
 			break;
 		case 4:
-			r = t;
-			g = p;
-			b = v;
+			r = t; g = p; b = v;
 			break;
-		default:		// case 5:
-			r = v;
-			g = p;
-			b = q;
+		default: // case 5:
+			r = v; g = p; b = q;
 			break;
 	}
 }
@@ -247,18 +232,28 @@ Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, c
 void Gradient::set(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
 	delta_val = i_max - i_min;
+	autoscale = i_autoscale;
 
-	if(type==terrain) model = new terrain_gradient(i_min, i_max, i_autoscale);
-	else if(type==slope) model = new slope_gradient(i_min, i_max, i_autoscale);
-	else if(type==azi) model = new azi_gradient(i_min, i_max, i_autoscale);
-	else if(type==heat) model = new heat_gradient(i_min, i_max, i_autoscale);
-	else if(type==water) model = new water_gradient(i_min, i_max, i_autoscale);
+	if(type==terrain) model = new gr_terrain(i_min, i_max, i_autoscale);
+	else if(type==slope) model = new gr_slope(i_min, i_max, i_autoscale);
+	else if(type==azi) model = new gr_azi(i_min, i_max, i_autoscale);
+	else if(type==heat) model = new gr_heat(i_min, i_max, i_autoscale);
+	else if(type==freeze) model = new gr_freeze(i_min, i_max, i_autoscale);
+	else if(type==blue) model = new gr_blue(i_min, i_max, i_autoscale);
+	else if(type==blue_pink) model = new gr_blue_pink(i_min, i_max, i_autoscale);
+	else if(type==pastel) model = new gr_pastel(i_min, i_max, i_autoscale);
 }
 
 //val between min_val and max_val
 //return values between 0 and 255 per channel
+//getColor: take value between min & max, as defined in the constructor (use min/max for rescaling gradient control points). Use autoscale bool only for specific adjustments (ie: remove sea level blue color in autoscale, etc) ie: autoscaling is done purely by the caller, who specifies the min/max for the gradient (and that should be enough)
+
 void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a) const
 {
+	if(model==NULL) {
+		throw UnknownValueException("Please set the color gradient before using it!", AT);
+	}
+
 	if(val==IOUtils::nodata) {
 		r=0; g=0; b=0; a=0;
 		return;
@@ -271,13 +266,11 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 		r=0; g=0; b=0; a=255;
 		return;
 	}
-
-	if(delta_val==0) {
-		r=g=b=0; a=255;
+	if(autoscale && delta_val==0) { //constant data through the grid & autoscale are no friends...
+		r=g=b=125; a=255;
 		return;
 	}
 
-	//get the rgba components by providing val between 0 and 1
 	model->getColor(val, r, g, b, a);
 }
 
@@ -331,9 +324,20 @@ void Gradient_model::getColor(const double &val, unsigned char &r, unsigned char
 	a = 255; //no alpha for valid values
 }
 
-void heat_gradient::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// Various Gradients
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+void gr_heat::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
 {
-	const double val = (i_val-min_val)/delta_val; //autoscale HACK: do autoscale, new way!!
+	double val;
+	if(autoscale)
+		val = (i_val-min_val)/delta_val;
+	else { //since the user provided bounds do not reflect the data's bounds
+		if(i_val<min_val) val=0.;
+		else if(i_val>max_val) val=1.;
+		else val = (i_val-min_val)/delta_val;
+	}
 
 	const double h = 240. * (1.-val);
 	const double v = val*0.75+0.25;
@@ -343,7 +347,42 @@ void heat_gradient::getColor(const double &i_val, unsigned char &r, unsigned cha
 	a = 255; //no alpha for valid values
 }
 
-water_gradient::water_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+gr_blue_pink::gr_blue_pink(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white
+	X.push_back(0.2); v_h.push_back(172.); v_s.push_back(.4); v_v.push_back(.95); //light blue
+	X.push_back(.4); v_h.push_back(213.); v_s.push_back(.4); v_v.push_back(.95); //violet
+	X.push_back(.6); v_h.push_back(255.); v_s.push_back(.4); v_v.push_back(.95); //violet/blue
+	X.push_back(.8); v_h.push_back(278.); v_s.push_back(.4); v_v.push_back(.95); //violet
+	X.push_back(1.); v_h.push_back(359.); v_s.push_back(.3); v_v.push_back(.95); //red
+
+	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
+}
+
+gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	X.push_back(0.); v_r.push_back(0.); v_g.push_back(0.); v_b.push_back(1.); //blue
+	X.push_back(.5); v_r.push_back(1.); v_g.push_back(1.); v_b.push_back(0.); //yellow
+	X.push_back(.5); v_r.push_back(0.); v_g.push_back(1.); v_b.push_back(0.); //green
+	X.push_back(1.); v_r.push_back(1.); v_g.push_back(0.); v_b.push_back(0.); //red
+
+	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
+}
+
+void gr_freeze::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const
+{
+	r = static_cast<unsigned char>(getInterpol(val, X, v_r)*255);
+	g = static_cast<unsigned char>(getInterpol(val, X, v_g)*255);
+	b = static_cast<unsigned char>(getInterpol(val, X, v_b)*255);
+
+	a = 255; //no alpha for valid values
+}
+
+gr_blue::gr_blue(const double& i_min, const double& i_max, const bool& i_autoscale) {
 	setMinMax(i_min, i_max, i_autoscale);
 
 	//write gradient control points
@@ -359,7 +398,22 @@ water_gradient::water_gradient(const double& i_min, const double& i_max, const b
 	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-terrain_gradient::terrain_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+gr_pastel::gr_pastel(const double& i_min, const double& i_max, const bool& i_autoscale) {
+	setMinMax(i_min, i_max, i_autoscale);
+
+	//write gradient control points
+	X.push_back(0.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
+	X.push_back(1.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
+	X.push_back(2.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
+	X.push_back(4.); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
+	X.push_back(5.); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
+	X.push_back(6.); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
+	X.push_back(7.); v_h.push_back(0.); v_s.push_back(.4); v_v.push_back(.7); //dark red
+
+	for(size_t i=0; i<X.size(); i++) X[i] = X[i]/7.*delta_val + min_val;
+}
+
+gr_terrain::gr_terrain(const double& i_min, const double& i_max, const bool& i_autoscale) {
 	setMinMax(i_min, i_max, i_autoscale);
 
 	//write gradient control points
@@ -386,7 +440,7 @@ terrain_gradient::terrain_gradient(const double& i_min, const double& i_max, con
 	}
 }
 
-slope_gradient::slope_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+gr_slope::gr_slope(const double& i_min, const double& i_max, const bool& i_autoscale) {
 	setMinMax(i_min, i_max, i_autoscale);
 
 	//write gradient control points
@@ -402,7 +456,7 @@ slope_gradient::slope_gradient(const double& i_min, const double& i_max, const b
 	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-azi_gradient::azi_gradient(const double& i_min, const double& i_max, const bool& i_autoscale) {
+gr_azi::gr_azi(const double& i_min, const double& i_max, const bool& i_autoscale) {
 	setMinMax(i_min, i_max, i_autoscale);
 
 	//write gradient control points
@@ -412,8 +466,8 @@ azi_gradient::azi_gradient(const double& i_min, const double& i_max, const bool&
 	} else {
 		X.push_back(0.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //blue
 		X.push_back(.25); v_h.push_back(310.); v_s.push_back(.78); v_v.push_back(1.); //magenta
-		X.push_back(.5); v_h.push_back(360.); v_s.push_back(.78); v_v.push_back(1.); //red, increasing hue
-		X.push_back(.5); v_h.push_back(0.); v_s.push_back(.78); v_v.push_back(1.); //red, back to hue=0
+		X.push_back(.5); v_h.push_back(360.); v_s.push_back(1.); v_v.push_back(1.); //red, increasing hue
+		X.push_back(.5); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(1.); //red, back to hue=0
 		X.push_back(.75); v_h.push_back(28.); v_s.push_back(.78); v_v.push_back(1.); //orange
 		X.push_back(1.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //back to blue
 	}

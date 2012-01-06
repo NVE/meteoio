@@ -67,6 +67,8 @@ class Coords {
 	bool operator==(const Coords&) const; ///<Operator that tests for equality
 	bool operator!=(const Coords&) const; ///<Operator that tests for inequality
 	bool isNodata() const;
+	void moveByXY(const double& x_displacement, const double& y_displacement);
+	void moveByBearing(const double& bearing, const double& distance);
 
 	static Coords merge(const Coords& coord1, const Coords& coord2);
 	void merge(const Coords& coord2);

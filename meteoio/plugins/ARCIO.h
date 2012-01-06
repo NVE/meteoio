@@ -69,6 +69,8 @@ class ARCIO : public IOInterface {
 	private:
 		void cleanup() throw();
 		Config cfg;
+		bool a3d_view_in, a3d_view_out; ///< make filename compatible with the Alpine3D's viewer?
+
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters

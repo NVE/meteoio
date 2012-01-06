@@ -32,19 +32,33 @@ namespace mio {
  * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.png
  *
  * @section template_units Units
- *
+ * All units are MKSA except temperatures that are expressed in celcius.
  *
  * @section template_keywords Keywords
  * This plugin uses the following keywords:
+ * - COORDSYS: input coordinate system (see Coords) specified in the [Output] section
+ * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Output] section
  * - png_legend: plot legend on the side of the graph? (default: true)
  * - png_min_size: guarantee that a 2D plot will have at least the given size
  * - png_max_size: guarantee that a 2D plot will have at most the given size
  * - png_scaling: scaling algorithm, either nearest or bilinear (default=bilinear)
- * - png_autoscale: autoscale for the color gradient? (default= true)
- * - etc
+ * - png_autoscale: autoscale for the color gradient? (default=true)
+ * - png_world_file: create world file with each file? (default=false)
  *
  * The size are specified as width followed by height, with the separator being either a space, 'x' or '*'. If a minimum and a maximum size are given, the average of the smallest and largest permissible sizes will be used.
+ * The world file is used for geolocalization and goes alongside the graphics output. By convention,
+ * the file has the same name as the image file, with the third letter of the extension jammed with a w: tif->tfw, jpg->jqw.
+ * The format is the following:
+ * @code
+ *    5.000000000000 (size of pixel in x direction)
+ *    0.000000000000 (rotation term for row)
+ *    0.000000000000 (rotation term for column)
+ *    -5.000000000000 (size of pixel in y direction)
+ *    492169.690845528910 (x coordinate of centre of upper left pixel in map units)
+ *    5426523.318065105000 (y coordinate of centre of upper left pixel in map units)
+ * @endcode
  *
+ * @section example Example use
  * @code
  * GRID2D = PNG
  * png_legend = false
@@ -72,6 +86,10 @@ PNGIO::PNGIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 
 void PNGIO::setOptions()
 {
+	cfg.getValue("COORDSYS", "Output", coordout);
+	cfg.getValue("COORDPARAM", "Output", coordoutparam, Config::nothrow);
+	//cfg.getValue("TIME_ZONE", "Output", tz_out, Config::nothrow);
+
 	//get size specifications
 	std::string min_size, max_size;
 	min_w = min_h = max_w = max_h = IOUtils::unodata;
@@ -86,6 +104,8 @@ void PNGIO::setOptions()
 	cfg.getValue("png_legend", "Output", has_legend, Config::nothrow);
 	scaling = "bilinear";
 	cfg.getValue("png_scaling", "Output", scaling, Config::nothrow);
+	has_world_file=false;
+	cfg.getValue("png_world_file", "Output", has_world_file, Config::nothrow);
 
 	if(has_legend) { //we need to save room for the legend
 		if(min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
@@ -302,6 +322,35 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 	free(row);
 }
 
+void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)
+{
+	const string world_file = IOUtils::removeExtension(filename)+".pnw";
+	const double cellsize = grid_in.cellsize;
+	Coords world_ref=grid_in.llcorner;
+	world_ref.setProj(coordout, coordoutparam);
+	world_ref.moveByXY(0., grid_in.nrows*cellsize);
+
+	std::ofstream fout;
+	fout.open(world_file.c_str());
+	if (fout.fail()) {
+		throw FileAccessException(world_file, AT);
+	}
+
+	try {
+		fout << std::setprecision(12) << cellsize << "\n";
+		fout << "0.000000000000\n";
+		fout << "0.000000000000\n";
+		fout << std::setprecision(12) << -cellsize << "\n";
+		fout << std::setprecision(12) << world_ref.getEasting() << "\n";
+		fout << std::setprecision(12) << world_ref.getNorthing() << "\n";
+	} catch(...) {
+		fout.close();
+		throw FileAccessException("Failed when writing to PNG world file \""+world_file+"\"", AT);
+	}
+
+	fout.close();
+}
+
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
 	FILE *fp=NULL;
@@ -320,6 +369,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, fp, png_ptr, info_ptr, full_width, nrows);
+	if(has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);
 	metadata_key.push_back("Title"); //adding generic title
@@ -334,7 +384,11 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	const std::string filename = date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
+	std::string filename;
+	if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
+		filename = MeteoGrids::getParameterName(parameter) + ".png";
+	else
+		filename = date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
 
 	FILE *fp=NULL;
 	png_structp png_ptr=NULL;
@@ -348,41 +402,70 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 	Gradient gradient;
 	if(parameter==MeteoGrids::DEM) {
-		if(!autoscale) gradient.set(Gradient::terrain, 0., 3000., false); //for Terrain, 3000 is the snow line
-		else gradient.set(Gradient::terrain, min, max, true);
+		if(!autoscale) {
+			min = 0.; //we want a 3000 snow line with a full scale legend
+			gradient.set(Gradient::terrain, min, 3000., autoscale); //max used as snow line reference
+			max = 4000.;
+		} else
+			gradient.set(Gradient::terrain, min, max, autoscale);
 	} else if(parameter==MeteoGrids::SLOPE) {
 		gradient.set(Gradient::slope, min, max, autoscale);
 	} else if(parameter==MeteoGrids::AZI) {
+		if(!autoscale) {
+			min = 0.;
+			max = 360.;
+		}
 		gradient.set(Gradient::azi, min, max, autoscale);
 	} else if(parameter==MeteoGrids::HS) {
-		if(!autoscale) gradient.set(Gradient::water, 0., 3.5, false);
-		else gradient.set(Gradient::water, min, max, true);
+		if(!autoscale) {
+			min = 0.; max = 3.5;
+		}
+		gradient.set(Gradient::blue, min, max, autoscale);
 	} else if(parameter==MeteoGrids::TA) {
 		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
-		min -= Cst::t_water_freezing_pt;
-		max -= Cst::t_water_freezing_pt;
-		if(!autoscale) gradient.set(Gradient::heat, -20., 20., false);
-		else gradient.set(Gradient::heat, min, max, true);
+		if(!autoscale) {
+			min = -10.; max = 10.;
+		} else {
+			min -= Cst::t_water_freezing_pt;
+			max -= Cst::t_water_freezing_pt;
+		}
+		gradient.set(Gradient::freeze, min, max, autoscale);
+	} else if(parameter==MeteoGrids::TSS) {
+		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
+		if(!autoscale) {
+			min = -10.; max = 10.;
+		} else {
+			min -= Cst::t_water_freezing_pt;
+			max -= Cst::t_water_freezing_pt;
+		}
+		gradient.set(Gradient::freeze, min, max, autoscale);
 	} else if(parameter==MeteoGrids::RH) {
-		if(!autoscale) gradient.set(Gradient::water, 0., 1., false);
-		else gradient.set(Gradient::water, min, max, true);
+		if(!autoscale) {
+			min = 0.; max = 1.;
+		}
+		gradient.set(Gradient::blue_pink, min, max, autoscale);
 	} else if(parameter==MeteoGrids::SWE) {
-		if(!autoscale) gradient.set(Gradient::water, 0., 2000., false);
-		else gradient.set(Gradient::water, min, max, true);
+		if(!autoscale) {
+			min = 0.; max = 2000.;
+		}
+		gradient.set(Gradient::blue, min, max, autoscale);
 	} else {
 		gradient.set(Gradient::heat, min, max, autoscale);
 	}
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
-	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array); //set different scales for different params! TODO
+	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, fp, png_ptr, info_ptr, full_width, nrows);
+	if(has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);
 	metadata_key.push_back("Title"); //adding title
 	metadata_text.push_back( MeteoGrids::getParameterName(parameter)+" on "+date.toString(Date::ISO) );
 	metadata_key.push_back("Simulation Date");
 	metadata_text.push_back( date.toString(Date::ISO) );
+	metadata_key.push_back("Simulation Parameter");
+	metadata_text.push_back( MeteoGrids::getParameterName(parameter) );
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
