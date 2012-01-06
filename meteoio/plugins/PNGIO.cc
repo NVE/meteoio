@@ -27,8 +27,10 @@ namespace mio {
 /**
  * @page pngio PNGIO
  * @section template_format Format
- * *Put here the informations about the standard format that is implemented*
- * No data read, only write (because of gradients)
+ * This plugin write data to the Portable Network Graphics format (see https://secure.wikimedia.org/wikipedia/en/wiki/Portable_Network_Graphics).
+ * No data read has been implemented, because reading an existing file would require the exact knowlege of the color gradient that has been used
+ * to create it. When writing grids, various color gradients will be used depending on the parameter that the data represents. Nodata values
+ * are represented by transparent pixels (transparency is acheived through a transparent color instead of a true alpha channel for size and performance).
  * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.png
  *
  * @section template_units Units
@@ -274,10 +276,13 @@ void PNGIO::setFile(const std::string& filename, FILE *fp, png_structp& png_ptr,
 
 	png_init_io(png_ptr, fp);
 
-	// Write header (8 bit colour depth)
+	// Write header (8 bit colour depth). Alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
 	png_set_IHDR(png_ptr, info_ptr, width, height,
-	             8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+	             8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 	             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+	//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
+	png_color_16 trans_rgb_value = {255, 255, 255, 255, 255};
+	png_set_tRNS(png_ptr, info_ptr, 0, 0, &trans_rgb_value);
 }
 
 unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array)
@@ -297,24 +302,35 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 {
 	const double ncols = grid.ncols, nrows = grid.nrows;
 
-	// Allocate memory for one row (4 bytes per pixel - RGBA)
+	// Allocate memory for one row (3 bytes per pixel - RGB)
+	const unsigned char channels = 3;
 	png_bytep row=NULL;
-	row = (png_bytep) malloc(4 * full_width * sizeof(png_byte));
+	row = (png_bytep) malloc(channels * full_width * sizeof(png_byte));
 
 	// Write image data
 	for(int y=nrows-1 ; y>=0 ; y--) {
-		//unsigned int x=0;
-		for(unsigned int x=0; x<ncols ; x++) {
-			const unsigned int i=x*4;
-			unsigned char r,g,b,a;
+		unsigned int x=0;
+		for(; x<ncols ; x++) {
+			const unsigned int i=x*channels;
+			unsigned char r,g,b;
+			bool a;
 			gradient.getColor(grid(x,y), r,g,b,a);
-			row[i]=r; row[i+1]=g; row[i+2]=b; row[i+3]=a;
+			if(a==true) {
+				row[i]=255; row[i+1]=255; row[i+2]=255;
+			} else {
+				row[i]=r; row[i+1]=g; row[i+2]=b;
+			}
 		}
-		for(unsigned int x=ncols; x<full_width; x++) {
-			const unsigned int i=x*4;
-			unsigned char r,g,b,a;
+		for(; x<full_width; x++) {
+			const unsigned int i=x*channels;
+			unsigned char r,g,b;
+			bool a;
 			gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
-			row[i]=r; row[i+1]=g; row[i+2]=b; row[i+3]=a;
+			if(a==true) {
+				row[i]=255; row[i+1]=255; row[i+2]=255;
+			} else {
+				row[i]=r; row[i+1]=g; row[i+2]=b;
+			}
 		}
 		png_write_row(png_ptr, row);
 	}

@@ -125,7 +125,8 @@ namespace Color {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Gradient class
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//This class is the base class for the various gradients
+//This class is the base class for the various gradients.
+//DO NOT USE pure white in a gradient, since this might be interpreted as a transparent pixel!
 class Gradient_model {
 	public:
 		Gradient_model() {setMinMax(0., 0., true);}; //do not use this constructor!
@@ -133,7 +134,7 @@ class Gradient_model {
 		//setBgColor()
 		//setFgColor()
 
-		virtual void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
+		virtual void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b) const;
 	protected:
 		double getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const;
 		void setMinMax(const double& i_min, const double& i_max, const bool& i_autoscale);
@@ -146,14 +147,15 @@ class Gradient_model {
 
 /**
  * @class Gradient
- * @brief This converts numeric values into rgba values.
+ * @brief This converts numeric values into rgb values.
  * The object is initialized with the range that the gradient should cover and the gradient type. Then each numeric value
- * that is given will be converted into rgba values from the selected gradient. Data out of range are converted to either
- * the minimum or the maximum of the gradient. Alpha channel is ONLY used by special pixels.
+ * that is given will be converted into rgb values from the selected gradient. Data out of range are converted to either
+ * the minimum or the maximum of the gradient. Special pixels should return a=true to indicate transparency (however, pure
+ * white is the transparency color, so do not use it in your gradients!).
  *
  * Some special pixels are recognized:
  * - IOUtils::nodata returns a transparent pixel
- * - legend::bg_color returns a white pixel
+ * - legend::bg_color returns an almost white pixel
  * - legend::text_color returns a black pixel
  *
  * The autoscale is handled both by the object and its caller: if "autoscale==true", the gradient might adjust its control points, for
@@ -225,9 +227,9 @@ class Gradient {
 		* @param r red (between 0 and 255)
 		* @param g green (between 0 and 255)
 		* @param b blue (between 0 and 255)
-		* @param a alpha (between 0 and 255)
+		* @param a transparent pixel?
 		*/
-		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
+		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, bool &a) const;
 
 	private:
 		double delta_val;
@@ -238,7 +240,7 @@ class Gradient {
 class gr_heat : public Gradient_model {
 	public:
 		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
-		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
+		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b) const;
 };
 
 class gr_blue_pink : public Gradient_model {
@@ -249,7 +251,7 @@ class gr_blue_pink : public Gradient_model {
 class gr_freeze : public Gradient_model {
 	public:
 		gr_freeze(const double& i_min, const double& i_max, const bool& i_autoscale);
-		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) const;
+		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b) const;
 	private:
 		//This gradient is interpolated in RGB color space
 		std::vector<double> X, v_r,v_g,v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order
