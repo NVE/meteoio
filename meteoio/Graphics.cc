@@ -223,6 +223,7 @@ void Color::HSVtoRGB(const double& h, const double& s, const double& v, double &
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Gradient class
 /////////////////////////////////////////////////////////////////////////////////////////////////
+const unsigned char Gradient::channel_max_color = 255;
 
 Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
@@ -233,6 +234,8 @@ void Gradient::set(const Type& type, const double& i_min, const double& i_max, c
 {
 	delta_val = i_max - i_min;
 	autoscale = i_autoscale;
+	color_discretization = 0.; //color discretization turned off
+	nr_unique_colors = 0;
 
 	if(type==terrain) model = new gr_terrain(i_min, i_max, i_autoscale);
 	else if(type==slope) model = new gr_slope(i_min, i_max, i_autoscale);
@@ -243,6 +246,11 @@ void Gradient::set(const Type& type, const double& i_min, const double& i_max, c
 	else if(type==blue_pink) model = new gr_blue_pink(i_min, i_max, i_autoscale);
 	else if(type==pastel) model = new gr_pastel(i_min, i_max, i_autoscale);
 	else if(type==bg_isomorphic) model = new gr_bg_isomorphic(i_min, i_max, i_autoscale);
+}
+
+void Gradient::setNrOfColors(const unsigned int& i_nr_unique_colors) {
+	nr_unique_colors = static_cast<unsigned char>( pow(i_nr_unique_colors, 1./3.) );
+	color_discretization = (double)channel_max_color/(double)nr_unique_colors;
 }
 
 //val between min_val and max_val
@@ -260,7 +268,7 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 		return;
 	}
 	if(val==legend::bg_color) {
-		r=254; g=254; b=254; a=false;
+		r=channel_max_color-1; g=channel_max_color-1; b=channel_max_color-1; a=false;
 		return;
 	}
 	if(val==legend::text_color) {
@@ -268,12 +276,22 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 		return;
 	}
 	if(autoscale && delta_val==0) { //constant data throughout the grid & autoscale are no friends...
-		r=g=b=125; a=false;
+		r=g=b=channel_max_color/2; a=false;
 		return;
 	}
 
 	a=false;
-	model->getColor(val, r, g, b);
+	double r_d,g_d,b_d;
+	model->getColor(val, r_d, g_d, b_d);
+	if(nr_unique_colors==0.) {
+		r = static_cast<unsigned char>(r_d*channel_max_color);
+		g = static_cast<unsigned char>(g_d*channel_max_color);
+		b = static_cast<unsigned char>(b_d*channel_max_color);
+	} else {
+		r = static_cast<unsigned char>( static_cast<unsigned char>(r_d*nr_unique_colors)*color_discretization );
+		g = static_cast<unsigned char>( static_cast<unsigned char>(g_d*nr_unique_colors)*color_discretization );
+		b = static_cast<unsigned char>( static_cast<unsigned char>(b_d*nr_unique_colors)*color_discretization );
+	}
 }
 
 void Gradient_model::setMinMax(const double& i_min, const double& i_max, const bool& i_autoscale)
@@ -320,20 +338,20 @@ void Gradient_model::HSV2RGB(const double& h, const double& s, const double& v, 
 	b = static_cast<unsigned char>(b_d*255);
 }
 
-void Gradient_model::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b) const
+void Gradient_model::getColor(const double &val, double &r, double &g, double &b) const
 {
 	const double h = getInterpol(val, X, v_h);
 	const double s = getInterpol(val, X, v_s);
 	const double v = getInterpol(val, X, v_v);
 
-	HSV2RGB(h, s, v, r, g, b);
+	Color::HSVtoRGB(h, s, v, r, g, b);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Various Gradients
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-void gr_heat::getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b) const
+void gr_heat::getColor(const double &i_val, double &r, double &g, double &b) const
 {
 	double val;
 	if(autoscale)
@@ -348,7 +366,7 @@ void gr_heat::getColor(const double &i_val, unsigned char &r, unsigned char &g, 
 	const double v = val*0.75+0.25;
 	const double s = 1.-val*0.3;
 
-	HSV2RGB(h, s, v, r, g, b);
+	Color::HSVtoRGB(h, s, v, r, g, b);
 }
 
 gr_blue_pink::gr_blue_pink(const double& i_min, const double& i_max, const bool& i_autoscale) {
@@ -377,12 +395,12 @@ gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& i_aut
 	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-void gr_freeze::getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b) const
+void gr_freeze::getColor(const double &val, double &r, double &g, double &b) const
 {
 	//interpolation on RGB values
-	r = static_cast<unsigned char>(getInterpol(val, X, v_r)*255);
-	g = static_cast<unsigned char>(getInterpol(val, X, v_g)*255);
-	b = static_cast<unsigned char>(getInterpol(val, X, v_b)*255);
+	r = getInterpol(val, X, v_r);
+	g = getInterpol(val, X, v_g);
+	b = getInterpol(val, X, v_b);
 }
 
 gr_blue::gr_blue(const double& i_min, const double& i_max, const bool& i_autoscale) {

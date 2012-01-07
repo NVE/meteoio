@@ -134,7 +134,7 @@ class Gradient_model {
 		//setBgColor()
 		//setFgColor()
 
-		virtual void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b) const;
+		virtual void getColor(const double &val, double &r, double &g, double &b) const;
 	protected:
 		double getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const;
 		void setMinMax(const double& i_min, const double& i_max, const bool& i_autoscale);
@@ -221,6 +221,15 @@ class Gradient {
 		//setFgColor()
 
 		/**
+		* @brief Set a reduced number of colors for the gradient
+		* The given argument is an upper bound for the number of unique colors in the generated
+		* gradient. This is a specially easy and useful way of reducing a file size with
+		* no run time overhead (and even a small benefit) and little visible impact if
+		* the number of colors remains large enough (say, at least a few thousands)
+		* @param i_nr_unique_colors maximum number of unique colors
+		*/
+		void setNrOfColors(const unsigned int& i_nr_unique_colors);
+		/**
 		* @brief Get RGB values for a given numeric value
 		* See class description for more explanations on the implementation/behavior
 		* @param val numerical value to convert
@@ -231,16 +240,19 @@ class Gradient {
 		*/
 		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, bool &a) const;
 
+		static const unsigned char channel_max_color; ///< nr of colors per channel of the generated gradients
 	private:
 		double delta_val;
 		bool autoscale;
+		double color_discretization;
+		unsigned char nr_unique_colors;
 		Gradient_model *model;
 };
 
 class gr_heat : public Gradient_model {
 	public:
 		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
-		void getColor(const double &i_val, unsigned char &r, unsigned char &g, unsigned char &b) const;
+		void getColor(const double &i_val, double &r, double &g, double &b) const;
 };
 
 class gr_blue_pink : public Gradient_model {
@@ -251,7 +263,7 @@ class gr_blue_pink : public Gradient_model {
 class gr_freeze : public Gradient_model {
 	public:
 		gr_freeze(const double& i_min, const double& i_max, const bool& i_autoscale);
-		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b) const;
+		void getColor(const double &val, double &r, double &g, double &b) const;
 	private:
 		//This gradient is interpolated in RGB color space
 		std::vector<double> X, v_r,v_g,v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order

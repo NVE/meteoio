@@ -88,6 +88,9 @@ class PNGIO : public IOInterface {
 		std::vector<std::string> metadata_key, metadata_text;
 
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		static const unsigned char channel_depth;
+		static const unsigned char channel_max_color;
+		static const unsigned char transparent_grey;
 };
 
 } //namespace

@@ -70,6 +70,9 @@ namespace mio {
  */
 
 const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+const unsigned char PNGIO::channel_depth = 8;
+const unsigned char PNGIO::channel_max_color = 255;
+const unsigned char PNGIO::transparent_grey = channel_max_color;
 
 PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -278,10 +281,10 @@ void PNGIO::setFile(const std::string& filename, FILE *fp, png_structp& png_ptr,
 
 	// Write header (8 bit colour depth). Alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
 	png_set_IHDR(png_ptr, info_ptr, width, height,
-	             8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+	             channel_depth, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 	             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 	//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
-	png_color_16 trans_rgb_value = {255, 255, 255, 255, 255};
+	png_color_16 trans_rgb_value = {transparent_grey, transparent_grey, transparent_grey, transparent_grey, transparent_grey};
 	png_set_tRNS(png_ptr, info_ptr, 0, 0, &trans_rgb_value);
 }
 
@@ -316,7 +319,7 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 			bool a;
 			gradient.getColor(grid(x,y), r,g,b,a);
 			if(a==true) {
-				row[i]=255; row[i+1]=255; row[i+2]=255;
+				row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
 			} else {
 				row[i]=r; row[i+1]=g; row[i+2]=b;
 			}
@@ -327,7 +330,7 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 			bool a;
 			gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
 			if(a==true) {
-				row[i]=255; row[i+1]=255; row[i+2]=255;
+				row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
 			} else {
 				row[i]=r; row[i+1]=g; row[i+2]=b;
 			}
@@ -380,6 +383,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const double max = grid.grid2D.getMax();
 
 	Gradient gradient(Gradient::heat, min, max, autoscale);
+	gradient.setNrOfColors(8000);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
@@ -473,6 +477,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	} else {
 		gradient.set(Gradient::heat, min, max, autoscale);
 	}
+	gradient.setNrOfColors(8000);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
