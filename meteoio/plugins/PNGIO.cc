@@ -40,12 +40,13 @@ namespace mio {
  * This plugin uses the following keywords:
  * - COORDSYS: input coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Output] section
- * - png_legend: plot legend on the side of the graph? (default: true)
- * - png_min_size: guarantee that a 2D plot will have at least the given size
- * - png_max_size: guarantee that a 2D plot will have at most the given size
- * - png_scaling: scaling algorithm, either nearest or bilinear (default=bilinear)
- * - png_autoscale: autoscale for the color gradient? (default=true)
- * - png_world_file: create world file with each file? (default=false)
+ * - GRID2DPATH: meteo grids directory where to read the grids; [Output] section
+ * - PNG_LEGEND: plot legend on the side of the graph? (default: true)
+ * - PNG_MIN_SIZE: guarantee that a 2D plot will have at least the given size
+ * - PNG_MAX_SIZE: guarantee that a 2D plot will have at most the given size
+ * - PNG_SCALING: scaling algorithm, either nearest or bilinear (default=bilinear)
+ * - PNG_AUTOSCALE: autoscale for the color gradient? (default=true)
+ * - PNG_WORLD_FILE: create world file with each file? (default=false)
  *
  * The size are specified as width followed by height, with the separator being either a space, 'x' or '*'. If a minimum and a maximum size are given, the average of the smallest and largest permissible sizes will be used.
  * The world file is used for geolocalization and goes alongside the graphics output. By convention,
@@ -93,24 +94,25 @@ void PNGIO::setOptions()
 {
 	cfg.getValue("COORDSYS", "Output", coordout);
 	cfg.getValue("COORDPARAM", "Output", coordoutparam, Config::nothrow);
+	cfg.getValue("GRID2DPATH", "Output", grid2dpath);
 	//cfg.getValue("TIME_ZONE", "Output", tz_out, Config::nothrow);
 
 	//get size specifications
 	std::string min_size, max_size;
 	min_w = min_h = max_w = max_h = IOUtils::unodata;
-	cfg.getValue("png_min_size", "Output", min_size, Config::nothrow);
+	cfg.getValue("PNG_MIN_SIZE", "Output", min_size, Config::nothrow);
 	if(min_size!="") parse_size(min_size, min_w, min_h);
-	cfg.getValue("png_max_size", "Output", max_size, Config::nothrow);
+	cfg.getValue("PNG_MAX_SIZE", "Output", max_size, Config::nothrow);
 	if(max_size!="") parse_size(max_size, max_w, max_h);
 
 	autoscale = true;
-	cfg.getValue("png_autoscale", "Output", autoscale, Config::nothrow);
+	cfg.getValue("PNG_AUTOSCALE", "Output", autoscale, Config::nothrow);
 	has_legend = true;
-	cfg.getValue("png_legend", "Output", has_legend, Config::nothrow);
+	cfg.getValue("PNG_LEGEND", "Output", has_legend, Config::nothrow);
 	scaling = "bilinear";
-	cfg.getValue("png_scaling", "Output", scaling, Config::nothrow);
+	cfg.getValue("PNG_SCALING", "Output", scaling, Config::nothrow);
 	has_world_file=false;
-	cfg.getValue("png_world_file", "Output", has_world_file, Config::nothrow);
+	cfg.getValue("PNG_WORLD_FILE", "Output", has_world_file, Config::nothrow);
 
 	if(has_legend) { //we need to save room for the legend
 		if(min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
@@ -372,6 +374,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
+	string full_name = grid2dpath+"/"+filename;
 	FILE *fp=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
@@ -383,13 +386,13 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const double max = grid.grid2D.getMax();
 
 	Gradient gradient(Gradient::heat, min, max, autoscale);
-	gradient.setNrOfColors(8000);
+	gradient.setNrOfLevels(50);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
-	setFile(filename, fp, png_ptr, info_ptr, full_width, nrows);
-	if(has_world_file) writeWorldFile(grid, filename);
+	setFile(full_name, fp, png_ptr, info_ptr, full_width, nrows);
+	if(has_world_file) writeWorldFile(grid, full_name);
 
 	createMetadata(grid);
 	metadata_key.push_back("Title"); //adding generic title
@@ -406,9 +409,9 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 {
 	std::string filename;
 	if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
-		filename = MeteoGrids::getParameterName(parameter) + ".png";
+		filename = grid2dpath + "/" + MeteoGrids::getParameterName(parameter) + ".png";
 	else
-		filename = date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
+		filename = grid2dpath + "/" + date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
 
 	FILE *fp=NULL;
 	png_structp png_ptr=NULL;
@@ -424,8 +427,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	if(parameter==MeteoGrids::DEM) {
 		if(!autoscale) {
 			min = 0.; //we want a 3000 snow line with a full scale legend
-			gradient.set(Gradient::terrain, min, 3000., autoscale); //max used as snow line reference
-			max = 4000.;
+			max = 3500.;
+			gradient.set(Gradient::terrain, min, max, autoscale); //max used as snow line reference
 		} else
 			gradient.set(Gradient::terrain, min, max, autoscale);
 	} else if(parameter==MeteoGrids::SLOPE) {
@@ -477,7 +480,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	} else {
 		gradient.set(Gradient::heat, min, max, autoscale);
 	}
-	gradient.setNrOfColors(8000);
+	gradient.setNrOfLevels(30);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);

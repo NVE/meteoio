@@ -81,6 +81,7 @@ class PNGIO : public IOInterface {
 		bool has_legend;
 		bool has_world_file; ///< create world file with each file?
 		std::string coordout, coordoutparam; //projection parameters
+		std::string grid2dpath;
 
 		std::string scaling;
 		unsigned int min_w, min_h, max_w, max_h;

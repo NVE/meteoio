@@ -228,14 +228,15 @@ const unsigned char Gradient::channel_max_color = 255;
 Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
 	set(type, i_min, i_max, i_autoscale);
+	nr_unique_levels = 0;
 }
 
 void Gradient::set(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
-	delta_val = i_max - i_min;
+	min = i_min;
+	max = i_max;
+	delta = i_max - i_min;
 	autoscale = i_autoscale;
-	color_discretization = 0.; //color discretization turned off
-	nr_unique_colors = 0;
 
 	if(type==terrain) model = new gr_terrain(i_min, i_max, i_autoscale);
 	else if(type==slope) model = new gr_slope(i_min, i_max, i_autoscale);
@@ -248,9 +249,8 @@ void Gradient::set(const Type& type, const double& i_min, const double& i_max, c
 	else if(type==bg_isomorphic) model = new gr_bg_isomorphic(i_min, i_max, i_autoscale);
 }
 
-void Gradient::setNrOfColors(const unsigned int& i_nr_unique_colors) {
-	nr_unique_colors = static_cast<unsigned char>( pow(i_nr_unique_colors, 1./3.) );
-	color_discretization = (double)channel_max_color/(double)nr_unique_colors;
+void Gradient::setNrOfLevels(const unsigned int& i_nr_unique_levels) {
+	nr_unique_levels = i_nr_unique_levels;
 }
 
 //val between min_val and max_val
@@ -275,31 +275,27 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 		r=0; g=0; b=0; a=false;
 		return;
 	}
-	if(autoscale && delta_val==0) { //constant data throughout the grid & autoscale are no friends...
+	if(autoscale && delta==0) { //constant data throughout the grid & autoscale are no friends...
 		r=g=b=channel_max_color/2; a=false;
 		return;
 	}
 
 	a=false;
 	double r_d,g_d,b_d;
-	model->getColor(val, r_d, g_d, b_d);
-	if(nr_unique_colors==0.) {
-		r = static_cast<unsigned char>(r_d*channel_max_color);
-		g = static_cast<unsigned char>(g_d*channel_max_color);
-		b = static_cast<unsigned char>(b_d*channel_max_color);
+	double val_norm;
+	if(nr_unique_levels==0) {
+		if(autoscale && val<min) val_norm=0.;
+		else if(autoscale && val>max) val_norm=1.;
+		else val_norm = (val-min)/delta;
 	} else {
-		r = static_cast<unsigned char>( static_cast<unsigned char>(r_d*nr_unique_colors)*color_discretization );
-		g = static_cast<unsigned char>( static_cast<unsigned char>(g_d*nr_unique_colors)*color_discretization );
-		b = static_cast<unsigned char>( static_cast<unsigned char>(b_d*nr_unique_colors)*color_discretization );
+		if(autoscale && val<min) val_norm=0.;
+		else if(autoscale && val>max) val_norm=1.;
+		else val_norm = (static_cast<unsigned int>( (val-min)/delta*(double)nr_unique_levels )) / (double)nr_unique_levels;
 	}
-}
-
-void Gradient_model::setMinMax(const double& i_min, const double& i_max, const bool& i_autoscale)
-{
-	min_val = i_min;
-	max_val = i_max;
-	delta_val = (max_val-min_val);
-	autoscale = i_autoscale;
+	model->getColor(val_norm, r_d, g_d, b_d);
+	r = static_cast<unsigned char>(r_d*channel_max_color);
+	g = static_cast<unsigned char>(g_d*channel_max_color);
+	b = static_cast<unsigned char>(b_d*channel_max_color);
 }
 
 //we assume that the vectors are sorted by X
@@ -353,25 +349,14 @@ void Gradient_model::getColor(const double &val, double &r, double &g, double &b
 
 void gr_heat::getColor(const double &i_val, double &r, double &g, double &b) const
 {
-	double val;
-	if(autoscale)
-		val = (i_val-min_val)/delta_val;
-	else { //since the user provided bounds do not reflect the data's bounds
-		if(i_val<min_val) val=0.;
-		else if(i_val>max_val) val=1.;
-		else val = (i_val-min_val)/delta_val;
-	}
-
-	const double h = 240. * (1.-val);
-	const double v = val*0.75+0.25;
-	const double s = 1.-val*0.3;
+	const double h = 240. * (1.-i_val);
+	const double v = i_val*0.75+0.25;
+	const double s = 1.-i_val*0.3;
 
 	Color::HSVtoRGB(h, s, v, r, g, b);
 }
 
-gr_blue_pink::gr_blue_pink(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_blue_pink::gr_blue_pink(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
 	//write gradient control points
 	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white
 	X.push_back(0.2); v_h.push_back(172.); v_s.push_back(.4); v_v.push_back(.95); //light blue
@@ -379,33 +364,24 @@ gr_blue_pink::gr_blue_pink(const double& i_min, const double& i_max, const bool&
 	X.push_back(.6); v_h.push_back(255.); v_s.push_back(.4); v_v.push_back(.95); //violet/blue
 	X.push_back(.8); v_h.push_back(278.); v_s.push_back(.4); v_v.push_back(.95); //violet
 	X.push_back(1.); v_h.push_back(359.); v_s.push_back(.3); v_v.push_back(.95); //red
-
-	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_freeze::gr_freeze(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
 	//write gradient control points
 	X.push_back(0.); v_r.push_back(0.); v_g.push_back(0.); v_b.push_back(1.); //blue
 	X.push_back(.5); v_r.push_back(1.); v_g.push_back(1.); v_b.push_back(0.); //yellow
 	X.push_back(.5); v_r.push_back(0.); v_g.push_back(1.); v_b.push_back(0.); //green
 	X.push_back(1.); v_r.push_back(1.); v_g.push_back(0.); v_b.push_back(0.); //red
-
-	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-void gr_freeze::getColor(const double &val, double &r, double &g, double &b) const
-{
+void gr_freeze::getColor(const double &val, double &r, double &g, double &b) const {
 	//interpolation on RGB values
 	r = getInterpol(val, X, v_r);
 	g = getInterpol(val, X, v_g);
 	b = getInterpol(val, X, v_b);
 }
 
-gr_blue::gr_blue(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_blue::gr_blue(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
 	//write gradient control points
 	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //5
 	X.push_back(.16667); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99); //10
@@ -415,66 +391,50 @@ gr_blue::gr_blue(const double& i_min, const double& i_max, const bool& i_autosca
 	X.push_back(.83335); v_h.push_back(231.); v_s.push_back(.66); v_v.push_back(.88); //120
 	X.push_back(1.); v_h.push_back(244.); v_s.push_back(.78); v_v.push_back(.85); //200
 	X.push_back(1.); v_h.push_back(270.); v_s.push_back(1.); v_v.push_back(.8); //200
-
-	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-gr_bg_isomorphic::gr_bg_isomorphic(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_bg_isomorphic::gr_bg_isomorphic(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
 	//write gradient control points
 	X.push_back(0.); v_h.push_back(47.); v_s.push_back(.92); v_v.push_back(0.); //black
 	X.push_back(.5); v_h.push_back(178.); v_s.push_back(.58); v_v.push_back(.67); //light blue
 	X.push_back(1.); v_h.push_back(84.); v_s.push_back(.67); v_v.push_back(1.); //light green
-
-	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-gr_pastel::gr_pastel(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_pastel::gr_pastel(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
 	//write gradient control points
 	X.push_back(0.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
-	X.push_back(1.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
-	X.push_back(2.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
-	X.push_back(4.); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
-	X.push_back(5.); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
-	X.push_back(6.); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
-	X.push_back(7.); v_h.push_back(0.); v_s.push_back(.4); v_v.push_back(.7); //dark red
-
-	for(size_t i=0; i<X.size(); i++) X[i] = X[i]/7.*delta_val + min_val;
+	X.push_back(1./7.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
+	X.push_back(2./7.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
+	X.push_back(4./7.); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
+	X.push_back(5./7.); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
+	X.push_back(6./7.); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
+	X.push_back(7./7.); v_h.push_back(0.); v_s.push_back(.4); v_v.push_back(.7); //dark red
 }
 
-gr_terrain::gr_terrain(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_terrain::gr_terrain(const double& /*i_min*/, const double& i_max, const bool& i_autoscale) {
 	//write gradient control points
-	if(autoscale) {
+	if(i_autoscale) {
 		X.push_back(0.); v_h.push_back(144.); v_s.push_back(.50); v_v.push_back(.39); //sea level, dark green
 		X.push_back(.25); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow
 		X.push_back(.5); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
 		X.push_back(.75); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
 		X.push_back(1.); v_h.push_back(22.); v_s.push_back(.2); v_v.push_back(.5); //light maroon
-
-		for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 	} else {
-		X.push_back(-1.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
+		const double snow_line = i_max - 500.;
 		X.push_back(0.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
 		X.push_back(0.); v_h.push_back(144.); v_s.push_back(.50); v_v.push_back(.39); //sea level, dark green
-		X.push_back(1200.); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow
-		X.push_back(2200.); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red
-		X.push_back(2700.); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon
-		X.push_back(2950.); v_h.push_back(22.); v_s.push_back(.36); v_v.push_back(.79); //light maroon
-		X.push_back(3000.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.7); //light gray == permanent snow line
+		X.push_back(.4); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow, 1200m
+		X.push_back(.73333); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red, 2200m
+		X.push_back(.9); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon, 2700m
+		X.push_back(.98333); v_h.push_back(22.); v_s.push_back(.36); v_v.push_back(.79); //light maroon, 2950m
+		X.push_back(1.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.7); //light gray == permanent snow line, 3000m
+		for(size_t i=0; i<X.size(); i++) X[i] = X[i]*snow_line/i_max; //snow line is the reference
 
-		for(size_t i=0; i<X.size(); i++) X[i] = X[i]/3000.*delta_val + min_val; //snow line is the reference
-		X.push_back(max_val+600.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white == fully glaciated line
+		X.push_back(1.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white == fully glaciated line
 	}
 }
 
-gr_slope::gr_slope(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_slope::gr_slope(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
 	//write gradient control points
 	//usually, between 0 and 50
 	X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
@@ -484,15 +444,11 @@ gr_slope::gr_slope(const double& i_min, const double& i_max, const bool& i_autos
 	X.push_back(.8); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
 	X.push_back(.9); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red
 	X.push_back(1.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
-
-	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
-gr_azi::gr_azi(const double& i_min, const double& i_max, const bool& i_autoscale) {
-	setMinMax(i_min, i_max, i_autoscale);
-
+gr_azi::gr_azi(const double& /*i_min*/, const double& /*i_max*/, const bool& i_autoscale) {
 	//write gradient control points
-	if(autoscale) {
+	if(i_autoscale) {
 		X.push_back(0.); v_h.push_back(113.); v_s.push_back(.66); v_v.push_back(.91); //light green
 		X.push_back(1.); v_h.push_back(360.); v_s.push_back(.66); v_v.push_back(.91); //light red
 	} else {
@@ -503,8 +459,6 @@ gr_azi::gr_azi(const double& i_min, const double& i_max, const bool& i_autoscale
 		X.push_back(.75); v_h.push_back(28.); v_s.push_back(.78); v_v.push_back(1.); //orange
 		X.push_back(1.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(1.); //back to blue
 	}
-
-	for(size_t i=0; i<X.size(); i++) X[i] = X[i]*delta_val + min_val;
 }
 
 } //namespace

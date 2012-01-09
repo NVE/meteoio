@@ -127,21 +127,20 @@ namespace Color {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //This class is the base class for the various gradients.
 //DO NOT USE pure white in a gradient, since this might be interpreted as a transparent pixel!
+//Gradients scale between 0 and 1, but might receive some out of range values for special effects (below sea level, above snow line, etc)
 class Gradient_model {
 	public:
-		Gradient_model() {setMinMax(0., 0., true);}; //do not use this constructor!
-		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
+		Gradient_model() {}; //do not use this constructor!
+		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) { (void)i_min; (void)i_max; (void)i_autoscale;};
 		//setBgColor()
 		//setFgColor()
 
+		//val MUST be between 0 and 1
 		virtual void getColor(const double &val, double &r, double &g, double &b) const;
 	protected:
 		double getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const;
-		void setMinMax(const double& i_min, const double& i_max, const bool& i_autoscale);
 		void HSV2RGB(const double& h, const double& s, const double& v, unsigned char &r, unsigned char &g, unsigned char &b) const;
 
-		double max_val, min_val, delta_val;
-		bool autoscale;
 		std::vector<double> X, v_h,v_s,v_v; ///<control points: vector of X and associated hues, saturations and values. They must be in X ascending order
 };
 
@@ -194,7 +193,7 @@ class Gradient {
 		* @brief Default Constructor.
 		* This should be followed by a call to set() before calling getColor
 		*/
-		Gradient() {model=NULL; delta_val=0.;};
+		Gradient() {model=NULL; min=max=delta=0.; nr_unique_levels=0;};
 
 		/**
 		* @brief Constructor.
@@ -221,14 +220,15 @@ class Gradient {
 		//setFgColor()
 
 		/**
-		* @brief Set a reduced number of colors for the gradient
-		* The given argument is an upper bound for the number of unique colors in the generated
-		* gradient. This is a specially easy and useful way of reducing a file size with
+		* @brief Set a reduced number of levels for the gradient
+		* The given argument is an upper bound for the number of unique levels in the generated
+		* gradient (leading to a reduced number of colors). This is a specially easy and useful way of reducing a file size with
 		* no run time overhead (and even a small benefit) and little visible impact if
-		* the number of colors remains large enough (say, at least a few thousands)
-		* @param i_nr_unique_colors maximum number of unique colors
+		* the number of levels/colors remains large enough (say, at least 30)
+		* @param i_nr_unique_levels maximum number of unique levels
 		*/
-		void setNrOfColors(const unsigned int& i_nr_unique_colors);
+		void setNrOfLevels(const unsigned int& i_nr_unique_levels);
+
 		/**
 		* @brief Get RGB values for a given numeric value
 		* See class description for more explanations on the implementation/behavior
@@ -242,16 +242,15 @@ class Gradient {
 
 		static const unsigned char channel_max_color; ///< nr of colors per channel of the generated gradients
 	private:
-		double delta_val;
+		double min, max, delta;
 		bool autoscale;
-		double color_discretization;
-		unsigned char nr_unique_colors;
+		unsigned char nr_unique_levels;
 		Gradient_model *model;
 };
 
 class gr_heat : public Gradient_model {
 	public:
-		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {setMinMax(i_min, i_max, i_autoscale);};
+		gr_heat(const double& i_min, const double& i_max, const bool& i_autoscale) {(void)i_min; (void)i_max; (void)i_autoscale;};
 		void getColor(const double &i_val, double &r, double &g, double &b) const;
 };
 

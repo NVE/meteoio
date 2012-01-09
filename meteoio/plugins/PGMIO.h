@@ -71,7 +71,9 @@ class PGMIO : public IOInterface {
 		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name);
 
 	private:
+		void getGridPaths();
 		void cleanup() throw();
+		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
 		size_t getNextHeader(std::vector<std::string>& vecString, const std::string& filename);
 
 		Config cfg;
@@ -79,6 +81,7 @@ class PGMIO : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
+		std::string grid2dpath_in, grid2dpath_out;
 };
 
 } //namespace

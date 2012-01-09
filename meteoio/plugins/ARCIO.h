@@ -67,13 +67,16 @@ class ARCIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		void getGridPaths();
 		void cleanup() throw();
+		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
 		Config cfg;
 		bool a3d_view_in, a3d_view_out; ///< make filename compatible with the Alpine3D's viewer?
 
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string grid2dpath_in, grid2dpath_out;
 };
 
 } //end namespace mio

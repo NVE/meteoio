@@ -96,7 +96,7 @@ class IOInterface : public PluginObject {
 
 		/**
 		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the
-		* specific 2D grid to be parsed into the Grid2DObject.
+		* specific 2D grid to be parsed into the Grid2DObject, relative to GRID2DPATH for most plugins.
 		* @param grid_out A Grid2DObject instance
 		* @param parameter A std::string representing some information for the function on what grid to retrieve
 		*/
@@ -104,7 +104,7 @@ class IOInterface : public PluginObject {
 
 		/**
 		* @brief Read the given meteo parameter into a Grid2DObject.
-		* Each plugin has its own logic for finding the requested meteo parameter grid.
+		* Each plugin has its own logic for finding the requested meteo parameter grid relative to GRID2DPATH for most plugins
 		* @param grid_out A Grid2DObject instance
 		* @param parameter The meteo parameter grid type to return (ie: air temperature, wind component, etc)
 		* @param date date of the data to read
@@ -229,6 +229,7 @@ class IOInterface : public PluginObject {
 
 		/**
 		* @brief Write a Grid2DObject
+		* The filename is specified relative to GRID2DPATH for most plugins
 		* @param grid_in (Grid2DObject) The grid to write
 		* @param options (string) Identifier usefull for the output plugin (it could become part of a file name, a db table, etc)
 		*/
@@ -236,6 +237,7 @@ class IOInterface : public PluginObject {
 
 		/**
 		* @brief Write a Grid2DObject comtaining a known meteorological parameter
+		* A filename is build relative to GRID2DPATH for most plugins.
 		* @param grid_in (Grid2DObject) The grid to write
 		* @param parameter The meteo parameter grid type of the provided grid object (ie: air temperature, wind component, etc)
 		* @param date date of the data to write

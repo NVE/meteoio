@@ -35,6 +35,7 @@ namespace mio {
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
+ * - GRID2DPATH: meteo grids directory where to read/write the grids; [Input] and [Output] sections
  * - PGM_XCOORD: lower left x coordinate; [Input] section
  * - PGM_YCOORD: lower left y coordinate; [Input] section
  * - PGM_CELLSIZE: cellsize in meters; [Input] section
@@ -47,20 +48,34 @@ const double PGMIO::plugin_nodata = -999.; //plugin specific nodata value. It ca
 PGMIO::PGMIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getGridPaths();
 }
 
 PGMIO::PGMIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getGridPaths();
 }
 
 PGMIO::PGMIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	getGridPaths();
 }
 
-PGMIO::~PGMIO() throw()
-{
+void PGMIO::getGridPaths() {
+	grid2dpath_in="", grid2dpath_out="";
+	string tmp="";
+	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
+	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+	tmp="";
+	cfg.getValue("GRID2D", "Output", tmp, Config::nothrow);
+	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
+}
+
+PGMIO::~PGMIO() throw() {
 
 }
 
@@ -77,7 +92,7 @@ size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::stri
 	throw IOException("Can not read necessary header lines in " + filename, AT);
 }
 
-void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
+void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name)
 {
 	unsigned int ncols, nrows, nr_colors;
 	double xllcorner, yllcorner, cellsize;
@@ -86,17 +101,17 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	std::vector<std::string> tmpvec;
 	std::string line="";
 
-	if (!IOUtils::validFileName(filename)) {
-		throw InvalidFileNameException(filename, AT);
+	if (!IOUtils::validFileName(full_name)) {
+		throw InvalidFileNameException(full_name, AT);
 	}
-	if (!IOUtils::fileExists(filename)) {
-		throw FileNotFoundException(filename, AT);
+	if (!IOUtils::fileExists(full_name)) {
+		throw FileNotFoundException(full_name, AT);
 	}
 
 	fin.clear();
-	fin.open (filename.c_str(), ifstream::in);
+	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(filename, AT);
+		throw FileAccessException(full_name, AT);
 	}
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -104,18 +119,18 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	//Go through file, save key value pairs
 	try {
 		//read header: magic value
-		if(getNextHeader(tmpvec, filename)!=1) {
-			throw IOException("Can not read necessary header in " + filename, AT);
+		if(getNextHeader(tmpvec, full_name)!=1) {
+			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		//read header: image width and height
-		if(getNextHeader(tmpvec, filename)!=2) {
-			throw IOException("Can not read necessary header in " + filename, AT);
+		if(getNextHeader(tmpvec, full_name)!=2) {
+			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		IOUtils::convertString(ncols, tmpvec[0]);
 		IOUtils::convertString(nrows, tmpvec[1]);
 		//read header: number of greys
-		if(getNextHeader(tmpvec, filename)!=1) {
-			throw IOException("Can not read necessary header in " + filename, AT);
+		if(getNextHeader(tmpvec, full_name)!=1) {
+			throw IOException("Can not read necessary header in " + full_name, AT);
 		}
 		IOUtils::convertString(nr_colors, tmpvec[0]);
 
@@ -139,12 +154,12 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 			getline(fin, line, eoln); //read complete line
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
-				throw InvalidFormatException("Premature End " + filename, AT);
+				throw InvalidFormatException("Premature End " + full_name, AT);
 			}
 
 			for (unsigned int ll=0; ll < ncols; ll++){
 				if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
-					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + filename, AT);
+					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + full_name, AT);
 				}
 
 				if(tmp_val==plugin_nodata) {
@@ -162,18 +177,20 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	cleanup();
 }
 
+void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
+	read2DGrid_internal(grid_out, grid2dpath_in+"/"+filename);
+}
+
 void PGMIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::stringstream ss;
-	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".pgm";
-	read2DGrid(grid_out, ss.str());
+	read2DGrid_internal(grid_out, grid2dpath_in+"/"+date.toString(Date::NUM)+"_"+MeteoGrids::getParameterName(parameter)+".pgm");
 }
 
 void PGMIO::readDEM(DEMObject& dem_out)
 {
 	string filename="";
 	cfg.getValue("DEMFILE", "Input", filename);
-	read2DGrid(dem_out, filename);
+	read2DGrid_internal(dem_out, filename);
 }
 
 void PGMIO::readLanduse(Grid2DObject& /*landuse_out*/)
@@ -217,10 +234,11 @@ void PGMIO::readSpecialPoints(std::vector<Coords>&)
 
 void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 {
+	std::string full_name = grid2dpath_out+"/"+name;
 	const unsigned int nr_colors = 256;
-	fout.open(name.c_str());
+	fout.open(full_name.c_str());
 	if (fout.fail()) {
-		throw FileAccessException(name, AT);
+		throw FileAccessException(full_name, AT);
 	}
 
 	Coords llcorner=grid_in.llcorner;
@@ -266,6 +284,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 
 void PGMIO::write2DGrid(const Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
+	//path will be added by calling write2Dgrid
 	std::stringstream ss;
 	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".pgm";
 	write2DGrid(grid_out, ss.str());
