@@ -88,7 +88,7 @@ namespace mio {
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - GRID2DPATH: meteo grids directory where to read/write the grids; [Input] and [Output] sections
- * - A3D_view: use Alpine3D's grid viewer naming scheme (default=false)? [Input] and [Output] sections.
+ * - A3D_VIEW: use Alpine3D's grid viewer naming scheme (default=false)? [Input] and [Output] sections.
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
@@ -98,9 +98,9 @@ ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), 
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;
-	cfg.getValue("A3D_view", "Input", a3d_view_in, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, Config::nothrow);
 	a3d_view_out = false;
-	cfg.getValue("A3D_view", "Output", a3d_view_out, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, Config::nothrow);
 	getGridPaths();
 }
 
@@ -108,9 +108,9 @@ ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;
-	cfg.getValue("A3D_view", "Input", a3d_view_in, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, Config::nothrow);
 	a3d_view_out = false;
-	cfg.getValue("A3D_view", "Output", a3d_view_out, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, Config::nothrow);
 	getGridPaths();
 }
 
@@ -118,9 +118,9 @@ ARCIO::ARCIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;
-	cfg.getValue("A3D_view", "Input", a3d_view_in, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, Config::nothrow);
 	a3d_view_out = false;
-	cfg.getValue("A3D_view", "Output", a3d_view_out, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, Config::nothrow);
 	getGridPaths();
 }
 
@@ -240,8 +240,13 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	if(a3d_view_in) {
-		string ext = MeteoGrids::getParameterName(parameter);
-		IOUtils::toLower(ext);
+		string ext="";
+		if(parameter==MeteoGrids::HS)
+			ext="sdp";
+		else {
+			ext = MeteoGrids::getParameterName(parameter);
+			IOUtils::toLower(ext);
+		}
 		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date.toString(Date::NUM)+"."+ext );
 	} else
 		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
@@ -342,8 +347,13 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 {
 	//the path will be added by write2DGrid
 	if(a3d_view_out) {
-		string ext = MeteoGrids::getParameterName(parameter);
-		IOUtils::toLower(ext);
+		string ext="";
+		if(parameter==MeteoGrids::HS)
+			ext="sdp";
+		else {
+			ext = MeteoGrids::getParameterName(parameter);
+			IOUtils::toLower(ext);
+		}
 		write2DGrid(grid_in, date.toString(Date::NUM)+"."+ext );
 	} else
 		write2DGrid(grid_in, date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".asc");

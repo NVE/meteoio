@@ -171,8 +171,7 @@ double PNGIO::getScaleFactor(const double& grid_w, const double& grid_h)
 		return max_factor;
 }
 
-PNGIO::~PNGIO() throw()
-{
+PNGIO::~PNGIO() throw() {
 
 }
 
@@ -270,6 +269,7 @@ void PNGIO::setFile(const std::string& filename, FILE *fp, png_structp& png_ptr,
 	if (info_ptr == NULL) {
 		fclose(fp);
 		png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+		free(png_ptr);
 		throw IOException("Could not allocate info structure", AT);
 	}
 
@@ -288,6 +288,9 @@ void PNGIO::setFile(const std::string& filename, FILE *fp, png_structp& png_ptr,
 	//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
 	png_color_16 trans_rgb_value = {transparent_grey, transparent_grey, transparent_grey, transparent_grey, transparent_grey};
 	png_set_tRNS(png_ptr, info_ptr, 0, 0, &trans_rgb_value);
+	//set background color to help applications show the picture when no background is present
+	png_color_16 background = {channel_max_color, channel_max_color, channel_max_color, channel_max_color, channel_max_color};
+	png_set_background(png_ptr, &background, PNG_BACKGROUND_GAMMA_SCREEN, true, 1.0);
 }
 
 unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array)
@@ -303,14 +306,17 @@ unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nro
 	}
 }
 
-void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, png_structp &png_ptr)
+void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr)
 {
-	const double ncols = grid.ncols, nrows = grid.nrows;
+	const double ncols = grid.ncols;
+	const double nrows = grid.nrows;
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	const unsigned char channels = 3;
-	png_bytep row=NULL;
-	row = (png_bytep) malloc(channels * full_width * sizeof(png_byte));
+	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
+	if(row==NULL) {
+		throw IOException("Can not allocate row memory in PNGIO!", AT);
+	}
 
 	// Write image data
 	for(int y=nrows-1 ; y>=0 ; y--) {
@@ -339,8 +345,8 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 		}
 		png_write_row(png_ptr, row);
 	}
-
-	free(row);
+	png_write_flush(png_ptr);
+	png_free(png_ptr, row);
 }
 
 void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)
@@ -500,6 +506,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
 
 	png_write_end(png_ptr, NULL);
+	fflush(fp); //because libpng forgets to flush io buffers.... no comments
 	cleanup(fp, png_ptr, info_ptr);
 }
 
@@ -508,6 +515,9 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 	const double lat = grid.llcorner.getLat();
 	const double lon = grid.llcorner.getLon();
 	stringstream ss;
+
+	metadata_key.clear();
+	metadata_text.clear();
 
 	metadata_key.push_back("Creation Time");
 	Date cr_date;
@@ -551,8 +561,6 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 		metadata_key.push_back("GPSLongitude");
 		metadata_text.push_back(decimal_to_dms(lon));
 	}
-
-	//add data set timestamp
 }
 
 void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
@@ -575,6 +583,8 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 	}
 
 	png_set_text(png_ptr, info_ptr, info_text, nr);
+	png_write_info(png_ptr, info_ptr);
+
 	free(info_text);
 	for(size_t ii=0; ii<nr; ii++) {
 		free(key[ii]);
@@ -582,8 +592,6 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 	}
 	free(key);
 	free(text);
-
-	png_write_info(png_ptr, info_ptr);
 }
 
 std::string PNGIO::decimal_to_dms(const double& decimal) {
@@ -598,9 +606,15 @@ std::string PNGIO::decimal_to_dms(const double& decimal) {
 
 void PNGIO::cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr)
 {
-	if (fp != NULL) fclose(fp);
+	if (fp != NULL) {
+		fclose(fp);
+		fp=NULL;
+	}
+
 	if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-	if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+	if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, &info_ptr);
+	free(info_ptr); info_ptr = NULL;
+	free(png_ptr); png_ptr = NULL;
 }
 
 #ifndef _METEOIO_JNI
