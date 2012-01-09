@@ -65,6 +65,8 @@ class legend {
 
 	private:
 		Array2D<double> grid;
+		void simpleLegend(const unsigned int &height, const double &minimum, const double &maximum);
+		void smartLegend(const unsigned int &height, const double &minimum, const double &maximum);
 		void drawLegend(const unsigned int &height, const double &minimum, const double &maximum);
 		void writeLine(const double& val, const unsigned int& px_row);
 		void writeChar(const unsigned int i_char[10][6], const unsigned int& px_col, const unsigned int& px_row);

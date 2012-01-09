@@ -43,7 +43,7 @@ const unsigned int legend::total_width = legend::legend_plot_space+legend::sampl
 
 const unsigned int legend::interline = 5;
 const unsigned int legend::label_height = legend::char_height+legend::interline; //1 char + interline
-const unsigned int legend::nb_labels = 10+1; //every decile + 0 level
+const unsigned int legend::nb_labels = 12+1; //every decile + 0 level
 const unsigned int legend::total_height = legend::nb_labels*legend::label_height+legend::interline;
 
 const unsigned int legend::font_0[char_height][char_width] = {{0,0,1,1,0,0}, {0,1,0,0,1,0}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {1,1,0,0,1,1}, {0,1,0,0,1,0}, {0,0,1,1,0,0}};
@@ -68,7 +68,8 @@ legend::legend(const unsigned int &height, const double &minimum, const double &
 	drawLegend(height, minimum, maximum);
 }
 
-void legend::drawLegend(const unsigned int &height, const double &minimum, const double &maximum)
+//uniform division of the given range
+void legend::simpleLegend(const unsigned int &height, const double &minimum, const double &maximum)
 {
 	grid.resize(total_width, height, IOUtils::nodata);
 	const double level_inc = (maximum-minimum)/(double)(nb_labels-1); //the infamous interval thing...
@@ -89,6 +90,60 @@ void legend::drawLegend(const unsigned int &height, const double &minimum, const
 			writeLine(level_val, px_row);
 		}
 	}
+}
+
+//this tries to properly round to legend min, max and steps so that it gets easier to follow
+void legend::smartLegend(const unsigned int &height, const double &minimum, const double &maximum)
+{
+	grid.resize(total_width, height, IOUtils::nodata);
+
+	const double range = maximum-minimum;
+	double min_norm=minimum, max_norm=maximum, step_norm, decade_mult;
+	unsigned int nb_labels_norm;
+
+	if(range>0.) {
+		const double decade = floor(log10(range));
+		decade_mult = pow(10.,decade);
+		min_norm = floor(minimum/decade_mult*10.)/10., max_norm = ceil(maximum/decade_mult*10.)/10.; //between 0 & 10
+		const double range_norm = max_norm-min_norm; //between 0 & 10
+		const double step = range_norm/nb_labels; //between 0 & 10 / number of labels -> between 0 & 1
+
+		if(step<=0.1) step_norm=0.1;
+		else if(step<=0.2) step_norm=0.2;
+		else if(step<=0.5) step_norm=0.5;
+		else step_norm=1.;
+
+		min_norm = round(min_norm/step_norm)*step_norm;
+		max_norm = round(max_norm/step_norm)*step_norm;
+		nb_labels_norm = (unsigned int)ceil((max_norm-min_norm)/step_norm)+1; //because min_norm might have been tweaked
+	} else {
+		step_norm = 0.;
+		decade_mult=1.;
+		nb_labels_norm=1.;
+	}
+
+	const unsigned int smart_height = nb_labels_norm*legend::label_height+legend::interline;
+	if(height>=smart_height) {
+		const unsigned int free_space = height-smart_height;
+		const unsigned int start_legend = free_space/2; //we will start from the bottom
+
+		//fill the background
+		for(unsigned int jj=start_legend; jj<(start_legend+smart_height); jj++) {
+			for(unsigned int ii=0; ii<total_width; ii++)
+				grid(ii,jj) = bg_color;
+		}
+
+		for(unsigned int l=0; l<nb_labels_norm; l++) {
+			const double level_val = (step_norm*l+min_norm)*decade_mult;
+			const unsigned int px_row = l*label_height+start_legend;
+			writeLine(level_val, px_row);
+		}
+	}
+}
+
+void legend::drawLegend(const unsigned int &height, const double &minimum, const double &maximum) {
+	smartLegend(height, minimum, maximum);
+	//simpleLegend(height, minimum, maximum);
 }
 
 double legend::getLegendWidth() {
