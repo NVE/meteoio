@@ -20,6 +20,7 @@
 #include <meteoio/Graphics.h>
 
 #include <algorithm>
+#include <errno.h>
 
 using namespace std;
 
@@ -246,15 +247,18 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 	}
 }
 
-void PNGIO::setFile(const std::string& filename, FILE *fp, png_structp& png_ptr, png_infop& info_ptr, const unsigned int &width, const unsigned int &height)
+void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const unsigned int &width, const unsigned int &height)
 {
 	// Open file for writing (binary mode)
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename, AT);
 	}
+	errno=0;
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL) {
-		throw FileAccessException(filename, AT);
+		stringstream ss;
+		ss << "Error openning file \"" << filename << "\", possible reason: " << strerror(errno);
+		throw FileAccessException(ss.str(), AT);
 	}
 
 	// Initialize write structure
@@ -275,8 +279,8 @@ void PNGIO::setFile(const std::string& filename, FILE *fp, png_structp& png_ptr,
 
 	// Setup Exception handling
 	if (setjmp(png_jmpbuf(png_ptr))) {
-		cleanup(fp, png_ptr, info_ptr);
-		throw IOException("Error during png creation", AT);
+		closePNG(png_ptr, info_ptr);
+		throw IOException("Error during png creation. Can not set jump pointer (I have no clue what it means too!)", AT);
 	}
 
 	png_init_io(png_ptr, fp);
@@ -349,39 +353,20 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 	png_free(png_ptr, row);
 }
 
-void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)
+void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr)
 {
-	const string world_file = IOUtils::removeExtension(filename)+".pnw";
-	const double cellsize = grid_in.cellsize;
-	Coords world_ref=grid_in.llcorner;
-	world_ref.setProj(coordout, coordoutparam);
-	world_ref.moveByXY(0., grid_in.nrows*cellsize);
-
-	std::ofstream fout;
-	fout.open(world_file.c_str());
-	if (fout.fail()) {
-		throw FileAccessException(world_file, AT);
-	}
-
-	try {
-		fout << std::setprecision(12) << cellsize << "\n";
-		fout << "0.000000000000\n";
-		fout << "0.000000000000\n";
-		fout << std::setprecision(12) << -cellsize << "\n";
-		fout << std::setprecision(12) << world_ref.getEasting() << "\n";
-		fout << std::setprecision(12) << world_ref.getNorthing() << "\n";
-	} catch(...) {
-		fout.close();
-		throw FileAccessException("Failed when writing to PNG world file \""+world_file+"\"", AT);
-	}
-
-	fout.close();
+	fclose(fp);
+	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	free(info_ptr);
+	free(png_ptr);
 }
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
 	string full_name = grid2dpath+"/"+filename;
-	FILE *fp=NULL;
+	//FILE *fp=NULL;
+	fp=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
@@ -397,7 +382,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
-	setFile(full_name, fp, png_ptr, info_ptr, full_width, nrows);
+	setFile(full_name, png_ptr, info_ptr, full_width, nrows);
 	if(has_world_file) writeWorldFile(grid, full_name);
 
 	createMetadata(grid);
@@ -406,9 +391,9 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
-
 	png_write_end(png_ptr, NULL);
-	cleanup(fp, png_ptr, info_ptr);
+
+	closePNG(png_ptr, info_ptr);
 }
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -419,7 +404,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	else
 		filename = grid2dpath + "/" + date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
 
-	FILE *fp=NULL;
+	//FILE *fp=NULL;
+	fp=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
@@ -491,7 +477,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
-	setFile(filename, fp, png_ptr, info_ptr, full_width, nrows);
+	setFile(filename, png_ptr, info_ptr, full_width, nrows);
 	if(has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);
@@ -504,10 +490,43 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	writeMetadata(png_ptr, info_ptr);
 
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
-
 	png_write_end(png_ptr, NULL);
-	fflush(fp); //because libpng forgets to flush io buffers.... no comments
-	cleanup(fp, png_ptr, info_ptr);
+
+	closePNG(png_ptr, info_ptr);
+	/*fclose(fp);
+	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	free(info_ptr);
+	free(png_ptr);*/
+}
+
+void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)
+{
+	const string world_file = IOUtils::removeExtension(filename)+".pnw";
+	const double cellsize = grid_in.cellsize;
+	Coords world_ref=grid_in.llcorner;
+	world_ref.setProj(coordout, coordoutparam);
+	world_ref.moveByXY(0., grid_in.nrows*cellsize);
+
+	std::ofstream fout;
+	fout.open(world_file.c_str());
+	if (fout.fail()) {
+		throw FileAccessException(world_file, AT);
+	}
+
+	try {
+		fout << std::setprecision(12) << cellsize << "\n";
+		fout << "0.000000000000\n";
+		fout << "0.000000000000\n";
+		fout << std::setprecision(12) << -cellsize << "\n";
+		fout << std::setprecision(12) << world_ref.getEasting() << "\n";
+		fout << std::setprecision(12) << world_ref.getNorthing() << "\n";
+	} catch(...) {
+		fout.close();
+		throw FileAccessException("Failed when writing to PNG world file \""+world_file+"\"", AT);
+	}
+
+	fout.close();
 }
 
 void PNGIO::createMetadata(const Grid2DObject& grid)
@@ -602,19 +621,6 @@ std::string PNGIO::decimal_to_dms(const double& decimal) {
 
 	dms << d << "/1 " << static_cast<int>(m*100) << "/100 " << fixed << setprecision(6) << s << "/1";
 	return dms.str();
-}
-
-void PNGIO::cleanup(FILE *fp, png_structp png_ptr, png_infop info_ptr)
-{
-	if (fp != NULL) {
-		fclose(fp);
-		fp=NULL;
-	}
-
-	if (info_ptr != NULL) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-	if (png_ptr != NULL) png_destroy_write_struct(&png_ptr, &info_ptr);
-	free(info_ptr); info_ptr = NULL;
-	free(png_ptr); png_ptr = NULL;
 }
 
 #ifndef _METEOIO_JNI

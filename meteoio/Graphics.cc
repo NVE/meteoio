@@ -412,7 +412,6 @@ void gr_heat::getColor(const double &i_val, double &r, double &g, double &b) con
 }
 
 gr_blue_pink::gr_blue_pink(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
-	//write gradient control points
 	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white
 	X.push_back(0.2); v_h.push_back(172.); v_s.push_back(.4); v_v.push_back(.95); //light blue
 	X.push_back(.4); v_h.push_back(213.); v_s.push_back(.4); v_v.push_back(.95); //violet
@@ -421,12 +420,23 @@ gr_blue_pink::gr_blue_pink(const double& /*i_min*/, const double& /*i_max*/, con
 	X.push_back(1.); v_h.push_back(359.); v_s.push_back(.3); v_v.push_back(.95); //red
 }
 
-gr_freeze::gr_freeze(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
-	//write gradient control points
-	X.push_back(0.); v_r.push_back(0.); v_g.push_back(0.); v_b.push_back(1.); //blue
-	X.push_back(.5); v_r.push_back(1.); v_g.push_back(1.); v_b.push_back(0.); //yellow
-	X.push_back(.5); v_r.push_back(0.); v_g.push_back(1.); v_b.push_back(0.); //green
-	X.push_back(1.); v_r.push_back(1.); v_g.push_back(0.); v_b.push_back(0.); //red
+gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& /*i_autoscale*/) {
+	//we want the yellow/green step to always be at zero celsius
+	double begin=0., middle=0.5, end=1.;
+	if(i_min<0. && i_max>0.) {
+		const double range = i_max-i_min;
+		middle = -i_min / range;
+	} else if(i_min<=0. && i_max<=0.) {
+		middle = 1.;
+		end = 1000.;
+	} else if(i_min>=0. && i_max>=0.) {
+		begin = -1000.;
+		middle = 0.;
+	}
+	X.push_back(begin); v_r.push_back(0.); v_g.push_back(0.); v_b.push_back(1.); //blue
+	X.push_back(middle); v_r.push_back(1.); v_g.push_back(1.); v_b.push_back(0.); //yellow
+	X.push_back(middle); v_r.push_back(0.); v_g.push_back(1.); v_b.push_back(0.); //green
+	X.push_back(end); v_r.push_back(1.); v_g.push_back(0.); v_b.push_back(0.); //red
 }
 
 void gr_freeze::getColor(const double &val, double &r, double &g, double &b) const {
@@ -437,7 +447,6 @@ void gr_freeze::getColor(const double &val, double &r, double &g, double &b) con
 }
 
 gr_blue::gr_blue(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
-	//write gradient control points
 	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //5
 	X.push_back(.16667); v_h.push_back(180.); v_s.push_back(.2); v_v.push_back(.99); //10
 	X.push_back(.33334); v_h.push_back(193.); v_s.push_back(.32); v_v.push_back(.97); //20
@@ -449,14 +458,12 @@ gr_blue::gr_blue(const double& /*i_min*/, const double& /*i_max*/, const bool& /
 }
 
 gr_bg_isomorphic::gr_bg_isomorphic(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
-	//write gradient control points
 	X.push_back(0.); v_h.push_back(47.); v_s.push_back(.92); v_v.push_back(0.); //black
 	X.push_back(.5); v_h.push_back(178.); v_s.push_back(.58); v_v.push_back(.67); //light blue
 	X.push_back(1.); v_h.push_back(84.); v_s.push_back(.67); v_v.push_back(1.); //light green
 }
 
 gr_pastel::gr_pastel(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
-	//write gradient control points
 	X.push_back(0.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
 	X.push_back(1./7.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
 	X.push_back(2./7.); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
@@ -467,7 +474,6 @@ gr_pastel::gr_pastel(const double& /*i_min*/, const double& /*i_max*/, const boo
 }
 
 gr_terrain::gr_terrain(const double& /*i_min*/, const double& i_max, const bool& i_autoscale) {
-	//write gradient control points
 	if(i_autoscale) {
 		X.push_back(0.); v_h.push_back(144.); v_s.push_back(.50); v_v.push_back(.39); //sea level, dark green
 		X.push_back(.25); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow
@@ -490,19 +496,17 @@ gr_terrain::gr_terrain(const double& /*i_min*/, const double& i_max, const bool&
 }
 
 gr_slope::gr_slope(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
-	//write gradient control points
 	//usually, between 0 and 50
 	X.push_back(0.); v_h.push_back(185.); v_s.push_back(.26); v_v.push_back(.56); //light blue
-	X.push_back(.5); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green
-	X.push_back(.6); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow
-	X.push_back(.7); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange
-	X.push_back(.8); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red
-	X.push_back(.9); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red
-	X.push_back(1.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black
+	X.push_back(.5); v_h.push_back(122.); v_s.push_back(.44); v_v.push_back(.91); //light green, 25
+	X.push_back(.6); v_h.push_back(60.); v_s.push_back(.44); v_v.push_back(.91); //light yellow, 30
+	X.push_back(.7); v_h.push_back(22.); v_s.push_back(.44); v_v.push_back(.91); //orange, 35
+	X.push_back(.8); v_h.push_back(0.); v_s.push_back(.44); v_v.push_back(.91); //red, 40
+	X.push_back(.9); v_h.push_back(0.); v_s.push_back(.58); v_v.push_back(.35); //dark red, 45
+	X.push_back(1.); v_h.push_back(0.); v_s.push_back(1.); v_v.push_back(0.); //black, 50
 }
 
 gr_azi::gr_azi(const double& /*i_min*/, const double& /*i_max*/, const bool& i_autoscale) {
-	//write gradient control points
 	if(i_autoscale) {
 		X.push_back(0.); v_h.push_back(113.); v_s.push_back(.66); v_v.push_back(.91); //light green
 		X.push_back(1.); v_h.push_back(360.); v_s.push_back(.66); v_v.push_back(.91); //light red
