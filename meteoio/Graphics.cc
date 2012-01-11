@@ -279,11 +279,13 @@ void Color::HSVtoRGB(const double& h, const double& s, const double& v, double &
 // Gradient class
 /////////////////////////////////////////////////////////////////////////////////////////////////
 const unsigned char Gradient::channel_max_color = 255;
+const unsigned int Gradient::reserved_idx = 5;
+const unsigned int Gradient::reserved_cols = 2;
 
 Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
 	set(type, i_min, i_max, i_autoscale);
-	nr_unique_levels = 0;
+	nr_unique_cols = 0;
 }
 
 void Gradient::set(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
@@ -305,7 +307,13 @@ void Gradient::set(const Type& type, const double& i_min, const double& i_max, c
 }
 
 void Gradient::setNrOfLevels(const unsigned int& i_nr_unique_levels) {
-	nr_unique_levels = i_nr_unique_levels;
+	if(i_nr_unique_levels<=reserved_idx) {
+		stringstream ss;
+		ss << "Insufficient number of colors requested for gradient: ask for more than ";
+		ss << reserved_idx << " colors!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	nr_unique_cols = i_nr_unique_levels - reserved_idx;
 }
 
 //val between min_val and max_val
@@ -338,19 +346,94 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 	a=false;
 	double r_d,g_d,b_d;
 	double val_norm;
-	if(nr_unique_levels==0) {
+	if(nr_unique_cols==0) {
 		if(autoscale && val<min) val_norm=0.;
 		else if(autoscale && val>max) val_norm=1.;
 		else val_norm = (val-min)/delta;
 	} else {
 		if(autoscale && val<min) val_norm=0.;
 		else if(autoscale && val>max) val_norm=1.;
-		else val_norm = (static_cast<unsigned int>( (val-min)/delta*(double)nr_unique_levels )) / (double)nr_unique_levels;
+		else val_norm = (static_cast<unsigned int>( (val-min)/delta*(double)nr_unique_cols )) / (double)nr_unique_cols;
 	}
 	model->getColor(val_norm, r_d, g_d, b_d);
 	r = static_cast<unsigned char>(r_d*channel_max_color);
 	g = static_cast<unsigned char>(g_d*channel_max_color);
 	b = static_cast<unsigned char>(b_d*channel_max_color);
+}
+
+void Gradient::getColor(const double& val, unsigned int& index) const
+{
+	if(model==NULL) {
+		throw UnknownValueException("Please set the color gradient before using it!", AT);
+	}
+
+	if(val==IOUtils::nodata) {
+		index=0;
+		return;
+	}
+	if(val==legend::bg_color) {
+		index=1;
+		return;
+	}
+	if(val==legend::text_color) {
+		index=2;
+		return;
+	}
+	if(autoscale && delta==0) { //constant data throughout the grid & autoscale are no friends...
+		index=nr_unique_cols/2 + reserved_idx;
+		return;
+	}
+
+	if(nr_unique_cols==0) {
+		throw UnknownValueException("Please define the number of colors for indexed gradients!", AT);
+	}
+
+	//watch out!! the palette contains some reserved values at the begining
+	if(val<min) index=reserved_idx-2;
+	else if(val>max) index=reserved_idx-1;
+	else index = static_cast<unsigned int>( (val-min)/delta*(double)nr_unique_cols ) + reserved_idx;
+}
+
+void Gradient::getPalette(std::vector<unsigned char> &r, std::vector<unsigned char> &g, std::vector<unsigned char> &b) const
+{
+	if(model==NULL) {
+		throw UnknownValueException("Please set the color gradient before using it!", AT);
+	}
+	if(nr_unique_cols==0) {
+		throw UnknownValueException("Please define the number of colors for indexed gradients!", AT);
+	}
+
+	r.clear(); g.clear(); b.clear();
+
+	//transparent color
+	r.push_back(channel_max_color); g.push_back(channel_max_color); b.push_back(channel_max_color);
+	//legend background color
+	r.push_back(channel_max_color-1); g.push_back(channel_max_color-1); b.push_back(channel_max_color-1);
+	//legend text color
+	r.push_back(0); g.push_back(0); b.push_back(0);
+
+	double r_d, g_d, b_d;
+
+	//under-range data color
+	model->getColor(-0.1, r_d, g_d, b_d);
+	r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
+	g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
+	b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
+
+	//over-range data color
+	model->getColor(1.1, r_d, g_d, b_d);
+	r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
+	g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
+	b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
+
+	//all normal colors
+	for(unsigned int ii=0; ii<=nr_unique_cols; ii++) {
+		const double val_norm = (double)ii/(double)nr_unique_cols;
+		model->getColor(val_norm, r_d, g_d, b_d);
+		r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
+		g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
+		b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
+	}
 }
 
 //we assume that the vectors are sorted by X

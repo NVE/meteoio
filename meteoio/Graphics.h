@@ -195,7 +195,7 @@ class Gradient {
 		* @brief Default Constructor.
 		* This should be followed by a call to set() before calling getColor
 		*/
-		Gradient() {model=NULL; min=max=delta=0.; nr_unique_levels=0;};
+		Gradient() {model=NULL; min=max=delta=0.; nr_unique_cols=0;};
 
 		/**
 		* @brief Constructor.
@@ -226,7 +226,7 @@ class Gradient {
 		* The given argument is an upper bound for the number of unique levels in the generated
 		* gradient (leading to a reduced number of colors). This is a specially easy and useful way of reducing a file size with
 		* no run time overhead (and even a small benefit) and little visible impact if
-		* the number of levels/colors remains large enough (say, at least 30)
+		* the number of levels/colors remains large enough (say, at least 20-30)
 		* @param i_nr_unique_levels maximum number of unique levels
 		*/
 		void setNrOfLevels(const unsigned int& i_nr_unique_levels);
@@ -242,11 +242,31 @@ class Gradient {
 		*/
 		void getColor(const double &val, unsigned char &r, unsigned char &g, unsigned char &b, bool &a) const;
 
+		/**
+		* @brief Get palette index values for a given numeric value
+		* See class description for more explanations on the implementation/behavior
+		* @param val numerical value to convert
+		* @param index palette index for the given value
+		*/
+		void getColor(const double& val, unsigned int& index) const;
+
+		/**
+		* @brief Get palette colors for the selected gradient
+		* When building an indexed image, one needs to first retrieve the palette using this method. Afterwards, getColor(val, index)
+		* will be called for each pixel in order to retrieve its palette index.
+		* @param r red components
+		* @param g green components
+		* @param b blue components
+		*/
+		void getPalette(std::vector<unsigned char> &r, std::vector<unsigned char> &g, std::vector<unsigned char> &b) const;
+
 		static const unsigned char channel_max_color; ///< nr of colors per channel of the generated gradients
 	private:
 		double min, max, delta;
 		bool autoscale;
-		unsigned char nr_unique_levels;
+		unsigned int nr_unique_cols; ///< number of unique colors to generate. The same discretization is performed for indexed or not
+		static const unsigned int reserved_idx; ///< for indexed gradients, number of reserved indexes
+		static const unsigned int reserved_cols; ///< for non-indexed gradients, number of reserved colors
 		Gradient_model *model;
 };
 

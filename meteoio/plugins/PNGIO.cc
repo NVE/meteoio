@@ -75,6 +75,9 @@ const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It ca
 const unsigned char PNGIO::channel_depth = 8;
 const unsigned char PNGIO::channel_max_color = 255;
 const unsigned char PNGIO::transparent_grey = channel_max_color;
+const bool PNGIO::indexed_png = true;
+const bool PNGIO::optimize_for_speed = true;
+const unsigned int PNGIO::nr_levels = 30;
 
 PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -285,13 +288,27 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 	png_init_io(png_ptr, fp);
 
-	// Write header (8 bit colour depth). Alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
-	png_set_IHDR(png_ptr, info_ptr, width, height,
-	             channel_depth, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-	             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-	//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
-	png_color_16 trans_rgb_value = {transparent_grey, transparent_grey, transparent_grey, transparent_grey, transparent_grey};
-	png_set_tRNS(png_ptr, info_ptr, 0, 0, &trans_rgb_value);
+	//png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
+	if(optimize_for_speed) png_set_compression_level(png_ptr, Z_BEST_SPEED);
+	png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB); //any other filter is costly and brings close to nothing...
+
+	// Write header (8 bit colour depth). Full alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
+	if(indexed_png) {
+		png_set_IHDR(png_ptr, info_ptr, width, height,
+			channel_depth, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+		//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
+		png_byte trans = 0; //by convention, the gradient define it as color 0
+		png_set_tRNS(png_ptr, info_ptr, &trans, 1, 0);
+	} else {
+		png_set_IHDR(png_ptr, info_ptr, width, height,
+			channel_depth, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+		//set transparent color (ie: cheap transparency: leads to smaller files and shorter run times)
+		png_color_16 trans_rgb_value = {transparent_grey, transparent_grey, transparent_grey, transparent_grey, transparent_grey};
+		png_set_tRNS(png_ptr, info_ptr, 0, 0, &trans_rgb_value);
+	}
+
 	//set background color to help applications show the picture when no background is present
 	png_color_16 background = {channel_max_color, channel_max_color, channel_max_color, channel_max_color, channel_max_color};
 	png_set_background(png_ptr, &background, PNG_BACKGROUND_GAMMA_SCREEN, true, 1.0);
@@ -316,47 +333,87 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 	const double nrows = grid.nrows;
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
-	const unsigned char channels = 3;
+	unsigned char channels;
+	if(indexed_png)
+		channels = 1;
+	else
+		channels = 3;
+
 	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
 	if(row==NULL) {
 		throw IOException("Can not allocate row memory in PNGIO!", AT);
 	}
 
 	// Write image data
-	for(int y=nrows-1 ; y>=0 ; y--) {
-		unsigned int x=0;
-		for(; x<ncols ; x++) {
-			const unsigned int i=x*channels;
-			unsigned char r,g,b;
-			bool a;
-			gradient.getColor(grid(x,y), r,g,b,a);
-			if(a==true) {
-				row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
-			} else {
-				row[i]=r; row[i+1]=g; row[i+2]=b;
+	if(indexed_png) {
+		for(int y=nrows-1 ; y>=0 ; y--) {
+			unsigned int x=0;
+			for(; x<ncols ; x++) {
+				const unsigned int i=x*channels;
+				unsigned int index;
+				gradient.getColor(grid(x,y), index);
+				row[i]=index;
 			}
-		}
-		for(; x<full_width; x++) {
-			const unsigned int i=x*channels;
-			unsigned char r,g,b;
-			bool a;
-			gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
-			if(a==true) {
-				row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
-			} else {
-				row[i]=r; row[i+1]=g; row[i+2]=b;
+			for(; x<full_width; x++) {
+				const unsigned int i=x*channels;
+				unsigned int index;
+				gradient.getColor(legend_array(x-ncols,y), index);
+				row[i]=index;
 			}
+			png_write_row(png_ptr, row);
 		}
-		png_write_row(png_ptr, row);
+	} else {
+		for(int y=nrows-1 ; y>=0 ; y--) {
+			unsigned int x=0;
+			for(; x<ncols ; x++) {
+				const unsigned int i=x*channels;
+				unsigned char r,g,b;
+				bool a;
+				gradient.getColor(grid(x,y), r,g,b,a);
+				if(a==true) {
+					row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
+				} else {
+					row[i]=r; row[i+1]=g; row[i+2]=b;
+				}
+			}
+			for(; x<full_width; x++) {
+				const unsigned int i=x*channels;
+				unsigned char r,g,b;
+				bool a;
+				gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
+				if(a==true) {
+					row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
+				} else {
+					row[i]=r; row[i+1]=g; row[i+2]=b;
+				}
+			}
+			png_write_row(png_ptr, row);
+		}
 	}
+
 	png_write_flush(png_ptr);
 	png_free(png_ptr, row);
+}
+
+void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr)
+{
+	std::vector<unsigned char> r, g, b;
+	gradient.getPalette(r,g,b);
+	const size_t nr_colors = r.size();
+	png_color *palette = (png_color*)calloc(sizeof (png_color), nr_colors);
+	for(size_t ii=0; ii<nr_colors; ii++) {
+		palette[ii].red = r[ii];
+		palette[ii].green = g[ii];
+		palette[ii].blue = b[ii];
+	}
+	png_set_PLTE(png_ptr, info_ptr, palette, nr_colors);
 }
 
 void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr)
 {
 	fclose(fp);
 	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+	if(info_ptr->palette!=NULL) free(info_ptr->palette);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	free(info_ptr);
 	free(png_ptr);
@@ -365,7 +422,6 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr)
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
 	string full_name = grid2dpath+"/"+filename;
-	//FILE *fp=NULL;
 	fp=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
@@ -377,12 +433,13 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const double max = grid.grid2D.getMax();
 
 	Gradient gradient(Gradient::heat, min, max, autoscale);
-	gradient.setNrOfLevels(50);
+	gradient.setNrOfLevels(nr_levels);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(full_name, png_ptr, info_ptr, full_width, nrows);
+	if(indexed_png) setPalette(gradient, png_ptr, info_ptr);
 	if(has_world_file) writeWorldFile(grid, full_name);
 
 	createMetadata(grid);
@@ -404,7 +461,6 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	else
 		filename = grid2dpath + "/" + date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
 
-	//FILE *fp=NULL;
 	fp=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
@@ -472,12 +528,13 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	} else {
 		gradient.set(Gradient::heat, min, max, autoscale);
 	}
-	gradient.setNrOfLevels(30);
+	gradient.setNrOfLevels(nr_levels);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, png_ptr, info_ptr, full_width, nrows);
+	if(indexed_png) setPalette(gradient, png_ptr, info_ptr);
 	if(has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);
@@ -493,11 +550,6 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	png_write_end(png_ptr, NULL);
 
 	closePNG(png_ptr, info_ptr);
-	/*fclose(fp);
-	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-	free(info_ptr);
-	free(png_ptr);*/
 }
 
 void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)

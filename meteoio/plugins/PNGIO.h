@@ -73,6 +73,7 @@ class PNGIO : public IOInterface {
 		void writeWorldFile(const Grid2DObject& grid_in, const std::string& filename);
 		unsigned int setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array);
 		void writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr);
+		void setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr);
 		void closePNG(png_structp& png_ptr, png_infop& info_ptr);
 		std::string decimal_to_dms(const double& decimal);
 
@@ -93,6 +94,9 @@ class PNGIO : public IOInterface {
 		static const unsigned char channel_depth;
 		static const unsigned char channel_max_color;
 		static const unsigned char transparent_grey;
+		static const bool optimize_for_speed; ///< optimize for speed instead of compression?
+		static const bool indexed_png; ///< write an indexed png?
+		static const unsigned int nr_levels; ///< number of levels to represent? (less-> smaller file size and faster)
 };
 
 } //namespace
