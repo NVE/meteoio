@@ -214,7 +214,10 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			getline(fin, line, eoln); //read complete line
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
-				throw InvalidFormatException("Premature End " + full_name, AT);
+				stringstream ss;
+				ss << "Invalid number of columns at data line " << nrows-kk << " in file " << full_name << ": ";
+				ss << ncols << " columns expected";
+				throw InvalidFormatException(ss.str(), AT);
 			}
 
 			for (unsigned int ll=0; ll < ncols; ll++){
