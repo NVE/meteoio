@@ -22,18 +22,18 @@ int main(void) {
 
 
 	Grid2DObject slope(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.slope);
-	io.write2DGrid(slope,"slope.asc");
+	io.write2DGrid(slope, MeteoGrids::SLOPE, Date(0.));
 	Grid2DObject azi(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.azi);
-	io.write2DGrid(azi,"azi.asc");
+	io.write2DGrid(azi, MeteoGrids::AZI, Date(0.));
 
 	//retrieving grid coordinates of a real world point
 	Coords point;
 	point.copyProj(dem.llcorner); //we use the same projection parameters as the DEM
-	point.setLatLon(46.1592, 8.12993, IOUtils::nodata);
+	point.setLatLon(46.232103, 7.362185, IOUtils::nodata);
 	dem.gridify(point);
 
 	//computing grid distances from real world distances
-	const double dist_x=7000., dist_y=12000.;
+	const double dist_x=70000., dist_y=120000.;
 	const unsigned int ncols = (unsigned int)ceil(dist_x/dem.cellsize);
 	const unsigned int nrows = (unsigned int)ceil(dist_y/dem.cellsize);
 
@@ -41,7 +41,7 @@ int main(void) {
 	DEMObject sub_dem(dem, point.getGridI(), point.getGridJ(), ncols, nrows);
 
 	//writing the sub-dem out
-	io.write2DGrid(sub_dem,"sub_dem.dem");
+	io.write2DGrid(sub_dem, MeteoGrids::DEM, Date(0.));
 
 	return 0;
 }

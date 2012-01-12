@@ -559,7 +559,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 	const double cellsize = grid_in.cellsize;
 	Coords world_ref=grid_in.llcorner;
 	world_ref.setProj(coordout, coordoutparam);
-	world_ref.moveByXY(0., grid_in.nrows*cellsize);
+	world_ref.moveByXY(.5*cellsize, (grid_in.nrows+.5)*cellsize); //moving to center of upper left cell
 
 	std::ofstream fout;
 	fout.open(world_file.c_str());

@@ -28,8 +28,8 @@ int main(int /*argc*/, char** argv) {
 	io.write2DGrid(param, MeteoGrids::HNW, d1);
 	io.interpolate(d1, dem, MeteoData::RH, param);
 	io.write2DGrid(param, MeteoGrids::RH, d1);
-	io.interpolate(d1, dem, MeteoData::ILWR, param);
-	io.write2DGrid(param, MeteoGrids::ILWR, d1);
+	io.interpolate(d1, dem, MeteoData::RSWR, param);
+	io.write2DGrid(param, MeteoGrids::RSWR, d1);
 
 	return 0;
 }
