@@ -368,20 +368,31 @@ void Interpol2D::constantLapseGrid2DFill(const double& value, const double& alti
 	}
 }
 
+//convert a vector of stations into two vectors of eastings and northings
+void Interpol2D::buildPositionsVectors(const std::vector<StationData>& vecStations, std::vector<double>& vecEastings, std::vector<double>& vecNorthings)
+{
+	vecEastings.clear();
+	vecNorthings.clear();
+	for (size_t i=0; i<vecStations.size(); i++) {
+		const Coords& position = vecStations[i].position;
+		vecEastings.push_back( position.getEasting() );
+		vecNorthings.push_back( position.getNorthing() );
+	}
+}
+
 double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<double>& vecData_in,
-                           const std::vector<StationData>& vecStations_in)
+                           const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
-	const size_t n_stations=vecStations_in.size();
+	const size_t n_stations=vecEastings.size();
 	double parameter=0., norm=0.;
 	const double scale = 1.e6;
 
 	for (size_t i=0; i<n_stations; i++) {
 		/*const double weight=1./(HorizontalDistance(x, y, vecStations_in[i].position.getEasting(),
 		       vecStations_in[i].position.getNorthing()) + 1e-6);*/
-		const Coords& position = vecStations_in[i].position;
-		const double DX=x-position.getEasting(); //optimization: precompute and store in a vector?
-		const double DY=y-position.getNorthing();
+		const double DX=x-vecEastings[i];
+		const double DY=y-vecNorthings[i];
 		const double weight = invSqrt( DX*DX + DY*DY + scale ); //use the optimized 1/sqrt approximation
 		//const double weight = weightInvDistSqrt( (DX*DX + DY*DY) );
 		parameter += weight*vecData_in[i];
@@ -419,6 +430,9 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 		                     ref_altitude, vecCoefficients);
 	}
 
+	std::vector<double> vecEastings, vecNorthings;
+	buildPositionsVectors(vecStations_in, vecEastings, vecNorthings);
+
 	const double xllcorner = dem.llcorner.getEasting();
 	const double yllcorner = dem.llcorner.getNorthing();
 	const double cellsize = dem.cellsize;
@@ -427,7 +441,7 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 			const double cell_altitude=dem.grid2D(i,j);
 			if (cell_altitude!=IOUtils::nodata) {
 				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize),
-				                           (yllcorner+j*cellsize), vecTref, vecStations_in);
+				                           (yllcorner+j*cellsize), vecTref, vecEastings, vecNorthings);
 				grid.grid2D(i,j) = funcptr(grid.grid2D(i,j), ref_altitude,
 				                           cell_altitude, vecCoefficients);
 			} else {
@@ -461,7 +475,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 		for (unsigned int i=0; i<grid.ncols; i++) {
 			//LL_IDW_pixel returns nodata when appropriate
 			double r;
-			const double value = LLIDW_pixel(i,j,vecData_in, vecStations_in, dem, nrOfNeighbors, r);
+			const double value = LLIDW_pixel(i,j,vecData_in, vecStations_in, dem, nrOfNeighbors, r); //TODO: precompute in vectors
 			grid.grid2D(i,j) = value;
 			if(value!=IOUtils::nodata) {
 				sum += fabs(r);
@@ -550,6 +564,8 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
                      const DEMObject& dem, Grid2DObject& grid)
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	std::vector<double> vecEastings, vecNorthings;
+	buildPositionsVectors(vecStations_in, vecEastings, vecNorthings);
 
 	//multiple source stations: simple IDW Krieging
 	const double xllcorner = dem.llcorner.getEasting();
@@ -559,7 +575,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 		for (unsigned int i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize), (yllcorner+j*cellsize),
-				                           vecData_in, vecStations_in);
+				                           vecData_in, vecEastings, vecNorthings);
 			} else {
 				grid.grid2D(i,j) = IOUtils::nodata;
 			}

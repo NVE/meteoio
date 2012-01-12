@@ -96,11 +96,13 @@ class Interpol2D {
 		static void getNeighbors(const double& x, const double& y,
 		                         const std::vector<StationData>& vecStations,
 		                         std::vector< std::pair<double, size_t> >& list);
+		static void buildPositionsVectors(const std::vector<StationData>& vecStations,
+		                                  std::vector<double>& vecEastings, std::vector<double>& vecNorthings);
 
 		//core methods
 		static double IDWCore(const double& x, const double& y,
 		                      const std::vector<double>& vecData_in,
-		                      const std::vector<StationData>& vecStations_in);
+		                      const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings);
 		static double LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 		                          const std::vector<double>& vecData_in,
 		                          const std::vector<StationData>& vecStations_in,
