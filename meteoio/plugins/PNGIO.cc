@@ -290,7 +290,8 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 	//png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
 	if(optimize_for_speed) png_set_compression_level(png_ptr, Z_BEST_SPEED);
-	png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB); //any other filter is costly and brings close to nothing...
+	png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB|PNG_FILTER_UP); //any other filter is costly and brings close to nothing...
+	if(indexed_png) png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
 
 	// Write header (8 bit colour depth). Full alpha channel with PNG_COLOR_TYPE_RGB_ALPHA
 	if(indexed_png) {
