@@ -48,7 +48,7 @@ class IOException : public POPException {
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
 		~IOException() throw();
-		const char* what() const throw();
+		virtual const char* what() const throw();
 
 	protected:
 		std::string msg;

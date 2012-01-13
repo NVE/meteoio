@@ -17,6 +17,11 @@
 */
 #include <meteoio/IOExceptions.h>
 
+#if defined(LINUX) && defined(__GNUC__)
+	#include <sstream>
+	#include <cxxabi.h>
+#endif
+
 using namespace std;
 
 namespace mio {
@@ -37,8 +42,36 @@ IOException::IOException(const std::string& message, const std::string& position
 	size_t tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
 	msg += "\n\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
-	for (unsigned int ii=1; ii<tracesize; ii++)
+	for (unsigned int ii=1; ii<tracesize; ii++) {
+	#ifdef __GNUC__
+		std::stringstream ss;
+		char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
+		for (char *p = symbols[ii]; *p; ++p) {
+			// find parantheses and +address offset surrounding mangled name
+			if (*p == '(') mangled_name = p;
+			else if (*p == '+') offset_begin = p;
+			else if (*p == ')') offset_end = p;
+		}
+		if (mangled_name && offset_begin && offset_end && mangled_name < offset_begin) {
+			//the line could be processed, attempt to demangle the symbol
+			*mangled_name++ = '\0'; *offset_begin++ = '\0'; *offset_end++ = '\0';
+			int status;
+			char *real_name = abi::__cxa_demangle(mangled_name, 0, 0, &status);
+			// if demangling is successful, output the demangled function name
+			if (status == 0) {
+				ss << "\t(" << ii << ") in " << real_name << " from " << symbols[ii] << " " << offset_end << "+" << offset_begin;
+			} else { // otherwise, output the mangled function name
+				ss << "\t(" << ii << ") in " << mangled_name << " from " << symbols[ii] << " " << offset_end << "+" << offset_begin;
+			}
+			free(real_name);
+		} else { // otherwise, print the whole line
+			ss << "\t(" << ii << ") at " << symbols[ii];
+		}
+		msg += ss.str()+"\n";
+	#else
 		msg += "\tat " + string(symbols[ii]) + "\n";
+	#endif
+	}
 	msg += "\033[0m"; //back to normal color
 	free(symbols);
 #endif

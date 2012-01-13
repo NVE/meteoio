@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <errno.h>
+#include <zlib.h>
 
 using namespace std;
 
@@ -282,7 +283,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 	// Setup Exception handling
 	if (setjmp(png_jmpbuf(png_ptr))) {
-		closePNG(png_ptr, info_ptr);
+		closePNG(png_ptr, info_ptr, NULL);
 		throw IOException("Error during png creation. Can not set jump pointer (I have no clue what it means too!)", AT);
 	}
 
@@ -396,12 +397,12 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 	png_free(png_ptr, row);
 }
 
-void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr)
+void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
 {
 	std::vector<unsigned char> r, g, b;
 	gradient.getPalette(r,g,b);
 	const size_t nr_colors = r.size();
-	png_color *palette = (png_color*)calloc(sizeof (png_color), nr_colors);
+	palette = (png_color*)calloc(sizeof (png_color), nr_colors);
 	for(size_t ii=0; ii<nr_colors; ii++) {
 		palette[ii].red = r[ii];
 		palette[ii].green = g[ii];
@@ -410,12 +411,12 @@ void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop
 	png_set_PLTE(png_ptr, info_ptr, palette, nr_colors);
 }
 
-void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr)
+void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
 {
-	fclose(fp);
 	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-	if(info_ptr->palette!=NULL) free(info_ptr->palette);
+	if(indexed_png && palette!=NULL) free(palette);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
+	fclose(fp);
 	free(info_ptr);
 	free(png_ptr);
 }
@@ -424,6 +425,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 {
 	string full_name = grid2dpath+"/"+filename;
 	fp=NULL;
+	png_color *palette=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
@@ -440,7 +442,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(full_name, png_ptr, info_ptr, full_width, nrows);
-	if(indexed_png) setPalette(gradient, png_ptr, info_ptr);
+	if(indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
 	if(has_world_file) writeWorldFile(grid, full_name);
 
 	createMetadata(grid);
@@ -451,7 +453,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
 	png_write_end(png_ptr, NULL);
 
-	closePNG(png_ptr, info_ptr);
+	closePNG(png_ptr, info_ptr, palette);
 }
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -463,6 +465,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		filename = grid2dpath + "/" + date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
 
 	fp=NULL;
+	png_color *palette=NULL;
 	png_structp png_ptr=NULL;
 	png_infop info_ptr=NULL;
 
@@ -535,7 +538,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, png_ptr, info_ptr, full_width, nrows);
-	if(indexed_png) setPalette(gradient, png_ptr, info_ptr);
+	if(indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
 	if(has_world_file) writeWorldFile(grid, filename);
 
 	createMetadata(grid);
@@ -550,7 +553,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
 	png_write_end(png_ptr, NULL);
 
-	closePNG(png_ptr, info_ptr);
+	closePNG(png_ptr, info_ptr, palette);
 }
 
 void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filename)
@@ -637,18 +640,19 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 
 void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 {
+	const size_t max_len = 79; //according to the official specs' recommendation
 	const size_t nr = metadata_key.size();
 	png_text *info_text;
 	info_text = (png_text *)calloc(sizeof(png_text), nr);
 	char **key, **text;
-	key = (char**)calloc(sizeof(char)*80, nr);
-	text = (char**)calloc(sizeof(char)*80, nr);
+	key = (char**)calloc(sizeof(char)*max_len, nr);
+	text = (char**)calloc(sizeof(char)*max_len, nr);
 
 	for(size_t ii=0; ii<nr; ii++) {
-		key[ii] = (char *)calloc(sizeof(char), 80);
-		text[ii] = (char *)calloc(sizeof(char), 80);
-		strncpy(key[ii], metadata_key[ii].c_str(), 80);
-		strncpy(text[ii], metadata_text[ii].c_str(), 80);
+		key[ii] = (char *)calloc(sizeof(char), max_len);
+		text[ii] = (char *)calloc(sizeof(char), max_len);
+		strncpy(key[ii], metadata_key[ii].c_str(), max_len);
+		strncpy(text[ii], metadata_text[ii].c_str(), max_len);
 		info_text[ii].key = key[ii];
 		info_text[ii].text = text[ii];
 		info_text[ii].compression = PNG_TEXT_COMPRESSION_NONE;
