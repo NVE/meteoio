@@ -98,8 +98,8 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 	grid.resize(total_width, height, IOUtils::nodata);
 
 	const double range = maximum-minimum;
-	double min_norm=minimum, max_norm=maximum, step_norm, decade_mult;
-	unsigned int nb_labels_norm;
+	double min_norm=minimum, max_norm=maximum, decade_mult;
+	unsigned int step_norm, nb_labels_norm;
 
 	if(range>0.) {
 		const double decade = floor(log10(range));
@@ -108,16 +108,17 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 		const double range_norm = max_norm-min_norm; //between 0 & 10
 		const double step = range_norm/nb_labels; //between 0 & 10 / number of labels -> between 0 & 1
 
-		if(step<=0.1) step_norm=0.1;
-		else if(step<=0.2) step_norm=0.2;
-		else if(step<=0.5) step_norm=0.5;
-		else step_norm=1.;
+		//for precision issues, it is necessary to keep step_norm as an interger -> we will always use step_norm/10
+		if(step<=0.1) step_norm=1;
+		else if(step<=0.2) step_norm=2;
+		else if(step<=0.5) step_norm=5;
+		else step_norm=10;
 
-		min_norm = round(min_norm/step_norm)*step_norm;
-		max_norm = round(max_norm/step_norm)*step_norm;
-		nb_labels_norm = (unsigned int)ceil((max_norm-min_norm)/step_norm)+1; //because min_norm might have been tweaked
+		min_norm = round(min_norm/step_norm*10)*step_norm/10.;
+		max_norm = round(max_norm/step_norm*10)*step_norm/10.;
+		nb_labels_norm = (unsigned int)ceil((max_norm-min_norm)/step_norm*10)+1; //because min_norm might have been tweaked
 	} else {
-		step_norm = 0.;
+		step_norm = 0;
 		decade_mult=1.;
 		nb_labels_norm=1.;
 	}
@@ -134,7 +135,7 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 		}
 
 		for(unsigned int l=0; l<nb_labels_norm; l++) {
-			const double level_val = (step_norm*l+min_norm)*decade_mult;
+			const double level_val = (step_norm*l/10.+min_norm)*decade_mult;
 			const unsigned int px_row = l*label_height+start_legend;
 			writeLine(level_val, px_row);
 		}
@@ -154,7 +155,8 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::stringstream ss;
 	const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
-	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val << std::endl; //improve this format...
+	//ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val << std::endl; //improve this format...
+	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << val << std::endl;
 
 	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
 
@@ -487,9 +489,14 @@ void Gradient_model::getColor(const double &val, double &r, double &g, double &b
 
 void gr_heat::getColor(const double &i_val, double &r, double &g, double &b) const
 {
-	const double h = 240. * (1.-i_val);
-	const double v = i_val*0.75+0.25;
-	const double s = 1.-i_val*0.3;
+	//normalize the input for under and over range
+	double val=i_val;
+	if(val<0.) val=0.;
+	if(val>1.) val=1.;
+
+	const double h = 240. * (1.-val);
+	const double v = val*0.75+0.25;
+	const double s = 1.-val*0.3;
 
 	Color::HSVtoRGB(h, s, v, r, g, b);
 }
