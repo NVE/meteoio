@@ -116,7 +116,7 @@ class Config {
 		 * @brief Returns the filename that the Config object was constructed with.
 		 * @return std::string The absolute filename of the key/value file.
 		 */
-		std::string getSourceName();
+		std::string getSourceName() const;
 
 		/**
 		 * @brief Print the content of the Config object (usefull for debugging)

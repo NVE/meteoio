@@ -60,6 +60,7 @@ class MeteoGrids {
 		                 V, ///< North component of wind
 		                 W, ///< Vertical component of wind
 		                 SWE, ///< Snow Water Equivalent
+		                 ROT, ///< Generated runoff
 		                 ALB, ///< Albedo
 		                 DEM, ///< Digital Elevation Model
 		                 SLOPE, ///< DEM slope angle

@@ -54,6 +54,11 @@ double IOManager::getAvgSamplingRate()
 	}
 }
 
+const Config IOManager::getConfig() const
+{
+	return cfg;
+}
+
 void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end,
                                 const std::vector< METEO_TIMESERIE >& vecMeteo)
 {

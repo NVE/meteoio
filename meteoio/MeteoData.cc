@@ -48,6 +48,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("V");
 	paramname.push_back("W");
 	paramname.push_back("SWE");
+	paramname.push_back("ROT");
 	paramname.push_back("ALB");
 	paramname.push_back("DEM");
 	paramname.push_back("SLOPE");

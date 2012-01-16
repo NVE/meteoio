@@ -82,16 +82,6 @@ void IOHandler::registerPlugins()
 	mapPlugins["COSMOXML"]  = IOPlugin("libcosmoxmlio"+popc_extra+libsuffix, "CosmoXMLIO", NULL, NULL);
 }
 
-#ifdef _POPC_
-IOHandler::IOHandler(const std::string& configfile) :  cfg(configfile), fileio(configfile), enable_copying(false) {
-#else
-IOHandler::IOHandler(const std::string& configfile) : IOInterface(NULL), cfg(configfile), fileio(configfile),
-                                                      enable_copying(false) {
-#endif
-	registerPlugins();
-	parse_copy_config();
-}
-
 //Copy constructor
 #ifdef _POPC_
 //IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(aio.cfg), bormaio(aio.cfg), imisio(aio.cfg){

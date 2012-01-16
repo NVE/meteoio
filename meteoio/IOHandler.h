@@ -45,7 +45,6 @@ class IOHandler {
 class IOHandler : public IOInterface {
 #endif
 	public:
-		IOHandler(const std::string& configfile);
 	#ifndef _POPC_
 		IOHandler(const IOHandler&);
 	#endif
@@ -103,7 +102,7 @@ class IOHandler : public IOInterface {
 
 		void parse_copy_config();
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_TIMESERIE >& vecMeteo) const;
-		Config cfg;
+		const Config& cfg;
 		std::map<std::string, IOPlugin> mapPlugins;
 		A3DIO fileio;
 

@@ -72,6 +72,8 @@ parclass IOManager {
 
 		void writeMeteoData([in ,proc=marshal_vector_METEO_TIMESERIE]/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, [in]const std::string& name=""); //HACK popc
 
+		const Config getConfig() const;
+
 		std::string toString() /*const*/; //HACK popc
 		//friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
 

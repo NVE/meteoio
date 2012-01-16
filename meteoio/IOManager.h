@@ -165,6 +165,12 @@ class IOManager {
 #else
 		void writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, const std::string& name="");
 #endif
+		/**
+		 * @brief Returns a copy of the internal Config object.
+		 * This is convenient to clone an iomanager
+		 * @return new Config object as a copy of the internal Config
+		 */
+		const Config getConfig() const;
 
 		std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const IOManager& io);

@@ -162,7 +162,7 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 }
 
 //Return key/value filename
-std::string Config::getSourceName()
+std::string Config::getSourceName() const
 {
 	return sourcename;
 }

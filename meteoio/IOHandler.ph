@@ -43,7 +43,6 @@ parclass IOHandler {
 // Note : No heritage here for POPC++ : a parclass cannot herit from a class
 		classuid(1003);
 	public:
-		IOHandler(const std::string& configfile) @{od.url("localhost");}; // @{ power=100 ?: 50; };
 		//IOHandler(const IOHandler&) @{od.url("localhost");};
 		IOHandler(const Config&) @{od.url("localhost");}; //@{ power=100 ?: 50; };
 		~IOHandler();
@@ -77,7 +76,7 @@ parclass IOHandler {
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 
-		Config cfg;
+		const Config& cfg;
 		std::map<std::string, IOPlugin> mapPlugins;
 		A3DIO fileio;
 };
