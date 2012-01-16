@@ -524,6 +524,16 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
+	} else if(parameter==MeteoGrids::ISWR) {
+		if(!autoscale) {
+			min = 0.; max = 1000.;
+		}
+		gradient.set(Gradient::heat, min, max, autoscale);
+	} else if(parameter==MeteoGrids::ILWR) {
+		if(!autoscale) {
+			min = 200.; max = 500.;
+		}
+		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if(parameter==MeteoGrids::SWE) {
 		if(!autoscale) {
 			min = 0.; max = 2000.;

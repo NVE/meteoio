@@ -381,7 +381,7 @@ void Gradient::getColor(const double& val, unsigned int& index) const
 		index=2;
 		return;
 	}
-	if(autoscale && delta==0) { //constant data throughout the grid & autoscale are no friends...
+	if(delta==0) { //otherwise constant data throughout the grid makes a division by zero...
 		index=nr_unique_cols/2 + reserved_idx;
 		return;
 	}
