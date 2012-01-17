@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/libsmet.h>
+#include <errno.h>
+#include <string.h>
 
 using namespace std;
 
@@ -418,8 +420,11 @@ bool SMETWriter::valid_header()
 void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data)
 {
 	fout.open(filename.c_str());
-	if (fout.fail())
-		throw SMETException("Could not open file '" + filename + "' for writing", SMET_AT);
+	if (fout.fail()) {
+		stringstream ss;
+		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
+		throw SMETException(ss.str(), SMET_AT);
+	}
 
 	write_header(); //Write the header info, always in ASCII format
 
@@ -429,16 +434,19 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	}
 
 	if (!timestamp_present)
-		throw SMETException("No timestamp present when writing file '"+filename+"', use write(const vector<double>& data)", SMET_AT);
+		throw SMETException("No timestamp present when writing file \""+filename+"\", use write(const vector<double>& data)", SMET_AT);
 
 	const size_t nr_of_data_fields = nr_of_fields - 1;
 
 	size_t nr_of_lines = data.size() / (nr_of_fields-1);
 	if ((nr_of_lines != vec_timestamp.size()) || ((data.size() % (nr_of_fields-1)) != 0))
-		throw SMETException("Inconsistency between vec_timestamp and data detected in file '"+filename+"', recheck your data", SMET_AT);
+		throw SMETException("Inconsistency between vec_timestamp and data detected for file \""+filename+"\", recheck your data", SMET_AT);
 
 	std::vector<double> current_data;
-	current_data.resize(nr_of_fields-1); //HACK: check if nr_of_fields>0
+	if(nr_of_fields<1) {
+		throw SMETException("Attempting to write a dataset that contains no fields to file \"" + filename + "\"!", SMET_AT);
+	}
+	current_data.resize(nr_of_fields-1);
 	check_formatting();
 
 	if (smet_type == ASCII){
@@ -449,7 +457,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 			write_data_line_ascii(vec_timestamp[ii], current_data);
 		}
 	} else {
-		throw SMETException("Cannot write a binary file with a timestamp, use julian instead", SMET_AT);
+		throw SMETException("Cannot write binary file \""+filename+"\" with a timestamp, use julian instead", SMET_AT);
 	}
 
 	cleanup();
@@ -458,8 +466,11 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 void SMETWriter::write(const std::vector<double>& data)
 {
 	fout.open(filename.c_str());
-	if (fout.fail())
-		throw SMETException("Could not open file '" + filename + "' for writing", SMET_AT);
+	if (fout.fail()) {
+		stringstream ss;
+		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
+		throw SMETException(ss.str(), SMET_AT);
+	}
 
 	write_header(); //Write the header info, always in ASCII format
 
@@ -470,7 +481,7 @@ void SMETWriter::write(const std::vector<double>& data)
 
 	size_t nr_of_lines = data.size() / nr_of_fields;
 	if ((data.size() % nr_of_fields) != 0)
-		throw SMETException("Inconsistency between data and header fields detected in file '"+filename+"', recheck your data", SMET_AT);
+		throw SMETException("Inconsistency between data and header fields detected in file \""+filename+"\", recheck your data", SMET_AT);
 
 	std::vector<double> current_data;
 	current_data.resize(nr_of_fields);
@@ -500,7 +511,7 @@ void SMETWriter::write_header()
 	map<string,string>::iterator it;
 
 	if (!valid_header())
-		throw SMETException("The header data you supplied is not valid, file '"+filename+"' cannot be written", SMET_AT);
+		throw SMETException("The header data you supplied is not valid, file \""+filename+"\" cannot be written", SMET_AT);
 
 	write_signature();
 
@@ -572,8 +583,11 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data)
 	if (!file_is_binary){ //open it as binary file
 		fout.close();
 		fout.open(filename.c_str(), ios::out | ios::app | ios::binary); //reopen as binary file
-		if (fout.fail())
-			throw SMETException("Could not access file " + filename, SMET_AT);
+		if (fout.fail()) {
+			stringstream ss;
+			ss << "Error writing to file \"" << filename << "\", possible reason: " << strerror(errno);
+			throw SMETException(ss.str(), SMET_AT);
+		}
 
 		file_is_binary = true;
 	}
@@ -649,8 +663,12 @@ SMETReader::SMETReader(const std::string& in_fname) : filename(in_fname), nr_of_
 	std::ifstream fin; //Input file streams
 	fin.clear();
 	fin.open (filename.c_str(), ios::in);
-	if (fin.fail())
-		throw SMETException("Could not open file '" + filename + "' for reading. Please check file existence and permissions!", SMET_AT);
+	if (fin.fail()) {
+		stringstream ss;
+		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		ss << " Please check file existence and permissions!";
+		throw SMETException(ss.str(), SMET_AT);
+	}
 
 	try {
 		eoln = SMETCommon::getEoln(fin); //get the end of line character for the file
@@ -685,7 +703,10 @@ std::string SMETReader::get_field_name(const size_t& nr_of_field)
 	if (nr_of_field < nr_of_fields){
 		return vec_fieldnames[nr_of_fields];
 	} else {
-		throw SMETException("The field you're trying to access in file '"+filename+"' is out of bounds", SMET_AT);
+		stringstream ss;
+		ss << "Trying to access field #" << nr_of_field << " (starting from 0) of " << nr_of_fields << " fields in file \"" << filename << "\". ";
+		ss << "This is out of bounds!";
+		throw SMETException(ss.str(), SMET_AT);
 	}
 }
 
@@ -949,8 +970,11 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 	ifstream fin;
 	fin.clear();
 	fin.open (filename.c_str(), ios::in);
-	if (fin.fail())
-		throw SMETException("Could not open file '" + filename + "' for reading", SMET_AT);
+	if (fin.fail()) {
+		stringstream ss;
+		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		throw SMETException(ss.str(), SMET_AT);
+	}
 
 	try {
 		fin.seekg(data_start_fpointer); //jump to data start position in the file
@@ -992,8 +1016,11 @@ void SMETReader::read(std::vector<double>& vec_data)
 
 	ifstream fin;
 	fin.open (filename.c_str(), ios::in);
-	if (fin.fail())
-		throw SMETException("Could not open file '" + filename + "' for reading", SMET_AT);
+	if (fin.fail()) {
+		stringstream ss;
+		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		throw SMETException(ss.str(), SMET_AT);
+	}
 
 	try {
 		fin.seekg(data_start_fpointer); //jump to data start position in the file

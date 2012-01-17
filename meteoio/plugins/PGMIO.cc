@@ -1,4 +1,3 @@
-/***********************************************************************************/
 /*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
@@ -16,6 +15,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "PGMIO.h"
+#include <errno.h>
+#include <string.h>
 
 using namespace std;
 
@@ -111,7 +112,9 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	fin.clear();
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(full_name, AT);
+		stringstream ss;
+		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
+		throw FileAccessException(ss.str(), AT);
 	}
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -154,7 +157,10 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			getline(fin, line, eoln); //read complete line
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
-				throw InvalidFormatException("Premature End " + full_name, AT);
+				stringstream ss;
+				ss << "Invalid number of columns at line " << nrows-kk << " in file \"" << full_name << "\". ";
+				ss << "Expecting " << ncols << " columns\n";
+				throw InvalidFormatException(ss.str(), AT);
 			}
 
 			for (unsigned int ll=0; ll < ncols; ll++){
@@ -171,6 +177,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			}
 		}
 	} catch(const std::exception&) {
+		cout << "[E] error when reading PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
 		cleanup();
 		throw;
 	}
@@ -238,7 +245,9 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	const unsigned int nr_colors = 256;
 	fout.open(full_name.c_str());
 	if (fout.fail()) {
-		throw FileAccessException(full_name, AT);
+		stringstream ss;
+		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
+		throw FileAccessException(ss.str(), AT);
 	}
 
 	Coords llcorner=grid_in.llcorner;
@@ -267,14 +276,14 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			for (unsigned int ll=0; ll < grid_in.ncols; ll++) {
 				const double value = grid_in.grid2D(ll, kk);
 				if(value!=IOUtils::nodata)
-					fout << (int)floor((grid_in.grid2D(ll, kk)-min_value)*scaling)+1 << " ";
+					fout << static_cast<unsigned int>( floor((grid_in.grid2D(ll, kk)-min_value)*scaling)+1 ) << " ";
 				else
 					fout << "0" << " ";
 			}
 			fout << "\n";
 		}
 	} catch(...) {
-		cout << "[E] " << AT << ": "<< endl;
+		cout << "[E] error when writing PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
 		cleanup();
 		throw;
 	}

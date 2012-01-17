@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "ARCIO.h"
+#include <errno.h>
+#include <string.h>
 
 using namespace std;
 
@@ -171,7 +173,9 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	fin.clear();
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
-		throw FileAccessException(full_name, AT);
+		stringstream ss;
+		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
+		throw FileAccessException(ss.str(), AT);
 	}
 
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
@@ -230,7 +234,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	} catch(const std::exception& e) {
 		cleanup();
 		std::stringstream msg;
-		msg << "[E] Error while reading file " << full_name << ": " << e.what();
+		msg << "[E] Error when reading ARC grid \"" << full_name << "\" : " << e.what();
 		throw InvalidFormatException(msg.str(), AT);
 	}
 	cleanup();
@@ -314,7 +318,9 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	std::string full_name = grid2dpath_out+"/"+name;
 	fout.open(full_name.c_str());
 	if (fout.fail()) {
-		throw FileAccessException(full_name, AT);
+		stringstream ss;
+		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
+		throw FileAccessException(ss.str(), AT);
 	}
 
 	try {
