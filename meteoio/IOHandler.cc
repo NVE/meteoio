@@ -154,7 +154,6 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 			cout << "Please check your PLUGINPATH in your configuration file!" << std::endl;
 		} else {
 			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg));
-
 			if(io == NULL) {
 				cout << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << "(NULL pointer to plugin's class)" << std::endl;
 				//delete dynLibrary; This causes a segfault !!
@@ -179,11 +178,9 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
 		throw IOException("Can not find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has its developer declared it in IOHandler::registerPlugins?", AT);
-
 	if ((mapit->second).io == NULL){
 		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
 	}
-
 	if ((mapit->second).io == NULL) {
 		throw IOException("Requesting to read/write data with plugin '" + op_src + "', but plugin is not loaded", AT);
 	}
@@ -378,7 +375,7 @@ std::string IOHandler::toString() const
 {
 	std::stringstream os;
 	os << "<IOHandler>\n";
-	os << "Config cfg = " << hex << &cfg << dec << "\n";
+	os << "Config& cfg = " << hex << &cfg << dec << "\n";
 
 	os << "<mapPlugins>\n";
 	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";

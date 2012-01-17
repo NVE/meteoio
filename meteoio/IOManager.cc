@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(i_cfg), bufferedio(rawio, i_cfg), meteoprocessor(i_cfg)
+IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg), meteoprocessor(cfg)
 {
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
 	fcache_start = fcache_end = Date(0.0, 0.); //this should not matter, since 0 is still way back before any real data...
@@ -354,7 +354,7 @@ std::string IOManager::toString() const {
 	stringstream os;
 
 	os << "<IOManager>\n";
-	os << "Config& cfg = " << hex << &cfg << dec << "\n";
+	os << "Config cfg = " << hex << &cfg << dec << "\n";
 #ifndef _POPC_ //HACK popc
 	os << rawio;
 #endif
