@@ -17,6 +17,7 @@
 #include "PGMIO.h"
 #include <errno.h>
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -25,7 +26,7 @@ namespace mio {
  * @page pgmio PGMIO
  * @section pgmio_format Format
  * This reads a grid file in PGM format (see http://www.fileformat.info/format/pbm/egff.htm). This is a graphic format that is supported by a wide range of graphics programs (Gimp, Irfanview, Paint Shop Pro, gqview, etc). This allows to write a grid as an image (one pixel equals one cell), read an image as a grid (useful for creating synthetic DEMs). Since there is no geolocalization information in this format, such data is either encoded as a comment (when writing a file) or read from io.ini (for reading).
- * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.pgm
+ * Finally, the naming scheme for meteo grids should be: YYYY-MM-DDTHH.mm_{MeteoGrids::Parameters}.pgm
  *
  * Please keep in mind that only a finite number of greyscales are used, making a discretization of the data. Moreover, we consider that a color of "0" is NODATA.
  *
@@ -190,7 +191,9 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
 
 void PGMIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	read2DGrid_internal(grid_out, grid2dpath_in+"/"+date.toString(Date::NUM)+"_"+MeteoGrids::getParameterName(parameter)+".pgm");
+	std::string date_str = date.toString(Date::ISO);
+	std::replace( date_str.begin(), date_str.end(), ':', '.');
+	read2DGrid_internal(grid_out, grid2dpath_in+"/"+date_str+"_"+MeteoGrids::getParameterName(parameter)+".pgm");
 }
 
 void PGMIO::readDEM(DEMObject& dem_out)
@@ -298,9 +301,9 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 void PGMIO::write2DGrid(const Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	//path will be added by calling write2Dgrid
-	std::stringstream ss;
-	ss << date.toString(Date::NUM) << "_" << MeteoGrids::getParameterName(parameter) << ".pgm";
-	write2DGrid(grid_out, ss.str());
+	std::string date_str = date.toString(Date::ISO);
+	std::replace( date_str.begin(), date_str.end(), ':', '.');
+	write2DGrid(grid_out, date_str+"_"+MeteoGrids::getParameterName(parameter)+".pgm");
 }
 
 void PGMIO::cleanup() throw()

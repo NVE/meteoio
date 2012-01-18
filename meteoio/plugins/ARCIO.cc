@@ -18,6 +18,7 @@
 #include "ARCIO.h"
 #include <errno.h>
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -33,7 +34,7 @@ namespace mio {
  *
  * These specifications should reflect commonly accepted practise.
  *
- * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.asc
+ * Finally, the naming scheme for meteo grids should be: YYYY-MM-DDTHH.mm_{MeteoGrids::Parameters}.asc
  *
  * @section lus_format Land Use Format
  * The landuse codes are coming from PREVAH and have the format 1LLDC where:
@@ -255,8 +256,11 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 			IOUtils::toLower(ext);
 		}
 		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date.toString(Date::NUM)+"."+ext );
-	} else
-		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+	} else {
+		std::string date_str = date.toString(Date::ISO);
+		std::replace( date_str.begin(), date_str.end(), ':', '.');
+		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date_str + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+	}
 }
 
 void ARCIO::readDEM(DEMObject& dem_out)
@@ -364,8 +368,11 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			IOUtils::toLower(ext);
 		}
 		write2DGrid(grid_in, date.toString(Date::NUM)+"."+ext );
-	} else
-		write2DGrid(grid_in, date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+	} else {
+		std::string date_str = date.toString(Date::ISO);
+		std::replace( date_str.begin(), date_str.end(), ':', '.');
+		write2DGrid(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+	}
 }
 
 #ifndef _METEOIO_JNI

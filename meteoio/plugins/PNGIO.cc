@@ -33,7 +33,7 @@ namespace mio {
  * No data read has been implemented, because reading an existing file would require the exact knowlege of the color gradient that has been used
  * to create it. When writing grids, various color gradients will be used depending on the parameter that the data represents. Nodata values
  * are represented by transparent pixels (transparency is acheived through a transparent color instead of a true alpha channel for size and performance).
- * Finally, the naming scheme for meteo grids should be: YYYYMMDDHHmm_{MeteoGrids::Parameters}.png
+ * Finally, the naming scheme for meteo grids should be: YYYY-MM-DDTHH.mm_{MeteoGrids::Parameters}.png
  *
  * @section template_units Units
  * All units are MKSA except temperatures that are expressed in celcius.
@@ -461,8 +461,11 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	std::string filename;
 	if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::SLOPE || parameter==MeteoGrids::AZI)
 		filename = grid2dpath + "/" + MeteoGrids::getParameterName(parameter) + ".png";
-	else
-		filename = grid2dpath + "/" + date.toString(Date::NUM) + "_" + MeteoGrids::getParameterName(parameter) + ".png";
+	else {
+		std::string date_str = date.toString(Date::ISO);
+		std::replace( date_str.begin(), date_str.end(), ':', '.');
+		filename = grid2dpath + "/" + date_str + "_" + MeteoGrids::getParameterName(parameter) + ".png";
+	}
 
 	fp=NULL;
 	png_color *palette=NULL;
