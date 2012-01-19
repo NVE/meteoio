@@ -49,6 +49,8 @@ namespace mio {
  * - PNG_SCALING: scaling algorithm, either nearest or bilinear (default=bilinear)
  * - PNG_AUTOSCALE: autoscale for the color gradient? (default=true)
  * - PNG_WORLD_FILE: create world file with each file? (default=false)
+ * - PNG_INDEXED: create an indexed PNG? (default=true)
+ * - PNG_SPEED_OPTIMIZE: optimize file creation for speed? (default=true, otherwise optimize for file size)
  *
  * The size are specified as width followed by height, with the separator being either a space, 'x' or '*'. If a minimum and a maximum size are given, the average of the smallest and largest permissible sizes will be used.
  * The world file is used for geolocalization and goes alongside the graphics output. By convention,
@@ -70,15 +72,27 @@ namespace mio {
  * png_min_size = 400x400
  * png_max_size = 1366*768
  * @endcode
+ *
+ * @section Compilation
+ * In order to compile this plugin, you need libpng and zlib. For Linux, please select both the libraries and their development files in your package manager.
+ *
+ * For Windows, you can find zlib at http://switch.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3.exe
+ * and libpng at http://switch.dl.sourceforge.net/project/gnuwin32/libpng/1.2.37/libpng-1.2.37-setup.exe . Once this has been installed, if you plan on using
+ * Visual c++, you also need to edit the file zconf.h in the libpng installation directory and transform the line 287:
+ * @code
+ * #if 0           // HAVE_UNISTD_H etc etc
+ * @endcode
+ * should become
+ * @code
+ * #if 1           // HAVE_UNISTD_H etc etc
+ * @endcode
  */
 
 const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const unsigned char PNGIO::channel_depth = 8;
 const unsigned char PNGIO::channel_max_color = 255;
 const unsigned char PNGIO::transparent_grey = channel_max_color;
-const bool PNGIO::indexed_png = true;
-const bool PNGIO::optimize_for_speed = true;
-const unsigned int PNGIO::nr_levels = 30;
+const unsigned char PNGIO::nr_levels = 30;
 
 PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -123,6 +137,11 @@ void PNGIO::setOptions()
 		if(min_w!=IOUtils::unodata) min_w -= legend::getLegendWidth();
 		if(max_w!=IOUtils::unodata) max_w -= legend::getLegendWidth();
 	}
+
+	indexed_png = true;
+	cfg.getValue("PNG_INDEXED", "Output", indexed_png, Config::nothrow);
+	optimize_for_speed = true;
+	cfg.getValue("PNG_SPEED_OPTIMIZE", "Output", optimize_for_speed, Config::nothrow);
 }
 
 void PNGIO::parse_size(const std::string& size_spec, unsigned int& width, unsigned int& height)
@@ -177,7 +196,7 @@ double PNGIO::getScaleFactor(const double& grid_w, const double& grid_h)
 }
 
 PNGIO::~PNGIO() throw() {
-
+	//HACK: implement a cleanup (close fp, free png pointers, etc
 }
 
 void PNGIO::read2DGrid(Grid2DObject&, const std::string&)
@@ -282,6 +301,9 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	}
 
 	// Setup Exception handling
+#ifdef _WIN32
+	#pragma warning(disable:4611) //the setjmp of libpng has been set up so that it can safely be called from c++
+#endif
 	if (setjmp(png_jmpbuf(png_ptr))) {
 		closePNG(png_ptr, info_ptr, NULL);
 		throw IOException("Error during png creation. Can not set jump pointer (I have no clue what it means too!)", AT);
@@ -289,8 +311,9 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 
 	png_init_io(png_ptr, fp);
 
-	//png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
 	if(optimize_for_speed) png_set_compression_level(png_ptr, Z_BEST_SPEED);
+	else png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
+
 	png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB|PNG_FILTER_UP); //any other filter is costly and brings close to nothing...
 	if(indexed_png) png_set_compression_strategy(png_ptr, Z_RLE); //Z_DEFAULT_STRATEGY, Z_FILTERED, Z_HUFFMAN_ONLY, Z_RLE
 
@@ -331,15 +354,15 @@ unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nro
 
 void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr)
 {
-	const double ncols = grid.ncols;
-	const double nrows = grid.nrows;
+	const unsigned int ncols = grid.ncols;
+	const unsigned int nrows = grid.nrows;
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	unsigned char channels;
 	if(indexed_png)
 		channels = 1;
 	else
-		channels = 3;
+		channels = 3; //4 for rgba
 
 	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
 	if(row==NULL) {
@@ -348,24 +371,24 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 
 	// Write image data
 	if(indexed_png) {
-		for(int y=nrows-1 ; y>=0 ; y--) {
+		for(int y=(signed)nrows-1 ; y>=0 ; y--) {
 			unsigned int x=0;
 			for(; x<ncols ; x++) {
 				const unsigned int i=x*channels;
-				unsigned int index;
+				unsigned char index;
 				gradient.getColor(grid(x,y), index);
-				row[i]=index;
+				row[i]=static_cast<png_byte>(index);
 			}
 			for(; x<full_width; x++) {
 				const unsigned int i=x*channels;
-				unsigned int index;
+				unsigned char index;
 				gradient.getColor(legend_array(x-ncols,y), index);
-				row[i]=index;
+				row[i]=static_cast<png_byte>(index);
 			}
 			png_write_row(png_ptr, row);
 		}
 	} else {
-		for(int y=nrows-1 ; y>=0 ; y--) {
+		for(int y=(signed)nrows-1 ; y>=0 ; y--) {
 			unsigned int x=0;
 			for(; x<ncols ; x++) {
 				const unsigned int i=x*channels;
@@ -373,9 +396,9 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 				bool a;
 				gradient.getColor(grid(x,y), r,g,b,a);
 				if(a==true) {
-					row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
+					row[i]=static_cast<png_byte>(transparent_grey); row[i+1]=static_cast<png_byte>(transparent_grey); row[i+2]=static_cast<png_byte>(transparent_grey);
 				} else {
-					row[i]=r; row[i+1]=g; row[i+2]=b;
+					row[i]=static_cast<png_byte>(r); row[i+1]=static_cast<png_byte>(g); row[i+2]=static_cast<png_byte>(b);
 				}
 			}
 			for(; x<full_width; x++) {
@@ -384,9 +407,9 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 				bool a;
 				gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
 				if(a==true) {
-					row[i]=transparent_grey; row[i+1]=transparent_grey; row[i+2]=transparent_grey;
+					row[i]=static_cast<png_byte>(transparent_grey); row[i+1]=static_cast<png_byte>(transparent_grey); row[i+2]=static_cast<png_byte>(transparent_grey);
 				} else {
-					row[i]=r; row[i+1]=g; row[i+2]=b;
+					row[i]=static_cast<png_byte>(r); row[i+1]=static_cast<png_byte>(g); row[i+2]=static_cast<png_byte>(b);
 				}
 			}
 			png_write_row(png_ptr, row);
@@ -402,11 +425,11 @@ void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop
 	std::vector<unsigned char> r, g, b;
 	gradient.getPalette(r,g,b);
 	const size_t nr_colors = r.size();
-	palette = (png_color*)calloc(sizeof (png_color), nr_colors);
+	palette = (png_color*)calloc(sizeof (png_color), nr_colors); //ie: three png_bytes, each being an unsigned char
 	for(size_t ii=0; ii<nr_colors; ii++) {
-		palette[ii].red = r[ii];
-		palette[ii].green = g[ii];
-		palette[ii].blue = b[ii];
+		palette[ii].red = static_cast<png_byte>(r[ii]);
+		palette[ii].green = static_cast<png_byte>(g[ii]);
+		palette[ii].blue = static_cast<png_byte>(b[ii]);
 	}
 	png_set_PLTE(png_ptr, info_ptr, palette, nr_colors);
 }
@@ -431,7 +454,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	//scale input image
 	const Grid2DObject grid = scaleGrid(grid_in);
-	const double ncols = grid.ncols, nrows = grid.nrows;
+	const unsigned int ncols = grid.ncols, nrows = grid.nrows;
 	const double min = grid.grid2D.getMin();
 	const double max = grid.grid2D.getMax();
 
@@ -474,7 +497,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 	//scale input image
 	Grid2DObject grid = scaleGrid(grid_in);
-	const double ncols = grid.ncols, nrows = grid.nrows;
+	const unsigned int ncols = grid.ncols, nrows = grid.nrows;
 	double min = grid.grid2D.getMin();
 	double max = grid.grid2D.getMax();
 

@@ -50,7 +50,7 @@ class legend {
 		* This is constant but depends on various parameters of the legend: font size, number of characters, spacing etc.
 		* @return width of the legend
 		*/
-		static double getLegendWidth();
+		static unsigned int getLegendWidth();
 
 		/**
 		* @brief Get the legend in an array
@@ -58,10 +58,10 @@ class legend {
 		* alongside the data array to build the full plot
 		* @return legend array
 		*/
-		const Array2D<double> getLegend();
+		const Array2D<double> getLegend() const;
 
-		static const int bg_color; ///<marker for solid background
-		static const int text_color; ///<marker for solid text
+		static const double bg_color; ///<marker for solid background
+		static const double text_color; ///<marker for solid text
 
 	private:
 		Array2D<double> grid;
@@ -229,7 +229,7 @@ class Gradient {
 		* the number of levels/colors remains large enough (say, at least 20-30)
 		* @param i_nr_unique_levels maximum number of unique levels
 		*/
-		void setNrOfLevels(const unsigned int& i_nr_unique_levels);
+		void setNrOfLevels(const unsigned char& i_nr_unique_levels);
 
 		/**
 		* @brief Get RGB values for a given numeric value
@@ -248,7 +248,7 @@ class Gradient {
 		* @param val numerical value to convert
 		* @param index palette index for the given value
 		*/
-		void getColor(const double& val, unsigned int& index) const;
+		void getColor(const double& val, unsigned char& index) const;
 
 		/**
 		* @brief Get palette colors for the selected gradient
@@ -264,9 +264,9 @@ class Gradient {
 	private:
 		double min, max, delta;
 		bool autoscale;
-		unsigned int nr_unique_cols; ///< number of unique colors to generate. The same discretization is performed for indexed or not
-		static const unsigned int reserved_idx; ///< for indexed gradients, number of reserved indexes
-		static const unsigned int reserved_cols; ///< for non-indexed gradients, number of reserved colors
+		unsigned char nr_unique_cols; ///< number of unique colors to generate. The same discretization is performed for indexed or not
+		static const unsigned char reserved_idx; ///< for indexed gradients, number of reserved indexes
+		static const unsigned char reserved_cols; ///< for non-indexed gradients, number of reserved colors
 		Gradient_model *model;
 };
 

@@ -27,8 +27,8 @@ namespace mio {
 // Legend class
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-const int legend::bg_color = IOUtils::nodata-1;
-const int legend::text_color = IOUtils::nodata-2;
+const double legend::bg_color = IOUtils::nodata-1;
+const double legend::text_color = IOUtils::nodata-2;
 
 const unsigned int legend::char_width = 6;
 const unsigned int legend::char_height = 10;
@@ -120,7 +120,7 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 	} else {
 		step_norm = 0;
 		decade_mult=1.;
-		nb_labels_norm=1.;
+		nb_labels_norm=1;
 	}
 
 	const unsigned int smart_height = nb_labels_norm*legend::label_height+legend::interline;
@@ -142,12 +142,12 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 	}
 }
 
-void legend::drawLegend(const unsigned int &height, const double &minimum, const double &maximum) {
+void legend::drawLegend(const unsigned int &height, const double &minimum, const double &maximum){
 	smartLegend(height, minimum, maximum);
 	//simpleLegend(height, minimum, maximum);
 }
 
-double legend::getLegendWidth() {
+unsigned int legend::getLegendWidth() {
 	return total_width;
 }
 
@@ -201,8 +201,7 @@ void legend::writeChar(const unsigned int i_char[char_height][char_width], const
 	}
 }
 
-const Array2D<double> legend::getLegend()
-{
+const Array2D<double> legend::getLegend() const {
 	return grid;
 }
 
@@ -281,8 +280,8 @@ void Color::HSVtoRGB(const double& h, const double& s, const double& v, double &
 // Gradient class
 /////////////////////////////////////////////////////////////////////////////////////////////////
 const unsigned char Gradient::channel_max_color = 255;
-const unsigned int Gradient::reserved_idx = 5;
-const unsigned int Gradient::reserved_cols = 2;
+const unsigned char Gradient::reserved_idx = 5;
+const unsigned char Gradient::reserved_cols = 2;
 
 Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
@@ -308,7 +307,7 @@ void Gradient::set(const Type& type, const double& i_min, const double& i_max, c
 	else if(type==bg_isomorphic) model = new gr_bg_isomorphic(i_min, i_max, i_autoscale);
 }
 
-void Gradient::setNrOfLevels(const unsigned int& i_nr_unique_levels) {
+void Gradient::setNrOfLevels(const unsigned char& i_nr_unique_levels) {
 	if(i_nr_unique_levels<=reserved_idx) {
 		stringstream ss;
 		ss << "Insufficient number of colors requested for gradient: ask for more than ";
@@ -363,7 +362,7 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 	b = static_cast<unsigned char>(b_d*channel_max_color);
 }
 
-void Gradient::getColor(const double& val, unsigned int& index) const
+void Gradient::getColor(const double& val, unsigned char& index) const
 {
 	if(model==NULL) {
 		throw UnknownValueException("Please set the color gradient before using it!", AT);
@@ -393,7 +392,7 @@ void Gradient::getColor(const double& val, unsigned int& index) const
 	//watch out!! the palette contains some reserved values at the begining
 	if(val<min) index=reserved_idx-2;
 	else if(val>max) index=reserved_idx-1;
-	else index = static_cast<unsigned int>( (val-min)/delta*(double)nr_unique_cols ) + reserved_idx;
+	else index = static_cast<unsigned char>( (val-min)/delta*(double)nr_unique_cols ) + reserved_idx;
 }
 
 void Gradient::getPalette(std::vector<unsigned char> &r, std::vector<unsigned char> &g, std::vector<unsigned char> &b) const
@@ -429,7 +428,7 @@ void Gradient::getPalette(std::vector<unsigned char> &r, std::vector<unsigned ch
 	b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
 
 	//all normal colors
-	for(unsigned int ii=0; ii<=nr_unique_cols; ii++) {
+	for(unsigned char ii=0; ii<=nr_unique_cols; ii++) {
 		const double val_norm = (double)ii/(double)nr_unique_cols;
 		model->getColor(val_norm, r_d, g_d, b_d);
 		r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
