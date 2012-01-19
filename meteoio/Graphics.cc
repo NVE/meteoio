@@ -154,7 +154,7 @@ double legend::getLegendWidth() {
 void legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::stringstream ss;
-	const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
+	//const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
 	//ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val << std::endl; //improve this format...
 	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << val << std::endl;
 

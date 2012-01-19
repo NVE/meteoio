@@ -496,13 +496,13 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		gradient.set(Gradient::azi, min, max, autoscale);
 	} else if(parameter==MeteoGrids::HS) {
 		if(!autoscale) {
-			min = 0.; max = 3.5;
+			min = 0.; max = 2.5;
 		}
 		gradient.set(Gradient::blue, min, max, autoscale);
 	} else if(parameter==MeteoGrids::TA) {
 		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
 		if(!autoscale) {
-			min = -10.; max = 10.;
+			min = -15.; max = 15.;
 		} else {
 			min -= Cst::t_water_freezing_pt;
 			max -= Cst::t_water_freezing_pt;
@@ -511,7 +511,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	} else if(parameter==MeteoGrids::TSS) {
 		grid.grid2D -= Cst::t_water_freezing_pt; //convert to celsius
 		if(!autoscale) {
-			min = -10.; max = 10.;
+			min = -20.; max = 5.;
 		} else {
 			min -= Cst::t_water_freezing_pt;
 			max -= Cst::t_water_freezing_pt;
@@ -529,7 +529,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
 	} else if(parameter==MeteoGrids::ISWR) {
 		if(!autoscale) {
-			min = 0.; max = 1000.;
+			min = 0.; max = 800.;
 		}
 		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if(parameter==MeteoGrids::ILWR) {
@@ -539,7 +539,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		gradient.set(Gradient::heat, min, max, autoscale);
 	} else if(parameter==MeteoGrids::SWE) {
 		if(!autoscale) {
-			min = 0.; max = 2000.;
+			min = 0.; max = 250.;
 		}
 		gradient.set(Gradient::blue, min, max, autoscale);
 	} else {

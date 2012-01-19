@@ -290,6 +290,8 @@ class ConfigProxy {
 			proxycfg.getValue(key, section, tmp, opt);
 			return tmp;
 		}
+
+		ConfigProxy operator =(const ConfigProxy& /*i_cfg*/) {return *this;} //making VC++ happy...
 };
 
 } //end namespace mio
