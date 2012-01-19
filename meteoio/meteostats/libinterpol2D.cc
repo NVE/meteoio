@@ -19,6 +19,7 @@
 
 #include <meteoio/meteostats/libinterpol2D.h>
 #include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 using namespace std;
 
@@ -609,7 +610,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	double Ww;		// Wind weighting
 	double Od;		// Diverting factor
 
-	const double to_rad = M_PI/180.;
+	const double to_rad = Cst::PI/180.;
 	const double dem_min_slope=dem.min_slope*to_rad, dem_range_slope=(dem.max_slope-dem_min_slope)*to_rad;
 	const double dem_min_curvature=dem.min_curvature, dem_range_curvature=(dem.max_curvature-dem_min_curvature);
 
@@ -627,7 +628,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				DW.grid2D(i, j) = IOUtils::nodata;
 			} else {
 				//convert direction to rad
-				dir *= ((M_PI) / 180.);
+				dir *= ((Cst::PI) / 180.);
 				//Speed and direction converted to zonal et meridional
 				//components
 				u = (-1.) * (speed * sin(dir));
@@ -635,7 +636,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 
 				// Converted back to speed and direction
 				speed = sqrt(u*u + v*v);
-				dir = (1.5 * M_PI) - atan(v/u);
+				dir = (1.5 * Cst::PI) - atan(v/u);
 
 				//normalize curvature and beta.
 				//Note: it should be slopeDir instead of beta, but beta is more efficient
@@ -656,7 +657,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				VW.grid2D(i, j) = Ww * speed;
 
 				// Add the diverting factor to the wind direction and convert to degrees
-				DW.grid2D(i, j) = (dir + Od) * (180. / (M_PI));
+				DW.grid2D(i, j) = (dir + Od) * (180. / (Cst::PI));
 				if( DW.grid2D(i, j)>360. ) {
 					DW.grid2D(i, j) -= 360.;
 				}

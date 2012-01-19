@@ -17,6 +17,7 @@
 */
 #include <cmath>
 #include <meteoio/FilterAlgorithms.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 using namespace std;
 
@@ -1042,14 +1043,14 @@ void FilterAlgorithms::WindAvgProcess(const std::vector<MeteoData>& vecM, const 
 			//calculate ve and vn
 			double ve=0.0, vn=0.0;
 			for (unsigned int jj=0; jj<vecSize; jj++){
-				ve += vecWindowVW[jj] * sin(vecWindowDW[jj] * M_PI / 180.); //turn into radians
-				vn += vecWindowVW[jj] * cos(vecWindowDW[jj] * M_PI / 180.); //turn into radians
+				ve += vecWindowVW[jj] * sin(vecWindowDW[jj] * Cst::PI / 180.); //turn into radians
+				vn += vecWindowVW[jj] * cos(vecWindowDW[jj] * Cst::PI / 180.); //turn into radians
 			}
 			ve /= vecSize;
 			vn /= vecSize;
 
 			meanspeed = sqrt(ve*ve + vn*vn);
-			meandirection = fmod( atan2(ve,vn) * 180. / M_PI + 360. , 360.); // turn into degrees [0;360)
+			meandirection = fmod( atan2(ve,vn) * 180. / Cst::PI + 360. , 360.); // turn into degrees [0;360)
 		}
 
 		vecWindowM[ii](MeteoData::VW) = meanspeed;

@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include <meteoio/IOUtils.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 #include <meteoio/Config.h>    // to avoid forward declaration hell
 #include <meteoio/MeteoData.h> // to avoid forward declaration hell
 
@@ -81,12 +82,12 @@ double IOUtils::pow4(const double& val)
 }
 
 double IOUtils::bearing_to_angle(const double& bearing) {
-	const double to_rad = M_PI/180.;
+	const double to_rad = Cst::PI/180.;
 	return (fmod(360.-bearing+90., 360.)*to_rad);
 }
 
 double IOUtils::angle_to_bearing(const double& angle) {
-	const double to_deg = 180.0 / M_PI;
+	const double to_deg = 180.0 / Cst::PI;
 	return (fmod( 90.-angle*to_deg+360. , 360. ));
 }
 

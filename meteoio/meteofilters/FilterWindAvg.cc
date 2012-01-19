@@ -84,14 +84,14 @@ double FilterWindAvg::calc_avg(const unsigned int& index, const std::vector<cons
 			//calculate ve and vn
 			double ve=0.0, vn=0.0;
 			for (size_t jj=0; jj<vecSize; jj++){
-				ve += vec_window[jj]->operator()(MeteoData::VW) * sin(vec_window[jj]->operator()(MeteoData::DW) * M_PI / 180.); //turn into radians
-				vn += vec_window[jj]->operator()(MeteoData::VW) * cos(vec_window[jj]->operator()(MeteoData::DW) * M_PI / 180.); //turn into radians
+				ve += vec_window[jj]->operator()(MeteoData::VW) * sin(vec_window[jj]->operator()(MeteoData::DW) * Cst::PI / 180.); //turn into radians
+				vn += vec_window[jj]->operator()(MeteoData::VW) * cos(vec_window[jj]->operator()(MeteoData::DW) * Cst::PI / 180.); //turn into radians
 			}
 			ve /= vecSize;
 			vn /= vecSize;
 
 			meanspeed = sqrt(ve*ve + vn*vn);
-			meandirection = fmod( atan2(ve,vn) * 180. / M_PI + 360. , 360.); // turn into degrees [0;360)
+			meandirection = fmod( atan2(ve,vn) * 180. / Cst::PI + 360. , 360.); // turn into degrees [0;360)
 		}
 
 		if(index==MeteoData::VW)

@@ -116,7 +116,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 	const double fc = 0.84;       // fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
 	const double alpha = 1.3;     // wavelength exponent (Iqbal(1983) p.118)
 	const double beta = 0.03;
-	const double to_rad = M_PI/180.;
+	const double to_rad = Cst::PI/180.;
 
 	if(ta==IOUtils::nodata || rh==IOUtils::nodata || pressure==IOUtils::nodata || mean_albedo==IOUtils::nodata) {
 		R_toa = IOUtils::nodata;
@@ -269,7 +269,7 @@ void SunObject::getSlopeRadiation(const double& slope_azi, const double& slope_e
  */
 double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_measured) const
 {
-	const double to_rad = M_PI/180.;
+	const double to_rad = Cst::PI/180.;
 	double splitting_coef;
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);

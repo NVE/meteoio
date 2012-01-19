@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include <meteoio/Coords.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 #ifdef PROJ4
 	#include <proj_api.h>
@@ -982,7 +983,7 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
 //also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
 	//Geometric constants
-	const double to_rad = M_PI / 180.0;
+	const double to_rad = Cst::PI / 180.0;
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
@@ -1047,7 +1048,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
 //also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
 	//Geometric constants
-	const double to_deg = 180.0 / M_PI;
+	const double to_deg = 180.0 / Cst::PI;
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
@@ -1205,7 +1206,7 @@ void Coords::distance(const Coords& destination, double& distance, double& beari
 //HACK: this is the 2D distance, it does not work in 3D!!
 	if(isSameProj(destination)) {
 		//we can use simple cartesian grid arithmetic
-		const double to_deg = 180.0 / M_PI;
+		const double to_deg = 180.0 / Cst::PI;
 		distance = sqrt( IOUtils::pow2(easting - destination.getEasting()) + IOUtils::pow2(northing - destination.getNorthing()) );
 		bearing = atan2( northing - destination.getNorthing() , easting - destination.getEasting() );
 		bearing = fmod( bearing*to_deg+360. , 360. );
@@ -1233,7 +1234,7 @@ void Coords::distance(const Coords& destination, double& distance, double& beari
 void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	double alpha;
-	const double to_rad = M_PI / 180.0;
+	const double to_rad = Cst::PI / 180.0;
 	double distance;
 
 	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
@@ -1267,7 +1268,7 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 */
 void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
-	const double to_deg = 180.0 / M_PI;
+	const double to_deg = 180.0 / Cst::PI;
 	const double distance = sqrt( IOUtils::pow2(east_in) + IOUtils::pow2(north_in) );
 	const double bearing = fmod( atan2(east_in, north_in)*to_deg+360. , 360.);
 
@@ -1312,8 +1313,8 @@ void Coords::WGS84_to_NULL(double /*lat_in*/, double /*long_in*/, double& /*east
 void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const
 {
 	const double Rearth = 6371.e3;
-	const double to_rad = M_PI / 180.0;
-	const double to_deg = 180.0 / M_PI;
+	const double to_rad = Cst::PI / 180.0;
+	const double to_deg = 180.0 / Cst::PI;
 	const double lat_ref_rad = lat_ref*to_rad;
 	const double bearing_rad = bearing*to_rad;
 
@@ -1328,7 +1329,7 @@ void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const d
 	            cos(lat_ref_rad)*sin(distance/Rearth)*cos(bearing_rad) );
 	lon = lon_ref*to_rad + atan2( sin(bearing_rad)*sin(distance/Rearth)*cos(lat_ref_rad) ,
 	                              cos(distance/Rearth) - sin(lat_ref_rad)*sin(lat) );
-	lon = fmod(lon+M_PI, 2.*M_PI) - M_PI;
+	lon = fmod(lon+Cst::PI, 2.*Cst::PI) - Cst::PI;
 
 	lat *= to_deg;
 	lon *= to_deg;
@@ -1353,7 +1354,7 @@ double Coords::cosineDistance(const double& lat1, const double& lon1, const doub
 	}
 
 	const double Rearth = 6371.e3;
-	const double to_rad = M_PI / 180.0;
+	const double to_rad = Cst::PI / 180.0;
 	const double d = acos(
 		sin(lat1*to_rad) * sin(lat2*to_rad)
 		+ cos(lat1*to_rad) * cos(lat2*to_rad) * cos((lon2-lon1)*to_rad)
@@ -1386,7 +1387,7 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double f = (a - b) / a;	//ellispoid flattening
-	const double to_rad = M_PI / 180.0;
+	const double to_rad = Cst::PI / 180.0;
 
 	const double L = (lon1 - lon2)*to_rad;
 	const double U1 = atan( (1.-f)*tan(lat1*to_rad) );
@@ -1462,8 +1463,8 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 	const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis, value for wgs84
 	const double f = (a - b) / a;	//ellispoid flattening
-	const double to_rad = M_PI / 180.0;
-	const double to_deg = 180.0 / M_PI;
+	const double to_rad = Cst::PI / 180.0;
+	const double to_deg = 180.0 / Cst::PI;
 
 	const double alpha1 = bearing*to_rad;
 	const double tanU1 = (1.-f)*tan(lat_ref*to_rad);
@@ -1477,7 +1478,7 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 	const double B = u2/1024. * (256. + u2*(-128.+u2*(74.-47.*u2)));
 
 	double sigma = distance / (b*A);
-	double sigma_p = 2.*M_PI;
+	double sigma_p = 2.*Cst::PI;
 	double cos2sigma_m = cos( 2.*sigma1 + sigma ); //required to avoid uninitialized value
 
 	while (fabs(sigma - sigma_p) > thresh) {

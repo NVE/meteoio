@@ -22,6 +22,7 @@
 #include <meteoio/Array2D.h>
 #include <meteoio/Grid2DObject.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 #include <cmath>
 #include <limits>
@@ -68,16 +69,16 @@ class DEMObject : public Grid2DObject {
 			NORMAL=2, ///< update the normals
 			CURVATURE=4 ///< update the curvatures
 		} update_type;
-		
+
 		DEMObject(const slope_type& i_algorithm=DFLT);
-		
+
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
 		          const double& cellsize_in, const Coords& llcorner_in, const slope_type& i_algorithm=DFLT);
-	
+
 		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
 		          const double& cellsize_in, const Coords& llcorner_in, const Array2D<double>& altitude_in,
 		          const bool& i_update=true, const slope_type& i_algorithm=DFLT);
-		
+
 		DEMObject(const Grid2DObject& dem_in, const bool& i_update=true, const slope_type& i_algorithm=DFLT);
 
 		DEMObject (const DEMObject& i_dem,
@@ -104,7 +105,7 @@ class DEMObject : public Grid2DObject {
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);
-		double CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope, const double no_slope=M_PI);
+		double CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope, const double no_slope=Cst::PI);
 		void CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		void CalculateFleming(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
 		void CalculateHorn(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);

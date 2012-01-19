@@ -44,6 +44,21 @@ namespace Cst {
 	const double earth_R0 = 6356766.0; // (m)
 
 	const double solcon = 1366.1; // (W/m^2)
+
+	//Math constants
+	const double e = 2.71828182845904523536; // e
+	const double Log2e = 1.44269504088896340736; // log2(e)
+	const double Log10e = 0.434294481903251827651; // log10(e)
+	const double Ln2 = 0.693147180559945309417; // ln(2)
+	const double Ln10 = 2.30258509299404568402; // ln(10)
+	const double PI = 3.14159265358979323846; // pi
+	const double PI2 = 1.57079632679489661923; // pi/2
+	const double PI4 = 0.785398163397448309616; // pi/4
+	const double InvPI = 0.318309886183790671538; // 1/pi
+	const double TwoOverPI = 0.636619772367581343076; // 2/pi
+	const double TwoOverSqrtPI = 1.12837916709551257390; // 2/sqrt(pi)
+	const double Sqrt2 = 1.41421356237309504880; // sqrt(2)
+	const double InvSqrt2 = 0.707106781186547524401; // 1/sqrt(2)
 } //end CST namespace
 
 } //end namespace

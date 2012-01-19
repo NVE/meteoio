@@ -18,11 +18,12 @@
 #include <cmath>
 #include <string>
 #include <meteoio/meteolaws/Suntrajectory.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 namespace mio {
 //class SunTrajectory
-const double SunTrajectory::to_deg = 180./M_PI;
-const double SunTrajectory::to_rad = M_PI/180.;
+const double SunTrajectory::to_deg = 180./Cst::PI;
+const double SunTrajectory::to_rad = Cst::PI/180.;
 
 /**
  * @brief Compute the solar incidence (rad), i.e. the angle between the incident sun beam
@@ -246,14 +247,14 @@ void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declina
 }
 
 void SunMeeus::getEquatorialSunVector(double& sunx, double& suny, double& sunz) {
-	const double to_rad = M_PI/180.;
+	const double to_rad = Cst::PI/180.;
 	double azi_Sacw;
 
 	// Convert to angle measured from South, counterclockwise (rad)
 	if ( SolarAzimuthAngle <= 90. ) {
-		azi_Sacw = M_PI - SolarAzimuthAngle*to_rad;
+		azi_Sacw = Cst::PI - SolarAzimuthAngle*to_rad;
 	} else {
-		azi_Sacw = 3.*M_PI - SolarAzimuthAngle*to_rad;
+		azi_Sacw = 3.*Cst::PI - SolarAzimuthAngle*to_rad;
 	}
 
 	// derived as shown in Funk (1984) p. 107, but for a y-coordinate increasing northwards

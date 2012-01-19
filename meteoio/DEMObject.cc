@@ -19,6 +19,7 @@
 #include <limits.h>
 
 #include <meteoio/DEMObject.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 /**
 * @file DEMObject.cc
@@ -593,7 +594,7 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 	}
 
 	//returning the angle matching the highest tangent
-	const double to_deg = 180./M_PI;
+	const double to_deg = 180./Cst::PI;
 	return ( atan(max_tangent)*to_deg );
 }
 
@@ -607,7 +608,7 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon) {
 
     for(double bearing=0.0; bearing <360.; bearing += increment) {
-        const double alpha = getHorizon(point, bearing * M_PI/180.);
+        const double alpha = getHorizon(point, bearing * Cst::PI/180.);
         horizon.push_back(alpha);
     }
 }
@@ -712,7 +713,7 @@ double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const doub
 				return (0.); // north facing
 			}
 		} else { //there is a E-W slope
-			const double to_deg = 180./M_PI;
+			const double to_deg = 180./Cst::PI;
 			if ( Nx > 0. ) {
 				return (90. - atan(Ny/Nx)*to_deg);
 			} else {
@@ -738,7 +739,7 @@ void DEMObject::CalculateHick(double A[4][4], double& slope, double& Nx, double&
 		Nz = IOUtils::nodata;
 		slope_failures++;
 	} else {
-		const double to_deg = 180./M_PI;
+		const double to_deg = 180./Cst::PI;
 		slope = atan(smax)*to_deg;
 
 		//Nx and Ny: x and y components of the normal pointing OUT of the surface
@@ -770,7 +771,7 @@ void DEMObject::CalculateFleming(double A[4][4], double& slope, double& Nx, doub
 		Nx = 0.5 * (A[2][1] - A[2][3]) / cellsize;
 		Ny = 0.5 * (A[3][2] - A[1][2]) / cellsize;
 		Nz = 1.;
-		const double to_deg = 180./M_PI;
+		const double to_deg = 180./Cst::PI;
 		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
 	} else {
 		CalculateHick(A, slope, Nx, Ny, Nz);
@@ -789,7 +790,7 @@ void DEMObject::CalculateHorn(double A[4][4], double& slope, double& Nx, double&
 
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		const double to_deg = 180./M_PI;
+		const double to_deg = 180./Cst::PI;
 		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
@@ -806,7 +807,7 @@ void DEMObject::CalculateCorripio(double A[4][4], double& slope, double& Nx, dou
 		Nz = 1.;
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		const double to_deg = 180./M_PI;
+		const double to_deg = 180./Cst::PI;
 		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
