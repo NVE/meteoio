@@ -65,9 +65,18 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	std::stringstream ss;
-	ss << MeteoGrids::getParameterName(parameter) << "::" << date.toString(Date::ISO);
-	read2DGrid(grid_out, ss.str());
+	const string buffer_name = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
+
+	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(buffer_name);
+	if (it != mapBufferedGrids.end()) { //already in map
+		grid_out = (*it).second;
+		return;
+	}
+
+	Grid2DObject tmpgrid2D;
+	iohandler.read2DGrid(tmpgrid2D, parameter, date);
+	bufferGrid(tmpgrid2D, buffer_name);
+	grid_out = tmpgrid2D;
 }
 
 void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)

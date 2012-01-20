@@ -415,13 +415,13 @@ void Gradient::getPalette(std::vector<unsigned char> &r, std::vector<unsigned ch
 
 	double r_d, g_d, b_d;
 
-	//under-range data color
+	//underflow data color
 	model->getColor(-0.1, r_d, g_d, b_d);
 	r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
 	g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
 	b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
 
-	//over-range data color
+	//overflow data color
 	model->getColor(1.1, r_d, g_d, b_d);
 	r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
 	g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
