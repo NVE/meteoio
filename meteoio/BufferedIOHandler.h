@@ -33,17 +33,16 @@ namespace mio {
  * a few convenience methods.
  *
  * @section buffereiohandler_keywords Keywords
- * This module uses the following keywords to customize the buffering:
- * - BUFF_CHUNKS: how many chunks of data to buffer; [General] section (NOT YET USED)
- * - BUFF_CHUNK_SIZE: size in days of a chunk of data to read at once; [General] section
+ * This module uses the following keywords to customize the buffering (all in the [General] section):
+ * - BUFF_CHUNKS: how many chunks of data to buffer; (NOT YET USED)
+ * - BUFF_CHUNK_SIZE: size in days of a chunk of data to read at once;
  * - BUFF_CENTERING: centering of the buffer. When rebuffering, the new date will be located BUFF_CENTERING % from the
- *                   begining of the buffer (therefore, it takes a value between 0 and 1); [General] section, optional
- *                   (10% by default)
+ *                   begining of the buffer (therefore, it takes a value between 0 and 1); Optional, 10% by default.
  * - BUFF_BEFORE: alternate way of buffer centering: When rebuffering, the new date will be located BUFF_BEFORE days from the
- *                beginning of the buffer (therefore, it takes a value in days); [General] section, optional. Only one of
+ *                beginning of the buffer (therefore, it takes a value in days); Optional, only one of
  *                two centering option can be used.
  * - BUFF_GRIDS: how many grids to keep in the buffer. If more grids have to be read, the oldest ones will be removed from
- *               the buffer. (10 by default)
+ *               the buffer. (10 by default, 0 means no buffering for grids)
  *
  * @author Thomas Egger
  * @date   2009-07-25

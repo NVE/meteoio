@@ -51,85 +51,104 @@ void BufferedIOHandler::bufferGrid(const Grid2DObject& in_grid2Dobj, const std::
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string& in_filename)
 {
-	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(in_filename);
-	if (it != mapBufferedGrids.end()) { //already in map
-		in_grid2Dobj = (*it).second;
-		return;
-	}
+	if(max_grids>0) {
+		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(in_filename);
+		if (it != mapBufferedGrids.end()) { //already in map
+			in_grid2Dobj = (*it).second;
+			return;
+		}
 
-	Grid2DObject tmpgrid2D;
-	iohandler.read2DGrid(tmpgrid2D, in_filename);
-	bufferGrid(tmpgrid2D, in_filename);
-	in_grid2Dobj = tmpgrid2D;
+		Grid2DObject tmpgrid2D;
+		iohandler.read2DGrid(tmpgrid2D, in_filename);
+		bufferGrid(tmpgrid2D, in_filename);
+		in_grid2Dobj = tmpgrid2D;
+	} else {
+		iohandler.read2DGrid(in_grid2Dobj, in_filename);
+	}
 }
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	const string buffer_name = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
+	if(max_grids>0) {
+		const string buffer_name = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
+		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(buffer_name);
+		if (it != mapBufferedGrids.end()) { //already in map
+			grid_out = (*it).second;
+			return;
+		}
 
-	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(buffer_name);
-	if (it != mapBufferedGrids.end()) { //already in map
-		grid_out = (*it).second;
-		return;
+		Grid2DObject tmpgrid2D;
+		iohandler.read2DGrid(tmpgrid2D, parameter, date);
+		bufferGrid(tmpgrid2D, buffer_name);
+		grid_out = tmpgrid2D;
+	} else {
+		iohandler.read2DGrid(grid_out, parameter, date);
 	}
-
-	Grid2DObject tmpgrid2D;
-	iohandler.read2DGrid(tmpgrid2D, parameter, date);
-	bufferGrid(tmpgrid2D, buffer_name);
-	grid_out = tmpgrid2D;
 }
 
 void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)
 {
-	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
-	if (it != mapBufferedGrids.end()) {
-		//already in map. If the update properties have changed,
-		//we copy the ones given in input and force the update of the object
-		const DEMObject::update_type in_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
-		in_grid2Dobj = (*it).second;
-		const DEMObject::update_type buff_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
-		if(in_ppt!=buff_ppt) {
-			in_grid2Dobj.setUpdatePpt(in_ppt);
-			in_grid2Dobj.update();
+	if(max_grids>0) {
+		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
+		if (it != mapBufferedGrids.end()) {
+			//already in map. If the update properties have changed,
+			//we copy the ones given in input and force the update of the object
+			const DEMObject::update_type in_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
+			in_grid2Dobj = (*it).second;
+			const DEMObject::update_type buff_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
+			if(in_ppt!=buff_ppt) {
+				in_grid2Dobj.setUpdatePpt(in_ppt);
+				in_grid2Dobj.update();
+			}
+			return;
 		}
-		return;
-	}
 
-	DEMObject tmpgrid2D;
-	 //copy the updating policy of the destination
-	tmpgrid2D.setUpdatePpt((DEMObject::update_type)in_grid2Dobj.getUpdatePpt());
-	iohandler.readDEM(tmpgrid2D);
-	mapBufferedGrids["/:DEM"] = tmpgrid2D;
-	in_grid2Dobj = tmpgrid2D;
+		DEMObject tmpgrid2D;
+		//copy the updating policy of the destination
+		tmpgrid2D.setUpdatePpt((DEMObject::update_type)in_grid2Dobj.getUpdatePpt());
+		iohandler.readDEM(tmpgrid2D);
+		mapBufferedGrids["/:DEM"] = tmpgrid2D;
+		in_grid2Dobj = tmpgrid2D;
+	} else {
+		iohandler.readDEM(in_grid2Dobj);
+	}
 }
 
 void BufferedIOHandler::readLanduse(Grid2DObject& in_grid2Dobj)
 {
-	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:LANDUSE");
-	if (it != mapBufferedGrids.end()) { //already in map
-		in_grid2Dobj = (*it).second;
-		return;
-	}
+	if(max_grids>0) {
+		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:LANDUSE");
+		if (it != mapBufferedGrids.end()) { //already in map
+			in_grid2Dobj = (*it).second;
+			return;
+		}
 
-	Grid2DObject tmpgrid2D;
-	iohandler.readLanduse(tmpgrid2D);
-	mapBufferedGrids["/:LANDUSE"] = tmpgrid2D;
-	in_grid2Dobj = tmpgrid2D;
+		Grid2DObject tmpgrid2D;
+		iohandler.readLanduse(tmpgrid2D);
+		mapBufferedGrids["/:LANDUSE"] = tmpgrid2D;
+		in_grid2Dobj = tmpgrid2D;
+	} else {
+		iohandler.readLanduse(in_grid2Dobj);
+	}
 }
 
 //HACK: manage buffering of assimilation grids! Why not considering them normal grids?
 void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& in_grid2Dobj)
 {
-	std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + in_date.toString(Date::FULL));
-	if (it != mapBufferedGrids.end()) { //already in map
-		in_grid2Dobj = (*it).second;
-		return;
-	}
+	if(max_grids>0) {
+		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + in_date.toString(Date::FULL));
+		if (it != mapBufferedGrids.end()) { //already in map
+			in_grid2Dobj = (*it).second;
+			return;
+		}
 
-	Grid2DObject tmpgrid2D;
-	iohandler.readAssimilationData(in_date, tmpgrid2D);
-	mapBufferedGrids["/:ASSIMILATIONDATA" + in_date.toString(Date::FULL)] = tmpgrid2D;
-	in_grid2Dobj = tmpgrid2D;
+		Grid2DObject tmpgrid2D;
+		iohandler.readAssimilationData(in_date, tmpgrid2D);
+		mapBufferedGrids["/:ASSIMILATIONDATA" + in_date.toString(Date::FULL)] = tmpgrid2D;
+		in_grid2Dobj = tmpgrid2D;
+	} else {
+		iohandler.readAssimilationData(in_date, in_grid2Dobj);
+	}
 }
 
 void BufferedIOHandler::readStationData(const Date& date, STATION_TIMESERIE& vecStation)
