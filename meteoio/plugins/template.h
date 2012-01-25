@@ -63,7 +63,7 @@ class TEMPLATE : public IOInterface {
 	private:
 		void cleanup() throw();
 
-		Config cfg;
+		const Config& cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

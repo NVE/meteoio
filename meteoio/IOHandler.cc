@@ -40,6 +40,7 @@ namespace mio {
  * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
  * - \subpage pngio "PNGIO" for reading PNG grid files (requires libpng)
  * - \subpage smetio "SMETIO" for reading SMET meteo data files (no extra requirements)
+ * - \subpage gribio "GribIO" for reading GRIB meteo grid files (requires libgrib)
  *
  * @section data_generators Data generators
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
@@ -80,6 +81,7 @@ void IOHandler::registerPlugins()
 	mapPlugins["PNG"]       = IOPlugin("libpngio"+popc_extra+libsuffix, "PNGIO", NULL, NULL);
 	mapPlugins["SMET"]      = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
 	mapPlugins["COSMOXML"]  = IOPlugin("libcosmoxmlio"+popc_extra+libsuffix, "CosmoXMLIO", NULL, NULL);
+	mapPlugins["GRIB"]      = IOPlugin("libgribio"+popc_extra+libsuffix, "GRIBIO", NULL, NULL);
 }
 
 //Copy constructor

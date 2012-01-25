@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 EPFL                                                            */
+/*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,37 +15,35 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __GEOTOPIO_H__
-#define __GEOTOPIO_H__
+#ifndef __GRIBIO_H__
+#define __GRIBIO_H__
 
-#include <meteoio/MeteoIO.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/Config.h>
 
 #include <string>
-#include <sstream>
-#include <iostream>
 
 namespace mio {
 
 /**
- * @class GeotopIO
- * @brief This class enables the access meteo data in legacy Geotop format
+ * @class GRIBIO
+ * @brief This is to read GRIB 1 or 2 data files
  *
  * @ingroup plugins
- * @author Thomas Egger
- * @date   2009-07-02
+ * @author Mathias Bavay
+ * @date   2012-01-25
  */
-class GeotopIO : public IOInterface {
+class GRIBIO : public IOInterface {
 	public:
-		GeotopIO(void (*delObj)(void*), const Config& i_cfg);
+		GRIBIO(void (*delObj)(void*), const Config& i_cfg);
 
-		GeotopIO(const std::string& configfile);
-		GeotopIO(const GeotopIO&);
-		GeotopIO(const Config&);
-		~GeotopIO() throw();
+		GRIBIO(const std::string& configfile);
+		GRIBIO(const GRIBIO&);
+		GRIBIO(const Config& cfgreader);
+		~GRIBIO() throw();
 
-		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
-
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 
@@ -54,35 +52,28 @@ class GeotopIO : public IOInterface {
 		                           std::vector< std::vector<MeteoData> >& vecMeteo,
 		                           const size_t& stationindex=IOUtils::npos);
 
-		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string& name="");
+		virtual void writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
+		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
-
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		void initParamNames(std::map<std::string, size_t>& mapParam);
-		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
-		                  const std::string& metafile);
-		void makeColumnMap(const std::vector<std::string>& tmpvec,
-		                   const std::vector<std::string>& vecColumnNames,
-		                   std::map<std::string, size_t>& mapHeader);
-		void convertUnits(MeteoData& meteo);
-		void convertUnitsBack(MeteoData& meteo);
+		void setOptions();
+		void listKeys(const std::string& filename);
 		void cleanup() throw();
-		void parseDate(const std::string& datestring, const std::string& fileandline, Date& date);
 
 		const Config& cfg;
-		double in_tz, out_tz;
-		std::ifstream fin; //Input file streams
-		std::ofstream fout; //Output file streams
-		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
+		std::string grid2dpath_in;
+		FILE *fp; //since passing fp always fail...
+
+		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+
 };
 
-} //end namespace
-
+} //namespace
 #endif

@@ -76,7 +76,7 @@ class PGMIO : public IOInterface {
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
 		size_t getNextHeader(std::vector<std::string>& vecString, const std::string& filename);
 
-		Config cfg;
+		const Config& cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::ifstream fin; //Input file streams

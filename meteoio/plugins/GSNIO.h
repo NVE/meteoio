@@ -89,7 +89,7 @@ class GSNIO : public IOInterface {
 				  std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo, ns2__GSNWebService_USCOREStreamElement* streamElement);
 
 		GSNWebServiceSoap12BindingProxy gsn;
-		Config cfg;
+		const Config& cfg;
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration

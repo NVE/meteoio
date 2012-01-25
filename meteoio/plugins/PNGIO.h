@@ -77,7 +77,7 @@ class PNGIO : public IOInterface {
 		void closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette);
 		std::string decimal_to_dms(const double& decimal);
 
-		Config cfg;
+		const Config& cfg;
 		FILE *fp; //since passing fp always fail...
 		bool autoscale;
 		bool has_legend;

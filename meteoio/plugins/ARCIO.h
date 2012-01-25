@@ -70,7 +70,7 @@ class ARCIO : public IOInterface {
 		void getGridPaths();
 		void cleanup() throw();
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
-		Config cfg;
+		const Config& cfg;
 		bool a3d_view_in, a3d_view_out; ///< make filename compatible with the Alpine3D's viewer?
 
 		std::ifstream fin; //Input file streams

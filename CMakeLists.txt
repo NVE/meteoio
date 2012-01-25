@@ -121,6 +121,7 @@ SET(PLUGIN_GRASSIO ON CACHE BOOL "Compilation GRASSIO ON or OFF")
 SET(PLUGIN_GSNIO OFF CACHE BOOL "Compilation GSNIO ON or OFF")
 SET(PLUGIN_IMISIO OFF CACHE BOOL "Compilation IMISIO ON or OFF")
 SET(PLUGIN_COSMOXMLIO OFF CACHE BOOL "Compilation COSMOXMLIO ON or OFF")
+SET(PLUGIN_GRIBIO OFF CACHE BOOL "Compilation GRIBIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 
 #some cmake specific things //HACK: should it not be in the plugin Cmake?

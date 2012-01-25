@@ -57,7 +57,7 @@ TEMPLATE::~TEMPLATE() throw()
 
 }
 
-void TEMPLATE::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
+void TEMPLATE::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_in*/)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

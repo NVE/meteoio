@@ -90,7 +90,7 @@ class SMETIO : public IOInterface {
 		double plugin_nodata;
 		static const std::string dflt_extension;
 
-		Config cfg;
+		const Config& cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;
 };
