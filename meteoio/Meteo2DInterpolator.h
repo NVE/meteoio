@@ -93,6 +93,7 @@ class IOManager; //forward declaration
  */
 
 #ifdef _POPC_
+#include <paroc_base.h>
 class Meteo2DInterpolator : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);

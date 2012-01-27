@@ -87,6 +87,7 @@ class MeteoGrids {
  */
 
 #ifdef _POPC_
+#include <paroc_base.h>
 class MeteoData : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);

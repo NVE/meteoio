@@ -44,6 +44,7 @@ typedef void(Coords::*convfunc)(double, double, double&, double&) const;
 */
 
 #ifdef _POPC_
+#include <paroc_base.h>
 class Coords : POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);

@@ -30,6 +30,9 @@
 #include <vector>
 #include <string>
 
+#include <paroc_memspool.h>
+#include <paroc_buffer.h>
+
 namespace mio {
 
 typedef Array2D<double> DOUBLE2D; //HACK for POPC

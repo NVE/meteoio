@@ -744,10 +744,8 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 {
 	std::string filename="", line_in="";
-	std::vector<std::string> tmpvec;
-	std::vector< std::pair<int,int> > mypts;
 
-	cfg.getValue("SPECIALPTSFILE", "Input", filename); // cout << tmp << endl;
+	cfg.getValue("SPECIALPTSFILE", "Input", filename);
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}
@@ -762,6 +760,7 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 
 	while (!fin.eof()) {
 		getline(fin, line_in, eoln);
+		std::vector<std::string> tmpvec;
 
 		if (IOUtils::readLineToVec(line_in, tmpvec)==2) { //Try to convert
 			int x, y;
@@ -775,18 +774,12 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 				throw ConversionFailedException("Conversion of a value failed in " + filename + " line: " + line_in, AT);
 			}
 
-			std::pair<int,int> tmppair(x,y);
-			mypts.push_back(tmppair);
+			Coords tmp_pts;
+			tmp_pts.setGridIndex(x, y, IOUtils::inodata, false);
+			pts.push_back(tmp_pts);
 		}
 	}
 	cleanup();
-
-	//Now put everything into the output vector TODO: don't do any intermediate steps... copy directly into vector!
-	Coords tmp_pts;
-	for (size_t jj=0; jj<mypts.size(); jj++) {
-		tmp_pts.setGridIndex(mypts.at(jj).first, mypts.at(jj).second, IOUtils::inodata, false);
-		pts.push_back(tmp_pts);
-	}
 }
 
 int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)

@@ -37,6 +37,7 @@ namespace mio {
  */
 
 #ifdef _POPC_
+#include <paroc_base.h>
 class Grid3DObjetctDummy {}; //HACK for POPC
 
 class Grid3DObject : POPBase {

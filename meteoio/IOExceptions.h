@@ -41,6 +41,7 @@ namespace mio {
  */
 
 #ifdef _POPC_
+#include <paroc_exception.h>
 class IOException : public POPException {
 #else
 	class IOException : public std::exception {

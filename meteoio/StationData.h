@@ -38,6 +38,7 @@ namespace mio {
  */
 
 #ifdef _POPC_
+#include <paroc_base.h>
 class StationData :POPBase {
 	public:
 		void Serialize(POPBuffer &buf, bool pack);
@@ -75,7 +76,7 @@ class StationData {
 		* @return azimuth of the local slope expressed as a bearing (0 is North, in degrees, clockwise)
 		*/
 		double getAzimuth() const;
-		
+
 		/**
 		* @brief General setter function
 		* @param i_position Position of the station
@@ -103,7 +104,7 @@ class StationData {
 		bool operator!=(const StationData&) const; ///<Operator that tests for inequality
 
 		/**
-		* @brief Simple merge strategy. 
+		* @brief Simple merge strategy.
 		* If some fields of the first argument are empty, they will be filled by the macthing field from the
 		* second argument.
 		* @param sd1 first StationData to merge, highest priority
@@ -113,7 +114,7 @@ class StationData {
 		static StationData merge(const StationData& sd1, const StationData& sd2);
 
 		/**
-		* @brief Simple merge strategy. 
+		* @brief Simple merge strategy.
 		* If some fields of the current object are empty, they will be filled by the macthing field from the
 		* provided argument.
 		* @param sd2 extra StationData to merge, lowest priority

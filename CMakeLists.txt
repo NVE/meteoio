@@ -99,6 +99,8 @@ IF(DEST STREQUAL "optimized")
 	SET(ARCH  "${ARCH_OPTIM}")
 ENDIF(DEST STREQUAL "optimized")
 
+SET(POPC OFF CACHE BOOL "Compile for POPC ON or OFF")
+
 ###########################################################
 #finally, SET compile flags
 SET(CMAKE_CXX_FLAGS_RELEASE "${_VERSION} ${ARCH} ${OPTIM} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)

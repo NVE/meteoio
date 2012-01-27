@@ -705,10 +705,63 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 	return true;
 }
 
-void SMETIO::readSpecialPoints(std::vector<Coords>&)
+void SMETIO::readSpecialPoints(std::vector<Coords>& pts)
 {
-	//Nothing so far
+	//The code below is not valid yet, due to issues with libsmet -> invalid this method
 	throw IOException("Nothing implemented here", AT);
+
+	std::string filename="", line_in="";
+	cfg.getValue("SPECIALPTSFILE", "Input", filename);
+	if (!IOUtils::fileExists(filename)) {
+		throw FileNotFoundException(filename, AT);
+	}
+
+	smet::SMETReader myreader(filename);
+	vector<double> vec_data;
+	myreader.read(vec_data);
+	const size_t nr_fields = myreader.get_nr_of_fields();
+	const int epsg = myreader.get_header_intvalue("epsg");
+	const double smet_nodata = myreader.get_header_doublevalue("nodata");
+
+	if(myreader.location_in_data(smet::WGS84)==true) {
+		size_t lat_fd=IOUtils::unodata, lon_fd=IOUtils::unodata;
+		size_t alt_fd=IOUtils::unodata;
+		for(size_t ii=0; ii<nr_fields; ii++) {
+			const string tmp = myreader.get_field_name(ii);
+			if(tmp=="latitude") lat_fd=ii;
+			if(tmp=="longitude") lon_fd=ii;
+			if(tmp=="altitude") alt_fd=ii;
+		}
+		for(size_t ii=0; ii<vec_data.size(); ii+=nr_fields) {
+			Coords point;
+			point.setLatLon(vec_data[ii+lat_fd], vec_data[ii+lon_fd], vec_data[ii+alt_fd]);
+			pts.push_back(point);
+		}
+	} else if(myreader.location_in_data(smet::EPSG)==true) {
+		if(epsg==(int)floor(smet_nodata + 0.1))
+			throw InvalidFormatException("In file \""+filename+"\", missing EPSG code in header!", AT);
+
+		size_t east_fd=IOUtils::unodata, north_fd=IOUtils::unodata;
+		size_t alt_fd=IOUtils::unodata;
+		for(size_t ii=0; ii<nr_fields; ii++) {
+			const string tmp = myreader.get_field_name(ii);
+			if(tmp=="easting") east_fd=ii;
+			if(tmp=="northing") north_fd=ii;
+			if(tmp=="altitude") alt_fd=ii;
+		}
+		for(size_t ii=0; ii<vec_data.size(); ii+=nr_fields) {
+			Coords point;
+			point.setEPSG(epsg);
+			point.setXY(vec_data[ii+east_fd], vec_data[ii+north_fd], vec_data[ii+alt_fd]);
+			pts.push_back(point);
+		}
+	} else {
+		throw InvalidFormatException("File \""+filename+"\" does not contain expected location information in DATA section!", AT);
+	}
+
+	for(size_t ii=0; ii<pts.size(); ii++) {
+		std::cout << pts[ii] << "\n";
+	}
 }
 
 void SMETIO::write2DGrid(const Grid2DObject& /*grid_in*/, const std::string& /*name*/)

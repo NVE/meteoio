@@ -58,6 +58,7 @@ namespace mio {
  */
 
 #ifdef _POPC_
+#include <paroc_base.h>
 class DateDummy {}; //HACK for POPC
 
 class Date : POPBase {
