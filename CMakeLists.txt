@@ -78,18 +78,9 @@ IF(NOT DEST)
 	SET(DEST "safe" CACHE STRING "Choose safe, optimized, hera, par or hera_par (with popc)" FORCE)
 ENDIF(NOT DEST)
 
-IF (DEST STREQUAL "hera_par") #only g++ is supported on hera
-	#required for AMD64: amdfam10 or fPIC, even for static libs
-	SET(ARCH "-march=amdfam10 -fPIC")
-ENDIF(DEST STREQUAL "hera_par")
-
 IF (DEST STREQUAL "hera")
 	SET(ARCH  "-march=amdfam10")
 ENDIF(DEST STREQUAL "hera")
-
-IF (DEST STREQUAL "par")
-	SET(ARCH  "${ARCH_OPTIM}")
-ENDIF(DEST STREQUAL "par")
 
 IF (DEST STREQUAL "safe")
 	SET(ARCH  "${ARCH_SAFE}")
@@ -99,6 +90,7 @@ IF(DEST STREQUAL "optimized")
 	SET(ARCH  "${ARCH_OPTIM}")
 ENDIF(DEST STREQUAL "optimized")
 
+#build for use with POPC in parallel objects
 SET(POPC OFF CACHE BOOL "Compile for POPC ON or OFF")
 
 ###########################################################

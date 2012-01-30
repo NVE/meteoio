@@ -121,7 +121,8 @@ METEOIO_OBJ =   $(SRCDIR)/IOManager.o \
 		$(SRCDIR)/meteostats/libfit1D.o \
 		$(SRCDIR)/meteostats/libfit1DCore.o \
 		$(SRCDIR)/meteostats/libinterpol1D.o \
-		$(SRCDIR)/meteostats/libinterpol2D.o
+		$(SRCDIR)/meteostats/libinterpol2D.o \
+		$(SRCDIR)/libsmet.o
 
 METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/IOManager_par.o \
@@ -169,7 +170,8 @@ METEOIO_OBJ_POPC = $(SRCDIR)/marshal_meteoio_par.o \
 		$(SRCDIR)/meteostats/libfit1D_par.o \
 		$(SRCDIR)/meteostats/libfit1DCore_par.o \
 		$(SRCDIR)/meteostats/libinterpol1D_par.o \
-		$(SRCDIR)/meteostats/libinterpol2D_par.o
+		$(SRCDIR)/meteostats/libinterpol2D_par.o \
+		$(SRCDIR)/libsmet_par.o
 
 TOOLS_OBJ =	$(TOOLSDIR)/createA3DFiles.o
 

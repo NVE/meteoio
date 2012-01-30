@@ -18,6 +18,7 @@
 
 #include <meteoio/Matrix.h>
 #include <time.h> //needed for random()
+#include <cmath> //needed for fabs()
 
 namespace mio {
 
@@ -704,7 +705,7 @@ unsigned int Matrix::findMaxInCol(const unsigned int &col) {
 	double max_val=0.;
 
 	for(unsigned int i=1; i<=nrows; i++) {
-		const double val = abs( operator()(i,col) );
+		const double val = fabs( operator()(i,col) );
 		if( val>max_val) {
 			max_val=val;
 			row_idx=i;
@@ -719,7 +720,7 @@ unsigned int Matrix::findMaxInRow(const unsigned int &row) {
 	double max_val=0.;
 
 	for(unsigned int j=1; j<=ncols; j++) {
-		const double val = abs( operator()(row,j) );
+		const double val = fabs( operator()(row,j) );
 		if( val>max_val) {
 			max_val=val;
 			col_idx=j;

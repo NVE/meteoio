@@ -21,6 +21,14 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteostats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
+IF(POPC)
+	FIND_PACKAGE(Popc REQUIRED)
+	#ADD_DEFINITIONS(-D_POPC_) #necessary if NOT forcing c++ compiler to popcc
+	INCLUDE_DIRECTORIES(${Popc_INCLUDE_DIRS})
+	#TARGET_LINK_LIBRARIES(${STATICNAME} ${Popc_LIBRARIES} ${SHAREDNAME})
+	SET(popc_sources marshal_meteoio.cc)
+ENDIF(POPC)
+
 #	FilterAlgorithms.cc obsoleted
 SET(meteoio_sources
 	IOManager.cc
@@ -53,14 +61,8 @@ SET(meteoio_sources
 	${meteolaws_sources}
 	${meteostats_sources}
 	${meteofilters_sources}
+	${popc_sources}
 )
-
-IF(POPC)
-	FIND_PACKAGE(Popc REQUIRED)
-	ADD_DEFINITIONS(-D_POPC_)
-	INCLUDE_DIRECTORIES(${Popc_INCLUDE_DIRS})
-	#TARGET_LINK_LIBRARIES(${STATICNAME} ${Popc_LIBRARIES} ${SHAREDNAME})
-ENDIF(POPC)
 
 IF(BUILD_STATIC_LIBS)
 	SET(STATICNAME ${PROJECT_NAME}_STATIC)
