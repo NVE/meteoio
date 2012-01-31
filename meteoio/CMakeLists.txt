@@ -23,10 +23,12 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
 IF(POPC)
 	FIND_PACKAGE(Popc REQUIRED)
-	#ADD_DEFINITIONS(-D_POPC_) #necessary if NOT forcing c++ compiler to popcc
 	INCLUDE_DIRECTORIES(${Popc_INCLUDE_DIRS})
 	#TARGET_LINK_LIBRARIES(${STATICNAME} ${Popc_LIBRARIES} ${SHAREDNAME})
 	SET(popc_sources marshal_meteoio.cc)
+	SET(CMAKE_CXX_COMPILER popcc)
+	SET(CMAKE_C_COMPILER popcc)
+	#ADD_DEFINITIONS(-D_POPC_) #necessary if NOT forcing c++ compiler to popcc
 ENDIF(POPC)
 
 #	FilterAlgorithms.cc obsoleted

@@ -22,6 +22,7 @@
 #include <meteoio/Config.h>
 
 #include <string>
+#include <grib_api.h>
 
 namespace mio {
 
@@ -62,7 +63,8 @@ class GRIBIO : public IOInterface {
 
 	private:
 		void setOptions();
-		void listKeys(const std::string& filename);
+		void listContent(const std::string& filename);
+		void listKeys(grib_handle** h, const std::string& filename);
 		void cleanup() throw();
 
 		const Config& cfg;
@@ -72,6 +74,7 @@ class GRIBIO : public IOInterface {
 		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		double tz_in;
 
 };
 
