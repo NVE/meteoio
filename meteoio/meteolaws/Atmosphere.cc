@@ -20,10 +20,10 @@
 #include <cmath>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h>
+#include <meteoio/meteolaws/Sun.h>
 #include <meteoio/IOUtils.h>
 
 namespace mio {
-
 /**
  * @brief Calculate the black body emissivity
  * @param lwr longwave radiation emitted by the body (W m-2)
@@ -203,6 +203,70 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
 double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
 	const double ea = Brutsaert_emissivity(RH, TA);
 	return blkBody_Radiation(ea, TA);
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Crawford and Duchon -- <i>"An Improved Parametrization
+ * for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
+ * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology,
+ * <b>38</b>, 1999, pp 474-480.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)
+ * @param iswr_clear_sky Clear Sky Modelled Incoming Short Wave Radiation (W/m^2)
+ * @param month current month (1-12, for a sinusoidal variation of the leading coefficients)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+*/
+double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month) {
+	if(iswr_meas<=0. || iswr_clear_sky<=0.)
+		return IOUtils::nodata;
+
+	double clf = 1. - iswr_meas/iswr_clear_sky; //cloud fraction estimate
+	if(clf<0.) clf=0.;
+	const double e = RH * waterSaturationPressure(TA); //near surface water vapor pressure
+	const double e_mBar = 0.01 * e;
+
+	const double epsilon = clf + (1.-clf) * (1.22 + 0.06*sin((month+2.)*Cst::PI/6.) ) * pow( (e_mBar/TA), 1./7.);
+	return epsilon*blkBody_Radiation(1., TA);
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Crawford and Duchon -- <i>"An Improved Parametrization
+ * for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
+ * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology,
+ * <b>38</b>, 1999, pp 474-480.
+ * @param lat latitude of the point of observation
+ * @param lon longitude of the point of observation
+ * @param altitude altitude of the point of observation
+ * @param julian julian date at the point of observation
+ * @param TZ time zone at the point of observation
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+ * Please note that this call might NOT be efficient for processing large amounts of points,
+ * since it internally builds complex objects at every call. You might want to copy/paste
+ * its code in order to process data in bulk.
+*/
+double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
+                                 const double& julian, const double& TZ,
+                                 const double& RH, const double& TA, const double& ISWR)
+{
+	if(TA==IOUtils::nodata || RH==IOUtils::nodata || ISWR==IOUtils::nodata) {
+		return IOUtils::nodata;
+	}
+	SunObject Sun(lat, lon, altitude, julian, TZ);
+	Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
+	double toa_h, direct_h, diffuse_h;
+	Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
+
+	Date date(julian, TZ, 0.);
+	int year, month, day;
+	date.getDate(year, month, day);
+
+	return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct_h+diffuse_h, month);
 }
 
 /**

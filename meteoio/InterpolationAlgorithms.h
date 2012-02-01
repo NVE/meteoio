@@ -79,7 +79,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
- * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2010) (see SnowHNWInterpolation)
+ * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowHNWInterpolation)
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  *
@@ -418,7 +418,7 @@ class USERInterpolation : public InterpolationAlgorithm {
  *
  * After this initialization, the pixels whose air temperatures are below or at freezing are modified according
  * to the method described in <i>"Quantitative evaluation of different hydrological modelling approaches
- * in a partly glacierized Swiss watershed"</i>, Magnusson et All., Hydrological Processes, 2010, under review and
+ * in a partly glacierized Swiss watershed"</i>, Magnusson et Al., Hydrological Processes, <b>25</b>, 2071-2084, 2011 and
  * <i>"Modelling runoff from highly glacierized alpine catchments in a changing climate"</i>, Huss et All., Hydrological Processes, <b>22</b>, 3888-3902, 2008.
  *
  * An example using this algorithm, initializing the grid with a constant lapse rate fill using +0.05% precipitation increase per meter of elevation, is given below:

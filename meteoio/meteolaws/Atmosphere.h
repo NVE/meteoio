@@ -30,7 +30,6 @@ namespace mio {
  */
 class Atmosphere {
 	public:
-
 		static double stdAirPressure(const double& altitude);
 		static double stdDryAirDensity(const double& altitude, const double& temperature);
 		static double waterSaturationPressure(const double& T);
@@ -42,6 +41,10 @@ class Atmosphere {
 		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Brutsaert_emissivity(const double& RH, const double& TA);
 		static double Brutsaert_ilwr(const double& RH, const double& TA);
+		static double Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month);
+		static double Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
+		                            const double& julian, const double& TZ,
+		                            const double& RH, const double& TA, const double& ISWR);
 
 		static double RhtoDewPoint(double RH, double TA, const bool& force_water);
 		static double DewPointtoRh(double TD, double TA, const bool& force_water);

@@ -44,13 +44,13 @@ class SunObject {
 		} position_algo;
 
 		SunObject(const position_algo alg=MEEUS);
-		SunObject(const double& _latitude, const double& _longitude, const double& _altitude);
-		SunObject(const double& _latitude, const double& _longitude, const double& _altitude, const double& _julian, const double& TZ=0.);
+		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude);
+		SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& TZ=0.);
 
 		//local julian date and timezone
-		void setDate(const double& _julian, const double& TZ=0.);
-		void setLatLon(const double& _latitude, const double& _longitude, const double& _altitude);
-		void setElevationThresh(const double& _elevation_threshold);
+		void setDate(const double& i_julian, const double& TZ=0.);
+		void setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude);
+		void setElevationThresh(const double& i_elevation_threshold);
 
 		void calculateRadiation(const double& ta, const double& rh, const double& pressure, const double& mean_albedo);
 		void calculateRadiation(const double& ta, const double& rh, const double& mean_albedo);
