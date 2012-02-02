@@ -133,6 +133,7 @@ namespace Color {
 class Gradient_model {
 	public:
 		Gradient_model() {}; //do not use this constructor!
+		virtual ~Gradient_model() {};
 		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) { (void)i_min; (void)i_max; (void)i_autoscale;};
 		//setBgColor()
 		//setFgColor()

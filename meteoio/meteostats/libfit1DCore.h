@@ -31,6 +31,7 @@ class FitModel {
 	public:
 		FitModel() {};
 		FitModel(const FitModel& source);
+		virtual ~FitModel() {};
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
 		void setGuess(const std::vector<double> lambda_in);
 		virtual bool fit() = 0;

@@ -50,9 +50,9 @@ class IOHandler : public IOInterface {
 	#endif
 		IOHandler(const Config&);
 	#ifdef _POPC_
-		~IOHandler();
+		virtual ~IOHandler();
 	#else
-		~IOHandler() throw();
+		virtual ~IOHandler() throw();
 	#endif
 
 		//methods defined in the IOInterface class
