@@ -76,6 +76,7 @@
 #include <meteoio/meteolaws/Sun.h>
 #include <meteoio/meteolaws/Suntrajectory.h>
 #include <meteoio/MeteoProcessor.h>
+#include <meteoio/MathOptim.h>
 #include <meteoio/ResamplingAlgorithms.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/StationData.h>

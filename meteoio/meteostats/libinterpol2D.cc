@@ -20,61 +20,11 @@
 #include <meteoio/meteostats/libinterpol2D.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
+#include <meteoio/MathOptim.h> //math optimizations
 
 using namespace std;
 
 namespace mio {
-
-//Quake3 fast 1/x² approximation
-// For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
-// Credited to Greg Walsh.
-// 32  Bit float magic number
-#define SQRT_MAGIC_D 0x5f3759df
-#define SQRT_MAGIC_F 0x5f375a86
-
-#ifdef _MSC_VER
-#pragma warning( push ) //for Visual C++
-#pragma warning(disable:4244) //Visual C++ righhtfully complains... but this behavior is what we want!
-#endif
-//maximum relative error is <1.7% while computation time for sqrt is <1/4. At 0, returns a large number
-//on a large scale interpolation test on TA, max relative error is 1e-6
-inline float invSqrt(const float x) {
-	const float xhalf = 0.5f*x;
-
-	union {
-		// get bits for floating value
-		float x;
-		int i;
-	} u;
-	u.x = x;
-	u.i = SQRT_MAGIC_F - (u.i >> 1);  // gives initial guess y0
-	return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
-}
-
-inline double invSqrt(const double x) {
-	const double xhalf = 0.5f*x;
-
-	union {
-		// get bits for floating value
-		float x;
-		int i;
-	} u;
-	u.x = x;
-	u.i = SQRT_MAGIC_D - (u.i >> 1);  // gives initial guess y0
-	return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
-}
-#ifdef _MSC_VER
-#pragma warning( pop ) //for Visual C++, restore previous warnings behavior
-#endif
-
-inline float fastSqrt_Q3(const float x) {
-	return x * invSqrt(x);
-}
-
-inline double fastSqrt_Q3(const double x) {
-	return x * invSqrt(x);
-}
-
 const double Interpol2D::wind_ys = 0.58;
 const double Interpol2D::wind_yc = 0.42;
 const double Interpol2D::bilin_inflection = 1200.;
@@ -123,7 +73,7 @@ double Interpol2D::InvHorizontalDistance(const double& X1, const double& Y1, con
 	//This function computes 1/horizontaldistance between two points
 	//coordinates are given in a square, metric grid system
 	const double DX=(X1-X2), DY=(Y1-Y2);
-	return invSqrt( DX*DX + DY*DY ); //we use the optimized approximation for 1/sqrt
+	return Optim::invSqrt( DX*DX + DY*DY ); //we use the optimized approximation for 1/sqrt
 }
 
 /**
@@ -172,11 +122,11 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
 //these weighting functions take the square of a distance as an argument and return a weight
 double Interpol2D::weightInvDist(const double& d2)
 {
-	return invSqrt( d2 ); //we use the optimized approximation for 1/sqrt
+	return Optim::invSqrt( d2 ); //we use the optimized approximation for 1/sqrt
 }
 double Interpol2D::weightInvDistSqrt(const double& d2)
 {
-	return fastSqrt_Q3( invSqrt(d2) ); //we use the optimized approximation for 1/sqrt
+	return Optim::fastSqrt_Q3( Optim::invSqrt(d2) ); //we use the optimized approximation for 1/sqrt
 }
 double Interpol2D::weightInvDist2(const double& d2)
 {
@@ -184,7 +134,7 @@ double Interpol2D::weightInvDist2(const double& d2)
 }
 double Interpol2D::weightInvDistN(const double& d2)
 {
-	return pow( invSqrt(d2) , dist_pow); //we use the optimized approximation for 1/sqrt
+	return pow( Optim::invSqrt(d2) , dist_pow); //we use the optimized approximation for 1/sqrt
 }
 
 //Data regression models
@@ -394,7 +344,7 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 		       vecStations_in[i].position.getNorthing()) + 1e-6);*/
 		const double DX=x-vecEastings[i];
 		const double DY=y-vecNorthings[i];
-		const double weight = invSqrt( DX*DX + DY*DY + scale ); //use the optimized 1/sqrt approximation
+		const double weight = Optim::invSqrt( DX*DX + DY*DY + scale ); //use the optimized 1/sqrt approximation
 		//const double weight = weightInvDistSqrt( (DX*DX + DY*DY) );
 		parameter += weight*vecData_in[i];
 		norm += weight;
@@ -538,7 +488,7 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
 			//const double contrib = LinProject(value, alt, cell_altitude, coeffs);
 			const double contrib = BiLinProject(value, alt, cell_altitude, coeffs);
-			const double weight = invSqrt( list[st].first + scale + 1.e-6 );
+			const double weight = Optim::invSqrt( list[st].first + scale + 1.e-6 );
 			pixel_value += weight*contrib;
 			norm += weight;
 			count++;
@@ -746,7 +696,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 			const Coords& st2 = vecStations[i-1].position;
 			const double DX = x1-st2.getEasting();
 			const double DY = y1-st2.getNorthing();
-			const double distance = fastSqrt_Q3(DX*DX + DY*DY);
+			const double distance = Optim::fastSqrt_Q3(DX*DX + DY*DY);
 			Ginv(i,j) = variogram.f(distance);
 		}
 		Ginv(j,j)=1.; //HACK diagonal should contain the nugget...
@@ -777,7 +727,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 				const Coords& position = vecStations[st].position;
 				const double DX = x-position.getEasting();
 				const double DY = y-position.getNorthing();
-				const double distance = fastSqrt_Q3(DX*DX + DY*DY);
+				const double distance = Optim::fastSqrt_Q3(DX*DX + DY*DY);
 
 				G0(st+1,1) = variogram.f(distance); //matrix starts at 1, not 0
 			}

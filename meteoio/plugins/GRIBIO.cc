@@ -26,14 +26,14 @@ using namespace std;
 
 namespace mio {
 /**
- * @page template GRIBIO
- * @section template_format Format
+ * @page gribio GRIBIO
+ * @section gribio_format Format
  * *Put here the informations about the standard format that is implemented*
  *
- * @section template_units Units
+ * @section gribio_units Units
  *
  *
- * @section template_keywords Keywords
+ * @section gribio_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
