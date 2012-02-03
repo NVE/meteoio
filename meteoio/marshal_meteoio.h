@@ -38,6 +38,7 @@ namespace mio {
 typedef Array2D<double> DOUBLE2D; //HACK for POPC
 typedef Array3D<double> DOUBLE3D;
 typedef Array2D<int> INT2D;
+typedef Array2D<char> CHAR2D;
 typedef std::vector<std::string> STR_VECTOR;
 
 void marshal_uint(POPBuffer &buf,unsigned int &data, int maxsize, int flag, POPMemspool *temp);
@@ -53,6 +54,8 @@ void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data,int maxsize, int flag, POPM
 void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data,int maxsize, int flag, POPMemspool *temp);
 
 void marshal_INT2D(POPBuffer &buf, INT2D &data,int maxsize, int flag, POPMemspool *temp);
+
+void marshal_CHAR2D(POPBuffer &buf, CHAR2D &data,int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp);
 

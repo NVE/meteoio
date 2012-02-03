@@ -412,6 +412,37 @@ void marshal_INT2D(POPBuffer &buf, INT2D &data, int maxsize, int flag, POPMemspo
 	}
 }
 
+void marshal_CHAR2D(POPBuffer &buf, CHAR2D &data, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		unsigned int nx, ny;
+		data.size(nx,ny);
+		buf.Pack(&nx,1);
+		buf.Pack(&ny,1);
+		bool keep_nodata = data.getKeepNodata();
+		buf.Pack(&keep_nodata,1);
+		if (nx>0 && ny>0) {
+			const unsigned int nxy=nx*ny;
+			buf.Pack(&data(0,0), nxy);
+		}
+	} else {
+		unsigned int nx,ny;
+		buf.UnPack(&nx,1);
+		buf.UnPack(&ny,1);
+		bool keep_nodata;
+		buf.UnPack(&keep_nodata,1);
+		data.setKeepNodata(keep_nodata);
+		if (nx>0 && ny>0) {
+			data.resize(nx,ny);
+			const unsigned int nxy=nx*ny;
+			buf.UnPack(&data(0,0), nxy);
+		} else
+			data.clear();
+	}
+}
+
 } //namespace
 
 #endif
