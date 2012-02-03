@@ -1,9 +1,17 @@
 INCLUDE(LibFindMacros)
 
+FIND_PROGRAM(POPCC_EXECUTABLE popcc)
+MARK_AS_ADVANCED(FORCE POPCC_EXECUTABLE)
+#build POPC_ROOT so we can provide a hint for searching for the header file
+IF("${POPCC_EXECUTABLE}" MATCHES "^(.+)bin[\\/]popcc(.*)$")
+   SET(POPC_ROOT "${CMAKE_MATCH_1}")
+ENDIF("${POPCC_EXECUTABLE}" MATCHES "^(.+)bin[\\/]popcc(.*)$")
+
 # Finally the library itself
 FIND_LIBRARY(Popc_LIBRARY
 NAMES libparoc_common.a
 PATHS
+	"${POPC_ROOT}/lib"
 	ENV LD_LIBRARY_PATH
 	"~/usr/lib"
 	"/usr/local/lib"
