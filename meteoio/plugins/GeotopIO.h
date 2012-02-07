@@ -43,7 +43,7 @@ class GeotopIO : public IOInterface {
 		GeotopIO(const Config&);
 		~GeotopIO() throw();
 
-		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
+		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
 		virtual void readDEM(DEMObject& dem_out);
@@ -59,10 +59,11 @@ class GeotopIO : public IOInterface {
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 
-		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
+		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		std::string getValueForKey(const std::string& line);
 		void initParamNames(std::map<std::string, size_t>& mapParam);
 		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
 		                  const std::string& metafile);
@@ -73,12 +74,17 @@ class GeotopIO : public IOInterface {
 		void convertUnitsBack(MeteoData& meteo);
 		void cleanup() throw();
 		void parseDate(const std::string& datestring, const std::string& fileandline, Date& date);
+		std::vector<std::string>  stringSplit( std::string str,const std::string delim);
+		std::vector<std::string> parseMeteoData(const std::string head, std::string datastr);
 
-		const Config& cfg;
+
+		Config cfg;
 		double in_tz, out_tz;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
 		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
+		std::vector<mio::StationData> vecStation;
+		std::vector<std::string> vecColumnNames;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
