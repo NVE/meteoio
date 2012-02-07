@@ -34,19 +34,21 @@ namespace mio {
  * This implements the standard methods for precipitation correction as described in
  * <i>"WMO Solid Precipitation Measurement Intercomparison"</i>, B. Goodison, P. Louie and D. Yang, <b>872</b>, 1998 as well as
  * the overview given by <i>"Literature Study on the Correction of Precipitation Measurements"</i>, Annette Wagner, 2009.
- * These methods depend on the type of rain gauge that does the measurements, therefore this type must be specified as an argument.
- * These methods also process pure snow and mixed precipitation differently, with the following thresholds:
+ * These methods process pure snow and mixed precipitation differently, with the following thresholds:
  * - pure snow below -2 C
  * - mixed precipitation between -2 and +2 C
  * - pure rain above 2 C
  *
+ * They also depend on the usage of a shield around the gauge as well as the type of rain gauge that does the measurements,
+ * therefore this type must be specified as an argument. The coefficients are not always available both for shielded and
+ * unshielded gauges, so most of the time only one variation will be available and is specified below.
  * The following methods can be specified as argument (only one can be specified):
  * - cst {factor for snow} {factor for mixed precipitation} - this applies a constant factor to the precipitation
- * - Nipher - National standard rain gauge in Canada
- * - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories
- * - US8sh - US national 8" rain gauge, shielded
- * - US8unsh - US national 8" rain gauge, unshielded
- * - Hellmann - the most widely used rain gauge in the world, with some country specific variations
+ * - Nipher - National standard rain gauge in Canada, shielded
+ * - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories, shielded
+ * - US8sh - US national 8\" rain gauge, shielded
+ * - US8unsh - US national 8\" rain gauge, unshielded
+ * - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded
  *
  * @code
  * HNW::filter1	= undercatch
