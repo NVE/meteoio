@@ -29,7 +29,7 @@ namespace mio {
  * @ingroup processing
  * @author Thomas Egger
  * @date   2011-01-24
- * @brief Mean average processing. 
+ * @brief Mean average processing.
  * The mean average filter returns the mean value of all values within a user given time window. Remarks:
  * - nodata values are excluded from the mean
  * - Two arguments expected (both have to be fullfilled for the filter to start operating):

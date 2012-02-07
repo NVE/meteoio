@@ -49,7 +49,7 @@ class FilterRate : public FilterBlock {
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(std::vector<std::string> vec_args);
+		void parse_args(const std::vector<std::string>& vec_args);
 		double min_rate_of_change, max_rate_of_change;
 };
 

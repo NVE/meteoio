@@ -37,6 +37,9 @@ class Atmosphere {
 		static double waterVaporDensity(const double& Temperature, const double& VaporPressure);
 		static double wetBulbTemperature(const double& T, const double& RH, const double& altitude);
 
+		static double windChill(const double& TA, const double& VW);
+		static double heatIndex(const double& TA, const double& RH);
+
 		static double Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness);
 		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Brutsaert_emissivity(const double& RH, const double& TA);

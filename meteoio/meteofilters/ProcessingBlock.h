@@ -29,9 +29,16 @@ class ProcessingProperties {
 	public:
 		ProcessingProperties() : time_before(0., 0.), time_after(0., 0.),
 		                         points_before(0), points_after(0),
-		                         for_second_pass(false) {}
+		                         stage(first) {}
 
 		friend std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data);
+
+		typedef enum PROC_STAGE { none, ///< never activate this block
+		                     first, ///< activate at first stage
+		                     second, ///< activate at second stage
+		                     both ///< activate at both first and second stage
+		                     //once ///< activate at stage one or two, but only once
+		                   } proc_stage;
 
 		Duration time_before;
 		Duration time_after;
@@ -39,21 +46,24 @@ class ProcessingProperties {
 		unsigned int points_before;
 		unsigned int points_after;
 
-		bool for_second_pass;
+		proc_stage stage;
 };
 
 /**
  * @class  ProcessingBlock
- * @brief  An abstract class 
+ * @brief  An abstract class
  * @author Thomas Egger
  * @date   2011-01-02
  */
 class ProcessingBlock {
 	public:
 		virtual ~ProcessingBlock();
-		
+
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
+
+		void convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
+		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);
 
 		std::string getName() const;
 		const ProcessingProperties& getProperties() const;

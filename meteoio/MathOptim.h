@@ -34,7 +34,7 @@ namespace Optim {
 	* This version works with positive and negative numbers but does not
 	* comply with IEEE handling of border cases (like infty, Nan, etc).
 	* Please benchmark your code before deciding to use this!!
-	* @param val number to round
+	* @param x number to round
 	* @return rounded number cast as int
 	*/
 	inline long int round(const double& x) {
@@ -47,7 +47,7 @@ namespace Optim {
 	* This version works with positive and negative numbers but does not
 	* comply with IEEE handling of border cases (like infty, Nan, etc).
 	* Please benchmark your code before deciding to use this!!
-	* @param val number to floor
+	* @param x number to floor
 	* @return floored number cast as int
 	*/
 	inline long int floor(const double& x) {
@@ -61,7 +61,7 @@ namespace Optim {
 	* This version works with positive and negative numbers but does not
 	* comply with IEEE handling of border cases (like infty, Nan, etc).
 	* Please benchmark your code before deciding to use this!!
-	* @param val number to ceil
+	* @param x number to ceil
 	* @return ceiled number cast as int
 	*/
 	inline long int ceil(const double& x) {

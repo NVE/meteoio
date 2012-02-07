@@ -12,6 +12,9 @@ SET(meteofilters_sources
 	meteofilters/FilterTukey.cc
 	meteofilters/FilterRate.cc
 	meteofilters/FilterHNWMelt.cc
+	meteofilters/ProcUndercatch.cc
+	meteofilters/ProcAdd.cc
+	meteofilters/ProcMult.cc
 	meteofilters/FilterBlock.cc
 	meteofilters/WindowedFilter.cc
 	meteofilters/ProcessingBlock.cc

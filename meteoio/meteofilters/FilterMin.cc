@@ -23,7 +23,7 @@ namespace mio {
 
 FilterMin::FilterMin(const std::vector<std::string>& vec_args) : FilterBlock("MIN") {
 	parse_args(vec_args);
-	properties.for_second_pass = true; //for the rest: default values
+	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
 void FilterMin::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
@@ -57,7 +57,7 @@ void FilterMin::parse_args(std::vector<std::string> vec_args) {
 		is_soft = FilterBlock::is_soft(vec_args);
 	}
 
-	FilterBlock::convert_args(1, 2, vec_args, filter_args);
+	convert_args(1, 2, vec_args, filter_args);
 
 	if (filter_args.size() > 2)
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);

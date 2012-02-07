@@ -86,9 +86,7 @@ size_t ProcessingStack::getFiltersForParameter(const Config& cfg, const std::str
 size_t ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
                                                     std::vector<std::string>& vecArguments)
 {
-	/*
-	 * Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
-	 */
+	// Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
 	cfg.getValue(keyname, "Filters", vecArguments, Config::nothrow);
 	return vecArguments.size();
 }
@@ -112,7 +110,13 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 				for (size_t jj=0; jj<filter_stack.size(); jj++){
 					//cout << param_name << ": processing filter " << (*filter_stack[jj]).getName() << endl;
 					if (second_pass){
-						if (!(*filter_stack[jj]).getProperties().for_second_pass)
+						if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::first
+						    || (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
+							continue;
+					}
+					if (!second_pass){
+						if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::second
+						    || (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
 							continue;
 					}
 					appliedFilter = true;

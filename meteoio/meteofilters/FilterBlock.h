@@ -28,21 +28,19 @@ namespace mio {
 
 /**
  * @class  FilterBlock
- * @brief  An abstract class 
+ * @brief  An abstract class
  * @author Thomas Egger
  * @date   2011-01-02
  */
 class FilterBlock : public ProcessingBlock {
 	public:
 		virtual ~FilterBlock();
-		
+
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
 		static bool is_soft(std::vector<std::string>& vec_args);
 
-		void convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
-		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);
 		static void extract_dbl_vector(const unsigned int& index, const std::vector<MeteoData>& ivec,
 		                               std::vector<double>& ovec);
 		static void extract_dbl_vector(const unsigned int& index, const std::vector<const MeteoData*>& ivec,

@@ -32,21 +32,8 @@ bool FilterBlock::is_soft(std::vector<std::string>& vec_args) {
 			return true;
 		}
 	}
-	
+
 	return false;
-}
-
-void FilterBlock::convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
-                               const std::vector<std::string>& vec_args, std::vector<double>& dbl_args)
-{
-	if ((vec_args.size() < min_nargs) || (vec_args.size() > max_nargs))
-		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT); 
-
-	for (unsigned int ii=0; ii<vec_args.size(); ii++){
-		double tmp = IOUtils::nodata;
-		IOUtils::convertString(tmp, vec_args[ii]);
-		dbl_args.push_back(tmp);
-	}
 }
 
 void FilterBlock::extract_dbl_vector(const unsigned int& index, const std::vector<MeteoData>& ivec,

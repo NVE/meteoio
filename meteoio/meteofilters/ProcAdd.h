@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2011 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERHNWMELT_H__
-#define __FILTERHNWMELT_H__
+#ifndef __PROCADD_H__
+#define __PROCADD_H__
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -25,25 +25,21 @@
 namespace mio {
 
 /**
- * @class  FilterHNWMelt
+ * @class  ProcAdd
  * @ingroup processing
  * @author Mathias Bavay
- * @date   2011-11-11
- * @brief Filters out snow melting in an unheated rain gauge.
- * This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place
- * when the relative humidity is greater than 0.5 and (TA-TSS) < 3, otherwise they get reset to 0.
- * It can take two optional arguments overwriting these thresholds. If none of these conditions could be tested
- * (for lack of data), then the precipitation is reset to nodata.
- *
+ * @date   2012-02-06
+ * @brief Add an offset to the values.
+ * This simply adds to all values a given constant.
  * @code
- * HNW::filter2	= hnw_melt
- * HNW::arg2	= 0.5 3.
+ * TSS::filter1	= add
+ * TSS::arg1	= 0.5
  * @endcode
  */
 
-class FilterHNWMelt : public FilterBlock {
+class ProcAdd : public ProcessingBlock {
 	public:
-		FilterHNWMelt(const std::vector<std::string>& vec_args);
+		ProcAdd(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -51,8 +47,7 @@ class FilterHNWMelt : public FilterBlock {
 	private:
 		void parse_args(const std::vector<std::string>& vec_args);
 
-		double thresh_rh;
-		double thresh_Dt;
+		double offset;
 };
 
 } //end namespace

@@ -127,7 +127,7 @@ void FilterStdDev::parse_args(std::vector<std::string> vec_args)
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
 
-	FilterBlock::convert_args(2, 2, vec_args, filter_args);
+	convert_args(2, 2, vec_args, filter_args);
 
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
 		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);

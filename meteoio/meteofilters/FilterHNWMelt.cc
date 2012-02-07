@@ -23,7 +23,7 @@ namespace mio {
 
 FilterHNWMelt::FilterHNWMelt(const std::vector<std::string>& vec_args) : FilterBlock("HNW_MELT") {
 	parse_args(vec_args);
-	properties.for_second_pass = true; //for the rest: default values
+	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
 void FilterHNWMelt::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
@@ -59,10 +59,10 @@ void FilterHNWMelt::process(const unsigned int& index, const std::vector<MeteoDa
 }
 
 
-void FilterHNWMelt::parse_args(std::vector<std::string> vec_args) {
+void FilterHNWMelt::parse_args(const std::vector<std::string>& vec_args) {
 	vector<double> filter_args;
 
-	FilterBlock::convert_args(0, 2, vec_args, filter_args);
+	convert_args(0, 2, vec_args, filter_args);
 
 	const size_t nb_args = filter_args.size();
 	if (nb_args == 0) {

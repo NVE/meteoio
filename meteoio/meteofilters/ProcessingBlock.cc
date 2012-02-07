@@ -27,6 +27,9 @@
 #include <meteoio/meteofilters/FilterHNWMelt.h>
 #include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/FilterMAD.h>
+#include <meteoio/meteofilters/ProcUndercatch.h>
+#include <meteoio/meteofilters/ProcAdd.h>
+#include <meteoio/meteofilters/ProcMult.h>
 
 namespace mio {
 /**
@@ -84,6 +87,10 @@ namespace mio {
  * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
  * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
  * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
+ * - ADD: adds a given offset to the data, see ProcAdd
+ * - MULT: multiply the data by a given factor, see ProcMult
+ * - UNDERCATCH: rain gauge correction for undercatch, using various correction models, see ProcUndercatch
+ *
  */
 
 std::set<std::string> BlockFactory::availableBlocks;
@@ -102,6 +109,9 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("TUKEY");
 	availableBlocks.insert("MAD");
 	availableBlocks.insert("HNW_MELT");
+	availableBlocks.insert("UNDERCATCH");
+	availableBlocks.insert("ADD");
+	availableBlocks.insert("MULT");
 	return true;
 }
 
@@ -134,6 +144,12 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterMAD(vec_args);
 	} else if (blockname == "HNW_MELT"){
 		return new FilterHNWMelt(vec_args);
+	} else if (blockname == "UNDERCATCH"){
+		return new ProcUndercatch(vec_args);
+	} else if (blockname == "MULT"){
+		return new ProcMult(vec_args);
+	} else if (blockname == "ADD"){
+		return new ProcAdd(vec_args);
 	} else {
 		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);
 	}
@@ -143,6 +159,19 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 
 ProcessingBlock::ProcessingBlock(const std::string& name) : block_name(name)
 {}
+
+void ProcessingBlock::convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
+                               const std::vector<std::string>& vec_args, std::vector<double>& dbl_args)
+{
+	if ((vec_args.size() < min_nargs) || (vec_args.size() > max_nargs))
+		throw InvalidArgumentException("Wrong number of arguments for filter/processing element \"" + getName() + "\"", AT);
+
+	for (unsigned int ii=0; ii<vec_args.size(); ii++){
+		double tmp = IOUtils::nodata;
+		IOUtils::convertString(tmp, vec_args[ii]);
+		dbl_args.push_back(tmp);
+	}
+}
 
 std::string ProcessingBlock::getName() const {
 	return block_name;
@@ -157,7 +186,6 @@ std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data) {
 	return os;
 }
 
-
 const ProcessingProperties& ProcessingBlock::getProperties() const {
 	return properties;
 }
@@ -171,8 +199,12 @@ std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data) {
 	os << "{";
 	if(h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
 	if(p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
-	if(data.for_second_pass==true)
+	if(data.stage==ProcessingProperties::first)
+		os << "p¹";
+	if(data.stage==ProcessingProperties::second)
 		os << "p²";
+	if(data.stage==ProcessingProperties::both)
+		os << "p½";
 	os << "}";
 	return os;
 }

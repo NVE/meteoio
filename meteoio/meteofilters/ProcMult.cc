@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,18 +15,18 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteofilters/FilterMax.h>
+#include <meteoio/meteofilters/ProcMult.h>
 
 using namespace std;
 
 namespace mio {
 
-FilterMax::FilterMax(const std::vector<std::string>& vec_args) : FilterBlock("MAX") {
+ProcMult::ProcMult(const std::vector<std::string>& vec_args) : ProcessingBlock("MULT") {
 	parse_args(vec_args);
-	properties.stage = ProcessingProperties::both; //for the rest: default values
+	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
-void FilterMax::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void ProcMult::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
@@ -38,37 +38,20 @@ void FilterMax::process(const unsigned int& index, const std::vector<MeteoData>&
 		double& tmp = ovec[ii](index);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
-		if (tmp > max_val){
-			if (is_soft){
-				tmp = max_soft;
-			} else {
-				tmp = IOUtils::nodata;
-			}
-		}
+		tmp *= factor;
 	}
 }
 
 
-void FilterMax::parse_args(std::vector<std::string> vec_args) {
+void ProcMult::parse_args(const std::vector<std::string>& vec_args) {
 	vector<double> filter_args;
 
-	is_soft = false;
-	if (vec_args.size() > 1){
-		is_soft = FilterBlock::is_soft(vec_args);
-	}
+	convert_args(1, 1, vec_args, filter_args);
 
-	convert_args(1, 2, vec_args, filter_args);
-
-	if (filter_args.size() > 2)
+	if (filter_args.size() > 1)
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
-	max_val = filter_args[0];
-
-	if (filter_args.size() == 2){
-		max_soft = filter_args[1];
-	} else {
-		max_soft = max_val;
-	}
+	factor = filter_args[0];
 }
 
 } //end namespace

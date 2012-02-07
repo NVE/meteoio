@@ -103,6 +103,53 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 }
 
 /**
+* @brief Wind chill temperature.
+* This is an index aiming at expressing the human-percived feeling of air temperature on exposed skin due to wind.
+* This is NOT a sceintific measurement, only an index to express a subjective feeling.
+* It is inapplicable above 10 Celsius and a few m/s wind (5 m/s used here), therefore returning air temperature.
+* @param TA air temperature (K)
+* @param VW wind velocity (m/s)
+* @return wind chill temperature (K)
+*/
+double Atmosphere::windChill(const double& TA, const double& VW)
+{
+	if(TA>(273.15+10.) || VW<5.) return TA; //not applicable in this case
+
+	const double t = K_TO_C(TA); //in Celsius
+	const double v = VW*3.6; //in km/h
+	const double v016 = pow(v, 0.16);
+
+	const double WCT = 13.12 + 0.6215*t - 11.37*v016 + 0.3965*t*v016;
+	return C_TO_K(WCT);
+}
+
+/**
+* @brief Heat index.
+* This is an index aiming at expressing the human-perceived air temperature due to humidity.
+* This is NOT a sceintific measurement, only an index to express a subjective feeling.
+* It is inapplicable below 26.7 Celsius and below 40% humidity, therefore returning air temperature.
+* @param TA air temperature (K)
+* @param RH relative humidity (between 0 and 1)
+* @return Heat index (K)
+*/
+double Atmosphere::heatIndex(const double& TA, const double& RH)
+{
+	if(TA<(273.15+26.7) || RH<0.4) return TA; //not applicable in this case
+
+	const double t = K_TO_C(TA); //in Celsius
+	const double t2 = t*t;
+	const double rh = RH*100.; //in percent
+	const double rh2 = rh*rh;
+
+	const double c1=-8.784695, c2=1.61139411, c3=2.338549 , c4=-0.14611605;
+	const double c5=-1.2308094e-2 , c6=-1.6424828e-2 , c7=2.211732e-3 , c8=7.2546e-4, c9=-3.582e-6;
+
+	const double HI = c1 + c2*t + c3*rh + c4*t*rh + c5*t2 + c6*rh2 + c7*t2*rh + c8*t*rh2 + c9*t2*rh2;
+
+	return C_TO_K(HI);
+}
+
+/**
 * @brief Standard water vapor saturation
 * @param T air temperature (K)
 * @return standard water vapor saturation pressure (Pa)

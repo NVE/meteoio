@@ -25,7 +25,7 @@ namespace mio {
 FilterRate::FilterRate(const std::vector<std::string>& vec_args) : FilterBlock("RATE")
 {
 	parse_args(vec_args);
-	properties.for_second_pass = true; //for the rest: default values
+	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
 void FilterRate::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
@@ -68,9 +68,9 @@ void FilterRate::process(const unsigned int& index, const std::vector<MeteoData>
 	}
 }
 
-void FilterRate::parse_args(std::vector<std::string> vec_args) {
+void FilterRate::parse_args(const std::vector<std::string>& vec_args) {
 	vector<double> filter_args;
-	FilterBlock::convert_args(1, 2, vec_args, filter_args);
+	convert_args(1, 2, vec_args, filter_args);
 
 	const size_t nb_args = filter_args.size();
 	if (nb_args == 2) {
