@@ -49,7 +49,8 @@ namespace mio {
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations
- * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the FilterHNWMelt filter to detect snow melting in the rain gauge as well as winter conditions detection (no such filter implemented yet).
+ * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the FilterHNWMelt filter to detect snow melting in the rain gauge.
+ * - USE_SNOWPACK_HNW: if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute HNW. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will overwrite hnw. (default=false)
  */
 
 const double ImisIO::plugin_nodata = -999.; ///< plugin specific nodata value
@@ -64,6 +65,8 @@ const string ImisIO::sqlQuerySensorDepths = "SELECT hts1_1, hts1_2, hts1_3 FROM 
 const string ImisIO::sqlQueryMeteoDataDrift = "SELECT TO_CHAR(a.datum, 'YYYY-MM-DD HH24:MI') AS thedate, a.ta, a.iswr, a.vw, a.dw, a.vw_max, a.rh, a.ilwr, a.hnw, a.tsg, a.tss, a.hs, a.rswr, b.vw AS vw_drift, b.dw AS dw_drift, a.ts1, a.ts2, a.ts3 FROM (SELECT * FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4) a LEFT OUTER JOIN (SELECT case when to_char(datum,'MI')=40 then trunc(datum,'HH24')+0.5/24 else datum end as datum, vw, dw FROM ams.v_ams_raw WHERE stat_abk=:5 AND stao_nr=:6 AND datum>=:3 AND datum<=:4) b ON a.datum=b.datum ORDER BY thedate"; ///< C. Marty's Data query with wind drift station; gets wind from enet stations for imis snow station too! [2010-02-24]
 
 const string ImisIO::sqlQueryMeteoData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, ta, iswr, vw, dw, vw_max, rh, ilwr, hnw, tsg, tss, hs, rswr, ts1, ts2, ts3 FROM ams.v_ams_raw WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Data query without wind drift station
+
+const string ImisIO::sqlQuerySWEData = "SELECT TO_CHAR(datum, 'YYYY-MM-DD HH24:MI') AS thedate, swe FROM snowpack.ams_pmod WHERE stat_abk=:1 AND stao_nr=:2 AND datum>=:3 AND datum<=:4 ORDER BY thedate ASC"; ///< Query SWE as calculated by SNOWPACK to feed into HNW
 
 std::map<std::string, AnetzData> ImisIO::mapAnetz;
 const bool ImisIO::__init = ImisIO::initStaticData();
@@ -176,6 +179,8 @@ void ImisIO::getDBParameters()
 	cfg.getValue("USEANETZ", "Input", useAnetz, Config::nothrow);
 	use_hnw_imis = false;
 	cfg.getValue("USE_IMIS_HNW", "Input", use_hnw_imis, Config::nothrow);
+	use_hnw_snowpack = false;
+	cfg.getValue("USE_SNOWPACK_HNW", "Input", use_hnw_snowpack, Config::nothrow);
 }
 
 ImisIO::ImisIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
@@ -479,6 +484,12 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			}
 		}
 
+		if(use_hnw_snowpack) {
+			for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
+				readSWE(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, conn);
+			}
+		}
+
 		closeDBConnection(env, conn);
 	} catch (const exception& e){
 		closeDBConnection(env, conn);
@@ -700,6 +711,103 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		vecMeteo.at(stationindex).push_back(tmpmd); //Now insert tmpmd
 	}
 }
+
+/**
+ * @brief Read simulated SWE from the database, compute Delta(SWE) and use it as HNW for one specific station (specified by the stationindex)
+ * @param dateStart     The beginning of the interval to retrieve data for
+ * @param dateEnd       The end of the interval to retrieve data for
+ * @param vecMeteo      The vector that will hold all MeteoData for each station
+ * @param stationindex  The index of the station as specified in the Config
+ * @param vecStationIDs Vector of station IDs
+ * @param env           Create Oracle environnment
+ * @param conn          Create connection to SDB
+ */
+void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
+                      const size_t& stationindex, const std::vector<StationData>& vecStationIDs,
+                      oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+{
+	const double max_interval = 3./24.; //3 hours between two SWE values max
+
+	// Moving back to the IMIS timezone (UTC+1)
+	Date dateS(dateStart), dateE(dateEnd);
+	dateS.setTimeZone(in_tz);
+	dateE.setTimeZone(in_tz);
+
+	//build stat_abk and stao_nr from station name
+	string stat_abk="", stao_nr="";
+	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
+
+	//query
+	try {
+		Statement *stmt = NULL;
+		ResultSet *rs = NULL;
+
+		stmt = conn->createStatement(sqlQuerySWEData);
+
+		// construct the oracle specific Date object: year, month, day, hour, minutes
+		int year, month, day, hour, minutes;
+		dateS.getDate(year, month, day, hour, minutes);
+		occi::Date begindate(env, year, month, day, hour, minutes);
+		dateE.getDate(year, month, day, hour, minutes);
+		occi::Date enddate(env, year, month, day, hour, minutes);
+		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
+		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
+		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
+		stmt->setDate(4, enddate);    // set 4th variable's value (end date)
+
+		rs = stmt->executeQuery(); // execute the statement stmt
+		vector<MetaData> cols = rs->getColumnListMetaData();
+
+		double prev_swe=IOUtils::nodata;
+		Date prev_date;
+		size_t ii_serie=0; //index in meteo time serie
+		size_t serie_len = vecMeteo[stationindex].size();
+
+		while (rs->next() == true) { //loop over timesteps
+			if(cols.size()!=2) {
+				stringstream ss;
+				ss << "For station " << vecStationIDs.at(stationindex).getStationID() << ", ";
+				ss << "snowpack SWE query returned " << cols.size() << " columns, while 2 were expected";
+				throw UnknownValueException(ss.str(), AT);
+			}
+			Date d;
+			IOUtils::convertString(d, rs->getString(1), 1.);
+			double curr_swe;
+			IOUtils::convertString(curr_swe, rs->getString(2));
+			if(prev_swe!=IOUtils::nodata && curr_swe!=IOUtils::nodata) {
+				 //valid values for Delta computation
+				if((d.getJulianDate()-prev_date.getJulianDate())<=max_interval) {
+					//data not too far apart, so we accept it for Delta SWE
+					//looking for matching timestamp in the vecMeteo
+					while(ii_serie<serie_len && vecMeteo[stationindex][ii_serie].date<d) ii_serie++;
+					if(ii_serie>=serie_len) return;
+					if(vecMeteo[stationindex][ii_serie].date==d) {
+						//we found the matching timestamp -> writing Delta(SWE) as hnw
+						const double new_hnw_sum = curr_swe - prev_swe;
+						if(new_hnw_sum>0.) vecMeteo[stationindex][ii_serie](MeteoData::HNW) = new_hnw_sum;
+						prev_swe = curr_swe;
+						prev_date = d;
+					}
+				} else {
+					//data points in SWE too far apart, we could not use it for hnw but we reset our prev_swe to this new point
+					prev_swe = curr_swe;
+					prev_date = d;
+				}
+			}
+			if(curr_swe!=IOUtils::nodata && prev_swe==IOUtils::nodata) {
+				 //this looks like the first valid data point that we find
+				prev_swe = curr_swe;
+				prev_date = d;
+			}
+		}
+
+		stmt->closeResultSet(rs);
+		conn->terminateStatement(stmt);
+	} catch (const exception& e){
+		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+	}
+}
+
 
 /**
  * @brief Puts the data that has been retrieved from the database into a MeteoData object

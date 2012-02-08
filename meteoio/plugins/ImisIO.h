@@ -131,6 +131,9 @@ class ImisIO : public IOInterface {
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              const size_t& stationindex, const std::vector<StationData>& vecStationID,
 		              oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+		void readSWE(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
+		             const size_t& stationindex, const std::vector<StationData>& vecStationIDs,
+		             oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
 		void readStationIDs(std::vector<std::string>& vecStationID);
 		void parseStationID(const std::string& stationID, std::string& stnAbbrev, std::string& stnNumber);
 
@@ -164,10 +167,11 @@ class ImisIO : public IOInterface {
 		static const std::string sqlQuerySensorDepths;
 		static const std::string sqlQueryMeteoDataDrift; // combined snow_drift query from two stations (ams.v_ams_raw)
 		static const std::string sqlQueryMeteoData; // single station query (ams.v_ams_raw)
+		static const std::string sqlQuerySWEData; //SWE as computed by SNOWPACK
 		std::string oracleUserName_in;
 		std::string oraclePassword_in;
 		std::string oracleDBName_in;
-		bool useAnetz, use_hnw_imis;
+		bool useAnetz, use_hnw_imis, use_hnw_snowpack;
 
 		static std::map<std::string, AnetzData> mapAnetz;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
