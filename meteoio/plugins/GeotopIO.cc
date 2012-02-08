@@ -305,7 +305,6 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 					}
 
 					convertUnits(md);
-					//if (ii==0) cout << md << endl;
 					vecMeteo[ii].push_back(md);
 				} else if (md.date > dateEnd) {
 					break;
@@ -399,8 +398,6 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 	 */
 	int x = 0, y = 1, lat = 2, lon = 3, elv = 4;
 
-	std::vector<std::vector<std::string> > vecMetaData;
-
 	std::vector<std::string> tmpvec;
 	unsigned int stationNumber = 1; //Since the stations don't have a name, they will be numbered
 
@@ -420,6 +417,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 	std::vector<std::string> vecData;
+	std::vector<std::string> vecX, vecY, vecLat, vecLon, vecAlt;
 
 	try {
 		Coords coordinate(coordin, coordinparam);
@@ -428,19 +426,19 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 
 			if (line.find("MeteoStationCoordinateX") == 0) {//in section 1
 				parseMetaData("MeteoStationCoordinateX", line, tmpvec);
-				vecMetaData.push_back(tmpvec);
+				vecX = tmpvec;
 			} else if (line.find("MeteoStationCoordinateY") == 0) {
 				parseMetaData("MeteoStationCoordinateY", line, tmpvec);
-				vecMetaData.push_back(tmpvec);
+				vecY = tmpvec;
 			} else if (line.find("MeteoStationLatitude") == 0) {
 				parseMetaData("MeteoStationLatitude", line, tmpvec);
-				vecMetaData.push_back(tmpvec);
+				vecLat = tmpvec;
 			} else if (line.find("MeteoStationLongitude") == 0) {
 				parseMetaData("MeteoStationLongitude", line, tmpvec);
-				vecMetaData.push_back(tmpvec);
+				vecLon = tmpvec;
 			} else if (line.find("MeteoStationElevation") == 0) {
 				parseMetaData("MeteoStationElevation", line, tmpvec);
-				vecMetaData.push_back(tmpvec);
+				vecAlt = tmpvec;
 			} else if (line.find("HeaderIPrec") == 0) {
 				mapColumnNames[getValueForKey(line)] = MeteoData::HNW;
 			} else if (line.find("HeaderWindVelocity") == 0) {
@@ -467,19 +465,19 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 
 		//HACK: Check for consistency between the vecMetaData vectors
 
-		for (unsigned int i = 0; i < vecMetaData[0].size(); i++) {
+		for (unsigned int i = 0; i < 5; i++) {
 
 			std::vector<double> tmpdata = std::vector<double>(5);
 
-			if (!IOUtils::convertString(tmpdata.at(x), vecMetaData[x].at(i),	std::dec))
+			if (!IOUtils::convertString(tmpdata.at(x), vecX.at(i),	std::dec))
 				throw InvalidFormatException(metafile + ": " + line, AT);
-			if (!IOUtils::convertString(tmpdata.at(y), vecMetaData[y].at(i), std::dec))
+			if (!IOUtils::convertString(tmpdata.at(y), vecY.at(i), std::dec))
 				throw InvalidFormatException(metafile + ": " + line, AT);
-			if (!IOUtils::convertString(tmpdata.at(lat),	vecMetaData[lat].at(i), std::dec))
+			if (!IOUtils::convertString(tmpdata.at(lat),	vecLat.at(i), std::dec))
 				throw InvalidFormatException(metafile + ": " + line, AT);
-			if (!IOUtils::convertString(tmpdata.at(lon),	vecMetaData[lon].at(i), std::dec))
+			if (!IOUtils::convertString(tmpdata.at(lon),	vecLon.at(i), std::dec))
 				throw InvalidFormatException(metafile + ": " + line, AT);
-			if (!IOUtils::convertString(tmpdata.at(elv),	vecMetaData[elv].at(i), std::dec))
+			if (!IOUtils::convertString(tmpdata.at(elv),	vecAlt.at(i), std::dec))
 				throw InvalidFormatException(metafile + ": " + line, AT);
 
 			//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
@@ -489,9 +487,9 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			tmpdata[3] = IOUtils::standardizeNodata(tmpdata[3], plugin_nodata);
 			tmpdata[4] = IOUtils::standardizeNodata(tmpdata[4], plugin_nodata);
 
-//			cout << "Station(" << i + 1 << ") X " << tmpdata[0] << " Y "
-//					<< tmpdata[1] << " La " << tmpdata[2] << " Lo "
-//					<< tmpdata[3] << " E " << tmpdata[4] << endl;
+			//			cout << "Station(" << i + 1 << ") X " << tmpdata[0] << " Y "
+			//		<< tmpdata[1] << " La " << tmpdata[2] << " Lo "
+			//		<< tmpdata[3] << " E " << tmpdata[4] << endl;
 
 			//coordinate.setLatLon(tmpdata[2], tmpdata[3], tmpdata[4], false);
 			coordinate.setXY(tmpdata[0], tmpdata[1], tmpdata[4], true);
