@@ -303,7 +303,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 							md(indices[jj-1]) = tmpdata[jj];
 						}
 					}
-
+					
 					convertUnits(md);
 					vecMeteo[ii].push_back(md);
 				} else if (md.date > dateEnd) {
@@ -465,7 +465,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 
 		//HACK: Check for consistency between the vecMetaData vectors
 
-		for (unsigned int i = 0; i < 5; i++) {
+		for (unsigned int i = 0; i < vecX.size(); i++) {
 
 			std::vector<double> tmpdata = std::vector<double>(5);
 
