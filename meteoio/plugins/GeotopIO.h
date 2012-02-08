@@ -65,26 +65,23 @@ class GeotopIO : public IOInterface {
 	private:
 		std::string getValueForKey(const std::string& line);
 		void initParamNames(std::map<std::string, size_t>& mapParam);
-		void readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames,
-		                  const std::string& metafile);
-		void makeColumnMap(const std::vector<std::string>& tmpvec,
-		                   const std::vector<std::string>& vecColumnNames,
-		                   std::map<std::string, size_t>& mapHeader);
+		void readMetaData(const std::string& metafile);
+		void identify_fields(const std::vector<std::string>& tmpvec, const std::string& filename,
+		                     std::vector<size_t>& indices, MeteoData& md);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		void cleanup() throw();
 		void parseDate(const std::string& datestring, const std::string& fileandline, Date& date);
-		std::vector<std::string>  stringSplit( std::string str,const std::string delim);
-		std::vector<std::string> parseMeteoData(const std::string head, std::string datastr);
-
+		void parseMetaData(const std::string& head, const std::string& datastr, std::vector<std::string>& tmpvec);
 
 		Config cfg;
 		double in_tz, out_tz;
+		size_t nr_of_stations;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout; //Output file streams
 		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
 		std::vector<mio::StationData> vecStation;
-		std::vector<std::string> vecColumnNames;
+		std::map<std::string, size_t> mapColumnNames;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

@@ -47,26 +47,20 @@ namespace mio {
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
-GeotopIO::GeotopIO(void(*delObj)(void*), const Config& i_cfg) :
-	IOInterface(delObj), cfg(i_cfg) {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout,
-			coordoutparam);
+	GeotopIO::GeotopIO(void(*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg), nr_of_stations(IOUtils::npos) {
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
 }
 
-GeotopIO::GeotopIO(const std::string& configfile) :
-	IOInterface(NULL), cfg(configfile) {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout,
-			coordoutparam);
+GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile), nr_of_stations(IOUtils::npos) {
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
 }
 
-GeotopIO::GeotopIO(const Config& cfgreader) :
-	IOInterface(NULL), cfg(cfgreader) {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout,
-			coordoutparam);
+GeotopIO::GeotopIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), nr_of_stations(IOUtils::npos) {
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
 }
@@ -208,12 +202,11 @@ void GeotopIO::writeMeteoData(
 
 void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 	string metafile="";
-
 	vecMeta.clear();
 
 	if (vecStation.size() == 0) {
 		cfg.getValue("METAFILE", "Input", metafile);
-		readMetaData(vecStation, vecColumnNames, metafile);
+		readMetaData(metafile);
 	}
 
 	vecMeta = vecStation;
@@ -227,22 +220,21 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	cfg.getValue("METEOPATH", "Input", path);
 	cfg.getValue("METEOPREFIX", "Input", prefix);
-	cfg.getValue("METEOPREFIX", "Input", metafile);
-
-	vector<StationData> myStations;
 
 	//read geotop.inpts to find out how many stations exist
 	//at what locations they are and what column headers to use
+	vector<StationData> myStations;
 	readStationData(dateStart, myStations);
-	//readMetaData(myStations, vecColumnNames, metafile);
-
 
 	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
-		vec_streampos = vector<map<Date, std::streampos> > (myStations.size());
+		vec_streampos = vector<map<Date, std::streampos> > (vecStation.size());
 
-	cout << "[i] GEOtopIO: Found " << myStations.size() << " station(s)" << std::endl;
+	if (nr_of_stations == IOUtils::npos) 
+		nr_of_stations = vecStation.size();
 
-	for (size_t ii = 0; ii < myStations.size(); ii++) {
+	cout << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
+
+	for (size_t ii = 0; ii < nr_of_stations; ii++) {
 		vecMeteo.push_back(vector<MeteoData> ());
 
 		stringstream ss;
@@ -270,7 +262,10 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
 
 			std::map<std::string, size_t> mapHeader;
-			makeColumnMap(tmpvec, vecColumnNames, mapHeader);
+			std::vector<size_t> indices;
+			MeteoData md;
+			identify_fields(tmpvec, filename, indices, md);
+			md.meta = vecStation[ii];
 
 			if (ncols == 0)
 				throw InvalidFormatException("No meta data found in " + filename, AT);
@@ -288,13 +283,12 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				streampos tmp_fpointer = fin.tellg();
 				getline(fin, line, eoln); //read complete line of data
 
-				MeteoData md;
-				md.meta = myStations[ii];
 				if (IOUtils::readLineToVec(line, tmpvec, ',') != ncols) {
 					break;
 					//throw InvalidFormatException("Premature End " + filename, AT);
 				}
 
+				md.reset(); //clear all previous data
 				//tmpvec[0] holds the date in many possible formats -> needs to be parsed
 				parseDate(tmpvec.at(0), filename + ": " + line, md.date);
 
@@ -304,27 +298,15 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 					for (size_t jj = 1; jj < ncols; jj++) {
 						if (!IOUtils::convertString(tmpdata[jj], tmpvec.at(jj), std::dec))
 							throw InvalidFormatException(filename + ": " + line, AT);
+
+						if (indices[jj-1] != IOUtils::npos){
+							md(indices[jj-1]) = tmpdata[jj];
+						}
 					}
-					tmpdata[ncols] = IOUtils::nodata;
 
-					md(MeteoData::TA) = tmpdata[mapHeader["ta"]];
-					md(MeteoData::ISWR) = tmpdata[mapHeader["iswr"]];
-					md(MeteoData::VW) = tmpdata[mapHeader["vw"]];
-					md(MeteoData::DW) = tmpdata[mapHeader["dw"]];
-					md(MeteoData::RH) = tmpdata[mapHeader["rh"]];
-					md(MeteoData::ILWR) = tmpdata[mapHeader["ilwr"]];
-					md(MeteoData::HNW) = tmpdata[mapHeader["hnw"]];
-					md(MeteoData::P) = tmpdata[mapHeader["p"]];
-					md(MeteoData::RSWR) = tmpdata[mapHeader["cloudt"]]; //HACK
-					/*if (vecColumnNames[9] != "dummy") { //Non standard parameter has to be added
-						size_t pos = md.addParameter("TAUCLOUD");
-						md(pos) = tmpdata[mapHeader["cloudt"]];
-						}*/
-
-                    convertUnits(md);
-
-                    vecMeteo[ii].push_back(md);
-				cout << md << endl;
+					convertUnits(md);
+					//if (ii==0) cout << md << endl;
+					vecMeteo[ii].push_back(md);
 				} else if (md.date > dateEnd) {
 					break;
 				}
@@ -383,142 +365,33 @@ void GeotopIO::parseDate(const std::string& datestring,
 	date.setDate(ymdhm[0], ymdhm[1], ymdhm[2], ymdhm[3], ymdhm[4], in_tz);
 }
 
-void GeotopIO::makeColumnMap(const std::vector<std::string>& tmpvec,
-		const std::vector<std::string>& vecColumnNames, std::map<std::string,
-				size_t>& mapHeader) {
-	/*
-	 #1 Precipitation intensity (mm/h)
-	 #2 Wind speed (m/s)
-	 #3 Direction from which wind comes from (degree from North, clockwise)
-	 #4 Relative humidity (%)
-	 #5 Air temperature (C)
-	 #6 Air pressure (mbar)
-	 #7 Global shortwave radiation (W/m2)
-	 #8 Direct shortwave radiation (W/m2)
-	 #9 Diffuse shortwave radiation (W/m2)
-	 #10 Cloudiness transmissivity
-	 #11 Cloudiness (fraction from 0 to 1)
-	 #12 Incoming longwave radiation (W/m2)
-	 #13 Net shortwave radiation (W/m2)
-	 #14 Temperature of the soil surface (for Dirichlet conditions)
-	 */
-
-	for (size_t ii = 0; ii < vecColumnNames.size(); ii++) {
-		std::string current = "";
-		switch (ii) {
-		case 0:
-			mapHeader["hnw"] = tmpvec.size();
-			current = "hnw";
-			break;
-		case 1:
-			mapHeader["vw"] = tmpvec.size();
-			current = "vw";
-			break;
-		case 2:
-			mapHeader["dw"] = tmpvec.size();
-			current = "dw";
-			break;
-		case 3:
-			mapHeader["rh"] = tmpvec.size();
-			current = "rh";
-			break;
-		case 4:
-			mapHeader["ta"] = tmpvec.size();
-			current = "ta";
-			break;
-		case 5:
-			mapHeader["p"] = tmpvec.size();
-			current = "p";
-			break;
-		case 6:
-			mapHeader["iswr"] = tmpvec.size();
-			current = "iswr";
-			break;
-		case 7:
-			mapHeader["dirswr"] = tmpvec.size();
-			current = "dirswr";
-			break;
-		case 8:
-			mapHeader["diffswr"] = tmpvec.size();
-			current = "diffswr";
-			break;
-		case 9:
-			mapHeader["cloudt"] = tmpvec.size();
-			current = "cloudt";
-			break;
-		case 10:
-			mapHeader["cloudi"] = tmpvec.size();
-			current = "cloudi";
-			break;
-		case 11:
-			mapHeader["ilwr"] = tmpvec.size();
-			current = "ilwr";
-			break;
-		case 12:
-			mapHeader["nswr"] = tmpvec.size();
-			current = "nswr";
-			break;
-		case 13:
-			mapHeader["tsup"] = tmpvec.size();
-			current = "tsup";
-			break;
-		default:
-			throw IOException(
-					"GEOtopIO can only deal with 14 meteo parameters", AT);
-			break;
-		}
-
-		//Go through the columns and seek out which parameter corresponds with which column
-		for (size_t jj = 1; jj < tmpvec.size(); jj++) {
-			//cout << "looking at parameter: " << tmpvec[jj] << "   comparing to : " << vecColumnNames[ii] << endl;
-			if (tmpvec[jj].length() >= vecColumnNames[ii].length()){
-				if (vecColumnNames[ii] == tmpvec[jj].substr(0, vecColumnNames[ii].length())){
-					mapHeader[current] = jj;
-					cout << "mapHeader[" << current << " = " << jj << endl;
-				}
+void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std::string& filename,
+                               std::vector<size_t>& indices, MeteoData& md) {
+	//Go through the columns and seek out which parameter corresponds with which column
+	for (size_t jj = 1; jj < tmpvec.size(); jj++) { //skip field 1, that one is reserved for the date
+		std::map<std::string, size_t>::iterator it = mapColumnNames.find(tmpvec[jj]);
+		if (it != mapColumnNames.end()) {
+			size_t index = it->second;
+			if (index == IOUtils::npos){
+				index = md.addParameter(it->first);
 			}
+			indices.push_back(index);
+			//cout << tmpvec[jj] << "=> index " << index << endl;
+		} else {
+			indices.push_back(IOUtils::npos);
+			cout << "[w] Column '" << tmpvec[jj] << "' in file " << filename << " will be ignored!" << endl;
+			//throw InvalidFormatException("The column name " + tmpvec[jj] + " is unknown", AT);
 		}
 	}
 }
 
-std::vector<std::string> GeotopIO::stringSplit(std::string str,
-		const std::string delim) {
-
-	/*
-	 * This function splits the string str by any char appears in delim, not including this char.
-	 * For example, the call splitString( "abcdefghabcd", "ade"); will return vector of the strings "bc" "fgh" "bc".
-	 */
-
-	std::vector<std::string> results;
-	unsigned int cutAt;
-
-	while ((cutAt = str.find_first_of(delim)) != str.npos) {
-		if (cutAt > 0) {
-			results.push_back(str.substr(0, cutAt));
-		}
-		str = str.substr(cutAt + 1);
-	}
-
-	if (str.length() > 0) {
-		results.push_back(str);
-	}
-
-	return results;
-}
-
-std::vector<std::string> GeotopIO::parseMeteoData(const std::string head,
-		std::string datastr) {
-
-	std::vector<std::string> tmpvec;
-
-	string delim = ",";
-
+void GeotopIO::parseMetaData(const std::string& head, const std::string& datastr, std::vector<std::string>& tmpvec) {
+	tmpvec.clear();
 	string mdata = datastr.substr(head.length() + 1, datastr.length() + 1);
-	return stringSplit(mdata, delim);
-
+	IOUtils::readLineToVec(mdata, tmpvec, ',');
 }
 
-void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<std::string>& vecColumnNames, const std::string& metafile) {
+void GeotopIO::readMetaData(const std::string& metafile) {
 	std::string line = "";
 
 	/*
@@ -538,8 +411,6 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 		throw FileNotFoundException(metafile, AT);
 	}
 
-	cout << "Reading Meta file" << endl;
-
 	fin.clear();
 	fin.open(metafile.c_str(), std::ifstream::in);
 	if (fin.fail()) {
@@ -550,57 +421,51 @@ void GeotopIO::readMetaData(std::vector<StationData>& vecStation, std::vector<st
 
 	std::vector<std::string> vecData;
 
-	for (size_t ii = 0; ii < 14; ii++) {
-		vecColumnNames.push_back("dummy");
-	}
-
 	try {
 		Coords coordinate(coordin, coordinparam);
 		while (!fin.eof()) {
 			getline(fin, line, eoln); //read complete line of data
 
-			//cout << "Read line: " << line << endl;
-
 			if (line.find("MeteoStationCoordinateX") == 0) {//in section 1
-				vecMetaData.push_back(parseMeteoData("MeteoStationCoordinateX",
-						line));
+				parseMetaData("MeteoStationCoordinateX", line, tmpvec);
+				vecMetaData.push_back(tmpvec);
 			} else if (line.find("MeteoStationCoordinateY") == 0) {
-				vecMetaData.push_back(parseMeteoData("MeteoStationCoordinateY",
-						line));
+				parseMetaData("MeteoStationCoordinateY", line, tmpvec);
+				vecMetaData.push_back(tmpvec);
 			} else if (line.find("MeteoStationLatitude") == 0) {
-				vecMetaData.push_back(parseMeteoData("MeteoStationLatitude",
-						line));
+				parseMetaData("MeteoStationLatitude", line, tmpvec);
+				vecMetaData.push_back(tmpvec);
 			} else if (line.find("MeteoStationLongitude") == 0) {
-				vecMetaData.push_back(parseMeteoData("MeteoStationLongitude",
-						line));
+				parseMetaData("MeteoStationLongitude", line, tmpvec);
+				vecMetaData.push_back(tmpvec);
 			} else if (line.find("MeteoStationElevation") == 0) {
-				vecMetaData.push_back(parseMeteoData("MeteoStationElevation",
-						line));
-			} else if (line.substr(0, 2) == "2:") {//in section 2
-				getline(fin, line, eoln);
-				IOUtils::trim(line);
-				if (line.length() > 2)
-					line = line.substr(1, line.length() - 2);
-				IOUtils::readLineToVec(line, vecColumnNames, ',');
-				for (size_t ii = 0; ii < vecColumnNames.size(); ii++) {
-					IOUtils::trim(vecColumnNames[ii]); //trim the column headers
-				}
+				parseMetaData("MeteoStationElevation", line, tmpvec);
+				vecMetaData.push_back(tmpvec);
 			} else if (line.find("HeaderIPrec") == 0) {
-				vecColumnNames[0] = getValueForKey(line);
+				mapColumnNames[getValueForKey(line)] = MeteoData::HNW;
 			} else if (line.find("HeaderWindVelocity") == 0) {
-				vecColumnNames[1] = getValueForKey(line);
+				mapColumnNames[getValueForKey(line)] = MeteoData::VW;
 			} else if (line.find("HeaderWindDirection") == 0) {
-				vecColumnNames[2] = getValueForKey(line);
+				mapColumnNames[getValueForKey(line)] = MeteoData::DW;
 			} else if (line.find("HeaderRH") == 0) {
-				vecColumnNames[3] = getValueForKey(line);
+				mapColumnNames[getValueForKey(line)] = MeteoData::RH;
 			} else if (line.find("HeaderAirTemp") == 0) {
-				vecColumnNames[4] = getValueForKey(line);
+				mapColumnNames[getValueForKey(line)] = MeteoData::TA;
 			} else if (line.find("HeaderSWglobal") == 0) {
-				vecColumnNames[6] = getValueForKey(line);
+				mapColumnNames[getValueForKey(line)] = MeteoData::ISWR;
 			} else if (line.find("HeaderCloudSWTransmissivity") == 0) {
-				vecColumnNames[9] = getValueForKey(line);
+				mapColumnNames[getValueForKey(line)] = MeteoData::RSWR;
+			} else if (line.find("NumberOfMeteoStations") == 0) {
+				size_t pos = line.find("=");
+				string val = line.substr(pos+1);
+				IOUtils::trim(val);
+				
+				if (!IOUtils::convertString(nr_of_stations, val,	std::dec))
+					throw InvalidFormatException(metafile + ": " + line, AT);
 			}
 		}
+
+		//HACK: Check for consistency between the vecMetaData vectors
 
 		for (unsigned int i = 0; i < vecMetaData[0].size(); i++) {
 
