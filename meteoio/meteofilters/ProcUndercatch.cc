@@ -90,6 +90,13 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 				k=96.63+0.41*VW*VW-9.84*VW+5.95*t; //Tmean
 			}
 			tmp *= 100./k;
+		}  else if(type==hellmannsh) {
+			if(VW==IOUtils::nodata) continue;
+			double k;
+			if(precip==snow) k=100.+0.72*VW*VW-13.74*VW;
+			//if(precip==mixed) k=100.+0.72*VW*VW-13.74*VW; //we don't have a fit, so we duplicate the snow fit
+			if(precip==mixed) k=101.319+0.524*VW*VW-6.42*VW;
+			tmp *= 100./k;
 		}
 	}
 }
@@ -119,6 +126,8 @@ void ProcUndercatch::parse_args(std::vector<std::string> filter_args)
 		type=us8unsh;
 	} else if(filter_args[0]=="hellmann") {
 		type=hellmann;
+	} else if(filter_args[0]=="hellmannsh") {
+		type=hellmannsh;
 	} else {
 		throw InvalidArgumentException("Rain gauge type \""+ filter_args[0] +"\" unknown for filter "+getName(), AT);
 	}

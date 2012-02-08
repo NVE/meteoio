@@ -34,7 +34,10 @@ namespace mio {
  * This implements the standard methods for precipitation correction as described in
  * <i>"WMO Solid Precipitation Measurement Intercomparison"</i>, B. Goodison, P. Louie and D. Yang, <b>872</b>, 1998 as well as
  * the overview given by <i>"Literature Study on the Correction of Precipitation Measurements"</i>, Annette Wagner, 2009.
- * These methods process pure snow and mixed precipitation differently, with the following thresholds:
+ * The correction parameters for the shielded Hellmann gauge (German version) are from <i>"Wind-induced Precipitation Undercatch
+of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 1999, pp 57-80.
+ *
+ * These correction methods process pure snow and mixed precipitation differently, with the following thresholds:
  * - pure snow below -2 C
  * - mixed precipitation between -2 and +2 C
  * - pure rain above 2 C
@@ -49,6 +52,7 @@ namespace mio {
  * - US8sh - US national 8\" rain gauge, shielded
  * - US8unsh - US national 8\" rain gauge, unshielded
  * - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded
+ * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
  *
  * @code
  * HNW::filter1	= undercatch
@@ -70,7 +74,8 @@ class ProcUndercatch : public ProcessingBlock {
 			tretyakov,
 			us8sh,
 			us8unsh,
-			hellmann
+			hellmann,
+			hellmannsh
 		} sensor_type;
 
 		typedef enum PRECIP_TYPE {
