@@ -1015,7 +1015,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 		mode = ios::in | ios::binary;
 
 	ifstream fin;
-	fin.open (filename.c_str(), ios::in);
+	fin.open (filename.c_str(), mode);
 	if (fin.fail()) {
 		stringstream ss;
 		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);

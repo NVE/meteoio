@@ -556,7 +556,7 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	info << "r^2=" << IOUtils::pow2( vecCoefficients[3] );
 
 	//run algorithm
-	Interpol2D::LapseIDW(vecDataEA, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
+	Interpol2D::LapseIDW(vecDataEA, vecMeta, dem, vecCoefficients, funcptr, grid);
 
 	//Recompute Rh from the interpolated td
 	for (unsigned int jj=0; jj<grid.nrows; jj++) {
@@ -568,7 +568,6 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 
 void SimpleWindInterpolationAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 	param = in_param;
-
 	nrOfMeasurments = 0;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
