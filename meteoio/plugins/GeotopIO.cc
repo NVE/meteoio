@@ -419,6 +419,8 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 	std::vector<std::string> vecData;
 	std::vector<std::string> vecX, vecY, vecLat, vecLon, vecAlt;
 
+	size_t meta_counter = 0;
+
 	try {
 		Coords coordinate(coordin, coordinparam);
 		while (!fin.eof()) {
@@ -427,18 +429,23 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			if (line.find("MeteoStationCoordinateX") == 0) {//in section 1
 				parseMetaData("MeteoStationCoordinateX", line, tmpvec);
 				vecX = tmpvec;
+				meta_counter |= 1;
 			} else if (line.find("MeteoStationCoordinateY") == 0) {
 				parseMetaData("MeteoStationCoordinateY", line, tmpvec);
 				vecY = tmpvec;
+				meta_counter |= 2;
 			} else if (line.find("MeteoStationLatitude") == 0) {
 				parseMetaData("MeteoStationLatitude", line, tmpvec);
 				vecLat = tmpvec;
+				meta_counter |= 4;
 			} else if (line.find("MeteoStationLongitude") == 0) {
 				parseMetaData("MeteoStationLongitude", line, tmpvec);
 				vecLon = tmpvec;
+				meta_counter |= 8;
 			} else if (line.find("MeteoStationElevation") == 0) {
 				parseMetaData("MeteoStationElevation", line, tmpvec);
 				vecAlt = tmpvec;
+				meta_counter |= 16;
 			} else if (line.find("HeaderIPrec") == 0) {
 				mapColumnNames[getValueForKey(line)] = MeteoData::HNW;
 			} else if (line.find("HeaderWindVelocity") == 0) {
@@ -463,10 +470,15 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			}
 		}
 
-		//HACK: Check for consistency between the vecMetaData vectors
+		//Check that all meta information is available
+		if (meta_counter != 31)
+			throw InvalidFormatException("Your GEOtop METAFILE " + metafile + " does not contain all required meta data", AT);
+
+		//Check for consistency between the meta data data vectors
+		if ((vecX.size() != vecY.size()) || (vecY.size() != vecLat.size()) || (vecLat.size() != vecLon.size()) || (vecLon.size() != vecAlt.size()))
+			throw InvalidFormatException("Your GEOtop METAFILE " + metafile + " does not contain a consistent number of meta data fields", AT);
 
 		for (unsigned int i = 0; i < vecX.size(); i++) {
-
 			std::vector<double> tmpdata = std::vector<double>(5);
 
 			if (!IOUtils::convertString(tmpdata.at(x), vecX.at(i),	std::dec))
@@ -487,7 +499,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			tmpdata[3] = IOUtils::standardizeNodata(tmpdata[3], plugin_nodata);
 			tmpdata[4] = IOUtils::standardizeNodata(tmpdata[4], plugin_nodata);
 
-			//			cout << "Station(" << i + 1 << ") X " << tmpdata[0] << " Y "
+			//cout << "Station(" << i + 1 << ") X " << tmpdata[0] << " Y "
 			//		<< tmpdata[1] << " La " << tmpdata[2] << " Lo "
 			//		<< tmpdata[3] << " E " << tmpdata[4] << endl;
 
@@ -497,8 +509,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			try {
 				coordinate.check();
 			} catch (...) {
-				std::cerr << "[E] Error in geographic coordinates in file "
-						<< metafile << " trapped at " << AT << std::endl;
+				std::cerr << "[E] Error in geographic coordinates in file " << metafile << " trapped at " << AT << std::endl;
 				throw;
 			}
 
