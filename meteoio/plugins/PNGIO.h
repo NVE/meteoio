@@ -84,6 +84,7 @@ class PNGIO : public IOInterface {
 		bool has_world_file; ///< create world file with each file?
 		bool optimize_for_speed; ///< optimize for speed instead of compression?
 		bool indexed_png; ///< write an indexed png?
+		unsigned char nr_levels; ///< number of levels to represent? (less-> smaller file size and faster)
 		std::string coordout, coordoutparam; //projection parameters
 		std::string grid2dpath;
 
@@ -96,7 +97,6 @@ class PNGIO : public IOInterface {
 		static const unsigned char channel_depth;
 		static const unsigned char channel_max_color;
 		static const unsigned char transparent_grey;
-		static const unsigned char nr_levels; ///< number of levels to represent? (less-> smaller file size and faster)
 };
 
 } //namespace

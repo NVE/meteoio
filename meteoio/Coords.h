@@ -111,6 +111,9 @@ class Coords {
 	static std::string decimal_to_dms(const double& decimal);
 	static void parseLatLon(const std::string& coordinates, double& lat, double& lon);
 
+	static double lat_degree_lenght(const double& latitude);
+	static double lon_degree_lenght(const double& latitude);
+
  private:
 	//Coordinates conversions
 	void convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const;

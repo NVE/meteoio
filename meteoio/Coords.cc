@@ -843,6 +843,40 @@ std::string Coords::decimal_to_dms(const double& decimal) {
 }
 
 /**
+* @brief Lenght of one degree of latitude
+* This returns the lenght in meters of one degree of latitude around the given latitude
+* (ie: latitude-.5, latitude+.5). See https://en.wikipedia.org/wiki/Latitude#The_length_of_a_degree_of_latitude
+* @param[in] latitude latitude where to perform the computation
+* @return lenght of one degree of latitude
+*/
+double Coords::lat_degree_lenght(const double& latitude) {
+	const double to_rad = Cst::PI / 180.0;
+	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+
+	const double degree_length = (Cst::PI*a*(1.-e2)) / ( 180.*pow(1.-e2*IOUtils::pow2(sin(latitude*to_rad)), 1.5) );
+	return fabs( degree_length );
+}
+
+/**
+* @brief Lenght of one degree of longitude
+* This returns the lenght in meters of one degree of longitude around the given latitude
+* (ie: latitude-.5, latitude+.5). See https://en.wikipedia.org/wiki/Latitude#The_length_of_a_degree_of_latitude
+* @param[in] latitude latitude where to perform the computation
+* @return lenght of one degree of longitude
+*/
+double Coords::lon_degree_lenght(const double& latitude) {
+	const double to_rad = Cst::PI / 180.0;
+	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+
+	const double degree_length = (Cst::PI*a*cos(latitude*to_rad)) / ( 180.*pow(1.-e2*IOUtils::pow2(sin(latitude*to_rad)), .5) );
+	return fabs( degree_length );
+}
+
+/**
 * @brief Coordinate conversion: from WGS84 Lat/Long to Swiss grid
 * See http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf for more.
 * @param[in] lat_in Decimal Latitude

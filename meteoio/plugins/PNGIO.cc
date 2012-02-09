@@ -33,6 +33,7 @@ namespace mio {
  * No data read has been implemented, because reading an existing file would require the exact knowlege of the color gradient that has been used
  * to create it. When writing grids, various color gradients will be used depending on the parameter that the data represents. Nodata values
  * are represented by transparent pixels (transparency is acheived through a transparent color instead of a true alpha channel for size and performance).
+ * If a grid containing no data (ie: size 0x0) is sent to the plugin, then no file will be written.
  * Finally, the naming scheme for meteo grids should be: YYYY-MM-DDTHH.mm_{MeteoGrids::Parameters}.png
  *
  * @section template_units Units
@@ -49,7 +50,10 @@ namespace mio {
  * - PNG_SCALING: scaling algorithm, either nearest or bilinear (default=bilinear)
  * - PNG_AUTOSCALE: autoscale for the color gradient? (default=true)
  * - PNG_WORLD_FILE: create world file with each file? (default=false)
+ *
+ * Advanced parameters (ie: don't mess up with them if you don't know what you're doing):
  * - PNG_INDEXED: create an indexed PNG? (default=true)
+ * - PNG_NR_LEVELS: number of colors to use (less=smaller files, but it must be at least 5 and less than 255. default=30)
  * - PNG_SPEED_OPTIMIZE: optimize file creation for speed? (default=true, otherwise optimize for file size)
  *
  * The size are specified as width followed by height, with the separator being either a space, 'x' or '*'. If a minimum and a maximum size are given, the average of the smallest and largest permissible sizes will be used.
@@ -92,7 +96,6 @@ const double PNGIO::plugin_nodata = -999.; //plugin specific nodata value. It ca
 const unsigned char PNGIO::channel_depth = 8;
 const unsigned char PNGIO::channel_max_color = 255;
 const unsigned char PNGIO::transparent_grey = channel_max_color;
-const unsigned char PNGIO::nr_levels = 30;
 
 PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -142,6 +145,13 @@ void PNGIO::setOptions()
 	cfg.getValue("PNG_INDEXED", "Output", indexed_png, Config::nothrow);
 	optimize_for_speed = true;
 	cfg.getValue("PNG_SPEED_OPTIMIZE", "Output", optimize_for_speed, Config::nothrow);
+	nr_levels = 30;
+	unsigned int tmp=0;
+	cfg.getValue("PNG_NR_LEVELS", "Output", tmp, Config::nothrow);
+	if(tmp>255 || tmp<5) {
+		throw InvalidFormatException("PNG_NR_LEVELS must be between 5 and 255!", AT);
+	}
+	if(tmp>0) nr_levels=static_cast<unsigned char>(tmp);
 }
 
 void PNGIO::parse_size(const std::string& size_spec, unsigned int& width, unsigned int& height)
@@ -455,6 +465,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	//scale input image
 	const Grid2DObject grid = scaleGrid(grid_in);
 	const unsigned int ncols = grid.ncols, nrows = grid.nrows;
+	if(ncols==0 || nrows==0) return;
+
 	const double min = grid.grid2D.getMin();
 	const double max = grid.grid2D.getMax();
 
@@ -498,6 +510,8 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	//scale input image
 	Grid2DObject grid = scaleGrid(grid_in);
 	const unsigned int ncols = grid.ncols, nrows = grid.nrows;
+	if(ncols==0 || nrows==0) return;
+
 	double min = grid.grid2D.getMin();
 	double max = grid.grid2D.getMax();
 

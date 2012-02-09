@@ -63,7 +63,11 @@ class GRIBIO : public IOInterface {
 
 	private:
 		void setOptions();
-		void listContent(const std::string& filename);
+		void listContent_old(const std::string& filename); //HACK: to delete when done
+		Date getDate(grib_handle* h);
+		Coords getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y);
+		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out);
+		void read2DGrid_intern(const std::string& filename, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void cleanup() throw();
 
