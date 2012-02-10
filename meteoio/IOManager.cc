@@ -22,7 +22,8 @@ using namespace std;
 
 namespace mio {
 
-IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg), meteoprocessor(cfg)
+IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg), 
+                                            meteoprocessor(cfg), interpolator(cfg, *this)
 {
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
 	fcache_start = fcache_end = Date(0.0, 0.); //this should not matter, since 0 is still way back before any real data...
@@ -274,8 +275,47 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
                             Grid2DObject& result, std::string& info_string)
 #endif
 {
-	Meteo2DInterpolator mi(cfg, *this);
-	mi.interpolate(date, dem, meteoparam, result, info_string);
+	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+}
+#ifdef _POPC_ //HACK popc
+void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+                            /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result)
+#else
+void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            const std::vector<Coords>& in_coords, std::vector<double>& result)
+#endif
+{
+	result.clear();
+
+	vector<Coords> vec_coords = in_coords;
+
+	for (size_t ii=0; ii<vec_coords.size(); ii++) {
+		bool gridify_success = dem.gridify(vec_coords[ii]);
+		if (!gridify_success)
+			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
+
+		//Make new DEM with just one point, namely the one specified by vec_coord[ii]
+		//Copy all other properties of the big DEM into the new one
+		DEMObject one_point_dem(dem, vec_coords[ii].getGridI(), vec_coords[ii].getGridJ(), 1, 1, false);
+
+		one_point_dem.min_altitude = dem.min_altitude;
+		one_point_dem.max_altitude = dem.max_altitude;
+		one_point_dem.min_slope = dem.min_slope;
+		one_point_dem.max_slope = dem.max_slope;
+		one_point_dem.min_curvature = dem.min_curvature;
+		one_point_dem.max_curvature = dem.max_curvature;
+
+		Grid2DObject result_grid;		
+		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid);
+		size_t result_x, result_y;
+		result_grid.size(result_x, result_y);
+		
+		if ((result_x == result_y) && (result_x == 1)) { //Consistency check, maybe unnecessary
+			result.push_back(result_grid.grid2D(0,0));
+		} else {
+			throw IOException("Error while trying to interpolate for one coordinate", AT);
+		}
+	}
 }
 
 void IOManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)

@@ -18,8 +18,8 @@
 #ifndef __IOMANAGER_H__
 #define __IOMANAGER_H__
 
-#include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/BufferedIOHandler.h>
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/MeteoData.h>
 
@@ -129,6 +129,14 @@ class IOManager {
 		                 Grid2DObject& result, std::string& info_string);
 #endif
 
+#ifdef _POPC_ //HACK popc
+		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+					  /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result);
+#else
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+					  const std::vector<Coords>& in_coords, std::vector<double>& result);
+#endif
+
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
 		 *        The processing level affects the way meteo data is read and processed
@@ -185,6 +193,7 @@ class IOManager {
 		IOHandler rawio;
 		BufferedIOHandler bufferedio;
 		MeteoProcessor meteoprocessor;
+		Meteo2DInterpolator interpolator;
 		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
 
 		std::map<Date, METEO_TIMESERIE > resampled_cache;  ///< stores already resampled data points

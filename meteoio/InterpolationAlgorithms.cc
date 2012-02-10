@@ -17,6 +17,8 @@
 */
 #include <meteoio/InterpolationAlgorithms.h>
 #include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/Meteo2DInterpolator.h>
+#include <meteoio/IOManager.h>
 
 using namespace std;
 

@@ -564,8 +564,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	const double dem_min_slope=dem.min_slope*to_rad, dem_range_slope=(dem.max_slope-dem_min_slope)*to_rad;
 	const double dem_min_curvature=dem.min_curvature, dem_range_curvature=(dem.max_curvature-dem_min_curvature);
 
-	for (unsigned int j=0;j<VW.nrows-1;j++) {
-		for (unsigned int i=0;i<VW.ncols-1;i++){
+	for (unsigned int j=0;j<VW.nrows;j++) {
+		for (unsigned int i=0;i<VW.ncols;i++){
 			// Get input data
 			speed = VW.grid2D(i,j);
 			dir = DW.grid2D(i,j);

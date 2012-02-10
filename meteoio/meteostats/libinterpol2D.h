@@ -22,7 +22,10 @@
 #ifndef INTERPOL2D_H
 #define INTERPOL2D_H
 
-#include <meteoio/MeteoIO.h>
+#include <meteoio/StationData.h>
+#include <meteoio/DEMObject.h>
+#include <meteoio/meteostats/libfit1D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 #include <vector>
 
 namespace mio {

@@ -19,7 +19,11 @@
 #ifndef __METEO2DINTERPOLATOR_H__
 #define __METEO2DINTERPOLATOR_H__
 
-#include <meteoio/MeteoIO.h>
+#include <meteoio/Config.h>
+#include <meteoio/Date.h>
+#include <meteoio/MeteoData.h>
+#include <meteoio/DEMObject.h>
+#include <meteoio/InterpolationAlgorithms.h>
 
 #include <memory>
 #include <vector>
