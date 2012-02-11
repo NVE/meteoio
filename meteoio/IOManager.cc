@@ -276,6 +276,8 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 #endif
 {
 	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+	cout << " (" << info_string << ") " << endl;
 }
 #ifdef _POPC_ //HACK popc
 void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
@@ -305,8 +307,15 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 		one_point_dem.min_curvature = dem.min_curvature;
 		one_point_dem.max_curvature = dem.max_curvature;
 
-		Grid2DObject result_grid;		
-		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid);
+		Grid2DObject result_grid;
+		string info_string;
+		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
+		if (ii == 0) {
+			cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam)
+				<< " point wise for " << vec_coords.size() << " points"
+				<< " (" << info_string << ") " << endl;
+		}
+
 		size_t result_x, result_y;
 		result_grid.size(result_x, result_y);
 		

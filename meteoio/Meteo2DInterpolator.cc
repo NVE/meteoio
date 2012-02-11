@@ -97,8 +97,6 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		}
 		bestalgorithm->calculate(result);
 		InfoString = bestalgorithm->getInfo();
-		cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-		cout << " (" << InfoString << ") " << std::endl;
 	} else {
 		//Some default message, that interpolation for this parameter needs configuration
 		throw IOException("You need to configure the interpolation algorithms for parameter " +
