@@ -701,7 +701,7 @@ void SMETReader::convert_to_MKSA(const bool& in_mksa)
 std::string SMETReader::get_field_name(const size_t& nr_of_field)
 {
 	if (nr_of_field < nr_of_fields){
-		return vec_fieldnames[nr_of_fields];
+		return vec_fieldnames[nr_of_field];
 	} else {
 		stringstream ss;
 		ss << "Trying to access field #" << nr_of_field << " (starting from 0) of " << nr_of_fields << " fields in file \"" << filename << "\". ";
@@ -1006,7 +1006,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 void SMETReader::read(std::vector<double>& vec_data)
 {
 	if (timestamp_present)
-		SMETException("Requesting not to read timestamp when there is one present in '"+filename+"'", SMET_AT);
+		throw SMETException("Requesting not to read timestamp when there is one present in '"+filename+"'", SMET_AT);
 
 	vector<string> tmp_vec;
 
@@ -1081,7 +1081,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 			}
 
 			for (size_t ii=0; ii<tmp_vec.size(); ii++){
-				if (ii == timestamp_field){
+				if (timestamp_present && (ii == timestamp_field)) {
 					vec_timestamp.push_back(tmp_vec[ii]);
 					shift = 1;
 				} else {
