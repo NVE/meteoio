@@ -146,12 +146,12 @@ void PNGIO::setOptions()
 	optimize_for_speed = true;
 	cfg.getValue("PNG_SPEED_OPTIMIZE", "Output", optimize_for_speed, Config::nothrow);
 	nr_levels = 30;
-	unsigned int tmp=0;
+	unsigned int tmp=IOUtils::unodata;
 	cfg.getValue("PNG_NR_LEVELS", "Output", tmp, Config::nothrow);
-	if(tmp>255 || tmp<5) {
+	if(tmp!=IOUtils::unodata && (tmp>255 || tmp<5)) {
 		throw InvalidFormatException("PNG_NR_LEVELS must be between 5 and 255!", AT);
 	}
-	if(tmp>0) nr_levels=static_cast<unsigned char>(tmp);
+	if(tmp!=IOUtils::unodata) nr_levels=static_cast<unsigned char>(tmp);
 }
 
 void PNGIO::parse_size(const std::string& size_spec, unsigned int& width, unsigned int& height)

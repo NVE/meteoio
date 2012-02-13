@@ -56,6 +56,8 @@ class Grid3DObject{
 		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
 		double& operator ()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz);
 		double operator ()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) const;
+		double& operator ()(const unsigned int& i);
+		double operator ()(const unsigned int& i) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid);
 

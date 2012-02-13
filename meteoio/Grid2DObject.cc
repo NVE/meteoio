@@ -273,6 +273,14 @@ double Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy) 
 	return grid2D(ix,iy);
 }
 
+double& Grid2DObject::operator()(const unsigned int& i) {
+	return grid2D(i);
+}
+
+double Grid2DObject::operator()(const unsigned int& i) const {
+	return grid2D(i);
+}
+
 std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
 {
 	os << "<Grid2DObject>\n";
