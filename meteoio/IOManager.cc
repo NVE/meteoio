@@ -316,7 +316,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 				<< " (" << info_string << ") " << endl;
 		}
 
-		size_t result_x, result_y;
+		unsigned int result_x, result_y;
 		result_grid.size(result_x, result_y);
 		
 		if ((result_x == result_y) && (result_x == 1)) { //Consistency check, maybe unnecessary
