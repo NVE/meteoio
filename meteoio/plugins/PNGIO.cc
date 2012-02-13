@@ -432,14 +432,15 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 
 void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
 {
-	std::vector<unsigned char> r, g, b;
-	gradient.getPalette(r,g,b);
-	const size_t nr_colors = r.size();
+	std::vector<unsigned char> pal;
+	size_t nr_colors;
+	gradient.getPalette(pal, nr_colors);
 	palette = (png_color*)calloc(sizeof (png_color), nr_colors); //ie: three png_bytes, each being an unsigned char
 	for(size_t ii=0; ii<nr_colors; ii++) {
-		palette[ii].red = static_cast<png_byte>(r[ii]);
-		palette[ii].green = static_cast<png_byte>(g[ii]);
-		palette[ii].blue = static_cast<png_byte>(b[ii]);
+		const size_t interlace = ii*3; //colors from Gradient interlaced
+		palette[ii].red = static_cast<png_byte>(pal[interlace]);
+		palette[ii].green = static_cast<png_byte>(pal[interlace+1]);
+		palette[ii].blue = static_cast<png_byte>(pal[interlace+2]);
 	}
 	png_set_PLTE(png_ptr, info_ptr, palette, nr_colors);
 }

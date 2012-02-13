@@ -254,12 +254,11 @@ class Gradient {
 		/**
 		* @brief Get palette colors for the selected gradient
 		* When building an indexed image, one needs to first retrieve the palette using this method. Afterwards, getColor(val, index)
-		* will be called for each pixel in order to retrieve its palette index.
-		* @param r red components
-		* @param g green components
-		* @param b blue components
+		* will be called for each pixel in order to retrieve its palette index. The returned colors are interlaced (rgb).
+		* @param palette interlaced colors
+		* @param nr_colors number of colors in the palette
 		*/
-		void getPalette(std::vector<unsigned char> &r, std::vector<unsigned char> &g, std::vector<unsigned char> &b) const;
+		void getPalette(std::vector<unsigned char> &palette, size_t &nr_colors) const;
 
 		static const unsigned char channel_max_color; ///< nr of colors per channel of the generated gradients
 	private:

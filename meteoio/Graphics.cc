@@ -395,7 +395,7 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 	else index = static_cast<unsigned char>( (val-min)/delta*(double)nr_unique_cols ) + reserved_idx;
 }
 
-void Gradient::getPalette(std::vector<unsigned char> &r, std::vector<unsigned char> &g, std::vector<unsigned char> &b) const
+void Gradient::getPalette(std::vector<unsigned char> &palette, size_t &nr_colors) const
 {
 	if(model==NULL) {
 		throw UnknownValueException("Please set the color gradient before using it!", AT);
@@ -404,37 +404,46 @@ void Gradient::getPalette(std::vector<unsigned char> &r, std::vector<unsigned ch
 		throw UnknownValueException("Please define the number of colors for indexed gradients!", AT);
 	}
 
-	r.clear(); g.clear(); b.clear();
+	palette.clear();
 
 	//transparent color
-	r.push_back(channel_max_color); g.push_back(channel_max_color); b.push_back(channel_max_color);
+	palette.push_back(channel_max_color); palette.push_back(channel_max_color); palette.push_back(channel_max_color);
 	//legend background color
-	r.push_back(channel_max_color-1); g.push_back(channel_max_color-1); b.push_back(channel_max_color-1);
+	palette.push_back(channel_max_color-1); palette.push_back(channel_max_color-1); palette.push_back(channel_max_color-1);
 	//legend text color
-	r.push_back(0); g.push_back(0); b.push_back(0);
+	palette.push_back(0); palette.push_back(0); palette.push_back(0);
 
 	double r_d, g_d, b_d;
 
 	//underflow data color
 	model->getColor(-0.1, r_d, g_d, b_d);
-	r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
-	g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
-	b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
+	palette.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
+	palette.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
+	palette.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
 
 	//overflow data color
 	model->getColor(1.1, r_d, g_d, b_d);
-	r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
-	g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
-	b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
+	palette.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
+	palette.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
+	palette.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
 
 	//all normal colors
 	for(unsigned char ii=0; ii<=nr_unique_cols; ii++) {
 		const double val_norm = (double)ii/(double)nr_unique_cols;
 		model->getColor(val_norm, r_d, g_d, b_d);
-		r.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
-		g.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
-		b.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
+		palette.push_back( static_cast<unsigned char>(r_d*channel_max_color) );
+		palette.push_back( static_cast<unsigned char>(g_d*channel_max_color) );
+		palette.push_back( static_cast<unsigned char>(b_d*channel_max_color) );
 	}
+
+	const size_t nr_entries = palette.size();
+	if((nr_entries%3) != 0) {
+		std::stringstream ss;
+		ss << "Error when creating color palette: " << nr_entries << " data points ";
+		ss << "for 3 channels palette is impossible! (colors are interlaced)";
+		throw IOException(ss.str(), AT);
+	}
+	nr_colors = nr_entries/3;
 }
 
 //we assume that the vectors are sorted by X
