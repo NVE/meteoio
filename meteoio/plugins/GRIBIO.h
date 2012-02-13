@@ -63,21 +63,25 @@ class GRIBIO : public IOInterface {
 
 	private:
 		void setOptions();
-		void listContent_old(const std::string& filename); //HACK: to delete when done
+		void listFields(const std::string& filename);
 		Date getDate(grib_handle* h);
 		Coords getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y);
 		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out);
-		void read2DGrid_intern(const std::string& filename, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
+		bool read2DGrid_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
+		void indexFile(const std::string& filename);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void cleanup() throw();
 
 		const Config& cfg;
 		std::string grid2dpath_in;
 		FILE *fp; //since passing fp always fail...
+		bool indexed; //flag to know if the file has already been indexed
+		grib_index *idx;
+		std::string idx_filename; //matching file name for the index
 
 		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string coordin, coordinparam; //projection parameters
 		double tz_in;
 
 };

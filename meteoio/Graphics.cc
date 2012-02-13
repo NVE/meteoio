@@ -135,7 +135,8 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 		}
 
 		for(unsigned int l=0; l<nb_labels_norm; l++) {
-			const double level_val = (step_norm*l/10.+min_norm)*decade_mult;
+			double level_val = (step_norm*l/10.+min_norm)*decade_mult;
+			if( fabs(level_val)<(range*1e-6) )level_val=0.; //to get a nice 0 at zero
 			const unsigned int px_row = l*label_height+start_legend;
 			writeLine(level_val, px_row);
 		}
@@ -155,8 +156,14 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::stringstream ss;
 	//const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
-	//ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val << std::endl; //improve this format...
-	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << val << std::endl;
+	//ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val; //improve this format...
+	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << val;
+	if(ss.str().size()>text_chars_nb) {
+		//the generated text is too long, so putting another constraint (ie setw is brain dead)
+		ss.str(std::string());
+		const unsigned int precision = text_chars_nb-6;
+		ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val;
+	}
 
 	const unsigned int x_offset = legend_plot_space+sample_width+sample_text_space;
 

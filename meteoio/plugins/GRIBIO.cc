@@ -17,7 +17,8 @@
 */
 #include "GRIBIO.h"
 
-#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteolaws/Meteoconst.h> //for PI
 
 #include <errno.h>
 #include <grib_api.h>
@@ -41,38 +42,47 @@ namespace mio {
  */
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
-const unsigned int GRIBIO::MAX_VAL_LEN = 1024; //max value string lengthin GRIB
 
 GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	setOptions();
+	indexed = false;
+	idx=NULL;
+	fp = NULL;
 }
 
 GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	setOptions();
+	indexed = false;
+	idx=NULL;
+	fp = NULL;
 }
 
 GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
 	setOptions();
+	indexed = false;
+	idx=NULL;
+	fp = NULL;
 }
 
 GRIBIO::~GRIBIO() throw()
 {
-
+	cleanup();
 }
 
 void GRIBIO::setOptions()
 {
-	cfg.getValue("TIME_ZONE", "Input", tz_in);
-	fp = NULL;
+	std::string coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	grid2dpath_in = "/local";
+	cfg.getValue("TIME_ZONE", "Input", tz_in);
+	cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 }
 
 void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 {
+	const unsigned int MAX_VAL_LEN=1024; //max value string length in GRIB
 	unsigned long key_iterator_filter_flags=GRIB_KEYS_ITERATOR_ALL_KEYS;
 	//char* name_space=(char *)"ls"; //name_space=NULL to get all the keys, char* name_space=0;
 	char* name_space=NULL;
@@ -97,61 +107,31 @@ void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 	grib_keys_iterator_delete(kiter);
 }
 
-void GRIBIO::listContent_old(const std::string& filename)
+void  GRIBIO::listFields(const std::string& filename)
 {
 	grib_handle* h=NULL;
-	int err=0, grib_count=0;
-
-	//grib_multi_support_on(0);
+	int err=0;
 
 	//loop over the messages
 	while((h = grib_handle_new_from_file(0,fp,&err)) != NULL) {
-		grib_count++;
-		//std::cout << "GRIB N. " << grib_count << "\n";
 		if(!h) {
 			cleanup();
 			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
 		}
 
-		long table_id;
-		GRIB_CHECK(grib_get_long(h,"table2Version",&table_id),0);
-		long param_id;
-		GRIB_CHECK(grib_get_long(h,"indicatorOfParameter",&param_id),0);
+		double marsParam;
+		GRIB_CHECK(grib_get_double(h,"marsParam",&marsParam),0);
+
+		size_t len=500;
+		char name[500], shortname[500];
+		GRIB_CHECK(grib_get_string(h,"name",name, &len),0);
+		len=500; //this has been reset by the previous call... no comments
+		GRIB_CHECK(grib_get_string(h,"shortName",shortname, &len),0);
 		long levelType;
-		GRIB_CHECK(grib_get_long(h,"indicatorOfTypeOfLevel", &levelType),0); //sfc (surface), pl (pressure level), ml (model level)
-
-		long dataDate, dataTime;
-		GRIB_CHECK(grib_get_long(h,"dataDate",&dataDate),0);
-		GRIB_CHECK(grib_get_long(h,"dataTime",&dataTime),0);
-		const int year=dataDate/10000, month=dataDate/100-year*100, day=dataDate-month*100-year*10000;
-		const int hour=dataTime/100, minutes=dataTime-hour*100;
-		Date date(year, month, day, hour, minutes, tz_in);
-
-		if(table_id==201 && param_id==133) {
-			std::cout << table_id << ":" << param_id << " -> Date=" << date.toString(Date::ISO) << " ";
-			long Ni, Nj;
-			GRIB_CHECK(grib_get_long(h,"Nx",&Ni),0);
-			GRIB_CHECK(grib_get_long(h,"numberOfPointsAlongAMeridian",&Nj),0);
-			std::cout << Ni << "x" << Nj << "\n";
-			long nb_pts;
-			GRIB_CHECK(grib_get_long(h,"numberOfDataPoints",&nb_pts),0);
-			std::cout << "nb_pts=" << nb_pts << " ";
-			std::cout << "\n";
-
-			/*double *values;
-			size_t values_len= 0;
-			GRIB_CHECK(grib_get_size(h,"values",&values_len),0);
-			values = (double*)malloc(values_len*sizeof(double));
-
-			GRIB_CHECK(grib_get_double_array(h,"values",values,&values_len),0);
-			for(size_t i = 0; i < values_len; i++)
-				printf("%d %g\n",i+1,values[i]);
-			free(values);*/
-
-			//listKeys(&h, filename);
-		} else {
-			//std::cout << table_id << ":" << param_id << " -> Date=" << date.toString(Date::ISO) << "\n";
-		}
+		GRIB_CHECK(grib_get_long(h,"indicatorOfTypeOfLevel", &levelType),0);
+		long level=0;
+		if(levelType!=1) GRIB_CHECK(grib_get_long(h,"level", &level),0);
+		std::cout << marsParam << " " << shortname << " " << name << " type " << levelType << " level " << level << "\n";
 	}
 }
 
@@ -213,7 +193,7 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 }
 
 void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
-{
+{ //HACK: why is it that we don't have to corect the aspect ratio??
 	long Ni, Nj;
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
@@ -232,47 +212,36 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
 	GRIB_CHECK(grib_get_double_array(h,"values",values,&values_len),0);
 	double cellsize_x, cellsize_y;
 	const Coords llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
-	//Grid2DObject tmp_grid(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), cellsize_x, llcorner);
-	grid_out.set(Ni, Nj, cellsize_x, llcorner); //HACK
+	grid_out.set(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), cellsize_x, llcorner); //HACK
 	int i=0;
 	for(unsigned int jj=0; jj<(unsigned)Nj; jj++) {
 		for(unsigned int ii=0; ii<(unsigned)Ni; ii++)
-			//tmp_grid(ii,jj) = values[i++];
 			grid_out(ii,jj) = values[i++];
 	}
 	free(values);
-	//grid_out = ResamplingAlgorithms2D::BilinearResampling(tmp_grid, 1., cellsize_x/cellsize_y);
 }
 
-void GRIBIO::read2DGrid_intern(const std::string& filename, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out)
+bool GRIBIO::read2DGrid_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out)
 {
+	GRIB_CHECK(grib_index_select_double(idx,"marsParam",in_marsParam),0);
+	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", i_levelType),0);
+
 	grib_handle* h=NULL;
 	int err=0;
-
-	//loop over the messages
-	while((h = grib_handle_new_from_file(0,fp,&err)) != NULL) {
+	while((h = grib_handle_new_from_index(idx,&err)) != NULL) {
 		if(!h) {
 			cleanup();
-			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
+			throw IOException("Unable to create grib handle from index", AT);
 		}
 
-		double marsParam;
-		GRIB_CHECK(grib_get_double(h,"marsParam",&marsParam),0);
-
-		if(marsParam==in_marsParam) {
-			const Date date = getDate(h);
-
-			long levelType;
-			GRIB_CHECK(grib_get_long(h,"indicatorOfTypeOfLevel", &levelType),0); //sfc (surface), pl (pressure level), ml (model level)
-			long level=0;
-			if(levelType==105) GRIB_CHECK(grib_get_long(h,"level", &level),0);
-
-			if(levelType==i_levelType && level==i_level && date==i_date) {
-				read2Dlevel(h, grid_out);
-				return;
-			}
+		long level=0;
+		if(i_levelType==105) GRIB_CHECK(grib_get_long(h,"level", &level),0);
+		if(level==i_level /*&& (date>=i_date && date<=i_date+timeRange)*/ ) {
+			read2Dlevel(h, grid_out);
+			return true;
 		}
 	}
+	return false;
 }
 
 void GRIBIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*i_name*/)
@@ -281,16 +250,8 @@ void GRIBIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*i_name*
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+void GRIBIO::indexFile(const std::string& filename)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
-
-	//in 115.260 and 116.260, swiss coordinates for each cell
-	const std::string prefix="laf";
-	const std::string ext=".grb";
-	const std::string filename = grid2dpath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
-
 	fp = fopen(filename.c_str(),"r");
 	if(fp==NULL) {
 		stringstream ss;
@@ -298,22 +259,93 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		throw FileAccessException(ss.str(), AT);
 	}
 
-	if(parameter==MeteoGrids::DW) read2DGrid_intern(filename, 31.2, 105, 10, date, grid_out); //10m wind direction, level 10, type 105
-	if(parameter==MeteoGrids::VW) read2DGrid_intern(filename, 32.2, 105, 10, date, grid_out); //10m wind speed, level 10, type 105
-	if(parameter==MeteoGrids::TA) read2DGrid_intern(filename, 17.2, 105, 2, date, grid_out); //2m TA, type 105, level 2
-	if(parameter==MeteoGrids::RH) read2DGrid_intern(filename, 52.2, 105, 2, date, grid_out); //type 105, level 2
-	if(parameter==MeteoGrids::TSS) read2DGrid_intern(filename, 11.2, 1, 0, date, grid_out); //type 1
-	if(parameter==MeteoGrids::HNW) read2DGrid_intern(filename, 61.2, 1, 0, date, grid_out); //type 1
-	if(parameter==MeteoGrids::ILWR) read2DGrid_intern(filename, 25.201, 1, 0, date, grid_out); //type 1
-	if(parameter==MeteoGrids::ISWR) read2DGrid_intern(filename, 111.250, 1, 0, date, grid_out); //type 1
-	if(parameter==MeteoGrids::P) read2DGrid_intern(filename, 1.2, 1, 0, date, grid_out); //type 1
-	if(parameter==MeteoGrids::HS) read2DGrid_intern(filename, 66.2, 1, 0, date, grid_out); //type 1
+	int err=0;
+	std::string keys="marsParam:d,indicatorOfTypeOfLevel:l"; //indexing keys
+	char *c_filename = (char *)filename.c_str();
+	idx = grib_index_new_from_file(0, c_filename, keys.c_str(), &err);
+	if(err!=0) {
+		cleanup();
+		throw IOException("Failed to index GRIB file \""+filename+"\"", AT);
+	}
+	indexed=true;
+	idx_filename=filename;
+}
 
-	if(parameter==MeteoGrids::DEM) read2DGrid_intern(filename, 8.2, 1, 0, date, grid_out); //type 1
-	if(parameter==MeteoGrids::SLOPE) read2DGrid_intern(filename, 98.202, 1, 0, date, grid_out); //type 1
-	if(parameter==MeteoGrids::AZI) read2DGrid_intern(filename, 99.202, 1, 0, date, grid_out); //type 1
+void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{ //HACK: in 115.260 and 116.260, swiss coordinates for each cells
 
-	cleanup();
+	const std::string prefix="laf";
+	const std::string ext=".grb";
+	const std::string filename = grid2dpath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
+
+	if(!indexed) { //if the file has not yet been indexed, do it
+		indexFile(filename);
+	} else if(idx_filename!=filename) {
+		 //the file name changed, we have to re-index it
+		cleanup();
+		indexFile(filename);
+	}
+
+	if(parameter==MeteoGrids::DW) {
+		if(!read2DGrid_indexed(idx, 31.2, 105, 10, date, grid_out)) { //10m wind direction, level 10, type 105
+			Grid2DObject V;
+			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V component
+			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U component
+			const double to_deg = 180. / Cst::PI;
+			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+					grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * to_deg + 360., 360.); // turn into degrees [0;360)
+				}
+			}
+		}
+	}
+	if(parameter==MeteoGrids::VW) {
+		if(read2DGrid_indexed(idx, 32.2, 105, 10, date, grid_out)) { //10m wind speed, level 10, type 105
+			grid_out.grid2D = grid_out.grid2D * (4.87 / log(67.8*10.-5.42)); //from 10m to 2m
+		} else {
+			Grid2DObject V;
+			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V component
+			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U component
+			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+					grid_out(ii,jj) = sqrt( IOUtils::pow2(grid_out(ii,jj)) + IOUtils::pow2(V(ii,jj)) ) * (4.87 / log(67.8*10.-5.42)); //from 10m to 2m
+				}
+			}
+		}
+	}
+	if(parameter==MeteoGrids::TA) read2DGrid_indexed(idx, 11.2, 105, 2, date, grid_out); //2m TA, type 105, level 2
+	if(parameter==MeteoGrids::RH) {
+		if(!read2DGrid_indexed(idx, 52.2, 105, 2, date, grid_out)) {
+			Grid2DObject ta;
+			read2DGrid_indexed(idx, 11.2, 105, 2, date, ta);
+			read2DGrid_indexed(idx, 17.2, 105, 2, date, grid_out); // dew point at 2m
+			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+					grid_out(ii,jj) = Atmosphere::DewPointtoRh(grid_out(ii,jj), ta(ii,jj), true);
+				}
+			}
+		}
+	}
+	if(parameter==MeteoGrids::TSS) read2DGrid_indexed(idx, 11.2, 1, 0, date, grid_out);
+	if(parameter==MeteoGrids::HNW) read2DGrid_indexed(idx, 61.2, 1, 0, date, grid_out);
+	if(parameter==MeteoGrids::ILWR) read2DGrid_indexed(idx, 25.201, 1, 0, date, grid_out);
+	if(parameter==MeteoGrids::ISWR) {
+		if(!read2DGrid_indexed(idx, 111.250, 1, 0, date, grid_out)) {
+			Grid2DObject diff;
+			read2DGrid_indexed(idx, 23.201, 1, 0, date, diff); //diffuse rad
+			read2DGrid_indexed(idx, 22.201, 1, 0, date, grid_out); //direct rad
+			grid_out.grid2D += diff.grid2D;
+		}
+	}
+	if(parameter==MeteoGrids::P) {
+		if(!read2DGrid_indexed(idx, 64.202, 1, 0, date, grid_out))
+			read2DGrid_indexed(idx, 1.2, 1, 0, date, grid_out);
+	}
+	if(parameter==MeteoGrids::HS) read2DGrid_indexed(idx, 66.2, 1, 0, date, grid_out);
+
+	if(parameter==MeteoGrids::DEM) read2DGrid_indexed(idx, 8.2, 1, 0, date, grid_out);
+	if(parameter==MeteoGrids::SLOPE) read2DGrid_indexed(idx, 98.202, 1, 0, date, grid_out);
+	if(parameter==MeteoGrids::AZI) read2DGrid_indexed(idx, 99.202, 1, 0, date, grid_out);
 }
 
 void GRIBIO::readDEM(DEMObject& /*dem_out*/)
@@ -376,6 +408,8 @@ void GRIBIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Para
 void GRIBIO::cleanup() throw()
 {
 	if(fp!=NULL) fclose(fp); fp=NULL;
+	if(idx!=NULL) free(idx); idx=NULL;
+	idx_filename="";
 }
 
 #ifndef _METEOIO_JNI
