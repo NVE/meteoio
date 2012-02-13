@@ -279,12 +279,26 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
 	cout << " (" << info_string << ") " << endl;
 }
+
 #ifdef _POPC_ //HACK popc
 void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
                             /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result)
 #else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result)
+#endif
+{
+	string info_string;
+	interpolate(date, dem, meteoparam, in_coords, result, info_string);
+}
+
+#ifdef _POPC_ //HACK popc
+void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+                            /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result,
+                            std::string& info_string)
+#else
+void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 #endif
 {
 	result.clear();
@@ -308,7 +322,6 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 		one_point_dem.max_curvature = dem.max_curvature;
 
 		Grid2DObject result_grid;
-		string info_string;
 		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
 		if (ii == 0) {
 			cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam)
@@ -316,14 +329,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 				<< " (" << info_string << ") " << endl;
 		}
 
-		unsigned int result_x, result_y;
-		result_grid.size(result_x, result_y);
-		
-		if ((result_x == result_y) && (result_x == 1)) { //Consistency check, maybe unnecessary
-			result.push_back(result_grid.grid2D(0,0));
-		} else {
-			throw IOException("Error while trying to interpolate for one coordinate", AT);
-		}
+		result.push_back(result_grid.grid2D(0,0));
 	}
 }
 

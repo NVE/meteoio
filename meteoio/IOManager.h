@@ -131,10 +131,19 @@ class IOManager {
 
 #ifdef _POPC_ //HACK popc
 		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-					  /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result);
+				 /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result);
 #else
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-					  const std::vector<Coords>& in_coords, std::vector<double>& result);
+				 const std::vector<Coords>& in_coords, std::vector<double>& result);
+#endif
+
+#ifdef _POPC_ //HACK popc
+		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+				 /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result,
+				 std::string& info_string);
+#else
+		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+				 const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string);
 #endif
 
 		/**
