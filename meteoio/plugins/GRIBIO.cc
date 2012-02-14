@@ -143,6 +143,7 @@ void  GRIBIO::listFields(const std::string& filename)
 		long level=0;
 		if(levelType!=1) GRIB_CHECK(grib_get_long(h,"level", &level),0);
 		std::cout << marsParam << " " << shortname << " " << name << " type " << levelType << " level " << level << "\n";
+		grib_handle_delete(h);
 	}
 }
 
@@ -153,35 +154,32 @@ Date GRIBIO::getDate(grib_handle* h) {
 
 	const int year=dataDate/10000, month=dataDate/100-year*100, day=dataDate-month*100-year*10000;
 	const int hour=dataTime/100, minutes=dataTime-hour*100;
-	return Date(year, month, day, hour, minutes, tz_in);
+	return Date(year, month, day, hour, minutes, tz_in); //HACK or is it always UTC?
 }
 
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y)
 {
+	//getting transformation parameters
 	double angleOfRotationInDegrees;
 	GRIB_CHECK(grib_get_double(h,"angleOfRotationInDegrees",&angleOfRotationInDegrees),0);
 	if(angleOfRotationInDegrees!=0.) {
 		throw InvalidArgumentException("Rotated grids not supported!", AT);
 	}
-
-	double ll_latitude;
-	double ll_longitude;
-	GRIB_CHECK(grib_get_double(h,"latitudeOfFirstGridPointInDegrees",&ll_latitude),0);
-	GRIB_CHECK(grib_get_double(h,"longitudeOfFirstGridPointInDegrees",&ll_longitude),0);
-
-	double latitudeOfSouthernPole;
-	double longitudeOfSouthernPole;
+	double latitudeOfSouthernPole, longitudeOfSouthernPole;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
 
+	//determining llcorner
+	double ll_latitude, ll_longitude;
+	GRIB_CHECK(grib_get_double(h,"latitudeOfFirstGridPointInDegrees",&ll_latitude),0);
+	GRIB_CHECK(grib_get_double(h,"longitudeOfFirstGridPointInDegrees",&ll_longitude),0);
 	Coords llcorner(coordin, coordinparam);
 	llcorner.setLatLon( ll_latitude+(90.+latitudeOfSouthernPole), ll_longitude+longitudeOfSouthernPole, 0.);
 
-	double ur_latitude;
-	double ur_longitude;
+	//determining cell size
+	double ur_latitude, ur_longitude;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfLastGridPointInDegrees",&ur_latitude),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfLastGridPointInDegrees",&ur_longitude),0);
-
 	const double cntr_latitude = .5*(ll_latitude+ur_latitude)+(90.+latitudeOfSouthernPole);
 
 	double d_i, d_j;
@@ -191,6 +189,7 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	cellsize_x = Coords::lon_degree_lenght(cntr_latitude)*d_i;
 	cellsize_y = Coords::lat_degree_lenght(cntr_latitude)*d_j;
 
+	//checking that cellsize does not vary too much across the grid
 	const double cellsize_x_ll = Coords::lon_degree_lenght(ll_latitude)*d_j;
 	const double cellsize_x_ur = Coords::lon_degree_lenght(ur_latitude)*d_j;
 	if( fabs(cellsize_x_ll-cellsize_x_ur)/cellsize_x > 1./100.) {
@@ -255,6 +254,7 @@ bool GRIBIO::read2DGrid_indexed(grib_index *idx, const double& in_marsParam, con
 			read2Dlevel(h, grid_out);
 			return true;
 		}
+		grib_handle_delete(h);
 	}
 	return false;
 }
@@ -288,6 +288,7 @@ void GRIBIO::indexFile(const std::string& filename)
 
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
+	//HACK: convert to TZ_in or to UTC!!
 	const std::string prefix="laf";
 	const std::string ext=".grb";
 	const std::string filename = grid2dpath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
@@ -452,6 +453,74 @@ void GRIBIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
+
+	const std::string filename="/local/laf2010020112f00.grb"; //HACK
+	const Date date(2010,2,1,12,0, 1.);
+
+	if(!indexed) {
+		//the file has not yet been indexed
+		indexFile(filename);
+	} else if(idx_filename!=filename) {
+		 //the file name changed, we have to re-index it
+		cleanup();
+		indexFile(filename);
+	}
+
+	readMeteo_indexed(idx, 11.2, 105, 2, date); //T_2M
+}
+
+bool GRIBIO::readMeteo_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date)
+{
+	GRIB_CHECK(grib_index_select_double(idx,"marsParam",in_marsParam),0);
+	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", i_levelType),0);
+
+	grib_handle* h=NULL;
+	int err=0;
+	while((h = grib_handle_new_from_index(idx,&err)) != NULL) {
+		if(!h) {
+			cleanup();
+			throw IOException("Unable to create grib handle from index", AT);
+		}
+
+		double timeRange=0.;
+		GRIB_CHECK(grib_get_double(h,"timeRangeIndicator", &timeRange),0);
+		const Date validity_start=getDate(h);
+		const Date validity_end=validity_start+timeRange/24.;
+		long level=0;
+		if(i_level!=0) GRIB_CHECK(grib_get_long(h,"level", &level),0);
+		if(level==i_level && (i_date.isUndef() || (i_date>=validity_start && i_date<=validity_end)) ) {
+			grib_nearest *nearest = grib_nearest_new(h,&err); //HACK: keep it between runs
+			GRIB_CHECK(err,0);
+
+			const int mode = GRIB_NEAREST_SAME_GRID | GRIB_NEAREST_SAME_POINT;
+			double lats[4]={0,};
+			double lons[4]={0,};
+			double values[4]={0,};
+			double distances[4]={0,};
+			int indexes[4]={0,};
+			size_t size=4;
+			const double lat=46.,lon=9.;
+
+			double latitudeOfSouthernPole, longitudeOfSouthernPole;
+			GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
+			GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+
+			const double local_lat = lat - (90.+latitudeOfSouthernPole);
+			const double local_lon = lon -longitudeOfSouthernPole;
+			GRIB_CHECK(grib_nearest_find(nearest,h,local_lat,local_lon,mode,lats,lons,values,distances,indexes,&size),0); //use find_multiples instead
+
+			for(unsigned int i=0;i<4;i++) {
+				printf("#%d (%.2f , %.2f) @ %g m -> %g\n", (int)indexes[i],lats[i]+(90.+latitudeOfSouthernPole),lons[i]+longitudeOfSouthernPole,distances[i]*1e3,values[i]);
+			}
+			printf("\n");
+
+			grib_handle_delete(h);
+			if(nearest) grib_nearest_delete(nearest);
+			return true;
+		}
+		grib_handle_delete(h);
+	}
+	return false;
 }
 
 void GRIBIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
@@ -482,7 +551,7 @@ void GRIBIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Para
 void GRIBIO::cleanup() throw()
 {
 	if(fp!=NULL) fclose(fp); fp=NULL;
-	if(idx!=NULL) free(idx); idx=NULL;
+	grib_index_delete(idx); idx=NULL;
 	idx_filename="";
 }
 

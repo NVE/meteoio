@@ -73,6 +73,8 @@ class GRIBIO : public IOInterface {
 		void listKeys(grib_handle** h, const std::string& filename);
 		void cleanup() throw();
 
+		bool readMeteo_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date); //temporary
+
 		const Config& cfg;
 		std::string grid2dpath_in;
 		FILE *fp; //since passing fp always fail...
