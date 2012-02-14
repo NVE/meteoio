@@ -36,6 +36,7 @@ class Atmosphere {
 		static double virtualTemperatureFactor(const double& e, const double& p);
 		static double waterVaporDensity(const double& Temperature, const double& VaporPressure);
 		static double wetBulbTemperature(const double& T, const double& RH, const double& altitude);
+		static double windLogProfile(const double& v_ref, const double& z_ref, const double& z, const double& z0=0.03);
 
 		static double windChill(const double& TA, const double& VW);
 		static double heatIndex(const double& TA, const double& RH);

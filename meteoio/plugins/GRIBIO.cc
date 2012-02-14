@@ -19,6 +19,7 @@
 
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for PI
+#include <meteoio/DEMObject.h>
 
 #include <errno.h>
 #include <grib_api.h>
@@ -30,6 +31,7 @@ namespace mio {
  * @page gribio GRIBIO
  * @section gribio_format Format
  * *Put here the informations about the standard format that is implemented*
+ * marsParam: see http://www-imk.fzk.de/~kouker/mars/param.html
  *
  * @section gribio_units Units
  *
@@ -78,6 +80,8 @@ void GRIBIO::setOptions()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValue("TIME_ZONE", "Input", tz_in);
 	cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+	update_dem = false;
+	cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
 }
 
 void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
@@ -235,7 +239,7 @@ bool GRIBIO::read2DGrid_indexed(grib_index *idx, const double& in_marsParam, con
 		}
 
 		long level=0;
-		if(i_levelType==105) GRIB_CHECK(grib_get_long(h,"level", &level),0);
+		if(i_level!=0) GRIB_CHECK(grib_get_long(h,"level", &level),0);
 		if(level==i_level /*&& (date>=i_date && date<=i_date+timeRange)*/ ) {
 			read2Dlevel(h, grid_out);
 			return true;
@@ -272,11 +276,17 @@ void GRIBIO::indexFile(const std::string& filename)
 }
 
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
-{ //HACK: in 115.260 and 116.260, swiss coordinates for each cells
+{
 
 	const std::string prefix="laf";
 	const std::string ext=".grb";
 	const std::string filename = grid2dpath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
+
+	read2DGrid(filename, grid_out, parameter, date);
+}
+
+void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{ //HACK: in 115.260 and 116.260, swiss coordinates for each cells
 
 	if(!indexed) { //if the file has not yet been indexed, do it
 		indexFile(filename);
@@ -286,11 +296,59 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		indexFile(filename);
 	}
 
+	//Basic meteo parameters
+	if(parameter==MeteoGrids::P) {
+		if(!read2DGrid_indexed(idx, 64.202, 1, 0, date, grid_out)) //HMO3
+			read2DGrid_indexed(idx, 1.2, 110, 2, date, grid_out); //P
+	}
+	if(parameter==MeteoGrids::TA) read2DGrid_indexed(idx, 11.2, 105, 2, date, grid_out); //T_2M
+	if(parameter==MeteoGrids::RH) {
+		if(!read2DGrid_indexed(idx, 52.2, 105, 2, date, grid_out)) { //RELHUM_2M
+			Grid2DObject ta;
+			read2DGrid_indexed(idx, 11.2, 105, 2, date, ta); //T_2M
+			read2DGrid_indexed(idx, 17.2, 105, 2, date, grid_out); //TD_2M
+			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+					grid_out(ii,jj) = Atmosphere::DewPointtoRh(grid_out(ii,jj), ta(ii,jj), true);
+				}
+			}
+		}
+	}
+	if(parameter==MeteoGrids::TSS) read2DGrid_indexed(idx, 197.201, 111, 0, date, grid_out); //T_SO
+	if(parameter==MeteoGrids::TSG) read2DGrid_indexed(idx, 11.2, 1, 0, date, grid_out); //T_G
+
+	//hydrological parameters
+	if(parameter==MeteoGrids::HNW) read2DGrid_indexed(idx, 61.2, 1, 0, date, grid_out); //tp
+	if(parameter==MeteoGrids::ROT) read2DGrid_indexed(idx, 90.2, 112, 0, date, grid_out); //RUNOFF
+	if(parameter==MeteoGrids::SWE) read2DGrid_indexed(idx, 65.2, 1, 0, date, grid_out); //W_SNOW
+
+	//radiation parameters
+	if(parameter==MeteoGrids::ALB) read2DGrid_indexed(idx, 84.2, 1, 0, date, grid_out); //ALB_RAD
+	if(parameter==MeteoGrids::ILWR) read2DGrid_indexed(idx, 25.201, 1, 0, date, grid_out); //ALWD_S
+	if(parameter==MeteoGrids::ISWR) {
+		if(!read2DGrid_indexed(idx, 111.250, 1, 0, date, grid_out)) { //GLOB
+			Grid2DObject diff;
+			read2DGrid_indexed(idx, 23.201, 1, 0, date, diff); //diffuse rad, ASWDIFD_S
+			read2DGrid_indexed(idx, 22.201, 1, 0, date, grid_out); //direct rad, ASWDIR_S
+			grid_out.grid2D += diff.grid2D;
+		}
+	}
+
+	//DEM parameters
+	if(parameter==MeteoGrids::DEM) read2DGrid_indexed(idx, 8.2, 1, 0, date, grid_out); //HSURF
+	if(parameter==MeteoGrids::SLOPE) read2DGrid_indexed(idx, 98.202, 1, 0, date, grid_out); //SLO_ANG
+	if(parameter==MeteoGrids::AZI) read2DGrid_indexed(idx, 99.202, 1, 0, date, grid_out); //SLO_ASP
+
+	//Wind parameters
+	if(parameter==MeteoGrids::U) read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U
+	if(parameter==MeteoGrids::V) read2DGrid_indexed(idx, 34.2, 105, 10, date, grid_out); //V_10M, also in 110, 10 as V
+	if(parameter==MeteoGrids::W) read2DGrid_indexed(idx, 40.2, 109, 10, date, grid_out); //W, 10m
+	if(parameter==MeteoGrids::VW_MAX) read2DGrid_indexed(idx, 187.201, 105, 10, date, grid_out); //VMAX_10M 10m
 	if(parameter==MeteoGrids::DW) {
-		if(!read2DGrid_indexed(idx, 31.2, 105, 10, date, grid_out)) { //10m wind direction, level 10, type 105
+		if(!read2DGrid_indexed(idx, 31.2, 105, 10, date, grid_out)) { //DD_10M
 			Grid2DObject V;
-			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V component
-			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U component
+			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V_10M
+			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U_10M
 			const double to_deg = 180. / Cst::PI;
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
@@ -300,58 +358,64 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		}
 	}
 	if(parameter==MeteoGrids::VW) {
-		if(read2DGrid_indexed(idx, 32.2, 105, 10, date, grid_out)) { //10m wind speed, level 10, type 105
-			grid_out.grid2D = grid_out.grid2D * (4.87 / log(67.8*10.-5.42)); //from 10m to 2m
-		} else {
+		if(!read2DGrid_indexed(idx, 32.2, 105, 10, date, grid_out)) { //FF_10M
 			Grid2DObject V;
-			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V component
-			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U component
+			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V_10M
+			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U_10M
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-					grid_out(ii,jj) = sqrt( IOUtils::pow2(grid_out(ii,jj)) + IOUtils::pow2(V(ii,jj)) ) * (4.87 / log(67.8*10.-5.42)); //from 10m to 2m
+					grid_out(ii,jj) = sqrt( IOUtils::pow2(grid_out(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
 				}
 			}
 		}
 	}
-	if(parameter==MeteoGrids::TA) read2DGrid_indexed(idx, 11.2, 105, 2, date, grid_out); //2m TA, type 105, level 2
-	if(parameter==MeteoGrids::RH) {
-		if(!read2DGrid_indexed(idx, 52.2, 105, 2, date, grid_out)) {
-			Grid2DObject ta;
-			read2DGrid_indexed(idx, 11.2, 105, 2, date, ta);
-			read2DGrid_indexed(idx, 17.2, 105, 2, date, grid_out); // dew point at 2m
+	if(parameter==MeteoGrids::U || parameter==MeteoGrids::V || parameter==MeteoGrids::W || parameter==MeteoGrids::VW || parameter==MeteoGrids::VW_MAX) {
+		//we need to compute the wind at 2m
+		Grid2DObject Z0;
+		if(read2DGrid_indexed(idx, 83.2, 1, 0, date, Z0)) { //Z0
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-					grid_out(ii,jj) = Atmosphere::DewPointtoRh(grid_out(ii,jj), ta(ii,jj), true);
+					grid_out(ii,jj) = Atmosphere::windLogProfile(grid_out(ii,jj), 10., 2., Z0(ii,jj));
 				}
 			}
+		} else {
+			const double wind_factor = Atmosphere::windLogProfile(1., 10., 2., 0.03);
+			grid_out.grid2D *= wind_factor;
 		}
 	}
-	if(parameter==MeteoGrids::TSS) read2DGrid_indexed(idx, 11.2, 1, 0, date, grid_out);
-	if(parameter==MeteoGrids::HNW) read2DGrid_indexed(idx, 61.2, 1, 0, date, grid_out);
-	if(parameter==MeteoGrids::ILWR) read2DGrid_indexed(idx, 25.201, 1, 0, date, grid_out);
-	if(parameter==MeteoGrids::ISWR) {
-		if(!read2DGrid_indexed(idx, 111.250, 1, 0, date, grid_out)) {
-			Grid2DObject diff;
-			read2DGrid_indexed(idx, 23.201, 1, 0, date, diff); //diffuse rad
-			read2DGrid_indexed(idx, 22.201, 1, 0, date, grid_out); //direct rad
-			grid_out.grid2D += diff.grid2D;
-		}
-	}
-	if(parameter==MeteoGrids::P) {
-		if(!read2DGrid_indexed(idx, 64.202, 1, 0, date, grid_out))
-			read2DGrid_indexed(idx, 1.2, 1, 0, date, grid_out);
-	}
-	if(parameter==MeteoGrids::HS) read2DGrid_indexed(idx, 66.2, 1, 0, date, grid_out);
-
-	if(parameter==MeteoGrids::DEM) read2DGrid_indexed(idx, 8.2, 1, 0, date, grid_out);
-	if(parameter==MeteoGrids::SLOPE) read2DGrid_indexed(idx, 98.202, 1, 0, date, grid_out);
-	if(parameter==MeteoGrids::AZI) read2DGrid_indexed(idx, 99.202, 1, 0, date, grid_out);
 }
 
-void GRIBIO::readDEM(DEMObject& /*dem_out*/)
-{
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+void GRIBIO::readDEM(DEMObject& dem_out)
+{ //HACK: add isEmpty() to Grid2D
+	const Date d(0.);
+	std::string filename;
+
+	cfg.getValue("DEMFILE", "Input", filename);
+	read2DGrid(filename, dem_out, MeteoGrids::DEM, d);
+	if(update_dem) {
+		dem_out.update();
+	} else {
+		const int dem_ppt=dem_out.getUpdatePpt();
+		if(dem_ppt&DEMObject::SLOPE) {
+			Grid2DObject slope;
+			read2DGrid(filename, slope, MeteoGrids::SLOPE, d);
+			dem_out.slope=slope.grid2D;
+			Grid2DObject azi;
+			read2DGrid(filename, azi, MeteoGrids::AZI, d);
+			dem_out.azi=azi.grid2D;
+		}
+		if(dem_ppt&DEMObject::NORMAL || dem_ppt&DEMObject::CURVATURE) {
+			//we will only update the normals and/or curvatures, then revert update properties
+			if(dem_ppt&DEMObject::NORMAL && dem_ppt&DEMObject::CURVATURE) dem_out.setUpdatePpt((DEMObject::update_type)(DEMObject::NORMAL|DEMObject::CURVATURE));
+			else if(dem_ppt&DEMObject::NORMAL) dem_out.setUpdatePpt(DEMObject::NORMAL);
+			else if(dem_ppt&DEMObject::CURVATURE) dem_out.setUpdatePpt(DEMObject::CURVATURE);
+
+			dem_out.update();
+			dem_out.setUpdatePpt((DEMObject::update_type)dem_ppt);
+		}
+
+		dem_out.updateAllMinMax();
+	}
 }
 
 void GRIBIO::readLanduse(Grid2DObject& /*landuse_out*/)

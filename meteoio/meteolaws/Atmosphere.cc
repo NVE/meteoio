@@ -103,6 +103,34 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 }
 
 /**
+* @brief Wind log profile.
+* This is used to compute the equivalent wind speed at a different height.
+* @details It depends on the roughness length
+* that can take a default value (0.03) or any other, for example:
+* <center><table border="0">
+* <tr><th>land class</th><th>roughness length</th></tr>
+* <tr><td>sea</td><td>0.0002</td></tr>
+* <tr><td>smooth</td><td>0.005</td></tr>
+* <tr><td>open</td><td>0.03</td></tr>
+* <tr><td>roughly open</td><td>0.10</td></tr>
+* <tr><td>rough</td><td>0.25</td></tr>
+* <tr><td>very rough</td><td>0.5</td></tr>
+* <tr><td>closed</td><td>1.0</td></tr>
+* <tr><td>chaotic</td><td>over 2.0</td></tr>
+* </table></center>
+*
+* @param v_ref reference wind speed (m/s)
+* @param z_ref height of the reference wind speed (m)
+* @param z new height (m)
+* @param z0 roughness length (m)
+* @return wind speed at height z (m/s)
+*/
+double Atmosphere::windLogProfile(const double& v_ref, const double& z_ref, const double& z, const double& z0)
+{
+	return v_ref * ( log(z/z0) / log(z_ref/z0) );
+}
+
+/**
 * @brief Wind chill temperature.
 * This is an index aiming at expressing the human-percived feeling of air temperature on exposed skin due to wind.
 * This is NOT a sceintific measurement, only an index to express a subjective feeling.

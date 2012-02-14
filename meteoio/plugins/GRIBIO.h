@@ -68,6 +68,7 @@ class GRIBIO : public IOInterface {
 		Coords getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y);
 		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out);
 		bool read2DGrid_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
+		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		void indexFile(const std::string& filename);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void cleanup() throw();
@@ -83,6 +84,7 @@ class GRIBIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam; //projection parameters
 		double tz_in;
+		bool update_dem;
 
 };
 
