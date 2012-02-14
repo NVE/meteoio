@@ -135,6 +135,12 @@ class Grid2DObject {
 		void size(unsigned int& o_ncols, unsigned int& o_nrows) const;
 
 		/**
+		* @brief Check if a grid does not contain any data (but it can contain geolocalization)
+		* @return true if the grid is 0x0
+		*/
+		bool isEmpty() const;
+
+		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
 		* as another Grid2DObject (as well as same cells). The grid coordinates (xllcorner & yllcorner) are NOT
 		* checked as these might be tweaked for convenience (like between input grid and local grid)

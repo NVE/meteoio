@@ -228,6 +228,10 @@ void Grid3DObject::size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned i
 	o_ndepths = ndepths;
 }
 
+bool Grid3DObject::isEmpty() const {
+	return (ncols==0 && nrows==0 && ndepths==0);
+}
+
 void Grid3DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
                              const double& i_cellsize)
 {

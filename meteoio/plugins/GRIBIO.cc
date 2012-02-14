@@ -30,17 +30,25 @@ namespace mio {
 /**
  * @page gribio GRIBIO
  * @section gribio_format Format
- * *Put here the informations about the standard format that is implemented*
- * marsParam: see http://www-imk.fzk.de/~kouker/mars/param.html
+ * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
+ * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format.
+ * This has been developed for reading MeteoSwiss Cosmo data and reads fields based on their marsParam code (see for example
+ * http://www-imk.fzk.de/~kouker/mars/param.html even if these don't match excatly MeteoSwiss...)
+ *
+ * Levels description is available at also http://www.nco.ncep.noaa.gov/pmb/docs/on388/ . no correction for grid rotation is currently performed.
  *
  * @section gribio_units Units
- *
+ * As specified by WMO.
  *
  * @section gribio_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - etc
+ * - COORDSYS: coordinate system (see Coords)
+ * - COORDPARAM: extra coordinates parameters (see Coords)
+ * - TIME_ZONE: time zone
+ * - GRID2DPATH: path where to find the grids
+ * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
+ * that is we use the slope and azimuth included in the GRIB file)
+ *
  */
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
@@ -88,7 +96,6 @@ void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 {
 	const unsigned int MAX_VAL_LEN=1024; //max value string length in GRIB
 	unsigned long key_iterator_filter_flags=GRIB_KEYS_ITERATOR_ALL_KEYS;
-	//char* name_space=(char *)"ls"; //name_space=NULL to get all the keys, char* name_space=0;
 	char* name_space=NULL;
 	grib_keys_iterator* kiter=grib_keys_iterator_new(*h,key_iterator_filter_flags,name_space);
 
@@ -238,9 +245,13 @@ bool GRIBIO::read2DGrid_indexed(grib_index *idx, const double& in_marsParam, con
 			throw IOException("Unable to create grib handle from index", AT);
 		}
 
+		double timeRange=0.;
+		GRIB_CHECK(grib_get_double(h,"timeRangeIndicator", &timeRange),0);
+		const Date validity_start=getDate(h);
+		const Date validity_end=validity_start+timeRange/24.;
 		long level=0;
 		if(i_level!=0) GRIB_CHECK(grib_get_long(h,"level", &level),0);
-		if(level==i_level /*&& (date>=i_date && date<=i_date+timeRange)*/ ) {
+		if(level==i_level && (i_date.isUndef() || (i_date>=validity_start && i_date<=validity_end)) ) {
 			read2Dlevel(h, grid_out);
 			return true;
 		}
@@ -277,7 +288,6 @@ void GRIBIO::indexFile(const std::string& filename)
 
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-
 	const std::string prefix="laf";
 	const std::string ext=".grb";
 	const std::string filename = grid2dpath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
@@ -286,9 +296,9 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 }
 
 void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
-{ //HACK: in 115.260 and 116.260, swiss coordinates for each cells
-
-	if(!indexed) { //if the file has not yet been indexed, do it
+{
+	if(!indexed) {
+		//the file has not yet been indexed
 		indexFile(filename);
 	} else if(idx_filename!=filename) {
 		 //the file name changed, we have to re-index it
@@ -298,8 +308,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 
 	//Basic meteo parameters
 	if(parameter==MeteoGrids::P) {
-		if(!read2DGrid_indexed(idx, 64.202, 1, 0, date, grid_out)) //HMO3
-			read2DGrid_indexed(idx, 1.2, 110, 2, date, grid_out); //P
+		if(!read2DGrid_indexed(idx, 1.2, 1, 0, date, grid_out)) //PS
+			read2DGrid_indexed(idx, 64.202, 1, 0, date, grid_out); //HMO3
 	}
 	if(parameter==MeteoGrids::TA) read2DGrid_indexed(idx, 11.2, 105, 2, date, grid_out); //T_2M
 	if(parameter==MeteoGrids::RH) {
@@ -369,25 +379,25 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			}
 		}
 	}
-	if(parameter==MeteoGrids::U || parameter==MeteoGrids::V || parameter==MeteoGrids::W || parameter==MeteoGrids::VW || parameter==MeteoGrids::VW_MAX) {
-		//we need to compute the wind at 2m
+	/*if(parameter==MeteoGrids::U || parameter==MeteoGrids::V || parameter==MeteoGrids::W || parameter==MeteoGrids::VW || parameter==MeteoGrids::VW_MAX) {
+		//we need to compute the wind at 7.5m
 		Grid2DObject Z0;
 		if(read2DGrid_indexed(idx, 83.2, 1, 0, date, Z0)) { //Z0
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-					grid_out(ii,jj) = Atmosphere::windLogProfile(grid_out(ii,jj), 10., 2., Z0(ii,jj));
+					grid_out(ii,jj) = Atmosphere::windLogProfile(grid_out(ii,jj), 10., 7.5, Z0(ii,jj));
 				}
 			}
 		} else {
-			const double wind_factor = Atmosphere::windLogProfile(1., 10., 2., 0.03);
+			const double wind_factor = Atmosphere::windLogProfile(1., 10., 7.5, 0.03);
 			grid_out.grid2D *= wind_factor;
 		}
-	}
+	}*/
 }
 
 void GRIBIO::readDEM(DEMObject& dem_out)
-{ //HACK: add isEmpty() to Grid2D
-	const Date d(0.);
+{
+	const Date d;
 	std::string filename;
 
 	cfg.getValue("DEMFILE", "Input", filename);
