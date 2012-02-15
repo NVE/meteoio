@@ -67,16 +67,22 @@ class GRIBIO : public IOInterface {
 		Date getDate(grib_handle* h);
 		Coords getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y);
 		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out);
-		bool read2DGrid_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
+		bool read2DGrid_indexed(const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		void indexFile(const std::string& filename);
+		void addStation(const std::string& coord_spec);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void cleanup() throw();
 
-		bool readMeteo_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date); //temporary
+		void readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons);
+		bool readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const long& npoints, double *lats, double *lons, double *values);
+		void fillMeteo(double *values, const MeteoData::Parameters& param, const long& npoints, std::vector<MeteoData> &Meteo);
+		void readMeteoStep(std::vector<StationData> &stations, double *lats, double *lons, const Date i_date, std::vector<MeteoData> &Meteo);
 
 		const Config& cfg;
 		std::string grid2dpath_in;
+		std::string meteopath_in;
+		std::vector<Coords> vecPts; //points to use for virtual stations if METEO=GRIB
 		FILE *fp; //since passing fp always fail...
 		bool indexed; //flag to know if the file has already been indexed
 		grib_index *idx;
@@ -84,8 +90,10 @@ class GRIBIO : public IOInterface {
 
 		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		static const double tz_in; //GRIB time zone
+		static const std::string prefix;
+		static const std::string ext;
 		std::string coordin, coordinparam; //projection parameters
-		double tz_in;
 		bool update_dem;
 
 };

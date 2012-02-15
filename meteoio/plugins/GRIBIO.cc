@@ -36,6 +36,7 @@ namespace mio {
  * http://www-imk.fzk.de/~kouker/mars/param.html even if these don't match excatly MeteoSwiss...)
  *
  * Levels description is available at also http://www.nco.ncep.noaa.gov/pmb/docs/on388/ . no correction for grid rotation is currently performed.
+ * read2DGrid(grid, filename) returns the first grid that is found.
  *
  * @section gribio_units Units
  * As specified by WMO.
@@ -44,14 +45,18 @@ namespace mio {
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords)
  * - COORDPARAM: extra coordinates parameters (see Coords)
- * - TIME_ZONE: time zone
  * - GRID2DPATH: path where to find the grids
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
+ * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
+ * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code"
  *
  */
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+const double GRIBIO::tz_in = 0.; //GRIB time zone, always UTC
+const std::string GRIBIO::prefix="laf"; //filename prefix
+const std::string GRIBIO::ext=".grb"; //filename extension
 
 GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -86,10 +91,61 @@ void GRIBIO::setOptions()
 {
 	std::string coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TIME_ZONE", "Input", tz_in);
-	cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	update_dem = false;
-	cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
+
+	string tmp="";
+	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
+	if (tmp == "GRIB") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
+	}
+
+	tmp="";
+	cfg.getValue("METEO", "Input", tmp, Config::nothrow);
+	if (tmp == "GRIB") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("METEOPATH", "Input", meteopath_in);
+		size_t current_stationnr = 1;
+		string current_station;
+		do {
+			current_station = "";
+			stringstream ss;
+			ss << "STATION" << current_stationnr;
+			cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
+
+			if (current_station != "") {
+				addStation(current_station);
+				std::cout <<  "\tRead virtual station " << vecPts.back().printLatLon() << "\n";
+			}
+			current_stationnr++;
+		} while (current_station != "");
+	}
+}
+
+void GRIBIO::addStation(const std::string& coord_spec)
+{
+	std::istringstream iss(coord_spec);
+	double coord1=IOUtils::nodata, coord2=IOUtils::nodata;
+	int epsg=IOUtils::inodata;
+
+	iss >> std::skipws >> coord1;
+	iss >> std::skipws >> coord2;
+	iss >> std::skipws >> epsg;
+
+	if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata && epsg!=IOUtils::inodata) {
+		Coords point;
+		point.setEPSG(epsg);
+		point.setXY(coord1, coord2, IOUtils::nodata);
+		vecPts.push_back(point);
+		return;
+	}
+	if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
+		Coords point(coordin, coordinparam);
+		point.setLatLon(coord1, coord2, IOUtils::nodata);
+		vecPts.push_back(point);
+		return;
+	}
+
+	throw InvalidArgumentException("Coordinate specification \""+coord_spec+"\" is invalid!", AT);
 }
 
 void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
@@ -154,7 +210,7 @@ Date GRIBIO::getDate(grib_handle* h) {
 
 	const int year=dataDate/10000, month=dataDate/100-year*100, day=dataDate-month*100-year*10000;
 	const int hour=dataTime/100, minutes=dataTime-hour*100;
-	return Date(year, month, day, hour, minutes, tz_in); //HACK or is it always UTC?
+	return Date(year, month, day, hour, minutes, tz_in);
 }
 
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y)
@@ -231,7 +287,7 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
 	free(values);
 }
 
-bool GRIBIO::read2DGrid_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out)
+bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out)
 {
 	GRIB_CHECK(grib_index_select_double(idx,"marsParam",in_marsParam),0);
 	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", i_levelType),0);
@@ -259,10 +315,32 @@ bool GRIBIO::read2DGrid_indexed(grib_index *idx, const double& in_marsParam, con
 	return false;
 }
 
-void GRIBIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*i_name*/)
+void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	const std::string filename = grid2dpath_in+"/"+i_name;
+	fp = fopen(filename.c_str(),"r");
+	if(fp==NULL) {
+		stringstream ss;
+		ss << "Error openning file \"" << filename << "\", possible reason: " << strerror(errno);
+		throw FileAccessException(ss.str(), AT);
+	}
+
+	grib_handle* h=NULL;
+	int err=0;
+	if((h = grib_handle_new_from_file(0,fp,&err)) != NULL) {
+		if(!h) {
+			cleanup();
+			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
+		}
+
+		read2Dlevel(h, grid_out);
+		grib_handle_delete(h);
+	} else {
+		cleanup();
+		throw IOException("No grid found in file \""+filename+"\"", AT);
+	}
+
+	cleanup();
 }
 
 void GRIBIO::indexFile(const std::string& filename)
@@ -288,36 +366,29 @@ void GRIBIO::indexFile(const std::string& filename)
 
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	//HACK: convert to TZ_in or to UTC!!
-	const std::string prefix="laf";
-	const std::string ext=".grb";
-	const std::string filename = grid2dpath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
+	Date UTC_date = date;
+	UTC_date.setTimeZone(tz_in);
 
-	read2DGrid(filename, grid_out, parameter, date);
+	const std::string filename = grid2dpath_in+"/"+prefix+UTC_date.toString(Date::NUM).substr(0,10)+"f"+UTC_date.toString(Date::NUM).substr(10,2)+ext;
+
+	read2DGrid(filename, grid_out, parameter, UTC_date);
 }
 
 void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	if(!indexed) {
-		//the file has not yet been indexed
-		indexFile(filename);
-	} else if(idx_filename!=filename) {
-		 //the file name changed, we have to re-index it
+	if(!indexed || idx_filename!=filename) {
 		cleanup();
 		indexFile(filename);
 	}
 
 	//Basic meteo parameters
-	if(parameter==MeteoGrids::P) {
-		if(!read2DGrid_indexed(idx, 1.2, 1, 0, date, grid_out)) //PS
-			read2DGrid_indexed(idx, 64.202, 1, 0, date, grid_out); //HMO3
-	}
-	if(parameter==MeteoGrids::TA) read2DGrid_indexed(idx, 11.2, 105, 2, date, grid_out); //T_2M
+	if(parameter==MeteoGrids::P) read2DGrid_indexed(1.2, 1, 0, date, grid_out); //PS what is HMO3?
+	if(parameter==MeteoGrids::TA) read2DGrid_indexed(11.2, 105, 2, date, grid_out); //T_2M
 	if(parameter==MeteoGrids::RH) {
-		if(!read2DGrid_indexed(idx, 52.2, 105, 2, date, grid_out)) { //RELHUM_2M
+		if(!read2DGrid_indexed(52.2, 105, 2, date, grid_out)) { //RELHUM_2M
 			Grid2DObject ta;
-			read2DGrid_indexed(idx, 11.2, 105, 2, date, ta); //T_2M
-			read2DGrid_indexed(idx, 17.2, 105, 2, date, grid_out); //TD_2M
+			read2DGrid_indexed(11.2, 105, 2, date, ta); //T_2M
+			read2DGrid_indexed(17.2, 105, 2, date, grid_out); //TD_2M
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
 					grid_out(ii,jj) = Atmosphere::DewPointtoRh(grid_out(ii,jj), ta(ii,jj), true);
@@ -325,41 +396,50 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			}
 		}
 	}
-	if(parameter==MeteoGrids::TSS) read2DGrid_indexed(idx, 197.201, 111, 0, date, grid_out); //T_SO
-	if(parameter==MeteoGrids::TSG) read2DGrid_indexed(idx, 11.2, 1, 0, date, grid_out); //T_G
+	if(parameter==MeteoGrids::TSS) read2DGrid_indexed(197.201, 111, 0, date, grid_out); //T_SO
+	if(parameter==MeteoGrids::TSG) read2DGrid_indexed(11.2, 1, 0, date, grid_out); //T_G
 
 	//hydrological parameters
-	if(parameter==MeteoGrids::HNW) read2DGrid_indexed(idx, 61.2, 1, 0, date, grid_out); //tp
-	if(parameter==MeteoGrids::ROT) read2DGrid_indexed(idx, 90.2, 112, 0, date, grid_out); //RUNOFF
-	if(parameter==MeteoGrids::SWE) read2DGrid_indexed(idx, 65.2, 1, 0, date, grid_out); //W_SNOW
+	if(parameter==MeteoGrids::HNW) read2DGrid_indexed(61.2, 1, 0, date, grid_out); //tp
+	if(parameter==MeteoGrids::ROT) read2DGrid_indexed(90.2, 112, 0, date, grid_out); //RUNOFF
+	if(parameter==MeteoGrids::SWE) read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
+	if(parameter==MeteoGrids::HS) {
+		Grid2DObject snow_density;
+		read2DGrid_indexed(133.201, 1, 0, date, snow_density); //RHO_SNOW
+		read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
+		grid_out.grid2D /= snow_density.grid2D;
+	}
 
 	//radiation parameters
-	if(parameter==MeteoGrids::ALB) read2DGrid_indexed(idx, 84.2, 1, 0, date, grid_out); //ALB_RAD
-	if(parameter==MeteoGrids::ILWR) read2DGrid_indexed(idx, 25.201, 1, 0, date, grid_out); //ALWD_S
+	if(parameter==MeteoGrids::ALB) {
+		read2DGrid_indexed(84.2, 1, 0, date, grid_out); //ALB_RAD
+		grid_out.grid2D /= 100.;
+	}
+	if(parameter==MeteoGrids::ILWR) read2DGrid_indexed(25.201, 1, 0, date, grid_out); //ALWD_S
 	if(parameter==MeteoGrids::ISWR) {
-		if(!read2DGrid_indexed(idx, 111.250, 1, 0, date, grid_out)) { //GLOB
+		if(!read2DGrid_indexed(111.250, 1, 0, date, grid_out)) { //GLOB
 			Grid2DObject diff;
-			read2DGrid_indexed(idx, 23.201, 1, 0, date, diff); //diffuse rad, ASWDIFD_S
-			read2DGrid_indexed(idx, 22.201, 1, 0, date, grid_out); //direct rad, ASWDIR_S
+			read2DGrid_indexed(23.201, 1, 0, date, diff); //diffuse rad, ASWDIFD_S
+			read2DGrid_indexed(22.201, 1, 0, date, grid_out); //direct rad, ASWDIR_S
 			grid_out.grid2D += diff.grid2D;
 		}
 	}
 
 	//DEM parameters
-	if(parameter==MeteoGrids::DEM) read2DGrid_indexed(idx, 8.2, 1, 0, date, grid_out); //HSURF
-	if(parameter==MeteoGrids::SLOPE) read2DGrid_indexed(idx, 98.202, 1, 0, date, grid_out); //SLO_ANG
-	if(parameter==MeteoGrids::AZI) read2DGrid_indexed(idx, 99.202, 1, 0, date, grid_out); //SLO_ASP
+	if(parameter==MeteoGrids::DEM) read2DGrid_indexed(8.2, 1, 0, date, grid_out); //HSURF
+	if(parameter==MeteoGrids::SLOPE) read2DGrid_indexed(98.202, 1, 0, date, grid_out); //SLO_ANG
+	if(parameter==MeteoGrids::AZI) read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
 
 	//Wind parameters
-	if(parameter==MeteoGrids::U) read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U
-	if(parameter==MeteoGrids::V) read2DGrid_indexed(idx, 34.2, 105, 10, date, grid_out); //V_10M, also in 110, 10 as V
-	if(parameter==MeteoGrids::W) read2DGrid_indexed(idx, 40.2, 109, 10, date, grid_out); //W, 10m
-	if(parameter==MeteoGrids::VW_MAX) read2DGrid_indexed(idx, 187.201, 105, 10, date, grid_out); //VMAX_10M 10m
+	if(parameter==MeteoGrids::U) read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U
+	if(parameter==MeteoGrids::V) read2DGrid_indexed(34.2, 105, 10, date, grid_out); //V_10M, also in 110, 10 as V
+	if(parameter==MeteoGrids::W) read2DGrid_indexed(40.2, 109, 10, date, grid_out); //W, 10m
+	if(parameter==MeteoGrids::VW_MAX) read2DGrid_indexed(187.201, 105, 10, date, grid_out); //VMAX_10M 10m
 	if(parameter==MeteoGrids::DW) {
-		if(!read2DGrid_indexed(idx, 31.2, 105, 10, date, grid_out)) { //DD_10M
+		if(!read2DGrid_indexed(31.2, 105, 10, date, grid_out)) { //DD_10M
 			Grid2DObject V;
-			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V_10M
-			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U_10M
+			read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M
+			read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M
 			const double to_deg = 180. / Cst::PI;
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
@@ -369,10 +449,10 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		}
 	}
 	if(parameter==MeteoGrids::VW) {
-		if(!read2DGrid_indexed(idx, 32.2, 105, 10, date, grid_out)) { //FF_10M
+		if(!read2DGrid_indexed(32.2, 105, 10, date, grid_out)) { //FF_10M
 			Grid2DObject V;
-			read2DGrid_indexed(idx, 34.2, 105, 10, date, V); //V_10M
-			read2DGrid_indexed(idx, 33.2, 105, 10, date, grid_out); //U_10M
+			read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M
+			read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
 					grid_out(ii,jj) = sqrt( IOUtils::pow2(grid_out(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
@@ -380,10 +460,19 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			}
 		}
 	}
+
+	if(grid_out.isEmpty()) {
+		stringstream ss;
+		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
+		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << filename << "\"";
+		throw NoAvailableDataException(ss.str(), AT);
+	}
+
+	//correcting wind speeds
 	/*if(parameter==MeteoGrids::U || parameter==MeteoGrids::V || parameter==MeteoGrids::W || parameter==MeteoGrids::VW || parameter==MeteoGrids::VW_MAX) {
 		//we need to compute the wind at 7.5m
 		Grid2DObject Z0;
-		if(read2DGrid_indexed(idx, 83.2, 1, 0, date, Z0)) { //Z0
+		if(read2DGrid_indexed(83.2, 1, 0, date, Z0)) { //Z0
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
 					grid_out(ii,jj) = Atmosphere::windLogProfile(grid_out(ii,jj), 10., 7.5, Z0(ii,jj));
@@ -398,7 +487,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 
 void GRIBIO::readDEM(DEMObject& dem_out)
 {
-	const Date d;
+	const Date d; //ie: undef. This will be caught when reading the GRIB file
 	std::string filename;
 
 	cfg.getValue("DEMFILE", "Input", filename);
@@ -447,32 +536,118 @@ void GRIBIO::readStationData(const Date&, std::vector<StationData>& /*vecStation
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GRIBIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
+void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
+                             std::vector< std::vector<MeteoData> >& vecMeteo,
                              const size_t&)
 {
 	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	throw IOException("Not fully working yet... But in progress!", AT);
 
-	const std::string filename="/local/laf2010020112f00.grb"; //HACK
-	const Date date(2010,2,1,12,0, 1.);
+	vecMeteo.clear();
+	vecMeteo.insert(vecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); //allocation for the vectors
 
-	if(!indexed) {
-		//the file has not yet been indexed
-		indexFile(filename);
-	} else if(idx_filename!=filename) {
-		 //the file name changed, we have to re-index it
+	std::vector<StationData> meta;
+	bool meta_ok=false;
+
+	//convert dateStart and dateEnd to UTC/tz_in and build vector of available date by scanning files on disk
+	std::vector<Date> vecDates;
+
+	const Date mydate(2010,2,1,12,0, tz_in); //HACK
+	vecDates.push_back(mydate);
+
+	double *lats = (double*)malloc(vecPts.size()*sizeof(double));
+	double *lons = (double*)malloc(vecPts.size()*sizeof(double));
+	double latitudeOfSouthernPole, longitudeOfSouthernPole;
+
+	try {
+		for(unsigned int ii=0; ii<vecDates.size(); ii++) { //or simply loop over files. Keep two vectors: files and dates
+			Date date = vecDates[ii];
+			const std::string filename = meteopath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
+
+			if(!indexed || idx_filename!=filename) {
+				cleanup();
+				indexFile(filename);
+			}
+			if(!meta_ok) {
+				//HACK: should we re-check metadata between files?
+				readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons); //HACK: unicity of points?
+			}
+
+			std::vector<MeteoData> Meteo;
+			readMeteoStep(meta, lats, lons, date, Meteo);
+
+			for(unsigned int jj=0; jj<vecPts.size(); jj++)
+				vecMeteo[jj].push_back(Meteo[jj]);
+		}
+	} catch(...) {
+		free(lats); free(lons);
 		cleanup();
-		indexFile(filename);
+		throw;
 	}
 
-	readMeteo_indexed(idx, 11.2, 105, 2, date); //T_2M
+	free(lats); free(lons);
 }
 
-bool GRIBIO::readMeteo_indexed(grib_index *idx, const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date)
+void GRIBIO::readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons)
 {
-	GRIB_CHECK(grib_index_select_double(idx,"marsParam",in_marsParam),0);
-	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", i_levelType),0);
+	GRIB_CHECK(grib_index_select_double(idx,"marsParam",8.2),0); //This is the DEM
+	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", 1),0);
+
+	grib_handle* h=NULL;
+	int err=0;
+	while((h = grib_handle_new_from_index(idx,&err)) != NULL) {
+		if(!h) {
+			cleanup();
+			throw IOException("Unable to create grib handle from index", AT);
+		}
+		const long npoints = vecPts.size();
+
+		GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
+		GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+
+		long Ni;
+		GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
+
+		//build GRIB local coordinates for the points
+		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			lats[ii] = vecPts[ii].getLat() - (90.+latitudeOfSouthernPole);
+			lons[ii] = vecPts[ii].getLon() - longitudeOfSouthernPole;
+		}
+
+		//retrieve nearest points
+		double *outlats = (double*)malloc(npoints*sizeof(double));
+		double *outlons = (double*)malloc(npoints*sizeof(double));
+		double *values = (double*)malloc(npoints*sizeof(double));
+		double *distances = (double*)malloc(npoints*sizeof(double));
+		int *indexes = (int *)malloc(npoints*sizeof(int));
+		if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
+			cleanup();
+			throw IOException("Errro when searching for nearest points in DEM", AT);
+		}
+
+		//fill metadata
+		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			StationData sd;
+			sd.position.setProj(coordin, coordinparam);
+			sd.position.setLatLon(outlats[ii]+(90.+latitudeOfSouthernPole), outlons[ii]+longitudeOfSouthernPole, values[ii]);
+			stringstream ss;
+			ss << "Point_" << indexes[ii];
+			sd.stationID=ss.str();
+			stringstream ss2;
+			ss2 << "GRIB point (" << indexes[ii] % Ni << "," << indexes[ii] / Ni << ")";
+			sd.stationName=ss2.str();
+			stations.push_back(sd);
+		}
+
+		free(outlats); free(outlons); free(values); free(distances); free(indexes);
+		grib_handle_delete(h);
+	}
+}
+
+bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const long& npoints, double *lats, double *lons, double *values)
+{
+	GRIB_CHECK(grib_index_select_double(idx,"marsParam",marsParam),0);
+	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", levelType),0);
 
 	grib_handle* h=NULL;
 	int err=0;
@@ -489,38 +664,106 @@ bool GRIBIO::readMeteo_indexed(grib_index *idx, const double& in_marsParam, cons
 		long level=0;
 		if(i_level!=0) GRIB_CHECK(grib_get_long(h,"level", &level),0);
 		if(level==i_level && (i_date.isUndef() || (i_date>=validity_start && i_date<=validity_end)) ) {
-			grib_nearest *nearest = grib_nearest_new(h,&err); //HACK: keep it between runs
-			GRIB_CHECK(err,0);
-
-			const int mode = GRIB_NEAREST_SAME_GRID | GRIB_NEAREST_SAME_POINT;
-			double lats[4]={0,};
-			double lons[4]={0,};
-			double values[4]={0,};
-			double distances[4]={0,};
-			int indexes[4]={0,};
-			size_t size=4;
-			const double lat=46.,lon=9.;
-
-			double latitudeOfSouthernPole, longitudeOfSouthernPole;
-			GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
-			GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
-
-			const double local_lat = lat - (90.+latitudeOfSouthernPole);
-			const double local_lon = lon -longitudeOfSouthernPole;
-			GRIB_CHECK(grib_nearest_find(nearest,h,local_lat,local_lon,mode,lats,lons,values,distances,indexes,&size),0); //use find_multiples instead
-
-			for(unsigned int i=0;i<4;i++) {
-				printf("#%d (%.2f , %.2f) @ %g m -> %g\n", (int)indexes[i],lats[i]+(90.+latitudeOfSouthernPole),lons[i]+longitudeOfSouthernPole,distances[i]*1e3,values[i]);
+			double *outlats = (double*)malloc(npoints*sizeof(double));
+			double *outlons = (double*)malloc(npoints*sizeof(double));
+			double *distances = (double*)malloc(npoints*sizeof(double));
+			int *indexes = (int *)malloc(npoints*sizeof(int));
+			if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
+				cleanup();
+				throw IOException("Errro when searching for nearest points in DEM", AT);
 			}
-			printf("\n");
 
+			free(outlats); free(outlons); free(distances); free(indexes);
 			grib_handle_delete(h);
-			if(nearest) grib_nearest_delete(nearest);
 			return true;
 		}
 		grib_handle_delete(h);
 	}
 	return false;
+}
+
+void GRIBIO::fillMeteo(double *values, const MeteoData::Parameters& param, const long& npoints, std::vector<MeteoData> &Meteo) {
+	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		Meteo[ii](param) = values[ii];
+	}
+}
+
+void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, double *lons, const Date i_date, std::vector<MeteoData> &Meteo)
+{
+	const long npoints = stations.size();
+
+	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		MeteoData md;
+		md.meta = stations[ii];
+		md.date = i_date;
+		Meteo.push_back(md);
+	}
+
+	double *values = (double*)malloc(npoints*sizeof(double));
+	double *values2 = (double*)malloc(npoints*sizeof(double)); //for extra parameters
+
+	//basic meteorological parameters
+	if(readMeteoValues(1.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::P, npoints, Meteo); //PS
+	if(readMeteoValues(11.2, 105, 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TA, npoints, Meteo); //T_2M
+	if(readMeteoValues(197.201, 111, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSS, npoints, Meteo); //T_SO
+	if(readMeteoValues(11.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSG, npoints, Meteo); //T_G
+	if(readMeteoValues(52.2, 105, 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::RH, npoints, Meteo); //RELHUM_2M
+	else if(readMeteoValues(17.2, 105, 2, i_date, npoints, lats, lons, values)) { //TD_2M
+		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			if(Meteo[ii](MeteoData::TA)!=IOUtils::nodata)
+				Meteo[ii](MeteoData::RH) = Atmosphere::DewPointtoRh(values[ii], Meteo[ii](MeteoData::TA), true);
+		}
+	}
+
+	//hydrological parameters
+	if(readMeteoValues(61.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HNW, npoints, Meteo); //tp
+	if(readMeteoValues(133.201, 1, 0, i_date, npoints, lats, lons, values)  //RHO_SNOW
+	   && readMeteoValues(65.2, 1, 0, i_date, npoints, lats, lons, values2)) { //W_SNOW
+		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			Meteo[ii](MeteoData::HS) = values2[ii] / values[ii];
+		}
+	}
+
+	//radiation parameters
+	if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
+	if(readMeteoValues(111.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB
+	else {
+		if(readMeteoValues(23.201, 1, 0, i_date, npoints, lats, lons, values) //ASWDIFD_S
+		   && readMeteoValues(22.201, 1, 0, i_date, npoints, lats, lons, values2)) { //ASWDIR_S
+			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+				Meteo[ii](MeteoData::ISWR) = values[ii] + values2[ii];
+			}
+		}
+	}
+	if(readMeteoValues(84.2, 1, 0, i_date, npoints, lats, lons, values)) { //ALB_RAD
+		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			if(Meteo[ii](MeteoData::ISWR)!=IOUtils::nodata) Meteo[ii](MeteoData::RSWR) = Meteo[ii](MeteoData::ISWR) * values[ii]/100.;
+		}
+	}
+
+	//Wind parameters
+	if(readMeteoValues(187.201, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW_MAX, npoints, Meteo); //VMAX_10M
+	if(readMeteoValues(31.2, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::DW, npoints, Meteo); //DD_10M
+	else {
+		if(readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
+		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
+			const double to_deg = 180. / Cst::PI;
+			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+				Meteo[ii](MeteoData::DW) = fmod( atan2( values2[ii], values[ii] ) * to_deg + 360., 360.); // turn into degrees [0;360)
+			}
+		}
+	}
+	if(readMeteoValues(32.2, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW, npoints, Meteo); //FF_10M
+	else {
+		if(readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
+		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
+			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+				Meteo[ii](MeteoData::VW) =  sqrt( IOUtils::pow2(values[ii]) + IOUtils::pow2(values2[ii]) );
+			}
+		}
+	}
+
+	free(values); free(values2);
 }
 
 void GRIBIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
@@ -551,7 +794,7 @@ void GRIBIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Para
 void GRIBIO::cleanup() throw()
 {
 	if(fp!=NULL) fclose(fp); fp=NULL;
-	grib_index_delete(idx); idx=NULL;
+	if(idx!=NULL) grib_index_delete(idx); idx=NULL;
 	idx_filename="";
 }
 
