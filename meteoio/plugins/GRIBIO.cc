@@ -64,6 +64,7 @@ GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj)
 	indexed = false;
 	idx=NULL;
 	fp = NULL;
+	meteopath_scanned = false;
 }
 
 GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
@@ -72,6 +73,7 @@ GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	indexed = false;
 	idx=NULL;
 	fp = NULL;
+	meteopath_scanned = false;
 }
 
 GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -80,6 +82,7 @@ GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 	indexed = false;
 	idx=NULL;
 	fp = NULL;
+	meteopath_scanned = false;
 }
 
 GRIBIO::~GRIBIO() throw()
@@ -353,7 +356,7 @@ void GRIBIO::indexFile(const std::string& filename)
 	}
 
 	int err=0;
-	std::string keys="marsParam:d,indicatorOfTypeOfLevel:l"; //indexing keys
+	std::string keys("marsParam:d,indicatorOfTypeOfLevel:l"); //indexing keys
 	char *c_filename = (char *)filename.c_str();
 	idx = grib_index_new_from_file(0, c_filename, keys.c_str(), &err);
 	if(err!=0) {
@@ -536,46 +539,73 @@ void GRIBIO::readStationData(const Date&, std::vector<StationData>& /*vecStation
 	throw IOException("Nothing implemented here", AT);
 }
 
+void GRIBIO::scanMeteoPath()
+{
+	std::list<std::string> dirlist;
+	IOUtils::readDirectory(meteopath_in, dirlist, ext);
+	dirlist.sort();
+
+	//Check date in every filename and cache it
+	std::list<std::string>::iterator it = dirlist.begin();
+	while ((it != dirlist.end())) {
+		const std::string& filename = *it;
+		std::string::size_type spos = filename.find_first_of("0123456789");
+		Date date;
+		IOUtils::convertString(date, filename.substr(spos,10)+filename.substr(spos+11,2), tz_in); //HACK MeteoSwiss-only file naming?
+		std::pair<Date,std::string> tmp(date, filename);
+
+		cache_meteo_files.push_back(tmp);
+		it++;
+	}
+	meteopath_scanned=true;
+}
+
 void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo,
                              const size_t&)
 {
-	//Nothing so far
-	throw IOException("Not fully working yet... But in progress!", AT);
+	if(!meteopath_scanned) scanMeteoPath();
 
 	vecMeteo.clear();
 	vecMeteo.insert(vecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); //allocation for the vectors
 
-	std::vector<StationData> meta;
-	bool meta_ok=false;
-
-	//convert dateStart and dateEnd to UTC/tz_in and build vector of available date by scanning files on disk
-	std::vector<Date> vecDates;
-
-	const Date mydate(2010,2,1,12,0, tz_in); //HACK
-	vecDates.push_back(mydate);
-
 	double *lats = (double*)malloc(vecPts.size()*sizeof(double));
 	double *lons = (double*)malloc(vecPts.size()*sizeof(double));
 	double latitudeOfSouthernPole, longitudeOfSouthernPole;
+	std::vector<StationData> meta; //metadata for meteo time series
+	bool meta_ok=false; //set to true once the metadata have been read
+
+	//find index of first time step
+	unsigned int idx_start;
+	bool start_found=false;
+	for(idx_start=0; idx_start<cache_meteo_files.size(); idx_start++) {
+		if(dateStart<cache_meteo_files[idx_start].first) {
+			start_found=true;
+			break;
+		}
+	}
+	if(start_found==false) return;
+	if(idx_start>0) idx_start--; //start with first element before dateStart (useful for resampling)
 
 	try {
-		for(unsigned int ii=0; ii<vecDates.size(); ii++) { //or simply loop over files. Keep two vectors: files and dates
-			Date date = vecDates[ii];
-			const std::string filename = meteopath_in+"/"+prefix+date.toString(Date::NUM).substr(0,10)+"f"+date.toString(Date::NUM).substr(10,2)+ext;
+		for(unsigned int ii=idx_start; ii<cache_meteo_files.size(); ii++) {
+			const Date& date = cache_meteo_files[ii].first;
+			if(date>dateEnd) break;
+			const std::string filename = meteopath_in+"/"+cache_meteo_files[ii].second;
 
 			if(!indexed || idx_filename!=filename) {
 				cleanup();
 				indexFile(filename);
 			}
 			if(!meta_ok) {
-				//HACK: should we re-check metadata between files?
-				readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons); //HACK: unicity of points?
+				readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons);
+				//HACK: remove potential duplicates in the returned points.
+				//This can be done by checking on station ID, since it contains the grid point index
+				meta_ok=true;
 			}
 
 			std::vector<MeteoData> Meteo;
 			readMeteoStep(meta, lats, lons, date, Meteo);
-
 			for(unsigned int jj=0; jj<vecPts.size(); jj++)
 				vecMeteo[jj].push_back(Meteo[jj]);
 		}
@@ -595,7 +625,7 @@ void GRIBIO::readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<Statio
 
 	grib_handle* h=NULL;
 	int err=0;
-	while((h = grib_handle_new_from_index(idx,&err)) != NULL) {
+	if((h = grib_handle_new_from_index(idx,&err)) != NULL) {
 		if(!h) {
 			cleanup();
 			throw IOException("Unable to create grib handle from index", AT);
@@ -621,6 +651,7 @@ void GRIBIO::readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<Statio
 		double *distances = (double*)malloc(npoints*sizeof(double));
 		int *indexes = (int *)malloc(npoints*sizeof(int));
 		if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
+			grib_handle_delete(h);
 			cleanup();
 			throw IOException("Errro when searching for nearest points in DEM", AT);
 		}
@@ -641,6 +672,8 @@ void GRIBIO::readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<Statio
 
 		free(outlats); free(outlons); free(values); free(distances); free(indexes);
 		grib_handle_delete(h);
+	} else {
+		throw NoAvailableDataException("Can not find DEM grid in GRIB file!", AT);
 	}
 }
 
@@ -669,6 +702,7 @@ bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, con
 			double *distances = (double*)malloc(npoints*sizeof(double));
 			int *indexes = (int *)malloc(npoints*sizeof(int));
 			if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
+				grib_handle_delete(h);
 				cleanup();
 				throw IOException("Errro when searching for nearest points in DEM", AT);
 			}

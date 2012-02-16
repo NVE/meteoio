@@ -72,6 +72,7 @@ class GRIBIO : public IOInterface {
 		void indexFile(const std::string& filename);
 		void addStation(const std::string& coord_spec);
 		void listKeys(grib_handle** h, const std::string& filename);
+		void scanMeteoPath();
 		void cleanup() throw();
 
 		void readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons);
@@ -87,6 +88,8 @@ class GRIBIO : public IOInterface {
 		bool indexed; //flag to know if the file has already been indexed
 		grib_index *idx;
 		std::string idx_filename; //matching file name for the index
+		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
+		bool meteopath_scanned; //set to true after we scanned METEOPATH and filed the cache
 
 		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999

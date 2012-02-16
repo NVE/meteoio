@@ -338,7 +338,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 	}
 
 	while ((dirp = readdir(dp)) != NULL) {
-		const std::string tmp = std::string(dirp->d_name);
+		const std::string tmp(dirp->d_name);
 		if( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
 			if (pattern=="") {
 				dirlist.push_back(tmp);
