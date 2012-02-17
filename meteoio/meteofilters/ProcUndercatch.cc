@@ -43,7 +43,7 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 
 		double& tmp = ovec[ii](index);
 		double VW = ovec[ii](MeteoData::VW);
-		//if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //HACK
+		if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //HACK: check impact!
 		double t = ovec[ii](MeteoData::TA);
 		if(t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
 		t=K_TO_C(t); //t in celsius

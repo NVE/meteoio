@@ -33,7 +33,7 @@ namespace mio {
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
  * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format.
  * This has been developed for reading MeteoSwiss Cosmo data and reads fields based on their marsParam code (see for example
- * http://www-imk.fzk.de/~kouker/mars/param.html even if these don't match excatly MeteoSwiss...)
+ * http://www-imk.fzk.de/~kouker/mars/param.html even if these don't match exactly MeteoSwiss...)
  *
  * Levels description is available at also http://www.nco.ncep.noaa.gov/pmb/docs/on388/ . no correction for grid rotation is currently performed.
  * read2DGrid(grid, filename) returns the first grid that is found.
@@ -49,7 +49,8 @@ namespace mio {
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
- * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code"
+ * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
+ * it will be removed from the list.
  *
  */
 
@@ -64,7 +65,7 @@ GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj)
 	indexed = false;
 	idx=NULL;
 	fp = NULL;
-	meteopath_scanned = false;
+	meteo_initialized = false;
 }
 
 GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
@@ -73,7 +74,7 @@ GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	indexed = false;
 	idx=NULL;
 	fp = NULL;
-	meteopath_scanned = false;
+	meteo_initialized = false;
 }
 
 GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -82,7 +83,7 @@ GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 	indexed = false;
 	idx=NULL;
 	fp = NULL;
-	meteopath_scanned = false;
+	meteo_initialized = false;
 }
 
 GRIBIO::~GRIBIO() throw()
@@ -102,26 +103,25 @@ void GRIBIO::setOptions()
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
 	}
+}
 
-	tmp="";
-	cfg.getValue("METEO", "Input", tmp, Config::nothrow);
-	if (tmp == "GRIB") { //keep it synchronized with IOHandler.cc for plugin mapping!!
-		cfg.getValue("METEOPATH", "Input", meteopath_in);
-		size_t current_stationnr = 1;
-		string current_station;
-		do {
-			current_station = "";
-			stringstream ss;
-			ss << "STATION" << current_stationnr;
-			cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
+void GRIBIO::readStations()
+{
+	cfg.getValue("METEOPATH", "Input", meteopath_in);
+	size_t current_stationnr = 1;
+	string current_station;
+	do {
+		current_station = "";
+		stringstream ss;
+		ss << "STATION" << current_stationnr;
+		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
-			if (current_station != "") {
-				addStation(current_station);
-				std::cout <<  "\tRead virtual station " << vecPts.back().printLatLon() << "\n";
-			}
-			current_stationnr++;
-		} while (current_station != "");
-	}
+		if (current_station != "") {
+			addStation(current_station);
+			std::cout <<  "\tRead virtual station " << vecPts.back().printLatLon() << "\n";
+		}
+		current_stationnr++;
+	} while (current_station != "");
 }
 
 void GRIBIO::addStation(const std::string& coord_spec)
@@ -557,14 +557,17 @@ void GRIBIO::scanMeteoPath()
 		cache_meteo_files.push_back(tmp);
 		it++;
 	}
-	meteopath_scanned=true;
 }
 
 void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              std::vector< std::vector<MeteoData> >& vecMeteo,
                              const size_t&)
 {
-	if(!meteopath_scanned) scanMeteoPath();
+	if(!meteo_initialized) {
+		readStations();
+		scanMeteoPath();
+		meteo_initialized=true;
+	}
 
 	vecMeteo.clear();
 	vecMeteo.insert(vecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); //allocation for the vectors
@@ -598,9 +601,13 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				indexFile(filename);
 			}
 			if(!meta_ok) {
-				readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons);
-				//HACK: remove potential duplicates in the returned points.
-				//This can be done by checking on station ID, since it contains the grid point index
+				if(readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons)==false) {
+					//some points have been removed vecPts has been changed -> re-reading
+					free(lats); free(lons);
+					lats = (double*)malloc(vecPts.size()*sizeof(double));
+					lons = (double*)malloc(vecPts.size()*sizeof(double));
+					readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons);
+				}
 				meta_ok=true;
 			}
 
@@ -618,63 +625,91 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	free(lats); free(lons);
 }
 
-void GRIBIO::readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons)
-{
+bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, double *lons)
+{ //remove potential duplicates. Returns true if some have been removed
+	const unsigned int npoints = vecPts.size();
+	std::vector<size_t> deletions;
+	deletions.reserve(npoints);
+	for(unsigned int ii=0; ii<npoints; ii++) {
+		const double lat = lats[ii];
+		const double lon = lons[ii];
+		for(unsigned int jj=ii+1; jj<npoints; jj++) {
+			if(lat==lats[jj] && lon==lons[jj]) deletions.push_back(jj);
+		}
+	}
+
+	//we need to erase from the end in order to keep the index unchanged...
+	for(unsigned int ii=deletions.size(); ii>0; ii--) {
+		const unsigned int index=deletions[ii-1];
+		vecPts.erase(vecPts.begin()+index-1);
+	}
+
+	if(deletions.size()>0) return true;
+	return false;
+}
+
+bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons)
+{//return true if the metadata have been read, false if it needs to be re-read (ie: some points were leading to duplicates -> vecPts has been changed)
+	stations.clear();
+
 	GRIB_CHECK(grib_index_select_double(idx,"marsParam",8.2),0); //This is the DEM
 	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", 1),0);
 
-	grib_handle* h=NULL;
 	int err=0;
-	if((h = grib_handle_new_from_index(idx,&err)) != NULL) {
-		if(!h) {
-			cleanup();
-			throw IOException("Unable to create grib handle from index", AT);
-		}
-		const long npoints = vecPts.size();
+	grib_handle* h = grib_handle_new_from_index(idx,&err);
+	if(h==NULL) {
+		cleanup();
+		throw IOException("Can not find DEM grid in GRIB file!", AT);
+	}
 
-		GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
-		GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+	const long npoints = vecPts.size();
+	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
+	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+	long Ni;
+	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 
-		long Ni;
-		GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
+	//build GRIB local coordinates for the points
+	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		lats[ii] = vecPts[ii].getLat() - (90.+latitudeOfSouthernPole);
+		lons[ii] = vecPts[ii].getLon() - longitudeOfSouthernPole;
+	}
 
-		//build GRIB local coordinates for the points
-		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-			lats[ii] = vecPts[ii].getLat() - (90.+latitudeOfSouthernPole);
-			lons[ii] = vecPts[ii].getLon() - longitudeOfSouthernPole;
-		}
+	//retrieve nearest points
+	double *outlats = (double*)malloc(npoints*sizeof(double));
+	double *outlons = (double*)malloc(npoints*sizeof(double));
+	double *values = (double*)malloc(npoints*sizeof(double));
+	double *distances = (double*)malloc(npoints*sizeof(double));
+	int *indexes = (int *)malloc(npoints*sizeof(int));
+	if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
+		grib_handle_delete(h);
+		cleanup();
+		throw IOException("Errro when searching for nearest points in DEM", AT);
+	}
 
-		//retrieve nearest points
-		double *outlats = (double*)malloc(npoints*sizeof(double));
-		double *outlons = (double*)malloc(npoints*sizeof(double));
-		double *values = (double*)malloc(npoints*sizeof(double));
-		double *distances = (double*)malloc(npoints*sizeof(double));
-		int *indexes = (int *)malloc(npoints*sizeof(int));
-		if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
-			grib_handle_delete(h);
-			cleanup();
-			throw IOException("Errro when searching for nearest points in DEM", AT);
-		}
-
-		//fill metadata
-		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-			StationData sd;
-			sd.position.setProj(coordin, coordinparam);
-			sd.position.setLatLon(outlats[ii]+(90.+latitudeOfSouthernPole), outlons[ii]+longitudeOfSouthernPole, values[ii]);
-			stringstream ss;
-			ss << "Point_" << indexes[ii];
-			sd.stationID=ss.str();
-			stringstream ss2;
-			ss2 << "GRIB point (" << indexes[ii] % Ni << "," << indexes[ii] / Ni << ")";
-			sd.stationName=ss2.str();
-			stations.push_back(sd);
-		}
-
+	//remove potential duplicates
+	if(removeDuplicatePoints(vecPts, outlats, outlons)==true) {
 		free(outlats); free(outlons); free(values); free(distances); free(indexes);
 		grib_handle_delete(h);
-	} else {
-		throw NoAvailableDataException("Can not find DEM grid in GRIB file!", AT);
+		return false;
 	}
+
+	//fill metadata
+	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		StationData sd;
+		sd.position.setProj(coordin, coordinparam);
+		sd.position.setLatLon(outlats[ii]+(90.+latitudeOfSouthernPole), outlons[ii]+longitudeOfSouthernPole, values[ii]);
+		stringstream ss;
+		ss << "Point_" << indexes[ii];
+		sd.stationID=ss.str();
+		stringstream ss2;
+		ss2 << "GRIB point (" << indexes[ii] % Ni << "," << indexes[ii] / Ni << ")";
+		sd.stationName=ss2.str();
+		stations.push_back(sd);
+	}
+
+	free(outlats); free(outlons); free(values); free(distances); free(indexes);
+	grib_handle_delete(h);
+	return true;
 }
 
 bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const long& npoints, double *lats, double *lons, double *values)

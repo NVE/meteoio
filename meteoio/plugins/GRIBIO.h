@@ -71,11 +71,13 @@ class GRIBIO : public IOInterface {
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		void indexFile(const std::string& filename);
 		void addStation(const std::string& coord_spec);
+		void readStations();
 		void listKeys(grib_handle** h, const std::string& filename);
 		void scanMeteoPath();
 		void cleanup() throw();
 
-		void readMeteoMeta(const std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons);
+		bool removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, double *lons);
+		bool readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons);
 		bool readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const long& npoints, double *lats, double *lons, double *values);
 		void fillMeteo(double *values, const MeteoData::Parameters& param, const long& npoints, std::vector<MeteoData> &Meteo);
 		void readMeteoStep(std::vector<StationData> &stations, double *lats, double *lons, const Date i_date, std::vector<MeteoData> &Meteo);
@@ -89,7 +91,7 @@ class GRIBIO : public IOInterface {
 		grib_index *idx;
 		std::string idx_filename; //matching file name for the index
 		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
-		bool meteopath_scanned; //set to true after we scanned METEOPATH and filed the cache
+		bool meteo_initialized; //set to true after we scanned METEOPATH, filed the cache, read the virtual stations from io.ini
 
 		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
