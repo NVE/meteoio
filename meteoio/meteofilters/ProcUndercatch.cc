@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteofilters/ProcUndercatch.h>
+#include <meteoio/meteolaws/Atmosphere.h>
 #include <cmath>
 
 using namespace std;
@@ -41,9 +42,11 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 		ovec.push_back(ivec[ii]);
 
 		double& tmp = ovec[ii](index);
-		const double VW = ovec[ii](MeteoData::VW);
+		double VW = ovec[ii](MeteoData::VW);
+		//if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //HACK
 		double t = ovec[ii](MeteoData::TA);
-		if(t!=IOUtils::nodata) t=K_TO_C(t); //t in celsius
+		if(t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
+		t=K_TO_C(t); //t in celsius
 		precip_type precip=mixed;
 		if(t<=Tsnow) precip=snow;
 		if(t>=Train) precip=rain;
@@ -80,6 +83,22 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 			double k;
 			if(precip==snow) k=exp(4.61-0.16*pow(VW, 1.28));
 			if(precip==mixed) k=100.77-8.34*VW;
+			tmp *= 100./k;
+		} else if(type==geonor_jp) {
+			//HACK: this seems not to work... we need the paper!
+			if(VW==IOUtils::nodata) continue;
+			const double rh = ovec[ii](MeteoData::RH);
+			const double alt = ovec[ii].meta.position.getAltitude();
+			double k, t_wb;
+			if(rh!=IOUtils::nodata && alt!=IOUtils::nodata) {
+				double ts_rate;
+				t_wb = K_TO_C(Atmosphere::wetBulbTemperature(ovec[ii](MeteoData::TA), rh, alt));
+				if(t_wb<1.1) ts_rate = 1. - .5*exp(-2.2*pow(1.1-t_wb, 1.3));
+				else ts_rate = .5*exp(-2.2*pow(t_wb-1.1, 1.3));
+				if(ts_rate>.5) precip=snow; else precip=mixed;
+			}
+			if(precip==snow) k=100.+34.6*VW;
+			if(precip==mixed) k=100.+8.56*VW;
 			tmp *= 100./k;
 		} else if(type==hellmann) {
 			if(VW==IOUtils::nodata) continue;
@@ -124,6 +143,8 @@ void ProcUndercatch::parse_args(std::vector<std::string> filter_args)
 		type=us8sh;
 	} else if(filter_args[0]=="us8unsh") {
 		type=us8unsh;
+	} else if(filter_args[0]=="geonor_jp") {
+		type=geonor_jp;
 	} else if(filter_args[0]=="hellmann") {
 		type=hellmann;
 	} else if(filter_args[0]=="hellmannsh") {

@@ -51,6 +51,7 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories, shielded
  * - US8sh - US national 8\" rain gauge, shielded
  * - US8unsh - US national 8\" rain gauge, unshielded
+ * - Geonor_Jp - Japanese network Geonor rain gauge. This uses an ad-hoc rain/snow splitting method. This seems to give weird results...
  * - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded
  * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
  *
@@ -74,6 +75,7 @@ class ProcUndercatch : public ProcessingBlock {
 			tretyakov,
 			us8sh,
 			us8unsh,
+			geonor_jp,
 			hellmann,
 			hellmannsh
 		} sensor_type;
