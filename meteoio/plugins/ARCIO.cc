@@ -159,8 +159,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	int i_ncols, i_nrows;
 	unsigned int ncols, nrows;
 	double xllcorner, yllcorner, cellsize, plugin_nodata;
-	double tmp_val;
-	std::vector<std::string> tmpvec;
+	double tmp;
 	std::string line="";
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
@@ -216,21 +215,22 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
-			getline(fin, line, eoln); //read complete line
-
-			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
-				stringstream ss;
-				ss << "Invalid number of columns at data line " << nrows-kk << " in file " << full_name << ": ";
-				ss << ncols << " columns expected";
-				throw InvalidFormatException(ss.str(), AT);
-			}
+			getline(fin, line, eoln);
+			std::istringstream iss(line);
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
 
 			for (unsigned int ll=0; ll < ncols; ll++){
-				if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
-					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + full_name, AT);
+				iss >> std::skipws >> tmp;
+				if (iss.fail()) {
+					stringstream ss;
+					ss << "Can not read column " << ll+1 << " of data line " << nrows-kk << " in file " << full_name << ": ";
+					ss << ncols << " columns of doubles expected";
+					throw InvalidFormatException(ss.str(), AT);
 				}
-				grid_out.grid2D(ll, kk) = IOUtils::standardizeNodata(tmp_val, plugin_nodata);
+				grid_out.grid2D(ll, kk) = IOUtils::standardizeNodata(tmp, plugin_nodata);
 			}
+
 		}
 	} catch(const std::exception& e) {
 		cleanup();
