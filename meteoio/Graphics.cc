@@ -361,7 +361,7 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 	} else {
 		if(autoscale && val<min) val_norm=0.;
 		else if(autoscale && val>max) val_norm=1.;
-		else val_norm = (static_cast<unsigned int>( (val-min)/delta*(double)nr_unique_cols )) / (double)nr_unique_cols;
+		else val_norm = (val-min)/delta;
 	}
 	model->getColor(val_norm, r_d, g_d, b_d);
 	r = static_cast<unsigned char>(r_d*channel_max_color);

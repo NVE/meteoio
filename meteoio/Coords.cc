@@ -239,7 +239,10 @@ std::ostream& operator<<(std::ostream &os, const Coords& coord)
 	os << "<Coords>\n";
 	os << "Altitude\t" << coord.altitude << "\n";
 	os << "Lat/Long\t" << coord.printLatLon() << "\n";
-	os << "X/Y_coords\t" << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
+	os << "Lat/Long\t" << "(" << coord.getLat() << " , " << coord.getLon() << ")" << "\n";
+	std::streamsize p = os.precision();
+	os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
+	os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield) << std::setprecision(p);
 	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
 	os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
 	os << "EPSG\t\t" << coord.getEPSG() << "\n";
@@ -872,7 +875,7 @@ double Coords::lon_degree_lenght(const double& latitude) {
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
-	const double degree_length = (Cst::PI*a*cos(latitude*to_rad)) / ( 180.*pow(1.-e2*IOUtils::pow2(sin(latitude*to_rad)), .5) );
+	const double degree_length = (Cst::PI*a*cos(latitude*to_rad)) / ( 180.*sqrt(1.-e2*IOUtils::pow2(sin(latitude*to_rad))) );
 	return fabs( degree_length );
 }
 

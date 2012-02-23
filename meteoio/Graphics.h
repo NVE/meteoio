@@ -227,7 +227,8 @@ class Gradient {
 		* The given argument is an upper bound for the number of unique levels in the generated
 		* gradient (leading to a reduced number of colors). This is a specially easy and useful way of reducing a file size with
 		* no run time overhead (and even a small benefit) and little visible impact if
-		* the number of levels/colors remains large enough (say, at least 20-30)
+		* the number of levels/colors remains large enough (say, at least 20-30). This is only applicable to indexed images, that is
+		* when getPalette is called an pixels are set using getColor(const double& val, unsigned char& index).
 		* @param i_nr_unique_levels maximum number of unique levels
 		*/
 		void setNrOfLevels(const unsigned char& i_nr_unique_levels);
@@ -264,7 +265,7 @@ class Gradient {
 	private:
 		double min, max, delta;
 		bool autoscale;
-		unsigned char nr_unique_cols; ///< number of unique colors to generate. The same discretization is performed for indexed or not
+		unsigned char nr_unique_cols; ///< number of unique colors to generate for indexed images
 		static const unsigned char reserved_idx; ///< for indexed gradients, number of reserved indexes
 		static const unsigned char reserved_cols; ///< for non-indexed gradients, number of reserved colors
 		Gradient_model *model;

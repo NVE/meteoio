@@ -230,7 +230,6 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 				}
 				grid_out.grid2D(ll, kk) = IOUtils::standardizeNodata(tmp, plugin_nodata);
 			}
-
 		}
 	} catch(const std::exception& e) {
 		cleanup();

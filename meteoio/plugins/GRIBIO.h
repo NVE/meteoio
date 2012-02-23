@@ -74,10 +74,12 @@ class GRIBIO : public IOInterface {
 		void readStations();
 		void listKeys(grib_handle** h, const std::string& filename);
 		void scanMeteoPath();
+		void rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true) const;
+		void trueLatLonToRotated(const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot) const;
 		void cleanup() throw();
 
 		bool removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, double *lons);
-		bool readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons);
+		bool readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData> &stations, double *lats, double *lons);
 		bool readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const long& npoints, double *lats, double *lons, double *values);
 		void fillMeteo(double *values, const MeteoData::Parameters& param, const long& npoints, std::vector<MeteoData> &Meteo);
 		void readMeteoStep(std::vector<StationData> &stations, double *lats, double *lons, const Date i_date, std::vector<MeteoData> &Meteo);
@@ -92,11 +94,14 @@ class GRIBIO : public IOInterface {
 		std::string idx_filename; //matching file name for the index
 		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
 		bool meteo_initialized; //set to true after we scanned METEOPATH, filed the cache, read the virtual stations from io.ini
+		double latitudeOfSouthernPole, longitudeOfSouthernPole; //for rotated coordinates
 
+		static const double to_rad;
+		static const double to_deg;
 		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double tz_in; //GRIB time zone
-		static const std::string prefix;
+		std::string prefix; //filename prefix, like "laf"
 		static const std::string ext;
 		std::string coordin, coordinparam; //projection parameters
 		bool update_dem;

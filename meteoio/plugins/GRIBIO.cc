@@ -21,6 +21,7 @@
 #include <meteoio/meteolaws/Meteoconst.h> //for PI
 #include <meteoio/DEMObject.h>
 
+#include <cmath>
 #include <errno.h>
 #include <grib_api.h>
 
@@ -32,11 +33,18 @@ namespace mio {
  * @section gribio_format Format
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
  * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format.
- * This has been developed for reading MeteoSwiss Cosmo data and reads fields based on their marsParam code (see for example
- * http://www-imk.fzk.de/~kouker/mars/param.html even if these don't match exactly MeteoSwiss...)
+ * This has been developed for reading MeteoSwiss Cosmo data and reads fields based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://dss.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
+ * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/).
  *
- * Levels description is available at also http://www.nco.ncep.noaa.gov/pmb/docs/on388/ . no correction for grid rotation is currently performed.
- * read2DGrid(grid, filename) returns the first grid that is found.
+ * Several assumptions/approximations are held/made when reading grids:
+ * - since models usually use rotated latitude/longitude (see http://www.cosmo-model.org/content/model/documentation/core/default.htm, part I, chapter 3.3), the center of the domain can be approximated by a tangential cartesian coordinate system. We therefore don't re-project the lat/lon grid and use it "as is".
+ * - however, no correction for grid rotation is currently performed. If a grid rotation is specified on top of the rotated coordinate system, an error message will be given
+ * - the cell size is computed at the center of the domain. This is performed by retrieving the latitude and longitude increments in the rotated coordinates, computing the point at center+increment in geographic coordinates and computing the equivalent geographic latitude and longitude increment. These increments are then converted to distances along the parallel and meridian at the true center latitude (see https://en.wikipedia.org/wiki/Latitude#The_length_of_a_degree_of_latitude).
+ * - the average cell size (ie: average between x and y) is used to move the center point to the lower left corner. This will be returned as lower left corner geolocalization of the grid.
+ *
+ * This means that close to the center of the grid, coordinates and distances will work as expected, but the distortion will increase when moving away from the center and can become significant. As examples for domain size, cone can look at the MeteoSwiss domain definition at http://www.cosmo-model.org/content/tasks/operational/meteoSwiss/default.htm.
+ *
+ * As a side note, when calling read2DGrid(grid, filename), it will returns the first grid that is found.
  *
  * @section gribio_units Units
  * As specified by WMO.
@@ -48,6 +56,7 @@ namespace mio {
  * - GRID2DPATH: path where to find the grids
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
+ * - GRIB_PREFIX: prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain)
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
@@ -56,8 +65,9 @@ namespace mio {
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const double GRIBIO::tz_in = 0.; //GRIB time zone, always UTC
-const std::string GRIBIO::prefix="laf"; //filename prefix
 const std::string GRIBIO::ext=".grb"; //filename extension
+const double GRIBIO::to_rad = Cst::PI / 180.0;
+const double GRIBIO::to_deg = 180.0 / Cst::PI;
 
 GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -66,6 +76,7 @@ GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj)
 	idx=NULL;
 	fp = NULL;
 	meteo_initialized = false;
+	latitudeOfSouthernPole = longitudeOfSouthernPole = IOUtils::nodata;
 }
 
 GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
@@ -75,6 +86,7 @@ GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	idx=NULL;
 	fp = NULL;
 	meteo_initialized = false;
+	latitudeOfSouthernPole = longitudeOfSouthernPole = IOUtils::nodata;
 }
 
 GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -84,6 +96,7 @@ GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 	idx=NULL;
 	fp = NULL;
 	meteo_initialized = false;
+	latitudeOfSouthernPole = longitudeOfSouthernPole = IOUtils::nodata;
 }
 
 GRIBIO::~GRIBIO() throw()
@@ -103,6 +116,7 @@ void GRIBIO::setOptions()
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
 	}
+	cfg.getValue("GRIB_PREFIX", "Input", prefix);
 }
 
 void GRIBIO::readStations()
@@ -216,6 +230,36 @@ Date GRIBIO::getDate(grib_handle* h) {
 	return Date(year, month, day, hour, minutes, tz_in);
 }
 
+void GRIBIO::rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true) const
+{
+	const double lat_rot_rad = lat_rot*to_rad;
+	const double lon_rot_rad = lon_rot*to_rad;
+	const double lat_pole_rad = -latitudeOfSouthernPole*to_rad;
+
+	if(latitudeOfSouthernPole==IOUtils::nodata || longitudeOfSouthernPole==IOUtils::nodata) {
+		throw NoAvailableDataException("Attempting to use latitudeOfSouthernPole and/or longitudeOfSouthernPole without reading them from GRIB!");
+	}
+
+	lat_true = asin( sin(lat_rot_rad)*sin(lat_pole_rad) + cos(lat_rot_rad)*cos(lon_rot_rad)*cos(lat_pole_rad) ) * to_deg;
+	lon_true = atan( cos(lat_rot_rad)*sin(lon_rot_rad) / (sin(lat_pole_rad)*cos(lat_rot_rad)*cos(lon_rot_rad) - sin(lat_rot_rad)*cos(lat_pole_rad)) )*to_deg + longitudeOfSouthernPole;
+}
+
+void GRIBIO::trueLatLonToRotated(const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot) const
+{
+	const double lat_true_rad = lat_true*to_rad;
+	const double lon_true_rad = lon_true*to_rad;
+	const double lat_pole_rad = -latitudeOfSouthernPole*to_rad;
+	const double lon_pole_rad = longitudeOfSouthernPole*to_rad;
+	const double delta_lon_rad = lon_true_rad-lon_pole_rad;
+
+	if(latitudeOfSouthernPole==IOUtils::nodata || longitudeOfSouthernPole==IOUtils::nodata) {
+		throw NoAvailableDataException("Attempting to use latitudeOfSouthernPole and/or longitudeOfSouthernPole without reading them from GRIB!");
+	}
+
+	lat_rot = asin( sin(lat_true_rad)*sin(lat_pole_rad) + cos(lat_true_rad)*cos(lat_pole_rad)*cos(delta_lon_rad) ) * to_deg;
+	lon_rot = atan( cos(lat_true_rad)*sin(delta_lon_rad) / (cos(lat_true_rad)*sin(lat_pole_rad)*cos(delta_lon_rad) - sin(lat_true_rad)*cos(lat_pole_rad)) ) * to_deg;
+}
+
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y)
 {
 	//getting transformation parameters
@@ -224,7 +268,6 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	if(angleOfRotationInDegrees!=0.) {
 		throw InvalidArgumentException("Rotated grids not supported!", AT);
 	}
-	double latitudeOfSouthernPole, longitudeOfSouthernPole;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
 
@@ -232,37 +275,50 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	double ll_latitude, ll_longitude;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfFirstGridPointInDegrees",&ll_latitude),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfFirstGridPointInDegrees",&ll_longitude),0);
-	Coords llcorner(coordin, coordinparam);
-	llcorner.setLatLon( ll_latitude+(90.+latitudeOfSouthernPole), ll_longitude+longitudeOfSouthernPole, 0.);
-
-	//determining cell size
 	double ur_latitude, ur_longitude;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfLastGridPointInDegrees",&ur_latitude),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfLastGridPointInDegrees",&ur_longitude),0);
-	const double cntr_latitude = .5*(ll_latitude+ur_latitude)+(90.+latitudeOfSouthernPole);
 
+	double cntr_lat, cntr_lon; //geographic coordinates
+	rotatedToTrueLatLon(.5*(ll_latitude+ur_latitude), .5*(ll_longitude+ur_longitude), cntr_lat, cntr_lon);
+	Coords cntr(coordin, coordinparam);
+	cntr.setLatLon(cntr_lat, cntr_lon, 0.);
+
+	//determining cell size
 	double d_i, d_j;
 	GRIB_CHECK(grib_get_double(h,"jDirectionIncrementInDegrees",&d_j),0);
 	GRIB_CHECK(grib_get_double(h,"iDirectionIncrementInDegrees",&d_i),0);
+	double tmp_lat, tmp_lon;
+	rotatedToTrueLatLon(.5*(ll_latitude+ur_latitude)+d_i, .5*(ll_longitude+ur_longitude)+d_j, tmp_lat, tmp_lon);
+	d_i = tmp_lon-cntr_lon; //delta in geographic coordinates
+	d_j = tmp_lat-cntr_lat;
 
-	cellsize_x = Coords::lon_degree_lenght(cntr_latitude)*d_i;
-	cellsize_y = Coords::lat_degree_lenght(cntr_latitude)*d_j;
+	long Ni, Nj;
+	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
+	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
+
+	cellsize_x = Coords::lon_degree_lenght(cntr_lat)*d_i;
+	cellsize_y = Coords::lat_degree_lenght(cntr_lat)*d_j;
+	const double cellsize=.5*(cellsize_x+cellsize_y);
+
+	cntr.moveByXY(-.5*(double)Ni*cellsize, -.5*(double)Nj*cellsize);
+	cellsize_x = cellsize_y = cellsize; //HACK
 
 	//checking that cellsize does not vary too much across the grid
-	const double cellsize_x_ll = Coords::lon_degree_lenght(ll_latitude)*d_j;
+	/*const double cellsize_x_ll = Coords::lon_degree_lenght(ll_latitude)*d_j;
 	const double cellsize_x_ur = Coords::lon_degree_lenght(ur_latitude)*d_j;
 	if( fabs(cellsize_x_ll-cellsize_x_ur)/cellsize_x > 1./100.) {
 		stringstream ss;
 		ss << "Cell size varying too much in the x direction between lower left and upper right corner: ";
 		ss << cellsize_x_ll << "m to " << cellsize_x_ur << "m";
 		throw IOException(ss.str(), AT);
-	}
+	}*/
 
-	return llcorner;
+	return cntr;
 }
 
 void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
-{ //HACK: why is it that we don't have to corect the aspect ratio??
+{
 	long Ni, Nj;
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
@@ -281,7 +337,10 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
 	GRIB_CHECK(grib_get_double_array(h,"values",values,&values_len),0);
 	double cellsize_x, cellsize_y;
 	const Coords llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
-	grid_out.set(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), cellsize_x, llcorner); //HACK
+	if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
+		throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
+	}
+	grid_out.set(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), .5*(cellsize_x+cellsize_y), llcorner); //HACK
 	int i=0;
 	for(unsigned int jj=0; jj<(unsigned)Nj; jj++) {
 		for(unsigned int ii=0; ii<(unsigned)Ni; ii++)
@@ -378,14 +437,14 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 }
 
 void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
-{
+{ //Parameters should be read in table 2 if available since this table is the one standardized by WMO
 	if(!indexed || idx_filename!=filename) {
 		cleanup();
 		indexFile(filename);
 	}
 
 	//Basic meteo parameters
-	if(parameter==MeteoGrids::P) read2DGrid_indexed(1.2, 1, 0, date, grid_out); //PS what is HMO3?
+	if(parameter==MeteoGrids::P) read2DGrid_indexed(1.2, 1, 0, date, grid_out); //PS
 	if(parameter==MeteoGrids::TA) read2DGrid_indexed(11.2, 105, 2, date, grid_out); //T_2M
 	if(parameter==MeteoGrids::RH) {
 		if(!read2DGrid_indexed(52.2, 105, 2, date, grid_out)) { //RELHUM_2M
@@ -407,10 +466,12 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	if(parameter==MeteoGrids::ROT) read2DGrid_indexed(90.2, 112, 0, date, grid_out); //RUNOFF
 	if(parameter==MeteoGrids::SWE) read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
 	if(parameter==MeteoGrids::HS) {
-		Grid2DObject snow_density;
-		read2DGrid_indexed(133.201, 1, 0, date, snow_density); //RHO_SNOW
-		read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
-		grid_out.grid2D /= snow_density.grid2D;
+		if(!read2DGrid_indexed(66.2, 1, 0, date, grid_out)) {
+			Grid2DObject snow_density;
+			read2DGrid_indexed(133.201, 1, 0, date, snow_density); //RHO_SNOW
+			read2DGrid_indexed(65.2, 1, 0, date, grid_out); //W_SNOW
+			grid_out.grid2D /= snow_density.grid2D;
+		}
 	}
 
 	//radiation parameters
@@ -418,9 +479,16 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		read2DGrid_indexed(84.2, 1, 0, date, grid_out); //ALB_RAD
 		grid_out.grid2D /= 100.;
 	}
-	if(parameter==MeteoGrids::ILWR) read2DGrid_indexed(25.201, 1, 0, date, grid_out); //ALWD_S
+	if(parameter==MeteoGrids::ILWR) {
+		if(read2DGrid_indexed(115.2, 1, 0, date, grid_out)) { //long wave
+			grid_out.grid2D *= -1.;
+		} else read2DGrid_indexed(25.201, 1, 0, date, grid_out); //ALWD_S
+	}
 	if(parameter==MeteoGrids::ISWR) {
-		if(!read2DGrid_indexed(111.250, 1, 0, date, grid_out)) { //GLOB
+		if(read2DGrid_indexed(116.2, 1, 0, date, grid_out)) { //short wave
+			grid_out.grid2D *= -1.;
+		} else {
+		//if(!read2DGrid_indexed(111.250, 1, 0, date, grid_out)) { //GLOB
 			Grid2DObject diff;
 			read2DGrid_indexed(23.201, 1, 0, date, diff); //diffuse rad, ASWDIFD_S
 			read2DGrid_indexed(22.201, 1, 0, date, grid_out); //direct rad, ASWDIR_S
@@ -430,8 +498,14 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 
 	//DEM parameters
 	if(parameter==MeteoGrids::DEM) read2DGrid_indexed(8.2, 1, 0, date, grid_out); //HSURF
-	if(parameter==MeteoGrids::SLOPE) read2DGrid_indexed(98.202, 1, 0, date, grid_out); //SLO_ANG
-	if(parameter==MeteoGrids::AZI) read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
+	if(parameter==MeteoGrids::SLOPE) {
+		read2DGrid_indexed(98.202, 1, 0, date, grid_out); //SLO_ANG
+		grid_out.grid2D *= to_deg;
+	}
+	if(parameter==MeteoGrids::AZI) {
+		read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
+		grid_out.grid2D *= to_deg;
+	}
 
 	//Wind parameters
 	if(parameter==MeteoGrids::U) read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U
@@ -574,7 +648,6 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	double *lats = (double*)malloc(vecPts.size()*sizeof(double));
 	double *lons = (double*)malloc(vecPts.size()*sizeof(double));
-	double latitudeOfSouthernPole, longitudeOfSouthernPole;
 	std::vector<StationData> meta; //metadata for meteo time series
 	bool meta_ok=false; //set to true once the metadata have been read
 
@@ -601,12 +674,12 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				indexFile(filename);
 			}
 			if(!meta_ok) {
-				if(readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons)==false) {
+				if(readMeteoMeta(vecPts, meta, lats, lons)==false) {
 					//some points have been removed vecPts has been changed -> re-reading
 					free(lats); free(lons);
 					lats = (double*)malloc(vecPts.size()*sizeof(double));
 					lons = (double*)malloc(vecPts.size()*sizeof(double));
-					readMeteoMeta(vecPts, meta, latitudeOfSouthernPole, longitudeOfSouthernPole, lats, lons);
+					readMeteoMeta(vecPts, meta, lats, lons);
 				}
 				meta_ok=true;
 			}
@@ -648,7 +721,7 @@ bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, do
 	return false;
 }
 
-bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData> &stations, double &latitudeOfSouthernPole, double &longitudeOfSouthernPole, double *lats, double *lons)
+bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData> &stations, double *lats, double *lons)
 {//return true if the metadata have been read, false if it needs to be re-read (ie: some points were leading to duplicates -> vecPts has been changed)
 	stations.clear();
 
@@ -665,13 +738,14 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 	const long npoints = vecPts.size();
 	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+
 	long Ni;
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 
 	//build GRIB local coordinates for the points
 	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-		lats[ii] = vecPts[ii].getLat() - (90.+latitudeOfSouthernPole);
-		lons[ii] = vecPts[ii].getLon() - longitudeOfSouthernPole;
+		trueLatLonToRotated(vecPts[ii].getLat(), vecPts[ii].getLon(), lats[ii], lons[ii]);
+		std::cout << "lats[" << ii << "]=" << lats[ii] << " lons[" << ii << "]=" << lons[ii] << "\n";
 	}
 
 	//retrieve nearest points
@@ -697,7 +771,9 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
 		StationData sd;
 		sd.position.setProj(coordin, coordinparam);
-		sd.position.setLatLon(outlats[ii]+(90.+latitudeOfSouthernPole), outlons[ii]+longitudeOfSouthernPole, values[ii]);
+		double true_lat, true_lon;
+		rotatedToTrueLatLon(outlats[ii], outlons[ii], true_lat, true_lon);
+		sd.position.setLatLon(true_lat, true_lon, values[ii]);
 		stringstream ss;
 		ss << "Point_" << indexes[ii];
 		sd.stationID=ss.str();
@@ -786,7 +862,8 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 
 	//hydrological parameters
 	if(readMeteoValues(61.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HNW, npoints, Meteo); //tp
-	if(readMeteoValues(133.201, 1, 0, i_date, npoints, lats, lons, values)  //RHO_SNOW
+	if(readMeteoValues(66.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HS, npoints, Meteo);
+	else if(readMeteoValues(133.201, 1, 0, i_date, npoints, lats, lons, values)  //RHO_SNOW
 	   && readMeteoValues(65.2, 1, 0, i_date, npoints, lats, lons, values2)) { //W_SNOW
 		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
 			Meteo[ii](MeteoData::HS) = values2[ii] / values[ii];
@@ -794,8 +871,10 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	}
 
 	//radiation parameters
-	if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
-	if(readMeteoValues(111.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB
+	if(readMeteoValues(115.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo);
+	else if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
+	if(readMeteoValues(116.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo);
+	else if(readMeteoValues(111.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB
 	else {
 		if(readMeteoValues(23.201, 1, 0, i_date, npoints, lats, lons, values) //ASWDIFD_S
 		   && readMeteoValues(22.201, 1, 0, i_date, npoints, lats, lons, values2)) { //ASWDIR_S

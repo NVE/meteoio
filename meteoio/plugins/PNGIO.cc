@@ -472,7 +472,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	const double max = grid.grid2D.getMax();
 
 	Gradient gradient(Gradient::heat, min, max, autoscale);
-	gradient.setNrOfLevels(nr_levels);
+	if(indexed_png) gradient.setNrOfLevels(nr_levels);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
 	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
