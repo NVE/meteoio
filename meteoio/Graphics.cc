@@ -309,6 +309,9 @@ void Gradient::set(const Type& type, const double& i_min, const double& i_max, c
 	else if(type==heat) model = new gr_heat(i_min, i_max, i_autoscale);
 	else if(type==freeze) model = new gr_freeze(i_min, i_max, i_autoscale);
 	else if(type==blue) model = new gr_blue(i_min, i_max, i_autoscale);
+	else if(type==bluewhitered) model = new gr_bluewhitered(i_min, i_max, i_autoscale);
+	else if(type==whitetoblk) model = new gr_whitetoblk(i_min, i_max, i_autoscale);
+	else if(type==blktowhite) model = new gr_blktowhite(i_min, i_max, i_autoscale);
 	else if(type==blue_pink) model = new gr_blue_pink(i_min, i_max, i_autoscale);
 	else if(type==pastel) model = new gr_pastel(i_min, i_max, i_autoscale);
 	else if(type==bg_isomorphic) model = new gr_bg_isomorphic(i_min, i_max, i_autoscale);
@@ -549,6 +552,22 @@ void gr_freeze::getColor(const double &val, double &r, double &g, double &b) con
 	r = getInterpol(val, X, v_r);
 	g = getInterpol(val, X, v_g);
 	b = getInterpol(val, X, v_b);
+}
+
+gr_bluewhitered::gr_bluewhitered(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
+	X.push_back(0.); v_h.push_back(240.); v_s.push_back(.78); v_v.push_back(.99); //deep blue
+	X.push_back(0.5); v_h.push_back(240.); v_s.push_back(.0); v_v.push_back(.99); //white
+	X.push_back(1.); v_h.push_back(360.); v_s.push_back(.78); v_v.push_back(.99); //red
+}
+
+gr_whitetoblk::gr_whitetoblk(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
+	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //white
+	X.push_back(1.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(0.); //black
+}
+
+gr_blktowhite::gr_blktowhite(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
+	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(0.); //black
+	X.push_back(1.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.99); //white
 }
 
 gr_blue::gr_blue(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {

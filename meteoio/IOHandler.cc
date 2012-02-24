@@ -26,21 +26,21 @@ namespace mio {
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are loaded on demand (and also compiled only if requested at compile time). A plugin can therefore fail to load (for example if it does not exist) at run time.
  *
  * @section available_plugins Available plugins
- * So far the following children have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
+ * So far the following plugins have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
  * - \subpage a3d "A3D" for reading original Alpine3D meteo files (no extra requirements)
+ * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
+ * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
  * - \subpage borma "BORMA" for reading Borma xml meteo files (requires libxml)
  * - \subpage cosmoxml "COSMO" for treading XML files produced by MeteoSwiss COSMO's postprocessing (requires libxml)
- * - \subpage imis "IMIS" for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
  * - \subpage geotop "GEOTOP" for reading original GeoTop meteo files (no extra requirements)
- * - \subpage snowpack "SNOWPACK" for reading original SNOWPACK meteo files (no extra requirements)
- * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
- * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
  * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
- * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
+ * - \subpage gribio "GRIBIO" for reading GRIB meteo grid files (requires grib-api)
+ * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
+ * - \subpage imis "IMIS" for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
  * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
  * - \subpage pngio "PNGIO" for reading PNG grid files (requires libpng)
  * - \subpage smetio "SMETIO" for reading SMET meteo data files (no extra requirements)
- * - \subpage gribio "GribIO" for reading GRIB meteo grid files (requires libgrib)
+ * - \subpage snowpack "SNOWPACK" for reading original SNOWPACK meteo files (no extra requirements)
  *
  * @section data_generators Data generators
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax

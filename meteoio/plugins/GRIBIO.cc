@@ -30,10 +30,10 @@ using namespace std;
 namespace mio {
 /**
  * @page gribio GRIBIO
- * @section gribio_format Format
+ * @section gribio_format Format and limitations
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
  * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format.
- * This has been developed for reading MeteoSwiss Cosmo data and reads fields based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://dss.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
+ * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://dss.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
  * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/).
  *
  * Several assumptions/approximations are held/made when reading grids:
@@ -45,6 +45,21 @@ namespace mio {
  * This means that close to the center of the grid, coordinates and distances will work as expected, but the distortion will increase when moving away from the center and can become significant. As examples for domain size, cone can look at the MeteoSwiss domain definition at http://www.cosmo-model.org/content/tasks/operational/meteoSwiss/default.htm.
  *
  * As a side note, when calling read2DGrid(grid, filename), it will returns the first grid that is found.
+ *
+ * @section cosmo_partners COSMO Group
+ * This plugin has been developed primarily for reading GRIB files produced by COSMO (http://www.cosmo-model.org/) at MeteoSwiss.
+ * COSMO (COnsortium for Small scale MOdelling) represents a non-hydrostatic limited-area atmospheric model, to be used both for operational and for research applications by the members of the consortium. The Consortium has the following members:
+ *  - Germany, DWD, Deutscher Wetterdienst
+ *  - Switzerland, MCH, MeteoSchweiz
+ *  - Italy, USAM, Ufficio Generale Spazio Aereo e Meteorologia
+ *  - Greece, HNMS, Hellenic National Meteorological Service
+ *  - Poland, IMGW, Institute of Meteorology and Water Management
+ *  - Romania, NMA, National Meteorological Administration
+ *  - Russia, RHM, Federal Service for Hydrometeorology and Environmental Monitoring
+ *  - Germany, AGeoBw, Amt für GeoInformationswesen der Bundeswehr
+ *  - Italy, CIRA, Centro Italiano Ricerche Aerospaziali
+ *  - Italy, ARPA-SIMC, ARPA Emilia Romagna Servizio Idro Meteo Clima
+ *  - Italy, ARPA Piemonte, Agenzia Regionale per la Protezione Ambientale Piemonte
  *
  * @section gribio_units Units
  * As specified by WMO.
@@ -234,7 +249,7 @@ void GRIBIO::rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, d
 {
 	const double lat_rot_rad = lat_rot*to_rad;
 	const double lon_rot_rad = lon_rot*to_rad;
-	const double lat_pole_rad = -latitudeOfSouthernPole*to_rad;
+	const double lat_pole_rad = -latitudeOfSouthernPole*to_rad; //HACK
 
 	if(latitudeOfSouthernPole==IOUtils::nodata || longitudeOfSouthernPole==IOUtils::nodata) {
 		throw NoAvailableDataException("Attempting to use latitudeOfSouthernPole and/or longitudeOfSouthernPole without reading them from GRIB!");
@@ -248,7 +263,7 @@ void GRIBIO::trueLatLonToRotated(const double& lat_true, const double& lon_true,
 {
 	const double lat_true_rad = lat_true*to_rad;
 	const double lon_true_rad = lon_true*to_rad;
-	const double lat_pole_rad = -latitudeOfSouthernPole*to_rad;
+	const double lat_pole_rad = latitudeOfSouthernPole*to_rad;
 	const double lon_pole_rad = longitudeOfSouthernPole*to_rad;
 	const double delta_lon_rad = lon_true_rad-lon_pole_rad;
 
@@ -484,6 +499,11 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			grid_out.grid2D *= -1.;
 		} else read2DGrid_indexed(25.201, 1, 0, date, grid_out); //ALWD_S
 	}
+	/*if(parameter==MeteoGrids::CLD) { //cloudiness // HACK
+		if(read2DGrid_indexed(74.2, 1, 0, date, grid_out)) //CLCM
+		grid_out.grid2D /= 100.;
+	}*/
+
 	if(parameter==MeteoGrids::ISWR) {
 		if(read2DGrid_indexed(116.2, 1, 0, date, grid_out)) { //short wave
 			grid_out.grid2D *= -1.;
@@ -745,7 +765,6 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 	//build GRIB local coordinates for the points
 	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
 		trueLatLonToRotated(vecPts[ii].getLat(), vecPts[ii].getLon(), lats[ii], lons[ii]);
-		std::cout << "lats[" << ii << "]=" << lats[ii] << " lons[" << ii << "]=" << lons[ii] << "\n";
 	}
 
 	//retrieve nearest points
@@ -871,8 +890,11 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	}
 
 	//radiation parameters
-	if(readMeteoValues(115.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo);
-	else if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
+	if(readMeteoValues(115.2, 1, 0, i_date, npoints, lats, lons, values)) { //long wave
+		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			Meteo[ii](MeteoData::ISWR) = -values[ii];
+		}
+	} else if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
 	if(readMeteoValues(116.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo);
 	else if(readMeteoValues(111.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB
 	else {

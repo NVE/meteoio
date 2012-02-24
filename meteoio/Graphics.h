@@ -189,6 +189,9 @@ class Gradient {
 		            blue_pink, ///< blue to pink gradient
 		            pastel, ///< same color scale as "slope" but linear
 		            bg_isomorphic, ///< drak-blue to light-green isomorphic gradient
+		            bluewhitered, ///< blue to white, then white to red
+		            whitetoblk, ///< white to black gradient
+		            blktowhite, ///< black to white gradient
 		            blue ///< white to slightly violet gradient. This is similar to the one used for the SLF avalanche bulletin
 		} Type;
 
@@ -289,6 +292,21 @@ class gr_freeze : public Gradient_model {
 	private:
 		//This gradient is interpolated in RGB color space
 		std::vector<double> X, v_r,v_g,v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order
+};
+
+class gr_bluewhitered : public Gradient_model {
+	public:
+		gr_bluewhitered(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_whitetoblk : public Gradient_model {
+	public:
+		gr_whitetoblk(const double& i_min, const double& i_max, const bool& i_autoscale);
+};
+
+class gr_blktowhite : public Gradient_model {
+	public:
+		gr_blktowhite(const double& i_min, const double& i_max, const bool& i_autoscale);
 };
 
 class gr_blue : public Gradient_model {

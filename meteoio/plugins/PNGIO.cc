@@ -18,6 +18,7 @@
 #include "PNGIO.h"
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/Graphics.h>
+#include <meteoio/meteolaws/Meteoconst.h>
 
 #include <algorithm>
 #include <errno.h>
@@ -532,6 +533,12 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			max = 360.;
 		}
 		gradient.set(Gradient::azi, min, max, autoscale);
+	} else if(parameter==MeteoGrids::DW) {
+		if(!autoscale) {
+			min = 0.;
+			max = 360.;
+		}
+		gradient.set(Gradient::azi, min, max, autoscale);
 	} else if(parameter==MeteoGrids::HS) {
 		if(!autoscale) {
 			min = 0.; max = 2.5;
@@ -560,11 +567,22 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
+	} else if(parameter==MeteoGrids::P) {
+		if(!autoscale) {
+			//lowest and highest pressures ever recorded on Earth: 87000 and 108570
+			min = 87000.; max = 115650.; //centered around 1 atm
+			gradient.set(Gradient::bluewhitered, min, max, autoscale);
+		} else {
+			const double delta1 = fabs(Cst::std_press-min);
+			const double delta2 = fabs(max - Cst::std_press);
+			const double delta = (delta1>delta2)?delta1:delta2;
+			gradient.set(Gradient::bluewhitered, Cst::std_press-delta, Cst::std_press+delta, autoscale);
+		}
 	} else if(parameter==MeteoGrids::ALB) {
 		if(!autoscale) {
 			min = 0.; max = 1.;
 		}
-		gradient.set(Gradient::bg_isomorphic, min, max, autoscale);
+		gradient.set(Gradient::blktowhite, min, max, autoscale);
 	} else if(parameter==MeteoGrids::ISWR) {
 		if(!autoscale) {
 			min = 0.; max = 800.;

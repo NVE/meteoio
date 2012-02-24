@@ -28,7 +28,7 @@ namespace mio {
 
 /**
  * @class GRIBIO
- * @brief This is to read GRIB 1 or 2 data files
+ * @brief This plugin reads GRIB 1 or 2 data files
  *
  * @ingroup plugins
  * @author Mathias Bavay

@@ -28,7 +28,7 @@ namespace mio {
 
 /**
  * @class SMETIO
- * @brief This (empty) class is to be used as a template for developing new plugins
+ * @brief Reads meteo data in the SMET ASCII or binary format.
  *
  * @ingroup plugins
  * @author Mathias Bavay

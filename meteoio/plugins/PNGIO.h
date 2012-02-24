@@ -28,11 +28,11 @@
 namespace mio {
 /**
  * @class PNGIO
- * @brief This (empty) class is to be used as a template for developing new plugins
+ * @brief This plugin write 2D grids as PNG images.
  *
  * @ingroup plugins
  * @author Mathias Bavay
- * @date   2010-06-14
+ * @date   2012-02-26
  */
 class PNGIO : public IOInterface {
 	public:

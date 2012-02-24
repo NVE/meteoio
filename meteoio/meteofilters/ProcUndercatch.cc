@@ -23,9 +23,11 @@ using namespace std;
 
 namespace mio {
 
-const double ProcUndercatch::Tsnow=-2., ProcUndercatch::Train=2.; //WMO values from Yan et al (2001)
+const double ProcUndercatch::Tsnow_WMO=-2., ProcUndercatch::Train_WMO=2.; //WMO values from Yan et al (2001)
 
 ProcUndercatch::ProcUndercatch(const std::vector<std::string>& vec_args) : ProcessingBlock("UNDERCATCH") {
+	Tsnow = Tsnow_WMO;
+	Train = Train_WMO;
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
@@ -131,10 +133,16 @@ void ProcUndercatch::parse_args(std::vector<std::string> filter_args)
 
 	if(filter_args[0]=="cst") {
 		type=cst;
-		if (filter_args.size() < 3)
+		if(filter_args.size() < 3 || filter_args.size() > 5 || filter_args.size() == 4)
 			throw InvalidArgumentException("Wrong number of arguments for filter "+getName()+" with rain gauge type \"cst\"", AT);
 		IOUtils::convertString(factor_snow, filter_args[1]);
 		IOUtils::convertString(factor_mixed, filter_args[2]);
+		if(filter_args.size()==5) {
+			IOUtils::convertString(Tsnow, filter_args[1]);
+			Tsnow = K_TO_C(Tsnow);
+			IOUtils::convertString(Train, filter_args[2]);
+			Train = K_TO_C(Train);
+		}
 	} else if(filter_args[0]=="nipher") {
 		type=nipher;
 	} else if(filter_args[0]=="tretyakov") {

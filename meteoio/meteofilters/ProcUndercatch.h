@@ -46,7 +46,7 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * therefore this type must be specified as an argument. The coefficients are not always available both for shielded and
  * unshielded gauges, so most of the time only one variation will be available and is specified below.
  * The following methods can be specified as argument (only one can be specified):
- * - cst {factor for snow} {factor for mixed precipitation} - this applies a constant factor to the precipitation
+ * - cst {factor for snow} {factor for mixed precipitation} - this applies a constant factor to the precipitation. Optionally, the snow and rain threshold temperatures can be given instead of relying on the above values (by adding them at the end of the line).
  * - Nipher - National standard rain gauge in Canada, shielded
  * - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories, shielded
  * - US8sh - US national 8\" rain gauge, shielded
@@ -90,7 +90,8 @@ class ProcUndercatch : public ProcessingBlock {
 
 		sensor_type type;
 		double factor_snow, factor_mixed;
-		static const double Tsnow, Train;
+		double Tsnow, Train;
+		static const double Tsnow_WMO, Train_WMO;
 };
 
 } //end namespace
