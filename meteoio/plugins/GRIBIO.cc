@@ -91,7 +91,7 @@ GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj)
 	idx=NULL;
 	fp = NULL;
 	meteo_initialized = false;
-	latitudeOfSouthernPole = longitudeOfSouthernPole = IOUtils::nodata;
+	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
 }
 
 GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
@@ -101,7 +101,7 @@ GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	idx=NULL;
 	fp = NULL;
 	meteo_initialized = false;
-	latitudeOfSouthernPole = longitudeOfSouthernPole = IOUtils::nodata;
+	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
 }
 
 GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -111,7 +111,7 @@ GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 	idx=NULL;
 	fp = NULL;
 	meteo_initialized = false;
-	latitudeOfSouthernPole = longitudeOfSouthernPole = IOUtils::nodata;
+	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
 }
 
 GRIBIO::~GRIBIO() throw()
@@ -245,16 +245,6 @@ Date GRIBIO::getDate(grib_handle* h) {
 	return Date(year, month, day, hour, minutes, tz_in);
 }
 
-void GRIBIO::rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true) const
-{
-	Coords::rotatedToTrueLatLon(-latitudeOfSouthernPole, longitudeOfSouthernPole+180., lat_rot, lon_rot, lat_true, lon_true);
-}
-
-void GRIBIO::trueLatLonToRotated(const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot) const
-{
-	Coords::trueLatLonToRotated(-latitudeOfSouthernPole, longitudeOfSouthernPole+180., lat_true, lon_true, lat_rot, lon_rot);
-}
-
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y)
 {
 	//getting transformation parameters
@@ -263,8 +253,11 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	if(angleOfRotationInDegrees!=0.) {
 		throw InvalidArgumentException("Rotated grids not supported!", AT);
 	}
+	double latitudeOfSouthernPole, longitudeOfSouthernPole;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+	latitudeOfNorthernPole = -latitudeOfSouthernPole;
+	longitudeOfNorthernPole = longitudeOfSouthernPole+180.;
 
 	//determining llcorner
 	double ll_latitude, ll_longitude;
@@ -275,7 +268,7 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	GRIB_CHECK(grib_get_double(h,"longitudeOfLastGridPointInDegrees",&ur_longitude),0);
 
 	double cntr_lat, cntr_lon; //geographic coordinates
-	rotatedToTrueLatLon(.5*(ll_latitude+ur_latitude), .5*(ll_longitude+ur_longitude), cntr_lat, cntr_lon);
+	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude), .5*(ll_longitude+ur_longitude), cntr_lat, cntr_lon);
 	Coords cntr(coordin, coordinparam);
 	cntr.setLatLon(cntr_lat, cntr_lon, 0.);
 
@@ -288,7 +281,7 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	GRIB_CHECK(grib_get_double(h,"jDirectionIncrementInDegrees",&d_j),0);
 	GRIB_CHECK(grib_get_double(h,"iDirectionIncrementInDegrees",&d_i),0);
 	double tmp_lat, tmp_lon;
-	rotatedToTrueLatLon(.5*(ll_latitude+ur_latitude)+d_i, .5*(ll_longitude+ur_longitude)+d_j, tmp_lat, tmp_lon);
+	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude)+d_i, .5*(ll_longitude+ur_longitude)+d_j, tmp_lat, tmp_lon);
 	d_i = tmp_lon-cntr_lon; //delta in geographic coordinates
 	d_j = tmp_lat-cntr_lat;
 
@@ -426,7 +419,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	Date UTC_date = date;
 	UTC_date.setTimeZone(tz_in);
 
-	const std::string filename = grid2dpath_in+"/"+prefix+UTC_date.toString(Date::NUM).substr(0,10)+"f"+UTC_date.toString(Date::NUM).substr(10,2)+ext;
+	const std::string filename = grid2dpath_in+"/"+prefix+UTC_date.toString(Date::NUM).substr(0,10)+ext;
 
 	read2DGrid(filename, grid_out, parameter, UTC_date);
 }
@@ -507,7 +500,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		grid_out.grid2D *= to_deg;
 	}
 
-	//Wind parameters
+	//Wind parameters //HACK: the wind must be re-projected to the geographic lat/lon!
 	if(parameter==MeteoGrids::U) read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U
 	if(parameter==MeteoGrids::V) read2DGrid_indexed(34.2, 105, 10, date, grid_out); //V_10M, also in 110, 10 as V
 	if(parameter==MeteoGrids::W) read2DGrid_indexed(40.2, 109, 10, date, grid_out); //W, 10m
@@ -625,7 +618,7 @@ void GRIBIO::scanMeteoPath()
 		const std::string& filename = *it;
 		std::string::size_type spos = filename.find_first_of("0123456789");
 		Date date;
-		IOUtils::convertString(date, filename.substr(spos,10)+filename.substr(spos+11,2), tz_in); //HACK MeteoSwiss-only file naming?
+		IOUtils::convertString(date, filename.substr(spos,10), tz_in); //HACK MeteoSwiss-only file naming?
 		std::pair<Date,std::string> tmp(date, filename);
 
 		cache_meteo_files.push_back(tmp);
@@ -736,15 +729,18 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 	}
 
 	const long npoints = vecPts.size();
+	double latitudeOfSouthernPole, longitudeOfSouthernPole;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+	latitudeOfNorthernPole = -latitudeOfSouthernPole;
+	longitudeOfNorthernPole = longitudeOfSouthernPole+180.;
 
 	long Ni;
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 
 	//build GRIB local coordinates for the points
 	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-		trueLatLonToRotated(vecPts[ii].getLat(), vecPts[ii].getLon(), lats[ii], lons[ii]);
+		Coords::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPts[ii].getLat(), vecPts[ii].getLon(), lats[ii], lons[ii]);
 	}
 
 	//retrieve nearest points
@@ -771,7 +767,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 		StationData sd;
 		sd.position.setProj(coordin, coordinparam);
 		double true_lat, true_lon;
-		rotatedToTrueLatLon(outlats[ii], outlons[ii], true_lat, true_lon);
+		Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats[ii], outlons[ii], true_lat, true_lon);
 		sd.position.setLatLon(true_lat, true_lon, values[ii]);
 		stringstream ss;
 		ss << "Point_" << indexes[ii];
@@ -891,7 +887,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 		}
 	}
 
-	//Wind parameters
+	//Wind parameters //HACK: the wind must be re-projected to the geographic lat/lon!
 	if(readMeteoValues(187.201, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW_MAX, npoints, Meteo); //VMAX_10M
 	if(readMeteoValues(31.2, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::DW, npoints, Meteo); //DD_10M
 	else {

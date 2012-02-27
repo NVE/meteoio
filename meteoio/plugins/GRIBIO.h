@@ -74,8 +74,8 @@ class GRIBIO : public IOInterface {
 		void readStations();
 		void listKeys(grib_handle** h, const std::string& filename);
 		void scanMeteoPath();
-		void rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true) const;
-		void trueLatLonToRotated(const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot) const;
+		/*void rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true) const;
+		void trueLatLonToRotated(const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot) const;*/
 		void cleanup() throw();
 
 		bool removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, double *lons);
@@ -94,7 +94,7 @@ class GRIBIO : public IOInterface {
 		std::string idx_filename; //matching file name for the index
 		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
 		bool meteo_initialized; //set to true after we scanned METEOPATH, filed the cache, read the virtual stations from io.ini
-		double latitudeOfSouthernPole, longitudeOfSouthernPole; //for rotated coordinates
+		double latitudeOfNorthernPole, longitudeOfNorthernPole; //for rotated coordinates
 
 		static const double to_rad;
 		static const double to_deg;
