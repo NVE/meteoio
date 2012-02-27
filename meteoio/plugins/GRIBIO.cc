@@ -247,32 +247,12 @@ Date GRIBIO::getDate(grib_handle* h) {
 
 void GRIBIO::rotatedToTrueLatLon(const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true) const
 {
-	const double lat_rot_rad = lat_rot*to_rad;
-	const double lon_rot_rad = lon_rot*to_rad;
-	const double lat_pole_rad = -latitudeOfSouthernPole*to_rad; //HACK
-
-	if(latitudeOfSouthernPole==IOUtils::nodata || longitudeOfSouthernPole==IOUtils::nodata) {
-		throw NoAvailableDataException("Attempting to use latitudeOfSouthernPole and/or longitudeOfSouthernPole without reading them from GRIB!");
-	}
-
-	lat_true = asin( sin(lat_rot_rad)*sin(lat_pole_rad) + cos(lat_rot_rad)*cos(lon_rot_rad)*cos(lat_pole_rad) ) * to_deg;
-	lon_true = atan( cos(lat_rot_rad)*sin(lon_rot_rad) / (sin(lat_pole_rad)*cos(lat_rot_rad)*cos(lon_rot_rad) - sin(lat_rot_rad)*cos(lat_pole_rad)) )*to_deg + longitudeOfSouthernPole;
+	Coords::rotatedToTrueLatLon(-latitudeOfSouthernPole, longitudeOfSouthernPole+180., lat_rot, lon_rot, lat_true, lon_true);
 }
 
 void GRIBIO::trueLatLonToRotated(const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot) const
 {
-	const double lat_true_rad = lat_true*to_rad;
-	const double lon_true_rad = lon_true*to_rad;
-	const double lat_pole_rad = latitudeOfSouthernPole*to_rad;
-	const double lon_pole_rad = longitudeOfSouthernPole*to_rad;
-	const double delta_lon_rad = lon_true_rad-lon_pole_rad;
-
-	if(latitudeOfSouthernPole==IOUtils::nodata || longitudeOfSouthernPole==IOUtils::nodata) {
-		throw NoAvailableDataException("Attempting to use latitudeOfSouthernPole and/or longitudeOfSouthernPole without reading them from GRIB!");
-	}
-
-	lat_rot = asin( sin(lat_true_rad)*sin(lat_pole_rad) + cos(lat_true_rad)*cos(lat_pole_rad)*cos(delta_lon_rad) ) * to_deg;
-	lon_rot = atan( cos(lat_true_rad)*sin(delta_lon_rad) / (cos(lat_true_rad)*sin(lat_pole_rad)*cos(delta_lon_rad) - sin(lat_true_rad)*cos(lat_pole_rad)) ) * to_deg;
+	Coords::trueLatLonToRotated(-latitudeOfSouthernPole, longitudeOfSouthernPole+180., lat_true, lon_true, lat_rot, lon_rot);
 }
 
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y)
@@ -300,6 +280,10 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	cntr.setLatLon(cntr_lat, cntr_lon, 0.);
 
 	//determining cell size
+	long Ni, Nj;
+	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
+	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
+
 	double d_i, d_j;
 	GRIB_CHECK(grib_get_double(h,"jDirectionIncrementInDegrees",&d_j),0);
 	GRIB_CHECK(grib_get_double(h,"iDirectionIncrementInDegrees",&d_i),0);
@@ -307,10 +291,6 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	rotatedToTrueLatLon(.5*(ll_latitude+ur_latitude)+d_i, .5*(ll_longitude+ur_longitude)+d_j, tmp_lat, tmp_lon);
 	d_i = tmp_lon-cntr_lon; //delta in geographic coordinates
 	d_j = tmp_lat-cntr_lat;
-
-	long Ni, Nj;
-	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
-	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
 
 	cellsize_x = Coords::lon_degree_lenght(cntr_lat)*d_i;
 	cellsize_y = Coords::lat_degree_lenght(cntr_lat)*d_j;

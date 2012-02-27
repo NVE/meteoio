@@ -114,6 +114,9 @@ class Coords {
 	static double lat_degree_lenght(const double& latitude);
 	static double lon_degree_lenght(const double& latitude);
 
+	static void rotatedToTrueLatLon(const double& lat_N, const double& lon_N, const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true);
+	static void trueLatLonToRotated(const double& lat_N, const double& lon_N, const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot);
+
  private:
 	//Coordinates conversions
 	void convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const;
@@ -179,6 +182,8 @@ class Coords {
 		double b;
 	};
 	static const struct ELLIPSOID ellipsoids[6];
+
+	static const double to_rad, to_deg;
 };
 } //end namespace
 

@@ -57,6 +57,9 @@ namespace mio {
  *
  */
 
+const double Coords::to_rad = Cst::PI / 180.0;
+const double Coords::to_deg = 180.0 / Cst::PI;
+
 map<std::string, convfunc> Coords::to_wgs84;
 map<std::string, convfunc> Coords::from_wgs84;
 const bool Coords::__init = Coords::initializeMaps();
@@ -853,7 +856,6 @@ std::string Coords::decimal_to_dms(const double& decimal) {
 * @return lenght of one degree of latitude
 */
 double Coords::lat_degree_lenght(const double& latitude) {
-	const double to_rad = Cst::PI / 180.0;
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
@@ -870,13 +872,78 @@ double Coords::lat_degree_lenght(const double& latitude) {
 * @return lenght of one degree of longitude
 */
 double Coords::lon_degree_lenght(const double& latitude) {
-	const double to_rad = Cst::PI / 180.0;
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
 	const double degree_length = (Cst::PI*a*cos(latitude*to_rad)) / ( 180.*sqrt(1.-e2*IOUtils::pow2(sin(latitude*to_rad))) );
 	return fabs( degree_length );
+}
+
+/**
+* @brief Convert rotated lat/lon into geographic lat/lon
+* Rotated coordinates are created by moving the North pole by a given offset along latitude and longitude.
+* The goal is to put the equator through the center of the domain of interest, so a lat/lon grid can easily be
+* approximated by a tangential cartesian coordinate system.
+* (see http://www.cosmo-model.org/content/model/documentation/core/default.htm, part I, chapter 3.3 for more)
+* @note To convert South Pole coordinates to North Pole coordinates, multiply the latitude by -1 and add 180 to the longitude.
+* @param[in] lat_N North pole latitude offset
+* @param[in] lon_N North pole longitude offset
+* @param[in] lat_rot rotated latitude
+* @param[in] lon_rot rotated longitude
+* @param[out] lat_true geographic latitude
+* @param[out] lon_true geographic longitude
+*/
+void Coords::rotatedToTrueLatLon(const double& lat_N, const double& lon_N, const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true)
+{
+	if(lat_N==IOUtils::nodata || lon_N==IOUtils::nodata || lat_rot==IOUtils::nodata || lon_rot==IOUtils::nodata) {
+		lat_true = IOUtils::nodata;
+		lon_true = IOUtils::nodata;
+		return;
+	}
+
+	const double lat_pole_rad = lat_N*to_rad;
+	const double lat_rot_rad = lat_rot*to_rad;
+	const double lon_rot_rad = (fmod(lon_rot+180., 360.)-180.)*to_rad; //putting lon_rot_rad in [-PI; PI]
+
+	lat_true = asin( sin(lat_rot_rad)*sin(lat_pole_rad) + cos(lat_rot_rad)*cos(lon_rot_rad)*cos(lat_pole_rad) ) * to_deg;
+	lon_true = atan2( cos(lat_rot_rad)*sin(lon_rot_rad) , (sin(lat_pole_rad)*cos(lat_rot_rad)*cos(lon_rot_rad) - sin(lat_rot_rad)*cos(lat_pole_rad)) )*to_deg + lon_N;
+	lon_true -= 180.; //HACK
+	lon_true = fmod(lon_true+180., 360.)-180.; //putting lon_rot_rad in [-180; 180]
+}
+
+/**
+* @brief Convert geographic lat/lon into rotated lat/lon
+* Rotated coordinates are created by moving the North pole by a given offset along latitude and longitude.
+* The goal is to put the equator through the center of the domain of interest, so a lat/lon grid can easily be
+* approximated by a tangential cartesian coordinate system.
+* (see http://www.cosmo-model.org/content/model/documentation/core/default.htm, part I, chapter 3.3 for more)
+* @note To convert South Pole coordinates to North Pole coordinates, multiply the latitude by -1 and add 180 to the longitude.
+* @param[in] lat_N North pole latitude offset
+* @param[in] lon_N North pole longitude offset
+* @param[in] lat_true geographic latitude
+* @param[in] lon_true geographic longitude
+* @param[out] lat_rot rotated latitude
+* @param[out] lon_rot rotated longitude
+*/
+void Coords::trueLatLonToRotated(const double& lat_N, const double& lon_N, const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot)
+{
+	if(lat_N==IOUtils::nodata || lon_N==IOUtils::nodata || lat_true==IOUtils::nodata || lon_true==IOUtils::nodata) {
+		lat_rot = IOUtils::nodata;
+		lon_rot = IOUtils::nodata;
+		return;
+	}
+
+	const double lon_norm = (fmod(lon_true+180., 360.)-180.)*to_rad; //putting lon_true in [-PI; PI]
+	const double lat_true_rad = lat_true*to_rad;
+	const double lat_pole_rad = lat_N*to_rad;
+	const double lon_pole_rad = lon_N*to_rad;
+	const double delta_lon_rad = lon_norm-lon_pole_rad;
+
+	lat_rot = asin( sin(lat_true_rad)*sin(lat_pole_rad) + cos(lat_true_rad)*cos(lat_pole_rad)*cos(delta_lon_rad) ) * to_deg;
+	lon_rot = atan2( cos(lat_true_rad)*sin(delta_lon_rad) , (cos(lat_true_rad)*sin(lat_pole_rad)*cos(delta_lon_rad) - sin(lat_true_rad)*cos(lat_pole_rad)) ) * to_deg;
+	lon_rot += 180.; //HACK
+	lon_rot = fmod(lon_rot+180., 360.)-180.; //putting lon_rot_rad in [-180; 180]
 }
 
 /**
@@ -1020,7 +1087,6 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 //also http://www.uwgb.edu/dutchs/usefuldata/UTMFormulas.HTM
 //also http://www.oc.nps.edu/oc2902w/maps/utmups.pdf or Chuck Gantz (http://www.gpsy.com/gpsinfo/geotoutm/)
 	//Geometric constants
-	const double to_rad = Cst::PI / 180.0;
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
@@ -1164,7 +1230,7 @@ void Coords::WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, dou
 	const std::string src_param="+proj=latlong +datum=WGS84 +ellps=WGS84";
 	const std::string dest_param="+init=epsg:"+coordparam;
 	projPJ pj_latlong, pj_dest;
-	double x=long_in*DEG_TO_RAD, y=lat_in*DEG_TO_RAD;
+	double x=long_in*to_rad, y=lat_in*to_rad;
 
 	if ( !(pj_dest = pj_init_plus(dest_param.c_str())) ) {
 		pj_free(pj_dest);
@@ -1271,7 +1337,6 @@ void Coords::distance(const Coords& destination, double& distance, double& beari
 void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	double alpha;
-	const double to_rad = Cst::PI / 180.0;
 	double distance;
 
 	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
@@ -1350,8 +1415,6 @@ void Coords::WGS84_to_NULL(double /*lat_in*/, double /*long_in*/, double& /*east
 void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const
 {
 	const double Rearth = 6371.e3;
-	const double to_rad = Cst::PI / 180.0;
-	const double to_deg = 180.0 / Cst::PI;
 	const double lat_ref_rad = lat_ref*to_rad;
 	const double bearing_rad = bearing*to_rad;
 
@@ -1391,7 +1454,6 @@ double Coords::cosineDistance(const double& lat1, const double& lon1, const doub
 	}
 
 	const double Rearth = 6371.e3;
-	const double to_rad = Cst::PI / 180.0;
 	const double d = acos(
 		sin(lat1*to_rad) * sin(lat2*to_rad)
 		+ cos(lat1*to_rad) * cos(lat2*to_rad) * cos((lon2-lon1)*to_rad)
@@ -1424,7 +1486,6 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double f = (a - b) / a;	//ellispoid flattening
-	const double to_rad = Cst::PI / 180.0;
 
 	const double L = (lon1 - lon2)*to_rad;
 	const double U1 = atan( (1.-f)*tan(lat1*to_rad) );
@@ -1500,8 +1561,6 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 	const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis, value for wgs84
 	const double f = (a - b) / a;	//ellispoid flattening
-	const double to_rad = Cst::PI / 180.0;
-	const double to_deg = 180.0 / Cst::PI;
 
 	const double alpha1 = bearing*to_rad;
 	const double tanU1 = (1.-f)*tan(lat_ref*to_rad);
