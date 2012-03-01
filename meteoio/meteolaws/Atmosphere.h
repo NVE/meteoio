@@ -49,6 +49,10 @@ class Atmosphere {
 		static double Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
 		                            const double& RH, const double& TA, const double& ISWR);
+		static double Dilley_emissivity(const double& RH, const double& TA);
+		static double Dilley_ilwr(const double& RH, const double& TA);
+		static double Prata_emissivity(const double& RH, const double& TA);
+		static double Prata_ilwr(const double& RH, const double& TA);
 
 		static double RhtoDewPoint(double RH, double TA, const bool& force_water);
 		static double DewPointtoRh(double TD, double TA, const bool& force_water);

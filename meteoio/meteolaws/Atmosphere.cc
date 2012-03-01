@@ -281,6 +281,68 @@ double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
 }
 
 /**
+ * @brief Evaluate the atmosphere emissivity for clear sky.
+ * This uses the formula from Dilley and O'Brien -- "Estimating downward clear sky
+ * long-wave irradiance at the surface from screen temperature and precipitable water",
+ * Q. J. R. Meteorolo. Soc., Vol. 124, 1998, pp 1391-1401. The long wave is computed
+ * and the ratio of this long wave to a black body emission gives an emissivity.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
+	const double ilwr_dilley = Dilley_ilwr(RH, TA);
+	const double ilwr_blkbody = blkBody_Radiation(1., TA);
+	return ilwr_dilley/ilwr_blkbody;
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear sky.
+ * This uses the formula from Dilley and O'Brien -- "Estimating downward clear sky
+ * long-wave irradiance at the surface from screen temperature and precipitable water",
+ * Q. J. R. Meteorolo. Soc., Vol. 124, 1998, pp 1391-1401.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
+	const double e0 = RH * waterSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
+	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
+
+	const double tmp = TA/Cst::t_water_triple_pt;
+	const double pow_tmp6 = tmp*tmp*tmp*tmp*tmp*tmp;
+	return 59.38 + 113.7*pow_tmp6 + 96.96*sqrt(w/25.);
+}
+
+/**
+ * @brief Evaluate the atmosphere emissivity for clear sky.
+ * This uses the formula from Prata -- "A new long-wave formula for estimating
+ * downward clear-sky radiation at the surface", Q. J. R. Meteorolo. Soc., Vol. 122, 1996, pp 1127-1151.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
+	const double e0 = RH * waterSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
+	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
+
+	return 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear sky.
+ * This uses the formula from Prata -- "A new long-wave formula for estimating
+ * downward clear-sky radiation at the surface", Q. J. R. Meteorolo. Soc., Vol. 122, 1996, pp 1127-1151.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
+	const double epsilon = Prata_emissivity(RH, TA);
+	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
  * @brief Evaluate the long wave radiation for clear or cloudy sky.
  * This uses the formula from Crawford and Duchon -- <i>"An Improved Parametrization
  * for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
@@ -303,7 +365,7 @@ double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const doubl
 	const double e_mBar = 0.01 * e;
 
 	const double epsilon = clf + (1.-clf) * (1.22 + 0.06*sin((month+2.)*Cst::PI/6.) ) * pow( (e_mBar/TA), 1./7.);
-	return epsilon*blkBody_Radiation(1., TA);
+	return blkBody_Radiation(epsilon, TA);
 }
 
 /**
