@@ -45,7 +45,7 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 
 		double& tmp = ovec[ii](index);
 		double VW = ovec[ii](MeteoData::VW);
-		if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //HACK: check impact!
+		if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
 		double t = ovec[ii](MeteoData::TA);
 		if(t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
 		t=K_TO_C(t); //t in celsius
@@ -86,8 +86,7 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 			if(precip==snow) k=exp(4.61-0.16*pow(VW, 1.28));
 			if(precip==mixed) k=100.77-8.34*VW;
 			tmp *= 100./k;
-		} else if(type==geonor_jp) {
-			//HACK: this seems not to work... we need the paper!
+		} else if(type==rt3_jp) {
 			if(VW==IOUtils::nodata) continue;
 			const double rh = ovec[ii](MeteoData::RH);
 			const double alt = ovec[ii].meta.position.getAltitude();
@@ -99,8 +98,8 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 				else ts_rate = .5*exp(-2.2*pow(t_wb-1.1, 1.3));
 				if(ts_rate>.5) precip=snow; else precip=mixed;
 			}
-			if(precip==snow) k=100.+34.6*VW;
-			if(precip==mixed) k=100.+8.56*VW;
+			if(precip==snow) k=100. / (1.+.346*VW);
+			if(precip==mixed) k=100. / (1.+.0856*VW);
 			tmp *= 100./k;
 		} else if(type==hellmann) {
 			if(VW==IOUtils::nodata) continue;
@@ -115,7 +114,6 @@ void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoD
 			if(VW==IOUtils::nodata) continue;
 			double k;
 			if(precip==snow) k=100.+0.72*VW*VW-13.74*VW;
-			//if(precip==mixed) k=100.+0.72*VW*VW-13.74*VW; //we don't have a fit, so we duplicate the snow fit
 			if(precip==mixed) k=101.319+0.524*VW*VW-6.42*VW;
 			tmp *= 100./k;
 		}
@@ -151,8 +149,8 @@ void ProcUndercatch::parse_args(std::vector<std::string> filter_args)
 		type=us8sh;
 	} else if(filter_args[0]=="us8unsh") {
 		type=us8unsh;
-	} else if(filter_args[0]=="geonor_jp") {
-		type=geonor_jp;
+	} else if(filter_args[0]=="rt3_jp") {
+		type=rt3_jp;
 	} else if(filter_args[0]=="hellmann") {
 		type=hellmann;
 	} else if(filter_args[0]=="hellmannsh") {

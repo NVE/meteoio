@@ -439,6 +439,28 @@ void IOUtils::skipLines(std::istream& fin, const size_t& nbLines, const char& eo
 	}
 }
 
+size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<double>& vec_data)
+{
+	vec_data.clear();
+	std::istringstream iss(line_in); //construct inputstream with the string line as input
+	iss.setf(std::ios::fixed);
+	iss.precision(std::numeric_limits<double>::digits10);
+
+	double tmp;
+	while (!iss.eof()) {
+		iss >> std::skipws >> tmp;
+
+		if (iss.fail()) {
+			std::stringstream ss;
+			ss << "Can not read column " << vec_data.size()+1 << " in data line \"" << line_in << "\"";
+			throw InvalidFormatException(ss.str(), AT);
+		}
+		vec_data.push_back(tmp);
+	}
+
+	return vec_data.size();
+}
+
 size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
 {
 	vecString.clear();

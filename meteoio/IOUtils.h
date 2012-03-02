@@ -195,6 +195,7 @@ namespace IOUtils {
 	void toUpper(std::string& str);
 	void toLower(std::string& str);
 	bool isNumeric(const std::string& input, const unsigned int& nBase=10);
+	size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
 	void readKeyValueHeader(std::map<std::string, std::string>& headermap,

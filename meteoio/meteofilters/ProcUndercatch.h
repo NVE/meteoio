@@ -35,7 +35,8 @@ namespace mio {
  * <i>"WMO Solid Precipitation Measurement Intercomparison"</i>, B. Goodison, P. Louie and D. Yang, <b>872</b>, 1998 as well as
  * the overview given by <i>"Literature Study on the Correction of Precipitation Measurements"</i>, Annette Wagner, 2009.
  * The correction parameters for the shielded Hellmann gauge (German version) are from <i>"Wind-induced Precipitation Undercatch
-of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 1999, pp 57-80.
+of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 1999, pp 57-80 while the correction for Japanese RT-3 gauges comes from
+* <i>"Performance of Japanese precipitation gauges in winter"</i>, K. Yokoyama, H. Ohno, Y. Kominami, S. Inoue and T. Kawakata, Seppyo, <b>65</b>, 2003, pp 303-316 (in Japanese with English summary).
  *
  * These correction methods process pure snow and mixed precipitation differently, with the following thresholds:
  * - pure snow below -2 C
@@ -51,7 +52,7 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories, shielded
  * - US8sh - US national 8\" rain gauge, shielded
  * - US8unsh - US national 8\" rain gauge, unshielded
- * - Geonor_Jp - Japanese network Geonor rain gauge. This uses an ad-hoc rain/snow splitting method. This seems to give weird results...
+ * - RT3_Jp - Japanese network RT-3 rain gauge. This uses an ad-hoc rain/snow splitting method.
  * - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded
  * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
  *
@@ -75,7 +76,7 @@ class ProcUndercatch : public ProcessingBlock {
 			tretyakov,
 			us8sh,
 			us8unsh,
-			geonor_jp,
+			rt3_jp,
 			hellmann,
 			hellmannsh
 		} sensor_type;
