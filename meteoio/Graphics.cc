@@ -520,12 +520,11 @@ void gr_heat::getColor(const double &i_val, double &r, double &g, double &b) con
 }
 
 gr_blue_pink::gr_blue_pink(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
-	X.push_back(0.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white
-	X.push_back(0.2); v_h.push_back(172.); v_s.push_back(.4); v_v.push_back(.95); //light blue
-	X.push_back(.4); v_h.push_back(213.); v_s.push_back(.4); v_v.push_back(.95); //violet
-	X.push_back(.6); v_h.push_back(255.); v_s.push_back(.4); v_v.push_back(.95); //violet/blue
-	X.push_back(.8); v_h.push_back(278.); v_s.push_back(.4); v_v.push_back(.95); //violet
-	X.push_back(1.); v_h.push_back(359.); v_s.push_back(.3); v_v.push_back(.95); //red
+	//this is an isomorphic gradient
+	X.push_back(0.); v_h.push_back(179.); v_s.push_back(0.); v_v.push_back(.95); //almost white
+	X.push_back(0.001); v_h.push_back(179.); v_s.push_back(.25); v_v.push_back(.95); //light blue
+	X.push_back(.4); v_h.push_back(230.); v_s.push_back(.67); v_v.push_back(.95); //dark blue
+	X.push_back(1.); v_h.push_back(281.); v_s.push_back(.7); v_v.push_back(.95); //bright violet
 }
 
 gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& /*i_autoscale*/) {
@@ -582,6 +581,7 @@ gr_blue::gr_blue(const double& /*i_min*/, const double& /*i_max*/, const bool& /
 }
 
 gr_bg_isomorphic::gr_bg_isomorphic(const double& /*i_min*/, const double& /*i_max*/, const bool& /*i_autoscale*/) {
+	//this is an isomorphic gradient
 	X.push_back(0.); v_h.push_back(47.); v_s.push_back(.92); v_v.push_back(0.); //black
 	X.push_back(.5); v_h.push_back(178.); v_s.push_back(.58); v_v.push_back(.67); //light blue
 	X.push_back(1.); v_h.push_back(84.); v_s.push_back(.67); v_v.push_back(1.); //light green

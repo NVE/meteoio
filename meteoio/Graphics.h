@@ -186,7 +186,7 @@ class Gradient {
 		            azi, ///< suitable to represent slope azimuth. In autoscale, it becomes a two color gradient
 		            heat, ///< the traditional heat gradient (with all its associated shortcomings)
 		            freeze, ///< two, two-color gradients with a sharp transition at 0
-		            blue_pink, ///< blue to pink gradient
+		            blue_pink, ///< blue to pink gradient, isomorphic gradient
 		            pastel, ///< same color scale as "slope" but linear
 		            bg_isomorphic, ///< drak-blue to light-green isomorphic gradient
 		            bluewhitered, ///< blue to white, then white to red
