@@ -72,6 +72,7 @@ namespace mio {
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
  * - GRIB_PREFIX: prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain)
+ * - GRIB_EXT: grib file extension, or <i>none</i> for no file extension (default: .grb)
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
@@ -80,7 +81,7 @@ namespace mio {
 
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const double GRIBIO::tz_in = 0.; //GRIB time zone, always UTC
-const std::string GRIBIO::ext=".grb"; //filename extension
+const std::string GRIBIO::default_ext=".grb"; //filename extension
 const double GRIBIO::to_rad = Cst::PI / 180.0;
 const double GRIBIO::to_deg = 180.0 / Cst::PI;
 
@@ -132,6 +133,10 @@ void GRIBIO::setOptions()
 		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
 	}
 	cfg.getValue("GRIB_PREFIX", "Input", prefix);
+
+	ext = default_ext;
+	cfg.getValue("GRIB_EXT", "Input", ext);
+	if(ext=="none") ext="";
 }
 
 void GRIBIO::readStations()

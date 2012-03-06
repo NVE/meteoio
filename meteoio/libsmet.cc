@@ -18,6 +18,7 @@
 #include <meteoio/libsmet.h>
 #include <errno.h>
 #include <string.h>
+#include <limits>
 
 using namespace std;
 
@@ -82,7 +83,7 @@ double SMETCommon::convert_to_double(const std::string& in_string)
 {
 	istringstream ss(in_string);
 	double value;
-	if (!(ss >> value)) throw SMETException("Value '" + in_string + "' cannot be converted to double", SMET_AT);
+	if (!(ss >> value)) throw SMETException("Value \"" + in_string + "\" cannot be converted to double", SMET_AT);
 
 	return value;
 }
@@ -91,7 +92,7 @@ int SMETCommon::convert_to_int(const std::string& in_string)
 {
 	istringstream ss(in_string);
 	int value;
-	if (!(ss >> value)) throw SMETException("Value '" + in_string + "' cannot be converted to int", SMET_AT);
+	if (!(ss >> value)) throw SMETException("Value \"" + in_string + "\" cannot be converted to int", SMET_AT);
 
 	return value;
 }
@@ -840,20 +841,20 @@ void SMETReader::process_header()
 	}
 
 	if (obligatory_keys.size() != SMETCommon::all_mandatory_header_keys.size())
-		throw SMETException("'"+filename+"' is not a valid SMET file, mandatory information in header is missing", SMET_AT);
+		throw SMETException("\""+filename+"\" is not a valid SMET file, mandatory information in header is missing", SMET_AT);
 
 	if ((location_wgs84 == 7) || (location_epsg == 15) || (location_data_wgs84 == 7)
 	    || ((location_epsg == 8) && (location_data_epsg == 7))){
 		//location info present somewhere
 	} else {
-		throw SMETException("'"+filename+"' is not a valid SMET file, mandatory location info is missing (header and data)", SMET_AT);
+		throw SMETException("\""+filename+"\" is not a valid SMET file, mandatory location info is missing (header and data)", SMET_AT);
 	}
 
 	const size_t nr_offset = vec_offset.size();
 	const size_t nr_multiplier = vec_multiplier.size();
 	if ((nr_offset>0 && nr_offset!=nr_of_fields) || (nr_multiplier>0 && nr_multiplier!=nr_of_fields)) {
 		std::stringstream ss;
-		ss << "File \'" << filename << "\' has " << nr_of_fields << " data fields, but specifies ";
+		ss << "File \"" << filename << "\" has " << nr_of_fields << " data fields, but specifies ";
 		ss << nr_offset << " offsets and " << nr_multiplier << " multipliers. ";
 		ss << "The number of offsets and multipliers MUST fit the number of fields, including the (optional) timestamp column.";
 		throw SMETException(ss.str(), SMET_AT);
@@ -890,7 +891,7 @@ void SMETReader::read_header(std::ifstream& fin)
 
 		if (line != "") {
 			if (!SMETCommon::readKeyValuePair(line, "=", header))
-				throw SMETException("Invalid key value pair in file '"+filename+"', in [Header] section: " + line, SMET_AT);
+				throw SMETException("Invalid key value pair in file \""+filename+"\", in [Header] section: " + line, SMET_AT);
 		}
 
 	}
@@ -965,7 +966,7 @@ void SMETReader::read(const double& i_julian_start, const double& i_julian_end, 
 void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data)
 {
 	if (!timestamp_present)
-		throw SMETException("Requesting to read timestamp when there is none present in '"+filename+"'", SMET_AT);
+		throw SMETException("Requesting to read timestamp when there is none present in \""+filename+"\"", SMET_AT);
 
 	ifstream fin;
 	fin.clear();
@@ -994,7 +995,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 		if (isAscii)
 			read_data_ascii(fin, vec_timestamp, vec_data);
 		else
-			throw SMETException("Binary SMET file '"+filename+"' has no field timestamp, only julian date", SMET_AT);
+			throw SMETException("Binary SMET file \""+filename+"\" has no field timestamp, only julian date", SMET_AT);
 	} catch(...) {
 		cleanup(fin);
 		throw;
@@ -1006,7 +1007,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 void SMETReader::read(std::vector<double>& vec_data)
 {
 	if (timestamp_present)
-		throw SMETException("Requesting not to read timestamp when there is one present in '"+filename+"'", SMET_AT);
+		throw SMETException("Requesting not to read timestamp when there is one present in \""+filename+"\"", SMET_AT);
 
 	vector<string> tmp_vec;
 
@@ -1063,37 +1064,42 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 		if (line == "") continue; //Pure comment lines and empty lines are ignored
 
 		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields){
-			size_t shift = 0;
-			if (julian_interval && julian_present){
-				double current_julian = SMETCommon::convert_to_double(tmp_vec[julian_field]);
-				if (current_julian < julian_start)
-					continue; //skip lines that don't hold the dates we're interested in
-				else if (current_julian > julian_end)
-					break; //skip the rest of the file
-			}
-
-			if (timestamp_interval && timestamp_present){
-				const string& current_timestamp = tmp_vec[timestamp_field];
-				if (current_timestamp < timestamp_start)
-					continue; //skip lines that don't hold the dates we're interested in
-				else if (current_timestamp > timestamp_end)
-					break; //skip the rest of the file
-			}
-
-			for (size_t ii=0; ii<tmp_vec.size(); ii++){
-				if (timestamp_present && (ii == timestamp_field)) {
-					vec_timestamp.push_back(tmp_vec[ii]);
-					shift = 1;
-				} else {
-					double tmp = SMETCommon::convert_to_double(tmp_vec[ii]);
-					if ((mksa) && (tmp != nodata_value)){
-						tmp *= vec_multiplier[ii-shift];
-						tmp += vec_offset[ii-shift];
-					}
-					vec_data.push_back(tmp);
+			try {
+				size_t shift = 0;
+				if (julian_interval && julian_present){
+					const double current_julian = SMETCommon::convert_to_double(tmp_vec[julian_field]);
+					if (current_julian < julian_start)
+						continue; //skip lines that don't hold the dates we're interested in
+					else if (current_julian > julian_end)
+						break; //skip the rest of the file
 				}
+
+				if (timestamp_interval && timestamp_present){
+					const string& current_timestamp = tmp_vec[timestamp_field];
+					if (current_timestamp < timestamp_start)
+						continue; //skip lines that don't hold the dates we're interested in
+					else if (current_timestamp > timestamp_end)
+						break; //skip the rest of the file
+				}
+
+				for (size_t ii=0; ii<tmp_vec.size(); ii++){
+					if (timestamp_present && (ii == timestamp_field)) {
+						vec_timestamp.push_back(tmp_vec[ii]);
+						shift = 1;
+					} else {
+						double tmp = SMETCommon::convert_to_double(tmp_vec[ii]);
+						if ((mksa) && (tmp != nodata_value)){
+							tmp *= vec_multiplier[ii-shift];
+							tmp += vec_offset[ii-shift];
+						}
+						vec_data.push_back(tmp);
+					}
+				}
+				current_fpointer = tmp_fpointer;
+			} catch(SMETException&) {
+				std::cout << "Error reading file \"" << filename << "\" at line \"" << line << "\"\n";
+				throw;
 			}
-			current_fpointer = tmp_fpointer;
 		} else {
 			std::stringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
@@ -1152,7 +1158,7 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 		char c;
 		fin.read(&c, sizeof(char));
 		if (c != '\n')
-			throw SMETException("Corrupted data in section [DATA] of binary SMET file '"+filename+"'", SMET_AT);
+			throw SMETException("Corrupted data in section [DATA] of binary SMET file \""+filename+"\"", SMET_AT);
 	}
 
 	if (current_fpointer != static_cast<streampos>(-1)){

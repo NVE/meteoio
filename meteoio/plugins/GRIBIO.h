@@ -89,6 +89,7 @@ class GRIBIO : public IOInterface {
 		std::string meteopath_in;
 		std::vector<Coords> vecPts; //points to use for virtual stations if METEO=GRIB
 		FILE *fp; //since passing fp always fail...
+		std::string ext; //file extension
 		bool indexed; //flag to know if the file has already been indexed
 		grib_index *idx;
 		std::string idx_filename; //matching file name for the index
@@ -102,7 +103,7 @@ class GRIBIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double tz_in; //GRIB time zone
 		std::string prefix; //filename prefix, like "laf"
-		static const std::string ext;
+		static const std::string default_ext;
 		std::string coordin, coordinparam; //projection parameters
 		bool update_dem;
 
