@@ -33,6 +33,8 @@ namespace mio {
 
 class A3DIO : public IOInterface {
 	public:
+		A3DIO(void (*delObj)(void*), const Config& i_cfg);
+
 		A3DIO(const std::string& configfile);
 		A3DIO(const A3DIO&);
 		A3DIO(const Config&);
@@ -84,11 +86,11 @@ class A3DIO : public IOInterface {
 		                const std::string& fileprefix, const std::string& label, const double& year,
 		                std::ofstream& file);
 		int write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data, const unsigned int& parindex,
-						 const std::string& filename, const std::string& label);
+		                     const std::string& filename, const std::string& label);
 		void write2DMeteo(const std::vector< std::vector<MeteoData> >& data);
 
 		double in_tz, out_tz; //timezones
-		Config cfg; //HACK: only keep a reference!
+		const Config& cfg;
 		std::ifstream fin; //Input file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

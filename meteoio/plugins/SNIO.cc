@@ -295,7 +295,7 @@ void SNIO::readMetaData()
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
 		if ((current_stationnr == 1) && (current_station == ""))
-			throw InvalidFormatException("Missing key 'STATION1' in config: Please specify a SNOWPACK formatted meteo data file", AT);
+			throw InvalidFormatException("Missing key \"STATION1\" in config: Please specify a SNOWPACK formatted meteo data file", AT);
 
 		if (current_station != ""){
 			if(IOUtils::getExtension(current_station)=="") current_station += dflt_extension; //default extension
@@ -310,7 +310,7 @@ void SNIO::readMetaData()
 				}
 			}
 			vecAllStations.push_back(sd);
-			cout << "\t[i] Read meta data for station ID '" << station_id << "'\n";
+			cout << "\t[i] Read meta data for station ID \"" << station_id << "\"\n";
 		}
 
 		current_stationnr++;

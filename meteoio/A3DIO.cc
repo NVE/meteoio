@@ -75,6 +75,13 @@ A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
 	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
 }
 
+A3DIO::A3DIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+{
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
+}
+
 A3DIO::A3DIO(const Config& in_cfg) : IOInterface(NULL), cfg(in_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
