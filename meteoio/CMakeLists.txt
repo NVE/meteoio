@@ -46,7 +46,6 @@ SET(meteoio_sources
 	ResamplingAlgorithms2D.cc
 	Meteo1DInterpolator.cc
 	InterpolationAlgorithms.cc
-	A3DIO.cc
 	Date.cc
 	Timer.cc
 	Grid2DObject.cc

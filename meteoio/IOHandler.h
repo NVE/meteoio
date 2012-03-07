@@ -23,7 +23,6 @@
 #endif*/
 
 #include <meteoio/IOInterface.h>
-#include <meteoio/A3DIO.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOPlugin.h>
 
@@ -104,7 +103,6 @@ class IOHandler : public IOInterface {
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_TIMESERIE >& vecMeteo) const;
 		const Config& cfg;
 		std::map<std::string, IOPlugin> mapPlugins;
-		A3DIO fileio;
 
 		bool enable_copying;
 		std::vector<std::string> copy_parameter, copy_name;

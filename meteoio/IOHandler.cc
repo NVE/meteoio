@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2009-2012 WSL Institute for Snow and Avalanche Research  SLF-DAVOS   */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -68,7 +68,7 @@ void IOHandler::registerPlugins()
 	const std::string popc_extra = "";
 #endif
 	//mapPlugins[io.ini KEY]= IOPlugin(library file name, class name, NULL, NULL);
-	mapPlugins["A3D"]       = IOPlugin("", "A3DIO", &fileio, NULL);
+	mapPlugins["A3D"]       = IOPlugin("liba3dio"+popc_extra+libsuffix, "A3DIO", NULL, NULL);
 	mapPlugins["BORMA"]     = IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
 	mapPlugins["IMIS"]      = IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
 	mapPlugins["GEOTOP"]    = IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
@@ -86,11 +86,11 @@ void IOHandler::registerPlugins()
 
 //Copy constructor
 #ifdef _POPC_
-//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), fileio(aio.cfg), bormaio(aio.cfg), imisio(aio.cfg){
+//IOHandler::IOHandler(const IOHandler& aio) : cfg(aio.cfg), bormaio(aio.cfg), imisio(aio.cfg){
 	//Nothing else so far //HACK for POPC
 //}
 #else
-IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fileio(aio.cfg), enable_copying(false)
+IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), enable_copying(false)
 {
 	//Nothing else so far
 	//TODO: Deal with the IOInterface* pointers, e.g. bormaio
@@ -98,9 +98,9 @@ IOHandler::IOHandler(const IOHandler& aio) : IOInterface(NULL), cfg(aio.cfg), fi
 #endif
 
 #ifdef _POPC_
-IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), fileio(cfgreader), enable_copying(false)
+IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), enable_copying(false)
 #else
-IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), fileio(cfgreader), enable_copying(false)
+IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), enable_copying(false)
 #endif
 {
 	registerPlugins();
