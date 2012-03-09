@@ -251,7 +251,7 @@ double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double
  * @brief Evaluate the atmosphere emissivity for clear sky.
  * This uses the formula from Brutsaert -- "On a Derivable
  * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
- * Research, Vol. 11, No. 5, October 1975, pp 742-744.
+ * Research, <b>11</b>, No. 5, October 1975, pp 742-744.
  * Alternative: Satterlund (1979): Water Resources Research, 15, 1649-1650.
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
@@ -269,7 +269,7 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
  * @brief Evaluate the long wave radiation for clear sky.
  * This uses the formula from Brutsaert -- "On a Derivable
  * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
- * Research, Vol. 11, No. 5, October 1975, pp 742-744.
+ * Research, <b>11</b>, No. 5, October 1975, pp 742-744.
  * Alternative: Satterlund (1979): Water Resources Research, 15, 1649-1650.
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
@@ -284,7 +284,7 @@ double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
  * @brief Evaluate the atmosphere emissivity for clear sky.
  * This uses the formula from Dilley and O'Brien -- "Estimating downward clear sky
  * long-wave irradiance at the surface from screen temperature and precipitable water",
- * Q. J. R. Meteorolo. Soc., Vol. 124, 1998, pp 1391-1401. The long wave is computed
+ * Q. J. R. Meteorolo. Soc., <b>124</b>, 1998, pp 1391-1401. The long wave is computed
  * and the ratio of this long wave to a black body emission gives an emissivity.
  * @param RH relative humidity (between 0 and 1)
  * @param TA near surface air temperature (K)
@@ -300,7 +300,7 @@ double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
  * @brief Evaluate the long wave radiation for clear sky.
  * This uses the formula from Dilley and O'Brien -- "Estimating downward clear sky
  * long-wave irradiance at the surface from screen temperature and precipitable water",
- * Q. J. R. Meteorolo. Soc., Vol. 124, 1998, pp 1391-1401.
+ * Q. J. R. Meteorolo. Soc., <b>124</b>, 1998, pp 1391-1401.
  * @param RH relative humidity (between 0 and 1)
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
@@ -317,7 +317,7 @@ double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
 /**
  * @brief Evaluate the atmosphere emissivity for clear sky.
  * This uses the formula from Prata -- "A new long-wave formula for estimating
- * downward clear-sky radiation at the surface", Q. J. R. Meteorolo. Soc., Vol. 122, 1996, pp 1127-1151.
+ * downward clear-sky radiation at the surface", Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
  * @param RH relative humidity (between 0 and 1)
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
@@ -332,7 +332,7 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 /**
  * @brief Evaluate the long wave radiation for clear sky.
  * This uses the formula from Prata -- "A new long-wave formula for estimating
- * downward clear-sky radiation at the surface", Q. J. R. Meteorolo. Soc., Vol. 122, 1996, pp 1127-1151.
+ * downward clear-sky radiation at the surface", Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
  * @param RH relative humidity (between 0 and 1)
  * @param TA near surface air temperature (K)
  * @return long wave radiation (W/m^2)
@@ -340,6 +340,24 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
 	const double epsilon = Prata_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+ * @brief Evaluate the cloudiness from a given solar index.
+ * This uses the formula from Kasten and Czeplak -- <i>"Solar and terrestrial radiation
+ * dependent on the amount and type of cloud"</i>, Sol. Energy, <b>24</b>, 1980, pp 177-189.
+ * The solar index is defined as measured radiation / clear sky radiation, values
+ * outside of [0;1] will be truncated to [0;1].
+ * @param solarIndex solar index
+ * @return cloudiness (between 0 and 1)
+*/
+double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
+	const double b1 = 0.75, b2 = 3.4;
+
+	if(solarIndex>1.) return 0.;
+	const double cloudiness = pow((1.-solarIndex)/b1, 1./b2);
+	if(cloudiness>1.) return 1.;
+	return cloudiness;
 }
 
 /**
@@ -405,6 +423,65 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 
 	return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct_h+diffuse_h, month);
 }
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
+ * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
+ * The cloudiness is computed from the solar index according to Kasten and Czeplak (1980).
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)
+ * @param iswr_clear_sky Clear Sky Modelled Incoming Short Wave Radiation (W/m^2)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+*/
+double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky) {
+	if(iswr_meas<=0. || iswr_clear_sky<=0.)
+		return IOUtils::nodata;
+
+	const double c = Kasten_cloudiness(iswr_meas/iswr_clear_sky);
+	const double epsilon_clear = Dilley_emissivity(RH, TA);
+	const double epsilon = (1.-.84*c)*epsilon_clear + .84*c;
+	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear or cloudy sky.
+ * This uses the formula from Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
+ * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
+ * The cloudiness is computed from the solar index according to Kasten and Czeplak (1980).
+ * @param lat latitude of the point of observation
+ * @param lon longitude of the point of observation
+ * @param altitude altitude of the point of observation
+ * @param julian julian date at the point of observation
+ * @param TZ time zone at the point of observation
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
+ * Please note that this call might NOT be efficient for processing large amounts of points,
+ * since it internally builds complex objects at every call. You might want to copy/paste
+ * its code in order to process data in bulk.
+*/
+double Atmosphere::Unsworth_ilwr(const double& lat, const double& lon, const double& altitude,
+                                 const double& julian, const double& TZ,
+                                 const double& RH, const double& TA, const double& ISWR)
+{
+	if(TA==IOUtils::nodata || RH==IOUtils::nodata || ISWR==IOUtils::nodata) {
+		return IOUtils::nodata;
+	}
+	SunObject Sun(lat, lon, altitude, julian, TZ);
+	Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
+	double toa_h, direct_h, diffuse_h;
+	Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
+
+	Date date(julian, TZ, 0.);
+	int year, month, day;
+	date.getDate(year, month, day);
+
+	return Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct_h+diffuse_h);
+}
+
 
 /**
 * @brief Convert a relative humidity to a dew point temperature.
