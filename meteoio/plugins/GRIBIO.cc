@@ -135,7 +135,7 @@ void GRIBIO::setOptions()
 	cfg.getValue("GRIB_PREFIX", "Input", prefix);
 
 	ext = default_ext;
-	cfg.getValue("GRIB_EXT", "Input", ext);
+	cfg.getValue("GRIB_EXT", "Input", ext, Config::nothrow);
 	if(ext=="none") ext="";
 }
 

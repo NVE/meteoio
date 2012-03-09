@@ -958,23 +958,25 @@ void A3DIO::write2DMeteo(const std::vector< std::vector<MeteoData> >& data)
 	write2DmeteoFile(data, mio::MeteoData::HNW, tmp_path+"/prec", "precipitations");
 }
 
-/*extern "C"
+#ifndef _METEOIO_JNI
+extern "C"
 {
-	void deleteObject(void* obj) {
+#define COMPILE_PLUGIN
+#include "exports.h"
+
+	METEOIO_EXPORT void deleteObject(void* obj) {
 		delete reinterpret_cast<PluginObject*>(obj);
 	}
 
-	void* loadObject(const std::string& classname, const std::string& filename) {
+	METEOIO_EXPORT void* loadObject(const std::string& classname, const Config& cfg) {
 		if(classname == "A3DIO") {
-			cerr << "Creating handle to " << classname << endl;
-			//return new A3DIO(deleteObject);
-			return new A3DIO(deleteObject, filename);
+			//cerr << "Creating dynamic handle for " << classname << endl;
+			return new A3DIO(deleteObject, cfg);
 		}
-		cerr << "Could not load " << classname << endl;
+		//cerr << "Could not load " << classname << endl;
 		return NULL;
 	}
 }
-
-*/
+#endif
 
 } //namespace
