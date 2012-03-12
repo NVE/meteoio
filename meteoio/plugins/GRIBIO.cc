@@ -32,7 +32,7 @@ namespace mio {
  * @page gribio GRIBIO
  * @section gribio_format Format and limitations
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
- * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format.
+ * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format (please note that grib_api must be compiled with Position Independent Code ("fPIC" flag)).
  * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://dss.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
  * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/).
  *
@@ -71,7 +71,7 @@ namespace mio {
  * - GRID2DPATH: path where to find the grids
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
- * - GRIB_PREFIX: prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain)
+ * - GRIB_PREFIX: prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain), optional
  * - GRIB_EXT: grib file extension, or <i>none</i> for no file extension (default: .grb)
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
@@ -132,7 +132,7 @@ void GRIBIO::setOptions()
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
 	}
-	cfg.getValue("GRIB_PREFIX", "Input", prefix);
+	cfg.getValue("GRIB_PREFIX", "Input", prefix, Config::nothrow);
 
 	ext = default_ext;
 	cfg.getValue("GRIB_EXT", "Input", ext, Config::nothrow);
@@ -149,6 +149,7 @@ void GRIBIO::readStations()
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
+		IOUtils::stripComments(current_station);
 
 		if (current_station != "") {
 			addStation(current_station);
