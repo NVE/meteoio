@@ -276,8 +276,12 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 			//if the requested interval is bigger than a normal buffer, we have to increase the buffer anyway...
 			iohandler.readMeteoData(new_buffer_end, new_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
 
-			if (tmp_meteo_buffer.size() != buffer_size)
-				throw IOException("The number of stations changed over time, this is not handled yet!", AT);
+			if (tmp_meteo_buffer.size() != buffer_size) {
+				stringstream ss;
+				ss << "The number of stations changed over time from " << buffer_size << " to " << tmp_meteo_buffer.size() << ", ";
+				ss << "this is not handled yet!";
+				throw IOException(ss.str(), AT);
+			}
 
 			//Loop through stations and append data
 			for (size_t ii=0; ii<buffer_size; ii++){

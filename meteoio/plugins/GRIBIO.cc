@@ -414,7 +414,7 @@ void GRIBIO::indexFile(const std::string& filename)
 	idx = grib_index_new_from_file(0, c_filename, keys.c_str(), &err);
 	if(err!=0) {
 		cleanup();
-		throw IOException("Failed to index GRIB file \""+filename+"\"", AT);
+		throw IOException("Failed to index GRIB file \""+filename+"\". Is it a valid GRIB file?", AT);
 	}
 	indexed=true;
 	idx_filename=filename;
@@ -643,7 +643,6 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 
 	vecMeteo.clear();
-	vecMeteo.insert(vecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); //allocation for the vectors
 
 	double *lats = (double*)malloc(vecPts.size()*sizeof(double));
 	double *lons = (double*)malloc(vecPts.size()*sizeof(double));
@@ -680,6 +679,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 					lons = (double*)malloc(vecPts.size()*sizeof(double));
 					readMeteoMeta(vecPts, meta, lats, lons);
 				}
+				vecMeteo.insert(vecMeteo.begin(), vecPts.size(), std::vector<MeteoData>()); //allocation for the vectors now that we know how many true stations we have
 				meta_ok=true;
 			}
 
@@ -706,14 +706,16 @@ bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, do
 		const double lat = lats[ii];
 		const double lon = lons[ii];
 		for(unsigned int jj=ii+1; jj<npoints; jj++) {
-			if(lat==lats[jj] && lon==lons[jj]) deletions.push_back(jj);
+			if(lat==lats[jj] && lon==lons[jj]) {
+				deletions.push_back(jj);
+			}
 		}
 	}
 
 	//we need to erase from the end in order to keep the index unchanged...
 	for(unsigned int ii=deletions.size(); ii>0; ii--) {
 		const unsigned int index=deletions[ii-1];
-		vecPts.erase(vecPts.begin()+index-1);
+		vecPts.erase(vecPts.begin()+index);
 	}
 
 	if(deletions.size()>0) return true;

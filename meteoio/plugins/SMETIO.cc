@@ -463,8 +463,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
 		vector<bool> vecParamInUse = vector<bool>(nr_of_parameters, false);
 		vector<string> vecColumnName = vector<string>(nr_of_parameters, "NULL");
-		double timezone = IOUtils::nodata;
+		double timezone = IOUtils::nodata; //time zone of the data
 		checkForUsedParameters(vecMeteo[ii], nr_of_parameters, timezone, vecParamInUse, vecColumnName);
+		if(out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
 
 		try {
 			smet::SMETType type = smet::ASCII;
@@ -478,7 +479,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			vector<double> vec_data;
 			for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
 				if (outputIsAscii){
-					if (out_dflt_TZ != IOUtils::nodata) {
+					if (out_dflt_TZ != IOUtils::nodata) { //user-specified time zone
 						Date tmp_date(vecMeteo[ii][jj].date);
 						tmp_date.setTimeZone(out_dflt_TZ);
 						vec_timestamp.push_back(tmp_date.toString(Date::ISO));
