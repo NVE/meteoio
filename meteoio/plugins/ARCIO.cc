@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <string.h>
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
@@ -360,17 +361,23 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	//the path will be added by write2DGrid
 	if(a3d_view_out) {
 		string ext="";
-		if(parameter==MeteoGrids::HS)
+		if(parameter==MeteoGrids::HS) {
 			ext="sdp";
-		else {
+		} else if(parameter==MeteoGrids::DEM) {
+			ext="asc";
+		} else {
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);
 		}
 		write2DGrid(grid_in, date.toString(Date::NUM)+"."+ext );
 	} else {
-		std::string date_str = date.toString(Date::ISO);
-		std::replace( date_str.begin(), date_str.end(), ':', '.');
-		write2DGrid(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+		if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::AZI || parameter==MeteoGrids::SLOPE) {
+			write2DGrid(grid_in, MeteoGrids::getParameterName(parameter) + ".asc");
+		} else {
+			std::string date_str = date.toString(Date::ISO);
+			std::replace( date_str.begin(), date_str.end(), ':', '.');
+			write2DGrid(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+		}
 	}
 }
 

@@ -265,38 +265,32 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	latitudeOfNorthernPole = -latitudeOfSouthernPole;
 	longitudeOfNorthernPole = longitudeOfSouthernPole+180.;
 
-	//determining llcorner
-	double ll_latitude, ll_longitude;
+	//determining llcorner, urcorner and center coordinates
+	double ll_latitude, ll_longitude, ll_lat, ll_lon;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfFirstGridPointInDegrees",&ll_latitude),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfFirstGridPointInDegrees",&ll_longitude),0);
-	double ur_latitude, ur_longitude;
+	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, ll_latitude, ll_longitude, ll_lat, ll_lon);
+	double ur_latitude, ur_longitude, ur_lat, ur_lon;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfLastGridPointInDegrees",&ur_latitude),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfLastGridPointInDegrees",&ur_longitude),0);
-
+	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, ur_latitude, ur_longitude, ur_lat, ur_lon);
 	double cntr_lat, cntr_lon; //geographic coordinates
 	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude), .5*(ll_longitude+ur_longitude), cntr_lat, cntr_lon);
-	Coords cntr(coordin, coordinparam);
-	cntr.setLatLon(cntr_lat, cntr_lon, 0.);
 
 	//determining cell size
 	long Ni, Nj;
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
-
-	double d_i, d_j;
-	GRIB_CHECK(grib_get_double(h,"jDirectionIncrementInDegrees",&d_j),0);
-	GRIB_CHECK(grib_get_double(h,"iDirectionIncrementInDegrees",&d_i),0);
-	double tmp_lat, tmp_lon;
-	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude)+d_i, .5*(ll_longitude+ur_longitude)+d_j, tmp_lat, tmp_lon);
-	d_i = tmp_lon-cntr_lon; //delta in geographic coordinates
-	d_j = tmp_lat-cntr_lat;
-
-	cellsize_x = Coords::lon_degree_lenght(cntr_lat)*d_i;
-	cellsize_y = Coords::lat_degree_lenght(cntr_lat)*d_j;
+	double bearing;
+	cellsize_x = Coords::VincentyDistance(cntr_lat, ll_lon, cntr_lat, ur_lon, bearing) / (double)Ni;
+	cellsize_y = Coords::VincentyDistance(cntr_lon, ll_lat, cntr_lon, ur_lat, bearing) / (double)Nj;
 	const double cellsize=.5*(cellsize_x+cellsize_y);
-
-	cntr.moveByXY(-.5*(double)Ni*cellsize, -.5*(double)Nj*cellsize);
 	cellsize_x = cellsize_y = cellsize; //HACK
+
+	//computing lower left corner by using the center point as reference
+	Coords cntr(coordin, coordinparam);
+	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata);
+	cntr.moveByXY(-.5*(double)Ni*cellsize_x, -.5*(double)Nj*cellsize_y);
 
 	//checking that cellsize does not vary too much across the grid
 	/*const double cellsize_x_ll = Coords::lon_degree_lenght(ll_latitude)*d_j;
@@ -308,7 +302,7 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 		throw IOException(ss.str(), AT);
 	}*/
 
-	return cntr;
+	return cntr; //this is now the ll corner
 }
 
 void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)

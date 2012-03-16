@@ -117,6 +117,11 @@ class Coords {
 	static void rotatedToTrueLatLon(const double& lat_N, const double& lon_N, const double& lat_rot, const double& lon_rot, double &lat_true, double &lon_true);
 	static void trueLatLonToRotated(const double& lat_N, const double& lon_N, const double& lat_true, const double& lon_true, double &lat_rot, double &lon_rot);
 
+	static double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
+	static void cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
+	static double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha);
+	static void VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon);
+
  private:
 	//Coordinates conversions
 	void convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const;
@@ -137,10 +142,6 @@ class Coords {
 
 	//Distances calculations
 	void distance(const Coords& destination, double& distance, double& bearing) const;
-	double cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const;
-	void cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const;
-	double VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const;
-	void VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const;
 
  private:
 	void clearCoordinates();

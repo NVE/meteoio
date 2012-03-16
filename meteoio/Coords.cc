@@ -1412,7 +1412,7 @@ void Coords::WGS84_to_NULL(double /*lat_in*/, double /*long_in*/, double& /*east
 * @param[out] lat Decimal latitude of target point (double&)
 * @param[out] lon Decimal longitude of target point (double&)
 */
-void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const
+void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
 {
 	const double Rearth = 6371.e3;
 	const double lat_ref_rad = lat_ref*to_rad;
@@ -1445,7 +1445,7 @@ void Coords::cosineInverse(const double& lat_ref, const double& lon_ref, const d
 * @param[out] alpha average bearing
 * @return distance (double)
 */
-double Coords::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const
+double Coords::cosineDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
 	if(lat1==lat2 && lon1==lon2) {
 		//distance is zero, it creates numerical problems -> skip calculation
@@ -1479,7 +1479,7 @@ double Coords::cosineDistance(const double& lat1, const double& lon1, const doub
 * @param[in] alpha average bearing (double&)
 * @return distance (double)
 */
-double Coords::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha) const
+double Coords::VincentyDistance(const double& lat1, const double& lon1, const double& lat2, const double& lon2, double& alpha)
 {
 	const double thresh = 1.e-12;	//convergence absolute threshold
 	const int n_max = 100;		//maximum number of iterations
@@ -1555,7 +1555,7 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 * @param[out] lat Decimal latitude of target point (double&)
 * @param[out] lon Decimal longitude of target point (double&)
 */
-void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon) const
+void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const double& distance, const double& bearing, double& lat, double& lon)
 {//well, actually this is the DIRECT Vincenty formula
 	const double thresh = 1.e-12;	//convergence absolute threshold
 	const double a = ellipsoids[E_WGS84].a;	//major ellipsoid semi-axis, value for wgs84
