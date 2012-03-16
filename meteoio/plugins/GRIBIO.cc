@@ -93,6 +93,8 @@ GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj)
 	fp = NULL;
 	meteo_initialized = false;
 	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
+	bearing_offset = IOUtils::nodata;
+	cellsize_x = cellsize_y = IOUtils::nodata;
 }
 
 GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
@@ -103,6 +105,8 @@ GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	fp = NULL;
 	meteo_initialized = false;
 	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
+	bearing_offset = IOUtils::nodata;
+	cellsize_x = cellsize_y = IOUtils::nodata;
 }
 
 GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -113,6 +117,8 @@ GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 	fp = NULL;
 	meteo_initialized = false;
 	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
+	bearing_offset = IOUtils::nodata;
+	cellsize_x = cellsize_y = IOUtils::nodata;
 }
 
 GRIBIO::~GRIBIO() throw()
@@ -251,7 +257,7 @@ Date GRIBIO::getDate(grib_handle* h) {
 	return Date(year, month, day, hour, minutes, tz_in);
 }
 
-Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y)
+Coords GRIBIO::getGeolocalization(grib_handle* h, double &cell_x, double &cell_y)
 {
 	//getting transformation parameters
 	double angleOfRotationInDegrees;
@@ -282,15 +288,20 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
 	double bearing;
-	cellsize_x = Coords::VincentyDistance(cntr_lat, ll_lon, cntr_lat, ur_lon, bearing) / (double)Ni;
-	cellsize_y = Coords::VincentyDistance(cntr_lon, ll_lat, cntr_lon, ur_lat, bearing) / (double)Nj;
-	const double cellsize=.5*(cellsize_x+cellsize_y);
-	cellsize_x = cellsize_y = cellsize; //HACK
+	cell_x = Coords::VincentyDistance(cntr_lat, ll_lon, cntr_lat, ur_lon, bearing) / (double)Ni;
+	cell_y = Coords::VincentyDistance(cntr_lon, ll_lat, cntr_lon, ur_lat, bearing) / (double)Nj;
+
+	//determining bearing offset
+	double delta_lat, delta_lon; //geographic coordinates
+	Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, .5*(ll_latitude+ur_latitude)+1., .5*(ll_longitude+ur_longitude), delta_lat, delta_lon);
+	Coords::VincentyDistance(cntr_lat, cntr_lon, delta_lat, delta_lon, bearing_offset);
+	bearing_offset = fmod( bearing_offset + 180., 360.) - 180.; // turn into [-180;180)
 
 	//computing lower left corner by using the center point as reference
 	Coords cntr(coordin, coordinparam);
 	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata);
-	cntr.moveByXY(-.5*(double)Ni*cellsize_x, -.5*(double)Nj*cellsize_y);
+	const double cellsize=.5*(cell_x+cell_y);
+	cntr.moveByXY(-.5*(double)Ni*cellsize, -.5*(double)Nj*cellsize);
 
 	//checking that cellsize does not vary too much across the grid
 	/*const double cellsize_x_ll = Coords::lon_degree_lenght(ll_latitude)*d_j;
@@ -305,7 +316,7 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cellsize_x, double &ce
 	return cntr; //this is now the ll corner
 }
 
-void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
+void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& read_geolocalization)
 {
 	long Ni, Nj;
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
@@ -323,12 +334,14 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out)
 	values = (double*)malloc(values_len*sizeof(double));
 
 	GRIB_CHECK(grib_get_double_array(h,"values",values,&values_len),0);
-	double cellsize_x, cellsize_y;
-	const Coords llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
-	if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
-		throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
+
+	if(read_geolocalization) {
+		llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
+		if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
+			throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
+		}
 	}
-	grid_out.set(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), .5*(cellsize_x+cellsize_y), llcorner); //HACK
+	grid_out.set(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), .5*(cellsize_x+cellsize_y), llcorner);
 	int i=0;
 	for(unsigned int jj=0; jj<(unsigned)Nj; jj++) {
 		for(unsigned int ii=0; ii<(unsigned)Ni; ii++)
@@ -357,7 +370,7 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 		long level=0;
 		if(i_level!=0) GRIB_CHECK(grib_get_long(h,"level", &level),0);
 		if(level==i_level && (i_date.isUndef() || (i_date>=validity_start && i_date<=validity_end)) ) {
-			read2Dlevel(h, grid_out);
+			read2Dlevel(h, grid_out, false); //geolocalization has been initialized when indexing the file
 			return true;
 		}
 		grib_handle_delete(h);
@@ -383,7 +396,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
 		}
 
-		read2Dlevel(h, grid_out);
+		read2Dlevel(h, grid_out, true);
 		grib_handle_delete(h);
 	} else {
 		cleanup();
@@ -412,6 +425,26 @@ void GRIBIO::indexFile(const std::string& filename)
 	}
 	indexed=true;
 	idx_filename=filename;
+
+	//read geolocalization of the first grid we find
+	grib_handle* h=NULL;
+	err=0;
+	if((h = grib_handle_new_from_file(0,fp,&err)) != NULL) {
+		if(!h) {
+			cleanup();
+			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
+		}
+
+		llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this sets llcorner, cellsize and bearing_offset
+		if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
+			throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
+		}
+		grib_handle_delete(h);
+	} else {
+		cleanup();
+		throw IOException("No grid found in file \""+filename+"\"", AT);
+	}
+
 }
 
 void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -497,12 +530,16 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	}
 	if(parameter==MeteoGrids::AZI) {
 		read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
-		grid_out.grid2D *= to_deg;
+		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+				grid_out(ii,jj) = fmod( grid_out(ii,jj)*to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
+			}
+		}
 	}
 
-	//Wind parameters //HACK: the wind must be re-projected to the geographic lat/lon!
-	if(parameter==MeteoGrids::U) read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U
-	if(parameter==MeteoGrids::V) read2DGrid_indexed(34.2, 105, 10, date, grid_out); //V_10M, also in 110, 10 as V
+	//Wind parameters //HACK: U and V must be re-projected to the geographic lat/lon!
+	if(parameter==MeteoGrids::U) read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U //HACK reproject U
+	if(parameter==MeteoGrids::V) read2DGrid_indexed(34.2, 105, 10, date, grid_out); //V_10M, also in 110, 10 as V //HACK reproject V
 	if(parameter==MeteoGrids::W) read2DGrid_indexed(40.2, 109, 10, date, grid_out); //W, 10m
 	if(parameter==MeteoGrids::VW_MAX) read2DGrid_indexed(187.201, 105, 10, date, grid_out); //VMAX_10M 10m
 	if(parameter==MeteoGrids::DW) {
@@ -510,10 +547,9 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			Grid2DObject V;
 			read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M
 			read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M
-			const double to_deg = 180. / Cst::PI;
 			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-					grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * to_deg + 360., 360.); // turn into degrees [0;360)
+					grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 				}
 			}
 		}
@@ -663,7 +699,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			if(!indexed || idx_filename!=filename) {
 				cleanup();
-				indexFile(filename);
+				indexFile(filename); //this will also read geolocalization
 			}
 			if(!meta_ok) {
 				if(readMeteoMeta(vecPts, meta, lats, lons)==false) {
@@ -889,15 +925,14 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 		}
 	}
 
-	//Wind parameters //HACK: the wind must be re-projected to the geographic lat/lon!
+	//Wind parameters
 	if(readMeteoValues(187.201, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::VW_MAX, npoints, Meteo); //VMAX_10M
 	if(readMeteoValues(31.2, 105, 10, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::DW, npoints, Meteo); //DD_10M
 	else {
 		if(readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
 		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
-			const double to_deg = 180. / Cst::PI;
 			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-				Meteo[ii](MeteoData::DW) = fmod( atan2( values2[ii], values[ii] ) * to_deg + 360., 360.); // turn into degrees [0;360)
+				Meteo[ii](MeteoData::DW) = fmod( atan2( values2[ii], values[ii] ) * to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
 	}
