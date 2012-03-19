@@ -69,6 +69,7 @@ class GRIBIO : public IOInterface {
 		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& read_geolocalization);
 		bool read2DGrid_indexed(const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
+		void readWind(const std::string& filename, const Date& date);
 		void indexFile(const std::string& filename);
 		void addStation(const std::string& coord_spec);
 		void readStations();
@@ -91,12 +92,14 @@ class GRIBIO : public IOInterface {
 		FILE *fp; //since passing fp always fail...
 		std::string ext; //file extension
 		bool indexed; //flag to know if the file has already been indexed
-		grib_index *idx;
+		grib_index *idx; //because it needs to be kept between calls
 		std::string idx_filename; //matching file name for the index
 		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
 		bool meteo_initialized; //set to true after we scanned METEOPATH, filed the cache, read the virtual stations from io.ini
 		double latitudeOfNorthernPole, longitudeOfNorthernPole; //for rotated coordinates
 		double bearing_offset; //to correct vectors coming from rotated lat/lon, we will add an offset to the bearing
+		Grid2DObject VW, DW; //for caching wind fields, since they require quite some calculations
+		Date wind_date;
 		Coords llcorner;
 		double cellsize_x, cellsize_y;
 

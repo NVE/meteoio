@@ -457,6 +457,31 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	read2DGrid(filename, grid_out, parameter, UTC_date);
 }
 
+void GRIBIO::readWind(const std::string& filename, const Date& date)
+{
+	if(wind_date==date) return; //wind fields are already up to date
+
+	if(read2DGrid_indexed(32.2, 105, 10, date, VW)) { //FF_10M
+		if(!read2DGrid_indexed(31.2, 105, 10, date, DW)) //DD_10M
+			throw NoAvailableDataException("Can not read wind direction in file \""+filename+"\"", AT);
+	} else {
+		Grid2DObject U,V;
+		read2DGrid_indexed(33.2, 105, 10, date, U); //U_10M, also in 110, 10 as U
+		read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M, also in 110, 10 as V
+
+		VW.set(U.ncols, U.nrows, U.cellsize, U.llcorner);
+		DW.set(U.ncols, U.nrows, U.cellsize, U.llcorner);
+		for(unsigned int jj=0; jj<VW.nrows; jj++) {
+			for(unsigned int ii=0; ii<VW.ncols; ii++) {
+				VW(ii,jj) = sqrt( IOUtils::pow2(U(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
+				DW(ii,jj) = fmod( atan2( U(ii,jj), V(ii,jj) ) * to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
+			}
+		}
+	}
+
+	wind_date = date;
+}
+
 void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 { //Parameters should be read in table 2 if available since this table is the one standardized by WMO
 	if(!indexed || idx_filename!=filename) {
@@ -505,7 +530,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			grid_out.grid2D *= -1.;
 		} else read2DGrid_indexed(25.201, 1, 0, date, grid_out); //ALWD_S
 	}
-	/*if(parameter==MeteoGrids::CLD) { //cloudiness // HACK
+	/*if(parameter==MeteoGrids::CLD) { //cloudiness
 		if(read2DGrid_indexed(74.2, 1, 0, date, grid_out)) //CLCM
 		grid_out.grid2D /= 100.;
 	}*/
@@ -537,34 +562,33 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		}
 	}
 
-	//Wind parameters //HACK: U and V must be re-projected to the geographic lat/lon!
-	if(parameter==MeteoGrids::U) read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M, also in 110, 10 as U //HACK reproject U
-	if(parameter==MeteoGrids::V) read2DGrid_indexed(34.2, 105, 10, date, grid_out); //V_10M, also in 110, 10 as V //HACK reproject V
-	if(parameter==MeteoGrids::W) read2DGrid_indexed(40.2, 109, 10, date, grid_out); //W, 10m
+	//Wind parameters
 	if(parameter==MeteoGrids::VW_MAX) read2DGrid_indexed(187.201, 105, 10, date, grid_out); //VMAX_10M 10m
-	if(parameter==MeteoGrids::DW) {
-		if(!read2DGrid_indexed(31.2, 105, 10, date, grid_out)) { //DD_10M
-			Grid2DObject V;
-			read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M
-			read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M
-			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-					grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
-				}
+	if(parameter==MeteoGrids::W) read2DGrid_indexed(40.2, 109, 10, date, grid_out); //W, 10m
+	 //we need to use VW, DW, correct for re-projection and recompute U,V
+	if(parameter==MeteoGrids::U) {
+		readWind(filename, date);
+		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+				grid_out(ii,jj) = VW(ii,jj)*sin(DW(ii,jj)*to_rad);
 			}
 		}
 	}
-	if(parameter==MeteoGrids::VW) {
-		if(!read2DGrid_indexed(32.2, 105, 10, date, grid_out)) { //FF_10M
-			Grid2DObject V;
-			read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M
-			read2DGrid_indexed(33.2, 105, 10, date, grid_out); //U_10M
-			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-					grid_out(ii,jj) = sqrt( IOUtils::pow2(grid_out(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
-				}
+	if(parameter==MeteoGrids::V) {
+		readWind(filename, date);
+		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+				grid_out(ii,jj) = VW(ii,jj)*cos(DW(ii,jj)*to_rad);
 			}
 		}
+	}
+	if(parameter==MeteoGrids::DW) {
+		readWind(filename, date);
+		grid_out = DW;
+	}
+	if(parameter==MeteoGrids::VW) {
+		readWind(filename, date);
+		grid_out = VW;
 	}
 
 	if(grid_out.isEmpty()) {
