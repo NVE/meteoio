@@ -135,6 +135,9 @@ template<class T> class Array2D {
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void size(unsigned int& nx, unsigned int& ny) const;
 
+		void clear();
+		bool isEmpty() const;
+
 		/**
 		* @brief returns the minimum value contained in the grid
 		* @return minimum value
@@ -166,7 +169,6 @@ template<class T> class Array2D {
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
 
-		void clear();
 		T& operator ()(const unsigned int& x, const unsigned int& y);
 		const T operator ()(const unsigned int& x, const unsigned int& y) const;
 		T& operator ()(const unsigned int& i);
@@ -354,6 +356,10 @@ template<class T> void Array2D<T>::size(unsigned int& anx, unsigned int& any) co
 template<class T> void Array2D<T>::clear() {
 	vecData.clear();
 	nx=ny=0;
+}
+
+template<class T> bool Array2D<T>::isEmpty() const {
+	return (nx==0 && ny==0);
 }
 
 template<class T> std::ostream& operator<<(std::ostream& os, const Array2D<T>& array) {

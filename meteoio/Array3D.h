@@ -170,6 +170,7 @@ template<class T> class Array3D {
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
 		void size(unsigned int& anx, unsigned int& any, unsigned int& anz) const;
 		void clear();
+		bool isEmpty() const;
 
 		/**
 		* @brief returns the minimum value contained in the grid
@@ -409,6 +410,10 @@ template<class T> void Array3D<T>::size(unsigned int& anx, unsigned int& any, un
 template<class T> void Array3D<T>::clear() {
 	vecData.clear();
 	nx = ny = nz = nxny = 0;
+}
+
+template<class T> bool Array3D<T>::isEmpty() const {
+	return (nx==0 && ny==0 && nz==0);
 }
 
 template<class T> std::ostream& operator<<(std::ostream& os, const Array3D<T>& array) {

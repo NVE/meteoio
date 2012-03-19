@@ -109,6 +109,11 @@ class Grid3DObject{
 		void size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const;
 
 		/**
+		* @brief deletes the data, but keeps geolocalization
+		*/
+		void clear();
+
+		/**
 		* @brief Check if a grid does not contain any data (but it can contain geolocalization)
 		* @return true if the grid is 0x0
 		*/

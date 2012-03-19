@@ -216,6 +216,11 @@ void Grid2DObject::size(unsigned int& o_ncols, unsigned int& o_nrows) const {
 	o_nrows = nrows;
 }
 
+void Grid2DObject::clear() {
+	grid2D.clear();
+	ncols = nrows = 0;
+}
+
 bool Grid2DObject::isEmpty() const {
 	return (ncols==0 && nrows==0);
 }

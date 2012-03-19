@@ -65,6 +65,7 @@ template<class T> class Array {
 		void resize(const unsigned int& asize);
 		void resize(const unsigned int& asize, const T& init);
 		void clear();
+		bool isEmpty() const;
 		void insertAt(const int& index, T e);
 		void removeAt(const unsigned int& index);
 		/**
@@ -205,6 +206,10 @@ template<class T> const T Array<T>::operator [](const unsigned int& index) const
 template<class T> void Array<T>::clear() {
 	vecData.clear();
 	nx = 0;
+}
+
+template<class T> bool Array<T>::isEmpty() const {
+	return (nx==0);
 }
 
 template<class T> std::ostream& operator<<(std::ostream& os, const Array<T>& array) {
