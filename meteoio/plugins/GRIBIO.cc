@@ -247,14 +247,58 @@ void  GRIBIO::listFields(const std::string& filename)
 	}
 }
 
-Date GRIBIO::getDate(grib_handle* h) {
+void GRIBIO::getDate(grib_handle* h, Date &base, double &d1, double &d2) {
 	long dataDate, dataTime;
 	GRIB_CHECK(grib_get_long(h,"dataDate",&dataDate),0);
 	GRIB_CHECK(grib_get_long(h,"dataTime",&dataTime),0);
 
 	const int year=dataDate/10000, month=dataDate/100-year*100, day=dataDate-month*100-year*10000;
 	const int hour=dataTime/100, minutes=dataTime-hour*100;
-	return Date(year, month, day, hour, minutes, tz_in);
+	base.setDate(year, month, day, hour, minutes, tz_in);
+
+	//reading offset to base date/time, as used for forecast, computed at time t for t+offset
+	long stepUnits, startStep, endStep;
+	GRIB_CHECK(grib_get_long(h,"stepUnits",&stepUnits),0);
+	GRIB_CHECK(grib_get_long(h,"startStep",&startStep),0);
+	GRIB_CHECK(grib_get_long(h,"endStep",&endStep),0);
+
+	double step_units; //in julian, ie. in days
+	switch(stepUnits) {
+		case 0: //minutes
+			step_units = 1./(24.*60.);
+			break;
+		case 1: //hours
+			step_units = 1./24.;
+			break;
+		case 2: //days
+			step_units = 1.;
+			break;
+		case 10: //3 hours
+			step_units = 3./24.;
+			break;
+		case 11: //6 hours
+			step_units = 6./24.;
+			break;
+		case 12: //12 hours
+			step_units = 12./24.;
+			break;
+		case 13: //seconds
+			step_units = 1./(24.*3600.);
+			break;
+		case 14: //15 minutes
+			step_units = 15./(24.*60.);
+			break;
+		case 15: //30 minutes
+			step_units = 30./(24.*60.);
+			break;
+		default:
+			std::stringstream ss;
+			ss << "GRIB file using stepUnits=" << stepUnits << ", which is not supported";
+			throw InvalidFormatException(ss.str(), AT);
+	}
+
+	d1 = startStep*step_units;
+	d2 = endStep*step_units;
 }
 
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cell_x, double &cell_y)
@@ -363,15 +407,26 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 			throw IOException("Unable to create grib handle from index", AT);
 		}
 
-		double timeRange=0.;
-		GRIB_CHECK(grib_get_double(h,"timeRangeIndicator", &timeRange),0);
-		const Date validity_start=getDate(h);
-		const Date validity_end=validity_start+timeRange/24.;
+		Date base_date;
+		double P1, P2;
+		getDate(h, base_date, P1, P2);
+
+		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
+		long timeRange;
+		GRIB_CHECK(grib_get_long(h,"timeRangeIndicator", &timeRange),0);
+
 		long level=0;
 		if(i_level!=0) GRIB_CHECK(grib_get_long(h,"level", &level),0);
-		if(level==i_level && (i_date.isUndef() || (i_date>=validity_start && i_date<=validity_end)) ) {
-			read2Dlevel(h, grid_out, false); //geolocalization has been initialized when indexing the file
-			return true;
+		if(level==i_level) {
+			//geolocalization has been initialized when indexing the file, so we don't need to redo it
+			if( (i_date.isUndef()) ||
+			    (timeRange==0 && i_date==base_date+P1) ||
+			    (timeRange==1 && i_date==base_date) ||
+			    ((timeRange==2 || timeRange==3) && i_date>=base_date+P1 && i_date<=base_date+P2) ||
+			    ((timeRange==4 || timeRange==5) && i_date==base_date+P2) ) {
+				read2Dlevel(h, grid_out, false);
+				return true;
+			}
 		}
 		grib_handle_delete(h);
 	}
@@ -858,26 +913,36 @@ bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, con
 			throw IOException("Unable to create grib handle from index", AT);
 		}
 
-		double timeRange=0.;
-		GRIB_CHECK(grib_get_double(h,"timeRangeIndicator", &timeRange),0);
-		const Date validity_start=getDate(h);
-		const Date validity_end=validity_start+timeRange/24.;
+		Date base_date;
+		double P1, P2;
+		getDate(h, base_date, P1, P2);
+
+		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
+		long timeRange;
+		GRIB_CHECK(grib_get_long(h,"timeRangeIndicator", &timeRange),0);
+
 		long level=0;
 		if(i_level!=0) GRIB_CHECK(grib_get_long(h,"level", &level),0);
-		if(level==i_level && (i_date.isUndef() || (i_date>=validity_start && i_date<=validity_end)) ) {
-			double *outlats = (double*)malloc(npoints*sizeof(double));
-			double *outlons = (double*)malloc(npoints*sizeof(double));
-			double *distances = (double*)malloc(npoints*sizeof(double));
-			int *indexes = (int *)malloc(npoints*sizeof(int));
-			if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
-				grib_handle_delete(h);
-				cleanup();
-				throw IOException("Errro when searching for nearest points in DEM", AT);
-			}
+		if(level==i_level) {
+			if( (i_date.isUndef()) ||
+			    (timeRange==0 && i_date==base_date+P1) ||
+			    (timeRange==1 && i_date==base_date) ||
+			    ((timeRange==2 || timeRange==3) && i_date>=base_date+P1 && i_date<=base_date+P2) ||
+			    ((timeRange==4 || timeRange==5) && i_date==base_date+P2) ) {
+				double *outlats = (double*)malloc(npoints*sizeof(double));
+				double *outlons = (double*)malloc(npoints*sizeof(double));
+				double *distances = (double*)malloc(npoints*sizeof(double));
+				int *indexes = (int *)malloc(npoints*sizeof(int));
+				if(grib_nearest_find_multiple(h, 0, lats, lons, npoints, outlats, outlons, values, distances, indexes)!=0) {
+					grib_handle_delete(h);
+					cleanup();
+					throw IOException("Errro when searching for nearest points in DEM", AT);
+				}
 
-			free(outlats); free(outlons); free(distances); free(indexes);
-			grib_handle_delete(h);
-			return true;
+				free(outlats); free(outlons); free(distances); free(indexes);
+				grib_handle_delete(h);
+				return true;
+			}
 		}
 		grib_handle_delete(h);
 	}

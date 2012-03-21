@@ -64,7 +64,7 @@ class GRIBIO : public IOInterface {
 	private:
 		void setOptions();
 		void listFields(const std::string& filename);
-		Date getDate(grib_handle* h);
+		void getDate(grib_handle* h, Date &base, double &d1, double &d2);
 		Coords getGeolocalization(grib_handle* h, double &cellsize_x, double &cellsize_y);
 		void read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& read_geolocalization);
 		bool read2DGrid_indexed(const double& in_marsParam, const long& i_levelType, const long& i_level, const Date i_date, Grid2DObject& grid_out);
