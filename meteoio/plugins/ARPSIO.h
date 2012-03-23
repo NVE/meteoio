@@ -75,6 +75,7 @@ class ARPSIO : public IOInterface {
 		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name);
 
 	private:
+		void setOptions();
 		void cleanup() throw();
 		void initializeGRIDARPS();
 		void initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH]);
@@ -87,8 +88,13 @@ class ARPSIO : public IOInterface {
 		FILE *fin;
 		std::ofstream fout;//Output file streams
 		std::string filename;
+		static const double to_rad;
+		static const double to_deg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		static const std::string default_ext;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string grid2dpath_in; //where are input grids stored
+		std::string ext; //file extension
 		unsigned int dimx, dimy, dimz;
 		double cellsize;
 		double xcoord, ycoord;

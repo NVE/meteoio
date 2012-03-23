@@ -15,6 +15,10 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <meteoio/meteolaws/Meteoconst.h> //for PI
+#include <string.h>
+#include <algorithm>
+
 #include "ARPSIO.h"
 
 using namespace std;
@@ -35,10 +39,14 @@ namespace mio {
  * - DEMFILE: path and file containing the DEM; [Input] section
  * - ARPS_X: x coordinate of the lower left corner of the grids; [Input] section
  * - ARPS_Y: y coordinate of the lower left corner of the grids; [Input] section
- * - ARPSPATH: path to the input directory where to find the arps files to be read as grids; [Input] section //NOT USED YET
+ * - GRID2DPATH: path to the input directory where to find the arps files to be read as grids; [Input] section //NOT USED YET
+ * - ARPS_EXT: arps file extension, or <i>none</i> for no file extension (default: .asc)
  */
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
+const std::string ARPSIO::default_ext=".asc"; //filename extension
+const double ARPSIO::to_rad = Cst::PI / 180.0;
+const double ARPSIO::to_deg = 180.0 / Cst::PI;
 
 ARPSIO::ARPSIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -47,6 +55,7 @@ ARPSIO::ARPSIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj)
 	cellsize=0.;
 	fin=NULL;
 	is_true_arps=true;
+	setOptions();
 }
 
 ARPSIO::ARPSIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
@@ -56,6 +65,7 @@ ARPSIO::ARPSIO(const std::string& configfile) : IOInterface(NULL), cfg(configfil
 	cellsize=0.;
 	fin=NULL;
 	is_true_arps=true;
+	setOptions();
 }
 
 ARPSIO::ARPSIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
@@ -65,6 +75,23 @@ ARPSIO::ARPSIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 	cellsize=0.;
 	fin=NULL;
 	is_true_arps=true;
+	setOptions();
+}
+
+void ARPSIO::setOptions()
+{
+	string tmp="";
+	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
+	if (tmp == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
+		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
+	}
+
+	cfg.getValue("ARPS_X", "Input", xcoord, Config::dothrow);
+	cfg.getValue("ARPS_Y", "Input", ycoord, Config::dothrow);
+
+	ext = default_ext;
+	cfg.getValue("ARPS_EXT", "Input", ext, Config::nothrow);
+	if(ext=="none") ext="";
 }
 
 ARPSIO::~ARPSIO() throw()
@@ -72,16 +99,11 @@ ARPSIO::~ARPSIO() throw()
 	cleanup();
 }
 
-void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& /*_name*/)
+void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
-	std::string meteopathname;
-	std::string parameter, grid_name;
+	std::string parameter;
 	unsigned int layer;
-	//HACK: build parameter and grid_name from _name
-	//example: _name="NW08::u" -> grid_name=NW08 and parameter=u
-	//idem for layer?
-	cfg.getValue("ARPSPATH", "Input", meteopathname);
-	const std::string _filename = meteopathname + grid_name + ".asc";
+	const std::string _filename = grid2dpath_in +"/" + i_name + ext;
 
 	openGridFile(_filename);
 	readGridLayer(parameter, layer, grid_out);
@@ -90,26 +112,112 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& /*_name*/)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARPSIO::read2DGrid(Grid2DObject& /*grid_out*/, const MeteoGrids::Parameters& /*parameter*/, const Date& /*date*/) {
-	//Nothing so far... TODO
-	throw IOException("Nothing implemented here", AT);
+void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	std::string date_str = date.toString(Date::ISO);
+	std::replace( date_str.begin(), date_str.end(), ':', '.');
+	const std::string name = grid2dpath_in + "/" + date_str + ext;
+	openGridFile(name);
+
+	//Radiation parameters
+	if(parameter==MeteoGrids::ISWR) readGridLayer("radsw", 2, grid_out);
+	if(parameter==MeteoGrids::RSWR) {
+		Grid2DObject net;
+		readGridLayer("radsw", 2, grid_out);
+		readGridLayer("radswnet", 2, net);
+		grid_out.grid2D -= net.grid2D;
+	}
+	if(parameter==MeteoGrids::ILWR) readGridLayer("radlwin", 2, grid_out);
+	if(parameter==MeteoGrids::ALB) {
+		Grid2DObject rswr, iswr;
+		readGridLayer("radsw", 2, iswr);
+		readGridLayer("radswnet", 2, grid_out); //net radiation
+		rswr.grid2D = iswr.grid2D - grid_out.grid2D;
+		grid_out.grid2D = iswr.grid2D/rswr.grid2D;
+	}
+
+	//Wind grids
+	if(parameter==MeteoGrids::U) readGridLayer("u", 2, grid_out);
+	if(parameter==MeteoGrids::V) readGridLayer("v", 2, grid_out);
+	if(parameter==MeteoGrids::W) readGridLayer("w", 2, grid_out);
+	if(parameter==MeteoGrids::VW) {
+		Grid2DObject V;
+		readGridLayer("u", 2, grid_out); //U
+		readGridLayer("v", 2, V);
+		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+				grid_out(ii,jj) = sqrt( IOUtils::pow2(grid_out(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
+			}
+		}
+	}
+	if(parameter==MeteoGrids::DW) {
+		Grid2DObject V;
+		readGridLayer("u", 2, grid_out); //U
+		readGridLayer("v", 2, V);
+		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
+			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * to_deg + 360., 360.); // turn into degrees [0;360)
+			}
+		}
+	}
+
+	//Basic meteo parameters
+	if(parameter==MeteoGrids::P) readGridLayer("p", 2, grid_out);
+	if(parameter==MeteoGrids::TSG) readGridLayer("tsoil", 2, grid_out); //or is it tss for us?
+	/*if(parameter==MeteoGrids::RH) {
+		//const double epsilon = Cst::gaz_constant_dry_air / Cst::gaz_constant_water_vapor;
+		readGridLayer("qv", 2, grid_out); //water vapor mixing ratio
+		//Atmosphere::waterSaturationPressure(T);
+		//HACK: compute relative humidity out of it!
+		//through potential temperature -> local temperature?
+	}*/
+
+	//Hydrological parameters
+	if(parameter==MeteoGrids::HS) readGridLayer("snowdpth", 2, grid_out);
+	if(parameter==MeteoGrids::HNW) {
+		readGridLayer("prcrate1", 2, grid_out); //in kg/m^2/s
+		grid_out.grid2D *= 3600.; //we need kg/m^2/h
+	}
+
+	//DEM
+	std::string dem_marker="zp coordinat";
+	if(!is_true_arps) dem_marker="zp_coordinat";
+	if(parameter==MeteoGrids::DEM) readGridLayer(dem_marker, 2, grid_out);
+	if(parameter==MeteoGrids::SLOPE) {
+		DEMObject dem;
+		dem.setUpdatePpt(DEMObject::SLOPE);
+		readGridLayer(dem_marker, 2, dem);
+		dem.update();
+		grid_out.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.slope);
+	}
+	if(parameter==MeteoGrids::AZI) {
+		DEMObject dem;
+		dem.setUpdatePpt(DEMObject::SLOPE);
+		readGridLayer(dem_marker, 2, dem);
+		dem.update();
+		grid_out.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.azi);
+	}
+
+	if(grid_out.isEmpty()) {
+		stringstream ss;
+		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
+		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << name << "\"";
+		throw NoAvailableDataException(ss.str(), AT);
+	}
+
+	rewind(fin);
 }
 
-void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& /*in_name*/)
+void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 {
-	std::string meteopathname;
-	std::string parameter, grid_name;
-	//HACK: build parameter and grid_name from _name
-	//example: _name="NW08::u" -> grid_name=NW08 and parameter=u
-	cfg.getValue("ARPSPATH", "Input", meteopathname);
-	const std::string _filename = meteopathname + grid_name + ".asc";
-
+	const std::string _filename = grid2dpath_in + "/" + i_name + ext;
 	openGridFile(_filename);
 
 	//resize the grid just in case
 	grid_out.grid3D.resize(dimx, dimy, dimz);
 
 	// Read until the parameter is found
+	std::string parameter; //HACK
 	moveToMarker(parameter);
 
 	//read the data we are interested in
@@ -295,10 +403,6 @@ void ARPSIO::openGridFile(const std::string& in_filename)
 		//this is a true ARPS file
 		initializeTrueARPS(dummy);
 	}
-
-	//get llcorner
-	cfg.getValue("ARPS_X", "Input", xcoord, Config::dothrow);
-	cfg.getValue("ARPS_Y", "Input", ycoord, Config::dothrow);
 
 	//come back to the begining of the file
 	rewind(fin);
