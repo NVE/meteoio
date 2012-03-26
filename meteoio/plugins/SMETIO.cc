@@ -25,6 +25,7 @@ namespace mio {
  * @page smetio SMET
  * @section template_format Format
  * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its <a href="../SMET_specifications.pdf">official format specification</a> for more information.
+ * This plugin can also provide special points, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter, the header must contain the epsg code (see example below).
  *
  * @section template_units Units
  * All units are MKSA, the only exception being the precipitations that are in mm/h. It is however possible to use  multipliers and offsets (but they must be specified in the file header).
@@ -34,10 +35,12 @@ namespace mio {
  * - STATION#: input filename (in METEOPATH). As many meteofiles as needed may be specified
  * - METEOPATH: meteo files directory where to read/write the meteofiles; [Input] and [Output] sections
  * - METEOPARAM: output file format options (ASCII or BINARY that might be followed by GZIP)
+ * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
  *
  * Example:
  * @code
  * [Input]
+ * METEO = SMET
  * METEOPATH = ./input
  * STATION1 = uppper_station.smet
  * STATION2 = lower_station.smet
@@ -46,6 +49,20 @@ namespace mio {
  * METEOPATH = ./output
  * METEOPARAM = ASCII GZIP
  * @endcode
+ *
+ * Below is an example of special points input:
+ * @code
+ * SMET 1.1 ASCII
+ * [HEADER]
+ * station_id	= my_pts
+ * epsg	= 21781
+ * nodata	= -999
+ * fields = easting northing altitude
+ * [DATA]
+ * 832781 187588 2115
+ * 635954 80358 2428
+ * @endcode
+ *
  */
 
 const std::string SMETIO::dflt_extension = ".smet";
@@ -393,6 +410,8 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 double SMETIO::olwr_to_tss(const double& olwr) {
 	const double ea = 1.;
 	if(olwr==IOUtils::nodata) return IOUtils::nodata;
+	if(olwr<0.) return IOUtils::nodata; //since olwr is NOT filtered, making sure no arithmetic exception would happen
+	if(olwr>1e4) return IOUtils::nodata; //since olwr is NOT filtered, making sure no arithmetic exception would happen
 	return pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
 }
 
@@ -691,7 +710,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 	 * true is returned, otherwise false
 	 */
 
-	if (vecMeteo.size() > 0) //HACK to get the station data even when encoutering bug 87
+	if (vecMeteo.size() > 0) //to get the station data even when encoutering bug 87
 		sd = vecMeteo[0].meta;
 
 	for (size_t ii=1; ii<vecMeteo.size(); ii++){

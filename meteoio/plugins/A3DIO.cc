@@ -59,8 +59,14 @@ namespace mio {
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 const unsigned int A3DIO::buffer_reserve = 23*24*2; //kind of average size of a buffer for optimizing vectors
 
-//Main constructor
-A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile) //HACK is this constructor still needed?
+A3DIO::A3DIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+{
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	in_tz = out_tz = 0.;
+	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
+}
+
+A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
@@ -69,13 +75,6 @@ A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 
 //Copy constructor
 A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = out_tz = 0.;
-	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
-}
-
-A3DIO::A3DIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;

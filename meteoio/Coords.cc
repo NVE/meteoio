@@ -458,7 +458,6 @@ void Coords::setXY(const double in_easting, const double in_northing, const doub
 * @param[in] in_invalidate should the geographic coordinates be invalidated? (default=true, this flag should be false ONLY when calling from Grid2/3DObject)
 */
 void Coords::setGridIndex(const int in_grid_i, const int in_grid_j, const int in_grid_k, const bool in_invalidate) {
-//HACK TODO make grid_i,j,k friends of Grid2/3DObject -> remove _invalidate and ALWAYS invalidate
 	grid_i = in_grid_i;
 	grid_j = in_grid_j;
 	grid_k = in_grid_k;

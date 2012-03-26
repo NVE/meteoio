@@ -391,7 +391,7 @@ void CosmoXMLIO::writeLocationHeader(const StationData& station, std::stringstre
  		XMLdata << "<col id=\"model_station_height\">" << station.position.getAltitude() << "</col>\n";
 		XMLdata << "<col id=\"model_station_latitude\">" << station.position.getLat() << "</col>\n";
 		XMLdata << "<col id=\"model_station_longitude\">" << station.position.getLon() << "</col>\n";
-// 		XMLdata << "<col id=\"data_cat_number\">" << "TO DO!" << "</col>\n";	//HACK do we need these values?
+// 		XMLdata << "<col id=\"data_cat_number\">" << "TO DO!" << "</col>\n";
 // 		XMLdata << "<col id=\"data_cat_description\">" << "TO DO!" << "</col>\n";
 // 		XMLdata << "<col id=\"model_configuration\">" << "TO DO!" << "</col>\n";
  		XMLdata << "<col id=\"missing_value_code\">" << IOUtils::nodata << "</col>\n";

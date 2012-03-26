@@ -100,16 +100,19 @@ const unsigned char PNGIO::transparent_grey = channel_max_color;
 
 PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
+	fp=NULL;
 	setOptions();
 }
 
 PNGIO::PNGIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 {
+	fp=NULL;
 	setOptions();
 }
 
 PNGIO::PNGIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
 {
+	fp=NULL;
 	setOptions();
 }
 
@@ -207,7 +210,7 @@ double PNGIO::getScaleFactor(const double& grid_w, const double& grid_h)
 }
 
 PNGIO::~PNGIO() throw() {
-	//HACK: implement a cleanup (close fp, free png pointers, etc
+	if(fp!=NULL) fclose(fp); fp=NULL;
 }
 
 void PNGIO::read2DGrid(Grid2DObject&, const std::string&)
@@ -298,14 +301,14 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	// Initialize write structure
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if (png_ptr == NULL) {
-		fclose(fp);
+		fclose(fp); fp=NULL;
 		throw IOException("Could not allocate write structure", AT);
 	}
 
 	// Initialize info structure
 	info_ptr = png_create_info_struct(png_ptr);
 	if (info_ptr == NULL) {
-		fclose(fp);
+		fclose(fp); fp=NULL;
 		png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
 		free(png_ptr);
 		throw IOException("Could not allocate info structure", AT);
@@ -363,7 +366,7 @@ unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nro
 	}
 }
 
-void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr)
+void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr, png_infop& info_ptr)
 {
 	const unsigned int ncols = grid.ncols;
 	const unsigned int nrows = grid.nrows;
@@ -377,6 +380,9 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 
 	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
 	if(row==NULL) {
+		fclose(fp); fp=NULL;
+		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+		free(png_ptr);
 		throw IOException("Can not allocate row memory in PNGIO!", AT);
 	}
 
@@ -451,7 +457,7 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 	if(indexed_png && palette!=NULL) free(palette);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
-	fclose(fp);
+	fclose(fp); fp=NULL;
 	free(info_ptr);
 	free(png_ptr);
 }
@@ -487,7 +493,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	metadata_text.push_back("Unknown Gridded data");
 	writeMetadata(png_ptr, info_ptr);
 
-	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
+	writeDataSection(grid, legend_array, gradient, full_width, png_ptr, info_ptr);
 	png_write_end(png_ptr, NULL);
 
 	closePNG(png_ptr, info_ptr, palette);
@@ -619,7 +625,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	metadata_text.push_back( MeteoGrids::getParameterName(parameter) );
 	writeMetadata(png_ptr, info_ptr);
 
-	writeDataSection(grid, legend_array, gradient, full_width, png_ptr);
+	writeDataSection(grid, legend_array, gradient, full_width, png_ptr, info_ptr);
 	png_write_end(png_ptr, NULL);
 
 	closePNG(png_ptr, info_ptr, palette);

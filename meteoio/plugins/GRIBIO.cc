@@ -733,7 +733,7 @@ void GRIBIO::scanMeteoPath()
 		const std::string& filename = *it;
 		std::string::size_type spos = filename.find_first_of("0123456789");
 		Date date;
-		IOUtils::convertString(date, filename.substr(spos,10), tz_in); //HACK MeteoSwiss-only file naming?
+		IOUtils::convertString(date, filename.substr(spos,10), tz_in);
 		std::pair<Date,std::string> tmp(date, filename);
 
 		cache_meteo_files.push_back(tmp);
