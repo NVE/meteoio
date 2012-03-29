@@ -165,7 +165,7 @@ template<class T> void Array<T>::resize(const unsigned int& asize, const T& init
 }
 
 
-template<class T> T& Array<T>::operator()(const unsigned int& index) {
+template<class T> inline T& Array<T>::operator()(const unsigned int& index) {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
 		std::stringstream ss;
@@ -176,7 +176,7 @@ template<class T> T& Array<T>::operator()(const unsigned int& index) {
 	return vecData[index];
 }
 
-template<class T> const T Array<T>::operator()(const unsigned int& index) const {
+template<class T> inline const T Array<T>::operator()(const unsigned int& index) const {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
 		std::stringstream ss;
@@ -187,7 +187,7 @@ template<class T> const T Array<T>::operator()(const unsigned int& index) const 
 	return vecData[index];
 }
 
-template<class T> T& Array<T>::operator [](const unsigned int& index) {
+template<class T> inline T& Array<T>::operator [](const unsigned int& index) {
 #ifndef NOSAFECHECKS
 	return vecData.at(index);
 #else
@@ -195,7 +195,7 @@ template<class T> T& Array<T>::operator [](const unsigned int& index) {
 #endif
 }
 
-template<class T> const T Array<T>::operator [](const unsigned int& index) const {
+template<class T> inline const T Array<T>::operator [](const unsigned int& index) const {
 #ifndef NOSAFECHECKS
 	return vecData.at(index);
 #else

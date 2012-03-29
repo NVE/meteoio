@@ -58,7 +58,7 @@ void FilterRate::process(const unsigned int& index, const std::vector<MeteoData>
 		if (curr_value == IOUtils::nodata)
 			continue;
 
-		const double local_rate = (curr_value-prev_value) / ((curr_time-prev_time)*24.*3600.); //per seconds
+		const double local_rate = (curr_value-prev_value) / ((curr_time-prev_time+1e-12)*24.*3600.); //per seconds
 
 		if( local_rate>max_rate_of_change || local_rate<min_rate_of_change ) {
 			curr_value = IOUtils::nodata;

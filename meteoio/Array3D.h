@@ -241,7 +241,7 @@ template<class T> class Array3D {
 		bool keep_nodata;
 };
 
-template<class T> T& Array3D<T>::operator()(const unsigned int& i) {
+template<class T> inline T& Array3D<T>::operator()(const unsigned int& i) {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
@@ -249,7 +249,7 @@ template<class T> T& Array3D<T>::operator()(const unsigned int& i) {
 #endif
 }
 
-template<class T> const T Array3D<T>::operator()(const unsigned int& i) const {
+template<class T> inline const T Array3D<T>::operator()(const unsigned int& i) const {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
@@ -257,7 +257,7 @@ template<class T> const T Array3D<T>::operator()(const unsigned int& i) const {
 #endif
 }
 
-template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) {
+template<class T> inline T& Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;
@@ -270,7 +270,7 @@ template<class T> T& Array3D<T>::operator()(const unsigned int& x, const unsigne
 	return vecData[x + y*nx + z*nxny];
 }
 
-template<class T> const T Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const {
+template<class T> inline const T Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;

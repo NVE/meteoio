@@ -52,7 +52,7 @@ double Interpol2D::getReferenceAltitude(const DEMObject& dem)
 * @param Y2 (const double) second point's Y coordinate
 * @return (double) distance in m
 */
-double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2)
+inline double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2)
 {
 	//This function computes the horizontaldistance between two points
 	//coordinates are given in a square, metric grid system
@@ -68,7 +68,7 @@ double Interpol2D::HorizontalDistance(const double& X1, const double& Y1, const 
 * @param Y2 (const double) second point's Y coordinate
 * @return (double) 1/distance in m
 */
-double Interpol2D::InvHorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2)
+inline double Interpol2D::InvHorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2)
 {
 	//This function computes 1/horizontaldistance between two points
 	//coordinates are given in a square, metric grid system
@@ -84,7 +84,7 @@ double Interpol2D::InvHorizontalDistance(const double& X1, const double& Y1, con
 * @param Y2 (const double) second point's Y coordinate
 * @return (double) distance in m
 */
-double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const int& j, const double& X2, const double& Y2)
+inline double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const int& j, const double& X2, const double& Y2)
 {//TODO: store DEM easting/northing, etc as private members
 	//This function computes the horizontal distance between two points
 	//coordinates are given in a square, metric grid system
@@ -120,19 +120,19 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
 }
 
 //these weighting functions take the square of a distance as an argument and return a weight
-double Interpol2D::weightInvDist(const double& d2)
+inline double Interpol2D::weightInvDist(const double& d2)
 {
 	return Optim::invSqrt( d2 ); //we use the optimized approximation for 1/sqrt
 }
-double Interpol2D::weightInvDistSqrt(const double& d2)
+inline double Interpol2D::weightInvDistSqrt(const double& d2)
 {
 	return Optim::fastSqrt_Q3( Optim::invSqrt(d2) ); //we use the optimized approximation for 1/sqrt
 }
-double Interpol2D::weightInvDist2(const double& d2)
+inline double Interpol2D::weightInvDist2(const double& d2)
 {
 	return 1./d2; //we use the optimized approximation for 1/sqrt
 }
-double Interpol2D::weightInvDistN(const double& d2)
+inline double Interpol2D::weightInvDistN(const double& d2)
 {
 	return pow( Optim::invSqrt(d2) , dist_pow); //we use the optimized approximation for 1/sqrt
 }

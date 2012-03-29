@@ -205,7 +205,7 @@ template<class T> class Array2D {
 		bool keep_nodata;
 };
 
-template<class T> T& Array2D<T>::operator()(const unsigned int& i) {
+template<class T> inline T& Array2D<T>::operator()(const unsigned int& i) {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
@@ -213,14 +213,14 @@ template<class T> T& Array2D<T>::operator()(const unsigned int& i) {
 #endif
 }
 
-template<class T> const T Array2D<T>::operator()(const unsigned int& i) const {
+template<class T> inline const T Array2D<T>::operator()(const unsigned int& i) const {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
 	return vecData[i];
 #endif
 }
-template<class T> T& Array2D<T>::operator()(const unsigned int& x, const unsigned int& y) {
+template<class T> inline T& Array2D<T>::operator()(const unsigned int& x, const unsigned int& y) {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny)) {
 		std::stringstream ss;
@@ -232,7 +232,7 @@ template<class T> T& Array2D<T>::operator()(const unsigned int& x, const unsigne
 	return vecData[x + y*nx];
 }
 
-template<class T> const T Array2D<T>::operator()(const unsigned int& x, const unsigned int& y) const {
+template<class T> inline const T Array2D<T>::operator()(const unsigned int& x, const unsigned int& y) const {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny)) {
 		std::stringstream ss;

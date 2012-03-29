@@ -350,19 +350,18 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	if (current_timezone == nodata_value)
 		current_timezone = in_dflt_TZ;
 	const bool timestamp_present = myreader.contains_timestamp();
+	Date previous_date(0., current_timezone);
 
 	size_t nr_of_lines = mydata.size() / indexes.size();
 
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
-		if (timestamp_present)
-			IOUtils::convertString(md.date, timestamps[ii], current_timezone);
-
-		//cout << md.date.toString(Date::ISO) << ": ";
-
 		vecMeteo.push_back(md);
 		MeteoData& tmp_md = vecMeteo.back();
+
+		if (timestamp_present)
+			IOUtils::convertString(tmp_md.date, timestamps[ii], current_timezone);
 
 		//Copy data points
 		for (size_t jj=0; jj<indexes.size(); jj++){
@@ -400,6 +399,9 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 			current_index++;
 		}
+		if(tmp_md.date<=previous_date)
+			throw InvalidFormatException("Error at time "+tmp_md.date.toString(Date::ISO)+" in SMET file: timestamps must be in increasing order and unique!", AT);
+		previous_date=tmp_md.date;
 
 		if ((olwr_present) && (tmp_md(MeteoData::TSS) == IOUtils::nodata)) {//HACK
 			tmp_md(MeteoData::TSS) = olwr_to_tss(tmp_md("OLWR"));
