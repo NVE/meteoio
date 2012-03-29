@@ -566,8 +566,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 
 	for (unsigned int j=0;j<VW.nrows;j++) {
 		for (unsigned int i=0;i<VW.ncols;i++){
-			// Get input data
 			speed = VW.grid2D(i,j);
+			if(speed==0.) continue; //we can not apply any correction factor!
 			dir = DW.grid2D(i,j);
 			beta = dem.slope(i, j)*to_rad;
 			azi = dem.azi(i, j)*to_rad;
@@ -577,8 +577,6 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				VW.grid2D(i, j) = IOUtils::nodata;
 				DW.grid2D(i, j) = IOUtils::nodata;
 			} else {
-				if (speed == 0) speed = 0.01; //to avoid numerical horrors
-
 				//convert direction to rad
 				dir *= ((Cst::PI) / 180.);
 				//Speed and direction converted to zonal et meridional
@@ -607,7 +605,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 
 				// Calculate the terrain-modified wind speed
 				VW.grid2D(i, j) = Ww * speed;
-				
+
 				// Add the diverting factor to the wind direction and convert to degrees
 				DW.grid2D(i, j) = (dir + Od) * (180. / (Cst::PI));
 				if( DW.grid2D(i, j)>360. ) {
