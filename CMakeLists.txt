@@ -243,12 +243,14 @@ SET(CPACK_COMPONENT_PLUGINS_DISPLAY_NAME "Input/Output Plugins")
 SET(CPACK_COMPONENT_PLUGINS_DESCRIPTION "Various plugins for supporting various data formats/protocols")
 SET(CPACK_COMPONENT_PLUGINS_GROUP Runtime)
 SET(CPACK_COMPONENT_PLUGINS_DEPENDS libraries)
-SET(CPACK_COMPONENT_DOCUMENTATION_DISPLAY_NAME "Documentation")
-SET(CPACK_COMPONENT_DOCUMENTATION_DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
-SET(CPACK_COMPONENT_EXAMPLES_DISPLAY_NAME "Examples")
-SET(CPACK_COMPONENT_EXAMPLES_DESCRIPTION "C++ Source code of various simple examples of applications with their example data")
-SET(CPACK_COMPONENT_EXAMPLES_GROUP Development)
-SET(CPACK_COMPONENT_EXAMPLES_DEPENDS libraries headers)
+IF(INSTALL_DOC)
+	SET(CPACK_COMPONENT_DOCUMENTATION_DISPLAY_NAME "Documentation")
+	SET(CPACK_COMPONENT_DOCUMENTATION_DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")
+	SET(CPACK_COMPONENT_EXAMPLES_DISPLAY_NAME "Examples")
+	SET(CPACK_COMPONENT_EXAMPLES_DESCRIPTION "C++ Source code of various simple examples of applications with their example data")
+	SET(CPACK_COMPONENT_EXAMPLES_GROUP Development)
+	SET(CPACK_COMPONENT_EXAMPLES_DEPENDS libraries headers)
+ENDIF(INSTALL_DOC)
 
 SET(CPACK_COMPONENT_RUNTIME_GROUP "Runtime")
 SET(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "What you need to run an application based on MeteoIO")
@@ -278,12 +280,17 @@ ELSE(UNIX)
 		SET(CPACK_NSIS_MUI_ICON "${CPACK_PACKAGE_ICON}")
 		SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}-${VERSION}")
 		SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME}")
-		SET(CPACK_NSIS_MENU_LINKS
-			"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
-			"${DOC_PATH}/examples" "MeteoIO examples"
-			"https://slfsmm.indefero.net/p/meteoio/" "Home page")
+		IF(INSTALL_DOC)
+			SET(CPACK_NSIS_MENU_LINKS
+				"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
+				"${DOC_PATH}/examples" "MeteoIO examples"
+				"https://slfsmm.indefero.net/p/meteoio/" "Home page")
+		ELSEIF(INSTALL_DOC)
+			SET(CPACK_NSIS_MENU_LINKS
+				"https://slfsmm.indefero.net/p/meteoio/" "Home page")
+		ENDIF(INSTALL_DOC)
 		#info for the add/uninstall software administration
-		SET(CPACK_NSIS_INSTALLED_ICON_NAME "${DOC_PATH}\\\\icon.ico")
+		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
 		SET(CPACK_NSIS_HELP_LINK "https://slfsmm.indefero.net/p/meteoio")
 		SET(CPACK_NSIS_CONTACT "Mathias.Bavay@wsl.ch")
