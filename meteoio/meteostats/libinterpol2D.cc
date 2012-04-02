@@ -561,8 +561,13 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	double Od;		// Diverting factor
 
 	const double to_rad = Cst::PI/180.;
-	const double dem_min_slope=dem.min_slope*to_rad, dem_range_slope=(dem.max_slope-dem_min_slope)*to_rad;
-	const double dem_min_curvature=dem.min_curvature, dem_range_curvature=(dem.max_curvature-dem_min_curvature);
+	const double to_deg = 180./Cst::PI;
+	const double dem_min_slope=dem.min_slope*to_rad;
+	const double dem_min_curvature=dem.min_curvature;
+	double dem_range_slope=(dem.max_slope-dem_min_slope)*to_rad;
+	double dem_range_curvature=(dem.max_curvature-dem_min_curvature);
+	if(dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
+	if(dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
 
 	for (unsigned int j=0;j<VW.nrows;j++) {
 		for (unsigned int i=0;i<VW.ncols;i++){
@@ -607,7 +612,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				VW.grid2D(i, j) = Ww * speed;
 
 				// Add the diverting factor to the wind direction and convert to degrees
-				DW.grid2D(i, j) = (dir + Od) * (180. / (Cst::PI));
+				DW.grid2D(i, j) = (dir + Od) * to_deg;
 				if( DW.grid2D(i, j)>360. ) {
 					DW.grid2D(i, j) -= 360.;
 				}
