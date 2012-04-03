@@ -420,7 +420,7 @@ bool SMETWriter::valid_header()
 
 void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std::vector<double>& data)
 {
-	fout.open(filename.c_str());
+	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		stringstream ss;
 		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
@@ -466,7 +466,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 
 void SMETWriter::write(const std::vector<double>& data)
 {
-	fout.open(filename.c_str());
+	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		stringstream ss;
 		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
@@ -663,7 +663,7 @@ SMETReader::SMETReader(const std::string& in_fname) : filename(in_fname), nr_of_
 {
 	std::ifstream fin; //Input file streams
 	fin.clear();
-	fin.open (filename.c_str(), ios::in);
+	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		stringstream ss;
 		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
@@ -970,7 +970,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 
 	ifstream fin;
 	fin.clear();
-	fin.open (filename.c_str(), ios::in);
+	fin.open (filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
 		stringstream ss;
 		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
@@ -1011,9 +1011,9 @@ void SMETReader::read(std::vector<double>& vec_data)
 
 	vector<string> tmp_vec;
 
-	ios_base::openmode mode = ios::in;
-	if (!isAscii)
-		mode = ios::in | ios::binary;
+	ios_base::openmode mode = ios::in|ios::binary; //read as binary to avoid eol mess
+	/*if (!isAscii)
+		mode = ios::in | ios::binary;*/
 
 	ifstream fin;
 	fin.open (filename.c_str(), mode);
@@ -1097,7 +1097,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 				}
 				current_fpointer = tmp_fpointer;
 			} catch(SMETException&) {
-				std::cout << "Error reading file \"" << filename << "\" at line \"" << line << "\"\n";
+				std::cout << "Error reading file \"" << filename << "\" at line \"" << line << "\"" << std::endl;
 				throw;
 			}
 		} else {
