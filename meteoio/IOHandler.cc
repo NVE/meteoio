@@ -25,22 +25,43 @@ namespace mio {
  * @page plugins Plugins overview
  * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are loaded on demand (and also compiled only if requested at compile time). A plugin can therefore fail to load (for example if it does not exist) at run time.
  *
+ * @section available_categories Data sources categories
+ * Several data sources categories have been defined that can be provided by a different plugin. Each data source category is defined by a specific key in the configuration file (usually, io.ini):
+ * - METEO, for meteorological time series
+ * - DEM, for Digital Elevation Maps
+ * - LANDUSE, for land cover information
+ * - GRID2D, for generic 2D grids (they can contain meteo fields and be recognized as such or arbitrary gridded data)
+ * - SPECIALPTS, for a list of points that can be used for providing extra information at some specific location (extracting time series at a few selected points, etc)
+ *
+ * A plugin is "connected" to a given data source category simply by giving its keyword as value for the data source key:
+ * @code
+ * METEO = SMET
+ * DEM = ARC
+ * @endcode
+ * Each plugin might have its own specific options, meaning that it might require its own keywords. Please check in each plugin documentation the supported options and keys (see links below).
+ * Moreover, a given plugin might only support a given category for read or write (for example, PNG: there is no easy and safe way to interpret a given color as a given numeric value without knowing its color scale, so reading a png has been disabled).
+ * Finally, the plugins usually don't implement all these categories (for example, ArcGIS file format only describes 2D grids, so the ARC plugin will only deal with 2D grids), so please check what a given plugin implements before connecting it to a specific data source category.
+ * 
  * @section available_plugins Available plugins
  * So far the following plugins have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
- * - \subpage a3d "A3D" for reading original Alpine3D meteo files (no extra requirements)
- * - \subpage arc "ARC" for reading ESRI/ARC DEM files (no extra requirements)
- * - \subpage arps "ARPSIO" for reading ARPS formatted DEM (no extra requirements)
- * - \subpage borma "BORMA" for reading Borma xml meteo files (requires libxml)
- * - \subpage cosmoxml "COSMO" for treading XML files produced by MeteoSwiss COSMO's postprocessing (requires libxml)
- * - \subpage geotop "GEOTOP" for reading original GeoTop meteo files (no extra requirements)
- * - \subpage grass "GRASS" for reading Grass DEM files (no extra requirements)
- * - \subpage gribio "GRIBIO" for reading GRIB meteo grid files (requires grib-api)
- * - \subpage gsn "GSN" for reading meteo data out of the Global Sensor Network web service interface (requires GSoap)
- * - \subpage imis "IMIS" for reading meteo data out of the IMIS database (requires Oracle's OCCI library)
- * - \subpage pgmio "PGMIO" for reading PGM grid files (no extra requirements)
- * - \subpage pngio "PNGIO" for reading PNG grid files (requires libpng)
- * - \subpage smetio "SMETIO" for reading SMET meteo data files (no extra requirements)
- * - \subpage snowpack "SNOWPACK" for reading original SNOWPACK meteo files (no extra requirements)
+ * <center><table border="1">
+ * <tr><th>Plugin keyword</th><th>Provides</th><th>Description</th><th>Extra requirements</th></tr>
+ * <tr><td>\subpage a3d "A3D"</td><td>meteo, specialpts</td><td>original Alpine3D meteo files</td><td></td></tr>
+ * <tr><td>\subpage arc "ARC"</td><td>dem, landuse, grid2d</td><td>ESRI/ARC ascii grid files</td><td></td></tr>
+ * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d</td><td>ARPS ascii formatted grids</td><td></td></tr>
+ * <tr><td>\subpage borma "BORMA"</td><td>meteo</td><td>Borma xml meteo files</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
+ * <tr><td>\subpage cosmoxml "COSMOXML"</td><td>meteo</td><td>MeteoSwiss COSMO's postprocessing XML format</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
+ * <tr><td>\subpage geotop "GEOTOP"</td><td>meteo</td><td>GeoTop meteo files</td><td></td></tr>
+ * <tr><td>\subpage grass "GRASS"</td><td>dem, landuse, grid2d</td><td>Grass grid files</td><td></td></tr>
+ * <tr><td>\subpage gribio "GRIB"</td><td>meteo, dem, grid2d</td><td>GRIB meteo grid files</td><td><A HREF="http://www.ecmwf.int/products/data/software/grib_api.html">grib-api</A></td></tr>
+ * <tr><td>\subpage gsn "GSN"</td><td>meteo</td><td>connects to the Global Sensor Network web service interface</td><td><SUP>1</SUP></td></tr>
+ * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
+ * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>PGM grid files</td><td></td></tr>
+ * <tr><td>\subpage pngio "PNG"</td><td>dem, grid2d</td><td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
+ * <tr><td>\subpage smetio "SMET"</td><td>meteo, specialpts</td><td>SMET data files</td><td></td></tr>
+ * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
+ * </table></center>
+ * <i><SUP>1</SUP>In order to rebuild the soap bindings for GSN, <A HREF="http://gsoap2.sourceforge.net/">gsoap</A> is required. This is only relevant to the plugin developers.</i>
  *
  * @section data_generators Data generators
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
