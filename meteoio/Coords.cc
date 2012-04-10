@@ -672,7 +672,15 @@ short int Coords::getEPSG() const {
 			return (32700+zoneNumber);
 		}
 	}
-	if(coordsystem=="PROJ4") return (short)atoi(coordparam.c_str());
+	if(coordsystem=="PROJ4") {
+		const int tmp = atoi(coordparam.c_str());
+		if(tmp<0 || tmp>32767) {
+			std::stringstream ss;
+			ss << "Invalid EPSG code argument: " << tmp << ". It should be between 0 and 32767! (please check EPSG registry)";
+			throw InvalidArgumentException(ss.str(), AT);
+		}
+		return static_cast<short>(tmp);
+	}
 
 	//all others have no associated EPSG code
 	return -1;
@@ -812,15 +820,17 @@ double Coords::dms_to_decimal(const std::string& dms) {
 * @param[out] lon parsed longitude
 */
 void Coords::parseLatLon(const std::string& coordinates, double&
-lat, double& lon) {
-	char lat_str[32]="";
-	char lon_str[32]="";
+lat, double& lon)
+{
+	const size_t len=64;
+	char lat_str[len]=""; //each string must be able to accomodate the whole length to avoid buffer overflow
+	char lon_str[len]="";
 
-	if(coordinates.size()>(32+32)) {
+	if(coordinates.size()>len) {
 		throw InvalidFormatException("Given lat/lon string is too long! ",AT);
 	}
 
-	if 	((sscanf(coordinates.c_str(), "%[0-9.,°d'\"-] %[0-9.,°d'\"-]", lat_str, lon_str) < 2) &&
+	if     ((sscanf(coordinates.c_str(), "%[0-9.,°d'\"-] %[0-9.,°d'\"-]", lat_str, lon_str) < 2) &&
 		(sscanf(coordinates.c_str(), "%[0-9.,°d'\"- ]/%[0-9.,°d'\"- ]", lat_str, lon_str) < 2) &&
 		(sscanf(coordinates.c_str(), "(%[0-9.,°d'\"- ];%[0-9.,°d'\"- ])", lat_str, lon_str) < 2) &&
 		(sscanf(coordinates.c_str(), "(%[0-9.°d'\"- ],%[0-9.°d'\"- ])", lat_str, lon_str) < 2)) {

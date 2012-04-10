@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <cmath>
+#include <cstring>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
@@ -355,15 +356,19 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 #endif
 
 std::string IOUtils::getLogName() {
-	char *logname;
-	logname = getenv("USERNAME"); //Windows & Unix
-	if(logname!=NULL) return std::string(logname);
-	logname = getenv("LOGNAME"); //Unix
-	if(logname!=NULL) return std::string(logname);
-	logname = getenv("USER"); //Windows & Unix
-	if(logname!=NULL) return std::string(logname);
+	char *tmp;
+	const size_t len=64;
+	char logname[len]; //to keep the user name short enough
 
-	return "N/A";
+	if((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
+		if((tmp=getenv("LOGNAME"))==NULL) { //Unix
+			tmp=getenv("USER"); //Windows & Unix
+		}
+	}
+	if(tmp==NULL) return std::string("N/A");
+
+	strncpy(logname, tmp, len-1);
+	return std::string(logname);
 }
 
 void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
