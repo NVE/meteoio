@@ -17,6 +17,7 @@
 */
 #include <meteoio/ResamplingAlgorithms.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -182,14 +183,14 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
 	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
 		extrapolate = true;
 
-	//Now find two points within the vecM (before and aft, that are not IOUtils::nodata)
+	//Now find two points within the vecM (before and after, that are not IOUtils::nodata)
 	//If that condition cannot be met, simply add nodata for the resampled value (exception: extrapolate)
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	bool foundP1=false, foundP2=false;
 
 	for (size_t ii=pos; (ii--) > 0; ){
 		if (vecM[ii](paramindex) != IOUtils::nodata){
-			indexP1 = (size_t)ii;
+			indexP1 = ii;
 			foundP1 = true;
 			break;
 		}
@@ -197,7 +198,7 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
 
 	for (size_t ii=pos+1; ii<vecM.size(); ii++){
 		if (vecM[ii](paramindex) != IOUtils::nodata){
-			indexP2 = (size_t)ii;
+			indexP2 = ii;
 			foundP2 = true;
 			break;
 		}
@@ -255,9 +256,7 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
 void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paramindex,
                                       const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM)
 {
-	/*
-	 * HACK TODO: Overall check IOUtils::nodata data path and test all scenarios with good test cases
-	 */
+	//HACK TODO: Overall check IOUtils::nodata data path and test all scenarios with good test cases
 
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
@@ -279,10 +278,10 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 	}
 
 	//find start of accumulation period
-	bool found_start=false;
-	size_t start_idx = pos+1;
 	Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.), vecM[pos].date.getTimeZone());
+	bool found_start=false;
 
+	size_t start_idx;
 	for (start_idx=pos+1; (start_idx--) > 0; ){
 		if(vecM[start_idx].date <= dateStart) {
 			found_start=true;
@@ -395,13 +394,13 @@ double ResamplingAlgorithms::linearInterpolation(const double& x1, const double&
                                        const double& x2, const double& y2, const double& x3)
 {
 	if (x1 == x2)
-		throw IOException("Attempted division by null", AT);
+		throw IOException("Attempted division by zero", AT);
 
-	//Solving y = kx +d
-	double k = (y1 - y2) / (x1 - x2);
-	double d = y2 - k*x2;
+	//Solving y = ax + b
+	const double a = (y2 - y1) / (x2 - x1);
+	const double b = y2 - a*x2;
 
-	return (k*x3 + d);
+	return (a*x3 + b);
 }
 
 } //namespace

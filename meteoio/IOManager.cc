@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg), 
+IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg),
                                             meteoprocessor(cfg), interpolator(cfg, *this)
 {
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
@@ -256,6 +256,33 @@ void IOManager::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, c
 }
 
 #ifdef _POPC_ //HACK popc
+bool IOManager::getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+                  Grid2DObject& result)
+#else
+bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                  Grid2DObject& result)
+#endif
+{
+	string info_string;
+	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+	cout << " (" << info_string << ") " << endl;
+	return (!result.isEmpty());
+}
+
+#ifdef _POPC_ //HACK popc
+bool IOManager::getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+                  Grid2DObject& result, std::string& info_string)
+#else
+bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                  Grid2DObject& result, std::string& info_string)
+#endif
+{
+	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+	return (!result.isEmpty());
+}
+
+#ifdef _POPC_ //HACK popc
 void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
                             Grid2DObject& result)
 #else
@@ -265,6 +292,8 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 {
 	string info_string;
 	interpolate(date, dem, meteoparam, result, info_string);
+	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+	cout << " (" << info_string << ") " << endl;
 }
 
 #ifdef _POPC_ //HACK popc
@@ -276,8 +305,6 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 #endif
 {
 	interpolator.interpolate(date, dem, meteoparam, result, info_string);
-	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-	cout << " (" << info_string << ") " << endl;
 }
 
 #ifdef _POPC_ //HACK popc
@@ -290,6 +317,8 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 {
 	string info_string;
 	interpolate(date, dem, meteoparam, in_coords, result, info_string);
+	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+	cout << " (" << info_string << ") " << endl;
 }
 
 #ifdef _POPC_ //HACK popc

@@ -22,7 +22,6 @@
 #include <meteoio/StationData.h>
 #include <meteoio/meteostats/libinterpol1D.h>
 
-#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>

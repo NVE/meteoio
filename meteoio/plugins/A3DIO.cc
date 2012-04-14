@@ -436,13 +436,16 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 	constructMeteo2DFilenames(startDate, endDate, filenames);//get all files for all years
 	const size_t stations = getNrOfStations(filenames, hashStations);
 
-	constructMeteo2DFilenames(startDate, startDate, filenames);//get filenames for current year
-	std::cerr << "[I] Number of 2D meteo stations: " << stations << std::endl;
-
 	if (stations < 1) {
-		throw InvalidFormatException("[E] No StationData found in 2D Meteo Files", AT);
+		string tmp;
+		cfg.getValue("METEOPATH", "Input", tmp);
+		std::stringstream ss;
+		ss << "[E] No stations metadata found between between " << startDate.toString(Date::ISO) << " and " << endDate.toString(Date::ISO);
+		ss << " in header of 2D meteo files in " << tmp;
+		throw InvalidFormatException(ss.str(), AT);
 	}
 
+	constructMeteo2DFilenames(startDate, startDate, filenames);//get filenames for current year
 	std::vector<StationData> tmpvecS = std::vector<StationData>(stations); //stores unique stations
 
 	try {

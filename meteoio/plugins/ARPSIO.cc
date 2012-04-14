@@ -27,20 +27,20 @@ namespace mio {
 /**
  * @page arps ARPSIO
  * @section arps_format Format
- * This is for reading grid data in the ARPS grid format (it transparently supports both true ARPS ascii grids and grids modified by the ARPSGRID utility). Currently, only DEM reading is implemented.
+ * This is for reading grid data in the ARPS grid format (it transparently supports both true ARPS ascii grids and grids modified by the ARPSGRID utility). DEM reading works well while reading meteo parameters might be a rough ride (since ARPS files do not always contain a consistent set of meteo fields).
  *
  * @section arps_units Units
- *
+ * All units are assumed to be MKSA.
  *
  * @section arps_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
  * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
  * - DEMFILE: path and file containing the DEM; [Input] section
- * - ARPS_X: x coordinate of the lower left corner of the grids; [Input] section
- * - ARPS_Y: y coordinate of the lower left corner of the grids; [Input] section
- * - GRID2DPATH: path to the input directory where to find the arps files to be read as grids; [Input] section //NOT USED YET
- * - ARPS_EXT: arps file extension, or <i>none</i> for no file extension (default: .asc)
+ * - ARPS_XCOORD: x coordinate of the lower left corner of the grids; [Input] section
+ * - ARPS_YCOORD: y coordinate of the lower left corner of the grids; [Input] section
+ * - GRID2DPATH: path to the input directory where to find the arps files to be read as grids; [Input] section
+ * - GRID2DEXT: arps file extension, or <i>none</i> for no file extension (default: .asc)
  */
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
@@ -86,11 +86,11 @@ void ARPSIO::setOptions()
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	}
 
-	cfg.getValue("ARPS_X", "Input", xcoord, Config::dothrow);
-	cfg.getValue("ARPS_Y", "Input", ycoord, Config::dothrow);
+	cfg.getValue("ARPS_XCOORD", "Input", xcoord, Config::dothrow);
+	cfg.getValue("ARPS_YCOORD", "Input", ycoord, Config::dothrow);
 
 	ext = default_ext;
-	cfg.getValue("ARPS_EXT", "Input", ext, Config::nothrow);
+	cfg.getValue("GRID2DEXT", "Input", ext, Config::nothrow);
 	if(ext=="none") ext="";
 }
 

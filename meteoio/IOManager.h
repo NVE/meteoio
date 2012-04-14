@@ -113,6 +113,44 @@ class IOManager {
 		void push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end,
 		                     const std::vector< METEO_TIMESERIE >& vecMeteo);
 
+		/**
+		 * @brief Fill Grid2DObject with spatial data.
+		 * Depending on which meteo plugin is in use, this might be spatially interpolated
+		 * point measurements or grids as provided by the data source itself.
+		 * Depending on the ProcessingLevel configured data will be either
+		 * raw (read directly from the IOHandler)
+		 *
+		 * NOTE:
+		 * - grid will be empty if there is no data found
+		 *
+		 * Example Usage:
+		 * @code
+		 * Grid2DObject grid;      //empty grid
+		 * IOManager iomanager(Config("io.ini"));
+		 * iomanager.getMeteoData(Date(2008,06,21,11,00), MeteoData::TA, grid); //21.6.2008 11:00
+		 * @endcode
+		 * @param date A Date object representing the date/time for the sought MeteoData objects
+		 * @param dem Digital Elevation Model data
+		 * @param meteoparam which meteo parameter to return
+		 * @param result grid returned filled with the requested data
+		 * @return true if the grid got filled
+		 */
+#ifdef _POPC_ //HACK popc
+		bool getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+		                 Grid2DObject& result);
+#else
+		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+		                 Grid2DObject& result);
+#endif
+
+#ifdef _POPC_ //HACK popc
+		bool getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
+		                 Grid2DObject& result, std::string& info_string);
+#else
+		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+		                 Grid2DObject& result, std::string& info_string);
+#endif
+
 #ifdef _POPC_ //HACK popc
 		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
 		                 Grid2DObject& result);

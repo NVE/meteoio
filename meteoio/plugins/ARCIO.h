@@ -77,6 +77,7 @@ class ARCIO : public IOInterface {
 		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string grid2dpath_in, grid2dpath_out;
+		std::string grid2d_ext_in, grid2d_ext_out; //file extension
 };
 
 } //end namespace mio

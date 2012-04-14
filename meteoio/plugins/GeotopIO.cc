@@ -39,7 +39,7 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - METAFILE:  string containing the absolute filename of the geotop.inpts file in the [Input] section 
+ * - METAFILE:  string containing the absolute filename of the geotop.inpts file in the [Input] section
  * - METEOPATH: string containing the path to the meteorological files
  * - METEOPREFIX: file name prefix for meteorological files
  * - METEOSEQ:specifiy in which order the columns should be printed out! ONLY relevant for writing out
@@ -126,7 +126,7 @@ void GeotopIO::writeMeteoData(
 		map<string, size_t>::iterator it = mapParam.find(vecSequence[ii]);
 		if (it == mapParam.end())
 			throw InvalidFormatException("Key " + vecSequence[ii]
-					+ " invalid in io.ini:METEODESTSEQ", AT);
+					+ " invalid in io.ini:METEOSEQ", AT);
 	}
 
 	//write the meta data file _meteo.txt
@@ -229,7 +229,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
 		vec_streampos = vector<map<Date, std::streampos> > (vecStation.size());
 
-	if (nr_of_stations == IOUtils::npos) 
+	if (nr_of_stations == IOUtils::npos)
 		nr_of_stations = vecStation.size();
 
 	cout << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
@@ -303,7 +303,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 							md(indices[jj-1]) = tmpdata[jj];
 						}
 					}
-					
+
 					convertUnits(md);
 					vecMeteo[ii].push_back(md);
 				} else if (md.date > dateEnd) {
@@ -464,7 +464,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 				size_t pos = line.find("=");
 				string val = line.substr(pos+1);
 				IOUtils::trim(val);
-				
+
 				if (!IOUtils::convertString(nr_of_stations, val,	std::dec))
 					throw InvalidFormatException(metafile + ": " + line, AT);
 			}
@@ -533,7 +533,7 @@ std::string GeotopIO::getValueForKey(const std::string& line)
 	size_t pos_start = line.find("\"");
 	size_t pos_end = line.find("\"", pos_start+1);
 	//cout << "t: pos_start = " << pos_start << "   pos_end = " << pos_end << endl;
-	
+
 	if ((pos_start != string::npos) && (pos_end != string::npos)) {
 		string param_name = line.substr(pos_start+1, pos_end - pos_start - 1);
 		IOUtils::trim(param_name);

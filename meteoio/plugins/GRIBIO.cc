@@ -69,10 +69,12 @@ namespace mio {
  * - COORDSYS: coordinate system (see Coords)
  * - COORDPARAM: extra coordinates parameters (see Coords)
  * - GRID2DPATH: path where to find the grids
+ * - GRID2DPREFIX: prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain), optional
+ * - GRID2DEXT: grib file extension, or <i>none</i> for no file extension (default: .grb)
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
- * - GRIB_PREFIX: prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain), optional
- * - GRIB_EXT: grib file extension, or <i>none</i> for no file extension (default: .grb)
+ * - METEOPATH: path where to find the grids for extracting time series at special points
+ * - METEOEXT: file extension, or <i>none</i> for no file extension (default: .grb)
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
@@ -138,11 +140,15 @@ void GRIBIO::setOptions()
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
 	}
-	cfg.getValue("GRIB_PREFIX", "Input", prefix, Config::nothrow);
+	cfg.getValue("GRID2DPREFIX", "Input", grid2d_prefix, Config::nothrow);
 
-	ext = default_ext;
-	cfg.getValue("GRIB_EXT", "Input", ext, Config::nothrow);
-	if(ext=="none") ext="";
+	meteo_ext = default_ext;
+	cfg.getValue("METEOEXT", "Input", meteo_ext, Config::nothrow);
+	if(meteo_ext=="none") meteo_ext="";
+
+	grid2d_ext = default_ext;
+	cfg.getValue("GRID2DEXT", "Input", grid2d_ext, Config::nothrow);
+	if(grid2d_ext=="none") grid2d_ext="";
 }
 
 void GRIBIO::readStations()
@@ -507,7 +513,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	Date UTC_date = date;
 	UTC_date.setTimeZone(tz_in);
 
-	const std::string filename = grid2dpath_in+"/"+prefix+UTC_date.toString(Date::NUM).substr(0,10)+ext;
+	const std::string filename = grid2dpath_in+"/"+grid2d_prefix+UTC_date.toString(Date::NUM).substr(0,10)+grid2d_ext;
 
 	read2DGrid(filename, grid_out, parameter, UTC_date);
 }
@@ -724,7 +730,7 @@ void GRIBIO::readStationData(const Date&, std::vector<StationData>& /*vecStation
 void GRIBIO::scanMeteoPath()
 {
 	std::list<std::string> dirlist;
-	IOUtils::readDirectory(meteopath_in, dirlist, ext);
+	IOUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
 	dirlist.sort();
 
 	//Check date in every filename and cache it

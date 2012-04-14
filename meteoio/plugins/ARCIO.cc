@@ -92,6 +92,7 @@ namespace mio {
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - GRID2DPATH: meteo grids directory where to read/write the grids; [Input] and [Output] sections
+ * - GRID2DEXT: grid file extension, or <i>none</i> for no file extension (default: .asc)
  * - A3D_VIEW: use Alpine3D's grid viewer naming scheme (default=false)? [Input] and [Output] sections.
  * - DEMFILE: for reading the data as a DEMObject
  * - LANDUSE: for interpreting the data as landuse codes
@@ -138,6 +139,13 @@ void ARCIO::getGridPaths() {
 	cfg.getValue("GRID2D", "Output", tmp, Config::nothrow);
 	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
+
+	grid2d_ext_in = ".asc";
+	cfg.getValue("GRID2DEXT", "Input", grid2d_ext_in, Config::nothrow);
+	if(grid2d_ext_in=="none") grid2d_ext_in="";
+	grid2d_ext_out = ".asc";
+	cfg.getValue("GRID2DEXT", "Output", grid2d_ext_out, Config::nothrow);
+	if(grid2d_ext_out=="none") grid2d_ext_out="";
 }
 
 ARCIO::~ARCIO() throw()
@@ -259,7 +267,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 	} else {
 		std::string date_str = date.toString(Date::ISO);
 		std::replace( date_str.begin(), date_str.end(), ':', '.');
-		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date_str + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date_str + "_" + MeteoGrids::getParameterName(parameter) + grid2d_ext_in);
 	}
 }
 
@@ -372,11 +380,11 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		write2DGrid(grid_in, date.toString(Date::NUM)+"."+ext );
 	} else {
 		if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::AZI || parameter==MeteoGrids::SLOPE) {
-			write2DGrid(grid_in, MeteoGrids::getParameterName(parameter) + ".asc");
+			write2DGrid(grid_in, MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
 		} else {
 			std::string date_str = date.toString(Date::ISO);
 			std::replace( date_str.begin(), date_str.end(), ':', '.');
-			write2DGrid(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + ".asc");
+			write2DGrid(grid_in, date_str + "_" + MeteoGrids::getParameterName(parameter) + grid2d_ext_out);
 		}
 	}
 }
