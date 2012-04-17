@@ -38,7 +38,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg) : cfg(in_cfg) {
 		taskargs.push_back(vecResamplingArguments);
 	}
 
-	window_size = 1.*86400.; //default size is 1 julian days
+	window_size = 10.*86400.; //default size is 10 julian days
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, Config::nothrow);
 	window_size /= 86400; //user uses seconds, internally julian day is used
 	if (window_size <= 0.01)

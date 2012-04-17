@@ -44,8 +44,14 @@ namespace mio {
  * HNW::resample   = linear
  * @endcode
  *
- * The search window size can be given with key WINDOW_SIZE that expresses (in seconds) how far a valid point can be searched for when
- * re-interpolating a missing value (up to WINDOW_SIZE/2 before and after the requested point, ie the search window is centered).
+ * The size (in seconds) of the biggest gap that can be interpolated is given with the key WINDOW_SIZE. Therefore if two valid points are less than
+ * WINDOW_SIZE seconds apart, points in between will be interpolated. If they are further apart, all points in between will remain IOUtils::nodata.
+ * If using the "extrapolate" optional argument, points at WINDOW_SIZE distance of only one valid point will be extrapolated, otherwise they will remain
+ * IOUtils::nodata. Please keep in mind that allowing extrapolated values can lead to grossly out of range data: using the slope
+ * between two hourly measurements to extrapolate a point 10 days ahead is obviously risky!
+ *
+ * By default, WINDOW_SIZE is set to 10 days. This key has a <b>dramatic impact on run time/performance</b>:
+ * reducing WINDOW_SIZE from 10 days down to one day makes geting meteo data 8 times faster while increasing it to 20 days makes it twice slower.
  *
  * @section algorithms_available Available Resampling Algorithms
  * Two algorithms for the resampling are implemented:
@@ -132,8 +138,8 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& pos, const size_t& par
 	if(foundP1 && foundP2) { //standard behavior
 		const Duration diff1 = vecM[pos].date - vecM[indexP1].date; //calculate time interval to element at pos
 		const Duration diff2 = vecM[indexP2].date - vecM[pos].date; //calculate time interval to element at pos
-		const double val1 = vecM[indexP1](paramindex);
-		const double val2 = vecM[indexP2](paramindex);
+		const double& val1 = vecM[indexP1](paramindex);
+		const double& val2 = vecM[indexP2](paramindex);
 
 		if (IOUtils::checkEpsilonEquality(diff1.getJulianDate(true), diff2.getJulianDate(true), 0.1/1440)){ //within 6 seconds
 			vecM[pos](paramindex) = Interpol1D::weightedMean(val1, val2, 0.5);
@@ -214,9 +220,9 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
 		return;
 
 	//At this point indexP1 and indexP2 point to values that are different from IOUtils::nodata
-	const double val1 = vecM[indexP1](paramindex);
+	const double& val1 = vecM[indexP1](paramindex);
 	const double jul1 = vecM[indexP1].date.getJulianDate(true);
-	const double val2 = vecM[indexP2](paramindex);
+	const double& val2 = vecM[indexP2](paramindex);
 	const double jul2 = vecM[indexP2].date.getJulianDate(true);
 
 	vecM[pos](paramindex) = linearInterpolation(jul1, val1, jul2, val2, vecM[pos].date.getJulianDate(true));
@@ -258,7 +264,7 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 	}
 
 	//find start of accumulation period
-	Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.), vecM[pos].date.getTimeZone());
+	const Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.), vecM[pos].date.getTimeZone());
 	bool found_start=false;
 
 	size_t start_idx;
@@ -270,9 +276,8 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 	}
 
 	if (!found_start){
-		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex)
-			<< ", not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO)
-			<< endl;
+		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ", ";
+		cerr << ", not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO) << "\n";
 		vecM[pos](paramindex) = IOUtils::nodata;
 		return;
 	}
@@ -281,18 +286,15 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 	//HACK: we consider nodata to be 0. In fact, we should try to interpolate from valid points
 	//if they are not too far away
 
-	size_t interval_end   = start_idx + 1;
-
-	double valstart = funcval(vecM, start_idx, dateStart, paramindex);
-	double valend   = funcval(vecM, interval_end, vecM[interval_end].date, paramindex);
+	const size_t interval_end   = start_idx + 1;
+	double valstart = funcval(start_idx, paramindex, vecM, dateStart);
+	double valend   = funcval(interval_end, paramindex, vecM, vecM[interval_end].date);
 	double sum = IOUtils::nodata;
 
 	if ((valend == IOUtils::nodata) || (valstart == IOUtils::nodata)){
 		sum = 0.0; //HACK maybe it should be set it to IOUtils::nodata
 	} else {
-		if ((start_idx == (pos-1)) && (dateStart == vecM[start_idx].date))
-			valstart = 0.0;
-
+		if ((start_idx == (pos-1)) && (dateStart == vecM[start_idx].date)) valstart = 0.0;
 		sum = valend - valstart;
 	}
 
@@ -302,7 +304,7 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 	}
 
 	if ((interval_end+1) == pos){
-		valend = funcval(vecM, interval_end, vecM[pos].date, paramindex);
+		valend = funcval(interval_end, paramindex, vecM, vecM[pos].date);
 		if (valend != IOUtils::nodata)
 			sum += valend;
 
@@ -316,7 +318,7 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 		}
 	}
 
-	valend = funcval(vecM, pos, vecM[pos].date, paramindex);
+	valend = funcval(pos, paramindex, vecM, vecM[pos].date);
 
 	if (valend != IOUtils::nodata)
 		sum += valend;
@@ -325,10 +327,10 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 	//TODO:check if at least one point has been summed. If not -> nodata
 }
 
-double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const size_t& index,
-                                     const Date& date, const size_t& paramindex)
+double ResamplingAlgorithms::funcval(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
+                                     const Date& date)
 {
-	size_t start = index;
+	size_t start = pos;
 	if (vecM[start].isResampled()){
 		if (start > 0){
 			start--;
@@ -337,10 +339,10 @@ double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const s
 		}
 	}
 
-	size_t end   = index+1;
+	size_t end = pos+1;
 	const double& valstart = vecM[start](paramindex);
 
-	if (!vecM[index].isResampled() && (vecM[index].date == date))
+	if (!vecM[pos].isResampled() && (vecM[pos].date == date))
 		return valstart;
 
 	if ((vecM[end].isResampled())) //skip resampled value
@@ -348,14 +350,14 @@ double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const s
 
 	//index either points to the element with date directly or to the last element with vecM[index] <= date
 	if (end < vecM.size()){
-		const double& valend   = vecM[end](paramindex);
-
+		const double& valend = vecM[end](paramindex);
 		if (valend == IOUtils::nodata)
 			return IOUtils::nodata;
 
-		return linearInterpolation(vecM[start].date.getJulianDate(true), 0.0,
-		                           vecM[end].date.getJulianDate(true), valend,
-		                           date.getJulianDate(true));
+		const double jul1 = vecM[start].date.getJulianDate(true);
+		const double jul2 = vecM[end].date.getJulianDate(true);
+
+		return linearInterpolation(jul1, 0., jul2, valend, date.getJulianDate(true));
 	}
 
 	return IOUtils::nodata;

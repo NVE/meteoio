@@ -57,8 +57,8 @@ class ResamplingAlgorithms {
 		                       const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
 
  	private:
-		static double funcval(const std::vector<MeteoData>& vecM, const size_t& index,
-		                      const Date& date, const size_t& paramindex);
+		static double funcval(const size_t& position, const size_t& paramindex, const std::vector<MeteoData>& vecM,
+		                      const Date& date);
 		static void getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
 		                               const double& window_size, size_t& indexP1, size_t& indexP2);
 		static double linearInterpolation(const double& x1, const double& y1,
