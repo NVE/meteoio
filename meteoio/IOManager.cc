@@ -151,7 +151,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 {
 	if ((start_date >= fcache_start) && (end_date <= fcache_end)){
 		//it's already in the filtered_cache, so just copy the requested slice
-		for (size_t ii=0; ii<filtered_cache.size(); ii++){
+		for (size_t ii=0; ii<filtered_cache.size(); ii++){ //loop over stations
 			size_t startpos = IOUtils::seek(start_date, filtered_cache[ii], false);
 			if (startpos == IOUtils::npos){
 				if (filtered_cache[ii].size() > 0){

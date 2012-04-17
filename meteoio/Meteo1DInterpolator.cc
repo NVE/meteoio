@@ -38,20 +38,20 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg) : cfg(in_cfg) {
 		taskargs.push_back(vecResamplingArguments);
 	}
 
-	window_size = 0.5*86400.; //default size is 0.5 julian days
+	window_size = 1.*86400.; //default size is 1 julian days
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, Config::nothrow);
 	window_size /= 86400; //user uses seconds, internally julian day is used
 	if (window_size <= 0.01)
 		throw IOException("WINDOW_SIZE not valid", AT);
 }
 
-void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties)
+void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) const
 {
 	o_properties.points_before = 1;
 	o_properties.points_after  = 1;
 
-	o_properties.time_before   = Duration(window_size/2.0, 0.);
-	o_properties.time_after    = Duration(window_size/2.0, 0.);
+	o_properties.time_before   = Duration(window_size, 0.); //we will need to cut a window 2x larger so we can interpolate each point in the window
+	o_properties.time_after    = Duration(window_size, 0.);
 }
 
 size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
@@ -83,7 +83,7 @@ size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData
 
 	for (ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
 		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, ii, taskargs[ii], vecM);
+			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, ii, taskargs[ii], window_size, vecM);
 	}
 
 	//There might be more parameters, interpolate them too
@@ -103,13 +103,13 @@ size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData
 		}
 
 		if (it->second.first != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(it->second.first)(position, ii, it->second.second, vecM);
+			ResamplingAlgorithms::getAlgorithm(it->second.first)(position, ii, it->second.second, window_size, vecM);
 	}
 
 	return position; //the position of the resampled MeteoData object within vecM
 }
 
-string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments)
+string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments) const
 {
 	/*
 	 * This function retrieves the resampling algorithm to be used for the

@@ -66,18 +66,18 @@ class Meteo1DInterpolator {
 		 */
 		size_t resampleData(const Date& date, std::vector<MeteoData>& vecM);
 
-		void getWindowSize(ProcessingProperties& o_properties);
+		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator);
 
  	private:
-		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments);
+		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments) const;
 
 		const Config& cfg;
 		double window_size; ///< In seconds
 		std::vector<std::string> tasklist;
 		std::vector< std::vector< std::string > > taskargs;
-		std::map<	std::string, std::pair < std::string, std::vector < std::string > > >	extended_tasklist;
+		std::map< std::string, std::pair < std::string, std::vector < std::string > > >	extended_tasklist;
 };
 } //end namespace
 

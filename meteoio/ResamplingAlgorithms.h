@@ -30,7 +30,7 @@
 namespace mio {
 
 typedef void(*resamplingptr)(const size_t& position, const size_t& paramindex,
-                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
+                             const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
 
 /**
  * @class ResamplingAlgorithms
@@ -47,18 +47,20 @@ class ResamplingAlgorithms {
 
 		//Available algorithms
 		static void NoResampling(const size_t& position, const size_t& paramindex,
-		                         const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
+		                         const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
 		static void LinearResampling(const size_t& position, const size_t& paramindex,
-		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
+		                             const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
 		static void NearestNeighbour(const size_t& position, const size_t& paramindex,
-		                             const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
+		                             const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
 
 		static void Accumulate(const size_t& position, const size_t& paramindex,
-		                       const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM);
+		                       const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
 
  	private:
 		static double funcval(const std::vector<MeteoData>& vecM, const size_t& index,
 		                      const Date& date, const size_t& paramindex);
+		static void getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
+		                               const double& window_size, size_t& indexP1, size_t& indexP2);
 		static double linearInterpolation(const double& x1, const double& y1,
 		                                  const double& x2, const double& y2, const double& x3);
 

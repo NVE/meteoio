@@ -289,7 +289,7 @@ namespace IOUtils {
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-					    const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow)
+	                                       const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow)
 	{
 		if (key == "") throw InvalidArgumentException("Empty key", AT);
 

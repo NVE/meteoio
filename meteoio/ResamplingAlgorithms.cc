@@ -92,18 +92,18 @@ const resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algon
  */
 
 void ResamplingAlgorithms::NoResampling(const size_t& /*pos*/, const size_t& /*paramindex*/,
-                                        const std::vector<std::string>& /*taskargs*/, std::vector<MeteoData>& /*vecM*/)
+                                        const std::vector<std::string>& /*taskargs*/, const double& /*window_size*/, std::vector<MeteoData>& /*vecM*/)
 {
 	return;
 }
 
 
 /**
- * @brief Nearest Neighbour data resampling: Find the nearest neighbour of a desired data point
- *        that is not IOUtils::nodata and copy that value into the desired data point
+ * @brief Nearest Neighbour data resampling
+ * Find the nearest neighbour of a desired data point that is not IOUtils::nodata and copy that value into the desired data point
  *        - If the data point itself is not IOUtils::nodata, nothing needs to be done
  *        - If two points have the same distance from the data point to be resampled, calculate mean and return it
- *        - no arguments are considered
+ *        - if the argument extrapolate is provided, points within WINDOW_SIZE seconds of only one valid point will receive the value of this point
  * @code
  * [Interpolations1D]
  * TA::resample = nearest_neighbour
@@ -111,49 +111,46 @@ void ResamplingAlgorithms::NoResampling(const size_t& /*pos*/, const size_t& /*p
  */
 
 void ResamplingAlgorithms::NearestNeighbour(const size_t& pos, const size_t& paramindex,
-                                            const std::vector<std::string>& /*taskargs*/, std::vector<MeteoData>& vecM)
+                                            const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM)
 {
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
 
-
 	if (vecM[pos](paramindex) != IOUtils::nodata) //if there is a value, don't resample
 		return;
 
+	//Check whether extrapolation is activated
+	bool extrapolate = false;
+	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
+		extrapolate = true;
+
+	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
+	getNearestValidPts(pos, paramindex, vecM, window_size, indexP1, indexP2);
+	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
+
 	//Try to find the nearest neighbour, if there are two equally distant, then return the arithmetic mean
-	MeteoData m1, m2;
-	bool found1=false, found2=false;
-	for (size_t ii=pos+1; ii<vecM.size(); ii++){
-		if (vecM[ii](paramindex) != IOUtils::nodata){
-			m1 = vecM[ii];
-			found1 = true;
-			break;
-		}
-	}
-
-	for (size_t ii=0; ii<pos; ii++){
-		if (vecM[ii](paramindex) != IOUtils::nodata){
-			m2 = vecM[ii];
-			found2 = true;
-		}
-	}
-
-	if (found1 && !found2){ //nearest neighbour on found after index 'pos'
-		vecM[pos](paramindex) = m1(paramindex);
-	} else if (!found1 && found2){ //nearest neighbour on found before index 'pos'
-		vecM[pos](paramindex) = m2(paramindex);
-	} else if (!found1 && !found2){ // no nearest neighbour with a value different from IOUtils::nodata
-		vecM[pos](paramindex) = IOUtils::nodata;
-	} else {
-		Duration diff1 = m1.date - vecM[pos].date; //calculate time interval to element at pos
-		Duration diff2 = vecM[pos].date - m2.date; //calculate time interval to element at pos
+	if(foundP1 && foundP2) { //standard behavior
+		const Duration diff1 = vecM[pos].date - vecM[indexP1].date; //calculate time interval to element at pos
+		const Duration diff2 = vecM[indexP2].date - vecM[pos].date; //calculate time interval to element at pos
+		const double val1 = vecM[indexP1](paramindex);
+		const double val2 = vecM[indexP2](paramindex);
 
 		if (IOUtils::checkEpsilonEquality(diff1.getJulianDate(true), diff2.getJulianDate(true), 0.1/1440)){ //within 6 seconds
-			vecM[pos](paramindex) = Interpol1D::weightedMean(m1(paramindex), m2(paramindex), 0.5);
+			vecM[pos](paramindex) = Interpol1D::weightedMean(val1, val2, 0.5);
 		} else if (diff1 < diff2){
-			vecM[pos](paramindex) = m1(paramindex);
+			vecM[pos](paramindex) = val1;
 		} else if (diff1 > diff2){
-			vecM[pos](paramindex) = m2(paramindex);
+			vecM[pos](paramindex) = val2;
+		}
+	} else if(!extrapolate) {
+		return;
+	} else if(extrapolate) {
+		if(foundP1 && !foundP2){ //nearest neighbour on found after index 'pos'
+			vecM[pos](paramindex) = vecM[indexP1](paramindex);
+		} else if (!foundP1 && foundP2){ //nearest neighbour on found before index 'pos'
+			vecM[pos](paramindex) = vecM[indexP2](paramindex);
+		} else { // no nearest neighbour with a value different from IOUtils::nodata
+			return;
 		}
 	}
 }
@@ -170,7 +167,7 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& pos, const size_t& par
  * @endcode
  */
 void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& paramindex,
-                                            const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM)
+                                            const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM)
 {
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
@@ -183,31 +180,13 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
 	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
 		extrapolate = true;
 
-	//Now find two points within the vecM (before and after, that are not IOUtils::nodata)
-	//If that condition cannot be met, simply add nodata for the resampled value (exception: extrapolate)
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-	bool foundP1=false, foundP2=false;
-
-	for (size_t ii=pos; (ii--) > 0; ){
-		if (vecM[ii](paramindex) != IOUtils::nodata){
-			indexP1 = ii;
-			foundP1 = true;
-			break;
-		}
-	}
-
-	for (size_t ii=pos+1; ii<vecM.size(); ii++){
-		if (vecM[ii](paramindex) != IOUtils::nodata){
-			indexP2 = ii;
-			foundP2 = true;
-			break;
-		}
-	}
+	getNearestValidPts(pos, paramindex, vecM, window_size, indexP1, indexP2);
+	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	//do nothing if we can't interpolate, and extrapolation is not explicitly activated
 	if ((!extrapolate) && ((!foundP1) || (!foundP2)))
 		return;
-
 	//do nothing if not at least one value different from IOUtils::nodata has been found
 	if (!foundP1 && !foundP2)
 		return;
@@ -235,11 +214,12 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
 		return;
 
 	//At this point indexP1 and indexP2 point to values that are different from IOUtils::nodata
-	const double& val1 = vecM[indexP1](paramindex);
-	const double& val2 = vecM[indexP2](paramindex);
-	vecM[pos](paramindex) = linearInterpolation(vecM[indexP1].date.getJulianDate(true), val1,
-	                                                  vecM[indexP2].date.getJulianDate(true), val2,
-	                                                  vecM[pos].date.getJulianDate(true));
+	const double val1 = vecM[indexP1](paramindex);
+	const double jul1 = vecM[indexP1].date.getJulianDate(true);
+	const double val2 = vecM[indexP2](paramindex);
+	const double jul2 = vecM[indexP2].date.getJulianDate(true);
+
+	vecM[pos](paramindex) = linearInterpolation(jul1, val1, jul2, val2, vecM[pos].date.getJulianDate(true));
 }
 
 /**
@@ -254,7 +234,7 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
  * @endcode
  */
 void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paramindex,
-                                      const std::vector<std::string>& taskargs, std::vector<MeteoData>& vecM)
+                                      const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM)
 {
 	//HACK TODO: Overall check IOUtils::nodata data path and test all scenarios with good test cases
 
@@ -382,7 +362,44 @@ double ResamplingAlgorithms::funcval(const std::vector<MeteoData>& vecM, const s
 }
 
 /**
- * @brief This function solves the equation y = kx + d for two given points and returns y for a given x
+ * @brief This function returns the last and next valid points around a given position
+ * @param pos current position (index)
+ * @param paramindex meteo parameter to use
+ * @param vecM vector of MeteoData
+ * @param window_size size of the search window
+ * @param indexP1 index of point before the current position (IOUtils::npos if none could be found)
+ * @param indexP2 index of point after the current position (IOUtils::npos if none could be found)
+ */
+void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
+                                              const double& window_size, size_t& indexP1, size_t& indexP2)
+{
+	indexP1=IOUtils::npos;
+	indexP2=IOUtils::npos;
+
+	const Date dateStart=vecM[pos].date-window_size;
+	for (size_t ii=pos; (ii--) > 0; ){
+		if (vecM[ii].date<dateStart) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata){
+			indexP1 = ii;
+			break;
+		}
+	}
+
+	Date dateEnd;
+	if(indexP1!=IOUtils::npos) dateEnd=vecM[indexP1].date+window_size; //so the search window remains window_size
+	else dateEnd=vecM[pos].date+window_size;
+
+	for (size_t ii=pos+1; ii<vecM.size(); ii++){
+		if (vecM[ii].date>dateEnd) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata){
+			indexP2 = ii;
+			break;
+		}
+	}
+}
+
+/**
+ * @brief This function solves the equation y = ax + b for two given points and returns y for a given x
  * @param x1 x-coordinate of first point
  * @param y1 y-coordinate of first point
  * @param x2 x-coordinate of second point
