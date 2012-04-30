@@ -230,8 +230,9 @@ class IOManager {
 		std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
 
-	private:
 		void add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo);
+
+	private:
 		void fill_filtered_cache();
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
 		                         std::vector< METEO_TIMESERIE >& vec_meteo);
