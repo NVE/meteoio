@@ -519,16 +519,11 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 
 		if (counter >= current_station_psum.size()) { break; } //should never happen
 
-		//cout << "Current slice date: " << current_slice_date.toString(Date::ISO)
-		//	<< "  value: " << current_station_psum.at(counter) << "\n";
-
 		double& hnw = vecMeteo[stationindex][jj](MeteoData::HNW);
-		//cout << vecMeteo[stationindex][jj].date.toString(Date::ISO) << ": " << hnw;
 		if ((hnw == IOUtils::nodata) || (IOUtils::checkEpsilonEquality(hnw, 0.0, 0.001))){
 			//replace by psum if there is no own value measured
 			hnw = current_station_psum.at(counter);
 		}
-		//cout << "  ---> " << hnw << "\n";
 	}
 }
 
@@ -561,8 +556,6 @@ void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t
 			double sum = 0.0;
 			const double& hnw0 = vec_of_psums.at(vecIndex.at(0))[kk];
 			const double& hnw1 = vec_of_psums.at(vecIndex.at(1))[kk];
-			//cout << "0: Using " << ad.anetzstations[0] << " with hnw: " << hnw0 << "\n";
-			//cout << "1: Using " << ad.anetzstations[1] << " with hnw: " << hnw1 << "\n";
 			sum += ad.coeffs[0] * hnw0;
 			sum += ad.coeffs[1] * hnw1;
 			sum += ad.coeffs[2] * hnw0 * hnw1;

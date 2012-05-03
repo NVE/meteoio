@@ -311,13 +311,13 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 
 		size_t pos_end = IOUtils::seek(date_end, vec_buffer_meteo[ii], false);//HACK:: edit IOUtils::seek to accept an offset
 		if (pos_end == IOUtils::npos)	pos_end = vec_buffer_meteo[ii].size() - 1; //just copy until the end of the buffer
-		//cout << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
+		//cerr << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
 		if (vec_buffer_meteo[ii][pos_end].date > date_end){
 			if (pos_end > pos_start)	pos_end--;
 		} else {
 			pos_end++;
 		}
-		//cout << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
+		//cerr << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
 		vecMeteo[ii].insert(vecMeteo[ii].begin(), vec_buffer_meteo[ii].begin()+pos_start, vec_buffer_meteo[ii].begin()+pos_end);
 	}
 }

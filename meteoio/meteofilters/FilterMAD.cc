@@ -85,7 +85,6 @@ void FilterMAD::MAD_filter_point(const std::vector<const MeteoData*>& vec_window
 	const double upper_lim = median + 3.*sigma;
 	const double lower_lim = median - 3.*sigma;
 
-	//cout << lower_lim << " " << value << " " << upper_lim << endl;
 	if( (value>upper_lim) || (value<lower_lim) ) {
 		value = IOUtils::nodata;
 	}

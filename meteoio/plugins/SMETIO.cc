@@ -366,7 +366,6 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 		//Copy data points
 		for (size_t jj=0; jj<indexes.size(); jj++){
 			const double& current_data = mydata[current_index];
-			//cout << current_data << " ";
 			if (indexes[jj] >= IOUtils::npos-5){ //the special fields have high indexes
 				if (indexes[jj] == IOUtils::npos){
 					if (!timestamp_present){
@@ -712,7 +711,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 	 * true is returned, otherwise false
 	 */
 
-	if (vecMeteo.size() > 0) //to get the station data even when encoutering bug 87
+	if (vecMeteo.size() > 0) //to get the station data even when in bug 87 conditions
 		sd = vecMeteo[0].meta;
 
 	for (size_t ii=1; ii<vecMeteo.size(); ii++){

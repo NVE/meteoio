@@ -287,9 +287,6 @@ void GSNIO::readMetaData()
 							info_complete |= 16;
 						}
 					}
-
-					//cout << metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->name << " -> "
-					//	<< metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->__item  << endl;
 				}
 
 				if (info_complete != 31){
@@ -355,9 +352,6 @@ void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*
 		} else {
 			index.push_back(IOUtils::npos);
 		}
-
-		//cout << *field.at(ii)->name << " ";
-		//cout << "(" << *field.at(ii)->type << ")  ";
 	}
 }
 
@@ -442,7 +436,6 @@ void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& ol
 	for (size_t jj=0; jj < streamElement->field.size(); jj++){
 		string value = streamElement->field.at(jj)->__item;
 		IOUtils::toUpper(value);
-		//cout << value << "  ";
 		if (index[jj] != IOUtils::npos){
 			if (value != "NULL"){
 				IOUtils::convertString(tmpmeteo(index[jj]), value);

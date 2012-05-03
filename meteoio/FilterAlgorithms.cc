@@ -189,18 +189,13 @@ bool FilterAlgorithms::getWindowData(const std::string& filtername, const std::v
 		}
 	}
 
-	//Date gap(vecM[startposition].date - vecM[endposition].date);
-	//cout << "The final gap is " << gap << "  windowposition: " << windowposition << endl;
-
 	//Push all relevant data elements into the vector vecWindow
-	//cout << "Start: " << startposition << "  End: " << endposition << endl;
 	for (unsigned int ii=startposition+1; (ii--) > endposition; ){
 		const double& tmp = vecM[ii](paramindex);
 		if (tmp != IOUtils::nodata) {
 			vecWindow.push_back(tmp);
 			if (vecDate != NULL) (*vecDate).push_back(vecM[ii].date);
 		}
-		//cout << ii << ": pushed at vecM[" <<  ii << "] " << " : "  << endl;
 	}
 
 	return true;
@@ -268,18 +263,18 @@ void FilterAlgorithms::ExpSmoothingProcess(const std::vector<MeteoData>& vecM, c
 			if (windowposition == "left"){
 				vecTmpWindow.erase(vecTmpWindow.begin()+posfind+1, vecTmpWindow.end()); //delete all after posfind
 				vecWindowM[ii](paramindex) = ExpSmoothingAlgorithm(vecTmpWindow, paramindex, alpha);
-				//cout << "ExpSmoothing: " << vecWindowM[ii](paramindex) << endl;
+				//cerr << "ExpSmoothing: " << vecWindowM[ii](paramindex) << endl;
 			} else if (windowposition == "right"){
 				vecTmpWindow.erase(vecTmpWindow.begin(), vecTmpWindow.begin()+posfind); //delete all before posfind
 				std::reverse(vecTmpWindow.begin(), vecTmpWindow.end()); //reverse the vector, posfind most significant
 				vecWindowM[ii](paramindex) = ExpSmoothingAlgorithm(vecTmpWindow, paramindex, alpha);
-				//cout << "ExpSmoothing: " << vecWindowM[ii](paramindex) << endl;
+				//cerr << "ExpSmoothing: " << vecWindowM[ii](paramindex) << endl;
 			} else { //centered window - regroup according to time difference with posfind
 				for (unsigned int jj=0; jj<vecTmpWindow.size(); jj++)
 					vecTmpWindow[jj].date=Date(abs(vecWindowM[ii].date.getJulianDate() - vecTmpWindow[jj].date.getJulianDate()));
 				std::sort(vecTmpWindow.begin(), vecTmpWindow.end(), compareMeteoData);
 				vecWindowM[ii](paramindex) = ExpSmoothingAlgorithm(vecTmpWindow, paramindex, alpha);
-				//cout << "ExpSmoothing: " << vecWindowM[ii](paramindex) << endl;
+				//cerr << "ExpSmoothing: " << vecWindowM[ii](paramindex) << endl;
 			}
 		}
 	}
@@ -323,18 +318,18 @@ void FilterAlgorithms::WMASmoothingProcess(const std::vector<MeteoData>& vecM, c
 			if (windowposition == "left"){
 				vecTmpWindow.erase(vecTmpWindow.begin()+posfind+1, vecTmpWindow.end()); //delete all after posfind
 				vecWindowM[ii](paramindex) = WMASmoothingAlgorithm(vecTmpWindow, paramindex);
-				//cout << "WMASmoothing: " << vecWindowM[ii](paramindex) << endl;
+				//cerr << "WMASmoothing: " << vecWindowM[ii](paramindex) << endl;
 			} else if (windowposition == "right"){
 				vecTmpWindow.erase(vecTmpWindow.begin(), vecTmpWindow.begin()+posfind); //delete all before posfind
 				std::reverse(vecTmpWindow.begin(), vecTmpWindow.end()); //reverse the vector, posfind most significant
 				vecWindowM[ii](paramindex) = WMASmoothingAlgorithm(vecTmpWindow, paramindex);
-				//cout << "WMASmoothing: " << vecWindowM[ii](paramindex) << endl;
+				//cerr << "WMASmoothing: " << vecWindowM[ii](paramindex) << endl;
 			} else { //centered window - regroup according to time difference with posfind
 				for (unsigned int jj=0; jj<vecTmpWindow.size(); jj++)
 					vecTmpWindow[jj].date=Date(abs(vecWindowM[ii].date.getJulianDate() - vecTmpWindow[jj].date.getJulianDate()));
 				std::sort(vecTmpWindow.begin(), vecTmpWindow.end(), compareMeteoData);
 				vecWindowM[ii](paramindex) = WMASmoothingAlgorithm(vecTmpWindow, paramindex);
-				//cout << "WMASmoothing: " << vecWindowM[ii](paramindex) << endl;
+				//cerr << "WMASmoothing: " << vecWindowM[ii](paramindex) << endl;
 			}
 		}
 	}
@@ -428,17 +423,17 @@ unsigned int FilterAlgorithms::getWindowData(const std::string& filtername, cons
 	}
 
 	//Date gap(vecM[startposition].date - vecM[endposition].date);
-	//cout << "The final gap is " << gap << "  windowposition: " << windowposition << endl;
+	//cerr << "The final gap is " << gap << "  windowposition: " << windowposition << endl;
 
 	//Push all relevant data elements into the vector vecResult
-	//cout << "POS" << pos << "  start: " << startposition << "  end: " << endposition << endl;
+	//cerr << "POS" << pos << "  start: " << startposition << "  end: " << endposition << endl;
 	unsigned int posofposition = IOUtils::npos;
 	unsigned int counter = 0;
 	for (unsigned int ii=endposition; ii<startposition+1; ii++){
 		vecResult.push_back(vecM[ii]);
 		if (date == vecM[ii].date) posofposition=counter;
 		counter++;
-		//cout << ii << ": pushed at vecM[" <<  ii << "] " << " : "  << endl;
+		//cerr << ii << ": pushed at vecM[" <<  ii << "] " << " : "  << endl;
 	}
 
 	return posofposition;
@@ -587,12 +582,10 @@ void FilterAlgorithms::MinMaxFilter(const std::vector<MeteoData>& /*vecM*/, cons
 		if (value<doubleArgs[0]){
 			if (isSoft) value=doubleArgs[0];
 			else value=IOUtils::nodata;
-			//cout << "Changed: " << value << endl;
 		}
 		if (value>doubleArgs[1]){
 			if (isSoft) value=doubleArgs[1];
 			else value=IOUtils::nodata;
-			//cout << "Changed: " << value << endl;
 		}
 	}
 }
@@ -876,7 +869,6 @@ void FilterAlgorithms::AccumulateProcess(const std::vector<MeteoData>& vecM, con
 				vecWindowM[ii](paramindex) = sum;
 			else
 				vecWindowM[ii](paramindex) = IOUtils::nodata;
-			//cout << "sum: " << vecWindowM[ii](paramindex) << endl;
 		} else {
 			throw IOException("Could not find an element to start accumulation", AT);
 		}

@@ -55,7 +55,6 @@ unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
 const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& index,
                                                                 const std::vector<MeteoData>& ivec)
 {
-	//cout << "Requesting index " << index << endl;
 	if ((index == 0) || (last_index > index)){ //reset global variables
 		vec_window.clear();
 		elements_left = elements_right = 0;
@@ -75,7 +74,6 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 				vec_window.push_back(&ivec[0]);
 			}
 		}
-		//cout << "Init: " << elements_left << "/" << elements_right << endl;
 
 		last_index = 0;
 		return vec_window;
@@ -177,8 +175,6 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned int& ivec_size,
                                      unsigned int& index_start, unsigned int& index_end)
 {
-	//cout << "Requesting index " << index << endl;
-
 	if ((ivec_size == 0) || (ivec_size <= index)){
 		index_end = 0;
 		index_start = 1;
@@ -198,8 +194,6 @@ void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned i
 				elements_left = elements_right = 1;
 			}
 		}
-
-		//cout << "Init: " << elements_left << "/" << elements_right << endl;
 
 		last_index = 0;
 
@@ -385,4 +379,4 @@ void WindowedFilter::get_window(const unsigned int& index, const unsigned int& i
 	}
 }
 
-}
+} //namespace

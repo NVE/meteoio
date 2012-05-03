@@ -235,7 +235,6 @@ bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
 	vecMeteo[stationnr].clear();
 
 	getFiles(vecStationName[stationnr], dateStart, dateEnd, vecFiles, vecDate);
-	//cout << "[i] Buffering station number: " << vecStationName[stationnr] << "  " << vecFiles.size() << " files" << endl;
 
 	if (vecFiles.size()==0) { //No files in range between dateStart and dateEnd
 		return false;
@@ -396,9 +395,6 @@ xmlpp::Node* BormaIO::xmlGetNode(xmlpp::Node* parentNode, const std::string& nod
 	xmlpp::Node::NodeList list = parentNode->get_children();
 
 	for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter) {
-		//xmlpp::Node* tmpNode= *iter;
-		//cout << tmpNode->get_name() << endl;
-
 		xmlpp::Node* tmpNode2= (xmlGetNode(*iter, nodename));
 		if (tmpNode2!=NULL) {
 			return tmpNode2;

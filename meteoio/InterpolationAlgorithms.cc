@@ -658,7 +658,7 @@ double USERInterpolation::getQualityRating()
 	const std::string filename = getGridFileName();
 
 	if (!IOUtils::validFileName(filename)) {
-		cout << "[E] Invalid grid filename for USER interpolation algorithm: " << filename << "\n";
+		cerr << "[E] Invalid grid filename for USER interpolation algorithm: " << filename << "\n";
 		return 0.0;
 	}
 	if(IOUtils::fileExists(filename)) {
@@ -790,9 +790,9 @@ double OrdinaryKrigingAlgorithm::computeVariogram()
 	try {
 		variogram.setModel(vario_model, dist, vari);
 	} catch(const IOException&) {
-		cout << "[E] Variogram data points:\n";
+		cerr << "[E] Variogram data points:\n";
 		for(unsigned int ii=0; ii<dist.size(); ii++) {
-			cout << dist[ii] << " " << vari[ii] << endl;
+			cerr << dist[ii] << " " << vari[ii] << endl;
 		}
 		throw IOException("The variogram model "+variogram.getName()+" could not be fitted to the available data!", AT);
 	}

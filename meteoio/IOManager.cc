@@ -225,7 +225,6 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 
 	for (size_t ii=0; ii<vec_cache.size(); ii++){//resampling for every station
 		if ((IOManager::resampled & processing_level) == IOManager::resampled){
-			//cout << "Resampling data for station " << ii << " (" << vec_cache[ii].size() << " elements)" << endl;
 			const size_t position = meteoprocessor.resample(i_date, vec_cache[ii]);
 
 			if (position != IOUtils::npos)

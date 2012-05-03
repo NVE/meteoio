@@ -174,7 +174,6 @@ char SMETCommon::getEoln(std::istream& fin)
 
 		if ((tmp == '\r') || (tmp == '\n')) {
 			char peekc = tmp;
-			//cout << (int)tmp << endl;
 			while ((!fin.eof() && ((peekc=='\r') || (peekc=='\n')))) {
 				tmp = peekc;
 				fin.get(peekc);
@@ -919,7 +918,7 @@ void SMETReader::checkSignature(const std::vector<std::string>& vecSignature, bo
 		throw SMETException("Unsupported file format version for file " + filename, SMET_AT);
 
 	if(version=="0.9" || version=="0.95" || version=="0.99" || version=="1.0") {
-		cout << "[W] SMET specification 1.1 changes the priorities of units_multiplier and units_offset. "
+		cerr << "[W] SMET specification 1.1 changes the priorities of units_multiplier and units_offset. "
 			<< "Please check/update your files and bring them to 1.1!!" << endl;
 	}
 
@@ -1097,7 +1096,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 				}
 				current_fpointer = tmp_fpointer;
 			} catch(SMETException&) {
-				std::cout << "Error reading file \"" << filename << "\" at line \"" << line << "\"" << std::endl;
+				std::cerr << "Error reading file \"" << filename << "\" at line \"" << line << "\"" << std::endl;
 				throw;
 			}
 		} else {

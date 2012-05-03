@@ -45,9 +45,6 @@ void FilterMedianAvg::process(const unsigned int& index, const std::vector<Meteo
 
 		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
 
-		//cout << "left : "<<elements_left << endl << "right: "<<elements_right << endl;
-		//cout << "size : "<<vec_window.size() << endl;
-
 		if (is_soft){
 			if (vec_window.size() > 0){
 				value = calc_median(index, vec_window);
@@ -61,9 +58,6 @@ void FilterMedianAvg::process(const unsigned int& index, const std::vector<Meteo
 				value = IOUtils::nodata;
 			}
 		}
-
-		//cout << endl << "Final value: " << value << " (" << ovec[ii].date.toString(Date::ISO) << ")" << endl;
-		//cout << "============================" << endl;
 	}
 }
 
@@ -121,4 +115,4 @@ void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 }
 
-}
+} //namespace

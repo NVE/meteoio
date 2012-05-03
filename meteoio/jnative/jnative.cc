@@ -25,7 +25,7 @@ void loadMeteoAndStationData(double* cMetadata, double* cData,
 		std::vector<StationData>& vecStation, std::vector<MeteoData>& vecData,
 		enum MeteoData::Parameters& interpolation_type){
 
-	std::cout << "loadMeteoAndStationData "  << algorithm << "*"  << nbStation <<  std::endl;
+	std::cerr << "loadMeteoAndStationData "  << algorithm << "*"  << nbStation <<  std::endl;
 
 	const Date date_in;
 	Coords position(metaCoordinateSystem, "");
@@ -182,7 +182,7 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 			DEMLoader::loadSubDEM(demFile, demCoordSystem, iointerface, demXll, demYll, demXrt, demYrt) :
 				DEMLoader::loadFullDEM(demFile, demCoordSystem, iointerface);
 	if (dem.ncols<1 || dem.ncols<2  ){
-		std::cout << "Problem with DEM creation : "  << std::endl;
+		std::cerr << "Problem with DEM creation : "  << std::endl;
 		//error
 		return makeError(-2.);
 	}
@@ -212,11 +212,11 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 		mi.interpolate(interpolation_type, p);
 	}
 	catch(const IOException){
-		std::cout << "Interpolation failed " << std::endl;
+		std::cerr << "Interpolation failed " << std::endl;
 		success = false;
 	}
 	catch(...){
-		std::cout << "Interpolation failed for some reason ?!? " <<  std::endl;
+		std::cerr << "Interpolation failed for some reason ?!? " <<  std::endl;
 		success = false;
 	}
 
@@ -237,9 +237,9 @@ double* executeInterpolationSubDem(char* algorithm, char* iointerface,
 	tmpEnd = clock(); //end
 	const double msInterpolation = (tmpEnd - tmpStart)/1000.0;
 
-	std::cout << " - time to load DEM : "  << msDemLoading << std::endl;
-	std::cout << " - time to load Data : "  << msDataLoading << std::endl;
-	std::cout << " - time to interpolate: "  << msInterpolation << std::endl;
+	std::cerr << " - time to load DEM : "  << msDemLoading << std::endl;
+	std::cerr << " - time to load Data : "  << msDataLoading << std::endl;
+	std::cerr << " - time to interpolate: "  << msInterpolation << std::endl;
 	//put the different process in the result
 	out[3] = msDemLoading;
 	out[4] = msDataLoading;

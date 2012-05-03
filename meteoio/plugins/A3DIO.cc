@@ -548,7 +548,6 @@ size_t A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::map<std:
 	std::string line_in="";
 
 	for (size_t ii=0; ii<filenames.size(); ii++) {
-		//cout << *it << endl;
 		std::string filename = filenames[ii];
 
 		fin.clear();
@@ -565,7 +564,6 @@ size_t A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::map<std:
 			for (size_t ii=4; ii<cols; ii++) {
 				size_t tmp_int = hashStations.count(tmpvec.at(ii));
 				if (tmp_int == 0) {
-					//cout << "Found station: " << tmpvec.at(ii) << endl;
 					hashStations[tmpvec.at(ii)] = hashStations.size();
 				}
 			}

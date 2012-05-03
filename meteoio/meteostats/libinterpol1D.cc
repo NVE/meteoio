@@ -515,11 +515,6 @@ int Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vec
 	std::stringstream mesg2;
 	const int code2 = NoisyLinRegression(X2, Y2, a2, b2, r2, mesg2);
 
-	/*if(mesg1.str()!="")
-		std::cout << "[E] In Bilinear reg segment1, " << mesg1.str() << std::endl;
-	if(mesg2.str()!="")
-		std::cout << "[E] In Bilinear reg segment2, " << mesg2.str() << std::endl;*/
-
 	if(code1==EXIT_FAILURE && code2==EXIT_FAILURE)
 		return EXIT_FAILURE;
 

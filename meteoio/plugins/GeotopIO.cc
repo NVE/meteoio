@@ -375,7 +375,7 @@ void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std
 				index = md.addParameter(it->first);
 			}
 			indices.push_back(index);
-			//cout << tmpvec[jj] << "=> index " << index << endl;
+			//cerr << tmpvec[jj] << "=> index " << index << endl;
 		} else {
 			indices.push_back(IOUtils::npos);
 			cerr << "[w] Column '" << tmpvec[jj] << "' in file " << filename << " will be ignored!" << endl;
@@ -499,10 +499,6 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			tmpdata[3] = IOUtils::standardizeNodata(tmpdata[3], plugin_nodata);
 			tmpdata[4] = IOUtils::standardizeNodata(tmpdata[4], plugin_nodata);
 
-			//cout << "Station(" << i + 1 << ") X " << tmpdata[0] << " Y "
-			//		<< tmpdata[1] << " La " << tmpdata[2] << " Lo "
-			//		<< tmpdata[3] << " E " << tmpdata[4] << endl;
-
 			//coordinate.setLatLon(tmpdata[2], tmpdata[3], tmpdata[4], false);
 			coordinate.setXY(tmpdata[0], tmpdata[1], tmpdata[4], true);
 
@@ -532,7 +528,6 @@ std::string GeotopIO::getValueForKey(const std::string& line)
 {
 	size_t pos_start = line.find("\"");
 	size_t pos_end = line.find("\"", pos_start+1);
-	//cout << "t: pos_start = " << pos_start << "   pos_end = " << pos_end << endl;
 
 	if ((pos_start != string::npos) && (pos_end != string::npos)) {
 		string param_name = line.substr(pos_start+1, pos_end - pos_start - 1);

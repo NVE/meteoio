@@ -34,7 +34,7 @@ FilterMeanAvg::FilterMeanAvg(const std::vector<std::string>& vec_args) : Windowe
 }
 
 void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-					   std::vector<MeteoData>& ovec)
+                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
@@ -44,9 +44,6 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
 		double& value = ovec[ii](index);
 
 		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
-
-		//cout << "left : "<<elements_left << endl << "right: "<<elements_right << endl;
-		//cout << "size : "<<vec_window.size() << endl;
 
 		if (is_soft){
 			if (vec_window.size() > 0){
@@ -61,9 +58,6 @@ void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoDa
 				value = IOUtils::nodata;
 			}
 		}
-
-		//cout << endl << "Final value: " << value << " (" << ovec[ii].date.toString(Date::ISO) << ")" << endl;
-		//cout << "============================" << endl;
 	}
 }
 
@@ -85,7 +79,6 @@ double FilterMeanAvg::calc_avg(const unsigned int& index, const std::vector<cons
 		if (value != IOUtils::nodata){
 			sum += value;
 			counter++;
-			//cout << "Adding value: " << value << "(" << (*vec_window[ii]).date.toString(Date::ISO) << ")" << endl;
 		}
 	}
 
@@ -119,4 +112,4 @@ void FilterMeanAvg::parse_args(std::vector<std::string> vec_args)
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 }
 
-}
+} //namespace

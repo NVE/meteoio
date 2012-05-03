@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERPASSIVET_H__
-#define __FILTERPASSIVET_H__
+#ifndef __PROCPASSIVET_H__
+#define __PROCPASSIVET_H__
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -25,35 +25,38 @@
 namespace mio {
 
 /**
- * @class  FilterPassiveT
+ * @class  ProcPassiveT
  * @ingroup processing
- * @author Mathias Bavay
- * @date   2012-04-23
- * @brief Filters and correct temperatures from unventillated sensor.
- * This filter can ONLY be applied to air temperatures.
+ * @brief Filters and corrects temperatures from unventilated sensor.
+ * This implements the correction described in <i>"Air Temperature Measurement Errors in Naturally Ventilated Radiation Shields"</i>, Reina Nakamura, L. Mahrt, J. Atmos. Oceanic Technol., <b>22</b>, 2005, pp 1046–1058
+ * with an albedo dependency as introduced in <i>"Albedo effect on radiative errors in air temperature measurements"</i>, H. Huwald, C. W. Higgins, M.-O. Boldi, E. Bou-Zeid, M. Lehning, and M. B. Parlange, Water Resour. Res., <b>45</b>, W08431, 2009.
  *
+ * If the "soft" option is given, the albedo has a value different according to snow (or no snow) on the ground. The default albedo (that is also used if snow height is nodata) can be given as a second option.
+ *
+ * @note This filter can ONLY be applied to air temperatures.
  * @code
  * TA::filter2	= passive_T
- * TA::arg2	= nakamura
+ * TA::arg2	= soft 0.23
  * @endcode
+ *
+ * @author Mathias Bavay
+ * @date   2012-05-03
  */
 
-class FilterPassiveT : public FilterBlock {
+class ProcPassiveT : public ProcessingBlock {
 	public:
-		FilterPassiveT(const std::vector<std::string>& vec_args);
+		ProcPassiveT(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		typedef enum TA_CORRECTION {
-			none,
-			nakamura
-		} ta_correction;
-		
 		void parse_args(std::vector<std::string> vec_args);
-		
-		ta_correction type;
+
+		bool is_soft;
+		double albedo;
+		static const double dflt_albedo, soil_albedo, snow_albedo;
+		static const double snow_thresh;
 };
 
 } //end namespace

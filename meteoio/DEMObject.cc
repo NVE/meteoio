@@ -302,11 +302,11 @@ void DEMObject::printFailures() {
 			for ( unsigned int i = 0; i < ncols; i++ ) {
 				if((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 					if(header==true) {
-						cout << "[i] DEM slope could not be computed at the following points \n";
-						cout << "[i]\tGrid Point\tElevation\tSlope\n";
+						cerr << "[i] DEM slope could not be computed at the following points \n";
+						cerr << "[i]\tGrid Point\tElevation\tSlope\n";
 						header=false;
 					}
-					cout << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" << slope(i,j) << "\n";
+					cerr << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" << slope(i,j) << "\n";
 				}
 			}
 		}
@@ -317,17 +317,17 @@ void DEMObject::printFailures() {
 			for ( unsigned int i = 0; i < ncols; i++ ) {
 				if((curvature(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 					if(header==true) {
-						cout << "[i] DEM curvature could not be computed at the following points \n";
-						cout << "[i]\tGrid Point\tElevation\tCurvature\n";
+						cerr << "[i] DEM curvature could not be computed at the following points \n";
+						cerr << "[i]\tGrid Point\tElevation\tCurvature\n";
 						header=false;
 					}
-					cout << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" <<  curvature(i,j) << "\n";
+					cerr << "[i]\t(" << i << "," << j << ")" << "\t\t" << grid2D(i,j) << "\t\t" <<  curvature(i,j) << "\n";
 				}
 			}
 		}
 	}
 	if(header==false) {
-		cout << std::endl;
+		cerr << std::endl;
 	}
 }
 
@@ -689,7 +689,7 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	//Inform the user is some points have unexpectidly not been computed
 	//(ie: there was an altitude but some parameters could not be computed)
 	if(slope_failures>0 || curvature_failures>0) {
-		cout << "[W] DEMObject: " << slope_failures << " point(s) have an elevation but no slope, " << curvature_failures << " point(s) have an elevation but no curvature." << std::endl;
+		cerr << "[W] DEMObject: " << slope_failures << " point(s) have an elevation but no slope, " << curvature_failures << " point(s) have an elevation but no curvature." << std::endl;
 	}
 
 } // end of CalculateAziSlope

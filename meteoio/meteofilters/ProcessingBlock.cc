@@ -28,6 +28,7 @@
 #include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/FilterMAD.h>
 #include <meteoio/meteofilters/ProcUndercatch.h>
+#include <meteoio/meteofilters/ProcPassiveT.h>
 #include <meteoio/meteofilters/ProcAdd.h>
 #include <meteoio/meteofilters/ProcMult.h>
 
@@ -90,6 +91,7 @@ namespace mio {
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
  * - UNDERCATCH: rain gauge correction for undercatch, using various correction models, see ProcUndercatch
+ * - PASSIVE_T: unventilated temperature sensor correction, see ProcPassiveT
  *
  */
 
@@ -110,6 +112,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("MAD");
 	availableBlocks.insert("HNW_MELT");
 	availableBlocks.insert("UNDERCATCH");
+	availableBlocks.insert("PASSIVE_T");
 	availableBlocks.insert("ADD");
 	availableBlocks.insert("MULT");
 	return true;
@@ -146,6 +149,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterHNWMelt(vec_args);
 	} else if (blockname == "UNDERCATCH"){
 		return new ProcUndercatch(vec_args);
+	} else if (blockname == "PASSIVE_T"){
+		return new ProcPassiveT(vec_args);
 	} else if (blockname == "MULT"){
 		return new ProcMult(vec_args);
 	} else if (blockname == "ADD"){

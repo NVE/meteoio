@@ -63,7 +63,7 @@ IOInterface* DEMLoader::generateIOInterface(
 		else
 			io = new ARCIO(cfg); //default IOinterface
 	}catch (const IOException&){
-		std::cout << "Problem with IOInterface ganeration in DEMLoader singleton, cause: "
+		std::cerr << "Problem with IOInterface ganeration in DEMLoader singleton, cause: "
 					<< e.what() << std::endl;
 		return NULL ;
 	}
@@ -91,7 +91,7 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 	demMapType::iterator iter = demMap.find(s);
 	if( iter != demMap.end() ){
 		const DEMObject& res =  iter->second; //found in map, return it
-		std::cout << "DEMLoader : "  << s << " already loaded" <<  std::endl;
+		std::cerr << "DEMLoader : "  << s << " already loaded" <<  std::endl;
 		return res;
 	}
 
@@ -102,7 +102,7 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 			if( iter == demMap.end() ){
 				IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
 				if (io!=NULL){
-					std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
+					std::cerr << "DEMLoader : "  << s << " loading ..." <<  std::endl;
 					DEMObject dem;
 					dem.setUpdatePpt(DEMObject::NO_UPDATE);
 					//read file ...
@@ -123,12 +123,12 @@ const DEMObject& DEMLoader::internal_loadSubDEM(const std::string  cDemFile,
 							urcorner.getGridJ() -llcorner.getGridJ()+1);
 
 					demMap.insert(demPairType(s, sub_dem));// critical operation
-					std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
+					std::cerr << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
 					delete io;
 				}
 			}
 		}catch (const IOException& e){
-			std::cout << "Problem while extracting subDEM in DEMLoader, cause: "
+			std::cerr << "Problem while extracting subDEM in DEMLoader, cause: "
 						<< e.what() << std::endl;
 			DEMObject dem;
 			demMap.insert(demPairType(s, dem));
@@ -148,7 +148,7 @@ const DEMObject& DEMLoader::internal_loadFullDEM(const std::string  cDemFile,
 	demMapType::iterator iter = demMap.find(s);
 	if( iter != demMap.end() ){
 		const DEMObject& res =  iter->second; //found in map, return it
-		std::cout << "DEMLoader : "  << s << " already loaded" <<  std::endl;
+		std::cerr << "DEMLoader : "  << s << " already loaded" <<  std::endl;
 		return res;
 	}
 
@@ -159,17 +159,17 @@ const DEMObject& DEMLoader::internal_loadFullDEM(const std::string  cDemFile,
 			try{
 				IOInterface* io = this->generateIOInterface(cDemFile, cDemCoordSystem, cInterfaceType);
 				if (io!=NULL){
-					std::cout << "DEMLoader : "  << s << " loading ..." <<  std::endl;
+					std::cerr << "DEMLoader : "  << s << " loading ..." <<  std::endl;
 					DEMObject dem;
 					dem.setUpdatePpt(DEMObject::NO_UPDATE);
 					io->readDEM(dem);
 					//read file ...
 					demMap.insert(demPairType(s, dem));// critical operation
-					std::cout << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
+					std::cerr << "DEMLoader : "  << s << " loaded !!" <<  std::endl;
 					delete io;
 				}
 			}catch (const IOException& e){
-				std::cout << "Problem while reading dem file in DEMLoader, cause: "
+				std::cerr << "Problem while reading dem file in DEMLoader, cause: "
 							<< e.what() << std::endl;
 				DEMObject dem;
 				demMap.insert(demPairType(s, dem));

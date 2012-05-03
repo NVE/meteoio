@@ -324,7 +324,6 @@ void IOHandler::parse_copy_config()
 		if ((name_of_copy.length() > 0) && (initial_name.length() > 0)){
 			copy_parameter.push_back(initial_name);
 			copy_name.push_back(name_of_copy);
-			//cout << "Param: " << initial_name << " copied to name: " << name_of_copy << endl;
 			enable_copying = true;
 		}
 	}

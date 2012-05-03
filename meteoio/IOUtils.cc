@@ -290,7 +290,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 
 	const size_t path_length = path.length();
 	if (path_length > (MAX_PATH - 3)) {
-		std::cout << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
+		std::cerr << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
@@ -384,9 +384,7 @@ void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 
 	for (size_t ii=0; ii< linecount; ii++){
 		if (std::getline(fin, line, eol)) {
-			//cout << line <<endl;
 			linenr++;
-
 			bool result = IOUtils::readKeyValuePair(line, delimiter, headermap);
 
 			if (!result) { //  means if ((key == "") || (value==""))
@@ -414,7 +412,6 @@ char IOUtils::getEoln(std::istream& fin)
 
 		if ((tmp == '\r') || (tmp == '\n')) {
 			char peekc = tmp;
-			//cout << (int)tmp << endl;
 			while ((!fin.eof() && ((peekc=='\r') || (peekc=='\n')))) {
 				tmp = peekc;
 				fin.get(peekc);

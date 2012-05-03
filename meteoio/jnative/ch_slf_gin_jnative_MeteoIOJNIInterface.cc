@@ -72,7 +72,7 @@ jdoubleArray __internalWrapper
 			DEMLoader::loadSubDEM(cDemFile, cDemCoordSystem, cIOInterface, demXll, demYll, demXrt, demYrt) :
 				DEMLoader::loadFullDEM(cDemFile, cDemCoordSystem, cIOInterface);
 	if (dem.nrows<1 || dem.ncols<2  ){
-		std::cout << "Problem with DEM creation : "  << std::endl;
+		std::cerr << "Problem with DEM creation : "  << std::endl;
 		//error
 		return jMakeError(env, -2.f);
 	}
@@ -134,11 +134,11 @@ jdoubleArray __internalWrapper
 		mi.interpolate(interpolation_type, p);
 	}
 	catch(const IOException e){
-		std::cout << "Interpolation failed : " << e.what() << std::endl;
+		std::cerr << "Interpolation failed : " << e.what() << std::endl;
 		success = false;
 	}
 	catch(...){
-		std::cout << "Interpolation failed for some reason ?!? " <<  std::endl;
+		std::cerr << "Interpolation failed for some reason ?!? " <<  std::endl;
 		success = false;
 	}
 	tmpEnd = clock(); //end
@@ -150,7 +150,7 @@ jdoubleArray __internalWrapper
 			if(bClusterization)
 				p.clusterization(vecClusterThresholds, vecClusterIds);
 		}catch(...){
-			std::cout << "Extra process failed " <<  std::endl;
+			std::cerr << "Extra process failed " <<  std::endl;
 		}
 	tmpEnd = clock(); //end
 	const double msExtra = (tmpEnd - tmpStart)/1000.0;
@@ -169,10 +169,10 @@ jdoubleArray __internalWrapper
 	//times[3] = msExtra;
 	env->SetDoubleArrayRegion(out, 3, 3, times);
 	free(times);
-	std::cout << " - time to load DEM : "  << msDemLoading << std::endl;
-	std::cout << " - time to load Data : "  << msDataLoading << std::endl;
-	std::cout << " - time to interpolate: "  << msInterpolation << std::endl;
-	std::cout << " - time to do cluster/polygonize: "  << msExtra << std::endl;
+	std::cerr << " - time to load DEM : "  << msDemLoading << std::endl;
+	std::cerr << " - time to load Data : "  << msDataLoading << std::endl;
+	std::cerr << " - time to interpolate: "  << msInterpolation << std::endl;
+	std::cerr << " - time to do cluster/polygonize: "  << msExtra << std::endl;
 
 
 	/************************************************************************/
