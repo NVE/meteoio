@@ -123,6 +123,22 @@ double SunTrajectory::projectHorizontalToBeam(const double& sun_elev, const doub
 	}
 }
 
+/**
+ * @brief Return the current solar time.
+ * Since the Sun reaches its zenith at a time different than the local noon, the solar noon
+ * does not happen at 12:00 local time. This defines a solar time that has a negative or positive offset
+ * with the local time, depending on the seasons (see http://www.jaloxa.eu/resources/daylighting/sunpath.shtml).
+ * @param TZ time zone of the output
+ * @return actual solar time
+ */
+double SunTrajectory::getSolarTime(const double& TZ) const
+{
+	if(julian_gmt!=IOUtils::nodata && SolarNoon!=IOUtils::nodata)
+		return julian_gmt + (SolarNoon - .5) + TZ/24.;
+	else
+		return IOUtils::nodata;
+}
+
 std::ostream& operator<<(std::ostream &os, const SunTrajectory& data)
 {
 	os << "<SunTrajectory>\n";
@@ -135,6 +151,7 @@ std::ostream& operator<<(std::ostream &os, const SunTrajectory& data)
 	os << "Azi./Elev.\t" << std::setw(7)<< data.SolarAzimuthAngle << "° " << std::setw(7) << data.SolarElevation << "°\n";
 	os << "RA/decl.\t" << std::setw(7) << data.SunRightAscension << "° " << std::setw(7) << data.SunDeclination << "°\n";
 	os << "Sunrise (gmt)\t" << IOUtils::printFractionalDay(data.SunRise) << "\n";
+	os << "SolarNoon (gmt)\t" << IOUtils::printFractionalDay(data.SolarNoon) << "\n";
 	os << "Sunset (gmt)\t" << IOUtils::printFractionalDay(data.SunSet) << "\n";
 	os << "Daylight\t" << IOUtils::printFractionalDay(data.SunlightDuration/(60.*24.)) << "\n";
 	os << "</SunTrajectory>\n";
@@ -173,6 +190,7 @@ void SunMeeus::private_init() {
 	SolarElevationAtm = IOUtils::nodata;
 	eccentricityEarth = IOUtils::nodata;
 	SunRise = SunSet = SunlightDuration = IOUtils::nodata;
+	SolarNoon = IOUtils::nodata;
 	SunRightAscension = SunDeclination = IOUtils::nodata;
 	HourAngle = IOUtils::nodata;
 }
@@ -312,7 +330,7 @@ void SunMeeus::update() {
 	             - tan(latitude*to_rad)*tan(SunDeclination*to_rad)
 	             ) * to_deg;
 
-	const double SolarNoon = (720. - 4.*longitude - EquationOfTime + lst_TZ*60.)/1440.; //in days, in LST time
+	SolarNoon = (720. - 4.*longitude - EquationOfTime + lst_TZ*60.)/1440.; //in days, in LST time
 	SunRise = SolarNoon - HA_sunrise*4./1440.; //in days, in LST
 	SunSet = .5 + (SolarNoon + HA_sunrise*4.)/1440.; //in days, in LST
 	SunlightDuration = 8.*HA_sunrise;

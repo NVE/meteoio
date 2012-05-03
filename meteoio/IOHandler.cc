@@ -41,7 +41,7 @@ namespace mio {
  * Each plugin might have its own specific options, meaning that it might require its own keywords. Please check in each plugin documentation the supported options and keys (see links below).
  * Moreover, a given plugin might only support a given category for read or write (for example, PNG: there is no easy and safe way to interpret a given color as a given numeric value without knowing its color scale, so reading a png has been disabled).
  * Finally, the plugins usually don't implement all these categories (for example, ArcGIS file format only describes 2D grids, so the ARC plugin will only deal with 2D grids), so please check what a given plugin implements before connecting it to a specific data source category.
- * 
+ *
  * @section available_plugins Available plugins
  * So far the following plugins have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
  * <center><table border="1">
@@ -172,16 +172,16 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		dynLibrary = DynamicLoader::loadObjectFile(filename);
 
 		if(dynLibrary == NULL) {
-			cout << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << std::endl;
-			cout << "\t" << DynamicLoader::getErrorMessage() << std::endl;
-			cout << "Please check your PLUGINPATH in your configuration file!" << std::endl;
+			cerr << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << std::endl;
+			cerr << "\t" << DynamicLoader::getErrorMessage() << std::endl;
+			cerr << "Please check your PLUGINPATH in your configuration file!" << std::endl;
 		} else {
 			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg));
 			if(io == NULL) {
-				cout << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << "(NULL pointer to plugin's class)" << std::endl;
+				cerr << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << "(NULL pointer to plugin's class)" << std::endl;
 				//delete dynLibrary; This causes a segfault !!
 			} else {
-				cout << "[i] Success loading dynamic plugin " << classname << " from " << filename << std::endl;
+				cerr << "[i] Success loading dynamic plugin " << classname << " from " << filename << std::endl;
 			}
 		}
 	} catch (const std::exception& e) {
@@ -189,7 +189,7 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 		if (dynLibrary != NULL)
 			delete dynLibrary;
 	#endif
-		std::cerr << AT << ": [E] failed while loading plugin with error: \n" << e.what() << std::endl;
+		cerr << AT << ": [E] failed while loading plugin with error: \n" << e.what() << std::endl;
 	}
 }
 

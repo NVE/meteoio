@@ -667,7 +667,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 			actual_nr_of_parameters = current_size;
 		} else if (actual_nr_of_parameters != current_size){
 			//There is an inconsistency in the fields, print out a warning and proceed
-			cout << "[w] While writing SMET file: Inconsistency in number of meteo "
+			cerr << "[w] While writing SMET file: Inconsistency in number of meteo "
 				<< "parameters for station " << stationname << endl;
 			actual_nr_of_parameters = MeteoData::nrOfParameters;
 			break;

@@ -118,7 +118,7 @@ void GSNIO::initGSNConnection(){
 	cfg.getValue("ENDPOINT", "INPUT", endpoint, Config::nothrow);
 	if (endpoint != ""){
 		gsn.soap_endpoint = endpoint.c_str();
-		cout << "\tUsing GSN Endpoint: " << endpoint << "\n";
+		cerr << "\tUsing GSN Endpoint: " << endpoint << "\n";
 	}
 
 	/*
@@ -220,9 +220,9 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 		reverse(vecMeteo[ii].begin(), vecMeteo[ii].end()); //this is necessary because GSN data comes sorted descending by date
 		/*//The following block can be commented in for testing purposes
-		cout << "vecMeteo[" <<ii << "].size() = " <<  vecMeteo[ii].size() << "\n";
+		cerr << "vecMeteo[" <<ii << "].size() = " <<  vecMeteo[ii].size() << "\n";
 		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++){
-			cout << vecMeteo[ii][jj] << "\n";
+			cerr << vecMeteo[ii][jj] << "\n";
 		}*/
 	}
 }
@@ -487,7 +487,7 @@ void GSNIO::readStationNames()
 
 		if (current_station != ""){
 			vecStationName.push_back(current_station); //add station name to vector of all station names
-			cout << "\tRead stationname '" << current_station << "'\n";
+			cerr << "\tRead stationname '" << current_station << "'\n";
 		}
 
 		current_stationnr++;
@@ -508,9 +508,9 @@ void GSNIO::listSensors(std::vector<std::string>& vec_names)
 	_ns1__listVirtualSensorNames sensor_req;
 
 	if (gsn.listVirtualSensorNames(&sensor_req, &sensor_names) == SOAP_OK){
-		cout << "[I] No STATIONS specified... Using all " << sensor_names.virtualSensorName.size() << " sensors available through GSN\n";
+		cerr << "[I] No STATIONS specified... Using all " << sensor_names.virtualSensorName.size() << " sensors available through GSN\n";
 		for (size_t ii=0; ii<sensor_names.virtualSensorName.size(); ii++){
-			cout << "\tSTATION" << ii+1 << " = " << sensor_names.virtualSensorName[ii] << "\n";
+			cerr << "\tSTATION" << ii+1 << " = " << sensor_names.virtualSensorName[ii] << "\n";
 			vec_names.push_back(sensor_names.virtualSensorName[ii]);
 		}
 	} else {

@@ -269,7 +269,7 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			fout << "\n";
 		}
 	} catch(const std::exception& e) {
-		cout << "[E] " << AT << ": " << e.what() << std::endl;
+		cerr << "[E] " << AT << ": " << e.what() << std::endl;
 		cleanup();
 		throw;
 	}

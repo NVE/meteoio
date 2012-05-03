@@ -165,7 +165,7 @@ void GRIBIO::readStations()
 
 		if (current_station != "") {
 			addStation(current_station);
-			std::cout <<  "\tRead virtual station " << vecPts.back().printLatLon() << "\n";
+			std::cerr <<  "\tRead virtual station " << vecPts.back().printLatLon() << "\n";
 		}
 		current_stationnr++;
 	} while (current_station != "");
@@ -218,7 +218,7 @@ void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 		vlen=MAX_VAL_LEN;
 		bzero(value,vlen);
 		GRIB_CHECK(grib_get_string(*h,name,value,&vlen),name);
-		std::cout << name << " = " << value << "\n";
+		std::cerr << name << " = " << value << "\n";
 	}
 
 	grib_keys_iterator_delete(kiter);
@@ -248,7 +248,7 @@ void  GRIBIO::listFields(const std::string& filename)
 		GRIB_CHECK(grib_get_long(h,"indicatorOfTypeOfLevel", &levelType),0);
 		long level=0;
 		if(levelType!=1) GRIB_CHECK(grib_get_long(h,"level", &level),0);
-		std::cout << marsParam << " " << shortname << " " << name << " type " << levelType << " level " << level << "\n";
+		std::cerr << marsParam << " " << shortname << " " << name << " type " << levelType << " level " << level << "\n";
 		grib_handle_delete(h);
 	}
 }

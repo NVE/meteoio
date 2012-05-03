@@ -265,8 +265,8 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 {
 	string info_string;
 	interpolator.interpolate(date, dem, meteoparam, result, info_string);
-	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-	cout << " (" << info_string << ") " << endl;
+	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+	cerr << " (" << info_string << ") " << endl;
 	return (!result.isEmpty());
 }
 
@@ -292,8 +292,8 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 {
 	string info_string;
 	interpolate(date, dem, meteoparam, result, info_string);
-	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-	cout << " (" << info_string << ") " << endl;
+	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+	cerr << " (" << info_string << ") " << endl;
 }
 
 #ifdef _POPC_ //HACK popc
@@ -317,8 +317,8 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 {
 	string info_string;
 	interpolate(date, dem, meteoparam, in_coords, result, info_string);
-	cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-	cout << " (" << info_string << ") " << endl;
+	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
+	cerr << " (" << info_string << ") " << endl;
 }
 
 #ifdef _POPC_ //HACK popc
@@ -353,7 +353,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 		Grid2DObject result_grid;
 		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
 		if (ii == 0) {
-			cout << "[i] Interpolating " << MeteoData::getParameterName(meteoparam)
+			cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam)
 				<< " point wise for " << vec_coords.size() << " points"
 				<< " (" << info_string << ") " << endl;
 		}

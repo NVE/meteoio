@@ -356,7 +356,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			fout << "\n";
 		}
 	} catch(...) {
-		cout << "[E] error when writing ARC grid \"" << full_name << "\" " << AT << ": "<< endl;
+		cerr << "[E] error when writing ARC grid \"" << full_name << "\" " << AT << ": "<< endl;
 		cleanup();
 		throw;
 	}

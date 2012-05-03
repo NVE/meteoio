@@ -404,11 +404,11 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
 		if (current_station != "") {
-			cout << "\tRead stationname " << ss.str() << ": '" << current_station << "'\n";
+			cerr << "\tRead stationname " << ss.str() << ": '" << current_station << "'\n";
 			if (!isdigit(current_station[0])) {
 				vecStationID.push_back(current_station);
 			} else {
-				cout << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!\n";
+				cerr << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!\n";
 			}
 		}
 

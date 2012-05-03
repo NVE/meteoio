@@ -178,7 +178,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			}
 		}
 	} catch(const std::exception&) {
-		cout << "[E] error when reading PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
+		cerr << "[E] error when reading PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
 		cleanup();
 		throw;
 	}
@@ -290,7 +290,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			fout << "\n";
 		}
 	} catch(...) {
-		cout << "[E] error when writing PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
+		cerr << "[E] error when writing PGM grid \"" << full_name << "\" " << AT << ": "<< endl;
 		cleanup();
 		throw;
 	}

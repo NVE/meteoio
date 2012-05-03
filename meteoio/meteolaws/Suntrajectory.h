@@ -55,7 +55,7 @@ class SunTrajectory {
 		virtual void getHorizontalCoordinates(double& azimuth, double& elevation) const=0;
 		virtual void getHorizontalCoordinates(double& azimuth, double& elevation, double& eccentricity) const=0;
 		virtual void getDaylight(double& sunrise, double& sunset, double& daylight, const double& TZ=0.)=0;
-		virtual void getEquatorialSunVector(double& sunx, double& suny, double& sunz)=0;
+		virtual double getSolarTime(const double& TZ=0.) const;
 
 		///(http://en.wikipedia.org/wiki/Equatorial_coordinate_system)
 		virtual void getEquatorialCoordinates(double& right_ascension, double& declination)=0;
@@ -84,7 +84,7 @@ class SunTrajectory {
 		double latitude, longitude;
 		double SolarAzimuthAngle, SolarElevation; ///>this is the TRUE solar elevation, not the apparent one
 		double eccentricityEarth;
-		double SunRise, SunSet, SunlightDuration;
+		double SunRise, SunSet, SunlightDuration, SolarNoon;
 		double SunRightAscension, SunDeclination;
 		double HourAngle;
 		static const double to_deg, to_rad, nodata;

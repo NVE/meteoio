@@ -232,7 +232,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (nr_of_stations == IOUtils::npos)
 		nr_of_stations = vecStation.size();
 
-	cout << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
+	cerr << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
 
 	for (size_t ii = 0; ii < nr_of_stations; ii++) {
 		vecMeteo.push_back(vector<MeteoData> ());
@@ -378,7 +378,7 @@ void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std
 			//cout << tmpvec[jj] << "=> index " << index << endl;
 		} else {
 			indices.push_back(IOUtils::npos);
-			cout << "[w] Column '" << tmpvec[jj] << "' in file " << filename << " will be ignored!" << endl;
+			cerr << "[w] Column '" << tmpvec[jj] << "' in file " << filename << " will be ignored!" << endl;
 			//throw InvalidFormatException("The column name " + tmpvec[jj] + " is unknown", AT);
 		}
 	}

@@ -310,7 +310,7 @@ void SNIO::readMetaData()
 				}
 			}
 			vecAllStations.push_back(sd);
-			cout << "\t[i] Read meta data for station ID \"" << station_id << "\"\n";
+			cerr << "\t[i] Read meta data for station ID \"" << station_id << "\"\n";
 		}
 
 		current_stationnr++;
@@ -768,7 +768,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 	fout << "END" << endl;
 
 	if ((failure_count > 0) || (Dirichlet_failure_count > 0) || (optional_failure_count > 0)) {
-		cout << "[W] " << failure_count << " basic input data, " << Dirichlet_failure_count <<
+		cerr << "[W] " << failure_count << " basic input data, " << Dirichlet_failure_count <<
 		        " Dirichlet boundary condition data, and " << optional_failure_count <<
 		        " optional data found missing when writing " << file_name << "\n";
 	}
