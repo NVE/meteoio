@@ -54,7 +54,7 @@ class ProcPassiveT : public ProcessingBlock {
 		void parse_args(std::vector<std::string> vec_args);
 
 		bool is_soft;
-		double albedo;
+		double usr_albedo;
 		static const double dflt_albedo, soil_albedo, snow_albedo;
 		static const double snow_thresh;
 };

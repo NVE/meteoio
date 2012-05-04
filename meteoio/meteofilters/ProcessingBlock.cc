@@ -124,7 +124,6 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	if (availableBlocks.find(blockname) == availableBlocks.end())
 		throw UnknownValueException("The processing block '"+blockname+"' does not exist" , AT);
 
-
 	if (blockname == "MIN"){
 		return new FilterMin(vec_args);
 	} else if (blockname == "MAX"){
@@ -159,7 +158,6 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);
 	}
 
-	//return NULL; //unreachable code
 }
 
 ProcessingBlock::ProcessingBlock(const std::string& name) : block_name(name)
