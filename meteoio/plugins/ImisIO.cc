@@ -177,8 +177,8 @@ void ImisIO::getDBParameters()
 
 	useAnetz = false;
 	cfg.getValue("USEANETZ", "Input", useAnetz, Config::nothrow);
-	use_hnw_imis = false;
-	cfg.getValue("USE_IMIS_HNW", "Input", use_hnw_imis, Config::nothrow);
+	use_imis_hnw = false;
+	cfg.getValue("USE_IMIS_HNW", "Input", use_imis_hnw, Config::nothrow);
 	use_hnw_snowpack = false;
 	cfg.getValue("USE_SNOWPACK_HNW", "Input", use_hnw_snowpack, Config::nothrow);
 }
@@ -690,7 +690,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		//divide it by two to conjure the accumulated value for the half hour
 		if (tmpmd.meta.stationID.length() > 0){
 			if (tmpmd.meta.stationID[0] != '*') { //only consider IMIS stations (ie: not ANETZ)
-				if(use_hnw_imis==false) {
+				if(use_imis_hnw==false) {
 					tmpmd(MeteoData::HNW) = IOUtils::nodata;
 				} else {
 					double& hnw = tmpmd(MeteoData::HNW);
