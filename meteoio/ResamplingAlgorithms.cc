@@ -240,14 +240,15 @@ void ResamplingAlgorithms::LinearResampling(const size_t& pos, const size_t& par
  * @endcode
  */
 void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paramindex,
-                                      const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM)
+                                      const std::vector<std::string>& taskargs, const double& /*window_size*/, std::vector<MeteoData>& vecM)
 {
-	//HACK TODO: Overall check IOUtils::nodata data path and test all scenarios with good test cases
-
 	if (pos >= vecM.size())
 		throw IOException("The position of the resampled element is out of bounds", AT);
 
-	//Get accumulation period
+	vecM[pos](paramindex) = IOUtils::nodata; // don't overwrite valid value! -> NOT on filtered_vec
+						//plus it should already have been done...
+
+	//Read accumulation period
 	double accumulate_period;
 	if (taskargs.size()==1) {
 		IOUtils::convertString(accumulate_period, taskargs[0]);
@@ -266,85 +267,51 @@ void ResamplingAlgorithms::Accumulate(const size_t& pos, const size_t& paraminde
 	//find start of accumulation period
 	const Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.), vecM[pos].date.getTimeZone());
 	bool found_start=false;
-
-	size_t start_idx;
-	for (start_idx=pos+1; (start_idx--) > 0; ){
+	size_t start_idx; //this is the index of the first point of the window that will contain dateStart
+	for (start_idx=pos+1; (start_idx--) > 0; ) {
 		if(vecM[start_idx].date <= dateStart) {
 			found_start=true;
 			break;
 		}
 	}
-
-	if (!found_start){
-		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ", ";
-		cerr << ", not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO) << "\n";
+	if (!found_start) {
+		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
+		cerr << "not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO) << "\n";
 		vecM[pos](paramindex) = IOUtils::nodata;
 		return;
 	}
 
 	//resample the starting point
-	//HACK: we consider nodata to be 0. In fact, we should try to interpolate from valid points
-	//if they are not too far away
+	double sum = funcval(start_idx, paramindex, vecM, dateStart); //resampling the starting point
+	if(sum==IOUtils::nodata) return;
 
-	const size_t interval_end   = start_idx + 1;
-	double valstart = funcval(start_idx, paramindex, vecM, dateStart);
-	double valend   = funcval(interval_end, paramindex, vecM, vecM[interval_end].date);
-	double sum = IOUtils::nodata;
-
-	if ((valend == IOUtils::nodata) || (valstart == IOUtils::nodata)){
-		sum = 0.0; //HACK maybe it should be set it to IOUtils::nodata
-	} else {
-		if ((start_idx == (pos-1)) && (dateStart == vecM[start_idx].date)) valstart = 0.0;
-		sum = valend - valstart;
+	 //sum all data points until current position
+	for(size_t idx=(start_idx+1); idx<pos; idx++) { //HACK: <= on filtered_vec
+		if(vecM[idx](paramindex)==IOUtils::nodata) return;
+		sum += vecM[idx](paramindex);
 	}
 
-	if (interval_end == pos){
-		vecM[pos](paramindex) = sum;
-		return;
-	}
-
-	if ((interval_end+1) == pos){
-		valend = funcval(interval_end, paramindex, vecM, vecM[pos].date);
-		if (valend != IOUtils::nodata)
-			sum += valend;
-
-		vecM[pos](paramindex) = sum;
-		return;
-	} else {
-		for (size_t ii=interval_end+1; ii<pos; ii++){
-			const double& val = vecM[ii](paramindex);
-			if (val != IOUtils::nodata)
-				sum += val;
-		}
-	}
-
-	valend = funcval(pos, paramindex, vecM, vecM[pos].date);
-
-	if (valend != IOUtils::nodata)
-		sum += valend;
-
+	//HACK resample end point (from filtered_vec)
 	vecM[pos](paramindex) = sum;
-	//TODO:check if at least one point has been summed. If not -> nodata
 }
 
 double ResamplingAlgorithms::funcval(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
                                      const Date& date)
 {
 	size_t start = pos;
-	if (vecM[start].isResampled()){
+	if (vecM[start].isResampled()) { //HACK how could a point in vecM be resampled?
 		if (start > 0){
 			start--;
 		} else {
 			return IOUtils::nodata;
 		}
 	}
-
-	size_t end = pos+1;
 	const double& valstart = vecM[start](paramindex);
 
 	if (!vecM[pos].isResampled() && (vecM[pos].date == date))
 		return valstart;
 
+	size_t end = pos+1;
 	if ((vecM[end].isResampled())) //skip resampled value
 		end++;
 
