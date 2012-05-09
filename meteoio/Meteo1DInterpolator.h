@@ -64,7 +64,7 @@ class Meteo1DInterpolator {
 		 * @param[in] vecM A vector of MeteoData where the new object will be inserted if not present
 		 * @return    The position of the newly constructed MeteoData/StationData pair within vecM & vecS
 		 */
-		size_t resampleData(const Date& date, std::vector<MeteoData>& vecM);
+		size_t resampleData(const Date& date, std::vector<MeteoData>& vecM, bool& inserted_element);
 
 		void getWindowSize(ProcessingProperties& o_properties) const;
 

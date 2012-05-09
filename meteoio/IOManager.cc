@@ -96,8 +96,7 @@ size_t IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation
 
 
 //for an interval of data: decide whether data should be filtered or raw
-size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd,
-                               std::vector< METEO_TIMESERIE >& vecMeteo)
+size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	vecMeteo.clear();
 
@@ -146,8 +145,7 @@ void IOManager::fill_filtered_cache()
  * @param vec_meteo  A vector to store the chunk cut out
  * @return true if the requested chunk was contained by filtered_cache, false otherwise
  */
-bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date,
-                                    std::vector< METEO_TIMESERIE >& vec_meteo)
+bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date, std::vector< METEO_TIMESERIE >& vec_meteo)
 {
 	if ((start_date >= fcache_start) && (end_date <= fcache_end)){
 		//it's already in the filtered_cache, so just copy the requested slice
@@ -219,7 +217,54 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 		return vecMeteo.size();
 	}
 
+	//HACK FROM HERE
+	//Let's make sure we have the data we need, in the filtered_cache
+	
+	vector< vector<MeteoData> > tmp_meteo;
+
+	if ((fcache_start <= i_date-proc_properties.time_before) && (fcache_end >= i_date+proc_properties.time_after)) {
+		//already cached data
+	} else {
+		//explicit caching
+		bufferedio.readMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, tmp_meteo);
+
+		//now it needs to be secured that the data is actually filtered, if configured
+		if ((IOManager::filtered & processing_level) == IOManager::filtered){
+			//we don't use tmp_meteo, but calling readMeteoData has filled the buffer for us
+			//and fill_filtered_cache will directly use the BufferedIO buffer
+			//HACK: if BufferedIO's buffer can not hold all data between start and end
+			//then this would not work
+			fill_filtered_cache();
+			//read_filtered_cache(dateStart, dateEnd, vecMeteo);
+		} else {
+			//vecMeteo = tmp_meteo; //HACK //HACK HACK HACK HACK HACK HACK
+		}
+	}	
+
+	if ((IOManager::resampled & processing_level) != IOManager::resampled) { //only filtering activated
+		for (size_t ii=0; ii<filtered_cache.size(); ii++){//for every station
+			const size_t index = IOUtils::seek(i_date, filtered_cache[ii], true);
+			if (index != IOUtils::npos)
+				vecMeteo.push_back(filtered_cache[ii][index]); //Insert station into vecMeteo		
+		}
+	} else {
+		//resampling required
+		MeteoData md;
+		for (size_t ii=0; ii<filtered_cache.size(); ii++){//resampling for every station
+			bool inserted_element = false;
+			const size_t position = meteoprocessor.resample(i_date, filtered_cache[ii], inserted_element);
+
+			if (position != IOUtils::npos) {
+				vecMeteo.push_back(filtered_cache[ii][position]);
+				if (inserted_element)
+					filtered_cache[ii].erase(filtered_cache[ii].begin() + position); //keep filtered_cache unchanged
+			}
+		}
+	}
+	
+	/*	
 	//request an appropriate window of filtered or unfiltered data
+	//HACK: use filteredbuffer directly for this, so no costly copying is necessary
 	getMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, vec_cache);
 	//vec_cache is either filtered or unfiltered, in any case it is wise to buffer it
 
@@ -235,7 +280,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
 		}
 	}
-
+	*/
 	//Store result in the local cache
 	add_to_cache(i_date, vecMeteo);
 

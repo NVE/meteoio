@@ -54,10 +54,14 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) cons
 	o_properties.time_after    = Duration(window_size, 0.);
 }
 
-size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM)
+size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM, bool& inserted_element)
 {
-	if (vecM.size() == 0) //Deal with case of the empty vector
+	if (vecM.size() == 0) { //Deal with case of the empty vector
+		inserted_element = false;
 		return IOUtils::npos; //nothing left to do
+	}
+
+	inserted_element = true;
 
 	//Find element in the vector, or insert it at the appropriate position
 	size_t position = IOUtils::seek(date, vecM, false);
@@ -77,6 +81,8 @@ size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData
 		}
 	} else if ((position != IOUtils::npos) && (vecM[position].date != date)){//insert before position
 		vecM.insert(vecM.begin()+position, tmpmd);
+	} else { //no insert necessary
+		inserted_element = false;
 	}
 
 	size_t ii = 0;

@@ -102,9 +102,9 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
 		ovec = ivec;
 }
 
-size_t MeteoProcessor::resample(const Date& date, std::vector<MeteoData>& ivec)
+size_t MeteoProcessor::resample(const Date& date, std::vector<MeteoData>& ivec, bool& inserted_element)
 {
-	return mi1d.resampleData(date, ivec);
+	return mi1d.resampleData(date, ivec, inserted_element);
 }
 
 std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
