@@ -244,7 +244,7 @@ class IOManager {
 		Meteo2DInterpolator interpolator;
 		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
 
-		std::map<Date, METEO_TIMESERIE > resampled_cache;  ///< stores already resampled data points
+		std::map<Date, METEO_TIMESERIE > point_cache;  ///< stores already resampled data points
 		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
 		unsigned int processing_level;
