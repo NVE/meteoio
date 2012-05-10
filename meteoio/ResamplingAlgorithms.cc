@@ -200,6 +200,9 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
 		extrapolate = true;
 
+	if ((!extrapolate) && position == ResamplingAlgorithms::end) //no extrapolation wished for
+		return;
+
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
@@ -240,6 +243,11 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 	const double& val2 = vecM[indexP2](paramindex);
 	const double jul2 = vecM[indexP2].date.getJulianDate(true);
 
+	/*
+	cout << "Resampling " << resampling_date.toString(Date::ISO) << " param " << md.getParameterName(paramindex) << endl
+		<< "P1: " << vecM[indexP1].date.toString(Date::ISO) << "  val: " << val1 << endl
+		<< "P1: " << vecM[indexP2].date.toString(Date::ISO) << "  val: " << val2 << endl;
+	*/
 	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulianDate(true));
 }
 
