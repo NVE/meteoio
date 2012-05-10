@@ -62,7 +62,7 @@ class MeteoProcessor {
 		void process(const std::vector< std::vector<MeteoData> >& ivec,
 		             std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass=false);
 
-		size_t resample(const Date& date, std::vector<MeteoData>& ivec, bool& inserted_element);
+		bool resample(const Date& date, const std::vector<MeteoData>& ivec, MeteoData& md);
 
 		void getWindowSize(ProcessingProperties& o_properties);
 

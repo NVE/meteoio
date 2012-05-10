@@ -62,9 +62,9 @@ class Meteo1DInterpolator {
 		 * @brief A function that executes all the resampling algorithms that have been setup in the constructor
 		 * @param[in] date The requested date for a MeteoData object (to be resampled if not present)
 		 * @param[in] vecM A vector of MeteoData where the new object will be inserted if not present
-		 * @return    The position of the newly constructed MeteoData/StationData pair within vecM & vecS
+		 * @return true if successfull, false if no resampling was possible (no element created)
 		 */
-		size_t resampleData(const Date& date, std::vector<MeteoData>& vecM, bool& inserted_element);
+		bool resampleData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md);
 
 		void getWindowSize(ProcessingProperties& o_properties) const;
 

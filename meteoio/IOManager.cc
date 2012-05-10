@@ -242,7 +242,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 	}	
 
 	if ((IOManager::resampled & processing_level) != IOManager::resampled) { //only filtering activated
-		for (size_t ii=0; ii<filtered_cache.size(); ii++){//for every station
+		for (size_t ii=0; ii<filtered_cache.size(); ii++) { //for every station
 			const size_t index = IOUtils::seek(i_date, filtered_cache[ii], true);
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(filtered_cache[ii][index]); //Insert station into vecMeteo		
@@ -250,15 +250,11 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 	} else {
 		//resampling required
 		MeteoData md;
-		for (size_t ii=0; ii<filtered_cache.size(); ii++){//resampling for every station
+		for (size_t ii=0; ii<filtered_cache.size(); ii++) { //resampling for every station
 			bool inserted_element = false;
-			const size_t position = meteoprocessor.resample(i_date, filtered_cache[ii], inserted_element);
+			const bool success = meteoprocessor.resample(i_date, filtered_cache[ii], md);
 
-			if (position != IOUtils::npos) {
-				vecMeteo.push_back(filtered_cache[ii][position]);
-				if (inserted_element)
-					filtered_cache[ii].erase(filtered_cache[ii].begin() + position); //keep filtered_cache unchanged
-			}
+			if (success) vecMeteo.push_back(md);
 		}
 	}
 	

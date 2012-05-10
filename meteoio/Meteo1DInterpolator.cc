@@ -54,42 +54,43 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) cons
 	o_properties.time_after    = Duration(window_size, 0.);
 }
 
-size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData>& vecM, bool& inserted_element)
+bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
-	if (vecM.size() == 0) { //Deal with case of the empty vector
-		inserted_element = false;
-		return IOUtils::npos; //nothing left to do
-	}
+	size_t vecM_size = vecM.size();
+	
+	if (vecM_size == 0) //Deal with case of the empty vector
+		return false; //nothing left to do
 
-	inserted_element = true;
+	md = vecM[0]; //create a clone of one of the elements
+	md.reset();   //set all values to IOUtils::nodata
+	md.setDate(date);
 
-	//Find element in the vector, or insert it at the appropriate position
-	size_t position = IOUtils::seek(date, vecM, false);
+	//Find element in the vector or the next index
+	size_t index = IOUtils::seek(date, vecM, false);
 
-	MeteoData tmpmd(vecM.at(0)); //create a clone of one of the elements
-	tmpmd.reset(); //set all values to IOUtils::nodata
-	tmpmd.setDate(date);
-	tmpmd.setResampled(true);
-
-	if (position == IOUtils::npos){ //nothing found append new element at the left or right
-		if (vecM.at(0).date > date){
-			vecM.insert(vecM.begin(), tmpmd);
-			position = 0;
-		} else if (vecM.at(vecM.size()-1).date < date){
-			vecM.push_back(tmpmd);
-			position = vecM.size() - 1;
+	//Three cases
+	ResamplingAlgorithms::ResamplingPosition elementpos = ResamplingAlgorithms::exact_match;
+	if (index == IOUtils::npos) { //nothing found append new element at the left or right
+		if (vecM.at(0).date > date) {
+			elementpos = ResamplingAlgorithms::before;
+			index = 0;
+		} else if (vecM.at(vecM_size-1).date < date) {
+			elementpos = ResamplingAlgorithms::end;
+			index = vecM_size - 1;
 		}
-	} else if ((position != IOUtils::npos) && (vecM[position].date != date)){//insert before position
-		vecM.insert(vecM.begin()+position, tmpmd);
-	} else { //no insert necessary
-		inserted_element = false;
+		md.setResampled(true);
+	} else if ((index != IOUtils::npos) && (vecM[index].date != date)) {
+		elementpos = ResamplingAlgorithms::before;
+		md.setResampled(true);
+	} else {
+		md.setResampled(false);
 	}
 
 	size_t ii = 0;
 
 	for (ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
 		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(position, ii, taskargs[ii], window_size, vecM);
+			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(index, elementpos, ii, taskargs[ii], window_size, vecM, md);
 	}
 
 	//There might be more parameters, interpolate them too
@@ -109,10 +110,10 @@ size_t Meteo1DInterpolator::resampleData(const Date& date, std::vector<MeteoData
 		}
 
 		if (it->second.first != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(it->second.first)(position, ii, it->second.second, window_size, vecM);
+			ResamplingAlgorithms::getAlgorithm(it->second.first)(index, elementpos, ii, it->second.second, window_size, vecM, md);
 	}
 
-	return position; //the position of the resampled MeteoData object within vecM
+	return true; //successfull resampling
 }
 
 string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments) const

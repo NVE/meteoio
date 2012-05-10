@@ -29,9 +29,6 @@
 
 namespace mio {
 
-typedef void(*resamplingptr)(const size_t& position, const size_t& paramindex,
-                             const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
-
 /**
  * @class ResamplingAlgorithms
  * @brief Temporal resampling algorithms
@@ -42,24 +39,32 @@ typedef void(*resamplingptr)(const size_t& position, const size_t& paramindex,
  */
 class ResamplingAlgorithms {
 	public:
+		enum ResamplingPosition {
+			exact_match,
+			before,
+			end
+		};
+
+		typedef void(*resamplingptr)(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+							    const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
 
 		static const resamplingptr& getAlgorithm(const std::string& algorithmname);
 
 		//Available algorithms
-		static void NoResampling(const size_t& position, const size_t& paramindex,
-		                         const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
-		static void LinearResampling(const size_t& position, const size_t& paramindex,
-		                             const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
-		static void NearestNeighbour(const size_t& position, const size_t& paramindex,
-		                             const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
+		static void NoResampling(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+							const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
+		static void LinearResampling(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+							    const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
+		static void NearestNeighbour(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+							    const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
 
-		static void Accumulate(const size_t& position, const size_t& paramindex,
-		                       const std::vector<std::string>& taskargs, const double& window_size, std::vector<MeteoData>& vecM);
+		static void Accumulate(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+						   const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
 
  	private:
 		static double funcval(const size_t& position, const size_t& paramindex, const std::vector<MeteoData>& vecM,
 		                      const Date& date);
-		static void getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
+		static void getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
 		                               const double& window_size, size_t& indexP1, size_t& indexP2);
 		static double linearInterpolation(const double& x1, const double& y1,
 		                                  const double& x2, const double& y2, const double& x3);
