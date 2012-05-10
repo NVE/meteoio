@@ -57,7 +57,7 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) cons
 bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	size_t vecM_size = vecM.size();
-	
+
 	if (vecM_size == 0) //Deal with case of the empty vector
 		return false; //nothing left to do
 
@@ -72,7 +72,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	ResamplingAlgorithms::ResamplingPosition elementpos = ResamplingAlgorithms::exact_match;
 	if (index == IOUtils::npos) { //nothing found append new element at the left or right
 		if (vecM.at(0).date > date) {
-			elementpos = ResamplingAlgorithms::before;
+			elementpos = ResamplingAlgorithms::begin;
 			index = 0;
 		} else if (vecM.at(vecM_size-1).date < date) {
 			elementpos = ResamplingAlgorithms::end;

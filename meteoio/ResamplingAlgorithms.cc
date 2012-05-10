@@ -98,7 +98,7 @@ const ResamplingAlgorithms::resamplingptr& ResamplingAlgorithms::getAlgorithm(co
  */
 
 void ResamplingAlgorithms::NoResampling(const size_t& /*pos*/, const ResamplingPosition& /*position*/, const size_t& /*paramindex*/,
-                                        const std::vector<std::string>& /*taskargs*/, const double& /*window_size*/, const std::vector<MeteoData>& /*vecM*/, MeteoData& md)
+                                        const std::vector<std::string>& /*taskargs*/, const double& /*window_size*/, const std::vector<MeteoData>& /*vecM*/, MeteoData& /*md*/)
 {
 	return;
 }
@@ -116,7 +116,7 @@ void ResamplingAlgorithms::NoResampling(const size_t& /*pos*/, const ResamplingP
  * @endcode
  */
 
-void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                                             const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
@@ -126,7 +126,7 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 
 	if (position == ResamplingAlgorithms::exact_match) {
 		const double& value = vecM[index](paramindex);
-		if (value != IOUtils::nodata) { 
+		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
 			return;
 		}
@@ -139,9 +139,9 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 
 	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
 	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
-	    || ((!extrapolate) && (position == ResamplingAlgorithms::before) && (index == 0)))
+	    || ((!extrapolate) && (position == ResamplingAlgorithms::begin)))
 		return;
-	
+
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
@@ -192,7 +192,7 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 
 	if (position == ResamplingAlgorithms::exact_match) {
 		const double& value = vecM[index](paramindex);
-		if (value != IOUtils::nodata) { 
+		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
 			return;
 		}
@@ -205,9 +205,9 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 
 	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
 	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
-	    || ((!extrapolate) && (position == ResamplingAlgorithms::before) && (index == 0)))
+	    || ((!extrapolate) && (position == ResamplingAlgorithms::begin)))
 		return;
-	
+
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
@@ -262,8 +262,8 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
  * HNW::arg1	 = 3600
  * @endcode
  */
-void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-                                            const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md)
+void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+                                            const std::vector<std::string>& taskargs, const double& /*window_size*/, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);

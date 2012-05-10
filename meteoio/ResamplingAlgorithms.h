@@ -42,6 +42,8 @@ class ResamplingAlgorithms {
 		enum ResamplingPosition {
 			exact_match,
 			before,
+			after,
+			begin,
 			end
 		};
 
@@ -51,14 +53,14 @@ class ResamplingAlgorithms {
 		static const resamplingptr& getAlgorithm(const std::string& algorithmname);
 
 		//Available algorithms
-		static void NoResampling(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+		static void NoResampling(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 							const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
-		static void LinearResampling(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+		static void LinearResampling(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 							    const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
-		static void NearestNeighbour(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+		static void NearestNeighbour(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 							    const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
 
-		static void Accumulate(const size_t& index, const ResamplingPosition& position, const size_t& paramindex, 
+		static void Accumulate(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 						   const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
 
  	private:
