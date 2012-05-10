@@ -205,14 +205,6 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
-	/*
-	cout << "Resampling for " << resampling_date.toString(Date::ISO) << "  param " << md.getParameterName(paramindex) << ": " << endl;
-	if (foundP1 && foundP2) {
-		cout << "\tindexP1: " <<  vecM[indexP1].date.toString(Date::ISO) << "  " << vecM[indexP1](paramindex) << endl
-			<< "\tindexP2: " <<  vecM[indexP2].date.toString(Date::ISO) << "  " << vecM[indexP2](paramindex) << endl;
-	}
-	*/
-
 	//do nothing if we can't interpolate, and extrapolation is not explicitly activated
 	if ((!extrapolate) && ((!foundP1) || (!foundP2)))
 		return;
@@ -265,12 +257,12 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                                             const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
-	/*
-	if (pos >= vecM.size())
-		throw IOException("The position of the resampled element is out of bounds", AT);
+	if (index >= vecM.size())
+		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
-	vecM[pos](paramindex) = IOUtils::nodata; // don't overwrite valid value! -> NOT on filtered_vec
-						//plus it should already have been done...
+	const Date& resampling_date = md.date;
+
+	md(paramindex) = IOUtils::nodata;
 
 	//Read accumulation period
 	double accumulate_period;
@@ -289,10 +281,10 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 	}
 
 	//find start of accumulation period
-	const Date dateStart(vecM[pos].date.getJulianDate() - accumulate_period/(24.*3600.), vecM[pos].date.getTimeZone());
+	const Date dateStart(resampling_date.getJulianDate() - accumulate_period/(24.*3600.), resampling_date.getTimeZone());
 	bool found_start=false;
 	size_t start_idx; //this is the index of the first point of the window that will contain dateStart
-	for (start_idx=pos+1; (start_idx--) > 0; ) {
+	for (start_idx=index+1; (start_idx--) > 0; ) {
 		if(vecM[start_idx].date <= dateStart) {
 			found_start=true;
 			break;
@@ -300,8 +292,8 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 	}
 	if (!found_start) {
 		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
-		cerr << "not enough data for accumulation period at date " << vecM[pos].date.toString(Date::ISO) << "\n";
-		vecM[pos](paramindex) = IOUtils::nodata;
+		cerr << "not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
+		md(paramindex) = IOUtils::nodata;
 		return;
 	}
 
@@ -310,14 +302,13 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 	if(sum==IOUtils::nodata) return;
 
 	 //sum all data points until current position
-	for(size_t idx=(start_idx+1); idx<pos; idx++) { //HACK: <= on filtered_vec
+	for(size_t idx=(start_idx+1); idx<index; idx++) { //HACK: <= on filtered_vec
 		if(vecM[idx](paramindex)==IOUtils::nodata) return;
 		sum += vecM[idx](paramindex);
 	}
 
 	//HACK resample end point (from filtered_vec)
-	vecM[pos](paramindex) = sum;
-	*/
+	md(paramindex) = sum;
 }
 
 double ResamplingAlgorithms::funcval(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
