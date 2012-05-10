@@ -137,12 +137,17 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
 		extrapolate = true;
 
+	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
+	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
+	    || ((!extrapolate) && (position == ResamplingAlgorithms::before) && (index == 0)))
+		return;
+	
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 
 	//Try to find the nearest neighbour, if there are two equally distant, then return the arithmetic mean
-	if(foundP1 && foundP2) { //standard behavior
+	if (foundP1 && foundP2) { //standard behavior
 		const Duration diff1 = resampling_date - vecM[indexP1].date; //calculate time interval to element at index
 		const Duration diff2 = vecM[indexP2].date - resampling_date; //calculate time interval to element at index
 		const double& val1 = vecM[indexP1](paramindex);
@@ -155,9 +160,7 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 		} else if (diff1 > diff2){
 			md(paramindex) = val2;
 		}
-	} else if(!extrapolate) {
-		return;
-	} else if(extrapolate) {
+	} else if (extrapolate) {
 		if(foundP1 && !foundP2){ //nearest neighbour on found after index 'index'
 			md(paramindex) = vecM[indexP1](paramindex);
 		} else if (!foundP1 && foundP2){ //nearest neighbour on found before index 'index'
@@ -200,9 +203,11 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
 		extrapolate = true;
 
-	if ((!extrapolate) && position == ResamplingAlgorithms::end) //no extrapolation wished for
+	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
+	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
+	    || ((!extrapolate) && (position == ResamplingAlgorithms::before) && (index == 0)))
 		return;
-
+	
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
@@ -243,11 +248,6 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 	const double& val2 = vecM[indexP2](paramindex);
 	const double jul2 = vecM[indexP2].date.getJulianDate(true);
 
-	/*
-	cout << "Resampling " << resampling_date.toString(Date::ISO) << " param " << md.getParameterName(paramindex) << endl
-		<< "P1: " << vecM[indexP1].date.toString(Date::ISO) << "  val: " << val1 << endl
-		<< "P1: " << vecM[indexP2].date.toString(Date::ISO) << "  val: " << val2 << endl;
-	*/
 	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulianDate(true));
 }
 
