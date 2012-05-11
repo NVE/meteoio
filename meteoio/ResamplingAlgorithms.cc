@@ -257,16 +257,16 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
  * hourly precipitation measurements. Remarks:
  * - the accumulation period has to be provided as an argument (in seconds)
+ * - if giving as a second argument "strict", nodatas will propagate (ie. a nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
  * @code
  * HNW::filter1 = accumulate
  * HNW::arg1	 = 3600
  * @endcode
  */
 void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-                                            const std::vector<std::string>& taskargs, const double& /*window_size*/, const std::vector<MeteoData>& vecM, MeteoData& md)
+                                      const std::vector<std::string>& taskargs, const double& /*window_size*/,
+                                      const std::vector<MeteoData>& vecM, MeteoData& md)
 {
-//Add option: strict -> nodata propagate
-//not strict -> aggregate as much as possible
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 	if(position==ResamplingAlgorithms::begin || position==ResamplingAlgorithms::end)
@@ -275,9 +275,10 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 	const Date& resampling_date = md.date;
 	md(paramindex) = IOUtils::nodata;
 
-	//Read accumulation period
+	//Read accumulation period and potential "strict" option
 	double accumulate_period;
-	if (taskargs.size()==1) {
+	bool strict = false;
+	if (taskargs.size()==1 || taskargs.size()==2) {
 		IOUtils::convertString(accumulate_period, taskargs[0]);
 		if(accumulate_period<=0.) {
 			std::stringstream tmp;
@@ -285,30 +286,38 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 			tmp << "for parameter " << vecM.at(0).getNameForParameter(paramindex);
 			throw InvalidArgumentException(tmp.str(), AT);
 		}
+		if(taskargs.size()==2) {
+			if(taskargs[1]=="strict") strict=true;
+			else {
+				std::stringstream ss;
+				ss << "Invalid argument \"" << taskargs[1] << "\" for param " << vecM.at(0).getNameForParameter(paramindex);
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+		}
 	} else {
 		std::stringstream tmp;
-		tmp << "Please provide accumulation period (in seconds) for param" << vecM.at(0).getNameForParameter(paramindex);
+		tmp << "Please provide accumulation period (in seconds) for param " << vecM.at(0).getNameForParameter(paramindex);
 		throw InvalidArgumentException(tmp.str(), AT);
 	}
 
+	//find start of accumulation period and initialize the sum
 	double sum = IOUtils::nodata;
-
-	//find start of accumulation period
 	const Date dateStart(resampling_date.getJulianDate() - accumulate_period/(24.*3600.), resampling_date.getTimeZone());
 	bool found_start=false;
-	size_t start_idx; //this is the index of the first point of the window that will contain dateStart
+	size_t start_idx; //this is the index of the first point of the window that contains dateStart
 	for (start_idx=index+1; (start_idx--) > 0; ) {
 		const Date& date = vecM[start_idx].date;
 		if(date <= dateStart) {
 			if(date<dateStart) {
 				const double start_value = funcval(start_idx, paramindex, vecM, dateStart, true); //resampling the starting point
-				if(start_value!=IOUtils::nodata) sum=start_value;
+				if(start_value!=IOUtils::nodata)
+					sum=start_value;
+				else if(strict) return;
 			}
 			found_start=true;
 			break;
 		}
 	}
-
 	if (!found_start) {
 		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
 		cerr << "not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
@@ -323,7 +332,7 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 		if(curr_value!=IOUtils::nodata) {
 			if(sum!=IOUtils::nodata) sum += curr_value;
 			else sum = curr_value;
-		}
+		} else if(strict) return;
 	}
 
 	//resample end point
@@ -331,8 +340,9 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 	if(end_val!=IOUtils::nodata) {
 		if(sum!=IOUtils::nodata) sum += end_val;
 		else sum = end_val;
-	}
+	} else if(strict) return;
 
+	//write out sum
 	md(paramindex) = sum;
 }
 
