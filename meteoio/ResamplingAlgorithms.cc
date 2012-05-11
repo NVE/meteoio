@@ -324,9 +324,17 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 		md(paramindex) = IOUtils::nodata;
 		return;
 	}
+	if(vecM[start_idx].date != dateStart) start_idx++; //we need to skip the first point that was already used in the interpolation
+
+	//if up-sampling, take a quicker path (for example, generate 15min values from hourly data)
+	if(start_idx==index) {
+		const double start_val = funcval(start_idx, paramindex, vecM, dateStart, false);
+		const double end_val = funcval(index, paramindex, vecM, resampling_date, false);
+		if(start_val!=IOUtils::nodata && end_val!=IOUtils::nodata) md(paramindex) = end_val - start_val;
+		return;
+	}
 
 	 //sum all whole periods
-	if(vecM[start_idx].date != dateStart) start_idx++; //we need to skip the first point that was already used in the interpolation
 	for(size_t idx=(start_idx+1); idx<index; idx++) {
 		const double curr_value = vecM[idx](paramindex);
 		if(curr_value!=IOUtils::nodata) {
@@ -354,7 +362,6 @@ double ResamplingAlgorithms::funcval(size_t pos, const size_t& paramindex, const
 	if (vecM[pos].date == date) return valstart;
 
 	size_t end = pos+1;
-	//if(!start_pt) end++;
 	if(end>=vecM.size()) return IOUtils::nodata; //reaching the end of the input vector
 
 	const double valend = vecM[end](paramindex);
