@@ -262,14 +262,17 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
  * HNW::arg1	 = 3600
  * @endcode
  */
-void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                                             const std::vector<std::string>& taskargs, const double& /*window_size*/, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
+//Add option: strict -> nodata propagate
+//not strict -> aggregate as much as possible
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
+	if(position==ResamplingAlgorithms::begin || position==ResamplingAlgorithms::end)
+		return;
 
 	const Date& resampling_date = md.date;
-
 	md(paramindex) = IOUtils::nodata;
 
 	//Read accumulation period
@@ -288,16 +291,24 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 		throw InvalidArgumentException(tmp.str(), AT);
 	}
 
+	double sum = IOUtils::nodata;
+
 	//find start of accumulation period
 	const Date dateStart(resampling_date.getJulianDate() - accumulate_period/(24.*3600.), resampling_date.getTimeZone());
 	bool found_start=false;
 	size_t start_idx; //this is the index of the first point of the window that will contain dateStart
 	for (start_idx=index+1; (start_idx--) > 0; ) {
-		if(vecM[start_idx].date <= dateStart) {
+		const Date& date = vecM[start_idx].date;
+		if(date <= dateStart) {
+			if(date<dateStart) {
+				const double start_value = funcval(start_idx, paramindex, vecM, dateStart, true); //resampling the starting point
+				if(start_value!=IOUtils::nodata) sum=start_value;
+			}
 			found_start=true;
 			break;
 		}
 	}
+
 	if (!found_start) {
 		cerr << "[W] Could not accumulate " << vecM.at(0).getNameForParameter(paramindex) << ": ";
 		cerr << "not enough data for accumulation period at date " << resampling_date.toString(Date::ISO) << "\n";
@@ -305,53 +316,47 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 		return;
 	}
 
-	//resample the starting point
-	double sum = funcval(start_idx, paramindex, vecM, dateStart); //resampling the starting point
-	if(sum==IOUtils::nodata) return;
-
-	 //sum all data points until current position
-	for(size_t idx=(start_idx+1); idx<index; idx++) { //HACK: <= on filtered_vec
-		if(vecM[idx](paramindex)==IOUtils::nodata) return;
-		sum += vecM[idx](paramindex);
+	 //sum all whole periods
+	if(vecM[start_idx].date != dateStart) start_idx++; //we need to skip the first point that was already used in the interpolation
+	for(size_t idx=(start_idx+1); idx<index; idx++) {
+		const double curr_value = vecM[idx](paramindex);
+		if(curr_value!=IOUtils::nodata) {
+			if(sum!=IOUtils::nodata) sum += curr_value;
+			else sum = curr_value;
+		}
 	}
 
-	//HACK resample end point (from filtered_vec)
+	//resample end point
+	const double end_val = funcval(index, paramindex, vecM, resampling_date, false);
+	if(end_val!=IOUtils::nodata) {
+		if(sum!=IOUtils::nodata) sum += end_val;
+		else sum = end_val;
+	}
+
 	md(paramindex) = sum;
 }
 
-double ResamplingAlgorithms::funcval(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
-                                     const Date& date)
+double ResamplingAlgorithms::funcval(size_t pos, const size_t& paramindex, const std::vector<MeteoData>& vecM,
+                                     const Date& date, const bool& start_pt)
 {
-	size_t start = pos;
-	if (vecM[start].isResampled()) { //HACK how could a point in vecM be resampled?
-		if (start > 0){
-			start--;
-		} else {
-			return IOUtils::nodata;
-		}
-	}
-	const double& valstart = vecM[start](paramindex);
-
-	if (!vecM[pos].isResampled() && (vecM[pos].date == date))
-		return valstart;
+	if(!start_pt) pos--;
+	const double valstart = vecM[pos](paramindex);
+	if (vecM[pos].date == date) return valstart;
 
 	size_t end = pos+1;
-	if ((vecM[end].isResampled())) //skip resampled value
-		end++;
+	//if(!start_pt) end++;
+	if(end>=vecM.size()) return IOUtils::nodata; //reaching the end of the input vector
 
-	//index either points to the element with date directly or to the last element with vecM[index] <= date
-	if (end < vecM.size()){
-		const double& valend = vecM[end](paramindex);
-		if (valend == IOUtils::nodata)
-			return IOUtils::nodata;
+	const double valend = vecM[end](paramindex);
+	if (valend == IOUtils::nodata) return IOUtils::nodata;
 
-		const double jul1 = vecM[start].date.getJulianDate(true);
-		const double jul2 = vecM[end].date.getJulianDate(true);
+	const double jul1 = vecM[pos].date.getJulianDate(true);
+	const double jul2 = vecM[end].date.getJulianDate(true);
 
+	if(start_pt)
+		return valend - linearInterpolation(jul1, 0., jul2, valend, date.getJulianDate(true));
+	else
 		return linearInterpolation(jul1, 0., jul2, valend, date.getJulianDate(true));
-	}
-
-	return IOUtils::nodata;
 }
 
 /**
