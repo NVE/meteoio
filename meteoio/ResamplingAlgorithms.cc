@@ -257,7 +257,7 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
  * hourly precipitation measurements. Remarks:
  * - the accumulation period has to be provided as an argument (in seconds)
- * - if giving as a second argument "strict", nodatas will propagate (ie. a nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
+ * - if giving as a second argument "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
  * @code
  * HNW::filter1 = accumulate
  * HNW::arg1	 = 3600
