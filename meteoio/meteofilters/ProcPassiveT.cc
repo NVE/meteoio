@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteofilters/ProcPassiveT.h>
+#include <cmath>
 
 using namespace std;
 
@@ -25,6 +26,8 @@ const double ProcPassiveT::dflt_albedo = .23;
 const double ProcPassiveT::soil_albedo = .23; //grass
 const double ProcPassiveT::snow_albedo = .56; //white surface
 const double ProcPassiveT::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+const double ProcPassiveT::vw_thresh = 0.1; //wind speed threshold
+const bool ProcPassiveT::nakamura = false; //use Nakamura or Huwald model
 
 ProcPassiveT::ProcPassiveT(const std::vector<std::string>& vec_args) : ProcessingBlock("PASSIVE_T") {
 	parse_args(vec_args);
@@ -73,16 +76,20 @@ void ProcPassiveT::process(const unsigned int& index, const std::vector<MeteoDat
 			else albedo = soil_albedo;
 		}
 
-		if(vw<.1) vw=.1; //this should be around the minimum measurable wind speed on regular instruments
+		if(vw<vw_thresh) vw=vw_thresh; //this should be around the minimum measurable wind speed on regular instruments
 		const double rho = 1.2; // in kg/m3
 		const double Cp = 1004.;
-		const double C0 = 0.13;
-		const double C1 = 373.40 * albedo / dflt_albedo; //in order to introduce the albedo as a scaling factor
 		const double X = iswr / (rho*Cp*ta*vw);
-
 		if(X<1e-4) continue; //the correction does not work well for small X values
-		const double RE = C0 + C1*X;
-		tmp -= RE; //substracting the radiative error
+		if(nakamura) {
+			const double C0 = 0.13;
+			const double C1 = 373.40 * albedo / dflt_albedo; //in order to introduce the albedo as a scaling factor
+			const double RE = C0 + C1*X;
+			tmp -= RE; //substracting the radiative error
+		} else {
+			const double RE = 3.1 * sqrt(X);
+			tmp -= RE; //substracting the radiative error
+		}
 	}
 }
 

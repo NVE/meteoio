@@ -33,7 +33,8 @@ namespace mio {
  *
  * If the "soft" option is given, the albedo has a value different according to snow (or no snow) on the ground. The default albedo (that is also used if snow height is nodata) can be given as a second option.
  *
- * @note This filter can ONLY be applied to air temperatures.
+ * @note This filter can ONLY be applied to air temperatures. Moreover, since it <i>might</i> depend on the radiation shield, it is highly recommended to do some tests (ie. comparisons between ventillated and unventillated sensors) before using it on a new sensor type. Hopefully a new paper would come and clarify its usability per sensor types...
+ *
  * @code
  * TA::filter2	= passive_T
  * TA::arg2	= soft 0.23
@@ -55,8 +56,9 @@ class ProcPassiveT : public ProcessingBlock {
 
 		bool is_soft;
 		double usr_albedo;
+		static const bool nakamura;
 		static const double dflt_albedo, soil_albedo, snow_albedo;
-		static const double snow_thresh;
+		static const double snow_thresh, vw_thresh;
 };
 
 } //end namespace
