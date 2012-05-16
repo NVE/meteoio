@@ -97,9 +97,20 @@ const ResamplingAlgorithms::resamplingptr& ResamplingAlgorithms::getAlgorithm(co
  * @endcode
  */
 
-void ResamplingAlgorithms::NoResampling(const size_t& /*pos*/, const ResamplingPosition& /*position*/, const size_t& /*paramindex*/,
-                                        const std::vector<std::string>& /*taskargs*/, const double& /*window_size*/, const std::vector<MeteoData>& /*vecM*/, MeteoData& /*md*/)
+void ResamplingAlgorithms::NoResampling(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+                                        const std::vector<std::string>& /*taskargs*/, const double& /*window_size*/, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
+	if (index >= vecM.size())
+		throw IOException("The index of the element to be resampled is out of bounds", AT);
+
+	if (position == ResamplingAlgorithms::exact_match) {
+		const double& value = vecM[index](paramindex);
+		if (value != IOUtils::nodata) {
+			md(paramindex) = value; //propagate value
+			return;
+		}
+	}
+
 	return;
 }
 
