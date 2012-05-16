@@ -77,6 +77,8 @@ template<class T> class Array2D {
 		*/
 		Array2D(const unsigned int& anx, const unsigned int& any, const T& init);
 
+		virtual ~Array2D();
+
 		/**
 		* A constructor that can be used to create an Array2D object that is contained in the
 		* one passed as i_array2D argument. The resulting Array2D object is a by value copy of
@@ -251,6 +253,8 @@ template<class T> Array2D<T>::Array2D() {
 	nx = ny = 0;
 	keep_nodata = true;
 }
+
+template<class T> Array2D<T>::~Array2D() { }
 
 template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
                                       const unsigned int& i_ncols, const unsigned int& i_nrows)
