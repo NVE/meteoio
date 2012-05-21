@@ -686,11 +686,17 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 		parseDataSet(vecResult[ii], tmpmd, fullStation);
 		convertUnits(tmpmd);
 
-		//For IMIS stations the hnw value is a rate (kg m-2 h-1)
+		//For IMIS stations the hnw value is a rate (kg m-2 h-1), therefore we need to
+		//divide it by two to conjure the accumulated value for the half hour
 		if (tmpmd.meta.stationID.length() > 0){
 			if (tmpmd.meta.stationID[0] != '*') { //only consider IMIS stations (ie: not ANETZ)
 				if(use_imis_hnw==false) {
 					tmpmd(MeteoData::HNW) = IOUtils::nodata;
+				} else {
+					double& hnw = tmpmd(MeteoData::HNW);
+					if(hnw!=IOUtils::nodata) {
+						hnw /= 2.; //half hour accumulated value for IMIS stations only
+					}
 				}
 			}
 		}
