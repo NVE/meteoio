@@ -57,7 +57,7 @@ class WindowedFilter : public FilterBlock {
 		Duration min_time_span;
 		Centering centering;
 
-		size_t elements_left, elements_right, last_index;
+		size_t last_start, last_end;
 
 	private:
 		unsigned int startIndex, endIndex;
