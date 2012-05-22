@@ -60,18 +60,18 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 		elements_left = elements_right = 0;
 
 		if ((centering == WindowedFilter::right) || (is_soft)){
-			for (size_t kk=0; kk<min_data_points; kk++){
-				if (ivec.size() > kk) {
-					elements_right++;
-					vec_window.push_back(&ivec[kk]);
-				}
+			const size_t end_kk = MIN(min_data_points, ivec.size());
+			//vec_window.reserve(end_kk+1);
+			for (size_t kk=0; kk<end_kk; kk++){
+				elements_right++;
+				vec_window.push_back(&ivec[kk]);
 			}
 
 			if (elements_right > 0) elements_left = 1;
 		} else if ((centering == WindowedFilter::left) || (centering == WindowedFilter::center)){
 			if (ivec.size() > 0) {
 				elements_left = elements_right = 1;
-				vec_window.push_back(&ivec[0]);
+				vec_window.push_back(&ivec[0]); //HACK ?? this leads to 1 element in window!
 			}
 		}
 
@@ -115,7 +115,7 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 					elements_left++;
 				}
 			}
-		}
+		} //HACK what happens if vec_window is empty?
 	} else { //!is_soft
 		if (centering == WindowedFilter::right){
 			if (elements_right >= min_data_points){
@@ -172,211 +172,144 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 	return vec_window;
 }
 
-void WindowedFilter::get_window_fast(const unsigned int& index, const unsigned int& ivec_size,
-                                     unsigned int& index_start, unsigned int& index_end)
-{
-	if ((ivec_size == 0) || (ivec_size <= index)){
-		index_end = 0;
-		index_start = 1;
+/**
+ * @brief A function that computes the start and end for a window for the 'index' element from ivec
+ * @param index The index of the element in ivec that requires a window
+ * @param ivec The original sequence of data points
+ * @param start the start index of the window
+ * @param end the end index of the window
+ * @return true if success, false if a window could not be computed
+ */
+bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec, size_t& start, size_t& end)
+{	/*
+	The principle is too compute the first index that matches the minimum number of points criteria,
+	the the one that matches the minimum time window,
+	then combine them (with the equivalent of OR: we take the MIN index).
+	Afterward, we compute the last index [...] for number of points
+	and the last index [...] for the time window
+	and combine them (with the equivalent of OR: we take the MIN index).
+	(or vice versa for right centering)
+	*/
+	const Date date = ivec[index].date;
+	start = end = index; //for proper initial value, so we can bail out without worries
+
+	if(centering == WindowedFilter::left) {
+		//get start of window
+		size_t start_elements = min_data_points - 1; //start elements criteria
+		if(start_elements>index) {
+			if(!is_soft) return false;
+			start_elements = index; //as many as possible
+		}
+		const Date start_date = date - min_time_span;
+		size_t start_time_idx = IOUtils::seek(start_date, ivec, false); //start time criteria
+		if(start_time_idx==IOUtils::npos) {
+			if(!is_soft) return false;
+			start_time_idx=0; //first possible element
+		}
+		const size_t elements_left = MAX(index - start_time_idx, start_elements);
+		start = index - elements_left;
+
+		//get end of window
+		if(!is_soft) return true; //with end=index
+		size_t end_elements = (min_data_points>(elements_left+1))?min_data_points - (elements_left + 1):0;
+		const Date end_date = ivec[start].date+min_time_span;
+		size_t end_time_idx = (end_date>date)?IOUtils::seek(end_date, ivec, false):index; //end time criteria
+		if(end_time_idx==IOUtils::npos) {
+			if(!is_soft) return false;
+			end_time_idx=ivec.size()-1; //last possible element
+		}
+		const size_t elements_right = MAX(end_time_idx - index, end_elements);
+		end = index + elements_right;
 	}
 
-	if ((index == 0) || (last_index > index)){ //reset global variables
-		elements_left = elements_right = 0;
-
-		if ((centering == WindowedFilter::right) || (is_soft)){
-			for (unsigned int kk=0; kk<min_data_points; kk++){
-				if (ivec_size > kk) elements_right++;
-			}
-
-			if (elements_right > 0) elements_left = 1;
-		} else if ((centering == WindowedFilter::left) || (centering == WindowedFilter::center)){
-			if (ivec_size > 0) {
-				elements_left = elements_right = 1;
-			}
+	if(centering == WindowedFilter::right) {
+		//get end of window
+		size_t end_elements = min_data_points - 1; //end elements criteria
+		if(end_elements>(ivec.size()-1-index)) {
+			if(!is_soft) return false;
+			end_elements = (ivec.size()-1-index); //as many as possible
 		}
+		const Date end_date = date+min_time_span;
+		size_t end_time_idx = IOUtils::seek(end_date, ivec, false); //end time criteria
+		if(end_time_idx==IOUtils::npos) {
+			if(!is_soft) return false;
+			end_time_idx=ivec.size()-1; //last possible element
+		}
+		const size_t elements_right = MAX(end_time_idx - index, end_elements);
+		end = index + elements_right;
 
-		last_index = 0;
-
-		startIndex = index_start = index + 1 - elements_left;
-		endIndex = index_end = index + elements_right - 1;
-
-		return;
+		//get start of window
+		if(!is_soft) return true; //with start=index
+		size_t start_elements = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
+		const Date start_date = ivec[end].date-min_time_span;
+		size_t start_time_idx = (start_date<date)?IOUtils::seek(start_date, ivec, false):index; //start time criteria
+		if(start_time_idx==IOUtils::npos) {
+			if(!is_soft) return false;
+			end_time_idx=0; //first possible element
+		}
+		const size_t elements_left = MAX(index - start_time_idx, start_elements);
+		start = index - elements_left;
 	}
 
-	if (index != (last_index+1))
-		throw IOException("get_window function only to be used with increments of 1 for the index", AT);
-
-	unsigned int window_size = endIndex - startIndex + 1;
-
-	//check whether a window is available
-	if (is_soft){
-		if (startIndex <= endIndex){
-			if (centering == WindowedFilter::right){
-				//Try to move right, if it doesn't work, don't change anything
-				if (ivec_size > (index + window_size - 1)) { //shift window one point to the right
-					endIndex++;
-					startIndex++;
-				}
-			} else if (centering == WindowedFilter::left){
-				if (index >= window_size){
-					if (ivec_size > index){ //otherwise don't touch the whole thing
-						startIndex++;
-						endIndex++;
-					}
-				} else {
-					elements_left++;
-					elements_right--;
-				}
-			} else if (centering == WindowedFilter::center){
-				if (elements_right <= elements_left){
-					if (ivec_size > (index+elements_right-1)){ //otherwise don't touch the whole thing
-						endIndex = index+elements_right-1;
-						startIndex++;
-					} else {
-						elements_right--;
-						elements_left++;
-					}
-				} else {
-					elements_right--;
-					elements_left++;
-				}
-			}
+	if(centering == WindowedFilter::center) {
+		//get start of ideal window
+		size_t start_elements = min_data_points/2; //start elements criteria
+		if(start_elements>index) {
+			if(!is_soft) return false;
+			start_elements = index; //as many as possible
 		}
-		index_start = startIndex;
-		index_end = endIndex;
-	} else { //!is_soft
-		if (centering == WindowedFilter::right){
-			if (elements_right >= min_data_points){
-				startIndex++;
-				elements_right--;
-
-				if (ivec_size > (index+min_data_points-1)) { //shift window one point to the right
-					endIndex++;
-					elements_right++; //elements_left will stay at a constant 1
-				}
-			}
-		} else if (centering == WindowedFilter::left){
-			if (elements_left >= min_data_points){
-				startIndex++;
-				elements_left--;
-
-				if (ivec_size > index) { //shift window one point to the right
-					endIndex++;
-					elements_left++; //elements_left will stay at a constant 1
-				}
-			} else {
-				if (ivec_size > index) { //broaden window
-					endIndex++;
-					elements_left++;
-				}
-			}
-		} else if (centering == WindowedFilter::center){
-			if ((elements_left + elements_right - 1) >= min_data_points){
-				startIndex++;
-				if (elements_right > 0) elements_right--;
-
-				if (ivec_size > (index+elements_left-1)) { //shift window one point to the right
-					endIndex++;
-					elements_right++; //elements_left will stay at a constant
-				}
-			} else {
-				if (ivec_size > (index+elements_left-1)) { //shift window one point to the right
-					endIndex++;
-					elements_left++;
-				}
-
-				if ((elements_left + elements_right - 1) < min_data_points){
-					if (ivec_size > (index+elements_left-1)){ //shift window one point to the right
-						endIndex++;
-						elements_right++;
-					}
-				}
-			}
+		const Date start_date = date - min_time_span/2;
+		size_t start_time_idx = IOUtils::seek(start_date, ivec, false); //start time criteria
+		if(start_time_idx==IOUtils::npos) {
+			if(!is_soft) return false;
+			start_time_idx=0; //first possible element
 		}
+		const size_t elements_left = MAX(index - start_time_idx, start_elements);
+		start = index - elements_left;
 
-		if ((elements_left + elements_right - 1) >= min_data_points){
-			index_start = startIndex;
-			index_end = endIndex;
-		} else {
-			index_end = 0;
-			index_start = 1;
+		//get end of ideal window
+		size_t end_elements = min_data_points/2; //end elements criteria
+		if(end_elements>(ivec.size()-1-index)) {
+			if(!is_soft) return false;
+			end_elements = (ivec.size()-1-index); //as many as possible
+		}
+		const Date end_date = date+min_time_span/2;
+		size_t end_time_idx = IOUtils::seek(end_date, ivec, false); //end time criteria
+		if(end_time_idx==IOUtils::npos) {
+			if(!is_soft) return false;
+			end_time_idx=ivec.size()-1; //last possible element
+		}
+		const size_t elements_right = MAX(end_time_idx - index, end_elements);
+		end = index + elements_right;
+
+		//now, check (and modify) if the window could not be centered
+		if(elements_left==elements_right) return true;
+		if(!is_soft) return false;
+		if(elements_left<elements_right) { //we hit the left border
+			//get again the end of window
+			size_t end_elements = (min_data_points>(elements_left+1))?min_data_points - (elements_left + 1):0;
+			const Date end_date = ivec[start].date+min_time_span;
+			size_t end_time_idx = (end_date>date)?IOUtils::seek(end_date, ivec, false):index; //end time criteria
+			if(end_time_idx==IOUtils::npos) {
+				end_time_idx=ivec.size()-1; //last possible element
+			}
+			const size_t elements_right = MAX(end_time_idx - index, end_elements);
+			end = index + elements_right;
+		} else { //we hit the right border
+			//get again the start of window
+			size_t start_elements = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
+			const Date start_date = ivec[end].date-min_time_span;
+			size_t start_time_idx = (start_date<date)?IOUtils::seek(start_date, ivec, false):index; //start time criteria
+			if(start_time_idx==IOUtils::npos) {
+				end_time_idx=0; //first possible element
+			}
+			const size_t elements_left = MAX(index - start_time_idx, start_elements);
+			start = index - elements_left;
 		}
 	}
 
-	last_index = index;
-}
 
-void WindowedFilter::get_window(const unsigned int& index, const unsigned int& ivec_size,
-                                unsigned int& index_start, unsigned int& index_end)
-{
-	if ((centering == WindowedFilter::right)){
-		index_end   = index + min_data_points - 1;
-		index_start = index;
-
-		if (index_end >= ivec_size){
-			if (is_soft){
-				index_end = ivec_size - 1;
-				if (ivec_size >= min_data_points){
-					index_start = ivec_size + 1 - min_data_points;
-				} else {
-					index_start = 0;
-				}
-			} else {
-				index_start = index_end + 1;
-			}
-		}
-
-		return;
-	}
-
-	if ((centering == WindowedFilter::left)){
-		index_end = index;
-
-		if (index <= min_data_points){
-			if (is_soft){
-				index_start = 0;
-				index_end = MIN(min_data_points - 1, ivec_size - 1);
-			} else {
-				index_start = index_end + 1;
-			}
-		} else {
-			index_start = index + 1 - min_data_points;
-		}
-
-		return;
-	}
-
-	if ((centering == WindowedFilter::center)){
-		unsigned int el_left = min_data_points / 2;
-		index_start = index_end = index;
-
-		//first calc index_start
-		if (el_left > index){
-			if (is_soft){
-				index_start = 0;
-			} else {
-				index_start = index_end + 1;
-				return;
-			}
-		} else {
-			index_start -= el_left;
-		}
-
-		if ((index_end - index_start + 1) == min_data_points) return; //Nothing more to do
-
-		index_end = index_start + min_data_points - 1;
-		if (index_end >= ivec_size){
-			if (is_soft){
-				index_end = ivec_size - 1;
-				while ((index_start != 0) && ((index_end - index_start + 1) < min_data_points)){
-					index_start--;
-				}
-			} else {
-				index_start = index_end + 1;
-				return;
-			}
-		}
-	}
+	return true;
 }
 
 } //namespace
