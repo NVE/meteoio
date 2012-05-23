@@ -122,6 +122,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		}
 		const Date start_date = date - min_time_span;
 		size_t start_time_idx = IOUtils::seek(start_date, ivec, false); //start time criteria
+		if(start_time_idx!=IOUtils::npos) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
 		if(start_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
 			start_time_idx=0; //first possible element
@@ -163,6 +164,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		size_t start_elements = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
 		const Date start_date = ivec[end].date-min_time_span;
 		size_t start_time_idx = (start_date<date)?IOUtils::seek(start_date, ivec, false):index; //start time criteria
+		if(start_time_idx!=IOUtils::npos && start_time_idx!=index) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
 		if(start_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
 			end_time_idx=0; //first possible element
@@ -180,6 +182,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		}
 		const Date start_date = date - min_time_span/2;
 		size_t start_time_idx = IOUtils::seek(start_date, ivec, false); //start time criteria
+		if(start_time_idx!=IOUtils::npos) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
 		if(start_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
 			start_time_idx=0; //first possible element
@@ -220,6 +223,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			size_t start_elements = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
 			const Date start_date = ivec[end].date-min_time_span;
 			size_t start_time_idx = (start_date<date)?IOUtils::seek(start_date, ivec, false):index; //start time criteria
+			if(start_time_idx!=IOUtils::npos && start_time_idx!=index) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
 			if(start_time_idx==IOUtils::npos) {
 				end_time_idx=0; //first possible element
 			}

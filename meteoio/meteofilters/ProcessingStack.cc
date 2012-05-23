@@ -38,14 +38,16 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 	}
 }
 
-ProcessingStack::~ProcessingStack() {
+ProcessingStack::~ProcessingStack()
+{
 	//this is suboptimal, shared_ptr<> would be the preference
 	//it's unfortunately a part of boost only
 	for (size_t ii=0; ii<filter_stack.size(); ii++)
 		delete filter_stack[ii];
 }
 
-void ProcessingStack::getWindowSize(ProcessingProperties& o_properties) {
+void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
+{
 	o_properties.points_before = 0;
 	o_properties.points_after = 0;
 	o_properties.time_after = Duration(0.0, 0.);
@@ -95,14 +97,15 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
 	ovec.clear();
+	ovec.reserve(ivec.size());
 	ovec.insert(ovec.begin(), ivec.size(), vector<MeteoData>());
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every station
 		if (ivec[ii].size() > 0){
 			//pick one element and check whether the param_name parameter exists
-			const size_t index = ivec[ii][0].getParameterIndex(param_name);
+			const size_t param = ivec[ii][0].getParameterIndex(param_name);
 
-			if (index != IOUtils::npos){
+			if (param != IOUtils::npos){
 				std::vector<MeteoData> tmp = ivec[ii];
 
 				//Now call the filters in a row
@@ -120,12 +123,12 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 					}
 					appliedFilter = true;
 
-					(*filter_stack[jj]).process(index, tmp, ovec[ii]);
+					(*filter_stack[jj]).process(param, tmp, ovec[ii]);
 
 					if (tmp.size() == ovec[ii].size()){
 						if ((jj+1) != filter_stack.size()){//after the last filter not necessary
 							for (size_t jj=0; jj<ovec[ii].size(); jj++){
-								tmp[jj](index) = ovec[ii][jj](index);
+								tmp[jj](param) = ovec[ii][jj](param);
 							}
 						}
 					} else {

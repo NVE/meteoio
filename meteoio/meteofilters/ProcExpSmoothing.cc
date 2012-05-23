@@ -15,14 +15,14 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteofilters/FilterMedianAvg.h>
+#include <meteoio/meteofilters/ProcExpSmoothing.h>
 #include <cmath>
 
 using namespace std;
 
 namespace mio {
 
-FilterMedianAvg::FilterMedianAvg(const std::vector<std::string>& vec_args) : WindowedFilter("MEAN_AVG")
+ProcExpSmoothing::ProcExpSmoothing(const std::vector<std::string>& vec_args) : WindowedFilter("EXP_SMOOTHING")
 {
 	parse_args(vec_args);
 
@@ -33,8 +33,8 @@ FilterMedianAvg::FilterMedianAvg(const std::vector<std::string>& vec_args) : Win
 	properties.points_after = min_data_points;
 }
 
-void FilterMedianAvg::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-                              std::vector<MeteoData>& ovec)
+void ProcExpSmoothing::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
@@ -45,35 +45,33 @@ void FilterMedianAvg::process(const unsigned int& param, const std::vector<Meteo
 		double& value = ovec[ii](param);
 
 		if( get_window_specs(ii, ivec, start, end) ) {
-			value = calc_median(ivec, param, start, end);
+			value = calcExpSmoothing(ivec, param, start, end);
 		} else if(!is_soft) value = IOUtils::nodata;
 	}
+
 }
 
-double FilterMedianAvg::calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
+double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
-	vector<double> vecTemp;
-	for(size_t ii=start; ii<=end; ii++){ //get rid of nodata elements
-		const double& value = ivec[ii](param);
-		if (value != IOUtils::nodata)
-			vecTemp.push_back(value);
+	bool initCompleted = false;
+	double expavg = IOUtils::nodata;
+
+	for (size_t ii=start; ii<=end; ii++){
+		const double currentval = ivec[ii](param);
+		if (currentval != IOUtils::nodata){
+			if (!initCompleted){
+				expavg = currentval;
+				initCompleted = true;
+			} else {
+				expavg = alpha*currentval + (1.-alpha)*expavg;
+			}
+		}
 	}
 
-	const size_t size_of_vec = vecTemp.size();
-	if (size_of_vec == 0)
-		return IOUtils::nodata;
-
-	const int middle = (int)(size_of_vec/2);
-	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
-
-	if ((size_of_vec % 2) == 1){ //uneven
-		return *(vecTemp.begin()+middle);
-	} else { //use arithmetic mean of element n/2 and n/2-1
-		return Interpol1D::weightedMean( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
-	}
+	return expavg;
 }
 
-void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
+void ProcExpSmoothing::parse_args(std::vector<std::string> vec_args)
 {
 	vector<double> filter_args;
 
@@ -84,7 +82,7 @@ void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 	if (vec_args.size() > 2)
 		centering = (WindowedFilter::Centering)WindowedFilter::get_centering(vec_args);
 
-	convert_args(2, 2, vec_args, filter_args);
+	convert_args(3, 3, vec_args, filter_args);
 
 	if ((filter_args[0] < 1) || (filter_args[1] < 0)){
 		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
@@ -92,6 +90,10 @@ void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
 
 	min_data_points = (unsigned int)floor(filter_args[0]);
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
+	alpha = filter_args[2];
+	if(alpha<0. || alpha>1.) {
+		throw InvalidArgumentException("The alpha parameter for filter " + getName() + " must be between 0 and 1!", AT);
+	}
 }
 
 } //namespace

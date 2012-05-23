@@ -41,8 +41,8 @@ class WindowedFilter : public FilterBlock {
 
 		WindowedFilter(const std::string& name);
 
-		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec) = 0; //HACK: index should be size_t
+		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+		                     std::vector<MeteoData>& ovec) = 0; //HACK: param should be size_t
 
 		static unsigned int get_centering(std::vector<std::string>& vec_args);
 

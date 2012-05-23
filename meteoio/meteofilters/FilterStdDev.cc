@@ -54,9 +54,15 @@ void FilterStdDev::process(const unsigned int& param, const std::vector<MeteoDat
 
 		if( get_window_specs(ii, ivec, start, end) ) {
 			getStat(ivec, param, start, end, std_dev, mean);
+		}  else if(!is_soft) {
+			value = IOUtils::nodata;
+			continue;
 		}
 
-		if(mean==IOUtils::nodata) continue;
+		if(mean==IOUtils::nodata) {
+			if(!is_soft) value = IOUtils::nodata;
+			continue;
+		}
 
 		if( value!=IOUtils::nodata && abs(value-mean)>sigma*std_dev) {
 			value = IOUtils::nodata;

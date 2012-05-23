@@ -41,14 +41,14 @@ void FilterMAD::process(const unsigned int& param, const std::vector<MeteoData>&
 	ovec.reserve(ivec.size());
 	size_t start, end;
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
 		double& value = ovec[ii](param);
 		if(value==IOUtils::nodata) continue;
 
 		if( get_window_specs(ii, ivec, start, end) ) {
 			MAD_filter_point(ivec, param, start, end, value);
-		}
+		} else if(!is_soft) value = IOUtils::nodata;
 	}
 }
 
@@ -59,7 +59,7 @@ void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsig
 	double median  = IOUtils::nodata;
 
 	std::vector<double> data;
-	for(unsigned int ii=start; ii<=end; ii++) data.push_back( ivec[ii](param) );
+	for(size_t ii=start; ii<=end; ii++) data.push_back( ivec[ii](param) );
 
 	//Calculate MAD
 	try {

@@ -26,16 +26,16 @@ ProcMult::ProcMult(const std::vector<std::string>& vec_args) : ProcessingBlock("
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
-void ProcMult::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void ProcMult::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){
+	for (size_t ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);
 
-		double& tmp = ovec[ii](index);
+		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
 		tmp *= factor;

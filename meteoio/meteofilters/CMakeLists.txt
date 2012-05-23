@@ -16,6 +16,8 @@ SET(meteofilters_sources
 	meteofilters/ProcUndercatch.cc
 	meteofilters/ProcAdd.cc
 	meteofilters/ProcMult.cc
+	meteofilters/ProcExpSmoothing.cc
+	meteofilters/ProcWMASmoothing.cc
 	meteofilters/FilterBlock.cc
 	meteofilters/WindowedFilter.cc
 	meteofilters/ProcessingBlock.cc

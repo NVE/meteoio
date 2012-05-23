@@ -59,7 +59,7 @@ class ProcessingBlock {
 	public:
 		virtual ~ProcessingBlock();
 
-		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
 		void convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,

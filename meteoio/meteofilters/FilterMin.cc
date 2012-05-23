@@ -26,16 +26,16 @@ FilterMin::FilterMin(const std::vector<std::string>& vec_args) : FilterBlock("MI
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
-void FilterMin::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterMin::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){
+	for (size_t ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);
 
-		double& tmp = ovec[ii](index);
+		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 
 		if (tmp < min_val){

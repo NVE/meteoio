@@ -46,8 +46,8 @@ class FilterMin : public FilterBlock {
 	public:
 		FilterMin(const std::vector<std::string>& vec_args);
 
-		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
-						 std::vector<MeteoData>& ovec);
+		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);

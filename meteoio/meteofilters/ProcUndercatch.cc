@@ -32,18 +32,18 @@ ProcUndercatch::ProcUndercatch(const std::vector<std::string>& vec_args) : Proce
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
-void ProcUndercatch::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
-	if(index!=MeteoData::HNW)
-		throw InvalidArgumentException("Trying to use UNDERCATCH filter on " + MeteoData::getParameterName(index) + " but it can only be applied to precipitation!!" + getName(), AT);
+	if(param!=MeteoData::HNW)
+		throw InvalidArgumentException("Trying to use UNDERCATCH filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
 	ovec.clear();
 	ovec.reserve(ivec.size());
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){
+	for (size_t ii=0; ii<ivec.size(); ii++){
 		ovec.push_back(ivec[ii]);
 
-		double& tmp = ovec[ii](index);
+		double& tmp = ovec[ii](param);
 		double VW = ovec[ii](MeteoData::VW);
 		if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
 		double t = ovec[ii](MeteoData::TA);

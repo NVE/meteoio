@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2012 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -15,14 +15,14 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteofilters/FilterMedianAvg.h>
+#include <meteoio/meteofilters/ProcWMASmoothing.h>
 #include <cmath>
 
 using namespace std;
 
 namespace mio {
 
-FilterMedianAvg::FilterMedianAvg(const std::vector<std::string>& vec_args) : WindowedFilter("MEAN_AVG")
+ProcWMASmoothing::ProcWMASmoothing(const std::vector<std::string>& vec_args) : WindowedFilter("WMA_SMOOTHING")
 {
 	parse_args(vec_args);
 
@@ -33,8 +33,8 @@ FilterMedianAvg::FilterMedianAvg(const std::vector<std::string>& vec_args) : Win
 	properties.points_after = min_data_points;
 }
 
-void FilterMedianAvg::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-                              std::vector<MeteoData>& ovec)
+void ProcWMASmoothing::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
@@ -45,35 +45,32 @@ void FilterMedianAvg::process(const unsigned int& param, const std::vector<Meteo
 		double& value = ovec[ii](param);
 
 		if( get_window_specs(ii, ivec, start, end) ) {
-			value = calc_median(ivec, param, start, end);
+			value = calcWMASmoothing(ivec, param, start, end);
 		} else if(!is_soft) value = IOUtils::nodata;
 	}
+
 }
 
-double FilterMedianAvg::calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
-{
-	vector<double> vecTemp;
-	for(size_t ii=start; ii<=end; ii++){ //get rid of nodata elements
-		const double& value = ivec[ii](param);
-		if (value != IOUtils::nodata)
-			vecTemp.push_back(value);
+double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
+{ //such as WMA = 1*X1 + 2*X2 + ... + n*Xn and then normalized by the sum of weights = (1+2+3+...+n)
+	double wma = 0.;
+	size_t counter = 0;
+
+	for (size_t ii=start; ii<=end; ii++){
+		const double currentval = ivec[ii](param);
+		if (currentval != IOUtils::nodata){
+			counter++;
+			wma += (counter) * currentval;
+		}
 	}
 
-	const size_t size_of_vec = vecTemp.size();
-	if (size_of_vec == 0)
+	if (counter > 0)
+		return (wma / (counter*(counter+1) * .5)); //arithmetic progression sum = n*(n+1)/2
+	else
 		return IOUtils::nodata;
-
-	const int middle = (int)(size_of_vec/2);
-	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
-
-	if ((size_of_vec % 2) == 1){ //uneven
-		return *(vecTemp.begin()+middle);
-	} else { //use arithmetic mean of element n/2 and n/2-1
-		return Interpol1D::weightedMean( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
-	}
 }
 
-void FilterMedianAvg::parse_args(std::vector<std::string> vec_args)
+void ProcWMASmoothing::parse_args(std::vector<std::string> vec_args)
 {
 	vector<double> filter_args;
 

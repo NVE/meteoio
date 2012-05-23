@@ -55,7 +55,7 @@ void FilterWindAvg::process(const unsigned int& param, const std::vector<MeteoDa
 
 		if( get_window_specs(ii, ivec, start, end) ) {
 			value = calc_avg(ivec, param, start, end);
-		}
+		} if(!is_soft) value = IOUtils::nodata;
 	}
 }
 

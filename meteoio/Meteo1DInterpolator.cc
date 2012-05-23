@@ -32,7 +32,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg) : cfg(in_cfg) {
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
 
 		vector<string> vecResamplingArguments;
-		string resamplingAlgorithm = getInterpolationForParameter(parname, vecResamplingArguments);
+		const string resamplingAlgorithm = getInterpolationForParameter(parname, vecResamplingArguments);
 
 		tasklist.push_back(resamplingAlgorithm);
 		taskargs.push_back(vecResamplingArguments);
@@ -56,7 +56,7 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) cons
 
 bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
-	size_t vecM_size = vecM.size();
+	const size_t vecM_size = vecM.size();
 
 	if (vecM_size == 0) //Deal with case of the empty vector
 		return false; //nothing left to do
@@ -96,7 +96,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	//There might be more parameters, interpolate them too
 	const MeteoData& origmd = vecM.at(0); //this element must exist at this point
 	for ( ; ii < origmd.getNrOfParameters(); ii++){
-		string parametername = origmd.getNameForParameter(ii);
+		const string parametername = origmd.getNameForParameter(ii);
 
 		//In order to parse the user config only once for this parameter we store
 		//the algorithm and its arguments in a hash map calles extended_tasklist

@@ -31,6 +31,8 @@
 #include <meteoio/meteofilters/ProcPassiveT.h>
 #include <meteoio/meteofilters/ProcAdd.h>
 #include <meteoio/meteofilters/ProcMult.h>
+#include <meteoio/meteofilters/ProcExpSmoothing.h>
+#include <meteoio/meteofilters/ProcWMASmoothing.h>
 
 namespace mio {
 /**
@@ -41,12 +43,11 @@ namespace mio {
  * It should be noted that filters often have two modes of operations: soft or hard. In soft mode, all value that is rejected is replaced by the filter parameter's value. This means that for a soft min filter set at 0.0, all values less than 0.0 will be replaced by 0.0. In hard mode, all rejected values are replaced by nodata.
  *
  * Several filter take arguments describing a processing window (for example, FilterStdDev). In such a case, two values are given:
- * - the time span of the window
+ * - the minimum time span of the window
  * - the minimum number of points in the window
  *
- * The ProcessingBlock will walk through the data, starting at the current point and adding points to the processing window.  As soon as one of these criteria is met,
- * the window is accepted. This means that a window defined as "6 21600" is a window that contains 6 points minimum OR spans 21600 seconds, depending on
- * which condition is met first. (THIS BEHAVIOR MIGHT CHANGE IN THE FUTURE TO BECOME A "AND" CONDITION)
+ * The ProcessingBlock will walk through the data, starting at the current point and adding points to the processing window.  When both of these criterias are met,
+ * the window is accepted. This means that a window defined as "6 21600" is a window that contains 6 points minimum AND spans at least 21600 seconds.
  *
  * @section processing_section Filtering section
  * The filters are specified for each parameter in the [Filters] section. This section contains
@@ -69,22 +70,19 @@ namespace mio {
  * @endcode
  *
  * @section processing_available Available processing elements
- * The filters are being ported to the new filtering infrastructure. Only the filters whose key is capitalized have been
- * ported and are ready to use in the current version.
- * The filters that are currently available are the following:
+ * New filters can easily be developed. The filters that are currently available are the following:
  * - RATE: rate of change filter, see FilterRate
  * - MIN_MAX: range check filter, see FilterMinMax
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
- * - mad: median absolute deviation, see FilterMAD
+ * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  * - HNW_MELT: detection of snow melting in a rain gauge, see FilterHNWMelt
  *
  * A few data transformations are also supported besides filtering:
- * - accumulate: data accumulates over a given period, see FilterAlgorithms::AccumulateProcess
- * - exp_smoothing: exponential smoothing of data, see FilterAlgorithms::ExpSmoothingProcess
- * - wma_smoothing window moving average smoothing of data, see FilterAlgorithms::WMASmoothingProcess
+ * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
+ * - WMA_SMOOTHING window moving average smoothing of data, see ProcWMASmoothing
  * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
  * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
  * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
@@ -115,6 +113,8 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("PASSIVE_T");
 	availableBlocks.insert("ADD");
 	availableBlocks.insert("MULT");
+	availableBlocks.insert("EXP_SMOOTHING");
+	availableBlocks.insert("WMA_SMOOTHING");
 	return true;
 }
 
@@ -154,6 +154,10 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcMult(vec_args);
 	} else if (blockname == "ADD"){
 		return new ProcAdd(vec_args);
+	} else if (blockname == "EXP_SMOOTHING"){
+		return new ProcExpSmoothing(vec_args);
+	} else if (blockname == "WMA_SMOOTHING"){
+		return new ProcWMASmoothing(vec_args);
 	} else {
 		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);
 	}
@@ -169,7 +173,7 @@ void ProcessingBlock::convert_args(const unsigned int& min_nargs, const unsigned
 	if ((vec_args.size() < min_nargs) || (vec_args.size() > max_nargs))
 		throw InvalidArgumentException("Wrong number of arguments for filter/processing element \"" + getName() + "\"", AT);
 
-	for (unsigned int ii=0; ii<vec_args.size(); ii++){
+	for (size_t ii=0; ii<vec_args.size(); ii++){
 		double tmp = IOUtils::nodata;
 		IOUtils::convertString(tmp, vec_args[ii]);
 		dbl_args.push_back(tmp);

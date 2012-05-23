@@ -36,14 +36,14 @@ class FilterBlock : public ProcessingBlock {
 	public:
 		virtual ~FilterBlock();
 
-		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
 		static bool is_soft(std::vector<std::string>& vec_args);
 
-		static void extract_dbl_vector(const unsigned int& index, const std::vector<MeteoData>& ivec,
+		static void extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                               std::vector<double>& ovec);
-		static void extract_dbl_vector(const unsigned int& index, const std::vector<const MeteoData*>& ivec,
+		static void extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec,
                                                std::vector<double>& ovec);
 
 	protected:

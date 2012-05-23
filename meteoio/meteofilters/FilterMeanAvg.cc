@@ -40,21 +40,21 @@ void FilterMeanAvg::process(const unsigned int& param, const std::vector<MeteoDa
 	ovec.reserve(ivec.size());
 	size_t start, end;
 
-	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
+	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
 		double& value = ovec[ii](param);
 
 		if( get_window_specs(ii, ivec, start, end) ) {
 			value = calc_avg(ivec, param, start, end);
-		}
+		} else if(!is_soft) value = IOUtils::nodata;
 	}
 }
 
 double FilterMeanAvg::calc_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
 	double sum = 0;
-	unsigned int counter = 0;
-	for (unsigned int ii=start; ii<=end; ii++){
+	size_t counter = 0;
+	for (size_t ii=start; ii<=end; ii++){
 		const double& value = ivec[ii](param);
 		if (value != IOUtils::nodata){
 			sum += value;
