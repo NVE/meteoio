@@ -34,42 +34,32 @@ FilterMAD::FilterMAD(const std::vector<std::string>& vec_args) : WindowedFilter(
 	properties.points_after = min_data_points;
 }
 
-void FilterMAD::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterMAD::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
+	size_t start, end;
 
 	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii](index);
+		double& value = ovec[ii](param);
+		if(value==IOUtils::nodata) continue;
 
-		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
-		if(value==IOUtils::nodata) continue; //because get_window needs to move the index 1 by 1
-
-		if (is_soft){
-			if (vec_window.size() > 0){
-				MAD_filter_point(vec_window, index, value);
-			}
-		} else {
-			if (vec_window.size() >= min_data_points){
-				MAD_filter_point(vec_window, index, value);
-			} else {
-				value = IOUtils::nodata;
-			}
+		if( get_window_specs(ii, ivec, start, end) ) {
+			MAD_filter_point(ivec, param, start, end, value);
 		}
-
 	}
 }
 
-void FilterMAD::MAD_filter_point(const std::vector<const MeteoData*>& vec_window, const unsigned int& index, double& value)
+void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value)
 {
 	const double K = 1. / 0.6745;
 	double mad     = IOUtils::nodata;
 	double median  = IOUtils::nodata;
 
 	std::vector<double> data;
-	for(unsigned int ii=0; ii<vec_window.size(); ii++) data.push_back( (*vec_window[ii])(index) );
+	for(unsigned int ii=start; ii<=end; ii++) data.push_back( ivec[ii](param) );
 
 	//Calculate MAD
 	try {

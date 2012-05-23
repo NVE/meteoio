@@ -56,12 +56,14 @@ class FilterWindAvg : public WindowedFilter {
 	public:
 		FilterWindAvg(const std::vector<std::string>& vec_args);
 
-		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
-		double calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
+		double calc_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
+
+		static const double to_rad, to_deg;
 };
 
 } //end namespace

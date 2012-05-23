@@ -49,7 +49,7 @@ class FilterMAD : public WindowedFilter {
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void MAD_filter_point(const std::vector<const MeteoData*>& vec_window, const unsigned int& index, double& value);
+		void MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value);
 		void parse_args(std::vector<std::string> vec_args);
 };
 

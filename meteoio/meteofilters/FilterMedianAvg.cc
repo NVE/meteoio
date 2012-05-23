@@ -33,49 +33,28 @@ FilterMedianAvg::FilterMedianAvg(const std::vector<std::string>& vec_args) : Win
 	properties.points_after = min_data_points;
 }
 
-void FilterMedianAvg::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterMedianAvg::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                               std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
+	size_t start, end;
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii](index);
+		double& value = ovec[ii](param);
 
-		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
-
-		if (is_soft){
-			if (vec_window.size() > 0){
-				value = calc_median(index, vec_window);
-			} else {
-				value = IOUtils::nodata;
-			}
-		} else {
-			if (vec_window.size() >= min_data_points){
-				value = calc_median(index, vec_window);
-			} else {
-				value = IOUtils::nodata;
-			}
+		if( get_window_specs(ii, ivec, start, end) ) {
+			value = calc_median(ivec, param, start, end);
 		}
 	}
 }
 
-/**
- * @brief Actual algorithm to calculate the average value for all values in vec_window(index)
- * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
- * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
- * @return A double either representing the average or IOUtils::nodata if averaging fails
- */
-double FilterMedianAvg::calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
+double FilterMedianAvg::calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
-	//HACK: once we would filter on vectors of double, directly call the proper stats method
-	if (vec_window.size() == 0)
-		return IOUtils::nodata;
-
 	vector<double> vecTemp;
-	for(size_t ii=0; ii<vec_window.size(); ii++){ //get rid of nodata elements
-		const double& value = (*vec_window[ii])(index);
+	for(size_t ii=start; ii<=end; ii++){ //get rid of nodata elements
+		const double& value = ivec[ii](param);
 		if (value != IOUtils::nodata)
 			vecTemp.push_back(value);
 	}

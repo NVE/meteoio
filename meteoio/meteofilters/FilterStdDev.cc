@@ -35,62 +35,43 @@ FilterStdDev::FilterStdDev(const std::vector<std::string>& vec_args) : WindowedF
 	properties.points_after = min_data_points;
 }
 
-void FilterStdDev::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterStdDev::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                            std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
+	size_t start, end;
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii](index);
+		double& value = ovec[ii](param);
 
-		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
+		if(value==IOUtils::nodata) continue;
 
 		//Calculate deviation
 		double mean     = IOUtils::nodata;
 		double std_dev  = IOUtils::nodata;
 
-		try {
-			/*vector<double> dbl_vec;
-			extract_dbl_vector(index,vec_window, dbl_vec);
-			mean = Interpol1D::arithmeticMean(dbl_vec);
-			std_dev = Interpol1D::std_dev(dbl_vec);*/
-			getStat(vec_window, index, std_dev, mean);
-		} catch(const exception&){
-			continue;
+		if( get_window_specs(ii, ivec, start, end) ) {
+			getStat(ivec, param, start, end, std_dev, mean);
 		}
 
 		if(mean==IOUtils::nodata) continue;
 
-		if (is_soft){
-			if (vec_window.size() > 0){
-				if( value!=IOUtils::nodata && abs(value-mean)>sigma*std_dev) {
-					value = IOUtils::nodata;
-				}
-			} else {
-				value = IOUtils::nodata;
-			}
-		} else {
-			if (vec_window.size() >= min_data_points){
-				if( value!=IOUtils::nodata && abs(value-mean)>sigma*std_dev) {
-					value = IOUtils::nodata;
-				}
-			} else {
-				value = IOUtils::nodata;
-			}
+		if( value!=IOUtils::nodata && abs(value-mean)>sigma*std_dev) {
+			value = IOUtils::nodata;
 		}
-
 	}
 }
 
-void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, const unsigned int& paramindex, double& stddev, double& mean) {
+void FilterStdDev::getStat(const std::vector<MeteoData>& ivec, const unsigned int& param,
+                           const size_t& start, const size_t& end, double& stddev, double& mean)
+{
 	size_t count=0;
 	double sum=0.;
-	const size_t n = vec_window.size();
 
-	for(size_t ii=0; ii<n; ii++) {
-		const double& value = (*vec_window[ii])(paramindex);
+	for(size_t ii=start; ii<=end; ii++) {
+		const double& value = ivec[ii](param);
 		if(value!=IOUtils::nodata) {
 			sum += value;
 			count++;
@@ -104,8 +85,8 @@ void FilterStdDev::getStat(const std::vector<const MeteoData*>& vec_window, cons
 		//compensated variance algorithm, see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance
 		mean = sum/(double)count;
 		double sum2=0., sum3=0.;
-		for(size_t ii=0; ii<n; ii++) {
-			const double& value = (*vec_window[ii])(paramindex);
+		for(size_t ii=start; ii<=end; ii++) {
+			const double& value = ivec[ii](param);
 			if(value!=IOUtils::nodata) {
 				sum2 = sum2 + (value - mean)*(value - mean);
 				sum3 = sum3 + (value - mean);

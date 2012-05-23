@@ -33,60 +33,36 @@ FilterMeanAvg::FilterMeanAvg(const std::vector<std::string>& vec_args) : Windowe
 	properties.points_after = min_data_points;
 }
 
-void FilterMeanAvg::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterMeanAvg::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                             std::vector<MeteoData>& ovec)
 {
 	ovec.clear();
 	ovec.reserve(ivec.size());
+	size_t start, end;
 
 	for (unsigned int ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii](index);
+		double& value = ovec[ii](param);
 
-		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
-
-		if (is_soft){
-			if (vec_window.size() > 0){
-				value = calc_avg(index, vec_window);
-			} else {
-				value = IOUtils::nodata;
-			}
-		} else {
-			if (vec_window.size() >= min_data_points){
-				value = calc_avg(index, vec_window);
-			} else {
-				value = IOUtils::nodata;
-			}
+		if( get_window_specs(ii, ivec, start, end) ) {
+			value = calc_avg(ivec, param, start, end);
 		}
 	}
 }
 
-/**
- * @brief Actual algorithm to calculate the average value for all values in vec_window(index)
- * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
- * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
- * @return A double either representing the average or IOUtils::nodata if averaging fails
- */
-double FilterMeanAvg::calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
+double FilterMeanAvg::calc_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
-	if (vec_window.size() == 0)
-		return IOUtils::nodata;
-
 	double sum = 0;
 	unsigned int counter = 0;
-	for (unsigned int ii=0; ii<vec_window.size(); ii++){
-		const double& value = (*vec_window[ii])(index);
+	for (unsigned int ii=start; ii<=end; ii++){
+		const double& value = ivec[ii](param);
 		if (value != IOUtils::nodata){
 			sum += value;
 			counter++;
 		}
 	}
 
-	if (counter == 0){
-		return IOUtils::nodata;
-	} else if (counter == 1){
-		return sum;
-	}
+	if (counter == 0) return IOUtils::nodata;
 
 	return (sum / (double)counter);
 }

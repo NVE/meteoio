@@ -22,6 +22,9 @@ using namespace std;
 
 namespace mio {
 
+const double FilterWindAvg::to_rad = Cst::PI / 180.;
+const double FilterWindAvg::to_deg = 180. / Cst::PI;
+
 FilterWindAvg::FilterWindAvg(const std::vector<std::string>& vec_args) : WindowedFilter("WIND_AVG")
 {
 	parse_args(vec_args);
@@ -33,71 +36,56 @@ FilterWindAvg::FilterWindAvg(const std::vector<std::string>& vec_args) : Windowe
 	properties.points_after = min_data_points;
 }
 
-void FilterWindAvg::process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+void FilterWindAvg::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                             std::vector<MeteoData>& ovec)
 {
-	if(index!=MeteoData::VW && index!=MeteoData::DW) {
+	if(param!=MeteoData::VW && param!=MeteoData::DW) {
 		stringstream ss;
-		ss << "Can not use WIND_AVG processing on " << MeteoData::getParameterName(index);
+		ss << "Can not use WIND_AVG processing on " << MeteoData::getParameterName(param);
 		throw InvalidArgumentException(ss.str(), AT);
 	}
+
 	ovec.clear();
 	ovec.reserve(ivec.size());
+	size_t start, end;
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
 		ovec.push_back(ivec[ii]);
-		double& value = ovec[ii](index);
+		double& value = ovec[ii](param);
 
-		const vector<const MeteoData*>& vec_window = get_window(ii, ivec);
-
-		if (is_soft){
-			if (vec_window.size() > 0){
-				value = calc_avg(index, vec_window);
-			} else {
-				value = IOUtils::nodata;
-			}
-		} else {
-			if (vec_window.size() >= min_data_points){
-				value = calc_avg(index, vec_window);
-			} else {
-				value = IOUtils::nodata;
-			}
+		if( get_window_specs(ii, ivec, start, end) ) {
+			value = calc_avg(ivec, param, start, end);
 		}
 	}
 }
 
-/**
- * @brief Actual algorithm to calculate the average value for all values in vec_window(index)
- * @param index The MeteoData parameter to be averaged (e.g. MeteoData::TA, etc)
- * @param vec_window A vector of pointers to MeteoData that shall be used for the averaging
- * @return A double either representing the average or IOUtils::nodata if averaging fails
- */
-double FilterWindAvg::calc_avg(const unsigned int& index, const std::vector<const MeteoData*>& vec_window)
+double FilterWindAvg::calc_avg(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
 {
-		const size_t vecSize = vec_window.size();
-		double meanspeed     = IOUtils::nodata;
-		double meandirection = IOUtils::nodata;
-
-		if (vecSize == 0){
-			return IOUtils::nodata;
-		} else {
-			//calculate ve and vn
-			double ve=0.0, vn=0.0;
-			for (size_t jj=0; jj<vecSize; jj++){
-				ve += vec_window[jj]->operator()(MeteoData::VW) * sin(vec_window[jj]->operator()(MeteoData::DW) * Cst::PI / 180.); //turn into radians
-				vn += vec_window[jj]->operator()(MeteoData::VW) * cos(vec_window[jj]->operator()(MeteoData::DW) * Cst::PI / 180.); //turn into radians
-			}
-			ve /= vecSize;
-			vn /= vecSize;
-
-			meanspeed = sqrt(ve*ve + vn*vn);
-			meandirection = fmod( atan2(ve,vn) * 180. / Cst::PI + 360. , 360.); // turn into degrees [0;360)
+	//calculate ve and vn
+	double ve=0.0, vn=0.0;
+	size_t count=0;
+	for (size_t ii=start; ii<=end; ii++) {
+		const double VW = ivec[ii](MeteoData::VW);
+		const double DW = ivec[ii](MeteoData::DW);
+		if(VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
+			ve += VW * sin(DW*to_rad);
+			vn += VW * cos(DW*to_rad);
+			count++;
 		}
+	}
 
-		if(index==MeteoData::VW)
-			return meanspeed;
-		else
-			return meandirection;
+	if(count==0) return IOUtils::nodata;
+
+	ve /= count;
+	vn /= count;
+
+	if(param==MeteoData::VW) {
+		const double meanspeed = sqrt(ve*ve + vn*vn);
+		return meanspeed;
+	} else {
+		const double meandirection = fmod( atan2(ve,vn) * to_deg + 360. , 360.); // turn into degrees [0;360)
+		return meandirection;
+	}
 }
 
 void FilterWindAvg::parse_args(std::vector<std::string> vec_args)

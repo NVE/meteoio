@@ -54,12 +54,12 @@ class FilterMedianAvg : public WindowedFilter {
 	public:
 		FilterMedianAvg(const std::vector<std::string>& vec_args);
 
-		virtual void process(const unsigned int& index, const std::vector<MeteoData>& ivec,
+		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
-		double calc_median(const unsigned int& index, const std::vector<const MeteoData*>& vec_window);
+		double calc_median(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
 };
 
 } //end namespace
