@@ -18,7 +18,6 @@
 #ifndef DEMOBJECT_H
 #define DEMOBJECT_H
 
-#include <meteoio/Array.h>
 #include <meteoio/Array2D.h>
 #include <meteoio/Grid2DObject.h>
 #include <meteoio/IOUtils.h>

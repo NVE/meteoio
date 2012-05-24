@@ -45,7 +45,7 @@ IF(MSVC)
 	SET(ARCH_OPTIM "/arch:SSE2")
 	SET(ARCH_SAFE "")
 	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
-	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS") #Za: strict ansi
+	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
 	SET(_VERSION "/D_VERSION=\\\"${_versionString}\\\"")
 ENDIF(MSVC)
 

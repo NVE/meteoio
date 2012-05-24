@@ -421,7 +421,7 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 	int year, month, day;
 	date.getDate(year, month, day);
 
-	return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct_h+diffuse_h, month);
+	return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct_h+diffuse_h, static_cast<unsigned char>(month));
 }
 
 /**

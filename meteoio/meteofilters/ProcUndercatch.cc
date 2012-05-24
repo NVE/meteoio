@@ -61,7 +61,7 @@ void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoD
 			if(precip==mixed) tmp *= factor_mixed;
 		} else if(type==nipher) {
 			if(VW==IOUtils::nodata) continue;
-			double k;
+			double k=100.;
 			if(precip==snow) k=100.-0.44*VW*VW-1.98*VW;
 			if(precip==mixed) {
 				if(t==IOUtils::nodata) continue;
@@ -70,19 +70,19 @@ void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoD
 			tmp *= 100./k;
 		} else if(type==tretyakov) {
 			if(VW==IOUtils::nodata || t==IOUtils::nodata) continue;
-			double k;
+			double k=100.;
 			if(precip==snow) k=103.11-8.67*VW+0.30*t; //Tmax
 			if(precip==mixed) k=96.99-4.46*VW+0.88*t+0.22*t; //Tmax, Tmin
 			tmp *= 100./k;
 		} else if(type==us8sh) {
 			if(VW==IOUtils::nodata) continue;
-			double k;
+			double k=100.;
 			if(precip==snow) k=exp(4.61-0.04*pow(VW, 1.75));
 			if(precip==mixed) k=101.04-5.62*VW;
 			tmp *= 100./k;
 		} else if(type==us8unsh) {
 			if(VW==IOUtils::nodata) continue;
-			double k;
+			double k=100.;
 			if(precip==snow) k=exp(4.61-0.16*pow(VW, 1.28));
 			if(precip==mixed) k=100.77-8.34*VW;
 			tmp *= 100./k;
@@ -90,10 +90,10 @@ void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoD
 			if(VW==IOUtils::nodata) continue;
 			const double rh = ovec[ii](MeteoData::RH);
 			const double alt = ovec[ii].meta.position.getAltitude();
-			double k, t_wb;
+			double k=100.;
 			if(rh!=IOUtils::nodata && alt!=IOUtils::nodata) {
+				const double t_wb = K_TO_C(Atmosphere::wetBulbTemperature(ovec[ii](MeteoData::TA), rh, alt));
 				double ts_rate;
-				t_wb = K_TO_C(Atmosphere::wetBulbTemperature(ovec[ii](MeteoData::TA), rh, alt));
 				if(t_wb<1.1) ts_rate = 1. - .5*exp(-2.2*pow(1.1-t_wb, 1.3));
 				else ts_rate = .5*exp(-2.2*pow(t_wb-1.1, 1.3));
 				if(ts_rate>.5) precip=snow; else precip=mixed;
@@ -103,7 +103,7 @@ void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoD
 			tmp *= 100./k;
 		} else if(type==hellmann) {
 			if(VW==IOUtils::nodata) continue;
-			double k;
+			double k=100.;
 			if(precip==snow) k=100.+1.13*VW*VW-19.45*VW;
 			if(precip==mixed) {
 				if(t==IOUtils::nodata) continue;
@@ -112,7 +112,7 @@ void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoD
 			tmp *= 100./k;
 		}  else if(type==hellmannsh) {
 			if(VW==IOUtils::nodata) continue;
-			double k;
+			double k=100.;
 			if(precip==snow) k=100.+0.72*VW*VW-13.74*VW;
 			if(precip==mixed) k=101.319+0.524*VW*VW-6.42*VW;
 			tmp *= 100./k;

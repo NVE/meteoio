@@ -690,10 +690,16 @@ short int Coords::getEPSG() const {
 * @brief set the current projection to a given EPSG-defined projection
 * @param epsg epsg code
 */
-void Coords::setEPSG(const short int epsg) {
+void Coords::setEPSG(const int epsg) {
 //TODO: get rid of the zone letter. This is not part of the standard and redundant (and messy)
 	bool found=false;
 	std::string coord_sys, coord_param;
+
+	if(epsg<0 || epsg>32767) {
+		std::stringstream ss;
+		ss << "Invalid epsg code " << epsg << " (it should be between 0 and 32767)!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 
 	if(!found && (epsg==21781)) {
 		coord_sys="CH1903";

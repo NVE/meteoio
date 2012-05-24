@@ -99,7 +99,7 @@ class Coords {
 	void setLocalRef(const double in_ref_latitude, const double in_ref_longitude);
 	void setLocalRef(const std::string in_coordparam);
 	void setDistances(const geo_distances in_algo);
-	void setEPSG(const short int epsg);
+	void setEPSG(const int epsg);
 
 	void check();
 	double distance(const Coords& destination) const;
