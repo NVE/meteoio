@@ -160,7 +160,6 @@ void Date::setDate(const Date& in_date)
 void Date::setDate(const int& i_year, const int& i_month, const int& i_day, const int& i_hour, const int& i_minute, const double& i_timezone, const bool& i_dst)
 {
 	plausibilityCheck(i_year, i_month, i_day, i_hour, i_minute); //also checks leap years
-	undef = false;
 	setTimeZone(i_timezone, i_dst);
 
 	if(timezone==0 && dst==false) {
@@ -175,6 +174,7 @@ void Date::setDate(const int& i_year, const int& i_month, const int& i_day, cons
 	}
 	//updating values to GMT, fixing potential 24:00 hour (ie: replaced by next day, 00:00)
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	undef = false;
 }
 
 void Date::setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst)
@@ -191,8 +191,8 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst) {
 	setTimeZone(in_timezone, in_dst);
 	gmt_julian = localToGMT(julian_in);
-	undef = false;
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
+	undef = false;
 }
 
 /**

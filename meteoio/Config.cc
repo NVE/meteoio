@@ -59,7 +59,7 @@ void Config::addCmdLine(const std::string& cmd_line)
 
 void Config::addKey(const std::string& key, const std::string& value)
 {
-	std::string section=defaultSection;
+	const std::string section=defaultSection;
 	addKey(key, section, value);
 }
 
@@ -98,8 +98,6 @@ void Config::parseCmdLine(const std::string& cmd_line)
 void Config::parseFile(const std::string& filename)
 {
 	std::ifstream fin; //Input file streams
-	unsigned int linenr = 0;
-	std::string line="", section=defaultSection;
 
 	if (!IOUtils::validFileName(filename)) {
 		throw InvalidFileNameException(filename,AT);
@@ -116,7 +114,9 @@ void Config::parseFile(const std::string& filename)
 		throw FileAccessException(filename, AT);
 	}
 
-	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	std::string line="", section=defaultSection;
+	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+	unsigned int linenr = 0;
 
 	try {
 		do {
@@ -183,7 +183,7 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, std::string keystar
 	map<string,string>::const_iterator it;
 	for (it=properties.begin(); it != properties.end(); it++){
 		const string tmp = (it->first).substr(0, tmp_keystart.length());
-		int matchcount = tmp_keystart.compare(tmp);
+		const int matchcount = tmp_keystart.compare(tmp);
 
 		if (matchcount == 0){ //perfect match
 			const string tmp2 = (it->first).substr(section.length() + 2);
@@ -196,7 +196,7 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, std::string keystar
 
 std::string Config::extract_section(std::string& key)
 {
-	string::size_type pos = key.find("::");
+	const string::size_type pos = key.find("::");
 
 	if (pos != string::npos){
 		string sectionname = key.substr(0, pos);

@@ -64,8 +64,12 @@ void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_s
                                 const std::vector< METEO_TIMESERIE >& vecMeteo)
 {
 	//perform check on date_start and date_end
-	if (date_end < date_start)
-		throw InvalidArgumentException("date_start cannot be greater than date_end", AT);
+	if (date_end < date_start) {
+		std::stringstream ss;
+		ss << "Trying to push data set from " << date_start.toString(Date::ISO) << " to " << date_end.toString(Date::ISO) << ". ";
+		ss << " Obviously, date_start should be less than date_end!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 
 	if (level == IOManager::filtered){
 		fcache_start   = date_start;
@@ -103,7 +107,7 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 	if (processing_level == IOManager::raw){
 		rawio.readMeteoData(dateStart, dateEnd, vecMeteo);
 	} else {
-		bool success = read_filtered_cache(dateStart, dateEnd, vecMeteo);
+		const bool success = read_filtered_cache(dateStart, dateEnd, vecMeteo);
 
 		if (!success){
 			vector< vector<MeteoData> > tmp_meteo;
@@ -245,7 +249,6 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 		MeteoData md;
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
 			const bool success = meteoprocessor.resample(i_date, (*data)[ii], md);
-			
 			if (success) vecMeteo.push_back(md);
 		}
 	}
@@ -348,7 +351,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 	vector<Coords> vec_coords = in_coords;
 
 	for (size_t ii=0; ii<vec_coords.size(); ii++) {
-		bool gridify_success = dem.gridify(vec_coords[ii]);
+		const bool gridify_success = dem.gridify(vec_coords[ii]);
 		if (!gridify_success)
 			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
 

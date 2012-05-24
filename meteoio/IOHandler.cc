@@ -164,11 +164,11 @@ void IOHandler::loadPlugin(const std::string& libname, const std::string& classn
 
 	try {
 		cfg.getValue("PLUGINPATH", pluginpath, Config::nothrow);
-		if (pluginpath != "")
+		if (pluginpath.length() > 0 && pluginpath.at( pluginpath.length() - 1 )!='/')
 			pluginpath += "/";
 
 		//Which dynamic library needs to be loaded
-		std::string filename = pluginpath + libname;
+		const std::string filename = pluginpath + libname;
 		dynLibrary = DynamicLoader::loadObjectFile(filename);
 
 		if(dynLibrary == NULL) {
@@ -244,13 +244,14 @@ void IOHandler::readStationData(const Date& date, STATION_TIMESERIE& vecStation)
 
 void IOHandler::readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo)
 {
-	vecMeteo.clear();
-
 	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
 	readMeteoData(date, date, meteoTmpBuffer);
 
-	unsigned int emptycounter = 0;
-	for (unsigned int ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
+	vecMeteo.clear();
+	vecMeteo.reserve(meteoTmpBuffer.size());
+
+	size_t emptycounter = 0;
+	for (size_t ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
 		if (meteoTmpBuffer[ii].size() > 0){
 			vecMeteo.push_back(meteoTmpBuffer[ii][0]);
 		} else {
@@ -314,11 +315,11 @@ void IOHandler::parse_copy_config()
 	 * duplicated (starting with 'COPY::')
 	 */
 	vector<string> copy_keys;
-	size_t nrOfMatches = cfg.findKeys(copy_keys, "COPY::", "Input");
+	const size_t nrOfMatches = cfg.findKeys(copy_keys, "COPY::", "Input");
 
 	for (size_t ii=0; ii<nrOfMatches; ii++) {
 		string initial_name = "";
-		string name_of_copy = copy_keys[ii].substr(6);
+		const string name_of_copy = copy_keys[ii].substr(6);
 		cfg.getValue(copy_keys[ii], "Input", initial_name);
 
 		if ((name_of_copy.length() > 0) && (initial_name.length() > 0)){
@@ -352,7 +353,7 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_T
 		}
 	}
 
-	size_t nr_of_params = copy_parameter.size();
+	const size_t nr_of_params = copy_parameter.size();
 	vector<size_t> indices; //will hold the indices of the parameters to be copied
 
 	for (size_t ii=station_start; ii<station_end; ii++) { //for each station
@@ -360,7 +361,7 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_T
 
 			if (jj==0) { //buffer the index numbers
 				for (size_t kk=0; kk<nr_of_params; kk++) {
-					size_t param_index = vecMeteo[ii][jj].getParameterIndex(copy_parameter[kk]);
+					const size_t param_index = vecMeteo[ii][jj].getParameterIndex(copy_parameter[kk]);
 					if (param_index == IOUtils::npos) {
 						std::stringstream ss;
 						ss << "At " << vecMeteo[ii][jj].date.toString(Date::ISO) << ", station " << vecMeteo[ii][jj].meta.stationID;
@@ -373,8 +374,8 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_T
 			}
 
 			for (size_t kk=0; kk<nr_of_params; kk++) {
-				size_t newindex = vecMeteo[ii][jj].addParameter(copy_name[kk]);
-				vecMeteo[ii][jj](newindex) = vecMeteo[ii][jj](indices[kk]);
+				const size_t newparam = vecMeteo[ii][jj].addParameter(copy_name[kk]);
+				vecMeteo[ii][jj](newparam) = vecMeteo[ii][jj](indices[kk]);
 			}
 		}
 		indices.clear(); //may change for every station

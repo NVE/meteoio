@@ -294,7 +294,7 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 			closeDBConnection(env, conn);
 		} catch (const exception& e){
 			closeDBConnection(env, conn);
-			throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
+			throw IOException("Oracle Error when reading stations' metedata: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 		}
 	}
 
@@ -493,7 +493,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		closeDBConnection(env, conn);
 	} catch (const exception& e){
 		closeDBConnection(env, conn);
-		throw IOException("Oracle Error: " + string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException("Oracle Error when reading stations' data: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
@@ -797,7 +797,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
 	} catch (const exception& e){
-		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException("Oracle Error when SWE data: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
@@ -891,7 +891,7 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 		conn->terminateStatement(stmt);
 		return cols.size();
 	} catch (const exception& e){
-		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException("Oracle Error when reading stations' id: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
@@ -929,7 +929,7 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
 		conn->terminateStatement(stmt);
 		return cols.size();
 	} catch (const exception& e){
-		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException("Oracle Error when reading sensors' depths: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
@@ -968,7 +968,7 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 		conn->terminateStatement(stmt);
 		return cols.size();
 	} catch (const exception& e){
-		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException("Oracle Error when reading stations' metadata: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 
@@ -1037,7 +1037,7 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		conn->terminateStatement(stmt);
 		return fullStation;
 	} catch (const exception& e){
-		throw IOException(string(e.what()), AT); //Translation of OCCI exception to IOException
+		throw IOException("Oracle Error when reading stations' data: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
 }
 

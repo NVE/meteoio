@@ -58,7 +58,7 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string
 			return;
 		}
 
-		Grid2DObject tmpgrid2D;
+		Grid2DObject tmpgrid2D; //HACK: why don't we read directly into in_grid2Dobj?
 		iohandler.read2DGrid(tmpgrid2D, in_filename);
 		bufferGrid(tmpgrid2D, in_filename);
 		in_grid2Dobj = tmpgrid2D;
@@ -274,6 +274,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 
 		while (date_end > new_buffer_end){
 			//if the requested interval is bigger than a normal buffer, we have to increase the buffer anyway...
+			tmp_meteo_buffer.reserve(buffer_size);
 			iohandler.readMeteoData(new_buffer_end, new_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
 
 			if (tmp_meteo_buffer.size() != buffer_size) {
@@ -284,8 +285,8 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 			}
 
 			//Loop through stations and append data
-			for (size_t ii=0; ii<buffer_size; ii++){
-				size_t station_size = vec_buffer_meteo[ii].size();
+			for (size_t ii=0; ii<buffer_size; ii++){ //loop through stations
+				const size_t station_size = vec_buffer_meteo[ii].size();
 
 				if ((station_size > 0) && (tmp_meteo_buffer[ii].size() > 0)){
 					//check if the last element equals the first one
@@ -293,6 +294,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 						vec_buffer_meteo[ii].pop_back(); //delete the element with the same date
 				}
 
+				vec_buffer_meteo[ii].reserve(vec_buffer_meteo[ii].size()+tmp_meteo_buffer[ii].size());
 				vec_buffer_meteo[ii].insert(vec_buffer_meteo[ii].end(), tmp_meteo_buffer[ii].begin(), tmp_meteo_buffer[ii].end());
 			}
 			new_buffer_end += chunk_size*chunks;
@@ -301,7 +303,8 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 	}
 
 	//2. Copy appropriate data into vecMeteo
-	for (size_t ii=0; ii<buffer_size; ii++){
+	vecMeteo.reserve(buffer_size);
+	for (size_t ii=0; ii<buffer_size; ii++){ //loop through stations
 		vecMeteo.push_back(vector<MeteoData>()); //insert one empty vector of MeteoData
 
 		if (vec_buffer_meteo[ii].size() == 0) continue; //no data in buffer for this station
@@ -310,14 +313,14 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 		if (pos_start == IOUtils::npos) pos_start = 0;
 
 		size_t pos_end = IOUtils::seek(date_end, vec_buffer_meteo[ii], false);//HACK:: edit IOUtils::seek to accept an offset
-		if (pos_end == IOUtils::npos)	pos_end = vec_buffer_meteo[ii].size() - 1; //just copy until the end of the buffer
-		//cerr << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
+		if (pos_end == IOUtils::npos) pos_end = vec_buffer_meteo[ii].size() - 1; //just copy until the end of the buffer
+
 		if (vec_buffer_meteo[ii][pos_end].date > date_end){
-			if (pos_end > pos_start)	pos_end--;
+			if (pos_end > pos_start) pos_end--;
 		} else {
 			pos_end++;
 		}
-		//cerr << "Station " << ii << ": pos_start=" << pos_start << "  pos_end=" << pos_end << endl;
+		vecMeteo[ii].reserve(pos_end-pos_start+1); //weird that the "insert" does not handle it internally...
 		vecMeteo[ii].insert(vecMeteo[ii].begin(), vec_buffer_meteo[ii].begin()+pos_start, vec_buffer_meteo[ii].begin()+pos_end);
 	}
 }
