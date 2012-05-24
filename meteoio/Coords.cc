@@ -709,7 +709,7 @@ void Coords::setEPSG(const int epsg) {
 	if(!found && (epsg>=32601) && (epsg<=32660)) {
 		//northern hemisphere
 		coord_sys="UTM";
-		const short int zoneNumber = epsg-32600;
+		const int zoneNumber = epsg-32600;
 		std::ostringstream osstream;
 		osstream << zoneNumber << "P";
 		coord_param=osstream.str();
@@ -718,7 +718,7 @@ void Coords::setEPSG(const int epsg) {
 	if(!found && (epsg>=32701) && (epsg<=32760)) {
 		//southern hemisphere
 		coord_sys="UTM";
-		const short int zoneNumber = epsg-32700;
+		const int zoneNumber = epsg-32700;
 		std::ostringstream osstream;
 		osstream << zoneNumber << "N";
 		coord_param=osstream.str();

@@ -18,6 +18,9 @@
 #ifndef __GSNIO_H__
 #define __GSNIO_H__
 
+#include <math.h>
+#define _isnan isnan
+
 #include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
 #include "gsn/GSNWebServiceSoap12Binding.nsmap"
 #ifdef _WIN32 //because we collected c**p from windows.h

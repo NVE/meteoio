@@ -27,7 +27,6 @@ const double ProcPassiveT::soil_albedo = .23; //grass
 const double ProcPassiveT::snow_albedo = .56; //white surface
 const double ProcPassiveT::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 const double ProcPassiveT::vw_thresh = 0.1; //wind speed threshold
-const bool ProcPassiveT::nakamura = false; //use Nakamura or Huwald model
 
 ProcPassiveT::ProcPassiveT(const std::vector<std::string>& vec_args) : ProcessingBlock("PASSIVE_T") {
 	parse_args(vec_args);
@@ -111,6 +110,8 @@ void ProcPassiveT::parse_args(std::vector<std::string> vec_args) {
 	} else {
 		usr_albedo = filter_args[0];
 	}
+
+	nakamura = false;
 }
 
 } //end namespace

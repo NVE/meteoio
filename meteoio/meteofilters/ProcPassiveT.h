@@ -56,7 +56,7 @@ class ProcPassiveT : public ProcessingBlock {
 
 		bool is_soft;
 		double usr_albedo;
-		static const bool nakamura;
+		bool nakamura; //use Nakamura or Huwald model
 		static const double dflt_albedo, soil_albedo, snow_albedo;
 		static const double snow_thresh, vw_thresh;
 };
