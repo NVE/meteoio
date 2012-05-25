@@ -38,7 +38,11 @@ namespace mio {
  * - the minimal time interval spanning the window (in seconds)
  * - the alpha parameter, such as 0 < alpha < 1
  *
- * @note This filter temporally shifts the signal back by window_width/2
+ * The standard behavior for this filter is obtained by using a left window. If using a right window, it behaves as if time was reversed
+ * (ie. predictions from the future). A centered window applies the standard algorithms on the <b>distance</b> between the center point and each points,
+ * that is that points get averaged symetrically around the middle point before running the standard algorithm.
+ *
+ * @note This filter temporally shifts the signal back by window_width/2 if using left or right window
  * @note This would probably lead to slightly unexpected results if used on irregularly sampled data
  *
  * @code
@@ -58,7 +62,7 @@ class ProcExpSmoothing : public WindowedFilter {
 
 	private:
 		void parse_args(std::vector<std::string> vec_args);
-		double calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
+		double calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos);
 
 		double alpha;
 };

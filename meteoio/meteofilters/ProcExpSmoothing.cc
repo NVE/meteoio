@@ -45,25 +45,41 @@ void ProcExpSmoothing::process(const unsigned int& param, const std::vector<Mete
 		double& value = ovec[ii](param);
 
 		if( get_window_specs(ii, ivec, start, end) ) {
-			value = calcExpSmoothing(ivec, param, start, end);
+			value = calcExpSmoothing(ivec, param, start, end, ii);
 		} else if(!is_soft) value = IOUtils::nodata;
 	}
 
 }
 
-double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
+double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos)
 {
+	const size_t max_len = MAX(pos-start, end-pos);
 	bool initCompleted = false;
 	double expavg = IOUtils::nodata;
 
-	for (size_t ii=start; ii<=end; ii++){
-		const double currentval = ivec[ii](param);
-		if (currentval != IOUtils::nodata){
-			if (!initCompleted){
-				expavg = currentval;
-				initCompleted = true;
+	for (size_t ii=1; ii<=max_len; ii++) {
+		//getting values left and right of the current point
+		const double val1 = ( pos>=ii && (pos-ii)>=start )? ivec[pos-ii](param) : IOUtils::nodata;
+		const double val2 = ( (pos+ii)<=end )? ivec[pos+ii](param) : IOUtils::nodata;
+
+		//computing the average (centered window) or take the proper point (left or right window)
+		double val;
+		if(val1!=IOUtils::nodata && val2!=IOUtils::nodata) {
+			val = (val1+val2) * .5;
+		} else if(val1!=IOUtils::nodata) {
+			val = val1;
+		} else if(val2!=IOUtils::nodata) {
+			val = val2;
+		} else
+			val = IOUtils::nodata;
+
+		//add the contribution
+		if(val!=IOUtils::nodata) {
+			if (initCompleted){
+				expavg = alpha*val + (1.-alpha)*expavg;
 			} else {
-				expavg = alpha*currentval + (1.-alpha)*expavg;
+				expavg = val;
+				initCompleted = true;
 			}
 		}
 	}

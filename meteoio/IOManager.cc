@@ -23,11 +23,12 @@ using namespace std;
 namespace mio {
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg),
-                                            meteoprocessor(cfg), interpolator(cfg, *this)
+                                            meteoprocessor(cfg), interpolator(cfg)
 {
 	setProcessingLevel(IOManager::filtered | IOManager::resampled);
 	fcache_start = fcache_end = Date(0.0, 0.); //this should not matter, since 0 is still way back before any real data...
 	meteoprocessor.getWindowSize(proc_properties);
+	interpolator.setIOManager(*this); //because "*this" does not necessarily exist in the initialization list...
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)

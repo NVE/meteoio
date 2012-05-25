@@ -108,8 +108,7 @@ class Meteo2DInterpolator {
 		/**
 		* @brief Constructor.
 		*/
-		//Meteo2DInterpolator(const Config& _cfg, const DEMObject& _dem,
-		//                    const std::vector<MeteoData>& _vecMeteo);
+		Meteo2DInterpolator(const Config& i_cfg);
 		Meteo2DInterpolator(const Config& i_cfg, IOManager& iomanager);
 
 		/**
@@ -155,13 +154,16 @@ class Meteo2DInterpolator {
 		                                const std::string& algorithm,
 		                                std::vector<std::string>& vecArgs) const;
 
+		void setIOManager(IOManager& iomanager);
+
 		friend std::ostream& operator<<(std::ostream& os, const Meteo2DInterpolator& mi);
 
 	private:
+		void setAlgorithms();
 		void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
-		IOManager& iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
+		IOManager *iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
 
 		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
 

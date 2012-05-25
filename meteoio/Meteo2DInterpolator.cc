@@ -22,8 +22,19 @@ using namespace std;
 
 namespace mio {
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) : cfg(i_cfg), iomanager(i_iom)
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) : cfg(i_cfg)
 {
+	iomanager = &i_iom;
+	setAlgorithms();
+}
+
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg) : cfg(i_cfg)
+{
+	iomanager = NULL;
+	setAlgorithms();
+}
+
+void Meteo2DInterpolator::setAlgorithms() {
 	/*
 	 * By reading the Config object build up a list of user configured algorithms
 	 * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
@@ -33,11 +44,15 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) 
 	for (size_t ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpAlgorithms;
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
-		size_t nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
+		const size_t nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
 
 		if (nrOfAlgorithms > 0)
 			mapAlgorithms[parname] = tmpAlgorithms;
 	}
+}
+
+void Meteo2DInterpolator::setIOManager(IOManager& i_iomanager) {
+	iomanager = &i_iomanager;
 }
 
 void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo)
@@ -67,6 +82,9 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                                       Grid2DObject& result, std::string& InfoString)
 {
+	if(iomanager==NULL)
+		throw IOException("No IOManager reference has been set!", AT);
+
 	//Show algorithms to be used for this parameter
 	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
 
@@ -80,7 +98,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			getArgumentsForAlgorithm(meteoparam, algoname, vecArgs);
 
 			//Get the configured algorithm
-			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, date, dem, vecArgs, iomanager));
+			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, date, dem, vecArgs, *iomanager));
 			//Get the quality rating and compare to previously computed quality ratings
 			algorithm->initialize(meteoparam);
 			const double rating = algorithm->getQualityRating();

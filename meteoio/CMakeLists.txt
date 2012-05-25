@@ -14,7 +14,11 @@ IF(PROJ4)
 	FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
 	FIND_LIBRARY(LIBPROJ proj)
 	INCLUDE_DIRECTORIES(${LIBPROJ_INCLUDE_DIR})
-	ADD_DEFINITIONS(-DPROJ4) #it looks like some VC++ versions don't support -D syntax
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPROJ4) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPROJ4)
+	ENDIF(MSVC)
 ENDIF(PROJ4)
 
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")

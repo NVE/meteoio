@@ -45,27 +45,43 @@ void ProcWMASmoothing::process(const unsigned int& param, const std::vector<Mete
 		double& value = ovec[ii](param);
 
 		if( get_window_specs(ii, ivec, start, end) ) {
-			value = calcWMASmoothing(ivec, param, start, end);
+			value = calcWMASmoothing(ivec, param, start, end, ii);
 		} else if(!is_soft) value = IOUtils::nodata;
 	}
-
 }
 
-double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end)
+double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos)
 { //such as WMA = 1*X1 + 2*X2 + ... + n*Xn and then normalized by the sum of weights = (1+2+3+...+n)
+	const size_t max_len = MAX(pos-start, end-pos);
 	double wma = 0.;
-	size_t counter = 0;
+	size_t norm = 0;
 
-	for (size_t ii=start; ii<=end; ii++){
-		const double currentval = ivec[ii](param);
-		if (currentval != IOUtils::nodata){
-			counter++;
-			wma += (counter) * currentval;
+	for (size_t ii=0; ii<=max_len; ii++) {
+		//getting values left and right of the current point
+		const double val1 = ( pos>=ii && (pos-ii)>=start )? ivec[pos-ii](param) : IOUtils::nodata;
+		const double val2 = ( (pos+ii)<=end )? ivec[pos+ii](param) : IOUtils::nodata;
+
+		//computing the average (centered window) or take the proper point (left or right window)
+		double val;
+		if(val1!=IOUtils::nodata && val2!=IOUtils::nodata) {
+			val = (val1+val2) * .5;
+		} else if(val1!=IOUtils::nodata) {
+			val = val1;
+		} else if(val2!=IOUtils::nodata) {
+			val = val2;
+		} else
+			val = IOUtils::nodata;
+
+		//compute the WMA contribution and normalization factor
+		if(val!=IOUtils::nodata) {
+			const double weight = max_len-ii+1;
+			wma += weight*val;
+			norm += weight;
 		}
 	}
 
-	if (counter > 0)
-		return (wma / (counter*(counter+1) * .5)); //arithmetic progression sum = n*(n+1)/2
+	if (norm > 0)
+		return wma/norm;
 	else
 		return IOUtils::nodata;
 }
