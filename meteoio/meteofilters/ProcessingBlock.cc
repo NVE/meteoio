@@ -82,7 +82,7 @@ namespace mio {
  *
  * A few data transformations are also supported besides filtering:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
- * - WMA_SMOOTHING window moving average smoothing of data, see ProcWMASmoothing
+ * - WMA_SMOOTHING weighted moving average smoothing of data, see ProcWMASmoothing
  * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
  * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
  * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
