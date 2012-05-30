@@ -159,9 +159,8 @@ class Grid3DObject{
 		double cellsize;
 		Coords llcorner;
 		unsigned int ncols, nrows, ndepths;
-		//NOTE: the altitude is understood as above sea level,
-		//that is we curently don't support altitude as above the local ground
-		//std::vector<double> thickness;
+		std::vector<double> z; ///> Vector of depths
+		bool z_is_absolute; ///> Are z coordinates absolute or relative to a DEM?
 
  protected:
 		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,

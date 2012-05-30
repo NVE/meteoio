@@ -24,11 +24,11 @@
 #include <meteoio/meteofilters/FilterWindAvg.h>
 #include <meteoio/meteofilters/FilterStdDev.h>
 #include <meteoio/meteofilters/FilterRate.h>
-#include <meteoio/meteofilters/FilterHNWMelt.h>
+#include <meteoio/meteofilters/FilterUnheatedHNW.h>
 #include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/FilterMAD.h>
 #include <meteoio/meteofilters/ProcUndercatch.h>
-#include <meteoio/meteofilters/ProcPassiveT.h>
+#include <meteoio/meteofilters/ProcUnventilatedT.h>
 #include <meteoio/meteofilters/ProcAdd.h>
 #include <meteoio/meteofilters/ProcMult.h>
 #include <meteoio/meteofilters/ProcExpSmoothing.h>
@@ -78,7 +78,7 @@ namespace mio {
  * - STD_DEV: reject data outside mean +/- k*stddev, see FilterStdDev
  * - MAD: median absolute deviation, see FilterMAD
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
- * - HNW_MELT: detection of snow melting in a rain gauge, see FilterHNWMelt
+ * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedHNW
  *
  * A few data transformations are also supported besides filtering:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
@@ -89,7 +89,7 @@ namespace mio {
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
  * - UNDERCATCH: rain gauge correction for undercatch, using various correction models, see ProcUndercatch
- * - PASSIVE_T: unventilated temperature sensor correction, see ProcPassiveT
+ * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  *
  */
 
@@ -108,9 +108,9 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("RATE");
 	availableBlocks.insert("TUKEY");
 	availableBlocks.insert("MAD");
-	availableBlocks.insert("HNW_MELT");
+	availableBlocks.insert("UNHEATED_RAINGAUGE");
 	availableBlocks.insert("UNDERCATCH");
-	availableBlocks.insert("PASSIVE_T");
+	availableBlocks.insert("UNVENTILATED_T");
 	availableBlocks.insert("ADD");
 	availableBlocks.insert("MULT");
 	availableBlocks.insert("EXP_SMOOTHING");
@@ -144,12 +144,12 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterTukey(vec_args);
 	} else if (blockname == "MAD"){
 		return new FilterMAD(vec_args);
-	} else if (blockname == "HNW_MELT"){
-		return new FilterHNWMelt(vec_args);
+	} else if (blockname == "UNHEATED_RAINGAUGE"){
+		return new FilterUnheatedHNW(vec_args);
 	} else if (blockname == "UNDERCATCH"){
 		return new ProcUndercatch(vec_args);
-	} else if (blockname == "PASSIVE_T"){
-		return new ProcPassiveT(vec_args);
+	} else if (blockname == "UNVENTILATED_T"){
+		return new ProcUnventilatedT(vec_args);
 	} else if (blockname == "MULT"){
 		return new ProcMult(vec_args);
 	} else if (blockname == "ADD"){

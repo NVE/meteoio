@@ -15,25 +15,25 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteofilters/ProcPassiveT.h>
+#include <meteoio/meteofilters/ProcUnventilatedT.h>
 #include <cmath>
 
 using namespace std;
 
 namespace mio {
 
-const double ProcPassiveT::dflt_albedo = .23;
-const double ProcPassiveT::soil_albedo = .23; //grass
-const double ProcPassiveT::snow_albedo = .56; //white surface
-const double ProcPassiveT::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-const double ProcPassiveT::vw_thresh = 0.1; //wind speed threshold
+const double ProcUnventilatedT::dflt_albedo = .23;
+const double ProcUnventilatedT::soil_albedo = .23; //grass
+const double ProcUnventilatedT::snow_albedo = .56; //white surface
+const double ProcUnventilatedT::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 
-ProcPassiveT::ProcPassiveT(const std::vector<std::string>& vec_args) : ProcessingBlock("PASSIVE_T") {
+ProcUnventilatedT::ProcUnventilatedT(const std::vector<std::string>& vec_args) : ProcessingBlock("UNVENTILATED_T") {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
-void ProcPassiveT::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void ProcUnventilatedT::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	if(param!=MeteoData::TA) {
@@ -92,7 +92,7 @@ void ProcPassiveT::process(const unsigned int& param, const std::vector<MeteoDat
 	}
 }
 
-void ProcPassiveT::parse_args(std::vector<std::string> vec_args) {
+void ProcUnventilatedT::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 
 	is_soft = false;

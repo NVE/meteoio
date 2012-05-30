@@ -15,18 +15,18 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteofilters/FilterHNWMelt.h>
+#include <meteoio/meteofilters/FilterUnheatedHNW.h>
 
 using namespace std;
 
 namespace mio {
 
-FilterHNWMelt::FilterHNWMelt(const std::vector<std::string>& vec_args) : FilterBlock("HNW_MELT") {
+FilterUnheatedHNW::FilterUnheatedHNW(const std::vector<std::string>& vec_args) : FilterBlock("UNHEATED_RAINGAUGE") {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }
 
-void FilterHNWMelt::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void FilterUnheatedHNW::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	if(param!=MeteoData::HNW) {
@@ -52,15 +52,20 @@ void FilterHNWMelt::process(const unsigned int& param, const std::vector<MeteoDa
 				tmp = 0.;
 			if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)>thresh_Dt ) //clear sky condition
 				tmp = 0.;
-                        if ( rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
+                        if (!soft && rh==IOUtils::nodata && ((ta==IOUtils::nodata) || (tss==IOUtils::nodata)) )
                                 tmp = IOUtils::nodata; //we could not even try to validate the data point -> we delete it for safety
 		}
 	}
 }
 
 
-void FilterHNWMelt::parse_args(const std::vector<std::string>& vec_args) {
+void FilterUnheatedHNW::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
+
+	soft = false;
+	if (vec_args.size() >= 1){
+		soft = is_soft(vec_args);
+	}
 
 	convert_args(0, 2, vec_args, filter_args);
 
@@ -73,8 +78,6 @@ void FilterHNWMelt::parse_args(const std::vector<std::string>& vec_args) {
 		thresh_Dt = filter_args[1];
 	} else
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName() + " - Please provide 0 or 2 arguments!", AT);
-
-
 }
 
 } //end namespace

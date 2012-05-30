@@ -223,7 +223,7 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
  * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
  * unsuccessful, then user provided lapse rate is used as a fallback. If the optional user given lapse rate is
  * followed by <i>"frac"</i>, then the lapse rate is understood as a fractional lapse rate, that is a relative change
- * of the value as a function of the elevation (for example, +0.05% per meters). In this case, no attempt to calculate
+ * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
  * the fractional lapse from the data is made.
  */
 class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
@@ -270,7 +270,7 @@ class IDWAlgorithm : public InterpolationAlgorithm {
  * unsuccessful or too bad (r^2<0.6), then the user provided lapse rate is used as a fallback.
  * If the optional user given lapse rate is
  * followed by <i>"frac"</i>, then the lapse rate is understood as a fractional lapse rate, that is a relative change
- * of the value as a function of the elevation (for example, +0.05% per meters). In this case, no attempt to calculate
+ * of the value as a function of the elevation (for example, +0.05% per meters given as 0.0005). In this case, no attempt to calculate
  * the fractional lapse from the data is made.
  */
 class IDWLapseAlgorithm : public InterpolationAlgorithm {

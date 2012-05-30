@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILTERHNWMELT_H__
-#define __FILTERHNWMELT_H__
+#ifndef __FILTERHUNHEATEDHNW_H__
+#define __FILTERHUNHEATEDHNW_H__
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -25,7 +25,7 @@
 namespace mio {
 
 /**
- * @class  FilterHNWMelt
+ * @class  FilterUnheatedHNW
  * @ingroup processing
  * @author Mathias Bavay
  * @date   2011-11-11
@@ -33,24 +33,26 @@ namespace mio {
  * This filter can ONLY be applied to precipitation. Non-zero measurements are accepted only if they take place
  * when the relative humidity is greater than 0.5 and (TA-TSS) < 3, otherwise they get reset to 0.
  * It can take two optional arguments overwriting these thresholds. If none of these conditions could be tested
- * (for lack of data), then the precipitation is reset to nodata.
+ * (for lack of data), then the precipitation is reset to nodata. On the contrary, if the "soft" option is given,
+ * the lack of validation data keeps the precipitation as it is.
  *
  * @code
- * HNW::filter2	= hnw_melt
- * HNW::arg2	= 0.5 3.
+ * HNW::filter2	= unheated_raingauge
+ * HNW::arg2	= soft 0.5 3.
  * @endcode
  */
 
-class FilterHNWMelt : public FilterBlock {
+class FilterUnheatedHNW : public FilterBlock {
 	public:
-		FilterHNWMelt(const std::vector<std::string>& vec_args);
+		FilterUnheatedHNW(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		void parse_args(const std::vector<std::string>& vec_args);
+		void parse_args(std::vector<std::string> vec_args);
 
+		bool soft;
 		double thresh_rh;
 		double thresh_Dt;
 };

@@ -11,8 +11,8 @@ SET(meteofilters_sources
 	meteofilters/FilterStdDev.cc
 	meteofilters/FilterTukey.cc
 	meteofilters/FilterRate.cc
-	meteofilters/FilterHNWMelt.cc
-	meteofilters/ProcPassiveT.cc
+	meteofilters/FilterUnheatedHNW.cc
+	meteofilters/ProcUnventilatedT.cc
 	meteofilters/ProcUndercatch.cc
 	meteofilters/ProcAdd.cc
 	meteofilters/ProcMult.cc
