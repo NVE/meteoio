@@ -47,6 +47,9 @@ const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Un
 const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 const float Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
+const double Date::epsilon=1./(24.*3600.); ///< minimum difference between two dates. 1 second in units of days
+//NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
+
 // CONSTUCTORS
 /**
 * @brief Default constructor: timezone is set to GMT without DST, julian date is set to 0 (meaning -4713-01-01T12:00)
@@ -628,7 +631,7 @@ bool Date::operator==(const Date& indate) const {
 	if(undef==true || indate.isUndef()) {
 		return( undef==true && indate.isUndef() );
 	}
-	const double epsilon=1./(24.*3600.); //that is, 1 second in units of days
+
 	return( fabs(indate.gmt_julian - gmt_julian) < epsilon );
 }
 
@@ -636,15 +639,16 @@ bool Date::operator!=(const Date& indate) const {
 	return !(*this==indate);
 }
 
+//If dates could be negative, all comparison operators would have to
+//test equality between *this and indate and then run the standard operator
+//on gmt_julian and indate (deleting the epsilon from the expressions).
 bool Date::operator<(const Date& indate) const {
 	if(undef==true || indate.isUndef()) {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
-	if (*this == indate) {
-		return false;
-	}
 
-	return (gmt_julian < indate.gmt_julian);
+	//if(*this==indate) return false;
+	return (gmt_julian < (indate.gmt_julian-epsilon));
 }
 
 bool Date::operator<=(const Date& indate) const {
@@ -652,10 +656,8 @@ bool Date::operator<=(const Date& indate) const {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
 
-	if (*this == indate) {
-		return true;
-	}
-	return (gmt_julian <= indate.gmt_julian);
+	//if(*this==indate) return true;
+	return (gmt_julian <= (indate.gmt_julian+epsilon));
 }
 
 bool Date::operator>(const Date& indate) const {
@@ -663,11 +665,8 @@ bool Date::operator>(const Date& indate) const {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
 
-	if (*this == indate) {
-		return false;
-	}
-
-	return (gmt_julian > indate.gmt_julian);
+	//if(*this==indate) return false;
+	return (gmt_julian > (indate.gmt_julian+epsilon));
 }
 
 bool Date::operator>=(const Date& indate) const {
@@ -675,10 +674,8 @@ bool Date::operator>=(const Date& indate) const {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
 
-	if (*this == indate) {
-		return true;
-	}
-	return (gmt_julian >= indate.gmt_julian);
+	//if(*this==indate) return true;
+	return (gmt_julian >= (indate.gmt_julian-epsilon));
 }
 
 const Date Date::operator+(const Date& indate) const {

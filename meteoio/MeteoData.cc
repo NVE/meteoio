@@ -248,7 +248,7 @@ const double& MeteoData::operator()(const size_t& parindex) const
 
 double& MeteoData::operator()(const std::string& parname)
 {
-	size_t index = getParameterIndex(parname);
+	const size_t index = getParameterIndex(parname);
 	if (index == IOUtils::npos)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist: " + parname, AT);
 
@@ -257,7 +257,7 @@ double& MeteoData::operator()(const std::string& parname)
 
 const double& MeteoData::operator()(const std::string& parname) const
 {
-	size_t index = getParameterIndex(parname);
+	const size_t index = getParameterIndex(parname);
 	if (index == IOUtils::npos)
 		throw IndexOutOfBoundsException("Trying to access meteo parameter that does not exist: " + parname, AT);
 

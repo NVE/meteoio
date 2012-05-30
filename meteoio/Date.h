@@ -38,7 +38,8 @@ namespace mio {
  * it can not be automatically calculated. Therefore, it has to be provided by the caller: when the dst flag
  * is set, the dst time shift is automatically applied. When the dst flag ceases to be set, the dst time shift
  * is no longer applied. This is very crude, but please keep in mind that using DST for monitoring data is
- * usually a bad idea...
+ * usually a bad idea... Finally, we assume that dates are positive. If this would not be the case, the
+ * comparison operators would have to be modified (as shown in the source code).
  *
  * Internally, the date is stored as true julian date in GMT.
  * The maximal precision is 1 minute (that can be easily brought to 1 seconds if
@@ -162,7 +163,7 @@ class Date {
 		const Date operator/(const double&) const;
 
 	protected:
-		double localToGMT(const double& in_julian)const;
+		double localToGMT(const double& in_julian) const;
 		double GMTToLocal(const double& in_gmt_julian) const;
 		double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
 		void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute) const;
@@ -175,6 +176,7 @@ class Date {
 		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
 		bool dst;
 		bool undef;
+		static const double epsilon;
 };
 
 typedef Date Duration; //so that later, we can implement a true Interval/Duration class
