@@ -403,26 +403,23 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 	indexP2=IOUtils::npos;
 
 	const Date dateStart = resampling_date - window_size;
-	if(vecM[0].date<=dateStart) { //we try to find a valid point only if it's even worth it...
-		for (size_t ii=pos; (ii--) > 0; ) {
-			if (vecM[ii].date < dateStart) break;
-			if (vecM[ii](paramindex) != IOUtils::nodata){
-				indexP1 = ii;
-				break;
-			}
+
+	for (size_t ii=pos; (ii--) > 0; ) {
+		if (vecM[ii].date < dateStart) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata){
+			indexP1 = ii;
+			break;
 		}
 	}
 
 	//make sure the search window remains window_size
 	const Date dateEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+window_size : resampling_date+window_size;
 
-	if(vecM[vecM.size()].date>=dateEnd) { //we try to find a valid point only if it's even worth it...
-		for (size_t ii=pos; ii<vecM.size(); ii++) {
-			if (vecM[ii].date > dateEnd) break;
-			if (vecM[ii](paramindex) != IOUtils::nodata) {
-				indexP2 = ii;
-				break;
-			}
+	for (size_t ii=pos; ii<vecM.size(); ii++) {
+		if (vecM[ii].date > dateEnd) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata) {
+			indexP2 = ii;
+			break;
 		}
 	}
 }
