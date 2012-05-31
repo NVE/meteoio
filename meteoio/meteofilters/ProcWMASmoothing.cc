@@ -74,8 +74,8 @@ double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, co
 
 		//compute the WMA contribution and normalization factor
 		if(val!=IOUtils::nodata) {
-			const double weight = max_len-ii+1;
-			wma += weight*val;
+			const size_t weight = max_len-ii+1;
+			wma += static_cast<double>(weight)*val;
 			norm += weight;
 		}
 	}
