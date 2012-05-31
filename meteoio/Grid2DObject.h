@@ -133,6 +133,8 @@ class Grid2DObject {
 		         const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
 
 		void size(unsigned int& o_ncols, unsigned int& o_nrows) const;
+		unsigned int getNx() const;
+		unsigned int getNy() const;
 
 		/**
 		* @brief deletes the data, but keeps geolocalization

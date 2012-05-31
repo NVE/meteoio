@@ -136,6 +136,8 @@ template<class T> class Array2D {
 		void resize(const unsigned int& nx, const unsigned int& ny);
 		void resize(const unsigned int& nx, const unsigned int& ny, const T& init);
 		void size(unsigned int& nx, unsigned int& ny) const;
+		unsigned int getNx() const;
+		unsigned int getNy() const;
 
 		void clear();
 		bool isEmpty() const;
@@ -352,9 +354,17 @@ template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigne
 	std::fill(vecData.begin(), vecData.end(), init);
 }
 
-template<class T> void Array2D<T>::size(unsigned int& anx, unsigned int& any) const{
+template<class T> void Array2D<T>::size(unsigned int& anx, unsigned int& any) const {
 	anx=nx;
 	any=ny;
+}
+
+template<class T> unsigned int Array2D<T>::getNx() const {
+	return nx;
+}
+
+template<class T> unsigned int Array2D<T>::getNy() const {
+	return ny;
 }
 
 template<class T> void Array2D<T>::clear() {

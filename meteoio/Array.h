@@ -61,7 +61,9 @@ template<class T> class Array {
 		*/
 		bool getKeepNodata();
 
-		unsigned int size();
+		void size(unsigned int& nx) const;
+		unsigned int getNx() const;
+
 		void resize(const unsigned int& asize);
 		void resize(const unsigned int& asize, const T& init);
 		void clear();
@@ -149,8 +151,11 @@ template<class T> bool Array<T>::getKeepNodata() {
 	return keep_nodata;
 }
 
+template<class T> void Array<T>::size(unsigned int& o_nx) const {
+	o_nx = nx;
+}
 
-template<class T> unsigned int Array<T>::size() {
+template<class T> unsigned int Array<T>::getNx() const {
 	return nx;
 }
 

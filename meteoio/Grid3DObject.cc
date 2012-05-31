@@ -234,6 +234,18 @@ void Grid3DObject::size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned i
 	o_ndepths = ndepths;
 }
 
+unsigned int Grid3DObject::getNx() const {
+	return ncols;
+}
+
+unsigned int Grid3DObject::getNy() const {
+	return nrows;
+}
+
+unsigned int Grid3DObject::getNz() const {
+	return ndepths;
+}
+
 void Grid3DObject::clear() {
 	grid3D.clear();
 	ncols = nrows = ndepths = 0;

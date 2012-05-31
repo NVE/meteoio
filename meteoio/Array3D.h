@@ -169,6 +169,9 @@ template<class T> class Array3D {
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
 		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
 		void size(unsigned int& anx, unsigned int& any, unsigned int& anz) const;
+		unsigned int getNx() const;
+		unsigned int getNy() const;
+		unsigned int getNz() const;
 		void clear();
 		bool isEmpty() const;
 
@@ -405,6 +408,18 @@ template<class T> void Array3D<T>::size(unsigned int& anx, unsigned int& any, un
 	anx=nx;
 	any=ny;
 	anz=nz;
+}
+
+template<class T> unsigned int Array3D<T>::getNx() const {
+	return nx;
+}
+
+template<class T> unsigned int Array3D<T>::getNy() const {
+	return ny;
+}
+
+template<class T> unsigned int Array3D<T>::getNz() const {
+	return nz;
 }
 
 template<class T> void Array3D<T>::clear() {

@@ -107,6 +107,9 @@ class Grid3DObject{
 			const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D_in);
 
 		void size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const;
+		unsigned int getNx() const;
+		unsigned int getNy() const;
+		unsigned int getNz() const;
 
 		/**
 		* @brief deletes the data, but keeps geolocalization
