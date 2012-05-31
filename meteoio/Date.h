@@ -27,6 +27,7 @@
 #include <iostream>
 #include <ctime>
 
+//#define NEGATIVE_JULIAN
 namespace mio {
 
 /**
@@ -38,8 +39,8 @@ namespace mio {
  * it can not be automatically calculated. Therefore, it has to be provided by the caller: when the dst flag
  * is set, the dst time shift is automatically applied. When the dst flag ceases to be set, the dst time shift
  * is no longer applied. This is very crude, but please keep in mind that using DST for monitoring data is
- * usually a bad idea... Finally, we assume that dates are positive. If this would not be the case, the
- * comparison operators would have to be modified (as shown in the source code).
+ * usually a bad idea... Finally, we assume that dates are positive. If this would not be the case, this
+ * class has to be recompiled with the proper define.
  *
  * Internally, the date is stored as true julian date in GMT.
  * The maximal precision is 1 minute (that can be easily brought to 1 seconds if

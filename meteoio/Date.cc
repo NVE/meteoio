@@ -639,16 +639,17 @@ bool Date::operator!=(const Date& indate) const {
 	return !(*this==indate);
 }
 
-//If dates could be negative, all comparison operators would have to
-//test equality between *this and indate and then run the standard operator
-//on gmt_julian and indate (deleting the epsilon from the expressions).
 bool Date::operator<(const Date& indate) const {
 	if(undef==true || indate.isUndef()) {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
 
-	//if(*this==indate) return false;
+#ifdef NEGATIVE_JULIAN
+	if(*this==indate) return false;
+	return (gmt_julian < indate.gmt_julian);
+#else
 	return (gmt_julian < (indate.gmt_julian-epsilon));
+#endif
 }
 
 bool Date::operator<=(const Date& indate) const {
@@ -656,8 +657,12 @@ bool Date::operator<=(const Date& indate) const {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
 
-	//if(*this==indate) return true;
+#ifdef NEGATIVE_JULIAN
+	if(*this==indate) return true;
+	return (gmt_julian <= indate.gmt_julian);
+#else
 	return (gmt_julian <= (indate.gmt_julian+epsilon));
+#endif
 }
 
 bool Date::operator>(const Date& indate) const {
@@ -665,8 +670,12 @@ bool Date::operator>(const Date& indate) const {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
 
-	//if(*this==indate) return false;
+#ifdef NEGATIVE_JULIAN
+	if(*this==indate) return false;
+	return (gmt_julian > indate.gmt_julian);
+#else
 	return (gmt_julian > (indate.gmt_julian+epsilon));
+#endif
 }
 
 bool Date::operator>=(const Date& indate) const {
@@ -674,8 +683,12 @@ bool Date::operator>=(const Date& indate) const {
 		throw UnknownValueException("Date object is undefined!", AT);
 	}
 
-	//if(*this==indate) return true;
+#ifdef NEGATIVE_JULIAN
+	if(*this==indate) return true;
+	return (gmt_julian >= indate.gmt_julian);
+#else
 	return (gmt_julian >= (indate.gmt_julian-epsilon));
+#endif
 }
 
 const Date Date::operator+(const Date& indate) const {
