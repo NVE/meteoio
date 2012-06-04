@@ -59,6 +59,8 @@ namespace Cst {
 	const double TwoOverSqrtPI = 1.12837916709551257390; // 2/sqrt(pi)
 	const double Sqrt2 = 1.41421356237309504880; // sqrt(2)
 	const double InvSqrt2 = 0.707106781186547524401; // 1/sqrt(2)
+	const double to_rad = PI/180.; // conversion factor from deg to rad
+	const double to_deg = 180./PI; // conversion factor from rad to deg
 } //end CST namespace
 
 } //end namespace

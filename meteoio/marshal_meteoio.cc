@@ -49,6 +49,20 @@ void marshal_MeteoParameters(POPBuffer &buf, MeteoData::Parameters &data, int ma
 	}
 }
 
+void marshal_MeteoGridsParameters(POPBuffer &buf, MeteoGrids::Parameters &data, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		int n=(int)data;
+		buf.Pack(&n,1);
+	} else {
+		int n;
+		buf.UnPack(&n,1);
+		data=(MeteoGrids::Parameters)n;
+	}
+}
+
 void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
@@ -314,6 +328,62 @@ void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data
       //marshal_Grid2DObject(buf, *obj, 0, flag, NULL);
 			data.push_back(obj);
 		}
+	}
+}
+
+void marshal_DEMObject(POPBuffer &buf,mio::DEMObject &data,int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		data.Serialize(buf, true);
+	} else {
+		data.Serialize(buf, false);
+	}
+}
+
+void marshal_Date(POPBuffer &buf,mio::Date &data,int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		data.Serialize(buf, true);
+	} else {
+		data.Serialize(buf, false);
+	}
+}
+
+void marshal_Config(POPBuffer &buf,mio::Config &data,int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		data.Serialize(buf, true);
+	} else {
+		data.Serialize(buf, false);
+	}
+}
+
+
+void marshal_Grid2DObject(POPBuffer &buf,mio::Grid2DObject &data,int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		data.Serialize(buf, true);
+	} else {
+		data.Serialize(buf, false);
+	}
+}
+
+void marshal_MeteoData(POPBuffer &buf, mio::MeteoData &data, int maxsize, int flag, POPMemspool *temp)
+{
+	(void)maxsize;
+	(void)*temp;
+	if (flag & FLAG_MARSHAL) {
+		data.Serialize(buf, true);
+	} else {
+		data.Serialize(buf, false);
 	}
 }
 

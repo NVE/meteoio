@@ -21,6 +21,7 @@
 #include <limits>
 
 using namespace std;
+using namespace smet; //HACK POPC
 
 namespace smet {
 

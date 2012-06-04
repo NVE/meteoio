@@ -26,6 +26,7 @@
 #include <meteoio/StationData.h>
 #include <meteoio/MeteoData.h>
 #include <meteoio/Coords.h>
+#include <meteoio/Config.h>
 
 #include <vector>
 #include <string>
@@ -44,6 +45,7 @@ typedef std::vector<std::string> STR_VECTOR;
 void marshal_uint(POPBuffer &buf,unsigned int &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_MeteoParameters(POPBuffer &buf, MeteoData::Parameters &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_MeteoGridsParameters(POPBuffer &buf, MeteoGrids::Parameters &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_slope_type(POPBuffer &buf, DEMObject::slope_type &data, int maxsize, int flag, POPMemspool *temp);
 
@@ -78,6 +80,16 @@ void marshal_STATION_TIMESERIE(POPBuffer &buf, STATION_TIMESERIE &data, int maxs
 void marshal_vector_STATION_TIMESERIE(POPBuffer &buf, std::vector<STATION_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_DEMObject(POPBuffer &buf, DEMObject &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_Date(POPBuffer &buf, Date &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_Config(POPBuffer &buf, Config &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_Grid2DObject(POPBuffer &buf, Grid2DObject &data, int maxsize, int flag, POPMemspool *temp);
+
+void marshal_MeteoData(POPBuffer &buf, MeteoData &data, int maxsize, int flag, POPMemspool *temp);
 
 } //end namespace
 
