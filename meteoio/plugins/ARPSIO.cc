@@ -101,12 +101,15 @@ ARPSIO::~ARPSIO() throw()
 
 void ARPSIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 {
-	std::string parameter;
-	unsigned int layer;
-	const std::string _filename = grid2dpath_in +"/" + i_name + ext;
+	const std::string _filename = grid2dpath_in +"/" + i_name;
 
 	openGridFile(_filename);
-	readGridLayer(parameter, layer, grid_out);
+
+	const unsigned int layer=2;
+	if(is_true_arps)
+		readGridLayer("zp coordinat", layer, grid_out);
+	else
+		readGridLayer("zp_coordinat", layer, grid_out);
 
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
@@ -210,7 +213,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 
 void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 {
-	const std::string _filename = grid2dpath_in + "/" + i_name + ext;
+	const std::string _filename = grid2dpath_in + "/" + i_name;
 	openGridFile(_filename);
 
 	//resize the grid just in case
@@ -340,6 +343,9 @@ void ARPSIO::initializeGRIDARPS()
 		throw InvalidFormatException("Only square cells currently supported! Non compliance in file "+filename, AT);
 	}
 	cellsize = cellsize_y;
+
+	//HACK: zcoords must be read from zp. But they are NOT constant...
+
 }
 
 void ARPSIO::initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH])
@@ -374,6 +380,17 @@ void ARPSIO::initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH])
 		throw InvalidFormatException("Only square cells currently supported! Non compliance in file "+filename, AT);
 	}
 	cellsize = cellsize_y;
+
+	moveToMarker("z coordinate");
+	while (fscanf(fin,"%lg",&v1)==1) {
+		zcoord.push_back( v1 );
+	}
+	if(zcoord.size()!=dimz) {
+		stringstream ss;
+		ss << "Expected " << dimz << " z coordinates in file \""+filename+"\", found " << zcoord.size();
+		cleanup();
+		throw InvalidFormatException(ss.str(), AT);
+	}
 }
 
 void ARPSIO::openGridFile(const std::string& in_filename)
@@ -420,6 +437,8 @@ void ARPSIO::cleanup() throw()
 	if (fout.is_open()) {//close fout if open
 		fout.close();
 	}
+
+	zcoord.clear();
 }
 
 /** @brief Read a specific layer for a given parameter from the ARPS file
@@ -438,7 +457,7 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 	if(layer<1 || layer>dimz) {
 		cleanup();
 		stringstream tmp;
-		tmp << "Layer " << layer << " does not exist in ARPS file " << filename << " (nr layers=" << dimz << " ";
+		tmp << "Layer " << layer << " does not exist in ARPS file " << filename << " (nr layers=" << dimz << ")";
 		throw IndexOutOfBoundsException(tmp.str(), AT);
 	}
 

@@ -98,6 +98,7 @@ class ARPSIO : public IOInterface {
 		unsigned int dimx, dimy, dimz;
 		double cellsize;
 		double xcoord, ycoord;
+		std::vector<double> zcoord;
 		bool is_true_arps; //is it an original arps file or is it a truncated file?
 };
 
