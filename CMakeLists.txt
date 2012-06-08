@@ -96,6 +96,7 @@ SET(POPC OFF CACHE BOOL "Compile for POPC ON or OFF")
 ###########################################################
 #finally, SET compile flags
 if(POPC)
+	#SET(POPC_FLAGS "-cxxmain -Dcerr=\\\"cout\\\"")
 	SET(POPC_FLAGS "-cxxmain")
 ENDIF(POPC)
 SET(CMAKE_CXX_FLAGS "${POPC_FLAGS} ${_VERSION} ${ARCH} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)

@@ -4,10 +4,10 @@ DEBUG   = -g #-O3 # -DDEBUG -ggdb
 METEOIODIR = ../../
 
 LIBS_LINUX_EXTRA = -rdynamic -ldl
-LIBS      = -lstdc++ -L../../lib -lmeteoio $(LIBS_LINUX_EXTRA)
+LIBS      = -lstdc++ -L$(METEOIODIR)/lib -lmeteoio $(LIBS_LINUX_EXTRA)
 
-INCLUDE=-I. -I$(METEOIODIR)
-INCLUDE_POPC=-I. -I$(METEOIODIR)
+INCLUDE=-I. -I$(METEOIODIR) -I$(METEOIODIR)/include
+INCLUDE_POPC=-I. -I$(METEOIODIR) -I$(METEOIODIR)/include
 
 #####################
 #	RULES
