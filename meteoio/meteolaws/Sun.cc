@@ -116,7 +116,6 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 	const double fc = 0.84;       // fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
 	const double alpha = 1.3;     // wavelength exponent (Iqbal(1983) p.118)
 	const double beta = 0.03;
-	const double to_rad = Cst::PI/180.;
 
 	if(ta==IOUtils::nodata || rh==IOUtils::nodata || pressure==IOUtils::nodata || mean_albedo==IOUtils::nodata) {
 		R_toa = IOUtils::nodata;
@@ -130,7 +129,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		R_diffuse = 0.;
 	} else {
 		const double zenith = 90. - sun_elevation; //this is the TRUE zenith because the elevation is the TRUE elevation
-		const double cos_zenith = cos(zenith*to_rad); //this uses true zenith angle
+		const double cos_zenith = cos(zenith*Cst::to_rad); //this uses true zenith angle
 
 		// relative optical air mass Young (1994), see http://en.wikipedia.org/wiki/Airmass
 		//const double mr = 1. / (cos_zenith + 0.50572 * pow( 96.07995-zenith , -1.6364 )); //pbl: this should use apparent zenith angle, and we only get true zenith angle here...
@@ -269,7 +268,6 @@ void SunObject::getSlopeRadiation(const double& slope_azi, const double& slope_e
  */
 double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_measured) const
 {
-	const double to_rad = Cst::PI/180.;
 	double splitting_coef;
 	double azimuth, elevation;
 	position.getHorizontalCoordinates(azimuth, elevation);
@@ -293,7 +291,7 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 				splitting_coef = 1.02 - 0.248*Mt;
 				if(splitting_coef>1.) splitting_coef=1.;
 			} else {           // Mt in ]0.3;0.78[ -> cloudy
-				splitting_coef = 1.4 - 1.749*Mt + 0.177*sin(elevation*to_rad);
+				splitting_coef = 1.4 - 1.749*Mt + 0.177*sin(elevation*Cst::to_rad);
 				if(splitting_coef>0.97) splitting_coef = 0.97;
 				if(splitting_coef<clear_sky) splitting_coef = clear_sky;
 			}

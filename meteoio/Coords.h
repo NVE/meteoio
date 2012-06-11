@@ -183,8 +183,6 @@ class Coords {
 		double b;
 	};
 	static const struct ELLIPSOID ellipsoids[6];
-
-	static const double to_rad, to_deg;
 };
 } //end namespace
 

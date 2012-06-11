@@ -21,9 +21,6 @@
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 namespace mio {
-//class SunTrajectory
-const double SunTrajectory::to_deg = 180./Cst::PI;
-const double SunTrajectory::to_rad = Cst::PI/180.;
 
 /**
  * @brief Compute the solar incidence (rad), i.e. the angle between the incident sun beam
@@ -34,21 +31,21 @@ const double SunTrajectory::to_rad = Cst::PI/180.;
  */
 double SunTrajectory::getAngleOfIncidence(const double& slope_azi, const double& slope_elev) const
 {
-	const double Z = (90.-SolarElevation)*to_rad;
-	const double beta = slope_elev*to_rad;
-	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((SolarAzimuthAngle-slope_azi)*to_rad);
+	const double Z = (90.-SolarElevation)*Cst::to_rad;
+	const double beta = slope_elev*Cst::to_rad;
+	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((SolarAzimuthAngle-slope_azi)*Cst::to_rad);
 
-	return acos(cos_theta)*to_deg;
+	return acos(cos_theta)*Cst::to_deg;
 }
 
 double SunTrajectory::getAngleOfIncidence(const double& sun_azi, const double& sun_elev,
                                           const double& slope_azi, const double& slope_elev)
 {
-	const double Z = (90.-sun_elev)*to_rad;
-	const double beta = slope_elev*to_rad;
-	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*to_rad);
+	const double Z = (90.-sun_elev)*Cst::to_rad;
+	const double beta = slope_elev*Cst::to_rad;
+	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*Cst::to_rad);
 
-	return acos(cos_theta)*to_deg;
+	return acos(cos_theta)*Cst::to_deg;
 }
 
 double SunTrajectory::getRadiationOnHorizontal(const double& radiation) const
@@ -56,7 +53,7 @@ double SunTrajectory::getRadiationOnHorizontal(const double& radiation) const
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
 	if(radiation==IOUtils::nodata) return IOUtils::nodata;
 
-	const double Z = (90.-SolarElevation)*to_rad;
+	const double Z = (90.-SolarElevation)*Cst::to_rad;
 
 	const double on_horizontal = radiation * cos(Z);
 	return on_horizontal;
@@ -67,9 +64,9 @@ double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double&
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
 	if(radiation==IOUtils::nodata) return IOUtils::nodata;
 
-	const double Z = (90.-SolarElevation)*to_rad;
-	const double beta = slope_elev*to_rad;
-	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((SolarAzimuthAngle-slope_azi)*to_rad);
+	const double Z = (90.-SolarElevation)*Cst::to_rad;
+	const double beta = slope_elev*Cst::to_rad;
+	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((SolarAzimuthAngle-slope_azi)*Cst::to_rad);
 
 	const double on_slope = radiation*cos_theta;
 	if(on_slope>0.) return on_slope;
@@ -80,14 +77,14 @@ double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double&
 double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& H_radiation)
 {// Project a horizontal radiation to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
-	const double Z = (90.-sun_elev)*to_rad;
+	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
 	if(cosZ==0.) {
 		return 1.e12;
 	} else {
-		const double beta = slope_elev*to_rad;
-		const double cos_theta = cos(beta)*cosZ + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*to_rad);
+		const double beta = slope_elev*Cst::to_rad;
+		const double cos_theta = cos(beta)*cosZ + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*Cst::to_rad);
 		const double on_slope = ( H_radiation/cosZ ) * cos_theta;
 		if(on_slope>0.) return on_slope;
 		return 0.;
@@ -97,9 +94,9 @@ double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const doub
 double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& S_radiation)
 {// Project a slope radiation to horizontal
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
-	const double Z = (90.-sun_elev)*to_rad;
-	const double beta = slope_elev*to_rad;
-	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*to_rad);
+	const double Z = (90.-sun_elev)*Cst::to_rad;
+	const double beta = slope_elev*Cst::to_rad;
+	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*Cst::to_rad);
 
 	if(cos_theta==0.) {
 		return 1.e12;
@@ -112,7 +109,7 @@ double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const doub
 double SunTrajectory::projectHorizontalToBeam(const double& sun_elev, const double& H_radiation)
 { // Project a beam radiation (ie: perpendicular to the sun beam) to the horizontal
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
-	const double Z = (90.-sun_elev)*to_rad;
+	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
 	if(cosZ==0.) {
@@ -265,14 +262,13 @@ void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declina
 }
 
 void SunMeeus::getEquatorialSunVector(double& sunx, double& suny, double& sunz) {
-	const double to_rad = Cst::PI/180.;
 	double azi_Sacw;
 
 	// Convert to angle measured from South, counterclockwise (rad)
 	if ( SolarAzimuthAngle <= 90. ) {
-		azi_Sacw = Cst::PI - SolarAzimuthAngle*to_rad;
+		azi_Sacw = Cst::PI - SolarAzimuthAngle*Cst::to_rad;
 	} else {
-		azi_Sacw = 3.*Cst::PI - SolarAzimuthAngle*to_rad;
+		azi_Sacw = 3.*Cst::PI - SolarAzimuthAngle*Cst::to_rad;
 	}
 
 	// derived as shown in Funk (1984) p. 107, but for a y-coordinate increasing northwards
@@ -293,42 +289,42 @@ void SunMeeus::update() {
 	const double geomMeanLongSun = fmod( 280.46646 + julian_century*(36000.76983 + julian_century*0.0003032) , 360.);
 	const double geomMeanAnomSun = 357.52911 + julian_century*(35999.05029 - 0.0001537*julian_century);
 	eccentricityEarth = 0.016708634 - julian_century*(0.000042037 + 0.0001537*julian_century);
-	const double SunEqOfCtr =   sin(1.*geomMeanAnomSun*to_rad)*( 1.914602-julian_century*(0.004817+0.000014*julian_century))
-	             + sin(2.*geomMeanAnomSun*to_rad)*(0.019993 - 0.000101*julian_century)
-	             + sin(3.*geomMeanAnomSun*to_rad)*(0.000289);
+	const double SunEqOfCtr =   sin(1.*geomMeanAnomSun*Cst::to_rad)*( 1.914602-julian_century*(0.004817+0.000014*julian_century))
+	             + sin(2.*geomMeanAnomSun*Cst::to_rad)*(0.019993 - 0.000101*julian_century)
+	             + sin(3.*geomMeanAnomSun*Cst::to_rad)*(0.000289);
 
 	const double SunTrueLong = geomMeanLongSun + SunEqOfCtr;
 	/*const double SunTrueAnom = geomMeanAnomSun + SunEqOfCtr;*/
 	/*const double SunRadVector =   ( 1.000001018 * (1. - eccentricityEarth*eccentricityEarth) )
-	               / ( 1. + eccentricityEarth*cos(SunTrueAnom*to_rad) );*/
+	               / ( 1. + eccentricityEarth*cos(SunTrueAnom*Cst::to_rad) );*/
 
-	const double SunAppLong = SunTrueLong - 0.00569 - 0.00478*sin( (125.04-1934.136*julian_century)*to_rad );
+	const double SunAppLong = SunTrueLong - 0.00569 - 0.00478*sin( (125.04-1934.136*julian_century)*Cst::to_rad );
 	const double MeanObliqueEcl = 23. + (26.+
 	                 (21.448-julian_century*(46.815+julian_century*(0.00059-julian_century*0.001813))) / 60. )
 	                 / 60.;
 
-	const double ObliqueCorr = MeanObliqueEcl + 0.00256*cos( (125.04-1934.136*julian_century)*to_rad );
+	const double ObliqueCorr = MeanObliqueEcl + 0.00256*cos( (125.04-1934.136*julian_century)*Cst::to_rad );
 
 	//Sun's position in the equatorial coordinate system
 	SunRightAscension = atan2(
-	                    cos(SunAppLong*to_rad) ,
-	                    cos(ObliqueCorr*to_rad) * sin(SunAppLong*to_rad)
-	                    ) * to_deg;
+	                    cos(SunAppLong*Cst::to_rad) ,
+	                    cos(ObliqueCorr*Cst::to_rad) * sin(SunAppLong*Cst::to_rad)
+	                    ) * Cst::to_deg;
 
-	SunDeclination = asin( sin(ObliqueCorr*to_rad) * sin(SunAppLong*to_rad) ) * to_deg;
+	SunDeclination = asin( sin(ObliqueCorr*Cst::to_rad) * sin(SunAppLong*Cst::to_rad) ) * Cst::to_deg;
 
 	//time calculations
-	const double var_y = tan( 0.5*ObliqueCorr*to_rad ) * tan( 0.5*ObliqueCorr*to_rad );
-	const double EquationOfTime = 4. * ( var_y*sin(2.*geomMeanLongSun*to_rad)
-	                 - 2.*eccentricityEarth*sin(geomMeanAnomSun*to_rad) +
-	                 4.*eccentricityEarth*var_y*sin(geomMeanAnomSun*to_rad) * cos(2.*geomMeanLongSun*to_rad)
-	                 - 0.5*var_y*var_y*sin(4.*geomMeanLongSun*to_rad)
-	                 - 1.25*eccentricityEarth*eccentricityEarth*sin(2.*geomMeanAnomSun*to_rad)
-	                 )*to_deg;
+	const double var_y = tan( 0.5*ObliqueCorr*Cst::to_rad ) * tan( 0.5*ObliqueCorr*Cst::to_rad );
+	const double EquationOfTime = 4. * ( var_y*sin(2.*geomMeanLongSun*Cst::to_rad)
+	                 - 2.*eccentricityEarth*sin(geomMeanAnomSun*Cst::to_rad) +
+	                 4.*eccentricityEarth*var_y*sin(geomMeanAnomSun*Cst::to_rad) * cos(2.*geomMeanLongSun*Cst::to_rad)
+	                 - 0.5*var_y*var_y*sin(4.*geomMeanLongSun*Cst::to_rad)
+	                 - 1.25*eccentricityEarth*eccentricityEarth*sin(2.*geomMeanAnomSun*Cst::to_rad)
+	                 )*Cst::to_deg;
 
-	const double HA_sunrise = acos( cos(90.833*to_rad)/cos(latitude*to_rad) * cos(SunDeclination*to_rad)
-	             - tan(latitude*to_rad)*tan(SunDeclination*to_rad)
-	             ) * to_deg;
+	const double HA_sunrise = acos( cos(90.833*Cst::to_rad)/cos(latitude*Cst::to_rad) * cos(SunDeclination*Cst::to_rad)
+	             - tan(latitude*Cst::to_rad)*tan(SunDeclination*Cst::to_rad)
+	             ) * Cst::to_deg;
 
 	SolarNoon = (720. - 4.*longitude - EquationOfTime + lst_TZ*60.)/1440.; //in days, in LST time
 	SunRise = SolarNoon - HA_sunrise*4./1440.; //in days, in LST
@@ -344,9 +340,9 @@ void SunMeeus::update() {
 		HourAngle = TrueSolarTime/4.-180.;
 
 	const double SolarZenithAngle = acos(
-	                   sin(latitude*to_rad) * sin(SunDeclination*to_rad)
-	                   + cos(latitude*to_rad) * cos(SunDeclination*to_rad) * cos(HourAngle*to_rad)
-	                   )*to_deg;
+	                   sin(latitude*Cst::to_rad) * sin(SunDeclination*Cst::to_rad)
+	                   + cos(latitude*Cst::to_rad) * cos(SunDeclination*Cst::to_rad) * cos(HourAngle*Cst::to_rad)
+	                   )*Cst::to_deg;
 
 	SolarElevation = 90. - SolarZenithAngle;
 
@@ -354,12 +350,12 @@ void SunMeeus::update() {
 		AtmosphericRefraction = 0.;
 	} else {
 		if( SolarElevation>5. ) {
-			AtmosphericRefraction = 58.1 / tan(SolarElevation*to_rad) - 0.07 / pow( tan(SolarElevation*to_rad) , 3 ) + 0.000086/pow( tan(SolarElevation*to_rad), 5);
+			AtmosphericRefraction = 58.1 / tan(SolarElevation*Cst::to_rad) - 0.07 / pow( tan(SolarElevation*Cst::to_rad) , 3 ) + 0.000086/pow( tan(SolarElevation*Cst::to_rad), 5);
 		} else {
 			if( SolarElevation>-0.575 ) {
 				AtmosphericRefraction = 1735. + SolarElevation*(-518.2 + SolarElevation*(103.4 + SolarElevation*(-12.79 + SolarElevation*0.711)));
 			} else {
-				AtmosphericRefraction = -20.772 / tan( SolarElevation*to_rad );
+				AtmosphericRefraction = -20.772 / tan( SolarElevation*Cst::to_rad );
 			}
 		}
 	}
@@ -368,13 +364,13 @@ void SunMeeus::update() {
 	SolarElevationAtm = SolarElevation + AtmosphericRefraction; //correction for the effects of the atmosphere
 	if( HourAngle>0. ) {
 		SolarAzimuthAngle = fmod( acos(
-		                     (sin(latitude*to_rad)*cos(SolarZenithAngle*to_rad) - sin(SunDeclination*to_rad)) /
-		                     (cos(latitude*to_rad)*sin(SolarZenithAngle*to_rad)))*to_deg + 180.
+		                     (sin(latitude*Cst::to_rad)*cos(SolarZenithAngle*Cst::to_rad) - sin(SunDeclination*Cst::to_rad)) /
+		                     (cos(latitude*Cst::to_rad)*sin(SolarZenithAngle*Cst::to_rad)))*Cst::to_deg + 180.
 		                    , 360. );
 	} else {
 		SolarAzimuthAngle = fmod( 540. - acos(
-		                     (sin(latitude*to_rad)*cos(SolarZenithAngle*to_rad) - sin(SunDeclination*to_rad)) /
-		                     (cos(latitude*to_rad)*sin(SolarZenithAngle*to_rad)))*to_deg
+		                     (sin(latitude*Cst::to_rad)*cos(SolarZenithAngle*Cst::to_rad) - sin(SunDeclination*Cst::to_rad)) /
+		                     (cos(latitude*Cst::to_rad)*sin(SolarZenithAngle*Cst::to_rad)))*Cst::to_deg
 		                    ,  360. );
 	}
 }

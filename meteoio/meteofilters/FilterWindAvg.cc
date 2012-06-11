@@ -17,13 +17,11 @@
 */
 #include <cmath>
 #include <meteoio/meteofilters/FilterWindAvg.h>
+#include <meteoio/meteolaws/Meteoconst.h>
 
 using namespace std;
 
 namespace mio {
-
-const double FilterWindAvg::to_rad = Cst::PI / 180.;
-const double FilterWindAvg::to_deg = 180. / Cst::PI;
 
 FilterWindAvg::FilterWindAvg(const std::vector<std::string>& vec_args) : WindowedFilter("WIND_AVG")
 {
@@ -68,8 +66,8 @@ double FilterWindAvg::calc_avg(const std::vector<MeteoData>& ivec, const unsigne
 		const double VW = ivec[ii](MeteoData::VW);
 		const double DW = ivec[ii](MeteoData::DW);
 		if(VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
-			ve += VW * sin(DW*to_rad);
-			vn += VW * cos(DW*to_rad);
+			ve += VW * sin(DW*Cst::to_rad);
+			vn += VW * cos(DW*Cst::to_rad);
 			count++;
 		}
 	}
@@ -83,7 +81,7 @@ double FilterWindAvg::calc_avg(const std::vector<MeteoData>& ivec, const unsigne
 		const double meanspeed = sqrt(ve*ve + vn*vn);
 		return meanspeed;
 	} else {
-		const double meandirection = fmod( atan2(ve,vn) * to_deg + 360. , 360.); // turn into degrees [0;360)
+		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360. , 360.); // turn into degrees [0;360)
 		return meandirection;
 	}
 }

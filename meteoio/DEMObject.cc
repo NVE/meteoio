@@ -594,8 +594,7 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 	}
 
 	//returning the angle matching the highest tangent
-	const double to_deg = 180./Cst::PI;
-	return ( atan(max_tangent)*to_deg );
+	return ( atan(max_tangent)*Cst::to_deg );
 }
 
 /**
@@ -713,11 +712,10 @@ double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const doub
 				return (0.); // north facing
 			}
 		} else { //there is a E-W slope
-			const double to_deg = 180./Cst::PI;
 			if ( Nx > 0. ) {
-				return (90. - atan(Ny/Nx)*to_deg);
+				return (90. - atan(Ny/Nx)*Cst::to_deg);
 			} else {
-				return (270. - atan(Ny/Nx)*to_deg);
+				return (270. - atan(Ny/Nx)*Cst::to_deg);
 			}
 		}
 	} else { // if slope = 0
@@ -739,8 +737,7 @@ void DEMObject::CalculateHick(double A[4][4], double& slope, double& Nx, double&
 		Nz = IOUtils::nodata;
 		slope_failures++;
 	} else {
-		const double to_deg = 180./Cst::PI;
-		slope = atan(smax)*to_deg;
+		slope = atan(smax)*Cst::to_deg;
 
 		//Nx and Ny: x and y components of the normal pointing OUT of the surface
 		if ( smax > 0. ) { //ie: there is some slope
@@ -771,8 +768,7 @@ void DEMObject::CalculateFleming(double A[4][4], double& slope, double& Nx, doub
 		Nx = 0.5 * (A[2][1] - A[2][3]) / cellsize;
 		Ny = 0.5 * (A[3][2] - A[1][2]) / cellsize;
 		Nz = 1.;
-		const double to_deg = 180./Cst::PI;
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * Cst::to_deg;
 	} else {
 		CalculateHick(A, slope, Nx, Ny, Nz);
 	}
@@ -790,8 +786,7 @@ void DEMObject::CalculateHorn(double A[4][4], double& slope, double& Nx, double&
 
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		const double to_deg = 180./Cst::PI;
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * Cst::to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
 		CalculateHick(A, slope, Nx, Ny, Nz);
@@ -807,8 +802,7 @@ void DEMObject::CalculateCorripio(double A[4][4], double& slope, double& Nx, dou
 		Nz = 1.;
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		const double to_deg = 180./Cst::PI;
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * to_deg;
+		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * Cst::to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
 		CalculateHick(A, slope, Nx, Ny, Nz);

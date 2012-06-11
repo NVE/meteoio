@@ -83,13 +83,11 @@ double IOUtils::pow4(const double& val)
 }
 
 double IOUtils::bearing_to_angle(const double& bearing) {
-	const double to_rad = Cst::PI/180.;
-	return (fmod(360.-bearing+90., 360.)*to_rad);
+	return (fmod(360.-bearing+90., 360.)*Cst::to_rad);
 }
 
 double IOUtils::angle_to_bearing(const double& angle) {
-	const double to_deg = 180.0 / Cst::PI;
-	return (fmod( 90.-angle*to_deg+360. , 360. ));
+	return (fmod( 90.-angle*Cst::to_deg+360. , 360. ));
 }
 
 double IOUtils::bearing(const std::string& bearing_str)

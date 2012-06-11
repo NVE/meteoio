@@ -88,8 +88,6 @@ class ARPSIO : public IOInterface {
 		FILE *fin;
 		std::ofstream fout;//Output file streams
 		std::string filename;
-		static const double to_rad;
-		static const double to_deg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string default_ext;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters

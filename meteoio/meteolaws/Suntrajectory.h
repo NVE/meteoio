@@ -87,7 +87,7 @@ class SunTrajectory {
 		double SunRise, SunSet, SunlightDuration, SolarNoon;
 		double SunRightAscension, SunDeclination;
 		double HourAngle;
-		static const double to_deg, to_rad, nodata;
+		static const double nodata;
 };
 
 class SunMeeus : public SunTrajectory {

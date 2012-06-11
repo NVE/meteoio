@@ -560,11 +560,9 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	double Ww;		// Wind weighting
 	double Od;		// Diverting factor
 
-	const double to_rad = Cst::PI/180.;
-	const double to_deg = 180./Cst::PI;
-	const double dem_min_slope=dem.min_slope*to_rad;
+	const double dem_min_slope=dem.min_slope*Cst::to_rad;
 	const double dem_min_curvature=dem.min_curvature;
-	double dem_range_slope=(dem.max_slope-dem_min_slope)*to_rad;
+	double dem_range_slope=(dem.max_slope-dem_min_slope)*Cst::to_rad;
 	double dem_range_curvature=(dem.max_curvature-dem_min_curvature);
 	if(dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
 	if(dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
@@ -574,8 +572,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 			speed = VW.grid2D(i,j);
 			if(speed==0.) continue; //we can not apply any correction factor!
 			dir = DW.grid2D(i,j);
-			beta = dem.slope(i, j)*to_rad;
-			azi = dem.azi(i, j)*to_rad;
+			beta = dem.slope(i, j)*Cst::to_rad;
+			azi = dem.azi(i, j)*Cst::to_rad;
 			curvature = dem.curvature(i, j);
 
 			if(speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
@@ -583,7 +581,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				DW.grid2D(i, j) = IOUtils::nodata;
 			} else {
 				//convert direction to rad
-				dir *= ((Cst::PI) / 180.);
+				dir *= Cst::to_rad;
 				//Speed and direction converted to zonal et meridional
 				//components
 				u = (-1.) * (speed * sin(dir));
@@ -612,7 +610,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 				VW.grid2D(i, j) = Ww * speed;
 
 				// Add the diverting factor to the wind direction and convert to degrees
-				DW.grid2D(i, j) = (dir + Od) * to_deg;
+				DW.grid2D(i, j) = (dir + Od) * Cst::to_deg;
 				if( DW.grid2D(i, j)>360. ) {
 					DW.grid2D(i, j) -= 360.;
 				}

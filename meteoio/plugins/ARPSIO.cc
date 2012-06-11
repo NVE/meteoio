@@ -45,8 +45,6 @@ namespace mio {
 
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
 const std::string ARPSIO::default_ext=".asc"; //filename extension
-const double ARPSIO::to_rad = Cst::PI / 180.0;
-const double ARPSIO::to_deg = 180.0 / Cst::PI;
 
 ARPSIO::ARPSIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -159,7 +157,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		readGridLayer("v", 2, V);
 		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * to_deg + 360., 360.); // turn into degrees [0;360)
+				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
 			}
 		}
 	}

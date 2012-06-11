@@ -84,8 +84,6 @@ namespace mio {
 const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 const double GRIBIO::tz_in = 0.; //GRIB time zone, always UTC
 const std::string GRIBIO::default_ext=".grb"; //filename extension
-const double GRIBIO::to_rad = Cst::PI / 180.0;
-const double GRIBIO::to_deg = 180.0 / Cst::PI;
 
 GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -535,7 +533,7 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 		for(unsigned int jj=0; jj<VW.nrows; jj++) {
 			for(unsigned int ii=0; ii<VW.ncols; ii++) {
 				VW(ii,jj) = sqrt( IOUtils::pow2(U(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
-				DW(ii,jj) = fmod( atan2( U(ii,jj), V(ii,jj) ) * to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
+				DW(ii,jj) = fmod( atan2( U(ii,jj), V(ii,jj) ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
 	}
@@ -612,13 +610,13 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	if(parameter==MeteoGrids::DEM) read2DGrid_indexed(8.2, 1, 0, date, grid_out); //HSURF
 	if(parameter==MeteoGrids::SLOPE) {
 		read2DGrid_indexed(98.202, 1, 0, date, grid_out); //SLO_ANG
-		grid_out.grid2D *= to_deg;
+		grid_out.grid2D *= Cst::to_deg;
 	}
 	if(parameter==MeteoGrids::AZI) {
 		read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
 		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-				grid_out(ii,jj) = fmod( grid_out(ii,jj)*to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
+				grid_out(ii,jj) = fmod( grid_out(ii,jj)*Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
 	}
@@ -631,7 +629,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		readWind(filename, date);
 		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-				grid_out(ii,jj) = VW(ii,jj)*sin(DW(ii,jj)*to_rad);
+				grid_out(ii,jj) = VW(ii,jj)*sin(DW(ii,jj)*Cst::to_rad);
 			}
 		}
 	}
@@ -639,7 +637,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		readWind(filename, date);
 		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-				grid_out(ii,jj) = VW(ii,jj)*cos(DW(ii,jj)*to_rad);
+				grid_out(ii,jj) = VW(ii,jj)*cos(DW(ii,jj)*Cst::to_rad);
 			}
 		}
 	}
@@ -1027,7 +1025,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 		if(readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
 		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
 			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-				Meteo[ii](MeteoData::DW) = fmod( atan2( values2[ii], values[ii] ) * to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
+				Meteo[ii](MeteoData::DW) = fmod( atan2( values2[ii], values[ii] ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
 	}

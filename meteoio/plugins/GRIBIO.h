@@ -105,8 +105,6 @@ class GRIBIO : public IOInterface {
 		Coords llcorner;
 		double cellsize_x, cellsize_y;
 
-		static const double to_rad;
-		static const double to_deg;
 		static const unsigned int MAX_VAL_LEN; //max value string lengthin GRIB
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double tz_in; //GRIB time zone
