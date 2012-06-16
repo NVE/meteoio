@@ -17,6 +17,7 @@
 */
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 
 #include <meteoio/IOUtils.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
@@ -195,15 +196,11 @@ void IOUtils::trim(std::string& str)
 }
 
 void IOUtils::toUpper(std::string& str){
-	for(size_t t=0; t<str.length(); t++) {
-		str[t] = (char)toupper(str[t]);
-	}
+	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
 }
 
 void IOUtils::toLower(std::string& str){
-	for(size_t t=0; t<str.length(); t++) {
-		str[t] = (char)tolower(str[t]);
-	}
+	std::transform(str.begin(), str.end(),str.begin(), ::tolower);
 }
 
 bool IOUtils::isNumeric(const std::string& str, const unsigned int& nBase)

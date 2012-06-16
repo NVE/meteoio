@@ -27,6 +27,8 @@ namespace mio {
  * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its <a href="../SMET_specifications.pdf">official format specification</a> for more information.
  * This plugin can also provide special points, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter, the header must contain the epsg code (see example below).
  *
+ * Non-standard parameters can also be given, such as extra snow temperatures. These parameters will then take the name that has been given in "fields", converted to uppercase. It is usually a good idea to number these parameters, such as TS1, TS2, TS3 for a serie of temperatures at various positions.
+ *
  * @section template_units Units
  * All units are MKSA, the only exception being the precipitations that are in mm/h. It is however possible to use  multipliers and offsets (but they must be specified in the file header).
  *
@@ -273,8 +275,11 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 		} else if (fields[ii] == "altitude") {
 			indexes.push_back(IOUtils::npos-5);
 		} else {
-			md.addParameter(fields[ii]);
-			indexes.push_back(md.getParameterIndex(fields[ii]));
+			//this is an extra parameter, we convert to uppercase
+			std::string extra_param = fields[ii];
+			IOUtils::toUpper(extra_param);
+			md.addParameter(extra_param);
+			indexes.push_back(md.getParameterIndex(extra_param));
 		}
 	}
 }
