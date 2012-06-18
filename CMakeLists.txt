@@ -23,7 +23,18 @@ OPTION( BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON )
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersion()
 
-IF(CMAKE_COMPILER_IS_GNUCXX)
+IF(MSVC)
+	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
+	SET(WARNINGS "/W4")
+	#SET(EXTRA_WARNINGS "/Wp64") #/Wall
+	SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
+	SET(ARCH_OPTIM "/arch:SSE2")
+	SET(ARCH_SAFE "")
+	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
+	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
+	SET(_VERSION "/D_VERSION=\\\"${_versionString}\\\"")
+ELSE(MSVC)
+	#we consider that all other compilers support "-" options and silently ignore what they don't know
 	SET(WARNINGS "-Wall")
 	SET(PROFILING "-pg -fprofile-arcs")
 	SET(EXTRA_WARNINGS "-Wextra -ansi -pedantic")
@@ -35,18 +46,6 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 	SET(ARCH_SAFE  "")
 	SET(DEBUG "-g3 -O0 -D__DEBUG")
 	SET(_VERSION "-D_VERSION=\\\"${_versionString}\\\"")
-ENDIF(CMAKE_COMPILER_IS_GNUCXX)
-
-IF(MSVC)
-	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-	SET(WARNINGS "/W4")
-	#SET(EXTRA_WARNINGS "/Wp64") #/Wall
-	SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
-	SET(ARCH_OPTIM "/arch:SSE2")
-	SET(ARCH_SAFE "")
-	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
-	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
-	SET(_VERSION "/D_VERSION=\\\"${_versionString}\\\"")
 ENDIF(MSVC)
 
 IF(UNIX)
