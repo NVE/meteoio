@@ -350,8 +350,9 @@ template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigne
 }
 
 template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigned int& any, const T& init) {
-	resize(anx, any);
-	std::fill(vecData.begin(), vecData.end(), init);
+	vecData.resize(anx*any, init);
+	nx = anx;
+	ny = any;
 }
 
 template<class T> void Array2D<T>::size(unsigned int& anx, unsigned int& any) const {
@@ -509,8 +510,8 @@ template<class T> Array2D<T>& Array2D<T>::operator=(const Array2D<T>& source) {
 }
 
 template<class T> Array2D<T>& Array2D<T>::operator=(const T& value) {
-	//std::fill(vecData.begin(), vecData.end(), value);
-	for(unsigned int i=0; i<vecData.size(); i++) vecData[i] = value;
+	std::fill(vecData.begin(), vecData.end(), value);
+	//for(unsigned int i=0; i<vecData.size(); i++) vecData[i] = value;
 	return *this;
 }
 

@@ -65,7 +65,8 @@ Date::Date() {
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst) {
+Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst)
+{
 	timezone = 0;
 	dst = false;
 	setDate(julian_in, in_timezone, in_dst);

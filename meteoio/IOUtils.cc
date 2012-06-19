@@ -91,28 +91,27 @@ double IOUtils::angle_to_bearing(const double& angle) {
 	return (fmod( 90.-angle*Cst::to_deg+360. , 360. ));
 }
 
-double IOUtils::bearing(const std::string& bearing_str)
+double IOUtils::bearing(std::string bearing_str)
 {
-	std::string s=bearing_str;
-	trim(s);
-	toUpper(s);
+	trim(bearing_str);
+	toUpper(bearing_str);
 
-	if(s=="N") return 0.;
-	if(s=="NNE") return 22.5;
-	if(s=="NE") return 45.;
-	if(s=="ENE") return 67.5;
-	if(s=="E") return 90.;
-	if(s=="ESE") return 112.5;
-	if(s=="SE") return 135.;
-	if(s=="SSE") return 157.5;
-	if(s=="S") return 180.;
-	if(s=="SSW") return 202.5;
-	if(s=="SW") return 225.;
-	if(s=="WSW") return 247.5;
-	if(s=="W") return 270.;
-	if(s=="WNW") return 292.5;
-	if(s=="NW") return 315.;
-	if(s=="NNW") return 337.5;
+	if(bearing_str=="N") return 0.;
+	if(bearing_str=="NNE") return 22.5;
+	if(bearing_str=="NE") return 45.;
+	if(bearing_str=="ENE") return 67.5;
+	if(bearing_str=="E") return 90.;
+	if(bearing_str=="ESE") return 112.5;
+	if(bearing_str=="SE") return 135.;
+	if(bearing_str=="SSE") return 157.5;
+	if(bearing_str=="S") return 180.;
+	if(bearing_str=="SSW") return 202.5;
+	if(bearing_str=="SW") return 225.;
+	if(bearing_str=="WSW") return 247.5;
+	if(bearing_str=="W") return 270.;
+	if(bearing_str=="WNW") return 292.5;
+	if(bearing_str=="NW") return 315.;
+	if(bearing_str=="NNW") return 337.5;
 
 	//no match
 	return nodata;
@@ -120,7 +119,7 @@ double IOUtils::bearing(const std::string& bearing_str)
 
 void IOUtils::stripComments(std::string& str)
 {
-	size_t found = str.find_first_of("#;");
+	const size_t found = str.find_first_of("#;");
 	if (found != std::string::npos){
 		str.erase(found); //rest of line disregarded
 	}
@@ -203,11 +202,10 @@ void IOUtils::toLower(std::string& str){
 	std::transform(str.begin(), str.end(),str.begin(), ::tolower);
 }
 
-bool IOUtils::isNumeric(const std::string& str, const unsigned int& nBase)
+bool IOUtils::isNumeric(std::string str, const unsigned int& nBase)
 {
-	std::string s = str;
-	trim(s); //delete trailing and leading whitespaces and tabs
-	std::istringstream iss(s);
+	trim(str); //delete trailing and leading whitespaces and tabs
+	std::istringstream iss(str);
 
 	if( nBase == 10 ) {
 		double tmp;
@@ -227,8 +225,6 @@ bool IOUtils::isNumeric(const std::string& str, const unsigned int& nBase)
 bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& delimiter,
                                std::map<std::string,std::string>& out_map, const std::string& keyprefix, const bool& setToUpperCase)
 {
-	//size_t pos = in_line.find(delimiter); //first occurence of '='
-
 	size_t pos = std::string::npos;
 	if ((delimiter==" ") || (delimiter=="\t")) {
 		pos = in_line.find_first_of(" \t", 0);
@@ -243,7 +239,6 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 
 		IOUtils::trim(key);
 		IOUtils::trim(value);
-		//cerr << "key:" << key << " val:" << value << endl;
 
 		if ((key == "") || (value=="")) {
 			return false;
@@ -256,7 +251,6 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 		out_map[keyprefix + key] = value;
 	} else {
 		return false;
-		//cerr << "line:" << in_line << "delimiter" << endl;
 	}
 
 	return true;
@@ -299,7 +293,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			//this is a directory -> do nothing
 		} else {
-			std::string filename(ffd.cFileName);
+			const std::string filename(ffd.cFileName);
 			dirlist.push_back(filename);
 		}
 	}
@@ -375,12 +369,12 @@ void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 	std::string line="";
 
 	//make a test for end of line encoding:
-	char eol = IOUtils::getEoln(fin);
+	const char eol = IOUtils::getEoln(fin);
 
 	for (size_t ii=0; ii< linecount; ii++){
 		if (std::getline(fin, line, eol)) {
 			linenr++;
-			bool result = IOUtils::readKeyValuePair(line, delimiter, headermap);
+			const bool result = IOUtils::readKeyValuePair(line, delimiter, headermap);
 
 			if (!result) { //  means if ((key == "") || (value==""))
 				std::stringstream out;
@@ -399,7 +393,7 @@ char IOUtils::getEoln(std::istream& fin)
 	char tmp = '0';
 	int chars = 0;
 
-	const std::streampos position = fin.tellg();
+	const std::streampos file_start = fin.tellg();
 
 	do {
 		fin.get(tmp);
@@ -413,14 +407,14 @@ char IOUtils::getEoln(std::istream& fin)
 				chars++;
 			}
 			pbuf = fin.rdbuf();
-			pbuf->pubseekpos(position); //rewind
+			pbuf->pubseekpos(file_start); //rewind
 			fin.clear(); //reset eof flag, etc
 			return tmp;
 		}
 	} while ((chars < 3000) && (!fin.eof()));
 
 	pbuf = fin.rdbuf();
-	pbuf->pubseekpos(position); //rewind
+	pbuf->pubseekpos(file_start); //rewind
 	fin.clear(); //reset eof flag, etc
 
 	return '\n';
@@ -523,7 +517,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, st
 		t = (i != 0);
 	}
 
-	std::string::size_type pos = s.find_first_not_of(ALPHANUM);
+	const std::string::size_type pos = s.find_first_not_of(ALPHANUM);
 	if (pos != std::string::npos) {
 		std::string tmp = s.substr(pos);
 		trim(tmp);
@@ -637,7 +631,7 @@ template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str
 	(void)f;
 	double lat, lon;
 	try {
-		Coords::parseLatLon(s,lat, lon);
+		Coords::parseLatLon(s, lat, lon);
 	} catch(const IOException&) {
 		return false;
 	}
@@ -683,13 +677,12 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 	}
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
-	//HACK: would it be better to create a timeseries object and call vector's binary search on it?
 	if (exactmatch){
 		size_t first = 1, last = vecM.size()-1;
 
 		//perform binary search
 		while (first <= last) {
-			size_t mid = (first + last) / 2;  // compute mid point
+			const size_t mid = (first + last) / 2;  // compute mid point
 			if (soughtdate > vecM[mid].date)
 				first = mid + 1;                   // repeat search in top half
 			else if (soughtdate < vecM[mid].date)
@@ -702,7 +695,7 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 
 		//perform binary search
 		while (first <= last) {
-			size_t mid = (first + last) / 2;  // compute mid point
+			const size_t mid = (first + last) / 2;  // compute mid point
 
 			if (mid < (vecM.size()-1))
 				if ((soughtdate > vecM[mid].date) && (soughtdate < vecM[mid+1].date))

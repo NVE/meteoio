@@ -129,7 +129,7 @@ const std::string& MeteoData::getNameForParameter(const size_t& parindex) const
 
 bool MeteoData::param_exists(const std::string& i_paramname) const
 {
-	size_t current_size = param_name.size();
+	const size_t current_size = param_name.size();
 	for (size_t ii = 0; ii<current_size; ii++) {
 		if (param_name[ii] == i_paramname)
 			return true;
@@ -141,7 +141,7 @@ bool MeteoData::param_exists(const std::string& i_paramname) const
 size_t MeteoData::addParameter(const std::string& i_paramname)
 {
 	//check if name is already taken
-	size_t current_index = getParameterIndex(i_paramname);
+	const size_t current_index = getParameterIndex(i_paramname);
 	if (current_index != IOUtils::npos)
 		return current_index; //do nothing, because parameter is already present
 
@@ -160,16 +160,16 @@ size_t MeteoData::getNrOfParameters() const
 	return nrOfAllParameters;
 }
 
-MeteoData::MeteoData() : date(0.0, 0.), meta(), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+MeteoData::MeteoData() : date(0.0, 0.), meta(), resampled(false), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata)
 {
-	param_name = s_default_paramname;
-	data = vector<double>(nrOfAllParameters, IOUtils::nodata);
+	/*param_name = s_default_paramname;
+	data.resize(nrOfAllParameters, IOUtils::nodata);*/
 }
 
-MeteoData::MeteoData(const Date& date_in) : date(date_in), meta(), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+MeteoData::MeteoData(const Date& date_in) : date(date_in), meta(), resampled(false), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata)
 {
-	param_name = s_default_paramname;
-	data = vector<double>(nrOfAllParameters, IOUtils::nodata);
+	/*param_name = s_default_paramname;
+	data.resize(nrOfAllParameters, IOUtils::nodata);*/
 }
 
 void MeteoData::setDate(const Date& in_date)
@@ -179,9 +179,7 @@ void MeteoData::setDate(const Date& in_date)
 
 void MeteoData::reset()
 {
-	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
-		data[ii] = IOUtils::nodata;
-	}
+	std::fill(data.begin(), data.end(), IOUtils::nodata);
 }
 
 /**

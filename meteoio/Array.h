@@ -165,8 +165,8 @@ template<class T> void Array<T>::resize(const unsigned int& asize) {
 }
 
 template<class T> void Array<T>::resize(const unsigned int& asize, const T& init) {
-	resize(asize);
-	std::fill(vecData.begin(), vecData.end(), init);
+	vecData.resize(asize, init);
+	nx = asize;
 }
 
 

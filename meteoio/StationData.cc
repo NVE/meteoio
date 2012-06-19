@@ -26,10 +26,10 @@ namespace mio {
 StationData::StationData() : position("NULL", "NULL"), stationID(""), stationName(""),
                              slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
-StationData::StationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
+StationData::StationData(const Coords& i_position, const std::string& i_id, const std::string& i_name) : position(i_position), stationID(i_id), stationName(i_name), slope(IOUtils::nodata), azi(IOUtils::nodata)
 {
-	setStationData(i_position, i_id, i_name);
-	setSlope(IOUtils::nodata, IOUtils::nodata);
+	/*setStationData(i_position, i_id, i_name);
+	setSlope(IOUtils::nodata, IOUtils::nodata);*/
 }
 
 void StationData::setStationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
@@ -105,8 +105,8 @@ double StationData::getAzimuth() const {
 std::ostream& operator<<(std::ostream& os, const StationData& station) {
 
 	os << "<station>" << endl
-	   << std::setprecision(10) << station.position 
-	   << "ID:    " << station.getStationID() << endl 
+	   << std::setprecision(10) << station.position
+	   << "ID:    " << station.getStationID() << endl
 	   << "Name:  " << station.getStationName() << endl
 	   << "Slope: " << station.getSlopeAngle() << " bearing: " << station.getAzimuth() << endl
 	   << "</station>" << endl;

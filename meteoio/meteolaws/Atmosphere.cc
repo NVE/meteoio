@@ -185,14 +185,14 @@ double Atmosphere::heatIndex(const double& TA, const double& RH)
 double Atmosphere::waterSaturationPressure(const double& T) {
 	double c2, c3; // varying constants
 
-	if ( T < 273.16 ) { // for a flat ice surface
+	if ( T < Cst::t_water_triple_pt ) { // for a flat ice surface
 		c2 = 21.88;
 		c3 = 7.66;
 	} else { // for a flat water surface
 		c2 = 17.27;
 		c3 = 35.86;
 	}
-	const double exp_p_sat = c2 *  (T - 273.16) / (T - c3); //exponent
+	const double exp_p_sat = c2 *  (T - Cst::t_water_triple_pt) / (T - c3); //exponent
 
 	return( Cst::p_water_triple_pt * exp( exp_p_sat ) );
 }

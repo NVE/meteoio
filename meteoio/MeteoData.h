@@ -184,11 +184,11 @@ class MeteoData {
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname
 
-		//private data members
+		//private data members, please keep the order consistent with declaration lists and logic!
+		bool resampled;              ///<set this to true if MeteoData is result of resampling
+		size_t nrOfAllParameters;
 		std::vector<std::string> param_name;
 		std::vector<double> data;
-		size_t nrOfAllParameters;
-		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
 
 typedef std::vector<MeteoData> METEO_TIMESERIE;

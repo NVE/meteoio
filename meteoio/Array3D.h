@@ -400,8 +400,11 @@ template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigne
 }
 
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
-	resize(anx, any, anz);
-	std::fill(vecData.begin(), vecData.end(), init);
+	vecData.resize(anx*any*anz, init);
+	nx = anx;
+	ny = any;
+	nz = anz;
+	nxny = nx*ny;
 }
 
 template<class T> void Array3D<T>::size(unsigned int& anx, unsigned int& any, unsigned int& anz) const {
