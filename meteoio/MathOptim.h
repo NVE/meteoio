@@ -113,6 +113,9 @@ namespace Optim {
 		return x * invSqrt(x);
 	}
 
+	inline double pow2(const double& val) {return (val*val);}
+	inline double pow3(const double& val) {return (val*val*val);}
+	inline double pow4(const double& val) {return (val*val*val*val);}
 }
 
 } //end namespace

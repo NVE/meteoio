@@ -34,6 +34,7 @@
 #include <fstream>
 #include <cctype>
 #include <limits>
+#include <cmath>
 
 #ifndef MAX
 #define MAX(x,y)    (((x) < (y)) ? (y) : (x))
@@ -86,11 +87,7 @@ namespace IOUtils {
 	* @param epsilon is a radius around val1
 	* @return true if val2 is within the radius around val1, false otherwise.
 	*/
-	bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon);
-
-	double pow2(const double& val);
-	double pow3(const double& val);
-	double pow4(const double& val);
+	inline bool checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon) {return (fabs(val1-val2) < epsilon);}
 
 	size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
 

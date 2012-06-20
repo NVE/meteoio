@@ -19,6 +19,7 @@
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/IOManager.h>
+#include <meteoio/MathOptim.h>
 
 using namespace std;
 
@@ -286,7 +287,7 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	}
 
 	//run algorithm
-	info << "r^2=" << IOUtils::pow2( vecCoefficients[3] );
+	info << "r^2=" << Optim::pow2( vecCoefficients[3] );
 	Interpol2D::constantLapseGrid2DFill(avgData, avgAltitudes, dem, vecCoefficients, funcptr, grid);
 }
 
@@ -373,7 +374,7 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	}
 
 	//run algorithm
-	info << "r^2=" << IOUtils::pow2( vecCoefficients[3] );
+	info << "r^2=" << Optim::pow2( vecCoefficients[3] );
 	Interpol2D::LapseIDW(vecData, vecMeta, dem, vecCoefficients, funcptr, grid);
 }
 
@@ -412,7 +413,7 @@ void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	//run algorithm
 	double r2=0.;
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2);
-	info << "r^2=" << IOUtils::pow2( r2 );
+	info << "r^2=" << Optim::pow2( r2 );
 }
 
 
@@ -555,7 +556,7 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	}
 
 	//run algorithm
-	info << "r^2=" << IOUtils::pow2( vecCoefficients[3] );
+	info << "r^2=" << Optim::pow2( vecCoefficients[3] );
 
 	//run algorithm
 	Interpol2D::LapseIDW(vecDataEA, vecMeta, dem, vecCoefficients, funcptr, grid);

@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/Date.h>
+#include <meteoio/IOUtils.h>
 #include <cmath>
 
 using namespace std;
@@ -633,7 +634,7 @@ bool Date::operator==(const Date& indate) const {
 		return( undef==true && indate.isUndef() );
 	}
 
-	return( fabs(indate.gmt_julian - gmt_julian) < epsilon );
+	return IOUtils::checkEpsilonEquality(gmt_julian, indate.gmt_julian, epsilon);
 }
 
 bool Date::operator!=(const Date& indate) const {

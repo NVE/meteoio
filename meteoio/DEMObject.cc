@@ -19,6 +19,7 @@
 #include <limits.h>
 
 #include <meteoio/DEMObject.h>
+#include <meteoio/MathOptim.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 /**
@@ -370,7 +371,7 @@ void DEMObject::sanitize() {
 */
 double DEMObject::horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2)
 {
-	return sqrt( IOUtils::pow2(xcoord2-xcoord1) + IOUtils::pow2(ycoord2-ycoord1) );
+	return sqrt( Optim::pow2(xcoord2-xcoord1) + Optim::pow2(ycoord2-ycoord1) );
 }
 
 /**
@@ -419,9 +420,9 @@ double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
 				//distance += sqrt( pow2((ix2-ix1)*cellsize) + pow2((iy2-iy1)*cellsize) + pow2(grid2D(ix2,iy2)-grid2D(ix1,iy1)) );
 				const double z1=grid2D(ix1,iy1);
 				const double z2=grid2D(ix2,iy2);
-				const double tmpx=IOUtils::pow2((double)(ix2-ix1)*cellsize);
-				const double tmpy=IOUtils::pow2((double)(iy2-iy1)*cellsize);
-				const double tmpz=IOUtils::pow2(z2-z1);
+				const double tmpx=Optim::pow2((double)(ix2-ix1)*cellsize);
+				const double tmpy=Optim::pow2((double)(iy2-iy1)*cellsize);
+				const double tmpz=Optim::pow2(z2-z1);
 				distance += sqrt( tmpx + tmpy + tmpz );
 			}
 			last_point = ii;

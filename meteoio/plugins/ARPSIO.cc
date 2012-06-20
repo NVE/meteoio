@@ -16,6 +16,8 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteolaws/Meteoconst.h> //for PI
+#include <meteoio/MathOptim.h>
+
 #include <string.h>
 #include <algorithm>
 
@@ -147,7 +149,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		readGridLayer("v", 2, V);
 		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
 			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
-				grid_out(ii,jj) = sqrt( IOUtils::pow2(grid_out(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
+				grid_out(ii,jj) = sqrt( Optim::pow2(grid_out(ii,jj)) + Optim::pow2(V(ii,jj)) );
 			}
 		}
 	}

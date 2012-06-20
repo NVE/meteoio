@@ -59,30 +59,6 @@ std::string getLibVersion() {
 	return ss.str();
 }
 
-bool IOUtils::checkEpsilonEquality(const double& val1, const double& val2, const double& epsilon)
-{
-	if (((val1-epsilon) < val2) && ((val1+epsilon) > val2)) {
-		return true;
-	}
-
-	return false;
-}
-
-double IOUtils::pow2(const double& val)
-{
-	return (val*val);
-}
-
-double IOUtils::pow3(const double& val)
-{
-	return (val*val*val);
-}
-
-double IOUtils::pow4(const double& val)
-{
-	return (val*val*val*val);
-}
-
 double IOUtils::bearing_to_angle(const double& bearing) {
 	return (fmod(360.-bearing+90., 360.)*Cst::to_rad);
 }

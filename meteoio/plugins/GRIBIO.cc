@@ -20,6 +20,7 @@
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for PI
 #include <meteoio/DEMObject.h>
+#include <meteoio/MathOptim.h>
 
 #include <cmath>
 #include <errno.h>
@@ -532,7 +533,7 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 		DW.set(U.ncols, U.nrows, U.cellsize, U.llcorner);
 		for(unsigned int jj=0; jj<VW.nrows; jj++) {
 			for(unsigned int ii=0; ii<VW.ncols; ii++) {
-				VW(ii,jj) = sqrt( IOUtils::pow2(U(ii,jj)) + IOUtils::pow2(V(ii,jj)) );
+				VW(ii,jj) = sqrt( Optim::pow2(U(ii,jj)) + Optim::pow2(V(ii,jj)) );
 				DW(ii,jj) = fmod( atan2( U(ii,jj), V(ii,jj) ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
@@ -1034,7 +1035,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 		if(readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
 		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
 			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-				Meteo[ii](MeteoData::VW) =  sqrt( IOUtils::pow2(values[ii]) + IOUtils::pow2(values2[ii]) );
+				Meteo[ii](MeteoData::VW) =  sqrt( Optim::pow2(values[ii]) + Optim::pow2(values2[ii]) );
 			}
 		}
 	}

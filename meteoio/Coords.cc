@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include <meteoio/Coords.h>
+#include <meteoio/MathOptim.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
 
 #ifdef PROJ4
@@ -872,7 +873,7 @@ double Coords::lat_degree_lenght(const double& latitude) {
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
-	const double degree_length = (Cst::PI*a*(1.-e2)) / ( 180.*pow(1.-e2*IOUtils::pow2(sin(latitude*Cst::to_rad)), 1.5) );
+	const double degree_length = (Cst::PI*a*(1.-e2)) / ( 180.*pow(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad)), 1.5) );
 	return fabs( degree_length );
 }
 
@@ -888,7 +889,7 @@ double Coords::lon_degree_lenght(const double& latitude) {
 	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
 	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
 
-	const double degree_length = (Cst::PI*a*cos(latitude*Cst::to_rad)) / ( 180.*sqrt(1.-e2*IOUtils::pow2(sin(latitude*Cst::to_rad))) );
+	const double degree_length = (Cst::PI*a*cos(latitude*Cst::to_rad)) / ( 180.*sqrt(1.-e2*Optim::pow2(sin(latitude*Cst::to_rad))) );
 	return fabs( degree_length );
 }
 
@@ -1122,7 +1123,7 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 	const double long0 = (double)((zoneNumber - 1)*6 - 180 + 3) * Cst::to_rad; //+3 puts origin in middle of zone
 
 	//Geometrical parameters
-	const double nu = a / sqrt(1.-e2*IOUtils::pow2(sin(Lat))); //radius of curvature of the earth perpendicular to the meridian plane
+	const double nu = a / sqrt(1.-e2*Optim::pow2(sin(Lat))); //radius of curvature of the earth perpendicular to the meridian plane
 	const double p = (Long-long0);
 
 	//calculating first the coefficients of the series, then the Meridional Arc M itself
@@ -1138,9 +1139,9 @@ void Coords::WGS84_to_UTM(double lat_in, double long_in, double& east_out, doubl
 	//calculating the coefficients for the series
 	const double K1 = M*k0;
 	const double K2 = 1./4.*k0*nu*sin(2.*Lat);
-	const double K3 = (k0*nu*sin(Lat)*IOUtils::pow3(cos(Lat))*1./24.) * (5. - IOUtils::pow2(tan(Lat)) + 9.*eP2*IOUtils::pow2(cos(Lat)) + 4.*eP2*eP2*IOUtils::pow4(cos(Lat)));
+	const double K3 = (k0*nu*sin(Lat)*Optim::pow3(cos(Lat))*1./24.) * (5. - Optim::pow2(tan(Lat)) + 9.*eP2*Optim::pow2(cos(Lat)) + 4.*eP2*eP2*Optim::pow4(cos(Lat)));
 	const double K4 = k0*nu*cos(Lat);
-	const double K5 = (k0*nu*IOUtils::pow3(cos(Lat))*1./6.) * (1. - IOUtils::pow2(tan(Lat)) + eP2*IOUtils::pow2(cos(Lat)));
+	const double K5 = (k0*nu*Optim::pow3(cos(Lat))*1./6.) * (1. - Optim::pow2(tan(Lat)) + eP2*Optim::pow2(cos(Lat)));
 
 	north_out = K1 + K2*p*p + K3*p*p*p*p;
 	east_out = K4*p + K5*p*p*p + 500000.0;
@@ -1193,10 +1194,10 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	const double fp = mu + J1*sin(2.*mu) + J2*sin(4.*mu) + J3*sin(6.*mu) + J4*sin(8.*mu);
 
 	//calculating the parameters
-	const double C1 = eP2 * IOUtils::pow2(cos(fp));
-	const double T1 = IOUtils::pow2( tan(fp) );
-	const double R1 = a*(1.-e2) / pow((1.-e2*IOUtils::pow2(sin(fp))), 1.5);
-	const double N1 = a / sqrt(1.-e2*IOUtils::pow2(sin(fp)));
+	const double C1 = eP2 * Optim::pow2(cos(fp));
+	const double T1 = Optim::pow2( tan(fp) );
+	const double R1 = a*(1.-e2) / pow((1.-e2*Optim::pow2(sin(fp))), 1.5);
+	const double N1 = a / sqrt(1.-e2*Optim::pow2(sin(fp)));
 	const double D = east_in / (N1*k0);
 
 	//calculating the coefficients of the series for latitude and longitude
@@ -1320,7 +1321,7 @@ void Coords::distance(const Coords& destination, double& distance, double& beari
 //HACK: this is the 2D distance, it does not work in 3D!!
 	if(isSameProj(destination)) {
 		//we can use simple cartesian grid arithmetic
-		distance = sqrt( IOUtils::pow2(easting - destination.getEasting()) + IOUtils::pow2(northing - destination.getNorthing()) );
+		distance = sqrt( Optim::pow2(easting - destination.getEasting()) + Optim::pow2(northing - destination.getNorthing()) );
 		bearing = atan2( northing - destination.getNorthing() , easting - destination.getEasting() );
 		bearing = fmod( bearing*Cst::to_deg+360. , 360. );
 	} else {
@@ -1380,7 +1381,7 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 */
 void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
-	const double distance = sqrt( IOUtils::pow2(east_in) + IOUtils::pow2(north_in) );
+	const double distance = sqrt( Optim::pow2(east_in) + Optim::pow2(north_in) );
 	const double bearing = fmod( atan2(east_in, north_in)*Cst::to_deg+360. , 360.);
 
 	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
@@ -1502,12 +1503,12 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 	double sin_sigma, cos_sigma, sigma, cos_alpha2, cos_2sigma_m;
 	int n=0;
 	do {
-		sin_sigma = sqrt( IOUtils::pow2(cos(U2)*sin(lambda)) + IOUtils::pow2(cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda)) );
+		sin_sigma = sqrt( Optim::pow2(cos(U2)*sin(lambda)) + Optim::pow2(cos(U1)*sin(U2) - sin(U1)*cos(U2)*cos(lambda)) );
 		if(sin_sigma==0.) return 0.; //co-incident points
 		cos_sigma = sin(U1)*sin(U2) + cos(U1)*cos(U2)*cos(lambda);
 		sigma = atan2(sin_sigma,cos_sigma);
 		const double sin_alpha = cos(U1)*cos(U2)*sin(lambda) / sin_sigma;
-		cos_alpha2 = 1. - IOUtils::pow2(sin_alpha);
+		cos_alpha2 = 1. - Optim::pow2(sin_alpha);
 		if(lat1==0. && lat2==0.) {
 			cos_2sigma_m = 0.;
 		} else {
@@ -1516,7 +1517,7 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 		const double C = f/16. * cos_alpha2*(4.+f*(4.-3.*cos_alpha2));
 		lambda_p = lambda;
 		lambda = L + (1.-C)*f*sin_alpha*(
-			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*IOUtils::pow2(cos_2sigma_m)) )
+			sigma + C*sin_sigma*( cos_2sigma_m + C * cos_sigma * (-1.+2.*Optim::pow2(cos_2sigma_m)) )
 			);
 		n++;
 	} while ( (n<n_max) && (fabs(lambda - lambda_p) > thresh) );
@@ -1528,7 +1529,7 @@ double Coords::VincentyDistance(const double& lat1, const double& lon1, const do
 	const double u2 = cos_alpha2 * (a*a - b*b) / (b*b);
 	const double A = 1. + u2/16384. * ( 4096.+u2*(-768.+u2*(320.-175.*u2)) );
 	const double B = u2/1024. * ( 256.+u2*(-128.+u2*(74.-47.*u2)) );
-	const double delta_sigma = B*sin_sigma*( cos_2sigma_m+B/4.*( cos_sigma*(-1.+2.*IOUtils::pow2(cos_2sigma_m)) - B/6.*(cos_2sigma_m*(-3.+4.*IOUtils::pow2(sin_sigma))*(-3.+4.*IOUtils::pow2(cos_2sigma_m))) ) );
+	const double delta_sigma = B*sin_sigma*( cos_2sigma_m+B/4.*( cos_sigma*(-1.+2.*Optim::pow2(cos_2sigma_m)) - B/6.*(cos_2sigma_m*(-3.+4.*Optim::pow2(sin_sigma))*(-3.+4.*Optim::pow2(cos_2sigma_m))) ) );
 
 	const double s = b*A*(sigma - delta_sigma);	//distance between the two points
 
@@ -1584,14 +1585,14 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 		cos2sigma_m = cos( 2.*sigma1 + sigma );
 		double delta_sigma = B*sin(sigma) * ( cos2sigma_m + B/4. * (
 			cos(sigma)*(-1.+2.*cos2sigma_m*cos2sigma_m)
-			-B/6. * cos2sigma_m * (-3.+4.*IOUtils::pow2(sin(sigma))) * (-3.+4.*cos2sigma_m*cos2sigma_m)
+			-B/6. * cos2sigma_m * (-3.+4.*Optim::pow2(sin(sigma))) * (-3.+4.*cos2sigma_m*cos2sigma_m)
 			) );
 		sigma_p = sigma;
 		sigma = distance / (b*A) + delta_sigma;
 	}
 
 	lat = atan2( sinU1*cos(sigma) + cosU1*sin(sigma)*cos(alpha1),
-		     (1.-f) * sqrt( sinAlpha*sinAlpha + IOUtils::pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
+		     (1.-f) * sqrt( sinAlpha*sinAlpha + Optim::pow2(sinU1*sin(sigma) - cosU1*cos(sigma)*cos(alpha1)) )
 		   );
 	const double lambda = atan2( sin(sigma)*sin(alpha1), cosU1*cos(sigma) - sinU1*sin(sigma)*cos(alpha1) );
 	const double C = f/16. * cos2alpha * (4.+f*(4.-3.*cos2alpha));

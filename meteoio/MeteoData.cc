@@ -18,6 +18,9 @@
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
 
+#include <cmath>
+#include <limits>
+
 using namespace std;
 namespace mio {
 
@@ -213,8 +216,9 @@ bool MeteoData::operator==(const MeteoData& in) const
 	if (nrOfAllParameters != in.nrOfAllParameters) //the number of meteo parameters has to be consistent
 		return false;
 
-	for (size_t ii=0; ii<nrOfAllParameters; ii++){
-		if (data[ii] != in.data[ii])
+	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
+		const double epsilon = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * std::numeric_limits<double>::epsilon();
+		if( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) )
 			return false;
 	}
 
