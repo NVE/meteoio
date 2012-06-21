@@ -163,10 +163,10 @@ void IOUtils::trim(std::string& str)
 	const size_t endpos = str.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	// if all spaces or empty return an empty string
-	if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
-		str = "";
-	} else {
+	if(startpos!=std::string::npos && endpos!=std::string::npos) {
 		str = str.substr( startpos, endpos-startpos+1 );
+	} else {
+		str = "";
 	}
 }
 

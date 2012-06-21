@@ -183,6 +183,7 @@ class MeteoData {
 		static std::vector<std::string> s_default_paramname;
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname
+		static double epsilon; ///<for comparing fields
 
 		//private data members, please keep the order consistent with declaration lists and logic!
 		bool resampled;              ///<set this to true if MeteoData is result of resampling

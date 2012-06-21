@@ -71,6 +71,7 @@ const std::string& MeteoGrids::getParameterName(const size_t& parindex)
 /************************************************************
  * static section                                           *
  ************************************************************/
+const double MeteoData::epsilon = 1e-6;
 const size_t MeteoData::nrOfParameters =  MeteoData::lastparam - MeteoData::firstparam + 1;
 map<size_t, string> MeteoData::static_meteoparamname;
 std::vector<std::string> MeteoData::s_default_paramname;
@@ -217,7 +218,6 @@ bool MeteoData::operator==(const MeteoData& in) const
 		return false;
 
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
-		const double epsilon = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * std::numeric_limits<double>::epsilon();
 		if( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) )
 			return false;
 	}

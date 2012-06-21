@@ -58,8 +58,10 @@ void StationData::setSlope(const double& in_slope_angle, const double& in_azimut
 
 //Comparison operator
 bool StationData::operator==(const StationData& in) const {
-	return ( (position == in.position) && (stationID == in.stationID) &&
-	         (slope==in.slope) && (azi==in.azi) );// && (stationName == in.stationName));
+	return ( (position == in.position) &&
+	         (stationID == in.stationID) &&
+	         (slope==in.slope) &&
+	         (azi==in.azi) );// && (stationName == in.stationName));
 }
 
 bool StationData::operator!=(const StationData& in) const {
