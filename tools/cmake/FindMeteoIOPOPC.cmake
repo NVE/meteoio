@@ -1,6 +1,9 @@
 INCLUDE(LibFindMacros)
 
 # Finally the library itself
+GET_FILENAME_COMPONENT(SRC_DIR ${CMAKE_SOURCE_DIR} PATH) #ie goes up one level
+STRING(REPLACE " " "\\ " SRC_DIR ${SRC_DIR})
+
 IF(WIN32)
 	MESSAGE("POPC is not supported under Windows!")
 ELSE(WIN32)
@@ -15,6 +18,7 @@ ELSE(WIN32)
 			"/usr/local/lib"
 			"/usr/lib"
 			"/opt/lib"
+			${SRC_DIR}/meteoio/lib
 		DOC "Location of the libmeteoio, like /usr/lib/libmeteoiopopc.dylib"
 		)
 	ELSE(APPLE)
@@ -26,6 +30,7 @@ ELSE(WIN32)
 			"/usr/local/lib"
 			"/usr/lib"
 			"/opt/lib"
+			${SRC_DIR}/meteoio/lib
 		DOC "Location of the libmeteoio, like /usr/lib/libmeteoiopopc.so"
 		)
 	ENDIF(APPLE)
@@ -34,6 +39,7 @@ ENDIF(WIN32)
 #build METEOIO_ROOT so we can provide a hint for searching for the header file
 GET_FILENAME_COMPONENT(meteoio_libs_root ${METEOIO_LIBRARY} PATH)
 SET(METEOIO_ROOT "${meteoio_libs_root}/../")
+STRING(REPLACE  " " "\\ " METEOIO_ROOT ${METEOIO_ROOT})
 
 # locate main header file
 FIND_PATH(METEOIO_INCLUDE_DIR
