@@ -51,8 +51,8 @@ class MeteoGrids {
 		                 ISWR, ///< Incoming short wave radiation
 		                 RSWR, ///< Reflected short wave radiation
 		                 ILWR, ///< Incoming long wave radiation
-		                 HS, ///< Snow height
-		                 HNW, ///< New water equivalent height
+		                 HS, ///< Height of snow
+		                 HNW, ///< Water equivalent of precipitations, either solid or liquid
 		                 TSG, ///< Temperature ground surface
 		                 TSS, ///< Temperature snow surface
 		                 P, ///< Air pressure
@@ -104,17 +104,17 @@ class MeteoData {
 		                 VW_MAX, ///< Maximum wind velocity
 		                 ISWR, ///< Incoming short wave radiation
 		                 RSWR, ///< Reflected short wave radiation
-		                 ILWR, ///< Incoming long wave radiation
-		                 HS, ///< Snow height
-		                 HNW, ///< New water equivalent height
-		                 TSG, ///< Temperature ground surface
-		                 TSS, ///< Temperature snow surface
+		                 ILWR, ///< Incoming long wave radiation (downwelling)
+		                 HS, ///< Height of snow
+		                 HNW, ///< Water equivalent (water depth) of precipitations, either solid or liquid
+		                 TSG, ///< Temperature of the ground surface
+		                 TSS, ///< Temperature of the snow surface
 		                 P, ///< Air pressure
 		                 lastparam=P};
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static const std::string& getParameterName(const size_t& parindex);
-
+		
 		/**
 		 * @brief The default constructor initializing every double attribute to nodata and the Date to julian==0.0
 		 */
