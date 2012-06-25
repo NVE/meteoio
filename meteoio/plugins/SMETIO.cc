@@ -24,7 +24,7 @@ namespace mio {
 /**
  * @page smetio SMET
  * @section template_format Format
- * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its <a href="../SMET_specifications.pdf">official format specification</a> for more information.
+ * The Station meteo data files is a station centered, ascii file format that has been designed with flexibility and ease of use in mind. Please refer to its <a href="../SMET_specifications.pdf">official format specification</a> for more information (including the list of standard parameters: TA, TSS, TSG, RH, VW, DW, ISWR, OSWR, ILWR, OLWR, PINT, PSUM, HS).
  * This plugin can also provide special points, given as a SMET file containing either latitude/longitude/altitude or easting/northing/altitude. For the latter, the header must contain the epsg code (see example below).
  *
  * Non-standard parameters can also be given, such as extra snow temperatures. These parameters will then take the name that has been given in "fields", converted to uppercase. It is usually a good idea to number these parameters, such as TS1, TS2, TS3 for a serie of temperatures at various positions.
