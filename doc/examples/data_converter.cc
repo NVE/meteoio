@@ -8,14 +8,14 @@ using namespace mio; //The MeteoIO namespace is called mio
 //It will retrieve the data for this time interval and write it out as specified
 //in the io.ini configuration
 int main(int argc, char** argv) {
-	if(argc!=2) {
+	if(argc!=3) {
 		std::cout << "Invalid number of arguments! Please provide a date range!\n";
 		exit(0);
 	}
 
 	Config cfg("io.ini");
 	Date d1, d2;
-	const double TZ = cfg.get("Input", "TIME_ZONE");
+	const double TZ = cfg.get("TIME_ZONE", "Input");
 	IOUtils::convertString(d1,argv[1], TZ);
 	IOUtils::convertString(d2,argv[2], TZ);
 

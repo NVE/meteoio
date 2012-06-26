@@ -41,7 +41,7 @@ The file is structured in three sections: a signature line as the very first lin
 The signature line is used to identify the file type, the file format specification version and the format type (ascii or binary). This signature has a fixed format in order to be easy to parse and the parser can reject any file that does not follow this signature or whose specification version does not match. However, the parsers are strongly encouraged to suppport past specifications and to try parsing more recent versions. The signature is formated as follow:
 \begin{quote} \begin{verbatim}
 {file identifier} {specification version} {file type}
-\end{verbatim}\end{quote} 
+\end{verbatim}\end{quote}
 with:
 \begin{itemize}
 	\item file identifier: fixed string "SMET"
@@ -52,17 +52,17 @@ with:
 Example:
 \begin{quote} \begin{verbatim}
 SMET 0.95 ASCII
-\end{verbatim}\end{quote} 
+\end{verbatim}\end{quote}
 
 \subsection{Header section}
 The header section contains all the metadata. It starts by a section marker, that is the following fixed string, alone on a line, capitalized:
 \begin{quote} \begin{verbatim}
 [HEADER]
-\end{verbatim}\end{quote} 
+\end{verbatim}\end{quote}
 Then, the header section purely consists of key-value pairs. Some keys are mandatory while other keys are optional. The general format for a key-value pair is the following:
 \begin{quote} \begin{verbatim}
 {key} = {value}
-\end{verbatim}\end{quote} 
+\end{verbatim}\end{quote}
 with:
 \begin{itemize}
 	\item key: any string of alphanumeric characters as well as "-\_:.", US-ASCII encoded
@@ -109,6 +109,7 @@ The field tyes are measurement parameter identifier chosen from the following li
 	\item[TSS] Temperature Snow Surface, in Kelvin
 	\item[TSG] Temperature Surface Ground, in Kelvin
 	\item[RH] Relative Humidity, between 0 and 1
+	\item[VW\_MAX] Maximum wind velocity, in m/s
 	\item[VW] Velocity Wind, in m/s
 	\item[DW] Direction Wind, in degrees, clockwise and north being zero degrees
 	\item[ISWR] Incoming Short Wave Radiation, in W/m$^2$
@@ -121,13 +122,13 @@ The field tyes are measurement parameter identifier chosen from the following li
 	\item[timestamp] ISO 8601 Combined date and time formatted
 	\item[julian] as the decimal number of days and fractions of a day since January 1, 4713 BC Greenwich noon, Julian proleptic calendar\footnote{Please keep in mind that year zero does not exist and that by starting at noon, it makes a half-day shift compared to usual meteorological time bases}. If both timestamps and julian are present, they must be within less than 1 second of each other.
 \end{description}
-Unrecognized/unsupported fields for any given application should be silently skipped. 
+Unrecognized/unsupported fields for any given application should be silently skipped.
 
 \subsection{Data section}
 The data section contains the data and starts with a section marker, that is the following fixed string, alone on a line, capitalized:
 \begin{quote} \begin{verbatim}
 [DATA]
-\end{verbatim}\end{quote} 
+\end{verbatim}\end{quote}
 Each data point occupies one line and the fields are delimited by any mixture and number of spaces and tabs (at least one). All units must be as specified above, that is MKSA with a few case using multipliers (precipitation in mm/h). It is also possible to use of the above mentionned multipliers/offsets, but in such a case they must be specified. The data is sorted by ascendant temporal order (the use of a timestamp as the first field makes an alphabetic ascending order equivalent to ascending temporal order).
 
 \section{Format variations}
@@ -150,7 +151,7 @@ units_multiplier  = 1 1 0.01 1 1
 2010-06-22T12:00:00   2.0  52  1.2  320.
 2010-06-22T13:00:00   3.0  60  2.4  340.
 2010-06-22T14:00:00   2.8  56  2.0  330.
-\end{verbatim}\end{quote} 
+\end{verbatim}\end{quote}
 
 
 \end{document}

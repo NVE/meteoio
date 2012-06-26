@@ -71,6 +71,7 @@ void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoD
 		} else if(type==tretyakov) {
 			if(VW==IOUtils::nodata || t==IOUtils::nodata) continue;
 			double k=100.;
+			if(VW>8.5) VW=8.5; //the fits have been calibrated until 8.5 m/s
 			if(precip==snow) k=103.11-8.67*VW+0.30*t; //Tmax
 			if(precip==mixed) k=96.99-4.46*VW+0.88*t+0.22*t; //Tmax, Tmin
 			tmp *= 100./k;
