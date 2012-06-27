@@ -153,7 +153,7 @@ namespace mio {
  */
 
 /**
- * @page build_io "How to build your io.ini configuration file"
+ * @page build_io How to build your io.ini configuration file
  * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. This section will show you
  * how to practically set up your first configuration file. Please read \ref general documentation page before starting!
  *
