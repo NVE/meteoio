@@ -136,10 +136,12 @@ template<class T> class Array {
 };
 
 template<class T> Array<T>::Array(const unsigned int& asize) {
+	keep_nodata = true;
 	resize(asize);
 }
 
 template<class T> Array<T>::Array(const unsigned int& asize, const T& init) {
+	keep_nodata = true;
 	resize(asize, init);
 }
 
@@ -160,11 +162,13 @@ template<class T> unsigned int Array<T>::getNx() const {
 }
 
 template<class T> void Array<T>::resize(const unsigned int& asize) {
+	vecData.clear();
 	vecData.resize(asize);
 	nx = asize;
 }
 
 template<class T> void Array<T>::resize(const unsigned int& asize, const T& init) {
+	vecData.clear();
 	vecData.resize(asize, init);
 	nx = asize;
 }

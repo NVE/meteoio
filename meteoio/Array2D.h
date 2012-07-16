@@ -261,6 +261,7 @@ template<class T> Array2D<T>::~Array2D() { }
 template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
                                       const unsigned int& i_ncols, const unsigned int& i_nrows)
 {
+	keep_nodata = true;
 	subset(i_array2D, i_nx, i_ny, i_ncols, i_nrows);
 }
 
@@ -278,9 +279,6 @@ template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const uns
 		throw IndexOutOfBoundsException("Trying to cut an array into a null sized array!", AT);
 
 	resize(i_ncols, i_nrows); //create new Array2D object
-	if(i_array2D.keep_nodata==false)
-		setKeepNodata(false);
-
 	//Copy by value subspace
 	for (unsigned int jj=0; jj<ny; jj++) {
 		for (unsigned int ii=0; ii<nx; ii++) {
@@ -309,9 +307,6 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsig
 
 	if ((i_ncols == 0) || (i_nrows == 0)) //the plane to copy has to make sense
 		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
-
-	if(i_array2D.keep_nodata==false)
-		setKeepNodata(false);
 
 	for(unsigned int jj=i_ny; jj<(i_ny+i_nrows); jj++) {
 		for(unsigned int ii=i_nx; ii<(i_nx+i_ncols); ii++) {
@@ -350,6 +345,7 @@ template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigne
 }
 
 template<class T> void Array2D<T>::resize(const unsigned int& anx, const unsigned int& any, const T& init) {
+	clear(); //we won't be able to "rescue" old values, so we reset the whole vector
 	vecData.resize(anx*any, init);
 	nx = anx;
 	ny = any;

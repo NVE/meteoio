@@ -298,6 +298,7 @@ template<class T> Array3D<T>::Array3D(const Array3D<T>& i_array3D,
                                       const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
                                       const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
 {
+	keep_nodata = true;
 	subset(i_array3D, i_nx, i_ny, i_nz, i_ncols, i_nrows, i_ndepth);
 }
 
@@ -318,9 +319,6 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 		throw IndexOutOfBoundsException("Trying to cut an array into a null sized array!", AT);
 
 	resize(i_ncols, i_nrows, i_ndepth); //create new Array3D object
-	if(i_array3D.keep_nodata==false)
-		setKeepNodata(false);
-
 	//Copy by value subspace
 	for (unsigned int ii=0; ii<nz; ii++) {
 		for (unsigned int jj=0; jj<ny; jj++) {
@@ -354,9 +352,6 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 
 	if ((i_ncols == 0) || (i_nrows == 0) || (i_ndepth == 0)) //the space has to make sense
 		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
-
-	if(i_array3D.keep_nodata==false)
-		setKeepNodata(false);
 
 	//Copy by value subspace
 	for (unsigned int ii=i_nz; ii<(i_nz+i_ndepth); ii++) {
@@ -400,6 +395,7 @@ template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigne
 }
 
 template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
+	clear();  //we won't be able to "rescue" old values, so we reset the whole vector
 	vecData.resize(anx*any*anz, init);
 	nx = anx;
 	ny = any;
