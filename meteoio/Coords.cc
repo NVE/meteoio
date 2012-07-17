@@ -88,24 +88,27 @@ bool Coords::initializeMaps() {
 }
 
 /**
-* @brief Equality operator that checks that lat/lon match. This currently does NOT compare the altitudes!
-* If both objects have nodata coordinates, then they are equal (even if the internal projections might be set to different systems).
+* @brief Equality operator that checks that two coordinates objects represent the same 3D point.
+* The comparison checks either lat/lon/alt or easting/northing/alt. If both objects have nodata coordinates,
+* then they are equal (even if the internal projections might be set to different systems).
 * @param[in] in Coord object to compare to
 * @return true or false
 */
 bool Coords::operator==(const Coords& in) const {
-//check that two Coords objects represent the same location
-	const double x_eps=5.;
+	//check on lat/lon
 	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		const bool comparison = ( IOUtils::checkEpsilonEquality(getLat(), in.getLat(), IOUtils::lat_epsilon) &&
-		                          IOUtils::checkEpsilonEquality(getLon(), in.getLon(), IOUtils::lon_epsilon) );
+		                          IOUtils::checkEpsilonEquality(getLon(), in.getLon(), IOUtils::lon_epsilon) &&
+		                          IOUtils::checkEpsilonEquality(getAltitude(), in.getAltitude(), IOUtils::grid_epsilon) );
 		return comparison;
 	}
+	//check on easting/northing
 	if(easting!=IOUtils::nodata && northing!=IOUtils::nodata) {
 		//in this case, it means that we don't know anything about the projection parameters
 		//otherwise the lat/long would have been calculated. So EPSG should be nodata
-		const bool comparison = ( IOUtils::checkEpsilonEquality(getEasting(), in.getEasting(), x_eps) &&
-		                          IOUtils::checkEpsilonEquality(getNorthing(), in.getNorthing(), x_eps) &&
+		const bool comparison = ( IOUtils::checkEpsilonEquality(getEasting(), in.getEasting(), IOUtils::grid_epsilon) &&
+		                          IOUtils::checkEpsilonEquality(getNorthing(), in.getNorthing(), IOUtils::grid_epsilon) &&
+		                          IOUtils::checkEpsilonEquality(getAltitude(), in.getAltitude(), IOUtils::grid_epsilon) &&
 		                          getEPSG()==in.getEPSG());
 		return comparison;
 	}
@@ -183,7 +186,7 @@ void Coords::moveByBearing(const double& bearing, const double& distance) {
 
 /**
 * @brief Simple merge strategy.
-* If some fields of the first argument are empty, they will be filled by the macthing field from the
+* If some fields of the first argument are empty, they will be filled by the matching field from the
 * second argument.
 * @param coord1 first Coords to merge, highest priority
 * @param coord2 second Coords to merge, lowest priority
@@ -197,7 +200,7 @@ Coords Coords::merge(const Coords& coord1, const Coords& coord2) {
 
 /**
 * @brief Simple merge strategy.
-* If some fields of the current object are empty, they will be filled by the macthing field from the
+* If some fields of the current object are empty, they will be filled by the matching field from the
 * provided argument.
 * @param coord2 extra Coords to merge, lowest priority
 */

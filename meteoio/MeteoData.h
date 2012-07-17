@@ -30,6 +30,9 @@
 
 namespace mio {
 
+class MeteoData; //forward declaration
+typedef std::vector<MeteoData> METEO_TIMESERIE;
+
 /**
  * @class MeteoGrids
  * @brief A class to represent the meteorological parameters that could be contained in a grid.
@@ -114,7 +117,7 @@ class MeteoData {
 
 		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static const std::string& getParameterName(const size_t& parindex);
-		
+
 		/**
 		 * @brief The default constructor initializing every double attribute to nodata and the Date to julian==0.0
 		 */
@@ -167,6 +170,54 @@ class MeteoData {
 		size_t getParameterIndex(const std::string& parname) const;
 		size_t getNrOfParameters() const;
 
+		/**
+		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
+		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be
+		 * filled by the matching field from the MeteoData objects given in the second vector (if the
+		 * same location exist). Stations only occuring in the second vector will be appended to the
+		 * first vector.
+		 * @note two stations are considered to be identical if they fit within a 5m 3D box
+		 * @note the vectors are supposed to contain data at a given time stamp. If both vectors don't match a
+		 * common time stamp, nothing is done
+		 * @param vec1 reference vector, highest priority
+		 * @param vec2 extra vector to merge, lowest priority
+		 * @param simple_merge if set to true, assume all stations are unique (ie. simply append vec2 to vec1)
+		 */
+		static void merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge=false);
+
+		/**
+		 * @brief Simple merge strategy for vectors containing meteodata for a given timestamp.
+		 * If some fields of the MeteoData objects given in the first vector are nodata, they will be
+		 * filled by the matching field from the MeteoData object given in the second argument (if the
+		 * same location exist). If meteo2 does not describe a station already in vec, it will simply be appended.
+		 * @note two stations are considered to be identical if they fit within a 5m 3D box
+		 * @note the datasets are supposed to contain data at a given time stamp. If vec1 and meteo2 don't match a
+		 * common time stamp, nothing is done
+		 * @param vec reference vector, highest priority
+		 * @param meteo2 extra MeteoData object to merge, lowest priority
+		 * @param simple_merge if set to true, assume all stations are unique (ie.simply append meteo2 to vec)
+		 */
+		static void merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge=false);
+
+		/**
+		 * @brief Simple merge strategy.
+		 * If some fields of the object given as first argument are nodata, they will be filled by the matching field from the
+		 * provided argument.
+		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
+		 * @param meteo1 reference MeteoData, highest priority
+		 * @param meteo2 extra MeteoData to merge, lowest priority
+		 */
+		static MeteoData merge(const MeteoData& meteo1, const MeteoData& meteo2);
+
+		/**
+		 * @brief Simple merge strategy.
+		 * If some fields of the current object are nodata, they will be filled by the matching field from the
+		 * provided argument.
+		 * @note no check on the location is performed, ie. it can merge data from stations kilometers away...
+		 * @param meteo2 extra MeteoData to merge, lowest priority
+		 */
+		void merge(const MeteoData& meteo2);
+
 		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
 
 		//Comparison operators
@@ -191,8 +242,6 @@ class MeteoData {
 		std::vector<std::string> param_name;
 		std::vector<double> data;
 };
-
-typedef std::vector<MeteoData> METEO_TIMESERIE;
 
 } //end namespace
 
