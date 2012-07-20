@@ -211,15 +211,22 @@ void MeteoData::setResampled(const bool& in_resampled)
 bool MeteoData::operator==(const MeteoData& in) const
 {
 	//An object is equal if the date is equal and all meteo parameters are equal
-	if (date != in.date)
+	if (date != in.date){
 		return false;
+	}
 
-	if (nrOfAllParameters != in.nrOfAllParameters) //the number of meteo parameters has to be consistent
+	if (nrOfAllParameters != in.nrOfAllParameters){ //the number of meteo parameters has to be consistent
 		return false;
+	}
 
 	for (size_t ii=0; ii<nrOfAllParameters; ii++) {
-		if( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) )
+		//const double epsilon = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * std::numeric_limits<double>::epsilon(); // Hack not working...
+		//const double epsilon = (fabs(data[ii]) < fabs(in.data[ii]) ? fabs(in.data[ii]) : fabs(data[ii])) * 0.0000001; // Hack not working with 0 == 0 ....
+		const double epsilon = 0.0000001; // HACK bad is not relativ....
+		if( !IOUtils::checkEpsilonEquality(data[ii], in.data[ii], epsilon) ){
+			//cerr<<getParameterName(ii) << " : " <<data[ii] << " != " << in.data[ii]  << "( epsilon : " << epsilon << ")" << endl; Hack still here for debug
 			return false;
+		}
 	}
 
 	return true;

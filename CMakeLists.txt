@@ -73,7 +73,7 @@ ELSE(UNIX)
 ENDIF(UNIX)
 
 IF(NOT CMAKE_BUILD_TYPE)
-	SET(CMAKE_BUILD_TYPE "release" CACHE STRING "Choose the type of build, options are: debug release " FORCE)
+	SET(CMAKE_BUILD_TYPE "release" CACHE STRING "Choose the type of build, options are: debug release coverage " FORCE)
 	SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
@@ -110,7 +110,6 @@ SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING 
 
 MESSAGE(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
-
 ###########################################################
 #plugins
 SET(PLUGIN_A3DIO ON CACHE BOOL "Compilation A3DIO ON or OFF")
@@ -161,13 +160,36 @@ FILE(GLOB_RECURSE alibs "lib/*.${STAT_EXT}")
 INSTALL(FILES ${solibs} ${importlibs} ${alibs} DESTINATION lib COMPONENT libraries)
 INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins COMPONENT plugins)
 
-
+# This is at the end of the file, so that every variables
 ADD_CUSTOM_TARGET(distclean make clean
-	COMMAND cmake -E remove CMakeCache.txt cmake_install.cmake meteoio/cmake_install.cmake meteoio/plugins/cmake_install.cmake meteoio/plugins/gsn/cmake_install.cmake
+	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
+	COMMAND cmake -E remove "lib/plugins/lib*.${DLL_EXT}" "lib/libmeteo*.${DLL_EXT}"
+	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake 
+	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake 
 	COMMAND cmake -E remove_directory CMakeFiles
+	COMMAND cmake -E remove_directory Testing
 	COMMAND cmake -E remove_directory meteoio/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/meteofilters/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/meteolaws/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
-	COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles)
+	COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles
+	COMMAND cmake -E remove_directory tests/CMakeFiles
+	COMMAND cmake -E remove_directory tests/Testing
+	COMMAND cmake -E remove_directory tests/meteo_reading_interpol/CMakeFiles
+	COMMAND cmake -E remove_directory tests/meteo_reading_interpol/Testing
+	COMMAND cmake -E remove_directory tests/meteo_reading_no_interpol/CMakeFiles
+	COMMAND cmake -E remove_directory tests/meteo_reading_no_interpol/Testing
+	COMMAND cmake -E remove_directory tests/sun/CMakeFiles
+	COMMAND cmake -E remove_directory tests/sun/Testing
+	COMMAND cmake -E remove tests/sun/generated_results.txt
+	COMMAND cmake -E remove_directory tests/dem_reading/CMakeFiles
+	COMMAND cmake -E remove_directory tests/dem_reading/Testing
+	COMMAND cmake -E remove tests/dem_reading/AZI.asc tests/dem_reading/DEM.asc tests/dem_reading/SLOPE.asc
+	COMMAND cmake -E remove_directory tests/2D_interpolations/CMakeFiles
+	COMMAND cmake -E remove_directory tests/2D_interpolations/Testing
+	COMMAND cmake -E remove tests/2D_interpolations/2009-01-19T12.00_HNW.asc tests/2D_interpolations/2009-01-19T12.00_RH.asc tests/2D_interpolations/2009-01-19T12.00_RSWR.asc tests/2D_interpolations/2009-01-19T12.00_TA.asc
+)
+
 
 ###########################################################
 #for the uninstall target
@@ -326,3 +348,40 @@ SET(CPACK_SOURCE_IGNORE_FILES
 )
 
 INCLUDE(CPack)
+
+###########################################################
+## CTest section
+###########################################################
+
+## Special build type configuration for Covarage Testing.
+# Attantion: Coverage testing right now only works with g++ (or comercial tools)
+## Add the tests itselfs
+OPTION(BUILD_TESTING "Build the tests." OFF)
+IF(BUILD_TESTING)
+
+	# Coverage statistic rign now only supportet with GCC (GNUGXX)
+	IF(CMAKE_COMPILER_IS_GNUCXX)
+		OPTION(BUILD_TESTING_WITH_COVERAGE "Use gcc flags to make covarage tests" OFF)
+	
+		IF(BUILD_TESTING_WITH_COVERAGE)
+			# force the correct flags to make coverage trought a build type
+			SET(CMAKE_BUILD_TYPE coverage)
+			SET(CMAKE_CXX_FLAGS_COVERAGE "-Wall -O0 -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
+			SET(CMAKE_C_FLAGS_COVERAGE "-Wall -O0 -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
+			MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_COVERAGE CMAKE_C_FLAGS_COVERAGE)
+			
+			# Force debug mode, so that no optimisation is made to get "Correct" results of coverage testing
+			SET(CMAKE_BUILD_TYPE "coverage" CACHE STRING "Choose the type of build, options are: debug release coverage " FORCE)
+			SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
+			
+		ENDIF(BUILD_TESTING_WITH_COVERAGE)
+	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+
+	INCLUDE(CTest) # This makes ENABLE_TESTING() and gives support for Dashboard
+	ADD_SUBDIRECTORY(tests)
+ENDIF(BUILD_TESTING)
+
+
+
+
+

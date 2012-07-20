@@ -1,0 +1,15 @@
+
+## Test Sun
+# generate executable
+ADD_EXECUTABLE(sun sun.cc)
+TARGET_LINK_LIBRARIES(sun ${LIBRARIES})
+
+# add the tests
+ADD_TEST(sun.smoke sun)
+SET_TESTS_PROPERTIES(sun.smoke 
+					PROPERTIES LABELS smoke)
+
+
+
+
+
