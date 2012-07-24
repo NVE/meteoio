@@ -42,14 +42,14 @@ int main(int /*argc*/, char** argv) {
 	ofstream output_file("first.txt");
 
 	while (!input_file.eof()){
-		
-		int spot=0;
-		int hiho = 0;
-		
+
+		size_t spot=0;
+		size_t hiho = 0;
+
 		getline(input_file, inbuf);
-		
+
 		do {
-			
+
 			spot = inbuf.find(search_string);
 			if(spot >= 0){
 				string tmpstring = inbuf.substr(0,spot);
@@ -57,11 +57,11 @@ int main(int /*argc*/, char** argv) {
 				tmpstring += inbuf.substr(spot+search_string.length(), inbuf.length());
 				inbuf = tmpstring;
 			}
-			
+
 			cout << hiho++<< endl;
-			
+
 		} while (spot != string::npos);
-		
+
 		output_file << inbuf << endl;
 	}
 

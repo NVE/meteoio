@@ -232,7 +232,7 @@ template<class T> inline T& Array2D<T>::operator()(const unsigned int& x, const 
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
-	//ROW-MAJOR alignment of the vector: fully C-compatible memory layout
+	//COLUMN-MAJOR alignment of the vector: fully C-compatible memory layout
 	return vecData[x + y*nx];
 }
 
