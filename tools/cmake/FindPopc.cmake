@@ -3,9 +3,8 @@ INCLUDE(LibFindMacros)
 FIND_PROGRAM(POPCC_EXECUTABLE popcc)
 MARK_AS_ADVANCED(FORCE POPCC_EXECUTABLE)
 #build POPC_ROOT so we can provide a hint for searching for the header file
-IF("${POPCC_EXECUTABLE}" MATCHES "^(.+)bin[\\/]popcc(.*)$")
-   SET(POPC_ROOT "${CMAKE_MATCH_1}")
-ENDIF("${POPCC_EXECUTABLE}" MATCHES "^(.+)bin[\\/]popcc(.*)$")
+GET_FILENAME_COMPONENT(popc_exe_root ${POPCC_EXECUTABLE} PATH)
+SET(POPC_ROOT "${popc_exe_root}/../")
 
 # Finally the library itself
 FIND_LIBRARY(Popc_LIBRARY

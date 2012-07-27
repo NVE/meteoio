@@ -100,7 +100,7 @@ SET(POPC OFF CACHE BOOL "Compile for POPC ON or OFF")
 
 ###########################################################
 #finally, SET compile flags
-if(POPC)
+IF(POPC)
 	#SET(POPC_FLAGS "-cxxmain -Dcerr=\\\"cout\\\"")
 	SET(POPC_FLAGS "-cxxmain")
 ENDIF(POPC)
@@ -164,8 +164,8 @@ INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins COMPONENT plugins)
 ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
 	COMMAND cmake -E remove "lib/plugins/lib*.${DLL_EXT}" "lib/libmeteo*.${DLL_EXT}"
-	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake 
-	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake 
+	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
+	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake
 	COMMAND cmake -E remove_directory CMakeFiles
 	COMMAND cmake -E remove_directory Testing
 	COMMAND cmake -E remove_directory meteoio/CMakeFiles
@@ -362,18 +362,18 @@ IF(BUILD_TESTING)
 	# Coverage statistic rign now only supportet with GCC (GNUGXX)
 	IF(CMAKE_COMPILER_IS_GNUCXX)
 		OPTION(BUILD_TESTING_WITH_COVERAGE "Use gcc flags to make covarage tests" OFF)
-	
+
 		IF(BUILD_TESTING_WITH_COVERAGE)
 			# force the correct flags to make coverage trought a build type
 			SET(CMAKE_BUILD_TYPE coverage)
 			SET(CMAKE_CXX_FLAGS_COVERAGE "-Wall -O0 -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
 			SET(CMAKE_C_FLAGS_COVERAGE "-Wall -O0 -ftest-coverage -fprofile-arcs" CACHE STRING "" FORCE)
 			MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_COVERAGE CMAKE_C_FLAGS_COVERAGE)
-			
+
 			# Force debug mode, so that no optimisation is made to get "Correct" results of coverage testing
 			SET(CMAKE_BUILD_TYPE "coverage" CACHE STRING "Choose the type of build, options are: debug release coverage " FORCE)
 			SET(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
-			
+
 		ENDIF(BUILD_TESTING_WITH_COVERAGE)
 	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
