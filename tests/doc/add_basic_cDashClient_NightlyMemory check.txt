@@ -67,7 +67,6 @@ on the add_basic_cDashClient_Nightly.txt.
 	
 	#also possible to set initial cache values for config to set that the test are build
 	# BUILD NAME SET HERE DROUG CACHE.. OLD WAY TO OD BUT ONLY WORKING WAY
-	# ALSO VALGRIND IS SETT HERE IN CACHE :-(. SETTERS NOT WORKING THIS WAY OF SCRIPTING -> look advanced CTest scripting !
 	SET(CTEST_INITIAL_CACHE "
 		BUILD_TESTING:BOOL=ON
 		BUILD_TESTING_WITH_COVERAGE:BOOL=OFF	
