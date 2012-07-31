@@ -6,9 +6,8 @@ using namespace mio; //The MeteoIO namespace is called mio
 using namespace std;
 
 // ----- Constants ----
-// HACK create  this durations... better way to construct them ??
-const Duration minute = mio::Date(2008, 12, 01, 3, 36, 00, 0) - mio::Date(2008, 12, 01, 3, 35, 00, 0);
-const Duration day = mio::Date(2008, 12, 02, 0, 00, 00, 0) - mio::Date(2008, 12, 01, 0, 00, 00, 0);
+const Duration minute(0, 0, 0, 0, 1, 0, 0);
+const Duration day   (0, 0, 1, 0, 0, 0, 0);
 const int minutes_per_day = 60 * 24;
 
 mio::SunObject Sun(46.77181, 9.86820, 2192.); //Stillberg station
