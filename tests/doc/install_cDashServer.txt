@@ -16,6 +16,8 @@ NEEDS AND INSTALLATION ROUTINE !!! ( http://public.kitware.com/Wiki/CDash:Instal
 - cURL module for PHP (for site statistics) [apt-get install php5-curl]
 - GD module for PHP (for regression tests) [apt-get install php5-gd]
 - mySQL modul for PHP [apt-get install php5-mysql php5-cgi]
+- ubuntu simple SMPT [sudo apt-get install ssmtp]
+- ubuntu SMPT server [sudo apt-get install sendmail]
 
 After installation of all modules, restart Apache and mySQL ! :
 sudo /etc/init.d/apache2 restart
@@ -25,7 +27,7 @@ sudo /etc/init.d/mysql restart
 2. Prepare files Apache Site (for only one site on the machine !!!)
 -------------------------------------------------------------
 1. Edit the parameters: vim /etc/apache2/sites-available/default
-	- change to "ServerAdmin bavay@slf.ch"
+	- change to "ServerAdmin XXXXX"
 2. Downlaod CDash-2.0.2.zip
 3. Unzip CDash-2.0.2.zip [unzip CDash-2.0.2.zip] 
 4. mkdir /var/www/htdocs
@@ -33,9 +35,13 @@ sudo /etc/init.d/mysql restart
 6. set read/write permission for apache user for whole project
 	1 cd /var/www/htdocs/
 	2 sudo chown -R www-data CDash/
+
+3. Config SMPT
+--------------
+1.	edit file /etc/ssmpt/ssmpt.config [sudo vim ssmtp.conf]:
+	- change line to : "mailhub=10.32.128.60"
 	
-	
-3. Add user to MySQL for cDash
+4. Add user to MySQL for cDash
 --------------------------------
 There are many ways to do that, my prefered way is to use workbench from mysql (http://www.mysql.com/products/workbench/)
 
@@ -83,7 +89,7 @@ There are many ways to do that, my prefered way is to use workbench from mysql (
 	
 
 
-4. Configure cDash for installation
+5. Configure cDash for installation
 ------------------------------------
 1.	cd /var/www/htdocs/CDash/cdash/
 2.	sudo cp config.php config.local.php
@@ -91,7 +97,7 @@ There are many ways to do that, my prefered way is to use workbench from mysql (
 	- set keys for mysql : 
 		$CDASH_DB_LOGIN = 'cdash_usr';
 		$CDASH_DB_PORT = '3306';
-	- set cdash_usr passowrt in key : "$CDASH_DB_PASS = '<YOUR_SQL_ROOT_PASSWORT>';"
+	- set cdash_usr passowrt in key : "$CDASH_DB_PASS = '<YOUR_cdash_usr_PASSWORT>';"
 	- For the email, set the following keys:
 		$CDASH_EMAILADMIN = 'admin@nesthorn.slf.ch';
 		$CDASH_EMAIL_FROM = 'admin@nesthorn.slf.ch';
@@ -104,7 +110,7 @@ There are many ways to do that, my prefered way is to use workbench from mysql (
 	3 sudo chmod go-rwx config.php
 	4 sudo chmod go-rwx config.local.php
 
-5. Switch Apache default site to cDash
+6. Switch Apache default site to cDash
 ---------------------------------------
 1.	cd /etc/apache2/sites-available/
 2.	sudo cp default cdash
@@ -118,7 +124,7 @@ There are many ways to do that, my prefered way is to use workbench from mysql (
 7.	reload configuration: sudo /etc/init.d/apache2 reload
 
 
-6. Install CDash
+7. Install CDash
 -----------------
 1. open in your browser http://nesthorn.slf.ch
 2. should open site (http://nesthorn.slf.ch/install.php) and controll shown information there !
@@ -129,7 +135,7 @@ There are many ways to do that, my prefered way is to use workbench from mysql (
 	- sudo vim /var/www/htdocs/CDash/cdash/config.local.php
 		- change following key to the values shown: "$CDASH_PRODUCTION_MODE = true;" 
 
-7. Annexes: For more information about CTest scripting
+8. Annexes: For more information about CTest scripting
 ------------------------------------------------------
 http://public.kitware.com/Wiki/CDash:Installation
 https://help.ubuntu.com/community/ApacheMySQLPHP

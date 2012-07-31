@@ -12,9 +12,8 @@ night the tests. This is based on sources and structure of MeteoIO
 	matter if virtual machine, or own hardware)
 	
 2.	Make sure following things are installed
-	- ccmake (version 2.8.0 or greater)
+	- cmake (version 2.8.0 or greater) and cmake-curses-gui
 	- subversion
-	- valgrind
 	- c++ compiler
 	
 3.	You need also that on your cDash server you want to use your project where 
@@ -25,8 +24,8 @@ night the tests. This is based on sources and structure of MeteoIO
 2. Get files
 ------------
 1. Make direcotry and checkout svn files:
-	- mkdir -p cdash_clients/meteoio
-	- cd cdash_clients/
+	- mkdir -p ${HOME}/cdash_clients/meteoio
+	- cd ${HOME}/cdash_clients/
 	- svn co http://slfsmm.indefero.net/svn/slfsmm/meteoio/YOUR_BRANCH_OR_TRUNK meteoio
 	
 2. Get cDash connection configuration
@@ -38,15 +37,15 @@ night the tests. This is based on sources and structure of MeteoIO
 	there avter download
 	
 3. 	First Test if connection works:
-	- cd cdash_clients/meteoio/
-	- ccmake . [configure and generate with all default]
+	- cd ${HOME}/cdash_clients/meteoio/
+	- ccmake . [configure and generate with all default, but activate the tests !! (Key BUILD_TESTING=ON)]
 	- make
 	- ctest -D Experimental
 	
 3. Make CTest Script which is run daily
 ---------------------------------------
 1.	Make a new file "startScriptNighty.cmake" in the root of the source files 
-	(here cdash_clients/meteoio/)
+	(here ${HOME}/cdash_clients/meteoio/)
 	
 2. But following content in te startScriptNighty.cmake file:
 
@@ -65,18 +64,22 @@ night the tests. This is based on sources and structure of MeteoIO
 	SET(CTEST_CMAKE_COMMAND "\"${CMAKE_EXECUTABLE_NAME}\"")
 	
 	#also possible to set initial cache values for config to set that the test are build
+	# BUILD NAME SET HERE DROUG CACHE.. OLD WAY TO OD BUT ONLY WORKING WAY
 	SET(CTEST_INITIAL_CACHE "
 		BUILD_TESTING:BOOL=ON
+		BUILD_TESTING_WITH_COVERAGE:BOOL=OFF
+		BUILDNAME:STRING=Linux_Standart
 	")
-	
+
 3.	Test script with command "ctest -S startScriptNighty.cmake -V"
 	
 4. set up Cron jop to run test every night at 01:05
 ---------------------------------------------------
 1.	crontab -e
-2.	chose your editor ( me 8. bim.basic)
-3.	Add follwoing line :
-	5 1 * * * cd /home/ctest/cdash_clients/meteoio/ && /usr/bin/ctest -S /home/ctest/cdash_clients/meteoio/startScriptNighty.cmake -V > /home/ctest/cdash_clients/meteoio/startScriptNighty.log 2>&1
+2.	chose your editor ( me 8. vim.basic)
+3.	Add follwoing two line :
+	1 1 * * * cd ${HOME}/cdash_clients/meteoio/ && make distclean
+	5 1 * * * cd ${HOME}/cdash_clients/meteoio/ && /usr/bin/ctest -S ${HOME}/cdash_clients/meteoio/startScriptNighty.cmake -V >${HOME}/cdash_clients/meteoio/startScriptNighty.log 2>&1
 4.	write and quit ( vim command ":wq")
 	
 If error on test, you have the log in file startScriptNighty.log
