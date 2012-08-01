@@ -6,8 +6,6 @@ using namespace mio; //The MeteoIO namespace is called mio
 using namespace std;
 
 // ----- Constants ----
-const Duration minute(0, 0, 0, 0, 1, 0, 0);
-const Duration day   (0, 0, 1, 0, 0, 0, 0);
 const int minutes_per_day = 60 * 24;
 
 mio::SunObject Sun(46.77181, 9.86820, 2192.); //Stillberg station
@@ -32,7 +30,7 @@ const double iswr_ref []= {-1000., -100., -10., -1., -0.1, -0.01, 0, 0.01, 0.1, 
 // write out ref file
 bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref) {
 
-	for(mio::Date date(start_date);date <= (start_date+day); date=date+minute){
+	for(mio::Date date(start_date); date <= (start_date+1.); date+=(1./(24.*6))) { //every 10 minutes
 		os << date.toString(Date::ISO) << "\t";
 		os << std::setprecision(10);
 		
