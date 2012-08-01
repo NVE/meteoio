@@ -3,8 +3,7 @@ CFLAGS  = -Wall -Wextra
 DEBUG   = -g #-O3 # -DDEBUG -ggdb
 METEOIODIR = ../../
 
-LIBS_LINUX_EXTRA = -rdynamic -ldl
-LIBS      = -lstdc++ -L$(METEOIODIR)/lib -lmeteoio $(LIBS_LINUX_EXTRA)
+LIBS      = -rdynamic -lstdc++ -ldl -L../../lib -lmeteoio -ldl
 
 INCLUDE=-I. -I$(METEOIODIR) -I$(METEOIODIR)/include
 INCLUDE_POPC=-I. -I$(METEOIODIR) -I$(METEOIODIR)/include

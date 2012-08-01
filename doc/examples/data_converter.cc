@@ -27,6 +27,8 @@ int main(int argc, char** argv) {
 	//Very basic conversion: get the whole data set at once, with its original sampling rate
 	//io.getMeteoData(d1, d2, vecMeteo);
 
+	Timer timer;
+	timer.start();
 	//More elaborate conversion: sample the data to a specific rate
 	//by looping over the time and calling readMeteoData for each timestep
 	std::vector<MeteoData> Meteo; //we need some intermediate storage, for storing data sets for 1 timestep
@@ -39,10 +41,11 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	timer.stop();
 	//In both case, we write the data out
 	std::cout << "Writing output data" << std::endl;
 	io.writeMeteoData(vecMeteo);
 
-	std::cout << "Done!!" << std::endl;
+	std::cout << "Done!! in " << timer.getElapsed() << " s" << std::endl;
 	return 0;
 }

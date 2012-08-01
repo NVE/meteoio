@@ -634,27 +634,38 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 {
 	//returns index of element, if element does not exist it returns closest index after soughtdate
 	//the element needs to be an exact hit or embedded between two measurments
-
 	if (vecM.size() <= 0) {//no elements in buffer
 		return IOUtils::npos;
 	}
 
+	size_t first = 0, last = vecM.size()-1;
+	const double start_val=vecM[first].date.getJulianDate(true);
+	const double end_val=vecM[last].date.getJulianDate(true);
+	const double curr_val = soughtdate.getJulianDate(true);
+
 	//if we reach this point: at least one element in buffer
-	if (vecM[0].date > soughtdate) {
+	if (vecM[first].date > soughtdate) {
 		return IOUtils::npos;
 	}
 
-	if (vecM[vecM.size()-1].date < soughtdate) {//last element is earlier, return npos
+	if (vecM[last].date < soughtdate) {//last element is earlier, return npos
 		return IOUtils::npos;
 	}
 
-	if (vecM[0].date == soughtdate) {//closest element
+	if (vecM[first].date == soughtdate) {//closest element
 		return 0;
 	}
 
+	const double raw_pos = (curr_val-start_val) / (end_val-start_val);
+	const size_t start = MAX( (size_t)(floor(raw_pos*last*.8)), first);
+	const size_t end = MIN( (size_t)ceil(raw_pos*last*1.2), last);
+	if(vecM[start].date.getJulianDate(true)<curr_val) first=start;
+	if(vecM[end].date.getJulianDate(true)>=curr_val) last=end;
+
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
 	if (exactmatch){
-		size_t first = 1, last = vecM.size()-1;
+		//first = 1; last = vecM.size()-1;
+		//size_t first = 1, last = vecM.size()-1;
 
 		//perform binary search
 		while (first <= last) {
@@ -667,8 +678,7 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 				return mid;                        // found it. return position
 		}
 	} else {
-		size_t first = 0, last = vecM.size()-1;
-
+		//first = 0; last = vecM.size()-1;
 		//perform binary search
 		while (first <= last) {
 			const size_t mid = (first + last) / 2;  // compute mid point
