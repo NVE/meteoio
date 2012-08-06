@@ -173,6 +173,9 @@ template<class T> class Array2D {
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
 
+		bool checkEpsilonEquality(const Array2D<double>& rhs, const double& epsilon) const;
+		static bool checkEpsilonEquality(const Array2D<double>& rhs1, const Array2D<double>& rhs2, const double& epsilon);
+
 		T& operator ()(const unsigned int& x, const unsigned int& y);
 		const T operator ()(const unsigned int& x, const unsigned int& y) const;
 		T& operator ()(const unsigned int& i);
@@ -495,6 +498,20 @@ template<class T> const Array2D<T> Array2D<T>::getAbs() const {
 
 
 //arithmetic operators
+template<class T> bool Array2D<T>::checkEpsilonEquality(const Array2D<double>& rhs, const double& epsilon) const {
+	if(nx!=rhs.nx || ny!=rhs.ny) return false;
+
+	const unsigned int nxy = nx*ny;
+	for (unsigned int jj=0; jj<nxy; jj++)
+		if(IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
+
+	return true;
+}
+
+template<class T> bool Array2D<T>::checkEpsilonEquality(const Array2D<double>& rhs1, const Array2D<double>& rhs2, const double& epsilon) {
+	return rhs1.checkEpsilonEquality(rhs2, epsilon);
+}
+
 template<class T> Array2D<T>& Array2D<T>::operator=(const Array2D<T>& source) {
 	if(this != &source) {
 		keep_nodata = source.keep_nodata;

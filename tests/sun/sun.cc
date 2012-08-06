@@ -12,9 +12,7 @@ mio::SunObject Sun(46.77181, 9.86820, 2192.); //Stillberg station
 const double slope_azi=38., slope_elev=35.;   //Stillberg station
 const double TZ=1.;
 const double TA = 273.15+11., RH = 0.5, mean_albedo = 0.5;
-
-string f_reference("reverence_results.txt");
-string f_output("generated_results.txt");
+const string f_output("curr_output.txt");
 
 // ---- INPUT Data to controll----
 // if you add an date here, don't forget to add it to list with push_pack in main !!!!
@@ -30,19 +28,18 @@ const double iswr_ref []= {-1000., -100., -10., -1., -0.1, -0.01, 0, 0.01, 0.1, 
 // write out ref file
 bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref) {
 
-	for(mio::Date date(start_date); date <= (start_date+1.); date+=(1./(24.*6))) { //every 10 minutes
+	for(mio::Date date(start_date); date <= (start_date+1.); date+=(1./(24.*6.))) { //every 10 minutes
 		os << date.toString(Date::ISO) << "\t";
 		os << std::setprecision(10);
-		
+
 		Sun.setDate(date.getJulianDate(), date.getTimeZone()); //local julian date and timezone
-		
 		Sun.calculateRadiation(TA, RH, mean_albedo);
 
 		//radiation in the beam'
 		double b_toa, b_direct, b_diffuse, md_beam;
 		Sun.getBeamRadiation(b_toa, b_direct, b_diffuse);
 		md_beam=Sun.getSplitting(b_toa,iswr_ref);
-		
+
 		os << b_toa << "\t" << b_direct << "\t" << b_diffuse << "\t";
 		os << md_beam << "\t";
 
@@ -50,7 +47,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		double h_toa, h_direct, h_diffuse, md_horizontal;
 		Sun.getHorizontalRadiation(h_toa, h_direct, h_diffuse);
 		md_horizontal=Sun.getSplitting(h_toa,iswr_ref);
-		
+
 		os << h_toa << "\t" << h_direct << "\t" << h_diffuse << "\t";
 		os << md_horizontal << "\t";
 
@@ -58,7 +55,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		double s_toa, s_direct, s_diffuse, md_slope;
 		Sun.getSlopeRadiation(slope_azi, slope_elev, s_toa, s_direct, s_diffuse);
 		md_slope=Sun.getSplitting(s_toa,iswr_ref);
-		
+
 		os << s_toa << "\t" << s_direct << "\t" << s_diffuse << "\t";
 		os << md_slope << "\t";
 
@@ -67,7 +64,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		double sunrise, sunset, daylight;
 		Sun.position.getHorizontalCoordinates(solar_azi, solar_elev, eccentricity);
 		Sun.position.getDaylight(sunrise, sunset, daylight, date.getTimeZone());
-		
+
 		os << Sun.getElevationThresh() << "\t";
 		os << Sun.position.getAngleOfIncidence(slope_azi,slope_elev) << "\t";
 		os << eccentricity << "\t";
@@ -76,7 +73,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		os << IOUtils::printFractionalDay(sunrise)<< "\t";
 		os << IOUtils::printFractionalDay(sunset)<< "\t";
 		os << IOUtils::printFractionalDay(daylight/minutes_per_day)<< "\t";
-		
+
 		// end line
 		os << endl;
 	}
@@ -96,10 +93,10 @@ void printHeader(ostream& os){
 
 //Test if sun simulation at Stilberg station at different dates and different iswr_ref
 int main() {
-	
+
 	// ----- Cenerate list for loops --------
 	cout << " --- Init Variables \n";
-	
+
 	list<mio::Date> date;
 	date.push_back(d1);
 	date.push_back(d2);
@@ -109,54 +106,24 @@ int main() {
 	date.push_back(d6);
 
 	list<double> iswr(iswr_ref, iswr_ref + sizeof(iswr_ref) / sizeof(double));
-	
+
 	// ----- Write reference file ------
-	cout << " --- Start writing Output file : \n";
-	
+	cout << " --- Start writing Output file \"" << f_output << "\"\n";
+
 	ofstream ofs(f_output.c_str(), ofstream::out | ofstream::trunc);
-	
+
 	printHeader(ofs);
 	for (list<mio::Date>::iterator it_date = date.begin(); it_date != date.end(); it_date++) {
-		cout << " -- read information for date : " << (*it_date).toString(Date::ISO) << endl;
+		cout << " -- read information for date : " << (*it_date).toString(Date::ISO) << "\n -- Processing reference iswr [";
 		for (list<double>::iterator it_iswr = iswr.begin(); it_iswr != iswr.end(); it_iswr++) {
-			cout << " - read information for reference iswr : " << *it_iswr << endl;
+			cout << " " << *it_iswr;
 			if(!writeSun24h(ofs, *it_date, *it_iswr)){
 				exit(1);
 			}
 		}
+		cout << " ]" << endl;
 	}
 	ofs.close();
-	
-	// ------ Compare reference file with generated results ---------
-	cout << " --- Start comparing reference file with output file generated before \n";	
-	ifstream ifref(f_reference.c_str());
-	ifstream ifout(f_output.c_str());
-	string l_ref, l_out;
-	
-	while (!ifref.eof())
-	{
-		if(ifout.eof()){
-			cerr << "Not enough lines generated as result!!!" << endl;
-			exit(1);
-		}
-		
-		getline(ifref,l_ref);
-		getline(ifout,l_out);
-		if (l_ref!=l_out) {
-			cerr << " ERROR, Sun generatet error at following point an error " << endl;
-			printHeader(cerr);
-			cerr << "ref : \n " << l_ref << endl;
-			cerr << "out : \n " << l_out << endl;
-			exit(1);
-		}
-	}
-	
-	if(!ifout.eof()){
-		cerr << "To much lines generated as result!!!" << endl;
-		exit(1);
-	}
-	ifout.close(); 
-	ifref.close();
-	
+
 	return 0;
 }

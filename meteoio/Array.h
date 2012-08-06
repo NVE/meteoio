@@ -101,6 +101,10 @@ template<class T> class Array {
 
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array<P>& array);
+
+		bool checkEpsilonEquality(const Array<double>& rhs, const double& epsilon) const;
+		static bool checkEpsilonEquality(const Array<double>& rhs1, const Array<double>& rhs2, const double& epsilon);
+
 		T& operator [](const unsigned int& index);
 		const T operator [](const unsigned int& index) const;
 		T& operator ()(const unsigned int& index);
@@ -355,6 +359,19 @@ template<class T> const Array<T> Array<T>::getAbs() const {
 }
 
 //arithmetic operators
+template<class T> bool Array<T>::checkEpsilonEquality(const Array<double>& rhs, const double& epsilon) const {
+	if(nx!=rhs.nx) return false;
+
+	for (unsigned int jj=0; jj<nx; jj++)
+		if(IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
+
+	return true;
+}
+
+template<class T> bool Array<T>::checkEpsilonEquality(const Array<double>& rhs1, const Array<double>& rhs2, const double& epsilon) {
+	return rhs1.checkEpsilonEquality(rhs2, epsilon);
+}
+
 template<class T> Array<T>& Array<T>::operator=(const Array<T>& source) {
 	if(this != &source) {
 		vecData = source.vecData;

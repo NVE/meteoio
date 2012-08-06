@@ -206,6 +206,9 @@ template<class T> class Array3D {
 
 		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array3D<P>& array);
 
+		bool checkEpsilonEquality(const Array3D<double>& rhs, const double& epsilon) const;
+		static bool checkEpsilonEquality(const Array3D<double>& rhs1, const Array3D<double>& rhs2, const double& epsilon);
+
 		T& operator ()(const unsigned int& i);
 		const T operator ()(const unsigned int& i) const;
 		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
@@ -554,6 +557,20 @@ template<class T> const Array3D<T> Array3D<T>::getAbs() const {
 }
 
 //arithmetic operators
+template<class T> bool Array3D<T>::checkEpsilonEquality(const Array3D<double>& rhs, const double& epsilon) const {
+	if(nx!=rhs.nx || ny!=rhs.ny || nz!=rhs.nz) return false;
+
+	const unsigned int nxyz = nx*ny*nz;
+	for (unsigned int jj=0; jj<nxyz; jj++)
+		if(IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
+
+	return true;
+}
+
+template<class T> bool Array3D<T>::checkEpsilonEquality(const Array3D<double>& rhs1, const Array3D<double>& rhs2, const double& epsilon) {
+	return rhs1.checkEpsilonEquality(rhs2, epsilon);
+}
+
 template<class T> Array3D<T>& Array3D<T>::operator=(const Array3D<T>& source) {
 	if(this != &source) {
 		keep_nodata = source.keep_nodata;

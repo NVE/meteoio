@@ -5,11 +5,9 @@ ADD_EXECUTABLE(2D_interpolations 2D_interpolations.cc)
 TARGET_LINK_LIBRARIES(2D_interpolations ${LIBRARIES})
 
 # add the tests
-#ADD_TEST(2D_interpolations.smoke 2D_interpolations 2009-01-19T12:00)
-ADD_TEST(2D_interpolations.smoke 2D_interpolations.sh)
-SET_TESTS_PROPERTIES(2D_interpolations.smoke 
-                     PROPERTIES LABELS smoke
-                     FAIL_REGULAR_EXPRESSION "error")
+ADD_TEST(2D_interpolations.smoke 2D_interpolations 2009-01-19T12:00)
+SET_TESTS_PROPERTIES(2D_interpolations.smoke
+                     PROPERTIES LABELS smoke)
 
 
 
