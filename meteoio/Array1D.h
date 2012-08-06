@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef ARRAY_H
-#define ARRAY_H
+#ifndef ARRAY1D_H
+#define ARRAY1D_H
 
 #include <vector>
 #include <limits>
@@ -28,8 +28,8 @@
 namespace mio {
 
 /**
- * @class Array
- * @brief The template class Array is a 1D array (vector) able to hold any type of object as datatype.
+ * @class Array1D
+ * @brief The template class Array1D is a 1D array (vector) able to hold any type of object as datatype.
  * If the compilation flag NOSAFECHECKS is used, bounds check is turned off (leading to increased performances).
  *
  * @ingroup data_str
@@ -37,16 +37,16 @@ namespace mio {
  * @date   2009-05-02
  */
 
-template<class T> class Array {
+template<class T> class Array1D {
 	public:
-		Array(const unsigned int& asize=0);
+		Array1D(const unsigned int& asize=0);
 
 		/**
 		* A constructor that creates an array filled with constant values
 		* @param asize size of the new array
 		* @param init initial value to fill the array with
 		*/
-		Array(const unsigned int& asize, const T& init);
+		Array1D(const unsigned int& asize, const T& init);
 
 		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
@@ -96,42 +96,42 @@ template<class T> class Array {
 		* @brief returns the grid of the absolute value of values contained in the grid
 		* @return grid of abs(grid)
 		*/
-		const Array<T> getAbs() const;
+		const Array1D<T> getAbs() const;
 		void abs();
 
 
-		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array<P>& array);
+		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array1D<P>& array);
 
-		bool checkEpsilonEquality(const Array<double>& rhs, const double& epsilon) const;
-		static bool checkEpsilonEquality(const Array<double>& rhs1, const Array<double>& rhs2, const double& epsilon);
+		bool checkEpsilonEquality(const Array1D<double>& rhs, const double& epsilon) const;
+		static bool checkEpsilonEquality(const Array1D<double>& rhs1, const Array1D<double>& rhs2, const double& epsilon);
 
 		T& operator [](const unsigned int& index);
 		const T operator [](const unsigned int& index) const;
 		T& operator ()(const unsigned int& index);
 		const T operator ()(const unsigned int& index) const;
 
-		Array<T>& operator =(const Array<T>&);
-		Array<T>& operator =(const T& value);
+		Array1D<T>& operator =(const Array1D<T>&);
+		Array1D<T>& operator =(const T& value);
 
-		Array<T>& operator+=(const T& rhs);
-		const Array<T> operator+(const T& rhs);
-		Array<T>& operator+=(const Array<T>& rhs);
-		const Array<T> operator+(const Array<T>& rhs);
+		Array1D<T>& operator+=(const T& rhs);
+		const Array1D<T> operator+(const T& rhs);
+		Array1D<T>& operator+=(const Array1D<T>& rhs);
+		const Array1D<T> operator+(const Array1D<T>& rhs);
 
-		Array<T>& operator-=(const T& rhs);
-		const Array<T> operator-(const T& rhs);
-		Array<T>& operator-=(const Array<T>& rhs);
-		const Array<T> operator-(const Array<T>& rhs);
+		Array1D<T>& operator-=(const T& rhs);
+		const Array1D<T> operator-(const T& rhs);
+		Array1D<T>& operator-=(const Array1D<T>& rhs);
+		const Array1D<T> operator-(const Array1D<T>& rhs);
 
-		Array<T>& operator*=(const T& rhs);
-		const Array<T> operator*(const T& rhs);
-		Array<T>& operator*=(const Array<T>& rhs);
-		const Array<T> operator*(const Array<T>& rhs);
+		Array1D<T>& operator*=(const T& rhs);
+		const Array1D<T> operator*(const T& rhs);
+		Array1D<T>& operator*=(const Array1D<T>& rhs);
+		const Array1D<T> operator*(const Array1D<T>& rhs);
 
-		Array<T>& operator/=(const T& rhs);
-		const Array<T> operator/(const T& rhs);
-		Array<T>& operator/=(const Array<T>& rhs);
-		const Array<T> operator/(const Array<T>& rhs);
+		Array1D<T>& operator/=(const T& rhs);
+		const Array1D<T> operator/(const T& rhs);
+		Array1D<T>& operator/=(const Array1D<T>& rhs);
+		const Array1D<T> operator/(const Array1D<T>& rhs);
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
@@ -139,46 +139,46 @@ template<class T> class Array {
 		bool keep_nodata;
 };
 
-template<class T> Array<T>::Array(const unsigned int& asize) {
+template<class T> Array1D<T>::Array1D(const unsigned int& asize) {
 	keep_nodata = true;
 	resize(asize);
 }
 
-template<class T> Array<T>::Array(const unsigned int& asize, const T& init) {
+template<class T> Array1D<T>::Array1D(const unsigned int& asize, const T& init) {
 	keep_nodata = true;
 	resize(asize, init);
 }
 
-template<class T> void Array<T>::setKeepNodata(const bool i_keep_nodata) {
+template<class T> void Array1D<T>::setKeepNodata(const bool i_keep_nodata) {
 	keep_nodata = i_keep_nodata;
 }
 
-template<class T> bool Array<T>::getKeepNodata() {
+template<class T> bool Array1D<T>::getKeepNodata() {
 	return keep_nodata;
 }
 
-template<class T> void Array<T>::size(unsigned int& o_nx) const {
+template<class T> void Array1D<T>::size(unsigned int& o_nx) const {
 	o_nx = nx;
 }
 
-template<class T> unsigned int Array<T>::getNx() const {
+template<class T> unsigned int Array1D<T>::getNx() const {
 	return nx;
 }
 
-template<class T> void Array<T>::resize(const unsigned int& asize) {
+template<class T> void Array1D<T>::resize(const unsigned int& asize) {
 	vecData.clear();
 	vecData.resize(asize);
 	nx = asize;
 }
 
-template<class T> void Array<T>::resize(const unsigned int& asize, const T& init) {
+template<class T> void Array1D<T>::resize(const unsigned int& asize, const T& init) {
 	vecData.clear();
 	vecData.resize(asize, init);
 	nx = asize;
 }
 
 
-template<class T> inline T& Array<T>::operator()(const unsigned int& index) {
+template<class T> inline T& Array1D<T>::operator()(const unsigned int& index) {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
 		std::stringstream ss;
@@ -189,7 +189,7 @@ template<class T> inline T& Array<T>::operator()(const unsigned int& index) {
 	return vecData[index];
 }
 
-template<class T> inline const T Array<T>::operator()(const unsigned int& index) const {
+template<class T> inline const T Array1D<T>::operator()(const unsigned int& index) const {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
 		std::stringstream ss;
@@ -200,7 +200,7 @@ template<class T> inline const T Array<T>::operator()(const unsigned int& index)
 	return vecData[index];
 }
 
-template<class T> inline T& Array<T>::operator [](const unsigned int& index) {
+template<class T> inline T& Array1D<T>::operator [](const unsigned int& index) {
 #ifndef NOSAFECHECKS
 	return vecData.at(index);
 #else
@@ -208,7 +208,7 @@ template<class T> inline T& Array<T>::operator [](const unsigned int& index) {
 #endif
 }
 
-template<class T> inline const T Array<T>::operator [](const unsigned int& index) const {
+template<class T> inline const T Array1D<T>::operator [](const unsigned int& index) const {
 #ifndef NOSAFECHECKS
 	return vecData.at(index);
 #else
@@ -216,16 +216,16 @@ template<class T> inline const T Array<T>::operator [](const unsigned int& index
 #endif
 }
 
-template<class T> void Array<T>::clear() {
+template<class T> void Array1D<T>::clear() {
 	vecData.clear();
 	nx = 0;
 }
 
-template<class T> bool Array<T>::isEmpty() const {
+template<class T> bool Array1D<T>::isEmpty() const {
 	return (nx==0);
 }
 
-template<class T> std::ostream& operator<<(std::ostream& os, const Array<T>& array) {
+template<class T> std::ostream& operator<<(std::ostream& os, const Array1D<T>& array) {
 	os << "<array1d>\n";
 	for(unsigned int ii=0; ii<array.nx; ii++) {
 		os << array(ii) << " ";
@@ -234,7 +234,7 @@ template<class T> std::ostream& operator<<(std::ostream& os, const Array<T>& arr
 	return os;
 }
 
-template<class T> void Array<T>::insertAt(const int& index, T e) {
+template<class T> void Array1D<T>::insertAt(const int& index, T e) {
 	if (index < 0) {
 		vecData.push_back(e);
                 nx++;
@@ -248,14 +248,14 @@ template<class T> void Array<T>::insertAt(const int& index, T e) {
 	}
 }
 
-template<class T> void Array<T>::removeAt(const unsigned int& index) {
+template<class T> void Array1D<T>::removeAt(const unsigned int& index) {
 	if (index < vecData.size()) {
 		vecData.erase(vecData.begin()+index);
 		nx--;
 	}
 }
 
-template<class T> T Array<T>::getMin() const {
+template<class T> T Array1D<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();
 
@@ -275,7 +275,7 @@ template<class T> T Array<T>::getMin() const {
 	}
 }
 
-template<class T> T Array<T>::getMax() const {
+template<class T> T Array1D<T>::getMax() const {
 
 	T max = -std::numeric_limits<T>::max();
 
@@ -295,7 +295,7 @@ template<class T> T Array<T>::getMax() const {
 	}
 }
 
-template<class T> T Array<T>::getMean() const {
+template<class T> T Array1D<T>::getMean() const {
 
 	T mean = 0;
 
@@ -321,7 +321,7 @@ template<class T> T Array<T>::getMean() const {
 	}
 }
 
-template<class T> size_t Array<T>::getCount() const
+template<class T> size_t Array1D<T>::getCount() const
 {
 	if(keep_nodata==false) {
 		return (size_t)nx;
@@ -334,7 +334,7 @@ template<class T> size_t Array<T>::getCount() const
 	}
 }
 
-template<class T> void Array<T>::abs() {
+template<class T> void Array1D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
 		if(keep_nodata==false) {
 			for (unsigned int ii=0; ii<nx; ii++) {
@@ -351,15 +351,15 @@ template<class T> void Array<T>::abs() {
 }
 
 
-template<class T> const Array<T> Array<T>::getAbs() const {
-	Array<T> result = *this; //make a copy
+template<class T> const Array1D<T> Array1D<T>::getAbs() const {
+	Array1D<T> result = *this; //make a copy
 	result.abs(); //already implemented
 
 	return result;
 }
 
 //arithmetic operators
-template<class T> bool Array<T>::checkEpsilonEquality(const Array<double>& rhs, const double& epsilon) const {
+template<class T> bool Array1D<T>::checkEpsilonEquality(const Array1D<double>& rhs, const double& epsilon) const {
 	if(nx!=rhs.nx) return false;
 
 	for (unsigned int jj=0; jj<nx; jj++)
@@ -368,11 +368,11 @@ template<class T> bool Array<T>::checkEpsilonEquality(const Array<double>& rhs, 
 	return true;
 }
 
-template<class T> bool Array<T>::checkEpsilonEquality(const Array<double>& rhs1, const Array<double>& rhs2, const double& epsilon) {
+template<class T> bool Array1D<T>::checkEpsilonEquality(const Array1D<double>& rhs1, const Array1D<double>& rhs2, const double& epsilon) {
 	return rhs1.checkEpsilonEquality(rhs2, epsilon);
 }
 
-template<class T> Array<T>& Array<T>::operator=(const Array<T>& source) {
+template<class T> Array1D<T>& Array1D<T>::operator=(const Array1D<T>& source) {
 	if(this != &source) {
 		vecData = source.vecData;
 		nx = source.nx;
@@ -381,23 +381,23 @@ template<class T> Array<T>& Array<T>::operator=(const Array<T>& source) {
 	return *this;
 }
 
-template<class T> Array<T>& Array<T>::operator=(const T& value) {
-	//reset every single member of the Array<T>
+template<class T> Array1D<T>& Array1D<T>::operator=(const T& value) {
+	//reset every single member of the Array1D<T>
 	std::fill(vecData.begin(), vecData.end(), value);
 	return *this;
 }
 
-template<class T> Array<T>& Array<T>::operator+=(const Array<T>& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator+=(const Array1D<T>& rhs)
 {
 	//They have to have equal size
 	if (rhs.nx != nx) {
 		std::stringstream ss;
-		ss << "Trying to add two Array objects with different dimensions: ";
+		ss << "Trying to add two Array1D objects with different dimensions: ";
 		ss << "(" << nx << ") + (" << rhs.nx << ")";
 		throw IOException(ss.str(), AT);
 	}
 
-	//Add to every single member of the Array<T>
+	//Add to every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) += rhs(ii);
@@ -414,17 +414,17 @@ template<class T> Array<T>& Array<T>::operator+=(const Array<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator+(const Array<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator+(const Array1D<T>& rhs)
 {
-	Array<T> result = *this; //make a copy
+	Array1D<T> result = *this; //make a copy
 	result += rhs; //already implemented
 
 	return result;
 }
 
-template<class T> Array<T>& Array<T>::operator+=(const T& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator+=(const T& rhs)
 {
-	//Add to every single member of the Array<T>
+	//Add to every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) += rhs;
@@ -439,25 +439,25 @@ template<class T> Array<T>& Array<T>::operator+=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator+(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator+(const T& rhs)
 {
-	Array<T> result = *this;
+	Array1D<T> result = *this;
 	result += rhs; //already implemented
 
 	return result;
 }
 
-template<class T> Array<T>& Array<T>::operator-=(const Array<T>& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator-=(const Array1D<T>& rhs)
 {
 	//They have to have equal size
 	if (rhs.nx != nx) {
 		std::stringstream ss;
-		ss << "Trying to substract two Array objects with different dimensions: ";
+		ss << "Trying to substract two Array1D objects with different dimensions: ";
 		ss << "(" << nx << ") - (" << rhs.nx << ")";
 		throw IOException(ss.str(), AT);
 	}
 
-	//Substract to every single member of the Array<T>
+	//Substract to every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) -= rhs(ii);
@@ -474,17 +474,17 @@ template<class T> Array<T>& Array<T>::operator-=(const Array<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator-(const Array<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator-(const Array1D<T>& rhs)
 {
-	Array<T> result = *this; //make a copy
+	Array1D<T> result = *this; //make a copy
 	result -= rhs; //already implemented
 
 	return result;
 }
 
-template<class T> Array<T>& Array<T>::operator-=(const T& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator-=(const T& rhs)
 {
-	//Substract to every single member of the Array<T>
+	//Substract to every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) -= rhs;
@@ -499,24 +499,24 @@ template<class T> Array<T>& Array<T>::operator-=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator-(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator-(const T& rhs)
 {
-	Array<T> result = *this;
+	Array1D<T> result = *this;
 	result -= rhs; //already implemented
 
 	return result;
 }
 
-template<class T> Array<T>& Array<T>::operator*=(const Array<T>& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator*=(const Array1D<T>& rhs)
 {
 	//They have to have equal size
 	if (rhs.nx != nx){
 		std::stringstream ss;
-		ss << "Trying to multiply two Array objects with different dimensions: ";
+		ss << "Trying to multiply two Array1D objects with different dimensions: ";
 		ss << "(" << nx << ") * (" << rhs.nx << ")";
 		throw IOException(ss.str(), AT);
 	}
-	//Multiply every single member of the Array<T>
+	//Multiply every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) *= rhs(ii);
@@ -533,17 +533,17 @@ template<class T> Array<T>& Array<T>::operator*=(const Array<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator*(const Array<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator*(const Array1D<T>& rhs)
 {
-	Array<T> result = *this; //make a copy
+	Array1D<T> result = *this; //make a copy
 	result *= rhs; //already implemented
 
 	return result;
 }
 
-template<class T> Array<T>& Array<T>::operator*=(const T& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator*=(const T& rhs)
 {
-	//Multiply every single member of the Array<T>
+	//Multiply every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) *= rhs;
@@ -558,24 +558,24 @@ template<class T> Array<T>& Array<T>::operator*=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator*(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator*(const T& rhs)
 {
-	Array<T> result = *this;
+	Array1D<T> result = *this;
 	result *= rhs; //already implemented
 
 	return result;
 }
 
-template<class T> Array<T>& Array<T>::operator/=(const Array<T>& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator/=(const Array1D<T>& rhs)
 {
 	//They have to have equal size
 	if (rhs.nx != nx){
 		std::stringstream ss;
-		ss << "Trying to divide two Array objects with different dimensions: ";
+		ss << "Trying to divide two Array1D objects with different dimensions: ";
 		ss << "(" << nx << ") / (" << rhs.nx << ")";
 		throw IOException(ss.str(), AT);
 	}
-	//Divide every single member of the Array<T>
+	//Divide every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) /= rhs(ii);
@@ -592,17 +592,17 @@ template<class T> Array<T>& Array<T>::operator/=(const Array<T>& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator/(const Array<T>& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator/(const Array1D<T>& rhs)
 {
-	Array<T> result = *this; //make a copy
+	Array1D<T> result = *this; //make a copy
 	result /= rhs; //already implemented
 
 	return result;
 }
 
-template<class T> Array<T>& Array<T>::operator/=(const T& rhs)
+template<class T> Array1D<T>& Array1D<T>::operator/=(const T& rhs)
 {
-	//Divide every single member of the Array<T>
+	//Divide every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
 			operator()(ii) /= rhs;
@@ -617,9 +617,9 @@ template<class T> Array<T>& Array<T>::operator/=(const T& rhs)
 	return *this;
 }
 
-template<class T> const Array<T> Array<T>::operator/(const T& rhs)
+template<class T> const Array1D<T> Array1D<T>::operator/(const T& rhs)
 {
-	Array<T> result = *this;
+	Array1D<T> result = *this;
 	result /= rhs; //already implemented
 
 	return result;

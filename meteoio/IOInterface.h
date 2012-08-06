@@ -18,7 +18,7 @@
 #ifndef __IOINTERFACE_H__
 #define __IOINTERFACE_H__
 
-#include <meteoio/Array.h>
+#include <meteoio/Array1D.h>
 #include <meteoio/Array2D.h>
 #include <meteoio/Date.h>
 #include <meteoio/DEMObject.h>

@@ -26,9 +26,9 @@
 #endif
 
 //list in alphabetical order
+#include <meteoio/Array1D.h>
 #include <meteoio/Array2D.h>
 #include <meteoio/Array3D.h>
-#include <meteoio/Array.h>
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Config.h>
 #include <meteoio/Coords.h>
