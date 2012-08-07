@@ -54,11 +54,12 @@ class ProcUnventilatedT : public ProcessingBlock {
 	private:
 		void parse_args(std::vector<std::string> vec_args);
 
-		bool is_soft;
 		double usr_albedo;
-		bool nakamura; //use Nakamura or Huwald model
 		static const double dflt_albedo, soil_albedo, snow_albedo;
 		static const double snow_thresh, vw_thresh;
+		bool is_soft;
+		bool nakamura; //use Nakamura or Huwald model
+
 };
 
 } //end namespace

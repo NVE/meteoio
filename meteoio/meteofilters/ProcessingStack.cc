@@ -127,8 +127,8 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 
 					if (tmp.size() == ovec[ii].size()){
 						if ((jj+1) != filter_stack.size()){//after the last filter not necessary
-							for (size_t jj=0; jj<ovec[ii].size(); jj++){
-								tmp[jj](param) = ovec[ii][jj](param);
+							for (size_t kk=0; kk<ovec[ii].size(); kk++){
+								tmp[kk](param) = ovec[ii][kk](param);
 							}
 						}
 					} else {

@@ -18,7 +18,12 @@
 #ifndef __GEOTOPIO_H__
 #define __GEOTOPIO_H__
 
-#include <meteoio/MeteoIO.h>
+#include <meteoio/Config.h>
+#include <meteoio/IOInterface.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/Coords.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/DynamicLibrary.h>
 
 #include <string>
 #include <sstream>

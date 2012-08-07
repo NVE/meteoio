@@ -45,7 +45,7 @@ namespace mio {
  * - PGM_MAX: maximum value in real world coordinates to match with the maximum value read out of the PGM file
  */
 
-const double PGMIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
+const double PGMIO::plugin_nodata = 0.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
 PGMIO::PGMIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
 {
@@ -98,7 +98,6 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 {
 	unsigned int ncols, nrows, nr_colors;
 	double xllcorner, yllcorner, cellsize;
-	const double plugin_nodata=0.;
 	double tmp_val, val_min, val_max;
 	std::vector<std::string> tmpvec;
 	std::string line="";

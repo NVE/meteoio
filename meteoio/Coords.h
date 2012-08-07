@@ -69,7 +69,7 @@ class Coords {
 	bool operator!=(const Coords&) const; ///<Operator that tests for inequality
 	bool isNodata() const;
 	void moveByXY(const double& x_displacement, const double& y_displacement);
-	void moveByBearing(const double& bearing, const double& distance);
+	void moveByBearing(const double& i_bearing, const double& i_distance);
 
 	static Coords merge(const Coords& coord1, const Coords& coord2);
 	void merge(const Coords& coord2);
@@ -124,8 +124,8 @@ class Coords {
 
  private:
 	//Coordinates conversions
-	void convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const;
-	void convert_from_WGS84(double latitude, double longitude, double& easting, double& northing) const;
+	void convert_to_WGS84(double i_easting, double i_northing, double& o_latitude, double& o_longitude) const;
+	void convert_from_WGS84(double i_latitude, double i_longitude, double& o_easting, double& o_northing) const;
 
 	void WGS84_to_CH1903(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void CH1903_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
@@ -141,7 +141,7 @@ class Coords {
 	void parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber) const;
 
 	//Distances calculations
-	void distance(const Coords& destination, double& distance, double& bearing) const;
+	void distance(const Coords& destination, double& o_distance, double& o_bearing) const;
 
  private:
 	void clearCoordinates();

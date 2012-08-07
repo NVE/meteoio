@@ -90,7 +90,7 @@ template<class T> class Array2D {
 		* @param i_nrows number of rows of the new array
 		*/
 		Array2D(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
-			    const unsigned int& i_ncols, const unsigned int& i_nrows);
+		        const unsigned int& i_ncols, const unsigned int& i_nrows);
 
 		/**
 		* @brief A method that can be used to cut out a subplane of an existing Array2D object

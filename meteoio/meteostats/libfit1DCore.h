@@ -41,15 +41,15 @@ class FitModel {
 		std::string getInfo();
 		FitModel& operator =(const FitModel& source);
 	protected:
-		size_t nPts; //number of data points
-		std::string regname; //model name
-		size_t nParam; //number of parameters
-		size_t min_nb_pts; //minimum number of data points
-		bool fit_ready;
-		std::string infoString;
 		std::vector<double> Lambda; //parameters of the fit
 		std::vector<double> X; //X of input data set to fit
 		std::vector<double> Y; //Y of input data set to fit
+		std::string infoString;
+		std::string regname; //model name
+		size_t nPts; //number of data points
+		size_t nParam; //number of parameters
+		size_t min_nb_pts; //minimum number of data points
+		bool fit_ready;
 };
 
 /**

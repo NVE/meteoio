@@ -172,12 +172,12 @@ class Date {
 		bool isLeapYear(const int&) const;
 		void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
 
+		static const double epsilon;
 		double timezone;
 		double gmt_julian;
 		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
 		bool dst;
 		bool undef;
-		static const double epsilon;
 };
 
 typedef Date Duration; //so that later, we can implement a true Interval/Duration class

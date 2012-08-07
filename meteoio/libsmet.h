@@ -213,24 +213,11 @@ class SMETReader {
 		void read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data);
 		void read_data_binary(std::ifstream& fin, std::vector<double>& vec_data);
 		void cleanup(std::ifstream& fin) throw();
-		void checkSignature(const std::vector<std::string>& vecSignature, bool& isAscii);
+		void checkSignature(const std::vector<std::string>& vecSignature, bool& o_isAscii);
 		void read_header(std::ifstream& fin);
 		void process_header();
 
 		std::streampos data_start_fpointer;
-		char eoln; //end of line character for this file
-
-		std::string filename;
-		size_t nr_of_fields; //is always the number of fields minus the timestamp field, if present
-		bool timestamp_present, julian_present;
-		size_t timestamp_field, julian_field; //index of the timestamp and julian column, if present
-		bool isAscii; //true if the file is in SMET ASCII format, false if it is in binary format
-		char location_wgs84, location_epsg, location_data_wgs84, location_data_epsg;
-		double nodata_value; //The nodata value as seen in the header section of the SMET file
-		bool mksa; //true if MKSA converted values have to be returned
-		bool timestamp_interval, julian_interval; //true if data shall only be read for a time interval
-		double julian_start, julian_end; //the beginning and end date of the current julian_interval
-		std::string timestamp_start, timestamp_end; //the beginning and end date of the current timestamp_interval
 
 		std::vector<double> vec_offset;              //an offset for every column, except timestamp
 		std::vector<double> vec_multiplier;          //a multiplier for every column, except timestamp
@@ -238,6 +225,19 @@ class SMETReader {
 		std::map< std::string, std::string > header; //holds the header
 		std::map<std::string, std::streampos> map_timestamp_streampos; //in order to save file pointers
 		std::map<double, std::streampos> map_julian_streampos;         //in order to save file pointers
+
+		std::string filename;
+		std::string timestamp_start, timestamp_end; //the beginning and end date of the current timestamp_interval
+		double nodata_value; //The nodata value as seen in the header section of the SMET file
+		double julian_start, julian_end; //the beginning and end date of the current julian_interval
+		size_t nr_of_fields; //is always the number of fields minus the timestamp field, if present
+		size_t timestamp_field, julian_field; //index of the timestamp and julian column, if present
+		char location_wgs84, location_epsg, location_data_wgs84, location_data_epsg;
+		char eoln; //end of line character for this file
+		bool timestamp_present, julian_present;
+		bool isAscii; //true if the file is in SMET ASCII format, false if it is in binary format
+		bool mksa; //true if MKSA converted values have to be returned
+		bool timestamp_interval, julian_interval; //true if data shall only be read for a time interval
 };
 
 /**
@@ -318,22 +318,22 @@ class SMETWriter {
 		bool valid_header_pair(const std::string& key, const std::string& value);
 		bool valid_header();
 
-		std::string filename;
-		SMETType smet_type;
-		bool gzip;
-		size_t nr_of_fields, julian_field, timestamp_field;
-		double nodata_value;
-		std::string nodata_string;
-		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
-		bool timestamp_present, julian_present;
-		bool file_is_binary;
-		char location_wgs84, location_epsg;
-
 		std::vector<std::string> other_header_keys; //this vector is used to preserve the sequence of header keys
 		std::vector<int> ascii_precision, ascii_width;
 		std::map< std::string, std::string > header;
 		std::set<std::string> mandatory_header_keys;
 		std::ofstream fout; //Output file streams
+
+		std::string filename;
+		std::string nodata_string;
+		SMETType smet_type;
+		double nodata_value;
+		size_t nr_of_fields, julian_field, timestamp_field;
+		char location_wgs84, location_epsg;
+		bool gzip;
+		bool location_in_header, location_in_data_wgs84, location_in_data_epsg;
+		bool timestamp_present, julian_present;
+		bool file_is_binary;
 };
 
 }

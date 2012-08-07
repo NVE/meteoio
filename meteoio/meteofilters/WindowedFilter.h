@@ -52,16 +52,17 @@ class WindowedFilter : public FilterBlock {
 		bool get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec,
 		                      size_t& start, size_t& end);
 
-		bool is_soft;
-		size_t min_data_points;
 		Duration min_time_span;
 		Centering centering;
-
 		size_t last_start, last_end;
+		size_t min_data_points;
 
 	private:
-		unsigned int startIndex, endIndex;
 		std::vector<const MeteoData*> vec_window;
+		unsigned int startIndex, endIndex;
+
+	protected:
+		bool is_soft; //placed here for alignement
 };
 
 } //end namespace

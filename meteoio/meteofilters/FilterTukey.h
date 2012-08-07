@@ -53,7 +53,7 @@ class FilterTukey : public WindowedFilter {
 	private:
 		void parse_args(std::vector<std::string> vec_args);
 		double getStdDev(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end);
-		double getU3(const std::vector<MeteoData>& ivec, const unsigned int& ii, const unsigned int& param);
+		double getU3(const std::vector<MeteoData>& ivec, const unsigned int& i, const unsigned int& param);
 		static const double k; ///<How many times the stddev allowed as deviation to the smooth signal for valid points
 };
 

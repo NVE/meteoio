@@ -167,15 +167,15 @@ void Coords::moveByXY(const double& x_displacement, const double& y_displacement
 }
 
 ///< move the point by the specified bearing and distance (in m)
-void Coords::moveByBearing(const double& bearing, const double& distance) {
+void Coords::moveByBearing(const double& i_bearing, const double& i_distance) {
 	double new_lat, new_lon;
 
 	switch(distance_algo) {
 		case GEO_COSINE:
-			cosineInverse(latitude, longitude, distance, bearing, new_lat, new_lon);
+			cosineInverse(latitude, longitude, i_distance, i_bearing, new_lat, new_lon);
 			break;
 		case GEO_VINCENTY:
-			VincentyInverse(latitude, longitude, distance, bearing, new_lat, new_lon);
+			VincentyInverse(latitude, longitude, i_distance, i_bearing, new_lat, new_lon);
 			break;
 		default:
 			throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
@@ -738,35 +738,35 @@ void Coords::setEPSG(const int epsg) {
 /////////////////////////////////////////////////////private methods
 /**
 * @brief Method converting towards WGS84
-* @param[in] easting easting of the coordinate to convert
-* @param[in] northing northing of the coordinate to convert
-* @param[out] latitude converted latitude
-* @param[out] longitude converted longitude
+* @param[in] i_easting easting of the coordinate to convert
+* @param[in] i_northing northing of the coordinate to convert
+* @param[out] o_latitude converted latitude
+* @param[out] o_longitude converted longitude
 */
-void Coords::convert_to_WGS84(double easting, double northing, double& latitude, double& longitude) const
+void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_latitude, double& o_longitude) const
 {
-	if((easting!=IOUtils::nodata) && (northing!=IOUtils::nodata)) {
-		(this->*convToWGS84)(easting, northing, latitude, longitude);
+	if((i_easting!=IOUtils::nodata) && (i_northing!=IOUtils::nodata)) {
+		(this->*convToWGS84)(i_easting, i_northing, o_latitude, o_longitude);
 	} else {
-		latitude = IOUtils::nodata;
-		longitude = IOUtils::nodata;
+		o_latitude = IOUtils::nodata;
+		o_longitude = IOUtils::nodata;
 	}
 }
 
 /**
 * @brief Method converting towards WGS84
-* @param[in] latitude latitude of the coordinate to convert
-* @param[in] longitude longitude of the coordinate to convert
-* @param[out] easting converted easting
-* @param[out] northing converted northing
+* @param[in] i_latitude latitude of the coordinate to convert
+* @param[in] i_longitude longitude of the coordinate to convert
+* @param[out] o_easting converted easting
+* @param[out] o_northing converted northing
 */
-void Coords::convert_from_WGS84(double latitude, double longitude, double& easting, double& northing) const
+void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o_easting, double& o_northing) const
 {
-	if((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
-		(this->*convFromWGS84)(latitude, longitude, easting, northing);
+	if((i_latitude!=IOUtils::nodata) && (i_longitude!=IOUtils::nodata)) {
+		(this->*convFromWGS84)(i_latitude, i_longitude, o_easting, o_northing);
 	} else {
-		easting = IOUtils::nodata;
-		northing = IOUtils::nodata;
+		o_easting = IOUtils::nodata;
+		o_northing = IOUtils::nodata;
 	}
 }
 
@@ -1320,20 +1320,20 @@ void Coords::PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, do
 #endif
 }
 
-void Coords::distance(const Coords& destination, double& distance, double& bearing) const {
+void Coords::distance(const Coords& destination, double& o_distance, double& o_bearing) const {
 //HACK: this is the 2D distance, it does not work in 3D!!
 	if(isSameProj(destination)) {
 		//we can use simple cartesian grid arithmetic
-		distance = sqrt( Optim::pow2(easting - destination.getEasting()) + Optim::pow2(northing - destination.getNorthing()) );
-		bearing = atan2( northing - destination.getNorthing() , easting - destination.getEasting() );
-		bearing = fmod( bearing*Cst::to_deg+360. , 360. );
+		o_distance = sqrt( Optim::pow2(easting - destination.getEasting()) + Optim::pow2(northing - destination.getNorthing()) );
+		o_bearing = atan2( northing - destination.getNorthing() , easting - destination.getEasting() );
+		o_bearing = fmod( o_bearing*Cst::to_deg+360. , 360. );
 	} else {
 		switch(distance_algo) {
 			case GEO_COSINE:
-				distance = cosineDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
+				o_distance = cosineDistance(latitude, longitude, destination.getLat(), destination.getLon(), o_bearing);
 				break;
 			case GEO_VINCENTY:
-				distance = VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), bearing);
+				o_distance = VincentyDistance(latitude, longitude, destination.getLat(), destination.getLon(), o_bearing);
 				break;
 			default:
 				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
@@ -1351,7 +1351,7 @@ void Coords::distance(const Coords& destination, double& distance, double& beari
 void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const
 {
 	double alpha;
-	double distance;
+	double dist;
 
 	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
 		east_out = IOUtils::nodata;
@@ -1360,17 +1360,17 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 	} else {
 		switch(distance_algo) {
 			case GEO_COSINE:
-				distance = cosineDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
+				dist = cosineDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
 				break;
 			case GEO_VINCENTY:
-				distance = VincentyDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
+				dist = VincentyDistance(ref_latitude, ref_longitude, lat_in, long_in, alpha);
 				break;
 			default:
 				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);
 		}
 
-		east_out = distance*sin(alpha*Cst::to_rad);
-		north_out = distance*cos(alpha*Cst::to_rad);
+		east_out = dist*sin(alpha*Cst::to_rad);
+		north_out = dist*cos(alpha*Cst::to_rad);
 	}
 }
 
@@ -1384,7 +1384,7 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 */
 void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
 {
-	const double distance = sqrt( Optim::pow2(east_in) + Optim::pow2(north_in) );
+	const double dist = sqrt( Optim::pow2(east_in) + Optim::pow2(north_in) );
 	const double bearing = fmod( atan2(east_in, north_in)*Cst::to_deg+360. , 360.);
 
 	if((ref_latitude==IOUtils::nodata) || (ref_longitude==IOUtils::nodata)) {
@@ -1394,10 +1394,10 @@ void Coords::local_to_WGS84(double east_in, double north_in, double& lat_out, do
 	} else {
 		switch(distance_algo) {
 			case GEO_COSINE:
-				cosineInverse(ref_latitude, ref_longitude, distance, bearing, lat_out, long_out);
+				cosineInverse(ref_latitude, ref_longitude, dist, bearing, lat_out, long_out);
 				break;
 			case GEO_VINCENTY:
-				VincentyInverse(ref_latitude, ref_longitude, distance, bearing, lat_out, long_out);
+				VincentyInverse(ref_latitude, ref_longitude, dist, bearing, lat_out, long_out);
 				break;
 			default:
 				throw InvalidArgumentException("Unrecognized geodesic distance algorithm selected", AT);

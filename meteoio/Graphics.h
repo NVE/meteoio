@@ -141,7 +141,7 @@ class Gradient_model {
 		//val MUST be between 0 and 1
 		virtual void getColor(const double &val, double &r, double &g, double &b) const;
 	protected:
-		double getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const;
+		double getInterpol(const double& val, const std::vector<double>& i_X, const std::vector<double>& i_Y) const;
 		void HSV2RGB(const double& h, const double& s, const double& v, unsigned char &r, unsigned char &g, unsigned char &b) const;
 
 		std::vector<double> X, v_h,v_s,v_v; ///<control points: vector of X and associated hues, saturations and values. They must be in X ascending order
@@ -267,11 +267,11 @@ class Gradient {
 		static const unsigned char channel_max_color; ///< nr of colors per channel of the generated gradients
 	private:
 		double min, max, delta;
-		bool autoscale;
+		Gradient_model *model;
 		unsigned char nr_unique_cols; ///< number of unique colors to generate for indexed images
 		static const unsigned char reserved_idx; ///< for indexed gradients, number of reserved indexes
 		static const unsigned char reserved_cols; ///< for non-indexed gradients, number of reserved colors
-		Gradient_model *model;
+		bool autoscale;
 };
 
 class gr_heat : public Gradient_model {

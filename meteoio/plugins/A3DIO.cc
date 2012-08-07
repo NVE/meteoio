@@ -561,10 +561,10 @@ size_t A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::map<std:
 		size_t cols = IOUtils::readLineToVec(line_in, tmpvec);
 		if ( cols > 4) { // if there are any stations
 			//check each station name and whether it's already hashed, otherwise: hash!
-			for (size_t ii=4; ii<cols; ii++) {
-				size_t tmp_int = hashStations.count(tmpvec.at(ii));
+			for (size_t jj=4; jj<cols; jj++) {
+				size_t tmp_int = hashStations.count(tmpvec.at(jj));
 				if (tmp_int == 0) {
-					hashStations[tmpvec.at(ii)] = hashStations.size();
+					hashStations[tmpvec.at(jj)] = hashStations.size();
 				}
 			}
 		}

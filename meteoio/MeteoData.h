@@ -98,6 +98,8 @@ class MeteoData : POPBase {
 class MeteoData {
 #endif
 	public:
+		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
+
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
 		                 TA=firstparam, ///< Air temperature
@@ -115,7 +117,6 @@ class MeteoData {
 		                 P, ///< Air pressure
 		                 lastparam=P};
 
-		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 		static const std::string& getParameterName(const size_t& parindex);
 
 		/**
@@ -232,15 +233,15 @@ class MeteoData {
 		//static methods
 		static std::map<size_t, std::string> static_meteoparamname; ///<Associate a name with meteo parameters in Parameters
 		static std::vector<std::string> s_default_paramname;
+		static const double epsilon; ///<for comparing fields
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map meteoparamname
-		static const double epsilon; ///<for comparing fields
 
 		//private data members, please keep the order consistent with declaration lists and logic!
-		bool resampled;              ///<set this to true if MeteoData is result of resampling
 		size_t nrOfAllParameters;
 		std::vector<std::string> param_name;
 		std::vector<double> data;
+		bool resampled;              ///<set this to true if MeteoData is result of resampling
 };
 
 } //end namespace

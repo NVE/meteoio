@@ -104,8 +104,8 @@ class IOHandler : public IOInterface {
 		const Config& cfg;
 		std::map<std::string, IOPlugin> mapPlugins;
 
-		bool enable_copying;
 		std::vector<std::string> copy_parameter, copy_name;
+		bool enable_copying;
 };
 
 } //namespace

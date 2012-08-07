@@ -56,7 +56,7 @@ bool AlgorithmFactory::initStaticData()
 
 //HACK: do not build a new object at every time step!!
 InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algoname,
-                                                       Meteo2DInterpolator& i_mi, const Date& date,
+                                                       Meteo2DInterpolator& i_mi, const Date& i_date,
                                                        const DEMObject& i_dem,
                                                        const std::vector<std::string>& i_vecArgs, IOManager& iom)
 {
@@ -68,29 +68,29 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		throw UnknownValueException("The interpolation algorithm '"+algoname+"' does not exist" , AT);
 
 	if (algoname == "CST"){
-		return new ConstAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new ConstAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "STD_PRESS"){
-		return new StandardPressureAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new StandardPressureAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "CST_LAPSE"){
-		return new ConstLapseRateAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new ConstLapseRateAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "IDW"){
-		return new IDWAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new IDWAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "IDW_LAPSE"){
-		return new IDWLapseAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new IDWLapseAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "LIDW_LAPSE"){
-		return new LocalIDWLapseAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new LocalIDWLapseAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "RH"){
-		return new RHAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new RHAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ILWR"){
-		return new ILWRAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new ILWRAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "WIND_CURV"){
-		return new SimpleWindInterpolationAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new SimpleWindInterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ODKRIG"){
-		return new OrdinaryKrigingAlgorithm(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new OrdinaryKrigingAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "USER"){
-		return new USERInterpolation(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new USERInterpolation(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "HNW_SNOW"){
-		return new SnowHNWInterpolation(i_mi, date, i_dem, i_vecArgs, i_algoname, iom);
+		return new SnowHNWInterpolation(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -108,44 +108,44 @@ InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
 	iomanager.getMeteoData(date, vecMeteo);
 }
 
-size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
-                                             std::vector<double>& vecData) const
+size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
+                                             std::vector<double>& o_vecData) const
 {
-	vector<StationData> vecMeta;
-	return getData(param, vecData, vecMeta);
+	vector<StationData> tmp_vecMeta;
+	return getData(i_param, o_vecData, tmp_vecMeta);
 
 }
 
-size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& param,
-                                             std::vector<double>& vecData, std::vector<StationData>& vecMeta) const
+size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
+                                             std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta) const
 {
-	if (vecData.size() > 0)
-		vecData.clear();
+	if (o_vecData.size() > 0)
+		o_vecData.clear();
 
-	if (vecMeta.size() > 0)
-		vecMeta.clear();
+	if (o_vecMeta.size() > 0)
+		o_vecMeta.clear();
 
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		const double& val = vecMeteo[ii](param);
+		const double& val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata){
-			vecData.push_back(val);
-			vecMeta.push_back(vecMeteo[ii].meta);
+			o_vecData.push_back(val);
+			o_vecMeta.push_back(vecMeteo[ii].meta);
 		}
 	}
 
-	return vecData.size();
+	return o_vecData.size();
 }
 
-size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& vecMeta,
-                                                         std::vector<double>& vecData) const
+size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& i_vecMeta,
+                                                         std::vector<double>& o_vecData) const
 {
-	for (size_t ii=0; ii<vecMeta.size(); ii++){
-		const double& val = vecMeta[ii].position.getAltitude();
+	for (size_t ii=0; ii<i_vecMeta.size(); ii++){
+		const double& val = i_vecMeta[ii].position.getAltitude();
 		if (val != IOUtils::nodata)
-			vecData.push_back(val);
+			o_vecData.push_back(val);
 	}
 
-	return vecData.size();
+	return o_vecData.size();
 }
 
 /**

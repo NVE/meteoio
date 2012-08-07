@@ -71,13 +71,14 @@ class ARCIO : public IOInterface {
 		void cleanup() throw();
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
 		const Config& cfg;
-		bool a3d_view_in, a3d_view_out; ///< make filename compatible with the Alpine3D's viewer?
 
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string grid2dpath_in, grid2dpath_out;
 		std::string grid2d_ext_in, grid2d_ext_out; //file extension
+
+		bool a3d_view_in, a3d_view_out; ///< make filename compatible with the Alpine3D's viewer?
 };
 
 } //end namespace mio

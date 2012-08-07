@@ -37,6 +37,7 @@ ELSE(MSVC)
 	#we consider that all other compilers support "-" options and silently ignore what they don't know
 	SET(WARNINGS "-Wall")
 	SET(PROFILING "-pg -fprofile-arcs")
+	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Wpadded -Winline -Wdisabled-optimization") #-Wfloat-equal
 	SET(EXTRA_WARNINGS "-Wextra -pedantic")
 	IF(CMAKE_COMPILER_IS_GNUCXX)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")

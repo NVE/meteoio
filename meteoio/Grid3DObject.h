@@ -153,16 +153,16 @@ class Grid3DObject{
 
 		/**
 		* @brief Extract a 2D grid for a given height
-		* @param z layer to extract
+		* @param i_z layer to extract
 		* @param layer extracted 2D grid
 		*/
-		void extractLayer(const unsigned int& z, Grid2DObject& layer);
+		void extractLayer(const unsigned int& i_z, Grid2DObject& layer);
 
 		Array3D<double> grid3D;
-		double cellsize;
 		Coords llcorner;
-		unsigned int ncols, nrows, ndepths;
+		double cellsize;
 		std::vector<double> z; ///> Vector of depths
+		unsigned int ncols, nrows, ndepths;
 		bool z_is_absolute; ///> Are z coordinates absolute or relative to a DEM?
 
  protected:

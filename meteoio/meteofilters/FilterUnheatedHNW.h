@@ -52,9 +52,9 @@ class FilterUnheatedHNW : public FilterBlock {
 	private:
 		void parse_args(std::vector<std::string> vec_args);
 
-		bool soft;
 		double thresh_rh;
 		double thresh_Dt;
+		bool soft;
 };
 
 } //end namespace

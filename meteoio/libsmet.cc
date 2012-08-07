@@ -222,11 +222,10 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 }
 
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type, const bool& in_gzip)
-           : filename(in_filename), smet_type(in_type), gzip(in_gzip), nr_of_fields(0),
-             julian_field(0), timestamp_field(0), nodata_value(-999.), nodata_string(""),
+           : filename(in_filename), nodata_string(""), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
+             julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), gzip(in_gzip),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
-             timestamp_present(false), julian_present(false), file_is_binary(false),
-             location_wgs84(0), location_epsg(0)
+             timestamp_present(false), julian_present(false), file_is_binary(false)
 {
 
 }
@@ -652,14 +651,13 @@ void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 	ascii_precision = vec_precision;
 }
 
+SMETReader::SMETReader(const std::string& in_fname) : filename(in_fname), timestamp_start("-4714-11-24T00:00"),
+                                                      timestamp_end("9999-12-31T00:00"), nodata_value(-999.),
+                                                      nr_of_fields(0), timestamp_field(0), julian_field(0),
+                                                      location_wgs84(0), location_epsg(0), location_data_wgs84(0), location_data_epsg(0),
+                                                      timestamp_present(false), julian_present(false), isAscii(true), mksa(true),
+                                                      timestamp_interval(false), julian_interval(false)
 
-SMETReader::SMETReader(const std::string& in_fname) : filename(in_fname), nr_of_fields(0), timestamp_present(false),
-                                                      julian_present(false), timestamp_field(0), julian_field(0),
-                                                      isAscii(true), location_wgs84(0), location_epsg(0),
-                                                      location_data_wgs84(0), location_data_epsg(0), nodata_value(-999.), mksa(true),
-                                                      timestamp_interval(false), julian_interval(false),
-                                                      timestamp_start("-4714-11-24T00:00"),
-                                                      timestamp_end("9999-12-31T00:00")
 {
 	std::ifstream fin; //Input file streams
 	fin.clear();
@@ -908,7 +906,7 @@ void SMETReader::read_header(std::ifstream& fin)
 	data_start_fpointer = fin.tellg();
 }
 
-void SMETReader::checkSignature(const std::vector<std::string>& vecSignature, bool& isAscii)
+void SMETReader::checkSignature(const std::vector<std::string>& vecSignature, bool& o_isAscii)
 {
 	if ((vecSignature.size() != 3) || (vecSignature[0] != "SMET"))
 		throw SMETException("The signature of file " + filename + " is invalid. Is it really a SMET file?", SMET_AT);
@@ -925,9 +923,9 @@ void SMETReader::checkSignature(const std::vector<std::string>& vecSignature, bo
 
 	const std::string type = vecSignature[2];
 	if (type == "ASCII")
-		isAscii = true;
+		o_isAscii = true;
 	else if (type == "BINARY")
-		isAscii = false;
+		o_isAscii = false;
 	else
 		throw SMETException("The 3rd column of file " + filename + " must be either ASCII or BINARY", SMET_AT);
 }

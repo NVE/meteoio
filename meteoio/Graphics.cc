@@ -457,14 +457,14 @@ void Gradient::getPalette(std::vector<unsigned char> &palette, size_t &nr_colors
 }
 
 //we assume that the vectors are sorted by X
-double Gradient_model::getInterpol(const double& val, const std::vector<double>& X, const std::vector<double>& Y) const
+double Gradient_model::getInterpol(const double& val, const std::vector<double>& i_X, const std::vector<double>& i_Y) const
 {
-	const size_t nr = X.size();
+	const size_t nr = i_X.size();
 #ifndef NOSAFECHECKS
-	if(Y.size()!=nr) {
+	if(i_Y.size()!=nr) {
 		std::stringstream ss;
 		ss << "For color gradients interpolations, both X and Y vectors must have the same size! ";
-		ss << "There are " << X.size() << " abscissa for " << Y.size() << " ordinates.";
+		ss << "There are " << i_X.size() << " abscissa for " << i_Y.size() << " ordinates.";
 		throw IOException(ss.str(), AT);
 	}
 	if(nr==0) {
@@ -473,13 +473,13 @@ double Gradient_model::getInterpol(const double& val, const std::vector<double>&
 #endif
 
 	size_t i=0;
-	while(i<nr && X[i]<val) i++; //find index of first element greater than val
+	while(i<nr && i_X[i]<val) i++; //find index of first element greater than val
 
-	if(i==0) return Y[0];
-	if(i>=nr) return Y[ nr-1 ];
-	if(X[i]==val) return Y[i];
+	if(i==0) return i_Y[0];
+	if(i>=nr) return i_Y[ nr-1 ];
+	if(i_X[i]==val) return i_Y[i];
 
-	const double y = Y[i-1] + (val-X[i-1])/(X[i]-X[i-1]) * (Y[i]-Y[i-1]);
+	const double y = i_Y[i-1] + (val-i_X[i-1])/(i_X[i]-i_X[i-1]) * (i_Y[i]-i_Y[i-1]);
 	return y;
 }
 

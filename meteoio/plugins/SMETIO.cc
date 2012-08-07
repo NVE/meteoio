@@ -544,7 +544,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 	}
 }
 
-void SMETIO::generateHeaderInfo(const StationData& sd, const bool& outputIsAscii, const bool& isConsistent,
+void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAscii, const bool& isConsistent,
                                 const double& timezone, const size_t& nr_of_parameters,
                                 const std::vector<bool>& vecParamInUse, const std::vector<std::string>& vecColumnName,
                                 smet::SMETWriter& mywriter)
@@ -567,7 +567,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& outputIsAscii
 
 	vector<int> myprecision, mywidth; //set meaningful precision/width for each column
 
-	if (outputIsAscii) {
+	if (i_outputIsAscii) {
 		ss << "timestamp";
 	} else {
 		ss << "julian";

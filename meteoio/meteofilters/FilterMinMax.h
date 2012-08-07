@@ -56,9 +56,9 @@ class FilterMinMax : public FilterBlock {
 	private:
 		void parse_args(std::vector<std::string> vec_args);
 
-		bool is_soft;
 		double min_val, max_val;
 		double min_soft, max_soft;
+		bool is_soft;
 };
 
 } //end namespace

@@ -94,21 +94,21 @@ double FilterTukey::getStdDev(const std::vector<MeteoData>& ivec, const unsigned
 	return sqrt(variance);
 }
 
-double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int& ii, const unsigned int& param)
+double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int& i, const unsigned int& param)
 {
 	//exit if we don't have the required data points
-	if( ii<4 || ii>=(ivec.size()-4) ) {
+	if( i<4 || i>=(ivec.size()-4) ) {
 		return IOUtils::nodata;
 	}
 
 	//prepare intermediate variances
 	std::vector<double> u2;
-	for(int i=-1; i<=1; i++) {
+	for(int ii=-1; ii<=1; ii++) {
 		std::vector<double> u1;
-		for(int j=-1; j<=1; j++) {
+		for(int jj=-1; jj<=1; jj++) {
 			std::vector<double> u;
-			for(int k=-2; k<=2; k++) {
-				const size_t index = ii + k + j + i;
+			for(int kk=-2; kk<=2; kk++) {
+				const size_t index = i + kk + jj + ii;
 				const double value = ivec[index](param);
 				if(value!=IOUtils::nodata)
 					u.push_back( value );

@@ -22,8 +22,8 @@ using namespace std;
 namespace mio {
 
 WindowedFilter::WindowedFilter(const std::string& name)
-	: FilterBlock(name), is_soft(false), min_data_points(1), min_time_span(0.0, 0.),
-	  centering(WindowedFilter::center), last_start(0), last_end(0)
+	: FilterBlock(name), min_time_span(0.0, 0.), centering(WindowedFilter::center),
+	  last_start(0), last_end(0), min_data_points(1), is_soft(false)
 {}
 
 unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
@@ -210,25 +210,25 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		if(!is_soft) return false;
 		if(elements_left<elements_right) { //we hit the left border
 			//get again the end of window
-			size_t end_elements = (min_data_points>(elements_left+1))?min_data_points - (elements_left + 1):0;
-			const Date end_date = ivec[start].date+min_time_span;
-			size_t end_time_idx = (end_date>date)?IOUtils::seek(end_date, ivec, false):index; //end time criteria
-			if(end_time_idx==IOUtils::npos) {
-				end_time_idx=ivec.size()-1; //last possible element
+			size_t end_elems = (min_data_points>(elements_left+1))?min_data_points - (elements_left + 1):0;
+			const Date end_dt = ivec[start].date+min_time_span;
+			size_t end_tm_idx = (end_dt>date)?IOUtils::seek(end_dt, ivec, false):index; //end time criteria
+			if(end_tm_idx==IOUtils::npos) {
+				end_tm_idx=ivec.size()-1; //last possible element
 			}
-			const size_t elements_right = MAX(end_time_idx - index, end_elements);
-			end = index + elements_right;
+			const size_t elems_right = MAX(end_tm_idx - index, end_elems);
+			end = index + elems_right;
 		} else { //we hit the right border
 			//get again the start of window
-			size_t start_elements = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
-			const Date start_date = ivec[end].date-min_time_span;
-			size_t start_time_idx = (start_date<date)?IOUtils::seek(start_date, ivec, false):index; //start time criteria
-			if(start_time_idx!=IOUtils::npos && start_time_idx!=index) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
-			if(start_time_idx==IOUtils::npos) {
+			size_t start_elems = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
+			const Date start_dt = ivec[end].date-min_time_span;
+			size_t start_tm_idx = (start_dt<date)?IOUtils::seek(start_dt, ivec, false):index; //start time criteria
+			if(start_tm_idx!=IOUtils::npos && start_tm_idx!=index) start_tm_idx = (start_tm_idx>0)?start_tm_idx-1:IOUtils::npos;
+			if(start_tm_idx==IOUtils::npos) {
 				end_time_idx=0; //first possible element
 			}
-			const size_t elements_left = MAX(index - start_time_idx, start_elements);
-			start = index - elements_left;
+			const size_t elems_left = MAX(index - start_tm_idx, start_elems);
+			start = index - elems_left;
 		}
 	}
 

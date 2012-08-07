@@ -280,10 +280,10 @@ void GSNIO::readMetaData()
 						} else if (field_name == "SLOPE") {
 							IOUtils::convertString(slope_angle, field_val);
 						} else if (field_name == "EXPOSITION") {
-							std::string tmp;
-							IOUtils::convertString(tmp, field_val);
-							if (IOUtils::isNumeric(tmp)) IOUtils::convertString(slope_azi, field_val);
-							else slope_azi=IOUtils::bearing(tmp);
+							std::string tmp2;
+							IOUtils::convertString(tmp2, field_val);
+							if (IOUtils::isNumeric(tmp2)) IOUtils::convertString(slope_azi, field_val);
+							else slope_azi=IOUtils::bearing(tmp2);
 							info_complete |= 16;
 						}
 					}
