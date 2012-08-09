@@ -48,7 +48,7 @@ namespace mio {
  * - DBUSER: user name to use when connecting to the database
  * - DBPASS: password to use when connecting to the database
  * - STATION#: station code for the given number #
- * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Almost each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations
+ * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Almost each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations if no local precipitation has been found (either nodata or 0).
  * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedHNW to detect snow melting in the rain gauge.
  * - USE_SNOWPACK_HNW: if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute HNW. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will overwrite hnw. (default=false)
  */

@@ -28,12 +28,12 @@ const double res_Met_10[]	= {273.15,			273.75,					273.45,				274.15,				273.55,
 const double res_Met_11[]	= {264.65,			265.45,					266.75,				269.05,				266.05,				267.05,				263.85}; // TSS
 const double res_Met_12[]	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 
-// methode do controll content of Meteo Data !! 
+// methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
 bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
-	
+
 	const double epsilon = 1.0e-7; // accuracy  of the double tests
-	
+
 	// Coords content
 	Coords& dataCoord = datMeteo.meta.position;
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getAltitude(), res_Alt[i_results], epsilon)){
@@ -57,12 +57,12 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		exit(1);
 	}
 	string tmp_type, tmp_args;
-	dataCoord.getProj(tmp_type,tmp_args); 
+	dataCoord.getProj(tmp_type,tmp_args);
 	if(tmp_type.compare("CH1903") != 0){
 		cerr << "error on Projection"<< endl;
 		exit(1);
 	}
-	
+
 	Coords refCoord;
 	refCoord.setLatLon(res_Lat[i_results], res_Lon[i_results], res_Alt[i_results]);
 	refCoord.setXY(res_X[i_results], res_Y[i_results], res_Alt[i_results]);
@@ -71,8 +71,8 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on == operator for Coords :";
 		exit(1);
 	}
-	
-	
+
+
 	// Station Data content
 	if(datMeteo.meta.getStationID().compare(res_ID[i_results]) != 0){
 		cerr << "error on StationID"<< endl;
@@ -90,14 +90,14 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on getAzimuth";
 		exit(1);
 	}
-	
+
 	StationData refStation(refCoord, res_ID[i_results], res_Name[i_results]);
 	refStation.setSlope(res_Slope[i_results], res_Azi[i_results]);
 	if(refStation != datMeteo.meta){
 		cerr << "error on != between Station Data";
 		exit(1);
 	}
-	
+
 	// Meteo data
 	if(!IOUtils::checkEpsilonEquality(datMeteo(0), res_Met_0[i_results], epsilon)){
 		cerr << "error on MeteoData(0) : " << datMeteo(0) << " != " << res_Met_0[i_results] << endl;
@@ -151,7 +151,7 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on MeteoData(12) : " << datMeteo(12) << " != " << res_Met_12[i_results] << endl;
 		exit(1);
 	}
-	
+
 	MeteoData refMeteo(datDate);
 	refMeteo.standardizeNodata(IOUtils::nodata);
 	refMeteo.meta = refStation;
@@ -174,7 +174,7 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << refMeteo << endl;
 		exit(1);
 	}
-	
+
 	return true;
 }
 
@@ -185,23 +185,23 @@ int main() {
 
 	Config cfg("io.ini");
 	IOManager io(cfg);
-	
+
 	//io.setProcessingLevel(IOManager::raw); //set the processing level: raw, filtered or resampled
 	io.getMeteoData(d1, vecMeteo);
 
 	// Compare data with hard coded values
 	if(vecMeteo.size() != 7) {
 		cerr << "ERROR on amout of Data read !!! \n";
-		exit(1); 
+		exit(1);
 	}
-	
+
 	// Test readed data
 	for(unsigned int i = 0; i < vecMeteo.size(); i++){
-		cout << "----- Controll of vecMeteo # : "<< i+1 << endl;
+		cout << "----- Control of vecMeteo # : "<< i+1 << endl;
 		if(!controllStation(vecMeteo[i], i, d1)){
 			exit(1);
 		}
 	}
-	
+
 	return 0;
 }

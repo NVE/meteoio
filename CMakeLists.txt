@@ -38,7 +38,11 @@ ELSE(MSVC)
 	SET(WARNINGS "-Wall")
 	SET(PROFILING "-pg -fprofile-arcs")
 	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Wpadded -Winline -Wdisabled-optimization") #-Wfloat-equal
-	SET(EXTRA_WARNINGS "-Wextra -pedantic")
+	IF(POPC)
+		SET(EXTRA_WARNINGS "-Wextra -Wno-ignored-qualifiers")
+	ELSE(POPC)
+		SET(EXTRA_WARNINGS "-Wextra -pedantic")
+	ENDIF(POPC)
 	IF(CMAKE_COMPILER_IS_GNUCXX)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
 		IF(WIN32) #for gcc on windows

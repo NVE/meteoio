@@ -21,7 +21,7 @@
 //Quake3 fast 1/x² approximation
 // For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
 // Credited to Greg Walsh.
-// 32  Bit float magic number
+// 32  Bit float magic number - for 64 bits doubles: 0x5fe6ec85e7de30da
 #define SQRT_MAGIC_D 0x5f3759df
 #define SQRT_MAGIC_F 0x5f375a86
 
@@ -79,8 +79,7 @@ namespace Optim {
 	inline float invSqrt(const float x) {
 		const float xhalf = 0.5f*x;
 
-		union {
-			// get bits for floating value
+		union { // get bits for floating value
 			float x;
 			int i;
 		} u;
@@ -92,12 +91,11 @@ namespace Optim {
 	inline double invSqrt(const double x) {
 		const double xhalf = 0.5f*x;
 
-		union {
-			// get bits for floating value
+		union { // get bits for floating value
 			float x;
 			int i;
 		} u;
-		u.x = x;
+		u.x = static_cast<float>(x);
 		u.i = SQRT_MAGIC_D - (u.i >> 1);  // gives initial guess y0
 		return u.x*(1.5f - xhalf*u.x*u.x);// Newton step, repeating increases accuracy
 	}
