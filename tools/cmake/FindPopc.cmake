@@ -11,6 +11,7 @@ FIND_LIBRARY(Popc_LIBRARY
 NAMES libparoc_common.a
 PATHS
 	"${POPC_ROOT}/lib"
+	"${POPC_ROOT}/popc/lib"
 	ENV LD_LIBRARY_PATH
 	"~/usr/lib"
 	"/usr/local/lib"
@@ -30,6 +31,7 @@ FIND_PATH(Popc_INCLUDE_DIR
   #HINTS ${POPC_ROOT}/include
   PATHS
 	"${POPC_ROOT}/include"
+	"${POPC_ROOT}/popc/include"
 	"~/usr/include"
 	"/usr/local/include"
 	"/usr/include"
