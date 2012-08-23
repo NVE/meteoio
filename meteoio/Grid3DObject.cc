@@ -69,6 +69,13 @@ Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nr
 }
 
 Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                           const double& i_cellsize, const Coords& i_llcorner, const double& init) : grid3D(i_ncols, i_nrows, i_ndepths, init)
+{
+	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
+	z_is_absolute = true;
+}
+
+Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D) : grid3D()
 {
 	set(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner, i_grid3D);
@@ -209,8 +216,15 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
                        const double& i_cellsize, const Coords& i_llcorner)
 {
-	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 	grid3D.resize(ncols, nrows, ndepths, IOUtils::nodata);
+	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
+}
+
+void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+                       const double& i_cellsize, const Coords& i_llcorner, const double& init)
+{
+	grid3D.resize(ncols, nrows, ndepths, init);
+	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
 void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,

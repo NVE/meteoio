@@ -76,6 +76,9 @@ class Grid2DObject {
 		             const double& cellsize, const Coords& i_llcorner);
 
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
+		             const double& cellsize, const Coords& i_llcorner, const double& init);
+
+		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
 		             const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
 		/**
@@ -131,6 +134,9 @@ class Grid2DObject {
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows,
 		         const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
+
+		void set(const unsigned int& ncols, const unsigned int& nrows,
+		         const double& cellsize, const Coords& i_llcorner, const double& init);
 
 		void size(unsigned int& o_ncols, unsigned int& o_nrows) const;
 		unsigned int getNx() const;

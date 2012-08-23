@@ -57,6 +57,13 @@ Grid2DObject::Grid2DObject(const unsigned int& i_ncols, const unsigned int& i_nr
 	set(i_ncols, i_nrows, i_cellsize, i_llcorner, i_grid2D);
 }
 
+Grid2DObject::Grid2DObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                           const double& i_cellsize, const Coords& i_llcorner, const double& init) : grid2D(i_ncols, i_nrows, init)
+{
+	//set metadata, grid2D already successfully created
+	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
+}
+
 Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const unsigned int& i_nx, const unsigned int& i_ny,
                            const unsigned int& i_ncols, const unsigned int& i_nrows)
 	: grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows)
@@ -191,8 +198,15 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner)
 {
-	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 	grid2D.resize(ncols, nrows, IOUtils::nodata);
+	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
+}
+
+void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
+                       const double& i_cellsize, const Coords& i_llcorner, const double& init)
+{
+	grid2D.resize(ncols, nrows, init);
+	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
 void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,

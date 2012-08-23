@@ -73,14 +73,17 @@ class Grid3DObject{
 		* a subspace of the space spanned by the i_grid3Dobj
 		*/
 		Grid3DObject(const Grid3DObject& i_grid3Dobj,
-				   const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-				   const unsigned int& i_nwidths, const unsigned int& i_nheights, const unsigned int& i_ndepths);
+		             const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
+		             const unsigned int& i_nwidths, const unsigned int& i_nheights, const unsigned int& i_ndepths);
 
 		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
-				const double& cellsize, const Coords& i_llcorner);
+		             const double& cellsize, const Coords& i_llcorner);
 
 		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
-			const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D);
+		             const double& cellsize, const Coords& i_llcorner, const double& init);
+
+		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		             const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D);
 
 		/**
 		* @brief Set all variables in one go.
@@ -91,7 +94,7 @@ class Grid3DObject{
 		* @param i_llcorner lower left corner coordinates
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& depths,
-			const double& cellsize, const Coords& i_llcorner);
+		         const double& cellsize, const Coords& i_llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double>
 		* will be destroyed and recreated to size ncols x nrows.
@@ -104,7 +107,10 @@ class Grid3DObject{
 		* @param grid3D_in (Array\<double\>&) grid to be copied by value
 		*/
 		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
-			const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D_in);
+		         const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D_in);
+
+		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		         const double& cellsize, const Coords& i_llcorner, const double& init);
 
 		void size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const;
 		unsigned int getNx() const;
