@@ -198,14 +198,14 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner)
 {
-	grid2D.resize(ncols, nrows, IOUtils::nodata);
+	grid2D.resize(i_ncols, i_nrows, IOUtils::nodata);
 	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
 void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner, const double& init)
 {
-	grid2D.resize(ncols, nrows, init);
+	grid2D.resize(i_ncols, i_nrows, init);
 	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
@@ -213,9 +213,7 @@ void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
 {
 	//Test for equality in size: Only compatible Array2D<double> grids are permitted
-	unsigned int nx,ny;
-	i_grid2D.size(nx,ny);
-	if ((i_ncols != nx) || (i_nrows != ny)) {
+	if ((i_ncols != i_grid2D.getNx()) || (i_nrows != i_grid2D.getNy())) {
 		throw IOException("Mismatch in size of Array2D<double> parameter _grid2D and size of Grid2DObject", AT);
 	}
 

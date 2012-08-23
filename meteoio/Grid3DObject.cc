@@ -216,14 +216,14 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
                        const double& i_cellsize, const Coords& i_llcorner)
 {
-	grid3D.resize(ncols, nrows, ndepths, IOUtils::nodata);
+	grid3D.resize(i_ncols, i_nrows, i_ndepths, IOUtils::nodata);
 	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
 void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
                        const double& i_cellsize, const Coords& i_llcorner, const double& init)
 {
-	grid3D.resize(ncols, nrows, ndepths, init);
+	grid3D.resize(i_ncols, i_nrows, i_ndepths, init);
 	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
@@ -231,9 +231,7 @@ void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
 {
 	//Test for equality in size: Only compatible Array3D<double> grids are permitted
-	unsigned int nx, ny, nz;
-	i_grid3D.size(nx, ny, nz);
-	if ((i_ncols != nx) || (i_nrows != ny) || (i_ndepths != nz)) {
+	if ((i_ncols != i_grid3D.getNx()) || (i_nrows != i_grid3D.getNy()) || (i_ndepths != i_grid3D.getNz())) {
 		throw IOException("Mismatch in size of Array3D<double> parameter grid3D and size of Grid3DObject", AT);
 	}
 

@@ -268,6 +268,7 @@ template<class T> inline T& Array3D<T>::operator()(const unsigned int& x, const 
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;
 		ss << "Trying to access array(" << x << "," << y << "," << z << ")";
+		ss << " while array is [" << nx << "," << ny << "," << nz << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
@@ -281,6 +282,7 @@ template<class T> inline const T Array3D<T>::operator()(const unsigned int& x, c
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;
 		ss << "Trying to access array(" << x << "," << y << "," << z << ")";
+		ss << " while array is [" << nx << "," << ny << "," << nz << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif

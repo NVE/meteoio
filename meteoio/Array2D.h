@@ -232,6 +232,7 @@ template<class T> inline T& Array2D<T>::operator()(const unsigned int& x, const 
 	if ((x >= nx) || (y >= ny)) {
 		std::stringstream ss;
 		ss << "Trying to access array(" << x << "," << y << ")";
+		ss << " while array is [" << nx << "," << ny << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
@@ -244,6 +245,7 @@ template<class T> inline const T Array2D<T>::operator()(const unsigned int& x, c
 	if ((x >= nx) || (y >= ny)) {
 		std::stringstream ss;
 		ss << "Trying to access array(" << x << "," << y << ")";
+		ss << " while array is [" << nx << "," << ny << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif

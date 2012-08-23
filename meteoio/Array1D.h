@@ -183,6 +183,7 @@ template<class T> inline T& Array1D<T>::operator()(const unsigned int& index) {
 	if (index >= nx) {
 		std::stringstream ss;
 		ss << "Trying to access array(" << index << ")";
+		ss << " while array is [" << nx << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
@@ -194,6 +195,7 @@ template<class T> inline const T Array1D<T>::operator()(const unsigned int& inde
 	if (index >= nx) {
 		std::stringstream ss;
 		ss << "Trying to access array(" << index << ")";
+		ss << " while array is [" << nx << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
@@ -243,7 +245,7 @@ template<class T> void Array1D<T>::insertAt(const int& index, T e) {
 		nx++;
 	} else {
 		std::stringstream ss;
-		ss << "Inserting an element at (" << index << ") in an array of size (" << nx << ")";
+		ss << "Inserting an element at (" << index << ") in an array of size [" << nx << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 }
