@@ -183,7 +183,7 @@ template<class T> inline T& Array1D<T>::operator()(const unsigned int& index) {
 	if (index >= nx) {
 		std::stringstream ss;
 		ss << "Trying to access array(" << index << ")";
-		ss << " while array is [" << nx << "]";
+		ss << " while array is (" << nx << ")";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
@@ -195,7 +195,7 @@ template<class T> inline const T Array1D<T>::operator()(const unsigned int& inde
 	if (index >= nx) {
 		std::stringstream ss;
 		ss << "Trying to access array(" << index << ")";
-		ss << " while array is [" << nx << "]";
+		ss << " while array is (" << nx << ")";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
 #endif
