@@ -20,12 +20,12 @@ log_echo "Starting MeteoIO testing"
 cd ${MIO_ROOT}
 
 make distclean
-/usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptCoverage.cmake -V > ${MIO_ROOT}/tests/startScriptCoverage.log 2>&1
+ctest -S ${MIO_ROOT}/tests/startScriptCoverage.cmake -V > ${MIO_ROOT}/tests/startScriptCoverage.log 2>&1
 
 make distclean
-/usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptNightly.cmake -V > ${MIO_ROOT}/tests/startScriptNightly.log 2>&1
+ctest -S ${MIO_ROOT}/tests/startScriptNightly.cmake -V > ${MIO_ROOT}/tests/startScriptNightly.log 2>&1
 
 make clean
-/usr/bin/ctest -S ${MIO_ROOT}/tests/startScriptValgrind.cmake -V > ${MIO_ROOT}/tests/startScriptValgrind.log 2>&1
+ctest -S ${MIO_ROOT}/tests/startScriptValgrind.cmake -V > ${MIO_ROOT}/tests/startScriptValgrind.log 2>&1
 
 log_echo "MeteoIO testing done!"
