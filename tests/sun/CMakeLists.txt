@@ -8,7 +8,7 @@ TARGET_LINK_LIBRARIES(sun ${LIBRARIES})
 ADD_TEST(sun.smoke sun.sh)
 SET_TESTS_PROPERTIES(sun.smoke
                      PROPERTIES LABELS smoke
-                     FAIL_REGULAR_EXPRESSION "error")
+                     FAIL_REGULAR_EXPRESSION "error|differ")
 
 
 

@@ -13,18 +13,18 @@ const string res_ID []		= {"FLU2",			"FIR2",					"FRA2",				"GLA2",				"ILI2",		
 const string res_Name []	= {"Fluela Hospiz",	"Schmidigen-Bidmeren",	"Efra",				"Guppen",			"Les Collines",		"Ottere",			"Nual"};
 const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Met_0 []	= {264.275,			266.5166667,			266.6333333,		269.6583333,		266.0166667,		267.0583333,		266.1916667}; // TA
-const double res_Met_1 []	= {1.,				0.9669166667,			1.,					0.9658333333,		0.9641666667,		0.9121666672,		0.9342499997}; // RH
+const double res_Met_0 []	= {264.275,			266.4940575,			266.6333333,		269.5678596,		266.0166667,		267.044084,		266.15818}; // TA
+const double res_Met_1 []	= {1.,				0.9669166667,			1.,					0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
 const double res_Met_2 []	= {2.2,				1.2,					2.2,				0.2,				2.1,				0.6,				1.}; // VW
 const double res_Met_3 []	= {335.5833333,		144.4166666,			103.25,				213.0833333,		266.8333333,		239.5,				112.25}; // DW
 const double res_Met_4 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 const double res_Met_5 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Met_6 []	= {53.83333397,		59.16666651,			51.25,				35.75,				60.91666651,		66.58333349,		62.58333349}; //RSWR
+const double res_Met_6 []	= {84.79166651,		81.29166661,			67.83333342,				50.37500004,				88.41666666,		85.45833337,		87.4999999}; //RSWR
 const double res_Met_7 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Met_8 []	= {0.5875000001,	0.95,					1.894166667,		1.415833333,		0.35,				0.7141666666,		1.47}; // HS
-const double res_Met_9 []	= {IOUtils::nodata,	0.,						IOUtils::nodata,	0.,					0.,					0.,					0.}; // HNW
-const double res_Met_10[]	= {273.15,			273.8083333,			273.45,				274.15,				273.55,				274.35,				273.55}; // TSG
-const double res_Met_11[]	= {264.475,			265.5083333,			266.4,				268.8166667,		265.7583333,		267.1083333,		263.3833333}; // TSS
+const double res_Met_8 []	= {0.5875000001,	0.95,					1.894166667,		1.415833333,		0.35,				0.72,		1.467083333}; // HS
+const double res_Met_9 []	= {IOUtils::nodata,	3.57323147,						IOUtils::nodata,	2.255830171,					3.593920512,					0.,					1.19964904}; // HNW
+const double res_Met_10[]	= {273.6963,			274.3503833,			273.9969,				274.6983,				274.0971,				274.9251417,				274.0971}; // TSG
+const double res_Met_11[]	= {262.9366667,			266.1666667,			264.41,				268.9033333,		265.43,		266.89,		262.1966667}; // TSS
 const double res_Met_12[]	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 
 // methode do controll content of Meteo Data !!

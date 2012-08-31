@@ -35,7 +35,7 @@ namespace mio {
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
  * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format (please note that grib_api must be compiled with Position Independent Code ("fPIC" flag)).
  * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://dss.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
- * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/).
+ * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/). Standard COSMO grids are listed at http://zephyr.ucd.ie/mediawiki/index.php/COSMO_GRIB .
  *
  * Several assumptions/approximations are held/made when reading grids:
  * - since models usually use rotated latitude/longitude (see http://www.cosmo-model.org/content/model/documentation/core/default.htm, part I, chapter 3.3), the center of the domain can be approximated by a tangential cartesian coordinate system. We therefore don't re-project the lat/lon grid and use it "as is".

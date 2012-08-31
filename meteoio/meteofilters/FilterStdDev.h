@@ -35,9 +35,9 @@ namespace mio {
  * Values outside of mean ± 2 std_dev are rejected.
  * @code
  * Valid examples for the io.ini file:
- *          TA::filter1 = stddev
+ *          TA::filter1 = std_dev
  *          TA::arg1    = soft left 1 1800  (1800 seconds time span for the left leaning window)
- *          RH::filter1 = stddev
+ *          RH::filter1 = std_dev
  *          RH::arg1    = 10 6000            (strictly centered window spanning 6000 seconds and at least 10 points)
  * @endcode
  */
