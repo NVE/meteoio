@@ -90,7 +90,7 @@ class Matrix {
 		* @param cols number of columns of the matrix
 		*/
 		void size(unsigned int& rows, unsigned int& cols) const;
-
+		
 		/**
 		* @brief free the memory and set the matrix dimensions to (0,0)
 		*/
@@ -221,11 +221,12 @@ class Matrix {
 		bool isIdentity() const;
 		static bool isIdentity(const Matrix& A);
 
+		static const double epsilon, epsilon_mtr;
+
 	protected:
 		std::vector<double> vecData;
 		unsigned int ncols;
 		unsigned int nrows;
-		static const double epsilon, epsilon_mtr;
 
 		unsigned int findMaxInCol(const unsigned int &col);
 		unsigned int findMaxInRow(const unsigned int &row);
