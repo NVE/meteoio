@@ -361,12 +361,12 @@ INCLUDE(CPack)
 ## Special build type configuration for Covarage Testing.
 # Attantion: Coverage testing right now only works with g++ (or comercial tools)
 ## Add the tests itselfs
-OPTION(BUILD_TESTING "Build the tests." OFF)
+OPTION(BUILD_TESTING "Build the tests" OFF)
 IF(BUILD_TESTING)
 
 	# Coverage statistic rign now only supportet with GCC (GNUGXX)
 	IF(CMAKE_COMPILER_IS_GNUCXX)
-		OPTION(BUILD_TESTING_WITH_COVERAGE "Use gcc flags to make covarage tests" OFF)
+		OPTION(BUILD_TESTING_WITH_COVERAGE "Use gcc flags to make coverage tests" OFF)
 
 		IF(BUILD_TESTING_WITH_COVERAGE)
 			# force the correct flags to make coverage trought a build type

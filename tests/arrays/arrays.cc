@@ -125,6 +125,14 @@ bool matrix(const unsigned int& n) {
 		status=false;
 	}
 
+	m2 = m1+m1;
+	m2 -= m1;
+	if(m2 != m1) {
+		cout << "\terror when adding/substracting matrix\n";
+		status=false;
+	}
+
+
 	m2 = m1.getInv();
 	Matrix m3=m1*m2;
 	if(m3.isIdentity()!=true) {
