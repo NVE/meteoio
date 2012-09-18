@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __PROCUNDERCATCH_H__
-#define __PROCUNDERCATCH_H__
+#ifndef __PROCUNDERCATCH_WMO_H__
+#define __PROCUNDERCATCH_WMO_H__
 
 #include <meteoio/meteofilters/FilterBlock.h>
 #include <vector>
@@ -25,7 +25,7 @@
 namespace mio {
 
 /**
- * @class  ProcUndercatch
+ * @class  ProcUndercatch_WMO
  * @ingroup processing
  * @author Mathias Bavay
  * @date   2012-02-06
@@ -57,14 +57,14 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
  *
  * @code
- * HNW::filter1	= undercatch
+ * HNW::filter1	= undercatch_wmo
  * HNW::arg1	= cst 1.3 1.1
  * @endcode
  */
 
-class ProcUndercatch : public ProcessingBlock {
+class ProcUndercatch_WMO : public ProcessingBlock {
 	public:
-		ProcUndercatch(const std::vector<std::string>& vec_args);
+		ProcUndercatch_WMO(const std::vector<std::string>& vec_args);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

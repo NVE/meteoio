@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteofilters/ProcUndercatch.h>
+#include <meteoio/meteofilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <cmath>
 
@@ -23,20 +23,20 @@ using namespace std;
 
 namespace mio {
 
-const double ProcUndercatch::Tsnow_WMO=-2., ProcUndercatch::Train_WMO=2.; //WMO values from Yan et al (2001)
+const double ProcUndercatch_WMO::Tsnow_WMO=-2., ProcUndercatch_WMO::Train_WMO=2.; //WMO values from Yan et al (2001)
 
-ProcUndercatch::ProcUndercatch(const std::vector<std::string>& vec_args) : ProcessingBlock("UNDERCATCH") {
+ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector<std::string>& vec_args) : ProcessingBlock("UNDERCATCH_WMO") {
 	Tsnow = Tsnow_WMO;
 	Train = Train_WMO;
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
 
-void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
+void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
 	if(param!=MeteoData::HNW)
-		throw InvalidArgumentException("Trying to use UNDERCATCH filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
+		throw InvalidArgumentException("Trying to use UNDERCATCH_WMO filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
 	ovec.clear();
 	ovec.reserve(ivec.size());
 
@@ -121,7 +121,7 @@ void ProcUndercatch::process(const unsigned int& param, const std::vector<MeteoD
 	}
 }
 
-void ProcUndercatch::parse_args(std::vector<std::string> filter_args)
+void ProcUndercatch_WMO::parse_args(std::vector<std::string> filter_args)
 {
 	if (filter_args.size() < 1)
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
