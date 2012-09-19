@@ -52,7 +52,7 @@ class SunObject {
 		void setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude);
 		void setElevationThresh(const double& i_elevation_threshold);
 
-		void calculateRadiation(const double& ta, const double& rh, const double& pressure, const double& mean_albedo);
+		void calculateRadiation(const double& ta, const double& rh, const double& pressure, const double& mean_albedo); //HACK handle cloudy atmosphere?
 		void calculateRadiation(const double& ta, const double& rh, const double& mean_albedo);
 		void getBeamRadiation(double& R_toa, double& R_direct, double& R_diffuse) const;
 		void getHorizontalRadiation(double& R_toa, double& R_direct, double& R_diffuse) const;

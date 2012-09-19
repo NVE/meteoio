@@ -68,7 +68,7 @@ class PGMIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
-		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name);
+		void read3DGrid(Grid3DObject& grid_out, const std::string& in_name); //HACK
 
 	private:
 		void getGridPaths();
