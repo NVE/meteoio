@@ -383,7 +383,7 @@ namespace mio {
  * 	const double dist_x=700, dist_y=1200;
  * 	mio::DEMObject dem;
  * 	mio::IOManager *io = NULL;
- *	mio::Config *cfg = NULL;
+ * 	mio::Config *cfg = NULL;
  * 	int i,j;
  *
  * 	try {
@@ -392,16 +392,21 @@ namespace mio {
  * 	} catch (const IOException& e){
  * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
  * 	}
- * 	io->readDEM(dem);
- *	mio::Coords point(*cfg);
- *	point.setLatLon(46.1592, 8.12993);
- *	dem.WGS84_to_grid(point, i,j);
  *
- * 	const int ncols = (int)ceil(dist_x/dem.cellsize);
- * 	const int nrows = (int)ceil(dist_y/dem.cellsize);
+ * 	try {
+ * 		io->readDEM(dem);
+ * 		mio::Coords point(*cfg);
+ * 		point.setLatLon(46.1592, 8.12993);
+ * 		dem.WGS84_to_grid(point, i,j);
  *
- * 	mio::DEMObject sub_dem(dem, i, j, ncols, nrows);
- * 	io->write2DGrid(sub_dem,"sub_dem.dem");
+ * 		const int ncols = (int)ceil(dist_x/dem.cellsize);
+ * 		const int nrows = (int)ceil(dist_y/dem.cellsize);
+ *
+ * 		mio::DEMObject sub_dem(dem, i, j, ncols, nrows);
+ * 		io->write2DGrid(sub_dem,"sub_dem.dem");
+ * 	} catch (const IOException& e){
+ * 		std::cout << "Problem processing DEM: " << e.what() << std::endl;
+ * 	}
  *
  * 	return 0;
  * }
@@ -411,7 +416,7 @@ namespace mio {
  * \code
  * #include "MeteoIO.h"
  *
- * int main(void) {
+ * void real_main(void) {
  * 	mio::Date d1;
  *
  * 	//initializing the io handlers according to the config file
@@ -430,6 +435,14 @@ namespace mio {
  * 	mio::Grid2DObject ta_grid;
  * 	io.interpolate(d1, dem, MeteoData::TA, ta_grid);
  * 	io.write2DGrid(param,"ta.asc");
+ * }
+ *
+ * int main(void) {
+ * 	try {
+ * 		real_main();
+ * 	} catch (const IOException& e){
+ * 		std::cout << e.what() << std::endl;
+ * 	}
  *
  * 	return 0;
  * }

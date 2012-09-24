@@ -84,7 +84,6 @@ IOException::IOException(const std::string& message, const std::string& position
 IOException::~IOException() throw(){
 }
 
-
 const char* IOException::what() const throw()
 {
 	return msg.c_str();

@@ -7,7 +7,8 @@ using namespace mio; //The MeteoIO namespace is called mio
 //for example ./data_converter 2008-12-01T00:00:00 2008-12-31T23:00
 //It will retrieve the data for this time interval and write it out as specified
 //in the io.ini configuration
-int main(int argc, char** argv) {
+
+void real_main(int argc, char** argv) {
 	if(argc!=3) {
 		std::cout << "Invalid number of arguments! Please provide a date range!\n";
 		exit(0);
@@ -47,5 +48,14 @@ int main(int argc, char** argv) {
 	io.writeMeteoData(vecMeteo);
 
 	std::cout << "Done!! in " << timer.getElapsed() << " s" << std::endl;
+}
+
+int main(int argc, char** argv) {
+	try {
+		real_main(argc, argv);
+	} catch(const std::exception &e) {
+		std::cerr << e.what();
+		exit(1);
+	}
 	return 0;
 }

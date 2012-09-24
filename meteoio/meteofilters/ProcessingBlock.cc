@@ -28,6 +28,7 @@
 #include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/FilterMAD.h>
 #include <meteoio/meteofilters/ProcUndercatch_WMO.h>
+#include <meteoio/meteofilters/ProcUndercatch_Hamon.h>
 #include <meteoio/meteofilters/ProcUnventilatedT.h>
 #include <meteoio/meteofilters/ProcAdd.h>
 #include <meteoio/meteofilters/ProcMult.h>
@@ -89,6 +90,7 @@ namespace mio {
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
+ * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  *
  */
@@ -110,6 +112,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("MAD");
 	availableBlocks.insert("UNHEATED_RAINGAUGE");
 	availableBlocks.insert("UNDERCATCH_WMO");
+	availableBlocks.insert("UNDERCATCH_HAMON");
 	availableBlocks.insert("UNVENTILATED_T");
 	availableBlocks.insert("ADD");
 	availableBlocks.insert("MULT");
@@ -148,6 +151,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterUnheatedHNW(vec_args);
 	} else if (blockname == "UNDERCATCH_WMO"){
 		return new ProcUndercatch_WMO(vec_args);
+	} else if (blockname == "UNDERCATCH_HAMON"){
+		return new ProcUndercatch_Hamon(vec_args);
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vec_args);
 	} else if (blockname == "MULT"){

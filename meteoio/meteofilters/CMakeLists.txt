@@ -14,6 +14,7 @@ SET(meteofilters_sources
 	meteofilters/FilterUnheatedHNW.cc
 	meteofilters/ProcUnventilatedT.cc
 	meteofilters/ProcUndercatch_WMO.cc
+	meteofilters/ProcUndercatch_Hamon.cc
 	meteofilters/ProcAdd.cc
 	meteofilters/ProcMult.cc
 	meteofilters/ProcExpSmoothing.cc
