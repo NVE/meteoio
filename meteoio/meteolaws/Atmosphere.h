@@ -58,6 +58,9 @@ class Atmosphere {
 		static double Prata_emissivity(const double& RH, const double& TA);
 		static double Prata_ilwr(const double& RH, const double& TA);
 		static double Kasten_cloudiness(const double& solarIndex);
+		static double ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
+		                                const double& julian, const double& TZ,
+		                                const double& RH, const double& TA, const double& ISWR, const double& cloudiness);
 
 		static double RhtoDewPoint(double RH, double TA, const bool& force_water);
 		static double DewPointtoRh(double TD, double TA, const bool& force_water);

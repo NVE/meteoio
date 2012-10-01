@@ -32,7 +32,11 @@ namespace mio {
  */
 double Atmosphere::blkBody_Emissivity(const double& lwr, const double& T) {
 	const double T2 = T*T;
-	return ( lwr / (Cst::stefan_boltzmann * (T2*T2)) );
+	const double ea = lwr / (Cst::stefan_boltzmann * (T2*T2));
+
+	if(ea > 1.0)
+		return 1.0;
+	return ea;
 }
 
 /**
@@ -229,7 +233,6 @@ double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const 
 	const double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
 	if(ea > 1.0)
 		return 1.0;
-
 	return ea;
 }
 
@@ -261,8 +264,11 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
 	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
 	const double e0_mBar = 0.01 * e0;
 	const double exponent = 1./7.;
+	const double ea = 1.24 * pow( (e0_mBar / TA), exponent);
 
-	return (1.24 * pow( (e0_mBar / TA), exponent) );
+	if(ea>1.0)
+		return 1.;
+	return ea;
 }
 
 /**
@@ -293,7 +299,11 @@ double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
 double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
 	const double ilwr_dilley = Dilley_ilwr(RH, TA);
 	const double ilwr_blkbody = blkBody_Radiation(1., TA);
-	return ilwr_dilley/ilwr_blkbody;
+	const double ea = ilwr_dilley/ilwr_blkbody;
+
+	if(ea>1.0)
+		return 1.;
+	return ea;
 }
 
 /**
@@ -325,8 +335,11 @@ double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
 double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 	const double e0 = RH * waterSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
+	const double ea = 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
 
-	return 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
+	if(ea>1.0)
+		return 1.;
+	return ea;
 }
 
 /**
@@ -482,6 +495,39 @@ double Atmosphere::Unsworth_ilwr(const double& lat, const double& lon, const dou
 	return Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct_h+diffuse_h);
 }
 
+/**
+ * @brief Compute a parametrized Incoming Long Wave Radiation
+ * This uses either Atmosphere::Crawford_ilwr or Atmosphere::Omstedt_ilwr or Atmosphere::Brutsaert_ilwr
+ * depending on which parameters are available.
+ *
+ * @param lat latitude of the point of observation
+ * @param lon longitude of the point of observation
+ * @param altitude altitude of the point of observation
+ * @param julian julian date at the point of observation
+ * @param TZ time zone at the point of observation
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA Air temperature (K)
+ * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness fractional cloud cover (between 0 and 1)
+ * @return long wave radiation (W/m^2) or IOUtils::nodata
+ */
+double Atmosphere::ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
+                                     const double& julian, const double& TZ,
+                                     const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
+{
+	const double iswr_thresh = 5.; //any iswr less than this is not considered as valid for Crawford
+	const double ND=IOUtils::nodata; //since we will do lots of comparisons with it...
+
+	if(lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>iswr_thresh) {
+		return Crawford_ilwr(lat, lon, altitude, julian, TZ, RH, TA, ISWR);
+	} else if(RH!=ND && TA!=ND && cloudiness!=ND) {
+		return Omstedt_ilwr(RH, TA, cloudiness);
+	} else if(RH!=ND && TA!=ND) {
+		return Brutsaert_ilwr(RH, TA);
+	}
+
+	return ND;
+}
 
 /**
 * @brief Convert a relative humidity to a dew point temperature.
