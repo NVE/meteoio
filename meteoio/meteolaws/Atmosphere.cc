@@ -378,20 +378,31 @@ double Atmosphere::Kasten_cloudiness(const double& solarIndex) {
  * This uses the formula from Crawford and Duchon -- <i>"An Improved Parametrization
  * for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology,
- * <b>38</b>, 1999, pp 474-480.
+ * <b>38</b>, 1999, pp 474-480. If no cloud cover fraction is provided, a parametrization
+ * using iswr_meas and iswr_clear_sky will be used. These parameters can therefore safely
+ * be set to IOUtils::nodata if cloudiness is provided.
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)
  * @param iswr_clear_sky Clear Sky Modelled Incoming Short Wave Radiation (W/m^2)
  * @param month current month (1-12, for a sinusoidal variation of the leading coefficients)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
  * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
 */
-double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month) {
-	if(iswr_meas<=0. || iswr_clear_sky<=0.)
-		return IOUtils::nodata;
+double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month, const double& cloudiness)
+{
+	double clf;
+	if(cloudiness==IOUtils::nodata) {
+		if(iswr_meas<=0. || iswr_clear_sky<=0.)
+			return IOUtils::nodata;
+		clf = 1. - iswr_meas/iswr_clear_sky;  //cloud fraction estimate
+		if(clf<0.) clf=0.;
+	} else {
+		if(cloudiness<0. || cloudiness>1.)
+			return IOUtils::nodata;
+		clf = cloudiness;
+	}
 
-	double clf = 1. - iswr_meas/iswr_clear_sky; //cloud fraction estimate
-	if(clf<0.) clf=0.;
 	const double e = RH * waterSaturationPressure(TA); //near surface water vapor pressure
 	const double e_mBar = 0.01 * e;
 
@@ -404,7 +415,9 @@ double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const doubl
  * This uses the formula from Crawford and Duchon -- <i>"An Improved Parametrization
  * for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology,
- * <b>38</b>, 1999, pp 474-480.
+ * <b>38</b>, 1999, pp 474-480. If no cloud cover fraction is provided, a parametrization
+ * using the current location (lat, lon, altitude) and ISWR will be used. These parameters can therefore safely
+ * be set to IOUtils::nodata if cloudiness is provided.
  * @param lat latitude of the point of observation
  * @param lon longitude of the point of observation
  * @param altitude altitude of the point of observation
@@ -413,6 +426,7 @@ double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const doubl
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
  * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
  * Please note that this call might NOT be efficient for processing large amounts of points,
  * since it internally builds complex objects at every call. You might want to copy/paste
@@ -420,41 +434,60 @@ double Atmosphere::Crawford_ilwr(const double& RH, const double& TA, const doubl
 */
 double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
                                  const double& julian, const double& TZ,
-                                 const double& RH, const double& TA, const double& ISWR)
+                                 const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
 {
-	if(TA==IOUtils::nodata || RH==IOUtils::nodata || ISWR==IOUtils::nodata) {
+	if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
 		return IOUtils::nodata;
 	}
-	SunObject Sun(lat, lon, altitude, julian, TZ);
-	Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
-	double toa_h, direct_h, diffuse_h;
-	Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
 
 	Date date(julian, TZ, 0.);
 	int year, month, day;
 	date.getDate(year, month, day);
 
-	return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct_h+diffuse_h, static_cast<unsigned char>(month));
+	if(cloudiness==IOUtils::nodata) {
+		if(ISWR==IOUtils::nodata) return IOUtils::nodata;
+
+		SunObject Sun(lat, lon, altitude, julian, TZ);
+		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
+		double toa_h, direct_h, diffuse_h;
+		Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
+
+		return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct_h+diffuse_h, static_cast<unsigned char>(month));
+	} else {
+		return Atmosphere::Crawford_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, static_cast<unsigned char>(month), cloudiness);
+	}
 }
 
 /**
  * @brief Evaluate the long wave radiation for clear or cloudy sky.
  * This uses the formula from Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
- * The cloudiness is computed from the solar index according to Kasten and Czeplak (1980).
+ * If no cloud cover fraction is provided, a parametrization (solar index according to Kasten and Czeplak (1980))
+ * using iswr_meas and iswr_clear_sky will be used. These parameters can therefore safely
+ * be set to IOUtils::nodata if cloudiness is provided.
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @param iswr_meas Measured Incoming Short Wave Radiation (W/m^2)
  * @param iswr_clear_sky Clear Sky Modelled Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
  * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
 */
-double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky) {
-	if(iswr_meas<=0. || iswr_clear_sky<=0.)
-		return IOUtils::nodata;
+double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const double& cloudiness)
+{
+	double c;
+	if(cloudiness==IOUtils::nodata) {
+		if(cloudiness<0. || cloudiness>1.)
+			return IOUtils::nodata;
+		c = cloudiness;
+	} else {
+		if(iswr_meas<=0. || iswr_clear_sky<=0.)
+			return IOUtils::nodata;
+		c = Kasten_cloudiness(iswr_meas/iswr_clear_sky);
+	}
 
-	const double c = Kasten_cloudiness(iswr_meas/iswr_clear_sky);
 	const double epsilon_clear = Dilley_emissivity(RH, TA);
 	const double epsilon = (1.-.84*c)*epsilon_clear + .84*c;
+
 	return blkBody_Radiation(epsilon, TA);
 }
 
@@ -462,7 +495,9 @@ double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const doubl
  * @brief Evaluate the long wave radiation for clear or cloudy sky.
  * This uses the formula from Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
- * The cloudiness is computed from the solar index according to Kasten and Czeplak (1980).
+ * If no cloud cover fraction is provided, a parametrization (according to Kasten and Czeplak (1980))
+ * using the current location (lat, lon, altitude) and ISWR will be used. These parameters can therefore safely
+ * be set to IOUtils::nodata if cloudiness is provided.
  * @param lat latitude of the point of observation
  * @param lon longitude of the point of observation
  * @param altitude altitude of the point of observation
@@ -471,6 +506,7 @@ double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const doubl
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
+ * @param cloudiness Cloud cover fraction (between 0 and 1, optional)
  * @return long wave radiation (W/m^2) or IOUtils::nodata at night time
  * Please note that this call might NOT be efficient for processing large amounts of points,
  * since it internally builds complex objects at every call. You might want to copy/paste
@@ -478,21 +514,24 @@ double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const doubl
 */
 double Atmosphere::Unsworth_ilwr(const double& lat, const double& lon, const double& altitude,
                                  const double& julian, const double& TZ,
-                                 const double& RH, const double& TA, const double& ISWR)
+                                 const double& RH, const double& TA, const double& ISWR, const double& cloudiness)
 {
-	if(TA==IOUtils::nodata || RH==IOUtils::nodata || ISWR==IOUtils::nodata) {
+	if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
 		return IOUtils::nodata;
 	}
-	SunObject Sun(lat, lon, altitude, julian, TZ);
-	Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
-	double toa_h, direct_h, diffuse_h;
-	Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
 
-	Date date(julian, TZ, 0.);
-	int year, month, day;
-	date.getDate(year, month, day);
+	if(cloudiness==IOUtils::nodata) {
+		if(ISWR==IOUtils::nodata) return IOUtils::nodata;
 
-	return Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct_h+diffuse_h);
+		SunObject Sun(lat, lon, altitude, julian, TZ);
+		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
+		double toa_h, direct_h, diffuse_h;
+		Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
+
+		return Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct_h+diffuse_h);
+	} else {
+		return Atmosphere::Unsworth_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, cloudiness);
+	}
 }
 
 /**
@@ -508,7 +547,7 @@ double Atmosphere::Unsworth_ilwr(const double& lat, const double& lon, const dou
  * @param RH relative humidity (between 0 and 1)
  * @param TA Air temperature (K)
  * @param ISWR Measured Incoming Short Wave Radiation (W/m^2)
- * @param cloudiness fractional cloud cover (between 0 and 1)
+ * @param cloudiness fractional cloud cover (between 0 and 1, optional. If provided, it will have the priority)
  * @return long wave radiation (W/m^2) or IOUtils::nodata
  */
 double Atmosphere::ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
@@ -518,11 +557,14 @@ double Atmosphere::ILWR_parametrized(const double& lat, const double& lon, const
 	const double iswr_thresh = 5.; //any iswr less than this is not considered as valid for Crawford
 	const double ND=IOUtils::nodata; //since we will do lots of comparisons with it...
 
-	if(lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>iswr_thresh) {
-		return Crawford_ilwr(lat, lon, altitude, julian, TZ, RH, TA, ISWR);
-	} else if(RH!=ND && TA!=ND && cloudiness!=ND) {
+	if(RH!=ND && TA!=ND && cloudiness!=ND) {
 		return Omstedt_ilwr(RH, TA, cloudiness);
-	} else if(RH!=ND && TA!=ND) {
+	}
+	if(lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>iswr_thresh) {
+		const double ilwr_p = Crawford_ilwr(lat, lon, altitude, julian, TZ, RH, TA, ISWR);
+		if(ilwr_p!=IOUtils::nodata) return ilwr_p; //it might have been that we could not compute (for low solar angles)
+	}
+	if(RH!=ND && TA!=ND) {
 		return Brutsaert_ilwr(RH, TA);
 	}
 

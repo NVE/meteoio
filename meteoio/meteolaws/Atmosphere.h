@@ -18,6 +18,8 @@
 #ifndef __ATMOSPHERE_H__
 #define __ATMOSPHERE_H__
 
+#include <meteoio/IOUtils.h>
+
 namespace mio {
 
 /**
@@ -45,14 +47,14 @@ class Atmosphere {
 		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Brutsaert_emissivity(const double& RH, const double& TA);
 		static double Brutsaert_ilwr(const double& RH, const double& TA);
-		static double Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month);
+		static double Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month, const double& cloudiness=IOUtils::nodata);
 		static double Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
-		                            const double& RH, const double& TA, const double& ISWR);
-		static double Unsworth_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky);
+		                            const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
+		static double Unsworth_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const double& cloudiness=IOUtils::nodata);
 		static double Unsworth_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
-		                            const double& RH, const double& TA, const double& ISWR);
+		                            const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
 		static double Dilley_emissivity(const double& RH, const double& TA);
 		static double Dilley_ilwr(const double& RH, const double& TA);
 		static double Prata_emissivity(const double& RH, const double& TA);
@@ -60,7 +62,7 @@ class Atmosphere {
 		static double Kasten_cloudiness(const double& solarIndex);
 		static double ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
 		                                const double& julian, const double& TZ,
-		                                const double& RH, const double& TA, const double& ISWR, const double& cloudiness);
+		                                const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
 
 		static double RhtoDewPoint(double RH, double TA, const bool& force_water);
 		static double DewPointtoRh(double TD, double TA, const bool& force_water);
