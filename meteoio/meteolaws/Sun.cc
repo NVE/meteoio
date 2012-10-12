@@ -54,11 +54,18 @@ SunObject::SunObject(const double& i_latitude, const double& i_longitude, const 
 }
 
 void SunObject::setDate(const double& i_julian, const double& TZ) {
-	position.reset();
-	julian_gmt = i_julian - TZ/24.;
-	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
-	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata && altitude!=IOUtils::nodata) {
-		update();
+	const double i_julian_gmt = i_julian - TZ/24.;
+
+	if(i_julian_gmt!=julian_gmt) { //invalidate all fields if receiving a new date
+		position.reset();
+		julian_gmt = i_julian_gmt;
+		beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
+	}
+
+	//if the date was new or if the previous date had not lead to an update -> update now
+	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata && altitude!=IOUtils::nodata &&
+	   (beam_toa==IOUtils::nodata || beam_direct==IOUtils::nodata || beam_diffuse==IOUtils::nodata)) {
+			update();
 	}
 }
 
@@ -110,7 +117,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
                                  const double& ta, const double& rh, const double& pressure, const double& mean_albedo,
                                  double& R_toa, double& R_direct, double& R_diffuse)
 {
-//TODO: find a suitable replacement for pow(): these pow cost us a lot here
+	//these pow cost us a lot here, but replacing them by fastPow() has a large impact o accuracy (because of the exp())
 	const double olt = 0.32;      // ozone layer thickness (cm) U.S.standard = 0.34 cm
 	const double w0 = 0.9;        // fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
 	const double fc = 0.84;       // fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
@@ -148,12 +155,12 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		// on the quoted pages
 
 		// broadband transmittance by Rayleigh scattering (Iqbal (1983), p.189)
-		const double taur = exp( -0.0903 * pow( ma,0.84 ) * (1 + ma - pow( ma,1.01 )) );
+		const double taur = exp( -0.0903 * pow( ma,0.84 ) * (1. + ma - pow( ma,1.01 )) );
 
 		// broadband transmittance by ozone (Iqbal (1983), p.189)
 		const double u3 = olt * mr; // ozone relative optical path length
 		const double tauoz = 1. - (0.1611 * u3 * pow( 1. + 139.48 * u3,-0.3035 ) -
-		                     0.002715 * u3 * pow( 1. + 0.044  * u3 + 0.0003 * u3 * u3,-1 ));
+		                     0.002715 * u3 * 1./( 1. + 0.044  * u3 + 0.0003 * u3 * u3));
 
 		// broadband transmittance by uniformly mixed gases (Iqbal (1983), p.189)
 		const double taug = exp( -0.0127 * pow( ma,0.26 ) );
@@ -169,7 +176,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		const double u1 = precw * mr;
 
 		// broadband transmittance by water vapor (in Iqbal (1983), p.189)
-		const double tauw = 1 - 2.4959 * u1 * (1. / (pow( 1.0 + 79.034 * u1,0.6828 ) + 6.385 * u1));
+		const double tauw = 1. - 2.4959 * u1 * (1. / (pow( 1.0 + 79.034 * u1,0.6828 ) + 6.385 * u1));
 
 		// broadband total transmittance by aerosols (in Iqbal (1983), pp.189-190)
 		// using Angstroem's turbidity formula Angstroem (1929, 1930) for the aerosol thickness

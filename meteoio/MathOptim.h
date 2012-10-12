@@ -114,6 +114,54 @@ namespace Optim {
 	inline double pow2(const double& val) {return (val*val);}
 	inline double pow3(const double& val) {return (val*val*val);}
 	inline double pow4(const double& val) {return (val*val*val*val);}
+
+	//please do not use this method directly, call fastPow() instead!
+	inline double fastPowInternal(double a, double b) {
+	//see http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+		// calculate approximation with fraction of the exponent
+		int e = (int) b;
+		union {
+			double d;
+			int x[2];
+		} u = { a };
+		u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
+		u.x[0] = 0;
+
+		// exponentiation by squaring with the exponent's integer part
+		// double r = u.d makes everything much slower, not sure why
+		double r = 1.0;
+		while (e) {
+			if (e & 1) {
+				r *= a;
+			}
+			a *= a;
+			e >>= 1;
+		}
+
+		return r * u.d;
+	}
+
+	/**
+	* @brief Optimized version of c++ pow()
+	* This version works with positive and negative exponents and handles exponents bigger than 1.
+	* The relative error remains less than 6% for the benachmarks that we ran (argument between 0 and 500
+	* and exponent between -10 and +10). It is ~3.3 times faster than cmath's pow().
+	* Source: http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+	*
+	* Please benchmark your code before deciding to use this!!
+	* @param a argument
+	* @param b exponent
+	* @return a^b
+	*/
+	inline double fastPow(double a, double b) {
+		if(b>0.) {
+			return fastPowInternal(a,b);
+		} else {
+			const double tmp = fastPowInternal(a,-b);
+			return 1./tmp;
+		}
+	}
+
 }
 
 } //end namespace
