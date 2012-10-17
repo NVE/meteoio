@@ -60,6 +60,7 @@ class SunObject {
 		double getElevationThresh() const;
 
 		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
+		double getSplitting(const double& iswr_measured) const;
 
 		//SunTrajectory position;
 		SunMeeus position;

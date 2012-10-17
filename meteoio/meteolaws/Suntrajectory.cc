@@ -50,7 +50,7 @@ double SunTrajectory::getAngleOfIncidence(const double& sun_azi, const double& s
 
 double SunTrajectory::getRadiationOnHorizontal(const double& radiation) const
 { // Project a beam radiation (ie: perpendicular to the sun beam) to the horizontal
-// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
+// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
 	if(radiation==IOUtils::nodata) return IOUtils::nodata;
 
 	const double Z = (90.-SolarElevation)*Cst::to_rad;
@@ -61,7 +61,7 @@ double SunTrajectory::getRadiationOnHorizontal(const double& radiation) const
 
 double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double& slope_elev, const double& radiation) const
 { // Project a beam radiation (ie: perpendicular to the sun beam) to a given slope
-// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
+// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
 	if(radiation==IOUtils::nodata) return IOUtils::nodata;
 
 	const double Z = (90.-SolarElevation)*Cst::to_rad;
@@ -73,10 +73,33 @@ double SunTrajectory::getRadiationOnSlope(const double& slope_azi, const double&
 	else return 0.;
 }
 
+/** @brief Project a given horizontal radiation to a given slope.
+* The sun position is the current one, the radiation intensity is given as well as the slope parameters.
+* This should be used after correcting the radiation on the horizontal (by applying atmospheric effects or
+* special handling for dawn/dusk) in order to compute consistent radiation on slopes.
+* @param slope_azi slope azimuth (compass orientation, in degrees)
+* @param slope_elev slope angle (in degrees)
+* @param H_radiation radiation intensity on the horizontal
+* @param elev_threshold all solar elevations less than this threshold will be use this threshold (in degrees, default 5 degrees)
+* @return radiation projected on the slope
+*/
+double SunTrajectory::getHorizontalOnSlope(const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold) const
+{// Project a given horizontal radiation to a given slope
+// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
+	const double Z = (SolarElevation>=elev_threshold)? (90.-SolarElevation)*Cst::to_rad : (90.-elev_threshold)*Cst::to_rad;
+	const double cosZ = cos(Z);
+
+	const double beta = slope_elev*Cst::to_rad;
+	const double cos_theta = cos(beta)*cosZ + sin(beta)*sin(Z)*cos((SolarAzimuthAngle-slope_azi)*Cst::to_rad);
+	const double on_slope = ( H_radiation/cosZ ) * cos_theta;
+	if(on_slope>0.) return on_slope;
+	return 0.;
+}
+
 //usefull static methods
 double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& H_radiation)
 {// Project a horizontal radiation to a given slope
-// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
+// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
 	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
@@ -93,7 +116,7 @@ double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const doub
 
 double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& S_radiation)
 {// Project a slope radiation to horizontal
-// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
+// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
 	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double beta = slope_elev*Cst::to_rad;
 	const double cos_theta = cos(beta)*cos(Z) + sin(beta)*sin(Z)*cos((sun_azi-slope_azi)*Cst::to_rad);
@@ -108,7 +131,7 @@ double SunTrajectory::projectSlopeToHorizontal(const double& sun_azi, const doub
 
 double SunTrajectory::projectHorizontalToBeam(const double& sun_elev, const double& H_radiation)
 { // Project a beam radiation (ie: perpendicular to the sun beam) to the horizontal
-// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, 435pp.
+// Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
 	const double Z = (90.-sun_elev)*Cst::to_rad;
 	const double cosZ = cos(Z);
 

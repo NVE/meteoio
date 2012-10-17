@@ -266,10 +266,12 @@ void SunObject::getSlopeRadiation(const double& slope_azi, const double& slope_e
 
 /**
  * @brief Evaluate the splitting coefficient between direct and diffuse components of the
- * incoming short wave radiation. Splitting is based on "clearness of the sky", i.e. the ratio of
- * measured incoming global radiation to top of the atmosphere radiation toa_h.g
- * Erbs et al., Iqbal p.269e
- * @param iswr_modeled modelled radiation, it should be Top Of Atmosphere Radiation (W/m²)
+ * incoming short wave radiation. Splitting is based on "clearness of the sky", ie. the ratio of
+ * measured incoming global radiation to top of the atmosphere radiation toa_h,
+ * see
+ * D. G. Erbs, S.A. Klein, J.A. Duffie, <i>"Estimation of the diffuse radiation fraction for hourly, daily and monthly-average global radiation"</i>, Solar Energy, <b>28</b>, 4, 1982, Pages 293-302 and
+ * M. Iqbal, <i>"An introduction to solar radiation"</i>, 1983, Academic Press,  ISBN: 0-12-373750-8
+ * @param iswr_modeled modelled radiation, it should be beam Top Of Atmosphere Radiation (W/m²)
  * @param iswr_measured measured Incoming Short Wave Radiation on the ground (W/m²)
  * @return splitting coefficient (between 0 and 1, 1 being 100% diffuse radiation)
  */
@@ -308,8 +310,14 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 	return (splitting_coef); // should be <=1.1; diff/toa should be <=0.8
 }
 
+double SunObject::getSplitting(const double& iswr_measured) const
+{
+	return getSplitting(beam_toa, iswr_measured);
+}
+
 std::ostream& operator<<(std::ostream &os, const SunObject& data)
 {
+	const std::streamsize old_prec = os.precision();
 	os << "<SunObject>\n";
 	os << data.position;
 	os << std::fixed << std::setprecision(4);
@@ -335,7 +343,7 @@ std::ostream& operator<<(std::ostream &os, const SunObject& data)
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << R_diffuse;
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << R_direct+R_diffuse << "\n";
 
-	os << "</SunObject>\n";
+	os << "</SunObject>\n" << std::setprecision(old_prec);
 	return os;
 }
 

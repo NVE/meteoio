@@ -18,11 +18,6 @@
 #ifndef __SUNTAJECTORY_H__
 #define __SUNTAJECTORY_H__
 
-/*#include <ostream>
-#include <iostream>
-#include <iomanip>
-#include <sstream>*/
-
 #include <meteoio/IOUtils.h>
 
 namespace mio {
@@ -61,9 +56,10 @@ class SunTrajectory {
 		virtual void getEquatorialCoordinates(double& right_ascension, double& declination)=0;
 
 		///radiation projection methods
+		double getAngleOfIncidence(const double& slope_azi, const double& slope_elev) const;
 		double getRadiationOnHorizontal(const double& radiation) const;
 		double getRadiationOnSlope(const double& slope_azi, const double& slope_elev, const double& radiation) const;
-		double getAngleOfIncidence(const double& slope_azi, const double& slope_elev) const;
+		double getHorizontalOnSlope(const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold=5.) const;
 
 		///static helper for radiation projection
 		static double getAngleOfIncidence(const double& sun_azi, const double& sun_elev,
