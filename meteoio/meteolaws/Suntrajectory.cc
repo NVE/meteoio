@@ -97,10 +97,10 @@ double SunTrajectory::getHorizontalOnSlope(const double& slope_azi, const double
 }
 
 //usefull static methods
-double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& H_radiation)
+double SunTrajectory::projectHorizontalToSlope(const double& sun_azi, const double& sun_elev, const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold)
 {// Project a horizontal radiation to a given slope
 // Oke, T.R., Boundary Layer Climates. 2nd ed, 1987, Routledge, London, p345.
-	const double Z = (90.-sun_elev)*Cst::to_rad;
+	const double Z = (sun_elev>elev_threshold)? (90.-sun_elev)*Cst::to_rad : (90.-elev_threshold)*Cst::to_rad;
 	const double cosZ = cos(Z);
 
 	if(cosZ==0.) {
