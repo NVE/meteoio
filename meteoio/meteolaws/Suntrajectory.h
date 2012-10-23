@@ -86,6 +86,19 @@ class SunTrajectory {
 		static const double nodata;
 };
 
+/**
+ * @class SunMeeus
+ * @brief Calculate the Sun's position based on the Meeus algorithm.
+ * See J. Meeus, <i>"Astronomical Algorithms"</i>, 1998, 2nd ed, ISBN 0-943396-61-1.
+ * A useful reference is also NOAA's spreadsheet at http://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html or
+ * http://energyworksus.com/solar_installation_position.html for comparing positional data. The technical report
+ * I. Reda, A. Andreas, <i>"Solar Position Algorithm for Solar Radiation Applications"</i>, 2008, NREL/TP-560-34302
+ * also contains an alternative algorithm and very detailed validation data sets.
+ *
+ * @ingroup meteolaws
+ * @author Mathias Bavay
+ * @date   2010-06-10
+ */
 class SunMeeus : public SunTrajectory {
 	public:
 		SunMeeus();
