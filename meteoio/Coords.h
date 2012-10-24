@@ -131,6 +131,8 @@ class Coords {
 	void CH1903_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 	void WGS84_to_UTM(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void UTM_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
+	void WGS84_to_UPS(double lat_in, double long_in, double& east_out, double& north_out) const;
+	void UPS_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 	void WGS84_to_PROJ4(double lat_in, double long_in, double& east_out, double& north_out) const;
 	void PROJ4_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
 	void WGS84_to_local(double lat_in, double long_in, double& east_out, double& north_out) const;

@@ -40,6 +40,7 @@ namespace mio {
  * The current internal implementations are the following (given by their keyword):
  * - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
  * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
+ * - UPS for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2]
  * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
  *
  * Such an example of use is the following:
@@ -77,6 +78,8 @@ bool Coords::initializeMaps() {
 	from_wgs84["CH1903"] = &Coords::WGS84_to_CH1903;
 	to_wgs84["UTM"]      = &Coords::UTM_to_WGS84;
 	from_wgs84["UTM"]    = &Coords::WGS84_to_UTM;
+	to_wgs84["UPS"]      = &Coords::UPS_to_WGS84;
+	from_wgs84["UPS"]    = &Coords::WGS84_to_UPS;
 	to_wgs84["PROJ4"]    = &Coords::PROJ4_to_WGS84;
 	from_wgs84["PROJ4"]  = &Coords::WGS84_to_PROJ4;
 	to_wgs84["LOCAL"]    = &Coords::local_to_WGS84;
@@ -673,6 +676,16 @@ short int Coords::getEPSG() const {
 			return (32700+zoneNumber);
 		}
 	}
+	if(coordsystem=="UPS") {
+		//UPS Zone
+		if(coordparam == "S") {
+			//southern hemisphere
+			return (32761);
+		} else {
+			//northern hemisphere
+			return (32661);
+		}
+	}
 	if(coordsystem=="PROJ4") {
 		const int tmp = atoi(coordparam.c_str());
 		if(tmp<0 || tmp>32767) {
@@ -723,6 +736,11 @@ void Coords::setEPSG(const int epsg) {
 		std::ostringstream osstream;
 		osstream << zoneNumber << "N";
 		coord_param=osstream.str();
+		found=true;
+	}
+	if(!found && (epsg==32761 || epsg==32661)) {
+		coord_sys="UPS";
+		coord_param = (epsg==32761)? "S" : "N";
 		found=true;
 	}
 	if(!found) {
@@ -804,7 +822,7 @@ double Coords::dms_to_decimal(const std::string& dms) {
 			throw InvalidFormatException("Can not parse given latitude or longitude: "+dms,AT);
 	}
 
-	decimal = d;
+	decimal = fabs(d);
 	if(m!=IOUtils::nodata) {
 		decimal += m/60.;
 	}
@@ -812,7 +830,8 @@ double Coords::dms_to_decimal(const std::string& dms) {
 		decimal += s/3600.;
 	}
 
-	return decimal;
+	if(d<0.) return (-decimal);
+	else return decimal;
 }
 
 /**
@@ -856,10 +875,13 @@ lat, double& lon)
 */
 std::string Coords::decimal_to_dms(const double& decimal) {
 	std::stringstream dms;
-	const int d = (int)floor(decimal);
-	const int m = (int)floor( (decimal - (double)d)*60. );
-	const double s = 3600.*(decimal - (double)d) - 60.*(double)m;
+	const double abs_dec = fabs(decimal);
+	const int d = (int)floor(abs_dec);
+	const int m = (int)floor( (abs_dec - (double)d)*60. );
+	const double s = 3600.*(abs_dec - (double)d) - 60.*(double)m;
 
+	if(decimal<0.)
+		dms << "-";
 	dms << d << "°" << m << "'" << fixed << setprecision(6) << s << "\"";
 	return dms.str();
 }
@@ -1217,6 +1239,115 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 
 	lat_out = (fp - Q1 * (Q2 - Q3 + Q4 /*+Q4extra*/))*Cst::to_deg;
 	long_out = (double)long0 + ((Q5 - Q6 + Q7 /*-Q7extra*/)/cos(fp))*Cst::to_deg;
+}
+
+/**
+* @brief Coordinate conversion: from WGS84 Lat/Long to Universal Polar Stereographic grid
+* see J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2
+* @param[in] lat_in Decimal Latitude
+* @param[in] long_in Decimal Longitude
+* @param[out] east_out easting coordinate (Swiss system)
+* @param[out] north_out northing coordinate (Swiss system)
+*/
+void Coords::WGS84_to_UPS(double lat_in, double long_in, double& east_out, double& north_out) const
+{
+	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	const double k0 = 0.994;		//scale factor for the projection
+	const double FN = 2000000.;		//false northing
+	const double FE = 2000000.;		//false easting
+
+	const double e = sqrt(e2);
+	const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
+	const double tan_Zz = pow( (1.+e*sin(lat_in*Cst::to_rad))/(1.-e*sin(lat_in*Cst::to_rad)) , e/2. ) * tan( Cst::PI/4. - lat_in*Cst::to_rad/2.);
+	const double R = k0*C0*tan_Zz;
+
+	if(coordparam=="N") {
+		north_out = FN - R*cos(long_in*Cst::to_rad);
+	} else if(coordparam=="S") {
+		north_out = FN + R*cos(long_in*Cst::to_rad);
+	} else {
+		throw InvalidFormatException("Invalid UPS zone: "+coordparam+". It should be either N or S.",AT);
+	}
+	east_out = FE + R*sin(long_in*Cst::to_rad);
+}
+
+/**
+* @brief Coordinate conversion: from Universal Polar Stereographic grid to WGS84 Lat/Long
+* see J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2
+* @param[in] east_in easting coordinate (UTM)
+* @param[in] north_in northing coordinate (UTM)
+* @param[out] lat_out Decimal Latitude
+* @param[out] long_out Decimal Longitude
+*/
+void Coords::UPS_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const
+{
+	const double a = ellipsoids[E_WGS84].a; //major ellipsoid semi-axis
+	const double b = ellipsoids[E_WGS84].b;	//minor ellipsoid semi-axis
+	const double e2 = (a*a-b*b) / (a*a);	//ellispoid eccentricity, squared
+	const double k0 = 0.994;		//scale factor for the projection
+	const double FN = 2000000.;		//false northing
+	const double FE = 2000000.;		//false easting
+
+	const double Delta_N = north_in - FN;
+	const double Delta_E = east_in - FE;
+
+	//which hemisphere are we in?
+	bool northern_hemisphere;
+	if(coordparam=="N") {
+		northern_hemisphere = true;
+	} else if(coordparam=="S") {
+		northern_hemisphere = false;
+	} else {
+		throw InvalidFormatException("Invalid UPS zone: "+coordparam+". It should be either N or S.",AT);
+	}
+
+	//computing longitude
+	if(Delta_N==0.) {
+		if(Delta_E==0.) {
+			long_out = 0.;
+			if(northern_hemisphere) {
+				lat_out = 90.;
+			} else {
+				lat_out = -90.;
+			}
+			return;
+		} else {
+			if(Delta_E>0.) long_out = 90.;
+			else long_out = -90.;
+		}
+	} else {
+		if(northern_hemisphere) {
+			long_out = atan2( Delta_E , -Delta_N) * Cst::to_deg;
+		} else {
+			long_out = atan2( Delta_E , Delta_N) * Cst::to_deg;
+		}
+	}
+
+	//computing latitude
+	double R;
+	if(Delta_N==0.) {
+		R = fabs(Delta_E);
+	} else if(Delta_E==0.) {
+		R = fabs(Delta_N);
+	} else {
+		if(Delta_N>Delta_E) R = fabs( Delta_N / cos(long_out*Cst::to_rad));
+		else R = fabs( Delta_E / sin(long_out*Cst::to_rad) );
+	}
+	const double e = sqrt(e2);
+	const double C0 = 2.*a / sqrt(1.-e2) * pow( (1.-e)/(1.+e) , e/2.);
+	const double tan_Zz = R / (k0*C0); //isometric colatitude
+	const double chi = Cst::PI/2. - atan( tan_Zz )*2.;
+
+	const double A = e2/2. + 5.*e2*e2/24. + e2*e2*e2/12. + 13.*e2*e2*e2*e2/360.;
+	const double B = 7.*e2*e2/48. + 29.*e2*e2*e2/240. + 811.*e2*e2*e2*e2/11520.;
+	const double C = 7.*e2*e2*e2/120. + 81.*e2*e2*e2*e2/1120.;
+	const double D = 4279.*e2*e2*e2*e2/161280.;
+	lat_out = chi + A*sin(2.*chi) + B*sin(4.*chi) + C*sin(6.*chi) + D*sin(8.*chi);
+	lat_out *= Cst::to_deg;
+
+	if(!northern_hemisphere) lat_out *=-1.;
 }
 
 void Coords::parseUTMZone(const std::string& zone_info, char& zoneLetter, short int& zoneNumber) const
