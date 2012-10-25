@@ -37,7 +37,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	} else {
 		msg = position + ": " + message;
 	}
-#if defined(LINUX) && !defined(ANDROID)
+#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	size_t tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings

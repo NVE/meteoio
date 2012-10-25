@@ -23,7 +23,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-#if defined(LINUX) && !defined(ANDROID)
+#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
 	#include <execinfo.h> //needed for the backtracing of the stack
 #endif
 
