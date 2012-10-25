@@ -32,7 +32,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		os << date.toString(Date::ISO) << "\t";
 		os << std::setprecision(10);
 
-		Sun.setDate(date.getJulianDate(), date.getTimeZone()); //local julian date and timezone
+		Sun.setDate(date.getJulian(), date.getTimeZone()); //local julian date and timezone
 		Sun.calculateRadiation(TA, RH, mean_albedo);
 
 		//radiation in the beam'

@@ -164,7 +164,7 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 		const double& val1 = vecM[indexP1](paramindex);
 		const double& val2 = vecM[indexP2](paramindex);
 
-		if (IOUtils::checkEpsilonEquality(diff1.getJulianDate(true), diff2.getJulianDate(true), 0.1/1440)){ //within 6 seconds
+		if (IOUtils::checkEpsilonEquality(diff1.getJulian(true), diff2.getJulian(true), 0.1/1440)){ //within 6 seconds
 			md(paramindex) = Interpol1D::weightedMean(val1, val2, 0.5);
 		} else if (diff1 < diff2){
 			md(paramindex) = val1;
@@ -255,11 +255,11 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 
 	//At this point indexP1 and indexP2 point to values that are different from IOUtils::nodata
 	const double& val1 = vecM[indexP1](paramindex);
-	const double jul1 = vecM[indexP1].date.getJulianDate(true);
+	const double jul1 = vecM[indexP1].date.getJulian(true);
 	const double& val2 = vecM[indexP2](paramindex);
-	const double jul2 = vecM[indexP2].date.getJulianDate(true);
+	const double jul2 = vecM[indexP2].date.getJulian(true);
 
-	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulianDate(true));
+	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulian(true));
 }
 
 /**
@@ -313,7 +313,7 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 
 	//find start of accumulation period and initialize the sum
 	double sum = IOUtils::nodata;
-	const Date dateStart(resampling_date.getJulianDate() - accumulate_period/(24.*3600.), resampling_date.getTimeZone());
+	const Date dateStart(resampling_date.getJulian() - accumulate_period/(24.*3600.), resampling_date.getTimeZone());
 	bool found_start=false;
 	size_t start_idx; //this is the index of the first point of the window that contains dateStart
 	for (start_idx=index+1; (start_idx--) > 0; ) {
@@ -378,13 +378,13 @@ double ResamplingAlgorithms::funcval(size_t pos, const size_t& paramindex, const
 	const double valend = vecM[end](paramindex);
 	if (valend == IOUtils::nodata) return IOUtils::nodata;
 
-	const double jul1 = vecM[pos].date.getJulianDate(true);
-	const double jul2 = vecM[end].date.getJulianDate(true);
+	const double jul1 = vecM[pos].date.getJulian(true);
+	const double jul2 = vecM[end].date.getJulian(true);
 
 	if(start_pt)
-		return valend - linearInterpolation(jul1, 0., jul2, valend, date.getJulianDate(true));
+		return valend - linearInterpolation(jul1, 0., jul2, valend, date.getJulian(true));
 	else
-		return linearInterpolation(jul1, 0., jul2, valend, date.getJulianDate(true));
+		return linearInterpolation(jul1, 0., jul2, valend, date.getJulian(true));
 }
 
 /**

@@ -65,5 +65,33 @@ int main() {
 		exit(1);
 	}
 
+	//Now to UPS
+	cout << "Lat/long to UPS\n";
+	point1.setProj("UPS","N");
+	point1.setLatLon(84.2872338889, -132.247989167, 0.);
+	const double ups_x=point1.getEasting(), ups_y=point1.getNorthing();
+	if(!IOUtils::checkEpsilonEquality(ups_x, 1530125.78038, 1e-4) || !IOUtils::checkEpsilonEquality(ups_y, 2426773.59547, 1e-4)) {
+		cerr << setprecision(12) << "calculated Easting=" << ups_x << " calculated northing=" << ups_y << "\n";
+		exit(1);
+	}
+
+	//Now to UPS
+	cout << "UPS to Lat/long\n";
+	point1.setProj("UPS","S");
+	point1.setXY(2500000., 1500000., 0.);
+	const double ups_lat=point1.getLat(), ups_lon=point1.getLon();
+	if(!IOUtils::checkEpsilonEquality(ups_lat, -83.6373175, 1e-4) || !IOUtils::checkEpsilonEquality(ups_lon, 135., 1e-4)) {
+		cerr << setprecision(12) << "calculated lat=" << ups_lat << " calculated lon=" << ups_lon << "\n";
+		exit(1);
+	}
+
+	cout << "Pretty printing of negative latitudes\n";
+	stringstream ss2;
+	ss2 << point1.printLatLon();
+	if(ss2.str() != string("(-83°38'14.343220\" , 135°0'0.000000\")")) {
+		cerr << "Pretty printing failed: " << ss2.str() << "\n";
+		exit(1);
+	}
+
 	return 0;
 }

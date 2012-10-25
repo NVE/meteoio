@@ -203,8 +203,8 @@ const ProcessingProperties& ProcessingBlock::getProperties() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data) {
-	const double h_before = data.time_before.getJulianDate()*24.;
-	const double h_after = data.time_after.getJulianDate()*24.;
+	const double h_before = data.time_before.getJulian()*24.;
+	const double h_after = data.time_after.getJulian()*24.;
 	const unsigned int p_before = data.points_before;
 	const unsigned int p_after = data.points_after;
 

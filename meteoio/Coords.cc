@@ -1243,7 +1243,8 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 
 /**
 * @brief Coordinate conversion: from WGS84 Lat/Long to Universal Polar Stereographic grid
-* see J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2
+* see J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2.
+* This is valid above latitudes 84N or above 80S.
 * @param[in] lat_in Decimal Latitude
 * @param[in] long_in Decimal Longitude
 * @param[out] east_out easting coordinate (Swiss system)
@@ -1275,7 +1276,8 @@ void Coords::WGS84_to_UPS(double lat_in, double long_in, double& east_out, doubl
 
 /**
 * @brief Coordinate conversion: from Universal Polar Stereographic grid to WGS84 Lat/Long
-* see J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2
+* see J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2.
+* This is valid above latitudes 84N or above 80S.
 * @param[in] east_in easting coordinate (UTM)
 * @param[in] north_in northing coordinate (UTM)
 * @param[out] lat_out Decimal Latitude

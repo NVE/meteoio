@@ -608,7 +608,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		Date tmp_date(vecmd[jj].date);
 		tmp_date.setTimeZone(out_tz);
 		tmp_date.getDate(YYYY, MM, DD, HH, MI);
-		const double sn_julian = tmp_date.getJulianDate() - sn_julian_offset + 0.5;
+		const double sn_julian = tmp_date.getJulian() - sn_julian_offset + 0.5;
 		const double ta = vecmd[jj](MeteoData::TA);
 		const double rh = vecmd[jj](MeteoData::RH);
 		const double hnw = vecmd[jj](MeteoData::HNW);

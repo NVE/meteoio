@@ -52,8 +52,8 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 
 		double& curr_value       = ovec[ii](param);
 		const double& prev_value = ovec[last_good](param);
-		const double curr_time   = ovec[ii].date.getJulianDate();
-		const double prev_time   = ovec[last_good].date.getJulianDate();
+		const double curr_time   = ovec[ii].date.getJulian();
+		const double prev_time   = ovec[last_good].date.getJulian();
 
 		if (curr_value == IOUtils::nodata)
 			continue;

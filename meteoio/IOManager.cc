@@ -488,7 +488,7 @@ std::string IOManager::toString() const {
 		os << point_cache.begin()->first.toString(Date::ISO) << " - 1 timestep\n";
 	}
 	if(count>1) {
-		const double avg_sampling = ( (point_cache.rbegin()->first.getJulianDate()) - (point_cache.begin()->first.getJulianDate()) ) / (double)(count-1);
+		const double avg_sampling = ( (point_cache.rbegin()->first.getJulian()) - (point_cache.begin()->first.getJulian()) ) / (double)(count-1);
 
 		os << "Resampled cache content (";
 		if(max_stations==min_stations)

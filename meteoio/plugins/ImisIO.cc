@@ -464,9 +464,9 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			vecMeteoAnetz.insert(vecMeteoAnetz.begin(), vecAnetzStation.size(), vector<MeteoData>());
 
 			//date_anetz_start/end must be changed to be a multiple of 6h before the original dateStart, dateEnd
-			Date date_anetz_start = Date(floor(dateStart.getJulianDate(true) * 4.0) / 4.0, 0.);
+			Date date_anetz_start = Date(floor(dateStart.getJulian(true) * 4.0) / 4.0, 0.);
 			date_anetz_start.setTimeZone(in_tz);
-			Date date_anetz_end   = Date(floor(dateEnd.getJulianDate(true) * 4.0) / 4.0, 0.);
+			Date date_anetz_end   = Date(floor(dateEnd.getJulian(true) * 4.0) / 4.0, 0.);
 			date_anetz_end.setTimeZone(in_tz);
 
 			//read Anetz Data
@@ -512,7 +512,7 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 	for (size_t jj=0; jj<vecMeteo[stationindex].size(); jj++){
 		while (vecMeteo[stationindex][jj].date > (current_slice_date+0.2485)){
 			counter++;
-			double julian = floor((current_slice_date.getJulianDate(true) +0.25001) * 4.0) / 4.0;
+			double julian = floor((current_slice_date.getJulian(true) +0.25001) * 4.0) / 4.0;
 			current_slice_date = Date(julian, 0.);
 			current_slice_date.setTimeZone(in_tz);
 		}
@@ -569,7 +569,7 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
                            const std::vector< std::vector<MeteoData> >& vecMeteoAnetz,
                            std::vector< std::vector<double> >& vec_of_psums)
 {
-	const unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulianDate(true) - dateStart.getJulianDate(true) + 0.00001) * 4.0) + 1;
+	const unsigned int nr_of_slices = (unsigned int)((dateEnd.getJulian(true) - dateStart.getJulian(true) + 0.00001) * 4.0) + 1;
 
 	for (size_t ii=0; ii<vecMeteoAnetz.size(); ii++){
 		double tmp_psum = 0.0;
@@ -769,7 +769,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 			IOUtils::convertString(curr_swe, rs->getString(2));
 			if(prev_swe!=IOUtils::nodata && curr_swe!=IOUtils::nodata) {
 				 //valid values for Delta computation
-				if((d.getJulianDate()-prev_date.getJulianDate())<=max_interval) {
+				if((d.getJulian()-prev_date.getJulian())<=max_interval) {
 					//data not too far apart, so we accept it for Delta SWE
 					//looking for matching timestamp in the vecMeteo
 					while(ii_serie<serie_len && vecMeteo[stationindex][ii_serie].date<d) ii_serie++;

@@ -458,7 +458,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		if (myreader.contains_timestamp()){
 			myreader.read(dateStart.toString(Date::ISO), dateEnd.toString(Date::ISO), mytimestamps, mydata);
 		} else {
-			myreader.read(dateStart.getJulianDate(), dateEnd.getJulianDate(), mydata);
+			myreader.read(dateStart.getJulian(), dateEnd.getJulian(), mydata);
 		}
 
 		copy_data(myreader, mytimestamps, mydata, vecMeteo[ii]);
@@ -516,9 +516,9 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					if(out_dflt_TZ!=IOUtils::nodata) {
 						Date tmp_date(vecMeteo[ii][jj].date);
 						tmp_date.setTimeZone(out_dflt_TZ);
-						julian = tmp_date.getJulianDate();
+						julian = tmp_date.getJulian();
 					} else {
-						julian = vecMeteo[ii][jj].date.getJulianDate();
+						julian = vecMeteo[ii][jj].date.getJulian();
 					}
 					vec_data.push_back(julian);
 				}

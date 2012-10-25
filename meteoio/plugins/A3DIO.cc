@@ -430,8 +430,8 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 	//1D and 2D data must correspond, that means that if there is 1D data
 	//for a certain date (e.g. 1.1.2006) then 2D data must exist (prec2006.txt etc),
 	//otherwise throw FileNotFoundException
-	Date startDate(vecMeteo[0][0].date.getJulianDate(), in_tz, false); //so that the correct filenames for the TZ will be constructed
-	Date endDate(vecMeteo[0][vecMeteo[0].size()-1].date.getJulianDate(), in_tz, false);
+	Date startDate(vecMeteo[0][0].date.getJulian(), in_tz, false); //so that the correct filenames for the TZ will be constructed
+	Date endDate(vecMeteo[0][vecMeteo[0].size()-1].date.getJulian(), in_tz, false);
 
 	constructMeteo2DFilenames(startDate, endDate, filenames);//get all files for all years
 	const size_t stations = getNrOfStations(filenames, hashStations);
@@ -816,7 +816,7 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 			file.flags ( std::ios::fixed );
 			for(size_t j=0; j<size; j++) {
 				int yyyy, mm, dd, hh;
-				Date tmp_date(data[ii][j].date.getJulianDate(true), out_tz);
+				Date tmp_date(data[ii][j].date.getJulian(true), out_tz);
 				tmp_date.getDate(yyyy, mm, dd, hh);
 				file.fill('0');
 				file << setw(4) << yyyy << " " << setw(2) << mm << " " << setw(2) << dd << " " << setw(2) << hh << " ";
@@ -910,14 +910,14 @@ int A3DIO::write2DmeteoFile(const std::vector< std::vector<MeteoData> >& data,
 
 	std::ofstream file;
 	int startyear, year, month, day, hour;
-	Date tmp_date(data[0][0].date.getJulianDate(true), out_tz);
+	Date tmp_date(data[0][0].date.getJulian(true), out_tz);
 	tmp_date.getDate(startyear, month, day, hour);
 
 	open2DFile(data, fileprefix, label, startyear, file);
 	file.flags ( ios::fixed );
 
 	for(size_t ii=0; ii<nb_timesteps; ii++) {
-		tmp_date.setDate(data[0][ii].date.getJulianDate(true), out_tz);
+		tmp_date.setDate(data[0][ii].date.getJulian(true), out_tz);
 		tmp_date.getDate(year, month, day, hour);
 		if(year!=startyear) {
 			//if the year has changed, we need to write to a new file

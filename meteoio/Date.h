@@ -114,7 +114,7 @@ class Date {
 		bool isUndef() const;
 		double getTimeZone() const;
 		bool getDST() const;
-		double getJulianDate(const bool& gmt=false) const;
+		double getJulian(const bool& gmt=false) const;
 		double getModifiedJulianDate(const bool& gmt=false) const;
 		double getTruncatedJulianDate(const bool& gmt=false) const;
 		time_t getUnixDate() const;

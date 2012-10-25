@@ -639,9 +639,9 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 	}
 
 	size_t first = 0, last = vecM.size()-1;
-	const double start_val=vecM[first].date.getJulianDate(true);
-	const double end_val=vecM[last].date.getJulianDate(true);
-	const double curr_val = soughtdate.getJulianDate(true);
+	const double start_val=vecM[first].date.getJulian(true);
+	const double end_val=vecM[last].date.getJulian(true);
+	const double curr_val = soughtdate.getJulian(true);
 
 	//if we reach this point: at least one element in buffer
 	if (vecM[first].date > soughtdate) {
@@ -659,8 +659,8 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 	const double raw_pos = (curr_val-start_val) / (end_val-start_val);
 	const size_t start = MAX( (size_t)(floor(raw_pos*last*.8)), first);
 	const size_t end = MIN( (size_t)ceil(raw_pos*last*1.2), last);
-	if(vecM[start].date.getJulianDate(true)<curr_val) first=start;
-	if(vecM[end].date.getJulianDate(true)>=curr_val) last=end;
+	if(vecM[start].date.getJulian(true)<curr_val) first=start;
+	if(vecM[end].date.getJulian(true)>=curr_val) last=end;
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
 	if (exactmatch){

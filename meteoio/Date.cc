@@ -147,7 +147,7 @@ void Date::setDate(const Date& in_date)
 		dst = false;
 		undef = true;
 	} else {
-		setDate(in_date.getJulianDate(), in_date.getTimeZone(), in_date.getDST());
+		setDate(in_date.getJulian(), in_date.getTimeZone(), in_date.getDST());
 	}
 }
 
@@ -288,7 +288,7 @@ bool Date::getDST() const {
 * @param gmt convert returned value to GMT? (default: false)
 * @return julian date in the current timezone / in GMT depending on the gmt parameter
 */
-double Date::getJulianDate(const bool& gmt) const {
+double Date::getJulian(const bool& gmt) const {
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
@@ -750,7 +750,7 @@ std::ostream& operator<<(std::ostream &os, const Date &date) {
 	else {
 		os << date.toString(Date::ISO) << "\n";
 		os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\t\t" << "DST=" << date.dst << "\n";
-		os << "julian:\t\t\t" << setprecision(10) << date.getJulianDate() << "\t(GMT=" << date.getJulianDate(true) << ")\n";
+		os << "julian:\t\t\t" << setprecision(10) << date.getJulian() << "\t(GMT=" << date.getJulian(true) << ")\n";
 		os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
 		os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
 		os << "MatlabJulian:\t\t" << date.getMatlabDate() << "\n";

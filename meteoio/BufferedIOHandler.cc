@@ -229,7 +229,7 @@ double BufferedIOHandler::getAvgSamplingRate()
 			sum += (unsigned long)vec_buffer_meteo[ii].size();
 		}
 		if (sum > 0){
-			double days = buffer_end.getJulianDate() - buffer_start.getJulianDate();
+			double days = buffer_end.getJulian() - buffer_start.getJulian();
 			return ((double)sum / days);
 		}
 	}
@@ -378,8 +378,8 @@ std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 	os << "Config& cfg = " << hex << &data.cfg << dec << "\n";
 	os << "IOHandler &iohandler = " << hex << &data.iohandler << dec << "\n";
 
-	os << "Buffering " << data.chunks << " chunk(s) of " <<data.chunk_size.getJulianDate() << " day(s) with "
-	   << data.buff_before.getJulianDate() << " day(s) pre-buffering\n";
+	os << "Buffering " << data.chunks << " chunk(s) of " <<data.chunk_size.getJulian() << " day(s) with "
+	   << data.buff_before.getJulian() << " day(s) pre-buffering\n";
 
 	os << "Current buffer content (" << data.vec_buffer_meteo.size() << " stations, "
 	   << data.mapBufferedGrids.size() << " grids):\n";

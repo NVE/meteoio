@@ -415,6 +415,7 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 		Date base_date;
 		double P1, P2;
 		getDate(h, base_date, P1, P2);
+std::cerr << "Found date=" << base_date.toString(Date::ISO) << "\n";
 
 		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
 		long timeRange;
@@ -495,7 +496,7 @@ void GRIBIO::indexFile(const std::string& filename)
 			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
 		}
 
-		llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this sets llcorner, cellsize and bearing_offset
+		//llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this sets llcorner, cellsize and bearing_offset
 		if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
 			throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
 		}
@@ -548,6 +549,9 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		cleanup();
 		indexFile(filename);
 	}
+
+listFields(filename);
+std::cerr << "fields have been listed\n";
 
 	//Basic meteo parameters
 	if(parameter==MeteoGrids::P) read2DGrid_indexed(1.2, 1, 0, date, grid_out); //PS
@@ -677,7 +681,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 
 void GRIBIO::readDEM(DEMObject& dem_out)
 {
-	const Date d; //ie: undef. This will be caught when reading the GRIB file
+	const Date d(2012,9,19,0,0,0); //ie: undef. This will be caught when reading the GRIB file
 	std::string filename;
 
 	cfg.getValue("DEMFILE", "Input", filename);

@@ -65,7 +65,7 @@ class SunTrajectory {
 		static double getAngleOfIncidence(const double& sun_azi, const double& sun_elev,
 		                                  const double& slope_azi, const double& slope_elev);
 		static double projectHorizontalToSlope(const double& sun_azi, const double& sun_elev,
-		                                       const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold);
+		                                       const double& slope_azi, const double& slope_elev, const double& H_radiation, const double& elev_threshold=5.);
 		static double projectSlopeToHorizontal(const double& sun_azi, const double& sun_elev,
 		                                       const double& slope_azi, const double& slope_elev, const double& S_radiation);
 		static double projectHorizontalToBeam(const double& sun_elev, const double& H_radiation);
