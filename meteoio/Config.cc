@@ -24,12 +24,12 @@ namespace mio {
 const std::string Config::defaultSection = "GENERAL";
 
 //Constructors
-Config::Config()
+Config::Config() : properties(), sourcename()
 {
 	//nothing is even put in the property map, the user will have to fill it by himself
 }
 
-Config::Config(const std::string& i_filename)
+Config::Config(const std::string& i_filename) : properties(), sourcename(i_filename)
 {
 	addFile(i_filename);
 }

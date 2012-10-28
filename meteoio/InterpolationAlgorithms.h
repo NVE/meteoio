@@ -325,7 +325,7 @@ class RHAlgorithm : public InterpolationAlgorithm {
 					const DEMObject& i_dem,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom) {}
+			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom), vecDataTA(), vecDataRH() {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -349,7 +349,7 @@ class ILWRAlgorithm : public InterpolationAlgorithm {
 					const DEMObject& i_dem,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom) {}
+			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom), vecDataEA() {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -373,7 +373,7 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 					const DEMObject& i_dem,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom) {}
+			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW() {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);
@@ -475,7 +475,7 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 					const DEMObject& i_dem,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom) {}
+			: InterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom), variogram() {}
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating();
 		virtual void calculate(Grid2DObject& grid);

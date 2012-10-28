@@ -139,14 +139,16 @@ template<class T> class Array1D {
 		bool keep_nodata;
 };
 
-template<class T> Array1D<T>::Array1D(const unsigned int& asize) {
-	keep_nodata = true;
-	resize(asize);
+template<class T> Array1D<T>::Array1D(const unsigned int& asize)
+                  : vecData(asize), nx(asize), keep_nodata(true)
+{
+	//resize(asize);
 }
 
-template<class T> Array1D<T>::Array1D(const unsigned int& asize, const T& init) {
-	keep_nodata = true;
-	resize(asize, init);
+template<class T> Array1D<T>::Array1D(const unsigned int& asize, const T& init)
+                 : vecData(asize, init), nx(asize), keep_nodata(true)
+{
+	//resize(asize, init);
 }
 
 template<class T> void Array1D<T>::setKeepNodata(const bool i_keep_nodata) {

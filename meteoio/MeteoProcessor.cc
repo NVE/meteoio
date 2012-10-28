@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg)
+MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg), processing_stack()
 {
 	//Parse [Filters] section, create processing stack for each configured parameter
 	set<string> set_of_used_parameters;

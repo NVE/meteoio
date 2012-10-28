@@ -21,7 +21,11 @@ using namespace std;
 
 namespace mio {
 
-Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg) : cfg(in_cfg) {
+Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
+                     : cfg(in_cfg), window_size(10.*86400.),
+                       tasklist(), taskargs(), extended_tasklist()
+{
+	//default window_size is 10 julian days
 	/*
 	 * By reading the Config object build up a list of user configured resampling algorithm
 	 * for each MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
@@ -38,7 +42,6 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg) : cfg(in_cfg) {
 		taskargs.push_back(vecResamplingArguments);
 	}
 
-	window_size = 10.*86400.; //default size is 10 julian days
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, Config::nothrow);
 	window_size /= 86400; //user uses seconds, internally julian day is used
 	if (window_size <= 0.01)

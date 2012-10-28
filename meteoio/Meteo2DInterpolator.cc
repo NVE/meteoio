@@ -22,15 +22,13 @@ using namespace std;
 
 namespace mio {
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) : cfg(i_cfg)
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) : cfg(i_cfg), iomanager(&i_iom), mapAlgorithms()
 {
-	iomanager = &i_iom;
 	setAlgorithms();
 }
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg) : cfg(i_cfg)
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg) : cfg(i_cfg), iomanager(NULL), mapAlgorithms()
 {
-	iomanager = NULL;
 	setAlgorithms();
 }
 

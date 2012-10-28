@@ -36,10 +36,8 @@ namespace mio {
 * @brief Default constructor.
 * Initialize internal variables. It does NOT start timing.
 */
-Timer::Timer() {
-	isRunning=false;
-	start_point=0;
-	elapsed=0;
+Timer::Timer() : start_point(0.), elapsed(0.), isRunning(false)
+{
 }
 
 /**

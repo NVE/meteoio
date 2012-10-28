@@ -82,10 +82,6 @@ const unsigned int FitLeastSquare::max_iter = 50; //maximum number of iterations
 
 //default constructor
 FitLeastSquare::FitLeastSquare() {
-	fit_ready = false;
-	nParam = 0;
-	min_nb_pts = 0;
-	regname = "none";
 }
 
 void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) {

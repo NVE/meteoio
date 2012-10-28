@@ -55,9 +55,10 @@ const double Date::epsilon=1./(24.*3600.); ///< minimum difference between two d
 /**
 * @brief Default constructor: timezone is set to GMT without DST, julian date is set to 0 (meaning -4713-01-01T12:00)
 */
-Date::Date() {
-	dst = false;
-	undef = true;
+Date::Date() : timezone(0.), gmt_julian(0.),
+               gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
+               dst(false), undef(true)
+{
 }
 
 /**
@@ -66,10 +67,11 @@ Date::Date() {
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst)
+Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst) :
+           timezone(0.), gmt_julian(0.),
+           gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
+           dst(false), undef(true)
 {
-	timezone = 0;
-	dst = false;
 	setDate(julian_in, in_timezone, in_dst);
 }
 
@@ -78,8 +80,11 @@ Date::Date(const double& julian_in, const double& in_timezone, const bool& in_ds
 * @param in_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const time_t& in_time, const bool& in_dst) {
-	dst = false;
+Date::Date(const time_t& in_time, const bool& in_dst) :
+           timezone(in_dst), gmt_julian(0.),
+           gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
+           dst(false), undef(true)
+{
 	setDate(in_time, in_dst);
 }
 
@@ -94,10 +99,11 @@ Date::Date(const time_t& in_time, const bool& in_dst) {
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone, const bool& in_dst)
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone, const bool& in_dst) :
+           timezone(in_timezone), gmt_julian(0.),
+           gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
+           dst(false), undef(true)
 {
-	timezone = 0;
-	dst = false;
 	setDate(in_year, in_month, in_day, in_hour, in_minute, in_timezone, in_dst);
 }
 

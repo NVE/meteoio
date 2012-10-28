@@ -96,15 +96,25 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 	}
 }
 
+
+		MeteoData::Parameters param; ///<the parameter that we will interpolate
+
+		std::vector<MeteoData> vecMeteo;
+		std::vector<double> vecData; ///<store the measurement for the given parameter
+		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
+		std::stringstream info; ///<to store some extra information about the interoplation process
+		size_t nrOfMeasurments; ///<the available number of measurements
+
+		
 InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
                                                const Date& i_date,
                                                const DEMObject& i_dem,
                                                const std::vector<std::string>& i_vecArgs,
                                                const std::string& i_algo, IOManager& iom)
-	: mi(i_mi), date(i_date), dem(i_dem), vecArgs(i_vecArgs), algo(i_algo), iomanager(iom)
+	: mi(i_mi), date(i_date), dem(i_dem), vecArgs(i_vecArgs), algo(i_algo), iomanager(iom),
+	  param(MeteoData::firstparam), vecMeteo(), vecData(), vecMeta(), info(), nrOfMeasurments(0)
 {
-	nrOfMeasurments = 0;
-	param = MeteoData::firstparam; //this is a stupid default value, but since we never check it...
+	//the default value for param is quite stupid, but since we never check it...
 	iomanager.getMeteoData(date, vecMeteo);
 }
 

@@ -294,16 +294,15 @@ template<class T> Array3DProxy<T> Array3D<T>::operator[](const unsigned int& i) 
 }
 
 
-template<class T> Array3D<T>::Array3D() {
-	nx = ny = nz = nxny = 0;
-	keep_nodata = true;
+template<class T> Array3D<T>::Array3D() : vecData(), nx(0), ny(0), nz(0), nxny(0), keep_nodata(true)
+{
 }
 
 template<class T> Array3D<T>::Array3D(const Array3D<T>& i_array3D,
                                       const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
                                       const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
+                               : vecData(i_ncols*i_nrows*i_ndepth), nx(i_ncols), ny(i_nrows), nz(i_ndepth), nxny(i_ncols*i_nrows), keep_nodata(true)
 {
-	keep_nodata = true;
 	subset(i_array3D, i_nx, i_ny, i_nz, i_ncols, i_nrows, i_ndepth);
 }
 
@@ -372,14 +371,16 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 }
 
 
-template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
-	resize(anx, any, anz);
-	keep_nodata = true;
+template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz)
+                             : vecData(anx*any*anz), nx(anx), ny(any), nz(anz), nxny(anx*any), keep_nodata(true)
+{
+	//resize(anx, any, anz);
 }
 
-template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
-	resize(anx, any, anz, init);
-	keep_nodata = true;
+template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init)
+                             : vecData(anx*any*anz, init), nx(anx), ny(any), nz(anz), nxny(anx*any), keep_nodata(true)
+{
+	//resize(anx, any, anz, init);
 }
 
 template<class T> void Array3D<T>::setKeepNodata(const bool i_keep_nodata) {

@@ -23,10 +23,12 @@ using namespace std;
 namespace mio {
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg),
-                                            meteoprocessor(cfg), interpolator(cfg)
+                                            meteoprocessor(cfg), interpolator(cfg),
+                                            proc_properties(), point_cache(), filtered_cache(),
+                                            fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
+                                            processing_level(IOManager::filtered | IOManager::resampled)
 {
-	setProcessingLevel(IOManager::filtered | IOManager::resampled);
-	fcache_start = fcache_end = Date(0.0, 0.); //this should not matter, since 0 is still way back before any real data...
+	//setProcessingLevel(IOManager::filtered | IOManager::resampled);
 	meteoprocessor.getWindowSize(proc_properties);
 	interpolator.setIOManager(*this); //because "*this" does not necessarily exist in the initialization list...
 }

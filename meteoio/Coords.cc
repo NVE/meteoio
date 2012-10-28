@@ -262,9 +262,16 @@ std::ostream& operator<<(std::ostream &os, const Coords& coord)
 * This constructor builds a dummy object that performs no conversions but can be used for comparison
 * purpose. This is more or less the equivalent of NULL for a pointer...
 */
-Coords::Coords() {
-	setDefaultValues();
-	setProj("NULL", "NULL");
+Coords::Coords() : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
+                   altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
+                   easting(IOUtils::nodata), northing(IOUtils::nodata),
+                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+                   coordsystem("NULL"), coordparam("NULL"),
+                   convToWGS84(&Coords::NULL_to_WGS84), convFromWGS84(&Coords::WGS84_to_NULL), distance_algo(GEO_COSINE)
+
+{
+	//setDefaultValues();
+	//setProj("NULL", "NULL");
 }
 
 /**
@@ -274,8 +281,15 @@ Coords::Coords() {
 *
 * See setProj() for a full description of these strings
 */
-Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters) {
-	setDefaultValues();
+Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters) :
+                   ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
+                   altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
+                   easting(IOUtils::nodata), northing(IOUtils::nodata),
+                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+                   coordsystem(in_coordinatesystem), coordparam(in_parameters),
+                   convToWGS84(&Coords::NULL_to_WGS84), convFromWGS84(&Coords::WGS84_to_NULL), distance_algo(GEO_COSINE)
+{
+	//setDefaultValues();
 	setProj(in_coordinatesystem, in_parameters);
 }
 
@@ -286,9 +300,15 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
 * @param[in] in_lat_ref latitude of the reference point
 * @param[in] in_long_ref longitude of the reference point
 */
-Coords::Coords(const double& in_lat_ref, const double& in_long_ref)
+Coords::Coords(const double& in_lat_ref, const double& in_long_ref) :
+                   ref_latitude(in_lat_ref), ref_longitude(in_long_ref),
+                   altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
+                   easting(IOUtils::nodata), northing(IOUtils::nodata),
+                   grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+                   coordsystem("LOCAL"), coordparam(""),
+                   convToWGS84(&Coords::local_to_WGS84), convFromWGS84(&Coords::WGS84_to_local), distance_algo(GEO_COSINE)
 {
-	setDefaultValues();
+	//setDefaultValues();
 	setLocalRef(in_lat_ref, in_long_ref);
 	setProj("LOCAL", "");
 }

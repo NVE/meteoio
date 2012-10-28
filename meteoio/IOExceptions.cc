@@ -29,7 +29,7 @@ namespace mio {
 #ifdef _POPC_
 IOException::IOException(const std::string& message, const std::string& position) : POPException(STD_EXCEPTION)
 #else
-IOException::IOException(const std::string& message, const std::string& position)
+IOException::IOException(const std::string& message, const std::string& position) : msg()
 #endif
 {
 	if (position=="") {

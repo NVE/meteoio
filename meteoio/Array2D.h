@@ -256,17 +256,16 @@ template<class T> Array2DProxy<T> Array2D<T>::operator[](const unsigned int& i) 
 	return Array2DProxy<T>(*this, i);
 }
 
-template<class T> Array2D<T>::Array2D() {
-	nx = ny = 0;
-	keep_nodata = true;
+template<class T> Array2D<T>::Array2D() : vecData(), nx(0), ny(0), keep_nodata(true)
+{
 }
 
 template<class T> Array2D<T>::~Array2D() { }
 
 template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const unsigned int& i_nx, const unsigned int& i_ny,
-                                      const unsigned int& i_ncols, const unsigned int& i_nrows)
+                                      const unsigned int& i_ncols, const unsigned int& i_nrows) :
+                                      vecData(i_ncols*i_nrows), nx(i_ncols), ny(i_nrows), keep_nodata(true)
 {
-	keep_nodata = true;
 	subset(i_array2D, i_nx, i_ny, i_ncols, i_nrows);
 }
 
@@ -322,16 +321,16 @@ template<class T> void Array2D<T>::fill(const Array2D<T>& i_array2D, const unsig
 	}
 }
 
-template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any, const T& init) {
-	nx = ny = 0;
-	keep_nodata = true;
-	resize(anx,any,init);
+template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any, const T& init) :
+                  vecData(anx*any, init), nx(anx), ny(any), keep_nodata(true)
+{
+	//resize(anx,any,init);
 }
 
-template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any) {
-	nx = ny = 0;
-	keep_nodata = true;
-	resize(anx,any);
+template<class T> Array2D<T>::Array2D(const unsigned int& anx, const unsigned int& any) :
+                  vecData(anx*any), nx(anx), ny(any), keep_nodata(true)
+{
+	//resize(anx,any);
 }
 
 template<class T> void Array2D<T>::setKeepNodata(const bool i_keep_nodata) {
