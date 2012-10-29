@@ -32,6 +32,18 @@ Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg) : cfg(i_cfg), ioma
 	setAlgorithms();
 }
 
+Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& source)
+{
+	//since this uses an IOManager on a given machine/node, since the pointers point to entry points
+	//in the compiled code, they should remain valid and therefore can be copied
+	if(this != &source) {
+		//cfg: can not be copied
+		iomanager = source.iomanager;
+		mapAlgorithms = source.mapAlgorithms;
+	}
+	return *this;
+}
+
 void Meteo2DInterpolator::setAlgorithms() {
 	/*
 	 * By reading the Config object build up a list of user configured algorithms

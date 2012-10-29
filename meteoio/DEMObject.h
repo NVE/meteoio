@@ -47,9 +47,8 @@ class DEMObject : public Grid2DObject {
 		Array2D<double> azi;
 		Array2D<double> curvature;
 		Array2D<double> Nx, Ny, Nz;
-		double min_altitude, max_altitude;
-		double min_slope, max_slope;
-		double min_curvature, max_curvature;
+		double min_altitude, min_slope, min_curvature;
+		double max_altitude, max_slope, max_curvature;
 
 		///Keywords for slope computation algorithm
 		typedef enum SLOPE_TYPE {

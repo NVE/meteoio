@@ -25,47 +25,39 @@ namespace mio {
 const double Matrix::epsilon = 1e-9; //for considering a determinant to be zero, etc
 const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrix
 
-Matrix::Matrix() {
-	nrows = ncols = 0;
+Matrix::Matrix() : vecData(), ncols(0), nrows(0)
+{
 }
 
-Matrix::Matrix(const int& rows, const int& cols) {
+Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
+{
 	if(rows<0 || cols<0) {
 		std::stringstream tmp;
 		tmp << "Trying construct a matrix with negative dimensions: ";
 		tmp << "(" << rows << "," << cols << ")";
 		throw IOException(tmp.str(), AT);
 	}
-	nrows = ncols = 0;
 	resize((unsigned)rows,(unsigned)cols);
 }
 
-Matrix::Matrix(const unsigned int& rows, const unsigned int& cols) {
-	nrows = ncols = 0;
-	resize(rows,cols);
+Matrix::Matrix(const unsigned int& rows, const unsigned int& cols) : vecData(rows*cols), ncols(cols), nrows(rows)
+{
+	//resize(rows,cols);
 }
 
-Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double& init) {
-	nrows = ncols = 0;
-	resize(rows,cols,init);
+Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double& init) : vecData(rows*cols, init), ncols(cols), nrows(rows)
+{
+	//resize(rows,cols,init);
 }
 
-Matrix::Matrix(const unsigned int& n, const double& init) {
-	nrows = ncols = 0;
-	identity(n, init);
+Matrix::Matrix(const unsigned int& n, const double& init) : vecData(n*n, 0.), ncols(n), nrows(n)
+{
+	//identity(n, init);
+	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
 }
 
-Matrix::Matrix(const Matrix& init) {
-	unsigned int tmprows, tmpcols;
-	init.size(tmprows, tmpcols);
-	nrows = ncols = 0;
-	resize(tmprows, tmpcols);
-
-	for (unsigned int ii=1; ii<=nrows; ii++) {
-		for (unsigned int jj=1; jj<=ncols; jj++) {
-			operator()(ii,jj) = init(ii,jj);
-		}
-	}
+Matrix::Matrix(const Matrix& init) : vecData(init.vecData), ncols(init.ncols), nrows(init.nrows)
+{
 }
 
 void Matrix::identity(const unsigned int& n, const double& init) {

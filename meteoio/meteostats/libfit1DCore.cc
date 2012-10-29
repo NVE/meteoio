@@ -23,10 +23,6 @@ using namespace std;
 
 namespace mio {
 
-FitModel::FitModel(const FitModel& source) {
-	*this = source;
-}
-
 void FitModel::getParams(std::vector<double>& o_coefficients) {
 	if(fit_ready!=true) {
 		throw InvalidArgumentException("The regression has not yet being computed!", AT);

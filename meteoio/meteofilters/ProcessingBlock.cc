@@ -169,7 +169,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 
 }
 
-ProcessingBlock::ProcessingBlock(const std::string& name) : block_name(name)
+ProcessingBlock::ProcessingBlock(const std::string& name) : properties(), block_name(name)
 {}
 
 void ProcessingBlock::convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,

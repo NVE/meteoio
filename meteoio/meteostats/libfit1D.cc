@@ -24,26 +24,24 @@ using namespace std;
 
 namespace mio {
 
-Fit1D::Fit1D() {
-	model = NULL;
+Fit1D::Fit1D() : model(NULL)
+{
 }
 
 //default constructor
-Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
-	model=NULL;
+Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
 	setModel(regType, in_X, in_Y, updatefit);
 }
 
-Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
-	model=NULL;
+Fit1D::Fit1D(const std::string& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
 	setModel(regType, in_X, in_Y, updatefit);
 }
 
-Fit1D::Fit1D(const Fit1D& i_fit) {
+Fit1D::Fit1D(const Fit1D& i_fit) : model(NULL) { //HACK: teh pointer could not be valid anymore
 	*this = i_fit;
 }
 
-Fit1D& Fit1D::operator=(const Fit1D& source) {
+Fit1D& Fit1D::operator=(const Fit1D& source) { //HACK: teh pointer could not be valid anymore
 	if(this != &source) {
 		model = new SimpleLinear; //this is only for memory allocation
 		*model = *(source.model); //copy what is pointed to

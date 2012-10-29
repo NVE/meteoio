@@ -19,12 +19,6 @@
 
 namespace mio {
 
-#ifdef _WIN32
-DynamicLibrary::DynamicLibrary(HINSTANCE i_objFile) : objFile(i_objFile){}
-#else
-DynamicLibrary::DynamicLibrary(void* i_objFile) : objFile(i_objFile){}
-#endif
-
 DynamicLibrary::~DynamicLibrary(void)
 {
 #ifdef _WIN32

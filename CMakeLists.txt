@@ -44,7 +44,7 @@ ELSE(MSVC)
 	IF(POPC)
 		SET(EXTRA_WARNINGS "-Wextra -Wno-ignored-qualifiers")
 	ELSE(POPC)
-		SET(EXTRA_WARNINGS "-Wextra -pedantic")
+		SET(EXTRA_WARNINGS "-Wextra -pedantic") #-Weffc++
 	ENDIF(POPC)
 	IF(CMAKE_COMPILER_IS_GNUCXX)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")

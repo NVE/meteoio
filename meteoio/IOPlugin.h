@@ -25,11 +25,11 @@ namespace mio {
 
 /**
  * @class IOPlugin
- * @brief A helper class representing a MeteoIO plugin in the context of the dynamic loading as implemented in class 
+ * @brief A helper class representing a MeteoIO plugin in the context of the dynamic loading as implemented in class
  * 	IOHandler. Each IOPlugin object represents an implementation of IOInterface or in more tangible terms it represents
  *	an instance of IOInterface in use. The two pointer member variables *io and *dynLibrary represent the opened
  *	dynamic library and the loaded object (from within that library). These pointers are essential for knowing
- *	how to deallocate the loaded object and library. 
+ *	how to deallocate the loaded object and library.
  *
  * @author Thomas Egger
  * @date   2009-08-11
@@ -40,7 +40,7 @@ class IOPlugin {
 		std::string classname; ///< Classname of the object to be loaded from that dynamic library (e.g. "A3DIO")
 		IOInterface *io; ///< The pointer to the actual dynamically loaded instance of IOInterface
 		DynamicLibrary *dynLibrary; ///< The pointer to the opened dynamic library
-		
+
 		/**
 		 * @brief The main constructor for the IOPlugin class
 		 *
@@ -51,6 +51,9 @@ class IOPlugin {
 		 */
 		IOPlugin(std::string i_s1, std::string i_s2, IOInterface *p1, DynamicLibrary *p2) : libname(i_s1), classname(i_s2), io(p1), dynLibrary(p2){}
 		IOPlugin() : libname(""), classname(""), io(NULL), dynLibrary(NULL){}
+		IOPlugin(const IOPlugin& c) : libname(c.libname), classname(c.classname), io(c.io), dynLibrary(c.dynLibrary){}
+
+		IOPlugin& operator=(const IOPlugin& source);
 
 		friend std::ostream& operator<<(std::ostream& os, const IOPlugin& data);
 		static const std::string header; //to contain a helpful header for understanding the output of <<

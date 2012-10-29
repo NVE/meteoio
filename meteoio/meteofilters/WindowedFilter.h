@@ -59,7 +59,6 @@ class WindowedFilter : public FilterBlock {
 
 	private:
 		std::vector<const MeteoData*> vec_window;
-		unsigned int startIndex, endIndex;
 
 	protected:
 		bool is_soft; //placed here for alignement

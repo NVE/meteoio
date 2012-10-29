@@ -21,7 +21,7 @@ using namespace std;
 
 namespace mio {
 
-ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : param_name(parname)
+ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
 {
 	vector<string> vec_filters;
 	const size_t nr_of_filters = getFiltersForParameter(cfg, param_name, vec_filters);

@@ -30,7 +30,6 @@ namespace mio {
 class FitModel {
 	public:
 		FitModel() : Lambda(), X(), Y(), infoString(), regname(), nPts(0), nParam(0), min_nb_pts(0), fit_ready(false) {};
-		FitModel(const FitModel& source);
 		virtual ~FitModel() {};
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
 		void setGuess(const std::vector<double> lambda_in);

@@ -23,10 +23,13 @@ namespace mio {
 
 #ifdef _POPC_
 BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg)
-	: iohandler(in_iohandler), cfg(in_cfg), mapBufferedGrids()
+        : iohandler(in_iohandler), cfg(in_cfg), vec_buffer_meteo(), mapBufferedGrids(), IndexBufferedGrids(),
+          buffer_start(), buffer_end(), chunk_size(), buff_before(), chunks(1), max_grids(10)
 #else
 BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg)
-	  : IOInterface(NULL), iohandler(in_iohandler), cfg(in_cfg), mapBufferedGrids()
+        : IOInterface(NULL), iohandler(in_iohandler), cfg(in_cfg), vec_buffer_meteo(), mapBufferedGrids(), IndexBufferedGrids(),
+          buffer_start(), buffer_end(), chunk_size(), buff_before(), chunks(1), max_grids(10)
+
 #endif
 {
 	setDfltBufferProperties();

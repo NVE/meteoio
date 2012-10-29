@@ -77,27 +77,27 @@ class DynamicLibrary {
 		void *objFile;
 #endif
 
-		// Since an instance of DynamicLibrary manages lifetime of an open 
-		// library, it is important to make sure that the object isn't 
+		// Since an instance of DynamicLibrary manages lifetime of an open
+		// library, it is important to make sure that the object isn't
 		// copied.
-		DynamicLibrary(const DynamicLibrary&) {}
+		DynamicLibrary(const DynamicLibrary&) : objFile() {}
 		DynamicLibrary& operator=(const DynamicLibrary&) {return *this;}
 
-		// Creates a new library, with the object file handle that is passed 
-		// in. Protected so that only the DynamicLoader can create an 
+		// Creates a new library, with the object file handle that is passed
+		// in. Protected so that only the DynamicLoader can create an
 		// instance (since it is declared friend.
 #ifdef _WIN32
-		DynamicLibrary(HINSTANCE i_objFile);
+		DynamicLibrary(HINSTANCE i_objFile) : objFile(i_objFile) {}
 #else
-		DynamicLibrary(void* i_objFile);
+		DynamicLibrary(void* i_objFile) : objFile(i_objFile) {}
 #endif
 
 	public:
 		// Destructor, closes the open shared library
 		~DynamicLibrary(void);
 
-		// Creates a new instance of the named class, or returns NULL is the 
-		// class isn't found. 
+		// Creates a new instance of the named class, or returns NULL is the
+		// class isn't found.
 		PluginObject* newObject(const std::string& name, const Config& cfg);
 
 		friend class DynamicLoader; ///< The friend class DynamicLoader can solely instantiate the DynamicLibrary class (protected constructor)

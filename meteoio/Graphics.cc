@@ -63,7 +63,7 @@ const unsigned int legend::font_E[char_height][char_width] = {{0,0,0,0,0,0}, {0,
 
 //create a legend of given height
 //if height is insufficient, we don't generate any content, only transparent pixels
-legend::legend(const unsigned int &height, const double &minimum, const double &maximum)
+legend::legend(const unsigned int &height, const double &minimum, const double &maximum) : grid(total_width, height, IOUtils::nodata)
 {
 	drawLegend(height, minimum, maximum);
 }
@@ -290,31 +290,57 @@ const unsigned char Gradient::channel_max_color = 255;
 const unsigned char Gradient::reserved_idx = 5;
 const unsigned char Gradient::reserved_cols = 2;
 
-Gradient::Gradient(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
+Gradient::Gradient(const Type& i_type, const double& i_min, const double& i_max, const bool& i_autoscale)
+          : min(i_min), max(i_max), delta(i_max - i_min), type(none), model(NULL), nr_unique_cols(0), autoscale(i_autoscale)
 {
-	set(type, i_min, i_max, i_autoscale);
-	nr_unique_cols = 0;
+	setModel(i_type);
 }
 
-void Gradient::set(const Type& type, const double& i_min, const double& i_max, const bool& i_autoscale)
+Gradient::Gradient(const Gradient& c)
+          : min(c.min), max(c.max), delta(c.delta), type(c.type), model(NULL), nr_unique_cols(c.nr_unique_cols), autoscale(c.autoscale)
+{
+	setModel(type);
+}
+
+Gradient& Gradient::operator=(const Gradient& source)
+{
+	if(this != &source) {
+		min = source.min;
+		max = source.max;
+		delta = source.delta;
+		type = source.type;
+		nr_unique_cols = source.nr_unique_cols;
+		autoscale = source.autoscale;
+		setModel(type);
+	}
+	return *this;
+}
+
+void Gradient::set(const Type& i_type, const double& i_min, const double& i_max, const bool& i_autoscale)
 {
 	min = i_min;
 	max = i_max;
 	delta = i_max - i_min;
 	autoscale = i_autoscale;
+	type = i_type;
 
-	if(type==terrain) model = new gr_terrain(i_min, i_max, i_autoscale);
-	else if(type==slope) model = new gr_slope(i_min, i_max, i_autoscale);
-	else if(type==azi) model = new gr_azi(i_min, i_max, i_autoscale);
-	else if(type==heat) model = new gr_heat(i_min, i_max, i_autoscale);
-	else if(type==freeze) model = new gr_freeze(i_min, i_max, i_autoscale);
-	else if(type==blue) model = new gr_blue(i_min, i_max, i_autoscale);
-	else if(type==bluewhitered) model = new gr_bluewhitered(i_min, i_max, i_autoscale);
-	else if(type==whitetoblk) model = new gr_whitetoblk(i_min, i_max, i_autoscale);
-	else if(type==blktowhite) model = new gr_blktowhite(i_min, i_max, i_autoscale);
-	else if(type==blue_pink) model = new gr_blue_pink(i_min, i_max, i_autoscale);
-	else if(type==pastel) model = new gr_pastel(i_min, i_max, i_autoscale);
-	else if(type==bg_isomorphic) model = new gr_bg_isomorphic(i_min, i_max, i_autoscale);
+	setModel(i_type);
+}
+
+void Gradient::setModel(const Type& i_type)
+{
+	if(i_type==terrain) model = new gr_terrain(min, max, autoscale);
+	else if(i_type==slope) model = new gr_slope(min, max, autoscale);
+	else if(i_type==azi) model = new gr_azi(min, max, autoscale);
+	else if(i_type==heat) model = new gr_heat(min, max, autoscale);
+	else if(i_type==freeze) model = new gr_freeze(min, max, autoscale);
+	else if(i_type==blue) model = new gr_blue(min, max, autoscale);
+	else if(i_type==bluewhitered) model = new gr_bluewhitered(min, max, autoscale);
+	else if(i_type==whitetoblk) model = new gr_whitetoblk(min, max, autoscale);
+	else if(i_type==blktowhite) model = new gr_blktowhite(min, max, autoscale);
+	else if(i_type==blue_pink) model = new gr_blue_pink(min, max, autoscale);
+	else if(i_type==pastel) model = new gr_pastel(min, max, autoscale);
+	else if(i_type==bg_isomorphic) model = new gr_bg_isomorphic(min, max, autoscale);
 }
 
 void Gradient::setNrOfLevels(const unsigned char& i_nr_unique_levels) {

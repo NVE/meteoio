@@ -27,33 +27,30 @@ namespace mio {
 
 const double SunObject::elevation_dftlThreshold = 5.; //in degrees
 
-SunObject::SunObject(SunObject::position_algo /*alg*/) {
-	julian_gmt = IOUtils::nodata;
-	latitude = longitude = altitude = IOUtils::nodata;
-	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
-	elevation_threshold = elevation_dftlThreshold;
+SunObject::SunObject(SunObject::position_algo /*alg*/)
+           : position(), julian_gmt(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata), altitude(IOUtils::nodata),
+             elevation_threshold(elevation_dftlThreshold),
+             beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
+{
 }
 
-SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude) {
-	julian_gmt = IOUtils::nodata;
-	latitude = i_latitude;
-	longitude = i_longitude;
-	altitude = i_altitude;
-	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
-	elevation_threshold = elevation_dftlThreshold;
+SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude)
+           : position(), julian_gmt(IOUtils::nodata), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
+             elevation_threshold(elevation_dftlThreshold),
+             beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
+{
 }
 
-SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& TZ) {
-	julian_gmt = i_julian - TZ/24.;
-	latitude = i_latitude;
-	longitude = i_longitude;
-	altitude = i_altitude;
-	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
-	elevation_threshold = elevation_dftlThreshold;
+SunObject::SunObject(const double& i_latitude, const double& i_longitude, const double& i_altitude, const double& i_julian, const double& TZ)
+           : position(), julian_gmt(i_julian - TZ/24.), latitude(i_latitude), longitude(i_longitude), altitude(i_altitude),
+             elevation_threshold(elevation_dftlThreshold),
+             beam_toa(IOUtils::nodata), beam_direct(IOUtils::nodata), beam_diffuse(IOUtils::nodata)
+{
 	update();
 }
 
-void SunObject::setDate(const double& i_julian, const double& TZ) {
+void SunObject::setDate(const double& i_julian, const double& TZ)
+{
 	const double i_julian_gmt = i_julian - TZ/24.;
 
 	if(i_julian_gmt!=julian_gmt) { //invalidate all fields if receiving a new date
@@ -69,7 +66,8 @@ void SunObject::setDate(const double& i_julian, const double& TZ) {
 	}
 }
 
-void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude) {
+void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, const double& i_altitude)
+{
 	position.reset();
 	latitude = i_latitude;
 	longitude = i_longitude;
@@ -80,7 +78,8 @@ void SunObject::setLatLon(const double& i_latitude, const double& i_longitude, c
 	}
 }
 
-void SunObject::setElevationThresh(const double& i_elevation_threshold) {
+void SunObject::setElevationThresh(const double& i_elevation_threshold)
+{
 	elevation_threshold = i_elevation_threshold;
 	beam_toa = beam_direct = beam_diffuse = IOUtils::nodata;
 }

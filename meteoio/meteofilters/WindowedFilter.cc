@@ -23,7 +23,7 @@ namespace mio {
 
 WindowedFilter::WindowedFilter(const std::string& name)
 	: FilterBlock(name), min_time_span(0.0, 0.), centering(WindowedFilter::center),
-	  last_start(0), last_end(0), min_data_points(1), is_soft(false)
+	  last_start(0), last_end(0), min_data_points(1), vec_window(), is_soft(false)
 {}
 
 unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)

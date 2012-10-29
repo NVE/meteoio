@@ -81,6 +81,8 @@ class Grid2DObject {
 		Grid2DObject(const unsigned int& ncols, const unsigned int& nrows,
 		             const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
+		virtual ~Grid2DObject() {};
+
 		/**
 		* @brief constructs an object as a subset of another grid object
 		* @param i_grid2Dobj (const Grid2DObject&) initial grid object

@@ -32,7 +32,9 @@ namespace mio {
  */
 class SunTrajectory {
 	public:
-		SunTrajectory() {};
+		SunTrajectory();
+		SunTrajectory(const double& i_latitude, const double& i_longitude);
+
 		virtual ~SunTrajectory() {};
 
 		/** @brief Set the date and time
@@ -103,12 +105,12 @@ class SunMeeus : public SunTrajectory {
 	public:
 		SunMeeus();
 		~SunMeeus() {};
-		SunMeeus(const double& _latitude, const double& _longitude);
-		SunMeeus(const double& _latitude, const double& _longitude, const double& _julian, const double& TZ=0.);
+		SunMeeus(const double& i_latitude, const double& i_longitude);
+		SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& TZ=0.);
 
-		void setDate(const double& _julian, const double& TZ=0.);
-		void setLatLon(const double& _latitude, const double& _longitude);
-		void setAll(const double& _latitude, const double& _longitude, const double& _julian, const double& TZ=0.);
+		void setDate(const double& i_julian, const double& TZ=0.);
+		void setLatLon(const double& i_latitude, const double& i_longitude);
+		void setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& TZ=0.);
 		void reset();
 
 		void getHorizontalCoordinates(double& azimuth, double& elevation) const;
@@ -117,7 +119,6 @@ class SunMeeus : public SunTrajectory {
 		void getEquatorialSunVector(double& sunx, double& suny, double& sunz);
 		void getEquatorialCoordinates(double& right_ascension, double& declination);
 	private:
-		void init();
 		void private_init();
 		void update();
 

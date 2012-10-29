@@ -30,7 +30,7 @@ set<string> SMETCommon::all_mandatory_header_keys = set<std::string>();
 set<string> SMETCommon::all_optional_header_keys  = set<std::string>();
 set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 
-SMETException::SMETException(const std::string& message, const std::string& position)
+SMETException::SMETException(const std::string& message, const std::string& position) : msg()
 {
 	if (position=="") {
 		msg = "At unknown position: " + message;
@@ -222,7 +222,8 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 }
 
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type, const bool& in_gzip)
-           : filename(in_filename), nodata_string(""), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
+           : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(), fout(),
+             filename(in_filename), nodata_string(""), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
              julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), gzip(in_gzip),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false)
@@ -651,13 +652,17 @@ void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 	ascii_precision = vec_precision;
 }
 
-SMETReader::SMETReader(const std::string& in_fname) : filename(in_fname), timestamp_start("-4714-11-24T00:00"),
+SMETReader::SMETReader(const std::string& in_fname) :
+                                                      data_start_fpointer(NULL), vec_offset(), vec_multiplier(), vec_fieldnames(),
+                                                      header(), map_timestamp_streampos(), map_julian_streampos(),
+                                                      filename(in_fname), timestamp_start("-4714-11-24T00:00"),
                                                       timestamp_end("9999-12-31T00:00"), nodata_value(-999.),
+                                                      julian_start(0.), julian_end(5373483.5),
                                                       nr_of_fields(0), timestamp_field(0), julian_field(0),
                                                       location_wgs84(0), location_epsg(0), location_data_wgs84(0), location_data_epsg(0),
+                                                      eoln('\n'),
                                                       timestamp_present(false), julian_present(false), isAscii(true), mksa(true),
                                                       timestamp_interval(false), julian_interval(false)
-
 {
 	std::ifstream fin; //Input file streams
 	fin.clear();

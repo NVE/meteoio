@@ -62,6 +62,7 @@ class Coords {
 	Coords();
 	Coords(const std::string& in_coordinatesystem, const std::string& in_parameters="");
 	Coords(const double& in_lat_ref, const double& in_long_ref);
+	Coords(const Coords& c);
 
 	//Operators
 	Coords& operator=(const Coords&); ///<Assignement operator

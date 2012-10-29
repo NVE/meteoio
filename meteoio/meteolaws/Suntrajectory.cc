@@ -22,6 +22,25 @@
 
 namespace mio {
 
+SunTrajectory::SunTrajectory() : julian_gmt(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
+                                 SolarAzimuthAngle(IOUtils::nodata), SolarElevation(IOUtils::nodata),
+                                 eccentricityEarth(IOUtils::nodata), SunRise(IOUtils::nodata), SunSet(IOUtils::nodata),
+                                 SunlightDuration(IOUtils::nodata), SolarNoon(IOUtils::nodata),
+                                 SunRightAscension(IOUtils::nodata), SunDeclination(IOUtils::nodata),
+                                 HourAngle(IOUtils::nodata)
+{
+}
+
+SunTrajectory::SunTrajectory(const double& i_latitude, const double& i_longitude) : julian_gmt(IOUtils::nodata), latitude(i_latitude), longitude(i_longitude),
+                                 SolarAzimuthAngle(IOUtils::nodata), SolarElevation(IOUtils::nodata),
+                                 eccentricityEarth(IOUtils::nodata), SunRise(IOUtils::nodata), SunSet(IOUtils::nodata),
+                                 SunlightDuration(IOUtils::nodata), SolarNoon(IOUtils::nodata),
+                                 SunRightAscension(IOUtils::nodata), SunDeclination(IOUtils::nodata),
+                                 HourAngle(IOUtils::nodata)
+{
+}
+
+
 /**
  * @brief Compute the solar incidence (rad), i.e. the angle between the incident sun beam
  *   and the normal to the slope (simplified by Funk (1984 pp.139-140)).
@@ -184,28 +203,21 @@ std::ostream& operator<<(std::ostream &os, const SunTrajectory& data)
 namespace mio {
 
 //Class SunMeeus
-SunMeeus::SunMeeus() {
-	init();
+SunMeeus::SunMeeus() : SunTrajectory(), SolarElevationAtm(IOUtils::nodata)
+{
 }
 
-SunMeeus::SunMeeus(const double& _latitude, const double& _longitude) {
-	julian_gmt = IOUtils::nodata;
-	latitude = _latitude;
-	longitude = _longitude;
-	private_init();
+SunMeeus::SunMeeus(const double& i_latitude, const double& i_longitude) : SunTrajectory(i_latitude, i_longitude), SolarElevationAtm(IOUtils::nodata)
+{
 }
 
-SunMeeus::SunMeeus(const double& _latitude, const double& _longitude, const double& _julian, const double& TZ) {
-	setAll(_latitude, _longitude, _julian, TZ);
+SunMeeus::SunMeeus(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& TZ) : SunTrajectory(i_latitude, i_longitude), SolarElevationAtm(IOUtils::nodata)
+{
+	setAll(i_latitude, i_longitude, i_julian, TZ);
 }
 
-void SunMeeus::init() {
-	julian_gmt = IOUtils::nodata;
-	latitude = longitude = IOUtils::nodata;
-	private_init();
-}
-
-void SunMeeus::private_init() {
+void SunMeeus::private_init()
+{
 	SolarAzimuthAngle = SolarElevation = IOUtils::nodata;
 	SolarElevationAtm = IOUtils::nodata;
 	eccentricityEarth = IOUtils::nodata;
@@ -216,38 +228,37 @@ void SunMeeus::private_init() {
 }
 
 
-void SunMeeus::setDate(const double& _julian, const double& TZ) {
-	if(TZ==0)
-		julian_gmt = _julian;
-	else
-		julian_gmt = _julian - TZ/24.;
+void SunMeeus::setDate(const double& i_julian, const double& TZ)
+{
+	julian_gmt = i_julian - TZ/24.;
 	private_init();
 	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
 		update();
 	}
 }
 
-void SunMeeus::setLatLon(const double& _latitude, const double& _longitude) {
-	latitude = _latitude;
-	longitude = _longitude;
+void SunMeeus::setLatLon(const double& i_latitude, const double& i_longitude)
+{
+	latitude = i_latitude;
+	longitude = i_longitude;
 	private_init();
 	if(julian_gmt!=IOUtils::nodata) {
 		update();
 	}
 }
 
-void SunMeeus::setAll(const double& _latitude, const double& _longitude, const double& _julian, const double& TZ) {
-	latitude = _latitude;
-	longitude = _longitude;
-	if(TZ==0)
-		julian_gmt = _julian;
-	else
-		julian_gmt = _julian - TZ/24.;
+void SunMeeus::setAll(const double& i_latitude, const double& i_longitude, const double& i_julian, const double& TZ)
+{
+	latitude = i_latitude;
+	longitude = i_longitude;
+	julian_gmt = i_julian - TZ/24.;
 	update();
 }
 
 void SunMeeus::reset() {;
-	init();
+	julian_gmt = IOUtils::nodata;
+	latitude = longitude = IOUtils::nodata;
+	private_init();
 }
 
 void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation) const {

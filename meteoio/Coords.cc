@@ -313,6 +313,17 @@ Coords::Coords(const double& in_lat_ref, const double& in_long_ref) :
 	setProj("LOCAL", "");
 }
 
+Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.ref_longitude),
+                   altitude(c.altitude), latitude(c.latitude), longitude(c.longitude),
+                   easting(c.easting), northing(c.northing),
+                   grid_i(c.grid_i), grid_j(c.grid_j), grid_k(c.grid_k),
+                   coordsystem(c.coordsystem), coordparam(c.coordparam),
+                   convToWGS84(NULL), convFromWGS84(NULL), distance_algo(c.distance_algo)
+
+{
+	setFunctionPointers();
+}
+
 /**
 * @brief Returns the East coordinate in the configured projection system
 * @return easting

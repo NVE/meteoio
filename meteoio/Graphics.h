@@ -132,9 +132,9 @@ namespace Color {
 //Gradients scale between 0 and 1, but might receive some out of range values for special effects (below sea level, above snow line, etc)
 class Gradient_model {
 	public:
-		Gradient_model() {}; //do not use this constructor!
+		Gradient_model() : X(), v_h(), v_s(), v_v() {}; //do not use this constructor!
 		virtual ~Gradient_model() {};
-		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) { (void)i_min; (void)i_max; (void)i_autoscale;};
+		Gradient_model(const double& i_min, const double& i_max, const bool& i_autoscale) : X(), v_h(), v_s(), v_v() { (void)i_min; (void)i_max; (void)i_autoscale;};
 		//setBgColor()
 		//setFgColor()
 
@@ -181,6 +181,7 @@ class Gradient {
 	public:
 		/// This enum provides names for possible color gradients
 		typedef enum TYPE {
+		            none, ///< no type selected
 		            terrain, ///< suitable for DEM. if autoscale, then sea and snow line are turned off
 		            slope, ///< suitable to represent slope
 		            azi, ///< suitable to represent slope azimuth. In autoscale, it becomes a two color gradient
@@ -199,7 +200,7 @@ class Gradient {
 		* @brief Default Constructor.
 		* This should be followed by a call to set() before calling getColor
 		*/
-		Gradient() {model=NULL; min=max=delta=0.; nr_unique_cols=0;};
+		Gradient() : min(0.), max(0.), delta(0.), type(none), model(NULL), nr_unique_cols(0), autoscale(true) { };
 
 		/**
 		* @brief Constructor.
@@ -209,7 +210,9 @@ class Gradient {
 		* @param max_val end value of the gradient
 		* @param i_autoscale do autoscale for setting the colors?
 		*/
-		Gradient(const Type& type, const double& min_val, const double &max_val, const bool& i_autoscale);
+		Gradient(const Type& i_type, const double& min_val, const double &max_val, const bool& i_autoscale);
+
+		Gradient(const Gradient& c);
 
 		~Gradient() {delete model;};
 
@@ -221,7 +224,7 @@ class Gradient {
 		* @param max_val end value of the gradient
 		* @param i_autoscale do autoscale for setting the colors?
 		*/
-		void set(const Type& type, const double& min_val, const double &max_val, const bool& i_autoscale);
+		void set(const Type& i_type, const double& min_val, const double &max_val, const bool& i_autoscale);
 		//setBgColor()
 		//setFgColor()
 
@@ -264,9 +267,14 @@ class Gradient {
 		*/
 		void getPalette(std::vector<unsigned char> &palette, size_t &nr_colors) const;
 
+		Gradient& operator=(const Gradient& source);
+
 		static const unsigned char channel_max_color; ///< nr of colors per channel of the generated gradients
 	private:
+		void setModel(const Type& i_type);
+
 		double min, max, delta;
+		Type type;
 		Gradient_model *model;
 		unsigned char nr_unique_cols; ///< number of unique colors to generate for indexed images
 		static const unsigned char reserved_idx; ///< for indexed gradients, number of reserved indexes
@@ -291,7 +299,7 @@ class gr_freeze : public Gradient_model {
 		void getColor(const double &val, double &r, double &g, double &b) const;
 	private:
 		//This gradient is interpolated in RGB color space
-		std::vector<double> X, v_r,v_g,v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order
+		std::vector<double> X, v_r, v_g, v_b; ///<control points: vector of X and associated r,g,b. They must be in X ascending order
 };
 
 class gr_bluewhitered : public Gradient_model {
