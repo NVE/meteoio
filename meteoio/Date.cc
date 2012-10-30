@@ -67,8 +67,8 @@ Date::Date() : timezone(0.), gmt_julian(0.),
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst) :
-           timezone(0.), gmt_julian(0.),
+Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst)
+         : timezone(0.), gmt_julian(0.),
            gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
            dst(false), undef(true)
 {
@@ -80,8 +80,8 @@ Date::Date(const double& julian_in, const double& in_timezone, const bool& in_ds
 * @param in_time unix time (ie: as number of seconds since Unix Epoch, always UTC)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const time_t& in_time, const bool& in_dst) :
-           timezone(in_dst), gmt_julian(0.),
+Date::Date(const time_t& in_time, const bool& in_dst)
+         : timezone(in_dst), gmt_julian(0.),
            gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
            dst(false), undef(true)
 {
@@ -99,8 +99,8 @@ Date::Date(const time_t& in_time, const bool& in_dst) :
 * @param in_timezone timezone as an offset to GMT (in hours, optional)
 * @param in_dst is it DST? (default: no)
 */
-Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone, const bool& in_dst) :
-           timezone(in_timezone), gmt_julian(0.),
+Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone, const bool& in_dst)
+         : timezone(in_timezone), gmt_julian(0.),
            gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
            dst(false), undef(true)
 {

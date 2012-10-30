@@ -27,9 +27,6 @@
 
 namespace mio {
 
-class Coords; //forward declaration
-typedef void(Coords::*convfunc)(double, double, double&, double&) const;
-
 /**
  * @class Coords
  * @brief A class to handle geographic coordinate systems.
@@ -149,7 +146,6 @@ class Coords {
  private:
 	void clearCoordinates();
 	void setDefaultValues();
-	void setFunctionPointers();
 	int getUTMZone(const double latitude, const double longitude, std::string& zone_out) const;
 
  private:
@@ -163,13 +159,8 @@ class Coords {
 	int grid_j; ///<grid index j (please notice that this index is NOT automatically regenerated NOR checked)
 	int grid_k; ///<grid index k (please notice that this index is NOT automatically regenerated NOR checked)
 
-	static const bool __init;    ///<helper variable to enable the init of static collection data
-	static bool initializeMaps();
-	static std::map<std::string, convfunc> to_wgs84;
-	static std::map<std::string, convfunc> from_wgs84;
 	std::string coordsystem;
 	std::string coordparam;
-	convfunc convToWGS84, convFromWGS84;
 	geo_distances distance_algo;
 
 	///Keywords for selecting an ellipsoid to use

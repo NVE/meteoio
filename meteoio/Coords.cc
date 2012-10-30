@@ -59,9 +59,8 @@ namespace mio {
  *
  */
 
-map<std::string, convfunc> Coords::to_wgs84;
-map<std::string, convfunc> Coords::from_wgs84;
-const bool Coords::__init = Coords::initializeMaps();
+//Adding a coordinate system is done by editing convert_to_WGS84 and convert_from_WGS84
+//and implementing the XXX_to_WGS84 and WGS84_to_XXX methods.
 
 const struct Coords::ELLIPSOID Coords::ellipsoids[6] = {
 	{ 6378137.,	6356752.3142 }, ///< E_WGS84
@@ -71,24 +70,6 @@ const struct Coords::ELLIPSOID Coords::ellipsoids[6] = {
 	{ 6378249.145,	6356514.86955 }, ///< E_CLARKE1880
 	{ 6378160.,	6356774.719 } ///< E_GRS67
 };
-
-bool Coords::initializeMaps() {
-	//Please don't forget to mirror the keywords here in the documentation in Coords.h!!
-	to_wgs84["CH1903"]   = &Coords::CH1903_to_WGS84;
-	from_wgs84["CH1903"] = &Coords::WGS84_to_CH1903;
-	to_wgs84["UTM"]      = &Coords::UTM_to_WGS84;
-	from_wgs84["UTM"]    = &Coords::WGS84_to_UTM;
-	to_wgs84["UPS"]      = &Coords::UPS_to_WGS84;
-	from_wgs84["UPS"]    = &Coords::WGS84_to_UPS;
-	to_wgs84["PROJ4"]    = &Coords::PROJ4_to_WGS84;
-	from_wgs84["PROJ4"]  = &Coords::WGS84_to_PROJ4;
-	to_wgs84["LOCAL"]    = &Coords::local_to_WGS84;
-	from_wgs84["LOCAL"]  = &Coords::WGS84_to_local;
-	to_wgs84["NULL"]     = &Coords::NULL_to_WGS84;
-	from_wgs84["NULL"]   = &Coords::WGS84_to_NULL;
-
-	return true;
-}
 
 /**
 * @brief Equality operator that checks that two coordinates objects represent the same 3D point.
@@ -149,7 +130,6 @@ Coords& Coords::operator=(const Coords& source) {
 		grid_i = source.grid_i;
 		grid_j = source.grid_j;
 		grid_k = source.grid_k;
-		setFunctionPointers();
 	}
 	return *this;
 }
@@ -226,9 +206,10 @@ void Coords::merge(const Coords& coord2) {
 
 	if(distance_algo==IOUtils::nodata) distance_algo=coord2.distance_algo;
 
-	//refresh pointers list, recalculate what could be calculated, etc
-	setFunctionPointers();
 	//in LOCAL projection, the check for the existence of the ref point will be done in the projection functions
+	if(coordsystem=="LOCAL" && coordparam!="") {
+		parseLatLon(coordparam, ref_latitude, ref_longitude);
+	}
 	if(latitude!=IOUtils::nodata && coordsystem!="NULL") {
 		convert_from_WGS84(latitude, longitude, easting, northing);
 	}
@@ -266,8 +247,7 @@ Coords::Coords() : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata)
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
                    grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
-                   coordsystem("NULL"), coordparam("NULL"),
-                   convToWGS84(&Coords::NULL_to_WGS84), convFromWGS84(&Coords::WGS84_to_NULL), distance_algo(GEO_COSINE)
+                   coordsystem("NULL"), coordparam("NULL"), distance_algo(GEO_COSINE)
 
 {
 	//setDefaultValues();
@@ -286,8 +266,7 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
                    grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
-                   coordsystem(in_coordinatesystem), coordparam(in_parameters),
-                   convToWGS84(&Coords::NULL_to_WGS84), convFromWGS84(&Coords::WGS84_to_NULL), distance_algo(GEO_COSINE)
+                   coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
 	//setDefaultValues();
 	setProj(in_coordinatesystem, in_parameters);
@@ -305,8 +284,7 @@ Coords::Coords(const double& in_lat_ref, const double& in_long_ref) :
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
                    grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
-                   coordsystem("LOCAL"), coordparam(""),
-                   convToWGS84(&Coords::local_to_WGS84), convFromWGS84(&Coords::WGS84_to_local), distance_algo(GEO_COSINE)
+                   coordsystem("LOCAL"), coordparam(""), distance_algo(GEO_COSINE)
 {
 	//setDefaultValues();
 	setLocalRef(in_lat_ref, in_long_ref);
@@ -317,11 +295,9 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
                    altitude(c.altitude), latitude(c.latitude), longitude(c.longitude),
                    easting(c.easting), northing(c.northing),
                    grid_i(c.grid_i), grid_j(c.grid_j), grid_k(c.grid_k),
-                   coordsystem(c.coordsystem), coordparam(c.coordparam),
-                   convToWGS84(NULL), convFromWGS84(NULL), distance_algo(c.distance_algo)
+                   coordsystem(c.coordsystem), coordparam(c.coordparam), distance_algo(c.distance_algo)
 
 {
-	setFunctionPointers();
 }
 
 /**
@@ -545,7 +521,9 @@ void Coords::setProj(const std::string& in_coordinatesystem, const std::string& 
 		coordsystem = in_coordinatesystem;
 	}
 	coordparam  = in_parameters;
-	setFunctionPointers();
+	if(coordsystem=="LOCAL" && coordparam!="") {
+		parseLatLon(coordparam, ref_latitude, ref_longitude);
+	}
 
 	//since lat/long is our reference, we refresh x,y (only if lat/lon exist)
 	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
@@ -676,7 +654,6 @@ void Coords::copyProj(const Coords& source, const bool i_update) {
 			coordsystem=source.coordsystem;
 			coordparam=source.coordparam;
 		}
-		setFunctionPointers();
 
 		if(i_update==true) {
 			if((latitude!=IOUtils::nodata) && (longitude!=IOUtils::nodata)) {
@@ -795,7 +772,13 @@ void Coords::setEPSG(const int epsg) {
 void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_latitude, double& o_longitude) const
 {
 	if((i_easting!=IOUtils::nodata) && (i_northing!=IOUtils::nodata)) {
-		(this->*convToWGS84)(i_easting, i_northing, o_latitude, o_longitude);
+		if(coordsystem=="UTM") UTM_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if(coordsystem=="UPS") UPS_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if(coordsystem=="CH1903") CH1903_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if(coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if(coordsystem=="PROJ4") PROJ4_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if(coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
 	} else {
 		o_latitude = IOUtils::nodata;
 		o_longitude = IOUtils::nodata;
@@ -812,7 +795,13 @@ void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_lat
 void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o_easting, double& o_northing) const
 {
 	if((i_latitude!=IOUtils::nodata) && (i_longitude!=IOUtils::nodata)) {
-		(this->*convFromWGS84)(i_latitude, i_longitude, o_easting, o_northing);
+		if(coordsystem=="UTM") WGS84_to_UTM(i_latitude, i_longitude, o_easting, o_northing);
+		else if(coordsystem=="UPS") WGS84_to_UPS(i_latitude, i_longitude, o_easting, o_northing);
+		else if(coordsystem=="CH1903") WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
+		else if(coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
+		else if(coordsystem=="PROJ4") WGS84_to_PROJ4(i_latitude, i_longitude, o_easting, o_northing);
+		else if(coordsystem=="NULL") WGS84_to_NULL(i_latitude, i_longitude, o_easting, o_northing);
+		else throw UnknownValueException("Unknown coordinate system \""+coordsystem+"\"", AT);
 	} else {
 		o_easting = IOUtils::nodata;
 		o_northing = IOUtils::nodata;
@@ -1772,25 +1761,6 @@ void Coords::VincentyInverse(const double& lat_ref, const double& lon_ref, const
 	//const double alpha2 = atan2( sinAlpha, -(sinU1*sin(sigma)-cosU1*cos(sigma)*cos(alpha1)) ); //reverse azimuth
 }
 
-void Coords::setFunctionPointers() {
-	//check whether there exists a tranformation for the given coordinatesystem
-	//init function pointers
-	std::map<std::string, convfunc>::iterator mapitTo;
-	std::map<std::string, convfunc>::iterator mapitFrom;
-	mapitTo   = to_wgs84.find(coordsystem);
-	mapitFrom = from_wgs84.find(coordsystem);
-
-	if ((mapitTo == to_wgs84.end()) || (mapitFrom == from_wgs84.end()))
-		throw IOException("No known conversions exist for coordinate system " + coordsystem, AT);
-
-	convToWGS84   = mapitTo->second;
-	convFromWGS84 = mapitFrom->second;
-
-	if(coordsystem=="LOCAL" && coordparam!="") {
-		parseLatLon(coordparam, ref_latitude, ref_longitude);
-	}
-}
-
 void Coords::clearCoordinates() {
 //sets safe defaults for all internal variables (except function pointers and maps)
 	latitude = longitude = IOUtils::nodata;
@@ -1841,7 +1811,6 @@ void Coords::Serialize(POPBuffer &buf, bool pack)
 		buf.UnPack(&grid_j, 1);
 		buf.UnPack(&grid_k, 1);
 		marshal_geo_distances(buf, distance_algo, 0, !FLAG_MARSHAL, NULL);
-		setFunctionPointers();
 	}
 }
 #endif
