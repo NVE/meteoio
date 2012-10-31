@@ -56,7 +56,6 @@ const double Date::epsilon=1./(24.*3600.); ///< minimum difference between two d
 * @brief Default constructor: timezone is set to GMT without DST, julian date is set to 0 (meaning -4713-01-01T12:00)
 */
 Date::Date() : timezone(0.), gmt_julian(0.),
-               gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
                dst(false), undef(true)
 {
 }
@@ -69,7 +68,6 @@ Date::Date() : timezone(0.), gmt_julian(0.),
 */
 Date::Date(const double& julian_in, const double& in_timezone, const bool& in_dst)
          : timezone(0.), gmt_julian(0.),
-           gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
            dst(false), undef(true)
 {
 	setDate(julian_in, in_timezone, in_dst);
@@ -82,7 +80,6 @@ Date::Date(const double& julian_in, const double& in_timezone, const bool& in_ds
 */
 Date::Date(const time_t& in_time, const bool& in_dst)
          : timezone(in_dst), gmt_julian(0.),
-           gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
            dst(false), undef(true)
 {
 	setDate(in_time, in_dst);
@@ -101,7 +98,6 @@ Date::Date(const time_t& in_time, const bool& in_dst)
 */
 Date::Date(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_timezone, const bool& in_dst)
          : timezone(in_timezone), gmt_julian(0.),
-           gmt_year(0), gmt_month(0), gmt_day(0), gmt_hour(0), gmt_minute(0),
            dst(false), undef(true)
 {
 	setDate(in_year, in_month, in_day, in_hour, in_minute, in_timezone, in_dst);
@@ -183,8 +179,6 @@ void Date::setDate(const int& i_year, const int& i_month, const int& i_day, cons
 		//converting local julian date to GMT julian date
 		gmt_julian = localToGMT(local_julian);
 	}
-	//updating values to GMT, fixing potential 24:00 hour (ie: replaced by next day, 00:00)
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	undef = false;
 }
 
@@ -202,7 +196,6 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst) {
 	setTimeZone(in_timezone, in_dst);
 	gmt_julian = localToGMT(julian_in);
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	undef = false;
 }
 
@@ -432,14 +425,10 @@ int Date::getYear(const bool& gmt) const {
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	if(gmt) {
-		return gmt_year;
-	} else {
-		const double local_julian = GMTToLocal(gmt_julian);
-		int local_year, local_month, local_day, local_hour, local_minute;
-		calculateValues(local_julian, local_year, local_month, local_day, local_hour, local_minute);
-		return local_year;
-	}
+	const double local_julian = (gmt)? gmt_julian : GMTToLocal(gmt_julian);
+	int year_out, month_out, day_out, hour_out, minute_out;
+	calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out);
+	return year_out;
 }
 
 /**
@@ -453,15 +442,9 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, const bool& gmt)
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	if(gmt) {
-		year_out = gmt_year;
-		month_out = gmt_month;
-		day_out = gmt_day;
-	} else {
-		const double local_julian = GMTToLocal(gmt_julian);
-		int local_hour, local_minute;
-		calculateValues(local_julian, year_out, month_out, day_out, local_hour, local_minute);
-	}
+	const double local_julian = (gmt)? gmt_julian : GMTToLocal(gmt_julian);
+	int hour_out, minute_out;
+	calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out);
 }
 
 /**
@@ -476,16 +459,9 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, c
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	if(gmt) {
-		year_out = gmt_year;
-		month_out = gmt_month;
-		day_out = gmt_day;
-		hour_out = gmt_hour;
-	} else {
-		const double local_julian = GMTToLocal(gmt_julian);
-		int local_minute;
-		calculateValues(local_julian, year_out, month_out, day_out, hour_out, local_minute);
-	}
+	const double local_julian = (gmt)? gmt_julian : GMTToLocal(gmt_julian);
+	int minute_out;
+	calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out);
 }
 
 /**
@@ -501,16 +477,8 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, i
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	if(gmt) {
-		year_out = gmt_year;
-		month_out = gmt_month;
-		day_out = gmt_day;
-		hour_out = gmt_hour;
-		minute_out = gmt_minute;
-	} else {
-		const double local_julian = GMTToLocal(gmt_julian);
-		calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out);
-	}
+	const double local_julian = (gmt)? gmt_julian : GMTToLocal(gmt_julian);
+	calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out);
 }
 
 /**
@@ -523,17 +491,16 @@ int Date::getJulianDayNumber(const bool& gmt) const {
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	if(gmt) {
-		const double first_day_of_year = getJulianDayNumber(gmt_year, 1, 1);
-		return (int)(gmt_julian - first_day_of_year + 1);
-	} else {
-		const double local_julian = GMTToLocal(gmt_julian);
-		int local_year, local_month, local_day, local_hour, local_minute;
-		calculateValues(local_julian, local_year, local_month, local_day, local_hour, local_minute);
-		const double in_day_offset = 1./24.*((double)local_hour+1./60.*(double)local_minute) - 0.5;
-		const double first_day_of_year = static_cast<double>(getJulianDayNumber(local_year, 1, 1)) + in_day_offset;
-		return (int)(local_julian - first_day_of_year + 1);
-	}
+	const double local_julian = (gmt)? gmt_julian : GMTToLocal(gmt_julian);
+	int year_out, month_out, day_out, hour_out, minute_out;
+	calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out);
+
+	const double in_day_offset = 1./24.*((double)hour_out+1./60.*(double)minute_out) - 0.5;
+	const double first_day_of_year = static_cast<double>(getJulianDayNumber(year_out, 1, 1)) + in_day_offset;
+
+	return (int)(local_julian - first_day_of_year + 1);
+
+	//HACK: why not using getJulianDayNumber(year, month, day)?
 }
 
 /**
@@ -589,7 +556,6 @@ Date& Date::operator+=(const Date& indate) {
 		return *this;
 	}
 	gmt_julian += indate.gmt_julian;
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
 
@@ -599,14 +565,12 @@ Date& Date::operator-=(const Date& indate) {
 		return *this;
 	}
 	gmt_julian -= indate.gmt_julian;
-	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
 
 Date& Date::operator+=(const double& indate) {
 	if(undef==false) {
 		gmt_julian += indate;
-		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
 }
@@ -614,7 +578,6 @@ Date& Date::operator+=(const double& indate) {
 Date& Date::operator-=(const double& indate) {
 	if(undef==false) {
 		gmt_julian -= indate;
-		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
 }
@@ -622,7 +585,6 @@ Date& Date::operator-=(const double& indate) {
 Date& Date::operator*=(const double& value) {
 	if(undef==false) {
 		gmt_julian *= value;
-		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
 }
@@ -630,7 +592,6 @@ Date& Date::operator*=(const double& value) {
 Date& Date::operator/=(const double& value) {
 	if(undef==false) {
 		gmt_julian /= value;
-		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
 }
@@ -779,23 +740,13 @@ std::ostream& operator<<(std::ostream &os, const Date &date) {
 */
 const string Date::toString(FORMATS type, const bool& gmt) const
 {//the date are displayed in LOCAL timezone (more user friendly)
-	int year_out, month_out, day_out, hour_out, minute_out;
-	double julian_out;
 
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	if(gmt) {
-		julian_out = gmt_julian;
-		year_out = gmt_year;
-		month_out = gmt_month;
-		day_out = gmt_day;
-		hour_out = gmt_hour;
-		minute_out = gmt_minute;
-	} else {
-		julian_out = GMTToLocal(gmt_julian);
-		calculateValues(julian_out, year_out, month_out, day_out, hour_out, minute_out);
-	}
+	const double julian_out = (gmt)? gmt_julian : GMTToLocal(gmt_julian);
+	int year_out, month_out, day_out, hour_out, minute_out;
+	calculateValues(julian_out, year_out, month_out, day_out, hour_out, minute_out);
 
 	stringstream tmpstr;
 	if(type==ISO) {
@@ -851,10 +802,9 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 	const double rnd_factor = (60.*24.);
 	const double tmp_julian = round(i_julian*rnd_factor) / rnd_factor;
 
-	long t1;
 	const long julday = (long) floor(tmp_julian+0.5);
 
-	t1 = julday + 68569L;
+	long t1 = julday + 68569L;
 	const long t2 = 4L * t1 / 146097L;
 	t1 = t1 - ( 146097L * t2 + 3L ) / 4L;
 	const long yr = 4000L * ( t1 + 1L ) / 1461001L;
@@ -878,9 +828,8 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 
 bool Date::isLeapYear(const int& i_year) const
 {
-	long jd1, jd2;
-	jd1 = getJulianDayNumber( i_year, 2, 28 );
-	jd2 = getJulianDayNumber( i_year, 3, 1 );
+	const long jd1 = getJulianDayNumber( i_year, 2, 28 );
+	const long jd2 = getJulianDayNumber( i_year, 3, 1 );
 	return ( (jd2-jd1) > 1 );
 }
 
@@ -947,21 +896,10 @@ void Date::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&timezone,1);
 		buf.Pack(&dst,1);
 		buf.Pack(&gmt_julian,1);
-		buf.Pack(&gmt_year,1);
-		buf.Pack(&gmt_month,1);
-		buf.Pack(&gmt_day,1);
-		buf.Pack(&gmt_hour,1);
-		buf.Pack(&gmt_minute,1);
 		buf.Pack(&undef,1);
 	} else {
 		buf.UnPack(&timezone,1);
 		buf.UnPack(&dst,1);
-		buf.UnPack(&gmt_julian,1);
-		buf.UnPack(&gmt_year,1);
-		buf.UnPack(&gmt_month,1);
-		buf.UnPack(&gmt_day,1);
-		buf.UnPack(&gmt_hour,1);
-		buf.UnPack(&gmt_minute,1);
 		buf.UnPack(&undef,1);
 	}
 }

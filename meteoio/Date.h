@@ -175,7 +175,6 @@ class Date {
 		static const double epsilon;
 		double timezone;
 		double gmt_julian;
-		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
 		bool dst;
 		bool undef;
 };
