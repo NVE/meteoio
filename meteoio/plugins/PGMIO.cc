@@ -47,19 +47,28 @@ namespace mio {
 
 const double PGMIO::plugin_nodata = 0.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-PGMIO::PGMIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+PGMIO::PGMIO(void (*delObj)(void*), const Config& i_cfg)
+       : IOInterface(delObj), cfg(i_cfg),
+         coordin(), coordinparam(), coordout(), coordoutparam(),
+         fin(), fout(), grid2dpath_in(), grid2dpath_out()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getGridPaths();
 }
 
-PGMIO::PGMIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+PGMIO::PGMIO(const std::string& configfile)
+       : IOInterface(NULL), cfg(configfile),
+         coordin(), coordinparam(), coordout(), coordoutparam(),
+         fin(), fout(), grid2dpath_in(), grid2dpath_out()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getGridPaths();
 }
 
-PGMIO::PGMIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+PGMIO::PGMIO(const Config& cfgreader)
+       : IOInterface(NULL), cfg(cfgreader),
+         coordin(), coordinparam(), coordout(), coordoutparam(),
+         fin(), fout(), grid2dpath_in(), grid2dpath_out()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getGridPaths();

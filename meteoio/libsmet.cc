@@ -653,7 +653,7 @@ void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 }
 
 SMETReader::SMETReader(const std::string& in_fname) :
-                                                      data_start_fpointer(NULL), vec_offset(), vec_multiplier(), vec_fieldnames(),
+                                                      data_start_fpointer(), vec_offset(), vec_multiplier(), vec_fieldnames(),
                                                       header(), map_timestamp_streampos(), map_julian_streampos(),
                                                       filename(in_fname), timestamp_start("-4714-11-24T00:00"),
                                                       timestamp_end("9999-12-31T00:00"), nodata_value(-999.),

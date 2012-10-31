@@ -99,7 +99,11 @@ namespace mio {
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
-ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg)
+       : IOInterface(delObj), cfg(i_cfg),
+         fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
+         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
+         a3d_view_in(false), a3d_view_out(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;
@@ -109,7 +113,11 @@ ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), 
 	getGridPaths();
 }
 
-ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+ARCIO::ARCIO(const std::string& configfile)
+       : IOInterface(NULL), cfg(configfile),
+         fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
+         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
+         a3d_view_in(false), a3d_view_out(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;
@@ -119,7 +127,11 @@ ARCIO::ARCIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
 	getGridPaths();
 }
 
-ARCIO::ARCIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+ARCIO::ARCIO(const Config& cfgreader)
+       : IOInterface(NULL), cfg(cfgreader),
+         fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
+         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
+         a3d_view_in(false), a3d_view_out(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;

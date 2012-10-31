@@ -77,44 +77,50 @@ const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 const size_t SNIO::min_nr_meteoData = 15;
 const std::string SNIO::dflt_extension = ".inp";
 
-SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg)
+      : IOInterface(delObj), cfg(i_cfg),
+        vecAllStations(), vec_streampos(), fin(), fout(),
+        coordin(), coordinparam(), coordout(), coordoutparam(),
+        in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
+        iswr_inp(true), rswr_inp(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = out_tz = 0.;
 	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
 	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
-	iswr_inp = rswr_inp = true;
 	cfg.getValue("ISWR_INP","Input",iswr_inp,Config::nothrow);
 	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
-	nr_meteoData = min_nr_meteoData;
 	if (!iswr_inp || !rswr_inp)
 		nr_meteoData = min_nr_meteoData - 1;
 }
 
-SNIO::SNIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+SNIO::SNIO(const std::string& configfile)
+      : IOInterface(NULL), cfg(configfile),
+        vecAllStations(), vec_streampos(), fin(), fout(),
+        coordin(), coordinparam(), coordout(), coordoutparam(),
+        in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
+        iswr_inp(true), rswr_inp(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = out_tz = 0.;
 	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
 	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
-	iswr_inp = rswr_inp = true;
 	cfg.getValue("ISWR_INP","Input",iswr_inp,Config::nothrow);
 	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
-	nr_meteoData = min_nr_meteoData;
 	if (!iswr_inp || !rswr_inp)
 		nr_meteoData = min_nr_meteoData - 1;
 }
 
-SNIO::SNIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+SNIO::SNIO(const Config& cfgreader)
+      : IOInterface(NULL), cfg(cfgreader),
+        vecAllStations(), vec_streampos(), fin(), fout(),
+        coordin(), coordinparam(), coordout(), coordoutparam(),
+        in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
+        iswr_inp(true), rswr_inp(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = out_tz = 0.;
 	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
 	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
-	iswr_inp = rswr_inp = true;
 	cfg.getValue("ISWR_INP","Input",iswr_inp,Config::nothrow);
 	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
-	nr_meteoData = min_nr_meteoData;
 	if (!iswr_inp || !rswr_inp)
 		nr_meteoData = min_nr_meteoData - 1;
 }

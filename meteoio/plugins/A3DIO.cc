@@ -59,29 +59,27 @@ namespace mio {
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
 const unsigned int A3DIO::buffer_reserve = 23*24*2; //kind of average size of a buffer for optimizing vectors
 
-A3DIO::A3DIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+A3DIO::A3DIO(void (*delObj)(void*), const Config& i_cfg)
+       : IOInterface(delObj), cfg(i_cfg),
+         in_tz(0.), out_tz(0.), fin(), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
 	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
 }
 
-A3DIO::A3DIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+A3DIO::A3DIO(const std::string& configfile)
+       : IOInterface(NULL), cfg(configfile),
+         in_tz(0.), out_tz(0.), fin(), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;
 	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
 }
 
-//Copy constructor
-A3DIO::A3DIO(const A3DIO& aio) : IOInterface(NULL), cfg(aio.cfg)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = out_tz = 0.;
-	IOUtils::getTimeZoneParameters(cfg, in_tz, out_tz);
-}
-
-A3DIO::A3DIO(const Config& in_cfg) : IOInterface(NULL), cfg(in_cfg)
+A3DIO::A3DIO(const Config& in_cfg)
+       : IOInterface(NULL), cfg(in_cfg),
+         in_tz(0.), out_tz(0.), fin(), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = out_tz = 0.;

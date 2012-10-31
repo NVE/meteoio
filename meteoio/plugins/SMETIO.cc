@@ -69,22 +69,31 @@ namespace mio {
 
 const std::string SMETIO::dflt_extension = ".smet";
 
-SMETIO::SMETIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+SMETIO::SMETIO(void (*delObj)(void*), const Config& i_cfg)
+        : IOInterface(delObj), cfg(i_cfg),
+          coordin(), coordinparam(), coordout(), coordoutparam(),
+          vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
+          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
 {
 	parseInputOutputSection();
-	plugin_nodata = IOUtils::nodata;
 }
 
-SMETIO::SMETIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+SMETIO::SMETIO(const std::string& configfile)
+        : IOInterface(NULL), cfg(configfile),
+          coordin(), coordinparam(), coordout(), coordoutparam(),
+          vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
+          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
 {
 	parseInputOutputSection();
-	plugin_nodata = IOUtils::nodata;
 }
 
-SMETIO::SMETIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+SMETIO::SMETIO(const Config& cfgreader)
+        : IOInterface(NULL), cfg(cfgreader),
+          coordin(), coordinparam(), coordout(), coordoutparam(),
+          vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
+          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
 {
 	parseInputOutputSection();
-	plugin_nodata = IOUtils::nodata;
 }
 
 SMETIO::~SMETIO() throw()

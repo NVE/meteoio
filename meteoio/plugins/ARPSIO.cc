@@ -48,33 +48,33 @@ namespace mio {
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
 const std::string ARPSIO::default_ext=".asc"; //filename extension
 
-ARPSIO::ARPSIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+ARPSIO::ARPSIO(void (*delObj)(void*), const Config& i_cfg)
+        : IOInterface(delObj), cfg(i_cfg),
+          fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
+          grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
+          xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	dimx=dimy=dimz=0;
-	cellsize=0.;
-	fin=NULL;
-	is_true_arps=true;
 	setOptions();
 }
 
-ARPSIO::ARPSIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+ARPSIO::ARPSIO(const std::string& configfile)
+        : IOInterface(NULL), cfg(configfile),
+          fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
+          grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
+          xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	dimx=dimy=dimz=0;
-	cellsize=0.;
-	fin=NULL;
-	is_true_arps=true;
 	setOptions();
 }
 
-ARPSIO::ARPSIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+ARPSIO::ARPSIO(const Config& cfgreader)
+        : IOInterface(NULL), cfg(cfgreader),
+          fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
+          grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
+          xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	dimx=dimy=dimz=0;
-	cellsize=0.;
-	fin=NULL;
-	is_true_arps=true;
 	setOptions();
 }
 
@@ -89,7 +89,7 @@ void ARPSIO::setOptions()
 	cfg.getValue("ARPS_XCOORD", "Input", xcoord, Config::dothrow);
 	cfg.getValue("ARPS_YCOORD", "Input", ycoord, Config::dothrow);
 
-	ext = default_ext;
+	//default value has been set in constructor
 	cfg.getValue("GRID2DEXT", "Input", ext, Config::nothrow);
 	if(ext=="none") ext="";
 }

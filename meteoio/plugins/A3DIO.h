@@ -36,7 +36,6 @@ class A3DIO : public IOInterface {
 		A3DIO(void (*delObj)(void*), const Config& i_cfg);
 
 		A3DIO(const std::string& configfile);
-		A3DIO(const A3DIO&);
 		A3DIO(const Config&);
 		~A3DIO() throw();
 
@@ -89,8 +88,8 @@ class A3DIO : public IOInterface {
 		                     const std::string& filename, const std::string& label);
 		void write2DMeteo(const std::vector< std::vector<MeteoData> >& data);
 
-		double in_tz, out_tz; //timezones
 		const Config& cfg;
+		double in_tz, out_tz; //timezones
 		std::ifstream fin; //Input file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

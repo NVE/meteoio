@@ -98,26 +98,42 @@ const unsigned char PNGIO::channel_depth = 8;
 const unsigned char PNGIO::channel_max_color = 255;
 const unsigned char PNGIO::transparent_grey = channel_max_color;
 
-PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg)
+       : IOInterface(delObj), cfg(i_cfg),
+         fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
+         indexed_png(true), nr_levels(30),
+         coordout(), coordoutparam(), grid2dpath(),
+         scaling("bilinear"), min_w(IOUtils::unodata), min_h(IOUtils::unodata), max_w(IOUtils::unodata), max_h(IOUtils::unodata),
+         metadata_key(), metadata_text()
 {
-	fp=NULL;
 	setOptions();
 }
 
-PNGIO::PNGIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
+PNGIO::PNGIO(const std::string& configfile)
+       : IOInterface(NULL), cfg(configfile),
+         fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
+         indexed_png(true), nr_levels(30),
+         coordout(), coordoutparam(), grid2dpath(),
+         scaling("bilinear"), min_w(IOUtils::unodata), min_h(IOUtils::unodata), max_w(IOUtils::unodata), max_h(IOUtils::unodata),
+         metadata_key(), metadata_text()
 {
-	fp=NULL;
 	setOptions();
 }
 
-PNGIO::PNGIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+PNGIO::PNGIO(const Config& cfgreader)
+       : IOInterface(NULL), cfg(cfgreader),
+         fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
+         indexed_png(true), nr_levels(30),
+         coordout(), coordoutparam(), grid2dpath(),
+         scaling("bilinear"), min_w(IOUtils::unodata), min_h(IOUtils::unodata), max_w(IOUtils::unodata), max_h(IOUtils::unodata),
+         metadata_key(), metadata_text()
 {
-	fp=NULL;
 	setOptions();
 }
 
 void PNGIO::setOptions()
 {
+	//default values have been set by the constructors
 	cfg.getValue("COORDSYS", "Output", coordout);
 	cfg.getValue("COORDPARAM", "Output", coordoutparam, Config::nothrow);
 	cfg.getValue("GRID2DPATH", "Output", grid2dpath);
@@ -125,19 +141,14 @@ void PNGIO::setOptions()
 
 	//get size specifications
 	std::string min_size, max_size;
-	min_w = min_h = max_w = max_h = IOUtils::unodata;
 	cfg.getValue("PNG_MIN_SIZE", "Output", min_size, Config::nothrow);
 	if(min_size!="") parse_size(min_size, min_w, min_h);
 	cfg.getValue("PNG_MAX_SIZE", "Output", max_size, Config::nothrow);
 	if(max_size!="") parse_size(max_size, max_w, max_h);
 
-	autoscale = true;
 	cfg.getValue("PNG_AUTOSCALE", "Output", autoscale, Config::nothrow);
-	has_legend = true;
 	cfg.getValue("PNG_LEGEND", "Output", has_legend, Config::nothrow);
-	scaling = "bilinear";
 	cfg.getValue("PNG_SCALING", "Output", scaling, Config::nothrow);
-	has_world_file=false;
 	cfg.getValue("PNG_WORLD_FILE", "Output", has_world_file, Config::nothrow);
 
 	if(has_legend) { //we need to save room for the legend
@@ -145,11 +156,8 @@ void PNGIO::setOptions()
 		if(max_w!=IOUtils::unodata) max_w -= legend::getLegendWidth();
 	}
 
-	indexed_png = true;
 	cfg.getValue("PNG_INDEXED", "Output", indexed_png, Config::nothrow);
-	optimize_for_speed = true;
 	cfg.getValue("PNG_SPEED_OPTIMIZE", "Output", optimize_for_speed, Config::nothrow);
-	nr_levels = 30;
 	unsigned int tmp=IOUtils::unodata;
 	cfg.getValue("PNG_NR_LEVELS", "Output", tmp, Config::nothrow);
 	if(tmp!=IOUtils::unodata && (tmp>255 || tmp<5)) {
