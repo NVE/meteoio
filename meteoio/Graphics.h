@@ -205,7 +205,7 @@ class Gradient {
 		/**
 		* @brief Constructor.
 		* The object will associate to each numeric value RGB values. See class description for more...
-		* @param type set the color gradient to use, from the enum Gradient::Type
+		* @param i_type set the color gradient to use, from the enum Gradient::Type
 		* @param min_val start value of the gradient
 		* @param max_val end value of the gradient
 		* @param i_autoscale do autoscale for setting the colors?
@@ -219,7 +219,7 @@ class Gradient {
 		/**
 		* @brief Setter
 		* See class description for more...
-		* @param type set the color gradient to use, from the enum Gradient::Type
+		* @param i_type set the color gradient to use, from the enum Gradient::Type
 		* @param min_val start value of the gradient
 		* @param max_val end value of the gradient
 		* @param i_autoscale do autoscale for setting the colors?
