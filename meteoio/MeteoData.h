@@ -98,8 +98,6 @@ class MeteoData : POPBase {
 class MeteoData {
 #endif
 	public:
-		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
-
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
 		                 TA=firstparam, ///< Air temperature
@@ -228,6 +226,8 @@ class MeteoData {
 		//direct access allowed
 		Date date; ///<Timestamp of the measurement
 		StationData meta; ///<The meta data of the measurement
+
+		static const size_t nrOfParameters; ///<holds the number of meteo parameters stored in MeteoData
 
 	private:
 		//static methods

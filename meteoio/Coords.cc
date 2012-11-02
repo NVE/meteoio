@@ -677,11 +677,11 @@ short int Coords::getEPSG() const {
 		char zoneLetter;
 		parseUTMZone(coordparam, zoneLetter, zoneNumber);
 		if(zoneLetter >= 'M') {
-			//northern hemisphere
-			return (32600+zoneNumber);
+			//northern hemisphere. We KNOW it will fit in a short int
+			return (static_cast<short int>(32600+zoneNumber));
 		} else {
-			//southern hemisphere
-			return (32700+zoneNumber);
+			//southern hemisphere. We KNOW it will fit in a short int
+			return (static_cast<short int>(32700+zoneNumber));
 		}
 	}
 	if(coordsystem=="UPS") {
@@ -1377,6 +1377,9 @@ void Coords::parseUTMZone(const std::string& zone_info, char& zoneLetter, short 
 	if ((sscanf(zone_info.c_str(), "%hd%c", &zoneNumber, &zoneLetter) < 2) &&
 		(sscanf(zone_info.c_str(), "%hd %c)", &zoneNumber, &zoneLetter) < 2)) {
 			throw InvalidFormatException("Can not parse given UTM zone: "+zone_info,AT);
+	}
+	if(zoneNumber<1 || zoneNumber>60) {
+		throw InvalidFormatException("Invalid UTM zone: "+zone_info+" (zone should be between 1 and 60, zone letter in [C-N, P-X])",AT);
 	}
 	zoneLetter = (char)toupper(zoneLetter); //just in case... (sorry for the pun!)
 	if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {

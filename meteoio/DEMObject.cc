@@ -708,29 +708,29 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 
 } // end of CalculateAziSlope
 
-double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope, const double no_slope) {
+double DEMObject::CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope) {
 //Calculates the aspect at a given point knowing its normal vector and slope
 //(direction of the normal pointing out of the surface, clockwise from north)
 //This azimuth calculation is similar to Hodgson (1998)
 //local_nodata is the value that we want to give to the aspect of points that don't have a slope
 //The value is a bearing (ie: deg, clockwise, 0=North)
 
-	if(Nx==IOUtils::nodata || Ny==IOUtils::nodata || Nz==IOUtils::nodata || slope==IOUtils::nodata) {
+	if(o_Nx==IOUtils::nodata || o_Ny==IOUtils::nodata || o_Nz==IOUtils::nodata || o_slope==IOUtils::nodata) {
 		return IOUtils::nodata;
 	}
 
-	if ( slope > 0. ) { //there is some slope
-		if ( Nx == 0. ) { //no E-W slope, so it is purely N-S
-			if ( Ny < 0. ) {
+	if ( o_slope > 0. ) { //there is some slope
+		if ( o_Nx == 0. ) { //no E-W slope, so it is purely N-S
+			if ( o_Ny < 0. ) {
 				return(180.); // south facing
 			} else {
 				return (0.); // north facing
 			}
 		} else { //there is a E-W slope
-			if ( Nx > 0. ) {
-				return (90. - atan(Ny/Nx)*Cst::to_deg);
+			if ( o_Nx > 0. ) {
+				return (90. - atan(o_Ny/o_Nx)*Cst::to_deg);
 			} else {
-				return (270. - atan(Ny/Nx)*Cst::to_deg);
+				return (270. - atan(o_Ny/o_Nx)*Cst::to_deg);
 			}
 		}
 	} else { // if slope = 0
@@ -739,88 +739,88 @@ double DEMObject::CalculateAspect(const double& Nx, const double& Ny, const doub
 }
 
 
-void DEMObject::CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
+void DEMObject::CalculateHick(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz) {
 //This calculates the surface normal vector using the steepest slope method (Dunn and Hickey, 1998):
 //the steepest slope found in the eight cells surrounding (i,j) is given to be the slope in (i,j)
 //Beware, sudden steps could happen
 	const double smax = steepestGradient(A); //steepest local gradient
 
 	if(smax==IOUtils::nodata) {
-		slope = IOUtils::nodata;
-		Nx = IOUtils::nodata;
-		Ny = IOUtils::nodata;
-		Nz = IOUtils::nodata;
+		o_slope = IOUtils::nodata;
+		o_Nx = IOUtils::nodata;
+		o_Ny = IOUtils::nodata;
+		o_Nz = IOUtils::nodata;
 		slope_failures++;
 	} else {
-		slope = atan(smax)*Cst::to_deg;
+		o_slope = atan(smax)*Cst::to_deg;
 
 		//Nx and Ny: x and y components of the normal pointing OUT of the surface
 		if ( smax > 0. ) { //ie: there is some slope
 			double dx_sum, dy_sum;
 			surfaceGradient(dx_sum, dy_sum, A);
 			if(dx_sum==IOUtils::nodata || dy_sum==IOUtils::nodata) {
-				Nx = IOUtils::nodata;
-				Ny = IOUtils::nodata;
-				Nz = IOUtils::nodata;
+				o_Nx = IOUtils::nodata;
+				o_Ny = IOUtils::nodata;
+				o_Nz = IOUtils::nodata;
 				slope_failures++;
 			} else {
-				Nx = -1.0 * dx_sum / (2. * cellsize);	//Nx=-dz/dx
-				Ny = -1.0 * dy_sum / (2. * cellsize);	//Ny=-dz/dy
-				Nz = 1.;				//Nz=1 (normalized by definition of Nx and Ny)
+				o_Nx = -1.0 * dx_sum / (2. * cellsize);	//Nx=-dz/dx
+				o_Ny = -1.0 * dy_sum / (2. * cellsize);	//Ny=-dz/dy
+				o_Nz = 1.;				//Nz=1 (normalized by definition of Nx and Ny)
 			}
 		} else { //ie: there is no slope
-			Nx = 0.;
-			Ny = 0.;
-			Nz = 1.;
+			o_Nx = 0.;
+			o_Ny = 0.;
+			o_Nz = 1.;
 		}
 	}
 }
 
-void DEMObject::CalculateFleming(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
+void DEMObject::CalculateFleming(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz) {
 //This calculates the surface normal vector using method by Fleming and Hoffer (1979)
 
 	if(A[2][1]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata && A[3][2]!=IOUtils::nodata && A[1][2]!=IOUtils::nodata) {
-		Nx = 0.5 * (A[2][1] - A[2][3]) / cellsize;
-		Ny = 0.5 * (A[3][2] - A[1][2]) / cellsize;
-		Nz = 1.;
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * Cst::to_deg;
+		o_Nx = 0.5 * (A[2][1] - A[2][3]) / cellsize;
+		o_Ny = 0.5 * (A[3][2] - A[1][2]) / cellsize;
+		o_Nz = 1.;
+		o_slope = atan( sqrt(o_Nx*o_Nx+o_Ny*o_Ny) ) * Cst::to_deg;
 	} else {
-		CalculateHick(A, slope, Nx, Ny, Nz);
+		CalculateHick(A, o_slope, o_Nx, o_Ny, o_Nz);
 	}
 }
 
-void DEMObject::CalculateHorn(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
+void DEMObject::CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz) {
 //This calculates the slope using the two eight neighbors method given in Horn (1981)
 //This is also the algorithm used by ArcGIS
 	if ( A[1][1]!=IOUtils::nodata && A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata &&
 	     A[2][1]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata &&
 	     A[3][1]!=IOUtils::nodata && A[3][2]!=IOUtils::nodata && A[3][3]!=IOUtils::nodata) {
-		Nx = ((A[3][3]+2.*A[2][3]+A[1][3]) - (A[3][1]+2.*A[2][1]+A[1][1])) / (8.*cellsize);
-		Ny = ((A[1][3]+2.*A[1][2]+A[1][1]) - (A[3][3]+2.*A[3][2]+A[3][1])) / (8.*cellsize);
-		Nz = 1.;
+		o_Nx = ((A[3][3]+2.*A[2][3]+A[1][3]) - (A[3][1]+2.*A[2][1]+A[1][1])) / (8.*cellsize);
+		o_Ny = ((A[1][3]+2.*A[1][2]+A[1][1]) - (A[3][3]+2.*A[3][2]+A[3][1])) / (8.*cellsize);
+		o_Nz = 1.;
 
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * Cst::to_deg;
+		o_slope = atan( sqrt(o_Nx*o_Nx+o_Ny*o_Ny) ) * Cst::to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
-		CalculateHick(A, slope, Nx, Ny, Nz);
+		CalculateHick(A, o_slope, o_Nx, o_Ny, o_Nz);
 	}
 }
 
-void DEMObject::CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz) {
+void DEMObject::CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz) {
 //This calculates the surface normal vector using the two triangle method given in Corripio (2002)
 	if ( A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata) {
 		// See Corripio (2002), knowing that here we normalize the result (divided by Nz=cellsize*cellsize)
-		Nx = (0.5 * (A[2][2] - A[2][3] + A[1][2] - A[1][3]) ) / cellsize;
-		Ny = (0.5 * (A[2][2] + A[2][3] - A[1][2] - A[1][3]) ) / cellsize;
-		Nz = 1.;
+		o_Nx = (0.5 * (A[2][2] - A[2][3] + A[1][2] - A[1][3]) ) / cellsize;
+		o_Ny = (0.5 * (A[2][2] + A[2][3] - A[1][2] - A[1][3]) ) / cellsize;
+		o_Nz = 1.;
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
-		slope = atan( sqrt(Nx*Nx+Ny*Ny) ) * Cst::to_deg;
+		o_slope = atan( sqrt(o_Nx*o_Nx+o_Ny*o_Ny) ) * Cst::to_deg;
 	} else {
 		//steepest slope method (Dunn and Hickey, 1998)
-		CalculateHick(A, slope, Nx, Ny, Nz);
+		CalculateHick(A, o_slope, o_Nx, o_Ny, o_Nz);
 	}
 }
 

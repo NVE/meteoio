@@ -103,12 +103,12 @@ class DEMObject : public Grid2DObject {
 
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);
-		double CalculateAspect(const double& Nx, const double& Ny, const double& Nz, const double& slope, const double no_slope=Cst::PI);
-		void CalculateHick(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
-		void CalculateFleming(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
-		void CalculateHorn(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
-		void CalculateCorripio(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
-		void (DEMObject::*CalculateSlope)(double A[4][4], double& slope, double& Nx, double& Ny, double& Nz);
+		double CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope=Cst::PI);
+		void CalculateHick(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
+		void CalculateFleming(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
+		void CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
+		void CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
+		void (DEMObject::*CalculateSlope)(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz);
 		double getCurvature(double A[4][4]);
 
 		double steepestGradient(double A[4][4]);
