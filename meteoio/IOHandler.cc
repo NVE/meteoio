@@ -77,14 +77,30 @@ namespace mio {
 void IOHandler::registerPlugins()
 {
 	//mapPlugins[io.ini KEY]= IOPlugin(library file name, class name, NULL, NULL);
+#ifdef PLUGIN_SMETIO
 	mapPlugins["SMET"]      = IOPlugin("SMETIO", NULL, &IOPlugin::createInstance<SMETIO>);
+#endif
+#ifdef PLUGIN_ARCIO
 	mapPlugins["ARC"]       = IOPlugin("ARCIO", NULL, &IOPlugin::createInstance<ARCIO>);
+#endif
+#ifdef PLUGIN_A3DIO
 	mapPlugins["A3D"]       = IOPlugin("A3DIO", NULL, &IOPlugin::createInstance<A3DIO>);
+#endif
+#ifdef PLUGIN_ARPSIO
 	mapPlugins["ARPS"]      = IOPlugin("ARPSIO", NULL, &IOPlugin::createInstance<ARPSIO>);
+#endif
+#ifdef PLUGIN_GRASSIO
 	mapPlugins["GRASS"]     = IOPlugin("GrassIO", NULL, &IOPlugin::createInstance<GrassIO>);
+#endif
+#ifdef PLUGIN_GEOTOPIO
 	mapPlugins["GEOTOP"]    = IOPlugin("GeotopIO", NULL, &IOPlugin::createInstance<GeotopIO>);
+#endif
+#ifdef PLUGIN_SNIO
 	mapPlugins["SNOWPACK"]  = IOPlugin("SNIO", NULL, &IOPlugin::createInstance<SNIO>);
+#endif
+#ifdef PLUGIN_PGMIO
 	mapPlugins["PGM"]       = IOPlugin("PGMIO", NULL, &IOPlugin::createInstance<PGMIO>);
+#endif
 #ifdef PLUGIN_IMISIO
 	mapPlugins["IMIS"]      = IOPlugin("ImisIO", NULL, &IOPlugin::createInstance<ImisIO>);
 #endif
@@ -150,7 +166,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 	std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
-		throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has its developer declared it in IOHandler::registerPlugins?", AT);
+		throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it registered in IOHandler::registerPlugins?", AT);
 	if ((mapit->second).io == NULL){
 		(mapit->second).io = (mapit->second).creator_func(cfg);
 	}

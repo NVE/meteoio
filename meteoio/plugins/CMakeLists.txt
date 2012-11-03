@@ -1,18 +1,38 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 IF(PLUGIN_SMETIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_SMETIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_SMETIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/SMETIO.cc)
 ENDIF(PLUGIN_SMETIO)
 
 IF(PLUGIN_ARCIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_ARCIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_ARCIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/ARCIO.cc)
 ENDIF(PLUGIN_ARCIO)
 
 IF(PLUGIN_A3DIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_A3DIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_A3DIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/A3DIO.cc)
 ENDIF(PLUGIN_A3DIO)
 
 IF(PLUGIN_ARPSIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_ARPSIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_ARPSIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/ARPSIO.cc)
 ENDIF(PLUGIN_ARPSIO)
 
@@ -21,9 +41,9 @@ IF(PLUGIN_BORMAIO)
 	INCLUDE_DIRECTORIES(${LibXML++_INCLUDE_DIRS})
 	SET(plugin_libs ${plugin_libs} ${LibXML++_LIBRARIES})
 	IF(MSVC)
-		ADD_DEFINITIONS(/DBORMAIO) #it looks like some VC++ versions don't support -D syntax
+		ADD_DEFINITIONS(/DPLUGIN_BORMAIO) #it looks like some VC++ versions don't support -D syntax
 	ELSE(MSVC)
-		ADD_DEFINITIONS(-DBORMAIO)
+		ADD_DEFINITIONS(-DPLUGIN_BORMAIO)
 	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/BormaIO.cc)
 ENDIF(PLUGIN_BORMAIO)
@@ -33,14 +53,19 @@ IF(PLUGIN_COSMOXMLIO)
 	INCLUDE_DIRECTORIES(${LibXML++_INCLUDE_DIRS})
 	SET(plugin_libs ${plugin_libs} ${LibXML++_LIBRARIES})
 	IF(MSVC)
-		ADD_DEFINITIONS(/DCOSMOXMLIO) #it looks like some VC++ versions don't support -D syntax
+		ADD_DEFINITIONS(/DPLUGIN_COSMOXMLIO) #it looks like some VC++ versions don't support -D syntax
 	ELSE(MSVC)
-		ADD_DEFINITIONS(-DCOSMOXMLIO)
+		ADD_DEFINITIONS(-DPLUGIN_COSMOXMLIO)
 	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/CosmoXMLIO.cc)
 ENDIF(PLUGIN_COSMOXMLIO)
 
 IF(PLUGIN_GRASSIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_GRASSIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_GRASSIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/GrassIO.cc)
 ENDIF(PLUGIN_GRASSIO)
 
@@ -57,6 +82,11 @@ IF(PLUGIN_GRIBIO)
 ENDIF(PLUGIN_GRIBIO)
 
 IF(PLUGIN_GEOTOPIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_GEOTOPIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_GEOTOPIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/GeotopIO.cc)
 ENDIF(PLUGIN_GEOTOPIO)
 
@@ -101,6 +131,11 @@ IF(PLUGIN_IMISIO)
 ENDIF(PLUGIN_IMISIO)
 
 IF(PLUGIN_PGMIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_PGMIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_PGMIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/PGMIO.cc)
 ENDIF(PLUGIN_PGMIO)
 
@@ -117,6 +152,11 @@ IF(PLUGIN_PNGIO)
 ENDIF(PLUGIN_PNGIO)
 
 IF(PLUGIN_SNIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_SNIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_SNIO)
+	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/SNIO.cc)
 ENDIF(PLUGIN_SNIO)
 
