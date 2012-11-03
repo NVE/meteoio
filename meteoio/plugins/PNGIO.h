@@ -36,8 +36,6 @@ namespace mio {
  */
 class PNGIO : public IOInterface {
 	public:
-		PNGIO(void (*delObj)(void*), const Config& i_cfg);
-
 		PNGIO(const std::string& configfile);
 		PNGIO(const PNGIO&);
 		PNGIO(const Config& cfgreader);

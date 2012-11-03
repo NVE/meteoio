@@ -48,18 +48,8 @@ namespace mio {
 const double ARPSIO::plugin_nodata = -999.; //plugin specific nodata value
 const std::string ARPSIO::default_ext=".asc"; //filename extension
 
-ARPSIO::ARPSIO(void (*delObj)(void*), const Config& i_cfg)
-        : IOInterface(delObj), cfg(i_cfg),
-          fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
-          grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
-          xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	setOptions();
-}
-
 ARPSIO::ARPSIO(const std::string& configfile)
-        : IOInterface(NULL), cfg(configfile),
+        : cfg(configfile),
           fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
           grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
           xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
@@ -69,7 +59,7 @@ ARPSIO::ARPSIO(const std::string& configfile)
 }
 
 ARPSIO::ARPSIO(const Config& cfgreader)
-        : IOInterface(NULL), cfg(cfgreader),
+        : cfg(cfgreader),
           fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
           grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
           xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
@@ -512,26 +502,5 @@ void ARPSIO::moveToMarker(const std::string& marker)
 		throw InvalidFormatException(message, AT);
 	}
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const std::string& classname, const Config& cfg) {
-		if(classname == "ARPSIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new ARPSIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

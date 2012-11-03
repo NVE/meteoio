@@ -69,17 +69,12 @@ const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
 const double CosmoXMLIO::out_tz = 0.; //Plugin specific time zone
 const std::string CosmoXMLIO::dflt_extension = ".xml";
 
-CosmoXMLIO::CosmoXMLIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+CosmoXMLIO::CosmoXMLIO(const std::string& configfile) : cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-CosmoXMLIO::CosmoXMLIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-}
-
-CosmoXMLIO::CosmoXMLIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+CosmoXMLIO::CosmoXMLIO(const Config& cfgreader) : cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -515,26 +510,5 @@ void CosmoXMLIO::cleanup() throw()
 {
 
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "CosmoXMLIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new CosmoXMLIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

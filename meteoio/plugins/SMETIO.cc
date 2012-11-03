@@ -69,17 +69,8 @@ namespace mio {
 
 const std::string SMETIO::dflt_extension = ".smet";
 
-SMETIO::SMETIO(void (*delObj)(void*), const Config& i_cfg)
-        : IOInterface(delObj), cfg(i_cfg),
-          coordin(), coordinparam(), coordout(), coordoutparam(),
-          vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
-          plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
-{
-	parseInputOutputSection();
-}
-
 SMETIO::SMETIO(const std::string& configfile)
-        : IOInterface(NULL), cfg(configfile),
+        : cfg(configfile),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
@@ -88,7 +79,7 @@ SMETIO::SMETIO(const std::string& configfile)
 }
 
 SMETIO::SMETIO(const Config& cfgreader)
-        : IOInterface(NULL), cfg(cfgreader),
+        : cfg(cfgreader),
           coordin(), coordinparam(), coordout(), coordoutparam(),
           vec_smet_reader(), vecFiles(), outpath(), in_dflt_TZ(0.), out_dflt_TZ(0.),
           plugin_nodata(IOUtils::nodata), nr_stations(0), outputIsAscii(true), outputIsGzipped(false)
@@ -806,27 +797,5 @@ void SMETIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, con
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }
-
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "SMETIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new SMETIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

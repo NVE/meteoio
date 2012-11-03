@@ -76,33 +76,33 @@ namespace mio {
 
 void IOHandler::registerPlugins()
 {
-#if defined(_WIN32)
-	const std::string libsuffix = ".dll";
-#elif defined(APPLE)
-	const std::string libsuffix = ".dylib";
-#else
-	const std::string libsuffix = ".so";
-#endif
-#ifdef _POPC_
-	const std::string popc_extra = "popc";
-#else
-	const std::string popc_extra = "";
-#endif
 	//mapPlugins[io.ini KEY]= IOPlugin(library file name, class name, NULL, NULL);
-	mapPlugins["A3D"]       = IOPlugin("liba3dio"+popc_extra+libsuffix, "A3DIO", NULL, NULL);
-	mapPlugins["BORMA"]     = IOPlugin("libbormaio"+popc_extra+libsuffix, "BormaIO", NULL, NULL);
-	mapPlugins["IMIS"]      = IOPlugin("libimisio"+popc_extra+libsuffix, "ImisIO", NULL, NULL);
-	mapPlugins["GEOTOP"]    = IOPlugin("libgeotopio"+popc_extra+libsuffix, "GeotopIO", NULL, NULL);
-	mapPlugins["SNOWPACK"]  = IOPlugin("libsnio"+popc_extra+libsuffix, "SNIO", NULL, NULL);
-	mapPlugins["GSN"]       = IOPlugin("libgsnio"+popc_extra+libsuffix, "GSNIO", NULL, NULL);
-	mapPlugins["ARC"]       = IOPlugin("libarcio"+popc_extra+libsuffix, "ARCIO", NULL, NULL);
-	mapPlugins["GRASS"]     = IOPlugin("libgrassio"+popc_extra+libsuffix, "GrassIO", NULL, NULL);
-	mapPlugins["ARPS"]      = IOPlugin("libarpsio"+popc_extra+libsuffix, "ARPSIO", NULL, NULL);
-	mapPlugins["PGM"]       = IOPlugin("libpgmio"+popc_extra+libsuffix, "PGMIO", NULL, NULL);
-	mapPlugins["PNG"]       = IOPlugin("libpngio"+popc_extra+libsuffix, "PNGIO", NULL, NULL);
-	mapPlugins["SMET"]      = IOPlugin("libsmetio"+popc_extra+libsuffix, "SMETIO", NULL, NULL);
-	mapPlugins["COSMOXML"]  = IOPlugin("libcosmoxmlio"+popc_extra+libsuffix, "CosmoXMLIO", NULL, NULL);
-	mapPlugins["GRIB"]      = IOPlugin("libgribio"+popc_extra+libsuffix, "GRIBIO", NULL, NULL);
+	mapPlugins["SMET"]      = IOPlugin("SMETIO", NULL, &IOPlugin::createInstance<SMETIO>);
+	mapPlugins["ARC"]       = IOPlugin("ARCIO", NULL, &IOPlugin::createInstance<ARCIO>);
+	mapPlugins["A3D"]       = IOPlugin("A3DIO", NULL, &IOPlugin::createInstance<A3DIO>);
+	mapPlugins["ARPS"]      = IOPlugin("ARPSIO", NULL, &IOPlugin::createInstance<ARPSIO>);
+	mapPlugins["GRASS"]     = IOPlugin("GrassIO", NULL, &IOPlugin::createInstance<GrassIO>);
+	mapPlugins["GEOTOP"]    = IOPlugin("GeotopIO", NULL, &IOPlugin::createInstance<GeotopIO>);
+	mapPlugins["SNOWPACK"]  = IOPlugin("SNIO", NULL, &IOPlugin::createInstance<SNIO>);
+	mapPlugins["PGM"]       = IOPlugin("PGMIO", NULL, &IOPlugin::createInstance<PGMIO>);
+#ifdef PLUGIN_IMISIO
+	mapPlugins["IMIS"]      = IOPlugin("ImisIO", NULL, &IOPlugin::createInstance<ImisIO>);
+#endif
+#ifdef PLUGIN_GRIBIO
+	mapPlugins["GRIB"]      = IOPlugin("GRIBIO", NULL, &IOPlugin::createInstance<GRIBIO>);
+#endif
+#ifdef PLUGIN_PNGIO
+	mapPlugins["PNG"]       = IOPlugin("PNGIO", NULL, &IOPlugin::createInstance<PNGIO>);
+#endif
+#ifdef PLUGIN_BORMAIO
+	mapPlugins["BORMA"]     = IOPlugin("BormaIO", NULL, &IOPlugin::createInstance<BormaIO>);
+#endif
+#ifdef PLUGIN_COSMOXMLIO
+	mapPlugins["COSMOXML"]  = IOPlugin("CosmoXMLIO", NULL, &IOPlugin::createInstance<CosmoXMLIO>);
+#endif
+#ifdef PLUGIN_GSNIO
+	mapPlugins["GSN"]       = IOPlugin("GSNIO", NULL, &IOPlugin::createInstance<GSNIO>);
+#endif
 }
 
 //Copy constructor
@@ -114,18 +114,14 @@ void IOHandler::registerPlugins()
 //}
 #else
 IOHandler::IOHandler(const IOHandler& aio)
-           : IOInterface(NULL), cfg(aio.cfg), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
+           : cfg(aio.cfg), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
 {
 	//Nothing else so far
 	//TODO: Deal with the IOInterface* pointers, e.g. bormaio
 }
 #endif
 
-#ifdef _POPC_
 IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
-#else
-IOHandler::IOHandler(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
-#endif
 {
 	registerPlugins();
 	parse_copy_config();
@@ -139,60 +135,11 @@ IOHandler::~IOHandler() throw(){
 	// Get rid of the objects
 	std::map<std::string, IOPlugin>::iterator mapit;
 	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); mapit++){
-		deletePlugin((mapit->second).dynLibrary, (mapit->second).io);
-	}
-}
-#ifdef _POPC_
-void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io)
-#else
-void IOHandler::deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw()
-#endif
-{
-	if (dynLibrary != NULL) {
+		IOInterface*& io = (mapit->second).io;
 		if (io != NULL) {
-			io->deleteSelf();
+			delete io;
 			io = NULL;
 		}
-
-		// Close the dynamic library
-#ifndef _POPC_ //HACK: this line causes a segfault in the parallel version for unknown reasons, lwk
-		delete dynLibrary;
-#endif
-	}
-}
-
-void IOHandler::loadPlugin(const std::string& libname, const std::string& classname, DynamicLibrary*& dynLibrary, IOInterface*& io)
-{
-	std::string pluginpath = "";
-
-	try {
-		cfg.getValue("PLUGINPATH", pluginpath, Config::nothrow);
-		if (pluginpath.length() > 0 && pluginpath.at( pluginpath.length() - 1 )!='/')
-			pluginpath += "/";
-
-		//Which dynamic library needs to be loaded
-		const std::string filename = pluginpath + libname;
-		dynLibrary = DynamicLoader::loadObjectFile(filename);
-
-		if(dynLibrary == NULL) {
-			cerr << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << std::endl;
-			cerr << "\t" << DynamicLoader::getErrorMessage() << std::endl;
-			cerr << "Please check your PLUGINPATH in your configuration file!" << std::endl;
-		} else {
-			io = dynamic_cast<IOInterface*>((dynLibrary)->newObject(classname, cfg));
-			if(io == NULL) {
-				cerr << AT << ": [E] Failed loading dynamic plugin " << classname << " from " << filename << "(NULL pointer to plugin's class)" << std::endl;
-				//delete dynLibrary; This causes a segfault !!
-			} else {
-				cerr << "[i] Success loading dynamic plugin " << classname << " from " << filename << std::endl;
-			}
-		}
-	} catch (const std::exception& e) {
-	#ifndef _POPC_ //HACK: this line causes a segfault in the parallel version for unknown reasons, lwk
-		if (dynLibrary != NULL)
-			delete dynLibrary;
-	#endif
-		cerr << AT << ": [E] failed while loading plugin with error: \n" << e.what() << std::endl;
 	}
 }
 
@@ -203,10 +150,12 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 	std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
-		throw IOException("Can not find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has its developer declared it in IOHandler::registerPlugins?", AT);
+		throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has its developer declared it in IOHandler::registerPlugins?", AT);
 	if ((mapit->second).io == NULL){
-		loadPlugin((mapit->second).libname, (mapit->second).classname, (mapit->second).dynLibrary, (mapit->second).io);
+		(mapit->second).io = (mapit->second).creator_func(cfg);
 	}
+
+	//Now check if it is correctly loaded
 	if ((mapit->second).io == NULL) {
 		throw IOException("Requesting to read/write data with plugin '" + op_src + "', but plugin is not loaded", AT);
 	}

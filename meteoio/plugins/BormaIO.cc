@@ -50,21 +50,14 @@ const double BormaIO::default_tz = +1.; //default timezone
 const double BormaIO::pivot_year = 80.; //pivot year for Y2K suppport
 const std::string BormaIO::dflt_extension = ".xml";
 
-BormaIO::BormaIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+BormaIO::BormaIO(const std::string& configfile) : cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = default_tz;
 	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
 }
 
-BormaIO::BormaIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = default_tz;
-	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
-}
-
-BormaIO::BormaIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+BormaIO::BormaIO(const Config& cfgreader) : cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = default_tz;
@@ -480,26 +473,5 @@ void BormaIO::convertUnits(MeteoData& meteo)
 	if (rh != IOUtils::nodata)
 		rh /= 100.;
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "BormaIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new BormaIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

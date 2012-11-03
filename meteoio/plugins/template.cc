@@ -37,17 +37,12 @@ namespace mio {
 
 const double TEMPLATE::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-TEMPLATE::TEMPLATE(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+TEMPLATE::TEMPLATE(const std::string& configfile) : cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-TEMPLATE::TEMPLATE(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-}
-
-TEMPLATE::TEMPLATE(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+TEMPLATE::TEMPLATE(const Config& cfgreader) : cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
@@ -130,26 +125,5 @@ void TEMPLATE::cleanup() throw()
 {
 
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "TEMPLATE") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new TEMPLATE(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

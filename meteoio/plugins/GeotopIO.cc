@@ -47,19 +47,13 @@ namespace mio {
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
-	GeotopIO::GeotopIO(void(*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg), nr_of_stations(IOUtils::npos) {
+GeotopIO::GeotopIO(const std::string& configfile) : cfg(configfile), nr_of_stations(IOUtils::npos) {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
 }
 
-GeotopIO::GeotopIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile), nr_of_stations(IOUtils::npos) {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
-	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
-}
-
-GeotopIO::GeotopIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader), nr_of_stations(IOUtils::npos) {
+GeotopIO::GeotopIO(const Config& cfgreader) : cfg(cfgreader), nr_of_stations(IOUtils::npos) {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
@@ -599,25 +593,5 @@ void GeotopIO::convertUnits(MeteoData& meteo) {
 	if (rh != IOUtils::nodata)
 		rh /= 100.;
 }
-
-#ifndef _METEOIO_JNI
-extern "C" {
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-METEOIO_EXPORT void deleteObject(void* obj) {
-	delete reinterpret_cast<PluginObject*> (obj);
-}
-
-METEOIO_EXPORT void* loadObject(const std::string& classname, const Config& cfg) {
-	if (classname == "GeotopIO") {
-		//cerr << "Creating dynamic handle for " << classname << endl;
-		return new GeotopIO(deleteObject, cfg);
-	}
-	//cerr << "Could not load " << classname << endl;
-	return NULL;
-}
-}
-#endif
 
 } //namespace

@@ -21,6 +21,7 @@ IF(PROJ4)
 	ENDIF(MSVC)
 ENDIF(PROJ4)
 
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteostats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
@@ -63,10 +64,10 @@ SET(meteoio_sources
 	IOInterface.cc
 	StationData.cc
 	Config.cc
-	DynamicLibrary.cc
 	IOExceptions.cc
 	IOUtils.cc
 	MeteoData.cc
+	${plugins_sources}
 	${meteolaws_sources}
 	${meteostats_sources}
 	${meteofilters_sources}
@@ -77,12 +78,12 @@ IF(BUILD_STATIC_LIBS)
 	SET(STATICNAME ${PROJECT_NAME}_STATIC)
 	SET(STATICLIBNAME ${PROJECT_NAME}${POPC_EXT})
 	ADD_LIBRARY(${STATICNAME} STATIC ${meteoio_sources})
-	TARGET_LINK_LIBRARIES(${STATICNAME} ${LIBPROJ} ${Popc_LIBRARIES})
+	TARGET_LINK_LIBRARIES(${STATICNAME} ${plugin_libs} ${LIBPROJ} ${Popc_LIBRARIES})
 ENDIF(BUILD_STATIC_LIBS)
 
 SET(SHAREDNAME ${PROJECT_NAME}${POPC_EXT})
 ADD_LIBRARY(${SHAREDNAME} ${meteoio_sources})
-TARGET_LINK_LIBRARIES(${SHAREDNAME} ${LIBPROJ} ${Popc_LIBRARIES})
+TARGET_LINK_LIBRARIES(${SHAREDNAME} ${plugin_libs} ${LIBPROJ} ${Popc_LIBRARIES})
 SET_TARGET_PROPERTIES(${SHAREDNAME} PROPERTIES
 	PREFIX "${LIBPREFIX}"
 	LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"

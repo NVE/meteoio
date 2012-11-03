@@ -45,8 +45,6 @@ namespace mio {
 */
 class CosmoXMLIO : public IOInterface {
 	public:
-		CosmoXMLIO(void (*delObj)(void*), const Config& i_cfg);
-
 		CosmoXMLIO(const std::string& configfile);
 		CosmoXMLIO(const CosmoXMLIO&);
 		CosmoXMLIO(const Config& cfgreader);

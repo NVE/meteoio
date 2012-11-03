@@ -42,8 +42,6 @@ namespace mio {
  */
 class GrassIO : public IOInterface {
 	public:
-		GrassIO(void (*delObj)(void*), const Config& i_cfg);
-
 		GrassIO(const std::string& configfile);
 		GrassIO(const GrassIO&);
 		GrassIO(const Config&);

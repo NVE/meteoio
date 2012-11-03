@@ -98,19 +98,8 @@ const unsigned char PNGIO::channel_depth = 8;
 const unsigned char PNGIO::channel_max_color = 255;
 const unsigned char PNGIO::transparent_grey = channel_max_color;
 
-PNGIO::PNGIO(void (*delObj)(void*), const Config& i_cfg)
-       : IOInterface(delObj), cfg(i_cfg),
-         fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
-         indexed_png(true), nr_levels(30),
-         coordout(), coordoutparam(), grid2dpath(),
-         scaling("bilinear"), min_w(IOUtils::unodata), min_h(IOUtils::unodata), max_w(IOUtils::unodata), max_h(IOUtils::unodata),
-         metadata_key(), metadata_text()
-{
-	setOptions();
-}
-
 PNGIO::PNGIO(const std::string& configfile)
-       : IOInterface(NULL), cfg(configfile),
+       : cfg(configfile),
          fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
          indexed_png(true), nr_levels(30),
          coordout(), coordoutparam(), grid2dpath(),
@@ -121,7 +110,7 @@ PNGIO::PNGIO(const std::string& configfile)
 }
 
 PNGIO::PNGIO(const Config& cfgreader)
-       : IOInterface(NULL), cfg(cfgreader),
+       : cfg(cfgreader),
          fp(NULL), autoscale(true), has_legend(true), has_world_file(false), optimize_for_speed(true),
          indexed_png(true), nr_levels(30),
          coordout(), coordoutparam(), grid2dpath(),
@@ -762,26 +751,5 @@ std::string PNGIO::decimal_to_dms(const double& decimal) {
 	dms << d << "/1 " << static_cast<int>(m*100) << "/100 " << fixed << setprecision(6) << s << "/1";
 	return dms.str();
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "PNGIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new PNGIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

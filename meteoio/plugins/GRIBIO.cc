@@ -86,7 +86,7 @@ const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It c
 const double GRIBIO::tz_in = 0.; //GRIB time zone, always UTC
 const std::string GRIBIO::default_ext=".grb"; //filename extension
 
-GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+GRIBIO::GRIBIO(const std::string& configfile) : cfg(configfile)
 {
 	setOptions();
 	indexed = false;
@@ -98,19 +98,7 @@ GRIBIO::GRIBIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj)
 	cellsize_x = cellsize_y = IOUtils::nodata;
 }
 
-GRIBIO::GRIBIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
-	setOptions();
-	indexed = false;
-	idx=NULL;
-	fp = NULL;
-	meteo_initialized = false;
-	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
-	bearing_offset = IOUtils::nodata;
-	cellsize_x = cellsize_y = IOUtils::nodata;
-}
-
-GRIBIO::GRIBIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+GRIBIO::GRIBIO(const Config& cfgreader) : cfg(cfgreader)
 {
 	setOptions();
 	indexed = false;
@@ -1078,26 +1066,5 @@ void GRIBIO::cleanup() throw()
 	if(idx!=NULL) grib_index_delete(idx); idx=NULL;
 	idx_filename="";
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "GRIBIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new GRIBIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

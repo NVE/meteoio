@@ -99,22 +99,8 @@ namespace mio {
  * - DAPATH: path+prefix of file containing data assimilation grids (named with ISO 8601 basic date and .sca extension, example ./input/dagrids/sdp_200812011530.sca)
  */
 
-ARCIO::ARCIO(void (*delObj)(void*), const Config& i_cfg)
-       : IOInterface(delObj), cfg(i_cfg),
-         fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
-         grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
-         a3d_view_in(false), a3d_view_out(false)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	a3d_view_in = false;
-	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, Config::nothrow);
-	a3d_view_out = false;
-	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, Config::nothrow);
-	getGridPaths();
-}
-
 ARCIO::ARCIO(const std::string& configfile)
-       : IOInterface(NULL), cfg(configfile),
+       : cfg(configfile),
          fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
          grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
          a3d_view_in(false), a3d_view_out(false)
@@ -128,7 +114,7 @@ ARCIO::ARCIO(const std::string& configfile)
 }
 
 ARCIO::ARCIO(const Config& cfgreader)
-       : IOInterface(NULL), cfg(cfgreader),
+       : cfg(cfgreader),
          fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam(),
          grid2dpath_in(), grid2dpath_out(), grid2d_ext_in(), grid2d_ext_out(),
          a3d_view_in(false), a3d_view_out(false)
@@ -400,26 +386,5 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 		}
 	}
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const std::string& classname, const Config& cfg) {
-		if(classname == "ARCIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new ARCIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

@@ -117,7 +117,6 @@ namespace mio {
  * The keys and their location in the configuration file (ie: to which section they belong) depends on the module that is actually using them. The optional keys depend on the specific options handled by each specific module (or plugin, or algorithm). Therefore, we can draw the following skeleton:
  * @code
  * [General]
- * PLUGINPATH	= ../../lib	#optional, if not provided the plugins will be search in the normal library path
  *
  * [Input]
  * COORDSYS	= CH1903	#mandatory: which coordinate system is used for the geographic coordinates

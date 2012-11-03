@@ -36,10 +36,9 @@ namespace mio {
  */
 class IOPlugin {
 	public:
-		std::string libname; ///< A string representing the file to be loaded, e.g. "libgeotopio.so", can be empty
 		std::string classname; ///< Classname of the object to be loaded from that dynamic library (e.g. "A3DIO")
 		IOInterface *io; ///< The pointer to the actual dynamically loaded instance of IOInterface
-		DynamicLibrary *dynLibrary; ///< The pointer to the opened dynamic library
+		IOInterface* (*creator_func)(const Config&); ///< The function pointer to the instantiation function
 
 		/**
 		 * @brief The main constructor for the IOPlugin class
@@ -49,11 +48,13 @@ class IOPlugin {
 		 * @param p1  A pointer to the loaded object of type IOInterface (or NULL)
 		 * @param p2  A pointer to the loaded dynamic library (or NULL)
 		 */
-		IOPlugin(std::string i_s1, std::string i_s2, IOInterface *p1, DynamicLibrary *p2) : libname(i_s1), classname(i_s2), io(p1), dynLibrary(p2){}
-		IOPlugin() : libname(""), classname(""), io(NULL), dynLibrary(NULL){}
-		IOPlugin(const IOPlugin& c) : libname(c.libname), classname(c.classname), io(c.io), dynLibrary(c.dynLibrary){}
+		IOPlugin(std::string i_s2, IOInterface *p1, IOInterface*(*p2)(const Config&)) : classname(i_s2), io(p1), creator_func(p2){}
+		IOPlugin() : classname(""), io(NULL), creator_func(NULL){}
+		IOPlugin(const IOPlugin& c) : classname(c.classname), io(c.io), creator_func(c.creator_func){}
 
 		IOPlugin& operator=(const IOPlugin& source);
+
+		template<typename T> static IOInterface* createInstance(const Config& cfg) { return new T(cfg); }
 
 		friend std::ostream& operator<<(std::ostream& os, const IOPlugin& data);
 		static const std::string header; //to contain a helpful header for understanding the output of <<

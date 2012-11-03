@@ -77,24 +77,8 @@ const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 const size_t SNIO::min_nr_meteoData = 15;
 const std::string SNIO::dflt_extension = ".inp";
 
-SNIO::SNIO(void (*delObj)(void*), const Config& i_cfg)
-      : IOInterface(delObj), cfg(i_cfg),
-        vecAllStations(), vec_streampos(), fin(), fout(),
-        coordin(), coordinparam(), coordout(), coordoutparam(),
-        in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
-        iswr_inp(true), rswr_inp(true)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
-	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
-	cfg.getValue("ISWR_INP","Input",iswr_inp,Config::nothrow);
-	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
-	if (!iswr_inp || !rswr_inp)
-		nr_meteoData = min_nr_meteoData - 1;
-}
-
 SNIO::SNIO(const std::string& configfile)
-      : IOInterface(NULL), cfg(configfile),
+      : cfg(configfile),
         vecAllStations(), vec_streampos(), fin(), fout(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
@@ -110,7 +94,7 @@ SNIO::SNIO(const std::string& configfile)
 }
 
 SNIO::SNIO(const Config& cfgreader)
-      : IOInterface(NULL), cfg(cfgreader),
+      : cfg(cfgreader),
         vecAllStations(), vec_streampos(), fin(), fout(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
@@ -835,26 +819,5 @@ void SNIO::convertUnits(MeteoData& meteo)
 		}
 	}
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "SNIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new SNIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

@@ -41,8 +41,6 @@ namespace mio {
  */
 class GeotopIO : public IOInterface {
 	public:
-		GeotopIO(void (*delObj)(void*), const Config& i_cfg);
-
 		GeotopIO(const std::string& configfile);
 		GeotopIO(const GeotopIO&);
 		GeotopIO(const Config&);

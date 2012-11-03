@@ -47,17 +47,8 @@ namespace mio {
 
 const double PGMIO::plugin_nodata = 0.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-PGMIO::PGMIO(void (*delObj)(void*), const Config& i_cfg)
-       : IOInterface(delObj), cfg(i_cfg),
-         coordin(), coordinparam(), coordout(), coordoutparam(),
-         fin(), fout(), grid2dpath_in(), grid2dpath_out()
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	getGridPaths();
-}
-
 PGMIO::PGMIO(const std::string& configfile)
-       : IOInterface(NULL), cfg(configfile),
+       : cfg(configfile),
          coordin(), coordinparam(), coordout(), coordoutparam(),
          fin(), fout(), grid2dpath_in(), grid2dpath_out()
 {
@@ -66,7 +57,7 @@ PGMIO::PGMIO(const std::string& configfile)
 }
 
 PGMIO::PGMIO(const Config& cfgreader)
-       : IOInterface(NULL), cfg(cfgreader),
+       : cfg(cfgreader),
          coordin(), coordinparam(), coordout(), coordoutparam(),
          fin(), fout(), grid2dpath_in(), grid2dpath_out()
 {
@@ -323,26 +314,5 @@ void PGMIO::cleanup() throw()
 		fout.close();
 	}
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "PGMIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new PGMIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

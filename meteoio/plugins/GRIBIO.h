@@ -36,8 +36,6 @@ namespace mio {
  */
 class GRIBIO : public IOInterface {
 	public:
-		GRIBIO(void (*delObj)(void*), const Config& i_cfg);
-
 		GRIBIO(const std::string& configfile);
 		GRIBIO(const GRIBIO&);
 		GRIBIO(const Config& cfgreader);

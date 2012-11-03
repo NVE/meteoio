@@ -19,26 +19,25 @@
 
 namespace mio {
 
-const std::string IOPlugin::header="<IOPlugin>              libname, classname,    &class,      &lib</IOPlugin>";
+const std::string IOPlugin::header="<IOPlugin>              classname,    &class,      &creator_func</IOPlugin>";
 
 IOPlugin& IOPlugin::operator=(const IOPlugin& source)
 {
 	//since this represents a plugin on a given machine/node, since the pointers point to entry points
 	//in the compiled code, they should remain valid and therefore can be copied
 	if(this != &source) {
-		libname = source.libname;
 		classname = source.classname;
 		io = source.io;
-		dynLibrary = source.dynLibrary;
+		creator_func = source.creator_func;
 	}
 	return *this;
 }
 
 std::ostream& operator<<(std::ostream& os, const IOPlugin& data) {
 	const unsigned int pt_w=8;
-	os << "<IOPlugin>" << std::setw(21) << data.libname << "," << std::setw(10) << data.classname;
+	os << "<IOPlugin>" << std::setw(10) << data.classname;
 	os << "," << std::showbase << std::setw(pt_w+2) << data.io;
-	os << "," << std::showbase << std::setw(pt_w+2) << data.dynLibrary << "</IOPlugin>\n";
+	os << "," << std::showbase << std::setw(pt_w+2) << data.creator_func << "</IOPlugin>\n";
 	return os;
 }
 

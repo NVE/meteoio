@@ -41,8 +41,6 @@ namespace mio {
  */
 class SNIO : public IOInterface {
 	public:
-		SNIO(void (*delObj)(void*), const Config& i_cfg);
-
 		SNIO(const std::string& configfile);
 		SNIO(const SNIO&);
 		SNIO(const Config& cfgreader);

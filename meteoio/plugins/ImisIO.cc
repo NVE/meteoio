@@ -183,19 +183,13 @@ void ImisIO::getDBParameters()
 	cfg.getValue("USE_SNOWPACK_HNW", "Input", use_hnw_snowpack, Config::nothrow);
 }
 
-ImisIO::ImisIO(void (*delObj)(void*), const Config& i_cfg) : IOInterface(delObj), cfg(i_cfg)
+ImisIO::ImisIO(const std::string& configfile) : cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
 }
 
-ImisIO::ImisIO(const std::string& configfile) : IOInterface(NULL), cfg(configfile)
-{
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	getDBParameters();
-}
-
-ImisIO::ImisIO(const Config& cfgreader) : IOInterface(NULL), cfg(cfgreader)
+ImisIO::ImisIO(const Config& cfgreader) : cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
@@ -1096,27 +1090,5 @@ void ImisIO::convertUnits(MeteoData& meteo)
 void ImisIO::cleanup() throw()
 {
 }
-
-#ifndef _METEOIO_JNI
-extern "C"
-{
-#define COMPILE_PLUGIN
-#include "exports.h"
-
-	//using namespace MeteoIO;
-	METEOIO_EXPORT void deleteObject(void* obj) {
-		delete reinterpret_cast<PluginObject*>(obj);
-	}
-
-	METEOIO_EXPORT void* loadObject(const string& classname, const Config& cfg) {
-		if(classname == "ImisIO") {
-			//cerr << "Creating dynamic handle for " << classname << endl;
-			return new ImisIO(deleteObject, cfg);
-		}
-		//cerr << "Could not load " << classname << endl;
-		return NULL;
-	}
-}
-#endif
 
 } //namespace

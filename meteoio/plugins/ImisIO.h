@@ -78,8 +78,6 @@ class AnetzData{
  */
 class ImisIO : public IOInterface {
 	public:
-		ImisIO(void (*delObj)(void*), const Config& i_cfg);
-
 		ImisIO(const std::string& configfile);
 		ImisIO(const ImisIO&);
 		ImisIO(const Config&);

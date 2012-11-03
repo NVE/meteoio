@@ -26,6 +26,31 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOPlugin.h>
 
+#include <meteoio/plugins/SMETIO.h>
+#include <meteoio/plugins/ARCIO.h>
+#include <meteoio/plugins/A3DIO.h>
+#include <meteoio/plugins/ARPSIO.h>
+#include <meteoio/plugins/GrassIO.h>
+#include <meteoio/plugins/GeotopIO.h>
+#include <meteoio/plugins/PGMIO.h>
+#include <meteoio/plugins/SNIO.h>
+
+#ifdef PLUGIN_IMISIO
+#include <meteoio/plugins/ImisIO.h>
+#endif
+
+#ifdef PLUGIN_GRIBIO
+#include <meteoio/plugins/GRIBIO.h>
+#endif
+
+#ifdef PLUGIN_PNGIO
+#include <meteoio/plugins/PNGIO.h>
+#endif
+
+#ifdef PLUGIN_GSNIO
+#include <meteoio/plugins/GSNIO.h>
+#endif
+
 #include <map>
 #include <string>
 
@@ -88,14 +113,6 @@ class IOHandler : public IOInterface {
 	#endif
 
 	private:
-		void loadDynamicPlugins();
-		void loadPlugin(const std::string& libname, const std::string& classname,
-		                DynamicLibrary*& dynLibrary, IOInterface*& io);
-	#ifdef _POPC_
-		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io);
-	#else
-		void deletePlugin(DynamicLibrary*& dynLibrary, IOInterface*& io) throw();
-	#endif
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 

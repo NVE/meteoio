@@ -22,7 +22,6 @@
 #include <meteoio/Array2D.h>
 #include <meteoio/Date.h>
 #include <meteoio/DEMObject.h>
-#include <meteoio/DynamicLibrary.h>
 #include <meteoio/Grid2DObject.h>
 #include <meteoio/MeteoData.h>
 #include <meteoio/StationData.h>
@@ -88,10 +87,8 @@ namespace mio {
  * @author Thomas Egger
  * @date   2009-01-08
  */
-class IOInterface : public PluginObject {
+class IOInterface {
 	public:
-
-		IOInterface(void (*delObj)(void*));
 		virtual ~IOInterface();
 
 		/**
