@@ -77,9 +77,6 @@ namespace mio {
 void IOHandler::registerPlugins()
 {
 	//mapPlugins[io.ini KEY]= IOPlugin(library file name, class name, NULL, NULL);
-#ifdef PLUGIN_SMETIO
-	mapPlugins["SMET"]      = IOPlugin("SMETIO", NULL, &IOPlugin::createInstance<SMETIO>);
-#endif
 #ifdef PLUGIN_ARCIO
 	mapPlugins["ARC"]       = IOPlugin("ARCIO", NULL, &IOPlugin::createInstance<ARCIO>);
 #endif
@@ -94,6 +91,9 @@ void IOHandler::registerPlugins()
 #endif
 #ifdef PLUGIN_GEOTOPIO
 	mapPlugins["GEOTOP"]    = IOPlugin("GeotopIO", NULL, &IOPlugin::createInstance<GeotopIO>);
+#endif
+#ifdef PLUGIN_SMETIO
+	mapPlugins["SMET"]      = IOPlugin("SMETIO", NULL, &IOPlugin::createInstance<SMETIO>);
 #endif
 #ifdef PLUGIN_SNIO
 	mapPlugins["SNOWPACK"]  = IOPlugin("SNIO", NULL, &IOPlugin::createInstance<SNIO>);

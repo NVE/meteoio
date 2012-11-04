@@ -26,14 +26,22 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOPlugin.h>
 
-#include <meteoio/plugins/SMETIO.h>
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/plugins/A3DIO.h>
 #include <meteoio/plugins/ARPSIO.h>
 #include <meteoio/plugins/GrassIO.h>
 #include <meteoio/plugins/GeotopIO.h>
 #include <meteoio/plugins/PGMIO.h>
+#include <meteoio/plugins/SMETIO.h>
 #include <meteoio/plugins/SNIO.h>
+
+#ifdef PLUGIN_BORMAIO
+#include <meteoio/plugins/BormaIO.h>
+#endif
+
+#ifdef PLUGIN_COSMOXMLIO
+#include <meteoio/plugins/CosmoXMLIO.h>
+#endif
 
 #ifdef PLUGIN_IMISIO
 #include <meteoio/plugins/ImisIO.h>
@@ -43,12 +51,12 @@
 #include <meteoio/plugins/GRIBIO.h>
 #endif
 
-#ifdef PLUGIN_PNGIO
-#include <meteoio/plugins/PNGIO.h>
-#endif
-
 #ifdef PLUGIN_GSNIO
 #include <meteoio/plugins/GSNIO.h>
+#endif
+
+#ifdef PLUGIN_PNGIO
+#include <meteoio/plugins/PNGIO.h>
 #endif
 
 #include <map>
@@ -60,8 +68,7 @@ namespace mio {
 * @file IOHandler.h
 * @class IOHandler
 * @brief This class is the class to use for raw I/O operations. It is responsible for transparently loading the plugins
-* and it follows the interface defined by the IOInterface class with the addition of
-* a few convenience methods.
+* and it follows the interface defined by the IOInterface class with the addition of a few convenience methods.
 */
 #ifdef _POPC_
 class IOHandler {

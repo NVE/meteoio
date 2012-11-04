@@ -1,14 +1,5 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
-IF(PLUGIN_SMETIO)
-	IF(MSVC)
-		ADD_DEFINITIONS(/DPLUGIN_SMETIO) #it looks like some VC++ versions don't support -D syntax
-	ELSE(MSVC)
-		ADD_DEFINITIONS(-DPLUGIN_SMETIO)
-	ENDIF(MSVC)
-	SET(plugins_sources ${plugins_sources} plugins/SMETIO.cc)
-ENDIF(PLUGIN_SMETIO)
-
 IF(PLUGIN_ARCIO)
 	IF(MSVC)
 		ADD_DEFINITIONS(/DPLUGIN_ARCIO) #it looks like some VC++ versions don't support -D syntax
@@ -150,6 +141,15 @@ IF(PLUGIN_PNGIO)
 	ENDIF(MSVC)
 	SET(plugins_sources ${plugins_sources} plugins/PNGIO.cc)
 ENDIF(PLUGIN_PNGIO)
+
+IF(PLUGIN_SMETIO)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DPLUGIN_SMETIO) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DPLUGIN_SMETIO)
+	ENDIF(MSVC)
+	SET(plugins_sources ${plugins_sources} plugins/SMETIO.cc)
+ENDIF(PLUGIN_SMETIO)
 
 IF(PLUGIN_SNIO)
 	IF(MSVC)
