@@ -7,6 +7,20 @@
 
 #include "soapGSNWebServiceSoap12BindingProxy.h"
 
+const struct Namespace namespaces[] =
+{
+	{"SOAP-ENV", "http://www.w3.org/2003/05/soap-envelope", "http://www.w3.org/*/soap-envelope", NULL},
+	{"SOAP-ENC", "http://www.w3.org/2003/05/soap-encoding", "http://www.w3.org/*/soap-encoding", NULL},
+	{"xsi", "http://www.w3.org/2001/XMLSchema-instance", "http://www.w3.org/*/XMLSchema-instance", NULL},
+	{"xsd", "http://www.w3.org/2001/XMLSchema", "http://www.w3.org/*/XMLSchema", NULL},
+	{"ns3", "http://datarequest.http.gsn/xsd", NULL, NULL},
+	{"ns2", "http://standard.webservice.gsn/xsd", NULL, NULL},
+	{"ns4", "http://standard.webservice.gsn/GSNWebServiceSoap12Binding", NULL, NULL},
+	{"ns1", "http://standard.webservice.gsn", NULL, NULL},
+	{"ns5", "http://standard.webservice.gsn/GSNWebServiceSoap11Binding", NULL, NULL},
+	{NULL, NULL, NULL, NULL}
+};
+
 GSNWebServiceSoap12BindingProxy::GSNWebServiceSoap12BindingProxy()
 {	GSNWebServiceSoap12BindingProxy_init(SOAP_IO_DEFAULT, SOAP_IO_DEFAULT);
 }
@@ -23,19 +37,6 @@ void GSNWebServiceSoap12BindingProxy::GSNWebServiceSoap12BindingProxy_init(soap_
 {	soap_imode(this, imode);
 	soap_omode(this, omode);
 	soap_endpoint = NULL;
-	static const struct Namespace namespaces[] =
-{
-	{"SOAP-ENV", "http://www.w3.org/2003/05/soap-envelope", "http://www.w3.org/*/soap-envelope", NULL},
-	{"SOAP-ENC", "http://www.w3.org/2003/05/soap-encoding", "http://www.w3.org/*/soap-encoding", NULL},
-	{"xsi", "http://www.w3.org/2001/XMLSchema-instance", "http://www.w3.org/*/XMLSchema-instance", NULL},
-	{"xsd", "http://www.w3.org/2001/XMLSchema", "http://www.w3.org/*/XMLSchema", NULL},
-	{"ns3", "http://datarequest.http.gsn/xsd", NULL, NULL},
-	{"ns2", "http://standard.webservice.gsn/xsd", NULL, NULL},
-	{"ns4", "http://standard.webservice.gsn/GSNWebServiceSoap12Binding", NULL, NULL},
-	{"ns1", "http://standard.webservice.gsn", NULL, NULL},
-	{"ns5", "http://standard.webservice.gsn/GSNWebServiceSoap11Binding", NULL, NULL},
-	{NULL, NULL, NULL, NULL}
-};
 	if (!this->namespaces)
 		this->namespaces = namespaces;
 }

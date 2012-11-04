@@ -22,7 +22,8 @@
 #define _isnan isnan
 
 #include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
-#include "gsn/GSNWebServiceSoap12Binding.nsmap"
+//#include "gsn/GSNWebServiceSoap12Binding.nsmap"
+
 #ifdef _WIN32 //because we collected c**p from windows.h
 	#undef max
 	#undef min

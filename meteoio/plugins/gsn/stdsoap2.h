@@ -1764,7 +1764,7 @@ struct soap_plugin
 };
 
 #ifndef WITH_NONAMESPACES
-extern SOAP_NMAC struct Namespace namespaces[];
+	extern SOAP_NMAC const struct Namespace namespaces[];
 #endif
 
 #ifndef WITH_LEAN
