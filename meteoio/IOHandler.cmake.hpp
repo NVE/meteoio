@@ -22,6 +22,21 @@
 #error
 #endif*/
 
+#cmakedefine PLUGIN_ARCIO
+#cmakedefine PLUGIN_A3DIO
+#cmakedefine PLUGIN_ARPSIO
+#cmakedefine PLUGIN_GRASSIO
+#cmakedefine PLUGIN_GEOTOPIO
+#cmakedefine PLUGIN_SMETIO
+#cmakedefine PLUGIN_SNIO
+#cmakedefine PLUGIN_PGMIO
+#cmakedefine PLUGIN_IMISIO
+#cmakedefine PLUGIN_GRIBIO
+#cmakedefine PLUGIN_PNGIO
+#cmakedefine PLUGIN_BORMAIO
+#cmakedefine PLUGIN_COSMOXMLIO
+#cmakedefine PLUGIN_GSNIO
+
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOPlugin.h>
