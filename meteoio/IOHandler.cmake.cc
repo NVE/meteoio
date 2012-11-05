@@ -18,20 +18,20 @@
 
 #include <meteoio/IOHandler.h>
 
-#define PLUGIN_ARCIO
-/* #undef PLUGIN_A3DIO */
-#define PLUGIN_ARPSIO
-#define PLUGIN_GRASSIO
-#define PLUGIN_GEOTOPIO
-#define PLUGIN_SMETIO
-#define PLUGIN_SNIO
-#define PLUGIN_PGMIO
-/* #undef PLUGIN_IMISIO */
-#define PLUGIN_GRIBIO
-#define PLUGIN_PNGIO
-#define PLUGIN_BORMAIO
-#define PLUGIN_COSMOXMLIO
-#define PLUGIN_GSNIO
+#cmakedefine PLUGIN_ARCIO
+#cmakedefine PLUGIN_A3DIO
+#cmakedefine PLUGIN_ARPSIO
+#cmakedefine PLUGIN_GRASSIO
+#cmakedefine PLUGIN_GEOTOPIO
+#cmakedefine PLUGIN_SMETIO
+#cmakedefine PLUGIN_SNIO
+#cmakedefine PLUGIN_PGMIO
+#cmakedefine PLUGIN_IMISIO
+#cmakedefine PLUGIN_GRIBIO
+#cmakedefine PLUGIN_PNGIO
+#cmakedefine PLUGIN_BORMAIO
+#cmakedefine PLUGIN_COSMOXMLIO
+#cmakedefine PLUGIN_GSNIO
 
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/plugins/A3DIO.h>

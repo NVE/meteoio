@@ -89,7 +89,7 @@ IF(PLUGIN_SNIO)
 	SET(plugins_sources ${plugins_sources} plugins/SNIO.cc)
 ENDIF(PLUGIN_SNIO)
 
-CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cmake.hpp ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.h )
+CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cmake.cc ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cc )
 
 # IF(PLUGIN_GSNIO)
 # 	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} "/usr/include")
