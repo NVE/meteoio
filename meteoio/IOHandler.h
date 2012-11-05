@@ -18,10 +18,6 @@
 #ifndef __IOHANDLER_H__
 #define __IOHANDLER_H__
 
-/*#ifdef _POPC_
-#error
-#endif*/
-
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOPlugin.h>
