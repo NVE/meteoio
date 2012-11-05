@@ -23,7 +23,6 @@ along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
 #include <meteoio/IOExceptions.h>
-#include <meteoio/DynamicLibrary.h>
 
 #include <libxml++/libxml++.h>
 #include <libxml++/parsers/textreader.h>

@@ -23,7 +23,6 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
 #include <meteoio/IOExceptions.h>
-#include <meteoio/DynamicLibrary.h>
 #include <meteoio/Date.h>
 
 #include <libxml++/libxml++.h>

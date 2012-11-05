@@ -34,7 +34,6 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/Coords.h>
 #include <meteoio/IOExceptions.h>
-#include <meteoio/DynamicLibrary.h>
 
 #include <string>
 #include <sstream>

@@ -34,7 +34,6 @@
 #include <meteoio/Coords.h>
 #include <meteoio/Date.h>
 #include <meteoio/DEMObject.h>
-#include <meteoio/DynamicLibrary.h>
 #include <meteoio/FilterProperties.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/Grid2DObject.h>

@@ -18,7 +18,6 @@
 #ifndef __IOPLUGIN_H__
 #define __IOPLUGIN_H__
 
-#include <meteoio/DynamicLibrary.h>
 #include <meteoio/IOInterface.h>
 
 namespace mio {
