@@ -41,12 +41,14 @@ namespace mio {
 
 const double GrassIO::plugin_nodata = -999.0; //plugin specific nodata value
 
-GrassIO::GrassIO(const std::string& configfile) : cfg(configfile)
+GrassIO::GrassIO(const std::string& configfile)
+        : cfg(configfile), fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-GrassIO::GrassIO(const Config& cfgreader) : cfg(cfgreader)
+GrassIO::GrassIO(const Config& cfgreader)
+        : cfg(cfgreader), fin(), fout(), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }

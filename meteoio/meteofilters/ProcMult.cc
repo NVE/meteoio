@@ -21,7 +21,8 @@ using namespace std;
 
 namespace mio {
 
-ProcMult::ProcMult(const std::vector<std::string>& vec_args) : ProcessingBlock("MULT") {
+ProcMult::ProcMult(const std::vector<std::string>& vec_args) : ProcessingBlock("MULT"), factor(1.)
+{
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }

@@ -47,13 +47,21 @@ namespace mio {
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
 
-GeotopIO::GeotopIO(const std::string& configfile) : cfg(configfile), nr_of_stations(IOUtils::npos) {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
-	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
+GeotopIO::GeotopIO(const std::string& configfile)
+         : cfg(configfile), in_tz(0.), out_tz(0.), nr_of_stations(IOUtils::npos),
+           fin(), fout(), vec_streampos(), vecStation(), mapColumnNames(),
+           coordin(), coordinparam(), coordout(), coordoutparam()
+{
+           IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+           cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
+           cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
 }
 
-GeotopIO::GeotopIO(const Config& cfgreader) : cfg(cfgreader), nr_of_stations(IOUtils::npos) {
+GeotopIO::GeotopIO(const Config& cfgreader) 
+         : cfg(cfgreader), in_tz(0.), out_tz(0.), nr_of_stations(IOUtils::npos),
+           fin(), fout(), vec_streampos(), vecStation(), mapColumnNames(),
+           coordin(), coordinparam(), coordout(), coordoutparam()
+{
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);

@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-FilterRate::FilterRate(const std::vector<std::string>& vec_args) : FilterBlock("RATE")
+FilterRate::FilterRate(const std::vector<std::string>& vec_args) : FilterBlock("RATE"), min_rate_of_change(0.), max_rate_of_change(0.)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values

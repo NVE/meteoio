@@ -21,7 +21,9 @@ using namespace std;
 
 namespace mio {
 
-FilterUnheatedHNW::FilterUnheatedHNW(const std::vector<std::string>& vec_args) : FilterBlock("UNHEATED_RAINGAUGE") {
+FilterUnheatedHNW::FilterUnheatedHNW(const std::vector<std::string>& vec_args)
+                  : FilterBlock("UNHEATED_RAINGAUGE"), thresh_rh(0.), thresh_Dt(0.), soft(true)
+{
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
 }

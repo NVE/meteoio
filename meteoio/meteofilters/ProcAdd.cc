@@ -21,7 +21,8 @@ using namespace std;
 
 namespace mio {
 
-ProcAdd::ProcAdd(const std::vector<std::string>& vec_args) : ProcessingBlock("ADD") {
+ProcAdd::ProcAdd(const std::vector<std::string>& vec_args) : ProcessingBlock("ADD"), offset(0.)
+{
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }

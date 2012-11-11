@@ -25,9 +25,10 @@ namespace mio {
 
 const double ProcUndercatch_WMO::Tsnow_WMO=-2., ProcUndercatch_WMO::Train_WMO=2.; //WMO values from Yan et al (2001)
 
-ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector<std::string>& vec_args) : ProcessingBlock("UNDERCATCH_WMO") {
-	Tsnow = Tsnow_WMO;
-	Train = Train_WMO;
+ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector<std::string>& vec_args)
+                   : ProcessingBlock("UNDERCATCH_WMO"), type(cst),
+                     factor_snow(1.3), factor_mixed(1.1), Tsnow(Tsnow_WMO), Train(Train_WMO)
+{
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
 }
