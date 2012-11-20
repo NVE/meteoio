@@ -42,7 +42,6 @@ class IOPlugin {
 		/**
 		 * @brief The main constructor for the IOPlugin class
 		 *
-		 * @param i_s1 A std::string representing the file to be opened (or "" if plugin is statically linked)
 		 * @param i_s2 A std::string that is the classname of the object to be loaded (e.g. "A3DIO", "GSNIO")
 		 * @param p1  A pointer to the loaded object of type IOInterface (or NULL)
 		 * @param p2  A pointer to the loaded dynamic library (or NULL)
