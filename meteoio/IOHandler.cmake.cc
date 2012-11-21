@@ -178,14 +178,15 @@ void IOHandler::registerPlugins()
 //}
 #else
 IOHandler::IOHandler(const IOHandler& aio)
-           : cfg(aio.cfg), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
+           : IOInterface(), cfg(aio.cfg), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
 {
 	//Nothing else so far
 	//TODO: Deal with the IOInterface* pointers, e.g. bormaio
 }
 #endif
 
-IOHandler::IOHandler(const Config& cfgreader) : cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
+IOHandler::IOHandler(const Config& cfgreader)
+           : IOInterface(), cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
 {
 	registerPlugins();
 	parse_copy_config();
