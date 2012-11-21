@@ -50,6 +50,8 @@ class ARPSIO : public IOInterface {
 		ARPSIO(const Config& cfgreader);
 		~ARPSIO() throw();
 
+		ARPSIO& operator=(const ARPSIO&); ///<Assignement operator, required because of pointer member
+
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 
@@ -83,7 +85,6 @@ class ARPSIO : public IOInterface {
 		const Config& cfg;
 		//std::ifstream fin; //Input file streams
 		FILE *fin;
-		std::ofstream fout;//Output file streams
 		std::string filename;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string default_ext;

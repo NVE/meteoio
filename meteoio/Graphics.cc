@@ -350,7 +350,7 @@ void Gradient::setNrOfLevels(const unsigned char& i_nr_unique_levels) {
 		ss << reserved_idx << " colors!";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
-	nr_unique_cols = i_nr_unique_levels - reserved_idx;
+	nr_unique_cols = static_cast<unsigned char>(i_nr_unique_levels - reserved_idx);
 }
 
 //val between min_val and max_val
@@ -405,19 +405,27 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 	}
 
 	if(val==IOUtils::nodata) {
-		index=0;
+		index = 0;
 		return;
 	}
 	if(val==legend::bg_color) {
-		index=1;
+		index = 1;
 		return;
 	}
 	if(val==legend::text_color) {
-		index=2;
+		index = 2;
 		return;
 	}
 	if(delta==0) { //otherwise constant data throughout the grid makes a division by zero...
-		index=nr_unique_cols/2 + reserved_idx;
+#ifndef NOSAFECHECKS
+		if((nr_unique_cols/2 + reserved_idx) > std::numeric_limits<unsigned char>::max()) {
+			std::stringstream ss;
+			ss << "[E] Number of unique colors in gradient and/or reserved index too large to fit in index: ";
+			ss << (nr_unique_cols/2 + reserved_idx) << " when it should be at most " << std::numeric_limits<unsigned char>::max();
+			throw IndexOutOfBoundsException(ss.str(), AT);
+		}
+#endif
+		index = static_cast<unsigned char>(nr_unique_cols/2 + reserved_idx);
 		return;
 	}
 
@@ -428,7 +436,7 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 	//watch out!! the palette contains some reserved values at the begining
 	if(val<min) index=reserved_idx-2;
 	else if(val>max) index=reserved_idx-1;
-	else index = static_cast<unsigned char>( (val-min)/delta*(double)nr_unique_cols ) + reserved_idx;
+	else index = static_cast<unsigned char>( static_cast<unsigned char>((val-min)/delta*(double)nr_unique_cols) + reserved_idx);
 }
 
 void Gradient::getPalette(std::vector<unsigned char> &palette, size_t &nr_colors) const
@@ -553,7 +561,9 @@ gr_blue_pink::gr_blue_pink(const double& /*i_min*/, const double& /*i_max*/, con
 	X.push_back(1.); v_h.push_back(281.); v_s.push_back(.7); v_v.push_back(.95); //bright violet
 }
 
-gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& /*i_autoscale*/) {
+gr_freeze::gr_freeze(const double& i_min, const double& i_max, const bool& /*i_autoscale*/)
+           : Gradient_model(), X(), v_r(), v_g(), v_b()
+{
 	//we want the yellow/green step to always be at zero celsius
 	double begin=0., middle=0.5, end=1.;
 	if(i_min<0. && i_max>0.) {

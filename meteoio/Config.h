@@ -65,6 +65,8 @@ class Config {
 		 */
 		Config();
 
+		virtual ~Config() {};
+
 		/**
 		 * @brief Main constructor. The file is parsed and a key/value map object is internally created
 		 * @param[in] filename_in string representing the absolute filename of the key/value file

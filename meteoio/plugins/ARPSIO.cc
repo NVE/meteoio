@@ -50,7 +50,7 @@ const std::string ARPSIO::default_ext=".asc"; //filename extension
 
 ARPSIO::ARPSIO(const std::string& configfile)
         : cfg(configfile),
-          fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
+          fin(NULL), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
           grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
           xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
 {
@@ -60,12 +60,34 @@ ARPSIO::ARPSIO(const std::string& configfile)
 
 ARPSIO::ARPSIO(const Config& cfgreader)
         : cfg(cfgreader),
-          fin(NULL), fout(), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
+          fin(NULL), filename(),  coordin(), coordinparam(), coordout(), coordoutparam(),
           grid2dpath_in(), ext(default_ext), dimx(0), dimy(0), dimz(0), cellsize(0.),
           xcoord(IOUtils::nodata), ycoord(IOUtils::nodata), zcoord(), is_true_arps(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	setOptions();
+}
+
+ARPSIO& ARPSIO::operator=(const ARPSIO& source) {
+	if(this != &source) {
+		fin = NULL;
+		filename = source.filename;
+		coordin = source.coordin;
+		coordinparam = source.coordinparam;
+		coordout = source.coordout;
+		coordoutparam = source.coordoutparam;
+		grid2dpath_in = source. grid2dpath_in;
+		ext = source.ext;
+		dimx = source.dimx;
+		dimy = source.dimy;
+		dimz = source.dimz;
+		cellsize = source.cellsize;
+		xcoord = source.xcoord;
+		ycoord = source.ycoord;
+		zcoord = source.zcoord;
+		is_true_arps = source.is_true_arps;
+	}
+	return *this;
 }
 
 void ARPSIO::setOptions()
@@ -424,9 +446,6 @@ void ARPSIO::cleanup() throw()
 	/*if (fin.is_open()) {//close fin if open
 		fin.close();
 	}*/
-	if (fout.is_open()) {//close fout if open
-		fout.close();
-	}
 
 	zcoord.clear();
 }
