@@ -19,6 +19,7 @@
 #include <string>
 #include <meteoio/meteolaws/Suntrajectory.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
+#include <meteoio/IOExceptions.h>
 
 namespace mio {
 
@@ -272,7 +273,7 @@ void SunMeeus::getHorizontalCoordinates(double& azimuth, double& elevation, doub
 		elevation = SolarElevation; //this is the TRUE elevation, not the apparent!
 		eccentricity = eccentricityEarth;
 	} else {
-		throw new std::string("Please set ALL required parameters to get Sun's position!!");
+		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
 	}
 }
 
@@ -282,7 +283,7 @@ void SunMeeus::getDaylight(double& sunrise, double& sunset, double& daylight, co
 		sunset = SunSet - longitude*1./15.*1./24. + TZ*1./24.; //back to TZ, in days
 		daylight = SunlightDuration;
 	} else {
-		throw new std::string("Please set ALL required parameters to get Sun's position!!");
+		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
 	}
 }
 
@@ -291,7 +292,7 @@ void SunMeeus::getEquatorialCoordinates(double& right_ascension, double& declina
 		right_ascension = SunRightAscension;
 		declination = SunDeclination;
 	} else {
-		throw new std::string("Please set ALL required parameters to get Sun's position!!");
+		throw InvalidArgumentException("Please set ALL required parameters to get Sun's position!!", AT);
 	}
 }
 

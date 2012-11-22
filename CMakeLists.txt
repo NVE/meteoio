@@ -46,12 +46,12 @@ ELSE(MSVC)
 	ELSE(POPC)
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
 	ENDIF(POPC)
-	IF(CMAKE_COMPILER_IS_GNUCXX)
-		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi")
+	IF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
+		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi") #Android does not like ansi...
 		IF(WIN32) #for gcc on windows
 			SET(CMAKE_SHARED_LINKER_FLAGS "--enable-auto-import")
 		ENDIF(WIN32)
-	ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+	ENDIF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
 	SET(OPTIM "-g -O3 -DNDEBUG -DNOSAFECHECKS")
 	EXECUTE_PROCESS(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 	IF (GCC_VERSION VERSION_GREATER 4.2 OR GCC_VERSION VERSION_EQUAL 4.2)
@@ -70,6 +70,8 @@ IF(UNIX)
 		SET(PLATFORM "-DAPPLE")
 		SET(DLL_EXT "dylib*")
 		SET(STAT_EXT "a")
+		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
+		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
 	ELSE(APPLE)
 		IF(CYGWIN)
 			SET(PLATFORM "-DLINUX -DCYGWIN")
@@ -256,7 +258,7 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Meteorological Input/Output preprocessing
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/Welcome.txt")
 SET(CPACK_PACKAGE_NAME "MeteoIO")
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "MeteoIO")
-SET(CPACK_PACKAGE_CONTACT "Mathias Bavay ")
+SET(CPACK_PACKAGE_CONTACT "Mathias Bavay <Mathias.Bavay@wsl.ch>")
 SET(CPACK_PACKAGE_VENDOR "WSL Institute for Snow and Avalanche Research")
 SET(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/meteoio/icons\\\\icon.ico")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/License.txt")
@@ -332,16 +334,16 @@ ELSE(UNIX)
 			SET(CPACK_NSIS_MENU_LINKS
 				"${DOC_PATH}/MeteoIO_doc.html" "MeteoIO documentation"
 				"${DOC_PATH}/examples" "MeteoIO examples"
-				"https://slfsmm.indefero.net/p/meteoio/" "Home page")
+				"https://models.slf.ch/p/meteoio/" "Home page")
 		ELSEIF(INSTALL_DOC)
 			SET(CPACK_NSIS_MENU_LINKS
-				"https://slfsmm.indefero.net/p/meteoio/" "Home page")
+				"https://models.slf.ch/p/meteoio/" "Home page")
 		ENDIF(INSTALL_DOC)
 		#info for the add/uninstall software administration
 		SET(CPACK_NSIS_INSTALLED_ICON_NAME "doc\\\\icon.ico")
 		SET(CPACK_NSIS_URL_INFO_ABOUT "http://www.slf.ch")
-		SET(CPACK_NSIS_HELP_LINK "https://slfsmm.indefero.net/p/meteoio")
-		SET(CPACK_NSIS_CONTACT "Mathias.Bavay@wsl.ch")
+		SET(CPACK_NSIS_HELP_LINK "https://models.slf.ch/p/meteoio")
+		SET(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 	ENDIF(WIN32)
 ENDIF(UNIX)
 
