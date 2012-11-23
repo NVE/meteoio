@@ -37,30 +37,25 @@ namespace mio {
 
 class AnetzData{
 	public:
-		AnetzData(): nrOfAnetzStations(0), nrOfCoefficients(0) {
-			anetzstations.push_back("");
-			anetzstations.push_back("");
-			anetzstations.push_back("");
-			coeffs.push_back(IOUtils::nodata);
-			coeffs.push_back(IOUtils::nodata);
-			coeffs.push_back(IOUtils::nodata);
+		AnetzData()
+		: nrOfAnetzStations(3), nrOfCoefficients(3), coeffs(3, IOUtils::nodata), anetzstations(3, "")
+		{
 		}
 
 		AnetzData(const size_t& nr_anetz,
 		          const std::string& i_anetz1, const std::string& i_anetz2, const std::string& i_anetz3,
 		          const size_t& nr_coeffs,
 		          const double& coeff1, const double& coeff2, const double& coeff3)
-		          : nrOfAnetzStations(nr_anetz), nrOfCoefficients(nr_coeffs)
+		          : nrOfAnetzStations(nr_anetz), nrOfCoefficients(nr_coeffs), coeffs(3), anetzstations(3)
 		{
-			anetzstations.push_back(i_anetz1);
-			anetzstations.push_back(i_anetz2);
-			anetzstations.push_back(i_anetz3);
-			coeffs.push_back(coeff1);
-			coeffs.push_back(coeff2);
-			coeffs.push_back(coeff3);
+			anetzstations[0] = i_anetz1;
+			anetzstations[1] = i_anetz2;
+			anetzstations[2] = i_anetz3;
+			coeffs[0] = coeff1;
+			coeffs[1] = coeff2;
+			coeffs[2] = coeff3;
 		}
 
-		std::string anetzstation1, anetzstation2, anetzstation3;
 		size_t nrOfAnetzStations, nrOfCoefficients;
 		std::vector<double> coeffs;
 		std::vector<std::string> anetzstations;
@@ -113,7 +108,7 @@ class ImisIO : public IOInterface {
 		                     const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
 		                     oracle::occi::Connection*& conn);
 		size_t getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
-		                          const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
+		                          const std::string& sqlQuery, std::vector<std::string>& vecMetaData,
 		                          oracle::occi::Connection*& conn);
 		size_t getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
 		                       const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
@@ -157,7 +152,6 @@ class ImisIO : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecStationMetaData;
 		std::map<std::string, std::string> mapDriftStation;
-		std::vector<double> vecHTS1; // vector of sensor depths
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string sqlQueryStationIDs;
 		static const std::string sqlQueryStationMetaData;

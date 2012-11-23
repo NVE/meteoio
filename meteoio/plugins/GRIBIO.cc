@@ -86,28 +86,56 @@ const double GRIBIO::plugin_nodata = -999.; //plugin specific nodata value. It c
 const double GRIBIO::tz_in = 0.; //GRIB time zone, always UTC
 const std::string GRIBIO::default_ext=".grb"; //filename extension
 
-GRIBIO::GRIBIO(const std::string& configfile) : cfg(configfile)
+GRIBIO::GRIBIO(const std::string& configfile)
+        : cfg(configfile), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
+          meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), idx_filename(), coordin(), coordinparam(),
+          VW(), DW(), wind_date(), llcorner(), fp(NULL), idx(NULL),
+          latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
+          cellsize_x(IOUtils::nodata), cellsize_y(IOUtils::nodata),
+          indexed(false), meteo_initialized(false), update_dem(false)
 {
 	setOptions();
-	indexed = false;
-	idx=NULL;
-	fp = NULL;
-	meteo_initialized = false;
-	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
-	bearing_offset = IOUtils::nodata;
-	cellsize_x = cellsize_y = IOUtils::nodata;
 }
 
-GRIBIO::GRIBIO(const Config& cfgreader) : cfg(cfgreader)
+GRIBIO::GRIBIO(const Config& cfgreader)
+        : cfg(cfgreader), grid2dpath_in(), meteopath_in(), vecPts(), cache_meteo_files(),
+          meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), idx_filename(), coordin(), coordinparam(),
+          VW(), DW(), wind_date(), llcorner(), fp(NULL), idx(NULL),
+          latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
+          cellsize_x(IOUtils::nodata), cellsize_y(IOUtils::nodata),
+          indexed(false), meteo_initialized(false), update_dem(false)
 {
 	setOptions();
-	indexed = false;
-	idx=NULL;
-	fp = NULL;
-	meteo_initialized = false;
-	latitudeOfNorthernPole = longitudeOfNorthernPole = IOUtils::nodata;
-	bearing_offset = IOUtils::nodata;
-	cellsize_x = cellsize_y = IOUtils::nodata;
+}
+
+GRIBIO& GRIBIO::operator=(const GRIBIO& source) {
+	if(this != &source) {
+		fp = NULL;
+		idx = NULL;
+		grid2dpath_in = source.grid2dpath_in;
+		meteopath_in = source.meteopath_in;
+		vecPts = source.vecPts;
+		cache_meteo_files = source.cache_meteo_files;
+		meteo_ext = source.meteo_ext;
+		grid2d_ext = source.grid2d_ext;
+		grid2d_prefix = source.grid2d_prefix;
+		idx_filename = source.idx_filename;
+		coordin = source.coordin;
+		coordinparam = source.coordinparam;
+		VW = source.VW;
+		DW = source.DW;
+		wind_date = source.wind_date;
+		llcorner = source.llcorner;
+		latitudeOfNorthernPole = source.latitudeOfNorthernPole;
+		longitudeOfNorthernPole = source.longitudeOfNorthernPole;
+		bearing_offset = source.bearing_offset;
+		cellsize_x = source.cellsize_x;
+		cellsize_y = source.cellsize_y;
+		indexed = source.indexed;
+		meteo_initialized = source.meteo_initialized;
+		update_dem = source.update_dem;
+	}
+	return *this;
 }
 
 GRIBIO::~GRIBIO() throw()
@@ -119,7 +147,6 @@ void GRIBIO::setOptions()
 {
 	std::string coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	update_dem = false;
 
 	string tmp="";
 	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
@@ -129,16 +156,14 @@ void GRIBIO::setOptions()
 	}
 	cfg.getValue("GRID2DPREFIX", "Input", grid2d_prefix, Config::nothrow);
 
-	meteo_ext = default_ext;
 	cfg.getValue("METEOEXT", "Input", meteo_ext, Config::nothrow);
 	if(meteo_ext=="none") meteo_ext="";
 
-	grid2d_ext = default_ext;
 	cfg.getValue("GRID2DEXT", "Input", grid2d_ext, Config::nothrow);
 	if(grid2d_ext=="none") grid2d_ext="";
 }
 
-void GRIBIO::readStations()
+void GRIBIO::readStations(std::vector<Coords> &vecPoints)
 {
 	cfg.getValue("METEOPATH", "Input", meteopath_in);
 	size_t current_stationnr = 1;
@@ -151,14 +176,14 @@ void GRIBIO::readStations()
 		IOUtils::stripComments(current_station);
 
 		if (current_station != "") {
-			addStation(current_station);
-			std::cerr <<  "\tRead virtual station " << vecPts.back().printLatLon() << "\n";
+			addStation(current_station, vecPoints);
+			std::cerr <<  "\tRead virtual station " << vecPoints.back().printLatLon() << "\n";
 		}
 		current_stationnr++;
 	} while (current_station != "");
 }
 
-void GRIBIO::addStation(const std::string& coord_spec)
+void GRIBIO::addStation(const std::string& coord_spec, std::vector<Coords> &vecPoints)
 {
 	std::istringstream iss(coord_spec);
 	double coord1=IOUtils::nodata, coord2=IOUtils::nodata;
@@ -172,13 +197,13 @@ void GRIBIO::addStation(const std::string& coord_spec)
 		Coords point;
 		point.setEPSG(epsg);
 		point.setXY(coord1, coord2, IOUtils::nodata);
-		vecPts.push_back(point);
+		vecPoints.push_back(point);
 		return;
 	}
 	if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
 		Coords point(coordin, coordinparam);
 		point.setLatLon(coord1, coord2, IOUtils::nodata);
-		vecPts.push_back(point);
+		vecPoints.push_back(point);
 		return;
 	}
 
@@ -743,7 +768,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                              const size_t&)
 {
 	if(!meteo_initialized) {
-		readStations();
+		readStations(vecPts);
 		scanMeteoPath();
 		meteo_initialized=true;
 	}
@@ -803,9 +828,9 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	free(lats); free(lons);
 }
 
-bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, double *lons)
+bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats, double *lons)
 { //remove potential duplicates. Returns true if some have been removed
-	const unsigned int npoints = vecPts.size();
+	const unsigned int npoints = vecPoints.size();
 	std::vector<size_t> deletions;
 	deletions.reserve(npoints);
 	for(unsigned int ii=0; ii<npoints; ii++) {
@@ -821,15 +846,15 @@ bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPts, double *lats, do
 	//we need to erase from the end in order to keep the index unchanged...
 	for(unsigned int ii=deletions.size(); ii>0; ii--) {
 		const unsigned int index=deletions[ii-1];
-		vecPts.erase(vecPts.begin()+index);
+		vecPoints.erase(vecPoints.begin()+index);
 	}
 
 	if(deletions.size()>0) return true;
 	return false;
 }
 
-bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData> &stations, double *lats, double *lons)
-{//return true if the metadata have been read, false if it needs to be re-read (ie: some points were leading to duplicates -> vecPts has been changed)
+bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationData> &stations, double *lats, double *lons)
+{//return true if the metadata have been read, false if it needs to be re-read (ie: some points were leading to duplicates -> vecPoints has been changed)
 	stations.clear();
 
 	GRIB_CHECK(grib_index_select_double(idx,"marsParam",8.2),0); //This is the DEM
@@ -842,7 +867,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 		throw IOException("Can not find DEM grid in GRIB file!", AT);
 	}
 
-	const long npoints = vecPts.size();
+	const long npoints = vecPoints.size();
 	double latitudeOfSouthernPole, longitudeOfSouthernPole;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
@@ -854,7 +879,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 
 	//build GRIB local coordinates for the points
 	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
-		Coords::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPts[ii].getLat(), vecPts[ii].getLon(), lats[ii], lons[ii]);
+		Coords::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPoints[ii].getLat(), vecPoints[ii].getLon(), lats[ii], lons[ii]);
 	}
 
 	//retrieve nearest points
@@ -870,7 +895,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPts, std::vector<StationData>
 	}
 
 	//remove potential duplicates
-	if(removeDuplicatePoints(vecPts, outlats, outlons)==true) {
+	if(removeDuplicatePoints(vecPoints, outlats, outlons)==true) {
 		free(outlats); free(outlons); free(values); free(distances); free(indexes);
 		grib_handle_delete(h);
 		return false;

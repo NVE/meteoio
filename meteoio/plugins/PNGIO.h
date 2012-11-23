@@ -41,6 +41,8 @@ class PNGIO : public IOInterface {
 		PNGIO(const Config& cfgreader);
 		~PNGIO() throw();
 
+		PNGIO& operator=(const PNGIO&); ///<Assignement operator, required because of pointer member
+
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 

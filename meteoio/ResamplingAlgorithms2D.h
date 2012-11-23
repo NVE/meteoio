@@ -37,11 +37,15 @@ class ResamplingAlgorithms2D {
 		//Available algorithms
 		static const Grid2DObject NearestNeighbour(const Grid2DObject &i_grid, const double &factor);
 		static const Grid2DObject BilinearResampling(const Grid2DObject &i_grid, const double &factor);
+		static const Grid2DObject cubicBSplineResampling(const Grid2DObject &i_grid, const double &factor);
 
 	private:
-		static void Bilinear_raw(Grid2DObject &o_grid, const Grid2DObject &i_grid);
-		static void Bilinear_nodata(Grid2DObject &o_grid, const Grid2DObject &i_grid);
+		static void cubicBSpline(Grid2DObject &o_grid, const Grid2DObject &i_grid);
+		static void Bilinear(Grid2DObject &o_grid, const Grid2DObject &i_grid);
 		static void NearestNeighbour(Grid2DObject &o_grid, const Grid2DObject &i_grid);
+
+		static double bilinear_pixel(const Grid2DObject &i_grid, const unsigned int &org_ii, const unsigned int &org_jj, const unsigned int &org_ncols, const unsigned int &org_nrows, const double &x, const double &y);
+		static double BSpline_weight(const double &x);
 };
 } //end namespace
 

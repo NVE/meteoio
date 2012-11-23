@@ -175,21 +175,22 @@ void ImisIO::getDBParameters()
 	cfg.getValue("DBUSER", "Input", oracleUserName_in);
 	cfg.getValue("DBPASS", "Input", oraclePassword_in);
 
-	useAnetz = false;
 	cfg.getValue("USEANETZ", "Input", useAnetz, Config::nothrow);
-	use_imis_hnw = false;
 	cfg.getValue("USE_IMIS_HNW", "Input", use_imis_hnw, Config::nothrow);
-	use_hnw_snowpack = false;
 	cfg.getValue("USE_SNOWPACK_HNW", "Input", use_hnw_snowpack, Config::nothrow);
 }
 
-ImisIO::ImisIO(const std::string& configfile) : cfg(configfile)
+ImisIO::ImisIO(const std::string& configfile)
+        : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
+          oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_hnw(false), use_hnw_snowpack(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
 }
 
-ImisIO::ImisIO(const Config& cfgreader) : cfg(cfgreader)
+ImisIO::ImisIO(const Config& cfgreader)
+        : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), vecStationMetaData(), mapDriftStation(),
+          oracleUserName_in(), oraclePassword_in(), oracleDBName_in(), useAnetz(false), use_imis_hnw(false), use_hnw_snowpack(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getDBParameters();
@@ -937,10 +938,10 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
  * @param return             number of columns retrieved
  */
 size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
-                                        const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
+                                        const std::string& sqlQuery, std::vector<std::string>& vecMetaData,
                                         oracle::occi::Connection*& conn)
 {
-	vecStationMetaData.clear();
+	vecMetaData.clear();
 
 	try {
 		Statement *stmt = conn->createStatement(sqlQuery);
@@ -954,7 +955,7 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 
 		while (rs->next() == true) {
 			for (size_t ii=1; ii<=cols.size(); ii++) {
-				vecStationMetaData.push_back(rs->getString(ii));
+				vecMetaData.push_back(rs->getString(ii));
 			}
 		}
 

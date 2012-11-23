@@ -120,6 +120,29 @@ PNGIO::PNGIO(const Config& cfgreader)
 	setOptions();
 }
 
+PNGIO& PNGIO::operator=(const PNGIO& source) {
+	if(this != &source) {
+		fp = NULL;
+		autoscale = source.autoscale;
+		has_legend = source.has_legend;
+		has_world_file = source.has_world_file;
+		optimize_for_speed = source.optimize_for_speed;
+		indexed_png = source.indexed_png;
+		nr_levels = source.nr_levels;
+		coordout = source.coordout;
+		coordoutparam = source.coordoutparam;
+		grid2dpath = source.grid2dpath;
+		scaling = source.scaling;
+		min_w = source.min_w;
+		min_h = source.min_h;
+		max_w = source.max_w;
+		max_h = source.max_h;
+		metadata_key = source.metadata_key;
+		metadata_text = source.metadata_text;
+	}
+	return *this;
+}
+
 void PNGIO::setOptions()
 {
 	//default values have been set by the constructors
