@@ -85,13 +85,13 @@ class Date {
 			CLOSEST ///< rounding toward closest
 		} RND;
 
+		static const int daysLeapYear[];
+		static const int daysNonLeapYear[];
 		static const double DST_shift;
 		static const float MJD_offset;
 		static const float Unix_offset;
 		static const float Excel_offset;
 		static const float Matlab_offset;
-		static const int daysLeapYear[];
-		static const int daysNonLeapYear[];
 
 		Date();
 		Date(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
@@ -175,6 +175,7 @@ class Date {
 		static const double epsilon;
 		double timezone;
 		double gmt_julian;
+		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
 		bool dst;
 		bool undef;
 };

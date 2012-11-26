@@ -79,13 +79,17 @@ namespace mio {
  * THE SOFTWARE IN THIS PRODUCT WAS IN PART PROVIDED BY GENIVIA INC AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-GSNIO::GSNIO(const std::string& configfile) : cfg(configfile)
+GSNIO::GSNIO(const std::string& configfile)
+      : gsn(), cfg(configfile), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
+        endpoint(), hostname(), port(), userid(), passwd(), proxyport(-1), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
 }
 
-GSNIO::GSNIO(const Config& cfgreader) : cfg(cfgreader)
+GSNIO::GSNIO(const Config& cfgreader)
+      : gsn(), cfg(cfgreader), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
+        endpoint(), hostname(), port(), userid(), passwd(), proxyport(-1), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -99,12 +103,7 @@ void GSNIO::initGSNConnection(){
 	cfg.getValue("TIME_ZONE", "Input", tmp_timezone, Config::nothrow);
 	if (tmp_timezone != ""){
 		IOUtils::convertString(default_timezone, tmp_timezone);
-	} else {
-		default_timezone = 1.0;
 	}
-
-	endpoint = hostname = port = userid = passwd = "";
-	proxyport = -1;
 
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);

@@ -95,9 +95,9 @@ class GSNIO : public IOInterface {
 		const Config& cfg;
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                                        ///< Variable for proxy configuration
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double default_timezone;
 };
 

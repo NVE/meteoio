@@ -69,12 +69,14 @@ const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
 const double CosmoXMLIO::out_tz = 0.; //Plugin specific time zone
 const std::string CosmoXMLIO::dflt_extension = ".xml";
 
-CosmoXMLIO::CosmoXMLIO(const std::string& configfile) : cfg(configfile)
+CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
+           : cfg(configfile), plugin_nodata(-999.), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
 
-CosmoXMLIO::CosmoXMLIO(const Config& cfgreader) : cfg(cfgreader)
+CosmoXMLIO::CosmoXMLIO(const Config& cfgreader)
+           : cfg(cfgreader), plugin_nodata(-999.), coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 }
