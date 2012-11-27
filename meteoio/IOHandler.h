@@ -49,6 +49,8 @@ class IOHandler : public IOInterface {
 		virtual ~IOHandler() throw();
 	#endif
 
+		IOHandler& operator=(const IOHandler&); ///<Assignement operator
+
 		//methods defined in the IOInterface class
 		virtual void read2DGrid(Grid2DObject& out_grid, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);

@@ -76,6 +76,8 @@ class BufferedIOHandler : public IOInterface {
 		virtual ~BufferedIOHandler() throw();
 	#endif
 
+		BufferedIOHandler& operator=(const BufferedIOHandler&); ///<Assignement operator
+
 		///Keywords for slope computation algorithm
 		typedef enum BUFFER_POLICY {
 			KEEP_NODATA, ///< when a data point is nodata in the buffer, return the buffered value

@@ -36,6 +36,22 @@ BufferedIOHandler::~BufferedIOHandler() throw()
 #endif
 {}
 
+BufferedIOHandler& BufferedIOHandler::operator=(const BufferedIOHandler& source) {
+	if(this != &source) {
+		iohandler = source.iohandler;
+		vec_buffer_meteo = source.vec_buffer_meteo;
+		mapBufferedGrids = source.mapBufferedGrids;
+		IndexBufferedGrids = source.IndexBufferedGrids;
+		buffer_start = source.buffer_start;
+		buffer_end = source.buffer_end;
+		chunk_size = source.chunk_size;
+		buff_before = source.buff_before;
+		chunks = source.chunks;
+		max_grids = source.max_grids;
+	}
+	return *this;
+}
+
 void BufferedIOHandler::bufferGrid(const Grid2DObject& in_grid2Dobj, const std::string& in_filename)
 {
 	if(IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid

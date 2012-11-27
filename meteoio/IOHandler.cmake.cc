@@ -208,6 +208,16 @@ IOHandler::~IOHandler() throw(){
 	}
 }
 
+IOHandler& IOHandler::operator=(const IOHandler& source) {
+	if(this != &source) {
+		mapPlugins = source.mapPlugins;
+		copy_parameter = source.copy_parameter;
+		copy_name = source.copy_name;
+		enable_copying = source.enable_copying;
+	}
+	return *this;
+}
+
 IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection)
 {
 	std::string op_src="";

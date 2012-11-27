@@ -300,7 +300,7 @@ void SNIO::readMetaData()
 				}
 			}
 			vecAllStations.push_back(sd);
-			cerr << "\t[i] Read meta data for station ID \"" << station_id << "\"\n";
+			//cerr << "[i] Read meta data for station ID \"" << station_id << "\"\n";
 		}
 
 		current_stationnr++;
