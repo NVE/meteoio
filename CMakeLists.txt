@@ -173,16 +173,14 @@ IF(WIN32) #handle the special case of WIN32 needing import libraries
 	FILE(GLOB_RECURSE importlibs "lib/libmeteo*.lib")
 ENDIF(WIN32)
 FILE(GLOB_RECURSE solibs "lib/libmeteo*.${DLL_EXT}")
-FILE(GLOB_RECURSE plugins "lib/plugins/lib*.${DLL_EXT}")
 FILE(GLOB_RECURSE alibs "lib/*.${STAT_EXT}")
 
 INSTALL(FILES ${solibs} ${importlibs} ${alibs} DESTINATION lib COMPONENT libraries)
-INSTALL(FILES ${plugins} DESTINATION lib/meteoio/plugins COMPONENT plugins)
 
 # This is at the end of the file, so that every variables
 ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
-	COMMAND cmake -E remove "lib/plugins/lib*.${DLL_EXT}" "lib/libmeteo*.${DLL_EXT}"
+	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}"
 	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
 	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake
 	COMMAND cmake -E remove_directory CMakeFiles
@@ -286,10 +284,6 @@ SET(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Header files")
 SET(CPACK_COMPONENT_HEADERS_DESCRIPTION "Necessary C++ header files for developing applications using MeteoIO")
 SET(CPACK_COMPONENT_HEADERS_GROUP Development)
 SET(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
-SET(CPACK_COMPONENT_PLUGINS_DISPLAY_NAME "Input/Output Plugins")
-SET(CPACK_COMPONENT_PLUGINS_DESCRIPTION "Various plugins for supporting various data formats/protocols")
-SET(CPACK_COMPONENT_PLUGINS_GROUP Runtime)
-SET(CPACK_COMPONENT_PLUGINS_DEPENDS libraries)
 IF(INSTALL_DOC)
 	SET(CPACK_COMPONENT_DOCUMENTATION_DISPLAY_NAME "Documentation")
 	SET(CPACK_COMPONENT_DOCUMENTATION_DESCRIPTION "Documentation of the MeteoIO usage and API both for the end user and the developer using MeteoIO in his/her application")

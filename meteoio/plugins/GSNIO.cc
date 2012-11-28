@@ -244,18 +244,16 @@ void GSNIO::readMetaData()
 		metadata_req.fieldSelector.push_back(&tmp);
 
 		if (gsn.getVirtualSensorsDetails(&metadata_req, &metadata) == SOAP_OK){
-			size_t details = metadata.virtualSensorDetails.size();
+			const size_t details = metadata.virtualSensorDetails.size();
 
 			if (details == 0)
 				throw IOException("No meta data for sensor " + vecStationName[ii] + ". Is it a valid sensor?", AT);
 
 			for (size_t jj=0; jj<details; jj++){
-				size_t predicates = metadata.virtualSensorDetails[jj]->addressing->predicates.size();
+				const size_t predicates = metadata.virtualSensorDetails[jj]->addressing->predicates.size();
 				for (size_t kk=0; kk<predicates; kk++){
-					string field_name = metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->name;
-					string field_val  = metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->__item;
-					IOUtils::toUpper(field_name);
-					IOUtils::toUpper(field_val);
+					const string field_name = IOUtils::strToUpper( metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->name );
+					const string field_val  = IOUtils::strToUpper( metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->__item );
 
 					if (field_val != "NULL") {
 						if (field_name == "NAME") {
@@ -312,8 +310,7 @@ void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*
                            MeteoData& md, std::vector<size_t>& index)
 {
 	for (size_t ii=0; ii<field.size(); ii++) {
-		string field_name = *field.at(ii)->name;
-		IOUtils::toUpper(field_name);
+		const string field_name = IOUtils::strToUpper( *field.at(ii)->name );
 
 		if (field_name == "RELATIVE_HUMIDITY"){
 			index.push_back(MeteoData::RH);
@@ -393,7 +390,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	}
 
 	if (multipage) {
-		string sid = data.queryResult.at(0)->sid;
+		const string sid = data.queryResult.at(0)->sid;
 		_ns1__getNextData requestNext;
 		_ns1__getNextDataResponse responseNext;
 
@@ -427,8 +424,7 @@ void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& ol
 	tmpmeteo.date.setTimeZone(default_timezone);
 
 	for (size_t jj=0; jj < streamElement->field.size(); jj++){
-		string value = streamElement->field.at(jj)->__item;
-		IOUtils::toUpper(value);
+		const string value = IOUtils::strToUpper( streamElement->field.at(jj)->__item );
 		if (index[jj] != IOUtils::npos){
 			if (value != "NULL"){
 				IOUtils::convertString(tmpmeteo(index[jj]), value);

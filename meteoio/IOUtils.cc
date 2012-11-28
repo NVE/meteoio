@@ -170,12 +170,24 @@ void IOUtils::trim(std::string& str)
 	}
 }
 
-void IOUtils::toUpper(std::string& str){
+void IOUtils::toUpper(std::string& str) {
 	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
 }
 
-void IOUtils::toLower(std::string& str){
+void IOUtils::toLower(std::string& str) {
 	std::transform(str.begin(), str.end(),str.begin(), ::tolower);
+}
+
+std::string IOUtils::strToUpper(const std::string &str) {
+    std::string strcopy(str.size(), 0);
+    std::transform(str.begin(), str.end(), strcopy.begin(), ::toupper);
+    return strcopy;
+}
+
+std::string IOUtils::strToLower(const std::string &str) {
+    std::string strcopy(str.size(), 0);
+    std::transform(str.begin(), str.end(), strcopy.begin(), ::tolower);
+    return strcopy;
 }
 
 bool IOUtils::isNumeric(std::string str, const unsigned int& nBase)

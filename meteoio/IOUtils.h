@@ -190,7 +190,9 @@ namespace IOUtils {
 	                      const std::string& keyprefix="", const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
+	std::string strToUpper(const std::string &str);
 	void toLower(std::string& str);
+	std::string strToLower(const std::string &str);
 	bool isNumeric(std::string input, const unsigned int& nBase=10);
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);

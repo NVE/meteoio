@@ -21,8 +21,25 @@
 #include <math.h>
 #define _isnan isnan
 
-#include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
-//#include "gsn/GSNWebServiceSoap12Binding.nsmap"
+//This is big hack to allow older versions of gcc to turn warnings off in soap files
+//hopefully we would soon get better soap files and would scrap the whole mess...
+#if defined(__GNUC__) && defined(__DEBUG)
+	//#pragma GCC diagnostic push_options
+	#pragma GCC diagnostic ignored "-Wall"
+	#pragma GCC diagnostic ignored "-Weffc++"
+	#pragma GCC diagnostic ignored "-Wlong-long"
+	#pragma GCC diagnostic ignored "-Wshadow"
+	#include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
+	//#include "gsn/GSNWebServiceSoap12Binding.nsmap"
+	//#pragma GCC diagnostic pop_options
+	#pragma GCC diagnostic warning "-Wall"
+	#pragma GCC diagnostic warning "-Weffc++"
+	#pragma GCC diagnostic warning "-Wlong-long"
+	#pragma GCC diagnostic warning "-Wshadow"
+#else
+	#include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
+	//#include "gsn/GSNWebServiceSoap12Binding.nsmap"
+#endif
 
 #ifdef _WIN32 //because we collected c**p from windows.h
 	#undef max
