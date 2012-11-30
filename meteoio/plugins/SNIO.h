@@ -92,6 +92,8 @@ class SNIO : public IOInterface {
 		static const size_t min_nr_meteoData; // minimal number of parameters on data input lines
 		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
 		size_t nr_meteoData; // number of parameters on data input lines, excluding optional ones
+		size_t number_meas_temperatures, number_of_solutes;
+		bool vw_drift, rho_hn;
 		bool iswr_inp, rswr_inp;
 };
 

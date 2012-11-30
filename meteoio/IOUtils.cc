@@ -756,6 +756,19 @@ void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 	else vecIndex.insert(vecIndex.begin()+insertIdx, tmp_idx); //insertion is at the proper place -> remains ordered
 }
 
+void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos)
+{
+	Date tmpdate;
+	convertString(tmpdate, i_date, 0.);
+	setIndex(tmpdate, i_pos);
+}
+
+void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos)
+{
+	Date tmpdate(i_date, 0.);
+	setIndex(tmpdate, i_pos);
+}
+
 std::streampos FileIndexer::getIndex(const Date& i_date)
 {
 	const size_t foundIdx = binarySearch(i_date);
@@ -763,12 +776,25 @@ std::streampos FileIndexer::getIndex(const Date& i_date)
 	else return vecIndex[foundIdx].pos;
 }
 
+std::streampos FileIndexer::getIndex(const std::string& i_date)
+{
+	Date tmpdate;
+	convertString(tmpdate, i_date, 0.);
+	return getIndex(tmpdate);
+}
+
+std::streampos FileIndexer::getIndex(const double& i_date)
+{
+	Date tmpdate(i_date, 0.);
+	return getIndex(tmpdate);
+}
+
 size_t FileIndexer::binarySearch(const Date& soughtdate)
 {//perform binary search
 	const size_t vec_size = vecIndex.size();
 	if(vec_size==0) return (size_t)-1;
 	if(soughtdate<vecIndex[0].date) return (size_t)-1;
-	if(soughtdate>=vecIndex[vec_size-1].date) return vec_size;
+	if(soughtdate>=vecIndex[vec_size-1].date) return vec_size-1;
 
 	const file_index value(soughtdate, 0);
 	const std::vector< struct file_index >::iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), value); //returns the first element that is GREATER than the provided value

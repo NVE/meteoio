@@ -385,6 +385,8 @@ namespace IOUtils {
 			* @param[in] i_pos streampos position
 			*/
 			void setIndex(const Date& i_date, const std::streampos& i_pos);
+			void setIndex(const std::string& i_date, const std::streampos& i_pos);
+			void setIndex(const double& i_date, const std::streampos& i_pos);
 
 			/**
 			* @brief Get the file position suitable for a given date
@@ -393,6 +395,8 @@ namespace IOUtils {
 			* -1 if nothing could be found (empty index)
 			*/
 			std::streampos getIndex(const Date& i_date);
+			std::streampos getIndex(const std::string& i_date);
+			std::streampos getIndex(const double& i_date);
 
 			friend std::ostream& operator<<(std::ostream &os, const FileIndexer& index);
 

@@ -83,6 +83,7 @@ SNIO::SNIO(const std::string& configfile)
         vecAllStations(), vecIndex(), fin(), fout(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
+        number_meas_temperatures(0), number_of_solutes (0), vw_drift(false), rho_hn(false),
         iswr_inp(true), rswr_inp(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -92,6 +93,10 @@ SNIO::SNIO(const std::string& configfile)
 	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
 	if (!iswr_inp || !rswr_inp)
 		nr_meteoData = min_nr_meteoData - 1;
+	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
+	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
+	cfg.getValue("VW_DRIFT", "Input", vw_drift, Config::nothrow);
+	cfg.getValue("RHO_HN", "Input", rho_hn, Config::nothrow);
 }
 
 SNIO::SNIO(const Config& cfgreader)
@@ -99,6 +104,7 @@ SNIO::SNIO(const Config& cfgreader)
         vecAllStations(), vecIndex(), fin(), fout(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
+        number_meas_temperatures(0), number_of_solutes (0), vw_drift(false), rho_hn(false),
         iswr_inp(true), rswr_inp(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -108,6 +114,10 @@ SNIO::SNIO(const Config& cfgreader)
 	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
 	if (!iswr_inp || !rswr_inp)
 		nr_meteoData = min_nr_meteoData - 1;
+	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
+	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
+	cfg.getValue("VW_DRIFT", "Input", vw_drift, Config::nothrow);
+	cfg.getValue("RHO_HN", "Input", rho_hn, Config::nothrow);
 }
 
 SNIO::~SNIO() throw()
@@ -341,7 +351,6 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	 */
 	vector<string> tmpvec;
 	string inpath = "";
-
 	cfg.getValue("METEOPATH", "Input", inpath);
 
 	if (vecAllStations.size() == 0)
@@ -508,8 +517,6 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 
 	// Read optional values
 	// TS[]: snow temperatures
-	size_t number_meas_temperatures = 0;
-	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
 	if (vecLine.size() < nr_meteoData + number_meas_temperatures)
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": not enough measured temperatures data", AT);
 
@@ -520,8 +527,6 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		md(ss.str()) = tmpdata[ii++];
 	}
 	// CONC[]: solute concentrations
-	size_t number_of_solutes = 0;
-	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
 	if (vecLine.size() < nr_meteoData + number_meas_temperatures + number_of_solutes)
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": not enough solute data", AT);
 
@@ -532,8 +537,6 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		md(ss.str()) = tmpdata[ii++];
 	}
 	// VW_DRIFT: optional wind velocity for blowing and drifting snow
-	bool vw_drift = false;
-	cfg.getValue("VW_DRIFT", "Input", vw_drift, Config::nothrow);
 	if (vw_drift) {
 		if (vecLine.size() < ii+1)
 			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": no data for vw_drift", AT);
@@ -541,8 +544,6 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		md("VW_DRIFT") = tmpdata[ii++];
 	}
 	// RHO_HN: measured new snow density
-	bool rho_hn = false;
-	cfg.getValue("RHO_HN", "Input", rho_hn, Config::nothrow);
 	if (rho_hn) {
 		if (vecLine.size() < ii+1)
 			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": no data for rho_hn", AT);
@@ -743,22 +744,22 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 		}
 		// VW_DRIFT: optional wind velocity for blowing and drifting snow
 		if (vecmd[jj].param_exists("VW_DRIFT")) {
-			const double vw_drift = vecmd[jj]("VW_DRIFT");
-			if (vw_drift == IOUtils::nodata) {
+			const double vw_drift_val = vecmd[jj]("VW_DRIFT");
+			if (vw_drift_val == IOUtils::nodata) {
 				optional_failure_count++;
-				fout << setw(4) << setprecision(0) << vw_drift << " ";
+				fout << setw(4) << setprecision(0) << vw_drift_val << " ";
 			} else {
-				fout << setw(4) << setprecision(1) << vw_drift << " ";
+				fout << setw(4) << setprecision(1) << vw_drift_val << " ";
 			}
 		}
 		// RHO_HN: measured new snow density
 		if (vecmd[jj].param_exists("RHO_HN")) {
-			const double rho_hn = vecmd[jj]("RHO_HN");
-			if (rho_hn == IOUtils::nodata) {
+			const double rho_hn_val = vecmd[jj]("RHO_HN");
+			if (rho_hn_val == IOUtils::nodata) {
 				optional_failure_count++;
-				fout << setw(6) << setprecision(0) << rho_hn << " ";
+				fout << setw(6) << setprecision(0) << rho_hn_val << " ";
 			} else {
-				fout << setw(6) << setprecision(1) << rho_hn << " ";
+				fout << setw(6) << setprecision(1) << rho_hn_val << " ";
 			}
 		}
 
