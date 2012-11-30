@@ -65,13 +65,14 @@ class SNIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		std::string file_pos(const std::string& filename, const size_t& linenr);
 		void writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string station_name);
 		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);
 		double cloudiness_to_ilwr (const double& RH, const double& TA, const double& cloudiness );
-		void parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos,
-		                    const Date& dateStart, const Date& dateEnd, MeteoData& md);
+		bool parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filename,
+		                    const size_t& linenr, const Date& dateStart, const Date& dateEnd, MeteoData& md);
 		bool readStationMetaData(const std::string& metafile, const std::string& stationname, StationData& sd);
 		void readMetaData();
 		std::string getStationID(const std::string& filename);
@@ -80,7 +81,7 @@ class SNIO : public IOInterface {
 
 		const Config& cfg;
 		std::vector<StationData> vecAllStations;
-		std::vector< std::map <Date, std::streampos> > vec_streampos; //in order to save file pointers
+		std::vector< IOUtils::FileIndexer > vecIndex;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
@@ -89,6 +90,7 @@ class SNIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const int sn_julian_offset;
 		static const size_t min_nr_meteoData; // minimal number of parameters on data input lines
+		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
 		size_t nr_meteoData; // number of parameters on data input lines, excluding optional ones
 		bool iswr_inp, rswr_inp;
 };

@@ -59,15 +59,17 @@ std::string getLibVersion() {
 	return ss.str();
 }
 
-double IOUtils::bearing_to_angle(const double& bearing) {
+namespace IOUtils {
+
+double bearing_to_angle(const double& bearing) {
 	return (fmod(360.-bearing+90., 360.)*Cst::to_rad);
 }
 
-double IOUtils::angle_to_bearing(const double& angle) {
+double angle_to_bearing(const double& angle) {
 	return (fmod( 90.-angle*Cst::to_deg+360. , 360. ));
 }
 
-double IOUtils::bearing(std::string bearing_str)
+double bearing(std::string bearing_str)
 {
 	trim(bearing_str);
 	toUpper(bearing_str);
@@ -93,7 +95,7 @@ double IOUtils::bearing(std::string bearing_str)
 	return nodata;
 }
 
-void IOUtils::stripComments(std::string& str)
+void stripComments(std::string& str)
 {
 	const size_t found = str.find_first_of("#;");
 	if (found != std::string::npos){
@@ -101,7 +103,7 @@ void IOUtils::stripComments(std::string& str)
 	}
 }
 
-void IOUtils::copy_file(const std::string& src, const std::string& dest)
+void copy_file(const std::string& src, const std::string& dest)
 {
 	if (src == dest) return; //copying to the same file doesn't make sense, but is no crime either
 
@@ -120,7 +122,7 @@ void IOUtils::copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string IOUtils::cleanPath(const std::string& in_path) {
+std::string cleanPath(const std::string& in_path) {
 	std::string out_path(in_path);
 
 	size_t curr = out_path.find('\\', 0);
@@ -132,7 +134,7 @@ std::string IOUtils::cleanPath(const std::string& in_path) {
 	return out_path;
 }
 
-std::string IOUtils::getExtension(const std::string& filename)
+std::string getExtension(const std::string& filename)
 {
 	const std::string whitespaces(" \t\f\v\n\r");
 	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
@@ -145,7 +147,7 @@ std::string IOUtils::getExtension(const std::string& filename)
 	return filename.substr(startpos+1, endpos-startpos);
 }
 
-std::string IOUtils::removeExtension(const std::string& filename)
+std::string removeExtension(const std::string& filename)
 {
 	const std::string whitespaces(" \t\f\v\n\r");
 	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
@@ -156,7 +158,7 @@ std::string IOUtils::removeExtension(const std::string& filename)
 	return filename.substr(0, startpos);
 }
 
-void IOUtils::trim(std::string& str)
+void trim(std::string& str)
 {
 	const std::string whitespaces(" \t\f\v\n\r");
 	const size_t startpos = str.find_first_not_of(whitespaces); // Find the first character position after excluding leading blank spaces
@@ -170,27 +172,27 @@ void IOUtils::trim(std::string& str)
 	}
 }
 
-void IOUtils::toUpper(std::string& str) {
+void toUpper(std::string& str) {
 	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
 }
 
-void IOUtils::toLower(std::string& str) {
+void toLower(std::string& str) {
 	std::transform(str.begin(), str.end(),str.begin(), ::tolower);
 }
 
-std::string IOUtils::strToUpper(const std::string &str) {
+std::string strToUpper(const std::string &str) {
     std::string strcopy(str.size(), 0);
     std::transform(str.begin(), str.end(), strcopy.begin(), ::toupper);
     return strcopy;
 }
 
-std::string IOUtils::strToLower(const std::string &str) {
+std::string strToLower(const std::string &str) {
     std::string strcopy(str.size(), 0);
     std::transform(str.begin(), str.end(), strcopy.begin(), ::tolower);
     return strcopy;
 }
 
-bool IOUtils::isNumeric(std::string str, const unsigned int& nBase)
+bool isNumeric(std::string str, const unsigned int& nBase)
 {
 	trim(str); //delete trailing and leading whitespaces and tabs
 	std::istringstream iss(str);
@@ -210,7 +212,7 @@ bool IOUtils::isNumeric(std::string str, const unsigned int& nBase)
 	return ( iss.rdbuf()->in_avail() == 0 ); //true if nothing was left after conversion
 }
 
-bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& delimiter,
+bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
                                std::map<std::string,std::string>& out_map, const std::string& keyprefix, const bool& setToUpperCase)
 {
 	size_t pos = std::string::npos;
@@ -225,15 +227,15 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 		std::string key = in_line.substr(0, pos);
 		std::string value = in_line.substr(pos + 1);
 
-		IOUtils::trim(key);
-		IOUtils::trim(value);
+		trim(key);
+		trim(value);
 
 		if ((key == "") || (value=="")) {
 			return false;
 		}
 
 		if (setToUpperCase)
-			IOUtils::toUpper(key);
+			toUpper(key);
 
 
 		out_map[keyprefix + key] = value;
@@ -244,7 +246,7 @@ bool IOUtils::readKeyValuePair(const std::string& in_line, const std::string& de
 	return true;
 }
 
-bool IOUtils::validFileName(const std::string& filename)
+bool validFileName(const std::string& filename)
 {
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
 	if((startpos!=0) || (filename==".") || (filename=="..")) {
@@ -255,12 +257,12 @@ bool IOUtils::validFileName(const std::string& filename)
 }
 
 #ifdef _WIN32
-bool IOUtils::fileExists(const std::string& filename)
+bool fileExists(const std::string& filename)
 {
 	return ( GetFileAttributes( filename.c_str() ) != INVALID_FILE_ATTRIBUTES );
 }
 
-void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
 {
 	WIN32_FIND_DATA ffd;
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -295,7 +297,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 	FindClose(hFind);
 }
 #else
-bool IOUtils::fileExists(const std::string& filename)
+bool fileExists(const std::string& filename)
 {
 	struct stat buffer ;
 
@@ -306,7 +308,7 @@ bool IOUtils::fileExists(const std::string& filename)
 	return false;
 }
 
-void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
+void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
 {
 	DIR *dp;
 	struct dirent *dirp;
@@ -332,7 +334,7 @@ void IOUtils::readDirectory(const std::string& path, std::list<std::string>& dir
 }
 #endif
 
-std::string IOUtils::getLogName() {
+std::string getLogName() {
 	char *tmp;
 	const size_t len=64;
 	char logname[len]; //to keep the user name short enough
@@ -348,7 +350,7 @@ std::string IOUtils::getLogName() {
 	return std::string(logname);
 }
 
-void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
+void readKeyValueHeader(std::map<std::string,std::string>& headermap,
                                  std::istream& fin,
                                  const size_t& linecount,
                                  const std::string& delimiter)
@@ -357,12 +359,12 @@ void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 	std::string line="";
 
 	//make a test for end of line encoding:
-	const char eol = IOUtils::getEoln(fin);
+	const char eol = getEoln(fin);
 
 	for (size_t ii=0; ii< linecount; ii++){
 		if (std::getline(fin, line, eol)) {
 			linenr++;
-			const bool result = IOUtils::readKeyValuePair(line, delimiter, headermap);
+			const bool result = readKeyValuePair(line, delimiter, headermap);
 
 			if (!result) { //  means if ((key == "") || (value==""))
 				std::stringstream out;
@@ -375,7 +377,7 @@ void IOUtils::readKeyValueHeader(std::map<std::string,std::string>& headermap,
 	}
 }
 
-char IOUtils::getEoln(std::istream& fin)
+char getEoln(std::istream& fin)
 {
 	std::streambuf* pbuf;
 	char tmp = '0';
@@ -408,7 +410,7 @@ char IOUtils::getEoln(std::istream& fin)
 	return '\n';
 }
 
-void IOUtils::skipLines(std::istream& fin, const size_t& nbLines, const char& eoln)
+void skipLines(std::istream& fin, const size_t& nbLines, const char& eoln)
 {
 	std::string dummy;
 	for (size_t ii=0; ii<nbLines; ii++) {
@@ -418,7 +420,7 @@ void IOUtils::skipLines(std::istream& fin, const size_t& nbLines, const char& eo
 	}
 }
 
-size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<double>& vec_data)
+size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data)
 {
 	vec_data.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
@@ -440,7 +442,7 @@ size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<double>& v
 	return vec_data.size();
 }
 
-size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
+size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString)
 {
 	vecString.clear();
 	std::istringstream iss(line_in); //construct inputstream with the string line as input
@@ -458,7 +460,7 @@ size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<std::strin
 	return vecString.size();
 }
 
-size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
+size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim)
 {
 	vecString.clear();
 	std::string tmp_string;
@@ -476,7 +478,7 @@ size_t IOUtils::readLineToVec(const std::string& line_in, std::vector<std::strin
 const char ALPHANUM[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const char NUM[] = "0123456789";
 
-template<> bool IOUtils::convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
 	std::string s = str;
@@ -486,7 +488,7 @@ template<> bool IOUtils::convertString<std::string>(std::string& t, const std::s
 	return true;
 }
 
-template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -517,7 +519,7 @@ template<> bool IOUtils::convertString<bool>(bool& t, const std::string& str, st
 	return true;
 }
 
-template<> bool IOUtils::convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -544,7 +546,7 @@ template<> bool IOUtils::convertString<unsigned int>(unsigned int& t, const std:
 	}
 }
 
-bool IOUtils::convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))
+bool convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -611,7 +613,7 @@ bool IOUtils::convertString(Date& t, const std::string& str, const double& time_
 	return true;
 }
 
-template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s = str;
 	trim(s); //delete trailing and leading whitespaces and tabs
@@ -629,7 +631,7 @@ template<> bool IOUtils::convertString<Coords>(Coords& t, const std::string& str
 }
 
 
-void IOUtils::getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
+void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
                                       std::string& coordout, std::string& coordoutparam) {
 	cfg.getValue("COORDSYS", "Input", coordin);
 	cfg.getValue("COORDPARAM", "Input", coordinparam, Config::nothrow);
@@ -637,17 +639,17 @@ void IOUtils::getProjectionParameters(const Config& cfg, std::string& coordin, s
 	cfg.getValue("COORDPARAM", "Output", coordoutparam, Config::nothrow);
 }
 
-void IOUtils::getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
+void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
 	cfg.getValue("TIME_ZONE", "Input", tz_in, Config::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", tz_out, Config::nothrow);
 }
 
-size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch)
+size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch)
 {
 	//returns index of element, if element does not exist it returns closest index after soughtdate
 	//the element needs to be an exact hit or embedded between two measurments
 	if (vecM.size() <= 0) {//no elements in buffer
-		return IOUtils::npos;
+		return npos;
 	}
 
 	size_t first = 0, last = vecM.size()-1;
@@ -657,11 +659,11 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 
 	//if we reach this point: at least one element in buffer
 	if (vecM[first].date > soughtdate) {
-		return IOUtils::npos;
+		return npos;
 	}
 
 	if (vecM[last].date < soughtdate) {//last element is earlier, return npos
-		return IOUtils::npos;
+		return npos;
 	}
 
 	if (vecM[first].date == soughtdate) {//closest element
@@ -709,10 +711,10 @@ size_t IOUtils::seek(const Date& soughtdate, const std::vector<MeteoData>& vecM,
 		}
 	}
 
-	return IOUtils::npos;
+	return npos;
 }
 
-std::string IOUtils::printFractionalDay(const double& fractional) {
+std::string printFractionalDay(const double& fractional) {
 	const double hours=floor(fractional*24.);
 	const double minutes=floor((fractional*24.-hours)*60.);
 	const double seconds=fractional*24.*3600.-hours*3600.-minutes*60.;
@@ -726,7 +728,7 @@ std::string IOUtils::printFractionalDay(const double& fractional) {
 	return tmp.str();
 }
 
-void IOUtils::getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers, const unsigned int &wk, unsigned int& startx, unsigned int& nx)
+void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers, const unsigned int &wk, unsigned int& startx, unsigned int& nx)
 {
 	if(nbworkers>dimx) {
 		std::stringstream ss;
@@ -746,4 +748,42 @@ void IOUtils::getArraySliceParams(const unsigned int& dimx, const unsigned int& 
 	}
 }
 
+void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
+{
+	file_index tmp_idx(i_date, i_pos);
+	const size_t insertIdx = binarySearch(i_date);
+	if(insertIdx==(size_t)-1 || insertIdx==vecIndex.size()) vecIndex.push_back(tmp_idx);
+	else vecIndex.insert(vecIndex.begin()+insertIdx, tmp_idx); //insertion is at the proper place -> remains ordered
+}
+
+std::streampos FileIndexer::getIndex(const Date& i_date)
+{
+	const size_t foundIdx = binarySearch(i_date);
+	if(foundIdx==(size_t)-1) return (std::streampos)-1;
+	else return vecIndex[foundIdx].pos;
+}
+
+size_t FileIndexer::binarySearch(const Date& soughtdate)
+{//perform binary search
+	const size_t vec_size = vecIndex.size();
+	if(vec_size==0) return (size_t)-1;
+	if(soughtdate<vecIndex[0].date) return (size_t)-1;
+	if(soughtdate>=vecIndex[vec_size-1].date) return vec_size;
+
+	const file_index value(soughtdate, 0);
+	const std::vector< struct file_index >::iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), value); //returns the first element that is GREATER than the provided value
+	if(it>vecIndex.begin()) return it-vecIndex.begin()-1;
+	else return (size_t)-1;
+}
+
+std::ostream& operator<<(std::ostream &os, const FileIndexer& index)
+{
+	os << "<FileIndexer>\n";
+	for(size_t ii=0; ii<index.vecIndex.size(); ii++)
+		os << "\t" << "[" << ii << "] - " << index.vecIndex[ii].date.toString(Date::ISO) << " -> #" << std::hex << index.vecIndex[ii].pos << std::dec << "\n";
+	os << "</FileIndexer>\n";
+	return os;
+}
+
+} //namespace IOUtils
 } //namespace

@@ -1060,7 +1060,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 
 	while (!fin.eof()){
 		line = "";
-		streampos tmp_fpointer = fin.tellg();
+		const streampos tmp_fpointer = fin.tellg();
 		getline(fin, line, eoln);
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
@@ -1123,7 +1123,7 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 {
 	streampos current_fpointer = -1;
 	while (!fin.eof()){
-		streampos tmp_fpointer = fin.tellg();
+		const streampos tmp_fpointer = fin.tellg();
 		double julian = -1.0;
 		for (size_t ii=0; ii<nr_of_fields; ii++){
 			if (julian_present && (ii == julian_field)){

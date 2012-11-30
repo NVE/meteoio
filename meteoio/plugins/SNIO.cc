@@ -75,11 +75,12 @@ namespace mio {
 const int SNIO::sn_julian_offset = 2415021;
 const double SNIO::plugin_nodata = -999.0; //plugin specific nodata value
 const size_t SNIO::min_nr_meteoData = 15;
+const size_t SNIO::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
 const std::string SNIO::dflt_extension = ".inp";
 
 SNIO::SNIO(const std::string& configfile)
       : cfg(configfile),
-        vecAllStations(), vec_streampos(), fin(), fout(),
+        vecAllStations(), vecIndex(), fin(), fout(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
         iswr_inp(true), rswr_inp(true)
@@ -95,7 +96,7 @@ SNIO::SNIO(const std::string& configfile)
 
 SNIO::SNIO(const Config& cfgreader)
       : cfg(cfgreader),
-        vecAllStations(), vec_streampos(), fin(), fout(),
+        vecAllStations(), vecIndex(), fin(), fout(),
         coordin(), coordinparam(), coordout(), coordoutparam(),
         in_tz(0.), out_tz(0.), nr_meteoData(min_nr_meteoData),
         iswr_inp(true), rswr_inp(true)
@@ -122,6 +123,12 @@ void SNIO::cleanup() throw()
 	if (fout.is_open()) {//close fout if open
 		fout.close();
 	}
+}
+
+std::string SNIO::file_pos(const std::string& filename, const size_t& linenr) {
+	stringstream ss2;
+	ss2 << filename << ":" <<linenr;
+	return ss2.str();
 }
 
 void SNIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*filename*/)
@@ -205,9 +212,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 					return true;
 				}
 			} else {
-				stringstream ss;
-				ss << linenr;
-				throw InvalidFormatException(metafile+":"+ss.str() + " each line must have 6 columns", AT);
+				throw InvalidFormatException(file_pos(metafile, linenr) + " each line must have 6 columns", AT);
 			}
 		}
 		cleanup();
@@ -344,8 +349,8 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	vecMeteo.clear();
 	vecMeteo.insert(vecMeteo.begin(), vecAllStations.size(), vector<MeteoData>());
-	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
-		vec_streampos = vector< map<Date, std::streampos> >(vecAllStations.size());
+	if (vecIndex.size() == 0) //the vecIndex save file pointers for certain dates
+		vecIndex.resize(vecAllStations.size());
 
 	for (size_t ii=0; ii<vecAllStations.size(); ii++){
 		string filename="", line="";
@@ -382,47 +387,46 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			size_t linenr = 0;
 
-			//The following 4 lines are an optimization to jump to the correct position in the file
-			streampos current_fpointer = -1;  //the filepointer for the current valid date
-			map<Date,streampos>::const_iterator it = vec_streampos.at(ii).find(dateStart);
-			if (it != vec_streampos.at(ii).end())
-				fin.seekg(it->second); //jump to position in the file
+			//The following lines are an optimization to jump to the correct position in the file
+			streampos current_fpointer = vecIndex.at(ii).getIndex(dateStart);
+			if(current_fpointer!=-1) fin.seekg(current_fpointer);
 
-			while (!fin.eof()){
-				streampos tmp_fpointer = fin.tellg();
+			while (!fin.eof()) {
+				const streampos tmp_fpointer = fin.tellg();
 				getline(fin, line, eoln); //read complete line of data
-
-				stringstream ss2;
 				linenr++;
-				ss2 << linenr;
 
 				const size_t ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
-
 				if (ncols >= nr_meteoData){
 					MeteoData md;
 					md.meta = vecAllStations[ii];
-					parseMeteoLine(tmpvec, file_with_path.str() + ":" + ss2.str(), dateStart, dateEnd, md);
 
-					if ((md.date >= dateStart) && (md.date <= dateEnd)){//check date and add to vectors
+					if (parseMeteoLine(tmpvec, file_with_path.str(), linenr, dateStart, dateEnd, md)){//the date is within the requested range -> we keep the data
 						convertUnits(md);
 						vecMeteo[ii].push_back(md);
-						current_fpointer = tmp_fpointer; //save this file pointer, it's a valid one for sure
+
 					}
+					current_fpointer = tmp_fpointer; //save file pointer
+					if( (linenr % streampos_every_n_lines)==0 && (current_fpointer != ((ifstream::pos_type)-1)))
+						vecIndex.at(ii).setIndex(md.date, current_fpointer);
+
+					if(md.date>dateEnd) break;
 				} else if (ncols == 1){
 					if (tmpvec.at(0) == "END") {
 						break; //reached end of MeteoData
 					} else {
-						throw InvalidFormatException(file_with_path.str() + ":line " + ss2.str() + " premature end of line", AT);
+						throw InvalidFormatException(file_pos(file_with_path.str(), linenr) + " premature end of line", AT);
 					}
 				} else if (ncols == 0){
 					//Ignore empty lines
 				} else {
-					throw InvalidFormatException(file_with_path.str() + ":line " + ss2.str() + " premature end of line", AT);
+					throw InvalidFormatException(file_pos(file_with_path.str(), linenr) + " premature end of line", AT);
 				}
 			}
 
 			//save stream position and the corresponding end date
-			if (current_fpointer != ((ifstream::pos_type)-1)) vec_streampos.at(ii)[dateEnd] = current_fpointer;
+			if (current_fpointer != ((ifstream::pos_type)-1))
+				vecIndex.at(ii).setIndex(dateEnd, current_fpointer);
 		} catch (const std::exception&){
 			cleanup();
 			throw;
@@ -431,7 +435,11 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	}
 }
 
-void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filepos,
+//This function takes a meteo line, extracts the date (ignores Julian) and then converts
+//all meteo parameters to doubles and finally copies them into the MeteoData object md
+//if the date is outside of the requested range, returns false.
+//if the date is as requested -> return true
+bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::string& filename, const size_t& linenr,
                           const Date& dateStart, const Date& dateEnd, MeteoData& md)
 {
 	/*
@@ -439,29 +447,30 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	 * all meteo parameters to doubles and finally copies them into the MeteoData object md
 	 */
 	if (vecLine.size() < nr_meteoData)
-		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": line is too short", AT);
+		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": line is too short", AT);
 
 	if (vecLine[0] != "M")
-		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": meteo input lines must start with 'M'", AT);
+		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": meteo input lines must start with 'M'", AT);
 
 	//deal with the date
 	if (vecLine[1].length() != 10)
-		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": date format must be DD.MM.YYYY", AT);
+		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": date format must be DD.MM.YYYY", AT);
+
 	const string year  = vecLine[1].substr(6,4);
 	const string month = vecLine[1].substr(3,2);
 	const string day   = vecLine[1].substr(0,2);
 
 	if (!IOUtils::convertString(md.date, year+"-"+month+"-"+day+"T"+vecLine[2], in_tz, std::dec))
-		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": invalid date format", AT);
+		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": invalid date format", AT);
 
 	if ((md.date < dateStart) || (md.date > dateEnd)) //stop parsing data for dates out of the scope
-		return;
+		return false;
 
 	//Extract all data as double values
 	vector<double> tmpdata = vector<double>(vecLine.size());
 	for (size_t ii=4; ii<vecLine.size(); ii++) {
 		if (!IOUtils::convertString(tmpdata[ii], vecLine[ii], std::dec))
-			throw ConversionFailedException("Reading station "+md.meta.stationID+", at "+filepos+": can not convert  '"+vecLine[ii]+"' to double", AT);
+			throw ConversionFailedException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": can not convert  '"+vecLine[ii]+"' to double", AT);
 	}
 
 	//Copy data into MeteoData object
@@ -502,7 +511,8 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	size_t number_meas_temperatures = 0;
 	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
 	if (vecLine.size() < nr_meteoData + number_meas_temperatures)
-		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": not enough measured temperatures data", AT);
+		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": not enough measured temperatures data", AT);
+
 	for (size_t jj = 1; jj <= number_meas_temperatures; jj++) {
 		stringstream ss;
 		ss << "TS" << (jj);
@@ -513,7 +523,8 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	size_t number_of_solutes = 0;
 	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
 	if (vecLine.size() < nr_meteoData + number_meas_temperatures + number_of_solutes)
-		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": not enough solute data", AT);
+		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": not enough solute data", AT);
+
 	for (size_t jj = 0 ; jj < number_of_solutes; jj++) {
 		stringstream ss;
 		ss << "CONC" << jj;
@@ -525,7 +536,7 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	cfg.getValue("VW_DRIFT", "Input", vw_drift, Config::nothrow);
 	if (vw_drift) {
 		if (vecLine.size() < ii+1)
-			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": no data for vw_drift", AT);
+			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": no data for vw_drift", AT);
 		md.addParameter("VW_DRIFT");
 		md("VW_DRIFT") = tmpdata[ii++];
 	}
@@ -534,13 +545,13 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 	cfg.getValue("RHO_HN", "Input", rho_hn, Config::nothrow);
 	if (rho_hn) {
 		if (vecLine.size() < ii+1)
-			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+filepos+": no data for rho_hn", AT);
+			throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": no data for rho_hn", AT);
 		md.addParameter("RHO_HN");
 		md("RHO_HN") = tmpdata[ii++];
 	}
 	if (vecLine.size() > ii) {
 		std::stringstream ss;
-		ss << "Reading station " << md.meta.stationID << ", at " << filepos << ": too many fields.\n";
+		ss << "Reading station " << md.meta.stationID << ", at " << file_pos(filename, linenr) << ": too many fields.\n";
 		ss << "Looking for " << nr_meteoData << " standard fields + " << number_meas_temperatures << " snow temperatures + ";
 		ss << number_of_solutes << " solutes";
 
@@ -557,6 +568,8 @@ void SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 
 		throw InvalidFormatException(ss.str(), AT);
 	}
+
+	return true;
 }
 
 void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)

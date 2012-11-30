@@ -366,6 +366,50 @@ namespace IOUtils {
 	*/
 	void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers, const unsigned int &wk, unsigned int& startx, unsigned int& nx);
 
+	/**
+	* @class file_indexer
+	* @brief helps building an index of stream positions
+	* to quickly jump closer to the proper position in an file
+	*
+	* @ingroup plugins
+	* @author Mathias Bavay
+	* @date   2012-11-30
+	*/
+	class FileIndexer {
+		public:
+			FileIndexer() : vecIndex() {};
+
+			/**
+			* @brief Add a new position to the index
+			* @param[in] i_date date of the new position
+			* @param[in] i_pos streampos position
+			*/
+			void setIndex(const Date& i_date, const std::streampos& i_pos);
+
+			/**
+			* @brief Get the file position suitable for a given date
+			* @param[in] i_date date for which a position is requested
+			* @return closest streampos position before the requested date,
+			* -1 if nothing could be found (empty index)
+			*/
+			std::streampos getIndex(const Date& i_date);
+
+			friend std::ostream& operator<<(std::ostream &os, const FileIndexer& index);
+
+		private:
+			struct file_index {
+				file_index(const Date& i_date, const std::streampos& i_pos) : date(i_date), pos(i_pos) {};
+				bool operator<(const file_index& a) const {
+					return date < a.date;
+				}
+				Date date;
+				std::streampos pos;
+			};
+			size_t binarySearch(const Date& soughtdate);
+
+			std::vector< struct file_index > vecIndex;
+	};
+
 } //end namespace IOUtils
 
 } //end namespace mio
