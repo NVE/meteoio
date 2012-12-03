@@ -357,17 +357,27 @@ void SunMeeus::update() {
 	                 - 1.25*eccentricityEarth*eccentricityEarth*sin(2.*geomMeanAnomSun*Cst::to_rad)
 	                 )*Cst::to_deg;
 
-	const double HA_sunrise = acos( cos(90.833*Cst::to_rad)/cos(latitude*Cst::to_rad) * cos(SunDeclination*Cst::to_rad)
-	             - tan(latitude*Cst::to_rad)*tan(SunDeclination*Cst::to_rad)
-	             ) * Cst::to_deg;
-
 	SolarNoon = (720. - 4.*longitude - EquationOfTime + lst_TZ*60.)/1440.; //in days, in LST time
-	SunRise = SolarNoon - HA_sunrise*4./1440.; //in days, in LST
-	SunSet = .5 + (SolarNoon + HA_sunrise*4.)/1440.; //in days, in LST
-	SunlightDuration = 8.*HA_sunrise;
+
+	const double cos_HAsunrise = cos(90.833*Cst::to_rad) / (cos(latitude*Cst::to_rad) * cos(SunDeclination*Cst::to_rad))
+	             - tan(latitude*Cst::to_rad)*tan(SunDeclination*Cst::to_rad);
+
+	if(cos_HAsunrise>=-1. && cos_HAsunrise<=1.) {
+		const double HA_sunrise = acos( cos_HAsunrise ) * Cst::to_deg;
+		SunRise = SolarNoon - HA_sunrise*4./1440.; //in days, in LST
+		SunSet = .5 + (SolarNoon + HA_sunrise*4.)/1440.; //in days, in LST
+		SunlightDuration = 8.*HA_sunrise;
+	} else if(cos_HAsunrise<-1.) { //the sun never sets
+		SunRise = IOUtils::nodata;
+		SunSet = IOUtils::nodata;
+		SunlightDuration = 24.;
+	} else if(cos_HAsunrise>1.) { //the sun never rises
+		SunRise = IOUtils::nodata;
+		SunSet = IOUtils::nodata;
+		SunlightDuration = 0.;
+	}
 
 	//Sun's position in the horizontal coordinate system (see http://en.wikipedia.org/wiki/Horizontal_coordinate_system)
-	double AtmosphericRefraction;
 	const double TrueSolarTime = fmod( lst_hours*60. + EquationOfTime + 4.*longitude - 60.*lst_TZ , 1440. ); //in LST time
 	if( TrueSolarTime<0. )
 		HourAngle = TrueSolarTime/4.+180.;
@@ -381,6 +391,7 @@ void SunMeeus::update() {
 
 	SolarElevation = 90. - SolarZenithAngle;
 
+	double AtmosphericRefraction;
 	if( SolarElevation>85. ) {
 		AtmosphericRefraction = 0.;
 	} else {
