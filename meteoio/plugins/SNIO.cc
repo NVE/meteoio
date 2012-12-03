@@ -398,7 +398,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//The following lines are an optimization to jump to the correct position in the file
 			streampos current_fpointer = vecIndex.at(ii).getIndex(dateStart);
-			if(current_fpointer!=-1) fin.seekg(current_fpointer);
+			if(current_fpointer!=(streampos)-1) fin.seekg(current_fpointer);
 
 			while (!fin.eof()) {
 				const streampos tmp_fpointer = fin.tellg();
