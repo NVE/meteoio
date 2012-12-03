@@ -4,7 +4,7 @@
 using namespace mio; //The MeteoIO namespace is called mio
 using namespace std;
 
-const double epsilon = 1e-3; //1e-4 is still too tight because of truncated results when writing data out for the ref.
+const double grid_epsilon = 1e-3; //1e-4 is still too tight because of truncated results when writing data out for the ref.
 const bool gen_ref = false; //wether to generate ref files or to test
 
 int main(int /*argc*/, char** argv) {
@@ -31,7 +31,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::TA, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_TA_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "TA grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}
@@ -40,7 +40,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::TSS, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_TSS_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "TSS grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}
@@ -49,7 +49,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::TSG, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_TSG_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "TSG grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}
@@ -58,7 +58,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::HNW, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_HNW_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "HNW grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}
@@ -67,7 +67,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::RH, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_RH_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "RH grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}
@@ -76,7 +76,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::VW, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_VW_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "VW grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}
@@ -85,7 +85,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::RSWR, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_RSWR_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "RSWR grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}
@@ -94,7 +94,7 @@ int main(int /*argc*/, char** argv) {
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::P, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_P_ref.asc");
-		if(ref.grid2D.checkEpsilonEquality(param.grid2D, epsilon)==false) {
+		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
 			cout << "P grids don't match!\n"; return EXIT_FAILURE;
 		}
 	}

@@ -106,7 +106,7 @@ void SMETCommon::trim(std::string& str)
 
 	// if all spaces or empty return an empty string
 	if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
-		str = "";
+		str.clear();
 	} else {
 		str = str.substr( startpos, endpos-startpos+1 );
 	}
@@ -215,7 +215,7 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 		if (tmp_string != "") {
 			vec_string.push_back(tmp_string);
 		}
-		tmp_string="";
+		tmp_string.clear();
 	}
 
 	return vec_string.size();
@@ -654,7 +654,7 @@ void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 
 SMETReader::SMETReader(const std::string& in_fname) :
                                                       data_start_fpointer(), vec_offset(), vec_multiplier(), vec_fieldnames(),
-                                                      header(), map_timestamp_streampos(), map_julian_streampos(),
+                                                      header(), indexer(),
                                                       filename(in_fname), timestamp_start("-4714-11-24T00:00"),
                                                       timestamp_end("9999-12-31T00:00"), nodata_value(-999.),
                                                       julian_start(0.), julian_end(5373483.5),
@@ -758,7 +758,7 @@ void SMETReader::process_header()
 
 		if (it->first == "fields"){
 			SMETCommon::readLineToVec(it->second, tmp_vec);
-			string newfields = "";
+			string newfields;
 			if (tmp_vec.size() > 0){
 				for (size_t ii=0; ii<tmp_vec.size(); ii++){
 					if (tmp_vec[ii] == "timestamp"){
@@ -811,7 +811,7 @@ void SMETReader::process_header()
 
 	if (get_header_value("units_offset") != ""){
 		vector<string> tmp_offset;
-		string offsetstring = "";
+		string offsetstring;
 		SMETCommon::readLineToVec(get_header_value("units_offset"), tmp_offset);
 
 		for (size_t ii=0; ii<tmp_offset.size(); ii++){
@@ -828,7 +828,7 @@ void SMETReader::process_header()
 
 	if (get_header_value("units_multiplier") != ""){
 		vector<string> tmp_multiplier;
-		string multiplierstring = "";
+		string multiplierstring;
 		SMETCommon::readLineToVec(get_header_value("units_multiplier"), tmp_multiplier);
 
 		for (size_t ii=0; ii<tmp_multiplier.size(); ii++){
@@ -867,7 +867,7 @@ void SMETReader::process_header()
 void SMETReader::read_header(std::ifstream& fin)
 {
 	//1. Read signature
-	std::string line = "";
+	std::string line;
 	vector<string> tmpvec;
 	getline(fin, line, eoln); //read complete signature line
 	SMETCommon::stripComments(line);
@@ -983,13 +983,17 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 	try {
 		fin.seekg(data_start_fpointer); //jump to data start position in the file
 		if (timestamp_interval && timestamp_present){
-			map<string, streampos>::const_iterator it = map_timestamp_streampos.find(timestamp_start);
+			const streampos fpointer = indexer.getIndex(timestamp_start);
+			if(fpointer!=-1) fin.seekg(fpointer);
+			/*map<string, streampos>::const_iterator it = map_timestamp_streampos.find(timestamp_start);
 			if ( it != map_timestamp_streampos.end())
-				fin.seekg(it->second);
+				fin.seekg(it->second);*/
 		} else if (julian_interval && julian_present){
-			map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
+			const streampos fpointer = indexer.getIndex(julian_start);
+			if(fpointer!=-1) fin.seekg(fpointer);
+			/*map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
 			if ( it != map_julian_streampos.end())
-				fin.seekg(it->second);
+				fin.seekg(it->second);*/
 		}
 
 		if (fin.fail() || fin.bad())
@@ -1029,9 +1033,11 @@ void SMETReader::read(std::vector<double>& vec_data)
 	try {
 		fin.seekg(data_start_fpointer); //jump to data start position in the file
 		if (julian_interval && julian_present){
-			map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
+			const streampos fpointer = indexer.getIndex(julian_start);
+			if(fpointer!=-1) fin.seekg(fpointer);
+			/*map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
 			if ( it != map_julian_streampos.end())
-				fin.seekg(it->second);
+				fin.seekg(it->second);*/
 		}
 
 		if (fin.fail() || fin.bad())
@@ -1051,16 +1057,14 @@ void SMETReader::read(std::vector<double>& vec_data)
 
 void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& vec_timestamp, std::vector<double>& vec_data)
 {
-	size_t nr_of_data_fields = nr_of_fields;
-	if (timestamp_present) nr_of_data_fields++;
-
+	const size_t nr_of_data_fields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
 	vector<string> tmp_vec;
 	string line;
-	streampos current_fpointer = -1;
+	streampos current_fpointer = (streampos)-1;
 
 	while (!fin.eof()){
-		line = "";
 		const streampos tmp_fpointer = fin.tellg();
+		line.clear();
 		getline(fin, line, eoln);
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
@@ -1113,9 +1117,11 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 
 	if (current_fpointer != static_cast<streampos>(-1)){
 		if (timestamp_interval && timestamp_present)
-			map_timestamp_streampos[timestamp_end] = current_fpointer;
+			indexer.setIndex(timestamp_end, current_fpointer);
+			/*map_timestamp_streampos[timestamp_end] = current_fpointer;*/
 		else if (julian_interval && julian_present)
-			map_julian_streampos[julian_end] = current_fpointer;
+			indexer.setIndex(julian_end, current_fpointer);
+			/*map_julian_streampos[julian_end] = current_fpointer;*/
 	}
 }
 
@@ -1132,7 +1138,7 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 			} else {
 				float tmpval;
 				fin.read(reinterpret_cast < char * > (&tmpval), sizeof(float));
-				double val = (double)tmpval;
+				const double val = (double)tmpval;
 
 				vec_data.push_back(val);
 			}
@@ -1166,7 +1172,8 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 
 	if (current_fpointer != static_cast<streampos>(-1)){
 		if (julian_interval && julian_present)
-			map_julian_streampos[julian_end] = current_fpointer;
+			indexer.setIndex(julian_end, current_fpointer);
+			/*map_julian_streampos[julian_end] = current_fpointer;*/
 	}
 }
 

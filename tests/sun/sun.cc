@@ -26,7 +26,7 @@ const mio::Date d6(2001, 05, 22, 01, 00, 00, 1); // double peaks
 const double iswr_ref []= {-1000., -100., -10., -1., -0.1, -0.01, 0, 0.01, 0.1, 1., 10., 100., 1000};
 
 // write out ref file
-bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref) {
+bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_ref) {
 
 	for(mio::Date date(start_date); date <= (start_date+1.); date+=(1./(24.*6.))) { //every 10 minutes
 		os << date.toString(Date::ISO) << "\t";
@@ -38,7 +38,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		//radiation in the beam'
 		double b_toa, b_direct, b_diffuse, md_beam;
 		Sun.getBeamRadiation(b_toa, b_direct, b_diffuse);
-		md_beam=Sun.getSplitting(b_toa,iswr_ref);
+		md_beam=Sun.getSplitting(b_toa,i_iswr_ref);
 
 		os << b_toa << "\t" << b_direct << "\t" << b_diffuse << "\t";
 		os << md_beam << "\t";
@@ -46,7 +46,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		//radiation on the horizontal
 		double h_toa, h_direct, h_diffuse, md_horizontal;
 		Sun.getHorizontalRadiation(h_toa, h_direct, h_diffuse);
-		md_horizontal=Sun.getSplitting(h_toa,iswr_ref);
+		md_horizontal=Sun.getSplitting(h_toa,i_iswr_ref);
 
 		os << h_toa << "\t" << h_direct << "\t" << h_diffuse << "\t";
 		os << md_horizontal << "\t";
@@ -54,16 +54,16 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		//radiation on the slope
 		double s_toa, s_direct, s_diffuse, md_slope;
 		Sun.getSlopeRadiation(slope_azi, slope_elev, s_toa, s_direct, s_diffuse);
-		md_slope=Sun.getSplitting(s_toa,iswr_ref);
+		md_slope=Sun.getSplitting(s_toa,i_iswr_ref);
 
 		os << s_toa << "\t" << s_direct << "\t" << s_diffuse << "\t";
 		os << md_slope << "\t";
 
 		//other sun stuff
 		double solar_azi, solar_elev, eccentricity;
-		double sunrise, sunset, daylight;
+		double sunrise, sunset, tmp_daylight;
 		Sun.position.getHorizontalCoordinates(solar_azi, solar_elev, eccentricity);
-		Sun.position.getDaylight(sunrise, sunset, daylight, date.getTimeZone());
+		Sun.position.getDaylight(sunrise, sunset, tmp_daylight, date.getTimeZone());
 
 		os << Sun.getElevationThresh() << "\t";
 		os << Sun.position.getAngleOfIncidence(slope_azi,slope_elev) << "\t";
@@ -72,7 +72,7 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double iswr_ref
 		os << solar_azi << "\t" << solar_elev << "\t";
 		os << IOUtils::printFractionalDay(sunrise)<< "\t";
 		os << IOUtils::printFractionalDay(sunset)<< "\t";
-		os << IOUtils::printFractionalDay(daylight/minutes_per_day)<< "\t";
+		os << IOUtils::printFractionalDay(tmp_daylight/minutes_per_day)<< "\t";
 
 		// end line
 		os << endl;

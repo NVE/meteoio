@@ -267,7 +267,7 @@ void A3DIO::read1DStation(std::string& file_1d, StationData& sd)
 
 void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	std::string file_1d="", line="";
+	std::string file_1d, line;
 	Date tmp_date;
 
 	MeteoData tmpdata;
@@ -534,7 +534,7 @@ void A3DIO::constructMeteo2DFilenames(const Date& startDate, const Date& endDate
 size_t A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::map<std::string, size_t>& hashStations)
 {
 	std::vector<std::string> tmpvec;
-	std::string line_in="";
+	std::string line_in;
 
 	for (size_t ii=0; ii<filenames.size(); ii++) {
 		std::string filename = filenames[ii];
@@ -543,7 +543,7 @@ size_t A3DIO::getNrOfStations(std::vector<std::string>& filenames, std::map<std:
 		fin.open (filename.c_str(), std::ifstream::in);
 		if (fin.fail()) throw FileAccessException(filename, AT);
 
-		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 		IOUtils::skipLines(fin, 4, eoln);
 		getline(fin, line_in, eoln); //5th line holds the names of the stations
@@ -568,7 +568,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
                             std::vector< std::vector<MeteoData> >& vecM, size_t& bufferindex)
 {
 
-	std::string line_in = "";
+	std::string line_in;
 	std::vector<std::string> tmpvec, vec_names;
 	Date tmp_date;
 	int tmp_ymdh[4];
@@ -622,7 +622,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 		if (tmp_date == currentMeteoData.date) {
 			//Read in data
 			for (size_t ii=4; ii<columns; ii++) {
-				size_t stationnr = hashStations[vec_names.at(ii)];
+				const size_t stationnr = hashStations[vec_names.at(ii)];
 				MeteoData& tmpmd = vecM[stationnr][bufferindex];
 				tmpmd.date = tmp_date;
 
@@ -667,7 +667,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,size_t>& hashStations,
                               std::vector<StationData>& vecS)
 {
-	std::string line_in = "";
+	std::string line_in;
 	std::vector<std::string> vec_altitude, vec_xcoord, vec_ycoord, vec_names;
 
 	fin.clear();
@@ -739,7 +739,7 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 
 void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 {
-	std::string filename="", line_in="";
+	std::string filename, line_in;
 
 	cfg.getValue("SPECIALPTSFILE", "Input", filename);
 	if (!IOUtils::fileExists(filename)) {

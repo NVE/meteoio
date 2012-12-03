@@ -92,7 +92,7 @@ ARPSIO& ARPSIO::operator=(const ARPSIO& source) {
 
 void ARPSIO::setOptions()
 {
-	string tmp="";
+	string tmp;
 	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
 	if (tmp == "ARPS") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
@@ -103,7 +103,7 @@ void ARPSIO::setOptions()
 
 	//default value has been set in constructor
 	cfg.getValue("GRID2DEXT", "Input", ext, Config::nothrow);
-	if(ext=="none") ext="";
+	if(ext=="none") ext.clear();
 }
 
 ARPSIO::~ARPSIO() throw()

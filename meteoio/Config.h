@@ -263,7 +263,7 @@ class Config {
 		 * @endcode
 		 */
 		size_t findKeys(std::vector<std::string>& vecResult,
-		               std::string keystart, std::string section="GENERAL") const;
+		               const std::string keystart, std::string section="GENERAL") const;
 
 		static const std::string defaultSection;
 

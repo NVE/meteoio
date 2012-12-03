@@ -76,7 +76,7 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 	double north, east, south, west;
 	double tmp_val, xllcorner, yllcorner, cellsize;
 	vector<string> tmpvec;
-	std::string line="";
+	std::string line;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
 	if (!IOUtils::validFileName(filename)) {
@@ -172,14 +172,14 @@ void GrassIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Dat
 
 void GrassIO::readDEM(DEMObject& dem_out)
 {
-	string filename="";
+	string filename;
 	cfg.getValue("DEMFILE", "Input", filename);
 	read2DGrid(dem_out, filename);
 }
 
 void GrassIO::readLanduse(Grid2DObject& landuse_out)
 {
-	string filename="";
+	string filename;
 	cfg.getValue("LANDUSEFILE", "Input", filename);
 	read2DGrid(landuse_out, filename);
 }
@@ -188,7 +188,7 @@ void GrassIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
 	int yyyy, MM, dd, hh, mm;
 	date_in.getDate(yyyy, MM, dd, hh, mm);
-	string filepath="";
+	string filepath;
 
 	cfg.getValue("DAPATH", "Input", filepath);
 

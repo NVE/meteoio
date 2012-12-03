@@ -128,22 +128,22 @@ ARCIO::ARCIO(const Config& cfgreader)
 }
 
 void ARCIO::getGridPaths() {
-	grid2dpath_in="", grid2dpath_out="";
-	string tmp="";
+	grid2dpath_in.clear(), grid2dpath_out.clear();
+	string tmp;
 	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
 	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-	tmp="";
+	tmp.clear();
 	cfg.getValue("GRID2D", "Output", tmp, Config::nothrow);
 	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 
 	grid2d_ext_in = ".asc";
 	cfg.getValue("GRID2DEXT", "Input", grid2d_ext_in, Config::nothrow);
-	if(grid2d_ext_in=="none") grid2d_ext_in="";
+	if(grid2d_ext_in=="none") grid2d_ext_in.clear();
 	grid2d_ext_out = ".asc";
 	cfg.getValue("GRID2DEXT", "Output", grid2d_ext_out, Config::nothrow);
-	if(grid2d_ext_out=="none") grid2d_ext_out="";
+	if(grid2d_ext_out=="none") grid2d_ext_out.clear();
 }
 
 ARCIO::~ARCIO() throw()
@@ -167,7 +167,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	unsigned int ncols, nrows;
 	double xllcorner, yllcorner, cellsize, plugin_nodata;
 	double tmp;
-	std::string line="";
+	std::string line;
 	std::map<std::string, std::string> header; // A map to save key value pairs of the file header
 
 	if (!IOUtils::validFileName(full_name)) {
@@ -254,7 +254,7 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	if(a3d_view_in) {
-		string ext="";
+		string ext;
 		if(parameter==MeteoGrids::HS)
 			ext="sdp";
 		else {
@@ -271,14 +271,14 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 
 void ARCIO::readDEM(DEMObject& dem_out)
 {
-	string filename="";
+	string filename;
 	cfg.getValue("DEMFILE", "Input", filename);
 	read2DGrid_internal(dem_out, filename);
 }
 
 void ARCIO::readLanduse(Grid2DObject& landuse_out)
 {
-	string filename="";
+	string filename;
 	cfg.getValue("LANDUSEFILE", "Input", filename);
 	read2DGrid_internal(landuse_out, filename);
 }
@@ -287,7 +287,7 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
 	int yyyy, MM, dd, hh, mm;
 	date_in.getDate(yyyy, MM, dd, hh, mm);
-	string filepath="";
+	string filepath;
 
 	cfg.getValue("DAPATH", "Input", filepath);
 
@@ -366,7 +366,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 {
 	//the path will be added by write2DGrid
 	if(a3d_view_out) {
-		string ext="";
+		string ext;
 		if(parameter==MeteoGrids::HS) {
 			ext="sdp";
 		} else if(parameter==MeteoGrids::DEM) {

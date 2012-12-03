@@ -146,11 +146,11 @@ void BormaIO::readStationNames()
 	vecStationName.clear();
 
 	size_t counter = 1;
-	string stationname = "";
+	string stationname;
 
 	do {
 		stringstream ss;
-		stationname = "";
+		stationname.clear();
 
 		ss << "STATION" << counter;
 		cfg.getValue(ss.str(), "Input", stationname, Config::nothrow);
@@ -168,7 +168,7 @@ void BormaIO::getFiles(const std::string& stationname, const Date& start_date, c
                        std::vector<std::string>& vecFiles, std::vector<Date>& vecDate)
 {
 	std::list<std::string> dirlist = std::list<std::string>();
-	std::string xmlpath="";
+	std::string xmlpath;
 
 	cfg.getValue("METEOPATH", "Input", xmlpath);
 	vecFiles.clear();

@@ -129,7 +129,7 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 	vecArguments.clear();
 	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, Config::nothrow);
 
-	std::string tmp = "";
+	std::string tmp;
 	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, Config::nothrow);
 
 	if (tmp.length() > 0)

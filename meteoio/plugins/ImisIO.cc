@@ -307,10 +307,10 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 
 	for (unsigned int ii=0; ii<vecStationID.size(); ii++) {
 		// Retrieve the station IDs - this only needs to be done once per instance
-		string stat_abk = "", stao_nr = "", station_name = "";
+		string stat_abk, stao_nr, station_name;
 		parseStationID(vecStationID[ii], stat_abk, stao_nr);
 		vector<string> stnIDs;
-		string drift_stat_abk = "", drift_stao_nr = "";
+		string drift_stat_abk, drift_stao_nr;
 		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, conn);
 		if(stnIDs.size()<3)
 			throw ConversionFailedException("Error while converting station IDs for station "+stat_abk+stao_nr, AT);
@@ -326,11 +326,11 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 
 		// Retrieve the station meta data - this only needs to be done once per instance
 		vector<string> stationMetaData;
-		double east, north, alt;
-		string stao_name = "";
+		string stao_name;
 		getStationMetaData(stat_abk, stao_nr, sqlQueryStationMetaData, stationMetaData, conn);
 		if(stationMetaData.size()<4)
 			throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
+		double east, north, alt;
 		IOUtils::convertString(stao_name, stationMetaData.at(0));
 		IOUtils::convertString(east, stationMetaData.at(1), std::dec);
 		IOUtils::convertString(north, stationMetaData.at(2), std::dec);
@@ -393,7 +393,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 	size_t current_stationnr = 1;
 	string current_station;
 	do {
-		current_station = "";
+		current_station.clear();
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
@@ -657,7 +657,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 {
 	vecMeteo.at(stationindex).clear();
 
-	string stat_abk="", stao_nr="";
+	string stat_abk, stao_nr;
 	vector< vector<string> > vecResult;
 	vector<int> datestart = vector<int>(5);
 	vector<int> dateend   = vector<int>(5);
@@ -722,7 +722,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 	dateE.setTimeZone(in_tz);
 
 	//build stat_abk and stao_nr from station name
-	string stat_abk="", stao_nr="";
+	string stat_abk, stao_nr;
 	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
 
 	//query
@@ -875,7 +875,7 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 		}
 
 		if (vecStationIDs.size() < 3) {
-			string stat_abk="", stao_nr="";
+			string stat_abk, stao_nr;
 			parseStationID(station_code, stat_abk, stao_nr);
 			vecStationIDs.push_back(station_code);
 			vecStationIDs.push_back(stat_abk);
@@ -994,7 +994,7 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		map<string, string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
 		if (it != mapDriftStation.end()) {
 			stmt = conn->createStatement(sqlQueryMeteoDataDrift);
-			string drift_stat_abk="", drift_stao_nr="";
+			string drift_stat_abk, drift_stao_nr;
 			parseStationID(it->second, drift_stat_abk, drift_stao_nr);
 			stmt->setString(5, drift_stat_abk);
 			stmt->setString(6, drift_stao_nr);

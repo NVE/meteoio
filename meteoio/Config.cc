@@ -167,7 +167,7 @@ std::string Config::getSourceName() const
 	return sourcename;
 }
 
-size_t Config::findKeys(std::vector<std::string>& vecResult, std::string keystart,
+size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string keystart,
                         std::string section) const
 {
 	vecResult.clear();
@@ -175,13 +175,10 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, std::string keystar
 	if (section.length() == 0) //enforce the default section if user tries to give empty section string
 		section = defaultSection;
 
-	IOUtils::toUpper(section);
-	IOUtils::toUpper(keystart);
-	const string tmp_keystart = section + "::" + keystart;
+	const string tmp_keystart = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keystart);
 
 	//Loop through keys, look for substring match - push it into vecResult
-	map<string,string>::const_iterator it;
-	for (it=properties.begin(); it != properties.end(); it++){
+	for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); it++){
 		const string tmp = (it->first).substr(0, tmp_keystart.length());
 		const int matchcount = tmp_keystart.compare(tmp);
 
@@ -199,7 +196,7 @@ std::string Config::extract_section(std::string& key)
 	const string::size_type pos = key.find("::");
 
 	if (pos != string::npos){
-		string sectionname = key.substr(0, pos);
+		const string sectionname = key.substr(0, pos);
 		key.erase(key.begin(), key.begin() + pos + 2); //delete section name
 		return sectionname;
 	}
@@ -215,10 +212,9 @@ void Config::write(const std::string& filename)
 		throw FileAccessException(filename, AT);
 
 	try {
-		map<string,string>::const_iterator it;
-		string current_section = "";
+		string current_section;
 		unsigned int sectioncount = 0;
-		for (it=properties.begin(); it != properties.end(); it++){
+		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); it++){
 			string tmp = it->first;
 			const string section = extract_section(tmp);
 

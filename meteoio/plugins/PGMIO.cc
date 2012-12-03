@@ -66,12 +66,12 @@ PGMIO::PGMIO(const Config& cfgreader)
 }
 
 void PGMIO::getGridPaths() {
-	grid2dpath_in="", grid2dpath_out="";
-	string tmp="";
+	grid2dpath_in.clear(), grid2dpath_out.clear();
+	string tmp;
 	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
 	if (tmp == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-	tmp="";
+	tmp.clear();
 	cfg.getValue("GRID2D", "Output", tmp, Config::nothrow);
 	if (tmp == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
@@ -82,7 +82,7 @@ PGMIO::~PGMIO() throw() {
 }
 
 size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::string& filename) {
-	std::string line="";
+	std::string line;
 
 	while(!fin.eof()) {
 		getline(fin, line);
@@ -100,7 +100,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	double xllcorner, yllcorner, cellsize;
 	double tmp_val, val_min, val_max;
 	std::vector<std::string> tmpvec;
-	std::string line="";
+	std::string line;
 
 	if (!IOUtils::validFileName(full_name)) {
 		throw InvalidFileNameException(full_name, AT);
@@ -197,7 +197,7 @@ void PGMIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 
 void PGMIO::readDEM(DEMObject& dem_out)
 {
-	string filename="";
+	string filename;
 	cfg.getValue("DEMFILE", "Input", filename);
 	read2DGrid_internal(dem_out, filename);
 }

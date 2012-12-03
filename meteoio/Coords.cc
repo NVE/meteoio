@@ -725,7 +725,7 @@ void Coords::setEPSG(const int epsg) {
 
 	if(!found && (epsg==21781)) {
 		coord_sys="CH1903";
-		coord_param="";
+		coord_param.clear();
 		found=true;
 	}
 	if(!found && (epsg>=32601) && (epsg<=32660)) {

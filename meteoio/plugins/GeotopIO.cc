@@ -57,7 +57,7 @@ GeotopIO::GeotopIO(const std::string& configfile)
            cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
 }
 
-GeotopIO::GeotopIO(const Config& cfgreader) 
+GeotopIO::GeotopIO(const Config& cfgreader)
          : cfg(cfgreader), in_tz(0.), out_tz(0.), nr_of_stations(IOUtils::npos),
            fin(), fout(), vec_streampos(), vecStation(), mapColumnNames(),
            coordin(), coordinparam(), coordout(), coordoutparam()
@@ -115,7 +115,7 @@ void GeotopIO::initParamNames(std::map<std::string, size_t>& mapParam) {
 void GeotopIO::writeMeteoData(
 		const std::vector<std::vector<MeteoData> >& vecMeteo,
 		const std::string&) {
-	string path = "";
+	string path;
 	vector<string> vecSequence;
 	vector<int> ymdhm = vector<int> (5);
 	map<string, size_t> mapParam;
@@ -203,7 +203,7 @@ void GeotopIO::writeMeteoData(
 }
 
 void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
-	string metafile="";
+	string metafile;
 	vecMeta.clear();
 
 	if (vecStation.size() == 0) {
@@ -217,7 +217,7 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		std::vector<std::vector<MeteoData> >& vecMeteo, const size_t& /*stationindex*/) {
 	vector<std::string> tmpvec;
-	string line = "", filename = "", path = "", prefix = "", metafile="";
+	string line, filename, path, prefix, metafile;
 	vecMeteo.clear();
 
 	cfg.getValue("METEOPATH", "Input", path);
@@ -393,11 +393,9 @@ void GeotopIO::parseMetaData(const std::string& head, const std::string& datastr
 }
 
 void GeotopIO::readMetaData(const std::string& metafile) {
-	std::string line = "";
+	std::string line;
 
-	/*
-	 * vector indexes correspond to meteo data
-	 */
+	//vector indexes correspond to meteo data
 	int x = 0, y = 1, lat = 2, lon = 3, elv = 4;
 
 	std::vector<std::string> tmpvec;

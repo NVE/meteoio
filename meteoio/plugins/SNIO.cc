@@ -201,7 +201,7 @@ bool SNIO::readStationMetaData(const std::string& metafile, const std::string& s
 		throw FileAccessException(metafile, AT);
 
 	try {
-		string line="";
+		string line;
 		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 		size_t linenr = 0;
@@ -254,9 +254,9 @@ std::string SNIO::getStationID(const std::string& filename)
 
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
-	string station_id = "";
+	string station_id;
 	try {
-		string line = "";
+		string line;
 		vector<string> tmpvec;
 
 		getline(fin, line, eoln);      //read complete line meta information, parse it
@@ -287,14 +287,14 @@ void SNIO::readMetaData()
 	 * Parse through the io.ini file and read the desired file names STATION#
 	 */
 	vecAllStations.clear();
-	string metafile="", inpath="";
+	string metafile, inpath;
 	cfg.getValue("METAFILE", "Input", metafile, Config::nothrow);
 	cfg.getValue("METEOPATH", "Input", inpath);
 
 	size_t current_stationnr = 1;
 	string current_station;
 	do { //Look for STATION1, STATION2, etc
-		current_station = "";
+		current_station.clear();
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
@@ -350,7 +350,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	 * The meteo data is terminated by a singular "END" on a line of its own
 	 */
 	vector<string> tmpvec;
-	string inpath = "";
+	string inpath;
 	cfg.getValue("METEOPATH", "Input", inpath);
 
 	if (vecAllStations.size() == 0)
@@ -362,7 +362,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		vecIndex.resize(vecAllStations.size());
 
 	for (size_t ii=0; ii<vecAllStations.size(); ii++){
-		string filename="", line="";
+		string filename, line;
 		stringstream ss, file_with_path;
 
 		ss << ii+1;
@@ -575,7 +575,7 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 
 void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
-	string outpath="";
+	string outpath;
 	cfg.getValue("METEOPATH", "Output", outpath);
 
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) {

@@ -148,16 +148,16 @@ void SMETIO::parseInputOutputSection()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
-	std::string inpath="", in_meteo="";
+	std::string inpath, in_meteo;
 	cfg.getValue("METEO", "Input", in_meteo, Config::nothrow);
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		size_t counter = 1;
-		string filename = "";
+		string filename;
 
 		do {
 			stringstream ss;
-			filename = "";
+			filename.clear();
 
 			ss << "STATION" << counter;
 			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
@@ -182,7 +182,7 @@ void SMETIO::parseInputOutputSection()
 	}
 
 	//Parse output section: extract info on whether to write ASCII or BINARY format, gzipped or not
-	outpath = "";
+	outpath.clear();
 	outputIsAscii = true;
 	outputIsGzipped = false;
 
@@ -733,7 +733,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 
 void SMETIO::readSpecialPoints(std::vector<Coords>& pts)
 {
-	std::string filename="", line_in="";
+	std::string filename, line_in;
 	cfg.getValue("SPECIALPTSFILE", "Input", filename);
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);

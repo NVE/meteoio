@@ -18,6 +18,8 @@
 #ifndef __LIBSMET_H__
 #define __LIBSMET_H__
 
+#include <meteoio/IOUtils.h> //HACK: move FileIndexer in a plugins specific file
+
 #include <cmath>
 #include <string>
 #include <sstream>
@@ -223,8 +225,7 @@ class SMETReader {
 		std::vector<double> vec_multiplier;          //a multiplier for every column, except timestamp
 		std::vector<std::string> vec_fieldnames;     //holds the column names, except for timestamp column
 		std::map< std::string, std::string > header; //holds the header
-		std::map<std::string, std::streampos> map_timestamp_streampos; //in order to save file pointers
-		std::map<double, std::streampos> map_julian_streampos;         //in order to save file pointers
+		mio::IOUtils::FileIndexer indexer; //in order to save file pointers
 
 		std::string filename;
 		std::string timestamp_start, timestamp_end; //the beginning and end date of the current timestamp_interval

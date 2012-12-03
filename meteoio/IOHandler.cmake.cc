@@ -220,7 +220,7 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 
 IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection)
 {
-	std::string op_src="";
+	std::string op_src;
 	cfg.getValue(cfgkey, cfgsection, op_src);
 
 	std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
@@ -345,8 +345,8 @@ void IOHandler::parse_copy_config()
 	const size_t nrOfMatches = cfg.findKeys(copy_keys, "COPY::", "Input");
 
 	for (size_t ii=0; ii<nrOfMatches; ii++) {
-		string initial_name = "";
 		const string name_of_copy = copy_keys[ii].substr(6);
+		string initial_name;
 		cfg.getValue(copy_keys[ii], "Input", initial_name);
 
 		if ((name_of_copy.length() > 0) && (initial_name.length() > 0)){

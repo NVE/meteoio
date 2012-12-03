@@ -119,7 +119,7 @@ void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*d
 void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationData>& vecStation)
 {
 	//Get all files from directory
-	string meteopath = "", station_path="";
+	string meteopath, station_path;
  	cfg.getValue("METEOPATH", "Input", meteopath);
 	if (meteopath == "")
 		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
@@ -137,7 +137,7 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 		StationData sd;
 		//Initialize variables
 		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
-		string station_name="", station_ID="";
+		string station_name, station_ID;
 		bool is_first=true;
 		Date first_date=IOUtils::nodata, last_date=IOUtils::nodata, date_read=IOUtils::nodata;
 
@@ -268,7 +268,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                                const size_t&)
 {
 	//Get all files from directory
-	string meteopath = "", station_path="";
+	string meteopath, station_path;
  	cfg.getValue("METEOPATH", "Input", meteopath);
 	if (meteopath == "")
 		throw ConversionFailedException("Error while reading value for METEOPATH", AT);

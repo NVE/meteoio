@@ -99,7 +99,7 @@ GSNIO::~GSNIO() throw(){}
 
 void GSNIO::initGSNConnection(){
 	//default timezone
-	string tmp_timezone = "";
+	string tmp_timezone;
 	cfg.getValue("TIME_ZONE", "Input", tmp_timezone, Config::nothrow);
 	if (tmp_timezone != ""){
 		IOUtils::convertString(default_timezone, tmp_timezone);
@@ -462,7 +462,7 @@ void GSNIO::readStationNames()
 	size_t current_stationnr = 1;
 	string current_station;
 	do {
-		current_station = "";
+		current_station.clear();
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);

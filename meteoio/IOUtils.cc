@@ -168,7 +168,7 @@ void trim(std::string& str)
 	if(startpos!=std::string::npos && endpos!=std::string::npos) {
 		str = str.substr( startpos, endpos-startpos+1 );
 	} else {
-		str = "";
+		str.clear();
 	}
 }
 
@@ -356,7 +356,7 @@ void readKeyValueHeader(std::map<std::string,std::string>& headermap,
                                  const std::string& delimiter)
 {
 	size_t linenr = 0;
-	std::string line="";
+	std::string line;
 
 	//make a test for end of line encoding:
 	const char eol = getEoln(fin);
@@ -454,7 +454,7 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 		if (tmp_string != "") {
 			vecString.push_back(tmp_string);
 		}
-		tmp_string="";
+		tmp_string.clear();
 	}
 
 	return vecString.size();
@@ -535,7 +535,7 @@ template<> bool convertString<unsigned int>(unsigned int& t, const std::string& 
 			//Conversion failed
 			return false;
 		}
-		std::string tmp="";
+		std::string tmp;
 		getline(iss,  tmp); //get rest of line, if any
 		trim(tmp);
 		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {
