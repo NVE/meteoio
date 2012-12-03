@@ -984,13 +984,13 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 		fin.seekg(data_start_fpointer); //jump to data start position in the file
 		if (timestamp_interval && timestamp_present){
 			const streampos fpointer = indexer.getIndex(timestamp_start);
-			if(fpointer!=-1) fin.seekg(fpointer);
+			if(fpointer!=(streampos)-1) fin.seekg(fpointer);
 			/*map<string, streampos>::const_iterator it = map_timestamp_streampos.find(timestamp_start);
 			if ( it != map_timestamp_streampos.end())
 				fin.seekg(it->second);*/
 		} else if (julian_interval && julian_present){
 			const streampos fpointer = indexer.getIndex(julian_start);
-			if(fpointer!=-1) fin.seekg(fpointer);
+			if(fpointer!=(streampos)-1) fin.seekg(fpointer);
 			/*map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
 			if ( it != map_julian_streampos.end())
 				fin.seekg(it->second);*/
@@ -1034,7 +1034,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 		fin.seekg(data_start_fpointer); //jump to data start position in the file
 		if (julian_interval && julian_present){
 			const streampos fpointer = indexer.getIndex(julian_start);
-			if(fpointer!=-1) fin.seekg(fpointer);
+			if(fpointer!=(streampos)-1) fin.seekg(fpointer);
 			/*map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
 			if ( it != map_julian_streampos.end())
 				fin.seekg(it->second);*/
@@ -1127,7 +1127,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 
 void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_data)
 {
-	streampos current_fpointer = -1;
+	streampos current_fpointer = (streampos)-1;
 	while (!fin.eof()){
 		const streampos tmp_fpointer = fin.tellg();
 		double julian = -1.0;
