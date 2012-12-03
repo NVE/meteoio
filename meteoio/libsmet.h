@@ -231,6 +231,7 @@ class SMETReader {
 		std::string timestamp_start, timestamp_end; //the beginning and end date of the current timestamp_interval
 		double nodata_value; //The nodata value as seen in the header section of the SMET file
 		double julian_start, julian_end; //the beginning and end date of the current julian_interval
+		static const size_t streampos_every_n_lines; //save current stream pos every n lines of data
 		size_t nr_of_fields; //is always the number of fields minus the timestamp field, if present
 		size_t timestamp_field, julian_field; //index of the timestamp and julian column, if present
 		char location_wgs84, location_epsg, location_data_wgs84, location_data_epsg;

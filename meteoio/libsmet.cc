@@ -652,6 +652,8 @@ void SMETWriter::set_precision(const std::vector<int>& vec_precision)
 	ascii_precision = vec_precision;
 }
 
+const size_t SMETReader::streampos_every_n_lines = 2000; //save streampos every 2000 lines of data
+
 SMETReader::SMETReader(const std::string& in_fname) :
                                                       data_start_fpointer(), vec_offset(), vec_multiplier(), vec_fieldnames(),
                                                       header(), indexer(),
@@ -985,15 +987,9 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 		if (timestamp_interval && timestamp_present){
 			const streampos fpointer = indexer.getIndex(timestamp_start);
 			if(fpointer!=(streampos)-1) fin.seekg(fpointer);
-			/*map<string, streampos>::const_iterator it = map_timestamp_streampos.find(timestamp_start);
-			if ( it != map_timestamp_streampos.end())
-				fin.seekg(it->second);*/
 		} else if (julian_interval && julian_present){
 			const streampos fpointer = indexer.getIndex(julian_start);
 			if(fpointer!=(streampos)-1) fin.seekg(fpointer);
-			/*map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
-			if ( it != map_julian_streampos.end())
-				fin.seekg(it->second);*/
 		}
 
 		if (fin.fail() || fin.bad())
@@ -1035,9 +1031,6 @@ void SMETReader::read(std::vector<double>& vec_data)
 		if (julian_interval && julian_present){
 			const streampos fpointer = indexer.getIndex(julian_start);
 			if(fpointer!=(streampos)-1) fin.seekg(fpointer);
-			/*map<double, streampos>::const_iterator it = map_julian_streampos.find(julian_start);
-			if ( it != map_julian_streampos.end())
-				fin.seekg(it->second);*/
 		}
 
 		if (fin.fail() || fin.bad())
@@ -1060,12 +1053,14 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 	const size_t nr_of_data_fields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
 	vector<string> tmp_vec;
 	string line;
+	size_t linenr = 0;
 	streampos current_fpointer = (streampos)-1;
 
 	while (!fin.eof()){
 		const streampos tmp_fpointer = fin.tellg();
 		line.clear();
 		getline(fin, line, eoln);
+		linenr++;
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
 		if (line == "") continue; //Pure comment lines and empty lines are ignored
@@ -1075,6 +1070,8 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 				size_t shift = 0;
 				if (julian_interval && julian_present){
 					const double current_julian = SMETCommon::convert_to_double(tmp_vec[julian_field]);
+					if( (linenr % streampos_every_n_lines)==0 && (current_fpointer != ((streampos)-1)))
+						indexer.setIndex(current_julian, tmp_fpointer);
 					if (current_julian < julian_start)
 						continue; //skip lines that don't hold the dates we're interested in
 					else if (current_julian > julian_end)
@@ -1083,6 +1080,8 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 
 				if (timestamp_interval && timestamp_present){
 					const string& current_timestamp = tmp_vec[timestamp_field];
+					if( (linenr % streampos_every_n_lines)==0 && (tmp_fpointer != ((streampos)-1)))
+						indexer.setIndex(current_timestamp, tmp_fpointer);
 					if (current_timestamp < timestamp_start)
 						continue; //skip lines that don't hold the dates we're interested in
 					else if (current_timestamp > timestamp_end)
@@ -1118,15 +1117,14 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 	if (current_fpointer != static_cast<streampos>(-1)){
 		if (timestamp_interval && timestamp_present)
 			indexer.setIndex(timestamp_end, current_fpointer);
-			/*map_timestamp_streampos[timestamp_end] = current_fpointer;*/
 		else if (julian_interval && julian_present)
 			indexer.setIndex(julian_end, current_fpointer);
-			/*map_julian_streampos[julian_end] = current_fpointer;*/
 	}
 }
 
 void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_data)
 {
+	size_t linenr = 0;
 	streampos current_fpointer = (streampos)-1;
 	while (!fin.eof()){
 		const streampos tmp_fpointer = fin.tellg();
@@ -1142,6 +1140,7 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 
 				vec_data.push_back(val);
 			}
+			linenr++;
 
 			if (mksa){
 				double& tmp = vec_data.back();
@@ -1153,6 +1152,8 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 		}
 
 		if (julian_present && julian_interval){
+			if( (linenr % streampos_every_n_lines)==0 && (tmp_fpointer != ((streampos)-1)))
+				indexer.setIndex(julian, tmp_fpointer);
 			if ((julian < julian_start) || (julian > julian_end)){
 				for (size_t ii=0; ii<nr_of_fields; ii++){
 					vec_data.pop_back();
