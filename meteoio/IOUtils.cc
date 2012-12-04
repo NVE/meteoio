@@ -750,10 +750,21 @@ void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers
 
 void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 {
-	file_index tmp_idx(i_date, i_pos);
-	const size_t insertIdx = binarySearch(i_date);
-	if(insertIdx==(size_t)-1 || insertIdx==vecIndex.size()) vecIndex.push_back(tmp_idx);
-	else vecIndex.insert(vecIndex.begin()+insertIdx, tmp_idx); //insertion is at the proper place -> remains ordered
+	const size_t vec_size = vecIndex.size();
+	const file_index elem(i_date, i_pos);
+
+	//check if we can simply append the new index
+	if(vec_size==0 || elem>vecIndex[vec_size-1]) {
+		vecIndex.push_back(elem);
+		return;
+	}
+
+	//look for the proper position for insertion of the new index
+	const std::vector< struct file_index >::iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), elem);
+	if(it>vecIndex.begin() && (it-1)->date!=elem.date) { //check that we don't try to insert a duplicate
+		vecIndex.insert(it, elem); //insertion is at the proper place -> remains ordered
+		return;
+	}
 }
 
 void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_pos)
@@ -769,37 +780,38 @@ void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos)
 	setIndex(tmpdate, i_pos);
 }
 
-std::streampos FileIndexer::getIndex(const Date& i_date)
+std::streampos FileIndexer::getIndex(const Date& i_date) const
 {
 	const size_t foundIdx = binarySearch(i_date);
-	if(foundIdx==(size_t)-1) return (std::streampos)-1;
+	if(foundIdx==static_cast<size_t>(-1)) return static_cast<std::streampos>(-1);
 	else return vecIndex[foundIdx].pos;
 }
 
-std::streampos FileIndexer::getIndex(const std::string& i_date)
+std::streampos FileIndexer::getIndex(const std::string& i_date) const
 {
 	Date tmpdate;
 	convertString(tmpdate, i_date, 0.);
 	return getIndex(tmpdate);
 }
 
-std::streampos FileIndexer::getIndex(const double& i_date)
+std::streampos FileIndexer::getIndex(const double& i_date) const
 {
 	Date tmpdate(i_date, 0.);
 	return getIndex(tmpdate);
 }
 
-size_t FileIndexer::binarySearch(const Date& soughtdate)
-{//perform binary search
+size_t FileIndexer::binarySearch(const Date& soughtdate) const
+{//perform binary search, return the first element that is GREATER than the provided value
 	const size_t vec_size = vecIndex.size();
-	if(vec_size==0) return (size_t)-1;
-	if(soughtdate<vecIndex[0].date) return (size_t)-1;
+	if(vec_size==0) return static_cast<size_t>(-1);
+	if(soughtdate<vecIndex[0].date) return static_cast<size_t>(-1);
 	if(soughtdate>=vecIndex[vec_size-1].date) return vec_size-1;
 
-	const file_index value(soughtdate, 0);
-	const std::vector< struct file_index >::iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), value); //returns the first element that is GREATER than the provided value
+	const file_index elem(soughtdate, 0);
+	//returns the first element that is GREATER than the provided value
+	const std::vector< struct file_index >::const_iterator it = std::upper_bound(vecIndex.begin(), vecIndex.end(), elem);
 	if(it>vecIndex.begin()) return it-vecIndex.begin()-1;
-	else return (size_t)-1;
+	else return static_cast<size_t>(-1);
 }
 
 std::ostream& operator<<(std::ostream &os, const FileIndexer& index)

@@ -394,9 +394,9 @@ namespace IOUtils {
 			* @return closest streampos position before the requested date,
 			* -1 if nothing could be found (empty index)
 			*/
-			std::streampos getIndex(const Date& i_date);
-			std::streampos getIndex(const std::string& i_date);
-			std::streampos getIndex(const double& i_date);
+			std::streampos getIndex(const Date& i_date) const;
+			std::streampos getIndex(const std::string& i_date) const;
+			std::streampos getIndex(const double& i_date) const;
 
 			friend std::ostream& operator<<(std::ostream &os, const FileIndexer& index);
 
@@ -406,10 +406,13 @@ namespace IOUtils {
 				bool operator<(const file_index& a) const {
 					return date < a.date;
 				}
+				bool operator>(const file_index& a) const {
+					return date > a.date;
+				}
 				Date date;
 				std::streampos pos;
 			};
-			size_t binarySearch(const Date& soughtdate);
+			size_t binarySearch(const Date& soughtdate) const;
 
 			std::vector< struct file_index > vecIndex;
 	};
