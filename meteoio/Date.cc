@@ -911,15 +911,15 @@ void Date::plausibilityCheck(const int& in_year, const int& in_month, const int&
 	    || (in_hour < 0) || (in_hour > 24)
 	    || (in_minute < 0) || (in_minute > 59)) {
 		stringstream ss;
-		ss << "Invalid Date requested: " << in_year << " " << in_month;
-		ss << " " << in_day << " " << in_hour << " " << in_minute;
+		ss << "Invalid Date requested: " << in_year << "-" << in_month;
+		ss << "-" << in_day << "T" << in_hour << ":" << in_minute;
 		throw IOException(ss.str(), AT);
 	}
 
 	if ((in_hour == 24) && (in_minute != 0)) {
 		stringstream ss;
-		ss << "Invalid Date requested: " << in_year << " " << in_month;
-		ss << " " << in_day << " " << in_hour << " " << in_minute;
+		ss << "Invalid Date requested: " << in_year << "-" << in_month;
+		ss << "-" << in_day << "T" << in_hour << ":" << in_minute;
 		throw IOException(ss.str(), AT);
 	}
 }

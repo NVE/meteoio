@@ -59,6 +59,11 @@ namespace mio {
  * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>.
  *
  * @section table_of_content Table of content
+ * -# External Links
+ *    -# <A HREF="https://models.slf.ch/p/meteoio/">MeteoIO's home page</A>
+ *          -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
+ *          -# <A HREF="https://models.slf.ch/p/meteoio/page/GettingHelp/">Getting help</A>
+ *    -# subscribe to <A HREF="https://freecode.com/projects/meteoio">MeteoIO's release announcements</A>
  * -# End User documentation
  *    -# \subpage general "General concepts"
  *    -# \subpage plugins "Available plugins" and usage
@@ -352,7 +357,7 @@ namespace mio {
  * 		mio::Config cfg("io.ini");
  * 		io = new mio::IOManager(cfg);
  * 	} catch (const IOException& e){
- * 		std::cout << "Problem with IOHandler creation, cause: " << e.what() << std::endl;
+ * 		std::cout << "Problem with IOManager creation, cause: " << e.what() << std::endl;
  * 	}
  *
  * 	try {
@@ -446,6 +451,9 @@ namespace mio {
  * 	return 0;
  * }
  * \endcode
+ *
+ * Do not forget to have a look at the examples provided in doc/examples! An example io.ini is provided as well as some data sets
+ * (7 weather stations as well as one DEM).
  */
 
 } //end namespace mio

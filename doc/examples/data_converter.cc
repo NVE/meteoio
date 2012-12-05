@@ -38,7 +38,7 @@ void real_main(int argc, char** argv) {
 	vecMeteo.insert(vecMeteo.begin(), Meteo.size(), std::vector<MeteoData>()); //allocation for the vectors
 	for(; d1<=d2; d1+=Tstep) { //time loop
 		io.getMeteoData(d1, Meteo); //read 1 timestep at once, forcing resampling to the timestep
-		for(unsigned int ii=0; ii<Meteo.size(); ii++) {
+		for(size_t ii=0; ii<Meteo.size(); ii++) {
 			vecMeteo.at(ii).push_back(Meteo[ii]); //fill the data manually into the vector of vectors
 		}
 	}
