@@ -36,7 +36,7 @@ namespace mio {
  * therefore the type of rain gauge must be specified as an argument:
  * - sh - original rain gauge as used in the reference, shielded
  * - unsh - original rain gauge as used in the reference, unshielded
- * - Hellmansh - shielded and fitted on Weissflujoch (Switzerland) data
+ * - Hellmannsh - shielded and fitted on Weissflujoch (Switzerland) data
  *
  * @code
  * HNW::filter1	= undercatch_hamon
