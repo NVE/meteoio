@@ -173,11 +173,11 @@ void trim(std::string& str)
 }
 
 void toUpper(std::string& str) {
-	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
 void toLower(std::string& str) {
-	std::transform(str.begin(), str.end(),str.begin(), ::tolower);
+	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
 
 std::string strToUpper(const std::string &str) {

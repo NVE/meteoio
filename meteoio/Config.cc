@@ -167,7 +167,7 @@ std::string Config::getSourceName() const
 	return sourcename;
 }
 
-size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string keystart,
+size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& keystart,
                         std::string section) const
 {
 	vecResult.clear();
@@ -176,7 +176,6 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string k
 		section = defaultSection;
 
 	const string tmp_keystart = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keystart);
-
 	//Loop through keys, look for substring match - push it into vecResult
 	for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); it++){
 		const string tmp = (it->first).substr(0, tmp_keystart.length());

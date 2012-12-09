@@ -77,7 +77,7 @@ size_t ProcessingStack::getFiltersForParameter(const Config& cfg, const std::str
 	std::string tmp;
 	cfg.findKeys(vecKeys, parname+"::filter", "Filters");
 
-	for (size_t ii=0; ii<vecKeys.size(); ii++){
+	for (size_t ii=0; ii<vecKeys.size(); ii++){		
 		cfg.getValue(vecKeys[ii], "Filters", tmp, Config::nothrow);
 		vecFilters.push_back(tmp);
 	}
