@@ -103,7 +103,7 @@ double Timer::getCurrentTime() const {
 
 	const ULONGLONG units_convert = 10000*1000; //it gives the time since 1 January 1601 (UTC) in units of 100ns
 	const ULONGLONG offset_to_epoch = 11644473600ULL; //offset in seconds to Unix epoch, 134774 days * 24*3600
-	return (double)(uli.QuadPart/units_convert - offset_to_epoch);
+	return static_cast<double>(uli.QuadPart - offset_to_epoch*units_convert) / units_convert;
 }
 #else
 double Timer::getCurrentTime() const {
