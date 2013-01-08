@@ -409,6 +409,10 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 
 		current_stationnr++;
 	} while (current_station != "");
+
+	if(vecStationID.size()==0) {
+		cerr << "\tNo stations specified for IMISIO... is this what you want?\n";
+	}
 }
 
 void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,

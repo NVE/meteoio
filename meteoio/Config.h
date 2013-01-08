@@ -122,6 +122,14 @@ class Config {
 		std::string getSourceName() const;
 
 		/**
+		 * @brief Return if a given key exists in a given section
+		 * @param[in] key string representing the key to be searched
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @return true if the key exists
+		 */
+		bool keyExists(const std::string& key, const std::string& section=Config::defaultSection) const;
+
+		/**
 		 * @brief Print the content of the Config object (usefull for debugging)
 		 * The Config is bound by "<Config>" and "</Config>" on separate lines
 		 */
@@ -271,7 +279,7 @@ class Config {
 		void parseCmdLine(const std::string& cmd_line);
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::string& line, std::string& section);
-		std::string extract_section(std::string& key);
+		std::string extract_section(std::string key) const;
 
 		std::map<std::string, std::string> properties; //Save key value pairs
 		std::string sourcename; //description of the data source for the key/value pair

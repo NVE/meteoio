@@ -77,6 +77,13 @@ void Config::deleteKey(std::string key, std::string section)
 	properties.erase(section + "::" + key);
 }
 
+bool Config::keyExists(const std::string& key, const std::string& section) const
+{
+	const string full_key = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key);
+	const map<string,string>::const_iterator it = properties.find(full_key);
+	return (it!=properties.end());
+}
+
 std::ostream& operator<<(std::ostream &os, const Config& cfg)
 {
 	os << "<Config>\n";
@@ -190,7 +197,7 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 	return vecResult.size();
 }
 
-std::string Config::extract_section(std::string& key)
+std::string Config::extract_section(std::string key) const
 {
 	const string::size_type pos = key.find("::");
 
@@ -214,8 +221,8 @@ void Config::write(const std::string& filename)
 		string current_section;
 		unsigned int sectioncount = 0;
 		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); it++){
-			string tmp = it->first;
-			const string section = extract_section(tmp);
+			const string key = it->first;
+			const string section = extract_section(key);
 
 			if (current_section != section){
 				current_section = section;
@@ -225,7 +232,7 @@ void Config::write(const std::string& filename)
 				fout << "[" << section << "]" << endl;
 			}
 
-			fout << tmp << " = " << it->second << endl;
+			fout << key << " = " << it->second << endl;
 		}
 	} catch(...) {
 		if (fout.is_open()) //close fout if open
