@@ -171,22 +171,28 @@ void IOHandler::registerPlugins()
 
 //Copy constructor
 #ifdef _POPC_
-//IOHandler::IOHandler(const IOHandler& aio)
-//           : cfg(aio.cfg), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
-//{
-	//Nothing else so far //HACK for POPC
-//}
+IOHandler::IOHandler(const IOHandler& aio)
+           : cfg(aio.cfg), mapPlugins(), copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying)
+{
+	//We might be on a different machine, even with different architecture -> rebuild plugins map
+	registerPlugins();
+}
 #else
 IOHandler::IOHandler(const IOHandler& aio)
-           : IOInterface(), cfg(aio.cfg), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
+           : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), copy_parameter(aio.copy_parameter),
+             copy_name(aio.copy_name), enable_copying(aio.enable_copying)
 {
-	//Nothing else so far
-	//TODO: Deal with the IOInterface* pointers, e.g. bormaio
+
 }
 #endif
 
+#ifdef _POPC_
+IOHandler::IOHandler(const Config& cfgreader)
+           : cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
+#else
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
+#endif
 {
 	registerPlugins();
 	parse_copy_config();

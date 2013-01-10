@@ -39,9 +39,7 @@ class IOHandler {
 class IOHandler : public IOInterface {
 #endif
 	public:
-	#ifndef _POPC_
 		IOHandler(const IOHandler&);
-	#endif
 		IOHandler(const Config&);
 	#ifdef _POPC_
 		virtual ~IOHandler();
@@ -87,12 +85,11 @@ class IOHandler : public IOInterface {
 	private:
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
-
 		void parse_copy_config();
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_TIMESERIE >& vecMeteo) const;
+
 		const Config& cfg;
 		std::map<std::string, IOPlugin> mapPlugins;
-
 		std::vector<std::string> copy_parameter, copy_name;
 		bool enable_copying;
 };
