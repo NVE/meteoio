@@ -6,10 +6,14 @@ MARK_AS_ADVANCED(FORCE POPCC_EXECUTABLE)
 GET_FILENAME_COMPONENT(popc_exe_root ${POPCC_EXECUTABLE} PATH)
 SET(POPC_ROOT "${popc_exe_root}/../")
 
+#get POPC_LOCATION env. variable to provide as a hint
+SET(POPC_LOCATION $ENV{POPC_LOCATION})
+
 # Finally the library itself
 FIND_LIBRARY(Popc_LIBRARY
 NAMES libparoc_common.a
 PATHS
+	"${POPC_LOCATION}/lib"
 	"${POPC_ROOT}/lib"
 	"${POPC_ROOT}/popc/lib"
 	ENV LD_LIBRARY_PATH
@@ -30,6 +34,7 @@ FIND_PATH(Popc_INCLUDE_DIR
   NAMES paroc_base.h
   #HINTS ${POPC_ROOT}/include
   PATHS
+	"${POPC_LOCATION}/lib"
 	"${POPC_ROOT}/include"
 	"${POPC_ROOT}/popc/include"
 	"~/usr/include"

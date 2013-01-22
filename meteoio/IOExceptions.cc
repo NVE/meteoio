@@ -35,7 +35,8 @@ IOException::IOException(const std::string& message, const std::string& position
 	if (position=="") {
 		msg = "At unknown position: " + message;
 	} else {
-		msg = position + ": " + message;
+		msg = "[" + (strrchr(position.c_str(), '/') ? strrchr(position.c_str(), '/') + 1 : position) + "] " + message;
+		//msg = position + ": " + message;
 	}
 #if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers

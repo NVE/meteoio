@@ -220,9 +220,15 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, cellsize, location);
 
+		unsigned int nr_empty=0;
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln);
+			if(line=="") { //so we can tolerate empty lines
+				kk++; //to keep the same kk at the next iteration
+				nr_empty++;
+				continue;
+			}
 			std::istringstream iss(line);
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10);
@@ -231,7 +237,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 				iss >> std::skipws >> tmp;
 				if (iss.fail()) {
 					stringstream ss;
-					ss << "Can not read column " << ll+1 << " of data line " << nrows-kk << " in file " << full_name << ": ";
+					ss << "Can not read column " << ll+1 << " of data line " << nrows-kk+nr_empty << " in file " << full_name << ": ";
 					ss << ncols << " columns of doubles expected";
 					throw InvalidFormatException(ss.str(), AT);
 				}
