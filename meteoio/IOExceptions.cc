@@ -17,9 +17,13 @@
 */
 #include <meteoio/IOExceptions.h>
 
-#if defined(LINUX) && defined(__GNUC__)
-	#include <sstream>
-	#include <cxxabi.h>
+#include <string.h>
+#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
+	#include <execinfo.h> //needed for the backtracing of the stack
+	#if defined(__GNUC__)
+		#include <sstream>
+		#include <cxxabi.h>
+	#endif
 #endif
 
 using namespace std;
