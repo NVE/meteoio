@@ -941,6 +941,8 @@ double Date::GMTToLocal(const double& i_gmt_julian) const {
 }
 
 #ifdef _POPC_
+#include "marshal_meteoio.h"
+using namespace mio; //HACK for POPC
 void Date::Serialize(POPBuffer &buf, bool pack)
 {
 	if (pack) {

@@ -28,10 +28,6 @@
 
 namespace mio {
 
-#ifdef _POPC_
-class DEMObjectDummy {}; //HACK for POPC
-#endif
-
 /**
  * @class DEMObject
  * @brief A class to represent DEMs: reads elevation grids, computes local slope, azimuth, curvature.
@@ -41,7 +37,17 @@ class DEMObjectDummy {}; //HACK for POPC
  * @author Gaël Rosset - Mathias Bavay
  * @date   2009-07-20
  */
+
+#ifdef _POPC_
+class DEMObjectDummy {}; //HACK for POPC
+
+#include <paroc_base.h>
+class DEMObject : public Grid2DObject/*, POPBase*/ {
+	public:
+		void Serialize(POPBuffer &buf, bool pack);
+#else
 class DEMObject : public Grid2DObject {
+#endif
 	public:
 		Array2D<double> slope;
 		Array2D<double> azi;
@@ -123,11 +129,6 @@ class DEMObject : public Grid2DObject {
 		slope_type dflt_algorithm;
 		unsigned int slope_failures; ///<contains the number of points that have an elevation but no slope
 		unsigned int curvature_failures; ///<contains the number of points that have an elevation but no curvature
-
-#ifdef _POPC_
-	public:
-		virtual void Serialize(POPBuffer &buf, bool pack);
-#endif
 };
 } //end namespace
 

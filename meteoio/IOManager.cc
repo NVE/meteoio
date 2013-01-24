@@ -208,7 +208,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 	//The first case: we are looking at raw data directly, only unresampled values are considered, exact date match
 	if (processing_level == IOManager::raw) {
 		rawio.readMeteoData(i_date-Duration(1./(24.*3600.), 0.), i_date+Duration(1./(24.*3600.), 0.), vec_cache);
-		for (size_t ii=0; ii<vec_cache.size(); ii++){
+		for (size_t ii=0; ii<vec_cache.size(); ii++){ //for every station
 			const size_t index = IOUtils::seek(i_date, vec_cache[ii], true);
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo

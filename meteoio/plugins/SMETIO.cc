@@ -324,7 +324,7 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 	}
 }
 
-void SMETIO::copy_data(const smet::SMETReader& myreader,
+void SMETIO::copy_data(const std::string& filename, const smet::SMETReader& myreader,
                        const std::vector<std::string>& timestamps,
                        const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo)
 {
@@ -333,18 +333,18 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	 * and copies the values into their respective places in the MeteoData structure
 	 * Meta data, whether in header or in data is also handled
 	 */
-	vector<size_t> indexes;
-	MeteoData md;
-	bool julian_present = false;
+	const string myfields = myreader.get_header_value("fields");
 	vector<string> fields;
-	string myfields = myreader.get_header_value("fields");
 	IOUtils::readLineToVec(myfields, fields);
+
+	bool julian_present = false;
+	MeteoData md;
+	vector<size_t> indexes;
 	identify_fields(fields, indexes, julian_present, md);
 
 	if ((timestamps.size() == 0) && (!julian_present)) return; //nothing to do
 
 	const bool olwr_present = md.param_exists("OLWR");
-
 	const bool data_wgs84 = myreader.location_in_data(smet::WGS84);
 	const bool data_epsg = myreader.location_in_data(smet::EPSG);
 
@@ -355,10 +355,11 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 	if (current_timezone == nodata_value)
 		current_timezone = in_dflt_TZ;
 	const bool timestamp_present = myreader.contains_timestamp();
+
+	const size_t nr_of_fields = indexes.size();
+	const size_t nr_of_lines = mydata.size() / nr_of_fields;
+
 	Date previous_date(0., current_timezone);
-
-	size_t nr_of_lines = mydata.size() / indexes.size();
-
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
@@ -369,7 +370,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 			IOUtils::convertString(tmp_md.date, timestamps[ii], current_timezone);
 
 		//Copy data points
-		for (size_t jj=0; jj<indexes.size(); jj++){
+		for (size_t jj=0; jj<nr_of_fields; jj++){
 			const double& current_data = mydata[current_index];
 			if (indexes[jj] >= IOUtils::npos-5){ //the special fields have high indexes
 				if (indexes[jj] == IOUtils::npos){
@@ -404,7 +405,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 			current_index++;
 		}
 		if(tmp_md.date<=previous_date)
-			throw InvalidFormatException("Error at time "+tmp_md.date.toString(Date::ISO)+" in SMET file: timestamps must be in increasing order and unique!", AT);
+			throw InvalidFormatException("Error at time "+tmp_md.date.toString(Date::ISO)+" in SMET file \""+filename+"\" : timestamps must be in increasing order and unique!", AT);
 		previous_date=tmp_md.date;
 
 		if ((olwr_present) && (tmp_md(MeteoData::TSS) == IOUtils::nodata)) {//HACK
@@ -444,7 +445,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	//Now loop through all requested stations, open the respective files and parse them
 	for (size_t ii=startindex; ii<endindex; ii++){
-		string filename = vecFiles.at(ii); //filename of current station
+		const string filename = vecFiles.at(ii); //filename of current station
 
 		if (!IOUtils::fileExists(filename))
 			throw FileNotFoundException(filename, AT);
@@ -461,7 +462,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			myreader.read(dateStart.getJulian(), dateEnd.getJulian(), mydata);
 		}
 
-		copy_data(myreader, mytimestamps, mydata, vecMeteo[ii]);
+		copy_data(filename, myreader, mytimestamps, mydata, vecMeteo[ii]);
 	}
 }
 
@@ -485,7 +486,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 			throw InvalidFileNameException(filename, AT);
 
 		//2. check which meteo parameter fields are actually in use
-		size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
+		const size_t nr_of_parameters = getNrOfParameters(sd.stationID, vecMeteo[ii]);
 		vector<bool> vecParamInUse = vector<bool>(nr_of_parameters, false);
 		vector<string> vecColumnName = vector<string>(nr_of_parameters, "NULL");
 		double timezone = IOUtils::nodata; //time zone of the data
