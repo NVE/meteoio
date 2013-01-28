@@ -28,14 +28,9 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
 IF(POPC)
 	FIND_PACKAGE(Popc REQUIRED)
-	INCLUDE_DIRECTORIES(${Popc_INCLUDE_DIRS})
-	#TARGET_LINK_LIBRARIES(${STATICNAME} ${Popc_LIBRARIES} ${SHAREDNAME})
 	SET(popc_sources marshal_meteoio.cc)
-	#ADD_DEFINITIONS(-D_POPC_) #necessary if NOT forcing c++ compiler to popcc
-	SET(CMAKE_CXX_COMPILER popcc)
-	SET(CMAKE_C_COMPILER popcc)
+	SET(CMAKE_CXX_COMPILER popcc) #this does not work, the user still has to do it manually
 	#INCLUDE(CMakeForceCompiler)
-	#CMAKE_FORCE_C_COMPILER(popcc POPCC)
 	#CMAKE_FORCE_CXX_COMPILER(popcc POPCC)
 	SET(POPC_EXT "popc")
 ENDIF(POPC)
