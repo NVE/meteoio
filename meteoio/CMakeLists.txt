@@ -27,7 +27,7 @@ INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteostats/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
 IF(POPC)
-	FIND_PACKAGE(Popc REQUIRED)
+	#FIND_PACKAGE(Popc REQUIRED)
 	SET(popc_sources marshal_meteoio.cc)
 	SET(CMAKE_CXX_COMPILER popcc) #this does not work, the user still has to do it manually
 	#INCLUDE(CMakeForceCompiler)
