@@ -922,17 +922,13 @@ double DEMObject::fillMissingGradient(const double& delta1, const double& delta2
 
 void DEMObject::surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]) {
 //Compute the gradient for a given cell (i,j) accross its eight surrounding cells (Horn, 1981)
-	double dx1, dx2, dx3;
-	double dy1, dy2, dy3;
+	double dx1 = lineGradient(A[3][1], A[3][2], A[3][3]);
+	double dx2 = lineGradient(A[2][1], A[2][2], A[2][3]);
+	double dx3 = lineGradient(A[1][1], A[1][2], A[1][3]);
 
-	//general calculation
-	dx1 = lineGradient(A[3][1], A[3][2], A[3][3]);
-	dx2 = lineGradient(A[2][1], A[2][2], A[2][3]);
-	dx3 = lineGradient(A[1][1], A[1][2], A[1][3]);
-
-	dy1 = lineGradient(A[3][1], A[2][1], A[1][1]);
-	dy2 = lineGradient(A[3][2], A[2][2], A[1][2]);
-	dy3 = lineGradient(A[3][3], A[2][3], A[1][3]);
+	double dy1 = lineGradient(A[3][1], A[2][1], A[1][1]);
+	double dy2 = lineGradient(A[3][2], A[2][2], A[1][2]);
+	double dy3 = lineGradient(A[3][3], A[2][3], A[1][3]);
 
 	//now trying to fill whatever could not be filled...
 	if(dx1==IOUtils::nodata) dx1 = fillMissingGradient(dx2, dx3);

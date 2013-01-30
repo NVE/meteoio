@@ -65,7 +65,7 @@ void BufferedIOHandler::bufferGrid(const Grid2DObject& in_grid2Dobj, const std::
 void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string& in_filename)
 {
 	if(max_grids>0) {
-		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(in_filename);
+		const std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(in_filename);
 		if (it != mapBufferedGrids.end()) { //already in map
 			in_grid2Dobj = (*it).second;
 			return;
@@ -84,7 +84,7 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Par
 {
 	if(max_grids>0) {
 		const string buffer_name = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
-		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(buffer_name);
+		const std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find(buffer_name);
 		if (it != mapBufferedGrids.end()) { //already in map
 			grid_out = (*it).second;
 			return;
@@ -102,7 +102,7 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Par
 void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)
 {
 	if(max_grids>0) {
-		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
+		const std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:DEM");
 		if (it != mapBufferedGrids.end()) {
 			//already in map. If the update properties have changed,
 			//we copy the ones given in input and force the update of the object
@@ -130,7 +130,7 @@ void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)
 void BufferedIOHandler::readLanduse(Grid2DObject& in_grid2Dobj)
 {
 	if(max_grids>0) {
-		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:LANDUSE");
+		const std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:LANDUSE");
 		if (it != mapBufferedGrids.end()) { //already in map
 			in_grid2Dobj = (*it).second;
 			return;
@@ -149,7 +149,7 @@ void BufferedIOHandler::readLanduse(Grid2DObject& in_grid2Dobj)
 void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& in_grid2Dobj)
 {
 	if(max_grids>0) {
-		std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + in_date.toString(Date::FULL));
+		const std::map<std::string, Grid2DObject>::iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + in_date.toString(Date::FULL));
 		if (it != mapBufferedGrids.end()) { //already in map
 			in_grid2Dobj = (*it).second;
 			return;
@@ -235,15 +235,21 @@ void BufferedIOHandler::setMinBufferRequirements(const double& i_chunk_size, con
 
 double BufferedIOHandler::getAvgSamplingRate()
 {
-	if (vec_buffer_meteo.size() > 0){
-		unsigned long sum = 0;
-		for (size_t ii=0; ii<vec_buffer_meteo.size(); ii++){
-			//count all data
-			sum += (unsigned long)vec_buffer_meteo[ii].size();
+	const size_t nr_stations = vec_buffer_meteo.size();
+	if (nr_stations > 0){
+		double sum = 0;
+		for (size_t ii=0; ii<nr_stations; ii++){ //loop over all stations
+			const size_t nr_data_pts = vec_buffer_meteo[ii].size();
+			if(nr_data_pts>1) {
+				const std::vector<MeteoData>& curr_station = vec_buffer_meteo[ii];
+				const double days = curr_station[nr_data_pts-1].date.getJulian() - curr_station[0].date.getJulian();
+
+				//add the average sampling rate for this station
+				if(days>0.) sum += (double)(nr_data_pts-1) / days; //the interval story: 2 points define 1 interval!
+			}
 		}
-		if (sum > 0){
-			double days = buffer_end.getJulian() - buffer_start.getJulian();
-			return ((double)sum / days);
+		if (sum > 0.){
+			return ((double)sum / ((double)nr_stations*24*3600)); //in points per seconds, ie Hz
 		}
 	}
 

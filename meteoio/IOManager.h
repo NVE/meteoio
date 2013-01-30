@@ -210,8 +210,12 @@ class IOManager {
 
 		/**
 		 * @brief Returns the average sampling rate in the data.
-		 * This computes the average sampling rate from the data that is contained in the buffer.
-		 * @return average sampling rate in seconds, nodata if the buffer is empty
+		 * This computes the average sampling rate of the data that is contained in the buffer. This is a quick
+		 * estimate, centered on how often a station measures "something" (ie, how many timestamps do we have
+		 * for this station in the buffer). if the station measures TA at h+0 and h+30 and
+		 * RH at h+15 and h+45, it would return 4 measurements per hour. If the station measures TA and RH at h+0 and h+30,
+		 * it would return 2 measurements per hour.
+		 * @return average sampling rate in Hz, nodata if the buffer is empty
 		 */
 		double getAvgSamplingRate();
 
