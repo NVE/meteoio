@@ -176,7 +176,7 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 
 	for(size_t i=0; i<ss.str().size(); i++) {
 		char c=ss.str()[i];
-		const unsigned int px_col = i*(char_width+char_space)+x_offset;
+		const unsigned int px_col = (unsigned int)i*(char_width+char_space)+x_offset;
 		if(c=='0') writeChar(font_0, px_col, px_row);
 		if(c=='1') writeChar(font_1, px_col, px_row);
 		if(c=='2') writeChar(font_2, px_col, px_row);

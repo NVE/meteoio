@@ -70,6 +70,7 @@ IF(UNIX)
 		SET(PLATFORM "-DAPPLE")
 		SET(DLL_EXT "dylib*")
 		SET(STAT_EXT "a")
+		#SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation") #bug in cmake: this has no effect for frameworks
 		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
 		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
 	ELSE(APPLE)

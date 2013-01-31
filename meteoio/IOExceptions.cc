@@ -25,8 +25,11 @@
 		#include <cxxabi.h>
 	#endif
 #endif
-#if defined(WIN32)
+#if defined(_WIN32)
     #include <windows.h>
+#endif
+#if defined(APPLE)
+	#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 using namespace std;
@@ -94,10 +97,24 @@ IOException::~IOException() throw(){
 
 const char* IOException::what() const throw()
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     const string tmp = msg + "\n\nPlease check the terminal for more information!";
     MessageBox ( NULL, tmp.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
 #endif
+#if defined(APPLE)
+	const string tmp = msg + "\n\nPlease check the terminal for more information!";
+	const void* keys[] = { kCFUserNotificationAlertHeaderKey, 
+	                       kCFUserNotificationAlertMessageKey };
+	const void* values[] = { CFSTR("Oops, something went wrong!"), 
+	                          CFStringCreateWithCString(NULL, tmp.c_str(), kCFStringEncodingMacRoman) };
+	CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
+			sizeof(keys)/sizeof(*keys),
+			&kCFTypeDictionaryKeyCallBacks,
+			&kCFTypeDictionaryValueCallBacks);
+	SInt32 error = 0;
+	CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
+#endif
+
 	return msg.c_str();
 }
 

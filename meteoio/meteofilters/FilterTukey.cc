@@ -108,7 +108,7 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int
 		for(int jj=-1; jj<=1; jj++) {
 			std::vector<double> u;
 			for(int kk=-2; kk<=2; kk++) {
-				const size_t index = i + kk + jj + ii;
+				const size_t index = (unsigned)((signed)i + kk + jj + ii);
 				const double value = ivec[index](param);
 				if(value!=IOUtils::nodata)
 					u.push_back( value );

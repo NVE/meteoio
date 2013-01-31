@@ -360,7 +360,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 
 		//Make new DEM with just one point, namely the one specified by vec_coord[ii]
 		//Copy all other properties of the big DEM into the new one
-		DEMObject one_point_dem(dem, vec_coords[ii].getGridI(), vec_coords[ii].getGridJ(), 1, 1, false);
+		DEMObject one_point_dem(dem, (unsigned)vec_coords[ii].getGridI(), (unsigned)vec_coords[ii].getGridJ(), 1, 1, false);
 
 		one_point_dem.min_altitude = dem.min_altitude;
 		one_point_dem.max_altitude = dem.max_altitude;

@@ -144,7 +144,7 @@ bool Grid2DObject::grid_to_WGS84(Coords& point) const {
 		point.copyProj(tmp_proj); //back to the original projection -> reproject the coordinates
 	}
 
-	point.setGridIndex(i, j, IOUtils::unodata, false);
+	point.setGridIndex(i, j, IOUtils::inodata, false);
 	return true;
 }
 
@@ -188,7 +188,7 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 		error_code=false;
 	}
 
-	point.setGridIndex(i, j, IOUtils::unodata, false);
+	point.setGridIndex(i, j, IOUtils::inodata, false);
 	return error_code;
 }
 
