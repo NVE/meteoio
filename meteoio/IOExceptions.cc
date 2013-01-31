@@ -25,6 +25,9 @@
 		#include <cxxabi.h>
 	#endif
 #endif
+#if defined(WIN32)
+    #include <windows.h>
+#endif
 
 using namespace std;
 
@@ -91,6 +94,10 @@ IOException::~IOException() throw(){
 
 const char* IOException::what() const throw()
 {
+#if defined(WIN32)
+    const string tmp = msg + "\n\nPlease check the terminal for more information!";
+    MessageBox ( NULL, tmp.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
+#endif
 	return msg.c_str();
 }
 
