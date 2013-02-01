@@ -24,7 +24,7 @@
 #include <meteoio/Config.h>    // to avoid forward declaration hell
 #include <meteoio/MeteoData.h> // to avoid forward declaration hell
 
-#ifdef _WIN32
+#ifdef WIN32
 	#include <windows.h>
 	//removing two macros defined in windows.h
 	#undef max
@@ -256,7 +256,7 @@ bool validFileName(const std::string& filename)
 	return true;
 }
 
-#ifdef _WIN32
+#ifdef WIN32
 bool fileExists(const std::string& filename)
 {
 	return ( GetFileAttributes( filename.c_str() ) != INVALID_FILE_ATTRIBUTES );

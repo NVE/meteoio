@@ -25,8 +25,10 @@
 		#include <cxxabi.h>
 	#endif
 #endif
-#if defined(_WIN32)
-    #include <windows.h>
+#if defined(WIN32)
+	#include <windows.h>
+	#undef max
+	#undef min
 #endif
 #if defined(APPLE)
 	#include <CoreFoundation/CoreFoundation.h>
@@ -36,23 +38,45 @@ using namespace std;
 
 namespace mio {
 
+#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
+void messageBox(const std::string& /*msg*/) {
+	//const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+	//MessageBoxX11("Oops, something went wrong!", box_msg.c_str());
+#else
+void messageBox(const std::string& msg) {
+#if defined(WIN32)
+	const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+	MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
+#endif
+#if defined(APPLE)
+	const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+	const void* keys[] = { kCFUserNotificationAlertHeaderKey,
+	                       kCFUserNotificationAlertMessageKey };
+	const void* values[] = { CFSTR("Oops, something went wrong!"),
+	                         CFStringCreateWithCString(NULL, box_msg.c_str(), kCFStringEncodingMacRoman) };
+	CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
+	                       sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+	SInt32 error = 0;
+	CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
+#endif
+
+#endif
+}
+
 #ifdef _POPC_
 IOException::IOException(const std::string& message, const std::string& position) : POPException(STD_EXCEPTION)
 #else
-IOException::IOException(const std::string& message, const std::string& position) : msg()
+IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
 #endif
 {
-	if (position=="") {
-		msg = "At unknown position: " + message;
-	} else {
-		msg = "[" + (strrchr(position.c_str(), '/') ? strrchr(position.c_str(), '/') + 1 : position) + "] " + message;
-		//msg = position + ": " + message;
-	}
+	const std::string where = (position.size()>0)? (strrchr(position.c_str(), '/') ? strrchr(position.c_str(), '/') + 1 : position) : "unknown position";
+	msg = "[" + where + "] " + message;
+
 #if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	size_t tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
-	msg += "\n\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
+	std::string backtrace_info = "\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
 	for (unsigned int ii=1; ii<tracesize; ii++) {
 	#ifdef __GNUC__
 		std::stringstream ss;
@@ -78,17 +102,20 @@ IOException::IOException(const std::string& message, const std::string& position
 		} else { // otherwise, print the whole line
 			ss << "\t(" << ii << ") at " << symbols[ii];
 		}
-		msg += ss.str()+"\n";
+		backtrace_info += ss.str()+"\n";
 	#else
-		msg += "\tat " + string(symbols[ii]) + "\n";
+		backtrace_info += "\tat " + string(symbols[ii]) + "\n";
 	#endif
 	}
-	msg += "\033[0m"; //back to normal color
+	backtrace_info += "\033[0m"; //back to normal color
 	free(symbols);
+	full_output = backtrace_info + "[" + where + "] \033[31;1m" + message + "\033[0m";
+#else
+	full_output = msg;
 #endif
 #ifdef _POPC_
-	//printf("IOException(%d): %s\n",Code(),msg.c_str());
-	SetExtra(msg.c_str());
+	const string tmp = backtrace_info + "\n\n" + msg;
+	SetExtra(tmp.c_str());
 #endif
 }
 
@@ -97,25 +124,8 @@ IOException::~IOException() throw(){
 
 const char* IOException::what() const throw()
 {
-#if defined(_WIN32)
-    const string tmp = msg + "\n\nPlease check the terminal for more information!";
-    MessageBox ( NULL, tmp.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
-#endif
-#if defined(APPLE)
-	const string tmp = msg + "\n\nPlease check the terminal for more information!";
-	const void* keys[] = { kCFUserNotificationAlertHeaderKey, 
-	                       kCFUserNotificationAlertMessageKey };
-	const void* values[] = { CFSTR("Oops, something went wrong!"), 
-	                          CFStringCreateWithCString(NULL, tmp.c_str(), kCFStringEncodingMacRoman) };
-	CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
-			sizeof(keys)/sizeof(*keys),
-			&kCFTypeDictionaryKeyCallBacks,
-			&kCFTypeDictionaryValueCallBacks);
-	SInt32 error = 0;
-	CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
-#endif
-
-	return msg.c_str();
+	messageBox(msg);
+	return full_output.c_str();
 }
 
 } //namespace

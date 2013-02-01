@@ -38,7 +38,6 @@ IF(POPC)
 	SET(POPC_EXT "popc")
 ENDIF(POPC)
 
-#	FilterAlgorithms.cc obsoleted
 SET(meteoio_sources
 	IOManager.cc
 	libsmet.cc

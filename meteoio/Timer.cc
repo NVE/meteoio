@@ -20,7 +20,7 @@
 //         Mathias Bavay (port and rewrite for Alpine3D, then MeteoIO)
 
 #include <stdio.h>
-#ifdef _WIN32
+#ifdef WIN32
 	#include <windows.h>
 	#undef max
 	#undef min
@@ -89,7 +89,7 @@ double Timer::getElapsed() const {
 	return elapsed;
 }
 
-#ifdef _WIN32
+#ifdef WIN32
 double Timer::getCurrentTime() const {
 	SYSTEMTIME systemTime;
 	GetSystemTime( &systemTime );

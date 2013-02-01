@@ -41,7 +41,7 @@
 	//#include "gsn/GSNWebServiceSoap12Binding.nsmap"
 #endif
 
-#ifdef _WIN32 //because we collected c**p from windows.h
+#ifdef WIN32 //because we collected c**p from windows.h that was included by gsoap
 	#undef max
 	#undef min
 #endif

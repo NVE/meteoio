@@ -49,7 +49,7 @@ class MIO_API IOException : public POPException {
 		virtual const char* what() const throw();
 
 	protected:
-		std::string msg;
+		std::string msg, full_output;
 };
 
 /**
