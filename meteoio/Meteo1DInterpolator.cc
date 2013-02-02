@@ -138,6 +138,16 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 	return "linear"; //the default resampling is linear
 }
 
+Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& source) {
+	if(this != &source) {
+		window_size = source.window_size;
+		tasklist = source.tasklist;
+		taskargs = source.taskargs;
+		extended_tasklist = source.extended_tasklist;
+	}
+	return *this;
+}
+
 std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator) {
 
 	os << "<Meteo1DInterpolator>\n";
