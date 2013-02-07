@@ -81,7 +81,7 @@ class SMETIO : public IOInterface {
 		                        smet::SMETWriter& mywriter);
 
 		static const std::string dflt_extension;
-		const Config& cfg;
+		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //default projection parameters
 		std::vector<smet::SMETReader> vec_smet_reader;
 		std::vector<std::string> vecFiles;  //read from the Config [Input] section
@@ -90,9 +90,6 @@ class SMETIO : public IOInterface {
 		double plugin_nodata;
 		size_t nr_stations; //number of stations to read from
 		bool outputIsAscii, outputIsGzipped;//read from the Config [Output] section
-
-
-
 };
 
 } //namespace

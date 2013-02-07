@@ -79,7 +79,7 @@ class SNIO : public IOInterface {
 		void parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd);
 		void cleanup() throw();
 
-		const Config& cfg;
+		const Config cfg;
 		std::vector<StationData> vecAllStations;
 		std::vector< IOUtils::FileIndexer > vecIndex;
 		std::ifstream fin; //Input file streams

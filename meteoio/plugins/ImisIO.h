@@ -148,7 +148,7 @@ class ImisIO : public IOInterface {
 		                   std::vector< std::vector<double> >& vec_of_psums);
 
 		static const double in_tz; //timezone
-		const Config& cfg;
+		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::vector<StationData> vecStationMetaData;
 		std::map<std::string, std::string> mapDriftStation;

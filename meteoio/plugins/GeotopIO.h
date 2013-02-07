@@ -76,7 +76,7 @@ class GeotopIO : public IOInterface {
 		void parseDate(const std::string& datestring, const std::string& fileandline, Date& date);
 		void parseMetaData(const std::string& head, const std::string& datastr, std::vector<std::string>& tmpvec);
 
-		Config cfg;
+		const Config cfg;
 		double in_tz, out_tz;
 		size_t nr_of_stations;
 		std::ifstream fin; //Input file streams

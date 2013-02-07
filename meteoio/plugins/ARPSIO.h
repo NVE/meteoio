@@ -82,7 +82,7 @@ class ARPSIO : public IOInterface {
 		void readGridLayer(const std::string& parameter, const unsigned int& layer, Grid2DObject& grid);
 		void moveToMarker(const std::string& marker);
 
-		const Config& cfg;
+		const Config cfg;
 		//std::ifstream fin; //Input file streams
 		FILE *fin;
 		std::string filename;

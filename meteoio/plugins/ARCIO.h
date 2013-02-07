@@ -67,7 +67,7 @@ class ARCIO : public IOInterface {
 		void getGridPaths();
 		void cleanup() throw();
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name);
-		const Config& cfg;
+		const Config cfg;
 
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams

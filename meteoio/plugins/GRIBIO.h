@@ -85,7 +85,7 @@ class GRIBIO : public IOInterface {
 		void fillMeteo(double *values, const MeteoData::Parameters& param, const long& npoints, std::vector<MeteoData> &Meteo);
 		void readMeteoStep(std::vector<StationData> &stations, double *lats, double *lons, const Date i_date, std::vector<MeteoData> &Meteo);
 
-		const Config& cfg;
+		const Config cfg;
 		std::string grid2dpath_in;
 		std::string meteopath_in;
 		std::vector<Coords> vecPts; //points to use for virtual stations if METEO=GRIB

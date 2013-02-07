@@ -99,7 +99,7 @@ class BormaIO : public IOInterface {
 		static const std::string dflt_extension;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 
-		const Config& cfg;
+		const Config cfg;
 };
 
 } //end namespace mio

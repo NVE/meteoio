@@ -312,8 +312,6 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		vector<string> stnIDs;
 		string drift_stat_abk, drift_stao_nr;
 		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, conn);
-		if(stnIDs.size()<3)
-			throw ConversionFailedException("Error while converting station IDs for station "+stat_abk+stao_nr, AT);
 		IOUtils::convertString(station_name, stnIDs.at(0));
 		IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
 		IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
@@ -328,8 +326,6 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		vector<string> stationMetaData;
 		string stao_name;
 		getStationMetaData(stat_abk, stao_nr, sqlQueryStationMetaData, stationMetaData, conn);
-		if(stationMetaData.size()<4)
-			throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
 		double east, north, alt;
 		IOUtils::convertString(stao_name, stationMetaData.at(0));
 		IOUtils::convertString(east, stationMetaData.at(1), std::dec);
@@ -477,7 +473,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			calculatePsum(date_anetz_start, date_anetz_end, vecMeteoAnetz, vec_of_psums);
 
 			for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through relevant stations
-				map<string,AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
+				const map<string,AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
 				if (it != mapAnetz.end())
 					assimilateAnetzData(date_anetz_start, it->second, vec_of_psums, mapAnetzNames, ii, vecMeteo);
 			}
@@ -511,7 +507,7 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 	for (size_t jj=0; jj<vecMeteo[stationindex].size(); jj++){
 		while (vecMeteo[stationindex][jj].date > (current_slice_date+0.2485)){
 			counter++;
-			double julian = floor((current_slice_date.getJulian(true) +0.25001) * 4.0) / 4.0;
+			const double julian = floor((current_slice_date.getJulian(true) +0.25001) * 4.0) / 4.0;
 			current_slice_date = Date(julian, 0.);
 			current_slice_date.setTimeZone(in_tz);
 		}
@@ -529,11 +525,9 @@ void ImisIO::assimilateAnetzData(const Date& dateStart, const AnetzData& ad,
 void ImisIO::getAnetzHNW(const AnetzData& ad, const std::map<std::string, size_t>& mapAnetzNames,
                          const std::vector< std::vector<double> >& vec_of_psums, std::vector<double>& psum)
 {
-	map<string, size_t>::const_iterator it;
-
 	vector<size_t> vecIndex; //this vector will hold up to three indexes for the Anetz stations (position in vec_of_psums)
 	for (size_t ii=0; ii<ad.nrOfAnetzStations; ii++){
-		it = mapAnetzNames.find(ad.anetzstations[ii]);
+		const map<string, size_t>::const_iterator it = mapAnetzNames.find(ad.anetzstations[ii]);
 		vecIndex.push_back(it->second);
 	}
 
@@ -626,7 +620,7 @@ void ImisIO::findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
 	set<string> uniqueStations;
 
 	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
-		map<string, AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
+		const map<string, AnetzData>::const_iterator it = mapAnetz.find(vecStationMetaData.at(ii).getStationID());
 		if (it != mapAnetz.end()){
 			for (size_t jj=0; jj<it->second.nrOfAnetzStations; jj++){
 				uniqueStations.insert(it->second.anetzstations[jj]);
@@ -732,28 +726,26 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 	//query
 	try {
 		Statement *stmt = NULL;
-		ResultSet *rs = NULL;
-
 		stmt = conn->createStatement(sqlQuerySWEData);
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
 		int year, month, day, hour, minutes;
 		dateS.getDate(year, month, day, hour, minutes);
-		occi::Date begindate(env, year, month, day, hour, minutes);
+		const occi::Date begindate(env, year, month, day, hour, minutes);
 		dateE.getDate(year, month, day, hour, minutes);
-		occi::Date enddate(env, year, month, day, hour, minutes);
+		const occi::Date enddate(env, year, month, day, hour, minutes);
 		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
 		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
 		stmt->setDate(4, enddate);    // set 4th variable's value (end date)
 
-		rs = stmt->executeQuery(); // execute the statement stmt
-		vector<MetaData> cols = rs->getColumnListMetaData();
+		ResultSet *rs = stmt->executeQuery(); // execute the statement stmt
+		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		double prev_swe=IOUtils::nodata;
 		Date prev_date;
 		size_t ii_serie=0; //index in meteo time serie
-		size_t serie_len = vecMeteo[stationindex].size();
+		const size_t serie_len = vecMeteo[stationindex].size();
 
 		while (rs->next() == true) { //loop over timesteps
 			if(cols.size()!=2) {
@@ -865,12 +857,10 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 
 	try {
 		Statement *stmt = conn->createStatement(sqlQuery);
-		ResultSet *rs = NULL;
-
 		stmt->setString(1, station_code); // set 1st variable's value
 
-		rs = stmt->executeQuery();    // execute the statement stmt
-		vector<MetaData> cols = rs->getColumnListMetaData();
+		ResultSet *rs = stmt->executeQuery();    // execute the statement stmt
+		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
 			for (size_t ii=1; ii<=cols.size(); ii++) {
@@ -878,7 +868,7 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 			}
 		}
 
-		if (vecStationIDs.size() < 3) {
+		if (vecStationIDs.size() < 3) { //if the station has not been found
 			string stat_abk, stao_nr;
 			parseStationID(station_code, stat_abk, stao_nr);
 			vecStationIDs.push_back(station_code);
@@ -910,13 +900,11 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
 
 	try {
 		Statement *stmt = conn->createStatement(sqlQuery);
-		ResultSet *rs = NULL;
-
 		stmt->setString(1, stat_abk); // set 1st variable's value
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 
-		rs = stmt->executeQuery();    // execute the statement stmt
-		vector<MetaData> cols = rs->getColumnListMetaData();
+		ResultSet *rs = stmt->executeQuery();    // execute the statement stmt
+		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
 			for (size_t ii=1; ii<=cols.size(); ii++) {
@@ -933,13 +921,14 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
 }
 
 /**
- * @brief This function gets meta data from table station2.standort and fills vecStationMetaData
+ * @brief This function gets meta data from table station2.standort and fills vecStationMetaData.
+ * This is also the moment to take the opportunity to check if the station really does exist.
  * @param stat_abk           a string key of table
  * @param stao_nr            a string key of table
  * @param sqlQuery           the query to execute
  * @param vecStationMetaData string vector in which data will be filled
  * @param conn               create connection to SDB
- * @param return             number of columns retrieved
+ * @param return             number of metadata read (ie. retrieve and not NULL)
  */
 size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
                                         const std::string& sqlQuery, std::vector<std::string>& vecMetaData,
@@ -949,13 +938,11 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 
 	try {
 		Statement *stmt = conn->createStatement(sqlQuery);
-		ResultSet *rs = NULL;
-
 		stmt->setString(1, stat_abk); // set 1st variable's value
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 
-		rs = stmt->executeQuery();    // execute the statement stmt
-		vector<MetaData> cols = rs->getColumnListMetaData();
+		ResultSet *rs = stmt->executeQuery();    // execute the statement stmt
+		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
 			for (size_t ii=1; ii<=cols.size(); ii++) {
@@ -965,10 +952,16 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 
 		stmt->closeResultSet(rs);
 		conn->terminateStatement(stmt);
-		return cols.size();
 	} catch (const exception& e){
 		throw IOException("Oracle Error when reading stations' metadata: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
+
+	const size_t nr_metadata = vecMetaData.size();
+	if(nr_metadata==0)
+			throw NoAvailableDataException("Station " + stat_abk+stao_nr + " not found in the database", AT);
+	if(nr_metadata<4)
+			throw ConversionFailedException("Error while converting station meta data for station "+stat_abk+stao_nr, AT);
+	return nr_metadata;
 }
 
 /**
@@ -993,9 +986,8 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 
 	try {
 		Statement *stmt = NULL;
-		ResultSet *rs = NULL;
 
-		map<string, string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
+		const map<string, string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
 		if (it != mapDriftStation.end()) {
 			stmt = conn->createStatement(sqlQueryMeteoDataDrift);
 			string drift_stat_abk, drift_stao_nr;
@@ -1008,15 +1000,15 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		}
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
-		occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
-		occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
+		const occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
+		const occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
 		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
 		stmt->setDate(4, enddate);    // set 4th variable's value (end date)
 
-		rs = stmt->executeQuery(); // execute the statement stmt
-		vector<MetaData> cols = rs->getColumnListMetaData();
+		ResultSet *rs = stmt->executeQuery(); // execute the statement stmt
+		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		vector<string> vecData;
 		while (rs->next() == true) {
