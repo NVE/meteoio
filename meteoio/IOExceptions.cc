@@ -94,7 +94,11 @@ IOException::IOException(const std::string& message, const std::string& position
 			char *real_name = abi::__cxa_demangle(mangled_name, 0, 0, &status);
 			// if demangling is successful, output the demangled function name
 			if (status == 0) {
-				ss << "\t(" << ii << ") in " << real_name << " from " << symbols[ii] << " " << offset_end << "+" << offset_begin;
+				const std::string tmp(real_name);
+				const size_t pos = tmp.find_first_of("(");
+				const std::string func_name = tmp.substr(0, pos);
+				const std::string func_args = tmp.substr(pos);
+				ss << "\t(" << ii << ") in \033[4m" << func_name << "\033[0m\033[01;30m" << func_args << " from " << symbols[ii] << " " << offset_end << "+" << offset_begin;
 			} else { // otherwise, output the mangled function name
 				ss << "\t(" << ii << ") in " << mangled_name << " from " << symbols[ii] << " " << offset_end << "+" << offset_begin;
 			}
