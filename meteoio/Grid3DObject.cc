@@ -93,7 +93,7 @@ bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
 			v_Itr = vec_points.erase(v_Itr);
 			status=false;
 		} else {
-			v_Itr++;
+			++v_Itr;
 		}
 	}
 

@@ -113,10 +113,10 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int
 				if(value!=IOUtils::nodata)
 					u.push_back( value );
 			}
-			if(u.size()>0)
+			if(!u.empty())
 				u1.push_back( Interpol1D::getMedian(u) );
 		}
-		if(u1.size()>0)
+		if(!u1.empty())
 			u2.push_back( Interpol1D::getMedian(u1) );
 		else
 			u2.push_back( IOUtils::nodata );

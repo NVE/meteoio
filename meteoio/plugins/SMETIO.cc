@@ -342,7 +342,7 @@ void SMETIO::copy_data(const std::string& filename, const smet::SMETReader& myre
 	vector<size_t> indexes;
 	identify_fields(fields, indexes, julian_present, md);
 
-	if ((timestamps.size() == 0) && (!julian_present)) return; //nothing to do
+	if ((timestamps.empty()) && (!julian_present)) return; //nothing to do
 
 	const bool olwr_present = md.param_exists("OLWR");
 	const bool data_wgs84 = myreader.location_in_data(smet::WGS84);
@@ -705,7 +705,7 @@ void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, cons
 		}
 	}
 
-	if (vecMeteo.size() > 0)
+	if (!vecMeteo.empty())
 		timezone = vecMeteo[0].date.getTimeZone();
 }
 
@@ -734,7 +734,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 
 void SMETIO::readSpecialPoints(std::vector<Coords>& pts)
 {
-	std::string filename, line_in;
+	std::string filename;
 	cfg.getValue("SPECIALPTSFILE", "Input", filename);
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);

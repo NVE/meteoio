@@ -27,7 +27,7 @@ MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg), processing_stack(
 	set<string> set_of_used_parameters;
 	get_parameters(cfg, set_of_used_parameters);
 
-	for (set<string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); it++){
+	for (set<string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it){
 		ProcessingStack* tmp = new ProcessingStack(cfg, *it);
 		processing_stack[*it] = tmp;
 	}
@@ -36,7 +36,7 @@ MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg), processing_stack(
 MeteoProcessor::~MeteoProcessor()
 {
 	//clean up heap memory
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++)
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it)
 		delete it->second;
 }
 
@@ -60,7 +60,7 @@ void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties)
 {
 	ProcessingProperties tmp;
 
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++){
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it){
 		(*(it->second)).getWindowSize(tmp);
 
 		compareProperties(tmp, o_properties);
@@ -89,7 +89,7 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
 	//call the different processing stacks
 	std::vector< std::vector<MeteoData> > vec_tmp;
 
-	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); it++){
+	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it){
 		if (it==processing_stack.begin()){
 			(*(it->second)).process(ivec, ovec, second_pass);
 		} else {
@@ -98,7 +98,7 @@ void MeteoProcessor::process(const std::vector< std::vector<MeteoData> >& ivec,
 		vec_tmp = ovec;
 	}
 
-	if (processing_stack.size() == 0)
+	if (processing_stack.empty())
 		ovec = ivec;
 }
 
@@ -113,7 +113,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
 	os << data.mi1d;
 	os << "Processing stacks:\n";
 	for (map<string, ProcessingStack*>::const_iterator it=data.processing_stack.begin();
-		it != data.processing_stack.end(); it++){
+		it != data.processing_stack.end(); ++it){
 		//os << setw(10) << it->first << "::"; //the processing stack already contains it
 		os << (*it->second);
 	}

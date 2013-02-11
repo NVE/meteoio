@@ -78,7 +78,7 @@ class A3DIO : public IOInterface {
 		                       std::map<std::string, size_t>& hashStations);
 
 		int create1DFile(const std::vector< std::vector<MeteoData> >& data);
-		int writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& stations, const std::string parameter_name);
+		int writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& stations, const std::string& parameter_name);
 		void open2DFile(const std::vector< std::vector<MeteoData> >& stations,
 		                const std::string& fileprefix, const std::string& label, const double& year,
 		                std::ofstream& file);

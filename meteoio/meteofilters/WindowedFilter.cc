@@ -28,7 +28,7 @@ WindowedFilter::WindowedFilter(const std::string& name)
 
 unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
 {
-	if (vec_args.size() > 0){
+	if (!vec_args.empty()){
 		if (vec_args[0] == "left"){
 			vec_args.erase(vec_args.begin());
 			return WindowedFilter::left;

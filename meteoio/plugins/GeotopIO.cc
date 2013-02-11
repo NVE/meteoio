@@ -206,7 +206,7 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 	string metafile;
 	vecMeta.clear();
 
-	if (vecStation.size() == 0) {
+	if (vecStation.empty()) {
 		cfg.getValue("METAFILE", "Input", metafile);
 		readMetaData(metafile);
 	}
@@ -217,7 +217,7 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		std::vector<std::vector<MeteoData> >& vecMeteo, const size_t& /*stationindex*/) {
 	vector<std::string> tmpvec;
-	string line, filename, path, prefix, metafile;
+	string line, filename, path, prefix;
 	vecMeteo.clear();
 
 	cfg.getValue("METEOPATH", "Input", path);
@@ -228,7 +228,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	vector<StationData> myStations;
 	readStationData(dateStart, myStations);
 
-	if (vec_streampos.size() == 0) //the vec_streampos save file pointers for certain dates
+	if (vec_streampos.empty()) //the vec_streampos save file pointers for certain dates
 		vec_streampos = vector<map<Date, std::streampos> > (vecStation.size());
 
 	if (nr_of_stations == IOUtils::npos)
@@ -263,7 +263,6 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			getline(fin, line, eoln); //read complete line meta information
 			size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
 
-			std::map<std::string, size_t> mapHeader;
 			std::vector<size_t> indices;
 			MeteoData md;
 			identify_fields(tmpvec, filename, indices, md);
@@ -273,7 +272,6 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 				throw InvalidFormatException("No meta data found in " + filename, AT);
 
 			std::vector<double> tmpdata = std::vector<double>(ncols + 1); //one extra for nodata value
-			std::vector<int> ymdh = std::vector<int>(4);
 
 			//The following 4 lines are an optimization to jump to the correct position in the file
 			streampos current_fpointer = -1; //the filepointer for the current date
@@ -416,7 +414,6 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 
 	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
-	std::vector<std::string> vecData;
 	std::vector<std::string> vecX, vecY, vecLat, vecLon, vecAlt;
 
 	size_t meta_counter = 0;

@@ -105,7 +105,7 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
                               const std::vector<StationData>& vecStations,
                               std::vector< std::pair<double, size_t> >& list)
 {
-	if(list.size()>0) list.clear();
+	if(!list.empty()) list.clear();
 
 	for(size_t i=0; i<vecStations.size(); i++) {
 		const Coords& position = vecStations[i].position;
@@ -195,7 +195,7 @@ double Interpol2D::ConstProject(const double& value, const double&, const double
 double Interpol2D::LinProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
 {
 	//linear lapse: coeffs must have been already computed
-	if (coeffs.size()<1) {
+	if (coeffs.empty()) {
 		throw IOException("Linear regression coefficients not initialized", AT);
 	}
 	return (value + coeffs[1] * (new_altitude - altitude));
@@ -214,7 +214,7 @@ double Interpol2D::LinProject(const double& value, const double& altitude, const
 double Interpol2D::BiLinProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
 {
 	//linear lapse: coeffs must have been already computed
-	if (coeffs.size()<1) {
+	if (coeffs.empty()) {
 		throw IOException("Linear regression coefficients not initialized", AT);
 	}
 	if(altitude<=bilin_inflection)
@@ -236,7 +236,7 @@ double Interpol2D::BiLinProject(const double& value, const double& altitude, con
 double Interpol2D::FracProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
 {
 	//linear lapse: coeffs must have been already computed
-	if (coeffs.size()<1) {
+	if (coeffs.empty()) {
 		throw IOException("Linear regression coefficients not initialized", AT);
 	}
 	return (value * (1. + coeffs[1] * (new_altitude - altitude)));
@@ -468,11 +468,8 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 	}
 
 	//compute lapse rate
-	if(X.size()==0)
+	if(X.empty())
 		return IOUtils::nodata;
-	std::stringstream mesg;
-	//coeffs.resize(4, 0.0);
-	//Interpol1D::NoisyLinRegression(X, Y, coeffs[1], coeffs[2], coeffs[3], mesg);
 	coeffs.resize(7,0.);
 	BiLinRegression(X, Y, coeffs);
 	r2=coeffs[3]*coeffs[6]; //Is it correct?

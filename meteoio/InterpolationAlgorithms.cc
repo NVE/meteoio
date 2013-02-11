@@ -105,7 +105,7 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		std::stringstream info; ///<to store some extra information about the interoplation process
 		size_t nrOfMeasurments; ///<the available number of measurements
 
-		
+
 InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
                                                const Date& i_date,
                                                const DEMObject& i_dem,
@@ -129,10 +129,10 @@ size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
 size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
                                              std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta) const
 {
-	if (o_vecData.size() > 0)
+	if (o_vecData.empty())
 		o_vecData.clear();
 
-	if (o_vecMeta.size() > 0)
+	if (o_vecMeta.empty())
 		o_vecMeta.clear();
 
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
@@ -261,7 +261,7 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	getStationAltitudes(vecMeta, vecAltitudes);
 	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;
 
-	if ((vecAltitudes.size() == 0) || (nrOfMeasurments == 0))
+	if ((vecAltitudes.empty()) || (nrOfMeasurments == 0))
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	double avgAltitudes = Interpol1D::arithmeticMean(vecAltitudes);
@@ -447,7 +447,7 @@ double RHAlgorithm::getQualityRating()
 	if (param != MeteoData::RH)
 		return 0.0;
 
-	if (vecDataTA.size() == 0)
+	if (vecDataTA.empty())
 		return 0.0;
 	if( ( nrOfMeasurments<(size_t)(0.5*vecDataRH.size()) ) || ( nrOfMeasurments<2 ) )
 		return 0.6;
@@ -464,7 +464,7 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 
-	if (vecDataTA.size() == 0) //No matching data
+	if (vecDataTA.empty()) //No matching data
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject ta;
@@ -515,7 +515,7 @@ double ILWRAlgorithm::getQualityRating()
 	if (param != MeteoData::ILWR)
 		return 0.0;
 
-	if (vecDataEA.size() == 0)
+	if (vecDataEA.empty())
 		return 0.0;
 
 	return 0.9;
@@ -526,7 +526,7 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	//This algorithm is only valid for RH
 	if (param != MeteoData::ILWR)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
-	if (vecDataEA.size() == 0) //No matching data
+	if (vecDataEA.empty()) //No matching data
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	vector<double> vecAltitudes;
@@ -606,7 +606,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating()
 		return 0.0;
 	}
 
-	if (vecDataVW.size() == 0)
+	if (vecDataVW.empty())
 		return 0.0;
 	if( ( nrOfMeasurments<(size_t)(0.5*vecDataVW.size()) ) || ( nrOfMeasurments<2 ) )
 		return 0.6;
@@ -624,7 +624,7 @@ void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
 
 	getStationAltitudes(vecMeta, vecAltitudes);
 
-	if( vecDataDW.size() == 0)
+	if( vecDataDW.empty())
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject dw;
@@ -654,7 +654,7 @@ std::string USERInterpolation::getGridFileName()
 	const std::string& grid_path = vecArgs[0];
 	std::string gridname = grid_path + std::string("/");
 
-	if(vecMeteo.size()>0) {
+	if(vecMeteo.empty()) {
 		const Date& timestep = vecMeteo.at(0).date;
 		gridname = gridname + timestep.toString(Date::NUM) + std::string("_") + MeteoData::getParameterName(param) + ext;
 	} else {

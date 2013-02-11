@@ -413,7 +413,7 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 	std::vector<std::string> filenames = std::vector<std::string>();
 
 	//Requirement: meteo1D data must exist:
-	if ((vecMeteo.size() == 0) || (vecMeteo[0].size() == 0))
+	if ((vecMeteo.empty()) || (vecMeteo[0].empty()))
 		return;
 
 	//1D and 2D data must correspond, that means that if there is 1D data
@@ -841,7 +841,7 @@ int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
 	return EXIT_SUCCESS;
 }
 
-int A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& data, const std::string parameter_name)
+int A3DIO::writeHeader(std::ofstream &file, const std::vector< std::vector<MeteoData> >& data, const std::string& parameter_name)
 {
 	std::ostringstream str_altitudes;
 	std::ostringstream str_eastings;

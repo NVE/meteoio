@@ -38,7 +38,7 @@ std::string FitModel::getInfo() {
 	}
 }
 
-void FitModel::setGuess(const std::vector<double> lambda_in) {
+void FitModel::setGuess(const std::vector<double>& lambda_in) {
 	const size_t nGuess = lambda_in.size();
 	if(nGuess!=nParam) {
 		stringstream ss;

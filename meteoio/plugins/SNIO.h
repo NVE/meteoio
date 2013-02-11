@@ -66,7 +66,7 @@ class SNIO : public IOInterface {
 
 	private:
 		std::string file_pos(const std::string& filename, const size_t& linenr);
-		void writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string station_name);
+		void writeStationHeader(const std::vector<MeteoData>& Meteo, const std::string& station_name);
 		void writeStationMeteo(const std::vector<MeteoData>& Meteo, const std::string& file_name);
 		void convertUnits(MeteoData& meteo);
 		void convertUnitsBack(MeteoData& meteo);

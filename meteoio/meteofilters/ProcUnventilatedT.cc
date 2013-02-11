@@ -99,7 +99,7 @@ void ProcUnventilatedT::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 
 	is_soft = false;
-	if (vec_args.size() >= 1){
+	if (!vec_args.empty()){
 		is_soft = FilterBlock::is_soft(vec_args);
 	}
 
@@ -108,7 +108,7 @@ void ProcUnventilatedT::parse_args(std::vector<std::string> vec_args) {
 	if (filter_args.size() > 1)
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
-	if (filter_args.size() == 0){
+	if (filter_args.empty()){
 		usr_albedo = dflt_albedo;
 	} else {
 		usr_albedo = filter_args[0];

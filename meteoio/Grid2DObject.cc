@@ -85,7 +85,7 @@ bool Grid2DObject::gridify(std::vector<Coords>& vec_points) const {
 			v_Itr = vec_points.erase(v_Itr);
 			status=false;
 		} else {
-			v_Itr++;
+			++v_Itr;
 		}
 	}
 
@@ -274,7 +274,7 @@ bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 
 bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids)
 {
-	if (thresholds.size()==0) {
+	if (thresholds.empty()==0) {
 		throw IOException("Can't start clusterization, cluster definition list is empty", AT);
 	}
 	if ((thresholds.size()+1) != ids.size()) {

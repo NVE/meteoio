@@ -300,7 +300,7 @@ std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
 
 void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge)
 {
-	if(vec1.size()>0 && vec2.size()>0 && vec1[0].date!=vec2[0].date) return; //vectors MUST contain data at the same date
+	if(vec1.empty() && vec2.empty() && vec1[0].date!=vec2[0].date) return; //vectors MUST contain data at the same date
 
 	if(simple_merge) {
 		for(size_t ii=0; ii<vec2.size(); ii++) vec1.push_back( vec2[ii] );
@@ -311,7 +311,7 @@ void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>
 
 void MeteoData::merge(std::vector<MeteoData>& vec, const MeteoData& meteo2, const bool& simple_merge)
 {
-	if(vec.size()>0 && vec[0].date!=meteo2.date) return; //the data must be time synchronized!
+	if(vec.empty() && vec[0].date!=meteo2.date) return; //the data must be time synchronized!
 
 	if(!simple_merge) {
 		for(size_t ii=0; ii<vec.size(); ii++) {

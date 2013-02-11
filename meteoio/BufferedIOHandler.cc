@@ -277,7 +277,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 	//Try to buffer after the requested chunk for subsequent calls
 
 	//0. initialize if not already initialized
-	if (vec_buffer_meteo.size() == 0) //init
+	if (vec_buffer_meteo.empty()) //init
 		bufferData(new_buffer_start, new_buffer_end, vec_buffer_meteo);
 
 	size_t buffer_size = vec_buffer_meteo.size();
@@ -413,7 +413,7 @@ std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 	}
 
 	std::map<std::string, Grid2DObject>::const_iterator it1;
-	for (it1=data.mapBufferedGrids.begin(); it1 != data.mapBufferedGrids.end(); it1++){
+	for (it1=data.mapBufferedGrids.begin(); it1 != data.mapBufferedGrids.end(); ++it1){
 		os << setw(10) << "Grid" << " = " << it1->first << ", ";
 		os << (it1->second).ncols << " x " << (it1->second).nrows << " @ " << (it1->second).cellsize << "m\n";
 	}

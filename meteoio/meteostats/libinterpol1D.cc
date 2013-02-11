@@ -234,7 +234,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 {
 //This uses a sorting algorithm for getting middle element
 // as much more efficient than full sorting (O(n) compared to O(n log(n))
-	if (vecData.size() == 0)
+	if (vecData.empty())
 		throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
 
 	vector<double> vecTemp;
@@ -260,7 +260,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 
 double Interpol1D::getMedianAverageDeviation(const std::vector<double>& vecData)
 {
-	if (vecData.size() == 0)
+	if (vecData.empty())
 		throw NoAvailableDataException("Trying to calculate MAD with no data points", AT);
 
 	vector<double> vecWindow(vecData);
@@ -289,13 +289,12 @@ double Interpol1D::variance(const std::vector<double>& X)
 	const size_t n = X.size();
 
 	size_t count=0;
-	double sum=0., sum_sq=0.;
+	double sum=0.;
 
 	for(size_t i=0; i<n; i++) {
 		const double value=X[i];
 		if(value!=IOUtils::nodata) {
 			sum += value;
-			sum_sq += value*value;
 			count++;
 		}
 	}
@@ -435,7 +434,7 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 	if (nb_pts<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
 		mesg << "[E] Not enough data points for linear regression!\n";
 		A=0.;
-		if (in_X.size()>0) B=in_X[0]; else B=0.;
+		if (!in_X.empty()) B=in_X[0]; else B=0.;
 		R=1.;
 		return EXIT_FAILURE;
 	}

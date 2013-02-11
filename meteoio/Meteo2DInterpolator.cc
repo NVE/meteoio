@@ -210,7 +210,7 @@ std::ostream& operator<<(std::ostream &os, const Meteo2DInterpolator &mi) {
 
 	os << "User list of algorithms:\n";
 	std::map<std::string, std::vector<std::string> >::const_iterator iter = mi.mapAlgorithms.begin();
-	for (; iter != mi.mapAlgorithms.end(); iter++) {
+	for (; iter != mi.mapAlgorithms.end(); ++iter) {
 		os << setw(10) << iter->first << " :: ";
 		for(unsigned int jj=0; jj<iter->second.size(); jj++) {
 			os << iter->second[jj] << " ";

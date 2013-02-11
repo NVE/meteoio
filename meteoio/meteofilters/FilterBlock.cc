@@ -26,7 +26,7 @@ FilterBlock::FilterBlock(const std::string& filter_name) : ProcessingBlock(filte
 FilterBlock::~FilterBlock() {}
 
 bool FilterBlock::is_soft(std::vector<std::string>& vec_args) {
-	if (vec_args.size() > 0){
+	if (!vec_args.empty()){
 		if (vec_args[0] == "soft"){
 			vec_args.erase(vec_args.begin());
 			return true;

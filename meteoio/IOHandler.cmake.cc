@@ -205,7 +205,7 @@ IOHandler::~IOHandler() throw(){
 #endif
 	// Get rid of the objects
 	std::map<std::string, IOPlugin>::iterator mapit;
-	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); mapit++){
+	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); ++mapit){
 		IOInterface*& io = (mapit->second).io;
 		if (io != NULL) {
 			delete io;
@@ -436,7 +436,7 @@ std::string IOHandler::toString() const
 	os << "<mapPlugins>\n";
 	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";
 	std::map<std::string, IOPlugin>::const_iterator it1;
-	for (it1=mapPlugins.begin(); it1 != mapPlugins.end(); it1++){
+	for (it1=mapPlugins.begin(); it1 != mapPlugins.end(); ++it1){
 		os << setw(10) << it1->first << " = " <<  it1->second;
 	}
 	os << "</mapPlugins>\n";

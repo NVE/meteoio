@@ -470,7 +470,7 @@ std::string IOManager::toString() const {
 	size_t min_stations=std::numeric_limits<size_t>::max();
 	size_t max_stations=0;
 	std::map<Date, std::vector<MeteoData> >::const_iterator iter = point_cache.begin();
-	for (; iter != point_cache.end(); iter++) {
+	for (; iter != point_cache.end(); ++iter) {
 		const size_t nb_stations = iter->second.size();
 		if(nb_stations>max_stations) max_stations=nb_stations;
 		if(nb_stations<min_stations) min_stations=nb_stations;

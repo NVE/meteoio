@@ -65,7 +65,7 @@ void FilterUnheatedHNW::parse_args(std::vector<std::string> vec_args) {
 	vector<double> filter_args;
 
 	soft = false;
-	if (vec_args.size() >= 1){
+	if (!vec_args.empty()){
 		soft = is_soft(vec_args);
 	}
 

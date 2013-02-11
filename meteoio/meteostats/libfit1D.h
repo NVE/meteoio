@@ -184,7 +184,7 @@ class Fit1D {
 		* thus allowing the user to force his model parameters.
 		* @param lambda_in one initial value per model parameter
 		*/
-		void setGuess(const std::vector<double> lambda_in) {model->setGuess(lambda_in);};
+		void setGuess(const std::vector<double>& lambda_in) {model->setGuess(lambda_in);};
 
 		/**
 		* @brief Compute the regression parameters

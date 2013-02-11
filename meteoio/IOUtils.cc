@@ -149,7 +149,6 @@ std::string getExtension(const std::string& filename)
 
 std::string removeExtension(const std::string& filename)
 {
-	const std::string whitespaces(" \t\f\v\n\r");
 	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
 	const size_t startpos = filename.find_last_of('.');
 	if( startpos==std::string::npos ) return filename;
@@ -648,7 +647,7 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 {
 	//returns index of element, if element does not exist it returns closest index after soughtdate
 	//the element needs to be an exact hit or embedded between two measurments
-	if (vecM.size() <= 0) {//no elements in buffer
+	if (vecM.empty()) {//no elements in buffer
 		return npos;
 	}
 

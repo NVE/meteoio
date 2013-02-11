@@ -174,7 +174,7 @@ void SNIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*
 void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	//the meta data cannot change for the stations in dependence of time
-	if (vecAllStations.size() == 0)
+	if (vecAllStations.empty())
 		readMetaData();
 
 	vecStation = vecAllStations; //vecAllStations is a global vector that holds all meta data
@@ -353,12 +353,12 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	string inpath;
 	cfg.getValue("METEOPATH", "Input", inpath);
 
-	if (vecAllStations.size() == 0)
+	if (vecAllStations.empty())
 		readMetaData();
 
 	vecMeteo.clear();
 	vecMeteo.insert(vecMeteo.begin(), vecAllStations.size(), vector<MeteoData>());
-	if (vecIndex.size() == 0) //the vecIndex save file pointers for certain dates
+	if (vecIndex.empty()) //the vecIndex save file pointers for certain dates
 		vecIndex.resize(vecAllStations.size());
 
 	for (size_t ii=0; ii<vecAllStations.size(); ii++){
@@ -595,7 +595,7 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	}
 }
 
-void SNIO::writeStationHeader(const std::vector<MeteoData>& vecmd, const std::string station_id)
+void SNIO::writeStationHeader(const std::vector<MeteoData>& vecmd, const std::string& station_id)
 {
 	//writing the (very basic) metadata
 	fout << "MTO <" << station_id << "> " << vecmd.size() << "\n";

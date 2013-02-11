@@ -32,7 +32,7 @@ class FitModel {
 		FitModel() : Lambda(), X(), Y(), infoString(), regname(), nPts(0), nParam(0), min_nb_pts(0), fit_ready(false) {};
 		virtual ~FitModel() {};
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
-		void setGuess(const std::vector<double> lambda_in);
+		void setGuess(const std::vector<double>& lambda_in);
 		virtual bool fit() = 0;
 		virtual double f(const double& x) = 0;
 		void getParams(std::vector<double>& o_coefficients);

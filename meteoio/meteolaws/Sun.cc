@@ -117,11 +117,6 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
                                  double& R_toa, double& R_direct, double& R_diffuse)
 {
 	//these pow cost us a lot here, but replacing them by fastPow() has a large impact o accuracy (because of the exp())
-	const double olt = 0.32;      // ozone layer thickness (cm) U.S.standard = 0.34 cm
-	const double w0 = 0.9;        // fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
-	const double fc = 0.84;       // fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
-	const double alpha = 1.3;     // wavelength exponent (Iqbal(1983) p.118)
-	const double beta = 0.03;
 
 	if(ta==IOUtils::nodata || rh==IOUtils::nodata || pressure==IOUtils::nodata || mean_albedo==IOUtils::nodata) {
 		R_toa = IOUtils::nodata;
@@ -134,6 +129,11 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		R_direct = 0.;
 		R_diffuse = 0.;
 	} else {
+		const double olt = 0.32;      // ozone layer thickness (cm) U.S.standard = 0.34 cm
+		const double w0 = 0.9;        // fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
+		const double fc = 0.84;       // fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
+		const double alpha = 1.3;     // wavelength exponent (Iqbal(1983) p.118)
+		const double beta = 0.03;
 		const double zenith = 90. - sun_elevation; //this is the TRUE zenith because the elevation is the TRUE elevation
 		const double cos_zenith = cos(zenith*Cst::to_rad); //this uses true zenith angle
 

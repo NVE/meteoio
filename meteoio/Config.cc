@@ -88,7 +88,7 @@ std::ostream& operator<<(std::ostream &os, const Config& cfg)
 {
 	os << "<Config>\n";
 	map<string,string>::const_iterator it;
-	for (it=cfg.properties.begin(); it != cfg.properties.end(); it++){
+	for (it=cfg.properties.begin(); it != cfg.properties.end(); ++it){
 		os << (*it).first << " -> " << (*it).second << "\n";
 	}
 	os << "</Config>\n";
@@ -184,7 +184,7 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 
 	const string tmp_keystart = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keystart);
 	//Loop through keys, look for substring match - push it into vecResult
-	for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); it++){
+	for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it){
 		const string tmp = (it->first).substr(0, tmp_keystart.length());
 		const int matchcount = tmp_keystart.compare(tmp);
 
@@ -220,7 +220,7 @@ void Config::write(const std::string& filename)
 	try {
 		string current_section;
 		unsigned int sectioncount = 0;
-		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); it++){
+		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it){
 			const string key = it->first;
 			const string section = extract_section(key);
 

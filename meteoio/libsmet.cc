@@ -342,9 +342,8 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 		nr_of_fields = counter;
 	}
 
-	size_t count_wgs84 = 0, count_epsg = 0;
 	if (key == "fields"){
-		//set<string> fieldnames; //this will help us locate duplicate fields
+        size_t count_wgs84 = 0, count_epsg = 0;
 
 		//check if location is in data and if timestamp is present
 		for (size_t ii = 0; ii<tmp_vec.size(); ii++){
@@ -378,7 +377,7 @@ bool SMETWriter::check_fields(const std::string& key, const std::string& value)
 			location_in_data_epsg = true;
 	} else {
 		//every value in units_offset and units_multiplier must be a decimal
-		for (vector<string>::const_iterator it = tmp_vec.begin(); it != tmp_vec.end(); it++)
+		for (vector<string>::const_iterator it = tmp_vec.begin(); it != tmp_vec.end(); ++it)
 			if (!SMETCommon::is_decimal(*it)) return false;
 	}
 
@@ -448,7 +447,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	if (smet_type == ASCII){
 		for (size_t ii=0; ii<nr_of_lines; ii++){
 			const size_t offset = ii*(nr_of_fields-1);
-			if (data.size() != 0)
+			if (!data.empty())
 				copy(data.begin()+offset, data.begin()+offset+nr_of_data_fields, current_data.begin());
 			write_data_line_ascii(vec_timestamp[ii], current_data);
 		}
@@ -484,13 +483,13 @@ void SMETWriter::write(const std::vector<double>& data)
 
 	if (smet_type == ASCII){
 		for (size_t ii=0; ii<nr_of_lines; ii++){
-			if (data.size() != 0)
+			if (!data.empty())
 				copy(data.begin()+ii*nr_of_fields, data.begin()+ii*nr_of_fields+nr_of_fields, current_data.begin());
 			write_data_line_ascii("0000-01-01T00:00", current_data); //dummy time
 		}
 	} else {
 		for (size_t ii=0; ii<nr_of_lines; ii++){
-			if (data.size() != 0)
+			if (!data.empty())
 				copy(data.begin()+ii*nr_of_fields, data.begin()+ii*nr_of_fields+nr_of_fields, current_data.begin());
 			write_data_line_binary(current_data);
 		}
@@ -604,7 +603,7 @@ void SMETWriter::write_data_line_ascii(const std::string& timestamp, const std::
 	fout << right;
 	fout << fixed;
 
-	if ((data.size() == 0) && timestamp_present) fout << timestamp;
+	if ((data.empty()) && timestamp_present) fout << timestamp;
 
 	for (size_t ii = 0; ii < data.size(); ii++){
 		if (ii > 0) fout << " ";
@@ -743,14 +742,14 @@ void SMETReader::process_header()
 {
 	vector<string> tmp_vec;
 	set<string> obligatory_keys;
-	for (map<string,string>::iterator it = header.begin(); it != header.end(); it++){
+	for (map<string,string>::iterator it = header.begin(); it != header.end(); ++it){
 		if (SMETCommon::all_mandatory_header_keys.find(it->first) != SMETCommon::all_mandatory_header_keys.end())
 			obligatory_keys.insert(it->first);
 
 		if (it->first == "fields"){
 			SMETCommon::readLineToVec(it->second, tmp_vec);
 			string newfields;
-			if (tmp_vec.size() > 0){
+			if (!tmp_vec.empty()){
 				for (size_t ii=0; ii<tmp_vec.size(); ii++){
 					if (tmp_vec[ii] == "timestamp"){
 						timestamp_present = true;

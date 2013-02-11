@@ -74,7 +74,7 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
 
 void ProcUndercatch_Hamon::parse_args(std::vector<std::string> filter_args)
 {
-	if (filter_args.size() < 1)
+	if (filter_args.empty())
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 
 	for(size_t ii=0; ii<filter_args.size(); ii++) {
