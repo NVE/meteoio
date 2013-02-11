@@ -69,7 +69,12 @@ IOException::IOException(const std::string& message, const std::string& position
 IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
 #endif
 {
-	const std::string where = (position.size()>0)? (strrchr(position.c_str(), '/') ? strrchr(position.c_str(), '/') + 1 : position) : "unknown position";
+#if defined(WIN32)
+	const char *delim = strrchr(position.c_str(), '\\');
+#else
+	const char *delim = strrchr(position.c_str(), '/');
+#endif
+	const std::string where = (position.empty())? "unknown position" : ((delim)? delim+1 : position);
 	msg = "[" + where + "] " + message;
 
 #if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
