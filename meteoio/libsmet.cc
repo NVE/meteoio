@@ -434,12 +434,13 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 
 	const size_t nr_of_data_fields = nr_of_fields - 1;
 	if(nr_of_fields<=1) { //avoid division by zero in the next block
-		throw SMETException("Attempting to write a dataset that contains no fields to file \"" + filename + "\"!", SMET_AT);
+		cerr << "[W] Attempting to write a dataset that contains no fields to file \"" + filename + "\"!\n";
+		return;
 	}
 
 	const size_t nr_of_lines = data.size() / (nr_of_fields-1);
 	if ((nr_of_lines != vec_timestamp.size()) || ((data.size() % (nr_of_fields-1)) != 0))
-		throw SMETException("Inconsistency between vec_timestamp and data detected for file \""+filename+"\", recheck your data", SMET_AT);
+		throw SMETException("Inconsistency between the number of timestamp and number of data points detected for file \""+filename+"\", recheck your data", SMET_AT);
 
 	std::vector<double> current_data(nr_of_fields-1);
 	check_formatting();

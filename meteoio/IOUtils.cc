@@ -450,10 +450,10 @@ size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecSt
 	while (!iss.eof()) {
 		iss >> std::skipws >> tmp_string;
 
-		if (tmp_string != "") {
+		if (!tmp_string.empty()) {
 			vecString.push_back(tmp_string);
+			tmp_string.clear();
 		}
-		tmp_string.clear();
 	}
 
 	return vecString.size();
@@ -480,7 +480,7 @@ const char NUM[] = "0123456789";
 template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
-	std::string s = str;
+	std::string s(str);
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	t = s;
@@ -489,7 +489,7 @@ template<> bool convertString<std::string>(std::string& t, const std::string& st
 
 template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s = str;
+	std::string s(str);
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	if (toupper(s[0])=='T' || toupper(s[0])=='Y' ) {
@@ -510,7 +510,7 @@ template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_ba
 	if (pos != std::string::npos) {
 		std::string tmp = s.substr(pos);
 		trim(tmp);
-		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
+		if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
 			return false;
 		}
 	}
@@ -520,9 +520,9 @@ template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_ba
 
 template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s = str;
+	std::string s(str);
 	trim(s); //delete trailing and leading whitespaces and tabs
-	if (s.size() == 0) {
+	if (s.empty()) {
 		t = unodata;
 		return true;
 	} else {
@@ -537,7 +537,7 @@ template<> bool convertString<unsigned int>(unsigned int& t, const std::string& 
 		std::string tmp;
 		getline(iss,  tmp); //get rest of line, if any
 		trim(tmp);
-		if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {
+		if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {
 			//if line holds more than one value it's invalid
 			return false;
 		}
@@ -547,7 +547,7 @@ template<> bool convertString<unsigned int>(unsigned int& t, const std::string& 
 
 bool convertString(Date& t, const std::string& str, const double& time_zone, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s = str;
+	std::string s(str);
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	(void)f;
@@ -605,7 +605,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 
 	std::string tmp(rest);
 	trim(tmp);
-	if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
+	if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
 		return false;
 	}
 
@@ -614,7 +614,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 
 template<> bool convertString<Coords>(Coords& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
-	std::string s = str;
+	std::string s(str);
 	trim(s); //delete trailing and leading whitespaces and tabs
 
 	(void)f;
@@ -677,9 +677,6 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
 	if (exactmatch){
-		//first = 1; last = vecM.size()-1;
-		//size_t first = 1, last = vecM.size()-1;
-
 		//perform binary search
 		while (first <= last) {
 			const size_t mid = (first + last) / 2;  // compute mid point
@@ -691,7 +688,6 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 				return mid;                        // found it. return position
 		}
 	} else {
-		//first = 0; last = vecM.size()-1;
 		//perform binary search
 		while (first <= last) {
 			const size_t mid = (first + last) / 2;  // compute mid point
@@ -706,7 +702,6 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 				last = mid - 1;                    // repeat search in bottom half
 			else
 				return mid;                        // found it. return position
-
 		}
 	}
 
@@ -753,7 +748,7 @@ void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 	const file_index elem(i_date, i_pos);
 
 	//check if we can simply append the new index
-	if(vec_size==0 || elem>vecIndex[vec_size-1]) {
+	if(vecIndex.empty() || elem>vecIndex[vec_size-1]) {
 		vecIndex.push_back(elem);
 		return;
 	}
@@ -802,7 +797,7 @@ std::streampos FileIndexer::getIndex(const double& i_date) const
 size_t FileIndexer::binarySearch(const Date& soughtdate) const
 {//perform binary search, return the first element that is GREATER than the provided value
 	const size_t vec_size = vecIndex.size();
-	if(vec_size==0) return static_cast<size_t>(-1);
+	if(vecIndex.empty()) return static_cast<size_t>(-1);
 	if(soughtdate<vecIndex[0].date) return static_cast<size_t>(-1);
 	if(soughtdate>=vecIndex[vec_size-1].date) return vec_size-1;
 

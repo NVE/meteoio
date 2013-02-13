@@ -162,6 +162,49 @@ namespace Optim {
 		}
 	}
 
+	//see http://metamerist.com/cbrt/cbrt.htm
+	template <int n>
+	inline float nth_rootf(float x) {
+		const int ebits = 8;
+		const int fbits = 23;
+
+		int& i = (int&) x;
+		const int bias = (1 << (ebits-1))-1;
+		i = (i - (bias << fbits)) / n + (bias << fbits);
+
+		return x;
+	}
+
+	template <int n>
+	inline double nth_rootd(double x) {
+		const int ebits = 11;
+		const int fbits = 52;
+
+		long long& i = (long long&) x;
+		const long long bias = (1 << (ebits-1))-1;
+		i = (i - (bias << fbits)) / n + (bias << fbits);
+
+		return x;
+	}
+
+	/**
+	* @brief Optimized version of cubic root
+	* This version is based on a single iteration Halley's method (see https://en.wikipedia.org/wiki/Halley%27s_method)
+	* with a seed provided by a bit hack approximation. It should offer 15-16 bits precision and be three times
+	* faster than pow(x, 1/3).
+	* Source: http://metamerist.com/cbrt/cbrt.htm
+	*
+	* Please benchmark your code before deciding to use this!!
+	* @param x argument
+	* @return x^(1/3)
+	*/
+	inline double cbrt(double x) {
+		const double a = nth_rootd<3>(x);
+		const double a3 = a*a*a;
+		const double b = a * ( a3 + x + x) / ( a3 + a3 + x );
+		return b; //single iteration, otherwise set a=b and do it again
+	}
+
 }
 
 } //end namespace
