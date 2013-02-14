@@ -224,7 +224,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		//Read one line after the other and parse values into Grid2DObject
 		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln);
-			if(line=="") { //so we can tolerate empty lines
+			if(line.empty()) { //so we can tolerate empty lines
 				kk++; //to keep the same kk at the next iteration
 				nr_empty++;
 				continue;

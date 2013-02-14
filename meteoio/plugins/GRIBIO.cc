@@ -175,12 +175,12 @@ void GRIBIO::readStations(std::vector<Coords> &vecPoints)
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 		IOUtils::stripComments(current_station);
 
-		if (current_station != "") {
+		if (!current_station.empty()) {
 			addStation(current_station, vecPoints);
 			std::cerr <<  "\tRead virtual station " << vecPoints.back().printLatLon() << "\n";
 		}
 		current_stationnr++;
-	} while (current_station != "");
+	} while (!current_station.empty());
 }
 
 void GRIBIO::addStation(const std::string& coord_spec, std::vector<Coords> &vecPoints)
@@ -849,7 +849,7 @@ bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats,
 		vecPoints.erase(vecPoints.begin()+index);
 	}
 
-	if(deletions.size()>0) return true;
+	if(!deletions.empty()) return true;
 	return false;
 }
 

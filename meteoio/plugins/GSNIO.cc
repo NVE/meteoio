@@ -101,7 +101,7 @@ void GSNIO::initGSNConnection(){
 	//default timezone
 	string tmp_timezone;
 	cfg.getValue("TIME_ZONE", "Input", tmp_timezone, Config::nothrow);
-	if (tmp_timezone != ""){
+	if (!tmp_timezone.empty()){
 		IOUtils::convertString(default_timezone, tmp_timezone);
 	}
 
@@ -109,7 +109,7 @@ void GSNIO::initGSNConnection(){
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
 
 	cfg.getValue("ENDPOINT", "INPUT", endpoint, Config::nothrow);
-	if (endpoint != ""){
+	if (!endpoint.empty()){
 		gsn.soap_endpoint = endpoint.c_str();
 		cerr << "\tUsing GSN Endpoint: " << endpoint << "\n";
 	}
@@ -122,14 +122,14 @@ void GSNIO::initGSNConnection(){
 	 */
 	try {
 		cfg.getValue("PROXY", "INPUT", hostname, Config::nothrow);
-		if (hostname == "") return;
+		if (hostname.empty()) return;
 		cfg.getValue("PROXYPORT", "INPUT", port, Config::nothrow);
-		if (port == "") return;
+		if (port.empty()) return;
 
 		if (!IOUtils::convertString(proxyport, port, std::dec))
-			throw ConversionFailedException("", AT);
+			throw ConversionFailedException(std::string(), AT);
 		if (proxyport < 1)
-			throw IOException("",AT);
+			throw IOException(std::string(),AT);
 
 		gsn.proxy_host = hostname.c_str();
 		gsn.proxy_port = proxyport;
@@ -178,7 +178,7 @@ void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 
-	if (vecMeta.size() == 0)
+	if (vecMeta.empty())
 		readMetaData();
 
 	vecStation = vecMeta;
@@ -188,10 +188,10 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                           std::vector< std::vector<MeteoData> >& vecMeteo,
                           const size_t& stationindex)
 {
-	if (vecMeta.size() == 0)
+	if (vecMeta.empty())
 		readMetaData();
 
-	if (vecMeta.size() == 0) //if there are no stations -> return
+	if (vecMeta.empty()) //if there are no stations -> return
 		return;
 
 	unsigned int indexStart=0, indexEnd=vecMeta.size();
@@ -224,7 +224,7 @@ void GSNIO::readMetaData()
 {
 	vecMeta.clear();
 
-	if (vecStationName.size() == 0)
+	if (vecStationName.empty())
 		readStationNames(); //reads station names into vector<string> vecStationName
 
 	for (size_t ii=0; ii<vecStationName.size(); ii++) {
@@ -467,15 +467,15 @@ void GSNIO::readStationNames()
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
-		if (current_station != ""){
+		if (!current_station.empty()){
 			vecStationName.push_back(current_station); //add station name to vector of all station names
 			cerr << "\tRead stationname '" << current_station << "'\n";
 		}
 
 		current_stationnr++;
-	} while (current_station != "");
+	} while (!current_station.empty());
 
-	if (vecStationName.size() == 0){
+	if (vecStationName.empty()){
 		//just take all sensors available
 		listSensors(vecStationName);
 	}

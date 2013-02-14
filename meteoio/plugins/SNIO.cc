@@ -261,7 +261,7 @@ std::string SNIO::getStationID(const std::string& filename)
 
 		getline(fin, line, eoln);      //read complete line meta information, parse it
 		const size_t ncols = IOUtils::readLineToVec(line, tmpvec); //split up line (whitespaces are delimiters)
-		if ((ncols != 3) || (tmpvec.at(0) != "MTO") || (tmpvec.at(1).size() < 3) || (tmpvec.at(1)[0] != '<') || (tmpvec.at(1)[tmpvec.at(1).length()-1] != '>'))
+		if ((ncols != 3) || (tmpvec.at(0) != "MTO") || (tmpvec.at(1).size() < 3) || (tmpvec.at(1)[0] != '<') || (tmpvec.at(1)[tmpvec.at(1).length()-1] != '>')) //in c++11: .front() and .back()
 			throw InvalidFormatException(filename + ": first line in invalid format", AT);
 
 		//Now get the 2nd column looking something like <{STATIONNAME}Data>
@@ -299,15 +299,15 @@ void SNIO::readMetaData()
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
-		if ((current_stationnr == 1) && (current_station == ""))
+		if ((current_stationnr == 1) && (current_station.empty()))
 			throw InvalidFormatException("Missing key \"STATION1\" in config: Please specify a SNOWPACK formatted meteo data file", AT);
 
-		if (current_station != ""){
+		if (!current_station.empty()){
 			if(IOUtils::getExtension(current_station)=="") current_station += dflt_extension; //default extension
 			string station_id = getStationID(inpath+ "/" +current_station);
 
 			StationData sd(Coords(), station_id);
-			if (metafile!="") { //a metafile has been provided, so get metadata
+			if (!metafile.empty()) { //a metafile has been provided, so get metadata
 				if (readStationMetaData(inpath+ "/" +metafile, station_id, sd) == false) {
 					stringstream msg;
 					msg << "No metadata found for station " << station_id << " in " << metafile;
@@ -315,11 +315,10 @@ void SNIO::readMetaData()
 				}
 			}
 			vecAllStations.push_back(sd);
-			//cerr << "[i] Read meta data for station ID \"" << station_id << "\"\n";
 		}
 
 		current_stationnr++;
-	} while (current_station != "");
+	} while (!current_station.empty());
 }
 
 void SNIO::parseMetaDataLine(const std::vector<std::string>& vecLine, StationData& sd)
@@ -579,9 +578,9 @@ void SNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
 	cfg.getValue("METEOPATH", "Output", outpath);
 
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
-		if (vecMeteo[ii].size() > 0) {
-			std::string station_id = vecMeteo[ii][0].meta.getStationID();
-			if (station_id == "") station_id = "UNKNOWN";
+		if (!vecMeteo[ii].empty()) {
+			std::string station_id = vecMeteo[ii].front().meta.getStationID();
+			if (station_id.empty()) station_id = "UNKNOWN";
 			const std::string output_name = outpath + "/" + station_id + ".inp";
 			if( !IOUtils::fileExists(output_name) ) {
 				fout.open(output_name.c_str());

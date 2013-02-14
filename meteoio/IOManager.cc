@@ -159,7 +159,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 		for (size_t ii=0; ii<filtered_cache.size(); ii++){ //loop over stations
 			size_t startpos = IOUtils::seek(start_date, filtered_cache[ii], false);
 			if (startpos == IOUtils::npos){
-				if (filtered_cache[ii].size() > 0){
+				if (!filtered_cache[ii].empty()){
 					if (filtered_cache[ii][0].date <= end_date){
 						startpos = 0;
 					}
@@ -168,11 +168,10 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 
 			if (startpos != IOUtils::npos){
 				vec_meteo.push_back(vector<MeteoData>());
-				const size_t index = vec_meteo.size()-1;
 				for (size_t jj=startpos; jj<filtered_cache[ii].size(); jj++){
 					const MeteoData& md = filtered_cache[ii][jj];
 					if (md.date <= end_date){
-						vec_meteo[index].push_back(md);
+						vec_meteo.back().push_back(md);
 					} else {
 						break;
 					}
@@ -189,9 +188,8 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 void IOManager::add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo)
 {
 	//Check cache size, delete oldest elements if necessary
-	if (point_cache.size() > 200){
+	if (point_cache.size() > 2000){
 		point_cache.clear();
-		//point_cache.erase(point_cache.begin(), point_cache.begin()+50);
 	}
 
 	point_cache[i_date] = vecMeteo;
@@ -219,7 +217,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 
 
 	//2.  Check which data point is available, buffered locally
-	map<Date, vector<MeteoData> >::const_iterator it = point_cache.find(i_date);
+	const map<Date, vector<MeteoData> >::const_iterator it = point_cache.find(i_date);
 	if (it != point_cache.end()){
 		vecMeteo = it->second;
 		return vecMeteo.size();
@@ -506,10 +504,10 @@ std::string IOManager::toString() const {
 	//display filtered_cache
 	os << "Filteredcache content (" << filtered_cache.size() << " stations)\n";
 	for(size_t ii=0; ii<filtered_cache.size(); ii++) {
-		if (filtered_cache[ii].size() > 0){
-			os << std::setw(10) << filtered_cache[ii][0].meta.stationID << " = "
-			   << filtered_cache[ii][0].date.toString(Date::ISO) << " - "
-			   << filtered_cache[ii][filtered_cache[ii].size()-1].date.toString(Date::ISO) << ", "
+		if (!filtered_cache[ii].empty()){
+			os << std::setw(10) << filtered_cache[ii].front().meta.stationID << " = "
+			   << filtered_cache[ii].front().date.toString(Date::ISO) << " - "
+			   << filtered_cache[ii].back().date.toString(Date::ISO) << ", "
 			   << filtered_cache[ii].size() << " timesteps" << endl;
 		}
 	}

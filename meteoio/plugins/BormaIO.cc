@@ -118,7 +118,7 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                             std::vector< std::vector<MeteoData> >& vecMeteo,
                             const size_t& stationindex)
 {
-	if (vecStationName.size() == 0)
+	if (vecStationName.empty())
 		readStationNames(); //reads station names into vector<string> vecStationName
 
 	unsigned int indexStart=0, indexEnd=vecStationName.size();
@@ -132,7 +132,7 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			indexStart = stationindex;
 			indexEnd   = stationindex+1;
 		} else {
-			throw IndexOutOfBoundsException("", AT);
+			throw IndexOutOfBoundsException(std::string(), AT);
 		}
 	}
 
@@ -155,11 +155,11 @@ void BormaIO::readStationNames()
 		ss << "STATION" << counter;
 		cfg.getValue(ss.str(), "Input", stationname, Config::nothrow);
 
-		if (stationname != ""){
+		if (!stationname.empty()){
 			vecStationName.push_back(stationname);
 		}
 		counter++;
-	} while (stationname != "");
+	} while (!stationname.empty());
 
 	nr_stations = counter - 1;
 }
@@ -222,14 +222,14 @@ bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
 	std::vector<Date> vecDate;
 
 	if (stationnr >= vecMeteo.size()) {
-		throw IndexOutOfBoundsException("", AT);
+		throw IndexOutOfBoundsException(std::string(), AT);
 	}
 
 	vecMeteo[stationnr].clear();
 
 	getFiles(vecStationName[stationnr], dateStart, dateEnd, vecFiles, vecDate);
 
-	if (vecFiles.size()==0) { //No files in range between dateStart and dateEnd
+	if (vecFiles.empty()) { //No files in range between dateStart and dateEnd
 		return false;
 	}
 
@@ -356,7 +356,7 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 
 void BormaIO::xmlParseStringToDouble(const std::string& str_in, double& d_out, const std::string& parname)
 {
-	if (str_in!="") {//do nothing if empty content for a node was read
+	if (!str_in.empty()) {//do nothing if empty content for a node was read
 		if (!IOUtils::convertString(d_out, str_in, std::dec)) {//but if content of node is not empty, try conversion
 			throw ConversionFailedException("Error while reading value for " + parname, AT);
 		}
@@ -375,7 +375,7 @@ std::string BormaIO::xmlGetNodeContent(xmlpp::Node* pNode, const std::string& no
 		}
 	}
 
-	return std::string("");
+	return std::string();
 }
 
 

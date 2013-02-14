@@ -87,7 +87,7 @@ size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::stri
 	while(!fin.eof()) {
 		getline(fin, line);
 		IOUtils::trim(line);
-		if(line.size()>0 && line.at(0)!='#') {
+		if(!line.empty() && line.at(0)!='#') {
 			return IOUtils::readLineToVec(line, vecString);
 		}
 	}

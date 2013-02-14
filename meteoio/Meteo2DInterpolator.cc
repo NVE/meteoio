@@ -162,7 +162,7 @@ size_t Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname
 	if (vecKeys.size() > 1)
 		throw IOException("Multiple definitions of " + parname + "::algorithms in config file", AT);;
 
-	if (vecKeys.size() == 0)
+	if (vecKeys.empty())
 		return 0;
 
 

@@ -17,6 +17,7 @@
 */
 #include <meteoio/Date.h>
 #include <meteoio/IOUtils.h>
+#include <meteoio/MathOptim.h>
 #include <cmath>
 
 using namespace std;
@@ -772,6 +773,62 @@ std::ostream& operator<<(std::ostream &os, const Date &date) {
 }
 
 /**
+* @brief Parse an ISO 8601 formatted time zone specification.
+* Time zones MUST be specified right after a date/time/combined representation
+* according to the following formats:
+*   - 'Z' like in 2013-02-13T19:43Z, meaning GMT
+*   - '+01' like in 2013-02-13T20:43+01 meaning GMT+1
+*   - '+0130' like in 2013-02-13T21:13+0130 meaning GMT+1.5
+*   - '-0515' like in 2013-02-13T15:28-0515 meaning GMT-5.25
+* See https://en.wikipedia.org/wiki/ISO_8601 for more information
+* @param timezone_iso time zone string
+* @return time zone/shift in hours
+*/
+double Date::parseTimeZone(const std::string& timezone_iso)
+{
+	if(timezone_iso=="Z") { //time as Z
+		return 0.;
+	} else if(timezone_iso[0]=='+' || timezone_iso[0]=='-') {
+		const char *c_str = timezone_iso.c_str();
+		const size_t str_size = timezone_iso.size();
+		switch(str_size) {
+			case 6: { //timezone as +01:00
+				int tz_h, tz_min;
+				if( sscanf(c_str, "%d:%d", &tz_h, &tz_min) == 2 ) {
+					//if there is a "-", apply it to the minutes
+					if(tz_h>=0.)
+						return (double)tz_h + (double)tz_min/60.;
+					else
+						return (double)tz_h - (double)tz_min/60.;
+				} else {
+					return IOUtils::nodata;
+				}
+			}
+			case 5: { //timezone as +0100
+				int tz_tmp;
+				if( sscanf(c_str, "%d", &tz_tmp) == 1 ) {
+					const int tz_h = tz_tmp/100;
+					const int tz_min = tz_tmp-100*tz_h;
+					return (double)tz_h + (double)tz_min/60.;
+				} else {
+					return IOUtils::nodata;
+				}
+			}
+			case 3: { //timezone as -01
+				int tz_h;
+				if( sscanf(c_str, "%d", &tz_h) == 1 )
+					return (double)tz_h;
+				else
+					return IOUtils::nodata;
+			}
+		}
+		return IOUtils::nodata;
+	} else {
+		return IOUtils::nodata;
+	}
+}
+
+/**
 * @brief Return a nicely formated string.
 * @param type select the formating to apply (see the definition of Date::FORMATS)
 * @param gmt convert returned value to GMT? (default: false)
@@ -798,21 +855,39 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 	}
 
 	stringstream tmpstr;
-	if(type==ISO) {
+	switch(type) {
+		case(ISO_TZ):
+		case(ISO):
 			tmpstr
 			<< setw(4) << setfill('0') << year_out << "-"
 			<< setw(2) << setfill('0') << month_out << "-"
 			<< setw(2) << setfill('0') << day_out << "T"
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out;
-	} else if(type==NUM) {
+			if(type==ISO_TZ) {
+				int tz_h, tz_min;
+				if(timezone>=0.) {
+					tz_h = static_cast<int>(timezone);
+					tz_min = static_cast<int>( (timezone - (double)tz_h)*60. + .5 ); //round to closest
+					tmpstr << "+";
+				} else {
+					tz_h = -static_cast<int>(timezone);
+					tz_min = -static_cast<int>( (timezone + (double)tz_h)*60. + .5 ); //round to closest
+					tmpstr << "-";
+				}
+				tmpstr << setw(2) << setfill('0') << tz_h << ":"
+				<< setw(2) << setfill('0') << tz_min;
+			}
+			break;
+		case(NUM):
 			tmpstr
 			<< setw(4) << setfill('0') << year_out
 			<< setw(2) << setfill('0') << month_out
 			<< setw(2) << setfill('0') << day_out
 			<< setw(2) << setfill('0') << hour_out
 			<< setw(2) << setfill('0') << minute_out ;
-	} else if(type==FULL) {
+			break;
+		case(FULL):
 			tmpstr
 			<< setw(4) << setfill('0') << year_out << "-"
 			<< setw(2) << setfill('0') << month_out << "-"
@@ -821,15 +896,17 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << minute_out << " ("
 			<< setprecision(10) << julian_out << ") GMT"
 			<< setw(2) << setfill('0') << showpos << timezone << noshowpos;
-	} else if(type==DIN) {
+			break;
+		case(DIN):
 			tmpstr
 			<< setw(2) << setfill('0') << day_out << "."
 			<< setw(2) << setfill('0') << month_out << "."
 			<< setw(4) << setfill('0') << year_out << " "
 			<< setw(2) << setfill('0') << hour_out << ":"
 			<< setw(2) << setfill('0') << minute_out;
-	} else {
-		throw InvalidArgumentException("Wrong date conversion format requested", AT);
+			break;
+		default:
+			throw InvalidArgumentException("Wrong date conversion format requested", AT);
 	}
 
 	return tmpstr.str();

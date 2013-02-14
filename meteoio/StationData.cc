@@ -23,7 +23,7 @@ using namespace std;
 namespace mio {
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
-StationData::StationData() : position("NULL", "NULL"), stationID(""), stationName(""),
+StationData::StationData() : position("NULL", "NULL"), stationID(), stationName(),
                              slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
 StationData::StationData(const Coords& i_position, const std::string& i_id, const std::string& i_name) : position(i_position), stationID(i_id), stationName(i_name), slope(IOUtils::nodata), azi(IOUtils::nodata)
@@ -75,8 +75,8 @@ StationData StationData::merge(const StationData& sd1, const StationData& sd2) {
 }
 
 void StationData::merge(const StationData& sd2) {
-	if(stationID=="") stationID=sd2.stationID;
-	if(stationName=="") stationName=sd2.stationName;
+	if(stationID.empty()) stationID=sd2.stationID;
+	if(stationName.empty()) stationName=sd2.stationName;
 	if(slope==IOUtils::nodata) slope=sd2.slope;
 	if(azi==IOUtils::nodata) azi=sd2.azi;
 	position.merge(sd2.position);

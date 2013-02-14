@@ -87,8 +87,7 @@ bool Config::keyExists(const std::string& key, const std::string& section) const
 std::ostream& operator<<(std::ostream &os, const Config& cfg)
 {
 	os << "<Config>\n";
-	map<string,string>::const_iterator it;
-	for (it=cfg.properties.begin(); it != cfg.properties.end(); ++it){
+	for (map<string,string>::const_iterator it = cfg.properties.begin(); it != cfg.properties.end(); ++it){
 		os << (*it).first << " -> " << (*it).second << "\n";
 	}
 	os << "</Config>\n";
@@ -121,7 +120,7 @@ void Config::parseFile(const std::string& filename)
 		throw FileAccessException(filename, AT);
 	}
 
-	std::string line="", section=defaultSection;
+	std::string line, section=defaultSection;
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 	unsigned int linenr = 0;
 
@@ -143,9 +142,8 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 {
 	//First thing cut away any possible comments (may start with "#" or ";")
 	IOUtils::stripComments(line);
-
 	IOUtils::trim(line);    //delete leading and trailing whitespace characters
-	if (line.length() == 0) //ignore empty lines
+	if (line.empty()) //ignore empty lines
 		return;
 
 	stringstream tmp;       //stringstream to convert the unsigned int linenr into a string
@@ -179,7 +177,7 @@ size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& 
 {
 	vecResult.clear();
 
-	if (section.length() == 0) //enforce the default section if user tries to give empty section string
+	if (section.empty()) //enforce the default section if user tries to give empty section string
 		section = defaultSection;
 
 	const string tmp_keystart = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keystart);

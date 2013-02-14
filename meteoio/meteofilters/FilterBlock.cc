@@ -27,7 +27,7 @@ FilterBlock::~FilterBlock() {}
 
 bool FilterBlock::is_soft(std::vector<std::string>& vec_args) {
 	if (!vec_args.empty()){
-		if (vec_args[0] == "soft"){
+		if (vec_args.front() == "soft"){
 			vec_args.erase(vec_args.begin());
 			return true;
 		}

@@ -162,7 +162,7 @@ void SMETIO::parseInputOutputSection()
 			ss << "STATION" << counter;
 			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
 
-			if (filename != ""){
+			if (!filename.empty()){
 				if(IOUtils::getExtension(filename)=="") filename += dflt_extension; //default extension
 				stringstream file_and_path;
 				file_and_path << inpath << "/" << filename;
@@ -172,7 +172,7 @@ void SMETIO::parseInputOutputSection()
 				vecFiles.push_back(file_and_path.str());
 			}
 			counter++;
-		} while (filename != "");
+		} while (!filename.empty());
 
 		nr_stations = counter - 1;
 
@@ -190,10 +190,10 @@ void SMETIO::parseInputOutputSection()
 	cfg.getValue("METEOPATH", "Output", outpath, Config::nothrow);
 	cfg.getValue("METEOPARAM", "Output", vecArgs, Config::nothrow); //"ASCII|BINARY GZIP"
 
-	if (outpath == "")
+	if (outpath.empty())
 		return;
 
-	if (vecArgs.size() == 0)
+	if (vecArgs.empty())
 		vecArgs.push_back("ASCII");
 
 	if (vecArgs.size() > 2)
@@ -475,7 +475,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		sd.position.setProj(coordout, coordoutparam);
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);
 
-		if (sd.stationID == ""){
+		if (sd.stationID.empty()){
 			stringstream ss;
 			ss << "Station" << ii+1;
 			sd.stationID = ss.str();
@@ -562,7 +562,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	stringstream ss;
 
 	mywriter.set_header_value("station_id", sd.stationID);
-	if (sd.stationName != "")
+	if (!sd.stationName.empty())
 		mywriter.set_header_value("station_name", sd.stationName);
 	mywriter.set_header_value("nodata", IOUtils::nodata);
 
@@ -717,7 +717,7 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 	 * true is returned, otherwise false
 	 */
 
-	if (vecMeteo.size() > 0) //to get the station data even when in bug 87 conditions
+	if (!vecMeteo.empty()) //to get the station data even when in bug 87 conditions
 		sd = vecMeteo[0].meta;
 
 	for (size_t ii=1; ii<vecMeteo.size(); ii++){

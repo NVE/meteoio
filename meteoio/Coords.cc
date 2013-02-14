@@ -207,7 +207,7 @@ void Coords::merge(const Coords& coord2) {
 	if(distance_algo==IOUtils::nodata) distance_algo=coord2.distance_algo;
 
 	//in LOCAL projection, the check for the existence of the ref point will be done in the projection functions
-	if(coordsystem=="LOCAL" && coordparam!="") {
+	if(coordsystem=="LOCAL" && !coordparam.empty()) {
 		parseLatLon(coordparam, ref_latitude, ref_longitude);
 	}
 	if(latitude!=IOUtils::nodata && coordsystem!="NULL") {
@@ -284,7 +284,7 @@ Coords::Coords(const double& in_lat_ref, const double& in_long_ref) :
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
                    grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
-                   coordsystem("LOCAL"), coordparam(""), distance_algo(GEO_COSINE)
+                   coordsystem("LOCAL"), coordparam(), distance_algo(GEO_COSINE)
 {
 	//setDefaultValues();
 	setLocalRef(in_lat_ref, in_long_ref);
@@ -515,13 +515,13 @@ void Coords::setProj(const std::string& in_coordinatesystem, const std::string& 
 		convert_to_WGS84(easting, northing, latitude, longitude);
 	}
 
-	if(in_coordinatesystem == "") {
+	if(in_coordinatesystem.empty()) {
 		coordsystem = std::string("NULL");
 	} else {
 		coordsystem = in_coordinatesystem;
 	}
 	coordparam  = in_parameters;
-	if(coordsystem=="LOCAL" && coordparam!="") {
+	if(coordsystem=="LOCAL" && !coordparam.empty()) {
 		parseLatLon(coordparam, ref_latitude, ref_longitude);
 	}
 

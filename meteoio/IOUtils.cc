@@ -136,12 +136,12 @@ std::string cleanPath(const std::string& in_path) {
 
 std::string getExtension(const std::string& filename)
 {
-	const std::string whitespaces(" \t\f\v\n\r");
 	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
 	const size_t startpos = filename.find_last_of('.');
-	if( startpos==std::string::npos ) return std::string("");
-	if( start_basename!=std::string::npos && startpos<start_basename ) return std::string("");
+	if( startpos==std::string::npos ) return std::string();
+	if( start_basename!=std::string::npos && startpos<start_basename ) return std::string();
 
+	const std::string whitespaces(" \t\f\v\n\r");
 	const size_t endpos = filename.find_last_not_of(whitespaces); // Find the first character position from reverse af
 
 	return filename.substr(startpos+1, endpos-startpos);
@@ -165,7 +165,8 @@ void trim(std::string& str)
 
 	// if all spaces or empty return an empty string
 	if(startpos!=std::string::npos && endpos!=std::string::npos) {
-		str = str.substr( startpos, endpos-startpos+1 );
+		str.erase(endpos+1); //right trim
+		str.erase(0, startpos); //left trim
 	} else {
 		str.clear();
 	}
@@ -214,7 +215,7 @@ bool isNumeric(std::string str, const unsigned int& nBase)
 bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
                                std::map<std::string,std::string>& out_map, const std::string& keyprefix, const bool& setToUpperCase)
 {
-	size_t pos = std::string::npos;
+	size_t pos;
 	if ((delimiter==" ") || (delimiter=="\t")) {
 		pos = in_line.find_first_of(" \t", 0);
 	} else {
@@ -229,7 +230,7 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
 		trim(key);
 		trim(value);
 
-		if ((key == "") || (value=="")) {
+		if (key.empty() || value.empty()) {
 			return false;
 		}
 
@@ -263,9 +264,6 @@ bool fileExists(const std::string& filename)
 
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
 {
-	WIN32_FIND_DATA ffd;
-	HANDLE hFind = INVALID_HANDLE_VALUE;
-
 	const size_t path_length = path.length();
 	if (path_length > (MAX_PATH - 3)) {
 		std::cerr << "Path " << path << "is too long (" << path_length << " characters)" << std::endl;
@@ -273,7 +271,8 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 	}
 
 	const std::string filepath = path+"\\"+pattern;
-	hFind = FindFirstFile(filepath.c_str(), &ffd);
+	WIN32_FIND_DATA ffd;
+	const HANDLE hFind = FindFirstFile(filepath.c_str(), &ffd);
 	if (INVALID_HANDLE_VALUE == hFind) {
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
@@ -309,17 +308,16 @@ bool fileExists(const std::string& filename)
 
 void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern)
 {
-	DIR *dp;
-	struct dirent *dirp;
-
-	if((dp  = opendir(path.c_str())) == NULL) {
+	DIR *dp = opendir(path.c_str());
+	if(dp == NULL) {
 		throw FileAccessException("Error opening directory " + path, AT);
 	}
 
+	struct dirent *dirp;
 	while ((dirp = readdir(dp)) != NULL) {
 		const std::string tmp(dirp->d_name);
 		if( tmp.compare(".")!=0 && tmp.compare("..")!=0 ) { //skip "." and ".."
-			if (pattern=="") {
+			if (pattern.empty()) {
 				dirlist.push_back(tmp);
 			} else {
 				const size_t pos = tmp.find(pattern);
@@ -480,10 +478,8 @@ const char NUM[] = "0123456789";
 template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	(void)f;
-	std::string s(str);
-	trim(s); //delete trailing and leading whitespaces and tabs
-
-	t = s;
+	t = str;
+	trim(t); //delete trailing and leading whitespaces and tabs
 	return true;
 }
 
@@ -552,61 +548,107 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 
 	(void)f;
 	int year;
-	unsigned int month, day, hour, minute, second;
+	unsigned int month, day, hour, minute;
+	double second;
 	char rest[32] = "";
 
 	//HACK: we read the seconds, but we ignore them...
-	if (sscanf(s.c_str(), "%d-%u-%u %u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
-		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%d-%u-%uT%u:%u:%u%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
-		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%d-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%d-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
-		t.setDate(year, month, day, hour, minute, time_zone);
-	} else if (sscanf(s.c_str(), "%d-%u-%u%31s", &year, &month, &day, rest) >= 3) {
-		t.setDate(year, month, day, (unsigned)0, (unsigned)0, time_zone);
-	} else if (sscanf(s.c_str(), "%u:%u%31s", &hour, &minute, rest) >= 2) {
-		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. , time_zone);
+	const char *c_str = s.c_str();
+	if (sscanf(c_str, "%d-%u-%u %u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
+		std::string timezone_iso(rest);
+		stripComments(timezone_iso);
+		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
+		if(tz==nodata) return false;
+		t.setDate(year, month, day, hour, minute, tz);
+		return true;
+
+	} else if (sscanf(c_str, "%d-%u-%uT%u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) { //ISO
+		std::string timezone_iso(rest);
+		stripComments(timezone_iso);
+		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
+		if(tz==nodata) return false;
+		t.setDate(year, month, day, hour, minute, tz);
+		return true;
+
+	} else if (sscanf(c_str, "%d-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
+		std::string timezone_iso(rest);
+		stripComments(timezone_iso);
+		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
+		if(tz==nodata) return false;
+		t.setDate(year, month, day, hour, minute, tz);
+		return true;
+
+	} else if (sscanf(c_str, "%d-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
+		std::string timezone_iso(rest);
+		stripComments(timezone_iso);
+		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
+		if(tz==nodata) return false;
+		t.setDate(year, month, day, hour, minute, tz);
+		return true;
+
+	} else if (sscanf(c_str, "%d-%u-%u%31s", &year, &month, &day, rest) >= 3) {
+		std::string timezone_iso(rest);
+		stripComments(timezone_iso);
+		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
+		if(tz==nodata) return false;
+		t.setDate(year, month, day, (unsigned)0, (unsigned)0, tz);
+		return true;
+
+	} else if (sscanf(c_str, "%u:%u%31s", &hour, &minute, rest) >= 2) {
+		std::string timezone_iso(rest);
+		stripComments(timezone_iso);
+		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
+		if(tz==nodata) return false;
+		t.setDate( ((double)hour)/24. + ((double)minute)/24./60. , tz);
+		return true;
+
 	} else {
 		//try to read purely numerical date, potentially surrounded by other chars
-		const size_t in_len = str.length();
-		const size_t beg = str.find_first_of(NUM);
-		if(beg==npos || beg==in_len) return false;
-		size_t end = str.find_first_not_of(NUM, beg+1);
-		if(end==npos) end = in_len;
+		//and potentially containing an ISO time zone string
+		const size_t in_len = s.length();
 
-		const std::string datum = str.substr(beg, end-beg);
-		const size_t d_len = datum.length();
-		if(d_len<10 || d_len>14) return false;
-		if( convertString(year,datum.substr(0,4))==false ) return false;
-		if( convertString(month,datum.substr(4,2))==false ) return false;
-		if( convertString(day,datum.substr(6,2))==false ) return false;
-		if( convertString(hour,datum.substr(8,2))==false ) return false;
-		if(d_len==10)
+		//extract date/time
+		const size_t date_beg = s.find_first_of(NUM);
+		if(date_beg==npos || date_beg==in_len) return false;
+		size_t date_end = s.find_first_not_of(NUM, date_beg+1);
+		if(date_end==npos) date_end = in_len;
+		const std::string date = s.substr(date_beg, date_end-date_beg);
+
+		//parse date/time
+		const size_t date_len = date.length();
+		if(date_len<10 || date_len>14) return false;
+		if( convertString(year,date.substr(0,4))==false ) return false;
+		if( convertString(month,date.substr(4,2))==false ) return false;
+		if( convertString(day,date.substr(6,2))==false ) return false;
+		if( convertString(hour,date.substr(8,2))==false ) return false;
+		if(date_len==10)
 			minute=0;
 		else {
-			if(d_len>=12) {
-				if( convertString(minute,datum.substr(10,2))==false ) return false;
+			if(date_len>=12) {
+				if( convertString(minute,date.substr(10,2))==false ) return false;
 			} else
 				return false;
-			if(d_len==12)
+			if(date_len==12)
 				second=0;
 			else {
-				if(d_len==14) {
-					if( convertString(second,datum.substr(12,2))==false ) return false;
+				if(date_len==14) {
+					if( convertString(second,date.substr(12,2))==false ) return false;
 				} else
 					return false;
 			}
 		}
 
-		t.setDate( year, month, day, hour, minute, time_zone );
-	}
+		//extract potential ISO time zone string
+		double tz = time_zone;
+		const size_t tz_beg = s.find_first_of("+-", date_end);
+		if(tz_beg!=npos && tz_beg!=in_len) {
+			size_t tz_end = s.find_first_not_of("0123456789:", date_end+1);
+			if(tz_end==npos) tz_end = in_len;
+			const std::string timezone_iso = s.substr(tz_beg, tz_end-tz_beg);
+			if(!timezone_iso.empty()) tz = Date::parseTimeZone(timezone_iso);
+		}
 
-	std::string tmp(rest);
-	trim(tmp);
-	if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
-		return false;
+		t.setDate( year, month, day, hour, minute, tz );
 	}
 
 	return true;
@@ -651,24 +693,24 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 		return npos;
 	}
 
-	size_t first = 0, last = vecM.size()-1;
-	const double start_val=vecM[first].date.getJulian(true);
-	const double end_val=vecM[last].date.getJulian(true);
+	const double start_val=vecM.front().date.getJulian(true);
+	const double end_val=vecM.back().date.getJulian(true);
 	const double curr_val = soughtdate.getJulian(true);
 
 	//if we reach this point: at least one element in buffer
-	if (vecM[first].date > soughtdate) {
+	if (vecM.front().date > soughtdate) {
 		return npos;
 	}
 
-	if (vecM[last].date < soughtdate) {//last element is earlier, return npos
+	if (vecM.back().date < soughtdate) {//last element is earlier, return npos
 		return npos;
 	}
 
-	if (vecM[first].date == soughtdate) {//closest element
+	if (vecM.front().date == soughtdate) {//closest element
 		return 0;
 	}
 
+	size_t first = 0, last = vecM.size()-1;
 	const double raw_pos = (curr_val-start_val) / (end_val-start_val);
 	const size_t start = MAX( (size_t)(floor(raw_pos*last*.8)), first);
 	const size_t end = MIN( (size_t)ceil(raw_pos*last*1.2), last);
@@ -744,11 +786,10 @@ void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers
 
 void FileIndexer::setIndex(const Date& i_date, const std::streampos& i_pos)
 {
-	const size_t vec_size = vecIndex.size();
 	const file_index elem(i_date, i_pos);
 
 	//check if we can simply append the new index
-	if(vecIndex.empty() || elem>vecIndex[vec_size-1]) {
+	if(vecIndex.empty() || elem>vecIndex.back()) {
 		vecIndex.push_back(elem);
 		return;
 	}
@@ -796,10 +837,9 @@ std::streampos FileIndexer::getIndex(const double& i_date) const
 
 size_t FileIndexer::binarySearch(const Date& soughtdate) const
 {//perform binary search, return the first element that is GREATER than the provided value
-	const size_t vec_size = vecIndex.size();
 	if(vecIndex.empty()) return static_cast<size_t>(-1);
-	if(soughtdate<vecIndex[0].date) return static_cast<size_t>(-1);
-	if(soughtdate>=vecIndex[vec_size-1].date) return vec_size-1;
+	if(soughtdate<vecIndex.front().date) return static_cast<size_t>(-1);
+	if(soughtdate>=vecIndex.back().date) return vecIndex.size()-1;
 
 	const file_index elem(soughtdate, 0);
 	//returns the first element that is GREATER than the provided value

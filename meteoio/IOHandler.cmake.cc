@@ -285,8 +285,8 @@ void IOHandler::readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo)
 
 	size_t emptycounter = 0;
 	for (size_t ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
-		if (meteoTmpBuffer[ii].size() > 0){
-			vecMeteo.push_back(meteoTmpBuffer[ii][0]);
+		if (!meteoTmpBuffer[ii].empty()){
+			vecMeteo.push_back(meteoTmpBuffer[ii].front());
 		} else {
 			emptycounter++;
 		}

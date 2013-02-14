@@ -74,10 +74,10 @@ size_t ProcessingStack::getFiltersForParameter(const Config& cfg, const std::str
 	 * by querying the Config object
 	 */
 	std::vector<std::string> vecKeys;
-	std::string tmp;
 	cfg.findKeys(vecKeys, parname+"::filter", "Filters");
 
-	for (size_t ii=0; ii<vecKeys.size(); ii++){		
+	for (size_t ii=0; ii<vecKeys.size(); ii++){
+		std::string tmp;
 		cfg.getValue(vecKeys[ii], "Filters", tmp, Config::nothrow);
 		vecFilters.push_back(tmp);
 	}
@@ -101,7 +101,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 	ovec.insert(ovec.begin(), ivec.size(), vector<MeteoData>());
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every station
-		if (ivec[ii].size() > 0){
+		if (!ivec[ii].empty()){
 			//pick one element and check whether the param_name parameter exists
 			const size_t param = ivec[ii][0].getParameterIndex(param_name);
 

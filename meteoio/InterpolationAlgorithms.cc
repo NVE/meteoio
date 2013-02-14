@@ -240,7 +240,7 @@ double ConstLapseRateAlgorithm::getQualityRating()
 	if (nrOfMeasurments == 0){
 		return 0.0;
 	} else if (nrOfMeasurments == 1){
-		if (vecArgs.size() > 0)
+		if (!vecArgs.empty())
 			return 0.9; //the laspe rate is provided
 		else
 			return 0.0; //no lapse rate is provided and it can not be computed
@@ -268,25 +268,24 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	double avgData = Interpol1D::arithmeticMean(vecData);
 
 	//Set regression coefficients
-	std::vector<double> vecCoefficients;
-	vecCoefficients.resize(4, 0.0);
+	std::vector<double> vecCoefficients(4, 0.0);
 
 	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
-	if (vecArgs.size() == 0) {
+	if (vecArgs.empty()) {
 		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
 	} else if (vecArgs.size() == 1) {
-		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+		IOUtils::convertString(vecCoefficients[1], vecArgs.front());
 	} else if (vecArgs.size() == 2) {
 		std::string extraArg;
 		IOUtils::convertString(extraArg, vecArgs[1]);
 		if(extraArg=="soft") { //soft
 			if(Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) {
 				vecCoefficients.assign(4, 0.0);
-				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+				IOUtils::convertString(vecCoefficients[1], vecArgs.front());
 			}
 		} else if(extraArg=="frac") {
 			funcptr = &Interpol2D::FracProject;
-			IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
+			IOUtils::convertString(vecCoefficients[1], vecArgs.front());
 		} else {
 			std::stringstream os;
 			os << "Unknown argument \"" << extraArg << "\" supplied for the CST_LAPSE algorithm";
@@ -354,11 +353,10 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;
 
 	//Set regression coefficients
-	std::vector<double> vecCoefficients;
-	vecCoefficients.resize(4, 0.0);
+	std::vector<double> vecCoefficients(4, 0.0);
 
 	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
-	if (vecArgs.size() == 0) { //force compute lapse rate
+	if (vecArgs.empty()) { //force compute lapse rate
 		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
 	} else if (vecArgs.size() == 1) { //force lapse rate
 		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
@@ -410,8 +408,7 @@ void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	//Set regression coefficients
-	std::vector<double> vecCoefficients;
-	vecCoefficients.resize(4, 0.0);
+	std::vector<double> vecCoefficients(4, 0.0);
 
 	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
 	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
@@ -479,8 +476,7 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 	}
 
 	//Krieging on Td
-	std::vector<double> vecCoefficients;
-	vecCoefficients.resize(4, 0.0);
+	std::vector<double> vecCoefficients(4, 0.0);
 
 	//run algorithm
 	Interpol2D::LinRegression(vecAltitudes, vecTd, vecCoefficients);
@@ -537,11 +533,10 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 
 	//Krieging on Td
-	std::vector<double> vecCoefficients;
-	vecCoefficients.resize(4, 0.0);
+	std::vector<double> vecCoefficients(4, 0.0);
 
 	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
-	if (vecArgs.size() == 0) {
+	if (vecArgs.empty()) {
 		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
 	} else if (vecArgs.size() == 1) {
 		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
@@ -631,8 +626,7 @@ void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
 	mi.interpolate(date, dem, MeteoData::DW, dw); //get DW interpolation from call back to Meteo2DInterpolator
 
 	//Krieging
-	std::vector<double> vecCoefficients;
-	vecCoefficients.resize(4, 0.0);
+	std::vector<double> vecCoefficients(4, 0.0);
 
 	Interpol2D::LinRegression(vecAltitudes, vecDataVW, vecCoefficients);
 	Interpol2D::LapseIDW(vecDataVW, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
@@ -654,7 +648,7 @@ std::string USERInterpolation::getGridFileName()
 	const std::string& grid_path = vecArgs[0];
 	std::string gridname = grid_path + std::string("/");
 
-	if(vecMeteo.empty()) {
+	if(!vecMeteo.empty()) {
 		const Date& timestep = vecMeteo.at(0).date;
 		gridname = gridname + timestep.toString(Date::NUM) + std::string("_") + MeteoData::getParameterName(param) + ext;
 	} else {
@@ -709,7 +703,7 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 {
 	//retrieve optional arguments
 	std::string base_algo;
-	if (vecArgs.size() == 0){
+	if (vecArgs.empty()){
 		base_algo=std::string("IDW_LAPSE");
 	} else if (vecArgs.size() == 1){
 		IOUtils::convertString(base_algo, vecArgs[0]);
@@ -762,7 +756,7 @@ void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 double OrdinaryKrigingAlgorithm::computeVariogram()
 {//return variogram fit of covariance between stations i and j
 	std::string vario_model;
-	if (vecArgs.size() == 0){
+	if (vecArgs.empty()){
 		vario_model=std::string("LINVARIO");
 	} else if (vecArgs.size() == 1){
 		IOUtils::convertString(vario_model, vecArgs[0]);

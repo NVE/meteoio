@@ -154,9 +154,9 @@ void PNGIO::setOptions()
 	//get size specifications
 	std::string min_size, max_size;
 	cfg.getValue("PNG_MIN_SIZE", "Output", min_size, Config::nothrow);
-	if(min_size!="") parse_size(min_size, min_w, min_h);
+	if(!min_size.empty()) parse_size(min_size, min_w, min_h);
 	cfg.getValue("PNG_MAX_SIZE", "Output", max_size, Config::nothrow);
-	if(max_size!="") parse_size(max_size, max_w, max_h);
+	if(!max_size.empty()) parse_size(max_size, max_w, max_h);
 
 	cfg.getValue("PNG_AUTOSCALE", "Output", autoscale, Config::nothrow);
 	cfg.getValue("PNG_LEGEND", "Output", has_legend, Config::nothrow);

@@ -121,7 +121,7 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 	//Get all files from directory
 	string meteopath, station_path;
  	cfg.getValue("METEOPATH", "Input", meteopath);
-	if (meteopath == "")
+	if (meteopath.empty())
 		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
 	const string pattern = dflt_extension;
 	list<string> dirlist;
@@ -270,7 +270,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	//Get all files from directory
 	string meteopath, station_path;
  	cfg.getValue("METEOPATH", "Input", meteopath);
-	if (meteopath == "")
+	if (meteopath.empty())
 		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
 	const string pattern = "xml";
 	list<string> dirlist;
@@ -449,23 +449,23 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
                                 const std::string&)
 {
 	ofstream fout;
-	string filename="", meteopath_out = "", line;
+	string filename, meteopath_out, line;
 	stringstream XMLdata;
 	cfg.getValue("METEOPATH", "Output", meteopath_out);
 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
 		//Test existence of element 0
-		if(vecMeteo[ii].size()==0) {
+		if(vecMeteo[ii].empty()) {
 			cerr << "[E] Station " << ii+1 << " exists but contains no data! Skip writing it...\n";
 			continue;
 		}
 
-		XMLdata.str("");	//Initialize XMLdata stringstream
+		XMLdata.str();	//Initialize XMLdata stringstream
 
 		//Write the first part of the XML file (header and station data description)
 		writeHeader(XMLdata);
 
 		//Insert station data
-		writeLocationHeader( vecMeteo[ii][0].meta, XMLdata );
+		writeLocationHeader( vecMeteo[ii].front().meta, XMLdata );
 
 		//Write the second part of the XML file (meteo data description)
 		writeMeteoDataDescription(XMLdata);
@@ -478,7 +478,7 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 
 		//Save file
 		std::string stat_id = vecMeteo[ii][0].meta.getStationID();
-		if(stat_id=="") {
+		if(stat_id.empty()) {
 			stringstream ss;
 			ss << "station" << ii;
 			stat_id = ss.str();

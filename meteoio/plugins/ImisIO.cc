@@ -277,7 +277,7 @@ void ImisIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 
-	if (vecStationMetaData.size() == 0){//Imis station meta data cannot change between time steps
+	if (vecStationMetaData.empty()){//Imis station meta data cannot change between time steps
 		Environment *env = NULL;
 		Connection *conn = NULL;
 
@@ -316,7 +316,7 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
 		IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
 		const string drift_stationID = drift_stat_abk + drift_stao_nr;
-		if (drift_stationID != "") {
+		if (!drift_stationID.empty()) {
 			mapDriftStation[vecStationID[ii]] = drift_stationID;
 		} else {
 			throw ConversionFailedException("Error! No drift station for station "+stat_abk+stao_nr, AT);
@@ -333,8 +333,8 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		IOUtils::convertString(alt, stationMetaData.at(3), std::dec);
 
 		//obtain a valid station_name w/o spaces within
-		if (station_name == "") {
-			if (stao_name != "") {
+		if (station_name.empty()) {
+			if (!stao_name.empty()) {
 				station_name += vecStationID[ii] + ":" + stao_name;
 			} else {
 				station_name += vecStationID[ii];
@@ -394,7 +394,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
 
-		if (current_station != "") {
+		if (!current_station.empty()) {
 			cerr << "\tRead stationname " << ss.str() << ": '" << current_station << "'\n";
 			if (!isdigit(current_station[0])) {
 				vecStationID.push_back(current_station);
@@ -404,9 +404,9 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 		}
 
 		current_stationnr++;
-	} while (current_station != "");
+	} while (!current_station.empty());
 
-	if(vecStationID.size()==0) {
+	if(vecStationID.empty()) {
 		cerr << "\tNo stations specified for IMISIO... is this what you want?\n";
 	}
 }
@@ -418,12 +418,12 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	Connection *conn = NULL;
 
 	try {
-		if (vecStationMetaData.size() == 0) {
+		if (vecStationMetaData.empty()) {
 			openDBConnection(env, conn);
 			readStationMetaData(conn); //reads all the station meta data into the vecStationMetaData (member vector)
 		}
 
-		if (vecStationMetaData.size() == 0) { //if there are no stations -> return
+		if (vecStationMetaData.empty()) { //if there are no stations -> return
 			if ((env != NULL) || (conn != NULL)) closeDBConnection(env, conn);
 			return;
 		}

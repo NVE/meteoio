@@ -213,9 +213,9 @@ namespace IOUtils {
 	* @return true if everything went fine, false otherwise
 	*/
 	template <class T> bool convertString(T& t, const std::string& str, std::ios_base& (*f)(std::ios_base&) = std::dec) {
-		std::string s = str;
+		std::string s(str);
 		trim(s); //delete trailing and leading whitespaces and tabs
-		if (s.size() == 0) {
+		if (s.empty()) {
 			t = static_cast<T> (nodata);
 			return true;
 		} else {
@@ -227,10 +227,10 @@ namespace IOUtils {
 				//Conversion failed
 				return false;
 			}
-			std::string tmp="";
+			std::string tmp;
 			getline(iss,  tmp); //get rest of line, if any
 			trim(tmp);
-			if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {
+			if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {
 				//if line holds more than one value it's invalid
 				return false;
 			}
@@ -255,15 +255,14 @@ namespace IOUtils {
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 	                                       const std::string& key, T& t, const unsigned int& options=IOUtils::dothrow){
-		if (key == "") {
+		if (key.empty()) {
 			throw InvalidArgumentException("Empty key", AT);
 		}
 
 		//const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
 		//if (value == ""){} //The alternative way
 
-		std::map<std::string, std::string>::const_iterator it;
-		it = properties.find(key);
+		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
 
 		if (it == properties.end()){
 			if (options == IOUtils::nothrow)
@@ -290,9 +289,9 @@ namespace IOUtils {
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 	                                       const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow)
 	{
-		if (key == "") throw InvalidArgumentException("Empty key", AT);
+		if (key.empty()) throw InvalidArgumentException("Empty key", AT);
 
-		std::map<std::string, std::string>::const_iterator it = properties.find(key);
+		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
 		if (it == properties.end()) {
 			if (options == IOUtils::nothrow) {
 				return;
@@ -304,7 +303,7 @@ namespace IOUtils {
 
 		//split value string
 		std::vector<std::string> vecUnconvertedValues;
-		size_t counter = readLineToVec(value, vecUnconvertedValues);
+		const size_t counter = readLineToVec(value, vecUnconvertedValues);
 		for (size_t ii=0; ii<counter; ii++){
 			T myvar;
 			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec)){

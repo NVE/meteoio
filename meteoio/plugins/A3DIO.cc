@@ -402,8 +402,8 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 	//1D and 2D data must correspond, that means that if there is 1D data
 	//for a certain date (e.g. 1.1.2006) then 2D data must exist (prec2006.txt etc),
 	//otherwise throw FileNotFoundException
-	Date startDate(vecMeteo[0][0].date.getJulian(), in_tz, false); //so that the correct filenames for the TZ will be constructed
-	Date endDate(vecMeteo[0][vecMeteo[0].size()-1].date.getJulian(), in_tz, false);
+	Date startDate(vecMeteo[0].front().date.getJulian(), in_tz, false); //so that the correct filenames for the TZ will be constructed
+	Date endDate(vecMeteo[0].back().date.getJulian(), in_tz, false);
 
 	std::vector<std::string> filenames;
 	constructMeteo2DFilenames(startDate, endDate, filenames);//get all files for all years
@@ -569,7 +569,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 		throw InvalidFormatException("[E] Premature end of line in file \"" + filename + "\" (line does not even contain full timestamp)", AT);
 	}
 
-	const MeteoData& lastMeteoData = vecM[0][vecM[0].size()-1]; //last time stamp in buffer of 1D meteo
+	const MeteoData& lastMeteoData = vecM[0].back(); //last time stamp in buffer of 1D meteo
 	std::vector<std::string> tmpvec;
 	int tmp_ymdh[4];
 	Date curr_date;
@@ -577,7 +577,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 		getline(fin, line_in, eoln);
 		std::string tmpline = line_in;
 		IOUtils::trim(tmpline);
-		if (tmpline=="") break;
+		if (tmpline.empty()) break;
 
 		const size_t cols_found = IOUtils::readLineToVec(line_in, tmpvec);
 		if (cols_found!=columns) { //Every station has to have its own column

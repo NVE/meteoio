@@ -29,13 +29,13 @@ WindowedFilter::WindowedFilter(const std::string& name)
 unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
 {
 	if (!vec_args.empty()){
-		if (vec_args[0] == "left"){
+		if (vec_args.front() == "left"){
 			vec_args.erase(vec_args.begin());
 			return WindowedFilter::left;
-		} else if (vec_args[0] == "right"){
+		} else if (vec_args.front() == "right"){
 			vec_args.erase(vec_args.begin());
 			return WindowedFilter::right;
-		} else if (vec_args[0] == "center"){
+		} else if (vec_args.front() == "center"){
 			vec_args.erase(vec_args.begin());
 			return WindowedFilter::center;
 		}
@@ -74,8 +74,7 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 			vec_window.erase( vec_window.begin(),  vec_window.begin()+(start-last_start));
 		}
 		if(last_start>start) {
-			std::vector<const MeteoData*>::iterator it;
-			it = vec_window.begin();
+			const std::vector<const MeteoData*>::iterator it = vec_window.begin();
 			for(size_t ii=start; ii<=last_start; ii++) vec_window.insert(it, &ivec[ii]);
 		}
 		if(last_end<end) {

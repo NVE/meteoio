@@ -177,7 +177,7 @@ bool FitLeastSquare::computeFit() {
 }
 
 void FitLeastSquare::initLambda() {
-	if(Lambda.size()==0) //else, setGuess has been called
+	if(Lambda.empty()) //else, setGuess has been called
 		Lambda.resize(nParam, lambda_init);
 }
 

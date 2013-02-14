@@ -32,7 +32,7 @@ set<string> SMETCommon::all_decimal_header_values = set<std::string>();
 
 SMETException::SMETException(const std::string& message, const std::string& position) : msg()
 {
-	if (position=="") {
+	if (position.empty()) {
 		msg = "At unknown position: " + message;
 	} else {
 		msg = position + ": " + message;
@@ -108,7 +108,8 @@ void SMETCommon::trim(std::string& str)
 	if(( std::string::npos == startpos ) || ( std::string::npos == endpos)) {
 		str.clear();
 	} else {
-		str = str.substr( startpos, endpos-startpos+1 );
+		str.erase(endpos+1); //right trim
+		str.erase(0, startpos); //left trim
 	}
 }
 
@@ -131,16 +132,14 @@ bool SMETCommon::readKeyValuePair(const std::string& in_line, const std::string&
 
 		SMETCommon::trim(key);
 		SMETCommon::trim(value);
-		//cerr << "key:" << key << " val:" << value << endl;
 
-		if ((key == "") || (value=="")) {
+		if (key.empty() || value.empty()) {
 			return false;
 		}
 
 		out_map[key] = value;
 	} else {
 		return false;
-		//cerr << "line:" << in_line << "delimiter" << endl;
 	}
 
 	return true;
@@ -210,7 +209,7 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 	while (!iss.eof()) {
 		iss >> std::skipws >> tmp_string;
 
-		if (tmp_string != "") {
+		if (!tmp_string.empty()) {
 			vec_string.push_back(tmp_string);
 		}
 		tmp_string.clear();
@@ -221,7 +220,7 @@ size_t SMETCommon::readLineToVec(const std::string& line_in, std::vector<std::st
 
 SMETWriter::SMETWriter(const std::string& in_filename, const SMETType& in_type, const bool& in_gzip)
            : other_header_keys(), ascii_precision(), ascii_width(), header(), mandatory_header_keys(), fout(),
-             filename(in_filename), nodata_string(""), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
+             filename(in_filename), nodata_string(), smet_type(in_type), nodata_value(-999.), nr_of_fields(0),
              julian_field(0), timestamp_field(0), location_wgs84(0), location_epsg(0), gzip(in_gzip),
              location_in_header(false), location_in_data_wgs84(false), location_in_data_epsg(false),
              timestamp_present(false), julian_present(false), file_is_binary(false)
@@ -883,7 +882,7 @@ void SMETReader::read_header(std::ifstream& fin)
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
 
-		if (line != "") {
+		if (!line.empty()) {
 			if (!SMETCommon::readKeyValuePair(line, "=", header))
 				throw SMETException("Invalid key value pair in file \""+filename+"\", in [Header] section: " + line, SMET_AT);
 		}
@@ -1057,7 +1056,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 		linenr++;
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
-		if (line == "") continue; //Pure comment lines and empty lines are ignored
+		if (line.empty()) continue; //Pure comment lines and empty lines are ignored
 
 		if (SMETCommon::readLineToVec(line, tmp_vec) == nr_of_data_fields){
 			try {
@@ -1168,7 +1167,6 @@ void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_d
 	if (current_fpointer != static_cast<streampos>(-1)){
 		if (julian_interval && julian_present)
 			indexer.setIndex(julian_end, current_fpointer);
-			/*map_julian_streampos[julian_end] = current_fpointer;*/
 	}
 }
 
@@ -1196,7 +1194,7 @@ std::string SMETReader::get_header_value(const std::string& key) const
 	if (it != header.end())
 		return it->second;
 
-	return "";
+	return std::string();
 }
 
 bool SMETReader::contains_timestamp() const
