@@ -977,10 +977,17 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 		} else if (julian_interval && julian_present){
 			fpointer = indexer.getIndex(julian_start);
 		}
+
 		if(fpointer!=static_cast<streampos>(-1))
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
-		else
-			fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
+		else {
+			if(data_start_fpointer!=static_cast<streampos>(-1))
+                fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
+            else { //the data section was itself empty (not even containg \n)
+                cleanup(fin);
+                return;
+            }
+		}
 
 		if (fin.fail() || fin.bad())
 			fin.seekg(data_start_fpointer);
@@ -1023,8 +1030,14 @@ void SMETReader::read(std::vector<double>& vec_data)
 		}
 		if(fpointer!=static_cast<streampos>(-1))
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
-		else
-			fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
+		else {
+			if(data_start_fpointer!=static_cast<streampos>(-1))
+                fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
+            else { //the data section was itself empty (not even containg \n)
+                cleanup(fin);
+                return;
+            }
+		}
 
 		if (fin.fail() || fin.bad())
 			fin.seekg(data_start_fpointer);
