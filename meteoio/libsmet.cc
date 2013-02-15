@@ -982,11 +982,11 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
 		else {
 			if(data_start_fpointer!=static_cast<streampos>(-1))
-                fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
-            else { //the data section was itself empty (not even containg \n)
-                cleanup(fin);
-                return;
-            }
+				fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
+			else { //the data section was itself empty (not even containg \n)
+				cleanup(fin);
+				return;
+			}
 		}
 
 		if (fin.fail() || fin.bad())
@@ -1009,8 +1009,6 @@ void SMETReader::read(std::vector<double>& vec_data)
 	if (timestamp_present)
 		throw SMETException("Requesting not to read timestamp when there is one present in \""+filename+"\"", SMET_AT);
 
-	vector<string> tmp_vec;
-
 	ios_base::openmode mode = ios::in|ios::binary; //read as binary to avoid eol mess
 	/*if (!isAscii)
 		mode = ios::in | ios::binary;*/
@@ -1032,20 +1030,22 @@ void SMETReader::read(std::vector<double>& vec_data)
 			fin.seekg(fpointer); //a previous pointer was found, jump to it
 		else {
 			if(data_start_fpointer!=static_cast<streampos>(-1))
-                fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
-            else { //the data section was itself empty (not even containg \n)
-                cleanup(fin);
-                return;
-            }
+				fin.seekg(data_start_fpointer); //nothing was found, jump to data start position in the file
+			else { //the data section was itself empty (not even containg \n)
+				cleanup(fin);
+				return;
+			}
 		}
 
 		if (fin.fail() || fin.bad())
 			fin.seekg(data_start_fpointer);
 
-		if (isAscii)
+		if (isAscii) {
+			vector<string> tmp_vec;
 			read_data_ascii(fin, tmp_vec, vec_data);
-		else
+		} else {
 			read_data_binary(fin, vec_data);
+		}
 	} catch(...) {
 		cleanup(fin);
 		throw;
@@ -1131,7 +1131,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 void SMETReader::read_data_binary(std::ifstream& fin, std::vector<double>& vec_data)
 {
 	size_t linenr = 0;
-	streampos current_fpointer = (streampos)-1;
+	streampos current_fpointer = static_cast<streampos>(-1);
 	while (!fin.eof()){
 		const streampos tmp_fpointer = fin.tellg();
 		double julian = -1.0;

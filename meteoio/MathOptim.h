@@ -18,6 +18,8 @@
 #ifndef __MATHOPTIM_H__
 #define __MATHOPTIM_H__
 
+#include <stdint.h>
+
 //Quake3 fast 1/x² approximation
 // For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
 // Credited to Greg Walsh.
@@ -180,8 +182,8 @@ namespace Optim {
 		const int ebits = 11;
 		const int fbits = 52;
 
-		long long& i = (long long&) x;
-		const long long bias = (1 << (ebits-1))-1;
+		int64_t& i = (int64_t&) x;
+		const int64_t bias = (1 << (ebits-1))-1;
 		i = (i - (bias << fbits)) / n + (bias << fbits);
 
 		return x;
@@ -191,7 +193,7 @@ namespace Optim {
 	* @brief Optimized version of cubic root
 	* This version is based on a single iteration Halley's method (see https://en.wikipedia.org/wiki/Halley%27s_method)
 	* with a seed provided by a bit hack approximation. It should offer 15-16 bits precision and be three times
-	* faster than pow(x, 1/3).
+	* faster than pow(x, 1/3). In some test, between -500 and +500, the largest relative error was 1.2e-4.
 	* Source: http://metamerist.com/cbrt/cbrt.htm
 	*
 	* Please benchmark your code before deciding to use this!!
