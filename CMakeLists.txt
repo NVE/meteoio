@@ -178,10 +178,9 @@ FILE(GLOB_RECURSE alibs "lib/*.${STAT_EXT}")
 
 INSTALL(FILES ${solibs} ${importlibs} ${alibs} DESTINATION lib COMPONENT libraries)
 
-# This is at the end of the file, so that every variables
 ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
-	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}"
+	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}" "lib/libmeteo*.${STAT_EXT}" "lib/libmeteo*.lib"
 	COMMAND cmake -E remove */CMakeCache.txt */CTestTestfile.cmake */cmake_install.cmake
 	COMMAND cmake -E remove */*/CMakeCache.txt */*/CTestTestfile.cmake */*/cmake_install.cmake
 	COMMAND cmake -E remove_directory CMakeFiles
