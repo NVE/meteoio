@@ -77,7 +77,7 @@ class Config {
 		 * @brief Write the Config object to a file
 		 * @param filename The filename including the path, e.g. "/tmp/test.ini"
 		 */
-		void write(const std::string& filename);
+		void write(const std::string& filename) const;
 
 		/**
 		 * @brief Add the content of a file to the internal key/value map object
@@ -183,17 +183,13 @@ class Config {
 		{
 			try {
 				vecT.clear();
-				std::string new_key(key);
-				std::string new_section(section);
-				IOUtils::toUpper(new_key);
-				IOUtils::toUpper(new_section);
-				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, vecT);
+				const std::string new_key( IOUtils::strToUpper(key) );
+				const std::string new_section( IOUtils::strToUpper(section) );
+				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, vecT, opt);
 			} catch(const std::exception& e){
-				if (opt != Config::nothrow) {
-					std::stringstream ss;
-					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
-					throw UnknownValueException(ss.str(), AT);
-				}
+				std::stringstream ss;
+				ss << "[E] Error for Config of " << sourcename << ": " << e.what();
+				throw UnknownValueException(ss.str(), AT);
 			}
 		}
 
@@ -243,17 +239,13 @@ class Config {
                                               const Options& opt=Config::dothrow) const
 		{
 			try {
-				std::string tmp_key(key);
-				std::string tmp_section(section);
-				IOUtils::toUpper(tmp_key);
-				IOUtils::toUpper(tmp_section);
-				IOUtils::getValueForKey<T>(properties, tmp_section + "::" + tmp_key, t);
+				const std::string new_key( IOUtils::strToUpper(key) );
+				const std::string new_section( IOUtils::strToUpper(section) );
+				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, t, opt);
 			} catch(const std::exception& e){
-				if (opt != Config::nothrow) {
-					std::stringstream ss;
-					ss << "[E] Error for Config of " << sourcename << ": " << e.what();
-					throw UnknownValueException(ss.str(), AT);
-				}
+				std::stringstream ss;
+				ss << "[E] Error for Config of " << sourcename << ": " << e.what();
+				throw UnknownValueException(ss.str(), AT);
 			}
 		}
 

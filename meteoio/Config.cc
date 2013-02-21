@@ -120,12 +120,13 @@ void Config::parseFile(const std::string& filename)
 		throw FileAccessException(filename, AT);
 	}
 
-	std::string line, section=defaultSection;
+	std::string section=defaultSection;
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 	unsigned int linenr = 0;
 
 	try {
 		do {
+			std::string line;
 			getline(fin, line, eoln); //read complete line
 			parseLine(linenr++, line, section);
 		} while(!fin.eof());
@@ -146,10 +147,10 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 	if (line.empty()) //ignore empty lines
 		return;
 
-	stringstream tmp;       //stringstream to convert the unsigned int linenr into a string
 	if (line[0] == '['){
 		const size_t endpos = line.find_last_of(']');
-		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))){
+		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
+			stringstream tmp;
 			tmp << linenr;
 			throw IOException("Section header corrupt in line " + tmp.str(), AT);
 		} else {
@@ -160,7 +161,8 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 	}
 
 	//At this point line can only be a key value pair
-	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::", true)){
+	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::", true)) {
+		stringstream tmp;
 		tmp << linenr;
 		throw InvalidFormatException("Error reading key value pair in \"" + sourcename + "\" at line " + tmp.str(), AT);
 	}
@@ -207,7 +209,7 @@ std::string Config::extract_section(std::string key) const
 	return defaultSection;
 }
 
-void Config::write(const std::string& filename)
+void Config::write(const std::string& filename) const
 {
 
 	std::ofstream fout;

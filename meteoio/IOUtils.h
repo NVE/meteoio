@@ -255,9 +255,8 @@ namespace IOUtils {
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 	                                       const std::string& key, T& t, const unsigned int& options=IOUtils::dothrow){
-		if (key.empty()) {
+		if (key.empty() && options!=IOUtils::nothrow)
 			throw InvalidArgumentException("Empty key", AT);
-		}
 
 		//const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
 		//if (value == ""){} //The alternative way
@@ -270,9 +269,9 @@ namespace IOUtils {
 			else
 				throw UnknownValueException("No value for key " + key, AT);
 		}
-		const std::string value = it->second;
+		const std::string& value = it->second;
 
-		if(!convertString<T>(t, value, std::dec)) {
+		if(!convertString<T>(t, value, std::dec) && options!=IOUtils::nothrow) {
 			std::cerr << "[E] When reading \"" << key << "\" = \"" << t << "\"\n";
 			throw ConversionFailedException(value, AT);
 		}
@@ -289,7 +288,8 @@ namespace IOUtils {
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
 	                                       const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow)
 	{
-		if (key.empty()) throw InvalidArgumentException("Empty key", AT);
+		if (key.empty() && options!=IOUtils::nothrow)
+			throw InvalidArgumentException("Empty key", AT);
 
 		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
 		if (it == properties.end()) {
@@ -299,14 +299,14 @@ namespace IOUtils {
 				throw UnknownValueException("No value for key " + key, AT);
 			}
 		}
-		const std::string value = it->second;
+		const std::string& value = it->second;
 
 		//split value string
 		std::vector<std::string> vecUnconvertedValues;
 		const size_t counter = readLineToVec(value, vecUnconvertedValues);
 		for (size_t ii=0; ii<counter; ii++){
 			T myvar;
-			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec)){
+			if(!convertString<T>(myvar, vecUnconvertedValues.at(ii), std::dec) && options!=IOUtils::nothrow){
 				std::cerr << "[E] When reading \"" << key << "\" = \"" << myvar << "\"\n";
 				throw ConversionFailedException(vecUnconvertedValues.at(ii), AT);
 			}

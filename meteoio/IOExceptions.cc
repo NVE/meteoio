@@ -117,8 +117,8 @@ IOException::IOException(const std::string& message, const std::string& position
 	#endif
 	}
 	backtrace_info += "\033[0m"; //back to normal color
-	free(symbols);
 	full_output = backtrace_info + "[" + where + "] \033[31;1m" + message + "\033[0m";
+	free(symbols);
 #else
 	full_output = msg;
 #endif
