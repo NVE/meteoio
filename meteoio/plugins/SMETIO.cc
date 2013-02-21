@@ -141,15 +141,15 @@ void SMETIO::parseInputOutputSection()
 {
 	//default timezones
 	in_dflt_TZ = out_dflt_TZ = IOUtils::nodata;
-	cfg.getValue("TIME_ZONE","Input",in_dflt_TZ,Config::nothrow);
-	cfg.getValue("TIME_ZONE","Output",out_dflt_TZ,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_dflt_TZ,IOUtils::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_dflt_TZ,IOUtils::nothrow);
 
 	// Parse the [Input] and [Output] sections within Config object cfg
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	//Parse input section: extract number of files to read and store filenames in vecFiles
 	std::string inpath, in_meteo;
-	cfg.getValue("METEO", "Input", in_meteo, Config::nothrow);
+	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
 		size_t counter = 1;
@@ -160,7 +160,7 @@ void SMETIO::parseInputOutputSection()
 			filename.clear();
 
 			ss << "STATION" << counter;
-			cfg.getValue(ss.str(), "Input", filename, Config::nothrow);
+			cfg.getValue(ss.str(), "Input", filename, IOUtils::nothrow);
 
 			if (!filename.empty()){
 				if(IOUtils::getExtension(filename)=="") filename += dflt_extension; //default extension
@@ -187,8 +187,8 @@ void SMETIO::parseInputOutputSection()
 	outputIsGzipped = false;
 
 	vector<string> vecArgs;
-	cfg.getValue("METEOPATH", "Output", outpath, Config::nothrow);
-	cfg.getValue("METEOPARAM", "Output", vecArgs, Config::nothrow); //"ASCII|BINARY GZIP"
+	cfg.getValue("METEOPATH", "Output", outpath, IOUtils::nothrow);
+	cfg.getValue("METEOPARAM", "Output", vecArgs, IOUtils::nothrow); //"ASCII|BINARY GZIP"
 
 	if (outpath.empty())
 		return;

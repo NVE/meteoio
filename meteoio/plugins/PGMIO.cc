@@ -68,11 +68,11 @@ PGMIO::PGMIO(const Config& cfgreader)
 void PGMIO::getGridPaths() {
 	grid2dpath_in.clear(), grid2dpath_out.clear();
 	string tmp;
-	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
+	cfg.getValue("GRID2D", "Input", tmp, IOUtils::nothrow);
 	if (tmp == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	tmp.clear();
-	cfg.getValue("GRID2D", "Output", tmp, Config::nothrow);
+	cfg.getValue("GRID2D", "Output", tmp, IOUtils::nothrow);
 	if (tmp == "PGM") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 }
@@ -137,11 +137,11 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		}
 		IOUtils::convertString(nr_colors, tmpvec[0]);
 
-		cfg.getValue("PGM_XCOORD", "Input", xllcorner, Config::dothrow);
-		cfg.getValue("PGM_YCOORD", "Input", yllcorner, Config::dothrow);
-		cfg.getValue("PGM_CELLSIZE", "Input", cellsize, Config::dothrow);
-		cfg.getValue("PGM_MIN", "Input", val_min, Config::dothrow);
-		cfg.getValue("PGM_MAX", "Input", val_max, Config::dothrow);
+		cfg.getValue("PGM_XCOORD", "Input", xllcorner, IOUtils::dothrow);
+		cfg.getValue("PGM_YCOORD", "Input", yllcorner, IOUtils::dothrow);
+		cfg.getValue("PGM_CELLSIZE", "Input", cellsize, IOUtils::dothrow);
+		cfg.getValue("PGM_MIN", "Input", val_min, IOUtils::dothrow);
+		cfg.getValue("PGM_MAX", "Input", val_max, IOUtils::dothrow);
 
 		Coords location(coordin, coordinparam);
 		location.setXY(xllcorner, yllcorner, IOUtils::nodata);

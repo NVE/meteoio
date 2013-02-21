@@ -54,14 +54,14 @@ BormaIO::BormaIO(const std::string& configfile) : cfg(configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = default_tz;
-	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
 }
 
 BormaIO::BormaIO(const Config& cfgreader) : cfg(cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	in_tz = default_tz;
-	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
 }
 
 BormaIO::~BormaIO() throw()
@@ -153,7 +153,7 @@ void BormaIO::readStationNames()
 		stationname.clear();
 
 		ss << "STATION" << counter;
-		cfg.getValue(ss.str(), "Input", stationname, Config::nothrow);
+		cfg.getValue(ss.str(), "Input", stationname, IOUtils::nothrow);
 
 		if (!stationname.empty()){
 			vecStationName.push_back(stationname);

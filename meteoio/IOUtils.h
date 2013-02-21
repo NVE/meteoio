@@ -67,8 +67,7 @@ class Config;
 std::string getLibVersion();
 
 namespace IOUtils {
-	const unsigned int nothrow = 0;
-	const unsigned int dothrow = 1;
+	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value
 	//const double not_set = std::numeric_limits<double>::max()-2.;
 	const unsigned int unodata = (unsigned int)-1;
@@ -126,7 +125,7 @@ namespace IOUtils {
 	* @param dirlist list of mathcing file names
 	* @param pattern optional pattern that must be part of the file names
 	*/
-	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern = "");
+	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="");
 
 	bool validFileName(const std::string& filename);
 
@@ -254,12 +253,9 @@ namespace IOUtils {
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-	                                       const std::string& key, T& t, const unsigned int& options=IOUtils::dothrow){
+	                                       const std::string& key, T& t, const ThrowOptions& options=IOUtils::dothrow){
 		if (key.empty() && options!=IOUtils::nothrow)
 			throw InvalidArgumentException("Empty key", AT);
-
-		//const std::string value = (const_cast<std::map<std::string,std::string>&>(properties))[key];
-		//if (value == ""){} //The alternative way
 
 		const std::map<std::string, std::string>::const_iterator it = properties.find(key);
 
@@ -286,7 +282,7 @@ namespace IOUtils {
 	* @param[in]  options     Extra options, by default IOUtils::dothrow
 	*/
 	template <class T> void getValueForKey(const std::map<std::string,std::string>& properties,
-	                                       const std::string& key, std::vector<T>& vecT, const unsigned int& options=IOUtils::dothrow)
+	                                       const std::string& key, std::vector<T>& vecT, const ThrowOptions& options=IOUtils::dothrow)
 	{
 		if (key.empty() && options!=IOUtils::nothrow)
 			throw InvalidArgumentException("Empty key", AT);

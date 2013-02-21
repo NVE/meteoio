@@ -78,7 +78,7 @@ size_t ProcessingStack::getFiltersForParameter(const Config& cfg, const std::str
 
 	for (size_t ii=0; ii<vecKeys.size(); ii++){
 		std::string tmp;
-		cfg.getValue(vecKeys[ii], "Filters", tmp, Config::nothrow);
+		cfg.getValue(vecKeys[ii], "Filters", tmp, IOUtils::nothrow);
 		vecFilters.push_back(tmp);
 	}
 
@@ -89,7 +89,7 @@ size_t ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::stri
                                                     std::vector<std::string>& vecArguments)
 {
 	// Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
-	cfg.getValue(keyname, "Filters", vecArguments, Config::nothrow);
+	cfg.getValue(keyname, "Filters", vecArguments, IOUtils::nothrow);
 	return vecArguments.size();
 }
 
@@ -97,13 +97,12 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
 	ovec.clear();
-	ovec.reserve(ivec.size());
 	ovec.insert(ovec.begin(), ivec.size(), vector<MeteoData>());
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every station
 		if (!ivec[ii].empty()){
 			//pick one element and check whether the param_name parameter exists
-			const size_t param = ivec[ii][0].getParameterIndex(param_name);
+			const size_t param = ivec[ii].front().getParameterIndex(param_name);
 
 			if (param != IOUtils::npos){
 				std::vector<MeteoData> tmp = ivec[ii];

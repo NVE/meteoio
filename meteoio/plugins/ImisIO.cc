@@ -175,9 +175,9 @@ void ImisIO::getDBParameters()
 	cfg.getValue("DBUSER", "Input", oracleUserName_in);
 	cfg.getValue("DBPASS", "Input", oraclePassword_in);
 
-	cfg.getValue("USEANETZ", "Input", useAnetz, Config::nothrow);
-	cfg.getValue("USE_IMIS_HNW", "Input", use_imis_hnw, Config::nothrow);
-	cfg.getValue("USE_SNOWPACK_HNW", "Input", use_hnw_snowpack, Config::nothrow);
+	cfg.getValue("USEANETZ", "Input", useAnetz, IOUtils::nothrow);
+	cfg.getValue("USE_IMIS_HNW", "Input", use_imis_hnw, IOUtils::nothrow);
+	cfg.getValue("USE_SNOWPACK_HNW", "Input", use_hnw_snowpack, IOUtils::nothrow);
 }
 
 ImisIO::ImisIO(const std::string& configfile)
@@ -392,7 +392,7 @@ void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 		current_station.clear();
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
+		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
 
 		if (!current_station.empty()) {
 			cerr << "\tRead stationname " << ss.str() << ": '" << current_station << "'\n";

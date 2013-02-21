@@ -100,7 +100,7 @@ GSNIO::~GSNIO() throw(){}
 void GSNIO::initGSNConnection(){
 	//default timezone
 	string tmp_timezone;
-	cfg.getValue("TIME_ZONE", "Input", tmp_timezone, Config::nothrow);
+	cfg.getValue("TIME_ZONE", "Input", tmp_timezone, IOUtils::nothrow);
 	if (!tmp_timezone.empty()){
 		IOUtils::convertString(default_timezone, tmp_timezone);
 	}
@@ -108,7 +108,7 @@ void GSNIO::initGSNConnection(){
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
 
-	cfg.getValue("ENDPOINT", "INPUT", endpoint, Config::nothrow);
+	cfg.getValue("ENDPOINT", "INPUT", endpoint, IOUtils::nothrow);
 	if (!endpoint.empty()){
 		gsn.soap_endpoint = endpoint.c_str();
 		cerr << "\tUsing GSN Endpoint: " << endpoint << "\n";
@@ -121,9 +121,9 @@ void GSNIO::initGSNConnection(){
 	 * - parameters not set will be set to ""
 	 */
 	try {
-		cfg.getValue("PROXY", "INPUT", hostname, Config::nothrow);
+		cfg.getValue("PROXY", "INPUT", hostname, IOUtils::nothrow);
 		if (hostname.empty()) return;
-		cfg.getValue("PROXYPORT", "INPUT", port, Config::nothrow);
+		cfg.getValue("PROXYPORT", "INPUT", port, IOUtils::nothrow);
 		if (port.empty()) return;
 
 		if (!IOUtils::convertString(proxyport, port, std::dec))
@@ -465,7 +465,7 @@ void GSNIO::readStationNames()
 		current_station.clear();
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
+		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
 
 		if (!current_station.empty()){
 			vecStationName.push_back(current_station); //add station name to vector of all station names

@@ -34,12 +34,12 @@ Config::Config(const std::string& i_filename) : properties(), sourcename(i_filen
 	addFile(i_filename);
 }
 
-ConfigProxy Config::get(const std::string& key, const Options& opt) const
+ConfigProxy Config::get(const std::string& key, const IOUtils::ThrowOptions& opt) const
 {
 	return ConfigProxy(*this, key, Config::defaultSection, opt);
 }
 
-ConfigProxy Config::get(const std::string& key, const std::string& section, const Options& opt) const
+ConfigProxy Config::get(const std::string& key, const std::string& section, const IOUtils::ThrowOptions& opt) const
 {
 	return ConfigProxy(*this, key, section, opt);
 }
@@ -63,18 +63,14 @@ void Config::addKey(const std::string& key, const std::string& value)
 	addKey(key, section, value);
 }
 
-void Config::addKey(std::string key, std::string section, const std::string& value)
+void Config::addKey(const std::string& key, const std::string& section, const std::string& value)
 {
-	IOUtils::toUpper(key);
-	IOUtils::toUpper(section);
-	properties[section + "::" + key] = value;
+	properties[ IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key) ] = value;
 }
 
-void Config::deleteKey(std::string key, std::string section)
+void Config::deleteKey(const std::string& key, const std::string& section)
 {
-	IOUtils::toUpper(key);
-	IOUtils::toUpper(section);
-	properties.erase(section + "::" + key);
+	properties.erase( IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(key) );
 }
 
 bool Config::keyExists(const std::string& key, const std::string& section) const

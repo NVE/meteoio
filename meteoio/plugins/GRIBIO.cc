@@ -149,17 +149,17 @@ void GRIBIO::setOptions()
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	string tmp;
-	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
+	cfg.getValue("GRID2D", "Input", tmp, IOUtils::nothrow);
 	if (tmp == "GRIB") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
-		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, Config::nothrow);
+		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
 	}
-	cfg.getValue("GRID2DPREFIX", "Input", grid2d_prefix, Config::nothrow);
+	cfg.getValue("GRID2DPREFIX", "Input", grid2d_prefix, IOUtils::nothrow);
 
-	cfg.getValue("METEOEXT", "Input", meteo_ext, Config::nothrow);
+	cfg.getValue("METEOEXT", "Input", meteo_ext, IOUtils::nothrow);
 	if(meteo_ext=="none") meteo_ext.clear();
 
-	cfg.getValue("GRID2DEXT", "Input", grid2d_ext, Config::nothrow);
+	cfg.getValue("GRID2DEXT", "Input", grid2d_ext, IOUtils::nothrow);
 	if(grid2d_ext=="none") grid2d_ext.clear();
 }
 
@@ -172,7 +172,7 @@ void GRIBIO::readStations(std::vector<Coords> &vecPoints)
 		current_station.clear();
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
+		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
 		IOUtils::stripComments(current_station);
 
 		if (!current_station.empty()) {

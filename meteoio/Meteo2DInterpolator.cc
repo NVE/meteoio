@@ -96,15 +96,15 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		throw IOException("No IOManager reference has been set!", AT);
 
 	//Show algorithms to be used for this parameter
-	map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
+	const map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
 
 	if (it != mapAlgorithms.end()){
 		double maxQualityRating = 0.0;
 		auto_ptr<InterpolationAlgorithm> bestalgorithm(NULL);
-		vector<string> vecArgs;
 
 		for (size_t ii=0; ii < it->second.size(); ii++){
 			const string& algoname = it->second.at(ii);
+			vector<string> vecArgs;
 			getArgumentsForAlgorithm(meteoparam, algoname, vecArgs);
 
 			//Get the configured algorithm
@@ -166,7 +166,7 @@ size_t Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname
 		return 0;
 
 
-	cfg.getValue(vecKeys.at(0), "Interpolations2D", vecAlgorithms, Config::nothrow);
+	cfg.getValue(vecKeys.at(0), "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
 
 	return vecAlgorithms.size();
 }
@@ -177,28 +177,26 @@ size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Parameters
 {
 	vecArgs.clear();
 	const string keyname = MeteoData::getParameterName(param) +"::"+ algorithm;
-	cfg.getValue(keyname, "Interpolations2D", vecArgs, Config::nothrow);
+	cfg.getValue(keyname, "Interpolations2D", vecArgs, IOUtils::nothrow);
 
 	return vecArgs.size();
 }
 
 void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj)
 {
-	unsigned int nx=0, ny=0;
+	const unsigned int nx = gridobj.getNx();
+	const unsigned int ny = gridobj.getNy();
+	const unsigned int nxy = nx*ny;
 
-	gridobj.grid2D.size(nx, ny);
-
-	for (unsigned int jj=0; jj<ny; jj++){
-		for (unsigned int ii=0; ii<nx; ii++){
-			double& value = gridobj.grid2D(ii,jj);
-			if (value == IOUtils::nodata){
-				continue;
-			}
-			if (value < minval) {
-				value = minval;
-			} else if (value > maxval) {
-				value = maxval;
-			}
+	for (unsigned int ii=0; ii<nxy; ii++){
+		double& value = gridobj.grid2D(ii);
+		if (value == IOUtils::nodata){
+			continue;
+		}
+		if (value < minval) {
+			value = minval;
+		} else if (value > maxval) {
+			value = maxval;
 		}
 	}
 }

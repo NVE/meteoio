@@ -58,8 +58,6 @@ class Config : POPBase {
 class Config {
 #endif
 	public:
-		enum Options { dothrow, nothrow };
-
 		/**
 		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object
 		 */
@@ -104,7 +102,7 @@ class Config {
 		 * @param[in] key string representing the key to be added
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		*/
-		void deleteKey(std::string key, std::string section=Config::defaultSection);
+		void deleteKey(const std::string& key, const std::string& section=Config::defaultSection);
 
 		/**
 		 * @brief Add a specific key/value pair to the internal key/value map object.
@@ -113,7 +111,7 @@ class Config {
 		 * @param[in] section std::string representing a section name; the key has to be part of this section
 		 * @param[in] value string representing the matching value to be added
 		 */
-		void addKey(std::string key, std::string section, const std::string& value);
+		void addKey(const std::string& key, const std::string& section, const std::string& value);
 
 		/**
 		 * @brief Returns the filename that the Config object was constructed with.
@@ -135,7 +133,7 @@ class Config {
 		 */
 		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
 
-		template <typename T> std::vector<T> getValue(const std::string& key, const Options& opt=Config::dothrow) const
+		template <typename T> std::vector<T> getValue(const std::string& key, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			std::vector<T> tmp;
 			getValue(key, Config::defaultSection, tmp, opt);
@@ -143,7 +141,7 @@ class Config {
 		}
 
 		template <typename T> std::vector<T> getValue(const std::string& key, const std::string& section,
-		                                              const Options& opt=Config::dothrow) const
+		                                              const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			std::vector<T> tmp;
 			getValue(key, section, tmp, opt);
@@ -162,7 +160,7 @@ class Config {
 		 */
 		template <typename T> void getValue(const std::string& key,
 		                                    std::vector<T>& vecT,
-		                                    const Options& opt=Config::dothrow) const
+		                                    const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			getValue(key, "GENERAL", vecT, opt);
 		}
@@ -179,17 +177,16 @@ class Config {
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
 		template <typename T> void getValue(const std::string& key, const std::string& section,
-		                                    std::vector<T>& vecT, const Options& opt=Config::dothrow) const
+		                                    std::vector<T>& vecT, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
+			vecT.clear();
+			const std::string new_key( IOUtils::strToUpper(key) );
+			const std::string new_section( IOUtils::strToUpper(section) );
+
 			try {
-				vecT.clear();
-				const std::string new_key( IOUtils::strToUpper(key) );
-				const std::string new_section( IOUtils::strToUpper(section) );
 				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, vecT, opt);
 			} catch(const std::exception& e){
-				std::stringstream ss;
-				ss << "[E] Error for Config of " << sourcename << ": " << e.what();
-				throw UnknownValueException(ss.str(), AT);
+				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+new_section+"::"+new_key, AT);
 			}
 		}
 
@@ -199,7 +196,7 @@ class Config {
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 * @return A value of type T
 		 */
-		ConfigProxy get(const std::string& key, const Options& opt=Config::dothrow) const;
+		ConfigProxy get(const std::string& key, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const;
 
 		/**
 		 * @ brief A function that allows to retrieve a value for a key as return parameter (vectors of values too)
@@ -211,11 +208,11 @@ class Config {
 		 * Example Usage:
 		 * @code
 		 * Config cfg("io.ini");
-		 * vector<int> = cfg.get("DEPTHS", "INPUT", Config::nothrow);
+		 * vector<int> = cfg.get("DEPTHS", "INPUT", IOUtils::nothrow);
 		 * string mystr = cfg.get("PATH", "OUTPUT");
 		 * @endcode
 		 */
-		ConfigProxy get(const std::string& key, const std::string& section, const Options& opt=Config::dothrow) const;
+		ConfigProxy get(const std::string& key, const std::string& section, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const;
 
 		/**
 		 * @brief Template function to retrieve a value of class T for a certain key
@@ -223,7 +220,7 @@ class Config {
 		 * @param[out] t a variable of class T into which the value for the corresponding key is saved (e.g. double, int, std::string)
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
-		template <typename T> void getValue(const std::string& key, T& t, const Options& opt=Config::dothrow) const
+		template <typename T> void getValue(const std::string& key, T& t, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
 			getValue(key, "GENERAL", t, opt);
 		}
@@ -236,16 +233,15 @@ class Config {
 		 * @param[in] opt indicating whether an exception should be raised, when key is not present
 		 */
 		template <typename T> void getValue(const std::string& key, const std::string& section, T& t,
-                                              const Options& opt=Config::dothrow) const
+                                              const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{
+			const std::string new_key( IOUtils::strToUpper(key) );
+			const std::string new_section( IOUtils::strToUpper(section) );
+
 			try {
-				const std::string new_key( IOUtils::strToUpper(key) );
-				const std::string new_section( IOUtils::strToUpper(section) );
 				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, t, opt);
 			} catch(const std::exception& e){
-				std::stringstream ss;
-				ss << "[E] Error for Config of " << sourcename << ": " << e.what();
-				throw UnknownValueException(ss.str(), AT);
+				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+new_section+"::"+new_key, AT);
 			}
 		}
 
@@ -282,10 +278,10 @@ class ConfigProxy {
 		const Config& proxycfg;
 		const std::string& key;
 		const std::string& section;
-		const Config::Options& opt;
+		const IOUtils::ThrowOptions& opt;
 
 		ConfigProxy(const Config& i_cfg, const std::string& i_key,
-		            const std::string& i_section, const Config::Options& i_opt)
+		            const std::string& i_section, const IOUtils::ThrowOptions& i_opt)
 		            : proxycfg(i_cfg), key(i_key),section(i_section), opt(i_opt) { }
 
 		template<typename T> operator T() {

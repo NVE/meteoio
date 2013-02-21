@@ -87,16 +87,16 @@ SNIO::SNIO(const std::string& configfile)
         iswr_inp(true), rswr_inp(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
-	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
-	cfg.getValue("ISWR_INP","Input",iswr_inp,Config::nothrow);
-	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,IOUtils::nothrow);
+	cfg.getValue("ISWR_INP","Input",iswr_inp,IOUtils::nothrow);
+	cfg.getValue("RSWR_INP","Input",rswr_inp,IOUtils::nothrow);
 	if (!iswr_inp || !rswr_inp)
 		nr_meteoData = min_nr_meteoData - 1;
-	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
-	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
-	cfg.getValue("VW_DRIFT", "Input", vw_drift, Config::nothrow);
-	cfg.getValue("RHO_HN", "Input", rho_hn, Config::nothrow);
+	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, IOUtils::nothrow);
+	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, IOUtils::nothrow);
+	cfg.getValue("VW_DRIFT", "Input", vw_drift, IOUtils::nothrow);
+	cfg.getValue("RHO_HN", "Input", rho_hn, IOUtils::nothrow);
 }
 
 SNIO::SNIO(const Config& cfgreader)
@@ -108,16 +108,16 @@ SNIO::SNIO(const Config& cfgreader)
         iswr_inp(true), rswr_inp(true)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TIME_ZONE","Input",in_tz,Config::nothrow);
-	cfg.getValue("TIME_ZONE","Output",out_tz,Config::nothrow);
-	cfg.getValue("ISWR_INP","Input",iswr_inp,Config::nothrow);
-	cfg.getValue("RSWR_INP","Input",rswr_inp,Config::nothrow);
+	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
+	cfg.getValue("TIME_ZONE","Output",out_tz,IOUtils::nothrow);
+	cfg.getValue("ISWR_INP","Input",iswr_inp,IOUtils::nothrow);
+	cfg.getValue("RSWR_INP","Input",rswr_inp,IOUtils::nothrow);
 	if (!iswr_inp || !rswr_inp)
 		nr_meteoData = min_nr_meteoData - 1;
-	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, Config::nothrow);
-	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, Config::nothrow);
-	cfg.getValue("VW_DRIFT", "Input", vw_drift, Config::nothrow);
-	cfg.getValue("RHO_HN", "Input", rho_hn, Config::nothrow);
+	cfg.getValue("NUMBER_MEAS_TEMPERATURES", "Input", number_meas_temperatures, IOUtils::nothrow);
+	cfg.getValue("NUMBER_OF_SOLUTES", "Input", number_of_solutes, IOUtils::nothrow);
+	cfg.getValue("VW_DRIFT", "Input", vw_drift, IOUtils::nothrow);
+	cfg.getValue("RHO_HN", "Input", rho_hn, IOUtils::nothrow);
 }
 
 SNIO::~SNIO() throw()
@@ -288,7 +288,7 @@ void SNIO::readMetaData()
 	 */
 	vecAllStations.clear();
 	string metafile, inpath;
-	cfg.getValue("METAFILE", "Input", metafile, Config::nothrow);
+	cfg.getValue("METAFILE", "Input", metafile, IOUtils::nothrow);
 	cfg.getValue("METEOPATH", "Input", inpath);
 
 	size_t current_stationnr = 1;
@@ -297,7 +297,7 @@ void SNIO::readMetaData()
 		current_station.clear();
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, Config::nothrow);
+		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
 
 		if ((current_stationnr == 1) && (current_station.empty()))
 			throw InvalidFormatException("Missing key \"STATION1\" in config: Please specify a SNOWPACK formatted meteo data file", AT);

@@ -107,9 +107,9 @@ ARCIO::ARCIO(const std::string& configfile)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;
-	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, IOUtils::nothrow);
 	a3d_view_out = false;
-	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, IOUtils::nothrow);
 	getGridPaths();
 }
 
@@ -121,28 +121,28 @@ ARCIO::ARCIO(const Config& cfgreader)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	a3d_view_in = false;
-	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Input", a3d_view_in, IOUtils::nothrow);
 	a3d_view_out = false;
-	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, Config::nothrow);
+	cfg.getValue("A3D_VIEW", "Output", a3d_view_out, IOUtils::nothrow);
 	getGridPaths();
 }
 
 void ARCIO::getGridPaths() {
 	grid2dpath_in.clear(), grid2dpath_out.clear();
 	string tmp;
-	cfg.getValue("GRID2D", "Input", tmp, Config::nothrow);
+	cfg.getValue("GRID2D", "Input", tmp, IOUtils::nothrow);
 	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 	tmp.clear();
-	cfg.getValue("GRID2D", "Output", tmp, Config::nothrow);
+	cfg.getValue("GRID2D", "Output", tmp, IOUtils::nothrow);
 	if (tmp == "ARC") //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Output", grid2dpath_out);
 
 	grid2d_ext_in = ".asc";
-	cfg.getValue("GRID2DEXT", "Input", grid2d_ext_in, Config::nothrow);
+	cfg.getValue("GRID2DEXT", "Input", grid2d_ext_in, IOUtils::nothrow);
 	if(grid2d_ext_in=="none") grid2d_ext_in.clear();
 	grid2d_ext_out = ".asc";
-	cfg.getValue("GRID2DEXT", "Output", grid2d_ext_out, Config::nothrow);
+	cfg.getValue("GRID2DEXT", "Output", grid2d_ext_out, IOUtils::nothrow);
 	if(grid2d_ext_out=="none") grid2d_ext_out.clear();
 }
 

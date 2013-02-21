@@ -333,18 +333,15 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 
 std::string getLogName() {
 	char *tmp;
-	const size_t len=64;
-	char logname[len]; //to keep the user name short enough
 
 	if((tmp=getenv("USERNAME"))==NULL) { //Windows & Unix
 		if((tmp=getenv("LOGNAME"))==NULL) { //Unix
 			tmp=getenv("USER"); //Windows & Unix
 		}
 	}
-	if(tmp==NULL) return std::string("N/A");
 
-	strncpy(logname, tmp, len-1);
-	return std::string(logname);
+	if(tmp==NULL) return std::string("N/A");
+	return std::string(tmp);
 }
 
 void readKeyValueHeader(std::map<std::string,std::string>& headermap,
@@ -675,14 +672,14 @@ template<> bool convertString<Coords>(Coords& t, const std::string& str, std::io
 void getProjectionParameters(const Config& cfg, std::string& coordin, std::string& coordinparam,
                                       std::string& coordout, std::string& coordoutparam) {
 	cfg.getValue("COORDSYS", "Input", coordin);
-	cfg.getValue("COORDPARAM", "Input", coordinparam, Config::nothrow);
-	cfg.getValue("COORDSYS", "Output", coordout, Config::nothrow);
-	cfg.getValue("COORDPARAM", "Output", coordoutparam, Config::nothrow);
+	cfg.getValue("COORDPARAM", "Input", coordinparam, IOUtils::nothrow);
+	cfg.getValue("COORDSYS", "Output", coordout, IOUtils::nothrow);
+	cfg.getValue("COORDPARAM", "Output", coordoutparam, IOUtils::nothrow);
 }
 
 void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
-	cfg.getValue("TIME_ZONE", "Input", tz_in, Config::nothrow);
-	cfg.getValue("TIME_ZONE", "Output", tz_out, Config::nothrow);
+	cfg.getValue("TIME_ZONE", "Input", tz_in, IOUtils::nothrow);
+	cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
 }
 
 size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch)

@@ -53,8 +53,8 @@ GeotopIO::GeotopIO(const std::string& configfile)
            coordin(), coordinparam(), coordout(), coordoutparam()
 {
            IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-           cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
-           cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
+           cfg.getValue("TIME_ZONE", "Input", in_tz, IOUtils::nothrow);
+           cfg.getValue("TIME_ZONE", "Output", out_tz, IOUtils::nothrow);
 }
 
 GeotopIO::GeotopIO(const Config& cfgreader)
@@ -63,8 +63,8 @@ GeotopIO::GeotopIO(const Config& cfgreader)
            coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	cfg.getValue("TIME_ZONE", "Input", in_tz, Config::nothrow);
-	cfg.getValue("TIME_ZONE", "Output", out_tz, Config::nothrow);
+	cfg.getValue("TIME_ZONE", "Input", in_tz, IOUtils::nothrow);
+	cfg.getValue("TIME_ZONE", "Output", out_tz, IOUtils::nothrow);
 }
 
 GeotopIO::~GeotopIO() throw () {

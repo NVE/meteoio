@@ -42,8 +42,8 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 		taskargs.push_back(vecResamplingArguments);
 	}
 
-	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, Config::nothrow);
-	window_size /= 86400; //user uses seconds, internally julian day is used
+	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, IOUtils::nothrow);
+	window_size /= 86400.; //user uses seconds, internally julian day is used
 	if (window_size <= 0.01)
 		throw IOException("WINDOW_SIZE not valid", AT);
 }
@@ -59,12 +59,10 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) cons
 
 bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<MeteoData>& vecM, MeteoData& md)
 {
-	const size_t vecM_size = vecM.size();
-
-	if (vecM_size == 0) //Deal with case of the empty vector
+	if (vecM.empty()) //Deal with case of the empty vector
 		return false; //nothing left to do
 
-	md = vecM[0]; //create a clone of one of the elements
+	md = vecM.front(); //create a clone of one of the elements
 	md.reset();   //set all values to IOUtils::nodata
 	md.setDate(date);
 
@@ -74,12 +72,12 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	//Three cases
 	ResamplingAlgorithms::ResamplingPosition elementpos = ResamplingAlgorithms::exact_match;
 	if (index == IOUtils::npos) { //nothing found append new element at the left or right
-		if (vecM.at(0).date > date) {
+		if (vecM.front().date > date) {
 			elementpos = ResamplingAlgorithms::begin;
 			index = 0;
-		} else if (vecM.at(vecM_size-1).date < date) {
+		} else if (vecM.back().date < date) {
 			elementpos = ResamplingAlgorithms::end;
-			index = vecM_size - 1;
+			index = vecM.size() - 1;
 		}
 		md.setResampled(true);
 	} else if ((index != IOUtils::npos) && (vecM[index].date != date)) {
@@ -90,14 +88,13 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	}
 
 	size_t ii = 0;
-
-	for (ii=0; ii<tasklist.size(); ii++){ //For all meteo parameters
+	for (; ii<tasklist.size(); ii++){ //For all meteo parameters
 		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
 			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(index, elementpos, ii, taskargs[ii], window_size, vecM, md);
 	}
 
 	//There might be more parameters, interpolate them too
-	const MeteoData& origmd = vecM.at(0); //this element must exist at this point
+	const MeteoData& origmd = vecM.front(); //this element must exist at this point
 	for ( ; ii < origmd.getNrOfParameters(); ii++){
 		const string parametername = origmd.getNameForParameter(ii);
 
@@ -127,12 +124,12 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 	 * arguments for that specific algorithm.
 	 */
 	vecArguments.clear();
-	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, Config::nothrow);
+	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, IOUtils::nothrow);
 
 	std::string tmp;
-	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, Config::nothrow);
+	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, IOUtils::nothrow);
 
-	if (tmp.length() > 0)
+	if (!tmp.empty())
 		return tmp;
 
 	return "linear"; //the default resampling is linear

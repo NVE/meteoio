@@ -184,15 +184,15 @@ void BufferedIOHandler::setDfltBufferProperties()
 {
 	double chunk_size_days = 15.; //default chunk size value
 	chunks = 1;
-	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days, Config::nothrow); //in days
-	cfg.getValue("BUFF_CHUNKS", "General", chunks, Config::nothrow);
+	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days, IOUtils::nothrow); //in days
+	cfg.getValue("BUFF_CHUNKS", "General", chunks, IOUtils::nothrow);
 	chunk_size = Duration(chunk_size_days, 0);
 
 	//get buffer centering options
 	double buff_centering = -1.;
 	double buff_start = -1.;
-	cfg.getValue("BUFF_CENTERING", "General", buff_centering, Config::nothrow);
-	cfg.getValue("BUFF_BEFORE", "General", buff_start, Config::nothrow);
+	cfg.getValue("BUFF_CENTERING", "General", buff_centering, IOUtils::nothrow);
+	cfg.getValue("BUFF_BEFORE", "General", buff_start, IOUtils::nothrow);
 	if ((buff_centering != -1.) && (buff_start != -1.))
 		throw InvalidArgumentException("Please do NOT provide both BUFF_CENTERING and BUFF_BEFORE!!", AT);
 
@@ -215,7 +215,7 @@ void BufferedIOHandler::setDfltBufferProperties()
 	//-> we end up not reading enough data and rebuffering...
 
 	max_grids = 10; //default number of grids to keep in buffer
-	cfg.getValue("BUFF_GRIDS", "General", max_grids, Config::nothrow);
+	cfg.getValue("BUFF_GRIDS", "General", max_grids, IOUtils::nothrow);
 }
 
 void BufferedIOHandler::setMinBufferRequirements(const double& i_chunk_size, const double& i_buff_before)
