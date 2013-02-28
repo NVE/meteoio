@@ -42,46 +42,48 @@ template<class T> class Array4D {
 		* one passed as i_array4D argument. The resulting Array4D object is a by value copy of
 		* a subvolume of the volume spanned by the i_array4D
 		* @param i_array4D array containing to extract the values from
-		* @param i_nz lower left corner cell W index
+		* @param i_nw lower left corner cell W index
 		* @param i_nx lower left corner cell X index
 		* @param i_ny lower left corner cell Y index
 		* @param i_nz lower left corner cell Z index
-		* @param i_ncols number of columns of the new array
-		* @param i_nrows number of rows of the new array
-		* @param i_ndepth number of depths of the new array
+		* @param i_sizeW length of the w dimension of the new array
+		* @param i_sizeX length of the x dimension of the new array
+		* @param i_sizeY length of the y dimension of the new array
+		* @param i_sizeZ length of the z dimension of the new array
 		*/
 		Array4D(const Array4D<T>& i_array4D,
 		        const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		        const unsigned int& i_dimW, const unsigned int& i_dimX, const unsigned int& i_dimY, const unsigned int& i_dimZ);
+		        const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ);
 
 		Array4D(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
 
 		/**
 		* A constructor that creates an array filled with constant values
-		* @param anx number of columns of the new array
-		* @param any number of rows of the new array
-		* @param anz number of depths of the new array
+		* @param i_sizeW length of the w dimension of the new array
+		* @param i_sizeX length of the x dimension of the new array
+		* @param i_sizeY length of the y dimension of the new array
+		* @param i_sizeZ length of the z dimension of the new array
 		* @param init initial value to fill the array with
 		*/
-		Array4D(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
+		Array4D(const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ, const T& init);
 
 		/**
 		* A method that can be used to create an Array4D object that is contained in the
 		* one passed as i_array4D argument. The resulting Array4D object is a by value copy of
 		* a subvolume of the volume spanned by the i_array4D
 		* @param i_array4D array containing to extract the values from
-		* @param i_nx lower left corner cell W index
+		* @param i_nw lower left corner cell W index
 		* @param i_nx lower left corner cell X index
 		* @param i_ny lower left corner cell Y index
 		* @param i_nz lower left corner cell Z index
-		* @param i_sizeW w size of the new array
-		* @param i_sizeX x size of the new array
-		* @param i_sizeY y size of the new array
-		* @param i_sizeZ z size of the new array
+		* @param i_sizeW length of the w dimension of the new array
+		* @param i_sizeX length of the x dimension of the new array
+		* @param i_sizeY length of the y dimension of the new array
+		* @param i_sizeZ length of the z dimension of the new array
 		*/
 		void subset(const Array4D<T>& i_array4D,
 		            const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		            const unsigned int& i_dimW, const unsigned int& i_dimX, const unsigned int& i_dimY, const unsigned int& i_dimZ);
+		            const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ);
 
 		/**
 		* @brief A method that can be used to insert a subplane into an existing Array4D object
@@ -92,10 +94,10 @@ template<class T> class Array4D {
 		* @param i_nx lower left corner cell X index
 		* @param i_ny lower left corner cell Y index
 		* @param i_nz lower left corner cell Z index
-		* @param i_dimW number of columns of the new array
-		* @param i_dimX number of rows of the new array
-		* @param i_dimY number of depths of the new array
-		* @param i_dimZ number of z dimensions of the new array
+		* @param i_sizeW length of the w dimension of the new array
+		* @param i_sizeX length of the x dimension of the new array
+		* @param i_sizeY length of the y dimension of the new array
+		* @param i_sizeZ length of the z dimension of the new array
 		*/
 		void fill(const Array4D<T>& i_array4D,
 		          const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
