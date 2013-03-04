@@ -23,14 +23,11 @@ using namespace std;
 namespace mio {
 
 //Default constructor initializing every double attribute to nodata and strings to  ""
-StationData::StationData() : position("NULL", "NULL"), stationID(), stationName(),
+StationData::StationData() : position(), stationID(), stationName(),
                              slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
-StationData::StationData(const Coords& i_position, const std::string& i_id, const std::string& i_name) : position(i_position), stationID(i_id), stationName(i_name), slope(IOUtils::nodata), azi(IOUtils::nodata)
-{
-	/*setStationData(i_position, i_id, i_name);
-	setSlope(IOUtils::nodata, IOUtils::nodata);*/
-}
+StationData::StationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
+            : position(i_position), stationID(i_id), stationName(i_name), slope(IOUtils::nodata), azi(IOUtils::nodata) {}
 
 void StationData::setStationData(const Coords& i_position, const std::string& i_id, const std::string& i_name)
 {

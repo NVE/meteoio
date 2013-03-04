@@ -247,12 +247,7 @@ Coords::Coords() : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata)
                    altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
                    easting(IOUtils::nodata), northing(IOUtils::nodata),
                    grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
-                   coordsystem("NULL"), coordparam("NULL"), distance_algo(GEO_COSINE)
-
-{
-	//setDefaultValues();
-	//setProj("NULL", "NULL");
-}
+                   coordsystem("NULL"), coordparam("NULL"), distance_algo(GEO_COSINE) {}
 
 /**
 * @brief Regular constructor: usually, this is the constructor to use
@@ -268,7 +263,6 @@ Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_par
                    grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
                    coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
 {
-	//setDefaultValues();
 	setProj(in_coordinatesystem, in_parameters);
 }
 
@@ -286,7 +280,6 @@ Coords::Coords(const double& in_lat_ref, const double& in_long_ref) :
                    grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
                    coordsystem("LOCAL"), coordparam(), distance_algo(GEO_COSINE)
 {
-	//setDefaultValues();
 	setLocalRef(in_lat_ref, in_long_ref);
 	setProj("LOCAL", "");
 }
@@ -295,10 +288,7 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
                    altitude(c.altitude), latitude(c.latitude), longitude(c.longitude),
                    easting(c.easting), northing(c.northing),
                    grid_i(c.grid_i), grid_j(c.grid_j), grid_k(c.grid_k),
-                   coordsystem(c.coordsystem), coordparam(c.coordparam), distance_algo(c.distance_algo)
-
-{
-}
+                   coordsystem(c.coordsystem), coordparam(c.coordparam), distance_algo(c.distance_algo) {}
 
 /**
 * @brief Returns the East coordinate in the configured projection system

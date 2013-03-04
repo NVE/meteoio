@@ -35,7 +35,6 @@ class A3DIO : public IOInterface {
 	public:
 		A3DIO(const std::string& configfile);
 		A3DIO(const Config&);
-		~A3DIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& name="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -61,7 +60,7 @@ class A3DIO : public IOInterface {
 	private:
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -9999
 		static const unsigned int buffer_reserve; //for optimizing vectors (ie: avoid unecessary resizing)
-		void read1DStation(std::string& file_1d, StationData& sd);
+		void read1DStation(StationData& sd);
 		void read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >&);
 		void read2DStations(const Date& timestamp, std::vector<StationData>& vecStation);
 		void read2DMeteo(std::vector< std::vector<MeteoData> >&);
@@ -69,7 +68,6 @@ class A3DIO : public IOInterface {
 		void constructMeteo2DFilenames(const Date& i_startDate, const Date& i_endDate, std::vector<std::string>& i_filenames);
 		bool readMeteoDataLine(std::string& line, MeteoData& tmpdata, std::string filename);
 		void convertUnits(MeteoData& meteo);
-		void cleanup() throw();
 		void read2DMeteoData(const std::string&, const std::string&, std::map<std::string,size_t>& hashStations,
 		                     std::vector< std::vector<MeteoData> >&, size_t& bufferindex);
 		void read2DMeteoHeader(const std::string& filename, std::map<std::string, size_t>& hashStations,
@@ -88,7 +86,7 @@ class A3DIO : public IOInterface {
 
 		const Config cfg;
 		double in_tz, out_tz; //timezones
-		std::ifstream fin; //Input file streams
+		std::string meteo1d;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 } //end namespace
