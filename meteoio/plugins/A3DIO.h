@@ -58,8 +58,6 @@ class A3DIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -9999
-		static const unsigned int buffer_reserve; //for optimizing vectors (ie: avoid unecessary resizing)
 		void read1DStation(StationData& sd);
 		void read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >&);
 		void read2DStations(const Date& timestamp, std::vector<StationData>& vecStation);
@@ -88,6 +86,8 @@ class A3DIO : public IOInterface {
 		double in_tz, out_tz; //timezones
 		std::string meteo1d;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+
+		static const double plugin_nodata; //plugin specific nodata value, e.g. -9999
 };
 } //end namespace
 

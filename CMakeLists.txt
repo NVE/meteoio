@@ -46,6 +46,9 @@ ELSE(MSVC)
 	ELSE(POPC)
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
 	ENDIF(POPC)
+	IF(APPLE)
+		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wno-sign-conversion -Wno-shorten-64-to-32") #for now, keep clang quiet
+	ENDIF(APPLE)
 	IF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi") #Android does not like ansi...
 		IF(WIN32) #for gcc on windows

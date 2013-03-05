@@ -677,10 +677,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 	cleanup(fin); //closes file
 }
 
-SMETReader::~SMETReader()
-{
-
-}
+SMETReader::~SMETReader() {}
 
 void SMETReader::cleanup(std::ifstream& fin) throw()
 {
@@ -878,7 +875,6 @@ void SMETReader::read_header(std::ifstream& fin)
 
 	while (!fin.eof() && (fin.peek() != '[')){ //Read until next section
 		getline(fin, line, eoln);
-
 		SMETCommon::stripComments(line);
 		SMETCommon::trim(line);
 

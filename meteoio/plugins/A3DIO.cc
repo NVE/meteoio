@@ -57,7 +57,6 @@ namespace mio {
  */
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
-const unsigned int A3DIO::buffer_reserve = 23*24*2; //kind of average size of a buffer for optimizing vectors
 
 A3DIO::A3DIO(const std::string& configfile)
        : cfg(configfile),
@@ -270,32 +269,29 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector<
 	try {
 		//Read one line, construct Date object and see whether date is greater or equal than the date_in object
 		bool eof_reached = false;
-		IOUtils::skipLines(fin, 1, eoln); //skip rest of line
+		IOUtils::skipLines(fin, 6, eoln); //skip header lines
 
 		//Loop going through the data sequentially until dateStart is found
 		do {
 			getline(fin, line, eoln); //read complete line
 			eof_reached = readMeteoDataLine(line, tmpdata, meteo1d);
-			//tmpdata.cleanData();
 			convertUnits(tmpdata);
 
 		} while((tmpdata.date < dateStart) && (!eof_reached));
 
 		if ((dateEnd < dateStart) && (!eof_reached)){ //Special case
 			vecMeteo.push_back( std::vector<MeteoData>() );
-			vecMeteo[0].push_back(tmpdata);
+			vecMeteo.front().push_back(tmpdata);
 		} else if ((tmpdata.date <= dateEnd)  && (!eof_reached)) {
 			vecMeteo.push_back( std::vector<MeteoData>() );
-			vecMeteo[0].reserve(buffer_reserve);
 		}
 
 		while ((tmpdata.date <= dateEnd)  && (!eof_reached)) {
 			//At this point tmpdata.date is >= dateStart
-			vecMeteo[0].push_back(tmpdata);
+			vecMeteo.front().push_back(tmpdata);
 
 			getline(fin, line, eoln); //read complete line
 			eof_reached = readMeteoDataLine(line, tmpdata, meteo1d);
-			//tmpdata.cleanData();
 			convertUnits(tmpdata);
 		}
 	} catch(...) {
@@ -411,7 +407,6 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 		//init vecStation with proper StationData, vecMeteo with nodata
 		for (size_t jj=0; jj<tmpvecS.size(); jj++){
 			vecMeteo.push_back( std::vector<MeteoData>() );
-			vecMeteo[jj+1].reserve(buffer_reserve);
 			MeteoData tmd;          //create an empty data set
 			tmd.meta = tmpvecS[jj]; //add meta data to that data set
 			for (size_t ii=0; ii<vecMeteo.front().size(); ii++){
