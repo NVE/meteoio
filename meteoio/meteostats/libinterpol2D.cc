@@ -718,8 +718,8 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	//now, calculate each point
 	for(size_t j=0; j<grid.nrows; j++) {
 		for(size_t i=0; i<grid.ncols; i++) {
-			const double x = llcorner_x+i*cellsize;
-			const double y = llcorner_y+j*cellsize;
+			const double x = llcorner_x+static_cast<double>(i)*cellsize;
+			const double y = llcorner_y+static_cast<double>(j)*cellsize;
 
 			//fill gamma
 			for(size_t st=0; st<nrOfMeasurments; st++) {

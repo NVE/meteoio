@@ -89,7 +89,7 @@ double FilterTukey::getStdDev(const std::vector<MeteoData>& ivec, const unsigned
 			sum3 = sum3 + (value - mean);
 		}
 	}
-	const double variance = (sum2 - sum3*sum3/count) / (count - 1);
+	const double variance = (sum2 - sum3*sum3/static_cast<double>(count)) / static_cast<double>(count - 1);
 
 	return sqrt(variance);
 }

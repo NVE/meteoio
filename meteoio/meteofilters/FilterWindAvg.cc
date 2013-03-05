@@ -74,8 +74,8 @@ double FilterWindAvg::calc_avg(const std::vector<MeteoData>& ivec, const unsigne
 
 	if(count==0) return IOUtils::nodata;
 
-	ve /= count;
-	vn /= count;
+	ve /= static_cast<double>(count);
+	vn /= static_cast<double>(count);
 
 	if(param==MeteoData::VW) {
 		const double meanspeed = sqrt(ve*ve + vn*vn);

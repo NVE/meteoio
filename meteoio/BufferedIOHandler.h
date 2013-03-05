@@ -162,7 +162,6 @@ class BufferedIOHandler : public IOInterface {
 		Date buffer_start, buffer_end;
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer
-		size_t chunks; ///< How many chuncks to buffer
 		size_t max_grids; ///< How many grids to buffer (grids, dems, landuse and assimilation grids together)
 };
 

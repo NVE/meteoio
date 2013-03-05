@@ -23,7 +23,7 @@ namespace mio {
 
 BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg)
         : iohandler(in_iohandler), cfg(in_cfg), vec_buffer_meteo(), mapBufferedGrids(), IndexBufferedGrids(),
-          buffer_start(), buffer_end(), chunk_size(), buff_before(), chunks(1), max_grids(10)
+          buffer_start(), buffer_end(), chunk_size(), buff_before(), max_grids(10)
 
 {
 	setDfltBufferProperties();
@@ -46,7 +46,6 @@ BufferedIOHandler& BufferedIOHandler::operator=(const BufferedIOHandler& source)
 		buffer_end = source.buffer_end;
 		chunk_size = source.chunk_size;
 		buff_before = source.buff_before;
-		chunks = source.chunks;
 		max_grids = source.max_grids;
 	}
 	return *this;
@@ -183,9 +182,7 @@ void BufferedIOHandler::writeMeteoData(const std::vector< METEO_TIMESERIE >& vec
 void BufferedIOHandler::setDfltBufferProperties()
 {
 	double chunk_size_days = 15.; //default chunk size value
-	chunks = 1;
 	cfg.getValue("BUFF_CHUNK_SIZE", "General", chunk_size_days, IOUtils::nothrow); //in days
-	cfg.getValue("BUFF_CHUNKS", "General", chunks, IOUtils::nothrow);
 	chunk_size = Duration(chunk_size_days, 0);
 
 	//get buffer centering options
@@ -270,7 +267,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 {
 	vecMeteo.clear();
 	const Date new_buffer_start(date_start-buff_before); //taking centering into account
-	Date new_buffer_end(new_buffer_start + chunk_size*chunks);
+	Date new_buffer_end(new_buffer_start + chunk_size);
 	vector< vector<MeteoData> > tmp_meteo_buffer; //it must be here -> adresses copied in 2. are still valid
 
 	//Read MeteoData for requested interval in chunks, furthermore buffer it
@@ -294,7 +291,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 		while (date_end > new_buffer_end){
 			//if the requested interval is bigger than a normal buffer, we have to increase the buffer anyway...
 			tmp_meteo_buffer.reserve(buffer_size);
-			iohandler.readMeteoData(new_buffer_end, new_buffer_end+chunk_size*chunks, tmp_meteo_buffer);
+			iohandler.readMeteoData(new_buffer_end, new_buffer_end+chunk_size, tmp_meteo_buffer);
 
 			if (tmp_meteo_buffer.size() != buffer_size) {
 				stringstream ss;
@@ -314,7 +311,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 				vec_buffer_meteo[ii].reserve(vec_buffer_meteo[ii].size()+tmp_meteo_buffer[ii].size());
 				vec_buffer_meteo[ii].insert(vec_buffer_meteo[ii].end(), tmp_meteo_buffer[ii].begin(), tmp_meteo_buffer[ii].end());
 			}
-			new_buffer_end += chunk_size*chunks;
+			new_buffer_end += chunk_size;
 			buffer_end = new_buffer_end;
 		}
 	}
@@ -343,7 +340,6 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 }
 
 void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo){
-	//TODO: implement reading data by chunks. It has to be done the same way as rebuffering
 	vecvecMeteo.clear(); //the plugins do it internally anyway, but this is cheap and safe...
 	iohandler.readMeteoData(date_start, date_end, vecvecMeteo);
 	buffer_start = date_start;
@@ -395,7 +391,7 @@ std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
 	os << "Config& cfg = " << hex << &data.cfg << dec << "\n";
 	os << "IOHandler &iohandler = " << hex << &data.iohandler << dec << "\n";
 
-	os << "Buffering " << data.chunks << " chunk(s) of " <<data.chunk_size.getJulian() << " day(s) with "
+	os << "Buffering " <<data.chunk_size.getJulian() << " day(s) with "
 	   << data.buff_before.getJulian() << " day(s) pre-buffering\n";
 
 	os << "Current buffer content (" << data.vec_buffer_meteo.size() << " stations, "

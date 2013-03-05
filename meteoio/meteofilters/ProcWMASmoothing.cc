@@ -81,7 +81,7 @@ double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, co
 	}
 
 	if (norm > 0)
-		return wma/norm;
+		return wma / static_cast<double>(norm);
 	else
 		return IOUtils::nodata;
 }

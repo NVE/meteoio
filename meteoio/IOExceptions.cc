@@ -79,10 +79,10 @@ IOException::IOException(const std::string& message, const std::string& position
 
 #if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
-	size_t tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
+	const int tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
 	std::string backtrace_info = "\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
-	for (unsigned int ii=1; ii<tracesize; ii++) {
+	for (unsigned int ii=1; ii<(unsigned)tracesize; ii++) {
 	#ifdef __GNUC__
 		std::stringstream ss;
 		char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
@@ -128,8 +128,7 @@ IOException::IOException(const std::string& message, const std::string& position
 #endif
 }
 
-IOException::~IOException() throw(){
-}
+IOException::~IOException() throw() {}
 
 const char* IOException::what() const throw()
 {

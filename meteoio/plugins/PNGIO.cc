@@ -376,7 +376,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array)
 {
 	if(has_legend) {
-		legend leg(nrows, min, max);
+		const legend leg(nrows, min, max);
 		legend_array = leg.getLegend();
 		unsigned int nx, ny;
 		legend_array.size(nx,ny);
@@ -469,7 +469,7 @@ void PNGIO::setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop
 		palette[ii].green = static_cast<png_byte>(pal[interlace+1]);
 		palette[ii].blue = static_cast<png_byte>(pal[interlace+2]);
 	}
-	png_set_PLTE(png_ptr, info_ptr, palette, nr_colors);
+	png_set_PLTE(png_ptr, info_ptr, palette, static_cast<int>(nr_colors));
 }
 
 void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette)
@@ -484,7 +484,7 @@ void PNGIO::closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palet
 
 void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename)
 {
-	string full_name = grid2dpath+"/"+filename;
+	const string full_name = grid2dpath+"/"+filename;
 	fp=NULL;
 	png_color *palette=NULL;
 	png_structp png_ptr=NULL;
@@ -655,7 +655,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 {
 	const string world_file = IOUtils::removeExtension(filename)+".pnw";
 	const double cellsize = grid_in.cellsize;
-	Coords world_ref=grid_in.llcorner;
+	Coords world_ref = grid_in.llcorner;
 	world_ref.setProj(coordout, coordoutparam);
 	world_ref.moveByXY(.5*cellsize, (grid_in.nrows+.5)*cellsize); //moving to center of upper left cell
 
@@ -737,11 +737,9 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 {
 	const size_t max_len = 79; //according to the official specs' recommendation
 	const size_t nr = metadata_key.size();
-	png_text *info_text;
-	info_text = (png_text *)calloc(sizeof(png_text), nr);
-	char **key, **text;
-	key = (char**)calloc(sizeof(char)*max_len, nr);
-	text = (char**)calloc(sizeof(char)*max_len, nr);
+	png_text *info_text = (png_text *)calloc(sizeof(png_text), nr);
+	char **key = (char**)calloc(sizeof(char)*max_len, nr);
+	char **text = (char**)calloc(sizeof(char)*max_len, nr);
 
 	for(size_t ii=0; ii<nr; ii++) {
 		key[ii] = (char *)calloc(sizeof(char), max_len);
@@ -753,7 +751,7 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 		info_text[ii].compression = PNG_TEXT_COMPRESSION_NONE;
 	}
 
-	png_set_text(png_ptr, info_ptr, info_text, nr);
+	png_set_text(png_ptr, info_ptr, info_text, static_cast<int>(nr));
 	png_write_info(png_ptr, info_ptr);
 
 	free(info_text);
@@ -766,11 +764,11 @@ void PNGIO::writeMetadata(png_structp &png_ptr, png_infop &info_ptr)
 }
 
 std::string PNGIO::decimal_to_dms(const double& decimal) {
-	std::stringstream dms;
 	const int d = static_cast<int>( floor(decimal) );
 	const double m = floor( ((decimal - (double)d)*60.)*100. ) / 100.;
 	const double s = 3600.*(decimal - (double)d) - 60.*m;
 
+	std::stringstream dms;
 	dms << d << "/1 " << static_cast<int>(m*100) << "/100 " << fixed << setprecision(6) << s << "/1";
 	return dms.str();
 }

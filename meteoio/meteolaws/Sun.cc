@@ -342,7 +342,8 @@ std::ostream& operator<<(std::ostream &os, const SunObject& data)
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << R_diffuse;
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << R_direct+R_diffuse << "\n";
 
-	os << "</SunObject>\n" << std::setprecision(old_prec);
+	os << "</SunObject>\n";
+	os.precision(old_prec);
 	return os;
 }
 

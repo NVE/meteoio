@@ -230,7 +230,8 @@ std::ostream& operator<<(std::ostream &os, const Coords& coord)
 	os << "Lat/Long\t" << "(" << coord.getLat() << " , " << coord.getLon() << ")" << "\n";
 	std::streamsize p = os.precision();
 	os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
-	os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield) << std::setprecision(p);
+	os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
+	os.precision(p);
 	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
 	os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
 	os << "EPSG\t\t" << coord.getEPSG() << "\n";

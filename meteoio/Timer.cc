@@ -45,8 +45,8 @@ Timer::Timer() : start_point(0.), elapsed(0.), isRunning(false)
 */
 void Timer::start() {
 	if (!isRunning) {
-		isRunning=true;
-		start_point=getCurrentTime();
+		isRunning = true;
+		start_point = getCurrentTime();
 	}
 }
 
@@ -55,7 +55,7 @@ void Timer::start() {
 */
 void Timer::restart() {
 	reset();
-	isRunning=true;
+	isRunning = true;
 }
 
 /**
@@ -64,8 +64,8 @@ void Timer::restart() {
 */
 void Timer::stop() {
 	if (isRunning) {
-		elapsed+=getCurrentTime()-start_point;
-		isRunning=false;
+		elapsed += static_cast<double>(getCurrentTime()-start_point);
+		isRunning = false;
 	}
 }
 
@@ -73,8 +73,8 @@ void Timer::stop() {
 * @brief Reset the timer to zero.
 */
 void Timer::reset() {
-	start_point=getCurrentTime();
-	elapsed=0;
+	start_point = getCurrentTime();
+	elapsed = 0.;
 }
 
 /**
@@ -84,13 +84,13 @@ void Timer::reset() {
 */
 double Timer::getElapsed() const {
 	if (isRunning) {
-		return elapsed+getCurrentTime()-start_point;
+		return elapsed + static_cast<double>(getCurrentTime()-start_point);
 	}
 	return elapsed;
 }
 
 #ifdef WIN32
-double Timer::getCurrentTime() const {
+long double Timer::getCurrentTime() const {
 	SYSTEMTIME systemTime;
 	GetSystemTime( &systemTime );
 
@@ -101,15 +101,15 @@ double Timer::getCurrentTime() const {
 	uli.LowPart = fileTime.dwLowDateTime;
 	uli.HighPart = fileTime.dwHighDateTime;
 
-	const ULONGLONG units_convert = 10000*1000; //it gives the time since 1 January 1601 (UTC) in units of 100ns
+	const ULONGLONG units_convert = 10000*1000ULL; //it gives the time since 1 January 1601 (UTC) in units of 100ns
 	const ULONGLONG offset_to_epoch = 11644473600ULL; //offset in seconds to Unix epoch, 134774 days * 24*3600
-	return static_cast<double>(uli.QuadPart - offset_to_epoch*units_convert) / units_convert;
+	return static_cast<long double>(uli.QuadPart - offset_to_epoch*units_convert) / units_convert;
 }
 #else
-double Timer::getCurrentTime() const {
+long double Timer::getCurrentTime() const {
 	timeval tp;
 	gettimeofday(&tp,NULL);
-	const double t=tp.tv_sec+double(tp.tv_usec)*1.0e-6;
+	const long double t = tp.tv_sec+tp.tv_usec*1.0e-6;
 	return t;
 }
 #endif

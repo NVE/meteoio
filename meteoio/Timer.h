@@ -49,9 +49,9 @@ public:
 	void reset();
 	double getElapsed() const;
 protected:
-	double getCurrentTime() const;
+	long double getCurrentTime() const;
 
-	double start_point;
+	long double start_point;
 	double elapsed;
 	bool isRunning;
 };

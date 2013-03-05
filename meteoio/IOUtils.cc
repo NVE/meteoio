@@ -709,8 +709,8 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 
 	size_t first = 0, last = vecM.size()-1;
 	const double raw_pos = (curr_val-start_val) / (end_val-start_val);
-	const size_t start = MAX( (size_t)(floor(raw_pos*last*.8)), first);
-	const size_t end = MIN( (size_t)ceil(raw_pos*last*1.2), last);
+	const size_t start = MAX( (size_t)(floor(raw_pos*static_cast<double>(last)*.8)), first);
+	const size_t end = MIN( (size_t)ceil(raw_pos*static_cast<double>(last)*1.2), last);
 	if(vecM[start].date.getJulian(true)<curr_val) first=start;
 	if(vecM[end].date.getJulian(true)>=curr_val) last=end;
 

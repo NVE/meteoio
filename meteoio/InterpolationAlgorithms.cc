@@ -446,7 +446,7 @@ double RHAlgorithm::getQualityRating()
 
 	if (vecDataTA.empty())
 		return 0.0;
-	if( ( nrOfMeasurments<(size_t)(0.5*vecDataRH.size()) ) || ( nrOfMeasurments<2 ) )
+	if( (nrOfMeasurments<vecDataRH.size()/2) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;
@@ -603,7 +603,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating()
 
 	if (vecDataVW.empty())
 		return 0.0;
-	if( ( nrOfMeasurments<(size_t)(0.5*vecDataVW.size()) ) || ( nrOfMeasurments<2 ) )
+	if( (nrOfMeasurments<vecDataVW.size()/2) || ( nrOfMeasurments<2 ) )
 		return 0.6;
 
 	return 0.9;

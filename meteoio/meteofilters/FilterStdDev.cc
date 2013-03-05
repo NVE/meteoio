@@ -98,7 +98,7 @@ void FilterStdDev::getStat(const std::vector<MeteoData>& ivec, const unsigned in
 				sum3 = sum3 + (value - mean);
 			}
 		}
-		const double variance = (sum2 - sum3*sum3/count) / (count - 1);
+		const double variance = (sum2 - sum3*sum3/static_cast<double>(count)) / static_cast<double>(count - 1);
 		stddev = sqrt(variance);
 	}
 }
