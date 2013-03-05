@@ -715,13 +715,13 @@ void Coords::setEPSG(const int epsg) {
 	}
 
 	if(!found && (epsg==21781)) {
-		coord_sys="CH1903";
+		coord_sys.assign("CH1903");
 		coord_param.clear();
 		found=true;
 	}
 	if(!found && (epsg>=32601) && (epsg<=32660)) {
 		//northern hemisphere
-		coord_sys="UTM";
+		coord_sys.assign("UTM");
 		const int zoneNumber = epsg-32600;
 		std::ostringstream osstream;
 		osstream << zoneNumber << "P";
@@ -730,7 +730,7 @@ void Coords::setEPSG(const int epsg) {
 	}
 	if(!found && (epsg>=32701) && (epsg<=32760)) {
 		//southern hemisphere
-		coord_sys="UTM";
+		coord_sys.assign("UTM");
 		const int zoneNumber = epsg-32700;
 		std::ostringstream osstream;
 		osstream << zoneNumber << "N";
@@ -738,13 +738,13 @@ void Coords::setEPSG(const int epsg) {
 		found=true;
 	}
 	if(!found && (epsg==32761 || epsg==32661)) {
-		coord_sys="UPS";
+		coord_sys.assign("UPS");
 		coord_param = (epsg==32761)? "S" : "N";
 		found=true;
 	}
 	if(!found) {
 		//anything else has to be processed by proj4
-		coord_sys="PROJ4";
+		coord_sys.assign("PROJ4");
 		std::ostringstream osstream;
 		osstream << epsg;
 		coord_param=osstream.str();
