@@ -42,7 +42,7 @@ ELSE(MSVC)
 	SET(PROFILING "-pg -fprofile-arcs")
 	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
 	IF(POPC)
-		SET(EXTRA_WARNINGS "")
+		SET(EXTRA_WARNINGS "-Wextra -Wno-ignored-qualifiers")
 	ELSE(POPC)
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
 	ENDIF(POPC)
