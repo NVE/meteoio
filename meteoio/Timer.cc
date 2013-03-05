@@ -109,7 +109,7 @@ long double Timer::getCurrentTime() const {
 long double Timer::getCurrentTime() const {
 	timeval tp;
 	gettimeofday(&tp,NULL);
-	const long double t = tp.tv_sec+tp.tv_usec*1.0e-6;
+	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.0e-6;
 	return t;
 }
 #endif
