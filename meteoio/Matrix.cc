@@ -609,6 +609,61 @@ Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 	return X;
 }
 
+void Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
+{ //Thomas algorithm for tridiagonal matrix solving of A·X=B
+	unsigned int Anrows,Ancols, Bnrows, Bncols;
+	A.size(Anrows, Ancols);
+	if(Anrows!=Ancols) {
+		std::stringstream tmp;
+		tmp << "Trying to solve A·X=B with A non square matrix ";
+		tmp << "(" << Anrows << "," << Ancols << ") !";
+		throw IOException(tmp.str(), AT);
+	}
+	B.size(Bnrows, Bncols);
+	if(Anrows!=Bnrows)  {
+		std::stringstream tmp;
+		tmp << "Trying to solve A·X=B with A and B of incompatible dimensions ";
+		tmp << "(" << Anrows << "," << Ancols << ") and (";
+		tmp << "(" << Bnrows << "," << Bncols << ") !";
+		throw IOException(tmp.str(), AT);
+	}
+	if(Bncols!=1) {
+		std::stringstream tmp;
+		tmp << "Trying to solve A·X=B but B is not a vector! It is ";
+		tmp << "(" << Bnrows << "," << Bncols << ") !";
+		throw IOException(tmp.str(), AT);
+	}
+
+	const unsigned int n = Anrows;
+	std::vector<double> b(n+1), c(n+1), v(n+1); //so we can keep the same index as for the matrix
+
+	b[1] = A(1,1); v[1] = B(1,1); //otherwise they would never be defined
+	for(unsigned int i=2; i<=n; i++) {
+		if(IOUtils::checkEpsilonEquality(b[i-1], 0., epsilon))
+			throw IOException("The given matrix can not be inversed", AT);
+		const double b_i = A(i,i);
+		const double v_i = B(i,1);
+		const double a_i = A(i,i-1);
+		const double m = a_i / b[i-1];
+		c[i-1] = A(i-1,i);
+		b[i] = b_i - m * c[i-1];
+		v[i] = v_i - m * v[i-1];
+	}
+
+	X.resize(n,1); //we need to ensure that X has the correct dimensions
+	X(n,1) = v[n] / b[n];
+	for(unsigned int i=n-1; i>=1; i--) {
+		X(i,1) = ( v[i] - c[i]*X(i+1,1) ) / b[i];
+	}
+}
+
+Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B) {
+//This uses the Thomas algorithm for tridiagonal matrix solving of A·X=B
+	Matrix X;
+	TDMA_solve(A, B, X);
+	return X;
+}
+
 bool Matrix::isIdentity() const {
 	if(nrows!=ncols) {
 		std::stringstream tmp;

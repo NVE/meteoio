@@ -90,7 +90,7 @@ class Matrix {
 		* @param cols number of columns of the matrix
 		*/
 		void size(unsigned int& rows, unsigned int& cols) const;
-		
+
 		/**
 		* @brief free the memory and set the matrix dimensions to (0,0)
 		*/
@@ -155,6 +155,30 @@ class Matrix {
 		* @param X solution matrix
 		*/
 		static void solve(const Matrix& A, const Matrix& B, Matrix& X);
+
+		/**
+		* @brief Solving system of equations using Thomas Algorithm
+		* The following function solves a A·X=B with X and B being vectors
+		* and A a tridiagonal matrix, using Thomas Algorithm
+		* (see http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm)
+		* @author Nander Wever, Mathias Bavay
+		* @param A A matrix
+		* @param B B matrix
+		* @return solution matrix
+		*/
+		static Matrix TDMA_solve(const Matrix& A, const Matrix& B);
+
+		/**
+		* @brief Solving system of equations using Thomas Algorithm
+		* The following function solves a A·X=B with X and B being vectors
+		* and A a tridiagonal matrix, using Thomas Algorithm
+		* (see http://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm)
+		* @author Nander Wever, Mathias Bavay
+		* @param A A matrix
+		* @param B B matrix
+		* @param X solution matrix
+		*/
+		static void TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X);
 
 		/**
 		* @brief matrix determinant
