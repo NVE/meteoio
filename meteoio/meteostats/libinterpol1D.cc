@@ -134,11 +134,10 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	std::vector< std::pair<double,double> > new_vec;
-	new_vec.reserve(X.size());
-	for(unsigned int i=0; i<X.size(); i++) {
+	std::vector< std::pair<double,double> > new_vec( X.size() );
+	for(unsigned int i=0; i<new_vec.size(); i++) {
 		const std::pair<double,double> tmp(X[i],Y[i]);
-		new_vec.push_back(tmp);
+		new_vec[i] = tmp;
 	}
 
 	std::sort( new_vec.begin(), new_vec.end(), pair_comparator );
@@ -287,7 +286,6 @@ double Interpol1D::variance(const std::vector<double>& X)
 //(see https://secure.wikimedia.org/wikipedia/en/wiki/Algorithms_for_calculating_variance)
 //in order to be more robust to small variations around the mean.
 	const size_t n = X.size();
-
 	size_t count=0;
 	double sum=0.;
 
@@ -444,7 +442,7 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 		return EXIT_SUCCESS;
 
 	std::vector<double> X(in_X), Y(in_Y);
-	size_t nb_valid_pts=nb_pts;
+	size_t nb_valid_pts = nb_pts;
 
 	while(R<r_thres && nb_valid_pts>min_pts) {
 		//we try to remove the one point in the data set that is the worst
@@ -534,15 +532,11 @@ int Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vec
 */
 void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {
-	std::vector<double> x;
+	std::vector<double> x(X.size());
 
 	for(unsigned int i=0; i<X.size(); i++) {
 		const double val = X[i];
-		if(val!=IOUtils::nodata) {
-			x.push_back( log(val) );
-		} else {
-			x.push_back( IOUtils::nodata );
-		}
+		x[i] = (val!=IOUtils::nodata)? log(val) : IOUtils::nodata;
 	}
 
 	LinRegression(x, Y, a, b, r, mesg); //HACK: how should we transform r?
@@ -560,15 +554,11 @@ void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<d
 */
 void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {
-	std::vector<double> y;
+	std::vector<double> y( Y.size() );
 
 	for(size_t i=0; i<Y.size(); i++) {
 		const double val = Y[i];
-		if(val!=IOUtils::nodata) {
-			y.push_back( log(val) );
-		} else {
-			y.push_back( IOUtils::nodata );
-		}
+		y[i] = (val!=IOUtils::nodata)? log(val) : IOUtils::nodata;
 	}
 
 	LinRegression(X, y, a, b, r, mesg); //HACK: how should we transform r?

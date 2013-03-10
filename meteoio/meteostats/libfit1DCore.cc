@@ -47,9 +47,10 @@ void FitModel::setGuess(const std::vector<double>& lambda_in) {
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	for(size_t i=0; i<nGuess; i++) {
+	Lambda = lambda_in;
+	/*for(size_t i=0; i<nGuess; i++) {
 		Lambda.push_back( lambda_in[i] );
-	}
+	}*/
 	fit_ready = true;
 }
 

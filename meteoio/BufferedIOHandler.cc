@@ -232,16 +232,16 @@ void BufferedIOHandler::setMinBufferRequirements(const double& i_chunk_size, con
 
 double BufferedIOHandler::getAvgSamplingRate()
 {
-	const size_t nr_stations = vec_buffer_meteo.size();
 	if (!vec_buffer_meteo.empty()){
+		const size_t nr_stations = vec_buffer_meteo.size();
 		double sum = 0;
 		for (size_t ii=0; ii<nr_stations; ii++){ //loop over all stations
 			if(!vec_buffer_meteo[ii].empty()) {
-				const size_t nr_data_pts = vec_buffer_meteo[ii].size();
 				const std::vector<MeteoData>& curr_station = vec_buffer_meteo[ii];
 				const double days = curr_station.back().date.getJulian() - curr_station.front().date.getJulian();
 
 				//add the average sampling rate for this station
+				const size_t nr_data_pts = vec_buffer_meteo[ii].size();
 				if(days>0.) sum += (double)(nr_data_pts-1) / days; //the interval story: 2 points define 1 interval!
 			}
 		}

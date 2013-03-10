@@ -35,12 +35,9 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
 {
 	if(param!=MeteoData::HNW)
 		throw InvalidArgumentException("Trying to use UNDERCATCH_HAMON filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
-	ovec.clear();
-	ovec.reserve(ivec.size());
+	ovec = ivec;
 
-	for (size_t ii=0; ii<ivec.size(); ii++){
-		ovec.push_back(ivec[ii]);
-
+	for (size_t ii=0; ii<ovec.size(); ii++){
 		double& tmp = ovec[ii](param);
 		double VW = ovec[ii](MeteoData::VW);
 		if(VW!=IOUtils::nodata) VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal

@@ -105,7 +105,7 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
                               const std::vector<StationData>& vecStations,
                               std::vector< std::pair<double, size_t> >& list)
 {
-	if(!list.empty()) list.clear();
+	list.resize(vecStations.size());
 
 	for(size_t i=0; i<vecStations.size(); i++) {
 		const Coords& position = vecStations[i].position;
@@ -113,7 +113,7 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
 		const double DY = y-position.getNorthing();
 		const double d2 = (DX*DX + DY*DY);
 		const std::pair <double, size_t> tmp(d2,i);
-		list.push_back(tmp);
+		list[i] = tmp;
 	}
 
 	sort (list.begin(), list.end());
@@ -322,12 +322,12 @@ void Interpol2D::constantLapseGrid2DFill(const double& value, const double& alti
 //convert a vector of stations into two vectors of eastings and northings
 void Interpol2D::buildPositionsVectors(const std::vector<StationData>& vecStations, std::vector<double>& vecEastings, std::vector<double>& vecNorthings)
 {
-	vecEastings.clear();
-	vecNorthings.clear();
+	vecEastings.resize( vecStations.size() );
+	vecNorthings.resize( vecStations.size() );
 	for (size_t i=0; i<vecStations.size(); i++) {
 		const Coords& position = vecStations[i].position;
-		vecEastings.push_back( position.getEasting() );
-		vecNorthings.push_back( position.getNorthing() );
+		vecEastings[i] = position.getEasting();
+		vecNorthings[i] = position.getNorthing();
 	}
 }
 

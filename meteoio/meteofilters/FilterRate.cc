@@ -31,13 +31,11 @@ FilterRate::FilterRate(const std::vector<std::string>& vec_args) : FilterBlock("
 void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                            std::vector<MeteoData>& ovec)
 {
-	ovec.clear();
-	ovec.reserve(ivec.size());
+	ovec = ivec;
 	size_t last_good = IOUtils::npos;
 
 	//Find first point that is not IOUtils::nodata
-	for (size_t ii=0; ii<ivec.size(); ii++){
-		ovec.push_back(ivec[ii]);
+	for (size_t ii=0; ii<ovec.size(); ii++){
 		if (ovec[ii](param) != IOUtils::nodata){
 			last_good = ii;
 			break;
@@ -47,9 +45,7 @@ void FilterRate::process(const unsigned int& param, const std::vector<MeteoData>
 	if (last_good == IOUtils::npos) //can not find a good point to start
 		return;
 
-	for (size_t ii=(last_good+1); ii<ivec.size(); ii++) {
-		ovec.push_back(ivec[ii]);
-
+	for (size_t ii=(last_good+1); ii<ovec.size(); ii++) {
 		double& curr_value       = ovec[ii](param);
 		const double& prev_value = ovec[last_good](param);
 		const double curr_time   = ovec[ii].date.getJulian();

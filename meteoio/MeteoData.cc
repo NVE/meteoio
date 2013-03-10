@@ -303,6 +303,7 @@ void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>
 	if(vec1.empty() && vec2.empty() && vec1[0].date!=vec2[0].date) return; //vectors MUST contain data at the same date
 
 	if(simple_merge) {
+		vec1.reserve( vec1.size()+vec2.size() );
 		for(size_t ii=0; ii<vec2.size(); ii++) vec1.push_back( vec2[ii] );
 	} else {
 		for(size_t ii=0; ii<vec2.size(); ii++) merge(vec1, vec2[ii]);

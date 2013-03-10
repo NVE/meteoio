@@ -44,12 +44,9 @@ void ProcUnventilatedT::process(const unsigned int& param, const std::vector<Met
 		ss << "Can not use " << getName() << " processing on " << MeteoData::getParameterName(param);
 		throw InvalidArgumentException(ss.str(), AT);
 	}
-	ovec.clear();
-	ovec.reserve(ivec.size());
+	ovec = ivec;
 
-	for (size_t ii=0; ii<ivec.size(); ii++){
-		ovec.push_back(ivec[ii]);
-
+	for (size_t ii=0; ii<ovec.size(); ii++){
 		double& tmp = ovec[ii](param);
 		if(tmp == IOUtils::nodata) continue; //preserve nodata values
 

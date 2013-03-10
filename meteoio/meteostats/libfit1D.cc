@@ -208,7 +208,7 @@ void ExpVario::setDefaultGuess() {
 		if(abs(X[i])<xzero) { xzero=X[i]; xzero_idx=i;}
 	}
 	Lambda.push_back( Y[xzero_idx] );
-	Lambda.push_back( Y[Y.size()-1] - Y[xzero_idx] );
+	Lambda.push_back( Y.back() - Y[xzero_idx] );
 	Lambda.push_back( 1. );
 }
 

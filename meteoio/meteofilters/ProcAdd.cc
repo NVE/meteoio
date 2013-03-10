@@ -30,12 +30,8 @@ ProcAdd::ProcAdd(const std::vector<std::string>& vec_args) : ProcessingBlock("AD
 void ProcAdd::process(const unsigned int& param, const std::vector<MeteoData>& ivec,
                         std::vector<MeteoData>& ovec)
 {
-	ovec.clear();
-	ovec.reserve(ivec.size());
-
-	for (size_t ii=0; ii<ivec.size(); ii++){
-		ovec.push_back(ivec[ii]);
-
+	ovec = ivec;
+	for (size_t ii=0; ii<ovec.size(); ii++){
 		double& tmp = ovec[ii](param);
 		if (tmp == IOUtils::nodata) continue; //preserve nodata values
 

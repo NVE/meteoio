@@ -96,8 +96,7 @@ size_t ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::stri
 void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
-	ovec.clear();
-	ovec.insert(ovec.begin(), ivec.size(), vector<MeteoData>());
+	ovec.resize( ivec.size() );
 
 	for (size_t ii=0; ii<ivec.size(); ii++){ //for every station
 		if (!ivec[ii].empty()){

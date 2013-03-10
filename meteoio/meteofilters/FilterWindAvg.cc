@@ -43,14 +43,12 @@ void FilterWindAvg::process(const unsigned int& param, const std::vector<MeteoDa
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	ovec.clear();
-	ovec.reserve(ivec.size());
-	size_t start, end;
+	ovec = ivec;
 
-	for (size_t ii=0; ii<ivec.size(); ii++){ //for every element in ivec, get a window
-		ovec.push_back(ivec[ii]);
+	for (size_t ii=0; ii<ovec.size(); ii++){ //for every element in ivec, get a window
 		double& value = ovec[ii](param);
 
+		size_t start, end;
 		if( get_window_specs(ii, ivec, start, end) ) {
 			value = calc_avg(ivec, param, start, end);
 		} if(!is_soft) value = IOUtils::nodata;

@@ -39,21 +39,18 @@ bool FilterBlock::is_soft(std::vector<std::string>& vec_args) {
 void FilterBlock::extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
                                      std::vector<double>& ovec)
 {
-	ovec.clear();
-	ovec.reserve(ivec.size());
+	ovec.resize( ivec.size() );
 	for(size_t ii=0; ii<ivec.size(); ii++) {
-		ovec.push_back( ivec[ii](param) );
+		ovec[ii] = ivec[ii](param);
 	}
 }
 
 void FilterBlock::extract_dbl_vector(const unsigned int& param, const std::vector<const MeteoData*>& ivec,
                                      std::vector<double>& ovec)
 {
-	ovec.clear();
-	ovec.reserve(ivec.size());
+	ovec.resize( ivec.size() );
 	for(size_t ii=0; ii<ivec.size(); ii++) {
-		const double& value = (*ivec[ii])(param);
-		ovec.push_back( value );
+		ovec[ii] =  (*ivec[ii])(param);
 	}
 }
 

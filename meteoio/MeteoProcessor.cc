@@ -46,9 +46,9 @@ size_t MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& 
 	cfg.findKeys(vec_keys, std::string(), "Filters");
 
 	for (size_t ii=0; ii<vec_keys.size(); ii++){
-		size_t found = vec_keys[ii].find_first_of(":");
+		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
-			string tmp = vec_keys[ii].substr(0,found);
+			const string tmp = vec_keys[ii].substr(0,found);
 			set_parameters.insert(tmp);
 		}
 	}
