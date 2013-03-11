@@ -96,10 +96,6 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 {
 	if(iomanager==NULL)
 		throw IOException("No IOManager reference has been set!", AT);
-	//check that the output grid is using the same projection as the dem
-	if(!result.llcorner.isSameProj(dem.llcorner)) {
-		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
-	}
 
 	//Show algorithms to be used for this parameter
 	const map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
@@ -135,6 +131,11 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		//Some default message, that interpolation for this parameter needs configuration
 		throw IOException("You need to configure the interpolation algorithms for parameter " +
 		                  MeteoData::getParameterName(meteoparam), AT);
+	}
+
+	//check that the output grid is using the same projection as the dem
+	if(!result.llcorner.isSameProj(dem.llcorner)) {
+		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
 	}
 
 	//Run soft min/max filter for RH, HNW and HS
