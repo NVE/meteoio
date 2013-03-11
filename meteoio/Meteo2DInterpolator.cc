@@ -22,12 +22,14 @@ using namespace std;
 
 namespace mio {
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom) : cfg(i_cfg), iomanager(&i_iom), mapAlgorithms()
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom)
+                    : cfg(i_cfg), iomanager(&i_iom), mapAlgorithms()
 {
 	setAlgorithms();
 }
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg) : cfg(i_cfg), iomanager(NULL), mapAlgorithms()
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg)
+                    : cfg(i_cfg), iomanager(NULL), mapAlgorithms()
 {
 	setAlgorithms();
 }
@@ -44,9 +46,9 @@ Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& s
 	return *this;
 }
 
-void Meteo2DInterpolator::setAlgorithms() {
-	/*
-	 * By reading the Config object build up a list of user configured algorithms
+void Meteo2DInterpolator::setAlgorithms()
+{
+	/* By reading the Config object build up a list of user configured algorithms
 	 * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
 	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
 	 * for configuration of interpolation algorithms within the Config object.
@@ -94,6 +96,10 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 {
 	if(iomanager==NULL)
 		throw IOException("No IOManager reference has been set!", AT);
+	//check that the output grid is using the same projection as the dem
+	if(!result.llcorner.isSameProj(dem.llcorner)) {
+		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
+	}
 
 	//Show algorithms to be used for this parameter
 	const map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
@@ -112,7 +118,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			//Get the quality rating and compare to previously computed quality ratings
 			algorithm->initialize(meteoparam);
 			const double rating = algorithm->getQualityRating();
-			if ((rating != 0.0) && (rating > maxQualityRating)){
+			if ((rating != 0.0) && (rating > maxQualityRating)) {
 				//we use ">" so that in case of equality, the first choice will be kept
 				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
 				maxQualityRating = rating;
@@ -131,11 +137,6 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		                  MeteoData::getParameterName(meteoparam), AT);
 	}
 
-	//check that the output grid is using the same projection as the dem
-	if(!result.llcorner.isSameProj(dem.llcorner)) {
-		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
-	}
-
 	//Run soft min/max filter for RH, HNW and HS
 	if (meteoparam == MeteoData::RH){
 		Meteo2DInterpolator::checkMinMax(0.0, 1.0, result);
@@ -150,13 +151,11 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 
 size_t Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms)
 {
-	/*
-	 * This function retrieves the user defined interpolation algorithms for
-	 * parameter 'parname' by querying the Config object
-	 */
-	std::vector<std::string> vecKeys;
-
+	// This function retrieves the user defined interpolation algorithms for
+	// parameter 'parname' by querying the Config object
 	vecAlgorithms.clear();
+
+	std::vector<std::string> vecKeys;
 	cfg.findKeys(vecKeys, parname+"::algorithms", "Interpolations2D");
 
 	if (vecKeys.size() > 1)
