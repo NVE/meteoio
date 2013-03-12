@@ -1111,7 +1111,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 		} else {
 			std::stringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
-			ss << "but this does not match the following line:\n" << line;
+			ss << "but this does not match the following line:\n" << line << "\n";
 			throw SMETException(ss.str(), SMET_AT);
 		}
 	}

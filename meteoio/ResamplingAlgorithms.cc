@@ -76,8 +76,7 @@ bool ResamplingAlgorithms::initStaticData()
 
 const ResamplingAlgorithms::resamplingptr& ResamplingAlgorithms::getAlgorithm(const std::string& algoname)
 {
-	std::map<std::string, resamplingptr>::const_iterator it;
-	it = algorithmMap.find(algoname);
+	const std::map<std::string, resamplingptr>::const_iterator it = algorithmMap.find(algoname);
 
 	if (it==algorithmMap.end())
 		throw UnknownValueException("Unknown resampling algorithm called: " + algoname, AT);
@@ -144,9 +143,7 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 	}
 
 	//Check whether extrapolation is activated
-	bool extrapolate = false;
-	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
-		extrapolate = true;
+	const bool extrapolate = ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))? true : false;
 
 	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
 	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
@@ -164,7 +161,7 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 		const double& val1 = vecM[indexP1](paramindex);
 		const double& val2 = vecM[indexP2](paramindex);
 
-		if (IOUtils::checkEpsilonEquality(diff1.getJulian(true), diff2.getJulian(true), 0.1/1440)){ //within 6 seconds
+		if (IOUtils::checkEpsilonEquality(diff1.getJulian(true), diff2.getJulian(true), 0.1/1440.)){ //within 6 seconds
 			md(paramindex) = Interpol1D::weightedMean(val1, val2, 0.5);
 		} else if (diff1 < diff2){
 			md(paramindex) = val1;
@@ -210,9 +207,7 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 	}
 
 	//Check whether extrapolation is activated
-	bool extrapolate = false;
-	if ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))
-		extrapolate = true;
+	const bool extrapolate = ((taskargs.size()==1) && (taskargs[0]=="extrapolate"))? true : false;
 
 	//if we are at the very beginning or end of vecM and !extrapolate, then there's nothing to do
 	if (((!extrapolate) && (position == ResamplingAlgorithms::end))
@@ -220,7 +215,6 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 		return;
 
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
-
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
 

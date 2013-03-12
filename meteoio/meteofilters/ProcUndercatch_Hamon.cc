@@ -58,7 +58,7 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
 			else if(t>0.) k=0.0121;
 			else if(t>-5.) k=0.0217;
 			else k=0.0366;
-		}  else if(type==hellmannsh) {
+		} else if(type==hellmannsh) {
 			if(t>1.2) k=0.;
 			else if(t>0.) k=0.0294;
 			else if(t>-5.) k=0.0527;
