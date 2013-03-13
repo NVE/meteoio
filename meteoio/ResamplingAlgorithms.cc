@@ -50,8 +50,7 @@ namespace mio {
  * IOUtils::nodata. Please keep in mind that allowing extrapolated values can lead to grossly out of range data: using the slope
  * between two hourly measurements to extrapolate a point 10 days ahead is obviously risky!
  *
- * By default, WINDOW_SIZE is set to 10 days. This key has a <b>dramatic impact on run time/performance</b>:
- * reducing WINDOW_SIZE from 10 days down to one day makes geting meteo data 8 times faster while increasing it to 20 days makes it twice slower.
+ * By default, WINDOW_SIZE is set to 10 days. This key has a <b>potentially large impact on run time/performance</b>.
  *
  * @section algorithms_available Available Resampling Algorithms
  * Two algorithms for the resampling are implemented:
@@ -106,7 +105,6 @@ void ResamplingAlgorithms::NoResampling(const size_t& index, const ResamplingPos
 		const double& value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
-			return;
 		}
 	}
 
@@ -330,7 +328,6 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 		return;
 	}
 	if(vecM[start_idx].date != dateStart) start_idx++; //we need to skip the first point that was already used in the interpolation
-
 	//if up-sampling, take a quicker path (for example, generate 15min values from hourly data)
 	if(start_idx==index) {
 		const double start_val = funcval(start_idx, paramindex, vecM, dateStart, false);

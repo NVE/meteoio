@@ -22,23 +22,6 @@
 
 using namespace std;
 
-#ifdef _MSC_VER
-//This is C99, Microsoft should move on and suppport it, it is almost 15 years old!!
-double round(const double& x) {
-	//middle value point test
-	if (ceil(x+0.5) == floor(x+0.5)) {
-		const int a = (int)ceil(x);
-		if (a%2 == 0) {
-			return ceil(x);
-		} else {
-			return floor(x);
-		}
-	} else {
-		return floor(x+0.5);
-	}
-}
-#endif
-
 namespace mio {
 
 const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
@@ -173,16 +156,14 @@ void Date::setDate(const int& i_year, const int& i_month, const int& i_day, cons
 {
 	plausibilityCheck(i_year, i_month, i_day, i_hour, i_minute); //also checks leap years
 	setTimeZone(i_timezone, i_dst);
-
-	if(timezone==0 && dst==false) {
-		//data is GMT and no DST
-		//setting values and computing GMT julian date
-		gmt_julian = calculateJulianDate(i_year, i_month, i_day, i_hour, i_minute);
+	if(timezone==0 && dst==false) { //data is GMT and no DST
+		//setting values and computing GMT julian date, rounded to internal precision of 1 second
+		gmt_julian = rnd( calculateJulianDate(i_year, i_month, i_day, i_hour, i_minute), (unsigned)1);
 	} else {
 		//computing local julian date
 		const double local_julian = calculateJulianDate(i_year, i_month, i_day, i_hour, i_minute);
-		//converting local julian date to GMT julian date
-		gmt_julian = localToGMT(local_julian);
+		//converting local julian date to GMT julian date, rounded to internal precision of 1 second
+		gmt_julian = rnd( localToGMT(local_julian), (unsigned)1);
 	}
 	//updating values to GMT, fixing potential 24:00 hour (ie: replaced by next day, 00:00)
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
@@ -202,7 +183,7 @@ void Date::setDate(const int& year, const unsigned int& month, const unsigned in
 */
 void Date::setDate(const double& julian_in, const double& in_timezone, const bool& in_dst) {
 	setTimeZone(in_timezone, in_dst);
-	gmt_julian = localToGMT(julian_in);
+	gmt_julian = rnd( localToGMT(julian_in), (unsigned)1); //round to internal precision of 1 second
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	undef = false;
 }
@@ -545,19 +526,37 @@ bool Date::isLeapYear() const {
 	if(undef==true)
 		throw UnknownValueException("Date object is undefined!", AT);
 
-	//this is quite inefficient... we might want to deal with leap years with their rule instead
 	int local_year, local_month, local_day, local_hour, local_minute;
 	getDate(local_year, local_month, local_day, local_hour, local_minute);
 
 	return (isLeapYear(local_year));
-
-	/*
-	if( ((local_year%4 == 0) && (local_year%100 != 0)) || (local_year%400 == 0) ) {
-	return true;
-} else {
-	return false;
 }
-	*/
+
+/**
+ * @brief Round a julian date to a given precision
+ * @param julian date to round
+ * @param precision round date to the given precision, in seconds
+ * @param type rounding strategy (default: CLOSEST)
+ */
+double Date::rnd(const double& julian, const unsigned int& precision, const RND& type)
+{
+	if(precision == 0)
+		throw InvalidArgumentException("Can not round dates to 0 seconds precision!", AT);
+
+	double integral;
+	const double fractional = modf(julian, &integral);
+	const double rnd_factor = (3600*24)/(double)precision;
+
+	if(type==CLOSEST)
+		return integral + (double)Optim::round( fractional*rnd_factor ) / rnd_factor;
+	if(type==UP)
+		return integral + (double)Optim::ceil( fractional*rnd_factor ) / rnd_factor;
+	if(type==DOWN)
+		return integral + (double)Optim::floor( fractional*rnd_factor ) / rnd_factor;
+
+	throw UnknownValueException("Unknown rounding strategy!", AT);
+	return julian;
+
 }
 
 /**
@@ -565,21 +564,16 @@ bool Date::isLeapYear() const {
  * @param precision round date to the given precision, in seconds
  * @param type rounding strategy (default: CLOSEST)
  */
-void Date::rnd(const double& precision, const RND& type) {
-	if(undef==false) {
-		const double rnd_factor = (3600*24)/precision;
-		if(type==UP)
-			gmt_julian = ceil(gmt_julian*rnd_factor) / rnd_factor;
-		if(type==DOWN)
-			gmt_julian = floor(gmt_julian*rnd_factor) / rnd_factor;
-		if(type==CLOSEST)
-			gmt_julian = round(gmt_julian*rnd_factor) / rnd_factor;
-	}
+void Date::rnd(const unsigned int& precision, const RND& type) {
+	if(!undef)
+		gmt_julian = rnd(gmt_julian, precision, type);
 }
 
-const Date Date::rnd(const Date& indate, const double& precision, const RND& type) {
+const Date Date::rnd(const Date& indate, const unsigned int& precision, const RND& type) {
 	Date tmp(indate);
-	tmp.rnd(precision, type);
+	if(!tmp.undef)
+		tmp.gmt_julian = rnd(tmp.gmt_julian, precision, type);
+
 	return tmp;
 }
 
@@ -590,6 +584,7 @@ Date& Date::operator+=(const Date& indate) {
 		return *this;
 	}
 	gmt_julian += indate.gmt_julian;
+	rnd(1); //round to internal precision of 1 second
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
@@ -600,6 +595,7 @@ Date& Date::operator-=(const Date& indate) {
 		return *this;
 	}
 	gmt_julian -= indate.gmt_julian;
+	rnd(1); //round to internal precision of 1 second
 	calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	return *this;
 }
@@ -607,6 +603,7 @@ Date& Date::operator-=(const Date& indate) {
 Date& Date::operator+=(const double& indate) {
 	if(undef==false) {
 		gmt_julian += indate;
+		rnd(1); //round to internal precision of 1 second
 		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
@@ -615,6 +612,7 @@ Date& Date::operator+=(const double& indate) {
 Date& Date::operator-=(const double& indate) {
 	if(undef==false) {
 		gmt_julian -= indate;
+		rnd(1); //round to internal precision of 1 second
 		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
@@ -623,6 +621,7 @@ Date& Date::operator-=(const double& indate) {
 Date& Date::operator*=(const double& value) {
 	if(undef==false) {
 		gmt_julian *= value;
+		rnd(1); //round to internal precision of 1 second
 		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
@@ -631,6 +630,7 @@ Date& Date::operator*=(const double& value) {
 Date& Date::operator/=(const double& value) {
 	if(undef==false) {
 		gmt_julian /= value;
+		rnd(1); //round to internal precision of 1 second
 		calculateValues(gmt_julian, gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute);
 	}
 	return *this;
@@ -786,6 +786,9 @@ std::ostream& operator<<(std::ostream &os, const Date &date) {
 */
 double Date::parseTimeZone(const std::string& timezone_iso)
 {
+	if(timezone_iso.empty()) //just in case, to avoid a segfault
+		return 0.;
+
 	if(timezone_iso=="Z") { //time as Z
 		return 0.;
 	} else if(timezone_iso[0]=='+' || timezone_iso[0]=='-') {
@@ -925,13 +928,10 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 { //given a julian day, calculate the year, month, day, hours and minutes
  //see Fliegel, H. F. and van Flandern, T. C. 1968. Letters to the editor: a machine algorithm for processing calendar dates. Commun. ACM 11, 10 (Oct. 1968), 657. DOI= http://doi.acm.org/10.1145/364096.364097
 	//we round the given julian date to the closest minute since this is our current resolution
-	const double rnd_factor = (60.*24.);
-	const double tmp_julian = round(i_julian*rnd_factor) / rnd_factor;
+	const double tmp_julian = rnd(i_julian, 60);
 
-	long t1;
-	const long julday = (long) floor(tmp_julian+0.5);
-
-	t1 = julday + 68569L;
+	const long julday = Optim::floor(tmp_julian+0.5);
+	long t1 = julday + 68569L;
 	const long t2 = 4L * t1 / 146097L;
 	t1 = t1 - ( 146097L * t2 + 3L ) / 4L;
 	const long yr = 4000L * ( t1 + 1L ) / 1461001L;
@@ -944,21 +944,19 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 	o_year = (int) ( 100L * ( t2 - 49L ) + yr + t1 );
 
 	// Correct for BC years -> astronomical year, that is from year -1 to year 0
-	if ( o_year <= 0 ) {
-		o_year--;
-	}
+	if ( o_year <= 0 ) o_year--;
 
-	const double frac = (tmp_julian + 0.5) - floor(tmp_julian+0.5); //the julian date reference is at 12:00
-	o_minute = ((int)round(frac*((double)24.0*60.0))) % 60;
-	o_hour = (int) round((((double)1440.0)*frac-(double)o_minute)/(double)60.0);
+	double integral;
+	const double frac = modf(tmp_julian+.5, &integral); //the julian date reference is at 12:00
+	o_minute = Optim::round(frac*24.0*60.0) % 60;
+	o_hour = Optim::round( (24.*60.*frac-(double)o_minute) / 60.0 );
 }
 
-bool Date::isLeapYear(const int& i_year) const
-{
-	long jd1, jd2;
-	jd1 = getJulianDayNumber( i_year, 2, 28 );
-	jd2 = getJulianDayNumber( i_year, 3, 1 );
-	return ( (jd2-jd1) > 1 );
+bool Date::isLeapYear(const int& i_year) const {
+	//Using the leap year rule: years that can be divided by 4 if they are not centuries
+	//For centuries, they are leap years only if they can be divided by 400
+	const bool is_leapYear = (i_year%4 == 0 && (i_year %100 != 0 || i_year%400 == 0));
+	return is_leapYear;
 }
 
 long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& i_day) const
@@ -968,9 +966,7 @@ long Date::getJulianDayNumber(const int& i_year, const int& i_month, const int& 
 	long lyear = (long) i_year;
 
 	// Correct for BC years -> astronomical year, that is from year -1 to year 0
-	if ( lyear < 0 ) {
-		lyear++;
-	}
+	if ( lyear < 0 ) lyear++;
 
 	const long jdn = lday - 32075L +
 	                  1461L * ( lyear + 4800L + ( lmonth - 14L ) / 12L ) / 4L +

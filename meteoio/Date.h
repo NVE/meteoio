@@ -131,8 +131,9 @@ class Date {
 		int getJulianDayNumber(const bool& gmt=false) const;
 		bool isLeapYear() const;
 
-		void rnd(const double& precision, const RND& type=CLOSEST);
-		static const Date rnd(const Date& indate, const double& precision, const RND& type=CLOSEST);
+		static double rnd(const double& julian, const unsigned int& precision, const RND& type=CLOSEST);
+		void rnd(const unsigned int& precision, const RND& type=CLOSEST);
+		static const Date rnd(const Date& indate, const unsigned int& precision, const RND& type=CLOSEST);
 		static double parseTimeZone(const std::string& timezone_iso);
 
 		const std::string toString(FORMATS type, const bool& gmt=false) const;

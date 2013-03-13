@@ -682,37 +682,29 @@ void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out) {
 	cfg.getValue("TIME_ZONE", "Output", tz_out, IOUtils::nothrow);
 }
 
+//returns index of element, if element does not exist it returns closest index after soughtdate
+//the element needs to be an exact hit or embedded between two measurments
 size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch)
 {
-	//returns index of element, if element does not exist it returns closest index after soughtdate
-	//the element needs to be an exact hit or embedded between two measurments
-	if (vecM.empty()) {//no elements in buffer
+	if (vecM.empty() || soughtdate > vecM.back().date || soughtdate < vecM.front().date) {
+		//the sought date is not contained in the vector, return npos
 		return npos;
 	}
 
-	const double start_val=vecM.front().date.getJulian(true);
-	const double end_val=vecM.back().date.getJulian(true);
-	const double curr_val = soughtdate.getJulian(true);
+	const size_t max_idx = vecM.size()-1; //obviously, the index must be <= max_idx
 
-	//if we reach this point: at least one element in buffer
-	if (vecM.front().date > soughtdate) {
-		return npos;
-	}
+	//since usually the sampling rate is quite constant, try to guess where our point
+	//should be and provide a much smaller search interval around it
+	const double start_date = vecM.front().date.getJulian(true);
+	const double end_date = vecM.back().date.getJulian(true);
+	const double curr_date = soughtdate.getJulian(true);
+	const double raw_pos = (curr_date-start_date) / (end_date-start_date) * static_cast<double>(max_idx); //always >=0
+	const size_t start_idx = (size_t)floor(raw_pos*.8);
+	const size_t end_idx = MIN( (size_t)ceil(raw_pos*1.2), max_idx);
 
-	if (vecM.back().date < soughtdate) {//last element is earlier, return npos
-		return npos;
-	}
-
-	if (vecM.front().date == soughtdate) {//closest element
-		return 0;
-	}
-
-	size_t first = 0, last = vecM.size()-1;
-	const double raw_pos = (curr_val-start_val) / (end_val-start_val);
-	const size_t start = MAX( (size_t)(floor(raw_pos*static_cast<double>(last)*.8)), first);
-	const size_t end = MIN( (size_t)ceil(raw_pos*static_cast<double>(last)*1.2), last);
-	if(vecM[start].date.getJulian(true)<curr_val) first=start;
-	if(vecM[end].date.getJulian(true)>=curr_val) last=end;
+	//first and last index of the search interval, either using our initial guess or the full vector
+	size_t first = (curr_date >= vecM[start_idx].date.getJulian(true))? start_idx : 0;
+	size_t last = (curr_date <= vecM[end_idx].date.getJulian(true))? end_idx : max_idx;
 
 	//if we reach this point: the date is spanned by the buffer and there are at least two elements
 	if (exactmatch){
@@ -731,9 +723,10 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 		while (first <= last) {
 			const size_t mid = (first + last) / 2;  // compute mid point
 
-			if (mid < (vecM.size()-1))
+			if (mid < max_idx) {
 				if ((soughtdate > vecM[mid].date) && (soughtdate < vecM[mid+1].date))
 					return mid+1;
+			}
 
 			if (soughtdate > vecM[mid].date)
 				first = mid + 1;                   // repeat search in top half
@@ -808,7 +801,7 @@ void FileIndexer::setIndex(const std::string& i_date, const std::streampos& i_po
 
 void FileIndexer::setIndex(const double& i_date, const std::streampos& i_pos)
 {
-	Date tmpdate(i_date, 0.);
+	const Date tmpdate(i_date, 0.);
 	setIndex(tmpdate, i_pos);
 }
 
@@ -828,7 +821,7 @@ std::streampos FileIndexer::getIndex(const std::string& i_date) const
 
 std::streampos FileIndexer::getIndex(const double& i_date) const
 {
-	Date tmpdate(i_date, 0.);
+	const Date tmpdate(i_date, 0.);
 	return getIndex(tmpdate);
 }
 

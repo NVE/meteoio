@@ -48,7 +48,8 @@ class ResamplingAlgorithms {
 		};
 
 		typedef void(*resamplingptr)(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-							    const std::vector<std::string>& taskargs, const double& window_size, const std::vector<MeteoData>& vecM, MeteoData& md);
+		                             const std::vector<std::string>& taskargs, const double& window_size,
+		                             const std::vector<MeteoData>& vecM, MeteoData& md);
 
 		static const resamplingptr& getAlgorithm(const std::string& algorithmname);
 
@@ -75,6 +76,6 @@ class ResamplingAlgorithms {
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map algorithmMap
 };
-} //end namespace
 
+} //end namespace
 #endif

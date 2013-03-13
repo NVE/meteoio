@@ -23,7 +23,7 @@ namespace mio {
 
 Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
                      : cfg(in_cfg), window_size(10.*86400.),
-                       tasklist(), taskargs(), extended_tasklist()
+                       tasklist(MeteoData::nrOfParameters), taskargs(MeteoData::nrOfParameters), extended_tasklist()
 {
 	//default window_size is 10 julian days
 	/*
@@ -38,8 +38,8 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 		vector<string> vecResamplingArguments;
 		const string resamplingAlgorithm = getInterpolationForParameter(parname, vecResamplingArguments);
 
-		tasklist.push_back(resamplingAlgorithm);
-		taskargs.push_back(vecResamplingArguments);
+		tasklist[ii] = resamplingAlgorithm;
+		taskargs[ii] = vecResamplingArguments;
 	}
 
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, IOUtils::nothrow);
