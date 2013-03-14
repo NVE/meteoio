@@ -35,10 +35,10 @@ namespace mio {
 
 /**
  * @class Timer
- * @brief A class to time code execution with microsecond resolution.
- *
- * @author Tuan Anh Nguyen, Mathias Bavay
- * @date   2010-19-10
+ * @brief Time code execution with at least 1 us resolution.
+ * The time resolution can be stored up to .1 ns resolution, but is measured to the following accuracy:
+ *    - 1 us on Posix systems (Linux, osX, BSD);
+ *    - 1 ns on Windows.
  */
 class Timer {
 public:

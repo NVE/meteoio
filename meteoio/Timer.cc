@@ -36,9 +36,8 @@ namespace mio {
 * @brief Default constructor.
 * Initialize internal variables. It does NOT start timing.
 */
-Timer::Timer() : start_point(0.), elapsed(0.), isRunning(false)
-{
-}
+Timer::Timer()
+     : start_point(0.), elapsed(0.), isRunning(false) {}
 
 /**
 * @brief Start the timer.
@@ -64,7 +63,7 @@ void Timer::restart() {
 */
 void Timer::stop() {
 	if (isRunning) {
-		elapsed += static_cast<double>(getCurrentTime()-start_point);
+		elapsed += static_cast<double>( getCurrentTime()-start_point );
 		isRunning = false;
 	}
 }
@@ -73,8 +72,8 @@ void Timer::stop() {
 * @brief Reset the timer to zero.
 */
 void Timer::reset() {
-	start_point = getCurrentTime();
 	elapsed = 0.;
+	start_point = getCurrentTime();
 }
 
 /**

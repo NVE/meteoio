@@ -18,12 +18,12 @@ int main(int /*argc*/, char** argv) {
 	//io.setProcessingLevel(IOManager::raw); //set the processing level: raw, filtered or resampled
 	io.getMeteoData(d1, vecMeteo);
 
-	std::cout << vecMeteo.size() << " stations with an average sampling rate of " << io.getAvgSamplingRate() << "\n";
+	std::cout << vecMeteo.size() << " stations with an average sampling rate of " << io.getAvgSamplingRate() << " or 1 point every " << 1./(io.getAvgSamplingRate()*60.+1e-12) << " minutes\n";
 	//writing some data out in order to prove that it really worked!
-	//for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
-	//	std::cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << std::endl;
-	//	std::cout << vecMeteo[ii] << std::endl;
-	//}
+	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
+		std::cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << std::endl;
+		std::cout << vecMeteo[ii] << std::endl;
+	}
 
 	return 0;
 }
