@@ -244,12 +244,12 @@ void GSNIO::readMetaData()
 		metadata_req.fieldSelector.push_back(&tmp);
 
 		if (gsn.getVirtualSensorsDetails(&metadata_req, &metadata) == SOAP_OK){
-			const size_t details = metadata.virtualSensorDetails.size();
+			const size_t nr_meta = metadata.virtualSensorDetails.size();
 
-			if (details == 0)
+			if (nr_meta == 0)
 				throw IOException("No meta data for sensor " + vecStationName[ii] + ". Is it a valid sensor?", AT);
 
-			for (size_t jj=0; jj<details; jj++){
+			for (size_t jj=0; jj<nr_meta; jj++){
 				const size_t predicates = metadata.virtualSensorDetails[jj]->addressing->predicates.size();
 				for (size_t kk=0; kk<predicates; kk++){
 					const string field_name = IOUtils::strToUpper( metadata.virtualSensorDetails[jj]->addressing->predicates[kk]->name );
@@ -286,7 +286,7 @@ void GSNIO::readMetaData()
 			}
 		} else {
 			soap_print_fault(&gsn, stderr);
-			throw IOException("Error in communication with GSN while retrieving virtual sensor meta data", AT);
+			throw IOException("Error in communication with GSN while retrieving virtual sensor meta data, see soap error message", AT);
 		}
 
 		//Save the meta data in StationData objects
@@ -312,33 +312,31 @@ void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*
 	for (size_t ii=0; ii<field.size(); ii++) {
 		const string field_name = IOUtils::strToUpper( *field.at(ii)->name );
 
-		if (field_name == "RELATIVE_HUMIDITY"){
+		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH"){
 			index.push_back(MeteoData::RH);
-		} else if (field_name == "AIR_TEMPERATURE"){
+		} else if (field_name == "AIR_TEMPERATURE" || field_name == "TA"){
 			index.push_back(MeteoData::TA);
-		} else if (field_name == "WIND_DIRECTION"){
+		} else if (field_name == "WIND_DIRECTION" || field_name == "DW"){
 			index.push_back(MeteoData::DW);
-		} else if (field_name == "WIND_SPEED_MAX"){
+		} else if (field_name == "WIND_SPEED_MAX" || field_name == "VW_MAX"){
 			index.push_back(MeteoData::VW_MAX);
-		} else if (field_name == "WIND_SPEED_SCALAR_AV"){
+		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW"){
 			index.push_back(MeteoData::VW);
-		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION"){
+		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD"){
 			index.push_back(MeteoData::ISWR);
-		} else if (field_name == "INCOMING_LONGWAVE_RADIATION"){
+		} else if (field_name == "INCOMING_LONGWAVE_RADIATION" || field_name == "ILWR"){
 			index.push_back(MeteoData::ILWR);
-		} else if (field_name == "OUTGOING_SHORTWAVE_RADIATION"){
+		} else if (field_name == "OUTGOING_SHORTWAVE_RADIATION" || field_name == "RSWR"){
 			index.push_back(MeteoData::RSWR);
-		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION"){ //is used to calculate TSS
+		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION" || field_name == "RLWR"){ //is used to calculate TSS
 			md.addParameter("OLWR");
 			index.push_back(md.getParameterIndex("OLWR"));
-		} else if (field_name == "SNOW_HEIGHT"){
+		} else if (field_name == "SNOW_HEIGHT" || field_name == "HS1"){
 			index.push_back(MeteoData::HS);
-		} else if (field_name == "RAIN_METER"){
+		} else if (field_name == "RAIN_METER" || field_name == "PINT"){
 			index.push_back(MeteoData::HNW);
-		} else if (field_name == "SURFACE_TEMP"){
+		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS"){
 			index.push_back(MeteoData::TSS);
-		} else if (field_name == "SOLAR_RAD"){
-			index.push_back(MeteoData::ISWR);
 		} else {
 			index.push_back(IOUtils::npos);
 		}
@@ -543,6 +541,10 @@ void GSNIO::convertUnits(MeteoData& meteo)
 	double& rh = meteo(MeteoData::RH);
 	if (rh != IOUtils::nodata)
 		rh /= 100.;
+
+	double& hs = meteo(MeteoData::HS);
+	if (hs != IOUtils::nodata)
+		hs /= 100.;
 }
 
 } //namespace
