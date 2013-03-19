@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 	now.setFromSys();
 	//now.setTimeZone(TZ);
 	std::cout << "now=" << now;
-	now.rnd(1800., Date::DOWN);
+	now.rnd(1800, Date::DOWN);
 	std::cout << "Rounded now=" << now;
 
 	Date d1;
@@ -33,6 +33,6 @@ int main(int argc, char** argv) {
 	std::cout << "And swapped back to timezone GMT+0:\n";
 	d1.setTimeZone(0.,false);
 	std::cout << d1 << std::endl;
-	
+
 	return 0;
 }

@@ -20,9 +20,6 @@ TARGET_LINK_LIBRARIES(data_converter ${METEOIO_LIBRARIES})
 ADD_EXECUTABLE(dem_reading dem_reading.cc)
 TARGET_LINK_LIBRARIES(dem_reading ${METEOIO_LIBRARIES})
 
-ADD_EXECUTABLE(grid2d_loop grid2d_loop.cc)
-TARGET_LINK_LIBRARIES(grid2d_loop ${METEOIO_LIBRARIES})
-
 ADD_EXECUTABLE(grid2d_reading grid2d_reading.cc)
 TARGET_LINK_LIBRARIES(grid2d_reading ${METEOIO_LIBRARIES})
 
