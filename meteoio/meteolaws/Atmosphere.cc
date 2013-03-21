@@ -475,7 +475,7 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 double Atmosphere::Unsworth_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const double& cloudiness)
 {
 	double c;
-	if(cloudiness==IOUtils::nodata) {
+	if(cloudiness!=IOUtils::nodata) {
 		if(cloudiness<0. || cloudiness>1.)
 			return IOUtils::nodata;
 		c = cloudiness;

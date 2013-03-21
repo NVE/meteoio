@@ -32,6 +32,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new ConstGenerator(vecArgs, i_algoname);
 	} else if (algoname == "STD_PRESS"){
 		return new StandardPressureGenerator(vecArgs, i_algoname);
+	} else if (algoname == "UNSWORTH"){
+		return new UnsworthGenerator(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -53,7 +55,7 @@ void ConstGenerator::parse_args(const std::vector<std::string>& vecArgs)
 	}
 }
 
-bool ConstGenerator::generate(const size_t& param, MeteoData& md) const
+bool ConstGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if(value == IOUtils::nodata)
@@ -62,7 +64,7 @@ bool ConstGenerator::generate(const size_t& param, MeteoData& md) const
 	return true; //all missing values could be filled
 }
 
-bool ConstGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo) const
+bool ConstGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(vecMeteo.empty()) return true;
 
@@ -81,7 +83,7 @@ void StandardPressureGenerator::parse_args(const std::vector<std::string>& vecAr
 	}
 }
 
-bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md) const
+bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
 {
 	if(param!=MeteoData::P) {
 		stringstream ss;
@@ -99,7 +101,7 @@ bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md) con
 	return true; //all missing values could be filled
 }
 
-bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo) const
+bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(param!=MeteoData::P) {
 		stringstream ss;
@@ -109,7 +111,7 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 
 	if(vecMeteo.empty()) return true;
 
-	const double altitude = vecMeteo[0].meta.position.getAltitude(); //if the stations move, this has to be in the loop
+	const double altitude = vecMeteo.front().meta.position.getAltitude(); //if the stations move, this has to be in the loop
 	if(altitude==IOUtils::nodata) return false;
 
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
@@ -119,6 +121,110 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 	}
 
 	return true; //all missing values could be filled
+}
+
+const double UnsworthGenerator::soil_albedo = .23; //grass
+const double UnsworthGenerator::snow_albedo = .56; //white surface
+const double UnsworthGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+
+void UnsworthGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	//Get the optional arguments for the algorithm: constant value to use
+	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
+}
+
+bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
+{
+	if(param!=MeteoData::ILWR) {
+		stringstream ss;
+		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	const double lat = md.meta.position.getLat();
+	const double lon = md.meta.position.getLon();
+	const double alt = md.meta.position.getAltitude();
+
+	double &value = md(param);
+	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
+	double ISWR=md(MeteoData::ISWR);
+	if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
+
+	if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+		if(HS<snow_thresh) ISWR = RSWR * soil_albedo;
+		else ISWR = RSWR * snow_albedo;
+	}
+
+	const double julian = md.date.getJulian(true);
+	const double ilwr_dilley = Atmosphere::Dilley_ilwr(RH, TA);
+	const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : ilwr_dilley;
+
+	if(ISWR==IOUtils::nodata || ISWR<5.) {
+		value = ilwr_no_iswr;
+	} else {
+		const double ilwr_uns = Atmosphere::Unsworth_ilwr(lat, lon, alt, julian, 0., RH, TA, ISWR);
+		if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0) {
+			value = ilwr_no_iswr;
+			return true;
+		}
+		last_cloudiness_ratio = ilwr_uns / ilwr_dilley;
+		last_cloudiness_julian = julian;
+		value = ilwr_uns;
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(param!=MeteoData::ILWR) {
+		stringstream ss;
+		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	if(vecMeteo.empty()) return true;
+
+	const double lat = vecMeteo.front().meta.position.getLat();
+	const double lon = vecMeteo.front().meta.position.getLon();
+	const double alt = vecMeteo.front().meta.position.getAltitude();
+
+	bool all_filled = true;
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		double &value = vecMeteo[ii](param);
+		const double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH), HS=vecMeteo[ii](MeteoData::HS), RSWR=vecMeteo[ii](MeteoData::RSWR);
+		double ISWR=vecMeteo[ii](MeteoData::ISWR);
+		if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
+			all_filled = false;
+			continue;
+		}
+
+		if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+			if(HS<snow_thresh) ISWR = RSWR * soil_albedo;
+			else ISWR = RSWR * snow_albedo;
+		}
+
+		const double julian = vecMeteo[ii].date.getJulian(true);
+		const double ilwr_dilley = Atmosphere::Dilley_ilwr(RH, TA);
+		const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : ilwr_dilley;
+
+		if(ISWR==IOUtils::nodata || ISWR<5.) {
+			value = ilwr_no_iswr;
+		} else {
+			const double ilwr_uns = Atmosphere::Unsworth_ilwr(lat, lon, alt, julian, 0., RH, TA, ISWR);
+			if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0) {
+				value = ilwr_no_iswr;
+				continue;
+			}
+			last_cloudiness_ratio = ilwr_uns / ilwr_dilley;
+			last_cloudiness_julian = julian;
+			value = ilwr_uns;
+		}
+	}
+
+	return all_filled;
 }
 
 } //namespace

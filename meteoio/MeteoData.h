@@ -100,20 +100,20 @@ class MeteoData {
 	public:
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,
-		                 TA=firstparam, ///< Air temperature
+		                 P=firstparam, ///< Air pressure
+		                 TA, ///< Air temperature
 		                 RH, ///< Relative humidity
+		                 TSG, ///< Temperature of the ground surface
+		                 TSS, ///< Temperature of the snow surface
+		                 HS, ///< Height of snow
 		                 VW, ///< Wind velocity
 		                 DW, ///< Wind direction
 		                 VW_MAX, ///< Maximum wind velocity
-		                 ISWR, ///< Incoming short wave radiation
 		                 RSWR, ///< Reflected short wave radiation
+		                 ISWR, ///< Incoming short wave radiation
 		                 ILWR, ///< Incoming long wave radiation (downwelling)
-		                 HS, ///< Height of snow
 		                 HNW, ///< Water equivalent (water depth) of precipitations, either solid or liquid
-		                 TSG, ///< Temperature of the ground surface
-		                 TSS, ///< Temperature of the snow surface
-		                 P, ///< Air pressure
-		                 lastparam=P};
+		                 lastparam=HNW};
 
 		static const std::string& getParameterName(const size_t& parindex);
 

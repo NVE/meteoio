@@ -80,33 +80,33 @@ const bool MeteoData::__init = MeteoData::initStaticData();
 bool MeteoData::initStaticData()
 {
 	//Associate unsigned int value and a string representation of a meteo parameter
+	static_meteoparamname[P]      = "P";
 	static_meteoparamname[TA]     = "TA";
-	static_meteoparamname[ISWR]   = "ISWR";
-	static_meteoparamname[VW]     = "VW";
-	static_meteoparamname[DW]     = "DW";
-	static_meteoparamname[VW_MAX] = "VW_MAX";
 	static_meteoparamname[RH]     = "RH";
-	static_meteoparamname[ILWR]   = "ILWR";
-	static_meteoparamname[HNW]    = "HNW";
 	static_meteoparamname[TSG]    = "TSG";
 	static_meteoparamname[TSS]    = "TSS";
 	static_meteoparamname[HS]     = "HS";
+	static_meteoparamname[VW]     = "VW";
+	static_meteoparamname[DW]     = "DW";
+	static_meteoparamname[VW_MAX] = "VW_MAX";
 	static_meteoparamname[RSWR]   = "RSWR";
-	static_meteoparamname[P]      = "P";
+	static_meteoparamname[ISWR]   = "ISWR";
+	static_meteoparamname[ILWR]   = "ILWR";
+	static_meteoparamname[HNW]    = "HNW";
 
+	s_default_paramname.push_back("P");
 	s_default_paramname.push_back("TA");
 	s_default_paramname.push_back("RH");
+	s_default_paramname.push_back("TSG");
+	s_default_paramname.push_back("TSS");
+	s_default_paramname.push_back("HS");
 	s_default_paramname.push_back("VW");
 	s_default_paramname.push_back("DW");
 	s_default_paramname.push_back("VW_MAX");
-	s_default_paramname.push_back("ISWR");
 	s_default_paramname.push_back("RSWR");
+	s_default_paramname.push_back("ISWR");
 	s_default_paramname.push_back("ILWR");
-	s_default_paramname.push_back("HS");
 	s_default_paramname.push_back("HNW");
-	s_default_paramname.push_back("TSG");
-	s_default_paramname.push_back("TSS");
-	s_default_paramname.push_back("P");
 
 	return true;
 }

@@ -52,6 +52,7 @@ namespace mio {
  * The keywords defining the algorithms are the following:
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
+ * - UNSWORTH: use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
  *
  * @author Mathias Bavay
  * @date   2013-03-20
@@ -75,9 +76,9 @@ class GeneratorAlgorithm {
 		GeneratorAlgorithm(const std::vector<std::string>& /*vecArgs*/, const std::string& i_algo) : algo(i_algo) {};
 		virtual ~GeneratorAlgorithm() {}
 		//fill one MeteoData, for one station
-		virtual bool generate(const size_t& param, MeteoData& md) const = 0;
+		virtual bool generate(const size_t& param, MeteoData& md) = 0;
 		//fill one time series of MeteoData for one station
-		virtual bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo) const = 0;
+		virtual bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo) = 0;
 		std::string getAlgo() const;
  	protected:
 		virtual void parse_args(const std::vector<std::string>& /*i_vecArgs*/) = 0;
@@ -102,8 +103,8 @@ class ConstGenerator : public GeneratorAlgorithm {
 	public:
 		ConstGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), constant(IOUtils::nodata) { parse_args(vecArgs); }
-		bool generate(const size_t& param, MeteoData& md) const;
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo) const;
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
 		double constant;
@@ -117,12 +118,40 @@ class ConstGenerator : public GeneratorAlgorithm {
 class StandardPressureGenerator : public GeneratorAlgorithm {
 	public:
 		StandardPressureGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), constant(IOUtils::nodata) { parse_args(vecArgs); }
-		bool generate(const size_t& param, MeteoData& md) const;
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo) const;
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
-		double constant;
+};
+
+/**
+ * @class UnsworthGenerator
+ * @brief ILWR parametrization using TA, RH, ISWR
+ * Use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate
+ * ILWR from TA, RH, ISWR.
+ * This uses the formula from Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
+ * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
+ * A parametrization (according to Kasten and Czeplak (1980)) using the current location (lat, lon, altitude)
+ * and ISWR is used to parametrize the cloud cover.
+ * The last evaluation of cloudiness (as a ratio of cloudy_ilwr / clear_sky_ilwr) is used all along
+ * during the times when no ISWR is available if such ratio is not too old (ie. no more than 1 day old).
+ * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
+ * In case of snow, a snow albedo of 0.56 is used while in the abscence of snow, a grass albedo of 0.23 is used
+ * in order to compute ISWR from RSWR.
+ */
+class UnsworthGenerator : public GeneratorAlgorithm {
+	public:
+		UnsworthGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), last_cloudiness_ratio(1.), last_cloudiness_julian(0.) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		void parse_args(const std::vector<std::string>& vecArgs);
+		double last_cloudiness_ratio; //last ratio of cloudiness
+		double last_cloudiness_julian; //time of such ratio
+
+		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 };
 
 } //end namespace mio
