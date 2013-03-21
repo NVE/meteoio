@@ -61,9 +61,9 @@ void marshal_CHAR2D(POPBuffer &buf, CHAR2D &data,int maxsize, int flag, POPMemsp
 
 void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_METEO_TIMESERIE(POPBuffer &buf, METEO_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_METEO_SET(POPBuffer &buf, METEO_SET &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_vector_METEO_TIMESERIE(POPBuffer &buf, std::vector<METEO_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_vector_METEO_SET(POPBuffer &buf, std::vector<METEO_SET> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vecstr(POPBuffer &buf, std::vector<std::string> &data, int maxsize, int flag, POPMemspool *temp);
 
@@ -75,9 +75,9 @@ void marshal_map_str_vecstr(POPBuffer &buf, std::map<std::string, STR_VECTOR> &d
 
 void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_STATION_TIMESERIE(POPBuffer &buf, STATION_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_STATIONS_SET(POPBuffer &buf, STATIONS_SET &data, int maxsize, int flag, POPMemspool *temp);
 
-void marshal_vector_STATION_TIMESERIE(POPBuffer &buf, std::vector<STATION_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp);
+void marshal_vector_STATIONS_SET(POPBuffer &buf, std::vector<STATIONS_SET> &data, int maxsize, int flag, POPMemspool *temp);
 
 void marshal_vector_Grid2DObject(POPBuffer &buf, std::vector<Grid2DObject> &data, int maxsize, int flag, POPMemspool *temp);
 

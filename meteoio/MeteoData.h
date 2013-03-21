@@ -31,7 +31,7 @@
 namespace mio {
 
 class MeteoData; //forward declaration
-typedef std::vector<MeteoData> METEO_TIMESERIE;
+typedef std::vector<MeteoData> METEO_SET;
 
 /**
  * @class MeteoGrids

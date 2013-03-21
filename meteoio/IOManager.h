@@ -18,6 +18,7 @@
 #ifndef __IOMANAGER_H__
 #define __IOMANAGER_H__
 
+#include <meteoio/DataGenerator.h>
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/MeteoProcessor.h>
@@ -32,7 +33,8 @@ class IOManager {
 			raw           = 1,
 			filtered      = 1 << 1,
 			resampled     = 1 << 2,
-			num_of_levels = 1 << 3
+			generated     = 1 << 3,
+			num_of_levels = 1 << 4
 		};
 
 		IOManager(const Config& i_cfg);
@@ -48,7 +50,7 @@ class IOManager {
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 		//end legacy support
 
-		size_t getStationData(const Date& date, STATION_TIMESERIE& vecStation);
+		size_t getStationData(const Date& date, STATIONS_SET& vecStation);
 
 		/**
 		* @brief Fill vecMeteo with a time series of objects
@@ -71,11 +73,11 @@ class IOManager {
 		* @endcode
 		* @param dateStart   A Date object representing the beginning of an interval (inclusive)
 		* @param dateEnd     A Date object representing the end of an interval (inclusive)
-		* @param vecMeteo    A vector of vector<MeteoData> objects to be filled with data
+		* @param vecVecMeteo A vector of vector<MeteoData> objects to be filled with data
 		* @return            Number of stations for which data has been found in the interval
 		*/
 		size_t getMeteoData(const Date& dateStart, const Date& dateEnd,
-		                    std::vector< METEO_TIMESERIE >& vecMeteo);
+		                    std::vector< METEO_SET >& vecVecMeteo);
 
 		/**
 		 * @brief Fill vector<MeteoData> object with multiple instances of MeteoData
@@ -97,7 +99,7 @@ class IOManager {
 		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
 		 * @return            Number of stations for which data has been found in the interval
 		 */
-		size_t getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo);
+		size_t getMeteoData(const Date& i_date, METEO_SET& vecMeteo);
 
 		/**
 		 * @brief Push a vector of time series of MeteoData objects into the IOManager. This overwrites
@@ -111,7 +113,7 @@ class IOManager {
 		 * @param vecMeteo The actual data being pushed into the IOManager object
 		 */
 		void push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end,
-		                     const std::vector< METEO_TIMESERIE >& vecMeteo);
+		                     const std::vector< METEO_SET >& vecMeteo);
 
 		/**
 		 * @brief Fill Grid2DObject with spatial data.
@@ -220,9 +222,9 @@ class IOManager {
 		double getAvgSamplingRate();
 
 #ifdef _POPC_ //HACK popc
-		void writeMeteoData(/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, /*const*/ std::string& name/*=""*/);
+		void writeMeteoData(/*const*/ std::vector< METEO_SET >& vecMeteo, /*const*/ std::string& name/*=""*/);
 #else
-		void writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, const std::string& name="");
+		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="");
 #endif
 		/**
 		 * @brief Returns a copy of the internal Config object.
@@ -234,22 +236,23 @@ class IOManager {
 		std::string toString() const;
 		friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
 
-		void add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo);
+		void add_to_cache(const Date& i_date, const METEO_SET& vecMeteo);
 
 	private:
 		void fill_filtered_cache();
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
-		                         std::vector< METEO_TIMESERIE >& vec_meteo);
+		                         std::vector< METEO_SET >& vec_meteo);
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler rawio;
 		BufferedIOHandler bufferedio;
 		MeteoProcessor meteoprocessor;
 		Meteo2DInterpolator interpolator;
+		DataGenerator dataGenerator;
 		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
 
-		std::map<Date, METEO_TIMESERIE > point_cache;  ///< stores already resampled data points
-		std::vector< METEO_TIMESERIE > filtered_cache; ///< stores already filtered data intervals
+		std::map<Date, METEO_SET > point_cache;  ///< stores already resampled data points
+		std::vector< METEO_SET > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
 		unsigned int processing_level;
 };

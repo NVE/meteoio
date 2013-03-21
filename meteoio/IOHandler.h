@@ -55,18 +55,18 @@ class IOHandler : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readStationData(const Date& date,
-		                             STATION_TIMESERIE& vecStation);
+		                             STATIONS_SET& vecStation);
 	#ifdef _POPC_
-		virtual void writeMeteoData(std::vector<METEO_TIMESERIE>& vecMeteo,
+		virtual void writeMeteoData(std::vector<METEO_SET>& vecMeteo,
 		                            const std::string& name="");
 	#else
-		virtual void writeMeteoData(const std::vector<METEO_TIMESERIE>& vecMeteo,
+		virtual void writeMeteoData(const std::vector<METEO_SET>& vecMeteo,
 		                            const std::string& name="");
 	#endif
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector<METEO_TIMESERIE>& vecMeteo,
+		                           std::vector<METEO_SET>& vecMeteo,
 		                           const size_t& stationindex=IOUtils::npos);
-		void readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo);
+		void readMeteoData(const Date& date, METEO_SET& vecMeteo);
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
@@ -86,7 +86,7 @@ class IOHandler : public IOInterface {
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 		void parse_copy_config();
-		void copy_parameters(const size_t& stationindex, std::vector< METEO_TIMESERIE >& vecMeteo) const;
+		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 
 		const Config& cfg;
 		std::map<std::string, IOPlugin> mapPlugins;

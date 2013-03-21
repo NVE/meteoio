@@ -146,7 +146,7 @@ class Meteo2DInterpolator {
 		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
 
 		/**
-		 * @brief Retrieve the arguments vector for a given interoplation algorithm
+		 * @brief Retrieve the arguments vector for a given interpolation algorithm
 		 * @param param the meteorological parameter that is concerned
 		 * @param algorithm the desired algorithm
 		 * @param vecArgs a vector of strings containing the arguments

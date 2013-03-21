@@ -23,10 +23,10 @@ using namespace std;
 namespace mio {
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg),
-                                            meteoprocessor(cfg), interpolator(cfg),
+                                            meteoprocessor(cfg), interpolator(cfg), dataGenerator(cfg),
                                             proc_properties(), point_cache(), filtered_cache(),
                                             fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
-                                            processing_level(IOManager::filtered | IOManager::resampled)
+                                            processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated)
 {
 	//setProcessingLevel(IOManager::filtered | IOManager::resampled);
 	meteoprocessor.getWindowSize(proc_properties);
@@ -64,7 +64,7 @@ const Config IOManager::getConfig() const
 }
 
 void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_start, const Date& date_end,
-                                const std::vector< METEO_TIMESERIE >& vecMeteo)
+                                const std::vector< METEO_SET >& vecMeteo)
 {
 	//perform check on date_start and date_end
 	if (date_end < date_start) {
@@ -88,7 +88,7 @@ void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_s
 	}
 }
 
-size_t IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation)
+size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	vecStation.clear();
 
@@ -103,14 +103,14 @@ size_t IOManager::getStationData(const Date& date, STATION_TIMESERIE& vecStation
 
 
 //for an interval of data: decide whether data should be filtered or raw
-size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_TIMESERIE >& vecMeteo)
+size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo)
 {
-	vecMeteo.clear();
+	vecVecMeteo.clear();
 
 	if (processing_level == IOManager::raw){
-		rawio.readMeteoData(dateStart, dateEnd, vecMeteo);
+		rawio.readMeteoData(dateStart, dateEnd, vecVecMeteo);
 	} else {
-		const bool success = read_filtered_cache(dateStart, dateEnd, vecMeteo);
+		const bool success = read_filtered_cache(dateStart, dateEnd, vecVecMeteo);
 
 		if (!success){
 			vector< vector<MeteoData> > tmp_meteo;
@@ -123,14 +123,18 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 				//HACK: if BufferedIO's buffer can not hold all data between start and end
 				//then this would not work
 				fill_filtered_cache();
-				read_filtered_cache(dateStart, dateEnd, vecMeteo);
+				read_filtered_cache(dateStart, dateEnd, vecVecMeteo);
 			} else {
-				vecMeteo = tmp_meteo;
+				vecVecMeteo = tmp_meteo;
 			}
+		}
+
+		if ((IOManager::generated & processing_level) == IOManager::generated){
+			dataGenerator.fillMissing(vecVecMeteo);
 		}
 	}
 
-	return vecMeteo.size(); //equivalent with the number of stations that have data
+	return vecVecMeteo.size(); //equivalent with the number of stations that have data
 }
 
 /**
@@ -140,7 +144,7 @@ void IOManager::fill_filtered_cache()
 {
 	if ((IOManager::filtered & processing_level) == IOManager::filtered){
 		//ask the bufferediohandler for the whole buffer
-		const vector< METEO_TIMESERIE >& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
+		const vector< METEO_SET >& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
 		meteoprocessor.process(buffer, filtered_cache);
 	}
 }
@@ -152,7 +156,7 @@ void IOManager::fill_filtered_cache()
  * @param vec_meteo  A vector to store the chunk cut out
  * @return true if the requested chunk was contained by filtered_cache, false otherwise
  */
-bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date, std::vector< METEO_TIMESERIE >& vec_meteo)
+bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date, std::vector< METEO_SET >& vec_meteo)
 {
 	if ((start_date >= fcache_start) && (end_date <= fcache_end)){
 		//it's already in the filtered_cache, so just copy the requested slice
@@ -185,7 +189,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 	return false;
 }
 
-void IOManager::add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo)
+void IOManager::add_to_cache(const Date& i_date, const METEO_SET& vecMeteo)
 {
 	//Check cache size, delete oldest elements if necessary
 	if (point_cache.size() > 2000){
@@ -196,10 +200,9 @@ void IOManager::add_to_cache(const Date& i_date, const METEO_TIMESERIE& vecMeteo
 }
 
 //data can be raw or processed (filtered, resampled)
-size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
+size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
-
 	vector< vector<MeteoData> > vec_cache;
 
 	//1. Check whether user wants raw data or processed data
@@ -254,15 +257,19 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_TIMESERIE& vecMeteo)
 		}
 	}
 
+	if ((IOManager::generated & processing_level) == IOManager::generated){
+		dataGenerator.fillMissing(vecMeteo);
+	}
+
 	//Store result in the local cache
 	add_to_cache(i_date, vecMeteo);
 
 	return vecMeteo.size();
 }
 #ifdef _POPC_ //HACK popc
-void IOManager::writeMeteoData(/*const*/ std::vector< METEO_TIMESERIE >& vecMeteo, /*const*/ std::string& name)
+void IOManager::writeMeteoData(/*const*/ std::vector< METEO_SET >& vecMeteo, /*const*/ std::string& name)
 #else
-void IOManager::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo, const std::string& name)
+void IOManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name)
 #endif
 {
 	if (processing_level == IOManager::raw){

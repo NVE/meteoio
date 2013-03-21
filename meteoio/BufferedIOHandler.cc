@@ -163,16 +163,16 @@ void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& 
 	}
 }
 
-void BufferedIOHandler::readStationData(const Date& date, STATION_TIMESERIE& vecStation)
+void BufferedIOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	iohandler.readStationData(date, vecStation);
 }
 
 #ifdef _POPC_
-void BufferedIOHandler::writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo,
+void BufferedIOHandler::writeMeteoData(std::vector< METEO_SET >& vecMeteo,
                                        const std::string& name)
 #else
-void BufferedIOHandler::writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo,
+void BufferedIOHandler::writeMeteoData(const std::vector< METEO_SET >& vecMeteo,
                                        const std::string& name)
 #endif
 {
@@ -253,7 +253,7 @@ double BufferedIOHandler::getAvgSamplingRate()
 	return IOUtils::nodata;
 }
 
-const std::vector< METEO_TIMESERIE >& BufferedIOHandler::get_complete_buffer(Date& start, Date& end)
+const std::vector< METEO_SET >& BufferedIOHandler::get_complete_buffer(Date& start, Date& end)
 {
 	start = buffer_start;
 	end   = buffer_end;
@@ -262,7 +262,7 @@ const std::vector< METEO_TIMESERIE >& BufferedIOHandler::get_complete_buffer(Dat
 }
 
 void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end,
-                                      std::vector< METEO_TIMESERIE >& vecMeteo,
+                                      std::vector< METEO_SET >& vecMeteo,
                                       const size_t& /*stationindex*/)
 {
 	vecMeteo.clear();
@@ -339,7 +339,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 	}
 }
 
-void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo){
+void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_SET >& vecvecMeteo){
 	vecvecMeteo.clear(); //the plugins do it internally anyway, but this is cheap and safe...
 	iohandler.readMeteoData(date_start, date_end, vecvecMeteo);
 	buffer_start = date_start;
@@ -355,7 +355,7 @@ void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end,
  * @param vecMeteo The actual data being pushed into vec_buffer_meteo
  */
 void BufferedIOHandler::push_meteo_data(const Date& date_start, const Date& date_end,
-                                        const std::vector< METEO_TIMESERIE >& vecMeteo)
+                                        const std::vector< METEO_SET >& vecMeteo)
 {
 	//perform check on date_start and date_end
 	if (date_end < date_start)

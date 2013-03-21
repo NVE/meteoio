@@ -89,7 +89,7 @@ class BufferedIOHandler : public IOInterface {
 		 * @param date date for which to read the metadata
 		 * @param vecStation vector of metadata
 		 */
-		virtual void readStationData(const Date& date, STATION_TIMESERIE& vecStation);
+		virtual void readStationData(const Date& date, STATIONS_SET& vecStation);
 
 		/**
 		 * @brief Clear all buffers in BufferedIOHandler and hence force rebuffering
@@ -103,13 +103,13 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readSpecialPoints(std::vector<Coords>& pts);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                           std::vector< METEO_TIMESERIE >& vecMeteo,
+		                           std::vector< METEO_SET >& vecMeteo,
 		                           const size_t& stationindex=IOUtils::npos);
 #ifdef _POPC_
-		virtual void writeMeteoData(std::vector< METEO_TIMESERIE >& vecMeteo,
+		virtual void writeMeteoData(std::vector< METEO_SET >& vecMeteo,
 		                            const std::string& name="");
 #else
-		virtual void writeMeteoData(const std::vector< METEO_TIMESERIE >& vecMeteo,
+		virtual void writeMeteoData(const std::vector< METEO_SET >& vecMeteo,
 		                            const std::string& name="");
 #endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
@@ -142,20 +142,20 @@ class BufferedIOHandler : public IOInterface {
 
 	private:
 		//private methods
-		const std::vector<METEO_TIMESERIE>& get_complete_buffer(Date& start, Date& end);
+		const std::vector<METEO_SET>& get_complete_buffer(Date& start, Date& end);
 
 		void push_meteo_data(const Date& date_start, const Date& date_end,
-		                     const std::vector< METEO_TIMESERIE >& vecMeteo);
+		                     const std::vector< METEO_SET >& vecMeteo);
 
 		void setDfltBufferProperties();
-		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_TIMESERIE >& vecvecMeteo);
+		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_SET >& vecvecMeteo);
 		void bufferGrid(const Grid2DObject& in_grid2Dobj, const std::string& in_filename);
 
 		//private members
 		IOHandler& iohandler;
 		const Config& cfg;
 
-		std::vector< METEO_TIMESERIE > vec_buffer_meteo;
+		std::vector< METEO_SET > vec_buffer_meteo;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 		std::vector<std::string> IndexBufferedGrids;
 

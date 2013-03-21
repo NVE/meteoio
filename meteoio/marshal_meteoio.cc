@@ -113,7 +113,7 @@ void marshal_vec_coords(POPBuffer &buf,std::vector<Coords> &data, int maxsize, i
 	}
 }
 
-void marshal_METEO_TIMESERIE(POPBuffer &buf, METEO_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_METEO_SET(POPBuffer &buf, METEO_SET &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -135,21 +135,21 @@ void marshal_METEO_TIMESERIE(POPBuffer &buf, METEO_TIMESERIE &data, int maxsize,
 	}
 }
 
-void marshal_vector_METEO_TIMESERIE(POPBuffer &buf, std::vector<METEO_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_METEO_SET(POPBuffer &buf, std::vector<METEO_SET> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
 		for(int i=0;i<n;i++) {
-			marshal_METEO_TIMESERIE(buf, data[i], maxsize, FLAG_MARSHAL, temp);
+			marshal_METEO_SET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
 		}
 	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();
 		for(int i=0;i<n;i++) {
-			METEO_TIMESERIE obj;
-			marshal_METEO_TIMESERIE(buf, obj, maxsize, !FLAG_MARSHAL, temp);
+			METEO_SET obj;
+			marshal_METEO_SET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
 			data.push_back(obj);
 		}
 	}
@@ -264,7 +264,7 @@ void marshal_Coords(POPBuffer &buf, Coords &data, int maxsize, int flag, POPMems
 	}
 }
 
-void marshal_STATION_TIMESERIE(POPBuffer &buf, STATION_TIMESERIE &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_STATIONS_SET(POPBuffer &buf, STATIONS_SET &data, int maxsize, int flag, POPMemspool *temp)
 {
 	(void)maxsize;
 	(void)*temp;
@@ -286,21 +286,21 @@ void marshal_STATION_TIMESERIE(POPBuffer &buf, STATION_TIMESERIE &data, int maxs
 	}
 }
 
-void marshal_vector_STATION_TIMESERIE(POPBuffer &buf, std::vector<STATION_TIMESERIE> &data, int maxsize, int flag, POPMemspool *temp)
+void marshal_vector_STATIONS_SET(POPBuffer &buf, std::vector<STATIONS_SET> &data, int maxsize, int flag, POPMemspool *temp)
 {
 	if(flag&FLAG_MARSHAL) {
 		int n=data.size();
 		buf.Pack(&n,1);
 		for(int i=0;i<n;i++) {
-			marshal_STATION_TIMESERIE(buf, data[i], maxsize, FLAG_MARSHAL, temp);
+			marshal_STATIONS_SET(buf, data[i], maxsize, FLAG_MARSHAL, temp);
 		}
 	} else {
 		int n=0;
 		buf.UnPack(&n,1);
 		data.clear();
 		for(int i=0;i<n;i++) {
-			STATION_TIMESERIE obj;
-			marshal_STATION_TIMESERIE(buf, obj, maxsize, !FLAG_MARSHAL, temp);
+			STATIONS_SET obj;
+			marshal_STATIONS_SET(buf, obj, maxsize, !FLAG_MARSHAL, temp);
 			data.push_back(obj);
 		}
 	}

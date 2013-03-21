@@ -184,9 +184,7 @@ size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Parameters
 
 void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj)
 {
-	const unsigned int nx = gridobj.getNx();
-	const unsigned int ny = gridobj.getNy();
-	const unsigned int nxy = nx*ny;
+	const unsigned int nxy = gridobj.getNx() * gridobj.getNy();
 
 	for (unsigned int ii=0; ii<nxy; ii++){
 		double& value = gridobj.grid2D(ii);

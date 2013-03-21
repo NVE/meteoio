@@ -269,13 +269,13 @@ void IOHandler::readLanduse(Grid2DObject& landuse_out)
 	plugin->readLanduse(landuse_out);
 }
 
-void IOHandler::readStationData(const Date& date, STATION_TIMESERIE& vecStation)
+void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readStationData(date, vecStation);
 }
 
-void IOHandler::readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo)
+void IOHandler::readMeteoData(const Date& date, METEO_SET& vecMeteo)
 {
 	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
 	readMeteoData(date, date, meteoTmpBuffer);
@@ -298,7 +298,7 @@ void IOHandler::readMeteoData(const Date& date, METEO_TIMESERIE& vecMeteo)
 }
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
-                              std::vector<METEO_TIMESERIE>& vecMeteo,
+                              std::vector<METEO_SET>& vecMeteo,
                               const size_t& stationindex)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
@@ -307,10 +307,10 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	copy_parameters(stationindex, vecMeteo);
 }
 #ifdef _POPC_
-void IOHandler::writeMeteoData(std::vector<METEO_TIMESERIE>& vecMeteo,
+void IOHandler::writeMeteoData(std::vector<METEO_SET>& vecMeteo,
                                const std::string& name)
 #else
-void IOHandler::writeMeteoData(const std::vector<METEO_TIMESERIE>& vecMeteo,
+void IOHandler::writeMeteoData(const std::vector<METEO_SET>& vecMeteo,
                                const std::string& name)
 #endif
 {
@@ -363,7 +363,7 @@ void IOHandler::parse_copy_config()
 	}
 }
 
-void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_TIMESERIE >& vecMeteo) const
+void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const
 {
 	/**
 	 * This procedure runs through the MeteoData objects in vecMeteo and according to user

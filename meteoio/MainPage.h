@@ -70,6 +70,7 @@ namespace mio {
  *    -# \subpage coords "Available coordinate systems" and usage
  *    -# \subpage processing "Available processing elements" and usage
  *    -# \subpage resampling "Available temporal interpolations" and usage
+ *    -# \subpage generators "Available data generators" and usage
  *    -# \subpage interpol2d "Available spatial interpolations" and usage
  *    -# \subpage build_io "How to build your io.ini configuration file"
  * -# Programing using MeteoIO
