@@ -789,13 +789,13 @@
   </wsdl:binding>
   <wsdl:service name="GSNWebService">
     <wsdl:port name="GSNWebServiceHttpSoap11Endpoint" binding="ns:GSNWebServiceSoap11Binding">
-      <soap:address location="http://192.33.210.37:22001/services/GSNWebService/"/>
+      <soap:address location="http://195.176.244.23:22002/services/GSNWebService/"/>
     </wsdl:port>
     <wsdl:port name="GSNWebServiceHttpSoap12Endpoint" binding="ns:GSNWebServiceSoap12Binding">
-      <soap12:address location="http://192.33.210.37:22001/services/GSNWebService/"/>
+      <soap12:address location="http://195.176.244.23:22002/services/GSNWebService/"/>
     </wsdl:port>
     <wsdl:port name="GSNWebServiceHttpEndpoint" binding="ns:GSNWebServiceHttpBinding">
-      <http:address location="http://192.33.210.37:22001/services/GSNWebService/"/>
+      <http:address location="http://195.176.244.23:22002/services/GSNWebService/"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
