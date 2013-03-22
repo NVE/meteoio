@@ -61,6 +61,7 @@ namespace mio {
  * - <i>"Long-wave radiation at the ground"</i>, Unsworth and Monteith, Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24
  * - <i>"Estimating downward clear sky long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Dilley and O'Brien, Q. J. R. Meteorolo. Soc., Vol. 124, 1998, doi:10.1002/qj.49712454903
  * - <i>"Solar and terrestrial radiation dependent on the amount and type of cloud"</i>, Kasten and Czeplak, 1980, Solar energy, 24.2, pp 177-189
+ * - <i>"Astronomical Algorithms"</i>, Meeus, second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA
  *
  *
  * @author Mathias Bavay
@@ -168,7 +169,8 @@ class UnsworthGenerator : public GeneratorAlgorithm {
  * @brief potential ISWR parametrization
  * This computes the potential incoming solar radiation, based on the position of the sun ine the sky
  * (as a function of the location and the date). Please note that although this is the radiation as perceived
- * at ground level (on the horizontal), this assumes <b>clear sky</b>!
+ * at ground level (on the horizontal), this assumes <b>clear sky</b>! This relies on SunObject to perform the heavy duty
+ * computation.
  */
 class PotRadGenerator : public GeneratorAlgorithm {
 	public:
@@ -178,6 +180,7 @@ class PotRadGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
+		double getSolarIndex(const double& ta, const double& rh, const double& ilwr);
 		SunObject sun;
 
 		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
