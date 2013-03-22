@@ -172,10 +172,6 @@ class AlgorithmFactory {
 		                                            Meteo2DInterpolator& i_mi, const Date& i_date,
 		                                            const DEMObject& i_dem,
 		                                            const std::vector<std::string>& i_vecArgs, IOManager& iom);
-
-		static std::set<std::string> setAlgorithms; ///<all algorithms that are configured
-		static const bool flag_init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static setAlgorithms
 };
 
 /**

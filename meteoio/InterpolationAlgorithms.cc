@@ -25,86 +25,43 @@ using namespace std;
 
 namespace mio {
 
-std::set<std::string> AlgorithmFactory::setAlgorithms;
-const bool AlgorithmFactory::flag_init = AlgorithmFactory::initStaticData();
-
-bool AlgorithmFactory::initStaticData()
-{
-	/*
-	 * Keywords for selecting the spatial interpolation algorithm among the
-	 * available methods for single source and multiple sources interpolations.
-	 * More details about some of these algorithms can be found in "A Meteorological
-	 * Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, 2006.
-	 * Please don't forget to document InterpolationAlgorithms.h for the available algorithms!
-	 */
-
-	setAlgorithms.insert("CST");       // constant fill
-	setAlgorithms.insert("STD_PRESS"); // standard air pressure interpolation
-	setAlgorithms.insert("CST_LAPSE"); // constant fill with an elevation lapse rate
-	setAlgorithms.insert("IDW");       // Inverse Distance Weighting fill
-	setAlgorithms.insert("IDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill
-	setAlgorithms.insert("LIDW_LAPSE"); // Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
-	setAlgorithms.insert("RH");        // relative humidity interpolation
-	setAlgorithms.insert("ILWR");        // long wave radiation interpolation
-	setAlgorithms.insert("WIND_CURV"); // wind velocity interpolation (using a heuristic terrain effect)
-	setAlgorithms.insert("HNW_SNOW"); // precipitation interpolation according to (Magnusson, 2010)
-	setAlgorithms.insert("ODKRIG"); // ordinary kriging
-	setAlgorithms.insert("USER"); // read user provided grid
-
-	return true;
-}
-
 //HACK: do not build a new object at every time step!!
 InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algoname,
                                                        Meteo2DInterpolator& i_mi, const Date& i_date,
                                                        const DEMObject& i_dem,
                                                        const std::vector<std::string>& i_vecArgs, IOManager& iom)
 {
-	std::string algoname(i_algoname);
-	IOUtils::toUpper(algoname);
+	const std::string algoname( IOUtils::strToUpper(i_algoname) );
+	//IOUtils::toUpper(algoname);
 
-	//Check whether algorithm theoretically exists
-	if (setAlgorithms.find(algoname) == setAlgorithms.end())
-		throw UnknownValueException("The interpolation algorithm '"+algoname+"' does not exist" , AT);
-
-	if (algoname == "CST"){
+	if (algoname == "CST"){// constant fill
 		return new ConstAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "STD_PRESS"){
+	} else if (algoname == "STD_PRESS"){// standard air pressure interpolation
 		return new StandardPressureAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "CST_LAPSE"){
+	} else if (algoname == "CST_LAPSE"){// constant fill with an elevation lapse rate
 		return new ConstLapseRateAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "IDW"){
+	} else if (algoname == "IDW"){// Inverse Distance Weighting fill
 		return new IDWAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "IDW_LAPSE"){
+	} else if (algoname == "IDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill
 		return new IDWLapseAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "LIDW_LAPSE"){
+	} else if (algoname == "LIDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
 		return new LocalIDWLapseAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "RH"){
+	} else if (algoname == "RH"){// relative humidity interpolation
 		return new RHAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "ILWR"){
+	} else if (algoname == "ILWR"){// long wave radiation interpolation
 		return new ILWRAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "WIND_CURV"){
+	} else if (algoname == "WIND_CURV"){// wind velocity interpolation (using a heuristic terrain effect)
 		return new SimpleWindInterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "ODKRIG"){
+	} else if (algoname == "ODKRIG"){// ordinary kriging
 		return new OrdinaryKrigingAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "USER"){
+	} else if (algoname == "USER"){// read user provided grid
 		return new USERInterpolation(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "HNW_SNOW"){
+	} else if (algoname == "HNW_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
 		return new SnowHNWInterpolation(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
 }
-
-
-		MeteoData::Parameters param; ///<the parameter that we will interpolate
-
-		std::vector<MeteoData> vecMeteo;
-		std::vector<double> vecData; ///<store the measurement for the given parameter
-		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
-		std::stringstream info; ///<to store some extra information about the interoplation process
-		size_t nrOfMeasurments; ///<the available number of measurements
-
 
 InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
                                                const Date& i_date,
@@ -128,11 +85,8 @@ size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
 size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
                                              std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta) const
 {
-	if (!o_vecData.empty())
-		o_vecData.clear();
-
-	if (!o_vecMeta.empty())
-		o_vecMeta.clear();
+	o_vecData.clear();
+	o_vecMeta.clear();
 
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		const double& val = vecMeteo[ii](i_param);
@@ -148,6 +102,7 @@ size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
 size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& i_vecMeta,
                                                          std::vector<double>& o_vecData) const
 {
+	o_vecData.clear();
 	for (size_t ii=0; ii<i_vecMeta.size(); ii++){
 		const double& val = i_vecMeta[ii].position.getAltitude();
 		if (val != IOUtils::nodata)
@@ -169,7 +124,7 @@ std::string InterpolationAlgorithm::getInfo() const
 		os << " station";
 	else
 		os << " stations";
-	std::string tmp = info.str();
+	std::string tmp( info.str() );
 	if(!tmp.empty()) {
 		os << ", " << tmp;
 	}

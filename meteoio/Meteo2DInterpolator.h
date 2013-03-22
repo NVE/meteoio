@@ -74,8 +74,8 @@ class IOManager; //forward declaration
  * interpolation process (such as a regression coefficient or error estimate) to the InterpolationAlgorithm::info
  * stringstream (which will be made available to external programs, such as GUIs).
  *
- * The new class and its associated end user key must be declared in AlgorithmFactory::initStaticData() and
- * the constructor called in AlgorithmFactory::getAlgorithm. It is recommended that any generic statistical
+ * The new class and its associated end user key must be used and its constructor called in AlgorithmFactory::getAlgorithm.
+ * It is recommended that any generic statistical
  * spatial processing be implemented as a static class in libinterpol2D.cc so that it could be reused by other
  * algorithms (see for example Interpol2D::IDW and IDWCore). In any case, proper doxygen documentation
  * must be written alongside the implementation.
