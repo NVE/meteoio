@@ -54,6 +54,13 @@ namespace mio {
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - UNSWORTH: use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
  *
+ * @section biblio Bibliography
+ * The data generators have been inspired by the following papers:
+ * - <i>"Long-wave radiation at the ground"</i>, Unsworth and Monteith, Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24
+ * - <i>"Estimating downward clear sky long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Dilley and O'Brien, Q. J. R. Meteorolo. Soc., Vol. 124, 1998, doi:10.1002/qj.49712454903
+ * - <i>"Solar and terrestrial radiation dependent on the amount and type of cloud"</i>, Kasten and Czeplak, 1980, Solar energy, 24.2, pp 177-189
+ *
+ *
  * @author Mathias Bavay
  * @date   2013-03-20
  */

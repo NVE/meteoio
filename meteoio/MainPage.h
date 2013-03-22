@@ -80,6 +80,7 @@ namespace mio {
  * -# Expanding MeteoIO
  *    -# How to \subpage dev_plugins "write a Plugin"
  *    -# How to \subpage dev_processing "write a processing element"
+ *    -# How to \subpage dev_DataGenerator "Write a data generator"
  *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
  */
 
