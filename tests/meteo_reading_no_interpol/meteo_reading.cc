@@ -14,19 +14,21 @@ const string res_ID []		= {"FLU2",			"FIR2",					"FRA2",				"GLA2",				"ILI2",		
 const string res_Name []	= {"Fluela Hospiz",	"Schmidigen-Bidmeren",	"Efra",				"Guppen",			"Les Collines",		"Ottere",			"Nual"};
 const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Met_0 []	= {264.45,			266.6957379,					266.75,				269.8447083,				266.25,				267.3158015,				266.1696319}; // TA
-const double res_Met_1 []	= {1.,				0.957,					1.,					0.967,				0.963,				0.862,				0.95}; // RH
-const double res_Met_2 []	= {2.9,				0.6,					2.,					0.2,				2.5,				1.5,				0.3}; // VW
-const double res_Met_3 []	= {335.,			138,					98,					216,				268.,				187,				107}; // DW
-const double res_Met_4 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Met_5 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Met_6 []	= {119.5,				105.5,						86.5,					67,					120.5,					105,				115.5}; //RSWR
-const double res_Met_7 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Met_8 []	= {0.57,			0.95,					1.9,				1.41,				0.35,				0.72,				1.47}; // HS
-const double res_Met_9 []	= {IOUtils::nodata,	0.,						IOUtils::nodata,	0.,					0.,					0.,					0.}; // HNW
-const double res_Met_10[]	= {273.6963,			274.3309,					273.9969,				274.6983,				274.0971,				274.9154,				274.0971}; // TSG
-const double res_Met_11[]	= {263.8,			266.12,					265.6,				268.74,				265.64,				267.24,				262.5}; // TSS
-const double res_Met_12[]	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
+
+const double res_Met_0[]	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
+const double res_Met_1 []	= {264.45,			266.6957379,					266.75,				269.8447083,				266.25,				267.3158015,				266.1696319}; // TA
+const double res_Met_2 []	= {1.,				0.957,					1.,					0.967,				0.963,				0.862,				0.95}; // RH
+const double res_Met_3[]	= {273.6963,			274.3309,					273.9969,				274.6983,				274.0971,				274.9154,				274.0971}; // TSG
+const double res_Met_4[]	= {263.8,			266.12,					265.6,				268.74,				265.64,				267.24,				262.5}; // TSS
+const double res_Met_5 []	= {0.57,			0.95,					1.9,				1.41,				0.35,				0.72,				1.47}; // HS
+const double res_Met_6 []	= {2.9,				0.6,					2.,					0.2,				2.5,				1.5,				0.3}; // VW
+const double res_Met_7 []	= {335.,			138,					98,					216,				268.,				187,				107}; // DW
+const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
+const double res_Met_9 []	= {119.5,				105.5,						86.5,					67,					120.5,					105,				115.5}; //RSWR
+const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
+const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
+const double res_Met_12 []	= {IOUtils::nodata,	0.,						IOUtils::nodata,	0.,					0.,					0.,					0.}; // HNW
+
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures

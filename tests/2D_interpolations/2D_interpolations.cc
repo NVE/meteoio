@@ -26,13 +26,14 @@ int main(int /*argc*/, char** argv) {
 
 	//performing spatial interpolations
 	Grid2DObject param, ref;
+	int status = EXIT_SUCCESS;
 
 	io.interpolate(d1, dem, MeteoData::TA, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::TA, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_TA_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "TA grids don't match!\n"; return EXIT_FAILURE;
+			cout << "TA grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
@@ -41,7 +42,7 @@ int main(int /*argc*/, char** argv) {
 	else {
 		io.read2DGrid(ref, date_str+"_TSS_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "TSS grids don't match!\n"; return EXIT_FAILURE;
+			cout << "TSS grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
@@ -50,7 +51,7 @@ int main(int /*argc*/, char** argv) {
 	else {
 		io.read2DGrid(ref, date_str+"_TSG_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "TSG grids don't match!\n"; return EXIT_FAILURE;
+			cout << "TSG grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
@@ -59,7 +60,7 @@ int main(int /*argc*/, char** argv) {
 	else {
 		io.read2DGrid(ref, date_str+"_HNW_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "HNW grids don't match!\n"; return EXIT_FAILURE;
+			cout << "HNW grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
@@ -68,7 +69,7 @@ int main(int /*argc*/, char** argv) {
 	else {
 		io.read2DGrid(ref, date_str+"_RH_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "RH grids don't match!\n"; return EXIT_FAILURE;
+			cout << "RH grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
@@ -77,7 +78,7 @@ int main(int /*argc*/, char** argv) {
 	else {
 		io.read2DGrid(ref, date_str+"_VW_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "VW grids don't match!\n"; return EXIT_FAILURE;
+			cout << "VW grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
@@ -86,7 +87,7 @@ int main(int /*argc*/, char** argv) {
 	else {
 		io.read2DGrid(ref, date_str+"_RSWR_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "RSWR grids don't match!\n"; return EXIT_FAILURE;
+			cout << "RSWR grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
@@ -95,12 +96,12 @@ int main(int /*argc*/, char** argv) {
 	else {
 		io.read2DGrid(ref, date_str+"_P_ref.asc");
 		if(ref.grid2D.checkEpsilonEquality(param.grid2D, grid_epsilon)==false) {
-			cout << "P grids don't match!\n"; return EXIT_FAILURE;
+			cout << "P grids don't match!\n"; status = EXIT_FAILURE;
 		}
 	}
 
 
 	if(!gen_ref) io.write2DGrid(param, MeteoGrids::P, d1); //trying to write one grid out
 
-	return 0;
+	return status;
 }
