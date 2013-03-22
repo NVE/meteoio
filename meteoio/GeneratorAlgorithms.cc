@@ -34,6 +34,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new StandardPressureGenerator(vecArgs, i_algoname);
 	} else if (algoname == "UNSWORTH"){
 		return new UnsworthGenerator(vecArgs, i_algoname);
+	} else if (algoname == "POT_RADIATION"){
+		return new PotRadGenerator(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -226,6 +228,114 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 
 	return all_filled;
 }
+
+const double PotRadGenerator::soil_albedo = .23; //grass
+const double PotRadGenerator::snow_albedo = .56; //white surface
+const double PotRadGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+void PotRadGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	//Get the optional arguments for the algorithm: constant value to use
+	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
+}
+
+bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
+{
+	if(param!=MeteoData::ISWR && param!=MeteoData::RSWR) {
+		stringstream ss;
+		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	double &value = md(param);
+	if(value == IOUtils::nodata) {
+		double albedo = soil_albedo;
+
+		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
+		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
+
+		const double lat = md.meta.position.getLat();
+		const double lon = md.meta.position.getLon();
+		const double alt = md.meta.position.getAltitude();
+		if(lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
+
+		sun.setLatLon(lat, lon, alt);
+		sun.setDate(md.date.getJulian(true), 0.);
+
+		const double HS=md(MeteoData::HS);
+		if(HS!=IOUtils::nodata && HS>=snow_thresh) //no big deal if we can not adapt the albedo
+			albedo = snow_albedo;
+
+		const double P=md(MeteoData::P);
+		if(P==IOUtils::nodata)
+			sun.calculateRadiation(TA, RH, albedo);
+		else
+			sun.calculateRadiation(TA, RH, P, albedo);
+
+		double R_toa, R_direct, R_diffuse;
+		sun.getHorizontalRadiation(R_toa, R_direct, R_diffuse);
+		if(param==MeteoData::ISWR)
+			value = R_direct+R_diffuse; //ISWR
+		else
+			value = (R_direct+R_diffuse)*albedo; //RSWR
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(param!=MeteoData::P) {
+		stringstream ss;
+		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	if(vecMeteo.empty()) return true;
+
+	const double lat = vecMeteo.front().meta.position.getLat();
+	const double lon = vecMeteo.front().meta.position.getLon();
+	const double alt = vecMeteo.front().meta.position.getAltitude();
+	if(lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return false;
+	sun.setLatLon(lat, lon, alt);
+
+	bool all_filled = true;
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		double &value = vecMeteo[ii](param);
+		if(value == IOUtils::nodata) {
+			double albedo = soil_albedo;
+
+			const double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH);
+			if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
+				all_filled = false;
+				continue;
+			}
+
+			sun.setDate(vecMeteo[ii].date.getJulian(true), 0.);
+
+			const double HS=vecMeteo[ii](MeteoData::HS);
+			if(HS!=IOUtils::nodata && HS>=snow_thresh) //no big deal if we can not adapt the albedo
+				albedo = snow_albedo;
+
+			const double P=vecMeteo[ii](MeteoData::P);
+			if(P==IOUtils::nodata)
+				sun.calculateRadiation(TA, RH, albedo);
+			else
+				sun.calculateRadiation(TA, RH, P, albedo);
+
+			double R_toa, R_direct, R_diffuse;
+			sun.getHorizontalRadiation(R_toa, R_direct, R_diffuse);
+			if(param==MeteoData::ISWR)
+				value = R_direct+R_diffuse; //ISWR
+			else
+				value = (R_direct+R_diffuse)*albedo; //RSWR
+		}
+	}
+
+	return all_filled; //all missing values could be filled
+}
+
 
 } //namespace
 

@@ -19,6 +19,7 @@
 #define __GENERATORALGORITHMS_H__
 
 #include <meteoio/MeteoData.h>
+#include <meteoio/meteolaws/Sun.h>
 
 #include <vector>
 #include <set>
@@ -53,6 +54,7 @@ namespace mio {
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - UNSWORTH: use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
+ * - POT_RADIATION: generate the potential incoming short wave radiation (see PotRadGenerator)
  *
  * @section biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -157,6 +159,26 @@ class UnsworthGenerator : public GeneratorAlgorithm {
 		void parse_args(const std::vector<std::string>& vecArgs);
 		double last_cloudiness_ratio; //last ratio of cloudiness
 		double last_cloudiness_julian; //time of such ratio
+
+		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
+};
+
+/**
+ * @class PotRadGenerator
+ * @brief potential ISWR parametrization
+ * This computes the potential incoming solar radiation, based on the position of the sun ine the sky
+ * (as a function of the location and the date). Please note that although this is the radiation as perceived
+ * at ground level (on the horizontal), this assumes <b>clear sky</b>!
+ */
+class PotRadGenerator : public GeneratorAlgorithm {
+	public:
+		PotRadGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		void parse_args(const std::vector<std::string>& vecArgs);
+		SunObject sun;
 
 		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 };
