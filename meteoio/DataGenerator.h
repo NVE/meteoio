@@ -108,6 +108,7 @@ class DataGenerator {
  	public:
 		DataGenerator(const Config& i_cfg);
 		DataGenerator(const DataGenerator& c) : cfg(c.cfg), mapAlgorithms(c.mapAlgorithms), generators_defined(c.generators_defined) {};
+		~DataGenerator();
 
 		void fillMissing(METEO_SET& vecMeteo) const;
 		void fillMissing(std::vector<METEO_SET>& vecVecMeteo) const;
