@@ -164,17 +164,13 @@ size_t MeteoData::getNrOfParameters() const
 	return nrOfAllParameters;
 }
 
-MeteoData::MeteoData() : date(0.0, 0.), meta(), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata), resampled(false)
-{
-	/*param_name = s_default_paramname;
-	data.resize(nrOfAllParameters, IOUtils::nodata);*/
-}
+MeteoData::MeteoData()
+         : date(0.0, 0.), meta(), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata), resampled(false)
+{ }
 
-MeteoData::MeteoData(const Date& date_in) : date(date_in), meta(), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata), resampled(false)
-{
-	/*param_name = s_default_paramname;
-	data.resize(nrOfAllParameters, IOUtils::nodata);*/
-}
+MeteoData::MeteoData(const Date& date_in)
+         : date(date_in), meta(), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata), resampled(false)
+{ }
 
 void MeteoData::setDate(const Date& in_date)
 {

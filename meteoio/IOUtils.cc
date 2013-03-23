@@ -485,9 +485,9 @@ template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_ba
 	std::string s(str);
 	trim(s); //delete trailing and leading whitespaces and tabs
 
-	if (toupper(s[0])=='T' || toupper(s[0])=='Y' ) {
+	if (toupper(s[0])=='T' || toupper(s[0])=='Y') {
 		t = true;
-	} else if (toupper(s[0])=='F' || toupper(s[0])=='N' ) {
+	} else if (toupper(s[0])=='F' || toupper(s[0])=='N') {
 		t = false;
 	} else {
 		std::istringstream iss(s);

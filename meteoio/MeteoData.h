@@ -241,7 +241,7 @@ class MeteoData {
 		size_t nrOfAllParameters;
 		std::vector<std::string> param_name;
 		std::vector<double> data;
-		bool resampled;              ///<set this to true if MeteoData is result of resampling
+		bool resampled; ///<set this to true if MeteoData is result of resampling
 };
 
 } //end namespace
