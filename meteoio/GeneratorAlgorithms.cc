@@ -255,7 +255,7 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 	double &value = md(param);
 	if(value == IOUtils::nodata) {
 		double albedo = soil_albedo;
-		//double solarIndex = 1.;
+		double solarIndex = 1.;
 
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
@@ -272,9 +272,10 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 		if(HS!=IOUtils::nodata && HS>=snow_thresh) //no big deal if we can not adapt the albedo
 			albedo = snow_albedo;
 
-		/*const double ILWR=md(MeteoData::ILWR);
+		const double ILWR=md(MeteoData::ILWR);
 		if(ILWR!=IOUtils::nodata)
-			solarIndex = getSolarIndex(TA, RH, ILWR);*/
+			solarIndex = getSolarIndex(TA, RH, ILWR);
+
 
 		const double P=md(MeteoData::P);
 		if(P==IOUtils::nodata)
@@ -288,6 +289,8 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 			value = R_direct+R_diffuse; //ISWR
 		else
 			value = (R_direct+R_diffuse)*albedo; //RSWR
+
+std::cout << "solarIndex=" << solarIndex << " -> iswr=" << value*solarIndex << "\n";
 	}
 
 	return true; //all missing values could be filled
