@@ -70,14 +70,14 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * P::algorithms = STD_PRESS
  * @endcode
  *
- * @section keywords Available algorithms
+ * @section interpol2D_keywords Available algorithms
  * The keywords defining the algorithms are the following:
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each cell (see StandardPressureAlgorithm)
  * - CST: constant value in each cell (see ConstAlgorithm)
  * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
- * - LIDW_LAPSE: IDW_LAPSE restrictited to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
+ * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
@@ -85,7 +85,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  *
- * @section lapse Lapse rates
+ * @section interpol2D_lapse Lapse rates
  * Several algorithms use elevation trends, currently modelled as a linear relation. The slope of this linear relation can
  * sometimes be provided by the end user (through his io.ini configuration file), otherwise it is computed from the data.
  * In order to bring slightly more robustness, if the correlation between the input data and the computed linear regression
@@ -93,7 +93,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * with one point less (cycling throught all the points). The best result (ie: highest correlation coefficient) will be
  * kept. If the final correlation coefficient is less than 0.7, a warning is displayed.
  *
- * @section dev_use Developer usage
+ * @section interpol2D_dev_use Developer usage
  * From the developer's point of view, all that has to be done is instantiate an IOManager object and call its
  * IOManager::interpolate method.
  * @code
@@ -110,7 +110,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  *
  * @endcode
  *
- * @section biblio Bibliography
+ * @section interpol2D_biblio Bibliography
  * The interpolation algorithms have been inspired by the following papers:
  * - <i>"A Meteorological Distribution System for High-Resolution Terrestrial Modeling (MicroMet)"</i>, Liston and Elder, Journal of Hydrometeorology <b>7</b> (2006), 217-234.
  * - <i>"Simulating wind ﬁelds and snow redistribution using terrain-based parameters to model snow accumulation and melt over a semi-arid mountain catchment"</i>, Adam Winstral and Danny Marks, Hydrological Processes <b>16</b> (2002), 3585– 3603. DOI: 10.1002/hyp.1238 [NOT YET IMPLEMENTED]

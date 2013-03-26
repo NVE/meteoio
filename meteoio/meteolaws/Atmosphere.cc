@@ -449,10 +449,11 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 
 		SunObject Sun(lat, lon, altitude, julian, TZ);
 		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
-		double toa_h, direct_h, diffuse_h;
-		Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
+		double toa, direct, diffuse;
+		Sun.getHorizontalRadiation(toa, direct, diffuse);
+		//Sun.getBeamRadiation(toa, direct, diffuse);
 
-		return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct_h+diffuse_h, static_cast<unsigned char>(month));
+		return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct+diffuse, static_cast<unsigned char>(month));
 	} else {
 		return Atmosphere::Crawford_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, static_cast<unsigned char>(month), cloudiness);
 	}
@@ -525,10 +526,11 @@ double Atmosphere::Unsworth_ilwr(const double& lat, const double& lon, const dou
 
 		SunObject Sun(lat, lon, altitude, julian, TZ);
 		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
-		double toa_h, direct_h, diffuse_h;
-		Sun.getHorizontalRadiation(toa_h, direct_h, diffuse_h);
+		double toa, direct, diffuse;
+		Sun.getHorizontalRadiation(toa, direct, diffuse);
+		//Sun.getBeamRadiation(toa, direct, diffuse);
 
-		return Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct_h+diffuse_h);
+		return Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct+diffuse);
 	} else {
 		return Atmosphere::Unsworth_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, cloudiness);
 	}

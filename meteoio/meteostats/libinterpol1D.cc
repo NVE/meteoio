@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteostats/libinterpol1D.h>
+#include <meteoio/MathOptim.h>
 #include <algorithm>
 #include <cmath>
 
@@ -65,8 +66,8 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 	//compute quantiles
 	for(size_t ii=0; ii<Qsize; ii++) {
 		const double q = quartiles[ii];
-		if(q<=0.) vecResults[ii] = vecTemp[0];
-		else if(q>=1.) vecResults[ii] = vecTemp[vecSize-1];
+		if(q<=0.) vecResults[ii] = vecTemp.front();
+		else if(q>=1.) vecResults[ii] = vecTemp.back();
 		else {
 			const double pos = static_cast<double>(vecSize - 1) * q;
 			const unsigned int ind = static_cast<unsigned int>(pos);
@@ -89,60 +90,59 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
  */
 std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const std::vector<double>& Y)
 {
-	if(X.size()!=Y.size()) {
+	const size_t Xsize = X.size();
+	if(Xsize!=Y.size()) {
 		stringstream ss;
-		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	std::vector<double> der;
+	std::vector<double> der(Xsize, IOUtils::nodata);
 	double right, centered, left, Dx_r, Dx_c, Dx_l;
-	unsigned int i=0;
+	size_t i=0;
 	//right hand derivative
 	Dx_r=X[i+1]-X[i];
-	if(Y[i]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_r!=0.) der.push_back( (Y[i+1]-Y[i])/Dx_r );
-		else der.push_back(IOUtils::nodata);
+	if(Y[i]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_r!=0.) der[i] = (Y[i+1]-Y[i]) / Dx_r;
 
 	//centered derivative if possible
 	i++;
-	for(; i<(X.size()-1); i++) {
+	for(; i<(Xsize-1); i++) {
 		Dx_r=X[i-1]-X[i]; Dx_c=X[i+1]-X[i-1]; Dx_l=X[i]-X[i-1];
 
 		if(Y[i]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_r!=0.) right=(Y[i+1]-Y[i])/Dx_r; else right=IOUtils::nodata;
 		if(Y[i]!=IOUtils::nodata && Y[i-1]!=IOUtils::nodata && Dx_l!=0.) left=(Y[i]-Y[i-1])/Dx_l; else left=IOUtils::nodata;
 		if(Y[i-1]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_c!=0.) centered=(Y[i+1]-Y[i-1])/Dx_c; else centered=IOUtils::nodata;
 
-		if(centered!=IOUtils::nodata) der.push_back(centered);
-		else if(right!=IOUtils::nodata) der.push_back(right);
-		else if(left!=IOUtils::nodata) der.push_back(left);
-		else der.push_back( IOUtils::nodata );
+		if(centered!=IOUtils::nodata) der[i] = centered;
+		else if(right!=IOUtils::nodata) der[i] = right;
+		else if(left!=IOUtils::nodata) der[i] = left;
 	}
 
 	//left hand derivative
 	Dx_l=X[i]-X[i-1];
-	if(Y[i]!=IOUtils::nodata && Y[i-1]!=IOUtils::nodata && Dx_l!=0.) der.push_back( (Y[i]-Y[i-1])/Dx_l );
-		else der.push_back(IOUtils::nodata);
+	if(Y[i]!=IOUtils::nodata && Y[i-1]!=IOUtils::nodata && Dx_l!=0.) der[i] = (Y[i]-Y[i-1]) / Dx_l;
 
 	return der;
 }
 
 void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
 {
-	if(X.size()!=Y.size()) {
+	const size_t Xsize = X.size();
+	if(Xsize!=Y.size()) {
 		stringstream ss;
-		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	std::vector< std::pair<double,double> > new_vec( X.size() );
-	for(unsigned int i=0; i<new_vec.size(); i++) {
+	std::vector< std::pair<double,double> > new_vec( Xsize );
+	for(size_t i=0; i<Xsize; i++) {
 		const std::pair<double,double> tmp(X[i],Y[i]);
 		new_vec[i] = tmp;
 	}
 
 	std::sort( new_vec.begin(), new_vec.end(), pair_comparator );
 
-	for(unsigned int i=0; i<new_vec.size(); i++) {
+	for(size_t i=0; i<Xsize; i++) {
 		X[i] = new_vec[i].first;
 		Y[i] = new_vec[i].second;
 	}
@@ -163,7 +163,7 @@ bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::
  */
 double Interpol1D::weightedMean(const double& d1, const double& d2, const double& weight)
 {
-	double tmp = abs(d1 - d2);
+	const double tmp = abs(d1 - d2);
 
 	if (d1 < d2) {
 		return (d1 + tmp*weight);
@@ -193,10 +193,10 @@ double Interpol1D::weightedMean(const std::vector<double>& vecData, const std::v
 
 	double sum = 0., count = 0.;
 	for (size_t ii=0; ii<nPts; ii++){
-		const double value=vecData[ii];
+		const double value = vecData[ii];
 		if(value!=IOUtils::nodata) {
 			const double w = weight[ii];
-			sum += vecData[ii]*w;
+			sum += value*w;
 			count += w;
 		}
 	}
@@ -216,9 +216,9 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 	unsigned int count=0;
 	double sum = 0.0;
 	for (size_t ii=0; ii<nPts; ii++){
-		const double value=vecData[ii];
+		const double value = vecData[ii];
 		if(value!=IOUtils::nodata) {
-			sum += vecData[ii];
+			sum += value;
 			count++;
 		}
 	}
@@ -270,7 +270,7 @@ double Interpol1D::getMedianAverageDeviation(const std::vector<double>& vecData)
 
 	//Calculate vector of deviations and write each value back into the vecWindow
 	for(size_t ii=0; ii<vecWindow.size(); ii++){
-		double& value=vecWindow[ii];
+		double& value = vecWindow[ii];
 		if(value!=IOUtils::nodata)
 			value = std::abs(value - median);
 	}
@@ -290,7 +290,7 @@ double Interpol1D::variance(const std::vector<double>& X)
 	double sum=0.;
 
 	for(size_t i=0; i<n; i++) {
-		const double value=X[i];
+		const double value = X[i];
 		if(value!=IOUtils::nodata) {
 			sum += value;
 			count++;
@@ -302,7 +302,7 @@ double Interpol1D::variance(const std::vector<double>& X)
 	const double mean = sum/(double)count;
 	double sum2=0., sum3=0.;
 	for(size_t i=0; i<n; i++) {
-		const double value=X[i];
+		const double value = X[i];
 		if(value!=IOUtils::nodata) {
 			sum2 = sum2 + (value - mean)*(value - mean);
 			sum3 = sum3 + (value - mean);
@@ -319,10 +319,10 @@ double Interpol1D::std_dev(const std::vector<double>& X)
 
 double Interpol1D::covariance(const std::vector<double>& X, const std::vector<double>& Y)
 {//this is a simple but still compensated covariance computation (see the notes on the variance)
-	if(X.size()!=Y.size())
+	const size_t Xsize = X.size();
+	if(Xsize!=Y.size())
 		throw IOException("Vectors should have the same size for covariance!", AT);
-	const size_t n = X.size();
-	if(n==0) return IOUtils::nodata;
+	if(Xsize==0) return IOUtils::nodata;
 
 	const double X_mean = Interpol1D::arithmeticMean(X);
 	const double Y_mean = Interpol1D::arithmeticMean(Y);
@@ -331,7 +331,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 
 	size_t count=0;
 	double sum=0.;
-	for(size_t i=0; i<n; i++) {
+	for(size_t i=0; i<Xsize; i++) {
 		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
 			sum += (X[i] - X_mean) * (Y[i] - Y_mean);
 			count++;
@@ -353,7 +353,7 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 */
 void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {	//check arguments
-	const size_t n=X.size();
+	const size_t n = X.size();
 	if(n==0)
 		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
 	if(n!=Y.size())
@@ -401,7 +401,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 		r = 1.;
 	} else {
 		//any other line
-		r = fabs( sxy / sqrt(sx*sy) );
+		r = abs( sxy / sqrt(sx*sy) );
 	}
 }
 
@@ -419,11 +419,11 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::stringstream& mesg)
 {
 	//finds the linear regression for points (x,y,z,Value)
-	const double r_thres=0.7;
-	//we want at least 4 points AND 85% of the initial data set kept in the regression
-	const unsigned int min_dataset=(unsigned int)floor(0.85*(double)in_X.size());
-	const unsigned int min_pts=(min_dataset>4)?min_dataset:4;
+	const double r_thres = 0.7;
 	const size_t nb_pts = in_X.size();
+	//we want at least 4 points AND 85% of the initial data set kept in the regression
+	const unsigned int min_dataset = (unsigned int)Optim::floor( 0.85*(double)nb_pts );
+	const unsigned int min_pts = (min_dataset>4)? min_dataset : 4;
 	double a,b,r;
 
 	if (nb_pts==2) {
@@ -462,7 +462,7 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 			}
 		}
 		//the worst point has been found, we overwrite it
-		Y[index_bad]=IOUtils::nodata;
+		Y[index_bad] = IOUtils::nodata;
 		nb_valid_pts--;
 	}
 
@@ -487,7 +487,7 @@ int Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vec
 {
 	//build segments
 	std::vector<double> X1, Y1, X2, Y2;
-	for(unsigned int ii=0; ii<in_X.size(); ii++) {
+	for(size_t ii=0; ii<in_X.size(); ii++) {
 		if(in_X[ii]<bilin_inflection) { //first segment
 			X1.push_back( in_X[ii] );
 			Y1.push_back( in_Y.at(ii) );
@@ -532,9 +532,9 @@ int Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vec
 */
 void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
 {
-	std::vector<double> x(X.size());
+	std::vector<double> x( X.size() );
 
-	for(unsigned int i=0; i<X.size(); i++) {
+	for(size_t i=0; i<X.size(); i++) {
 		const double val = X[i];
 		x[i] = (val!=IOUtils::nodata)? log(val) : IOUtils::nodata;
 	}

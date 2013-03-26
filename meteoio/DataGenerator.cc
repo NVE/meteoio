@@ -37,7 +37,7 @@ DataGenerator::~DataGenerator()
 	std::map< size_t, std::vector<GeneratorAlgorithm*> >::iterator it;
 	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); it++) {
 		std::vector<GeneratorAlgorithm*> &vec = it->second;
-		for(size_t ii=0; ii<vec.size(); ii++) 
+		for(size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
 	}
 }
@@ -167,7 +167,7 @@ std::ostream& operator<<(std::ostream &os, const DataGenerator &mi) {
 	std::map< size_t, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mi.mapAlgorithms.begin();
 	for (; iter != mi.mapAlgorithms.end(); ++iter) {
 		os << setw(10) << MeteoData::getParameterName(iter->first) << " :: ";
-		for(unsigned int jj=0; jj<iter->second.size(); jj++) {
+		for(size_t jj=0; jj<iter->second.size(); jj++) {
 			os << iter->second[jj]->getAlgo() << " ";
 		}
 		os << "\n";

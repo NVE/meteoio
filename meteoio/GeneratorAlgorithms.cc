@@ -276,21 +276,19 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 		if(ILWR!=IOUtils::nodata)
 			solarIndex = getSolarIndex(TA, RH, ILWR);
 
-
 		const double P=md(MeteoData::P);
 		if(P==IOUtils::nodata)
 			sun.calculateRadiation(TA, RH, albedo);
 		else
 			sun.calculateRadiation(TA, RH, P, albedo);
 
-		double R_toa, R_direct, R_diffuse;
-		sun.getHorizontalRadiation(R_toa, R_direct, R_diffuse);
+		double toa, direct, diffuse;
+		sun.getHorizontalRadiation(toa, direct, diffuse);
+		//sun.getBeamRadiation(toa, direct, diffuse);
 		if(param==MeteoData::ISWR)
-			value = R_direct+R_diffuse; //ISWR
+			value = direct+diffuse; //ISWR
 		else
-			value = (R_direct+R_diffuse)*albedo; //RSWR
-
-std::cout << "solarIndex=" << solarIndex << " -> iswr=" << value*solarIndex << "\n";
+			value = (direct+diffuse)*albedo; //RSWR
 	}
 
 	return true; //all missing values could be filled
@@ -341,12 +339,12 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 			else
 				sun.calculateRadiation(TA, RH, P, albedo);
 
-			double R_toa, R_direct, R_diffuse;
-			sun.getHorizontalRadiation(R_toa, R_direct, R_diffuse);
+			double toa, direct, diffuse;
+			sun.getHorizontalRadiation(toa, direct, diffuse);
 			if(param==MeteoData::ISWR)
-				value = R_direct+R_diffuse; //ISWR
+				value = direct+diffuse; //ISWR
 			else
-				value = (R_direct+R_diffuse)*albedo; //RSWR
+				value = (direct+diffuse)*albedo; //RSWR
 		}
 	}
 

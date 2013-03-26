@@ -17,6 +17,7 @@
 */
 #include <meteoio/meteostats/libfit1D.h>
 #include <meteoio/meteostats/libinterpol1D.h>
+#include <meteoio/MathOptim.h>
 #include <cmath>
 #include <algorithm>
 
@@ -24,9 +25,7 @@ using namespace std;
 
 namespace mio {
 
-Fit1D::Fit1D() : model(NULL)
-{
-}
+Fit1D::Fit1D() : model(NULL) {}
 
 //default constructor
 Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
@@ -49,7 +48,8 @@ Fit1D& Fit1D::operator=(const Fit1D& source) { //HACK: the pointer could not be 
 	return *this;
 }
 
-void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
+void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
+{
 	regression regType;
 	if(i_regType=="ZERO") regType=ZERO;
 	else if(i_regType=="SIMPLE_LINEAR") regType=SIMPLE_LINEAR;
@@ -67,7 +67,8 @@ void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 	setModel(regType, in_X, in_Y, updatefit);
 }
 
-void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) {
+void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
+{
 	if(model!=NULL) delete model;
 
 	if(regType==ZERO) model=new Zero;
@@ -91,13 +92,14 @@ void SimpleLinear::setData(const std::vector<double>& in_X, const std::vector<do
 	Y = in_Y;
 
 	//check input data consistency
-	if( X.size()!=Y.size() ) {
+	nPts=X.size();
+
+	if( nPts!=Y.size() ) {
 		stringstream ss;
 		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	nPts=X.size();
 	if(nPts<min_nb_pts) {
 		stringstream ss;
 		ss << "Only " << nPts << " data points for " << regname << " regression model.";
@@ -150,7 +152,7 @@ double SphericVario::f(const double& x) {
 	const double abs_x = fabs(x);
 	if(abs_x>0 && abs_x<=as) {
 		const double val = abs_x/as;
-		const double y = c0 + cs * ( 1.5*val - 0.5*val*val*val );
+		const double y = c0 + cs * ( 1.5*val - 0.5*Optim::pow3(val) );
 		return y;
 	} else {
 		return (c0+cs);

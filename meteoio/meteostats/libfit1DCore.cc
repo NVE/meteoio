@@ -48,9 +48,6 @@ void FitModel::setGuess(const std::vector<double>& lambda_in) {
 	}
 
 	Lambda = lambda_in;
-	/*for(size_t i=0; i<nGuess; i++) {
-		Lambda.push_back( lambda_in[i] );
-	}*/
 	fit_ready = true;
 }
 
@@ -103,14 +100,16 @@ bool FitLeastSquare::fit() {
 ////////////////////////////////////////////////////////////
 //// End of public methods
 
-void FitLeastSquare::checkInputs() {
-	if( X.size()!=Y.size() ) {
+void FitLeastSquare::checkInputs()
+{
+	nPts=X.size();
+
+	if( nPts!=Y.size() ) {
 		stringstream ss;
-		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		ss << "X vector and Y vector don't match! " << nPts << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	nPts=X.size();
 	if(nPts<min_nb_pts) {
 		stringstream ss;
 		ss << "Only " << nPts << " data points for " << regname << " regression model.";
@@ -120,7 +119,7 @@ void FitLeastSquare::checkInputs() {
 }
 
 bool FitLeastSquare::computeFit() {
-	double max_delta = std::numeric_limits<double>::max();
+	double max_delta;
 	initLambda();
 	Matrix dLambda; //parameters variations
 	initDLambda(dLambda);
