@@ -75,7 +75,7 @@ void ProcUnventilatedT::process(const unsigned int& param, const std::vector<Met
 			else albedo = soil_albedo;
 		}
 
-		if(vw<vw_thresh) vw=vw_thresh; //this should be around the minimum measurable wind speed on regular instruments
+		if(vw<vw_thresh) vw = vw_thresh; //this should be around the minimum measurable wind speed on regular instruments
 		const double rho = 1.2; // in kg/m3
 		const double Cp = 1004.;
 		const double X = iswr / (rho*Cp*ta*vw);

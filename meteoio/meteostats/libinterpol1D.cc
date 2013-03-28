@@ -304,8 +304,9 @@ double Interpol1D::variance(const std::vector<double>& X)
 	for(size_t i=0; i<n; i++) {
 		const double value = X[i];
 		if(value!=IOUtils::nodata) {
-			sum2 = sum2 + (value - mean)*(value - mean);
-			sum3 = sum3 + (value - mean);
+			const double delta = value - mean;
+			sum2 += delta*delta;
+			sum3 += delta;
 		}
 	}
 	const double variance = (sum2 - sum3*sum3/static_cast<double>(count)) / static_cast<double>(count - 1);

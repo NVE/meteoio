@@ -102,7 +102,7 @@ void ResamplingAlgorithms::NoResampling(const size_t& index, const ResamplingPos
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
 	if (position == ResamplingAlgorithms::exact_match) {
-		const double& value = vecM[index](paramindex);
+		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
 		}
@@ -130,10 +130,10 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
-	const Date& resampling_date = md.date;
+	const Date resampling_date = md.date;
 
 	if (position == ResamplingAlgorithms::exact_match) {
-		const double& value = vecM[index](paramindex);
+		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
 			return;
@@ -156,8 +156,8 @@ void ResamplingAlgorithms::NearestNeighbour(const size_t& index, const Resamplin
 	if (foundP1 && foundP2) { //standard behavior
 		const Duration diff1 = resampling_date - vecM[indexP1].date; //calculate time interval to element at index
 		const Duration diff2 = vecM[indexP2].date - resampling_date; //calculate time interval to element at index
-		const double& val1 = vecM[indexP1](paramindex);
-		const double& val2 = vecM[indexP2](paramindex);
+		const double val1 = vecM[indexP1](paramindex);
+		const double val2 = vecM[indexP2](paramindex);
 
 		if (IOUtils::checkEpsilonEquality(diff1.getJulian(true), diff2.getJulian(true), 0.1/1440.)){ //within 6 seconds
 			md(paramindex) = Interpol1D::weightedMean(val1, val2, 0.5);
@@ -194,10 +194,10 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
-	const Date& resampling_date = md.date;
+	const Date resampling_date = md.date;
 
 	if (position == ResamplingAlgorithms::exact_match) {
-		const double& value = vecM[index](paramindex);
+		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
 			md(paramindex) = value; //propagate value
 			return;
@@ -246,9 +246,9 @@ void ResamplingAlgorithms::LinearResampling(const size_t& index, const Resamplin
 		return;
 
 	//At this point indexP1 and indexP2 point to values that are different from IOUtils::nodata
-	const double& val1 = vecM[indexP1](paramindex);
+	const double val1 = vecM[indexP1](paramindex);
 	const double jul1 = vecM[indexP1].date.getJulian(true);
-	const double& val2 = vecM[indexP2](paramindex);
+	const double val2 = vecM[indexP2](paramindex);
 	const double jul2 = vecM[indexP2].date.getJulian(true);
 
 	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulian(true));
@@ -275,7 +275,7 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 	if(position==ResamplingAlgorithms::begin || position==ResamplingAlgorithms::end)
 		return;
 
-	const Date& resampling_date = md.date;
+	const Date resampling_date = md.date;
 	md(paramindex) = IOUtils::nodata;
 
 	//Read accumulation period and potential "strict" option
@@ -309,7 +309,7 @@ void ResamplingAlgorithms::Accumulate(const size_t& index, const ResamplingPosit
 	bool found_start=false;
 	size_t start_idx; //this is the index of the first point of the window that contains dateStart
 	for (start_idx=index+1; (start_idx--) > 0; ) {
-		const Date& date = vecM[start_idx].date;
+		const Date date = vecM[start_idx].date;
 		if(date <= dateStart) {
 			if(date<dateStart) {
 				const double start_value = funcval(start_idx, paramindex, vecM, dateStart, true); //resampling the starting point

@@ -55,8 +55,8 @@ void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsig
 	double mad     = IOUtils::nodata;
 	double median  = IOUtils::nodata;
 
-	std::vector<double> data;
-	for(size_t ii=start; ii<=end; ii++) data.push_back( ivec[ii](param) );
+	std::vector<double> data( end-start+1 );
+	for(size_t ii=start; ii<=end; ii++) data[ii-start] = ivec[ii](param);
 
 	//Calculate MAD
 	try {
