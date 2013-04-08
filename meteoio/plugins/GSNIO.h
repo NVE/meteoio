@@ -116,6 +116,8 @@ class GSNIO : public IOInterface {
 		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
 		int proxyport;                                        ///< Variable for proxy configuration
 		double default_timezone;
+
+		static const int soap_timeout; //time out for soap connections
 };
 
 } //end namespace mio

@@ -80,6 +80,8 @@ namespace mio {
  * THE SOFTWARE IN THIS PRODUCT WAS IN PART PROVIDED BY GENIVIA INC AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+const int GSNIO::soap_timeout = 120; //120 seconds connect time out
+
 GSNIO::GSNIO(const std::string& configfile)
       : gsn(), cfg(configfile), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), hostname(), port(), userid(), passwd(), proxyport(-1), default_timezone(1.)
@@ -108,6 +110,7 @@ void GSNIO::initGSNConnection(){
 
 	//soap_init(&gsn);
 	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
+	gsn.connect_timeout = soap_timeout;
 
 	cfg.getValue("ENDPOINT", "INPUT", endpoint, IOUtils::nothrow);
 	if (!endpoint.empty()){
@@ -213,11 +216,6 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 		reverse(vecMeteo[ii].begin(), vecMeteo[ii].end()); //this is necessary because GSN data comes sorted descending by date
-		/*//The following block can be commented in for testing purposes
-		cerr << "vecMeteo[" <<ii << "].size() = " <<  vecMeteo[ii].size() << "\n";
-		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++){
-			cerr << vecMeteo[ii][jj] << "\n";
-		}*/
 	}
 }
 
@@ -461,7 +459,7 @@ void GSNIO::readStationNames()
 	size_t current_stationnr = 1;
 	string current_station;
 	do {
-		current_station.clear();
+		current_station = string("");
 		stringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
