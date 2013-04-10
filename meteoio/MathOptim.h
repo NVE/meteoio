@@ -165,25 +165,23 @@ namespace Optim {
 	}
 
 	//see http://metamerist.com/cbrt/cbrt.htm
-	template <int n>
-	inline float nth_rootf(float x) {
+	template <int n> inline float nth_rootf(float x) {
 		const int ebits = 8;
 		const int fbits = 23;
 
-		int& i = (int&) x;
 		const int bias = (1 << (ebits-1))-1;
+		int& i = reinterpret_cast<int&>(x);
 		i = (i - (bias << fbits)) / n + (bias << fbits);
 
 		return x;
 	}
 
-	template <int n>
-	inline double nth_rootd(double x) {
+	template <int n> inline double nth_rootd(double x) {
 		const int ebits = 11;
 		const int fbits = 52;
 
-		int64_t& i = (int64_t&) x;
 		const int64_t bias = (1 << (ebits-1))-1;
+		int64_t& i = reinterpret_cast<int64_t&>(x);
 		i = (i - (bias << fbits)) / n + (bias << fbits);
 
 		return x;
@@ -194,7 +192,8 @@ namespace Optim {
 	* This version is based on a single iteration Halley's method (see https://en.wikipedia.org/wiki/Halley%27s_method)
 	* with a seed provided by a bit hack approximation. It should offer 15-16 bits precision and be three times
 	* faster than pow(x, 1/3). In some test, between -500 and +500, the largest relative error was 1.2e-4.
-	* Source: http://metamerist.com/cbrt/cbrt.htm
+	* Source:  Otis E. Lancaster, Machine Method for the Extraction of Cube Root Journal of the American Statistical Association, Vol. 37, No. 217. (Mar., 1942), pp. 112-115.
+	* and http://metamerist.com/cbrt/cbrt.htm
 	*
 	* Please benchmark your code before deciding to use this!!
 	* @param x argument
@@ -203,7 +202,7 @@ namespace Optim {
 	inline double cbrt(double x) {
 		const double a = nth_rootd<3>(x);
 		const double a3 = a*a*a;
-		const double b = a * ( a3 + x + x) / ( a3 + a3 + x );
+		const double b = a * ( (a3 + x) + x) / ( a3 + (a3 + x) );
 		return b; //single iteration, otherwise set a=b and do it again
 	}
 

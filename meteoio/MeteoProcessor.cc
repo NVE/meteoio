@@ -62,7 +62,6 @@ void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties)
 
 	for (map<string, ProcessingStack*>::const_iterator it=processing_stack.begin(); it != processing_stack.end(); ++it){
 		(*(it->second)).getWindowSize(tmp);
-
 		compareProperties(tmp, o_properties);
 	}
 

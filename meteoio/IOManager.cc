@@ -229,11 +229,10 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	//Let's make sure we have the data we need, in the filtered_cache or in vec_cache
 	vector< vector<MeteoData> >* data = NULL; //reference to either filtered_cache or vec_cache
 	if ((IOManager::filtered & processing_level) == IOManager::filtered){
-		if ((fcache_start <= i_date-proc_properties.time_before) && (fcache_end >= i_date+proc_properties.time_after)) {
-			//already cached data
-		} else {
+		const bool cached = (fcache_start <= i_date-proc_properties.time_before) && (fcache_end >= i_date+proc_properties.time_after);
+		if (!cached) {
 			//explicit caching, this forces the bufferediohandler to rebuffer, if necessary
-			bufferedio.readMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, vec_cache);
+			bufferedio.readMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, vec_cache); //HACK: vec_cache is not used
 			fill_filtered_cache();
 		}
 		data = &filtered_cache;
@@ -241,7 +240,6 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		bufferedio.readMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, vec_cache);
 		data = &vec_cache;
 	}
-
 
 	if ((IOManager::resampled & processing_level) != IOManager::resampled) { //no resampling required
 		for (size_t ii=0; ii<(*data).size(); ii++) { //for every station
@@ -263,9 +261,9 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	//Store result in the local cache
 	add_to_cache(i_date, vecMeteo);
-
 	return vecMeteo.size();
 }
+
 #ifdef _POPC_ //HACK popc
 void IOManager::writeMeteoData(/*const*/ std::vector< METEO_SET >& vecMeteo, /*const*/ std::string& name)
 #else
