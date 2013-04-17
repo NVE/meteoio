@@ -157,11 +157,12 @@ template<class T> class Array4D {
 		const Array4D<T> getAbs() const;
 		void abs();
 
-		//template<class P> friend std::ostream& operator<<(std::ostream& os, const Array4D<P>& array);
+		const std::string toString() const;
+		template<class P> friend std::iostream& operator<<(std::iostream& os, const Array4D<P>& array);
+		template<class P> friend std::iostream& operator>>(std::iostream& is, Array4D<P>& array);
 
 		bool checkEpsilonEquality(const Array4D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array4D<double>& rhs1, const Array4D<double>& rhs2, const double& epsilon);
-
 
 		T& operator ()(const unsigned int& i);
 		const T operator ()(const unsigned int& i) const;
@@ -400,22 +401,45 @@ template<class T> bool Array4D<T>::isEmpty() const {
 	return (nw==0 && nx==0 && ny==0 && nz==0);
 }
 
-/*
-template<class T> std::ostream& operator<<(std::ostream& os, const Array4D<T>& array) {
+template<class T> const std::string Array4D<T>::toString() const {
+	std::stringstream os;
 	os << "<array4d>\n";
-	for (unsigned int kk=0; kk<array.nz; kk++) {
-		os << "depth[" << kk << "]\n";
-		for(unsigned int ii=0; ii<array.nx; ii++) {
-			for (unsigned int jj=0; jj<array.ny; jj++) {
-				os << array(ii,jj,kk) << " ";
+	for (unsigned int ll=0; ll<nw; ll++) {
+		os << "dim4[" << ll << "]\n";
+		for (unsigned int kk=0; kk<nz; kk++) {
+			os << "depth[" << kk << "]\n";
+			for(unsigned int ii=0; ii<nx; ii++) {
+				for (unsigned int jj=0; jj<ny; jj++) {
+					os << operator()(ii,jj,kk,ll) << " ";
+				}
+				os << "\n";
 			}
-			os << "\n";
 		}
 	}
 	os << "</array4d>\n";
+	return os.str();
+}
+
+template<class P> std::iostream& operator<<(std::iostream& os, const Array4D<P>& array) {
+	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
+	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
+	os.write(reinterpret_cast<const char*>(&array.ny), sizeof(array.ny));
+	os.write(reinterpret_cast<const char*>(&array.nz), sizeof(array.nz));
+	os.write(reinterpret_cast<const char*>(&array.nw), sizeof(array.nw));
+	os.write(reinterpret_cast<const char*>(&array.vecData[0]), array.nx*array.ny*array.nz*array.nw*sizeof(P));
 	return os;
 }
-*/
+
+template<class P> std::iostream& operator>>(std::iostream& is, Array4D<P>& array) {
+	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
+	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
+	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));
+	is.read(reinterpret_cast<char*>(&array.nz), sizeof(array.nz));
+	is.read(reinterpret_cast<char*>(&array.nw), sizeof(array.nw));
+	array.vecData.resize(array.nx*array.ny*array.nz*array.nw);
+	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*array.ny*array.nz*array.nw*sizeof(P)); //30 times faster than assign() or copy()
+}
+
 template<class T> T Array4D<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();

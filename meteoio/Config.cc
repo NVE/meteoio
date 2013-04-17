@@ -80,14 +80,62 @@ bool Config::keyExists(const std::string& key, const std::string& section) const
 	return (it!=properties.end());
 }
 
-std::ostream& operator<<(std::ostream &os, const Config& cfg)
-{
+const std::string Config::toString() const {
+	std::stringstream os;
 	os << "<Config>\n";
-	for (map<string,string>::const_iterator it = cfg.properties.begin(); it != cfg.properties.end(); ++it){
+	os << "Source: " << sourcename << "\n";
+	for (map<string,string>::const_iterator it = properties.begin(); it != properties.end(); ++it){
 		os << (*it).first << " -> " << (*it).second << "\n";
 	}
 	os << "</Config>\n";
+	return os.str();
+}
+
+std::iostream& operator<<(std::iostream& os, const Config& cfg) {
+	const size_t s_source = cfg.sourcename.size();
+	os.write(reinterpret_cast<const char*>(&s_source), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&cfg.sourcename[0]), s_source*sizeof(cfg.sourcename[0]));
+
+	const size_t s_map = cfg.properties.size();
+	os.write(reinterpret_cast<const char*>(&s_map), sizeof(size_t));
+	for (map<string,string>::const_iterator it = cfg.properties.begin(); it != cfg.properties.end(); ++it){
+		const string& key = (*it).first;
+		const size_t s_key = key.size();
+		os.write(reinterpret_cast<const char*>(&s_key), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&key[0]), s_key*sizeof(key[0]));
+
+		const string& value = (*it).second;
+		const size_t s_value = value.size();
+		os.write(reinterpret_cast<const char*>(&s_value), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&value[0]), s_value*sizeof(value[0]));
+	}
+
 	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, Config& cfg) {
+	size_t s_source;
+	is.read(reinterpret_cast<char*>(&s_source), sizeof(size_t));
+	cfg.sourcename.resize(s_source);
+	is.read(reinterpret_cast<char*>(&cfg.sourcename[0]), s_source*sizeof(cfg.sourcename[0]));
+
+	cfg.properties.clear();
+	size_t s_map;
+	is.read(reinterpret_cast<char*>(&s_map), sizeof(size_t));
+	for(size_t ii=0; ii<s_map; ii++) {
+		size_t s_key, s_value;
+		is.read(reinterpret_cast<char*>(&s_key), sizeof(size_t));
+		string key;
+		key.resize(s_key);
+		is.read(reinterpret_cast<char*>(&key[0]), s_key*sizeof(key[0]));
+
+		is.read(reinterpret_cast<char*>(&s_value), sizeof(size_t));
+		string value;
+		value.resize(s_value);
+		is.read(reinterpret_cast<char*>(&value[0]), s_value*sizeof(value[0]));
+
+		cfg.properties[key] = value;
+	}
 }
 
 //Parsing

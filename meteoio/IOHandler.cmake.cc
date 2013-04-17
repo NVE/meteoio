@@ -415,18 +415,11 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 	}
 }
 
-#ifndef _POPC_
-std::ostream& operator<<(std::ostream& os, const IOHandler& data)
-{
-	os << data.toString();
-	return os;
-}
-#endif
 
 #ifdef _POPC_
-std::string IOHandler::toString()
+const std::string IOHandler::toString()
 #else
-std::string IOHandler::toString() const
+const std::string IOHandler::toString() const
 #endif
 {
 	std::stringstream os;
@@ -437,7 +430,7 @@ std::string IOHandler::toString() const
 	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";
 	std::map<std::string, IOPlugin>::const_iterator it1;
 	for (it1=mapPlugins.begin(); it1 != mapPlugins.end(); ++it1){
-		os << setw(10) << it1->first << " = " <<  it1->second;
+		os << setw(10) << it1->first << " = " <<  it1->second.toString();
 	}
 	os << "</mapPlugins>\n";
 	os << "</IOHandler>\n";

@@ -59,7 +59,9 @@ class Grid3DObject{
 		double& operator ()(const unsigned int& i);
 		double operator ()(const unsigned int& i) const;
 
-		friend std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid);
+		const std::string toString() const;
+		friend std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid);
+		friend std::iostream& operator>>(std::iostream& is, Grid3DObject& grid);
 
 		/**
 		* Default constructor.

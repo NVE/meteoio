@@ -22,7 +22,7 @@ int main(int /*argc*/, char** argv) {
 	//writing some data out in order to prove that it really worked!
 	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
 		std::cout << "---------- Station: " << (ii+1) << " / " << vecMeteo.size() << std::endl;
-		std::cout << vecMeteo[ii] << std::endl;
+		std::cout << vecMeteo[ii].toString() << std::endl;
 	}
 
 	return 0;

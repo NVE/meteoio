@@ -72,7 +72,7 @@ class SunTrajectory {
 		                                       const double& slope_azi, const double& slope_elev, const double& S_radiation);
 		static double projectHorizontalToBeam(const double& sun_elev, const double& H_radiation);
 
-		friend std::ostream& operator<<(std::ostream& os, const SunTrajectory& data);
+		const std::string toString() const;
 
 	protected:
 		virtual void update()=0;

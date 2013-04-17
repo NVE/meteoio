@@ -171,7 +171,9 @@ template<class T> class Array2D {
 		const Array2D<T> getAbs() const;
 		void abs();
 
-		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array2D<P>& array);
+		const std::string toString() const;
+		template<class P> friend std::iostream& operator<<(std::iostream& os, const Array2D<P>& array);
+		template<class P> friend std::iostream& operator>>(std::iostream& is, Array2D<P>& array);
 
 		bool checkEpsilonEquality(const Array2D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array2D<double>& rhs1, const Array2D<double>& rhs2, const double& epsilon);
@@ -377,18 +379,36 @@ template<class T> bool Array2D<T>::isEmpty() const {
 	return (nx==0 && ny==0);
 }
 
-template<class T> std::ostream& operator<<(std::ostream& os, const Array2D<T>& array) {
+template<class T> const std::string Array2D<T>::toString() const {
+	std::stringstream os;
 	os << "<array2d>\n";
-	for(unsigned int jj=0; jj<array.ny; jj++) {
-		unsigned int jnx = jj*array.nx;
-		for (unsigned int ii=0; ii<array.nx; ii++) {
-			os << array(ii+jnx) << " ";
+	for(unsigned int jj=0; jj<ny; jj++) {
+		const unsigned int jnx = jj*nx;
+		for (unsigned int ii=0; ii<nx; ii++) {
+			os << vecData[ii+jnx] << " ";
 		}
 		os << "\n";
 	}
 	os << "</array2d>\n";
+	return os.str();
+}
+
+template<class P> std::iostream& operator<<(std::iostream& os, const Array2D<P>& array) {
+	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
+	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
+	os.write(reinterpret_cast<const char*>(&array.ny), sizeof(array.ny));
+	os.write(reinterpret_cast<const char*>(&array.vecData[0]), array.nx*array.ny*sizeof(P));
 	return os;
 }
+
+template<class P> std::iostream& operator>>(std::iostream& is, Array2D<P>& array) {
+	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
+	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
+	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));
+	array.vecData.resize(array.nx*array.ny);
+	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*array.ny*sizeof(P)); //30 times faster than assign() or copy()
+}
+
 
 template<class T> T Array2D<T>::getMin() const {
 

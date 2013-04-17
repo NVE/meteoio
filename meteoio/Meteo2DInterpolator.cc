@@ -199,14 +199,15 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 	}
 }
 
-std::ostream& operator<<(std::ostream &os, const Meteo2DInterpolator &mi) {
+const std::string Meteo2DInterpolator::toString() const {
+	stringstream os;
 	os << "<Meteo2DInterpolator>\n";
-	os << "Config& cfg = " << hex << &mi.cfg << dec << "\n";
-	os << "IOManager& iomanager = "  << hex << &mi.iomanager << dec << "\n";
+	os << "Config& cfg = " << hex << &cfg << dec << "\n";
+	os << "IOManager& iomanager = "  << hex << &iomanager << dec << "\n";
 
 	os << "User list of algorithms:\n";
-	std::map<std::string, std::vector<std::string> >::const_iterator iter = mi.mapAlgorithms.begin();
-	for (; iter != mi.mapAlgorithms.end(); ++iter) {
+	std::map<std::string, std::vector<std::string> >::const_iterator iter;
+	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
 		os << setw(10) << iter->first << " :: ";
 		for(unsigned int jj=0; jj<iter->second.size(); jj++) {
 			os << iter->second[jj] << " ";
@@ -215,7 +216,7 @@ std::ostream& operator<<(std::ostream &os, const Meteo2DInterpolator &mi) {
 	}
 
 	os << "</Meteo2DInterpolator>\n";
-	return os;
+	return os.str();
 }
 
 

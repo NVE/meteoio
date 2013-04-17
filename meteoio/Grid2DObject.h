@@ -65,7 +65,9 @@ class Grid2DObject {
 		double& operator ()(const unsigned int& i);
 		double operator ()(const unsigned int& i) const;
 
-		friend std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid);
+		const std::string toString() const;
+		friend std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid);
+		friend std::iostream& operator>>(std::iostream& is, Grid2DObject& grid);
 
 		/**
 		* @brief Default constructor.
@@ -164,12 +166,6 @@ class Grid2DObject {
 		*/
 		bool isSameGeolocalization(const Grid2DObject& target) const;
 
-		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
-		unsigned int ncols; ///<number of columns in the grid
-		unsigned int nrows; ///<number of rows in the grid
-		double cellsize; ///<dimension in meters of a cell (considered to be square)
-		Coords llcorner; ///<lower left corner of the grid
-
 		/**
 		* @brief Partitional algorithm to classify each point of the grid.
 		* The classification is given by a list of growing thresholds, the 'clusters' are then a simple
@@ -181,6 +177,12 @@ class Grid2DObject {
 		* @return (bool) true if clusturization was succesfull
 		*/
 		bool clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids);
+
+		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
+		unsigned int ncols; ///<number of columns in the grid
+		unsigned int nrows; ///<number of rows in the grid
+		double cellsize; ///<dimension in meters of a cell (considered to be square)
+		Coords llcorner; ///<lower left corner of the grid
 
  protected:
 		void setValues(const unsigned int& ncols, const unsigned int& nrows,

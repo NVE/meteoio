@@ -314,15 +314,16 @@ double SunObject::getSplitting(const double& iswr_measured) const
 	return getSplitting(beam_toa, iswr_measured);
 }
 
-std::ostream& operator<<(std::ostream &os, const SunObject& data)
+const std::string SunObject::toString() const
 {
+	std::stringstream os;
 	const std::streamsize old_prec = os.precision();
 	os << "<SunObject>\n";
-	os << data.position;
+	os << position.toString();
 	os << std::fixed << std::setprecision(4);
-	os << "Julian (gmt)\t" << data.julian_gmt << "\n";
-	os << "Lat/Long/Alt\t" << std::setw(7) << data.latitude << "° " << std::setw(7) << data.longitude << "° " << std::setprecision(0) << std::setw(4) << data.altitude << "\n";
-	os << "Elev. thresh.\t" << std::setprecision(1) << data.elevation_threshold << "°\n";
+	os << "Julian (gmt)\t" << julian_gmt << "\n";
+	os << "Lat/Long/Alt\t" << std::setw(7) << latitude << "° " << std::setw(7) << longitude << "° " << std::setprecision(0) << std::setw(4) << altitude << "\n";
+	os << "Elev. thresh.\t" << std::setprecision(1) << elevation_threshold << "°\n";
 
 	const unsigned int colw=10;
 	os << std::setw(colw) << "" << std::fixed << std::setw(colw) << std::setprecision(1) << "toa";
@@ -330,13 +331,13 @@ std::ostream& operator<<(std::ostream &os, const SunObject& data)
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << "diffuse";
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << "sum\n";
 
-	os << std::setw(colw) << "Beam" << std::fixed << std::setw(colw) << std::setprecision(1) << data.beam_toa;
-	os << std::fixed << std::setw(colw) << std::setprecision(1) << data.beam_direct;
-	os << std::fixed << std::setw(colw) << std::setprecision(1) << data.beam_diffuse;
-	os << std::fixed << std::setw(colw) << std::setprecision(1) << data.beam_direct+data.beam_diffuse << "\n";
+	os << std::setw(colw) << "Beam" << std::fixed << std::setw(colw) << std::setprecision(1) << beam_toa;
+	os << std::fixed << std::setw(colw) << std::setprecision(1) << beam_direct;
+	os << std::fixed << std::setw(colw) << std::setprecision(1) << beam_diffuse;
+	os << std::fixed << std::setw(colw) << std::setprecision(1) << beam_direct+beam_diffuse << "\n";
 
 	double R_toa, R_direct, R_diffuse;
-	data.getHorizontalRadiation(R_toa, R_direct, R_diffuse);
+	getHorizontalRadiation(R_toa, R_direct, R_diffuse);
 	os << std::setw(colw) << "Horizontal" << std::fixed << std::setw(colw) << std::setprecision(1) << R_toa;
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << R_direct;
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << R_diffuse;
@@ -344,7 +345,7 @@ std::ostream& operator<<(std::ostream &os, const SunObject& data)
 
 	os << "</SunObject>\n";
 	os.precision(old_prec);
-	return os;
+	return os.str();
 }
 
 } //end namespace

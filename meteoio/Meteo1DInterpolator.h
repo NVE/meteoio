@@ -70,7 +70,7 @@ class Meteo1DInterpolator {
 		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		Meteo1DInterpolator& operator=(const Meteo1DInterpolator&); ///<Assignement operator
-		friend std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator);
+		const std::string toString() const;
 
  	private:
 		std::string getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments) const;

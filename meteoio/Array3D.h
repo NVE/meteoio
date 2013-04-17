@@ -204,7 +204,9 @@ template<class T> class Array3D {
 		const Array3D<T> getAbs() const;
 		void abs();
 
-		template<class P> friend std::ostream& operator<<(std::ostream& os, const Array3D<P>& array);
+		const std::string toString() const;
+		template<class P> friend std::iostream& operator<<(std::iostream& os, const Array3D<P>& array);
+		template<class P> friend std::iostream& operator>>(std::iostream& is, Array3D<P>& array);
 
 		bool checkEpsilonEquality(const Array3D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array3D<double>& rhs1, const Array3D<double>& rhs2, const double& epsilon);
@@ -436,19 +438,38 @@ template<class T> bool Array3D<T>::isEmpty() const {
 	return (nx==0 && ny==0 && nz==0);
 }
 
-template<class T> std::ostream& operator<<(std::ostream& os, const Array3D<T>& array) {
+template<class T> const std::string Array3D<T>::toString() const {
+	std::stringstream os;
 	os << "<array3d>\n";
-	for (unsigned int kk=0; kk<array.nz; kk++) {
+	for (unsigned int kk=0; kk<nz; kk++) {
 		os << "depth[" << kk << "]\n";
-		for(unsigned int ii=0; ii<array.nx; ii++) {
-			for (unsigned int jj=0; jj<array.ny; jj++) {
-				os << array(ii,jj,kk) << " ";
+		for(unsigned int ii=0; ii<nx; ii++) {
+			for (unsigned int jj=0; jj<ny; jj++) {
+				os << operator()(ii,jj,kk) << " ";
 			}
 			os << "\n";
 		}
 	}
 	os << "</array3d>\n";
+	return os.str();
+}
+
+template<class P> std::iostream& operator<<(std::iostream& os, const Array3D<P>& array) {
+	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
+	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
+	os.write(reinterpret_cast<const char*>(&array.ny), sizeof(array.ny));
+	os.write(reinterpret_cast<const char*>(&array.nz), sizeof(array.nz));
+	os.write(reinterpret_cast<const char*>(&array.vecData[0]), array.nx*array.ny*array.nz*sizeof(P));
 	return os;
+}
+
+template<class P> std::iostream& operator>>(std::iostream& is, Array3D<P>& array) {
+	is.read(reinterpret_cast<char*>(&array.keep_nodata), sizeof(array.keep_nodata));
+	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
+	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));
+	is.read(reinterpret_cast<char*>(&array.nz), sizeof(array.nz));
+	array.vecData.resize(array.nx*array.ny*array.nz);
+	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*array.ny*array.nz*sizeof(P)); //30 times faster than assign() or copy()
 }
 
 template<class T> T Array3D<T>::getMin() const {

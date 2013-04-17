@@ -456,16 +456,13 @@ void IOManager::write2DGrid(const Grid2DObject& grid2D, const MeteoGrids::Parame
 	}
 }
 
-std::string IOManager::toString() const {
+const std::string IOManager::toString() const {
 	stringstream os;
-
 	os << "<IOManager>\n";
 	os << "Config cfg = " << hex << &cfg << dec << "\n";
-#ifndef _POPC_ //HACK popc
-	os << rawio;
-#endif
-	os << bufferedio;
-	os << meteoprocessor;
+	os << rawio.toString();
+	os << bufferedio.toString();
+	os << meteoprocessor.toString();
 	os << "Processing level = " << processing_level << "\n";
 
 	//display meteocache
@@ -520,13 +517,5 @@ std::string IOManager::toString() const {
 	os << "</IOManager>\n";
 	return os.str();
 }
-
-//#ifndef _POPC_
-std::ostream& operator<<(std::ostream& os, const IOManager& io)
-{
-	os << io.toString();
-	return os;
-}
-//#endif
 
 } //namespace

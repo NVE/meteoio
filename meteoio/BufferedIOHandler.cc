@@ -385,36 +385,37 @@ void BufferedIOHandler::clearBuffer(){
 	mapBufferedGrids.clear();
 }
 
-std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data)
+const std::string BufferedIOHandler::toString() const
 {
+	std::stringstream os;
 	os << "<BufferedIOHandler>\n";
-	os << "Config& cfg = " << hex << &data.cfg << dec << "\n";
-	os << "IOHandler &iohandler = " << hex << &data.iohandler << dec << "\n";
+	os << "Config& cfg = " << hex << &cfg << dec << "\n";
+	os << "IOHandler &iohandler = " << hex << &iohandler << dec << "\n";
 
-	os << "Buffering " <<data.chunk_size.getJulian() << " day(s) with "
-	   << data.buff_before.getJulian() << " day(s) pre-buffering\n";
+	os << "Buffering " <<chunk_size.getJulian() << " day(s) with "
+	   << buff_before.getJulian() << " day(s) pre-buffering\n";
 
-	os << "Current buffer content (" << data.vec_buffer_meteo.size() << " stations, "
-	   << data.mapBufferedGrids.size() << " grids):\n";
+	os << "Current buffer content (" << vec_buffer_meteo.size() << " stations, "
+	   << mapBufferedGrids.size() << " grids):\n";
 
-	for(size_t ii=0; ii<data.vec_buffer_meteo.size(); ii++) {
-		if (!data.vec_buffer_meteo[ii].empty()){
-			os << std::setw(10) << data.vec_buffer_meteo[ii].front().meta.stationID << " = "
-			   << data.vec_buffer_meteo[ii].front().date.toString(Date::ISO) << " - "
-			   << data.vec_buffer_meteo[ii].back().date.toString(Date::ISO) << ", "
-			   << data.vec_buffer_meteo[ii].size() << " timesteps" << endl;
+	for(size_t ii=0; ii<vec_buffer_meteo.size(); ii++) {
+		if (!vec_buffer_meteo[ii].empty()){
+			os << std::setw(10) << vec_buffer_meteo[ii].front().meta.stationID << " = "
+			   << vec_buffer_meteo[ii].front().date.toString(Date::ISO) << " - "
+			   << vec_buffer_meteo[ii].back().date.toString(Date::ISO) << ", "
+			   << vec_buffer_meteo[ii].size() << " timesteps" << endl;
 		}
 	}
 
 	std::map<std::string, Grid2DObject>::const_iterator it1;
-	for (it1=data.mapBufferedGrids.begin(); it1 != data.mapBufferedGrids.end(); ++it1){
+	for (it1=mapBufferedGrids.begin(); it1 != mapBufferedGrids.end(); ++it1){
 		os << setw(10) << "Grid" << " = " << it1->first << ", ";
 		os << (it1->second).ncols << " x " << (it1->second).nrows << " @ " << (it1->second).cellsize << "m\n";
 	}
 
 	os << "</BufferedIOHandler>\n";
 
-	return os;
+	return os.str();
 }
 
 } //namespace

@@ -222,21 +222,67 @@ void Coords::merge(const Coords& coord2) {
 * @brief Print the content of the Coords object (usefull for debugging)
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
-std::ostream& operator<<(std::ostream &os, const Coords& coord)
-{
+const std::string Coords::toString() const {
+	std::stringstream os;
 	os << "<Coords>\n";
-	os << "Altitude\t" << coord.altitude << "\n";
-	os << "Lat/Long\t" << coord.printLatLon() << "\n";
-	os << "Lat/Long\t" << "(" << coord.getLat() << " , " << coord.getLon() << ")" << "\n";
+	os << "Altitude\t" << altitude << "\n";
+	os << "Lat/Long\t" << printLatLon() << "\n";
+	os << "Lat/Long\t" << "(" << getLat() << " , " << getLon() << ")" << "\n";
 	std::streamsize p = os.precision();
-	os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << coord.getEasting() << " , " << coord.getNorthing() << ")" << "\n";
+	os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
 	os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
 	os.precision(p);
-	os << "I/J_indices\t" << "(" << coord.getGridI() << " , " << coord.getGridJ() << ")" << "\n";
-	os << "Projection\t" << coord.coordsystem << " " << coord.coordparam << "\n";
-	os << "EPSG\t\t" << coord.getEPSG() << "\n";
+	os << "I/J_indices\t" << "(" << getGridI() << " , " << getGridJ() << ")" << "\n";
+	os << "Projection\t" << coordsystem << " " << coordparam << "\n";
+	os << "EPSG\t\t" << getEPSG() << "\n";
 	os << "</Coords>\n";
+	return os.str();
+}
+
+std::iostream& operator<<(std::iostream& os, const Coords& coord) {
+	os.write(reinterpret_cast<const char*>(&coord.ref_latitude), sizeof(coord.ref_latitude));
+	os.write(reinterpret_cast<const char*>(&coord.ref_longitude), sizeof(coord.ref_longitude));
+	os.write(reinterpret_cast<const char*>(&coord.altitude), sizeof(coord.altitude));
+	os.write(reinterpret_cast<const char*>(&coord.latitude), sizeof(coord.latitude));
+	os.write(reinterpret_cast<const char*>(&coord.longitude), sizeof(coord.longitude));
+	os.write(reinterpret_cast<const char*>(&coord.easting), sizeof(coord.easting));
+	os.write(reinterpret_cast<const char*>(&coord.northing), sizeof(coord.northing));
+	os.write(reinterpret_cast<const char*>(&coord.grid_i), sizeof(coord.grid_i));
+	os.write(reinterpret_cast<const char*>(&coord.grid_j), sizeof(coord.grid_j));
+	os.write(reinterpret_cast<const char*>(&coord.grid_k), sizeof(coord.grid_k));
+
+	const size_t s_coordsystem = coord.coordsystem.size();
+	os.write(reinterpret_cast<const char*>(&s_coordsystem), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&coord.coordsystem[0]), s_coordsystem*sizeof(coord.coordsystem[0]));
+	const size_t s_coordparam = coord.coordparam.size();
+	os.write(reinterpret_cast<const char*>(&s_coordparam), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&coord.coordparam[0]), s_coordparam*sizeof(coord.coordparam[0]));
+
+	os.write(reinterpret_cast<const char*>(&coord.distance_algo), sizeof(coord.distance_algo));
 	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, Coords& coord) {
+	is.read(reinterpret_cast<char*>(&coord.ref_latitude), sizeof(coord.ref_latitude));
+	is.read(reinterpret_cast<char*>(&coord.ref_longitude), sizeof(coord.ref_longitude));
+	is.read(reinterpret_cast<char*>(&coord.altitude), sizeof(coord.altitude));
+	is.read(reinterpret_cast<char*>(&coord.latitude), sizeof(coord.latitude));
+	is.read(reinterpret_cast<char*>(&coord.longitude), sizeof(coord.longitude));
+	is.read(reinterpret_cast<char*>(&coord.easting), sizeof(coord.easting));
+	is.read(reinterpret_cast<char*>(&coord.northing), sizeof(coord.northing));
+	is.read(reinterpret_cast<char*>(&coord.grid_i), sizeof(coord.grid_i));
+	is.read(reinterpret_cast<char*>(&coord.grid_j), sizeof(coord.grid_j));
+	is.read(reinterpret_cast<char*>(&coord.grid_k), sizeof(coord.grid_k));
+
+	size_t s_coordsystem, s_coordparam;
+	is.read(reinterpret_cast<char*>(&s_coordsystem), sizeof(size_t));
+	coord.coordsystem.resize(s_coordsystem);
+	is.read(reinterpret_cast<char*>(&coord.coordsystem[0]), s_coordsystem*sizeof(coord.coordsystem[0]));
+	is.read(reinterpret_cast<char*>(&s_coordparam), sizeof(size_t));
+	coord.coordparam.resize(s_coordparam);
+	is.read(reinterpret_cast<char*>(&coord.coordparam[0]), s_coordparam*sizeof(coord.coordparam[0]));
+
+	is.read(reinterpret_cast<char*>(&coord.distance_algo), sizeof(coord.distance_algo));
 }
 
 /**

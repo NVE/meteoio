@@ -137,8 +137,9 @@ class Date {
 		static double parseTimeZone(const std::string& timezone_iso);
 
 		const std::string toString(FORMATS type, const bool& gmt=false) const;
-
-		friend std::ostream& operator<<(std::ostream& os, const Date& date);
+		const std::string toString() const;
+		friend std::iostream& operator<<(std::iostream& os, const Date& date);
+		friend std::iostream& operator>>(std::iostream& is, Date& date);
 
 		//Operator Prototypes
 		bool operator==(const Date&) const;

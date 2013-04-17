@@ -92,7 +92,9 @@ class StationData {
 		*/
 		void setSlope(const double& in_slope_angle, const double& in_azimuth);
 
-		friend std::ostream& operator<<(std::ostream& os, const StationData& station);
+		const std::string toString() const;
+		friend std::iostream& operator<<(std::iostream& os, const StationData& station);
+		friend std::iostream& operator>>(std::iostream& is, StationData& station);
 
 		//Comparison operators
 		/**
@@ -129,7 +131,6 @@ class StationData {
 	private:
 		double slope; ///<Local slope at the station, in degrees, between 0 and 90 degrees
 		double azi; ///<Azimuth at the local slope at the station, in degrees, 0 at north, compass orientation
-		//for Snowpack and other (1D) applications: add slope, aspect, horizon, etc
 };
 
 typedef std::vector<StationData> STATIONS_SET;

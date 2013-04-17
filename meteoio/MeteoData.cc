@@ -165,11 +165,11 @@ size_t MeteoData::getNrOfParameters() const
 }
 
 MeteoData::MeteoData()
-         : date(0.0, 0.), meta(), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata), resampled(false)
+         : date(0.0, 0.), meta(), param_name(s_default_paramname), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
 MeteoData::MeteoData(const Date& date_in)
-         : date(date_in), meta(), nrOfAllParameters(MeteoData::nrOfParameters), param_name(s_default_paramname), data(nrOfAllParameters, IOUtils::nodata), resampled(false)
+         : date(date_in), meta(), param_name(s_default_paramname), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
 void MeteoData::setDate(const Date& in_date)
@@ -277,21 +277,62 @@ size_t MeteoData::getParameterIndex(const std::string& parname) const
 	return IOUtils::npos; //parameter not a part of MeteoData
 }
 
-std::ostream& operator<<(std::ostream& os, const MeteoData& data) {
-
+const std::string MeteoData::toString() const {
+	std::stringstream os;
 	os << "<meteo>\n";
-	os << data.meta;
-	os << data.date.toString(Date::FULL) << "\n";
+	os << meta.toString();
+	os << date.toString(Date::FULL) << "\n";
 
-	for (size_t ii=0; ii<data.getNrOfParameters(); ii++) {
-		const double& value = data(ii);
+	for (size_t ii=0; ii<getNrOfParameters(); ii++) {
+		const double& value = operator()(ii);
 		if(value != IOUtils::nodata)
-			os << setw(8) << data.getNameForParameter(ii) << ":" << setw(15) << value << endl;
+			os << setw(8) << getNameForParameter(ii) << ":" << setw(15) << value << endl;
 	}
 
 	os << "</meteo>\n";
+	return os.str();
+}
 
+std::iostream& operator<<(std::iostream& os, const MeteoData& data) {
+	os << data.date;
+	os << data.meta;
+	const size_t s_vector = data.param_name.size();
+	os.write(reinterpret_cast<const char*>(&s_vector), sizeof(size_t));
+	for(size_t ii=0; ii<s_vector; ii++) {
+		const size_t s_string = data.param_name[ii].size();
+		os.write(reinterpret_cast<const char*>(&s_string), sizeof(size_t));
+		os.write(reinterpret_cast<const char*>(&data.param_name[ii][0]), s_string*sizeof(data.param_name[ii][0]));
+	}
+
+	const size_t s_data = data.data.size();
+	os.write(reinterpret_cast<const char*>(&s_data), sizeof(s_data));
+	os.write(reinterpret_cast<const char*>(&data.data[0]), s_data*sizeof(data.data[0]));
+
+	os.write(reinterpret_cast<const char*>(&data.nrOfAllParameters), sizeof(data.nrOfAllParameters));
+	os.write(reinterpret_cast<const char*>(&data.resampled), sizeof(data.resampled));
 	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, MeteoData& data) {
+	is >> data.date;
+	is >> data.meta;
+	size_t s_vector;
+	is.read(reinterpret_cast<char*>(&s_vector), sizeof(size_t));
+	data.param_name.resize(s_vector);
+	for(size_t ii=0; ii<s_vector; ii++) {
+		size_t s_string;
+		is.read(reinterpret_cast<char*>(&s_string), sizeof(size_t));
+		data.param_name[ii].resize(s_string);
+		is.read(reinterpret_cast<char*>(&data.param_name[ii][0]), s_string*sizeof(data.param_name[ii][0]));
+	}
+
+	size_t s_data;
+	is.read(reinterpret_cast<char*>(&s_data), sizeof(size_t));
+	data.data.resize(s_data);
+	is.read(reinterpret_cast<char*>(&data.data[0]), s_data*sizeof(data.data[0]));
+
+	is.read(reinterpret_cast<char*>(&data.nrOfAllParameters), sizeof(data.nrOfAllParameters));
+	is.read(reinterpret_cast<char*>(&data.resampled), sizeof(data.resampled));
 }
 
 void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge)

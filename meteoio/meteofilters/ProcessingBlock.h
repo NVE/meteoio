@@ -31,7 +31,7 @@ class ProcessingProperties {
 		                         points_before(0), points_after(0),
 		                         stage(first) {}
 
-		friend std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data);
+		const std::string toString() const;
 
 		typedef enum PROC_STAGE { none, ///< never activate this block
 		                     first, ///< activate at first stage
@@ -67,7 +67,7 @@ class ProcessingBlock {
 
 		std::string getName() const;
 		const ProcessingProperties& getProperties() const;
-		friend std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data);
+		const std::string toString() const;
 
 	protected:
 		ProcessingBlock(const std::string& name); ///< protected constructor only to be called by children

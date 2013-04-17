@@ -159,13 +159,14 @@ size_t DataGenerator::getArgumentsForAlgorithm(const std::string& parname,
 	return vecArgs.size();
 }
 
-std::ostream& operator<<(std::ostream &os, const DataGenerator &mi) {
+const std::string DataGenerator::toString() const {
+	std::stringstream os;
 	os << "<DataGenerator>\n";
-	os << "Config& cfg = " << hex << &mi.cfg << dec << "\n";
+	os << "Config& cfg = " << hex << &cfg << dec << "\n";
 
 	os << "User list of generators:\n";
-	std::map< size_t, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mi.mapAlgorithms.begin();
-	for (; iter != mi.mapAlgorithms.end(); ++iter) {
+	std::map< size_t, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapAlgorithms.begin();
+	for (; iter != mapAlgorithms.end(); ++iter) {
 		os << setw(10) << MeteoData::getParameterName(iter->first) << " :: ";
 		for(size_t jj=0; jj<iter->second.size(); jj++) {
 			os << iter->second[jj]->getAlgo() << " ";
@@ -174,7 +175,7 @@ std::ostream& operator<<(std::ostream &os, const DataGenerator &mi) {
 	}
 
 	os << "</DataGenerator>\n";
-	return os;
+	return os.str();
 }
 
 

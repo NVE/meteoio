@@ -67,7 +67,7 @@ class SunObject {
 
 		double getJulian(const double& TZ);
 
-		friend std::ostream& operator<<(std::ostream& os, const SunObject& data);
+		const std::string toString() const;
 	private:
 		void update();
 		void getBeamPotential(const double& sun_elevation, const double& Eccentricity_corr,

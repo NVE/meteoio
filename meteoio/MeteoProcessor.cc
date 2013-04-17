@@ -106,18 +106,18 @@ bool MeteoProcessor::resample(const Date& date, const std::vector<MeteoData>& iv
 	return mi1d.resampleData(date, ivec, md);
 }
 
-std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data)
-{
+const std::string MeteoProcessor::toString() const {
+	std::stringstream os;
 	os << "<MeteoProcessor>\n";
-	os << data.mi1d;
+	os << mi1d.toString();
 	os << "Processing stacks:\n";
-	for (map<string, ProcessingStack*>::const_iterator it=data.processing_stack.begin();
-		it != data.processing_stack.end(); ++it){
-		//os << setw(10) << it->first << "::"; //the processing stack already contains it
-		os << (*it->second);
+	map<string, ProcessingStack*>::const_iterator it;
+	for (it=processing_stack.begin(); it != processing_stack.end(); ++it){
+		//os << setw(10) << it->first.toString() << "::"; //the processing stack already contains it
+		os << (*it->second).toString();
 	}
 	os << "</MeteoProcessor>\n";
-	return os;
+	return os.str();
 }
 
 } //namespace

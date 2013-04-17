@@ -172,8 +172,8 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 	refMeteo(12)= res_Met_12[i_results];
 	if(datMeteo != refMeteo){
 		cerr << "error on == operator for MeteoData :" << datMeteo.getNrOfParameters() << " - " << refMeteo.getNrOfParameters() << endl;
-		cerr << datMeteo << endl;
-		cerr << refMeteo << endl;
+		cerr << datMeteo.toString() << endl;
+		cerr << refMeteo.toString() << endl;
 		exit(1);
 	}
 

@@ -73,13 +73,10 @@ class IOHandler : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
-	#ifndef _POPC_
-		friend std::ostream& operator<<(std::ostream& os, const IOHandler& data);
-	#endif
 	#ifdef _POPC_
-		std::string toString();
+		const std::string toString();
 	#else
-		std::string toString() const;
+		const std::string toString() const;
 	#endif
 
 	private:

@@ -128,24 +128,25 @@ double Matrix::operator ()(const unsigned int& i, const unsigned int& j) const {
 	return vecData[(j-1) + (i-1)*ncols];
 }
 
-std::ostream& operator<<(std::ostream& os, const Matrix& data) {
+const std::string Matrix::toString() const {
+	std::stringstream os;
 	const unsigned int wd=6;
 	os << "\n┌ ";
-	for(unsigned int jj=1; jj<=(data.ncols*(wd+1)); jj++)
+	for(unsigned int jj=1; jj<=(ncols*(wd+1)); jj++)
 		os << " ";
 	os << " ┐\n";
-	for(unsigned int ii=1; ii<=data.nrows; ii++) {
+	for(unsigned int ii=1; ii<=nrows; ii++) {
 		os << "│ ";
-		for (unsigned int jj=1; jj<=data.ncols; jj++) {
-			os << std::setw(wd) << std::fixed << std::setprecision(2) << data(ii,jj) << " ";
+		for (unsigned int jj=1; jj<=ncols; jj++) {
+			os << std::setw(wd) << std::fixed << std::setprecision(2) << operator()(ii,jj) << " ";
 		}
 		os << " │\n";
 	}
 	os << "└ ";
-	for(unsigned int jj=1; jj<=(data.ncols*(wd+1)); jj++)
+	for(unsigned int jj=1; jj<=(ncols*(wd+1)); jj++)
 		os << " ";
 	os << " ┘\n";
-	return os;
+	return os.str();
 }
 
 bool Matrix::operator==(const Matrix& in) const {

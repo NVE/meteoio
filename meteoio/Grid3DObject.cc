@@ -323,14 +323,46 @@ double Grid3DObject::operator()(const unsigned int& i) const {
 	return grid3D(i);
 }
 
-std::ostream& operator<<(std::ostream& os, const Grid3DObject& grid)
-{
+const std::string Grid3DObject::toString() const {
+	std::stringstream os;
 	os << "<Grid3DObject>\n";
-	os << grid.llcorner;
-	os << grid.ncols << " x " << grid.nrows  << " x " << grid.ndepths << " @ " << grid.cellsize << "m\n";
-	os << grid.grid3D;
+	os << llcorner.toString();
+	os << ncols << " x " << nrows  << " x " << ndepths << " @ " << cellsize << "m\n";
+	os << grid3D.toString();
 	os << "</Grid3DObject>\n";
+	return os.str();
+}
+
+std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid) {
+	os.write(reinterpret_cast<const char*>(&grid.ncols), sizeof(grid.ncols));
+	os.write(reinterpret_cast<const char*>(&grid.nrows), sizeof(grid.nrows));
+	os.write(reinterpret_cast<const char*>(&grid.ndepths), sizeof(grid.ndepths));
+	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
+	os.write(reinterpret_cast<const char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
+
+	const size_t s_z = grid.z.size();
+	os.write(reinterpret_cast<const char*>(&s_z), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&grid.z[0]), s_z*sizeof(grid.z[0]));
+
+	os << grid.llcorner;
+	os << grid.grid3D;
 	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, Grid3DObject& grid) {
+	is.read(reinterpret_cast<char*>(&grid.ncols), sizeof(grid.ncols));
+	is.read(reinterpret_cast<char*>(&grid.nrows), sizeof(grid.nrows));
+	is.read(reinterpret_cast<char*>(&grid.ndepths), sizeof(grid.ndepths));
+	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
+	is.read(reinterpret_cast<char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
+
+	size_t s_z;
+	is.read(reinterpret_cast<char*>(&s_z), sizeof(size_t));
+	grid.z.resize(s_z);
+	is.read(reinterpret_cast<char*>(&grid.z[0]), s_z*sizeof(grid.z[0]));
+
+	is >> grid.llcorner;
+	is >> grid.grid3D;
 }
 
 } //end namespace

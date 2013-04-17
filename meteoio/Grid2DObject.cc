@@ -311,14 +311,31 @@ double Grid2DObject::operator()(const unsigned int& i) const {
 	return grid2D(i);
 }
 
-std::ostream& operator<<(std::ostream& os, const Grid2DObject& grid)
-{
+const std::string Grid2DObject::toString() const {
+	std::stringstream os;
 	os << "<Grid2DObject>\n";
-	os << grid.llcorner;
-	os << grid.ncols << " x " << grid.nrows << " @ " << grid.cellsize << "m\n";
-	os << grid.grid2D;
+	os << llcorner.toString();
+	os << ncols << " x " << nrows << " @ " << cellsize << "m\n";
+	os << grid2D.toString();
 	os << "</Grid2DObject>\n";
+	return os.str();
+}
+
+std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid) {
+	os.write(reinterpret_cast<const char*>(&grid.ncols), sizeof(grid.ncols));
+	os.write(reinterpret_cast<const char*>(&grid.nrows), sizeof(grid.nrows));
+	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
+	os << grid.llcorner;
+	os << grid.grid2D;
 	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, Grid2DObject& grid) {
+	is.read(reinterpret_cast<char*>(&grid.ncols), sizeof(grid.ncols));
+	is.read(reinterpret_cast<char*>(&grid.nrows), sizeof(grid.nrows));
+	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
+	is >> grid.llcorner;
+	is >> grid.grid2D;
 }
 
 } //namespace

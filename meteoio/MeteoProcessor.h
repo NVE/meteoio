@@ -66,7 +66,7 @@ class MeteoProcessor {
 
 		void getWindowSize(ProcessingProperties& o_properties);
 
-		friend std::ostream& operator<<(std::ostream& os, const MeteoProcessor& data);
+		const std::string toString() const;
 
  	private:
 		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);

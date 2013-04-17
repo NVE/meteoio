@@ -994,6 +994,46 @@ double DEMObject::safeGet(const int i, const int j)
 	return grid2D((unsigned)i, (unsigned)j);
 }
 
+std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
+	os << dem.slope;
+	os << dem.azi;
+	os << dem.curvature;
+	os << dem.Nx << dem.Ny << dem.Nz;
+
+	os.write(reinterpret_cast<const char*>(&dem.min_altitude), sizeof(dem.min_altitude));
+	os.write(reinterpret_cast<const char*>(&dem.min_slope), sizeof(dem.min_slope));
+	os.write(reinterpret_cast<const char*>(&dem.min_curvature), sizeof(dem.min_curvature));
+	os.write(reinterpret_cast<const char*>(&dem.max_altitude), sizeof(dem.max_altitude));
+	os.write(reinterpret_cast<const char*>(&dem.max_slope), sizeof(dem.max_slope));
+	os.write(reinterpret_cast<const char*>(&dem.max_curvature), sizeof(dem.max_curvature));
+
+	os.write(reinterpret_cast<const char*>(&dem.update_flag), sizeof(dem.update_flag));
+	os.write(reinterpret_cast<const char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
+	os.write(reinterpret_cast<const char*>(&dem.slope_failures), sizeof(dem.slope_failures));
+	os.write(reinterpret_cast<const char*>(&dem.curvature_failures), sizeof(dem.curvature_failures));
+	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
+	is >> dem.slope;
+	is >> dem.azi;
+	is >> dem.curvature;
+	is >> dem.Nx >> dem.Ny >> dem.Nz;
+
+	is.read(reinterpret_cast<char*>(&dem.min_altitude), sizeof(dem.min_altitude));
+	is.read(reinterpret_cast<char*>(&dem.min_slope), sizeof(dem.min_slope));
+	is.read(reinterpret_cast<char*>(&dem.min_curvature), sizeof(dem.min_curvature));
+	is.read(reinterpret_cast<char*>(&dem.max_altitude), sizeof(dem.max_altitude));
+	is.read(reinterpret_cast<char*>(&dem.max_slope), sizeof(dem.max_slope));
+	is.read(reinterpret_cast<char*>(&dem.max_curvature), sizeof(dem.max_curvature));
+
+	is.read(reinterpret_cast<char*>(&dem.update_flag), sizeof(dem.update_flag));
+	is.read(reinterpret_cast<char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
+	is.read(reinterpret_cast<char*>(&dem.slope_failures), sizeof(dem.slope_failures));
+	is.read(reinterpret_cast<char*>(&dem.curvature_failures), sizeof(dem.curvature_failures));
+}
+
+
 } //end namespace
 
 #ifdef _POPC_

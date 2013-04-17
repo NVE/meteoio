@@ -54,7 +54,7 @@ class IOPlugin {
 
 		template<typename T> static IOInterface* createInstance(const Config& cfg) { return new T(cfg); }
 
-		friend std::ostream& operator<<(std::ostream& os, const IOPlugin& data);
+		const std::string toString() const;
 		static const std::string header; //to contain a helpful header for understanding the output of <<
 
 };

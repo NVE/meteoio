@@ -179,24 +179,25 @@ double SunTrajectory::getSolarTime(const double& TZ) const
 		return IOUtils::nodata;
 }
 
-std::ostream& operator<<(std::ostream &os, const SunTrajectory& data)
+const std::string SunTrajectory::toString() const
 {
+	std::stringstream os;
 	os << "<SunTrajectory>\n";
 	os << std::fixed << std::setprecision(4);
-	os << "Julian (gmt)\t" << data.julian_gmt << "\n";
-	os << "Lat/Long\t" << std::setw(7) << data.latitude << "° " << std::setw(7) << data.longitude << "°\n";
-	os << "Ecc. corr.\t" << std::setprecision(4) << std::setw(7) << data.eccentricityEarth << "°\n";
-	os << "Hour Angle\t" << std::setprecision(4) << std::setw(7) << data.HourAngle << "°\n";
+	os << "Julian (gmt)\t" << julian_gmt << "\n";
+	os << "Lat/Long\t" << std::setw(7) << latitude << "° " << std::setw(7) << longitude << "°\n";
+	os << "Ecc. corr.\t" << std::setprecision(4) << std::setw(7) << eccentricityEarth << "°\n";
+	os << "Hour Angle\t" << std::setprecision(4) << std::setw(7) << HourAngle << "°\n";
 	os << std::setprecision(2);
-	os << "Azi./Elev.\t" << std::setw(7)<< data.SolarAzimuthAngle << "° " << std::setw(7) << data.SolarElevation << "°\n";
-	os << "RA/decl.\t" << std::setw(7) << data.SunRightAscension << "° " << std::setw(7) << data.SunDeclination << "°\n";
-	os << "Sunrise (gmt)\t" << IOUtils::printFractionalDay(data.SunRise) << "\n";
-	os << "SolarNoon (gmt)\t" << IOUtils::printFractionalDay(data.SolarNoon) << "\n";
-	os << "Sunset (gmt)\t" << IOUtils::printFractionalDay(data.SunSet) << "\n";
-	os << "Daylight\t" << IOUtils::printFractionalDay(data.SunlightDuration/(60.*24.)) << "\n";
+	os << "Azi./Elev.\t" << std::setw(7)<< SolarAzimuthAngle << "° " << std::setw(7) << SolarElevation << "°\n";
+	os << "RA/decl.\t" << std::setw(7) << SunRightAscension << "° " << std::setw(7) << SunDeclination << "°\n";
+	os << "Sunrise (gmt)\t" << IOUtils::printFractionalDay(SunRise) << "\n";
+	os << "SolarNoon (gmt)\t" << IOUtils::printFractionalDay(SolarNoon) << "\n";
+	os << "Sunset (gmt)\t" << IOUtils::printFractionalDay(SunSet) << "\n";
+	os << "Daylight\t" << IOUtils::printFractionalDay(SunlightDuration/(60.*24.)) << "\n";
 	os << "</SunTrajectory>\n";
 	os << std::setfill(' ');
-	return os;
+	return os.str();
 }
 
 } //end namespace

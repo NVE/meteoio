@@ -115,7 +115,7 @@ class DataGenerator {
 
 		DataGenerator& operator=(const DataGenerator& source);
 
-		friend std::ostream& operator<<(std::ostream& os, const DataGenerator& mi);
+		const std::string toString() const;
 
 	private:
 		void setAlgorithms();

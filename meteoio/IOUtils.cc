@@ -838,13 +838,14 @@ size_t FileIndexer::binarySearch(const Date& soughtdate) const
 	else return static_cast<size_t>(-1);
 }
 
-std::ostream& operator<<(std::ostream &os, const FileIndexer& index)
+const std::string FileIndexer::toString() const
 {
+	std::stringstream os;
 	os << "<FileIndexer>\n";
-	for(size_t ii=0; ii<index.vecIndex.size(); ii++)
-		os << "\t" << "[" << ii << "] - " << index.vecIndex[ii].date.toString(Date::ISO) << " -> #" << std::hex << index.vecIndex[ii].pos << std::dec << "\n";
+	for(size_t ii=0; ii<vecIndex.size(); ii++)
+		os << "\t" << "[" << ii << "] - " << vecIndex[ii].date.toString(Date::ISO) << " -> #" << std::hex << vecIndex[ii].pos << std::dec << "\n";
 	os << "</FileIndexer>\n";
-	return os;
+	return os.str();
 }
 
 } //namespace IOUtils

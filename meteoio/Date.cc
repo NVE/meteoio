@@ -750,28 +750,6 @@ const Date Date::operator/(const double& value) const {
 	return tmp;
 }
 
-std::ostream& operator<<(std::ostream &os, const Date &date) {
-	os << "<date>\n";
-	if(date.undef==true)
-		os << "Date is undefined\n";
-	else {
-		os << date.toString(Date::ISO) << "\n";
-		os << "TZ=GMT" << showpos << date.timezone << noshowpos << "\t\t" << "DST=" << date.dst << "\n";
-		os << "julian:\t\t\t" << setprecision(10) << date.getJulian() << "\t(GMT=" << date.getJulian(true) << ")\n";
-		os << "ModifiedJulian:\t\t" << date.getModifiedJulianDate() << "\n";
-		os << "TruncatedJulian:\t" << date.getTruncatedJulianDate() << "\n";
-		os << "MatlabJulian:\t\t" << date.getMatlabDate() << "\n";
-		try {
-			os << "Unix:\t\t\t" << date.getUnixDate() << "\n";
-		} catch (...) {}
-		try {
-			os << "Excel:\t\t\t" << date.getExcelDate() << "\n";
-		} catch (...) {}
-	}
-	os << "</date>\n";
-	return os;
-}
-
 /**
 * @brief Parse an ISO 8601 formatted time zone specification.
 * Time zones MUST be specified right after a date/time/combined representation
@@ -913,6 +891,59 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 	}
 
 	return tmpstr.str();
+}
+
+const std::string Date::toString() const {
+	std::stringstream os;
+	os << "<date>\n";
+	if(undef==true)
+		os << "Date is undefined\n";
+	else {
+		os << toString(Date::ISO) << "\n";
+		os << "TZ=GMT" << showpos << timezone << noshowpos << "\t\t" << "DST=" << dst << "\n";
+		os << "julian:\t\t\t" << setprecision(10) << getJulian() << "\t(GMT=" << getJulian(true) << ")\n";
+		os << "ModifiedJulian:\t\t" << getModifiedJulianDate() << "\n";
+		os << "TruncatedJulian:\t" << getTruncatedJulianDate() << "\n";
+		os << "MatlabJulian:\t\t" << getMatlabDate() << "\n";
+		try {
+			os << "Unix:\t\t\t" << getUnixDate() << "\n";
+		} catch (...) {}
+		try {
+			os << "Excel:\t\t\t" << getExcelDate() << "\n";
+		} catch (...) {}
+	}
+	os << "</date>\n";
+	return os.str();
+}
+
+std::iostream& operator<<(std::iostream& os, const Date& date) {
+	os.write(reinterpret_cast<const char*>(&date.timezone), sizeof(date.timezone));
+	os.write(reinterpret_cast<const char*>(&date.gmt_julian), sizeof(date.gmt_julian));
+
+	os.write(reinterpret_cast<const char*>(&date.gmt_year), sizeof(date.gmt_year));
+	os.write(reinterpret_cast<const char*>(&date.gmt_month), sizeof(date.gmt_month));
+	os.write(reinterpret_cast<const char*>(&date.gmt_day), sizeof(date.gmt_day));
+	os.write(reinterpret_cast<const char*>(&date.gmt_hour), sizeof(date.gmt_hour));
+	os.write(reinterpret_cast<const char*>(&date.gmt_minute), sizeof(date.gmt_minute));
+
+	os.write(reinterpret_cast<const char*>(&date.dst), sizeof(date.dst));
+	os.write(reinterpret_cast<const char*>(&date.undef), sizeof(date.undef));
+	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, Date& date) {
+	is.read(reinterpret_cast<char*>(&date.timezone), sizeof(date.timezone));
+	is.read(reinterpret_cast<char*>(&date.gmt_julian), sizeof(date.gmt_julian));
+
+	is.read(reinterpret_cast<char*>(&date.gmt_year), sizeof(date.gmt_year));
+	is.read(reinterpret_cast<char*>(&date.gmt_month), sizeof(date.gmt_month));
+	is.read(reinterpret_cast<char*>(&date.gmt_day), sizeof(date.gmt_day));
+	is.read(reinterpret_cast<char*>(&date.gmt_hour), sizeof(date.gmt_hour));
+	is.read(reinterpret_cast<char*>(&date.gmt_minute), sizeof(date.gmt_minute));
+
+	is.read(reinterpret_cast<char*>(&date.dst), sizeof(date.dst));
+	is.read(reinterpret_cast<char*>(&date.undef), sizeof(date.undef));
+
 }
 
 // PRIVATE METHODS

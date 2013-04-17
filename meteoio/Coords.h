@@ -85,7 +85,9 @@ class Coords {
 	std::string printLatLon() const;
 	short int getEPSG() const;
 
-	friend std::ostream& operator<<(std::ostream& os, const Coords& coord);
+	const std::string toString() const;
+	friend std::iostream& operator<<(std::iostream& os, const Coords& coord);
+	friend std::iostream& operator>>(std::iostream& is, Coords& coord);
 
 	//Setter methods
 	void setLatLon(const double in_latitude, const double in_longitude, const double in_altitude, const bool in_update=true);

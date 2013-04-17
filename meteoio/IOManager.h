@@ -233,8 +233,7 @@ class IOManager {
 		 */
 		const Config getConfig() const;
 
-		std::string toString() const;
-		friend std::ostream& operator<<(std::ostream& os, const IOManager& io);
+		const std::string toString() const;
 
 		void add_to_cache(const Date& i_date, const METEO_SET& vecMeteo);
 

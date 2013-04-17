@@ -393,7 +393,7 @@ namespace IOUtils {
 			std::streampos getIndex(const std::string& i_date) const;
 			std::streampos getIndex(const double& i_date) const;
 
-			friend std::ostream& operator<<(std::ostream &os, const FileIndexer& index);
+			const std::string toString() const;
 
 		private:
 			struct file_index {

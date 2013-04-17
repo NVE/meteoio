@@ -33,12 +33,13 @@ IOPlugin& IOPlugin::operator=(const IOPlugin& source)
 	return *this;
 }
 
-std::ostream& operator<<(std::ostream& os, const IOPlugin& data) {
+const std::string IOPlugin::toString() const {
+	std::stringstream os;
 	const unsigned int pt_w=8;
-	os << "<IOPlugin>" << std::setw(10) << data.classname;
-	os << "," << std::showbase << std::setw(pt_w+2) << data.io;
-	os << "," << std::showbase << std::setw(pt_w+2) << data.creator_func << "</IOPlugin>\n";
-	return os;
+	os << "<IOPlugin>" << std::setw(10) << classname;
+	os << "," << std::showbase << std::setw(pt_w+2) << io;
+	os << "," << std::showbase << std::setw(pt_w+2) << creator_func << "</IOPlugin>\n";
+	return os.str();
 }
 
 } //end namespace

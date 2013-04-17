@@ -107,6 +107,9 @@ class DEMObject : public Grid2DObject {
 		double getHorizon(const Coords& point, const double& bearing);
 		void getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon);
 
+		friend std::iostream& operator<<(std::iostream& os, const DEMObject& dem);
+		friend std::iostream& operator>>(std::iostream& is, DEMObject& dem);
+
 	private:
 		void CalculateAziSlopeCurve(slope_type algorithm);
 		double CalculateAspect(const double& o_Nx, const double& o_Ny, const double& o_Nz, const double& o_slope, const double no_slope=Cst::PI);

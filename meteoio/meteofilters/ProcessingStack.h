@@ -45,7 +45,7 @@ class ProcessingStack {
 
 		void getWindowSize(ProcessingProperties& o_properties);
 
-		friend std::ostream& operator<<(std::ostream& os, const ProcessingStack& data);
+		const std::string toString() const;
 
 	private:
 		size_t getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters);

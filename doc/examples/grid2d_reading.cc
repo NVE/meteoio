@@ -14,11 +14,11 @@ int main(void) {
 	io.read2DGrid(grid2, MeteoGrids::TA, Date(2008, 12, 10, 12, 30, 0));
 
 	//debug style output
-	std::cout << "Initial air temperatures grid: " << grid2 << "\n";
+	std::cout << "Initial air temperatures grid: " << grid2.toString() << "\n";
 
 	//simple arithmetic operations (the nodata values are preserved)
 	grid2.grid2D -= 273.15;
-	std::cout << "Air temperatures grid in celsius: " << grid2 << "\n";
+	std::cout << "Air temperatures grid in celsius: " << grid2.toString() << "\n";
 
 	//operations between grids
 	Grid2DObject grid3(grid1.ncols, grid1.nrows, grid1.cellsize, grid1.llcorner);
@@ -33,7 +33,7 @@ int main(void) {
 
 	//now let's make a grid subset: from point (2,2) and size 5x5
 	Grid2DObject subgrid(grid1, 2, 2, 5, 5);
-	std::cout << "The subgrid of grid1 is: " << subgrid << "\n";
+	std::cout << "The subgrid of grid1 is: " << subgrid.toString() << "\n";
 
 	//we can check if two grids are "compatible", having the same geolocalization
 	if(subgrid.isSameGeolocalization(grid1))

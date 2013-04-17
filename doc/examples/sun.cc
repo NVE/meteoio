@@ -17,7 +17,7 @@ int main(int /*argc*/, char** argv) {
 	mio::IOUtils::convertString(iswr_ref,argv[2]); //get measured global incoming radiation
 
 	Sun.calculateRadiation(TA, RH, mean_albedo);
-	std::cout << Sun;
+	std::cout << Sun.toString();
 
 	//radiation in the beam
 	double B_toa, B_direct, B_diffuse;

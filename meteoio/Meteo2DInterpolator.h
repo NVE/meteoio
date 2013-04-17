@@ -157,8 +157,7 @@ class Meteo2DInterpolator {
 
 		void setIOManager(IOManager& iomanager);
 		Meteo2DInterpolator& operator=(const Meteo2DInterpolator& source);
-
-		friend std::ostream& operator<<(std::ostream& os, const Meteo2DInterpolator& mi);
+		const std::string toString() const;
 
 	private:
 		void setAlgorithms();

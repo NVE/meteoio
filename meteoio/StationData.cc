@@ -101,16 +101,45 @@ double StationData::getAzimuth() const {
 	return azi;
 }
 
-std::ostream& operator<<(std::ostream& os, const StationData& station) {
-
-	os << "<station>" << endl
-	   << std::setprecision(10) << station.position
-	   << "ID:    " << station.getStationID() << endl
-	   << "Name:  " << station.getStationName() << endl
-	   << "Slope: " << station.getSlopeAngle() << " bearing: " << station.getAzimuth() << endl
+const std::string StationData::toString() const {
+	std::stringstream os;
+	os << "<station>" << "\n"
+	   << std::setprecision(10) << position.toString()
+	   << "ID:    " << getStationID() << "\n"
+	   << "Name:  " << getStationName() << "\n"
+	   << "Slope: " << getSlopeAngle() << " bearing: " << getAzimuth() << "\n"
 	   << "</station>" << endl;
+	return os.str();
+}
 
+std::iostream& operator<<(std::iostream& os, const StationData& station) {
+	os << station.position;
+
+	const size_t s_ID = station.stationID.size();
+	os.write(reinterpret_cast<const char*>(&s_ID), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&station.stationID[0]), s_ID*sizeof(station.stationID[0]));
+	const size_t s_name = station.stationName.size();
+	os.write(reinterpret_cast<const char*>(&s_name), sizeof(size_t));
+	os.write(reinterpret_cast<const char*>(&station.stationName[0]), s_name*sizeof(station.stationName[0]));
+
+	os.write(reinterpret_cast<const char*>(&station.slope), sizeof(station.slope));
+	os.write(reinterpret_cast<const char*>(&station.azi), sizeof(station.azi));
 	return os;
+}
+
+std::iostream& operator>>(std::iostream& is, StationData& station) {
+	is >> station.position;
+
+	size_t s_ID, s_name;
+	is.read(reinterpret_cast<char*>(&s_ID), sizeof(size_t));
+	station.stationID.resize(s_ID);
+	is.read(reinterpret_cast<char*>(&station.stationID[0]), s_ID*sizeof(station.stationID[0]));
+	is.read(reinterpret_cast<char*>(&s_name), sizeof(size_t));
+	station.stationName.resize(s_name);
+	is.read(reinterpret_cast<char*>(&station.stationName[0]), s_name*sizeof(station.stationName[0]));
+
+	is.read(reinterpret_cast<char*>(&station.slope), sizeof(station.slope));
+	is.read(reinterpret_cast<char*>(&station.azi), sizeof(station.azi));
 }
 
 } //end namespace

@@ -131,7 +131,10 @@ class Config {
 		 * @brief Print the content of the Config object (usefull for debugging)
 		 * The Config is bound by "<Config>" and "</Config>" on separate lines
 		 */
-		friend std::ostream& operator<<(std::ostream& os, const Config& cfg);
+		const std::string toString() const;
+
+		friend std::iostream& operator<<(std::iostream& os, const Config& cfg);
+		friend std::iostream& operator>>(std::iostream& is, Config& cfg);
 
 		template <typename T> std::vector<T> getValue(const std::string& key, const IOUtils::ThrowOptions& opt=IOUtils::dothrow) const
 		{

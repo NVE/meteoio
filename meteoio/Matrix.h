@@ -215,7 +215,7 @@ class Matrix {
 		*/
 		//void bidiagonalize();
 
-		friend std::ostream& operator<<(std::ostream& os, const Matrix& data);
+		const std::string toString() const;
 
 		Matrix& operator+=(const Matrix& rhs);
 		const Matrix operator+(const Matrix& rhs) const;

@@ -145,20 +145,21 @@ Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& s
 	return *this;
 }
 
-std::ostream& operator<<(std::ostream& os, const Meteo1DInterpolator& Interpolator) {
-
+const std::string Meteo1DInterpolator::toString() const
+{
+	stringstream os;
 	os << "<Meteo1DInterpolator>\n";
-	os << "Config& cfg = " << hex << &Interpolator.cfg << dec <<"\n";
-	for (unsigned int jj=0; jj<Interpolator.tasklist.size(); jj++){
-		os << setw(10) << MeteoData::getParameterName(jj) << "::" << Interpolator.tasklist[jj] << "\t";
-		for (unsigned int ii=0; ii<Interpolator.taskargs[jj].size(); ii++){
-			os << "ARGS: " << Interpolator.taskargs[jj][ii] << " ";
+	os << "Config& cfg = " << hex << &cfg << dec <<"\n";
+	for (size_t jj=0; jj<tasklist.size(); jj++){
+		os << setw(10) << MeteoData::getParameterName(jj) << "::" << tasklist[jj] << "\t";
+		for (size_t ii=0; ii<taskargs[jj].size(); ii++){
+			os << "ARGS: " << taskargs[jj][ii] << " ";
 		}
 		os << "\n";
 	}
 	os << "</Meteo1DInterpolator>\n";
 
-	return os;
+	return os.str();
 }
 
 } //namespace

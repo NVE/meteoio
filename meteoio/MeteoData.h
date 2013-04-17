@@ -217,7 +217,9 @@ class MeteoData {
 		 */
 		void merge(const MeteoData& meteo2);
 
-		friend std::ostream& operator<<(std::ostream& os, const MeteoData& data);
+		const std::string toString() const;
+		friend std::iostream& operator<<(std::iostream& os, const MeteoData& data);
+		friend std::iostream& operator>>(std::iostream& is, MeteoData& data);
 
 		//Comparison operators
 		bool operator==(const MeteoData&) const; ///<Operator that tests for equality
@@ -238,9 +240,9 @@ class MeteoData {
 		static bool initStaticData();///<initialize the static map meteoparamname
 
 		//private data members, please keep the order consistent with declaration lists and logic!
-		size_t nrOfAllParameters;
 		std::vector<std::string> param_name;
 		std::vector<double> data;
+		size_t nrOfAllParameters;
 		bool resampled; ///<set this to true if MeteoData is result of resampling
 };
 

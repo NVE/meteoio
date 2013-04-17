@@ -191,34 +191,37 @@ std::string ProcessingBlock::getName() const {
 
 ProcessingBlock::~ProcessingBlock() {}
 
-std::ostream& operator<<(std::ostream& os, const ProcessingBlock& data) {
-	os << "[" << data.block_name << " ";
-	os << data.properties;
+const std::string ProcessingBlock::toString() const {
+	std::stringstream os;
+	os << "[" << block_name << " ";
+	os << properties.toString();
 	os << "]";
-	return os;
+	return os.str();
 }
 
 const ProcessingProperties& ProcessingBlock::getProperties() const {
 	return properties;
 }
 
-std::ostream& operator<<(std::ostream& os, const ProcessingProperties& data) {
-	const double h_before = data.time_before.getJulian()*24.;
-	const double h_after = data.time_after.getJulian()*24.;
-	const unsigned int p_before = data.points_before;
-	const unsigned int p_after = data.points_after;
+const std::string ProcessingProperties::toString() const
+{
+	std::stringstream os;
+	const double h_before = time_before.getJulian()*24.;
+	const double h_after = time_after.getJulian()*24.;
+	const unsigned int p_before = points_before;
+	const unsigned int p_after = points_after;
 
 	os << "{";
 	if(h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";
 	if(p_before>0 || p_after>0) os << "-" << p_before << " +" << p_after << " pts; ";
-	if(data.stage==ProcessingProperties::first)
+	if(stage==ProcessingProperties::first)
 		os << "p¹";
-	if(data.stage==ProcessingProperties::second)
+	if(stage==ProcessingProperties::second)
 		os << "p²";
-	if(data.stage==ProcessingProperties::both)
+	if(stage==ProcessingProperties::both)
 		os << "p½";
 	os << "}";
-	return os;
+	return os.str();
 }
 
 } //end namespace

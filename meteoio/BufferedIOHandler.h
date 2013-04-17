@@ -126,7 +126,7 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		double getAvgSamplingRate();
 
-		friend std::ostream& operator<<(std::ostream& os, const BufferedIOHandler& data);
+		const std::string toString() const;
 
 		friend class IOManager;
 
