@@ -140,6 +140,7 @@ std::iostream& operator>>(std::iostream& is, StationData& station) {
 
 	is.read(reinterpret_cast<char*>(&station.slope), sizeof(station.slope));
 	is.read(reinterpret_cast<char*>(&station.azi), sizeof(station.azi));
+	return is;
 }
 
 } //end namespace

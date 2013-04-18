@@ -254,6 +254,7 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array1D<P>& array
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	array.vecData.resize(array.nx);
 	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*sizeof(P)); //30 times faster than assign() or copy()
+	return is;
 }
 
 template<class T> void Array1D<T>::insertAt(const int& index, T e) {

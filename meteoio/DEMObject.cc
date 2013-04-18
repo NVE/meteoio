@@ -1031,6 +1031,7 @@ std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
 	is.read(reinterpret_cast<char*>(&dem.dflt_algorithm), sizeof(dem.dflt_algorithm));
 	is.read(reinterpret_cast<char*>(&dem.slope_failures), sizeof(dem.slope_failures));
 	is.read(reinterpret_cast<char*>(&dem.curvature_failures), sizeof(dem.curvature_failures));
+	return is;
 }
 
 

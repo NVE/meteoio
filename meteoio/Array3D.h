@@ -470,6 +470,7 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array3D<P>& array
 	is.read(reinterpret_cast<char*>(&array.nz), sizeof(array.nz));
 	array.vecData.resize(array.nx*array.ny*array.nz);
 	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*array.ny*array.nz*sizeof(P)); //30 times faster than assign() or copy()
+	return is;
 }
 
 template<class T> T Array3D<T>::getMin() const {

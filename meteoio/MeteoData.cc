@@ -333,6 +333,7 @@ std::iostream& operator>>(std::iostream& is, MeteoData& data) {
 
 	is.read(reinterpret_cast<char*>(&data.nrOfAllParameters), sizeof(data.nrOfAllParameters));
 	is.read(reinterpret_cast<char*>(&data.resampled), sizeof(data.resampled));
+	return is;
 }
 
 void MeteoData::merge(std::vector<MeteoData>& vec1, const std::vector<MeteoData>& vec2, const bool& simple_merge)

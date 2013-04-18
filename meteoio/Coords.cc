@@ -283,6 +283,7 @@ std::iostream& operator>>(std::iostream& is, Coords& coord) {
 	is.read(reinterpret_cast<char*>(&coord.coordparam[0]), s_coordparam*sizeof(coord.coordparam[0]));
 
 	is.read(reinterpret_cast<char*>(&coord.distance_algo), sizeof(coord.distance_algo));
+	return is;
 }
 
 /**

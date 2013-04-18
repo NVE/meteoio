@@ -336,6 +336,7 @@ std::iostream& operator>>(std::iostream& is, Grid2DObject& grid) {
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
 	is >> grid.llcorner;
 	is >> grid.grid2D;
+	return is;
 }
 
 } //namespace

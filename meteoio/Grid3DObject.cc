@@ -363,6 +363,7 @@ std::iostream& operator>>(std::iostream& is, Grid3DObject& grid) {
 
 	is >> grid.llcorner;
 	is >> grid.grid3D;
+	return is;
 }
 
 } //end namespace

@@ -438,6 +438,7 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array4D<P>& array
 	is.read(reinterpret_cast<char*>(&array.nw), sizeof(array.nw));
 	array.vecData.resize(array.nx*array.ny*array.nz*array.nw);
 	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*array.ny*array.nz*array.nw*sizeof(P)); //30 times faster than assign() or copy()
+	return is;
 }
 
 template<class T> T Array4D<T>::getMin() const {

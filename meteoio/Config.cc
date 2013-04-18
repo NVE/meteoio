@@ -136,6 +136,7 @@ std::iostream& operator>>(std::iostream& is, Config& cfg) {
 
 		cfg.properties[key] = value;
 	}
+	return is;
 }
 
 //Parsing

@@ -943,7 +943,7 @@ std::iostream& operator>>(std::iostream& is, Date& date) {
 
 	is.read(reinterpret_cast<char*>(&date.dst), sizeof(date.dst));
 	is.read(reinterpret_cast<char*>(&date.undef), sizeof(date.undef));
-
+	return is;
 }
 
 // PRIVATE METHODS
