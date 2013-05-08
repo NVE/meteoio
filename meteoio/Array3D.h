@@ -480,13 +480,13 @@ template<class T> T Array3D<T>::getMin() const {
 
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			const T val = operator()(jj);
+			const T val = vecData[jj];
 			if(val<min) min=val;
 		}
 		return min;
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			const T val = operator()(jj);
+			const T val = vecData[jj];
 			if(val!=IOUtils::nodata && val<min) min=val;
 		}
 		if(min!=std::numeric_limits<T>::max()) return min;
@@ -501,13 +501,13 @@ template<class T> T Array3D<T>::getMax() const {
 
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			const T val = operator()(jj);
+			const T val = vecData[jj];
 			if(val>max) max=val;
 		}
 		return max;
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			const T val = operator()(jj);
+			const T val = vecData[jj];
 			if(val!=IOUtils::nodata && val>max) max=val;
 		}
 		if(max!=-std::numeric_limits<T>::max()) return max;
@@ -522,7 +522,7 @@ template<class T> T Array3D<T>::getMean() const {
 
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			const T val = operator()(jj);
+			const T val = vecData[jj];
 			mean += val;
 		}
 		if(nxyz>0) return mean/(T)(nxyz);
@@ -530,7 +530,7 @@ template<class T> T Array3D<T>::getMean() const {
 	} else {
 		unsigned int count = 0;
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			const T val = operator()(jj);
+			const T val = vecData[jj];
 			if(val!=IOUtils::nodata) {
 				mean += val;
 				count++;
@@ -560,13 +560,13 @@ template<class T> void Array3D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
 		const unsigned int nxyz = nx*ny*nz;
 		if(keep_nodata==false) {
-			for (unsigned int ii=0; ii<nxyz; ii++) {
-				T& val = operator()(ii);
+			for (unsigned int jj=0; jj<nxyz; jj++) {
+				T& val = vecData[jj];
 				if(val<0) val=-val;
 			}
 		} else {
-			for (unsigned int ii=0; ii<nxyz; ii++) {
-				T& val = operator()(ii);
+			for (unsigned int jj=0; jj<nxyz; jj++) {
+				T& val = vecData[jj];
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
 		}
@@ -626,14 +626,14 @@ template<class T> Array3D<T>& Array3D<T>::operator+=(const Array3D<T>& rhs)
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) += rhs(jj);
+			vecData[jj] += rhs(jj);
 		}
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
-				operator()(jj) = IOUtils::nodata;
+			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				vecData[jj] = IOUtils::nodata;
 			else
-				operator()(jj) += rhs(jj);
+				vecData[jj] += rhs(jj);
 		}
 	}
 
@@ -654,12 +654,12 @@ template<class T> Array3D<T>& Array3D<T>::operator+=(const T& rhs)
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) += rhs;
+			vecData[jj] += rhs;
 		}
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)!=IOUtils::nodata)
-				operator()(jj) += rhs;
+			if(vecData[jj]!=IOUtils::nodata)
+				vecData[jj] += rhs;
 		}
 	}
 
@@ -687,14 +687,14 @@ template<class T> Array3D<T>& Array3D<T>::operator-=(const Array3D<T>& rhs)
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) -= rhs(jj);
+			vecData[jj] -= rhs(jj);
 		}
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
-				operator()(jj) = IOUtils::nodata;
+			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				vecData[jj] = IOUtils::nodata;
 			else
-				operator()(jj) -= rhs(jj);
+				vecData[jj] -= rhs(jj);
 		}
 	}
 
@@ -711,26 +711,14 @@ template<class T> const Array3D<T> Array3D<T>::operator-(const Array3D<T>& rhs)
 
 template<class T> Array3D<T>& Array3D<T>::operator-=(const T& rhs)
 {
-	//Substract to every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
-	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) -= rhs;
-		}
-	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)!=IOUtils::nodata)
-				operator()(jj) -= rhs;
-		}
-	}
-
+	*this += -rhs;
 	return *this;
 }
 
 template<class T> const Array3D<T> Array3D<T>::operator-(const T& rhs)
 {
 	Array3D<T> result = *this;
-	result -= rhs; //already implemented
+	result += -rhs; //already implemented
 
 	return result;
 }
@@ -748,14 +736,14 @@ template<class T> Array3D<T>& Array3D<T>::operator*=(const Array3D<T>& rhs)
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) *= rhs(jj);
+			vecData[jj] *= rhs(jj);
 		}
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
-				operator()(jj) = IOUtils::nodata;
+			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				vecData[jj] = IOUtils::nodata;
 			else
-				operator()(jj) *= rhs(jj);
+				vecData[jj] *= rhs(jj);
 		}
 	}
 
@@ -776,12 +764,12 @@ template<class T> Array3D<T>& Array3D<T>::operator*=(const T& rhs)
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) *= rhs;
+			vecData[jj] *= rhs;
 		}
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)!=IOUtils::nodata)
-				operator()(jj) *= rhs;
+			if(vecData[jj]!=IOUtils::nodata)
+				vecData[jj] *= rhs;
 		}
 	}
 
@@ -809,14 +797,14 @@ template<class T> Array3D<T>& Array3D<T>::operator/=(const Array3D<T>& rhs)
 	const unsigned int nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) /= rhs(jj);
+			vecData[jj] /= rhs(jj);
 		}
 	} else {
 		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
-				operator()(jj) = IOUtils::nodata;
+			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
+				vecData[jj] = IOUtils::nodata;
 			else
-				operator()(jj) /= rhs(jj);
+				vecData[jj] /= rhs(jj);
 		}
 	}
 
@@ -833,26 +821,14 @@ template<class T> const Array3D<T> Array3D<T>::operator/(const Array3D<T>& rhs)
 
 template<class T> Array3D<T>& Array3D<T>::operator/=(const T& rhs)
 {
-	//Divide every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
-	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
-			operator()(jj) /= rhs;
-		}
-	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
-			if(operator()(jj)!=IOUtils::nodata)
-				operator()(jj) /= rhs;
-		}
-	}
-
+	*this *= (1./rhs);
 	return *this;
 }
 
 template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
 {
 	Array3D<T> result = *this;
-	result /= rhs; //already implemented
+	result *= (1./rhs); //already implemented
 
 	return result;
 }

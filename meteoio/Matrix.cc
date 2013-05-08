@@ -78,12 +78,14 @@ void Matrix::resize(const unsigned int& rows, const unsigned int& cols) {
 }
 
 void Matrix::resize(const unsigned int& rows, const unsigned int& cols, const double& init) {
-	resize(rows, cols);
+	clear();
 
-	for (unsigned int ii=1; ii<=nrows; ii++) {
-		for (unsigned int jj=1; jj<=ncols; jj++) {
-			operator()(ii,jj) = init;
-		}
+	if ((rows > 0) && (cols > 0)) {
+		vecData.resize(rows*cols, init);
+		ncols = cols;
+		nrows = rows;
+	} else {
+		throw IndexOutOfBoundsException("Can not resize a matrix to negative sizes!", AT);
 	}
 }
 
@@ -99,11 +101,9 @@ void Matrix::clear() {
 
 void Matrix::random(const double& range) {
 	srand((unsigned)time(0));
-	for(unsigned int i=1; i<=nrows; i++) {
-		for(unsigned int j=1; j<=ncols; j++) {
-			operator()(i,j) = (double)rand()/(double)RAND_MAX*range;
-		}
-	}
+
+	for(unsigned int ii=0; ii<vecData.size(); ii++)
+		vecData[ii] = (double)rand()/(double)RAND_MAX*range;
 }
 
 double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
@@ -156,12 +156,8 @@ bool Matrix::operator==(const Matrix& in) const {
 	if(nrows!=in_nrows || ncols!=in_ncols)
 		return false;
 
-	for(unsigned int i=1; i<=nrows; i++) {
-		for(unsigned int j=1; j<=ncols; j++) {
-			//if( operator()(i,j) != in(i,j) ) return false;
-			if( !IOUtils::checkEpsilonEquality( operator()(i,j) , in(i,j), epsilon_mtr) ) return false;
-		}
-	}
+	for(unsigned int ii=0; ii<vecData.size(); ii++)
+		if( !IOUtils::checkEpsilonEquality( vecData[ii] , in.vecData[ii], epsilon_mtr) ) return false;
 
 	return true;
 }
@@ -181,11 +177,8 @@ Matrix& Matrix::operator+=(const Matrix& rhs) {
 	}
 
 	//fill sum matrix
-	for(unsigned int i=1; i<=nrows; i++) {
-		for(unsigned int j=1; j<=ncols; j++) {
-			operator()(i,j) += rhs(i,j);
-		}
-	}
+	for(unsigned int ii=0; ii<vecData.size(); ii++)
+		vecData[ii] += rhs.vecData[ii];
 
 	return *this;
 }
@@ -199,11 +192,8 @@ const Matrix Matrix::operator+(const Matrix& rhs) const {
 
 Matrix& Matrix::operator+=(const double& rhs) {
 	//fill sum matrix
-	for(unsigned int i=1; i<=nrows; i++) {
-		for(unsigned int j=1; j<=ncols; j++) {
-			operator()(i,j) += rhs;
-		}
-	}
+	for(unsigned int ii=0; ii<vecData.size(); ii++)
+		vecData[ii] += rhs;
 
 	return *this;
 }
@@ -226,11 +216,8 @@ Matrix& Matrix::operator-=(const Matrix& rhs) {
 	}
 
 	//fill sum matrix
-	for(unsigned int i=1; i<=nrows; i++) {
-		for(unsigned int j=1; j<=ncols; j++) {
-			operator()(i,j) -= rhs(i,j);
-		}
-	}
+	for(unsigned int ii=0; ii<vecData.size(); ii++)
+		vecData[ii] -= rhs.vecData[ii];
 
 	return *this;
 }
@@ -291,11 +278,8 @@ const Matrix Matrix::operator*(const Matrix& rhs) const {
 }
 
 Matrix& Matrix::operator*=(const double& rhs) {
-	for(unsigned int i=1; i<=nrows; i++) {
-		for(unsigned int j=1; j<=ncols; j++) {
-			operator()(i,j) *= rhs;
-		}
-	}
+	for(unsigned int ii=0; ii<vecData.size(); ii++)
+		vecData[ii] *= rhs;
 
 	return *this;
 }
@@ -366,7 +350,6 @@ Matrix Matrix::T(const Matrix& m) {
 }
 
 Matrix Matrix::getT() const {
-//other possibility: create a "transpose" flag that simply swaps the data reading...
 	Matrix result(ncols, nrows);
 	for(unsigned int i=1; i<=result.nrows; i++) {
 		for(unsigned int j=1; j<=result.ncols; j++) {

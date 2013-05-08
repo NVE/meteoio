@@ -361,12 +361,12 @@ template<class T> void Array1D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
 		if(keep_nodata==false) {
 			for (unsigned int ii=0; ii<nx; ii++) {
-				T& val = operator()(ii);
+				T& val = vecData[ii];
 				if(val<0) val=-val;
 			}
 		} else {
 			for (unsigned int ii=0; ii<nx; ii++) {
-				T& val = operator()(ii);
+				T& val = vecData[ii];
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
 		}
@@ -423,14 +423,14 @@ template<class T> Array1D<T>& Array1D<T>::operator+=(const Array1D<T>& rhs)
 	//Add to every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) += rhs(ii);
+			vecData[ii] += rhs(ii);
 		}
 	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
-				operator()(ii) = IOUtils::nodata;
+			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				vecData[ii] = IOUtils::nodata;
 			else
-				operator()(ii) += rhs(ii);
+				vecData[ii] += rhs(ii);
 		}
 	}
 
@@ -450,12 +450,12 @@ template<class T> Array1D<T>& Array1D<T>::operator+=(const T& rhs)
 	//Add to every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) += rhs;
+			vecData[ii] += rhs;
 		}
 	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)!=IOUtils::nodata)
-				operator()(ii) += rhs;
+			if(vecData[ii]!=IOUtils::nodata)
+				vecData[ii] += rhs;
 		}
 	}
 
@@ -483,14 +483,14 @@ template<class T> Array1D<T>& Array1D<T>::operator-=(const Array1D<T>& rhs)
 	//Substract to every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) -= rhs(ii);
+			vecData[ii] -= rhs(ii);
 		}
 	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
-				operator()(ii) = IOUtils::nodata;
+			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				vecData[ii] = IOUtils::nodata;
 			else
-				operator()(ii) -= rhs(ii);
+				vecData[ii] -= rhs(ii);
 		}
 	}
 
@@ -507,25 +507,14 @@ template<class T> const Array1D<T> Array1D<T>::operator-(const Array1D<T>& rhs)
 
 template<class T> Array1D<T>& Array1D<T>::operator-=(const T& rhs)
 {
-	//Substract to every single member of the Array1D<T>
-	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) -= rhs;
-		}
-	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)!=IOUtils::nodata)
-				operator()(ii) -= rhs;
-		}
-	}
-
+	*this += -rhs;
 	return *this;
 }
 
 template<class T> const Array1D<T> Array1D<T>::operator-(const T& rhs)
 {
 	Array1D<T> result = *this;
-	result -= rhs; //already implemented
+	result += -rhs; //already implemented
 
 	return result;
 }
@@ -542,14 +531,14 @@ template<class T> Array1D<T>& Array1D<T>::operator*=(const Array1D<T>& rhs)
 	//Multiply every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) *= rhs(ii);
+			vecData[ii] *= rhs(ii);
 		}
 	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
-				operator()(ii) = IOUtils::nodata;
+			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				vecData[ii] = IOUtils::nodata;
 			else
-				operator()(ii) *= rhs(ii);
+				vecData[ii] *= rhs(ii);
 		}
 	}
 
@@ -569,12 +558,12 @@ template<class T> Array1D<T>& Array1D<T>::operator*=(const T& rhs)
 	//Multiply every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) *= rhs;
+			vecData[ii] *= rhs;
 		}
 	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)!=IOUtils::nodata)
-				operator()(ii) *= rhs;
+			if(vecData[ii]!=IOUtils::nodata)
+				vecData[ii] *= rhs;
 		}
 	}
 
@@ -601,14 +590,14 @@ template<class T> Array1D<T>& Array1D<T>::operator/=(const Array1D<T>& rhs)
 	//Divide every single member of the Array1D<T>
 	if(keep_nodata==false) {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) /= rhs(ii);
+			vecData[ii] /= rhs(ii);
 		}
 	} else {
 		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
-				operator()(ii) = IOUtils::nodata;
+			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
+				vecData[ii] = IOUtils::nodata;
 			else
-				operator()(ii) /= rhs(ii);
+				vecData[ii] /= rhs(ii);
 		}
 	}
 
@@ -625,25 +614,14 @@ template<class T> const Array1D<T> Array1D<T>::operator/(const Array1D<T>& rhs)
 
 template<class T> Array1D<T>& Array1D<T>::operator/=(const T& rhs)
 {
-	//Divide every single member of the Array1D<T>
-	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			operator()(ii) /= rhs;
-		}
-	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
-			if(operator()(ii)!=IOUtils::nodata)
-				operator()(ii) /= rhs;
-		}
-	}
-
+	*this *= (1./rhs);
 	return *this;
 }
 
 template<class T> const Array1D<T> Array1D<T>::operator/(const T& rhs)
 {
 	Array1D<T> result = *this;
-	result /= rhs; //already implemented
+	result *= 1./rhs; //already implemented
 
 	return result;
 }
