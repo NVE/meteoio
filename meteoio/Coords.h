@@ -23,7 +23,6 @@
 
 #include <string>
 #include <iostream>
-#include <map>
 
 namespace mio {
 

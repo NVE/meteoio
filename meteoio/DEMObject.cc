@@ -619,12 +619,12 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 * @param horizon vector of heights above a given angle
 *
 */
-void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon) {
-
-    for(double bearing=0.0; bearing <360.; bearing += increment) {
-        const double alpha = getHorizon(point, bearing * Cst::PI/180.);
-        horizon.push_back(alpha);
-    }
+void DEMObject::getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon)
+{
+	for(double bearing=0.0; bearing <360.; bearing += increment) {
+		const double alpha = getHorizon(point, bearing * Cst::PI/180.);
+		horizon.push_back(alpha);
+	}
 }
 
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
@@ -655,15 +655,12 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 		for ( unsigned int i = 0; i < ncols; i++ ) {
 			if( grid2D(i,j) == IOUtils::nodata ) {
 				if(update_flag&SLOPE) {
-					//new_slope = new_azi = IOUtils::nodata;
 					slope(i,j) = azi(i,j) = IOUtils::nodata;
 				}
 				if(update_flag&CURVATURE) {
-					//new_curvature = IOUtils::nodata;
 					curvature(i,j) = IOUtils::nodata;
 				}
 				if(update_flag&NORMAL) {
-					//new_Nx = new_Ny = new_Nz = IOUtils::nodata;
 					Nx(i,j) = Ny(i,j) = Nz(i,j) = IOUtils::nodata;
 				}
 			} else {
@@ -778,7 +775,6 @@ void DEMObject::CalculateHick(double A[4][4], double& o_slope, double& o_Nx, dou
 
 void DEMObject::CalculateFleming(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz) {
 //This calculates the surface normal vector using method by Fleming and Hoffer (1979)
-
 	if(A[2][1]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata && A[3][2]!=IOUtils::nodata && A[1][2]!=IOUtils::nodata) {
 		o_Nx = 0.5 * (A[2][1] - A[2][3]) / cellsize;
 		o_Ny = 0.5 * (A[3][2] - A[1][2]) / cellsize;
@@ -809,11 +805,11 @@ void DEMObject::CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, dou
 }
 
 void DEMObject::CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz) {
-//This calculates the surface normal vector using the two triangle method given in Corripio (2002)
-	if ( A[1][2]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata && A[2][2]!=IOUtils::nodata && A[2][3]!=IOUtils::nodata) {
-		// See Corripio (2002), knowing that here we normalize the result (divided by Nz=cellsize*cellsize)
-		o_Nx = (0.5 * (A[2][2] - A[2][3] + A[1][2] - A[1][3]) ) / cellsize;
-		o_Ny = (0.5 * (A[2][2] + A[2][3] - A[1][2] - A[1][3]) ) / cellsize;
+//This calculates the surface normal vector using the two triangle method given in Corripio (2003) but using a 3x3 grid instead of 2x2
+	if ( A[1][1]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata && A[3][3]!=IOUtils::nodata && A[3][1]!=IOUtils::nodata) {
+		// See Corripio (2003), knowing that here we normalize the result (divided by Nz=cellsize*cellsize)
+		o_Nx = (0.5 * (A[1][3] - A[1][1] + A[3][1] - A[3][3]) ) / cellsize;
+		o_Ny = (0.5 * (A[1][3] - A[1][1] + A[1][3] - A[3][3]) ) / cellsize;
 		o_Nz = 1.;
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
@@ -890,34 +886,30 @@ double DEMObject::steepestGradient(double A[4][4]) {
 
 double DEMObject::lineGradient(const double& A1, const double& A2, const double& A3) {
 //best effort to calculate the local gradient
-	double delta = IOUtils::nodata;
-
 	if(A3!=IOUtils::nodata && A1!=IOUtils::nodata) {
-		delta = A3 - A1;
+		return A3 - A1;
 	} else {
 		if(A2!=IOUtils::nodata) {
 			if(A3!=IOUtils::nodata)
-				delta = (A3 - A2) * 2.;
+				return (A3 - A2)*2.;
 			if(A1!=IOUtils::nodata)
-				delta = (A2 - A1) * 2.;
+				return (A2 - A1)*2.;
 		}
 	}
 
-	return delta;
+	return IOUtils::nodata;
 }
 
 double DEMObject::fillMissingGradient(const double& delta1, const double& delta2) {
 //If a gradient could not be computed, try to fill it with some neighboring value
-	double dx = IOUtils::nodata;
-
 	if(delta1!=IOUtils::nodata && delta2!=IOUtils::nodata) {
-		dx = 0.5 * (delta1+delta2);
+		return 0.5*(delta1+delta2);
 	} else {
-		if(delta1!=IOUtils::nodata) dx = delta1;
-		if(delta2!=IOUtils::nodata) dx = delta2;
+		if(delta1!=IOUtils::nodata) return delta1;
+		if(delta2!=IOUtils::nodata) return delta2;
 	}
 
-	return dx;
+	return IOUtils::nodata;
 }
 
 void DEMObject::surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]) {

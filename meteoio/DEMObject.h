@@ -62,7 +62,7 @@ class DEMObject : public Grid2DObject {
 			FLEM, ///< four nearest neighbors (Fleming and Hoffer, 1979). It seems to be the same as (Zevenbergen and Thorne, 1987)
 			HICK, ///< maximum downhill slope method (Dunn and Hickey, 1998)
 			HORN, ///< eight neighbor algorithm (Horn, 1981) as used by ArcGIS. It seems to be the same as (Corripio, 2002) but for border cells.
-			CORR, ///< surface normal vector using the two triangle method (Corripio, 2002) and eight-neighbor algorithm (Horn, 1981) for border cells
+			CORR, ///< surface normal vector using the two triangle method (Corripio, 2003) and eight-neighbor algorithm (Horn, 1981) for border cells
 			D8 ///< discretized azimuth directions (angles for N, NE, etc) and slope rounded to nearest integer
 		} slope_type;
 
