@@ -70,31 +70,27 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string
 			return;
 		}
 
-		Grid2DObject tmpgrid2D; //HACK: why don't we read directly into in_grid2Dobj?
-		iohandler.read2DGrid(tmpgrid2D, in_filename);
-		bufferGrid(tmpgrid2D, in_filename);
-		in_grid2Dobj = tmpgrid2D;
+		iohandler.read2DGrid(in_grid2Dobj, in_filename);
+		bufferGrid(in_grid2Dobj, in_filename); //the STL containers make a copy
 	} else {
 		iohandler.read2DGrid(in_grid2Dobj, in_filename);
 	}
 }
 
-void BufferedIOHandler::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
+void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const MeteoGrids::Parameters& parameter, const Date& date)
 {
 	if(max_grids>0) {
 		const string buffer_name = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
 		const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find(buffer_name);
 		if (it != mapBufferedGrids.end()) { //already in map
-			grid_out = (*it).second;
+			in_grid2Dobj = (*it).second;
 			return;
 		}
 
-		Grid2DObject tmpgrid2D;
-		iohandler.read2DGrid(tmpgrid2D, parameter, date);
-		bufferGrid(tmpgrid2D, buffer_name);
-		grid_out = tmpgrid2D;
+		iohandler.read2DGrid(in_grid2Dobj, parameter, date);
+		bufferGrid(in_grid2Dobj, buffer_name); //the STL containers make a copy
 	} else {
-		iohandler.read2DGrid(grid_out, parameter, date);
+		iohandler.read2DGrid(in_grid2Dobj, parameter, date);
 	}
 }
 
@@ -106,21 +102,20 @@ void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)
 			//already in map. If the update properties have changed,
 			//we copy the ones given in input and force the update of the object
 			const DEMObject::update_type in_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
+			const DEMObject::slope_type in_slope_alg = (DEMObject::slope_type)in_grid2Dobj.getDefaultAlgorithm();
 			in_grid2Dobj = (*it).second;
 			const DEMObject::update_type buff_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
-			if(in_ppt!=buff_ppt) {
+			const DEMObject::slope_type buff_slope_alg = (DEMObject::slope_type)in_grid2Dobj.getDefaultAlgorithm();
+			if(in_ppt!=buff_ppt || in_slope_alg!=buff_slope_alg) {
+				in_grid2Dobj.setDefaultAlgorithm(in_slope_alg);
 				in_grid2Dobj.setUpdatePpt(in_ppt);
 				in_grid2Dobj.update();
 			}
 			return;
 		}
 
-		DEMObject tmpgrid2D;
-		//copy the updating policy of the destination
-		tmpgrid2D.setUpdatePpt((DEMObject::update_type)in_grid2Dobj.getUpdatePpt());
-		iohandler.readDEM(tmpgrid2D);
-		mapBufferedGrids["/:DEM"] = tmpgrid2D;
-		in_grid2Dobj = tmpgrid2D;
+		iohandler.readDEM(in_grid2Dobj);
+		mapBufferedGrids["/:DEM"] = in_grid2Dobj; //the STL containers make a copy
 	} else {
 		iohandler.readDEM(in_grid2Dobj);
 	}
@@ -135,10 +130,8 @@ void BufferedIOHandler::readLanduse(Grid2DObject& in_grid2Dobj)
 			return;
 		}
 
-		Grid2DObject tmpgrid2D;
-		iohandler.readLanduse(tmpgrid2D);
-		mapBufferedGrids["/:LANDUSE"] = tmpgrid2D;
-		in_grid2Dobj = tmpgrid2D;
+		iohandler.readLanduse(in_grid2Dobj);
+		mapBufferedGrids["/:LANDUSE"] = in_grid2Dobj; //the STL containers make a copy
 	} else {
 		iohandler.readLanduse(in_grid2Dobj);
 	}
@@ -154,10 +147,8 @@ void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& 
 			return;
 		}
 
-		Grid2DObject tmpgrid2D;
-		iohandler.readAssimilationData(in_date, tmpgrid2D);
-		mapBufferedGrids["/:ASSIMILATIONDATA" + in_date.toString(Date::FULL)] = tmpgrid2D;
-		in_grid2Dobj = tmpgrid2D;
+		iohandler.readAssimilationData(in_date, in_grid2Dobj);
+		mapBufferedGrids["/:ASSIMILATIONDATA" + in_date.toString(Date::FULL)] = in_grid2Dobj; //the STL containers make a copy
 	} else {
 		iohandler.readAssimilationData(in_date, in_grid2Dobj);
 	}

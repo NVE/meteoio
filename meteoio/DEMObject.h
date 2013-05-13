@@ -91,6 +91,7 @@ class DEMObject : public Grid2DObject {
 		           const bool& i_update=true, const slope_type& i_algorithm=DFLT);
 
 		void setDefaultAlgorithm(const slope_type& i_algorithm);
+		int getDefaultAlgorithm() const;
 		void setUpdatePpt(const update_type& in_update_flag);
 		int getUpdatePpt() const;
 

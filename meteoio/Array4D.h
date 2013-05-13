@@ -528,12 +528,12 @@ template<class T> void Array4D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
 		const unsigned int nwyz = nwnxny*nz;
 		if(keep_nodata==false) {
-			for (unsigned int ii=0; ii<nwyz; ii++) {
+			for (unsigned int jj=0; jj<nwyz; jj++) {
 				T& val = vecData[jj];
 				if(val<0) val=-val;
 			}
 		} else {
-			for (unsigned int ii=0; ii<nwyz; ii++) {
+			for (unsigned int jj=0; jj<nwyz; jj++) {
 				T& val = vecData[jj];
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}

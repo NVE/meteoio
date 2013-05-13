@@ -286,6 +286,13 @@ void DEMObject::setDefaultAlgorithm(const slope_type& i_algorithm) {
 }
 
 /**
+* @brief Get the default slope calculation algorithm
+* @return default algorithm to use for slope computation
+*/
+int DEMObject::getDefaultAlgorithm() const {
+	return dflt_algorithm;
+}
+/**
 * @brief Recomputes the min/max of altitude, slope and curvature
 * It return +/- std::numeric_limits\<double\>\:\:max() for a given parameter if its grid was empty/undefined
 */
@@ -401,7 +408,7 @@ double DEMObject::horizontalDistance(Coords point1, const Coords& point2)
 		point1.copyProj(point2);
 	}
 	return horizontalDistance(point1.getEasting(), point1.getNorthing(),
-			point2.getEasting(), point2.getNorthing() );
+	                          point2.getEasting(), point2.getNorthing() );
 }
 
 
@@ -630,7 +637,7 @@ void DEMObject::getHorizon(const Coords& point, const double& increment, std::ve
 void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 //This computes the slope and the aspect at a given cell as well as the x and y components of the normal vector
 	double A[4][4]; //table to store neigbouring heights: 3x3 matrix but we want to start at [1][1]
-
+	                //we use matrix notation: A[y][x]
 	if(algorithm==DFLT) {
 		algorithm = dflt_algorithm;
 	}
@@ -805,11 +812,11 @@ void DEMObject::CalculateHorn(double A[4][4], double& o_slope, double& o_Nx, dou
 }
 
 void DEMObject::CalculateCorripio(double A[4][4], double& o_slope, double& o_Nx, double& o_Ny, double& o_Nz) {
-//This calculates the surface normal vector using the two triangle method given in Corripio (2003) but using a 3x3 grid instead of 2x2
-	if ( A[1][1]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata && A[3][3]!=IOUtils::nodata && A[3][1]!=IOUtils::nodata) {
-		// See Corripio (2003), knowing that here we normalize the result (divided by Nz=cellsize*cellsize)
-		o_Nx = (0.5 * (A[1][3] - A[1][1] + A[3][1] - A[3][3]) ) / cellsize;
-		o_Ny = (0.5 * (A[1][3] - A[1][1] + A[1][3] - A[3][3]) ) / cellsize;
+//This calculates the surface normal vector using the two triangle method given in Corripio (2003) but cell centered instead of node centered (ie using a 3x3 grid instead of 2x2)
+	if ( A[1][1]!=IOUtils::nodata && A[1][3]!=IOUtils::nodata && A[3][1]!=IOUtils::nodata && A[3][3]!=IOUtils::nodata) {
+		// See Corripio (2003), knowing that here we normalize the result (divided by Nz=cellsize*cellsize) and that we are cell centered instead of node centered
+		o_Nx = (A[3][1] + A[1][1] - A[3][3] - A[1][3]) / (2.*2.*cellsize);
+		o_Ny = (A[3][1] - A[1][1] + A[3][3] - A[1][3]) / (2.*2.*cellsize);
 		o_Nz = 1.;
 		//There is no difference between slope = acos(n_z/|n|) and slope = atan(sqrt(sx*sx+sy*sy))
 		//slope = acos( (Nz / sqrt( Nx*Nx + Ny*Ny + Nz*Nz )) );
