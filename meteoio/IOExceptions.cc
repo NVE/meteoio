@@ -57,7 +57,7 @@ void messageBox(const std::string& msg) {
 	CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
 	                       sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 	SInt32 error = 0;
-	CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
+	//CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
 #endif
 
 #endif
