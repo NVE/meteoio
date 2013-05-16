@@ -207,6 +207,9 @@ template<class T> class Array2D {
 		Array2D<T>& operator/=(const Array2D<T>& rhs);
 		const Array2D<T> operator/(const Array2D<T>& rhs);
 
+		bool operator==(const Array2D<T>&) const; ///<Operator that tests for equality
+		bool operator!=(const Array2D<T>&) const; ///<Operator that tests for inequality
+
 	protected:
 		std::vector<T> vecData;
 		unsigned int nx;
@@ -767,6 +770,23 @@ template<class T> const Array2D<T> Array2D<T>::operator/(const T& rhs)
 	result *= (1./rhs); //already implemented
 
 	return result;
+}
+
+template<class T> bool Array2D<T>::operator==(const Array2D<T>& in) const {
+	unsigned int in_nx=in.getNx(), in_ny=in.getNy();
+
+	if(nx!=in_nx || ny!=in_ny)
+		return false;
+
+	const unsigned int nxy = nx*ny;
+	for(unsigned int jj=0; jj<nxy; jj++)
+		if( !IOUtils::checkEpsilonEquality( vecData[jj] , in.vecData[jj], 1e-6) ) return false;
+
+	return true;
+}
+
+template<class T> bool Array2D<T>::operator!=(const Array2D<T>& in) const {
+	return !(*this==in);
 }
 
 } //end namespace mio

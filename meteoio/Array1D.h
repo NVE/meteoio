@@ -136,6 +136,9 @@ template<class T> class Array1D {
 		Array1D<T>& operator/=(const Array1D<T>& rhs);
 		const Array1D<T> operator/(const Array1D<T>& rhs);
 
+		bool operator==(const Array1D<T>&) const; ///<Operator that tests for equality
+		bool operator!=(const Array1D<T>&) const; ///<Operator that tests for inequality
+
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
 		unsigned int nx; ///<this is introduced to omit the costly vecData.size()
@@ -624,6 +627,22 @@ template<class T> const Array1D<T> Array1D<T>::operator/(const T& rhs)
 	result *= 1./rhs; //already implemented
 
 	return result;
+}
+
+template<class T> bool Array1D<T>::operator==(const Array1D<T>& in) const {
+	unsigned int in_nx=in.getNx();
+
+	if(nx!=in_nx)
+		return false;
+
+	for(unsigned int jj=0; jj<nx; jj++)
+		if( !IOUtils::checkEpsilonEquality( vecData[jj] , in.vecData[jj], 1e-6) ) return false;
+
+	return true;
+}
+
+template<class T> bool Array1D<T>::operator!=(const Array1D<T>& in) const {
+	return !(*this==in);
 }
 
 } //end namespace mio

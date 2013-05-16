@@ -240,6 +240,9 @@ template<class T> class Array3D {
 		Array3D<T>& operator/=(const Array3D<T>& rhs);
 		const Array3D<T> operator/(const Array3D<T>& rhs);
 
+		bool operator==(const Array3D<T>&) const; ///<Operator that tests for equality
+		bool operator!=(const Array3D<T>&) const; ///<Operator that tests for inequality
+
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
 		unsigned int nx;
@@ -831,6 +834,23 @@ template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
 	result *= (1./rhs); //already implemented
 
 	return result;
+}
+
+template<class T> bool Array3D<T>::operator==(const Array3D<T>& in) const {
+	unsigned int in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz();
+
+	if(nx!=in_nx || ny!=in_ny || nz!=in_nz)
+		return false;
+
+	const unsigned int nxyz = nx*ny*nz;
+	for(unsigned int jj=0; jj<nxyz; jj++)
+		if( !IOUtils::checkEpsilonEquality( vecData[jj] , in.vecData[jj], 1e-6) ) return false;
+
+	return true;
+}
+
+template<class T> bool Array3D<T>::operator!=(const Array3D<T>& in) const {
+	return !(*this==in);
 }
 
 } //end namespace mio

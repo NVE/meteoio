@@ -192,6 +192,9 @@ template<class T> class Array4D {
 		Array4D<T>& operator/=(const Array4D<T>& rhs);
 		const Array4D<T> operator/(const Array4D<T>& rhs);
 
+		bool operator==(const Array4D<T>&) const; ///<Operator that tests for equality
+		bool operator!=(const Array4D<T>&) const; ///<Operator that tests for inequality
+
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
 		unsigned int nw;
@@ -801,6 +804,23 @@ template<class T> const Array4D<T> Array4D<T>::operator/(const T& rhs)
 	result *= (1./rhs); //already implemented
 
 	return result;
+}
+
+template<class T> bool Array4D<T>::operator==(const Array4D<T>& in) const {
+	unsigned int in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz(), in_nw=in.getNw();
+
+	if(nx!=in_nx || ny!=in_ny || nz!=in_nz || nw!=in_nw)
+		return false;
+
+	const unsigned int nwxyz = nx*ny*nz*nw;
+	for(unsigned int jj=0; jj<nwxyz; jj++)
+		if( !IOUtils::checkEpsilonEquality( vecData[jj] , in.vecData[jj], 1e-6) ) return false;
+
+	return true;
+}
+
+template<class T> bool Array4D<T>::operator!=(const Array4D<T>& in) const {
+	return !(*this==in);
 }
 
 } //end namespace mio
