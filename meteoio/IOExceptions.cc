@@ -46,7 +46,7 @@ void messageBox(const std::string& /*msg*/) {
 void messageBox(const std::string& msg) {
 #if defined(WIN32)
 	const string box_msg = msg + "\n\nPlease check the terminal for more information!";
-	MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
+	//MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
 #endif
 #if defined(APPLE)
 	const string box_msg = msg + "\n\nPlease check the terminal for more information!";
