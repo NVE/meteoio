@@ -67,8 +67,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
 		for(size_t station=0; station<vecMeteo.size(); station++) { //process this parameter on all stations
 			const size_t param = vecMeteo[station].getParameterIndex(it->first);
-			if(param>=vecMeteo[station].getNrOfParameters())
-				throw InvalidArgumentException("Parameter \""+it->first+"\" not defined for station \""+vecMeteo[station].meta.getStationID()+"\"", AT);
+			if(param==IOUtils::npos) continue;
 
 			size_t jj=0;
 			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecMeteo[station]) != true) jj++;
@@ -93,8 +92,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 
 		for(size_t station=0; station<vecVecMeteo.size(); station++) { //process this parameter on all stations
 			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
-			if(param>=vecVecMeteo[station][0].getNrOfParameters())
-				throw InvalidArgumentException("Parameter \""+it->first+"\" not defined for station \""+vecVecMeteo[station][0].meta.getStationID()+"\"", AT);
+			if(param==IOUtils::npos) continue;
 
 			size_t jj=0;
 			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecVecMeteo[station]) != true) jj++;

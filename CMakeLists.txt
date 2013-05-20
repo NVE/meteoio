@@ -36,6 +36,9 @@ IF(MSVC)
 	IF(BUILD_SHARED_LIBS)
 		ADD_DEFINITIONS(/DMIO_DLL)
 	ENDIF(BUILD_SHARED_LIBS)
+	IF(GUI_EXCEPTIONS)
+		SET(MSG_BOX "/DMESG_BOX")
+	ENDIF(GUI_EXCEPTIONS)
 ELSE(MSVC)
 	#we consider that all other compilers support "-" options and silently ignore what they don't know
 	SET(WARNINGS "-Wall")
@@ -119,12 +122,16 @@ ENDIF(DEST STREQUAL "optimized")
 #build for use with POPC in parallel objects
 SET(POPC OFF CACHE BOOL "Compile for POPC ON or OFF")
 
+#build for use with POPC in parallel objects
+SET(GUI_EXCEPTIONS ON CACHE BOOL "Show a message box with exceptions texts ON or OFF")
+
 ###########################################################
 #finally, SET compile flags
 IF(POPC)
 	#SET(POPC_FLAGS "-cxxmain -Dcerr=\\\"cout\\\"")
 	SET(POPC_FLAGS "-cxxmain")
 ENDIF(POPC)
+
 SET(CMAKE_CXX_FLAGS "${POPC_FLAGS} ${_VERSION} ${ARCH} ${CFLAGS} ${PLATFORM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)

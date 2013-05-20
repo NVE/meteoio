@@ -24,13 +24,16 @@
 		#include <sstream>
 		#include <cxxabi.h>
 	#endif
+	#if defined(MSG_BOX)
+		#include <meteoio/MessageBoxX11.h>
+	#endif
 #endif
 #if defined(WIN32)
 	#include <windows.h>
 	#undef max
 	#undef min
 #endif
-#if defined(APPLE)
+#if defined(APPLE) && defined(MSG_BOX)
 	#include <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -38,30 +41,29 @@ using namespace std;
 
 namespace mio {
 
-#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
-void messageBox(const std::string& /*msg*/) {
-	//const string box_msg = msg + "\n\nPlease check the terminal for more information!";
-	//MessageBoxX11("Oops, something went wrong!", box_msg.c_str());
-#else
-void messageBox(const std::string& msg) {
-#if defined(WIN32)
-	const string box_msg = msg + "\n\nPlease check the terminal for more information!";
-	//MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
+#if defined(MSG_BOX)
+	void messageBox(const std::string& msg) {
+	#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
+		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+		MessageBoxX11("Oops, something went wrong!", box_msg.c_str());
+	#endif
+	#if defined(WIN32)
+		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+		MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
+	#endif
+	#if defined(APPLE)
+		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
+		const void* keys[] = { kCFUserNotificationAlertHeaderKey,
+				kCFUserNotificationAlertMessageKey };
+		const void* values[] = { CFSTR("Oops, something went wrong!"),
+					CFStringCreateWithCString(NULL, box_msg.c_str(), kCFStringEncodingMacRoman) };
+		CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
+				sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+		SInt32 error = 0;
+		CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
+	#endif
+	}
 #endif
-#if defined(APPLE)
-	const string box_msg = msg + "\n\nPlease check the terminal for more information!";
-	const void* keys[] = { kCFUserNotificationAlertHeaderKey,
-	                       kCFUserNotificationAlertMessageKey };
-	const void* values[] = { CFSTR("Oops, something went wrong!"),
-	                         CFStringCreateWithCString(NULL, box_msg.c_str(), kCFStringEncodingMacRoman) };
-	CFDictionaryRef dict = CFDictionaryCreate(0, keys, values,
-	                       sizeof(keys)/sizeof(*keys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-	SInt32 error = 0;
-	//CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
-#endif
-
-#endif
-}
 
 #ifdef _POPC_
 IOException::IOException(const std::string& message, const std::string& position) : POPException(STD_EXCEPTION)
@@ -132,7 +134,9 @@ IOException::~IOException() throw() {}
 
 const char* IOException::what() const throw()
 {
+#if defined(MSG_BOX)
 	messageBox(msg);
+#endif
 	return full_output.c_str();
 }
 
