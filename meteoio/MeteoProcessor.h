@@ -69,8 +69,8 @@ class MeteoProcessor {
 		const std::string toString() const;
 
  	private:
-		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
-		void compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current);
+		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters) const;
+		void compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current) const;
 
 		Meteo1DInterpolator mi1d;
 		std::map<std::string, ProcessingStack*> processing_stack;

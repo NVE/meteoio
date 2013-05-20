@@ -87,12 +87,6 @@ void StandardPressureGenerator::parse_args(const std::vector<std::string>& vecAr
 
 bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
 {
-	if(param!=MeteoData::P) {
-		stringstream ss;
-		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
 	double &value = md(param);
 	if(value == IOUtils::nodata) {
 		const double altitude = md.meta.position.getAltitude();
@@ -105,12 +99,6 @@ bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
 
 bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(param!=MeteoData::P) {
-		stringstream ss;
-		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
 	if(vecMeteo.empty()) return true;
 
 	const double altitude = vecMeteo.front().meta.position.getAltitude(); //if the stations move, this has to be in the loop
@@ -139,12 +127,6 @@ void UnsworthGenerator::parse_args(const std::vector<std::string>& vecArgs)
 
 bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 {
-	if(param!=MeteoData::ILWR) {
-		stringstream ss;
-		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
 	const double lat = md.meta.position.getLat();
 	const double lon = md.meta.position.getLon();
 	const double alt = md.meta.position.getAltitude();
@@ -183,12 +165,6 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 
 bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(param!=MeteoData::ILWR) {
-		stringstream ss;
-		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
 	if(vecMeteo.empty()) return true;
 
 	const double lat = vecMeteo.front().meta.position.getLat();
@@ -246,12 +222,6 @@ void PotRadGenerator::parse_args(const std::vector<std::string>& vecArgs)
 
 bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 {
-	if(param!=MeteoData::ISWR && param!=MeteoData::RSWR) {
-		stringstream ss;
-		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
 	double &value = md(param);
 	if(value == IOUtils::nodata) {
 		double albedo = soil_albedo;
@@ -285,10 +255,12 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 		double toa, direct, diffuse;
 		sun.getHorizontalRadiation(toa, direct, diffuse);
 		//sun.getBeamRadiation(toa, direct, diffuse);
-		if(param==MeteoData::ISWR)
+		if(param!=MeteoData::RSWR)
 			value = direct+diffuse; //ISWR
 		else
 			value = (direct+diffuse)*albedo; //RSWR
+
+//std::cout << md.date.toString(Date::ISO) << " " << solarIndex << " " << value << " " << value*solarIndex << "\n";
 	}
 
 	return true; //all missing values could be filled
@@ -296,12 +268,6 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 
 bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(param!=MeteoData::P) {
-		stringstream ss;
-		ss << "Can not use " << algo << " generator on " << MeteoData::getParameterName(param);
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-
 	if(vecMeteo.empty()) return true;
 
 	const double lat = vecMeteo.front().meta.position.getLat();
@@ -341,7 +307,7 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 
 			double toa, direct, diffuse;
 			sun.getHorizontalRadiation(toa, direct, diffuse);
-			if(param==MeteoData::ISWR)
+			if(param!=MeteoData::RSWR)
 				value = direct+diffuse; //ISWR
 			else
 				value = (direct+diffuse)*albedo; //RSWR

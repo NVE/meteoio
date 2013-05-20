@@ -106,8 +106,8 @@ class DataGenerator : POPBase {
 class DataGenerator {
 #endif
  	public:
-		DataGenerator(const Config& i_cfg);
-		DataGenerator(const DataGenerator& c) : cfg(c.cfg), mapAlgorithms(c.mapAlgorithms), generators_defined(c.generators_defined) {};
+		DataGenerator(const Config& cfg);
+		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), generators_defined(c.generators_defined) {};
 		~DataGenerator();
 
 		void fillMissing(METEO_SET& vecMeteo) const;
@@ -118,15 +118,14 @@ class DataGenerator {
 		const std::string toString() const;
 
 	private:
-		void setAlgorithms();
-		size_t getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);
-		size_t getArgumentsForAlgorithm(const std::string& parname,
+		void setAlgorithms(const Config& cfg);
+		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters) const;
+		size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
+		size_t getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
 		                                const std::string& algorithm,
 		                                std::vector<std::string>& vecArgs) const;
 
-		const Config& cfg; ///< Reference to Config object, initialized during construction
-
-		std::map< size_t, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
+		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
 		bool generators_defined; //if true, there are some generators to run. if false, nothing to do
 };
 

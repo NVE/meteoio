@@ -40,7 +40,7 @@ MeteoProcessor::~MeteoProcessor()
 		delete it->second;
 }
 
-size_t MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
+size_t MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& set_parameters) const
 {
 	std::vector<std::string> vec_keys;
 	cfg.findKeys(vec_keys, std::string(), "Filters");
@@ -70,7 +70,7 @@ void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties)
 	compareProperties(tmp, o_properties);
 }
 
-void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current)
+void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current) const
 {
 	current.points_before = MAX(current.points_before, newprop.points_before);
 	current.points_after = MAX(current.points_after, newprop.points_after);
