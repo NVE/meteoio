@@ -506,15 +506,15 @@ int Date::getJulianDayNumber(const bool& gmt) const {
 		throw UnknownValueException("Date object is undefined!", AT);
 
 	if(gmt) {
-		const double first_day_of_year = getJulianDayNumber(gmt_year, 1, 1);
-		return (int)(gmt_julian - first_day_of_year + 1);
+		const double first_day_of_year = static_cast<double>(getJulianDayNumber(gmt_year, 1, 1));
+		return static_cast<int>(gmt_julian - first_day_of_year + 1);
 	} else {
 		const double local_julian = GMTToLocal(gmt_julian);
 		int local_year, local_month, local_day, local_hour, local_minute;
 		calculateValues(local_julian, local_year, local_month, local_day, local_hour, local_minute);
 		const double in_day_offset = 1./24.*((double)local_hour+1./60.*(double)local_minute) - 0.5;
 		const double first_day_of_year = static_cast<double>(getJulianDayNumber(local_year, 1, 1)) + in_day_offset;
-		return (int)(local_julian - first_day_of_year + 1);
+		return static_cast<int>(local_julian - first_day_of_year + 1);
 	}
 }
 
@@ -979,8 +979,8 @@ void Date::calculateValues(const double& i_julian, int& o_year, int& o_month, in
 
 	double integral;
 	const double frac = modf(tmp_julian+.5, &integral); //the julian date reference is at 12:00
-	o_minute = Optim::round(frac*24.0*60.0) % 60;
-	o_hour = Optim::round( (24.*60.*frac-(double)o_minute) / 60.0 );
+	o_minute = static_cast<int>(Optim::round(frac*24.0*60.0)) % 60;
+	o_hour = static_cast<int>(Optim::round( (24.*60.*frac-(double)o_minute) / 60.0 ));
 }
 
 bool Date::isLeapYear(const int& i_year) const {
