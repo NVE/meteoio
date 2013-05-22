@@ -122,8 +122,8 @@ ENDIF(DEST STREQUAL "optimized")
 #build for use with POPC in parallel objects
 SET(POPC OFF CACHE BOOL "Compile for POPC ON or OFF")
 
-#build for use with POPC in parallel objects
-SET(GUI_EXCEPTIONS ON CACHE BOOL "Show a message box with exceptions texts ON or OFF")
+#show exception messages in a graphical message box
+SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
 
 ###########################################################
 #finally, SET compile flags

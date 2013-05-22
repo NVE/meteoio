@@ -209,7 +209,6 @@ double ConstLapseRateAlgorithm::getQualityRating() const
 void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 {
 	vector<double> vecAltitudes;
-
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if ((vecAltitudes.empty()) || (nrOfMeasurments == 0))
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -248,6 +247,41 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 
 	info << "r^2=" << Optim::pow2( vecCoefficients[3] );
 	Interpol2D::constantLapseGrid2DFill(avgData, avgAltitudes, dem, vecCoefficients, funcptr, grid);
+
+
+	/*Fit1D::regression reg_type = Fit1D::NOISYLINEAR;
+	vector<double> vecAltitudes;
+	getStationAltitudes(vecMeta, vecAltitudes);
+	if ((vecAltitudes.empty()) || (nrOfMeasurments == 0))
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
+
+	//read args and tweak reg_type if necessary
+	if (vecArgs.size() == 1) {
+		reg_type = Fit1D::SIMPLE_LINEAR;
+		std::vector<double> guesses(2);
+		IOUtils::convertString(guesses[0], vecArgs.front());
+	} else if (vecArgs.size() == 2) {
+		std::string extraArg;
+		IOUtils::convertString(extraArg, vecArgs[1]);
+		if(extraArg=="soft") { //soft
+			if(Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) {
+				vecCoefficients.assign(4, 0.0);
+				IOUtils::convertString(vecCoefficients[1], vecArgs.front());
+			}
+		} else if(extraArg=="frac") {
+			funcptr = &Interpol2D::FracProject;
+			IOUtils::convertString(vecCoefficients[1], vecArgs.front());
+		} else {
+			std::stringstream os;
+			os << "Unknown argument \"" << extraArg << "\" supplied for the CST_LAPSE algorithm";
+			throw InvalidArgumentException(os.str(), AT);
+		}
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the CST_LAPSE algorithm", AT);
+	}
+
+	Fit1D detrend(reg_type, vecAltitudes, vecData);*/
+
 }
 
 

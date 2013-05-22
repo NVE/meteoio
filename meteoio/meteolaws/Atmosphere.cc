@@ -451,8 +451,6 @@ double Atmosphere::Crawford_ilwr(const double& lat, const double& lon, const dou
 		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
 		double toa, direct, diffuse;
 		Sun.getHorizontalRadiation(toa, direct, diffuse);
-		//Sun.getBeamRadiation(toa, direct, diffuse);
-
 		return Atmosphere::Crawford_ilwr(RH, TA, ISWR, direct+diffuse, static_cast<unsigned char>(month));
 	} else {
 		return Atmosphere::Crawford_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, static_cast<unsigned char>(month), cloudiness);
@@ -528,8 +526,6 @@ double Atmosphere::Unsworth_ilwr(const double& lat, const double& lon, const dou
 		Sun.calculateRadiation(TA, RH, 0.5); //we force a terrain albedo of 0.5...
 		double toa, direct, diffuse;
 		Sun.getHorizontalRadiation(toa, direct, diffuse);
-		//Sun.getBeamRadiation(toa, direct, diffuse);
-
 		return Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct+diffuse);
 	} else {
 		return Atmosphere::Unsworth_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, cloudiness);

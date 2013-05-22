@@ -138,8 +138,7 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
 		if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-			if(HS<snow_thresh) ISWR = RSWR * soil_albedo;
-			else ISWR = RSWR * snow_albedo;
+			ISWR = (HS>=snow_thresh)? RSWR*snow_albedo : RSWR*soil_albedo;
 		}
 
 		const double julian = md.date.getJulian(true);
@@ -150,7 +149,7 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 			value = ilwr_no_iswr;
 		} else {
 			const double ilwr_uns = Atmosphere::Unsworth_ilwr(lat, lon, alt, julian, 0., RH, TA, ISWR);
-			if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0) {
+			if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
 				value = ilwr_no_iswr;
 				return true;
 			}
@@ -183,8 +182,7 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 			}
 
 			if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-				if(HS<snow_thresh) ISWR = RSWR * soil_albedo;
-				else ISWR = RSWR * snow_albedo;
+				ISWR = (HS>=snow_thresh)? RSWR*snow_albedo : RSWR*soil_albedo;
 			}
 
 			const double julian = vecMeteo[ii].date.getJulian(true);
@@ -195,7 +193,7 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 				value = ilwr_no_iswr;
 			} else {
 				const double ilwr_uns = Atmosphere::Unsworth_ilwr(lat, lon, alt, julian, 0., RH, TA, ISWR);
-				if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0) {
+				if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
 					value = ilwr_no_iswr;
 					continue;
 				}
@@ -224,9 +222,6 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if(value == IOUtils::nodata) {
-		double albedo = soil_albedo;
-		double solarIndex = 1.;
-
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
@@ -238,10 +233,12 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 		sun.setLatLon(lat, lon, alt);
 		sun.setDate(md.date.getJulian(true), 0.);
 
+		double albedo = .5;
 		const double HS=md(MeteoData::HS);
-		if(HS!=IOUtils::nodata && HS>=snow_thresh) //no big deal if we can not adapt the albedo
-			albedo = snow_albedo;
+		if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
+		double solarIndex = 1.;
 		const double ILWR=md(MeteoData::ILWR);
 		if(ILWR!=IOUtils::nodata)
 			solarIndex = getSolarIndex(TA, RH, ILWR);
@@ -254,13 +251,10 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 
 		double toa, direct, diffuse;
 		sun.getHorizontalRadiation(toa, direct, diffuse);
-		//sun.getBeamRadiation(toa, direct, diffuse);
 		if(param!=MeteoData::RSWR)
-			value = direct+diffuse; //ISWR
+			value = (direct+diffuse)*solarIndex; //ISWR
 		else
-			value = (direct+diffuse)*albedo; //RSWR
-
-//std::cout << md.date.toString(Date::ISO) << " " << solarIndex << " " << value << " " << value*solarIndex << "\n";
+			value = (direct+diffuse)*albedo*solarIndex; //RSWR
 	}
 
 	return true; //all missing values could be filled
@@ -280,9 +274,6 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
 		double &value = vecMeteo[ii](param);
 		if(value == IOUtils::nodata) {
-			double albedo = soil_albedo;
-			//double solarIndex = 1.;
-
 			const double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH);
 			if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
 				all_filled = false;
@@ -291,13 +282,15 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 
 			sun.setDate(vecMeteo[ii].date.getJulian(true), 0.);
 
+			double albedo = .5;
 			const double HS=vecMeteo[ii](MeteoData::HS);
-			if(HS!=IOUtils::nodata && HS>=snow_thresh) //no big deal if we can not adapt the albedo
-				albedo = snow_albedo;
+			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
-			/*const double ILWR=vecMeteo[ii](MeteoData::ILWR);
+			double solarIndex = 1.;
+			const double ILWR=vecMeteo[ii](MeteoData::ILWR);
 			if(ILWR!=IOUtils::nodata)
-				solarIndex = getSolarIndex(TA, RH, ILWR);*/
+				solarIndex = getSolarIndex(TA, RH, ILWR);
 
 			const double P=vecMeteo[ii](MeteoData::P);
 			if(P==IOUtils::nodata)
@@ -308,17 +301,19 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 			double toa, direct, diffuse;
 			sun.getHorizontalRadiation(toa, direct, diffuse);
 			if(param!=MeteoData::RSWR)
-				value = direct+diffuse; //ISWR
+				value = (direct+diffuse)*solarIndex; //ISWR
 			else
-				value = (direct+diffuse)*albedo; //RSWR
+				value = (direct+diffuse)*albedo*solarIndex; //RSWR
 		}
 	}
 
-	return all_filled; //all missing values could be filled
+	return all_filled;
 }
 
 double PotRadGenerator::getSolarIndex(const double& ta, const double& rh, const double& ilwr)
 {// this is based on Kartsen cloudiness, Dilley clear sky emissivity and Unsworth ILWR
+//this means that this solar index is the ratio of iswr for clear sky on a horizontal
+//surface and the measured iswr
 	const double epsilon_clear = Atmosphere::Dilley_emissivity(rh, ta);
 	const double ilwr_clear = Atmosphere::blkBody_Radiation(1., ta);
 
