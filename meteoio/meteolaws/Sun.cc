@@ -203,12 +203,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		// 0.9751 is for this wavelength range.
 		// Bintanja (1996) (see Corripio (2002)) introduced a correction beta_z for increased
 		// transmittance with altitude that is linear up to 3000 m and than fairly constant up to 5000 - 6000 m
-		double beta_z;
-		if( altitude < 3000. ) {
-			beta_z = 2.2 * 1.e-5 * altitude;
-		} else {
-			beta_z = 2.2 * 1.e-5 * 3000.;
-		}
+		const double beta_z = (altitude<3000.)? 2.2*1.e-5*altitude : 2.2*1.e-5*3000.;
 
 		//Now calculating the radiation
 		//Top of atmosphere radiation (it will always be positive, because we check for sun elevation before)
@@ -216,6 +211,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 
 		R_toa = Cst::solcon * (1.+Eccentricity_corr);
 
+		//Direct radiation. All transmitances, including Rayleigh scattering (Iqbal (1983), p.189)
 		R_direct = 0.9751*( taur * tau_commons + beta_z ) * R_toa ;
 
 		// Diffuse radiation from the sky
@@ -230,8 +226,7 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		const double alb_sky = 0.0685 + (1. - fc) * (1. - tauas);
 
 		// multiple reflected diffuse radiation between surface and sky (Iqbal (1983), p.154)
-		const double Idm = (Idr + Ida + R_direct) * ground_albedo * alb_sky /
-		                   (1. - ground_albedo * alb_sky);
+		const double Idm = (Idr + Ida + R_direct) * ground_albedo * alb_sky / (1. - ground_albedo * alb_sky);
 
 		R_diffuse = (Idr + Ida + Idm)*cos_zenith; //Iqbal always "project" diffuse radiation on the horizontal
 

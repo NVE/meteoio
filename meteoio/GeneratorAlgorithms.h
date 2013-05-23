@@ -59,7 +59,7 @@ namespace mio {
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - UNSWORTH: use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
- * - POT_RADIATION: generate the potential incoming short wave radiation (see PotRadGenerator)
+ * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -158,11 +158,12 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
 class UnsworthGenerator : public GeneratorAlgorithm {
 	public:
 		UnsworthGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), last_cloudiness_ratio(1.), last_cloudiness_julian(0.) { parse_args(vecArgs); }
+			: GeneratorAlgorithm(vecArgs, i_algo), sun(), last_cloudiness_ratio(1.), last_cloudiness_julian(0.) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
+		SunObject sun;
 		double last_cloudiness_ratio; //last ratio of cloudiness
 		double last_cloudiness_julian; //time of such ratio
 
@@ -174,8 +175,9 @@ class UnsworthGenerator : public GeneratorAlgorithm {
  * @brief potential ISWR parametrization
  * This computes the potential incoming solar radiation, based on the position of the sun ine the sky
  * (as a function of the location and the date). Please note that although this is the radiation as perceived
- * at ground level (on the horizontal), this assumes <b>clear sky</b>! This relies on SunObject to perform the heavy duty
- * computation.
+ * at ground level (on the horizontal). If an incoming long wave measurement is available, it corrects the
+ * generated iswr for cloudiness (basically doing like UnsworthGenerator in reverse), otherwise this assumes
+ * clear sky! This relies on SunObject to perform the heavy duty computation.
  */
 class PotRadGenerator : public GeneratorAlgorithm {
 	public:

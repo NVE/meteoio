@@ -127,18 +127,22 @@ void UnsworthGenerator::parse_args(const std::vector<std::string>& vecArgs)
 
 bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 {
-	const double lat = md.meta.position.getLat();
-	const double lon = md.meta.position.getLon();
-	const double alt = md.meta.position.getAltitude();
-
 	double &value = md(param);
 	if(value==IOUtils::nodata) {
+		const double lat = md.meta.position.getLat();
+		const double lon = md.meta.position.getLon();
+		const double alt = md.meta.position.getAltitude();
+
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
 		double ISWR=md(MeteoData::ISWR);
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
+		double albedo = .5;
+		if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+
 		if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-			ISWR = (HS>=snow_thresh)? RSWR*snow_albedo : RSWR*soil_albedo;
+			ISWR = RSWR*albedo;
 		}
 
 		const double julian = md.date.getJulian(true);
@@ -148,7 +152,14 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 		if(ISWR==IOUtils::nodata || ISWR<5.) {
 			value = ilwr_no_iswr;
 		} else {
-			const double ilwr_uns = Atmosphere::Unsworth_ilwr(lat, lon, alt, julian, 0., RH, TA, ISWR);
+			sun.setLatLon(lat, lon, alt);
+			sun.setDate(julian, 0.);
+
+			sun.calculateRadiation(TA, RH, albedo);
+			double toa, direct, diffuse;
+			sun.getHorizontalRadiation(toa, direct, diffuse);
+			const double ilwr_uns = Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct+diffuse);
+
 			if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
 				value = ilwr_no_iswr;
 				return true;
@@ -169,6 +180,7 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 	const double lat = vecMeteo.front().meta.position.getLat();
 	const double lon = vecMeteo.front().meta.position.getLon();
 	const double alt = vecMeteo.front().meta.position.getAltitude();
+	sun.setLatLon(lat, lon, alt);
 
 	bool all_filled = true;
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
@@ -181,8 +193,12 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 				continue;
 			}
 
+			double albedo = .5;
+			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+
 			if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-				ISWR = (HS>=snow_thresh)? RSWR*snow_albedo : RSWR*soil_albedo;
+				ISWR = RSWR*albedo;
 			}
 
 			const double julian = vecMeteo[ii].date.getJulian(true);
@@ -192,7 +208,12 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 			if(ISWR==IOUtils::nodata || ISWR<5.) {
 				value = ilwr_no_iswr;
 			} else {
-				const double ilwr_uns = Atmosphere::Unsworth_ilwr(lat, lon, alt, julian, 0., RH, TA, ISWR);
+				sun.setDate(julian, 0.);
+				sun.calculateRadiation(TA, RH, albedo);
+				double toa, direct, diffuse;
+				sun.getHorizontalRadiation(toa, direct, diffuse);
+				const double ilwr_uns = Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct+diffuse);
+
 				if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
 					value = ilwr_no_iswr;
 					continue;
