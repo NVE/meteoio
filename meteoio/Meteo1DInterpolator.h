@@ -45,7 +45,7 @@ class Meteo1DInterpolator {
 	public:
 
 		/**
-		* @brief 	The default constructor
+		* @brief The default constructor
 		* Set up the interpolation algorithm for each parameter
 		* Init tasklist: a vector that holds one std::string for each parameter,
 		*                representing the interpolation algorithm that will be executed
@@ -57,6 +57,8 @@ class Meteo1DInterpolator {
 		* @param[in] in_cfg Config object that holds the MeteoFilter configuration in the [Filters] section
 		*/
 		Meteo1DInterpolator(const Config& in_cfg);
+
+		~Meteo1DInterpolator();
 
 		/**
 		 * @brief A function that executes all the resampling algorithms that have been setup in the constructor
@@ -77,9 +79,7 @@ class Meteo1DInterpolator {
 
 		const Config& cfg;
 		double window_size; ///< In seconds
-		std::vector<std::string> tasklist;
-		std::vector< std::vector< std::string > > taskargs;
-		std::map< std::string, std::pair < std::string, std::vector < std::string > > >	extended_tasklist;
+		std::map< std::string, ResamplingAlgorithms* > mapAlgorithms; //per parameter interpolation algorithms
 };
 } //end namespace
 

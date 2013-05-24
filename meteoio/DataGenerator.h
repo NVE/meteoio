@@ -125,7 +125,7 @@ class DataGenerator {
 		                                const std::string& algorithm,
 		                                std::vector<std::string>& vecArgs) const;
 
-		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
+		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data generators algorithms
 		bool generators_defined; //if true, there are some generators to run. if false, nothing to do
 };
 

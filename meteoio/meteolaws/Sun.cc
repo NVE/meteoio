@@ -112,6 +112,7 @@ void SunObject::update() {
 	position.setAll(latitude, longitude, julian_gmt);
 }
 
+//see http://www.meteoexploration.com/products/solarcalc.php for a validation calculator
 void SunObject::getBeamPotential(const double& sun_elevation, const double& Eccentricity_corr,
                                  const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
                                  double& R_toa, double& R_direct, double& R_diffuse)

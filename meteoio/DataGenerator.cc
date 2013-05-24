@@ -35,7 +35,7 @@ DataGenerator::DataGenerator(const Config& cfg)
 DataGenerator::~DataGenerator()
 { //we have to deallocate the memory allocated by "new GeneratorAlgorithm()"
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); it++) {
+	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
 		std::vector<GeneratorAlgorithm*> &vec = it->second;
 		for(size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
@@ -63,7 +63,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 	if(!generators_defined) return; //no generators defined by the end user
 
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); it++) {
+	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
 		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
 		for(size_t station=0; station<vecMeteo.size(); station++) { //process this parameter on all stations
 			const size_t param = vecMeteo[station].getParameterIndex(it->first);
@@ -87,7 +87,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 	if(!generators_defined) return; //no generators defined by the end user
 
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); it++) {
+	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
 		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
 
 		for(size_t station=0; station<vecVecMeteo.size(); station++) { //process this parameter on all stations

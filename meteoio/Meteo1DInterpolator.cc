@@ -23,29 +23,29 @@ namespace mio {
 
 Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
                      : cfg(in_cfg), window_size(10.*86400.),
-                       tasklist(MeteoData::nrOfParameters), taskargs(MeteoData::nrOfParameters), extended_tasklist()
+                       mapAlgorithms()
 {
 	//default window_size is 10 julian days
-	/*
-	 * By reading the Config object build up a list of user configured resampling algorithm
-	 * for each MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
-	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
-	 * for configuration of resampling algorithms within the Config object.
-	 */
-	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
-		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
-
-		vector<string> vecResamplingArguments;
-		const string resamplingAlgorithm = getInterpolationForParameter(parname, vecResamplingArguments);
-
-		tasklist[ii] = resamplingAlgorithm;
-		taskargs[ii] = vecResamplingArguments;
-	}
-
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, IOUtils::nothrow);
 	window_size /= 86400.; //user uses seconds, internally julian day is used
 	if (window_size <= 0.01)
 		throw IOException("WINDOW_SIZE not valid", AT);
+
+	//read the Config object to create the resampling algorithms for each
+	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
+	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
+		const std::string parname = MeteoData::getParameterName(ii); //Current parameter name
+		vector<string> vecArgs;
+		const string algo_name = getInterpolationForParameter(parname, vecArgs);
+		mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);
+	}
+}
+
+Meteo1DInterpolator::~Meteo1DInterpolator()
+{
+	map< string, ResamplingAlgorithms* >::iterator it;
+	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it)
+		delete it->second;
 }
 
 void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) const
@@ -87,30 +87,17 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 		md.setResampled(false);
 	}
 
-	size_t ii = 0;
-	for (; ii<tasklist.size(); ii++){ //For all meteo parameters
-		if (tasklist[ii] != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(tasklist[ii])(index, elementpos, ii, taskargs[ii], window_size, vecM, md);
-	}
-
-	//There might be more parameters, interpolate them too
-	const MeteoData& origmd = vecM.front(); //this element must exist at this point
-	for ( ; ii < origmd.getNrOfParameters(); ii++){
-		const string parametername = origmd.getNameForParameter(ii);
-
-		//In order to parse the user config only once for this parameter we store
-		//the algorithm and its arguments in a hash map calles extended_tasklist
-		map<string, pair<string, vector<string> > >::const_iterator it = extended_tasklist.find(parametername);
-		if (it == extended_tasklist.end()){
-			vector<string> taskarg; //vector to be filled with taskarguments
-			const string algo = getInterpolationForParameter(parametername, taskarg);
-
-			extended_tasklist[parametername] = pair<string, vector<string> > (algo, taskarg);
-			it = extended_tasklist.find(parametername);
+	for(size_t ii=0; ii<md.getNrOfParameters(); ii++) {
+		const std::string parname = md.getNameForParameter(ii); //Current parameter name
+		const map< string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);
+		if(it!=mapAlgorithms.end()) {
+			it->second->resample(index, elementpos, ii, vecM, md);
+		} else { //we are dealing with an extra parameter, we need to add it to the map first
+			vector<string> vecArgs;
+			const string algo_name = getInterpolationForParameter(parname, vecArgs);
+			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
+			mapAlgorithms[parname]->resample(index, elementpos, ii, vecM, md);
 		}
-
-		if (it->second.first != "no") //resampling can be disabled by stating e.g. TA::resample = no
-			ResamplingAlgorithms::getAlgorithm(it->second.first)(index, elementpos, ii, it->second.second, window_size, vecM, md);
 	}
 
 	return true; //successfull resampling
@@ -138,9 +125,7 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& source) {
 	if(this != &source) {
 		window_size = source.window_size;
-		tasklist = source.tasklist;
-		taskargs = source.taskargs;
-		extended_tasklist = source.extended_tasklist;
+		mapAlgorithms= source.mapAlgorithms;
 	}
 	return *this;
 }
@@ -150,12 +135,9 @@ const std::string Meteo1DInterpolator::toString() const
 	stringstream os;
 	os << "<Meteo1DInterpolator>\n";
 	os << "Config& cfg = " << hex << &cfg << dec <<"\n";
-	for (size_t jj=0; jj<tasklist.size(); jj++){
-		os << setw(10) << MeteoData::getParameterName(jj) << "::" << tasklist[jj] << "\t";
-		for (size_t ii=0; ii<taskargs[jj].size(); ii++){
-			os << "ARGS: " << taskargs[jj][ii] << " ";
-		}
-		os << "\n";
+	map< string, ResamplingAlgorithms* >::const_iterator it;
+	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+		os << setw(10) << it->first << "::" << it->second->getAlgo() << "\n";
 	}
 	os << "</Meteo1DInterpolator>\n";
 
