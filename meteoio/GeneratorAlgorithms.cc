@@ -138,11 +138,15 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
 		double albedo = .5;
-		if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
-		if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-			ISWR = RSWR*albedo;
+			if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+				ISWR = RSWR / albedo;
+			}
+		} else {
+			albedo = RSWR / ISWR;
 		}
 
 		const double julian = md.date.getJulian(true);
@@ -194,11 +198,15 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 			}
 
 			double albedo = .5;
-			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+				if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
-			if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-				ISWR = RSWR*albedo;
+				if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+					ISWR = RSWR / albedo;
+				}
+			} else {
+				albedo = RSWR / ISWR;
 			}
 
 			const double julian = vecMeteo[ii].date.getJulian(true);
@@ -243,7 +251,7 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if(value == IOUtils::nodata) {
-		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
+		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS);
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
 		const double lat = md.meta.position.getLat();
@@ -255,10 +263,13 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 		sun.setDate(md.date.getJulian(true), 0.);
 
 		double albedo = .5;
-		const double HS=md(MeteoData::HS);
-		if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
-
+		if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+		} else { //this could happen if the user calls this generator for a copy parameter, etc
+			albedo = RSWR / ISWR;
+		}
+		
 		double solarIndex = 1.;
 		const double ILWR=md(MeteoData::ILWR);
 		if(ILWR!=IOUtils::nodata)
@@ -295,7 +306,7 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
 		double &value = vecMeteo[ii](param);
 		if(value == IOUtils::nodata) {
-			const double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH);
+			const double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH), ISWR=vecMeteo[ii](MeteoData::ISWR), RSWR=vecMeteo[ii](MeteoData::RSWR), HS=vecMeteo[ii](MeteoData::HS);
 			if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
 				all_filled = false;
 				continue;
@@ -304,9 +315,12 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 			sun.setDate(vecMeteo[ii].date.getJulian(true), 0.);
 
 			double albedo = .5;
-			const double HS=vecMeteo[ii](MeteoData::HS);
-			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+				if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+			} else { //this could happen if the user calls this generator for a copy parameter, etc
+				albedo = RSWR / ISWR;
+			}
 
 			double solarIndex = 1.;
 			const double ILWR=vecMeteo[ii](MeteoData::ILWR);
