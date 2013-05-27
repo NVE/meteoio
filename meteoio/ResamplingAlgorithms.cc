@@ -31,7 +31,7 @@ ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::strin
 		return new NoResampling(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "LINEAR"){
 		return new LinearResampling(algoname, parname, dflt_window_size, vecArgs);
-	} else if (algoname == "N_NEIGHBOR"){
+	} else if (algoname == "NEAREST"){
 		return new NearestNeighbour(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "ACCUMULATE"){
 		return new Accumulate(algoname, parname, dflt_window_size, vecArgs);

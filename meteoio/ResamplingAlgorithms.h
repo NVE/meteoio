@@ -65,7 +65,7 @@ namespace mio {
  * @section algorithms_available Available Resampling Algorithms
  * Two algorithms for the resampling are implemented:
  * - none: do not perform resampling, see NoResampling
- * - n_neighbor:  nearest neighbor data resampling, see NearestNeighbour
+ * - nearest:  nearest neighbor data resampling, see NearestNeighbour
  * - linear: linear data resampling, see LinearResampling
  * - accumulate: data re-accumulation as suitable for precipitations, see Accumulate
  */
@@ -149,8 +149,8 @@ class NoResampling : public ResamplingAlgorithms {
  * The window size can be specified as argument but must appear in first position.
  * @code
  * [Interpolations1D]
- * TA::resample   = n_neighbor
- * TA::n_neighbor = 86400 extrapolate
+ * TA::resample   = nearest
+ * TA::nearest = 86400 extrapolate
  * @endcode
  */
 class NearestNeighbour : public ResamplingAlgorithms {
