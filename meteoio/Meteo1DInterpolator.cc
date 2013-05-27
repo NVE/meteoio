@@ -22,14 +22,14 @@ using namespace std;
 namespace mio {
 
 Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
-                     : cfg(in_cfg), window_size(10.*86400.),
+                     : cfg(in_cfg), window_size(2.*86400.),
                        mapAlgorithms()
 {
-	//default window_size is 10 julian days
+	//default window_size is 2 julian days
 	cfg.getValue("WINDOW_SIZE", "Interpolations1D", window_size, IOUtils::nothrow);
-	window_size /= 86400.; //user uses seconds, internally julian day is used
-	if (window_size <= 0.01)
+	if (window_size <= 1.)
 		throw IOException("WINDOW_SIZE not valid", AT);
+	window_size /= 86400.; //user uses seconds, internally julian day is used
 
 	//read the Config object to create the resampling algorithms for each
 	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
@@ -52,7 +52,6 @@ void Meteo1DInterpolator::getWindowSize(ProcessingProperties& o_properties) cons
 {
 	o_properties.points_before = 1;
 	o_properties.points_after  = 1;
-
 	o_properties.time_before   = Duration(window_size, 0.); //we will need to cut a window 2x larger so we can interpolate each point in the window
 	o_properties.time_after    = Duration(window_size, 0.);
 }
@@ -92,7 +91,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 		const map< string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);
 		if(it!=mapAlgorithms.end()) {
 			it->second->resample(index, elementpos, ii, vecM, md);
-		} else { //we are dealing with an extra parameter, we need to add it to the map first
+		} else { //we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
 			vector<string> vecArgs;
 			const string algo_name = getInterpolationForParameter(parname, vecArgs);
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
@@ -103,23 +102,24 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	return true; //successfull resampling
 }
 
+/**
+ * @brief retrieve the resampling algorithm to be used for the 1D interpolation of meteo parameters.
+ * The potential arguments are also extracted.
+ * @param parname meteo parameter to deal with
+ * @param vecArguments vector of arguments
+ * @return algorithm name
+ */
 string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parname, std::vector<std::string>& vecArguments) const
 {
-	/*
-	 * This function retrieves the resampling algorithm to be used for the
-	 * 1D interpolation of meteo parameters. It also extracts any possible
-	 * arguments for that specific algorithm.
-	 */
-	vecArguments.clear();
-	cfg.getValue(parname+"::args", "Interpolations1D", vecArguments, IOUtils::nothrow);
+	string algo_name = "linear"; //the default resampling is linear
+	cfg.getValue(parname+"::resample", "Interpolations1D", algo_name, IOUtils::nothrow);
 
-	std::string tmp;
-	cfg.getValue(parname+"::resample", "Interpolations1D", tmp, IOUtils::nothrow);
+	cfg.getValue(parname+"::"+algo_name, "Interpolations1D", vecArguments, IOUtils::nothrow);
 
-	if (!tmp.empty())
-		return tmp;
+	if(cfg.keyExists(parname+"::"+"args", "Interpolations1D")) //HACK: temporary until we consider everybody has migrated
+		throw InvalidArgumentException("The syntax for Interpolations1D arguments has been changed. Please check the documentation and update your configuration file \""+cfg.getSourceName()+"\"", AT);
 
-	return "linear"; //the default resampling is linear
+	return algo_name;
 }
 
 Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& source) {
@@ -135,9 +135,11 @@ const std::string Meteo1DInterpolator::toString() const
 	stringstream os;
 	os << "<Meteo1DInterpolator>\n";
 	os << "Config& cfg = " << hex << &cfg << dec <<"\n";
+	os << "Resampling algorithms:\n";
 	map< string, ResamplingAlgorithms* >::const_iterator it;
 	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
-		os << setw(10) << it->first << "::" << it->second->getAlgo() << "\n";
+		//os << setw(10) << it->first << "::" << it->second->getAlgo() << "\n";
+		os << it->second->toString() << "\n";
 	}
 	os << "</Meteo1DInterpolator>\n";
 

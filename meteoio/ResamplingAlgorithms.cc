@@ -23,18 +23,18 @@ using namespace std;
 
 namespace mio {
 
-ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& window_size, const std::vector<std::string>& vecArgs)
+ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::string& i_algoname, const std::string& parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
 {
 	const std::string algoname(IOUtils::strToUpper(i_algoname));
 
 	if (algoname == "NONE" || algoname == "NO"){
-		return new NoResampling(algoname, parname, window_size, vecArgs);
+		return new NoResampling(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "LINEAR"){
-		return new LinearResampling(algoname, parname, window_size, vecArgs);
-	} else if (algoname == "NEAREST_NEIGHBOUR"){
-		return new NearestNeighbour(algoname, parname, window_size, vecArgs);
+		return new LinearResampling(algoname, parname, dflt_window_size, vecArgs);
+	} else if (algoname == "N_NEIGHBOR"){
+		return new NearestNeighbour(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "ACCUMULATE"){
-		return new Accumulate(algoname, parname, window_size, vecArgs);
+		return new Accumulate(algoname, parname, dflt_window_size, vecArgs);
 	} else {
 		throw IOException("The resampling algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -67,12 +67,13 @@ double ResamplingAlgorithms::funcval(size_t pos, const size_t& paramindex, const
  * @param pos current position (index)
  * @param paramindex meteo parameter to use
  * @param vecM vector of MeteoData
+ * @param resampling_date date to resample
  * @param window_size size of the search window
  * @param indexP1 index of point before the current position (IOUtils::npos if none could be found)
  * @param indexP2 index of point after the current position (IOUtils::npos if none could be found)
  */
 void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
-                                              const double& window_size, size_t& indexP1, size_t& indexP2)
+                                              const double& window_size, size_t& indexP1, size_t& indexP2) //HACK
 {
 	indexP1=IOUtils::npos;
 	indexP2=IOUtils::npos;
@@ -125,6 +126,21 @@ double ResamplingAlgorithms::linearInterpolation(const double& x1, const double&
  * The following functions are implementations of different resampling algorithms *
  **********************************************************************************/
 
+NoResampling::NoResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+             : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs)
+{
+	if(!vecArgs.empty()) //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+}
+
+std::string NoResampling::toString() const
+{
+	stringstream ss;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
+	ss << "[ ]";
+	return ss.str();
+}
+
 void NoResampling::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
                             const std::vector<MeteoData>& vecM, MeteoData& md) const
 {
@@ -139,6 +155,38 @@ void NoResampling::resample(const size_t& index, const ResamplingPosition& posit
 	}
 
 	return;
+}
+
+NearestNeighbour::NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+                 : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
+{
+	const size_t nr_args = vecArgs.size();
+	if(nr_args==0) return;
+	if(nr_args==1) {
+		if(vecArgs[0]=="extrapolate")
+			extrapolate=true;
+		else {
+			IOUtils::convertString(window_size, vecArgs[0]);
+			window_size /= 86400.; //user uses seconds, internally julian day is used
+		}
+	} else if(nr_args==2) {
+		IOUtils::convertString(window_size, vecArgs[0]);
+		window_size /= 86400.; //user uses seconds, internally julian day is used
+		if(vecArgs[1]=="extrapolate")
+			extrapolate=true;
+		else
+			throw InvalidArgumentException("Invalid argument \""+vecArgs[1]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
+	} else {
+		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+	}
+}
+
+std::string NearestNeighbour::toString() const
+{
+	stringstream ss;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
+	ss << "[ window_size=" << window_size << " extrapolate=" << extrapolate << " ]";
+	return ss.str();
 }
 
 void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
@@ -189,6 +237,38 @@ void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& p
 			return;
 		}
 	}
+}
+
+LinearResampling::LinearResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+                 : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
+{
+	const size_t nr_args = vecArgs.size();
+	if(nr_args==0) return;
+	if(nr_args==1) {
+		if(vecArgs[0]=="extrapolate")
+			extrapolate=true;
+		else {
+			IOUtils::convertString(window_size, vecArgs[0]);
+			window_size /= 86400.; //user uses seconds, internally julian day is used
+		}
+	} else if(nr_args==2) {
+		IOUtils::convertString(window_size, vecArgs[0]);
+		window_size /= 86400.; //user uses seconds, internally julian day is used
+		if(vecArgs[1]=="extrapolate")
+			extrapolate=true;
+		else
+			throw InvalidArgumentException("Invalid argument \""+vecArgs[1]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
+	} else {
+		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+	}
+}
+
+std::string LinearResampling::toString() const
+{
+	stringstream ss;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
+	ss << "[ window_size=" << window_size << " extrapolate=" << extrapolate << " ]";
+	return ss.str();
 }
 
 void LinearResampling::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
@@ -254,30 +334,35 @@ void LinearResampling::resample(const size_t& index, const ResamplingPosition& p
 	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulian(true));
 }
 
-Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& i_window_size, const std::vector<std::string>& vecArgs)
-           : ResamplingAlgorithms(i_algoname, i_parname, i_window_size, vecArgs), accumulate_period(0.), strict(false)
+Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+           : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), accumulate_period(0.), strict(false)
 {
-	if (vecArgs.size()==1 || vecArgs.size()==2) {
+	const size_t nr_args = vecArgs.size();
+	if (nr_args==1 || nr_args==2) {
 		IOUtils::convertString(accumulate_period, vecArgs[0]);
+		accumulate_period /= 86400.; //user uses seconds, internally julian day is used
 		if(accumulate_period<=0.) {
 			std::stringstream tmp;
-			tmp << "Invalid accumulation period (" << accumulate_period << ") ";
-			tmp << "for parameter " << parname;
+			tmp << "Invalid accumulation period (" << accumulate_period << ") for \"" << i_parname << "::" << i_algoname << "\"";
 			throw InvalidArgumentException(tmp.str(), AT);
 		}
-		if(vecArgs.size()==2) {
-			if(vecArgs[1]=="strict") strict=true;
-			else {
-				std::stringstream ss;
-				ss << "Invalid argument \"" << vecArgs[1] << "\" for param " << parname;
-				throw InvalidArgumentException(ss.str(), AT);
-			}
+		if(nr_args==2) {
+			if(vecArgs[1]=="strict")
+				strict=true;
+			else
+				throw InvalidArgumentException("Invalid argument \""+vecArgs[1]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
 		}
 	} else {
-		std::stringstream tmp;
-		tmp << "Please provide accumulation period (in seconds) for param " << parname;
-		throw InvalidArgumentException(tmp.str(), AT);
+		throw InvalidArgumentException("Please provide accumulation period (in seconds) for \""+i_parname+"::"+i_algoname+"\"", AT);
 	}
+}
+
+std::string Accumulate::toString() const
+{
+	stringstream ss;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
+	ss << "[ accumulate_period=" << accumulate_period << " strict=" << strict << " ]";
+	return ss.str();
 }
 
 void Accumulate::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
@@ -293,7 +378,7 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 
 	//find start of accumulation period and initialize the sum
 	double sum = IOUtils::nodata;
-	const Date dateStart(resampling_date.getJulian() - accumulate_period/(24.*3600.), resampling_date.getTimeZone());
+	const Date dateStart(resampling_date.getJulian() - accumulate_period, resampling_date.getTimeZone());
 	bool found_start=false;
 	size_t start_idx; //this is the index of the first data point before the window
 	for (start_idx=index+1; (start_idx--) > 0; ) {

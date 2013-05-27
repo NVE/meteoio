@@ -40,30 +40,34 @@ namespace mio {
  * assumed. An example of such section is given below:
  * @code
  * [Interpolations1D]
+ * WINDOW_SIZE     = 86400
  * TA::resample    = linear
  *
  * RH::resample    = linear
+ * RH::linear      = 172800
  *
- * VW::resample    = nearest_neighbour
- * VW::args        = extrapolate
+ * VW::resample    = n_neighbor
+ * VW::n_neighbor  = extrapolate
  *
- * HNW::resample   = linear
+ * HNW::resample   = accumulate
+ * HNW::accumulate = 3600
  * @endcode
  *
- * The size (in seconds) of the biggest gap that can be interpolated is given with the key WINDOW_SIZE. Therefore if two valid points are less than
+ * Most of the resampling algorithms allow you to define per-meteo parameter and per-algorithm the WINDOW_SIZE. Otherwise, the section's WINDOW_SIZE is
+ * used as default window size. This represents the biggest gap that can be interpolated (in seconds). Therefore if two valid points are less than
  * WINDOW_SIZE seconds apart, points in between will be interpolated. If they are further apart, all points in between will remain IOUtils::nodata.
  * If using the "extrapolate" optional argument, points at WINDOW_SIZE distance of only one valid point will be extrapolated, otherwise they will remain
  * IOUtils::nodata. Please keep in mind that allowing extrapolated values can lead to grossly out of range data: using the slope
  * between two hourly measurements to extrapolate a point 10 days ahead is obviously risky!
  *
- * By default, WINDOW_SIZE is set to 10 days. This key has a <b>potentially large impact on run time/performance</b>.
+ * By default, WINDOW_SIZE is set to 2 days. This key has a <b>potentially large impact on run time/performance</b>.
  *
  * @section algorithms_available Available Resampling Algorithms
  * Two algorithms for the resampling are implemented:
- * - none: do not perform resampling, see ResamplingAlgorithms::NoResampling
- * - linear: linear data resampling, see ResamplingAlgorithms::LinearResampling
- * - nearest_neighbour:  data resampling, see ResamplingAlgorithms::NearestNeighbour
- * - accumulate: data re-accumulation as suitable for precipitations, see ResamplingAlgorithms::Accumulate
+ * - none: do not perform resampling, see NoResampling
+ * - n_neighbor:  nearest neighbor data resampling, see NearestNeighbour
+ * - linear: linear data resampling, see LinearResampling
+ * - accumulate: data re-accumulation as suitable for precipitations, see Accumulate
  */
 
 /**
@@ -86,8 +90,8 @@ class ResamplingAlgorithms {
 			end
 		};
 
-		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& i_window_size, const std::vector<std::string>& /*vecArgs*/)
-		                    : algo(i_algoname), parname(i_parname), window_size(i_window_size) {};
+		ResamplingAlgorithms(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& /*vecArgs*/)
+		                    : algo(i_algoname), parname(i_parname), window_size(dflt_window_size) {};
 
 		virtual ~ResamplingAlgorithms() {};
 
@@ -95,6 +99,8 @@ class ResamplingAlgorithms {
 
 		virtual void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) const = 0;
+
+		virtual std::string toString() const = 0;
 
  	protected:
 		static double funcval(size_t position, const size_t& paramindex, const std::vector<MeteoData>& vecM,
@@ -105,7 +111,7 @@ class ResamplingAlgorithms {
 		                                  const double& x2, const double& y2, const double& x3);
 
 		const std::string algo, parname;
-		const double window_size;
+		double window_size;
 };
 
 class ResamplingAlgorithmsFactory {
@@ -119,6 +125,7 @@ class ResamplingAlgorithmsFactory {
 
 /**
  * @brief No resampling: do not resample parameter but keep original sampling rate
+ * It is enabled either with the "none" or "no" key.
  * @code
  * [Interpolations1D]
  * TA::resample = none
@@ -126,11 +133,11 @@ class ResamplingAlgorithmsFactory {
  */
 class NoResampling : public ResamplingAlgorithms {
 	public:
-		NoResampling(const std::string& i_algoname, const std::string& i_parname, const double& i_window_size, const std::vector<std::string>& vecArgs)
-		             : ResamplingAlgorithms(i_algoname, i_parname, i_window_size, vecArgs) {};
+		NoResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
+		std::string toString() const;
 };
 
 /**
@@ -139,21 +146,22 @@ class NoResampling : public ResamplingAlgorithms {
  *        - If the data point itself is not IOUtils::nodata, nothing needs to be done
  *        - If two points have the same distance from the data point to be resampled, calculate mean and return it
  *        - if the argument extrapolate is provided, points within WINDOW_SIZE seconds of only one valid point will receive the value of this point
+ * The window size can be specified as argument but must appear in first position.
  * @code
  * [Interpolations1D]
- * TA::resample = nearest_neighbour
+ * TA::resample   = n_neighbor
+ * TA::n_neighbor = 86400 extrapolate
  * @endcode
  */
 class NearestNeighbour : public ResamplingAlgorithms {
 	public:
-		NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& i_window_size, const std::vector<std::string>& vecArgs)
-		             : ResamplingAlgorithms(i_algoname, i_parname, i_window_size, vecArgs), extrapolate( ((vecArgs.size()==1) && (vecArgs[0]=="extrapolate")) ) {};
+		NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
-
+		std::string toString() const;
 	private:
-		const bool extrapolate;
+		bool extrapolate;
 };
 
 /**
@@ -161,22 +169,22 @@ class NearestNeighbour : public ResamplingAlgorithms {
  *        the requested value is automatically calculated using a linear interpolation. Furthermore
  *        if the argument extrapolate is provided there will be an attempt made to extrapolate the
  *        point if the interpolation fails, by solving the line equation y = kx + d
+ * The window size can be specified as argument but must appear in first position.
  * @code
  * [Interpolations1D]
  * TA::resample = linear
- * TA::args     = extrapolate
+ * TA::linear   = extrapolate
  * @endcode
  */
 class LinearResampling : public ResamplingAlgorithms {
 	public:
-		LinearResampling(const std::string& i_algoname, const std::string& i_parname, const double& i_window_size, const std::vector<std::string>& vecArgs)
-		             : ResamplingAlgorithms(i_algoname, i_parname, i_window_size, vecArgs), extrapolate( ((vecArgs.size()==1) && (vecArgs[0]=="extrapolate")) ) {};
+		LinearResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
-
+		std::string toString() const;
 	private:
-		const bool extrapolate;
+		bool extrapolate;
 };
 
 /**
@@ -187,19 +195,19 @@ class LinearResampling : public ResamplingAlgorithms {
  * - the accumulation period has to be provided as an argument (in seconds)
  * - if giving as a second argument "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
  * @code
- * HNW::filter1 = accumulate
- * HNW::arg1	 = 3600
+ * HNW::resample   = accumulate
+ * HNW::accumulate = 3600
  * @endcode
  */
 class Accumulate : public ResamplingAlgorithms {
 	public:
-		Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& /*i_window_size*/, const std::vector<std::string>& vecArgs);
+		Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
-
+		std::string toString() const;
 	private:
-		double accumulate_period;
+		double accumulate_period; //internally, in julian days
 		bool strict;
 };
 
