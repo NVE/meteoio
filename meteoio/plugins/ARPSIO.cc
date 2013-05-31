@@ -508,7 +508,7 @@ void ARPSIO::moveToMarker(const std::string& marker)
 	char dummy[ARPS_MAX_LINE_LENGTH];
 	int nb_elems=0;
 	do {
-		nb_elems=fscanf(fin," %[^\t\n] ",dummy);
+		nb_elems=fscanf(fin," %[^\t\n] ",dummy); //HACK: possible buffer overflow
 	} while (!feof(fin) && strcmp(dummy,marker.c_str()) != 0 && nb_elems!=0);
 	if(feof(fin)) {
 		cleanup();

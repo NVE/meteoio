@@ -212,10 +212,10 @@ void GRIBIO::addStation(const std::string& coord_spec, std::vector<Coords> &vecP
 
 void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 {
-	const unsigned int MAX_VAL_LEN=1024; //max value string length in GRIB
-	unsigned long key_iterator_filter_flags=GRIB_KEYS_ITERATOR_ALL_KEYS;
-	char* name_space=NULL;
-	grib_keys_iterator* kiter=grib_keys_iterator_new(*h,key_iterator_filter_flags,name_space);
+	const unsigned int MAX_VAL_LEN = 1024; //max value string length in GRIB
+	unsigned long key_iterator_filter_flags = GRIB_KEYS_ITERATOR_ALL_KEYS;
+	char* name_space = NULL;
+	grib_keys_iterator* kiter = grib_keys_iterator_new(*h,key_iterator_filter_flags,name_space);
 
 	if (!kiter) {
 		cleanup();
@@ -224,10 +224,9 @@ void GRIBIO::listKeys(grib_handle** h, const std::string& filename)
 
 	//Iterating over all keys
 	while(grib_keys_iterator_next(kiter)) {
-		char value[MAX_VAL_LEN];
-		size_t vlen=MAX_VAL_LEN;
 		const char* name = grib_keys_iterator_get_name(kiter);
-		vlen=MAX_VAL_LEN;
+		char value[MAX_VAL_LEN];
+		size_t vlen = MAX_VAL_LEN;
 		bzero(value,vlen);
 		GRIB_CHECK(grib_get_string(*h,name,value,&vlen),name);
 		std::cerr << name << " = " << value << "\n";

@@ -36,8 +36,8 @@ void MessageBoxX11( const char* title, const char* text ) {
 	const char* wmDeleteWindow = "WM_DELETE_WINDOW";
 
 	/* Open a display */
-	Display* dpy;
-	if( !(dpy = XOpenDisplay( 0 )) ) return;
+	Display* dpy = XOpenDisplay(0);
+	if(!dpy) return;
 
 	/* Get us a white and black color */
 	const int black = BlackPixel( dpy, DefaultScreen(dpy) );
@@ -67,24 +67,23 @@ void MessageBoxX11( const char* title, const char* text ) {
 
 	/* Split the text down into a list of lines */
 	char **strvec = NULL;
-	size_t strvec_size = 0;
-	char *temp = (char *)malloc( strlen(text)+1 );
-	strcpy( temp, text );
+	size_t strvec_size = 0, text_len = strlen(text)+1;
+	char *temp = (char *)malloc( text_len );
+	strncpy( temp, text, text_len );
 
 	char *pch = strtok( temp, "\n" );
 	while( pch!=NULL ) {
 		strvec = (char **)realloc( strvec, (strvec_size+1)*sizeof(char**) );
 		strvec[ strvec_size ] = (char *)malloc( strlen(pch)+1 );
-		strcpy( strvec[ strvec_size ], pch );
+		strncpy( strvec[ strvec_size ], pch, strlen(pch)+1 );
 		++strvec_size;
 		pch = strtok( NULL, "\n" );
 	}
 	free( temp );
 
 	/* Compute the printed length and height of the longest and the tallest line */
-	XFontStruct* font;
-	if( !(font = XQueryFont( dpy, XGContextFromGC(gc) )) )
-	return;
+	XFontStruct* font = XQueryFont( dpy, XGContextFromGC(gc));
+	if(!font) return;
 
 	int length=0, height=0, direction, ascent, descent;
 	XCharStruct overall;
