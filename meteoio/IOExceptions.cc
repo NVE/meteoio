@@ -119,10 +119,10 @@ IOException::IOException(const std::string& message, const std::string& position
 	#endif
 	}
 	backtrace_info += "\033[0m"; //back to normal color
-	full_output = backtrace_info + "[" + where + "] \033[31;1m" + message + "\033[0m";
+	full_output = backtrace_info + "[" + where + "] \033[31;1m" + message + "\033[0m\n";
 	free(symbols);
 #else
-	full_output = msg;
+	full_output = msg+"\n";
 #endif
 #ifdef _POPC_
 	const string tmp = backtrace_info + "\n\n" + msg;

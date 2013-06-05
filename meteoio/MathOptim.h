@@ -19,6 +19,7 @@
 #define __MATHOPTIM_H__
 
 #include <stdint.h>
+#include <cmath>
 
 //Quake3 fast 1/x² approximation
 // For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
@@ -70,6 +71,17 @@ namespace Optim {
 		const long int xi = static_cast<long int>(x);
 		if (x <= 0 || static_cast<double>(xi) == x) return xi ;
 		else return xi + 1 ;
+	}
+
+	inline double intPart(const double &x) {
+		double fracpart, intpart;
+		fracpart = modf(x, &intpart);
+		return intpart;
+	}
+
+	inline double fracPart(const double &x) {
+		double intpart;
+		return modf(x, &intpart);
 	}
 
 	#ifdef _MSC_VER

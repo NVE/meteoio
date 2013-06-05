@@ -126,6 +126,31 @@ class ConstGenerator : public GeneratorAlgorithm {
 };
 
 /**
+ * @class SinGenerator
+ * @brief Sinusoid generator.
+ * Generate a sinusoidal variation for this parameter, as provided in argument (please remember that it must be in SI units).
+ * The arguments that must be provided are the following: the sinusoidal period (either "yearly" or "daily"), the minimum value,
+ * the maximum value and the offset specifying when the minimum value should be reached, within one period (expressed as fraction of such period).
+ * The example below generates a yearly sinusoidal variation for the air temperature, the minimum being 268.26 K and occuring at 1/12
+ * of the period (which practically means, at the end of the first month).
+ * @code
+ * TA::generators = Sin
+ * TA::Sin = yearly 268.26 285.56 0.0833
+ * @endcode
+ */
+class SinGenerator : public GeneratorAlgorithm {
+	public:
+		SinGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), amplitude(IOUtils::nodata), offset(IOUtils::nodata), phase(IOUtils::nodata), type(' ') { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		void parse_args(const std::vector<std::string>& vecArgs);
+		double amplitude, offset, phase;
+		char type;
+};
+
+/**
  * @class StandardPressureGenerator
  * @brief Standard atmospheric pressure generator.
  * Generate a standard atmosphere's pressure, depending on the local elevation.
@@ -177,7 +202,9 @@ class UnsworthGenerator : public GeneratorAlgorithm {
  * (as a function of the location and the date). Please note that although this is the radiation as perceived
  * at ground level (on the horizontal). If an incoming long wave measurement is available, it corrects the
  * generated iswr for cloudiness (basically doing like UnsworthGenerator in reverse), otherwise this assumes
- * clear sky! This relies on SunObject to perform the heavy duty computation.
+ * clear sky! If no TA or RH is available, average values will be used
+ * (in order to get an average value for the precipitable water vapor).
+ * @note This relies on SunObject to perform the heavy duty computation.
  */
 class PotRadGenerator : public GeneratorAlgorithm {
 	public:

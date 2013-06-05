@@ -512,9 +512,7 @@ int Date::getJulianDayNumber(const bool& gmt) const {
 		const double local_julian = GMTToLocal(gmt_julian);
 		int local_year, local_month, local_day, local_hour, local_minute;
 		calculateValues(local_julian, local_year, local_month, local_day, local_hour, local_minute);
-		const double in_day_offset = 1./24.*((double)local_hour+1./60.*(double)local_minute) - 0.5;
-		const double first_day_of_year = static_cast<double>(getJulianDayNumber(local_year, 1, 1)) + in_day_offset;
-		return static_cast<int>(local_julian - first_day_of_year + 1);
+		return static_cast<int>(Optim::intPart(local_julian)) - static_cast<int>(getJulianDayNumber(local_year, 1, 1)) + 1;
 	}
 }
 
