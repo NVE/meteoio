@@ -24,20 +24,61 @@ namespace mio {
 /**
  * @page snowpack SNIO
  * @section snowpack_format Format
- * This is for reading meteo data in the SNOWPACK meteo format. The metadata might be provided
- * in a separate file that can contain multiple stations, one per line. Each line has the following structure:
- * - ALI2 Allieres:Chenau 1767 6.993 46.489 1.22 \n
+ * This is for reading meteo data in the SNOWPACK meteo format. It is mostly a meteo data format but a
+ * metadata file can be provided alongside. These two formats are described below. Please note that when writing
+ * to a file, the header line will only be created if the file does not already exist. If the file already
+ * exists on the disk, new data will be appended without attempting to write a header line.
+ *
+ * @subsection snowpack_meteo_format Meteo data file format
+ * The SNOWPACK meteo format is defined as such:
+ * - a one line header that starts with "MTO" as marker, followed by a short name suitable to be used
+ *   as station_id (between <>) and the number of data lines.
+ * - multiple lines of data, starting with "M"
+ * - a one line footer that consists of the "END" string followed by a new line character.
+ *
+ * A short example could therefore be:
+ * @code
+ * MTO <Example_station> 2
+ * M 01.08.1958 05:00 21396.20834 9.6 0.674 0.3 356.1 0.0 0.0 276.6 1 -0.1 0 0 1 1 1 1 1 0.6
+ * M 01.08.1958 06:00 21396.25000 9.6 0.675 0.8 343.0 27.1 5.3 288.7 1 -0.1 0 0 1 1 1 1 1 1.6
+ * END
+ * @endcode
+ *
+ * The data section is made of independent lines that all start with the "M" character, followed by
+ * the date as DD.MM.YYYY and the time as HH:mm (24 hours time) and then the Julian day
+ * relative to 01.01.1900 00:00 (please note that the Julian day as given by Excel is off by 2 days!).
+ * All other fields in each lines are meteo parameters, in order given in the table below.
+ *
+ * <center><table>
+ * <tr><th>Parameter</th><th>Units</th><th>Mandatory</th><th>Comments</th></tr>
+ * <tr><td></td><td></td><td></td><td></td></tr>
+ * <tr><td>Air temperature</td><td>K or °C</td><td>yes</td><td></td></tr>
+ * <tr><td>Relative air humidity</td><td>[0-1] or %</td><td>yes</td><td></td></tr>
+ * <tr><td>Wind velocity</td><td>m s<sup>-1</sup></td><td>yes</td><td>at snow station</td></tr>
+ * <tr><td>Wind direction</td><td>degrees</td><td>no</td><td>At either snow or wind station</td></tr>
+ * <tr><td>Incoming SW radiation</td><td>W m<sup>-2</sup></td><td>no</td><td></td></tr>
+ * <tr><td>Reflected SW radiation</td><td>W m<sup>-2</sup></td><td>no</td><td></td></tr>
+ * <tr><td>Incoming LW radiation or Cloudiness</td><td>W m<sup>-2 or [0-1]</sup></td><td>no</td><td></td></tr>
+ * <tr><td>Snow surface temperature</td><td>K or °C</td><td>no</td><td></td></tr>
+ * <tr><td>Bottom temperature</td><td>K or °C</td><td>no</td><td></td></tr>
+ * <tr><td>Precipitations per meteo step</td><td>kg m<sup>-2</sup> (mm H<sub>2</sub>O)</td><td>no</td><td></td></tr>
+ * <tr><td>Snow depth</td><td>m</td><td>no</td><td></td></tr>
+ * <tr><td>Measured temperatures in snow/soil</td><td>K or °C</td><td>no</td><td></td></tr>
+ * <tr><td>Wind velocity</td><td>m s<sup>-1</sup></td><td>no</td><td>at wind station</td></tr>
+ * </table></center>
+ *
+ * The optional parameters are futher specified through some plugin options (see below, \ref snowpack_keywords).
+ *
+ * @subsection snowpack_metadata_format Metadata file format
+ * The (optional) metadata is provided in a separate file that can contain multiple stations, one per line.
+ * Each line has the following structure:
+ * - ALI2 Allieres:Chenau 1767 6.993 46.489 1.22
  *
  * where the first field is the short name, followed by the fullname and the location, then the elevation,
  * the longitude, the latitude and a wind coefficient (unused by MeteoIO). The short name is used for
  * identifying the station (stationID) and matching it with the data file (name given in io.ini).
  * If no such metadata file is provided, the metadata will be left nodata. This only makes sense
  * if the metadata would be later filled by another way (like a merge).
- *
- * In any case, the header line of the data file MUST contain a short name suitable to be used as station_id.
- *
- * Finally, when writing to a file, the header line will only be created if the file does not already exist. If the
- * file already exists on the disk, new data will be appended without attempting to write a header line.
  *
  * @section snowpack_units Units
  * - temperatures in degrees Celsius (input and output) or in kelvins (input only)
