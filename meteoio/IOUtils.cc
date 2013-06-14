@@ -212,20 +212,13 @@ bool isNumeric(std::string str, const unsigned int& nBase)
 	return ( iss.rdbuf()->in_avail() == 0 ); //true if nothing was left after conversion
 }
 
-bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
-                               std::map<std::string,std::string>& out_map, const std::string& keyprefix, const bool& setToUpperCase)
+bool readKeyValuePair(const std::string& in_line, const std::string& delimiter, std::string &key, std::string &value, const bool& setToUpperCase)
 {
-	size_t pos;
-	if ((delimiter==" ") || (delimiter=="\t")) {
-		pos = in_line.find_first_of(" \t", 0);
-	} else {
-		pos = in_line.find(delimiter); //first occurence of '='
-	}
-
+	const size_t pos = ((delimiter==" ") || (delimiter=="\t"))? in_line.find_first_of(" \t", 0) : in_line.find(delimiter); //first occurence of delimiter
 
 	if(pos != std::string::npos) { //ignore in_lines that are empty or without '='
-		std::string key = in_line.substr(0, pos);
-		std::string value = in_line.substr(pos + 1);
+		key = in_line.substr(0, pos);
+		value = in_line.substr(pos + 1);
 
 		trim(key);
 		trim(value);
@@ -236,10 +229,9 @@ bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
 
 		if (setToUpperCase)
 			toUpper(key);
-
-
-		out_map[keyprefix + key] = value;
 	} else {
+		key="";
+		value="";
 		return false;
 	}
 
@@ -357,10 +349,12 @@ void readKeyValueHeader(std::map<std::string,std::string>& headermap,
 
 	for (size_t ii=0; ii< linecount; ii++){
 		if (std::getline(fin, line, eol)) {
+			std::string key, value;
 			linenr++;
-			const bool result = readKeyValuePair(line, delimiter, headermap);
-
-			if (!result) { //  means if ((key == "") || (value==""))
+			const bool result = readKeyValuePair(line, delimiter, key, value);
+			if(result) {
+				headermap[key] = value;
+			} else { //  means if ((key == "") || (value==""))
 				std::stringstream out;
 				out << "Invalid key value pair in line: " << linenr << " of header";
 				throw IOException(out.str(), AT);

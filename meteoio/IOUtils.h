@@ -178,15 +178,13 @@ namespace IOUtils {
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
 	* @param in_line (const string&) string to parse
 	* @param delimiter (const string&) delimiter to use for the parsing
-	* @param out_map (map\<string,string\>&) map after parsing
-	* @param keyprefix this string is prefixed before the key, defaults to no prefix: ""
 	* @param setToUpperCase If set to true the key will be put into upper case (for case insensitivity)
+	* @param key retrieved key
+	* @param value retrieved value
 	* @return (bool) true when line is empty
 	*/
-	bool readKeyValuePair(const std::string& in_line,
-	                      const std::string& delimiter,
-	                      std::map<std::string,std::string>& out_map,
-	                      const std::string& keyprefix="", const bool& setToUpperCase=false);
+	bool readKeyValuePair(const std::string& in_line, const std::string& delimiter,
+	                      std::string &key, std::string &value, const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
 	std::string strToUpper(const std::string &str);

@@ -154,6 +154,8 @@ namespace mio {
  *
  * @endcode
  *
+ * It is also possible (for advanced use) to import another configuration file, see in the \ref config_import "Config class" documentation.
+ *
  * @subsection Finding_docs Where to find the proper documentation
  * As can be seen from the previous example, each plugin, each filter or each interpolation algorithm might have its own parameters. Therefore, this is the documentation of each specific plugin/filter/algorithm that has to be used in order to figure out what can be configured when it (see the next sections in the welcome page).
  */

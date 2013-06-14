@@ -24,7 +24,7 @@ namespace mio {
 
 const double ProcUnventilatedT::dflt_albedo = .23;
 const double ProcUnventilatedT::soil_albedo = .23; //grass
-const double ProcUnventilatedT::snow_albedo = .56; //white surface
+const double ProcUnventilatedT::snow_albedo = .85; //snow
 const double ProcUnventilatedT::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 

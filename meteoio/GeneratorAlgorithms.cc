@@ -167,7 +167,7 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 }
 
 const double UnsworthGenerator::soil_albedo = .23; //grass
-const double UnsworthGenerator::snow_albedo = .56; //white surface
+const double UnsworthGenerator::snow_albedo = .85; //snow
 const double UnsworthGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
 void UnsworthGenerator::parse_args(const std::vector<std::string>& vecArgs)
@@ -200,6 +200,8 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 			}
 		} else {
 			albedo = RSWR / ISWR;
+			if(albedo>=1.) albedo=0.99;
+			if(albedo<=0.) albedo=0.01;
 		}
 
 		const double julian = md.date.getJulian(true);
@@ -260,6 +262,8 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 				}
 			} else {
 				albedo = RSWR / ISWR;
+				if(albedo>=1.) albedo=0.99;
+				if(albedo<=0.) albedo=0.01;
 			}
 
 			const double julian = vecMeteo[ii].date.getJulian(true);
@@ -290,7 +294,7 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 }
 
 const double PotRadGenerator::soil_albedo = .23; //grass
-const double PotRadGenerator::snow_albedo = .56; //white surface
+const double PotRadGenerator::snow_albedo = .85; //snow
 const double PotRadGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 void PotRadGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
@@ -318,6 +322,8 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 		} else { //this could happen if the user calls this generator for a copy parameter, etc
 			albedo = RSWR / ISWR;
+			if(albedo>=1.) albedo=0.99;
+			if(albedo<=0.) albedo=0.01;
 		}
 
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
@@ -371,6 +377,8 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 			} else { //this could happen if the user calls this generator for a copy parameter, etc
 				albedo = RSWR / ISWR;
+				if(albedo>=1.) albedo=0.99;
+				if(albedo<=0.) albedo=0.01;
 			}
 
 			if(TA==IOUtils::nodata || RH==IOUtils::nodata) {

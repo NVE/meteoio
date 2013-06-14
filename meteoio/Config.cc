@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/Config.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -24,12 +25,12 @@ namespace mio {
 const std::string Config::defaultSection = "GENERAL";
 
 //Constructors
-Config::Config() : properties(), sourcename()
+Config::Config() : properties(), imported(), sourcename()
 {
 	//nothing is even put in the property map, the user will have to fill it by himself
 }
 
-Config::Config(const std::string& i_filename) : properties(), sourcename(i_filename)
+Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename)
 {
 	addFile(i_filename);
 }
@@ -168,12 +169,15 @@ void Config::parseFile(const std::string& filename)
 	std::string section=defaultSection;
 	const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 	unsigned int linenr = 0;
+	std::vector<std::string> import_after; //files to import after the current one
+	bool accept_import_before = true;
+	imported.push_back(filename);
 
 	try {
 		do {
 			std::string line;
 			getline(fin, line, eoln); //read complete line
-			parseLine(linenr++, line, section);
+			parseLine(linenr++, import_after, accept_import_before, line, section);
 		} while(!fin.eof());
 		fin.close();
 	} catch(const std::exception&){
@@ -182,9 +186,16 @@ void Config::parseFile(const std::string& filename)
 		}
 		throw;
 	}
+
+	std::reverse(import_after.begin(), import_after.end());
+	while(!import_after.empty()) {
+		const string filename = import_after.back();
+		addFile(filename);
+		import_after.pop_back();
+	}
 }
 
-void Config::parseLine(const unsigned int& linenr, std::string& line, std::string& section)
+void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section)
 {
 	//First thing cut away any possible comments (may start with "#" or ";")
 	IOUtils::stripComments(line);
@@ -192,7 +203,9 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 	if (line.empty()) //ignore empty lines
 		return;
 
-	if (line[0] == '['){
+	//if this is a section header, read it
+	if(line[0] == '[') {
+		accept_import_before = false; //this is not an import, so no further imports allowed
 		const size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
 			stringstream tmp;
@@ -205,12 +218,32 @@ void Config::parseLine(const unsigned int& linenr, std::string& line, std::strin
 		}
 	}
 
-	//At this point line can only be a key value pair
-	if (!IOUtils::readKeyValuePair(line, "=", properties, section+"::", true)) {
+	//this can only be a key value pair...
+	string key, value;
+	if(IOUtils::readKeyValuePair(line, "=", key, value, true)) {
+		if(key=="IMPORT_BEFORE") {
+			if(!accept_import_before)
+				throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
+			if(std::find(imported.begin(), imported.end(), value)!=imported.end())
+				throw IOException("Can not import again \"" + value + "\": it has already been imported!", AT);
+			parseFile(value);
+			return;
+		}
+		if(key=="IMPORT_AFTER") {
+			if(std::find(imported.begin(), imported.end(), value)!=imported.end())
+				throw IOException("Can not import again \"" + value + "\": it has already been imported!", AT);
+			import_after.push_back(value);
+			return;
+		}
+
+		properties[section+"::"+key] = value; //save the key/value pair
+		accept_import_before = false; //this is not an import, so no further import_before allowed
+	} else {
 		stringstream tmp;
 		tmp << linenr;
 		throw InvalidFormatException("Error reading key value pair in \"" + sourcename + "\" at line " + tmp.str(), AT);
 	}
+
 }
 
 //Return key/value filename

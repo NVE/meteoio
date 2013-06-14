@@ -42,8 +42,16 @@ namespace mio {
  * - empty lines are ignored
  * - if there is no section name given in a file, the default section called "GENERAL" is assumed
  * - a VALUE for a KEY can consist of multiple whitespace separated values (e.g. MYNUMBERS = 17.77 -18.55 8888 99.99)
+ * @anchor config_import
+ * - it is possible to import another ini file, by specifying as many of the keys listed below as necessary.
+ *   Please not that in order to prevent circular dependencies, it is not possible to import the same file several times.
+ *      - IMPORT_BEFORE = {file and path to import}. This must take place before any non-import
+ *        key or section header. This imports the specified file before processing the current file, allowing
+ *        to overwrite the imported parameters in the current configuration file.
+ *      - IMPORT_AFTER = {file and path to import}. This can occur anywhere and imports the specified file
+ *        after processing the current file, allowing to overwrite the local parameters by the imported parameters.
  *
- * @author Thomas Egger
+ * @author Thomas Egger & Mathias Bavay
  * @date   2008-11-30
  */
 
@@ -269,10 +277,11 @@ class Config {
 	private:
 		void parseCmdLine(const std::string& cmd_line);
 		void parseFile(const std::string& filename);
-		void parseLine(const unsigned int& linenr, std::string& line, std::string& section);
+		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
 		std::string extract_section(std::string key) const;
 
 		std::map<std::string, std::string> properties; //Save key value pairs
+		std::vector<std::string> imported; //list of files already imported (to avoid circular references)
 		std::string sourcename; //description of the data source for the key/value pair
 }; //end class definition Config
 
