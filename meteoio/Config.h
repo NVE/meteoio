@@ -279,6 +279,7 @@ class Config {
 		void parseFile(const std::string& filename);
 		void parseLine(const unsigned int& linenr, std::vector<std::string> &import_after, bool &accept_import_before, std::string &line, std::string &section);
 		std::string extract_section(std::string key) const;
+		std::string clean_import_path(const std::string& in_path) const;
 
 		std::map<std::string, std::string> properties; //Save key value pairs
 		std::vector<std::string> imported; //list of files already imported (to avoid circular references)

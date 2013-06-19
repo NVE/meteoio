@@ -122,16 +122,33 @@ void copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string cleanPath(const std::string& in_path) {
-	std::string out_path(in_path);
+std::string cleanPath(const std::string& in_path, const bool& resolve)
+{
+	if(!resolve) { //do not resolve links, relative paths, etc
+		std::string out_path(in_path);
+		std::replace(out_path.begin(), out_path.end(), '\\', '/');
+		return out_path;
+	} else {
+	#ifdef WIN32
+		char out_buff[MAX_PATH], in_buff = in_path.c_str();
+		char *ptr1 = out_buff, *ptr2 = in_buff;
 
-	size_t curr = out_path.find('\\', 0);
-	while(curr!=std::string::npos){
-		out_path.replace(curr, 1, "/");
-		curr = out_path.find('\\', curr);
+		std::string out_path = (PathCanonicalize(ptr1,ptr2))? ptr1 : in_path;
+		std::replace(out_path.begin(), out_path.end(), '\\', '/');
+		return out_path;
+	#else //POSIX
+		std::string out_path(in_path);
+		std::replace(out_path.begin(), out_path.end(), '\\', '/');
+
+		char *real_path = realpath(out_path.c_str(), NULL); //POSIX
+		if(real_path!=NULL) {
+			const std::string tmp(real_path);
+			free(real_path);
+			return tmp;
+		} else
+			return out_path; //something failed in realpath, keep it as it is
+	#endif
 	}
-	//out_path.replace(out_path.begin(), out_path.end(), '\\', '/');
-	return out_path;
 }
 
 std::string getExtension(const std::string& filename)
@@ -155,6 +172,26 @@ std::string removeExtension(const std::string& filename)
 	if( start_basename!=std::string::npos && startpos<start_basename ) return filename;
 
 	return filename.substr(0, startpos);
+}
+
+std::string getPath(const std::string& filename, const bool& resolve)
+{
+	const std::string clean_filename = cleanPath(filename, resolve);
+	const size_t end_path = clean_filename.find_last_of("/");
+	if(end_path!=std::string::npos) {
+		return clean_filename.substr(0, end_path);
+	} else {
+		return cleanPath("./", resolve);
+	}
+}
+
+std::string getFilename(const std::string& path)
+{
+	const size_t start_basename = path.find_last_of("/\\");
+	if(start_basename!=std::string::npos)
+		return path.substr(start_basename+1, std::string::npos);
+	else
+		return path;
 }
 
 void trim(std::string& str)

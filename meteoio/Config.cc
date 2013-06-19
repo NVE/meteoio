@@ -189,8 +189,8 @@ void Config::parseFile(const std::string& filename)
 
 	std::reverse(import_after.begin(), import_after.end());
 	while(!import_after.empty()) {
-		const string filename = import_after.back();
-		addFile(filename);
+		const string file_name = import_after.back();
+		addFile(file_name);
 		import_after.pop_back();
 	}
 }
@@ -222,17 +222,19 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	string key, value;
 	if(IOUtils::readKeyValuePair(line, "=", key, value, true)) {
 		if(key=="IMPORT_BEFORE") {
+			const std::string file_and_path = clean_import_path(value);
 			if(!accept_import_before)
 				throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
-			if(std::find(imported.begin(), imported.end(), value)!=imported.end())
+			if(std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
 				throw IOException("Can not import again \"" + value + "\": it has already been imported!", AT);
-			parseFile(value);
+			parseFile(file_and_path);
 			return;
 		}
 		if(key=="IMPORT_AFTER") {
-			if(std::find(imported.begin(), imported.end(), value)!=imported.end())
+			const std::string file_and_path = clean_import_path(value);
+			if(std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
 				throw IOException("Can not import again \"" + value + "\": it has already been imported!", AT);
-			import_after.push_back(value);
+			import_after.push_back(file_and_path);
 			return;
 		}
 
@@ -285,6 +287,21 @@ std::string Config::extract_section(std::string key) const
 		return sectionname;
 	}
 	return defaultSection;
+}
+
+std::string Config::clean_import_path(const std::string& in_path) const
+{
+#ifdef WIN32
+	const bool is_absolute = (in_path.size()>=2 && in_path[1]==':');
+#else
+	const bool is_absolute = (in_path.size()>=1 && in_path[0]=='/');
+#endif
+	//if this is a relative path, prefix the import path with the current path
+	const std::string prefix = (!is_absolute)? IOUtils::getPath(sourcename, true)+"/" : "";
+	const std::string path = IOUtils::getPath(prefix+in_path, true);  //clean & resolve path
+	const std::string filename = IOUtils::getFilename(in_path);
+
+	return path + "/" + filename;
 }
 
 void Config::write(const std::string& filename) const

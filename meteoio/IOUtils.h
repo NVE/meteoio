@@ -139,10 +139,12 @@ namespace IOUtils {
 	std::string getLogName();
 
 	/**
-	* @brief Replace "\" by "/" in a string so that a path string is cross plateform
+	* @brief Replace "\" by "/" in a string so that a path string is cross plateform, optionally resolve
+	* links, convert relative paths to absolute paths, etc
 	* @param in_path the path string to cleanup
+	* @param resolve resolve links, convert relative paths, etc? (default=false)
 	*/
-	std::string cleanPath(const std::string& in_path);
+	std::string cleanPath(const std::string& in_path, const bool& resolve=false);
 
 	/**
 	* @brief returns the extension part of a given filename.
@@ -161,6 +163,21 @@ namespace IOUtils {
 	* @return filename without extension (the '.' is also removed)
 	*/
 	std::string removeExtension(const std::string& filename);
+
+	/**
+	* @brief returns the path preceeding a given filename.
+	* @param filename filename to extract the path from
+	* @param resolve resolve links, convert relative paths, etc? (default=false)
+	* @return path
+	*/
+	std::string getPath(const std::string& filename, const bool& resolve=false);
+
+	/**
+	* @brief extract the file name from a path+filename string.
+	* @param path path to extract the true filename from
+	* @return filename
+	*/
+	std::string getFilename(const std::string& path);
 
 	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
