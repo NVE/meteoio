@@ -205,7 +205,6 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 
 	//if this is a section header, read it
 	if(line[0] == '[') {
-		accept_import_before = false; //this is not an import, so no further imports allowed
 		const size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
 			stringstream tmp;
@@ -226,14 +225,14 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 			if(!accept_import_before)
 				throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
 			if(std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-				throw IOException("Can not import again \"" + value + "\": it has already been imported!", AT);
+				throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
 			parseFile(file_and_path);
 			return;
 		}
 		if(key=="IMPORT_AFTER") {
 			const std::string file_and_path = clean_import_path(value);
 			if(std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
-				throw IOException("Can not import again \"" + value + "\": it has already been imported!", AT);
+				throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
 			import_after.push_back(file_and_path);
 			return;
 		}

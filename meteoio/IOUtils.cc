@@ -26,6 +26,7 @@
 
 #ifdef WIN32
 	#include <windows.h>
+	#include "Shlwapi.h"
 	//removing two macros defined in windows.h
 	#undef max
 	#undef min
@@ -130,10 +131,12 @@ std::string cleanPath(const std::string& in_path, const bool& resolve)
 		return out_path;
 	} else {
 	#ifdef WIN32
-		char out_buff[MAX_PATH], in_buff = in_path.c_str();
-		char *ptr1 = out_buff, *ptr2 = in_buff;
+        char **ptr = NULL;
+		char *out_buff = (char*)calloc(MAX_PATH, sizeof(char));
 
-		std::string out_path = (PathCanonicalize(ptr1,ptr2))? ptr1 : in_path;
+        const DWORD status = GetFullPathName(in_path.c_str(), MAX_PATH, out_buff, ptr);
+		std::string out_path = (status!=0 && status<=MAX_PATH)? out_buff : in_path;
+		free(out_buff);
 		std::replace(out_path.begin(), out_path.end(), '\\', '/');
 		return out_path;
 	#else //POSIX
