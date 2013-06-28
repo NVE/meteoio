@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/libsmet.h>
+#include <meteoio/plugins/libsmet.h>
 #include <errno.h>
 #include <string.h>
 #include <limits>

@@ -40,7 +40,6 @@ ENDIF(POPC)
 
 SET(meteoio_sources
 	IOManager.cc
-	libsmet.cc
 	Matrix.cc
 	IOPlugin.cc
 	MeteoProcessor.cc
@@ -66,6 +65,7 @@ SET(meteoio_sources
 	IOExceptions.cc
 	IOUtils.cc
 	MeteoData.cc
+	plugins/libsmet.cc
 	${plugins_sources}
 	${meteolaws_sources}
 	${meteostats_sources}

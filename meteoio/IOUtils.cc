@@ -131,12 +131,13 @@ std::string cleanPath(const std::string& in_path, const bool& resolve)
 		return out_path;
 	} else {
 	#ifdef WIN32
-        char **ptr = NULL;
+		//if this would not suffice, see http://pdh11.blogspot.ch/2009/05/pathcanonicalize-versus-what-it-says-on.html
+		char **ptr = NULL;
 		char *out_buff = (char*)calloc(MAX_PATH, sizeof(char));
-
-        const DWORD status = GetFullPathName(in_path.c_str(), MAX_PATH, out_buff, ptr);
+		const DWORD status = GetFullPathName(in_path.c_str(), MAX_PATH, out_buff, ptr);
 		std::string out_path = (status!=0 && status<=MAX_PATH)? out_buff : in_path;
 		free(out_buff);
+
 		std::replace(out_path.begin(), out_path.end(), '\\', '/');
 		return out_path;
 	#else //POSIX

@@ -34,7 +34,7 @@ namespace mio {
  * @section gribio_format Format and limitations
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
  * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format (please note that grib_api must be compiled with Position Independent Code ("fPIC" flag)).
- * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://dss.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
+ * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://rda.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
  * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/). Standard COSMO grids are listed at http://zephyr.ucd.ie/mediawiki/index.php/COSMO_GRIB .
  *
  * Several assumptions/approximations are held/made when reading grids:
@@ -383,7 +383,6 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& rea
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 	GRIB_CHECK(grib_get_long(h,"Nj",&Nj),0);
 
-	double *values;
 	size_t values_len= 0;
 	GRIB_CHECK(grib_get_size(h,"values",&values_len),0);
 	if(values_len!=(unsigned)(Ni*Nj)) {
@@ -392,18 +391,19 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& rea
 		ss << "but containing " << values_len << " values. This is inconsistent!";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
-	values = (double*)malloc(values_len*sizeof(double));
+	double *values = (double*)calloc(values_len, sizeof(double));
 
 	GRIB_CHECK(grib_get_double_array(h,"values",values,&values_len),0);
 
 	if(read_geolocalization) {
 		llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
 		if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
-			throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
+			free(values);
+			throw InvalidArgumentException("Unsupported geometry: cells can not be represented by square cells!", AT);
 		}
 	}
 	grid_out.set(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), .5*(cellsize_x+cellsize_y), llcorner);
-	int i=0;
+	unsigned int i=0;
 	for(unsigned int jj=0; jj<(unsigned)Nj; jj++) {
 		for(unsigned int ii=0; ii<(unsigned)Ni; ii++)
 			grid_out(ii,jj) = values[i++];
@@ -427,7 +427,6 @@ bool GRIBIO::read2DGrid_indexed(const double& in_marsParam, const long& i_levelT
 		Date base_date;
 		double P1, P2;
 		getDate(h, base_date, P1, P2);
-std::cerr << "Found date=" << base_date.toString(Date::ISO) << "\n";
 
 		//see WMO code table5 for definitions of timeRangeIndicator. http://dss.ucar.edu/docs/formats/grib/gribdoc/timer.html
 		long timeRange;
@@ -489,7 +488,7 @@ void GRIBIO::indexFile(const std::string& filename)
 	}
 
 	int err=0;
-	std::string keys("marsParam:d,indicatorOfTypeOfLevel:l"); //indexing keys
+	const std::string keys("marsParam:d,indicatorOfTypeOfLevel:l"); //indexing keys
 	char *c_filename = (char *)filename.c_str();
 	idx = grib_index_new_from_file(0, c_filename, keys.c_str(), &err);
 	if(err!=0) {
@@ -562,9 +561,6 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		indexFile(filename);
 	}
 
-listFields(filename);
-std::cerr << "fields have been listed\n";
-
 	//Basic meteo parameters
 	if(parameter==MeteoGrids::P) read2DGrid_indexed(1.2, 1, 0, date, grid_out); //PS
 	if(parameter==MeteoGrids::TA) read2DGrid_indexed(11.2, 105, 2, date, grid_out); //T_2M
@@ -614,8 +610,7 @@ std::cerr << "fields have been listed\n";
 	if(parameter==MeteoGrids::ISWR) {
 		if(read2DGrid_indexed(116.2, 1, 0, date, grid_out)) { //short wave
 			grid_out.grid2D *= -1.;
-		} else {
-		//if(!read2DGrid_indexed(111.250, 1, 0, date, grid_out)) { //GLOB
+		} else if(!read2DGrid_indexed(111.250, 1, 0, date, grid_out)) { //GLOB
 			Grid2DObject diff;
 			read2DGrid_indexed(23.201, 1, 0, date, diff); //diffuse rad, ASWDIFD_S
 			read2DGrid_indexed(22.201, 1, 0, date, grid_out); //direct rad, ASWDIR_S
@@ -993,7 +988,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	//basic meteorological parameters
 	if(readMeteoValues(1.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::P, npoints, Meteo); //PS
 	if(readMeteoValues(11.2, 105, 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TA, npoints, Meteo); //T_2M
-	if(readMeteoValues(197.201, 111, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSS, npoints, Meteo); //T_SO
+	if(readMeteoValues(197.201, 111, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSS, npoints, Meteo); //T_SO take 118, BRTMP instead?
 	if(readMeteoValues(11.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSG, npoints, Meteo); //T_G
 	if(readMeteoValues(52.2, 105, 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::RH, npoints, Meteo); //RELHUM_2M
 	else if(readMeteoValues(17.2, 105, 2, i_date, npoints, lats, lons, values)) { //TD_2M
@@ -1019,7 +1014,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 			Meteo[ii](MeteoData::ISWR) = -values[ii];
 		}
 	} else if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
-	if(readMeteoValues(116.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo);
+	if(readMeteoValues(116.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //SWAVR
 	else if(readMeteoValues(111.250, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ISWR, npoints, Meteo); //GLOB
 	else {
 		if(readMeteoValues(23.201, 1, 0, i_date, npoints, lats, lons, values) //ASWDIFD_S

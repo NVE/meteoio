@@ -20,7 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
-#include <meteoio/libsmet.h>
+#include <meteoio/plugins/libsmet.h>
 
 #include <string>
 
