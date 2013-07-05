@@ -15,7 +15,7 @@ const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,
 const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 
 const double res_Met_0[]	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
-const double res_Met_1 []	= {264.275,			266.4940575,			266.6333333,		269.5678596,		266.0166667,		267.044084,		266.15818}; // TA
+const double res_Met_1 []	= {264.261457,			266.4673185,			266.6195186,		269.5468685,		266.0020691,		267.0407779,		266.1504106}; // TA
 const double res_Met_2 []	= {1.,				0.9669166667,			1.,					0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
 const double res_Met_3[]	= {273.6963,			274.3503833,			273.9969,				274.6983,				274.0971,				274.9251417,				274.0971}; // TSG
 const double res_Met_4[]	= {262.9366667,			266.1666667,			264.41,				268.9033333,		265.43,		266.89,		262.1966667}; // TSS
@@ -33,34 +33,35 @@ const double res_Met_12 []	= {IOUtils::nodata,	3.57323147,						IOUtils::nodata,
 bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 
 	const double epsilon = 1.0e-7; // accuracy of the double tests
+	bool status = true;
 
 	// Coords content
 	Coords& dataCoord = datMeteo.meta.position;
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getAltitude(), res_Alt[i_results], epsilon)){
 		cerr << "error on Altitude"<< endl;
-		exit(1);
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getLat(), res_Lat[i_results], epsilon)){
 		cerr << "error on Latitude"<< endl;
-		exit(1);
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getLon(), res_Lon[i_results], epsilon)){
 		cerr << "error on Longitude"<< endl;
-		exit(1);
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getEasting(), res_X[i_results], epsilon)){
 		cerr << "error on X (Easting)"<< endl;
-		exit(1);
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(dataCoord.getNorthing(), res_Y[i_results], epsilon)){
 		cerr << "error on Y (Northing)"<< endl;
-		exit(1);
+		status = false;
 	}
 	string tmp_type, tmp_args;
 	dataCoord.getProj(tmp_type,tmp_args);
 	if(tmp_type.compare("CH1903") != 0){
 		cerr << "error on Projection"<< endl;
-		exit(1);
+		status = false;
 	}
 
 	Coords refCoord;
@@ -71,87 +72,87 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on == operator for Coords :";
 		cerr << datMeteo.meta.position.toString() << endl;
 		cerr << refCoord.toString() << endl;
-		exit(1);
+		status = false;
 	}
 
 
 	// Station Data content
 	if(datMeteo.meta.getStationID().compare(res_ID[i_results]) != 0){
 		cerr << "error on StationID"<< endl;
-		exit(1);
+		status = false;
 	}
 	if(datMeteo.meta.getStationName().compare(res_Name[i_results]) != 0){
 		cerr << "error on getStationName"<< endl;
-		exit(1);
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo.meta.getSlopeAngle(),res_Slope[i_results], epsilon)){
 		cerr << "error on getSlopeAngle";
-		exit(1);
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo.meta.getAzimuth(), res_Azi[i_results], epsilon)){
 		cerr << "error on getAzimuth";
-		exit(1);
+		status = false;
 	}
 
 	StationData refStation(refCoord, res_ID[i_results], res_Name[i_results]);
 	refStation.setSlope(res_Slope[i_results], res_Azi[i_results]);
 	if(refStation != datMeteo.meta){
 		cerr << "error on != between Station Data";
-		exit(1);
+		status = false;
 	}
 
 	// Meteo data
 	if(!IOUtils::checkEpsilonEquality(datMeteo(0), res_Met_0[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(0) << " != " << res_Met_0[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(0) << " != " << res_Met_0[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(1), res_Met_1[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(1) << " != " << res_Met_1[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(1) << " != " << res_Met_1[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(2), res_Met_2[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(2) << " != " << res_Met_2[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(2) << " != " << res_Met_2[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(3), res_Met_3[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(3) << " != " << res_Met_3[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(3) << " != " << res_Met_3[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(4), res_Met_4[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(4) << " != " << res_Met_4[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(4) << " != " << res_Met_4[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(5), res_Met_5[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(5) << " != " << res_Met_5[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(5) << " != " << res_Met_5[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(6), res_Met_6[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(6) << " != " << res_Met_6[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(6) << " != " << res_Met_6[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(7), res_Met_7[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(7) << " != " << res_Met_7[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(7) << " != " << res_Met_7[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(8), res_Met_8[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(8) << " != " << res_Met_8[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(8) << " != " << res_Met_8[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(9), res_Met_9[i_results], 10.*epsilon)){ // HACK special epsilon that passes tests !
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(9) << " != " << res_Met_9[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(9) << " != " << res_Met_9[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(10), res_Met_10[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(10) << " != " << res_Met_10[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(10) << " != " << res_Met_10[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(11), res_Met_11[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(11) << " != " << res_Met_11[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(11) << " != " << res_Met_11[i_results] << endl;
+		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(12), res_Met_12[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << datMeteo(12) << " != " << res_Met_12[i_results] << endl;
-		exit(1);
+		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(12) << " != " << res_Met_12[i_results] << endl;
+		status = false;
 	}
 
 	MeteoData refMeteo(datDate);
@@ -174,14 +175,15 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on == operator for MeteoData :" << datMeteo.getNrOfParameters() << " - " << refMeteo.getNrOfParameters() << endl;
 		cerr << datMeteo.toString() << endl;
 		cerr << refMeteo.toString() << endl;
-		exit(1);
+		status = false;
 	}
 
-	return true;
+	return status;
 }
 
 //Test if data read at 2008-12-01T15:35:00 are correct
 int main() {
+	bool status = true;
 	Date d1(2008, 12, 1, 15, 35, 0, 1);
 	std::vector<MeteoData> vecMeteo;
 
@@ -194,16 +196,19 @@ int main() {
 	// Compare data with hard coded values
 	if(vecMeteo.size() != 7) {
 		cerr << "ERROR on amout of Data read !!! \n";
-		exit(1);
+		status = false;
 	}
 
 	// Test readed data
 	for(unsigned int i = 0; i < vecMeteo.size(); i++){
 		cout << "----- Control of vecMeteo # : "<< i+1 << endl;
 		if(!controllStation(vecMeteo[i], i, d1)){
-			exit(1);
+			status = false;
 		}
 	}
 
-	return 0;
+	if(status==true)
+		return 0;
+	else
+		return 1;
 }
