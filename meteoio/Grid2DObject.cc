@@ -312,7 +312,7 @@ double Grid2DObject::operator()(const unsigned int& i) const {
 }
 
 const std::string Grid2DObject::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<Grid2DObject>\n";
 	os << llcorner.toString();
 	os << ncols << " x " << nrows << " @ " << cellsize << "m\n";

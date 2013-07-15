@@ -457,7 +457,7 @@ void IOManager::write2DGrid(const Grid2DObject& grid2D, const MeteoGrids::Parame
 }
 
 const std::string IOManager::toString() const {
-	stringstream os;
+	ostringstream os;
 	os << "<IOManager>\n";
 	os << "Config cfg = " << hex << &cfg << dec << "\n";
 	os << rawio.toString();

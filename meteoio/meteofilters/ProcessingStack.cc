@@ -30,7 +30,7 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 		string block_name = vec_filters[ii];
 		IOUtils::toUpper(block_name);
 		std::vector<std::string> vec_args;
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << param_name << "::arg" << (ii+1);
 
 		getArgumentsForFilter(cfg, tmp.str(), vec_args); //Read arguments

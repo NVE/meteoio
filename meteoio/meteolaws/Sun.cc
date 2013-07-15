@@ -316,7 +316,7 @@ double SunObject::getSplitting(const double& iswr_measured) const
 
 const std::string SunObject::toString() const
 {
-	std::stringstream os;
+	std::ostringstream os;
 	const std::streamsize old_prec = os.precision();
 	os << "<SunObject>\n";
 	os << position.toString();

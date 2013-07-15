@@ -118,7 +118,7 @@ size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData
 */
 std::string InterpolationAlgorithm::getInfo() const
 {
-	std::stringstream os;
+	std::ostringstream os;
 	os << algo << ", " << nrOfMeasurments;
 	if(nrOfMeasurments==1)
 		os << " station";

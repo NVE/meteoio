@@ -132,7 +132,7 @@ Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& s
 
 const std::string Meteo1DInterpolator::toString() const
 {
-	stringstream os;
+	ostringstream os;
 	os << "<Meteo1DInterpolator>\n";
 	os << "Config& cfg = " << hex << &cfg << dec <<"\n";
 	os << "Resampling algorithms:\n";

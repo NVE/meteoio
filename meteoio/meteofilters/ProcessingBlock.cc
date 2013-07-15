@@ -192,7 +192,7 @@ std::string ProcessingBlock::getName() const {
 ProcessingBlock::~ProcessingBlock() {}
 
 const std::string ProcessingBlock::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "[" << block_name << " ";
 	os << properties.toString();
 	os << "]";

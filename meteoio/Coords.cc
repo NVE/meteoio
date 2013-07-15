@@ -932,7 +932,7 @@ lat, double& lon)
 * @return string containing the formatted coordinate
 */
 std::string Coords::decimal_to_dms(const double& decimal) {
-	std::stringstream dms;
+	std::ostringstream dms;
 	const double abs_dec = fabs(decimal);
 	const int d = (int)floor(abs_dec);
 	const int m = (int)floor( (abs_dec - (double)d)*60. );
@@ -1162,7 +1162,7 @@ int Coords::getUTMZone(const double i_latitude, const double i_longitude, std::s
 	else if((0 >=  i_longitude) && (i_latitude <= -80)) zoneLetter = 'A';
 	else if((0 <   i_longitude) && (i_latitude <= -80)) zoneLetter = 'B';
 
-	std::stringstream zone;
+	std::ostringstream zone;
 	zone << ZoneNumber << zoneLetter;
 	zone_out = zone.str();
 

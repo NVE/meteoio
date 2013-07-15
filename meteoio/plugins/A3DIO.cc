@@ -463,7 +463,7 @@ void A3DIO::constructMeteo2DFilenames(const Date& startDate, const Date& endDate
 	cfg.getValue("METEOPATH", "Input", tmp);
 
 	for (int yyyy = startyear; yyyy<=endyear; yyyy++){
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << yyyy;
 
 		std::string precFilename = tmp + "/prec" + ss.str() + ".txt";

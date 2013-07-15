@@ -442,7 +442,7 @@ template<class T> bool Array3D<T>::isEmpty() const {
 }
 
 template<class T> const std::string Array3D<T>::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<array3d>\n";
 	for (unsigned int kk=0; kk<nz; kk++) {
 		os << "depth[" << kk << "]\n";

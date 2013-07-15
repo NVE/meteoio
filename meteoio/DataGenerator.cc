@@ -180,7 +180,7 @@ size_t DataGenerator::getArgumentsForAlgorithm(const Config& cfg,
 }
 
 const std::string DataGenerator::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<DataGenerator>\n";
 	os << "Generators defined: " << generators_defined << "\n";
 	os << "User list of generators:\n";

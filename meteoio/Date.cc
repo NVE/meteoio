@@ -892,7 +892,7 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 }
 
 const std::string Date::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<date>\n";
 	if(undef==true)
 		os << "Date is undefined\n";

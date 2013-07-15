@@ -82,7 +82,7 @@ bool Config::keyExists(const std::string& key, const std::string& section) const
 }
 
 const std::string Config::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<Config>\n";
 	os << "Source: " << sourcename << "\n";
 	for (map<string,string>::const_iterator it = properties.begin(); it != properties.end(); ++it){
@@ -207,7 +207,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	if(line[0] == '[') {
 		const size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
-			stringstream tmp;
+			ostringstream tmp;
 			tmp << linenr;
 			throw IOException("Section header corrupt in line " + tmp.str(), AT);
 		} else {
@@ -240,7 +240,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		properties[section+"::"+key] = value; //save the key/value pair
 		accept_import_before = false; //this is not an import, so no further import_before allowed
 	} else {
-		stringstream tmp;
+		ostringstream tmp;
 		tmp << linenr;
 		throw InvalidFormatException("Error reading key value pair in \"" + sourcename + "\" at line " + tmp.str(), AT);
 	}

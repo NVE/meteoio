@@ -164,7 +164,7 @@ void SMETIO::parseInputOutputSection()
 
 			if (!filename.empty()){
 				if(IOUtils::getExtension(filename)=="") filename += dflt_extension; //default extension
-				stringstream file_and_path;
+				ostringstream file_and_path;
 				file_and_path << inpath << "/" << filename;
 				if (!IOUtils::validFileName(file_and_path.str())) //Check whether filename is valid
 					throw InvalidFileNameException(file_and_path.str(), AT);

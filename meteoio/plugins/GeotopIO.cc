@@ -155,7 +155,7 @@ void GeotopIO::writeMeteoData(
 
 	//Writing actual meteo files
 	for (size_t ii = 0; ii < vecMeteo.size(); ii++) {
-		stringstream ss;
+		ostringstream ss;
 		ss.fill('0');
 		ss << path << "/" << "_meteo" << setw(4) << (ii + 1) << ".txt";
 
@@ -239,7 +239,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	for (size_t ii = 0; ii < nr_of_stations; ii++) {
 		vecMeteo.push_back(vector<MeteoData> ());
 
-		stringstream ss;
+		ostringstream ss;
 		ss.fill('0');
 		ss << path << "/" << prefix << setw(4) << (ii + 1) << ".txt";
 

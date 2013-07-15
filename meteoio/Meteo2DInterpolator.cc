@@ -200,7 +200,7 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 }
 
 const std::string Meteo2DInterpolator::toString() const {
-	stringstream os;
+	ostringstream os;
 	os << "<Meteo2DInterpolator>\n";
 	os << "Config& cfg = " << hex << &cfg << dec << "\n";
 	os << "IOManager& iomanager = "  << hex << &iomanager << dec << "\n";

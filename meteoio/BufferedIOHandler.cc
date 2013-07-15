@@ -378,7 +378,7 @@ void BufferedIOHandler::clearBuffer(){
 
 const std::string BufferedIOHandler::toString() const
 {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<BufferedIOHandler>\n";
 	os << "Config& cfg = " << hex << &cfg << dec << "\n";
 	os << "IOHandler &iohandler = " << hex << &iohandler << dec << "\n";

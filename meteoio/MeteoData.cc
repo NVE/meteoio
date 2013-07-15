@@ -278,7 +278,7 @@ size_t MeteoData::getParameterIndex(const std::string& parname) const
 }
 
 const std::string MeteoData::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<meteo>\n";
 	os << meta.toString();
 	os << date.toString(Date::FULL) << "\n";

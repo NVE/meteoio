@@ -177,7 +177,7 @@ void SNIO::cleanup() throw()
 }
 
 std::string SNIO::file_pos(const std::string& filename, const size_t& linenr) {
-	stringstream ss2;
+	ostringstream ss2;
 	ss2 << filename << ":" <<linenr;
 	return ss2.str();
 }
@@ -403,7 +403,7 @@ void SNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	for (size_t ii=0; ii<vecAllStations.size(); ii++){
 		string filename, line;
-		stringstream ss, file_with_path;
+		ostringstream ss, file_with_path;
 
 		ss << ii+1;
 		cfg.getValue("STATION"+ss.str(), "Input", filename);
@@ -591,7 +591,7 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		md("RHO_HN") = tmpdata[ii++];
 	}
 	if (vecLine.size() > ii) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Reading station " << md.meta.stationID << ", at " << file_pos(filename, linenr) << ": too many fields.\n";
 		ss << "Looking for " << nr_meteoData << " standard fields + " << number_meas_temperatures << " snow temperatures + ";
 		ss << number_of_solutes << " solutes";

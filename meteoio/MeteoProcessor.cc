@@ -107,7 +107,7 @@ bool MeteoProcessor::resample(const Date& date, const std::vector<MeteoData>& iv
 }
 
 const std::string MeteoProcessor::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<MeteoProcessor>\n";
 	os << mi1d.toString();
 	os << "Processing stacks:\n";

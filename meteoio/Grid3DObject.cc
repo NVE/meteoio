@@ -324,7 +324,7 @@ double Grid3DObject::operator()(const unsigned int& i) const {
 }
 
 const std::string Grid3DObject::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<Grid3DObject>\n";
 	os << llcorner.toString();
 	os << ncols << " x " << nrows  << " x " << ndepths << " @ " << cellsize << "m\n";

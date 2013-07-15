@@ -236,7 +236,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			for (unsigned int ll=0; ll < ncols; ll++){
 				iss >> std::skipws >> tmp;
 				if (iss.fail()) {
-					stringstream ss;
+					ostringstream ss;
 					ss << "Can not read column " << ll+1 << " of data line " << nrows-kk+nr_empty << " in file " << full_name << ": ";
 					ss << ncols << " columns of doubles expected";
 					throw InvalidFormatException(ss.str(), AT);
@@ -297,7 +297,7 @@ void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 
 	cfg.getValue("DAPATH", "Input", filepath);
 
-	stringstream ss;
+	ostringstream ss;
 	ss.fill('0');
 	ss << filepath << "/" << setw(4) << yyyy << setw(2) << MM << setw(2) <<  dd << setw(2) <<  hh <<  setw(2) <<  mm << ".sca";
 

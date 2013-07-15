@@ -383,7 +383,7 @@ template<class T> bool Array2D<T>::isEmpty() const {
 }
 
 template<class T> const std::string Array2D<T>::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<array2d>\n";
 	for(unsigned int jj=0; jj<ny; jj++) {
 		const unsigned int jnx = jj*nx;
