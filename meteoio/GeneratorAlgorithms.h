@@ -58,6 +58,7 @@ namespace mio {
  * The keywords defining the algorithms are the following:
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
+ * - SIN: sinusoidal variation (see SinGenerator)
  * - UNSWORTH: use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
  * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
