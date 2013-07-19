@@ -33,6 +33,7 @@ class FitModel {
 		virtual ~FitModel() {};
 		virtual void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) = 0;
 		void setGuess(const std::vector<double>& lambda_in);
+		virtual void setLapseRate(const double& /*lapse_rate*/) {throw InvalidArgumentException("Lapse rates can only be forced for linear regressions!", AT);};
 		virtual bool fit() = 0;
 		virtual double f(const double& x) = 0;
 		void getParams(std::vector<double>& o_coefficients);
@@ -40,6 +41,8 @@ class FitModel {
 		std::string getInfo();
 		FitModel& operator =(const FitModel& source);
 	protected:
+		virtual bool checkInputs() {return true;};
+
 		std::vector<double> Lambda; //parameters of the fit
 		std::vector<double> X; //X of input data set to fit
 		std::vector<double> Y; //Y of input data set to fit
@@ -48,7 +51,7 @@ class FitModel {
 		size_t nPts; //number of data points
 		size_t nParam; //number of parameters
 		size_t min_nb_pts; //minimum number of data points
-		bool fit_ready;
+		bool fit_ready; //set to false if fit() must be called before using the fit
 };
 
 /**
@@ -62,7 +65,7 @@ class FitModel {
  */
 class FitLeastSquare : public FitModel {
  	public:
-		FitLeastSquare();
+		FitLeastSquare() {};
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		virtual double f(const double& x) = 0;
@@ -71,7 +74,7 @@ class FitLeastSquare : public FitModel {
 		virtual void setDefaultGuess(); //set defaults guess values. Called by setData
 
 	private:
-		void checkInputs();
+		bool checkInputs();
 		void initLambda();
 		void initDLambda(Matrix& dLambda) const;
 		double getDelta(const double& var) const;

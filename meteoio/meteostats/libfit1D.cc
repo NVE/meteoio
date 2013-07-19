@@ -25,9 +25,6 @@ using namespace std;
 
 namespace mio {
 
-Fit1D::Fit1D() : model(NULL) {}
-
-//default constructor
 Fit1D::Fit1D(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit) : model(NULL) {
 	setModel(regType, in_X, in_Y, updatefit);
 }
@@ -53,7 +50,8 @@ void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 	regression regType;
 	if(i_regType=="ZERO") regType=ZERO;
 	else if(i_regType=="SIMPLE_LINEAR") regType=SIMPLE_LINEAR;
-	else if(i_regType=="NOISYLINEAR") regType=NOISYLINEAR;
+	else if(i_regType=="NOISY_LINEAR") regType=NOISY_LINEAR;
+	else if(i_regType=="FRAC_LINEAR") regType=FRAC_LINEAR;
 	else if(i_regType=="LINVARIO") regType=LINVARIO;
 	else if(i_regType=="EXPVARIO") regType=EXPVARIO;
 	else if(i_regType=="SPHERICVARIO") regType=SPHERICVARIO;
@@ -73,7 +71,8 @@ void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X,
 
 	if(regType==ZERO) model=new Zero;
 	if(regType==SIMPLE_LINEAR) model=new SimpleLinear;
-	if(regType==NOISYLINEAR) model=new NoisyLinear;
+	if(regType==NOISY_LINEAR) model=new NoisyLinear;
+	if(regType==FRAC_LINEAR) model=new FracLinear;
 	if(regType==LINVARIO) model=new LinVario;
 	if(regType==EXPVARIO) model=new ExpVario;
 	if(regType==SPHERICVARIO) model=new SphericVario;
@@ -91,6 +90,11 @@ void SimpleLinear::setData(const std::vector<double>& in_X, const std::vector<do
 	X = in_X;
 	Y = in_Y;
 
+	fit_ready = false;
+}
+
+bool SimpleLinear::checkInputs()
+{
 	//check input data consistency
 	nPts=X.size();
 
@@ -104,30 +108,79 @@ void SimpleLinear::setData(const std::vector<double>& in_X, const std::vector<do
 		stringstream ss;
 		ss << "Only " << nPts << " data points for " << regname << " regression model.";
 		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
-		throw InvalidArgumentException(ss.str(), AT);
+		infoString = ss.str();
+		return false;
 	}
 
-	fit_ready = false;
+	return true;
 }
 
 double SimpleLinear::f(const double& x) {
 	return Lambda.at(0)*x + Lambda.at(1);
 }
 
-bool SimpleLinear::fit() {
+bool SimpleLinear::fit()
+{
+	if(!checkInputs())
+		return false;
+
 	Lambda.clear();
 	double a,b,r;
 	std::stringstream mesg;
-	Interpol1D::LinRegression(X, Y, a, b, r, mesg);
+
+	if(fixed_lapse_rate==IOUtils::nodata) {
+		Interpol1D::LinRegression(X, Y, a, b, r, mesg);
+		mesg << "Computed regression with " << regname << " model - r=" << r;
+	} else {
+		a = fixed_lapse_rate;
+		Interpol1D::LinRegressionFixedRate(X, Y, a, b, r, mesg);
+		mesg << "Computed regression with " << regname << " model ";
+		mesg << "(fixed lapse rate=" << a << ") - r=" << r;
+	}
 	Lambda.push_back(a);
 	Lambda.push_back(b);
-	mesg << "Computed regression with " << regname << " model - r=" << r;
 	infoString = mesg.str();
 	fit_ready = true;
 	return true;
 }
 
-bool NoisyLinear::fit() {
+double FracLinear::f(const double& x) {
+	return Lambda.at(0)*x*x + Lambda.at(1);
+}
+
+bool FracLinear::fit()
+{
+	if(!checkInputs())
+		return false;
+
+	Lambda.clear();
+	double a,b,r;
+	std::stringstream mesg;
+
+	std::vector<double> X_sq(X);
+	std::transform(X_sq.begin(), X_sq.end(), X_sq.begin(), X_sq.begin(), multiplies<double>());
+
+	if(fixed_lapse_rate==IOUtils::nodata) {
+		Interpol1D::LinRegression(X_sq, Y, a, b, r, mesg);
+		mesg << "Computed regression with " << regname << " model - r=" << r;
+	} else {
+		a = fixed_lapse_rate;
+		Interpol1D::LinRegressionFixedRate(X_sq, Y, a, b, r, mesg);
+		mesg << "Computed regression with " << regname << " model ";
+		mesg << "(fixed lapse rate=" << a << ") - r=" << r;
+	}
+	Lambda.push_back(a);
+	Lambda.push_back(b);
+	infoString = mesg.str();
+	fit_ready = true;
+	return true;
+}
+
+bool NoisyLinear::fit()
+{
+	if(!checkInputs())
+		return false;
+
 	Lambda.clear();
 	double a,b,r;
 	std::stringstream mesg;

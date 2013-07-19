@@ -408,6 +408,57 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 /**
 * @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
+* the linear regression has the form Y = aX + b with a regression coefficient r (it is nodata safe) while forcing the value of a
+* @param X vector of X coordinates
+* @param Y vector of Y coordinates (same order as X)
+* @param a slope of the linear regression (forced)
+* @param b origin of the linear regression
+* @param r absolute value of linear regression coefficient
+* @param mesg information message if something fishy is detected
+*/
+void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
+{	//check arguments
+	const size_t n = X.size();
+	if(n==0)
+		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
+	if(n!=Y.size())
+		throw IOException("Vectors should have the same size for linear regression!", AT);
+
+	//computing x_avg and y_avg
+	int count=0;
+	double x_avg=0, y_avg=0;
+	for (size_t i=0; i<n; i++) {
+		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
+			x_avg += X[i];
+			y_avg += Y[i];
+			count++;
+		}
+	}
+	if(count==0)
+		throw NoAvailableDataException("Trying to calculate linear regression with no valid data points", AT);
+	x_avg /= (double)count;
+	y_avg /= (double)count;
+
+	//computing the regression line
+	b = y_avg - a*x_avg;
+
+	double TSS=0, SSR=0; //Total Sum of Squares and Sum of Squared Residuals
+	for (size_t i=0; i<n; i++) {
+		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
+			SSR += Optim::pow2( Y[i] - (a*X[i]+b) );
+			TSS += Optim::pow2( Y[i] );
+		}
+	}
+	if(TSS!=0) {
+		r = 1. - SSR/TSS;
+	} else {
+		r = 1.; //when all Y[i]=0 we automatically pick up the best possible fit. But r does not mean anything...
+		mesg << "[W] Computing fixed lapse rate linear regression on data all at Y=0\n";
+	}
+}
+
+/**
+* @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
 * the linear regression has the form Y = aX + b with a regression coefficient r. If the regression coefficient is not good enough, tries to remove bad points (up to 15% of the initial data set can be removed, keeping at least 4 points)
 * @param in_X vector of X coordinates
 * @param in_Y vector of Y coordinates (same order as X)

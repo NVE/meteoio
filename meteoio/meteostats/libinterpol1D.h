@@ -50,6 +50,7 @@ class Interpol1D {
 		static double covariance(const std::vector<double>& z1, const std::vector<double>& z2);
 
 		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
+		static void LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 		static int NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::stringstream& mesg);
 		static int twoLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, const double& bilin_inflection, std::vector<double>& coeffs);
 		static void LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);

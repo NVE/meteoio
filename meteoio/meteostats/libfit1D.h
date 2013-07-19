@@ -35,8 +35,19 @@ class Zero : public FitModel {
 
 class SimpleLinear : public FitModel {
 	public:
-		SimpleLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
+		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
+		bool fit();
+		double f(const double& x);
+		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts=1;};
+	protected:
+		bool checkInputs();
+		double fixed_lapse_rate;
+};
+
+class FracLinear : public SimpleLinear {
+	public:
+		FracLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
 		bool fit();
 		double f(const double& x);
 };
@@ -95,8 +106,9 @@ class Quadratic : public FitLeastSquare {
  * It works on a time serie and uses either ad-hoc methods or matrix arithmetic to perform an arbitrary fit.
  * Currently, the following models are supported:
  * - Specific fits:
- *    - SimpleLinear:
+ *    - SimpleLinear
  *    - NoisyLinear
+ *    - fracLinear
  * - Least Square fits:
  *    - SphericVario
  *    - LinVario
@@ -119,7 +131,8 @@ class Fit1D {
 		typedef enum REGRESSION {
 			ZERO, ///< always return zero (this is a way to disable detrending)
 			SIMPLE_LINEAR, ///< basic, cheap linear fit
-			NOISYLINEAR, ///< same as SIMPLE_LINEAR but trying to remove outliers
+			NOISY_LINEAR, ///< same as SIMPLE_LINEAR but trying to remove outliers
+			FRAC_LINEAR, ///< "linear" but with a fractional lapse rate (ultimately, it is quadratic)
 			LINVARIO, ///< linear variogram
 			EXPVARIO, ///< exponential variogram
 			SPHERICVARIO, ///< spherical variogram
@@ -132,7 +145,7 @@ class Fit1D {
 		* @brief Empty Constructor. The model must be set afterwards.
 		* If the model has not been set before calling other methods, a NULL pointer exception will be thrown.
 		*/
-		Fit1D();
+		Fit1D() : model(NULL) {};
 
 		/**
 		* @brief Constructor.
@@ -187,6 +200,13 @@ class Fit1D {
 		void setGuess(const std::vector<double>& lambda_in) {model->setGuess(lambda_in);};
 
 		/**
+		* @brief Set a forced lapse rate for linear regressions
+		* This will throw an exception for all other regression models!
+		* @param lapse_rate lapse rate to set
+		*/
+		void setLapseRate(const double& lapse_rate) {model->setLapseRate(lapse_rate);};
+
+		/**
 		* @brief Compute the regression parameters
 		* @return false if could not find the parameters
 		*/
@@ -221,6 +241,14 @@ class Fit1D {
 		std::string getInfo() const {return model->getInfo();};
 
 		Fit1D& operator =(const Fit1D& source);
+
+		/**
+		* @brief Calculate a value using the computed least square fit.
+		* The fit has to be computed before.
+		* @param x abscissa
+		* @return f(x) using the computed least square fit
+		*/
+		double operator ()(const double& x) const {return model->f(x);};
 
 	private:
 		FitModel *model;

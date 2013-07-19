@@ -31,11 +31,7 @@ void FitModel::getParams(std::vector<double>& o_coefficients) {
 }
 
 std::string FitModel::getInfo() {
-	if(fit_ready==true) {
-		return infoString;
-	} else {
-		throw InvalidArgumentException("The regression has not yet being computed!", AT);
-	}
+	return infoString;
 }
 
 void FitModel::setGuess(const std::vector<double>& lambda_in) {
@@ -74,14 +70,9 @@ const double FitLeastSquare::delta_init_rel = 0.2; //initial delta, relative
 const double FitLeastSquare::eps_conv = 1e-6; //convergence criteria
 const unsigned int FitLeastSquare::max_iter = 50; //maximum number of iterations
 
-//default constructor
-FitLeastSquare::FitLeastSquare() {
-}
-
 void FitLeastSquare::setData(const std::vector<double>& in_X, const std::vector<double>& in_Y) {
 	X = in_X;
 	Y = in_Y;
-	checkInputs();
 	Interpol1D::sort(X, Y); //sort the data by increasing X
 	setDefaultGuess();
 	fit_ready = false;
@@ -94,13 +85,14 @@ void FitLeastSquare::setDefaultGuess() {
 }
 
 bool FitLeastSquare::fit() {
+	checkInputs();
 	return computeFit();
 }
 
 ////////////////////////////////////////////////////////////
 //// End of public methods
 
-void FitLeastSquare::checkInputs()
+bool FitLeastSquare::checkInputs()
 {
 	nPts=X.size();
 
@@ -114,8 +106,11 @@ void FitLeastSquare::checkInputs()
 		stringstream ss;
 		ss << "Only " << nPts << " data points for " << regname << " regression model.";
 		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
-		throw InvalidArgumentException(ss.str(), AT);
+		infoString = ss.str();
+		return false;
 	}
+
+	return true;
 }
 
 bool FitLeastSquare::computeFit() {
