@@ -74,8 +74,8 @@ namespace Optim {
 	}
 
 	inline double intPart(const double &x) {
-		double fracpart, intpart;
-		fracpart = modf(x, &intpart);
+		double intpart;
+		modf(x, &intpart);
 		return intpart;
 	}
 
