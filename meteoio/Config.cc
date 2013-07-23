@@ -315,8 +315,8 @@ void Config::write(const std::string& filename) const
 		string current_section;
 		unsigned int sectioncount = 0;
 		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it){
-			const string key = it->first;
-			const string section = extract_section(key);
+			const string key_full = it->first;
+			const string section = extract_section(key_full);
 
 			if (current_section != section){
 				current_section = section;
@@ -326,7 +326,11 @@ void Config::write(const std::string& filename) const
 				fout << "[" << section << "]" << endl;
 			}
 
-			fout << key << " = " << it->second << endl;
+			const size_t key_start = key_full.find_first_of(":");
+			if(key_start!=string::npos) //start after the "::" marking the section prefix
+				fout << key_full.substr(key_start+2) << " = " << it->second << endl;
+			else //every key should have a section prefix, but just in case...
+				fout << key_full << " = " << it->second << endl;
 		}
 	} catch(...) {
 		if (fout.is_open()) //close fout if open
