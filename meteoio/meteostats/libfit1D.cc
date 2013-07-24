@@ -51,7 +51,6 @@ void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 	if(i_regType=="ZERO") regType=ZERO;
 	else if(i_regType=="SIMPLE_LINEAR") regType=SIMPLE_LINEAR;
 	else if(i_regType=="NOISY_LINEAR") regType=NOISY_LINEAR;
-	else if(i_regType=="FRAC_LINEAR") regType=FRAC_LINEAR;
 	else if(i_regType=="LINVARIO") regType=LINVARIO;
 	else if(i_regType=="EXPVARIO") regType=EXPVARIO;
 	else if(i_regType=="SPHERICVARIO") regType=SPHERICVARIO;
@@ -72,7 +71,6 @@ void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X,
 	if(regType==ZERO) model=new Zero;
 	if(regType==SIMPLE_LINEAR) model=new SimpleLinear;
 	if(regType==NOISY_LINEAR) model=new NoisyLinear;
-	if(regType==FRAC_LINEAR) model=new FracLinear;
 	if(regType==LINVARIO) model=new LinVario;
 	if(regType==EXPVARIO) model=new ExpVario;
 	if(regType==SPHERICVARIO) model=new SphericVario;
@@ -133,39 +131,7 @@ bool SimpleLinear::fit()
 		mesg << "Computed regression with " << regname << " model - r=" << r;
 	} else {
 		a = fixed_lapse_rate;
-		Interpol1D::LinRegressionFixedRate(X, Y, a, b, r, mesg);
-		mesg << "Computed regression with " << regname << " model ";
-		mesg << "(fixed lapse rate=" << a << ") - r=" << r;
-	}
-	Lambda.push_back(a);
-	Lambda.push_back(b);
-	infoString = mesg.str();
-	fit_ready = true;
-	return true;
-}
-
-double FracLinear::f(const double& x) {
-	return Lambda.at(0)*x*x + Lambda.at(1);
-}
-
-bool FracLinear::fit()
-{
-	if(!checkInputs())
-		return false;
-
-	Lambda.clear();
-	double a,b,r;
-	std::stringstream mesg;
-
-	std::vector<double> X_sq(X);
-	std::transform(X_sq.begin(), X_sq.end(), X_sq.begin(), X_sq.begin(), multiplies<double>());
-
-	if(fixed_lapse_rate==IOUtils::nodata) {
-		Interpol1D::LinRegression(X_sq, Y, a, b, r, mesg);
-		mesg << "Computed regression with " << regname << " model - r=" << r;
-	} else {
-		a = fixed_lapse_rate;
-		Interpol1D::LinRegressionFixedRate(X_sq, Y, a, b, r, mesg);
+		Interpol1D::LinRegression(X, Y, a, b, r, mesg, true);
 		mesg << "Computed regression with " << regname << " model ";
 		mesg << "(fixed lapse rate=" << a << ") - r=" << r;
 	}
@@ -184,10 +150,18 @@ bool NoisyLinear::fit()
 	Lambda.clear();
 	double a,b,r;
 	std::stringstream mesg;
-	Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
+
+	if(fixed_lapse_rate==IOUtils::nodata) {
+		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
+		mesg << "Computed regression with " << regname << " model - r=" << r;
+	} else {
+		a = fixed_lapse_rate;
+		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
+		mesg << "Computed regression with " << regname << " model ";
+		mesg << "(fixed lapse rate=" << a << ") - r=" << r;
+	}
 	Lambda.push_back(a);
 	Lambda.push_back(b);
-	mesg << "Computed regression with " << regname << " model - r=" << r;
 	infoString = mesg.str();
 	fit_ready = true;
 	return true;

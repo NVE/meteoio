@@ -26,7 +26,7 @@
 
 namespace mio {
 
-//purely virtual class to use as an interface
+//class to use as an interface
 class FitModel {
 	public:
 		FitModel() : Lambda(), X(), Y(), infoString(), regname(), nPts(0), nParam(0), min_nb_pts(0), fit_ready(false) {};
@@ -40,6 +40,7 @@ class FitModel {
 		std::string getName() {return regname;};
 		std::string getInfo();
 		FitModel& operator =(const FitModel& source);
+		std::string toString() const;
 	protected:
 		virtual bool checkInputs() {return true;};
 

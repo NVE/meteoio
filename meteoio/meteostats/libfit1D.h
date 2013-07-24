@@ -45,13 +45,6 @@ class SimpleLinear : public FitModel {
 		double fixed_lapse_rate;
 };
 
-class FracLinear : public SimpleLinear {
-	public:
-		FracLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
-		bool fit();
-		double f(const double& x);
-};
-
 class NoisyLinear : public SimpleLinear {
 	public:
 		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "NoisyLinear";};
@@ -108,7 +101,6 @@ class Quadratic : public FitLeastSquare {
  * - Specific fits:
  *    - SimpleLinear
  *    - NoisyLinear
- *    - fracLinear
  * - Least Square fits:
  *    - SphericVario
  *    - LinVario
@@ -132,7 +124,6 @@ class Fit1D {
 			ZERO, ///< always return zero (this is a way to disable detrending)
 			SIMPLE_LINEAR, ///< basic, cheap linear fit
 			NOISY_LINEAR, ///< same as SIMPLE_LINEAR but trying to remove outliers
-			FRAC_LINEAR, ///< "linear" but with a fractional lapse rate (ultimately, it is quadratic)
 			LINVARIO, ///< linear variogram
 			EXPVARIO, ///< exponential variogram
 			SPHERICVARIO, ///< spherical variogram
@@ -249,6 +240,8 @@ class Fit1D {
 		* @return f(x) using the computed least square fit
 		*/
 		double operator ()(const double& x) const {return model->f(x);};
+
+		std::string toString() const {return model->toString();};
 
 	private:
 		FitModel *model;

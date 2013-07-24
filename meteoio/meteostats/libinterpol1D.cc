@@ -351,9 +351,16 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 * @param b origin of the linear regression
 * @param r absolute value of linear regression coefficient
 * @param mesg information message if something fishy is detected
+* @param fixed_rate force the lapse rate? (default=false)
 */
-void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg)
-{	//check arguments
+void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg, const bool& fixed_rate)
+{
+	if(fixed_rate) {
+		LinRegressionFixedRate(X, Y, a, b, r, mesg);
+		return;
+	}
+
+	//check arguments
 	const size_t n = X.size();
 	if(n==0)
 		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
@@ -466,9 +473,10 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 * @param B origin of the linear regression
 * @param R linear regression coefficient
 * @param mesg information message if something fishy is detected
+* @param fixed_rate force the lapse rate? (default=false)
 * @return EXIT_SUCCESS or EXIT_FAILURE
 */
-int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::stringstream& mesg)
+int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::stringstream& mesg, const bool& fixed_rate)
 {
 	//finds the linear regression for points (x,y,z,Value)
 	const double r_thres = 0.7;
@@ -476,20 +484,9 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 	//we want at least 4 points AND 85% of the initial data set kept in the regression
 	const unsigned int min_dataset = (unsigned int)Optim::floor( 0.85*(double)nb_pts );
 	const unsigned int min_pts = (min_dataset>4)? min_dataset : 4;
-	double a,b,r;
+	double a=A,b,r; //a needs to be initiallized to A in case of fixed_rate
 
-	if (nb_pts==2) {
-		mesg << "[W] only two points for linear regression!\n";
-	}
-	if (nb_pts<2) { //this should not be needed, we should have refrained from calling LinRegression in such a case
-		mesg << "[E] Not enough data points for linear regression!\n";
-		A=0.;
-		if (!in_X.empty()) B=in_X[0]; else B=0.;
-		R=1.;
-		return EXIT_FAILURE;
-	}
-
-	LinRegression(in_X, in_Y, A, B, R, mesg);
+	LinRegression(in_X, in_Y, A, B, R, mesg, fixed_rate);
 	if(R>=r_thres)
 		return EXIT_SUCCESS;
 
@@ -503,11 +500,11 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 		for (size_t i=0; i<nb_pts; i++) {
 			//invalidating alternatively each point
 			const double Y_tmp=Y[i]; Y[i]=IOUtils::nodata;
-			LinRegression(X, Y, a, b, r, mesg);
+			LinRegression(X, Y, a, b, r, mesg, fixed_rate);
 			Y[i]=Y_tmp;
 
 			if (fabs(r)>fabs(R)) {
-				A=a;
+				A=a; //if fixed_rate, a=A anyway...
 				B=b;
 				R=r;
 				index_bad=i;

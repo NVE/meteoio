@@ -17,6 +17,7 @@
 */
 #include <meteoio/meteostats/libfit1DCore.h>
 #include <meteoio/meteostats/libinterpol1D.h>
+#include <algorithm>
 #include <cmath>
 
 using namespace std;
@@ -60,6 +61,27 @@ FitModel& FitModel::operator =(const FitModel& source) {
 		Y = source.Y;
 	}
 	return *this;
+}
+
+std::string FitModel::toString() const {
+	std::ostringstream os;
+	os << "<FitModel>\n";
+	os << regname << " model with " << nParam << " (npts >= " << min_nb_pts << ")\n";
+	const double Xmin = *std::min_element(X.begin(),X.end());
+	const double Xmax = *std::max_element(X.begin(),X.end());
+	const double Ymin = *std::min_element(Y.begin(),Y.end());
+	const double Ymax = *std::max_element(Y.begin(),Y.end());
+	os << nPts << " calibration point(s) in\t";
+	os << "X[" << Xmin << "-" << Xmax << "]\tY[" << Ymin << "-" << Ymax << "]\n";
+
+	if(!Lambda.empty()) {
+		os << "Model parameters:       \t";
+		for(size_t ii=0; ii<Lambda.size(); ii++) os << Lambda[ii] << " ";
+		os << "\n";
+	}
+	os << "</FitModel>\n";
+
+	return os.str();
 }
 
 ////////////////////////////////////////////////////////////
