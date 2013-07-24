@@ -162,8 +162,12 @@ namespace mio {
 
 /**
  * @page build_io How to build your io.ini configuration file
- * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. This section will show you
- * how to practically set up your first configuration file. Please read \ref general documentation page before starting!
+ * As shown in \ref config_doc , the operation of MeteoIO is driven by a configuration file. Please note that
+ * <b>it is highly recommended to use <a href="https://models.slf.ch/p/inishell">inishell</a></b> to build your io.ini configuration file, since this significantly
+ * reduces the number of errors and provides help text for each keys.
+ *
+ * Anyway, this section will show you how to manually set up a configuration file. Please read
+ * \ref general documentation page before starting!
  *
  * You first need to create the various sections:
  * - [General] : The documentation about this section is found in ??. It currently contains the PLUGIN_PATH key that

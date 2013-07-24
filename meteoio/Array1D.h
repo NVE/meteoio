@@ -69,8 +69,10 @@ template<class T> class Array1D {
 		void resize(const unsigned int& asize, const T& init);
 		void clear();
 		bool isEmpty() const;
+
 		void insertAt(const int& index, T e);
 		void removeAt(const unsigned int& index);
+
 		/**
 		* @brief returns the minimum value contained in the grid
 		* @return minimum value

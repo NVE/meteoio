@@ -33,17 +33,17 @@ namespace mio {
  * @page gribio GRIBIO
  * @section gribio_format Format and limitations
  * This plugin reads GRIB (https://en.wikipedia.org/wiki/GRIB) files as produced by meteorological models.
- * Being based on GRIB API (http://www.ecmwf.int/products/data/software/grib_api.html), it should support both version 1 and 2 of the format (please note that grib_api must be compiled with Position Independent Code ("fPIC" flag)).
+ * Being based on GRIB API (https://software.ecmwf.int/wiki/display/GRIB/Home), it should support both version 1 and 2 of the format (please note that grib_api must be compiled with Position Independent Code ("fPIC" flag)).
  * Fields are read based on their marsParam code (this is built as {grib parameter number}.{grib table number} the table being preferably table 2, the parameter being preferably WMO standardized, as in http://rda.ucar.edu/docs/formats/grib/gribdoc/params.html) and levels
  * (levels description is available at http://www.nco.ncep.noaa.gov/pmb/docs/on388/). Standard COSMO grids are listed at http://zephyr.ucd.ie/mediawiki/index.php/COSMO_GRIB .
  *
  * Several assumptions/approximations are held/made when reading grids:
- * - since models usually use rotated latitude/longitude (see http://www.cosmo-model.org/content/model/documentation/core/default.htm, part I, chapter 3.3), the center of the domain can be approximated by a tangential cartesian coordinate system. We therefore don't re-project the lat/lon grid and use it "as is".
+ * - since models usually use rotated latitude/longitude (see http://www.cosmo-model.org/content/model/documentation/core/default.htm , part I, chapter 3.3), the center of the domain can be approximated by a tangential cartesian coordinate system. We therefore don't re-project the lat/lon grid and use it "as is".
  * - however, no correction for grid rotation is currently performed. If a grid rotation is specified on top of the rotated coordinate system, an error message will be given
  * - the cell size is computed at the center of the domain. This is performed by retrieving the latitude and longitude increments in the rotated coordinates, computing the point at center+increment in geographic coordinates and computing the equivalent geographic latitude and longitude increment. These increments are then converted to distances along the parallel and meridian at the true center latitude (see https://en.wikipedia.org/wiki/Latitude#The_length_of_a_degree_of_latitude).
  * - the average cell size (ie: average between x and y) is used to move the center point to the lower left corner. This will be returned as lower left corner geolocalization of the grid.
  *
- * This means that close to the center of the grid, coordinates and distances will work as expected, but the distortion will increase when moving away from the center and can become significant. As examples for domain size, cone can look at the MeteoSwiss domain definition at http://www.cosmo-model.org/content/tasks/operational/meteoSwiss/default.htm.
+ * This means that close to the center of the grid, coordinates and distances will work as expected, but the distortion will increase when moving away from the center and can become significant. As examples for domain size, cone can look at the MeteoSwiss domain definition at http://www.cosmo-model.org/content/tasks/operational/meteoSwiss/default.htm .
  *
  * As a side note, when calling read2DGrid(grid, filename), it will returns the first grid that is found.
  *
