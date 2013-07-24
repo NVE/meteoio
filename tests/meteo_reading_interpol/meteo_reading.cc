@@ -4,29 +4,29 @@
 using namespace mio; //The MeteoIO namespace is called mio
 using namespace std;
 // Static varibales containing the results
-const double res_Lat []		= {46.75239923,		46.66852716,			46.3382058,			46.99660709,		46.19133322,		46.53947302,		46.64704387};
-const double res_Lon []		= {9.946665632,		8.064570356,			8.85309869,			9.037581964,		6.827769776,		7.56182955,			8.740197547};
-const double res_Alt []		= {2390,			2110,					2100,				1630,				2020,				2020,				2220};
-const double res_X []		= {791600,			647900,					708900,				721610,				552840,				609450,				699639};
-const double res_Y []		= {180975,			168780,					132850,				206300,				115725,				154250,				167027};
-const string res_ID []		= {"FLU2",			"FIR2",					"FRA2",				"GLA2",				"ILI2",				"OTT2",				"TUJ3"};
-const string res_Name []	= {"Fluela Hospiz",	"Schmidigen-Bidmeren",	"Efra",				"Guppen",			"Les Collines",		"Ottere",			"Nual"};
-const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
-const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
+const double res_Lat []		= {46.75239923,		46.66852716,		46.3382058,		46.99660709,		46.19133322,		46.53947302,		46.64704387};
+const double res_Lon []		= {9.946665632,		8.064570356,		8.85309869,		9.037581964,		6.827769776,		7.56182955,		8.740197547};
+const double res_Alt []		= {2390,		2110,			2100,			1630,			2020,			2020,			2220};
+const double res_X []		= {791600,		647900,			708900,			721610,			552840,			609450,			699639};
+const double res_Y []		= {180975,		168780,			132850,			206300,			115725,			154250,			167027};
+const string res_ID []		= {"FLU2",		"FIR2",			"FRA2",			"GLA2",			"ILI2",			"OTT2",			"TUJ3"};
+const string res_Name []	= {"Fluela Hospiz",	"Schmidigen-Bidmeren",	"Efra",			"Guppen",		"Les Collines",		"Ottere",		"Nual"};
+const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
+const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 
-const double res_Met_0[]	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
-const double res_Met_1 []	= {264.261457,			266.4673185,			266.6195186,		269.5468685,		266.0020691,		267.0407779,		266.1504106}; // TA
-const double res_Met_2 []	= {1.,				0.9669166667,			1.,					0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
-const double res_Met_3[]	= {273.6963,			274.3503833,			273.9969,				274.6983,				274.0971,				274.9251417,				274.0971}; // TSG
-const double res_Met_4[]	= {262.9366667,			266.1666667,			264.41,				268.9033333,		265.43,		266.89,		262.1966667}; // TSS
-const double res_Met_5 []	= {0.5875000001,	0.95,					1.894166667,		1.415833333,		0.35,				0.72,		1.467083333}; // HS
-const double res_Met_6 []	= {2.2,				1.2,					2.2,				0.2,				2.1,				0.6,				1.}; // VW
-const double res_Met_7 []	= {335.5833333,		144.4166666,			103.25,				213.0833333,		266.8333333,		239.5,				112.25}; // DW
-const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
-const double res_Met_9 []	= {84.79166651,		81.29166661,			67.83333342,				50.37500004,				88.41666666,		85.45833337,		87.4999999}; //RSWR
-const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
-const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,		IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
-const double res_Met_12 []	= {IOUtils::nodata,	3.57323147,						IOUtils::nodata,	2.255830171,					3.593920512,					0.,					1.19964904}; // HNW
+const double res_Met_0[]	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
+const double res_Met_1 []	= {264.261457,		266.4673185,		266.6195186,		269.5468685,		266.0020691,		267.0407779,		266.1504106}; // TA
+const double res_Met_2 []	= {1.,			0.9669166667,		1.,			0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
+const double res_Met_3[]	= {273.6963,		274.3503833,		273.9969,		274.6983,		274.0971,		274.9251417,		274.0971}; // TSG
+const double res_Met_4[]	= {262.9366667,		266.1666667,		264.41,			268.9033333,		265.43,			266.89,			262.1966667}; // TSS
+const double res_Met_5 []	= {0.5875000001,	0.95,			1.894166667,		1.415833333,		0.35,			0.72,			1.467083333}; // HS
+const double res_Met_6 []	= {2.2,			1.2,			2.2,			0.2,			2.1,			0.6,			1.}; // VW
+const double res_Met_7 []	= {335.5833333,		144.4166666,		103.25,			213.0833333,		266.8333333,		239.5,			112.25}; // DW
+const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
+const double res_Met_9 []	= {84.79166651,		81.29166661,		67.83333342,		50.37500004,		88.41666666,		85.45833337,		87.4999999}; //RSWR
+const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
+const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
+const double res_Met_12 []	= {IOUtils::nodata,	3.57323147,		IOUtils::nodata,	2.255830171,		3.593920512,		0.,			1.19964904}; // HNW
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
@@ -107,51 +107,51 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(1), res_Met_1[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(1) << " != " << res_Met_1[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(1) << " : " << std::setprecision(10) << datMeteo(1) << " != " << res_Met_1[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(2), res_Met_2[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(2) << " != " << res_Met_2[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(2) << " : " << std::setprecision(10) << datMeteo(2) << " != " << res_Met_2[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(3), res_Met_3[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(3) << " != " << res_Met_3[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(3) << " : " << std::setprecision(10) << datMeteo(3) << " != " << res_Met_3[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(4), res_Met_4[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(4) << " != " << res_Met_4[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(4) << " : " << std::setprecision(10) << datMeteo(4) << " != " << res_Met_4[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(5), res_Met_5[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(5) << " != " << res_Met_5[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(5) << " : " << std::setprecision(10) << datMeteo(5) << " != " << res_Met_5[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(6), res_Met_6[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(6) << " != " << res_Met_6[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(6) << " : " << std::setprecision(10) << datMeteo(6) << " != " << res_Met_6[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(7), res_Met_7[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(7) << " != " << res_Met_7[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(7) << " : " << std::setprecision(10) << datMeteo(7) << " != " << res_Met_7[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(8), res_Met_8[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(8) << " != " << res_Met_8[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(8) << " : " << std::setprecision(10) << datMeteo(8) << " != " << res_Met_8[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(9), res_Met_9[i_results], 10.*epsilon)){ // HACK special epsilon that passes tests !
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(9) << " != " << res_Met_9[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(9) << " : " << std::setprecision(10) << datMeteo(9) << " != " << res_Met_9[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(10), res_Met_10[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(10) << " != " << res_Met_10[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(10) << " : " << std::setprecision(10) << datMeteo(10) << " != " << res_Met_10[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(11), res_Met_11[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(11) << " != " << res_Met_11[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(11) << " : " << std::setprecision(10) << datMeteo(11) << " != " << res_Met_11[i_results] << endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo(12), res_Met_12[i_results], epsilon)){
-		cerr << "error on " << MeteoData::getParameterName(0) << " : " << std::setprecision(10) << datMeteo(12) << " != " << res_Met_12[i_results] << endl;
+		cerr << "error on " << MeteoData::getParameterName(12) << " : " << std::setprecision(10) << datMeteo(12) << " != " << res_Met_12[i_results] << endl;
 		status = false;
 	}
 
