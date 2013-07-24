@@ -149,6 +149,9 @@ class InterpolationAlgorithm {
 		size_t getData(const MeteoData::Parameters& i_param,
 		               std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta) const;
 		size_t getStationAltitudes(const std::vector<StationData>& i_vecMeta, std::vector<double>& o_vecData) const;
+		void getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat, Fit1D &trend) const;
+		void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat) const;
+		void retrend(const Fit1D& trend, Grid2DObject &grid) const;
 
 		Meteo2DInterpolator& mi;
 		const Date& date;

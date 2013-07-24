@@ -131,6 +131,92 @@ std::string InterpolationAlgorithm::getInfo() const
 	return os.str();
 }
 
+/**
+ * @brief Read the interpolation arguments and compute the trend accordingly
+ *
+ * @param vecAltitudes altitudes sorted similarly as the data in vecDat
+ * @param vecDat data for the interpolated parameter
+ * @param trend object containing the fitted trend to be used for detrending/retrending
+*/
+void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat, Fit1D &trend) const
+{
+	bool status;
+	if (vecArgs.empty()) {
+		trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+		status = trend.fit();
+	} else if (vecArgs.size() == 1) {
+		double lapse_rate;
+		IOUtils::convertString(lapse_rate, vecArgs.front());
+		trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+		trend.setLapseRate(lapse_rate);
+		status = trend.fit();
+	} else if (vecArgs.size() == 2) {
+		std::string extraArg;
+		IOUtils::convertString(extraArg, vecArgs[1]);
+		if(extraArg=="soft") { //soft
+			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+			status = trend.fit();
+			if(!status) {
+				double lapse_rate;
+				IOUtils::convertString(lapse_rate, vecArgs[0]);
+				trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+				trend.setLapseRate(lapse_rate);
+				status = trend.fit();
+			}
+		} else if(extraArg=="frac") {
+			double lapse_rate;
+			IOUtils::convertString(lapse_rate, vecArgs[0]);
+			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+			const double avgData = Interpol1D::arithmeticMean(vecDat);
+			trend.setLapseRate(lapse_rate*avgData);
+			status = trend.fit();
+		} else {
+			throw InvalidArgumentException("Unknown argument \""+extraArg+"\" supplied for the "+algo+" algorithm", AT);
+		}
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	}
+
+	if(!status)
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param) + ": " + trend.getInfo(), AT);
+}
+
+
+void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat) const
+{
+	if(vecDat.size() != vecAltitudes.size()) {
+		std::ostringstream ss;
+		ss << "Number of station data (" << vecDat.size() << ") and number of elevations (" << vecAltitudes.size() << ") don't match!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	for(size_t ii=0; ii<vecAltitudes.size(); ii++) {
+		double &val = vecDat[ii];
+		if(val!=IOUtils::nodata)
+			val -= trend( vecAltitudes[ii] );
+	}
+}
+
+void InterpolationAlgorithm::retrend(const Fit1D& trend, Grid2DObject &grid) const
+{
+	const size_t nxy = grid.getNx()*grid.getNy();
+	const size_t dem_nxy = dem.grid2D.getNx()*dem.grid2D.getNy();
+	if(nxy != dem_nxy) {
+		std::ostringstream ss;
+		ss << "Dem size (" << dem.grid2D.getNx() << "," << dem.grid2D.getNy() << ") and";
+		ss << "grid size (" << grid.getNx() << "," << grid.getNy() << ") don't match!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	for(size_t ii=0; ii<nxy; ii++) {
+		double &val = grid(ii);
+		if(val!=IOUtils::nodata)
+			val += trend.f( dem.grid2D(ii) );
+	}
+}
+
+/**********************************************************************************/
+/*                    Implementation of the various algorithms                    */
 /**********************************************************************************/
 void StandardPressureAlgorithm::initialize(const MeteoData::Parameters& in_param) {
 	param = in_param;
@@ -148,8 +234,7 @@ double StandardPressureAlgorithm::getQualityRating() const
 	return 0.1;
 }
 
-void StandardPressureAlgorithm::calculate(Grid2DObject& grid)
-{
+void StandardPressureAlgorithm::calculate(Grid2DObject& grid) {
 	Interpol2D::stdPressureGrid2DFill(dem, grid);
 }
 
@@ -172,8 +257,7 @@ double ConstAlgorithm::getQualityRating() const
 	return 0.0;
 }
 
-void ConstAlgorithm::calculate(Grid2DObject& grid)
-{
+void ConstAlgorithm::calculate(Grid2DObject& grid) {
 	//check how many data points there are (not including nodata)
 	if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -211,77 +295,15 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if ((vecAltitudes.empty()) || (nrOfMeasurments == 0))
-		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
-	double avgAltitudes = Interpol1D::arithmeticMean(vecAltitudes);
-	double avgData = Interpol1D::arithmeticMean(vecData);
-
-	//Set regression coefficients
-	std::vector<double> vecCoefficients(4, 0.0);
-	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;
-
-	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
-	if (vecArgs.empty()) {
-		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
-	} else if (vecArgs.size() == 1) {
-		IOUtils::convertString(vecCoefficients[1], vecArgs.front());
-	} else if (vecArgs.size() == 2) {
-		std::string extraArg;
-		IOUtils::convertString(extraArg, vecArgs[1]);
-		if(extraArg=="soft") { //soft
-			if(Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) {
-				vecCoefficients.assign(4, 0.0);
-				IOUtils::convertString(vecCoefficients[1], vecArgs.front());
-			}
-		} else if(extraArg=="frac") {
-			funcptr = &Interpol2D::FracProject;
-			IOUtils::convertString(vecCoefficients[1], vecArgs.front());
-		} else {
-			std::stringstream os;
-			os << "Unknown argument \"" << extraArg << "\" supplied for the CST_LAPSE algorithm";
-			throw InvalidArgumentException(os.str(), AT);
-		}
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the CST_LAPSE algorithm", AT);
-	}
-
-	info << "r^2=" << Optim::pow2( vecCoefficients[3] );
-	Interpol2D::constantLapseGrid2DFill(avgData, avgAltitudes, dem, vecCoefficients, funcptr, grid);
-
-
-	/*Fit1D::regression reg_type = Fit1D::NOISYLINEAR;
-	vector<double> vecAltitudes;
-	getStationAltitudes(vecMeta, vecAltitudes);
-	if ((vecAltitudes.empty()) || (nrOfMeasurments == 0))
-		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
-
-	//read args and tweak reg_type if necessary
-	if (vecArgs.size() == 1) {
-		reg_type = Fit1D::SIMPLE_LINEAR;
-		std::vector<double> guesses(2);
-		IOUtils::convertString(guesses[0], vecArgs.front());
-	} else if (vecArgs.size() == 2) {
-		std::string extraArg;
-		IOUtils::convertString(extraArg, vecArgs[1]);
-		if(extraArg=="soft") { //soft
-			if(Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) {
-				vecCoefficients.assign(4, 0.0);
-				IOUtils::convertString(vecCoefficients[1], vecArgs.front());
-			}
-		} else if(extraArg=="frac") {
-			funcptr = &Interpol2D::FracProject;
-			IOUtils::convertString(vecCoefficients[1], vecArgs.front());
-		} else {
-			std::stringstream os;
-			os << "Unknown argument \"" << extraArg << "\" supplied for the CST_LAPSE algorithm";
-			throw InvalidArgumentException(os.str(), AT);
-		}
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the CST_LAPSE algorithm", AT);
-	}
-
-	Fit1D detrend(reg_type, vecAltitudes, vecData);*/
-
+	Fit1D trend;
+	getTrend(vecAltitudes, vecData, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, vecData);
+	const double avgData = Interpol1D::arithmeticMean(vecData);
+	Interpol2D::constantGrid2DFill(avgData, dem, grid);
+	retrend(trend, grid);
 }
 
 
@@ -326,47 +348,18 @@ double IDWLapseAlgorithm::getQualityRating() const
 }
 
 void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
-{	const double thresh_r_fixed_rate = 0.6;
-
-	if (nrOfMeasurments == 0)
-		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
-
+{
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
+	if ((vecAltitudes.empty()) || (nrOfMeasurments == 0))
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
-	//Set regression coefficients
-	std::vector<double> vecCoefficients(4, 0.0);
-	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;
-
-	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
-	if (vecArgs.empty()) { //force compute lapse rate
-		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
-	} else if (vecArgs.size() == 1) { //force lapse rate
-		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
-	} else if (vecArgs.size() == 2) {
-		std::string extraArg;
-		IOUtils::convertString(extraArg, vecArgs[1]);
-		if(extraArg=="soft") { //soft
-			if((Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients) != EXIT_SUCCESS) ||
-			   (vecCoefficients[3]<thresh_r_fixed_rate) ) { //because we return |r|
-				vecCoefficients.assign(4, 0.0);
-				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
-			}
-		} else if(extraArg=="frac") {
-			funcptr = &Interpol2D::FracProject;
-			IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
-		} else {
-			std::stringstream os;
-			os << "Unknown argument \"" << extraArg << "\" supplied for the IDW_LAPSE algorithm";
-			throw InvalidArgumentException(os.str(), AT);
-		}
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the IDW_LAPSE algorithm", AT);
-	}
-
-	//run algorithm
-	info << "r^2=" << Optim::pow2( vecCoefficients[3] );
-	Interpol2D::LapseIDW(vecData, vecMeta, dem, vecCoefficients, funcptr, grid);
+	Fit1D trend;
+	getTrend(vecAltitudes, vecData, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, vecData);
+	Interpol2D::IDW(vecData, vecMeta, dem, grid); //the meta should NOT be used for elevations!
+	retrend(trend, grid);
 }
 
 
@@ -385,14 +378,13 @@ double LocalIDWLapseAlgorithm::getQualityRating() const
 
 void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
 {
-	size_t nrOfNeighbors=0;
-
 	if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	//Set regression coefficients
 	std::vector<double> vecCoefficients(4, 0.0);
 
+	size_t nrOfNeighbors=0;
 	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
 	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
 		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
@@ -401,7 +393,7 @@ void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	}
 
 	double r2=0.;
-	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2);
+	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2); //HACK
 	info << "r^2=" << Optim::pow2( r2 );
 }
 
@@ -442,6 +434,8 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
+	if (vecAltitudes.empty() || nrOfMeasurments==0)
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	if (vecDataTA.empty()) //No matching data
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -457,12 +451,12 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 		vecTd[ii] = Atmosphere::RhtoDewPoint(vecDataRH[ii], vecDataTA[ii], 1);
 	}
 
-	//Krieging on Td
-	std::vector<double> vecCoefficients(4, 0.0);
-
-	//run algorithm
-	Interpol2D::LinRegression(vecAltitudes, vecTd, vecCoefficients);
-	Interpol2D::LapseIDW(vecTd, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
+	Fit1D trend;
+	getTrend(vecAltitudes, vecTd, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, vecTd);
+	Interpol2D::IDW(vecTd, vecMeta, dem, grid); //the meta should NOT be used for elevations!
+	retrend(trend, grid);
 
 	//Recompute Rh from the interpolated td
 	for (unsigned int jj=0; jj<grid.nrows; jj++) {
@@ -504,49 +498,23 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	//This algorithm is only valid for ILWR
 	if (param != MeteoData::ILWR)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
-	if (vecDataEA.empty()) //No matching data
+	if (vecDataEA.empty() || nrOfMeasurments==0) //No matching data
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
+	if (vecAltitudes.empty() || nrOfMeasurments==0)
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 
-	//Krieging on Td
-	std::vector<double> vecCoefficients(4, 0.0);
-	LapseRateProjectPtr funcptr = &Interpol2D::LinProject;
-
-	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
-	if (vecArgs.empty()) {
-		Interpol2D::LinRegression(vecAltitudes, vecData, vecCoefficients);
-	} else if (vecArgs.size() == 1) {
-		IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
-	} else if (vecArgs.size() == 2) {
-		std::string extraArg;
-		IOUtils::convertString(extraArg, vecArgs[1]);
-		if(extraArg=="soft") { //soft
-			if(Interpol2D::LinRegression(vecAltitudes, vecDataEA, vecCoefficients) != EXIT_SUCCESS) {
-				vecCoefficients.assign(4, 0.0);
-				IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
-			}
-		} else if(extraArg=="frac") {
-			funcptr = &Interpol2D::FracProject;
-			IOUtils::convertString(vecCoefficients[1], vecArgs[0]);
-		} else {
-			std::stringstream os;
-			os << "Unknown argument \"" << extraArg << "\" supplied for the ILWR algorithm";
-			throw InvalidArgumentException(os.str(), AT);
-		}
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the ILWR algorithm", AT);
-	}
-
-	//run algorithm
-	info << "r^2=" << Optim::pow2( vecCoefficients[3] );
-
-	//run algorithm
-	Interpol2D::LapseIDW(vecDataEA, vecMeta, dem, vecCoefficients, funcptr, grid);
+	Fit1D trend;
+	getTrend(vecAltitudes, vecDataEA, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, vecDataEA);
+	Interpol2D::IDW(vecDataEA, vecMeta, dem, grid); //the meta should NOT be used for elevations!
+	retrend(trend, grid);
 
 	//Recompute Rh from the interpolated td
 	for (unsigned int jj=0; jj<grid.nrows; jj++) {
@@ -599,6 +567,8 @@ void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
 
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
+	if (vecAltitudes.empty() || nrOfMeasurments==0)
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
 
 	if( vecDataDW.empty())
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -606,11 +576,12 @@ void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
 	Grid2DObject dw;
 	mi.interpolate(date, dem, MeteoData::DW, dw); //get DW interpolation from call back to Meteo2DInterpolator
 
-	//Krieging
-	std::vector<double> vecCoefficients(4, 0.0);
-
-	Interpol2D::LinRegression(vecAltitudes, vecDataVW, vecCoefficients);
-	Interpol2D::LapseIDW(vecDataVW, vecMeta, dem, vecCoefficients, &Interpol2D::LinProject, grid);
+	Fit1D trend;
+	getTrend(vecAltitudes, vecDataVW, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, vecDataVW);
+	Interpol2D::IDW(vecDataVW, vecMeta, dem, grid); //the meta should NOT be used for elevations!
+	retrend(trend, grid);
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
 }
 
@@ -729,8 +700,20 @@ void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 {
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
+	vector<double> vecAltitudes;
+	getStationAltitudes(vecMeta, vecAltitudes);
+	if (vecAltitudes.empty() || nrOfMeasurments==0)
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+
+	Fit1D trend;
+	getTrend(vecAltitudes, vecData, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, vecData);
+
 	computeVariogram(); //only refresh once a month, or once a week, etc
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
+
+	retrend(trend, grid);
 }
 
 double OrdinaryKrigingAlgorithm::computeVariogram()
@@ -744,24 +727,18 @@ double OrdinaryKrigingAlgorithm::computeVariogram()
 		throw InvalidArgumentException("Wrong number of arguments supplied for the ODKRIG algorithm", AT);
 	}
 
-	/*std::vector<double> alti;
-	for(unsigned int j=0; j<nrOfMeasurments; j++) {
-		alti.push_back( vecMeta[j].position.getAltitude() );
-	}
-	Fit1D trend(Fit1D::NOISYLINEAR, alti, vecData); //HACK*/
-
 	//give data to compute the variogram
 	std::vector<double> dist, vari;
 	for(unsigned int j=0; j<nrOfMeasurments; j++) {
 		const Coords& st1 = vecMeta[j].position;
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
-		const double val1 = vecData[j] /*- trend.f(st1.getAltitude())*/;
+		const double val1 = vecData[j];
 
 		for(unsigned int i=0; i<j; i++) {
 			//compute distance between stations
 			const Coords& st2 = vecMeta[i].position;
-			const double val2 = vecData[i] /*- trend.f(st2.getAltitude())*/;
+			const double val2 = vecData[i];
 			const double DX = x1-st2.getEasting();
 			const double DY = y1-st2.getNorthing();
 			//const double distance = fastSqrt_Q3(DX*DX + DY*DY);
