@@ -24,14 +24,14 @@ using namespace std;
 
 namespace mio {
 
-void FitModel::getParams(std::vector<double>& o_coefficients) {
+void FitModel::getParams(std::vector<double>& o_coefficients) const {
 	if(fit_ready!=true) {
 		throw InvalidArgumentException("The regression has not yet being computed!", AT);
 	}
 	o_coefficients = Lambda;
 }
 
-std::string FitModel::getInfo() {
+std::string FitModel::getInfo() const {
 	return infoString;
 }
 

@@ -30,7 +30,7 @@ class Zero : public FitModel {
 		Zero() {fit_ready = true; nParam = 0; min_nb_pts = 0; regname = "Zero";};
 		void setData(const std::vector<double>& /*in_X*/, const std::vector<double>& /*in_Y*/) { };
 		bool fit() { return true;};
-		double f(const double& /*x*/) {return 0.;};
+		double f(const double& /*x*/) const {return 0.;};
 };
 
 class SimpleLinear : public FitModel {
@@ -38,7 +38,7 @@ class SimpleLinear : public FitModel {
 		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
-		double f(const double& x);
+		double f(const double& x) const;
 		void setLapseRate(const double& in_lapse_rate) {fixed_lapse_rate = in_lapse_rate; fit_ready = false; min_nb_pts=1;};
 	protected:
 		bool checkInputs();
@@ -55,42 +55,42 @@ class SphericVario : public FitLeastSquare {
 	public:
 		SphericVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "SphericVario";};
 		void setDefaultGuess();
-		double f(const double& x);
+		double f(const double& x) const;
 };
 
 class LinVario : public FitLeastSquare {
 	public:
 		LinVario() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinVario";};
 		void setDefaultGuess();
-		double f(const double& x);
+		double f(const double& x) const;
 };
 
 class ExpVario : public FitLeastSquare {
 	public:
 		ExpVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "ExpVario";};
 		void setDefaultGuess();
-		double f(const double& x);
+		double f(const double& x) const;
 };
 
 class RatQuadVario : public FitLeastSquare {
 	public:
 		RatQuadVario() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "RatQuadVario";};
 		void setDefaultGuess();
-		double f(const double& x);
+		double f(const double& x) const;
 };
 
 class LinearLS : public FitLeastSquare {
 	public:
 		LinearLS() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "LinearLS";};
 		void setDefaultGuess();
-		double f(const double& x);
+		double f(const double& x) const;
 };
 
 class Quadratic : public FitLeastSquare {
 	public:
 		Quadratic() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "Quadratic";};
 		void setDefaultGuess();
-		double f(const double& x);
+		double f(const double& x) const;
 };
 
 /**

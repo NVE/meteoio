@@ -35,10 +35,10 @@ class FitModel {
 		void setGuess(const std::vector<double>& lambda_in);
 		virtual void setLapseRate(const double& /*lapse_rate*/) {throw InvalidArgumentException("Lapse rates can only be forced for linear regressions!", AT);};
 		virtual bool fit() = 0;
-		virtual double f(const double& x) = 0;
-		void getParams(std::vector<double>& o_coefficients);
-		std::string getName() {return regname;};
-		std::string getInfo();
+		virtual double f(const double& x) const = 0;
+		void getParams(std::vector<double>& o_coefficients) const;
+		std::string getName() const {return regname;};
+		std::string getInfo() const;
 		FitModel& operator =(const FitModel& source);
 		std::string toString() const;
 	protected:
@@ -69,7 +69,7 @@ class FitLeastSquare : public FitModel {
 		FitLeastSquare() {};
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
-		virtual double f(const double& x) = 0;
+		virtual double f(const double& x) const = 0;
 
 	protected:
 		virtual void setDefaultGuess(); //set defaults guess values. Called by setData

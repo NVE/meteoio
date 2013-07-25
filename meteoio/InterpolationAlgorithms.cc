@@ -32,7 +32,6 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
                                                        const std::vector<std::string>& i_vecArgs, IOManager& iom)
 {
 	const std::string algoname( IOUtils::strToUpper(i_algoname) );
-	//IOUtils::toUpper(algoname);
 
 	if (algoname == "CST"){// constant fill
 		return new ConstAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
@@ -44,9 +43,9 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new IDWAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "IDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill
 		return new IDWLapseAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "LIDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
+	} /*else if (algoname == "LIDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
 		return new LocalIDWLapseAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "RH"){// relative humidity interpolation
+	}*/ else if (algoname == "RH"){// relative humidity interpolation
 		return new RHAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ILWR"){// long wave radiation interpolation
 		return new ILWRAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
@@ -78,8 +77,15 @@ InterpolationAlgorithm::InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
 size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
                                              std::vector<double>& o_vecData) const
 {
-	vector<StationData> tmp_vecMeta;
-	return getData(i_param, o_vecData, tmp_vecMeta);
+	o_vecData.clear();
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		const double& val = vecMeteo[ii](i_param);
+		if (val != IOUtils::nodata) {
+			o_vecData.push_back(val);
+		}
+	}
+
+	return o_vecData.size();
 }
 
 size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
@@ -87,7 +93,6 @@ size_t InterpolationAlgorithm::getData(const MeteoData::Parameters& i_param,
 {
 	o_vecData.clear();
 	o_vecMeta.clear();
-
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		const double& val = vecMeteo[ii](i_param);
 		if (val != IOUtils::nodata){
@@ -104,9 +109,10 @@ size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData
 {
 	o_vecData.clear();
 	for (size_t ii=0; ii<i_vecMeta.size(); ii++){
-		const double& val = i_vecMeta[ii].position.getAltitude();
-		if (val != IOUtils::nodata)
-			o_vecData.push_back(val);
+		const double& alt = i_vecMeta[ii].position.getAltitude();
+		if (alt != IOUtils::nodata) {
+			o_vecData.push_back(alt);
+		}
 	}
 
 	return o_vecData.size();
@@ -124,7 +130,7 @@ std::string InterpolationAlgorithm::getInfo() const
 		os << " station";
 	else
 		os << " stations";
-	std::string tmp( info.str() );
+	const std::string tmp( info.str() );
 	if(!tmp.empty()) {
 		os << ", " << tmp;
 	}
@@ -235,7 +241,7 @@ double StandardPressureAlgorithm::getQualityRating() const
 }
 
 void StandardPressureAlgorithm::calculate(Grid2DObject& grid) {
-	Interpol2D::stdPressureGrid2DFill(dem, grid);
+	Interpol2D::stdPressure(dem, grid);
 }
 
 
@@ -262,7 +268,7 @@ void ConstAlgorithm::calculate(Grid2DObject& grid) {
 	if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
-	Interpol2D::constantGrid2DFill(Interpol1D::arithmeticMean(vecData), dem, grid);
+	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
 }
 
 
@@ -301,8 +307,7 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	getTrend(vecAltitudes, vecData, trend);
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
-	const double avgData = Interpol1D::arithmeticMean(vecData);
-	Interpol2D::constantGrid2DFill(avgData, dem, grid);
+	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
 	retrend(trend, grid);
 }
 
@@ -376,9 +381,9 @@ double LocalIDWLapseAlgorithm::getQualityRating() const
 	return 0.7;
 }
 
-void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
+void LocalIDWLapseAlgorithm::calculate(Grid2DObject& /*grid*/)
 {
-	if (nrOfMeasurments == 0)
+	/*if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	//Set regression coefficients
@@ -394,7 +399,7 @@ void LocalIDWLapseAlgorithm::calculate(Grid2DObject& grid)
 
 	double r2=0.;
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2); //HACK
-	info << "r^2=" << Optim::pow2( r2 );
+	info << "r^2=" << Optim::pow2( r2 );*/
 }
 
 
@@ -544,9 +549,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating() const
 		return 0.0;
 
 	//This algorithm requires the curvatures
-	unsigned int nx=0, ny=0;
-	dem.curvature.size(nx,ny);
-	if (nx==0 || ny==0) {
+	if (dem.curvature.isEmpty()) {
 		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Skipping algorithm...\n";
 		return 0.0;
 	}
@@ -716,7 +719,7 @@ void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 	retrend(trend, grid);
 }
 
-double OrdinaryKrigingAlgorithm::computeVariogram()
+bool OrdinaryKrigingAlgorithm::computeVariogram()
 {//return variogram fit of covariance between stations i and j
 	std::string vario_model;
 	if (vecArgs.empty()){
@@ -758,7 +761,7 @@ double OrdinaryKrigingAlgorithm::computeVariogram()
 		}
 		throw IOException("The variogram model "+variogram.getName()+" could not be fitted to the available data!", AT);
 	}
-	return 1.;
+	return true;
 }
 
 } //namespace

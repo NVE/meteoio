@@ -113,7 +113,7 @@ bool SimpleLinear::checkInputs()
 	return true;
 }
 
-double SimpleLinear::f(const double& x) {
+double SimpleLinear::f(const double& x) const {
 	return Lambda.at(0)*x + Lambda.at(1);
 }
 
@@ -168,7 +168,7 @@ bool NoisyLinear::fit()
 }
 
 //regression models using the standard least square algorithm
-double SphericVario::f(const double& x) {
+double SphericVario::f(const double& x) const {
 	//c0>=0, cs>=0, as>=0
 	const double c0 = Lambda.at(0);
 	const double cs = Lambda.at(1);
@@ -192,7 +192,7 @@ void SphericVario::setDefaultGuess() {
 	Lambda.push_back( *max_element(X.begin(), X.end()) );
 }
 
-double LinVario::f(const double& x) {
+double LinVario::f(const double& x) const {
 	//c0>=0, b1>=0
 	const double c0 = Lambda.at(0);
 	const double bl = Lambda.at(1);
@@ -216,7 +216,7 @@ void LinVario::setDefaultGuess() {
 	Lambda.push_back( slope );
 }
 
-double ExpVario::f(const double& x) {
+double ExpVario::f(const double& x) const {
 	//c0>=0, ce>=0, ae>=0
 	const double c0 = Lambda.at(0);
 	const double ce = Lambda.at(1);
@@ -241,7 +241,7 @@ void ExpVario::setDefaultGuess() {
 	Lambda.push_back( 1. );
 }
 
-double RatQuadVario::f(const double& x) {
+double RatQuadVario::f(const double& x) const {
 	//c0>=0, cr>=0, ar>=0
 	const double c0 = Lambda.at(0);
 	const double cr = Lambda.at(1);
@@ -266,7 +266,7 @@ void RatQuadVario::setDefaultGuess() {
 	Lambda.push_back( 1. );
 }
 
-double LinearLS::f(const double& x) {
+double LinearLS::f(const double& x) const {
 	const double y = Lambda.at(0)*x + Lambda.at(1); //Lambda is a vector
 	return y;
 }
@@ -283,7 +283,7 @@ void LinearLS::setDefaultGuess() {
 	Lambda.push_back( Y[xzero_idx] );
 }
 
-double Quadratic::f(const double& x) {
+double Quadratic::f(const double& x) const {
 	const double y = Lambda.at(0)*x*x + Lambda.at(1)*x + Lambda.at(2); //Lambda is a vector
 	return y;
 }

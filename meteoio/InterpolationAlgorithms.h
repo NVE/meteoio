@@ -77,13 +77,13 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
- * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowHNWInterpolation)
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
+ * <!-- - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm) -->
  *
  * @section interpol2D_lapse Lapse rates
  * Several algorithms use elevation trends, currently modelled as a linear relation. The slope of this linear relation can
@@ -479,7 +479,7 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating() const;
 		virtual void calculate(Grid2DObject& grid);
 	private:
-		double computeVariogram();
+		bool computeVariogram();
 		Fit1D variogram;
 };
 

@@ -39,11 +39,7 @@ namespace mio {
  *
  * @ingroup stats
  * @author Mathias Bavay
- * @date   2009-01-20
  */
-
-typedef double (*LapseRateProjectPtr)(const double& value, const double& altitude,
-                                      const double& new_altitude, const std::vector<double>& coeffs);
 
 class Interpol2D {
 	public:
@@ -53,41 +49,19 @@ class Interpol2D {
 			R_LIN ///< linear elevation dependence
 		} reg_types;
 
-		static void stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid);
-		static void constantGrid2DFill(const double& value, const DEMObject& dem, Grid2DObject& grid);
-		static void constantLapseGrid2DFill(const double& value, const double& altitude,
-                                                    const DEMObject& dem, const std::vector<double>& vecCoefficients,
-                                                    const LapseRateProjectPtr& funcptr, Grid2DObject& grid);
-		static void LapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                                     const DEMObject& dem, const std::vector<double>& vecCoefficients,
-                                     const LapseRateProjectPtr& funcptr,
-                                     Grid2DObject& grid);
+		static void stdPressure(const DEMObject& dem, Grid2DObject& grid);
+		static void constant(const double& value, const DEMObject& dem, Grid2DObject& grid);
 		static void IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                 const DEMObject& dem, Grid2DObject& grid);
-		static void LocalLapseIDW(const std::vector<double>& vecData_in,
+		/*static void LocalLapseIDW(const std::vector<double>& vecData_in,
 		                          const std::vector<StationData>& vecStations_in,
 		                          const DEMObject& dem, const size_t& nrOfNeighbors,
-		                          Grid2DObject& grid, double& r2);
+		                          Grid2DObject& grid, double& r2);*/
 		static void SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);
 		static void PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void ODKriging(const std::vector<double>& vecData,
 		                      const std::vector<StationData>& vecStations,
 		                      const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid);
-
-		//projections functions
-		static double ConstProject(const double& value, const double& altitude, const double& new_altitude,
-		                           const std::vector<double>& coeffs);
-		static double LinProject(const double& value, const double& altitude, const double& new_altitude,
-		                         const std::vector<double>& coeffs);
-		static double BiLinProject(const double& value, const double& altitude, const double& new_altitude,
-		                           const std::vector<double>& coeffs);
-		static double FracProject(const double& value, const double& altitude, const double& new_altitude,
-		                          const std::vector<double>& coeffs);
-
-		static int LinRegression(const std::vector<double>& data_in,
-		                         const std::vector<double>& elevations, std::vector<double>& coeffs);
-		static int BiLinRegression(const std::vector<double>& data_in,
-		                           const std::vector<double>& elevations, std::vector<double>& coeffs);
 
 	private:
 		//generic functions
@@ -95,7 +69,6 @@ class Interpol2D {
 		static double HorizontalDistance(const double& X1, const double& Y1, const double& X2, const double& Y2);
 		static double HorizontalDistance(const DEMObject& dem, const int& i, const int& j,
 		                                 const double& X2, const double& Y2);
-		static double getReferenceAltitude(const DEMObject& dem);
 		static void getNeighbors(const double& x, const double& y,
 		                         const std::vector<StationData>& vecStations,
 		                         std::vector< std::pair<double, size_t> >& list);
@@ -122,7 +95,6 @@ class Interpol2D {
 		//static members
 		const static double wind_ys; ///<coefficient for wind dependency on slope
 		const static double wind_yc; ///<coefficient for wind dependency on curvature
-		const static double bilin_inflection; ///<bilinear inflection point (m above sea level)
 };
 } //end namespace
 

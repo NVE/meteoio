@@ -27,21 +27,6 @@ using namespace std;
 namespace mio {
 const double Interpol2D::wind_ys = 0.58;
 const double Interpol2D::wind_yc = 0.42;
-const double Interpol2D::bilin_inflection = 1200.;
-
-double Interpol2D::getReferenceAltitude(const DEMObject& dem)
-{
-	double ref_altitude = 1500.;
-
-	if(dem.min_altitude!=IOUtils::nodata && dem.max_altitude!=IOUtils::nodata) {
-		//we use the median elevation as the reference elevation for reprojections
-		ref_altitude = 0.5 * (dem.min_altitude+dem.max_altitude);
-	} else {
-		//since there is nothing else that we can do, we use an arbitrary elevation
-		ref_altitude = 1500.;
-	}
-	return ref_altitude;
-}
 
 //Usefull functions
 /**
@@ -119,6 +104,18 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
 	sort (list.begin(), list.end());
 }
 
+//convert a vector of stations into two vectors of eastings and northings
+void Interpol2D::buildPositionsVectors(const std::vector<StationData>& vecStations, std::vector<double>& vecEastings, std::vector<double>& vecNorthings)
+{
+	vecEastings.resize( vecStations.size() );
+	vecNorthings.resize( vecStations.size() );
+	for (size_t i=0; i<vecStations.size(); i++) {
+		const Coords& position = vecStations[i].position;
+		vecEastings[i] = position.getEasting();
+		vecNorthings[i] = position.getNorthing();
+	}
+}
+
 //these weighting functions take the square of a distance as an argument and return a weight
 inline double Interpol2D::weightInvDist(const double& d2)
 {
@@ -137,111 +134,6 @@ inline double Interpol2D::weightInvDistN(const double& d2)
 	return pow( Optim::invSqrt(d2) , dist_pow); //we use the optimized approximation for 1/sqrt
 }
 
-//Data regression models
-/**
-* @brief Computes the linear regression coefficients fitting the points given as X and Y in two vectors
-* It relies on Interpol1D::NoisyLinRegression.
-* @param in_X vector of X coordinates
-* @param in_Y vector of Y coordinates (same order as X)
-* @param coeffs a,b,r coefficients in a vector
-* @return EXIT_SUCCESS or EXIT_FAILURE
-*/
-int Interpol2D::LinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, std::vector<double>& coeffs)
-{
-	std::stringstream mesg;
-	const int code = Interpol1D::NoisyLinRegression(in_X, in_Y, coeffs[1], coeffs[2], coeffs[3], mesg);
-	cerr << mesg.str();
-	return code;
-}
-
-//temporary solution while we migrate the regression classes
-int Interpol2D::BiLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, std::vector<double>& coeffs)
-{
-	std::vector<double> params;
-	const int code = Interpol1D::twoLinRegression(in_X, in_Y, Interpol2D::bilin_inflection, params);
-	coeffs[1] = params[1]; coeffs[2] = params[2]; coeffs[3] = 1.;
-	coeffs[4] = params[3]; coeffs[5] = params[4]; coeffs[6] = 1.;
-	return code;
-}
-
-
-//Now, the core interpolation functions: they project a given parameter to a reference altitude, given a constant lapse rate
-//example: Ta projected to 1500m with a rate of -0.0065K/m
-/**
-* @brief Projects a given parameter to another elevation:
-* This implementation keeps the value constant as a function of the elevation.
-* This interface has to follow the interface of *LapseRateProjectPtr
-* @param value original value
-* @param altitude altitude of the original value
-* @param new_altitude altitude of the reprojected value
-* @param coeffs coefficients to use for the projection
-* @return reprojected value
-*/
-double Interpol2D::ConstProject(const double& value, const double&, const double&, const std::vector<double>&)
-{
-	return value;
-}
-
-/**
-* @brief Projects a given parameter to another elevation:
-* This implementation assumes a linear dependency of the value as a function of the elevation.
-* This interface has to follow the interface of *LapseRateProjectPtr
-* @param value original value
-* @param altitude altitude of the original value
-* @param new_altitude altitude of the reprojected value
-* @param coeffs coefficients to use for the projection
-* @return reprojected value
-*/
-double Interpol2D::LinProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
-{
-	//linear lapse: coeffs must have been already computed
-	if (coeffs.empty()) {
-		throw IOException("Linear regression coefficients not initialized", AT);
-	}
-	return (value + coeffs[1] * (new_altitude - altitude));
-}
-
-/**
-* @brief Projects a given parameter to another elevation:
-* This implementation assumes a 2 segments linear dependency of the value as a function of the elevation.
-* It uses Interpol2D::bilin_inflection as the inflection point altitude. This interface has to follow the interface of *LapseRateProjectPtr
-* @param value original value
-* @param altitude altitude of the original value
-* @param new_altitude altitude of the reprojected value
-* @param coeffs coefficients to use for the projection
-* @return reprojected value
-*/
-double Interpol2D::BiLinProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
-{
-	//linear lapse: coeffs must have been already computed
-	if (coeffs.empty()) {
-		throw IOException("Linear regression coefficients not initialized", AT);
-	}
-	if(altitude<=bilin_inflection)
-		return (value + coeffs[1] * (new_altitude - altitude));
-	else
-		return (value + coeffs[4] * (new_altitude - altitude));
-}
-
-/**
-* @brief Projects a given parameter to another elevation:
-* This implementation assumes that the value increases by a given fraction as a function of the elevation.
-* This interface has to follow the interface of *LapseRateProjectPtr
-* @param value original value
-* @param altitude altitude of the original value
-* @param new_altitude altitude of the reprojected value
-* @param coeffs coefficients to use for the projection
-* @return reprojected value
-*/
-double Interpol2D::FracProject(const double& value, const double& altitude, const double& new_altitude, const std::vector<double>& coeffs)
-{
-	//linear lapse: coeffs must have been already computed
-	if (coeffs.empty()) {
-		throw IOException("Linear regression coefficients not initialized", AT);
-	}
-	return (value * (1. + coeffs[1] * (new_altitude - altitude)));
-}
-
 //Filling Functions
 /**
 * @brief Grid filling function:
@@ -249,8 +141,8 @@ double Interpol2D::FracProject(const double& value, const double& altitude, cons
 * @param dem array of elevations (dem)
 * @param grid 2D array to fill
 */
-void Interpol2D::stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid) {
-                                       grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid) {
+                             grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (unsigned int j=0; j<grid.nrows; j++) {
@@ -272,7 +164,7 @@ void Interpol2D::stdPressureGrid2DFill(const DEMObject& dem, Grid2DObject& grid)
 * @param dem array of elevations (dem). This is needed in order to know if a point is "nodata"
 * @param grid 2D array to fill
 */
-void Interpol2D::constantGrid2DFill(const double& value, const DEMObject& dem, Grid2DObject& grid)
+void Interpol2D::constant(const double& value, const DEMObject& dem, Grid2DObject& grid)
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
@@ -288,49 +180,6 @@ void Interpol2D::constantGrid2DFill(const double& value, const DEMObject& dem, G
 	}
 }
 
-/**
-* @brief Grid filling function:
-* This implementation fills a flat grid with a constant value and then reprojects it to the terrain's elevation.
-* for example, the air temperature measured at one point at 1500m would be given as value, the 1500m as altitude and the dem would allow to reproject this temperature on the full DEM using the detrending function provided as pointer (with its previously calculated coefficients).
-* @param value value to put in the grid
-* @param altitude altitude of the "value"
-* @param dem array of elevations (dem)
-* @param vecCoefficients vector of detrending coefficients
-* @param funcptr detrending function pointer (that uses the detrending coefficients)
-* @param grid 2D array to fill
-*/
-void Interpol2D::constantLapseGrid2DFill(const double& value, const double& altitude,
-                                         const DEMObject& dem, const std::vector<double>& vecCoefficients,
-                                         const LapseRateProjectPtr& funcptr, Grid2DObject& grid)
-{
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
-
-	//fills a data table with constant values and then reprojects it to the DEM's elevation from a given altitude
-	//the laspe rate parameters must have been set before
-	for (unsigned int j=0; j<grid.nrows; j++) {
-		for (unsigned int i=0; i<grid.ncols; i++) {
-			const double cell_altitude=dem.grid2D(i,j);
-			if (cell_altitude!=IOUtils::nodata) {
-				grid.grid2D(i,j) = funcptr(value, altitude, cell_altitude, vecCoefficients);
-			} else {
-				grid.grid2D(i,j) = IOUtils::nodata;
-			}
-		}
-	}
-}
-
-//convert a vector of stations into two vectors of eastings and northings
-void Interpol2D::buildPositionsVectors(const std::vector<StationData>& vecStations, std::vector<double>& vecEastings, std::vector<double>& vecNorthings)
-{
-	vecEastings.resize( vecStations.size() );
-	vecNorthings.resize( vecStations.size() );
-	for (size_t i=0; i<vecStations.size(); i++) {
-		const Coords& position = vecStations[i].position;
-		vecEastings[i] = position.getEasting();
-		vecNorthings[i] = position.getNorthing();
-	}
-}
-
 double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<double>& vecData_in,
                            const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings)
 {
@@ -340,69 +189,16 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 	const double scale = 1.e6;
 
 	for (size_t i=0; i<n_stations; i++) {
-		/*const double weight=1./(HorizontalDistance(x, y, vecStations_in[i].position.getEasting(),
-		       vecStations_in[i].position.getNorthing()) + 1e-6);*/
 		const double DX=x-vecEastings[i];
 		const double DY=y-vecNorthings[i];
 		const double weight = Optim::invSqrt( DX*DX + DY*DY + scale ); //use the optimized 1/sqrt approximation
-		//const double weight = weightInvDistSqrt( (DX*DX + DY*DY) );
 		parameter += weight*vecData_in[i];
 		norm += weight;
 	}
 	return (parameter/norm); //normalization
 }
 
-/**
-* @brief Grid filling function:
-* This implementation fills a flat grid using Inverse Distance Weighting and then reproject it to the terrain's elevation.
-* for example, the air temperatures measured at several stations would be given as values, the stations altitude and positions
-* as positions and projected to a flat grid. Afterward, the grid would be reprojected to the correct elevation as given
-* by the dem would using the detrending function provided as pointer (with its previously calculated coefficients).
-* @param vecData_in input values to use for the IDW
-* @param vecStations_in position of the "values" (altitude and coordinates)
-* @param dem array of elevations (dem)
-* @param vecCoefficients vector of detrending coefficients
-* @param funcptr detrending function pointer (that uses the detrending coefficients)
-* @param grid 2D array to fill
-*/
-void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                          const DEMObject& dem, const std::vector<double>& vecCoefficients,
-                          const LapseRateProjectPtr& funcptr,
-                          Grid2DObject& grid)
-{	//multiple source stations: lapse rate projection, IDW Krieging, re-projection
-	const double ref_altitude = getReferenceAltitude(dem);
-	const size_t n_stations=vecStations_in.size();
-
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
-	std::vector<double> vecTref(vecStations_in.size(), 0.0); // init to 0.0
-
-	for (size_t i=0; i<n_stations; i++) {
-		vecTref[i] = funcptr(vecData_in[i], vecStations_in[i].position.getAltitude(),
-		                     ref_altitude, vecCoefficients);
-	}
-
-	std::vector<double> vecEastings, vecNorthings;
-	buildPositionsVectors(vecStations_in, vecEastings, vecNorthings);
-
-	const double xllcorner = dem.llcorner.getEasting();
-	const double yllcorner = dem.llcorner.getNorthing();
-	const double cellsize = dem.cellsize;
-	for (unsigned int j=0; j<grid.nrows; j++) {
-		for (unsigned int i=0; i<grid.ncols; i++) {
-			const double cell_altitude=dem.grid2D(i,j);
-			if (cell_altitude!=IOUtils::nodata) {
-				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize),
-				                           (yllcorner+j*cellsize), vecTref, vecEastings, vecNorthings);
-				grid.grid2D(i,j) = funcptr(grid.grid2D(i,j), ref_altitude,
-				                           cell_altitude, vecCoefficients);
-			} else {
-				grid.grid2D(i,j) = IOUtils::nodata;
-			}
-		}
-	}
-}
-
-/**
+/*
 * @brief Grid filling function:
 * Similar to Interpol2D::LapseIDW but using a limited number of stations for each cell. We also assume a two segments regression for altitude detrending with
 * a fixed 1200m above sea level inflection point.
@@ -413,7 +209,7 @@ void Interpol2D::LapseIDW(const std::vector<double>& vecData_in, const std::vect
 * @param grid 2D array to fill
 * @param r2 average r² coefficient of the lapse rate regressions
 */
-void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
+/*void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                const DEMObject& dem, const size_t& nrOfNeighbors,
                                Grid2DObject& grid, double& r2)
 {
@@ -471,7 +267,7 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 	if(X.empty())
 		return IOUtils::nodata;
 	coeffs.resize(7,0.);
-	BiLinRegression(X, Y, coeffs);
+	//BiLinRegression(X, Y, coeffs);
 	r2=coeffs[3]*coeffs[6]; //Is it correct?
 
 	//compute local pixel value
@@ -484,9 +280,9 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 		const double alt = vecStations_in[st_index].position.getAltitude();
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
 			//const double contrib = LinProject(value, alt, cell_altitude, coeffs);
-			const double contrib = BiLinProject(value, alt, cell_altitude, coeffs);
+			//const double contrib = BiLinProject(value, alt, cell_altitude, coeffs); //HACK
 			const double weight = Optim::invSqrt( list[st].first + scale + 1.e-6 );
-			pixel_value += weight*contrib;
+			//pixel_value += weight*contrib;
 			norm += weight;
 			count++;
 		}
@@ -496,7 +292,7 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 		return (pixel_value/norm);
 	else
 		return IOUtils::nodata;
-}
+}*/
 
 /**
 * @brief Grid filling function:
