@@ -43,7 +43,7 @@ namespace mio {
  */
 class Matrix {
 	public:
-		Matrix();
+		Matrix() : vecData(), ncols(0), nrows(0) {};
 
 		/**
 		* @brief A constructor that creates a matrix of a given size
@@ -51,7 +51,7 @@ class Matrix {
 		* @param cols number of columns of the new matrix
 		*/
 		Matrix(const int& rows, const int& cols);
-		Matrix(const unsigned int& rows, const unsigned int& cols);
+		Matrix(const unsigned int& rows, const unsigned int& cols) : vecData(rows*cols), ncols(cols), nrows(rows) {};
 
 		/**
 		* @brief A constructor that creates a matrix filled with constant values
@@ -59,7 +59,7 @@ class Matrix {
 		* @param cols number of columns of the new matrix
 		* @param init initial value to fill the matrix with
 		*/
-		Matrix(const unsigned int& rows, const unsigned int& cols, const double& init);
+		Matrix(const unsigned int& rows, const unsigned int& cols, const double& init) : vecData(rows*cols, init), ncols(cols), nrows(rows) {};
 
 		/**
 		* @brief A constructor that creates a diagonal matrix of size n
@@ -72,7 +72,7 @@ class Matrix {
 		* @brief Copy constructor
 		* @param init matrix to copy
 		*/
-		Matrix(const Matrix& init);
+		Matrix(const Matrix& init) : vecData(init.vecData), ncols(init.ncols), nrows(init.nrows) {};
 
 		/**
 		* @brief Convert the current matrix to a identity matrix of size n
@@ -134,7 +134,7 @@ class Matrix {
 		* @return inversed matrix
 		*/
 		Matrix getInv() const;
-		void inv();
+		bool inv();
 
 		/**
 		* @brief matrix solving for A·X=B.
@@ -153,8 +153,9 @@ class Matrix {
 		* @param A A matrix
 		* @param B B matrix
 		* @param X solution matrix
+		* @return true is success
 		*/
-		static void solve(const Matrix& A, const Matrix& B, Matrix& X);
+		static bool solve(const Matrix& A, const Matrix& B, Matrix& X);
 
 		/**
 		* @brief Solving system of equations using Thomas Algorithm
@@ -177,8 +178,9 @@ class Matrix {
 		* @param A A matrix
 		* @param B B matrix
 		* @param X solution matrix
+		* @return true is success
 		*/
-		static void TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X);
+		static bool TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X);
 
 		/**
 		* @brief matrix determinant

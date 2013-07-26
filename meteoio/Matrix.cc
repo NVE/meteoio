@@ -25,12 +25,7 @@ namespace mio {
 const double Matrix::epsilon = 1e-9; //for considering a determinant to be zero, etc
 const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrix
 
-Matrix::Matrix() : vecData(), ncols(0), nrows(0)
-{
-}
-
-Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
-{
+Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0) {
 	if(rows<0 || cols<0) {
 		std::stringstream tmp;
 		tmp << "Trying construct a matrix with negative dimensions: ";
@@ -40,24 +35,8 @@ Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
 	resize((unsigned)rows,(unsigned)cols);
 }
 
-Matrix::Matrix(const unsigned int& rows, const unsigned int& cols) : vecData(rows*cols), ncols(cols), nrows(rows)
-{
-	//resize(rows,cols);
-}
-
-Matrix::Matrix(const unsigned int& rows, const unsigned int& cols, const double& init) : vecData(rows*cols, init), ncols(cols), nrows(rows)
-{
-	//resize(rows,cols,init);
-}
-
-Matrix::Matrix(const unsigned int& n, const double& init) : vecData(n*n, 0.), ncols(n), nrows(n)
-{
-	//identity(n, init);
+Matrix::Matrix(const unsigned int& n, const double& init) : vecData(n*n, 0.), ncols(n), nrows(n) {
 	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
-}
-
-Matrix::Matrix(const Matrix& init) : vecData(init.vecData), ncols(init.ncols), nrows(init.nrows)
-{
 }
 
 void Matrix::identity(const unsigned int& n, const double& init) {
@@ -67,26 +46,16 @@ void Matrix::identity(const unsigned int& n, const double& init) {
 
 void Matrix::resize(const unsigned int& rows, const unsigned int& cols) {
 	clear();
-
-	if ((rows > 0) && (cols > 0)) {
-		vecData.resize(rows*cols);
-		ncols = cols;
-		nrows = rows;
-	} else {
-		throw IndexOutOfBoundsException("Can not resize a matrix to negative sizes!", AT);
-	}
+	vecData.resize(rows*cols);
+	nrows = rows;
+	ncols = cols;
 }
 
 void Matrix::resize(const unsigned int& rows, const unsigned int& cols, const double& init) {
 	clear();
-
-	if ((rows > 0) && (cols > 0)) {
-		vecData.resize(rows*cols, init);
-		ncols = cols;
-		nrows = rows;
-	} else {
-		throw IndexOutOfBoundsException("Can not resize a matrix to negative sizes!", AT);
-	}
+	vecData.resize(rows*cols, init);
+	ncols = cols;
+	nrows = rows;
 }
 
 void Matrix::size(unsigned int& rows, unsigned int& cols) const{
@@ -156,7 +125,7 @@ bool Matrix::operator==(const Matrix& in) const {
 	if(nrows!=in_nrows || ncols!=in_ncols)
 		return false;
 
-	for(unsigned int ii=0; ii<vecData.size(); ii++)
+	for(size_t ii=0; ii<vecData.size(); ii++)
 		if( !IOUtils::checkEpsilonEquality( vecData[ii] , in.vecData[ii], epsilon_mtr) ) return false;
 
 	return true;
@@ -177,7 +146,7 @@ Matrix& Matrix::operator+=(const Matrix& rhs) {
 	}
 
 	//fill sum matrix
-	for(unsigned int ii=0; ii<vecData.size(); ii++)
+	for(size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] += rhs.vecData[ii];
 
 	return *this;
@@ -192,7 +161,7 @@ const Matrix Matrix::operator+(const Matrix& rhs) const {
 
 Matrix& Matrix::operator+=(const double& rhs) {
 	//fill sum matrix
-	for(unsigned int ii=0; ii<vecData.size(); ii++)
+	for(size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] += rhs;
 
 	return *this;
@@ -216,7 +185,7 @@ Matrix& Matrix::operator-=(const Matrix& rhs) {
 	}
 
 	//fill sum matrix
-	for(unsigned int ii=0; ii<vecData.size(); ii++)
+	for(size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] -= rhs.vecData[ii];
 
 	return *this;
@@ -278,7 +247,7 @@ const Matrix Matrix::operator*(const Matrix& rhs) const {
 }
 
 Matrix& Matrix::operator*=(const double& rhs) {
-	for(unsigned int ii=0; ii<vecData.size(); ii++)
+	for(size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] *= rhs;
 
 	return *this;
@@ -473,7 +442,7 @@ Matrix Matrix::getInv() const {
 	return X;
 }
 
-void Matrix::inv() {
+bool Matrix::inv() {
 //same as getInv() const but we write the final result on top of the input matrix
 	if(nrows!=ncols) {
 		std::stringstream tmp;
@@ -486,7 +455,7 @@ void Matrix::inv() {
 	Matrix U;
 	Matrix L;
 	if(LU(L, U)==false) {
-		throw IOException("LU decomposition of given matrix not possible", AT);
+		return false;
 	}
 
 	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
@@ -494,7 +463,7 @@ void Matrix::inv() {
 	Matrix Y(n, n);
 	for(unsigned int i=1; i<=n; i++) {
 		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
-			throw IOException("The given matrix can not be inversed", AT);
+			return false;
 		}
 		Y(i,i) = 1./L(i,i); //j==i
 		for(unsigned int j=1; j<i; j++) { //j<i
@@ -512,8 +481,8 @@ void Matrix::inv() {
 	//now, we backward solve UX=Y
 	Matrix& X = *this; //we write the solution over the input matrix
 	for(unsigned int i=n; i>=1; i--) { //lines
-		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
-			throw IOException("The given matrix is singular and can not be inversed", AT);
+		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //actually, only U(n,n) needs checking
+			return false;
 		}
 		for(unsigned int j=1; j<=n; j++) { //lines
 			double sum=0.;
@@ -523,9 +492,11 @@ void Matrix::inv() {
 			X(i,j) = (Y(i,j) - sum) / U(i,i);
 		}
 	}
+
+	return true;
 }
 
-void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
+bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
 	unsigned int Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
@@ -549,7 +520,7 @@ void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	Matrix U;
 	Matrix L;
 	if(A.LU(L, U)==false) {
-		throw IOException("LU decomposition of A matrix not possible", AT);
+		return false;
 	}
 
 	//we solve AX=B. Since A=LU, then LUX = B
@@ -557,7 +528,7 @@ void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	Matrix Y(n, m);
 	for(unsigned int i=1; i<=n; i++) {
 		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
-			throw IOException("The given matrix can not be inversed", AT);
+			return false;
 		}
 		for(unsigned int j=1; j<=m; j++) {
 			double sum=0.;
@@ -571,10 +542,9 @@ void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	//now, we backward solve UX=Y
 	X.resize(n,m); //we need to ensure that X has the correct dimensions
 	for(unsigned int i=n; i>=1; i--) { //lines
-		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
-			std::stringstream ss;
-			ss << "The given " << Ancols << "*" << Anrows << " matrix is singular and can not be inversed";
-			throw IOException(ss.str(), AT);
+		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //actually, only U(n,n) needs checking
+			//singular matrix
+			return false;
 		}
 		for(unsigned int j=1; j<=m; j++) {
 			double sum = 0.;
@@ -584,16 +554,19 @@ void Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 			X(i,j) = (Y(i,j) - sum) / U(i,i);
 		}
 	}
+
+	return true;
 }
 
 Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
 	Matrix X;
-	solve(A, B, X);
+	if(!solve(A, B, X))
+		throw IOException("Matrix inversion failed!", AT);
 	return X;
 }
 
-void Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
+bool Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 { //Thomas algorithm for tridiagonal matrix solving of A·X=B
 	unsigned int Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
@@ -624,7 +597,7 @@ void Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 	b[1] = A(1,1); v[1] = B(1,1); //otherwise they would never be defined
 	for(unsigned int i=2; i<=n; i++) {
 		if(IOUtils::checkEpsilonEquality(b[i-1], 0., epsilon))
-			throw IOException("The given matrix can not be inversed", AT);
+			return false;
 		const double b_i = A(i,i);
 		const double v_i = B(i,1);
 		const double a_i = A(i,i-1);
@@ -639,13 +612,17 @@ void Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 	for(unsigned int i=n-1; i>=1; i--) {
 		X(i,1) = ( v[i] - c[i]*X(i+1,1) ) / b[i];
 	}
+
+	return true;
 }
 
 Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B) {
 //This uses the Thomas algorithm for tridiagonal matrix solving of A·X=B
 	Matrix X;
-	TDMA_solve(A, B, X);
-	return X;
+	if(TDMA_solve(A, B, X))
+		return X;
+	else
+		throw IOException("Matrix inversion failed!", AT);
 }
 
 bool Matrix::isIdentity() const {

@@ -53,6 +53,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new SimpleWindInterpolationAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ODKRIG"){// ordinary kriging
 		return new OrdinaryKrigingAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
+	} else if (algoname == "ODKRIG_LAPSE"){// ordinary kriging with lapse rate
+		return new LapseOrdinaryKrigingAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "USER"){// read user provided grid
 		return new USERInterpolation(i_mi, i_date, i_dem, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "HNW_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
@@ -688,50 +690,11 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	if(new_mean!=0.) grid.grid2D *= orig_mean/new_mean;
 }
 
-void OrdinaryKrigingAlgorithm::initialize(const MeteoData::Parameters& in_param) {
-	param = in_param;
-	nrOfMeasurments = getData(param, vecData, vecMeta);
-}
-
-double OrdinaryKrigingAlgorithm::getQualityRating() const
+void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData)
 {
-	if(nrOfMeasurments>=20) return 0.9;
-	return 0.1;
-}
+	distData.clear();
+	variData.clear();
 
-void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
-{
-	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
-	//or, get max range from io.ini, build variogram from this user defined max range
-	vector<double> vecAltitudes;
-	getStationAltitudes(vecMeta, vecAltitudes);
-	if (vecAltitudes.empty() || nrOfMeasurments==0)
-		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
-
-	Fit1D trend;
-	getTrend(vecAltitudes, vecData, trend);
-	info << trend.getInfo();
-	detrend(trend, vecAltitudes, vecData);
-
-	computeVariogram(); //only refresh once a month, or once a week, etc
-	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
-
-	retrend(trend, grid);
-}
-
-bool OrdinaryKrigingAlgorithm::computeVariogram()
-{//return variogram fit of covariance between stations i and j
-	std::string vario_model;
-	if (vecArgs.empty()){
-		vario_model=std::string("LINVARIO");
-	} else if (vecArgs.size() == 1){
-		IOUtils::convertString(vario_model, vecArgs[0]);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the ODKRIG algorithm", AT);
-	}
-
-	//give data to compute the variogram
-	std::vector<double> dist, vari;
 	for(unsigned int j=0; j<nrOfMeasurments; j++) {
 		const Coords& st1 = vecMeta[j].position;
 		const double x1 = st1.getEasting();
@@ -744,24 +707,84 @@ bool OrdinaryKrigingAlgorithm::computeVariogram()
 			const double val2 = vecData[i];
 			const double DX = x1-st2.getEasting();
 			const double DY = y1-st2.getNorthing();
-			//const double distance = fastSqrt_Q3(DX*DX + DY*DY);
-			const double distance = sqrt(DX*DX + DY*DY);
+			const double distance = Optim::fastSqrt_Q3(Optim::pow2(DX) + Optim::pow2(DY));
 
-			dist.push_back(distance);
-			vari.push_back( 0.5*(val1-val2)*(val1-val2) );
+			distData.push_back(distance);
+			variData.push_back( 0.5*Optim::pow2(val1-val2) );
 		}
 	}
+}
 
-	try {
-		variogram.setModel(vario_model, dist, vari);
-	} catch(const IOException&) {
-		cerr << "[E] Variogram data points:\n";
-		for(unsigned int ii=0; ii<dist.size(); ii++) {
-			cerr << dist[ii] << " " << vari[ii] << endl;
+bool OrdinaryKrigingAlgorithm::computeVariogram()
+{//return variogram fit of covariance between stations i and j
+	std::vector<double> distData, variData;
+	getDataForVariogram(distData, variData);
+
+	std::vector<string> vario_types( vecArgs );
+	if(vario_types.empty()) vario_types.push_back("LINVARIO");
+	/*std::vector<string> vario_types;
+	vario_types.push_back("SPHERICVARIO");
+	vario_types.push_back("EXPVARIO");
+	vario_types.push_back("LINVARIO");*/
+
+	size_t args_index=0;
+	do {
+		const string vario_model = IOUtils::strToUpper( vario_types[args_index] );
+		const bool status = variogram.setModel(vario_model, distData, variData);
+		if(status) {
+			info << " - " << vario_model;
+			return true;
 		}
-		throw IOException("The variogram model "+variogram.getName()+" could not be fitted to the available data!", AT);
-	}
-	return true;
+
+		args_index++;
+	} while (args_index<vario_types.size());
+
+	return false;
+}
+
+void OrdinaryKrigingAlgorithm::initialize(const MeteoData::Parameters& in_param) {
+	param = in_param;
+	nrOfMeasurments = getData(param, vecData, vecMeta);
+}
+
+double OrdinaryKrigingAlgorithm::getQualityRating() const
+{
+	if(nrOfMeasurments>=7) return 0.9;
+	return 0.1;
+}
+
+void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
+{
+	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
+	//or, get max range from io.ini, build variogram from this user defined max range
+	if (nrOfMeasurments==0)
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+
+	if(!computeVariogram()) //only refresh once a month, or once a week, etc
+		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
+	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
+}
+
+void LapseOrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
+{
+	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
+	//or, get max range from io.ini, build variogram from this user defined max range
+	vector<double> vecAltitudes;
+	getStationAltitudes(vecMeta, vecAltitudes);
+	if (vecAltitudes.empty() || nrOfMeasurments==0)
+		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
+
+	Fit1D trend(Fit1D::NOISY_LINEAR, vecAltitudes, vecData, false);
+	if(!trend.fit())
+		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param) + ": " + trend.getInfo(), AT);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, vecData);
+
+	if(!computeVariogram()) //only refresh once a month, or once a week, etc
+		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
+	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
+
+	retrend(trend, grid);
 }
 
 } //namespace

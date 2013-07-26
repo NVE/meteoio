@@ -45,7 +45,7 @@ Fit1D& Fit1D::operator=(const Fit1D& source) { //HACK: the pointer could not be 
 	return *this;
 }
 
-void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
+bool Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
 {
 	regression regType;
 	if(i_regType=="ZERO") regType=ZERO;
@@ -61,10 +61,10 @@ void Fit1D::setModel(const std::string& i_regType, const std::vector<double>& in
 		throw IOException("The regression algorithm '"+i_regType+"' is not implemented" , AT);
 	}
 
-	setModel(regType, in_X, in_Y, updatefit);
+	return setModel(regType, in_X, in_Y, updatefit);
 }
 
-void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
+bool Fit1D::setModel(const regression& regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit)
 {
 	if(model!=NULL) delete model;
 
@@ -79,7 +79,10 @@ void Fit1D::setModel(const regression& regType, const std::vector<double>& in_X,
 	if(regType==QUADRATIC) model=new Quadratic;
 
 	model->setData(in_X, in_Y);
-	if(updatefit) fit();
+	if(updatefit)
+		return fit();
+	else
+		return true;
 }
 
 //////////////////////////////////////////////////////////////

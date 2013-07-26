@@ -158,7 +158,7 @@ namespace Optim {
 	/**
 	* @brief Optimized version of c++ pow()
 	* This version works with positive and negative exponents and handles exponents bigger than 1.
-	* The relative error remains less than 6% for the benachmarks that we ran (argument between 0 and 500
+	* The relative error remains less than 6% for the benchmarks that we ran (argument between 0 and 500
 	* and exponent between -10 and +10). It is ~3.3 times faster than cmath's pow().
 	* Source: http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
 	*

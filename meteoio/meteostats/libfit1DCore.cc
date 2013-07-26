@@ -163,7 +163,7 @@ bool FitLeastSquare::computeFit() {
 		//calculate parameters deltas
 		const Matrix a = A.getT() * A;
 		const Matrix b = A.getT() * dBeta;
-		Matrix::solve(a, b, dLambda);
+		if(!Matrix::solve(a, b, dLambda)) return false;
 
 		//apply the deltas to the parameters, record maximum delta
 		max_delta = 0.;

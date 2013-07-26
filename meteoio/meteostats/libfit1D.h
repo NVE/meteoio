@@ -170,8 +170,9 @@ class Fit1D {
 		* @param in_X vector of data points abscissae
 		* @param in_Y vector of data points ordinates
 		* @param updatefit should the fit be redone? (default=true, otherwise you must manually call fit())
+		* @return false if could not compute the parameters. if !updatefit, always return true
 		*/
-		void setModel(const regression& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
+		bool setModel(const regression& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
 
 		/**
 		* @brief Set or reset the regression model.
@@ -179,8 +180,9 @@ class Fit1D {
 		* @param in_X vector of data points abscissae
 		* @param in_Y vector of data points ordinates
 		* @param updatefit should the fit be redone? (default=true, otherwise you must manually call fit())
+		* @return false if could not compute the parameters. if !updatefit, always return true
 		*/
-		void setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
+		bool setModel(const std::string& i_regType, const std::vector<double>& in_X, const std::vector<double>& in_Y, const bool& updatefit=true);
 
 		/**
 		* @brief Provide a set of initial values for the model parameters.
@@ -199,7 +201,7 @@ class Fit1D {
 
 		/**
 		* @brief Compute the regression parameters
-		* @return false if could not find the parameters
+		* @return false if could not compute the parameters
 		*/
 		bool fit() {return model->fit();};
 

@@ -82,6 +82,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowHNWInterpolation)
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
+ * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  * <!-- - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm) -->
  *
@@ -447,22 +448,21 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
 /**
  * @class OrdinaryKrigingAlgorithm
  * @brief Ordinary kriging.
- * this implements ordinary krigging (see https://secure.wikimedia.org/wikipedia/en/wiki/Kriging)
+ * This implements ordinary krigging (see https://secure.wikimedia.org/wikipedia/en/wiki/Kriging)
  * with user-selectable variogram model (see https://secure.wikimedia.org/wikipedia/en/wiki/Variogram).
  * The variogram and krigging
- * coefficients are re-computed fresh for each new grid (or time step). There is currently no fallback
- * mechanism for variogram fit failures, which makes the whole thing not very robust.
- * Therefore, USE IT AT YOUR OWN RISK!
+ * coefficients are re-computed fresh for each new grid (or time step).
  *
  * The variogram is currently computed with the current data (as 1/2*(X1-X2)^2), which makes it quite
  * uninteresting... The next improvement will consist in calculating the covariances (used to build the
  * variogram) from time series (thus reflecting the time-correlation between stations).
  *
- * The available variogram models are found in Fit1D::regression and written capitalized as optional arguments
- * (by default, LINVARIO is used):
+ * The available variogram models are found in Fit1D::regression and given as optional arguments
+ * (by default, LINVARIO is used). Several models can be given, the first that can fit the data will be used
+ * for the current timestep:
  * @code
  * TA::algorithms = ODKRIG
- * TA::odkrig = SPHERICVARIO
+ * TA::odkrig = SPHERICVARIO linvario
  * @endcode
  *
  * @author Mathias Bavay
@@ -478,9 +478,33 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		virtual void initialize(const MeteoData::Parameters& in_param);
 		virtual double getQualityRating() const;
 		virtual void calculate(Grid2DObject& grid);
-	private:
+	protected:
+		void getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData);
 		bool computeVariogram();
 		Fit1D variogram;
+};
+
+
+/**
+ * @class LapseOrdinaryKrigingAlgorithm
+ * @brief Ordinary kriging with detrending.
+ * This is very similar to OrdinaryKrigingAlgorithm but performs detrending on the data.
+ * @code
+ * TA::algorithms = ODKRIG_LAPSE
+ * TA::odkrig = SPHERICVARIO
+ * @endcode
+ *
+ * @author Mathias Bavay
+ */
+class LapseOrdinaryKrigingAlgorithm : public OrdinaryKrigingAlgorithm {
+	public:
+		LapseOrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi,
+					const Date& i_date,
+					const DEMObject& i_dem,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, IOManager& iom)
+			: OrdinaryKrigingAlgorithm(i_mi, i_date, i_dem, i_vecArgs, i_algo, iom) {}
+		virtual void calculate(Grid2DObject& grid);
 };
 
 } //end namespace mio
