@@ -219,7 +219,7 @@ class IOManager {
 		 * it would return 2 measurements per hour.
 		 * @return average sampling rate in Hz, nodata if the buffer is empty
 		 */
-		double getAvgSamplingRate();
+		double getAvgSamplingRate() const;
 
 #ifdef _POPC_ //HACK popc
 		void writeMeteoData(/*const*/ std::vector< METEO_SET >& vecMeteo, /*const*/ std::string& name/*=""*/);

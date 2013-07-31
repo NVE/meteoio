@@ -64,7 +64,7 @@ class SMETIO : public IOInterface {
 		void read_meta_data(const smet::SMETReader& myreader, StationData& meta);
 		void identify_fields(const std::vector<std::string>& fields, std::vector<size_t>& indexes,
 		                     bool& julian_present, MeteoData& md);
-		void copy_data(const std::string& filename, const smet::SMETReader& myreader, const std::vector<std::string>& timestamps,
+		void copy_data(const smet::SMETReader& myreader, const std::vector<std::string>& timestamps,
 		               const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo);
 
 		void parseInputOutputSection();

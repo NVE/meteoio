@@ -24,17 +24,9 @@ namespace mio {
 BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg)
         : iohandler(in_iohandler), cfg(in_cfg), vec_buffer_meteo(), mapBufferedGrids(), IndexBufferedGrids(),
           buffer_start(), buffer_end(), chunk_size(), buff_before(), max_grids(10)
-
 {
 	setDfltBufferProperties();
 }
-
-#ifdef _POPC_
-BufferedIOHandler::~BufferedIOHandler()
-#else
-BufferedIOHandler::~BufferedIOHandler() throw()
-#endif
-{}
 
 BufferedIOHandler& BufferedIOHandler::operator=(const BufferedIOHandler& source) {
 	if(this != &source) {
@@ -221,7 +213,7 @@ void BufferedIOHandler::setMinBufferRequirements(const double& i_chunk_size, con
 	if(buff_before>chunk_size) chunk_size = buff_before;
 }
 
-double BufferedIOHandler::getAvgSamplingRate()
+double BufferedIOHandler::getAvgSamplingRate() const
 {
 	if (!vec_buffer_meteo.empty()){
 		const size_t nr_stations = vec_buffer_meteo.size();
@@ -372,7 +364,11 @@ void BufferedIOHandler::write2DGrid(const Grid2DObject& grid_in, const MeteoGrid
 	iohandler.write2DGrid(grid_in, parameter, date);
 }
 
-void BufferedIOHandler::clearBuffer(){
+void BufferedIOHandler::clearBuffer() {
+	IndexBufferedGrids.clear();
+	vec_buffer_meteo.clear();
+	buffer_start = 0.;
+	buffer_end = 0.;
 	mapBufferedGrids.clear();
 }
 

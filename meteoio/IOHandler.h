@@ -83,6 +83,7 @@ class IOHandler : public IOInterface {
 		void registerPlugins();
 		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
 		void parse_copy_config();
+		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 
 		const Config& cfg;

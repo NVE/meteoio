@@ -281,19 +281,29 @@ void IOHandler::readMeteoData(const Date& date, METEO_SET& vecMeteo)
 	readMeteoData(date, date, meteoTmpBuffer);
 
 	vecMeteo.clear();
-	vecMeteo.reserve(meteoTmpBuffer.size());
+	vecMeteo.reserve( meteoTmpBuffer.size() );
 
-	size_t emptycounter = 0;
-	for (size_t ii=0; ii<meteoTmpBuffer.size(); ii++){//stations
-		if (!meteoTmpBuffer[ii].empty()){
-			vecMeteo.push_back(meteoTmpBuffer[ii].front());
-		} else {
-			emptycounter++;
-		}
+	for (size_t ii=0; ii<meteoTmpBuffer.size(); ii++) {//stations
+		if (!meteoTmpBuffer[ii].empty())
+			vecMeteo.push_back( meteoTmpBuffer[ii].front() );
 	}
+}
 
-	if (emptycounter == meteoTmpBuffer.size()){
-		vecMeteo.clear();
+void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
+{
+	for(size_t stat_idx=0; stat_idx<vecVecMeteo.size(); stat_idx++) {
+		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
+		if(nr_timestamps==0) continue;
+
+		Date previous_date( vecVecMeteo[stat_idx][0].date );
+		for(size_t ii=1; ii<nr_timestamps; ii++) {
+			const StationData& station = vecVecMeteo[stat_idx][ii].meta;
+			const Date& current_date = vecVecMeteo[stat_idx][ii].date;
+			if(current_date<=previous_date) {
+				throw IOException("Error at time "+current_date.toString(Date::ISO)+" for station \""+station.stationName+"\" ("+station.stationID+") : timestamps must be in increasing order and unique!", AT);
+			}
+			previous_date = current_date;
+		}
 	}
 }
 
@@ -303,6 +313,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
+	checkTimestamps(vecMeteo);
 
 	copy_parameters(stationindex, vecMeteo);
 }

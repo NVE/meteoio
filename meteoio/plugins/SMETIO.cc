@@ -324,7 +324,7 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 	}
 }
 
-void SMETIO::copy_data(const std::string& filename, const smet::SMETReader& myreader,
+void SMETIO::copy_data(const smet::SMETReader& myreader,
                        const std::vector<std::string>& timestamps,
                        const std::vector<double>& mydata, std::vector<MeteoData>& vecMeteo)
 {
@@ -359,7 +359,6 @@ void SMETIO::copy_data(const std::string& filename, const smet::SMETReader& myre
 	const size_t nr_of_fields = indexes.size();
 	const size_t nr_of_lines = mydata.size() / nr_of_fields;
 
-	Date previous_date(0., current_timezone);
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
@@ -404,9 +403,6 @@ void SMETIO::copy_data(const std::string& filename, const smet::SMETReader& myre
 
 			current_index++;
 		}
-		if(tmp_md.date<=previous_date)
-			throw InvalidFormatException("Error at time "+tmp_md.date.toString(Date::ISO)+" in SMET file \""+filename+"\" : timestamps must be in increasing order and unique!", AT);
-		previous_date=tmp_md.date;
 
 		if ((olwr_present) && (tmp_md(MeteoData::TSS) == IOUtils::nodata)) {//HACK
 			tmp_md(MeteoData::TSS) = olwr_to_tss(tmp_md("OLWR"));
@@ -462,7 +458,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			myreader.read(dateStart.getJulian(), dateEnd.getJulian(), mydata);
 		}
 
-		copy_data(filename, myreader, mytimestamps, mydata, vecMeteo[ii]);
+		copy_data(myreader, mytimestamps, mydata, vecMeteo[ii]);
 	}
 }
 

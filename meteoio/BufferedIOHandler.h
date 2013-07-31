@@ -71,9 +71,9 @@ class BufferedIOHandler : public IOInterface {
 		 */
 		BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg);
 	#ifdef _POPC_
-		virtual ~BufferedIOHandler();
+		virtual ~BufferedIOHandler() {};
 	#else
-		virtual ~BufferedIOHandler() throw();
+		virtual ~BufferedIOHandler() throw() {};
 	#endif
 
 		BufferedIOHandler& operator=(const BufferedIOHandler&); ///<Assignement operator
@@ -124,7 +124,7 @@ class BufferedIOHandler : public IOInterface {
 		 * it would return 2 measurements per hour.
 		 * @return average sampling rate in Hz, nodata if the buffer is empty
 		 */
-		double getAvgSamplingRate();
+		double getAvgSamplingRate() const;
 
 		const std::string toString() const;
 

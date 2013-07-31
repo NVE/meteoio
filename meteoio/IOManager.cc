@@ -28,7 +28,6 @@ IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(r
                                             fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
                                             processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated)
 {
-	//setProcessingLevel(IOManager::filtered | IOManager::resampled);
 	meteoprocessor.getWindowSize(proc_properties);
 	interpolator.setIOManager(*this); //because "*this" does not necessarily exist in the initialization list...
 }
@@ -49,7 +48,7 @@ void IOManager::setMinBufferRequirements(const double& buffer_size, const double
 	bufferedio.setMinBufferRequirements(buffer_size, buff_before);
 }
 
-double IOManager::getAvgSamplingRate()
+double IOManager::getAvgSamplingRate() const
 {
 	if (processing_level == IOManager::raw){
 		return IOUtils::nodata;
@@ -100,7 +99,6 @@ size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
 
 	return vecStation.size();
 }
-
 
 //for an interval of data: decide whether data should be filtered or raw
 size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< METEO_SET >& vecVecMeteo)
