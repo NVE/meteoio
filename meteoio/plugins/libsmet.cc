@@ -667,7 +667,6 @@ SMETReader::SMETReader(const std::string& in_fname)
 
 	try {
 		eoln = SMETCommon::getEoln(fin); //get the end of line character for the file
-
 		read_header(fin);
 		process_header();
 	} catch(...){
@@ -842,10 +841,13 @@ void SMETReader::process_header()
 
 	const size_t nr_offset = vec_offset.size();
 	const size_t nr_multiplier = vec_multiplier.size();
-	if ((nr_offset>0 && nr_offset!=nr_of_fields) || (nr_multiplier>0 && nr_multiplier!=nr_of_fields)) {
+	if (nr_offset!=nr_of_fields || nr_multiplier!=nr_of_fields) {
+		const size_t Nfields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
+		const size_t Noffset = (timestamp_present)? nr_offset+1 : nr_offset;
+		const size_t Nmultiplier =(timestamp_present)? nr_multiplier+1 : nr_multiplier;
 		std::stringstream ss;
-		ss << "File \"" << filename << "\" has " << nr_of_fields << " data fields, but specifies ";
-		ss << nr_offset << " offsets and " << nr_multiplier << " multipliers. ";
+		ss << "File \"" << filename << "\" has " << Nfields << " data fields, but specifies ";
+		ss << Noffset << " offsets and " << Nmultiplier << " multipliers. ";
 		ss << "The number of offsets and multipliers MUST fit the number of fields, including the (optional) timestamp column.";
 		throw SMETException(ss.str(), SMET_AT);
 	}

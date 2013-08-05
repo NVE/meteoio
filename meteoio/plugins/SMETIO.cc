@@ -231,52 +231,38 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 	 * If a paramter is unknown in the fields section, then it is added as separate field to MeteoData
 	 */
 	for (size_t ii=0; ii<fields.size(); ii++){
-		if (fields[ii] == "TA") {
-			indexes.push_back(md.getParameterIndex("TA"));
-		} else if (fields[ii] == "TSS") {
-			indexes.push_back(md.getParameterIndex("TSS"));
-		} else if (fields[ii] == "TSG") {
-			indexes.push_back(md.getParameterIndex("TSG"));
-		} else if (fields[ii] == "RH") {
-			indexes.push_back(md.getParameterIndex("RH"));
-		} else if (fields[ii] == "VW") {
-			indexes.push_back(md.getParameterIndex("VW"));
-		} else if (fields[ii] == "VW_MAX") {
-			indexes.push_back(md.getParameterIndex("VW_MAX"));
-		} else if (fields[ii] == "DW") {
-			indexes.push_back(md.getParameterIndex("DW"));
-		} else if (fields[ii] == "ISWR") {
-			indexes.push_back(md.getParameterIndex("ISWR"));
-		} else if (fields[ii] == "OSWR") {
-			indexes.push_back(md.getParameterIndex("RSWR"));
-		} else if (fields[ii] == "ILWR") {
-			indexes.push_back(md.getParameterIndex("ILWR"));
-		} else if (fields[ii] == "OLWR") {
+		const string& key = fields[ii];
+
+		if(md.param_exists(key)) {
+			indexes.push_back(md.getParameterIndex(key));
+			continue;
+		}
+
+		//specific key mapping
+		if (key == "PSUM") {
+			indexes.push_back(md.getParameterIndex("HNW"));
+		} else if (key == "OLWR") {
 			md.addParameter("OLWR");
 			indexes.push_back(md.getParameterIndex("OLWR"));
-		} else if (fields[ii] == "PINT") {
+		} else if (key == "PINT") {
 			md.addParameter("PINT");
 			indexes.push_back(md.getParameterIndex("PINT"));
-		} else if (fields[ii] == "PSUM") {
-			indexes.push_back(md.getParameterIndex("HNW"));
-		} else if (fields[ii] == "HS") {
-			indexes.push_back(md.getParameterIndex("HS"));
-		} else if (fields[ii] == "julian") {
+		} else if (key == "julian") {
 			julian_present = true;
 			indexes.push_back(IOUtils::npos);
-		} else if (fields[ii] == "latitude") {
+		} else if (key == "latitude") {
 			indexes.push_back(IOUtils::npos-1);
-		} else if (fields[ii] == "longitude") {
+		} else if (key == "longitude") {
 			indexes.push_back(IOUtils::npos-2);
-		} else if (fields[ii] == "easting") {
+		} else if (key == "easting") {
 			indexes.push_back(IOUtils::npos-3);
-		} else if (fields[ii] == "northing") {
+		} else if (key == "northing") {
 			indexes.push_back(IOUtils::npos-4);
-		} else if (fields[ii] == "altitude") {
+		} else if (key == "altitude") {
 			indexes.push_back(IOUtils::npos-5);
 		} else {
 			//this is an extra parameter, we convert to uppercase
-			std::string extra_param = fields[ii];
+			std::string extra_param = key;
 			IOUtils::toUpper(extra_param);
 			md.addParameter(extra_param);
 			indexes.push_back(md.getParameterIndex(extra_param));
@@ -291,21 +277,21 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 	 * SMETReader objects read all the header info upon construction and can subsequently
 	 * be queried for that info
 	 */
-	double nodata_value = myreader.get_header_doublevalue("nodata");
+	const double nodata_value = myreader.get_header_doublevalue("nodata");
 
 	meta.position.setProj(coordin, coordinparam); //set the default projection from config file
 	if (myreader.location_in_header(smet::WGS84)){
-		double lat = myreader.get_header_doublevalue("latitude");
-		double lon = myreader.get_header_doublevalue("longitude");
-		double alt = myreader.get_header_doublevalue("altitude");
+		const double lat = myreader.get_header_doublevalue("latitude");
+		const double lon = myreader.get_header_doublevalue("longitude");
+		const double alt = myreader.get_header_doublevalue("altitude");
 		meta.position.setLatLon(lat, lon, alt);
 	}
 
 	if (myreader.location_in_header(smet::EPSG)){
-		double east  = myreader.get_header_doublevalue("easting");
-		double north = myreader.get_header_doublevalue("northing");
-		double alt   = myreader.get_header_doublevalue("altitude");
-		short int epsg  = (short int)(floor(myreader.get_header_doublevalue("epsg") + 0.1));
+		const double east  = myreader.get_header_doublevalue("easting");
+		const double north = myreader.get_header_doublevalue("northing");
+		const double alt   = myreader.get_header_doublevalue("altitude");
+		const short int epsg  = (short int)(floor(myreader.get_header_doublevalue("epsg") + 0.1));
 		meta.position.setEPSG(epsg); //this needs to be set before calling setXY(...)
 		meta.position.setXY(east, north, alt);
 	}
@@ -313,13 +299,10 @@ void SMETIO::read_meta_data(const smet::SMETReader& myreader, StationData& meta)
 	meta.stationID = myreader.get_header_value("station_id");
 	meta.stationName = myreader.get_header_value("station_name");
 
-	bool data_epsg = myreader.location_in_data(smet::EPSG);
+	const bool data_epsg = myreader.location_in_data(smet::EPSG);
 	if (data_epsg){
-		double d_epsg = myreader.get_header_doublevalue("epsg");
-		short int epsg = IOUtils::snodata;
-		if (d_epsg != nodata_value)
-			epsg  = (short int)(floor(d_epsg + 0.1));
-
+		const double d_epsg = myreader.get_header_doublevalue("epsg");
+		const short int epsg = (d_epsg != nodata_value)? (short int)(floor(d_epsg + 0.1)): IOUtils::snodata;
 		meta.position.setEPSG(epsg);
 	}
 }
