@@ -248,7 +248,6 @@ template<class T> inline const T Array4D<T>::operator()(const unsigned int& w, c
 	return vecData[w + nw*x + y*nwnx + z*nwnxny];
 }
 
-
 template<class T> Array4D<T>::Array4D() : vecData(), nw(0), nx(0), ny(0), nz(0), nwnx(0), nwnxny(0), keep_nodata(true)
 {
 }
@@ -328,7 +327,6 @@ template<class T> void Array4D<T>::fill(const Array4D<T>& i_array4D,
 		}
 	}
 }
-
 
 template<class T> Array4D<T>::Array4D(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz)
                              : vecData(anw*anx*any*anz), nw(anw), nx(anx), ny(any), nz(anz), nwnx(anw*anx), nwnxny(anw*anx*any),  keep_nodata(true)

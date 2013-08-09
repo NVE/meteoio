@@ -413,7 +413,6 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array2D<P>& array
 	return is;
 }
 
-
 template<class T> T Array2D<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();

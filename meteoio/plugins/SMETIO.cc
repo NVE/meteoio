@@ -241,6 +241,8 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 		//specific key mapping
 		if (key == "PSUM") {
 			indexes.push_back(md.getParameterIndex("HNW"));
+		} else if (key == "OSWR") {
+			indexes.push_back(md.getParameterIndex("RSWR"));
 		} else if (key == "OLWR") {
 			md.addParameter("OLWR");
 			indexes.push_back(md.getParameterIndex("OLWR"));
@@ -424,7 +426,7 @@ void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	//Now loop through all requested stations, open the respective files and parse them
 	for (size_t ii=startindex; ii<endindex; ii++){
-		const string filename = vecFiles.at(ii); //filename of current station
+		const string& filename = vecFiles.at(ii); //filename of current station
 
 		if (!IOUtils::fileExists(filename))
 			throw FileNotFoundException(filename, AT);
@@ -473,8 +475,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		if(out_dflt_TZ != IOUtils::nodata) timezone=out_dflt_TZ; //if the user set an output time zone, all will be converted to it
 
 		try {
-			smet::SMETType type = smet::ASCII;
-			if (!outputIsAscii) type = smet::BINARY;
+			const smet::SMETType type = (outputIsAscii)? smet::ASCII : smet::BINARY;
 
 			smet::SMETWriter mywriter(filename, type, outputIsGzipped);
 			generateHeaderInfo(sd, outputIsAscii, isConsistent, timezone,
@@ -645,7 +646,7 @@ size_t SMETIO::getNrOfParameters(const std::string& stationname, const std::vect
 
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		has_one_element = true;
-		size_t current_size = vecMeteo[ii].getNrOfParameters();
+		const size_t current_size = vecMeteo[ii].getNrOfParameters();
 
 		if (actual_nr_of_parameters == IOUtils::npos){
 			actual_nr_of_parameters = current_size;

@@ -72,7 +72,6 @@ template <class T> class Array3DProxy2 {
 		const unsigned int any;
 };
 
-
 /**
  * @class Array3D
  * @brief The template class Array3D is a 3D Array (Tensor) able to hold any type of object as datatype.
@@ -298,7 +297,6 @@ template<class T> Array3DProxy<T> Array3D<T>::operator[](const unsigned int& i) 
 	return Array3DProxy<T>(*this, i);
 }
 
-
 template<class T> Array3D<T>::Array3D() : vecData(), nx(0), ny(0), nz(0), nxny(0), keep_nodata(true)
 {
 }
@@ -374,7 +372,6 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 		}
 	}
 }
-
 
 template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz)
                              : vecData(anx*any*anz), nx(anx), ny(any), nz(anz), nxny(anx*any), keep_nodata(true)
@@ -575,7 +572,6 @@ template<class T> void Array3D<T>::abs() {
 		}
 	}
 }
-
 
 template<class T> const Array3D<T> Array3D<T>::getAbs() const {
 	Array3D<T> result = *this; //make a copy

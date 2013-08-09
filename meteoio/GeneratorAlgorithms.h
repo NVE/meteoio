@@ -178,7 +178,7 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
  * The last evaluation of cloudiness (as a ratio of cloudy_ilwr / clear_sky_ilwr) is used all along
  * during the times when no ISWR is available if such ratio is not too old (ie. no more than 1 day old).
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
- * In case of snow, a snow albedo of 0.56 is used while in the abscence of snow, a grass albedo of 0.23 is used
+ * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
  * in order to compute ISWR from RSWR.
  */
 class UnsworthGenerator : public GeneratorAlgorithm {

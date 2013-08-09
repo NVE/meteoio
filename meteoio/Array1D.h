@@ -187,7 +187,6 @@ template<class T> void Array1D<T>::resize(const unsigned int& asize, const T& in
 	nx = asize;
 }
 
-
 template<class T> inline T& Array1D<T>::operator()(const unsigned int& index) {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
@@ -377,7 +376,6 @@ template<class T> void Array1D<T>::abs() {
 		}
 	}
 }
-
 
 template<class T> const Array1D<T> Array1D<T>::getAbs() const {
 	Array1D<T> result = *this; //make a copy
