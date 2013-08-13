@@ -12,6 +12,7 @@ SET(meteofilters_sources
 	meteofilters/FilterTukey.cc
 	meteofilters/FilterRate.cc
 	meteofilters/FilterUnheatedHNW.cc
+	meteofilters/ProcButterworth.cc
 	meteofilters/ProcUnventilatedT.cc
 	meteofilters/ProcUndercatch_WMO.cc
 	meteofilters/ProcUndercatch_Hamon.cc

@@ -27,6 +27,7 @@
 #include <meteoio/meteofilters/FilterUnheatedHNW.h>
 #include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/FilterMAD.h>
+#include <meteoio/meteofilters/ProcButterworth.h>
 #include <meteoio/meteofilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteofilters/ProcUndercatch_Hamon.h>
 #include <meteoio/meteofilters/ProcUnventilatedT.h>
@@ -83,7 +84,8 @@ namespace mio {
  *
  * A few data transformations are also supported besides filtering:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
- * - WMA_SMOOTHING weighted moving average smoothing of data, see ProcWMASmoothing
+ * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
+ * - BUTTERWORTH: low pass butterworth filter, see ProcButterworth
  * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
  * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
  * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
@@ -110,6 +112,7 @@ bool BlockFactory::initStaticData()
 	availableBlocks.insert("RATE");
 	availableBlocks.insert("TUKEY");
 	availableBlocks.insert("MAD");
+	availableBlocks.insert("BUTTERWORTH");
 	availableBlocks.insert("UNHEATED_RAINGAUGE");
 	availableBlocks.insert("UNDERCATCH_WMO");
 	availableBlocks.insert("UNDERCATCH_HAMON");
@@ -147,6 +150,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterTukey(vec_args);
 	} else if (blockname == "MAD"){
 		return new FilterMAD(vec_args);
+	} else if (blockname == "BUTTERWORTH"){
+		return new ProcButterworth(vec_args);
 	} else if (blockname == "UNHEATED_RAINGAUGE"){
 		return new FilterUnheatedHNW(vec_args);
 	} else if (blockname == "UNDERCATCH_WMO"){

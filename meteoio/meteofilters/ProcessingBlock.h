@@ -27,18 +27,18 @@ namespace mio {
 
 class ProcessingProperties {
 	public:
-		ProcessingProperties() : time_before(0., 0.), time_after(0., 0.),
-		                         points_before(0), points_after(0),
-		                         stage(first) {}
-
-		const std::string toString() const;
-
 		typedef enum PROC_STAGE { none, ///< never activate this block
 		                     first, ///< activate at first stage
 		                     second, ///< activate at second stage
 		                     both ///< activate at both first and second stage
 		                     //once ///< activate at stage one or two, but only once
 		                   } proc_stage;
+
+		ProcessingProperties() : time_before(0., 0.), time_after(0., 0.),
+		                         points_before(0), points_after(0),
+		                         stage(first) {}
+
+		const std::string toString() const;
 
 		Duration time_before;
 		Duration time_after;
