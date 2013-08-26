@@ -385,26 +385,7 @@ void ImisIO::parseStationID(const std::string& stationID, std::string& stat_abk,
 void ImisIO::readStationIDs(std::vector<std::string>& vecStationID)
 {
 	vecStationID.clear();
-
-	size_t current_stationnr = 1;
-	string current_station;
-	do {
-		current_station.clear();
-		stringstream ss;
-		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
-
-		if (!current_station.empty()) {
-			cerr << "\tRead stationname " << ss.str() << ": '" << current_station << "'\n";
-			if (!isdigit(current_station[0])) {
-				vecStationID.push_back(current_station);
-			} else {
-				cerr << "\t ==> discarded as neither IMIS, nor ENET, nor ANETZ station!\n";
-			}
-		}
-
-		current_stationnr++;
-	} while (!current_station.empty());
+	cfg.getValues("STATION", "INPUT", vecStationID);
 
 	if(vecStationID.empty()) {
 		cerr << "\tNo stations specified for IMISIO... is this what you want?\n";

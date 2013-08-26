@@ -81,6 +81,7 @@ class SNIO : public IOInterface {
 
 		const Config cfg;
 		std::vector<StationData> vecAllStations;
+		std::vector<std::string> vecFilenames;
 		std::vector< IOUtils::FileIndexer > vecIndex;
 		std::ifstream fin; //Input file streams
 		std::ofstream fout;//Output file streams

@@ -256,6 +256,24 @@ class Config {
 			}
 		}
 
+		template <typename T> void getValues(const std::string& keystart, const std::string& section, std::vector<T>& vecT) const
+		{
+			vecT.clear();
+			std::vector< std::string > vecKeys;
+			const std::string new_section( IOUtils::strToUpper(section) );
+			const size_t nr_keys = findKeys(vecKeys, keystart, new_section);
+
+			for(size_t ii=0; ii<nr_keys; ++ii) {
+				const std::string full_key = new_section + "::" + vecKeys[ii];
+				T tmp;
+				try {
+					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
+				} catch(const std::exception& e){
+					throw UnknownValueException("[E] Error in "+sourcename+" reading key "+full_key, AT);
+				}
+				vecT.push_back(tmp);
+			}
+		}
 
 		/**
 		 * @brief Function that searches for a given string within the keys of section (default: GENERAL)

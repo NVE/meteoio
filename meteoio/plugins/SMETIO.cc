@@ -152,32 +152,18 @@ void SMETIO::parseInputOutputSection()
 	cfg.getValue("METEO", "Input", in_meteo, IOUtils::nothrow);
 	if (in_meteo == "SMET") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("METEOPATH", "Input", inpath);
-		size_t counter = 1;
-		string filename;
+		std::vector<std::string> vecFilenames;
+		cfg.getValues("STATION", "INPUT", vecFilenames);
 
-		do {
-			stringstream ss;
-			filename.clear();
+		for (size_t ii=0; ii<vecFilenames.size(); ii++) {
+			const string filename = vecFilenames[ii];
+			const string extension = IOUtils::getExtension(filename);
+			const std::string file_and_path = (extension!="")? inpath+"/"+filename : inpath+"/"+filename+dflt_extension;
 
-			ss << "STATION" << counter;
-			cfg.getValue(ss.str(), "Input", filename, IOUtils::nothrow);
-
-			if (!filename.empty()){
-				if(IOUtils::getExtension(filename)=="") filename += dflt_extension; //default extension
-				ostringstream file_and_path;
-				file_and_path << inpath << "/" << filename;
-				if (!IOUtils::validFileName(file_and_path.str())) //Check whether filename is valid
-					throw InvalidFileNameException(file_and_path.str(), AT);
-
-				vecFiles.push_back(file_and_path.str());
-			}
-			counter++;
-		} while (!filename.empty());
-
-		nr_stations = counter - 1;
-
-		for (size_t ii=0; ii<vecFiles.size(); ii++){
-			vec_smet_reader.push_back(smet::SMETReader(vecFiles[ii]));
+			if (!IOUtils::validFileName(file_and_path)) //Check whether filename is valid
+				throw InvalidFileNameException(file_and_path, AT);
+			vecFiles.push_back(file_and_path);
+			vec_smet_reader.push_back(smet::SMETReader(file_and_path));
 		}
 	}
 

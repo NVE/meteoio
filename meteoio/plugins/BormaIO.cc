@@ -144,24 +144,8 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 void BormaIO::readStationNames()
 {
 	vecStationName.clear();
-
-	size_t counter = 1;
-	string stationname;
-
-	do {
-		stringstream ss;
-		stationname.clear();
-
-		ss << "STATION" << counter;
-		cfg.getValue(ss.str(), "Input", stationname, IOUtils::nothrow);
-
-		if (!stationname.empty()){
-			vecStationName.push_back(stationname);
-		}
-		counter++;
-	} while (!stationname.empty());
-
-	nr_stations = counter - 1;
+	cfg.getValues("STATION", "INPUT", vecStationName);
+	nr_stations = vecStationName.size();
 }
 
 void BormaIO::getFiles(const std::string& stationname, const Date& start_date, const Date& end_date,

@@ -110,6 +110,10 @@ bool SinGenerator::generate(const size_t& param, MeteoData& md)
 		} else if(type=='d') {
 			const double julian = md.date.getJulian();
 			t = (julian - Optim::intPart(julian) - phase) + .25; //watch out: julian day starts at noon!
+		} else {
+			std::stringstream ss;
+			ss << "Invalid period \"" << type << "\" specified for the " << algo << " generator";
+			throw InvalidArgumentException(ss.str(), AT);
 		}
 
 		const double w = 2.*M_PI;
