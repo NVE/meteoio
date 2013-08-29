@@ -132,7 +132,7 @@ void DataGenerator::setAlgorithms(const Config& cfg)
 	}
 }
 
-size_t DataGenerator::get_parameters(const Config& cfg, std::set<std::string>& set_parameters) const
+size_t DataGenerator::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
 	std::vector<std::string> vec_keys;
 	cfg.findKeys(vec_keys, std::string(), "Generators");
@@ -171,7 +171,7 @@ size_t DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::st
 size_t DataGenerator::getArgumentsForAlgorithm(const Config& cfg,
                                                const std::string& parname,
                                                const std::string& algorithm,
-                                               std::vector<std::string>& vecArgs) const
+                                               std::vector<std::string>& vecArgs)
 {
 	vecArgs.clear();
 	cfg.getValue(parname+"::"+algorithm, "Generators", vecArgs, IOUtils::nothrow);

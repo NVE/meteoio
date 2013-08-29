@@ -118,12 +118,12 @@ class DataGenerator {
 		const std::string toString() const;
 
 	private:
-		void setAlgorithms(const Config& cfg);
-		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters) const;
-		size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
-		size_t getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
+		static size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
+		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
+		static size_t getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
 		                                const std::string& algorithm,
-		                                std::vector<std::string>& vecArgs) const;
+		                                std::vector<std::string>& vecArgs);
+		void setAlgorithms(const Config& cfg);
 
 		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data generators algorithms
 		bool generators_defined; //if true, there are some generators to run. if false, nothing to do

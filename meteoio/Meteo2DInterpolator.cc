@@ -46,6 +46,10 @@ Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& s
 	return *this;
 }
 
+void Meteo2DInterpolator::setIOManager(IOManager& i_iomanager) {
+	iomanager = &i_iomanager;
+}
+
 void Meteo2DInterpolator::setAlgorithms()
 {
 	/* By reading the Config object build up a list of user configured algorithms
@@ -56,32 +60,27 @@ void Meteo2DInterpolator::setAlgorithms()
 	for (size_t ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		std::vector<std::string> tmpAlgorithms;
 		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
-		const size_t nrOfAlgorithms = getAlgorithmsForParameter(parname, tmpAlgorithms);
+		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
 
 		if (nrOfAlgorithms > 0)
 			mapAlgorithms[parname] = tmpAlgorithms;
 	}
 }
 
-void Meteo2DInterpolator::setIOManager(IOManager& i_iomanager) {
-	iomanager = &i_iomanager;
-}
-
-void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo)
+size_t Meteo2DInterpolator::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
-	//check that the stations are using the same projection as the dem
-	for (size_t i=0; i<vec_meteo.size(); i++) {
-		const StationData& meta = vec_meteo[i].meta;
-		if(!meta.position.isSameProj(dem.llcorner)) {
-			std::stringstream os;
-			std::string type, args;
-			meta.position.getProj(type, args);
-			os << "Station " << meta.stationID << " is using projection (" << type << " " << args << ") ";
-			dem.llcorner.getProj(type, args);
-			os << "while DEM is using projection ("<< type << " " << args << ") ";
-			throw IOException(os.str(), AT);
+	std::vector<std::string> vec_keys;
+	cfg.findKeys(vec_keys, std::string(), "Interpolations2D");
+
+	for (size_t ii=0; ii<vec_keys.size(); ii++) {
+		const size_t found = vec_keys[ii].find_first_of(":");
+		if (found != std::string::npos){
+			const string tmp = vec_keys[ii].substr(0,found);
+			set_parameters.insert( IOUtils::strToUpper(tmp) );
 		}
 	}
+
+	return set_parameters.size();
 }
 
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
@@ -150,12 +149,11 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	}
 }
 
-size_t Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms)
+size_t Meteo2DInterpolator::getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms)
 {
 	// This function retrieves the user defined interpolation algorithms for
 	// parameter 'parname' by querying the Config object
 	vecAlgorithms.clear();
-
 	std::vector<std::string> vecKeys;
 	cfg.findKeys(vecKeys, parname+"::algorithms", "Interpolations2D");
 
@@ -165,9 +163,7 @@ size_t Meteo2DInterpolator::getAlgorithmsForParameter(const std::string& parname
 	if (vecKeys.empty())
 		return 0;
 
-
-	cfg.getValue(vecKeys.at(0), "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
-
+	cfg.getValue(vecKeys[0], "Interpolations2D", vecAlgorithms, IOUtils::nothrow);
 	return vecAlgorithms.size();
 }
 
@@ -198,6 +194,24 @@ void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval
 		}
 	}
 }
+
+void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo)
+{
+	//check that the stations are using the same projection as the dem
+	for (size_t ii=0; ii<vec_meteo.size(); ii++) {
+		const StationData& meta = vec_meteo[ii].meta;
+		if(!meta.position.isSameProj(dem.llcorner)) {
+			std::stringstream os;
+			std::string type, args;
+			meta.position.getProj(type, args);
+			os << "Station " << meta.stationID << " is using projection (" << type << " " << args << ") ";
+			dem.llcorner.getProj(type, args);
+			os << "while DEM is using projection ("<< type << " " << args << ") ";
+			throw IOException(os.str(), AT);
+		}
+	}
+}
+
 
 const std::string Meteo2DInterpolator::toString() const {
 	ostringstream os;

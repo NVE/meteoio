@@ -138,14 +138,6 @@ class Meteo2DInterpolator {
 		                 Grid2DObject& result, std::string& InfoString);
 
 		/**
-		 * @brief A min/max filter for 2D grids
-		 * @param minval Minimum value allowed in the 2D grid
-		 * @param maxval Maximum value allowed in the 2D grid
-		 * @param gridobj A Grid2DObject that will be min/max checked
-		 */
-		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
-
-		/**
 		 * @brief Retrieve the arguments vector for a given interpolation algorithm
 		 * @param param the meteorological parameter that is concerned
 		 * @param algorithm the desired algorithm
@@ -160,14 +152,17 @@ class Meteo2DInterpolator {
 		const std::string toString() const;
 
 	private:
+		static void checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj);
+		static void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
+		static size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
+		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
+
 		void setAlgorithms();
-		void check_projections(const DEMObject& dem, const std::vector<MeteoData>& vec_meteo);
-		size_t getAlgorithmsForParameter(const std::string& parname, std::vector<std::string>& vecAlgorithms);
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		IOManager *iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
 
-		std::map< std::string, std::vector<std::string> > mapAlgorithms; //per parameter interpolation algorithms
+		std::map< std::string, std::vector<std::string> > mapAlgorithms;
 };
 
 } //end namespace
