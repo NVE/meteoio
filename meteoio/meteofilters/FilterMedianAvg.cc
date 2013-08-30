@@ -57,17 +57,21 @@ double FilterMedianAvg::calc_median(const std::vector<MeteoData>& ivec, const un
 			vecTemp.push_back(value);
 	}
 
-	const size_t size_of_vec = vecTemp.size();
-	if (size_of_vec == 0)
+	const size_t vecSize = vecTemp.size();
+	if (vecSize == 0)
 		return IOUtils::nodata;
 
-	const int middle = (int)(size_of_vec/2);
-	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
-
-	if ((size_of_vec % 2) == 1){ //uneven
+	if ((vecSize % 2) == 1){ //uneven
+		const int middle = (int)(vecSize/2);
+		nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 		return *(vecTemp.begin()+middle);
 	} else { //use arithmetic mean of element n/2 and n/2-1
-		return Interpol1D::weightedMean( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
+		const int middle = (int)(vecSize/2);
+		nth_element(vecTemp.begin(), vecTemp.begin()+middle-1, vecTemp.end());
+		const double m1 = *(vecTemp.begin()+middle-1);
+		nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
+		const double m2 = *(vecTemp.begin()+middle);
+		return Interpol1D::weightedMean( m1, m2, 0.5);
 	}
 }
 

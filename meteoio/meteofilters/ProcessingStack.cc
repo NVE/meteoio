@@ -23,12 +23,12 @@ namespace mio {
 
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
 {
-	vector<string> vec_filters;
-	const size_t nr_of_filters = getFiltersForParameter(cfg, param_name, vec_filters);
+	vector<string> vecFilters;
+	cfg.getValues(parname+"::filter", "Filters", vecFilters);
+	const size_t nr_of_filters = vecFilters.size();
 	for (size_t ii=0; ii<nr_of_filters; ii++){
 		//create a processing block for each filter
-		string block_name = vec_filters[ii];
-		IOUtils::toUpper(block_name);
+		const string block_name = IOUtils::strToUpper( vecFilters[ii] );
 		std::vector<std::string> vec_args;
 		std::ostringstream tmp;
 		tmp << param_name << "::arg" << (ii+1);
@@ -67,24 +67,6 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
 	}
 }
 
-size_t ProcessingStack::getFiltersForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecFilters)
-{
-	/*
-	 * This function retrieves the filter sequence for parameter 'parname'
-	 * by querying the Config object
-	 */
-	std::vector<std::string> vecKeys;
-	cfg.findKeys(vecKeys, parname+"::filter", "Filters");
-
-	for (size_t ii=0; ii<vecKeys.size(); ii++){
-		std::string tmp;
-		cfg.getValue(vecKeys[ii], "Filters", tmp, IOUtils::nothrow);
-		vecFilters.push_back(tmp);
-	}
-
-	return vecFilters.size();
-}
-
 size_t ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
                                                     std::vector<std::string>& vecArguments)
 {
@@ -102,7 +84,6 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 		if (!ivec[ii].empty()){
 			//pick one element and check whether the param_name parameter exists
 			const size_t param = ivec[ii].front().getParameterIndex(param_name);
-
 			if (param != IOUtils::npos){
 				std::vector<MeteoData> tmp = ivec[ii];
 

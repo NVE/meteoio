@@ -164,7 +164,6 @@ bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::
 double Interpol1D::weightedMean(const double& d1, const double& d2, const double& weight)
 {
 	const double tmp = abs(d1 - d2);
-
 	if (d1 < d2) {
 		return (d1 + tmp*weight);
 	} else {
@@ -247,13 +246,17 @@ double Interpol1D::getMedian(const std::vector<double>& vecData)
 	if (vecSize == 0)
 		return IOUtils::nodata;
 
-	const int middle = (int)(vecSize/2);
-	nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
-
 	if ((vecSize % 2) == 1){ //uneven
+		const int middle = (int)(vecSize/2);
+		nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
 		return *(vecTemp.begin()+middle);
 	} else { //use arithmetic mean of element n/2 and n/2-1
-		return weightedMean( *(vecTemp.begin()+middle), *(vecTemp.begin()+middle-1), 0.5);
+		const int middle = (int)(vecSize/2);
+		nth_element(vecTemp.begin(), vecTemp.begin()+middle-1, vecTemp.end());
+		const double m1 = *(vecTemp.begin()+middle-1);
+		nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
+		const double m2 = *(vecTemp.begin()+middle);
+		return weightedMean( m1, m2, 0.5);
 	}
 }
 
