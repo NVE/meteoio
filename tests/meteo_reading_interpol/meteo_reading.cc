@@ -15,11 +15,11 @@ const double res_Slope []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	
 const double res_Azi []		= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata};
 
 const double res_Met_0[]	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // P
-const double res_Met_1 []	= {264.261457,		266.4673185,		266.6195186,		269.5468685,		266.0020691,		267.0407779,		266.1504106}; // TA
+const double res_Met_1 []	= {264.261457,		266.4673185,		266.6195186,		269.5468685,		266.0020691,		267.0407779,		266.1262215}; // TA
 const double res_Met_2 []	= {1.,			0.9669166667,		1.,			0.9658333333,		0.9641666667,		0.9121666667,		0.93425}; // RH
 const double res_Met_3[]	= {273.6963,		274.3503833,		273.9969,		274.6983,		274.0971,		274.9251417,		274.0971}; // TSG
 const double res_Met_4[]	= {262.9366667,		266.1666667,		264.41,			268.9033333,		265.43,			266.89,			262.1966667}; // TSS
-const double res_Met_5 []	= {0.5875000001,	0.95,			1.894166667,		1.415833333,		0.35,			0.72,			1.467083333}; // HS
+const double res_Met_5 []	= {0.5875000001,	0.95,			1.894166667,		1.415833333,		0.35,			0.72,			1.47}; // HS
 const double res_Met_6 []	= {2.2,			1.2,			2.2,			0.2,			2.1,			0.6,			1.}; // VW
 const double res_Met_7 []	= {335.5833333,		144.4166666,		103.25,			213.0833333,		266.8333333,		239.5,			112.25}; // DW
 const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
@@ -86,18 +86,18 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo.meta.getSlopeAngle(),res_Slope[i_results], epsilon)){
-		cerr << "error on getSlopeAngle";
+		cerr << "error on getSlopeAngle"<< endl;
 		status = false;
 	}
 	if(!IOUtils::checkEpsilonEquality(datMeteo.meta.getAzimuth(), res_Azi[i_results], epsilon)){
-		cerr << "error on getAzimuth";
+		cerr << "error on getAzimuth"<< endl;
 		status = false;
 	}
 
 	StationData refStation(refCoord, res_ID[i_results], res_Name[i_results]);
 	refStation.setSlope(res_Slope[i_results], res_Azi[i_results]);
 	if(refStation != datMeteo.meta){
-		cerr << "error on != between Station Data";
+		cerr << "error on != between Station Data"<< endl;
 		status = false;
 	}
 
