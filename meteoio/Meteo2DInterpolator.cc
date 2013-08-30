@@ -65,8 +65,32 @@ void Meteo2DInterpolator::setAlgorithms()
 		if (nrOfAlgorithms > 0)
 			mapAlgorithms[parname] = tmpAlgorithms;
 	}
+
+	/*set<string> set_of_used_parameters;
+	get_parameters(cfg, set_of_used_parameters);
+
+	set<string>::const_iterator it;
+	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
+		std::vector<std::string> tmpAlgorithms;
+		const std::string parname = *it;
+		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
+
+		//algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, date, dem, vecArgs, *iomanager));
+		std::vector<InterpolationAlgorithm*> vecAlgorithms(nrOfAlgorithms);
+		for(size_t jj=0; jj<nrOfAlgorithms; jj++) {
+			std::vector<std::string> vecArgs;
+			getArgumentsForAlgorithm(parname, tmpAlgorithms[jj], vecArgs);
+			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *iomanager);
+		}
+
+		if(nrOfAlgorithms>0) {
+			mapAlgorithms[parname] = vecAlgorithms;
+			generators_defined = true;
+		}
+	}*/
 }
 
+//get a list of all meteoparameters referenced in the Interpolations2D section
 size_t Meteo2DInterpolator::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
 	std::vector<std::string> vec_keys;
@@ -96,8 +120,11 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	if(iomanager==NULL)
 		throw IOException("No IOManager reference has been set!", AT);
 
+	//HACK: convert meteoParam -> string. Should we not pass a string to start with!
+	const string param = MeteoData::getParameterName(meteoparam);
+
 	//Show algorithms to be used for this parameter
-	const map<string, vector<string> >::const_iterator it = mapAlgorithms.find(MeteoData::getParameterName(meteoparam));
+	const map<string, vector<string> >::const_iterator it = mapAlgorithms.find(param);
 
 	if (it != mapAlgorithms.end()){
 		double maxQualityRating = 0.0;
@@ -106,13 +133,12 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		for (size_t ii=0; ii < it->second.size(); ii++){
 			const string& algoname = it->second.at(ii);
 			vector<string> vecArgs;
-			getArgumentsForAlgorithm(meteoparam, algoname, vecArgs);
+			getArgumentsForAlgorithm(param, algoname, vecArgs);
 
 			//Get the configured algorithm
-			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, date, dem, vecArgs, *iomanager));
+			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, vecArgs, *iomanager));
 			//Get the quality rating and compare to previously computed quality ratings
-			algorithm->initialize(meteoparam);
-			const double rating = algorithm->getQualityRating();
+			const double rating = algorithm->getQualityRating(dem, date, meteoparam);
 			if ((rating != 0.0) && (rating > maxQualityRating)) {
 				//we use ">" so that in case of equality, the first choice will be kept
 				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
@@ -167,12 +193,12 @@ size_t Meteo2DInterpolator::getAlgorithmsForParameter(const Config& cfg, const s
 	return vecAlgorithms.size();
 }
 
-size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const MeteoData::Parameters& param,
+size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& param,
                                                      const std::string& algorithm,
                                                      std::vector<std::string>& vecArgs) const
 {
 	vecArgs.clear();
-	const string keyname = MeteoData::getParameterName(param) +"::"+ algorithm;
+	const string keyname = param +"::"+ algorithm;
 	cfg.getValue(keyname, "Interpolations2D", vecArgs, IOUtils::nothrow);
 
 	return vecArgs.size();

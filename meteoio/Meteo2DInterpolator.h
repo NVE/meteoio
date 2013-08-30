@@ -143,7 +143,7 @@ class Meteo2DInterpolator {
 		 * @param algorithm the desired algorithm
 		 * @param vecArgs a vector of strings containing the arguments
 		 */
-		size_t getArgumentsForAlgorithm(const MeteoData::Parameters& param,
+		size_t getArgumentsForAlgorithm(const std::string& param,
 		                                const std::string& algorithm,
 		                                std::vector<std::string>& vecArgs) const;
 
@@ -163,6 +163,7 @@ class Meteo2DInterpolator {
 		IOManager *iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
 
 		std::map< std::string, std::vector<std::string> > mapAlgorithms;
+		//std::map< std::string, std::vector<InterpolationAlgorithm> > mapAlgorithms; //per parameter interpolation algorithms
 };
 
 } //end namespace
