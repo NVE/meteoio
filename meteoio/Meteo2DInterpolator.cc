@@ -23,15 +23,22 @@ using namespace std;
 namespace mio {
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom)
-                    : cfg(i_cfg), iomanager(&i_iom), mapAlgorithms()
+                    : cfg(i_cfg), iomanager(&i_iom), algorithms_ready(false), mapAlgorithms()
 {
 	setAlgorithms();
 }
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg)
-                    : cfg(i_cfg), iomanager(NULL), mapAlgorithms()
+                    : cfg(i_cfg), iomanager(NULL), algorithms_ready(false), mapAlgorithms() {}
+
+Meteo2DInterpolator::~Meteo2DInterpolator()
 {
-	setAlgorithms();
+	std::map<std::string, std::vector<InterpolationAlgorithm*> >::iterator iter;
+	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
+		const vector<InterpolationAlgorithm*>& vecAlgs = iter->second;
+		for(size_t ii=0; ii<vecAlgs.size(); ++ii)
+			delete vecAlgs[ii];
+	}
 }
 
 Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& source)
@@ -50,32 +57,22 @@ void Meteo2DInterpolator::setIOManager(IOManager& i_iomanager) {
 	iomanager = &i_iomanager;
 }
 
+/* By reading the Config object build up a list of user configured algorithms
+* for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
+* Concept of this constructor: loop over all MeteoData::Parameters and then look
+* for configuration of interpolation algorithms within the Config object.
+*/
 void Meteo2DInterpolator::setAlgorithms()
 {
-	/* By reading the Config object build up a list of user configured algorithms
-	 * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
-	 * Concept of this constructor: loop over all MeteoData::Parameters and then look
-	 * for configuration of interpolation algorithms within the Config object.
-	 */
-	for (size_t ii=0; ii < MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
-		std::vector<std::string> tmpAlgorithms;
-		const std::string& parname = MeteoData::getParameterName(ii); //Current parameter name
-		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
-
-		if (nrOfAlgorithms > 0)
-			mapAlgorithms[parname] = tmpAlgorithms;
-	}
-
-	/*set<string> set_of_used_parameters;
+	set<string> set_of_used_parameters;
 	get_parameters(cfg, set_of_used_parameters);
 
 	set<string>::const_iterator it;
 	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
-		std::vector<std::string> tmpAlgorithms;
 		const std::string parname = *it;
+		std::vector<std::string> tmpAlgorithms;
 		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
 
-		//algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, date, dem, vecArgs, *iomanager));
 		std::vector<InterpolationAlgorithm*> vecAlgorithms(nrOfAlgorithms);
 		for(size_t jj=0; jj<nrOfAlgorithms; jj++) {
 			std::vector<std::string> vecArgs;
@@ -85,9 +82,9 @@ void Meteo2DInterpolator::setAlgorithms()
 
 		if(nrOfAlgorithms>0) {
 			mapAlgorithms[parname] = vecAlgorithms;
-			generators_defined = true;
 		}
-	}*/
+	}
+	algorithms_ready = true;
 }
 
 //get a list of all meteoparameters referenced in the Interpolations2D section
@@ -119,44 +116,34 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 {
 	if(iomanager==NULL)
 		throw IOException("No IOManager reference has been set!", AT);
-
-	//HACK: convert meteoParam -> string. Should we not pass a string to start with!
-	const string param = MeteoData::getParameterName(meteoparam);
+	if(!algorithms_ready)
+		setAlgorithms();
 
 	//Show algorithms to be used for this parameter
-	const map<string, vector<string> >::const_iterator it = mapAlgorithms.find(param);
-
-	if (it != mapAlgorithms.end()){
-		double maxQualityRating = 0.0;
-		auto_ptr<InterpolationAlgorithm> bestalgorithm(NULL);
-
-		for (size_t ii=0; ii < it->second.size(); ii++){
-			const string& algoname = it->second.at(ii);
-			vector<string> vecArgs;
-			getArgumentsForAlgorithm(param, algoname, vecArgs);
-
-			//Get the configured algorithm
-			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, vecArgs, *iomanager));
-			//Get the quality rating and compare to previously computed quality ratings
-			const double rating = algorithm->getQualityRating(date, meteoparam);
-			if ((rating != 0.0) && (rating > maxQualityRating)) {
-				//we use ">" so that in case of equality, the first choice will be kept
-				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
-				maxQualityRating = rating;
-			}
-		}
-
-		//finally execute the algorithm with the best quality rating or throw an exception
-		if (bestalgorithm.get() == NULL) {
-			throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+MeteoData::getParameterName(meteoparam), AT);
-		}
-		bestalgorithm->calculate(dem, result);
-		InfoString = bestalgorithm->getInfo();
-	} else {
-		//Some default message, that interpolation for this parameter needs configuration
-		throw IOException("You need to configure the interpolation algorithms for parameter " +
-		                  MeteoData::getParameterName(meteoparam), AT);
+	const string param_name = MeteoData::getParameterName(meteoparam);
+	const map<string, vector<InterpolationAlgorithm*> >::iterator it = mapAlgorithms.find(param_name);
+	if(it==mapAlgorithms.end()) {
+		throw IOException("No interpolation algorithms configured for parameter "+param_name, AT);
 	}
+
+	//look for algorithm with the highest quality rating
+	const vector<InterpolationAlgorithm*>& vecAlgs = it->second;
+	double maxQualityRating = -1.;
+	size_t bestalgorithm = 0;
+	for (size_t ii=0; ii < vecAlgs.size(); ++ii){
+		const double rating = vecAlgs[ii]->getQualityRating(date, meteoparam);
+		if ((rating != 0.0) && (rating > maxQualityRating)) {
+			//we use ">" so that in case of equality, the first choice will be kept
+			bestalgorithm = ii;
+			maxQualityRating = rating;
+		}
+	}
+
+	//finally execute the algorithm with the best quality rating or throw an exception
+	if(maxQualityRating<=0.0)
+		throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+param_name, AT);
+	vecAlgs[bestalgorithm]->calculate(dem, result);
+	InfoString = vecAlgs[bestalgorithm]->getInfo();
 
 	//check that the output grid is using the same projection as the dem
 	if(!result.llcorner.isSameProj(dem.llcorner)) {
@@ -246,11 +233,11 @@ const std::string Meteo2DInterpolator::toString() const {
 	os << "IOManager& iomanager = "  << hex << &iomanager << dec << "\n";
 
 	os << "User list of algorithms:\n";
-	std::map<std::string, std::vector<std::string> >::const_iterator iter;
+	std::map<std::string, std::vector<InterpolationAlgorithm*> >::const_iterator iter;
 	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
 		os << setw(10) << iter->first << " :: ";
 		for(unsigned int jj=0; jj<iter->second.size(); jj++) {
-			os << iter->second[jj] << " ";
+			//os << iter->second[jj]-> << " ";
 		}
 		os << "\n";
 	}

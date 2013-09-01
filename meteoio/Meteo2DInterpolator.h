@@ -110,7 +110,9 @@ class Meteo2DInterpolator {
 		*/
 		Meteo2DInterpolator(const Config& i_cfg);
 		Meteo2DInterpolator(const Config& i_cfg, IOManager& iomanager);
-		Meteo2DInterpolator(const Meteo2DInterpolator& c) : cfg(c.cfg), iomanager(c.iomanager), mapAlgorithms(c.mapAlgorithms) {};
+		Meteo2DInterpolator(const Meteo2DInterpolator& c) : cfg(c.cfg), iomanager(c.iomanager), algorithms_ready(c.algorithms_ready), mapAlgorithms(c.mapAlgorithms) {};
+
+		~Meteo2DInterpolator();
 
 		/**
 		 * @brief A generic function that can interpolate for any given MeteoData member variable
@@ -161,9 +163,8 @@ class Meteo2DInterpolator {
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		IOManager *iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
-
-		std::map< std::string, std::vector<std::string> > mapAlgorithms;
-		//std::map< std::string, std::vector<InterpolationAlgorithm> > mapAlgorithms; //per parameter interpolation algorithms
+		bool algorithms_ready; ///< Have the algorithms objects been constructed?
+		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
 };
 
 } //end namespace
