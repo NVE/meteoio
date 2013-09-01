@@ -280,7 +280,7 @@ double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
 		const double alt = vecStations_in[st_index].position.getAltitude();
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
 			//const double contrib = LinProject(value, alt, cell_altitude, coeffs);
-			//const double contrib = BiLinProject(value, alt, cell_altitude, coeffs); //HACK
+			//const double contrib = BiLinProject(value, alt, cell_altitude, coeffs);
 			const double weight = Optim::invSqrt( list[st].first + scale + 1.e-6 );
 			//pixel_value += weight*contrib;
 			norm += weight;

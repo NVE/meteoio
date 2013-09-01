@@ -370,7 +370,7 @@ void LocalIDWLapseAlgorithm::calculate(const DEMObject& /*dem*/, Grid2DObject& /
 	}
 
 	double r2=0.;
-	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2); //HACK
+	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2);
 	info << "r^2=" << Optim::pow2( r2 );*/
 }
 
@@ -615,7 +615,7 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
 	IOUtils::toUpper(base_algo);
 	vector<string> vecArgs2;
-	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2); //HACK
+	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
 	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);

@@ -584,7 +584,6 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 	double second;
 	char rest[32] = "";
 
-	//HACK: we read the seconds, but we ignore them...
 	const char *c_str = s.c_str();
 	if (sscanf(c_str, "%d-%u-%u %u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) {
 		std::string timezone_iso(rest);

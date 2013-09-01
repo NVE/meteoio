@@ -489,7 +489,6 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			if (!IOUtils::convertString(tmpdata.at(elv),	vecAlt.at(i), std::dec))
 				throw InvalidFormatException(metafile + ": " + line, AT);
 
-			//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
 			tmpdata[0] = IOUtils::standardizeNodata(tmpdata[0], plugin_nodata);
 			tmpdata[1] = IOUtils::standardizeNodata(tmpdata[1], plugin_nodata);
 			tmpdata[2] = IOUtils::standardizeNodata(tmpdata[2], plugin_nodata);

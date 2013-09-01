@@ -197,7 +197,6 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		IOUtils::getValueForKey(header, "cellsize", cellsize);
 		IOUtils::getValueForKey(header, "NODATA_value", plugin_nodata);
 
-		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
 		i_ncols = IOUtils::standardizeNodata(i_ncols, plugin_nodata);
 		i_nrows = IOUtils::standardizeNodata(i_nrows, plugin_nodata);
 		xllcorner = IOUtils::standardizeNodata(xllcorner, plugin_nodata);

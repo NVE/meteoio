@@ -218,7 +218,6 @@ void A3DIO::read1DStation(StationData& sd)
 		IOUtils::getValueForKey(header, "Y_Coord", ycoord);
 		IOUtils::getValueForKey(header, "Altitude", altitude);
 
-		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
 		latitude = IOUtils::standardizeNodata(latitude, plugin_nodata);
 		longitude = IOUtils::standardizeNodata(longitude, plugin_nodata);
 		altitude = IOUtils::standardizeNodata(altitude, plugin_nodata);

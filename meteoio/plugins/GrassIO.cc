@@ -104,7 +104,6 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 		IOUtils::getValueForKey(header, "south", south);
 		IOUtils::getValueForKey(header, "west",  west);
 
-		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
 		_nx = IOUtils::standardizeNodata(_nx, plugin_nodata);
 		_ny = IOUtils::standardizeNodata(_ny, plugin_nodata);
 		north = IOUtils::standardizeNodata(north, plugin_nodata);

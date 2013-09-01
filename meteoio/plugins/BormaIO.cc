@@ -276,7 +276,6 @@ void BormaIO::xmlExtractData(const std::string& filename, const Date& date_in, M
 		xmlParseStringToDouble(str_lati, latitude, "stationsLat");
 		xmlParseStringToDouble(str_alti, altitude, "stationsAlt");
 
-		//HACK!! would it be possible for getValueForKey() to do this transparently? (with a user flag)
 		latitude = IOUtils::standardizeNodata(latitude, plugin_nodata);
 		longitude = IOUtils::standardizeNodata(longitude, plugin_nodata);
 		altitude = IOUtils::standardizeNodata(altitude, plugin_nodata);
