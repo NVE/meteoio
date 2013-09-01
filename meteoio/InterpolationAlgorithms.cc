@@ -193,7 +193,7 @@ void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<doubl
 	}
 }
 
-void InterpolationAlgorithm::retrend(const Fit1D& trend, Grid2DObject &grid) const
+void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid) const
 {
 	const size_t nxy = grid.getNx()*grid.getNy();
 	const size_t dem_nxy = dem.grid2D.getNx()*dem.grid2D.getNy();
@@ -214,9 +214,8 @@ void InterpolationAlgorithm::retrend(const Fit1D& trend, Grid2DObject &grid) con
 /**********************************************************************************/
 /*                    Implementation of the various algorithms                    */
 /**********************************************************************************/
-double StandardPressureAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double StandardPressureAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -230,13 +229,12 @@ double StandardPressureAlgorithm::getQualityRating(const DEMObject& i_dem, const
 	return 0.1;
 }
 
-void StandardPressureAlgorithm::calculate(Grid2DObject& grid) {
+void StandardPressureAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
 	Interpol2D::stdPressure(dem, grid);
 }
 
-double ConstAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -252,13 +250,12 @@ double ConstAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_da
 	return 0.0;
 }
 
-void ConstAlgorithm::calculate(Grid2DObject& grid) {
+void ConstAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
 	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
 }
 
-double ConstLapseRateAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double ConstLapseRateAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -280,7 +277,7 @@ double ConstLapseRateAlgorithm::getQualityRating(const DEMObject& i_dem, const D
 	return 0.2;
 }
 
-void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
+void ConstLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
@@ -292,12 +289,11 @@ void ConstLapseRateAlgorithm::calculate(Grid2DObject& grid)
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
 	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
-	retrend(trend, grid);
+	retrend(dem, trend, grid);
 }
 
-double IDWAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double IDWAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -313,14 +309,13 @@ double IDWAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date
 	return 0.2;
 }
 
-void IDWAlgorithm::calculate(Grid2DObject& grid)
+void IDWAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	Interpol2D::IDW(vecData, vecMeta, dem, grid);
 }
 
-double IDWLapseAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -331,7 +326,7 @@ double IDWLapseAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i
 	return 0.7;
 }
 
-void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
+void IDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
@@ -343,12 +338,11 @@ void IDWLapseAlgorithm::calculate(Grid2DObject& grid)
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
 	Interpol2D::IDW(vecData, vecMeta, dem, grid); //the meta should NOT be used for elevations!
-	retrend(trend, grid);
+	retrend(dem, trend, grid);
 }
 
-double LocalIDWLapseAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -359,7 +353,7 @@ double LocalIDWLapseAlgorithm::getQualityRating(const DEMObject& i_dem, const Da
 	return 0.7;
 }
 
-void LocalIDWLapseAlgorithm::calculate(Grid2DObject& /*grid*/)
+void LocalIDWLapseAlgorithm::calculate(const DEMObject& /*dem*/, Grid2DObject& /*grid*/)
 {
 	/*if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
@@ -380,13 +374,12 @@ void LocalIDWLapseAlgorithm::calculate(Grid2DObject& /*grid*/)
 	info << "r^2=" << Optim::pow2( r2 );*/
 }
 
-double RHAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	//This algorithm is only valid for RH
 	if (in_param != MeteoData::RH)
 		return 0.0;
 
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	vecData.clear();
@@ -411,7 +404,7 @@ double RHAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date,
 	return 0.9;
 }
 
-void RHAlgorithm::calculate(Grid2DObject& grid)
+void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
@@ -434,7 +427,7 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecTd);
 	Interpol2D::IDW(vecTd, vecMeta, dem, grid); //the meta should NOT be used for elevations!
-	retrend(trend, grid);
+	retrend(dem, trend, grid);
 
 	//Recompute Rh from the interpolated td
 	for (unsigned int jj=0; jj<grid.nrows; jj++) {
@@ -446,13 +439,12 @@ void RHAlgorithm::calculate(Grid2DObject& grid)
 	}
 }
 
-double ILWRAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double ILWRAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	//This algorithm is only valid for ILWR
 	if (in_param != MeteoData::ILWR)
 		return 0.0;
 
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	vecData.clear();
@@ -473,7 +465,7 @@ double ILWRAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_dat
 	return 0.9;
 }
 
-void ILWRAlgorithm::calculate(Grid2DObject& grid)
+void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
@@ -488,7 +480,7 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecDataEA);
 	Interpol2D::IDW(vecDataEA, vecMeta, dem, grid); //the meta should NOT be used for elevations!
-	retrend(trend, grid);
+	retrend(dem, trend, grid);
 
 	//Recompute Rh from the interpolated td
 	for (unsigned int jj=0; jj<grid.nrows; jj++) {
@@ -499,13 +491,12 @@ void ILWRAlgorithm::calculate(Grid2DObject& grid)
 	}
 }
 
-double SimpleWindInterpolationAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	//This algorithm is only valid for VW
 	if (in_param != MeteoData::VW)
 		return 0.0;
 
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	vecData.clear();
@@ -522,12 +513,6 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const DEMObject& i_dem
 		}
 	}
 
-	//This algorithm requires the curvatures
-	if (dem.curvature.isEmpty()) {
-		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Skipping algorithm...\n";
-		return 0.0;
-	}
-
 	if (vecDataVW.empty() || vecDataDW.empty() || nrOfMeasurments==0)
 		return 0.0;
 	if( (nrOfMeasurments<vecDataVW.size()/2) || ( nrOfMeasurments<2 ) )
@@ -536,7 +521,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const DEMObject& i_dem
 	return 0.9;
 }
 
-void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
+void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
@@ -551,7 +536,7 @@ void SimpleWindInterpolationAlgorithm::calculate(Grid2DObject& grid)
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecDataVW);
 	Interpol2D::IDW(vecDataVW, vecMeta, dem, grid); //the meta should NOT be used for elevations!
-	retrend(trend, grid);
+	retrend(dem, trend, grid);
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
 }
 
@@ -575,9 +560,8 @@ std::string USERInterpolation::getGridFileName() const
 	return gridname;
 }
 
-double USERInterpolation::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = 0;
@@ -594,7 +578,7 @@ double USERInterpolation::getQualityRating(const DEMObject& i_dem, const Date& i
 	}
 }
 
-void USERInterpolation::calculate(Grid2DObject& grid)
+void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	const std::string filename = getGridFileName();
 
@@ -604,9 +588,8 @@ void USERInterpolation::calculate(Grid2DObject& grid)
 	}
 }
 
-double SnowHNWInterpolation::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double SnowHNWInterpolation::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -617,7 +600,7 @@ double SnowHNWInterpolation::getQualityRating(const DEMObject& i_dem, const Date
 	return 0.9;
 }
 
-void SnowHNWInterpolation::calculate(Grid2DObject& grid)
+void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	//retrieve optional arguments
 	std::string base_algo;
@@ -634,8 +617,8 @@ void SnowHNWInterpolation::calculate(Grid2DObject& grid)
 	vector<string> vecArgs2;
 	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2); //HACK
 	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
-	algorithm->getQualityRating(dem, date, param);
-	algorithm->calculate(grid);
+	algorithm->getQualityRating(date, param);
+	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
 	const double orig_mean = grid.grid2D.getMean();
 
@@ -704,9 +687,8 @@ bool OrdinaryKrigingAlgorithm::computeVariogram()
 	return false;
 }
 
-double OrdinaryKrigingAlgorithm::getQualityRating(const DEMObject& i_dem, const Date& i_date, const MeteoData::Parameters& in_param)
+double OrdinaryKrigingAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	dem = i_dem;
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
@@ -716,7 +698,7 @@ double OrdinaryKrigingAlgorithm::getQualityRating(const DEMObject& i_dem, const 
 	return 0.1;
 }
 
-void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
+void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
@@ -725,7 +707,7 @@ void OrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 }
 
-void LapseOrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
+void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
@@ -744,8 +726,7 @@ void LapseOrdinaryKrigingAlgorithm::calculate(Grid2DObject& grid)
 		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 
-	retrend(trend, grid);
+	retrend(dem, trend, grid);
 }
 
 } //namespace
-

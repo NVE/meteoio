@@ -335,11 +335,21 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 * @param VW 2D array of Wind Velocity to fill
 * @param DW 2D array of Wind Direction to fill
 */
-void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW)
+void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW)
 {
-	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(dem))){
+	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(i_dem))){
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
 	}
+
+	const bool recomputeDEM = i_dem.curvature.isEmpty();
+	DEMObject *intern_dem = NULL;
+	if(recomputeDEM) {
+		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Computing it...\n";
+		intern_dem = new DEMObject(i_dem);
+		intern_dem->setUpdatePpt((DEMObject::update_type)(DEMObject::SLOPE|DEMObject::CURVATURE));
+		intern_dem->update();
+	}
+	const DEMObject *dem = (recomputeDEM)? intern_dem : &i_dem;
 
 	//This method computes the speed of the wind and returns a table in 2D with this values
 	double speed;		// Wind speed (m s-1)
@@ -353,10 +363,10 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 	double Ww;		// Wind weighting
 	double Od;		// Diverting factor
 
-	const double dem_min_slope=dem.min_slope*Cst::to_rad;
-	const double dem_min_curvature=dem.min_curvature;
-	double dem_range_slope=(dem.max_slope-dem_min_slope)*Cst::to_rad;
-	double dem_range_curvature=(dem.max_curvature-dem_min_curvature);
+	const double dem_min_slope=dem->min_slope*Cst::to_rad;
+	const double dem_min_curvature=dem->min_curvature;
+	double dem_range_slope=(dem->max_slope-dem_min_slope)*Cst::to_rad;
+	double dem_range_curvature=(dem->max_curvature-dem_min_curvature);
 	if(dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
 	if(dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
 
@@ -365,9 +375,9 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 			speed = VW.grid2D(i,j);
 			if(speed==0.) continue; //we can not apply any correction factor!
 			dir = DW.grid2D(i,j);
-			beta = dem.slope(i, j)*Cst::to_rad;
-			azi = dem.azi(i, j)*Cst::to_rad;
-			curvature = dem.curvature(i, j);
+			beta = dem->slope(i, j)*Cst::to_rad;
+			azi = dem->azi(i, j)*Cst::to_rad;
+			curvature = dem->curvature(i, j);
 
 			if(speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
 				VW.grid2D(i, j) = IOUtils::nodata;
@@ -410,6 +420,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& dem, Grid2DObject& VW
 			}
 		}
 	}
+
+	if(intern_dem!=NULL) delete (intern_dem);
 }
 
 /**

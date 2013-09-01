@@ -138,7 +138,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 			//Get the configured algorithm
 			auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(algoname, *this, vecArgs, *iomanager));
 			//Get the quality rating and compare to previously computed quality ratings
-			const double rating = algorithm->getQualityRating(dem, date, meteoparam);
+			const double rating = algorithm->getQualityRating(date, meteoparam);
 			if ((rating != 0.0) && (rating > maxQualityRating)) {
 				//we use ">" so that in case of equality, the first choice will be kept
 				bestalgorithm = algorithm; //remember this algorithm: ownership belongs to bestalgorithm
@@ -150,7 +150,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		if (bestalgorithm.get() == NULL) {
 			throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+MeteoData::getParameterName(meteoparam), AT);
 		}
-		bestalgorithm->calculate(result);
+		bestalgorithm->calculate(dem, result);
 		InfoString = bestalgorithm->getInfo();
 	} else {
 		//Some default message, that interpolation for this parameter needs configuration

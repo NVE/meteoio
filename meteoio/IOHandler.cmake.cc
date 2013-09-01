@@ -229,7 +229,7 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	std::string op_src;
 	cfg.getValue(cfgkey, cfgsection, op_src);
 
-	std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
+	const std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
 	if (mapit == mapPlugins.end())
 		throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it registered in IOHandler::registerPlugins?", AT);
 	if ((mapit->second).io == NULL){
@@ -283,7 +283,7 @@ void IOHandler::readMeteoData(const Date& date, METEO_SET& vecMeteo)
 	vecMeteo.clear();
 	vecMeteo.reserve( meteoTmpBuffer.size() );
 
-	for (size_t ii=0; ii<meteoTmpBuffer.size(); ii++) {//stations
+	for (size_t ii=0; ii<meteoTmpBuffer.size(); ++ii) {//stations
 		if (!meteoTmpBuffer[ii].empty())
 			vecMeteo.push_back( meteoTmpBuffer[ii].front() );
 	}
@@ -291,12 +291,12 @@ void IOHandler::readMeteoData(const Date& date, METEO_SET& vecMeteo)
 
 void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
 {
-	for(size_t stat_idx=0; stat_idx<vecVecMeteo.size(); stat_idx++) {
+	for(size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) {
 		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
 		if(nr_timestamps==0) continue;
 
 		Date previous_date( vecVecMeteo[stat_idx][0].date );
-		for(size_t ii=1; ii<nr_timestamps; ii++) {
+		for(size_t ii=1; ii<nr_timestamps; ++ii) {
 			const StationData& station = vecVecMeteo[stat_idx][ii].meta;
 			const Date& current_date = vecVecMeteo[stat_idx][ii].date;
 			if(current_date<=previous_date) {
@@ -361,7 +361,7 @@ void IOHandler::parse_copy_config()
 	vector<string> copy_keys;
 	const size_t nrOfMatches = cfg.findKeys(copy_keys, "COPY::", "Input");
 
-	for (size_t ii=0; ii<nrOfMatches; ii++) {
+	for (size_t ii=0; ii<nrOfMatches; ++ii) {
 		const string name_of_copy = copy_keys[ii].substr(6);
 		string initial_name;
 		cfg.getValue(copy_keys[ii], "Input", initial_name);
@@ -374,17 +374,17 @@ void IOHandler::parse_copy_config()
 	}
 }
 
+/**
+* This procedure runs through the MeteoData objects in vecMeteo and according to user
+* configuration copies a certain present meteo parameter to another one, named by the
+* user in the [Input] section of the io.ini, e.g.
+* [Input]
+* COPY::TA2 = TA
+* means that TA2 will be the name of a new parameter in MeteoData with the copied value
+* of the meteo parameter MeteoData::TA
+*/
 void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const
 {
-	/**
-	 * This procedure runs through the MeteoData objects in vecMeteo and according to user
-	 * configuration copies a certain present meteo parameter to another one, named by the
-	 * user in the [Input] section of the io.ini, e.g.
-	 * [Input]
-	 * COPY::TA2 = TA
-	 * means that TA2 will be the name of a new parameter in MeteoData with the copied value
-	 * of the meteo parameter MeteoData::TA
-	 */
 	if (!enable_copying) return; //Nothing configured
 
 	size_t station_start=0, station_end=vecMeteo.size();
@@ -400,11 +400,11 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 	const size_t nr_of_params = copy_parameter.size();
 	vector<size_t> indices; //will hold the indices of the parameters to be copied
 
-	for (size_t ii=station_start; ii<station_end; ii++) { //for each station
-		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) { //for each MeteoData object of one station
+	for (size_t ii=station_start; ii<station_end; ++ii) { //for each station
+		for (size_t jj=0; jj<vecMeteo[ii].size(); ++jj) { //for each MeteoData object of one station
 
 			if (jj==0) { //buffer the index numbers
-				for (size_t kk=0; kk<nr_of_params; kk++) {
+				for (size_t kk=0; kk<nr_of_params; ++kk) {
 					const size_t param_index = vecMeteo[ii][jj].getParameterIndex(copy_parameter[kk]);
 					if (param_index == IOUtils::npos) {
 						std::stringstream ss;
@@ -417,7 +417,7 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 				}
 			}
 
-			for (size_t kk=0; kk<nr_of_params; kk++) {
+			for (size_t kk=0; kk<nr_of_params; ++kk) {
 				const size_t newparam = vecMeteo[ii][jj].addParameter(copy_name[kk]);
 				vecMeteo[ii][jj](newparam) = vecMeteo[ii][jj](indices[kk]);
 			}
