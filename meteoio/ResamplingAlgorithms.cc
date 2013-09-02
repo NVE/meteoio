@@ -91,7 +91,7 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 	//make sure the search window remains window_size
 	const Date dateEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+window_size : resampling_date+window_size;
 
-	for (size_t ii=pos; ii<vecM.size(); ii++) {
+	for (size_t ii=pos; ii<vecM.size(); ++ii) {
 		if (vecM[ii].date > dateEnd) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata) {
 			indexP2 = ii;
@@ -110,7 +110,7 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
  * @return y-coordinate of desired point
  */
 double ResamplingAlgorithms::linearInterpolation(const double& x1, const double& y1,
-                                       const double& x2, const double& y2, const double& x3)
+                                       const double& x2, const double& y2, const double& x)
 {
 	if (x1 == x2)
 		throw IOException("Attempted division by zero", AT);
@@ -119,7 +119,7 @@ double ResamplingAlgorithms::linearInterpolation(const double& x1, const double&
 	const double a = (y2 - y1) / (x2 - x1);
 	const double b = y2 - a*x2;
 
-	return (a*x3 + b);
+	return (a*x + b);
 }
 
 /**********************************************************************************

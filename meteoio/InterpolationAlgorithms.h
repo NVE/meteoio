@@ -138,13 +138,15 @@ class InterpolationAlgorithm {
 		InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
 		                       const std::vector<std::string>& i_vecArgs,
 		                       const std::string& i_algo, IOManager& iom) :
-		                      mi(i_mi), date(0.), vecArgs(i_vecArgs), algo(i_algo), iomanager(iom),
-		                      param(MeteoData::firstparam), vecMeteo(), vecData(), vecMeta(), info(), nrOfMeasurments(0) {};
+		                      algo(i_algo), mi(i_mi), date(0.), vecArgs(i_vecArgs), vecMeteo(), vecData(),
+		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0), iomanager(iom) {};
 		virtual ~InterpolationAlgorithm() {};
 		//if anything is not ok (wrong parameter for this algo, insufficient data, etc) -> return zero
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param) = 0;
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid) = 0;
 		std::string getInfo() const;
+		const std::string algo;
+
  	protected:
 		size_t getData(const Date& i_date, const MeteoData::Parameters& i_param, std::vector<double>& o_vecData);
 		size_t getData(const Date& i_date, const MeteoData::Parameters& i_param,
@@ -157,16 +159,14 @@ class InterpolationAlgorithm {
 		Meteo2DInterpolator& mi;
 		Date date;
 		const std::vector<std::string> vecArgs; //we must keep our own copy, it is different for each algorithm!
-		const std::string algo;
-		IOManager& iomanager;
-
-		MeteoData::Parameters param; ///<the parameter that we will interpolate
 
 		std::vector<MeteoData> vecMeteo;
 		std::vector<double> vecData; ///<store the measurement for the given parameter
 		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
 		std::ostringstream info; ///<to store some extra information about the interoplation process
+		MeteoData::Parameters param; ///<the parameter that we will interpolate
 		size_t nrOfMeasurments; ///<the available number of measurements
+		IOManager& iomanager;
 };
 
 class AlgorithmFactory {

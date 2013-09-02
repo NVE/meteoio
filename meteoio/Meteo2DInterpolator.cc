@@ -232,12 +232,12 @@ const std::string Meteo2DInterpolator::toString() const {
 	os << "Config& cfg = " << hex << &cfg << dec << "\n";
 	os << "IOManager& iomanager = "  << hex << &iomanager << dec << "\n";
 
-	os << "User list of algorithms:\n";
+	os << "Spatial resampling algorithms:\n";
 	std::map<std::string, std::vector<InterpolationAlgorithm*> >::const_iterator iter;
 	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
-		os << setw(10) << iter->first << " :: ";
+		os << setw(10) << iter->first << "::";
 		for(unsigned int jj=0; jj<iter->second.size(); jj++) {
-			//os << iter->second[jj]-> << " ";
+			os << iter->second[jj]->algo << " ";
 		}
 		os << "\n";
 	}

@@ -100,7 +100,6 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-
 	if(!gen_ref) io.write2DGrid(param, MeteoGrids::P, d1); //trying to write one grid out
 
 	return status;

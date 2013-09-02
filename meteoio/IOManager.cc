@@ -462,6 +462,7 @@ const std::string IOManager::toString() const {
 	os << bufferedio.toString();
 	os << meteoprocessor.toString();
 	os << "Processing level = " << processing_level << "\n";
+	os << interpolator.toString();
 
 	//display meteocache
 	size_t count=0;
