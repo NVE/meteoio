@@ -331,7 +331,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 * @brief Grid filling function:
 * This implementation fills a grid using a curvature and slope algorithm, as described in "A Meteorological
 * Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, 2006.
-* @param dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
+* @param i_dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
 * @param VW 2D array of Wind Velocity to fill
 * @param DW 2D array of Wind Direction to fill
 */

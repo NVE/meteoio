@@ -38,10 +38,10 @@ ELSE(WIN32)
 		FIND_LIBRARY(METEOIO_LIBRARY
 		NAMES meteoio${POPC_EXT}
 		PATHS
-			"/Applications/MeteoIO/lib"
 			ENV LD_LIBRARY_PATH
 			ENV DYLD_FALLBACK_LIBRARY_PATH
 			"~/usr/lib"
+			"/Applications/MeteoIO/lib"
 			"/usr/local/lib"
 			"/usr/lib"
 			"/opt/lib"

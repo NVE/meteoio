@@ -106,7 +106,7 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
  * @param y1 y-coordinate of first point
  * @param x2 x-coordinate of second point
  * @param y2 y-coordinate of second point
- * @param x3 x-coordinate of desired point
+ * @param x x-coordinate of desired point
  * @return y-coordinate of desired point
  */
 double ResamplingAlgorithms::linearInterpolation(const double& x1, const double& y1,

@@ -56,6 +56,7 @@ class Interpol1D {
 		static void ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 
 	private:
+		static bool ptOK(const double& x, const double& y);
 		static void LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::stringstream& mesg);
 		static bool pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r);
 };

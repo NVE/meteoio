@@ -80,6 +80,11 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 	return vecResults;
 }
 
+//small helper function for checking if a point can be used when computing a vector derivative
+bool Interpol1D::ptOK(const double& x, const double& y) {
+	return (x!=IOUtils::nodata && y!=IOUtils::nodata);
+}
+
 /**
  * @brief This function returns the vector of local derivatives, given a vector of abscissae and ordinates.
  * The vectors must be sorted by ascending x. The derivatives will be centered if possible, left or right otherwise or nodata
@@ -90,28 +95,37 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
  */
 std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const std::vector<double>& Y)
 {
-	const size_t Xsize = X.size();
-	if(Xsize!=Y.size()) {
+	const size_t n = X.size();
+	if(n!=Y.size()) {
 		stringstream ss;
-		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
+		ss << "X vector and Y vector don't match! " << n << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	if(n<2) {
+		stringstream ss;
+		ss << "X and Y vector only contain " << n << "points, it is not possible to compute a derivative!\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	std::vector<double> der(Xsize, IOUtils::nodata);
-	double right, centered, left, Dx_r, Dx_c, Dx_l;
-	size_t i=0;
+	std::vector<double> der(n, IOUtils::nodata);
 	//right hand derivative
-	Dx_r=X[i+1]-X[i];
-	if(Y[i]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_r!=0.) der[i] = (Y[i+1]-Y[i]) / Dx_r;
+	{
+		const double x=X[0], x1=X[1];
+		const double y=Y[0], y1=Y[1];
+		const double Dx_r=x1-x;
+		if(ptOK(x,y) && ptOK(x1,y1) && Dx_r!=0.)
+			der[0] = (y1-y) / Dx_r;
+	}
 
 	//centered derivative if possible
-	i++;
-	for(; i<(Xsize-1); i++) {
-		Dx_r=X[i-1]-X[i]; Dx_c=X[i+1]-X[i-1]; Dx_l=X[i]-X[i-1];
+	for(size_t i=1; i<(n-1); i++) {
+		const double x0=X[i-1], x=X[i], x1=X[i+1];
+		const double y0=Y[i-1], y=Y[i], y1=Y[i+1];
+		const double Dx_r=x1-x, Dx_c=x1-x0, Dx_l=x-x0;
 
-		if(Y[i]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_r!=0.) right=(Y[i+1]-Y[i])/Dx_r; else right=IOUtils::nodata;
-		if(Y[i]!=IOUtils::nodata && Y[i-1]!=IOUtils::nodata && Dx_l!=0.) left=(Y[i]-Y[i-1])/Dx_l; else left=IOUtils::nodata;
-		if(Y[i-1]!=IOUtils::nodata && Y[i+1]!=IOUtils::nodata && Dx_c!=0.) centered=(Y[i+1]-Y[i-1])/Dx_c; else centered=IOUtils::nodata;
+		const double right = (ptOK(x,y) && ptOK(x1,y1) && Dx_r!=0.)? (y1-y) / Dx_r : IOUtils::nodata;
+		const double left = (ptOK(x,y) && ptOK(x0,y0) && Dx_l!=0.)? (y-y0) / Dx_l : IOUtils::nodata;
+		const double centered = (ptOK(x0,y0) && ptOK(x1,y1) && Dx_c!=0.)? (y1-y0) / Dx_c : IOUtils::nodata;
 
 		if(centered!=IOUtils::nodata) der[i] = centered;
 		else if(right!=IOUtils::nodata) der[i] = right;
@@ -119,8 +133,14 @@ std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const s
 	}
 
 	//left hand derivative
-	Dx_l=X[i]-X[i-1];
-	if(Y[i]!=IOUtils::nodata && Y[i-1]!=IOUtils::nodata && Dx_l!=0.) der[i] = (Y[i]-Y[i-1]) / Dx_l;
+	{
+		const size_t last = n-1;
+		const double x0=X[last-1], x=X[last];
+		const double y0=Y[last-1], y=Y[last];
+		const double Dx_l=x-x0;
+		if(ptOK(x,y) && ptOK(x0,y0) && Dx_l!=0.)
+			der[last] = (y-y0) / Dx_l;
+	}
 
 	return der;
 }
