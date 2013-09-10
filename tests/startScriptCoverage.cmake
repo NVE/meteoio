@@ -1,4 +1,4 @@
-# simple Script that makes Experimental  build with cTest and publie it on CDash with coverage informations. 
+# simple Script that makes Experimental  build with cTest and publie it on CDash with coverage informations.
 # This script need to be started be cron. The command for the cron is :
 # "ctest -S startScriptCoverage.cmake"
 
