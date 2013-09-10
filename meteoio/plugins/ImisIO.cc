@@ -306,13 +306,15 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 	vector<string> vecStationID;
 	readStationIDs(vecStationID);
 
+
+	Statement *stmt = conn->createStatement();
 	for (unsigned int ii=0; ii<vecStationID.size(); ii++) {
 		// Retrieve the station IDs - this only needs to be done once per instance
 		string stat_abk, stao_nr, station_name;
 		parseStationID(vecStationID[ii], stat_abk, stao_nr);
 		vector<string> stnIDs;
 		string drift_stat_abk, drift_stao_nr;
-		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, conn);
+		getStationIDs(vecStationID[ii], sqlQueryStationIDs, stnIDs, stmt);
 		IOUtils::convertString(station_name, stnIDs.at(0));
 		IOUtils::convertString(drift_stat_abk, stnIDs.at(1));
 		IOUtils::convertString(drift_stao_nr, stnIDs.at(2));
@@ -326,7 +328,7 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		// Retrieve the station meta data - this only needs to be done once per instance
 		vector<string> stationMetaData;
 		string stao_name;
-		getStationMetaData(stat_abk, stao_nr, sqlQueryStationMetaData, stationMetaData, conn);
+		getStationMetaData(stat_abk, stao_nr, sqlQueryStationMetaData, stationMetaData, stmt);
 		double east, north, alt;
 		IOUtils::convertString(stao_name, stationMetaData.at(0));
 		IOUtils::convertString(east, stationMetaData.at(1), std::dec);
@@ -360,6 +362,7 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		myCoord.setXY(east, north, alt);
 		vecStationMetaData.push_back(StationData(myCoord, vecStationID[ii], station_name));
 	}
+	conn->terminateStatement(stmt);
 }
 
 /**
@@ -398,6 +401,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	Environment *env = NULL;
 	Connection *conn = NULL;
+	Statement *stmt = NULL;
 
 	try {
 		if (vecStationMetaData.empty()) {
@@ -427,9 +431,10 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		if ((env == NULL) || (conn == NULL))
 			openDBConnection(env, conn);
+		stmt = conn->createStatement();
 
 		for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
-			readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, conn);
+			readData(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, stmt);
 		}
 
 		if (useAnetz) { //Important: we don't care about the metadata for ANETZ stations
@@ -448,7 +453,7 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//read Anetz Data
 			for (size_t ii=0; ii<vecAnetzStation.size(); ii++)
-				readData(date_anetz_start, dateEnd, vecMeteoAnetz, ii, vecAnetzStation, env, conn);
+				readData(date_anetz_start, dateEnd, vecMeteoAnetz, ii, vecAnetzStation, env, stmt);
 
 			//We got all the data, now calc psum for all ANETZ stations
 			vector< vector<double> > vec_of_psums; //6 hour accumulations of hnw
@@ -463,10 +468,11 @@ void ImisIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 		if(use_hnw_snowpack) {
 			for (size_t ii=indexStart; ii<indexEnd; ii++) { //loop through relevant stations
-				readSWE(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, conn);
+				readSWE(dateStart, dateEnd, vecMeteo, ii, vecStationMetaData, env, stmt);
 			}
 		}
 
+		conn->terminateStatement(stmt);
 		closeDBConnection(env, conn);
 	} catch (const exception& e){
 		closeDBConnection(env, conn);
@@ -633,7 +639,7 @@ void ImisIO::findAnetzStations(const size_t& indexStart, const size_t& indexEnd,
  */
 void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                       const size_t& stationindex, const std::vector<StationData>& vecStationIDs,
-                      oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+                      oracle::occi::Environment*& env, oracle::occi::Statement*& stmt)
 {
 	vecMeteo.at(stationindex).clear();
 
@@ -648,8 +654,8 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 	//get data for one specific station
 	std::vector<std::string> vecHTS1;
 	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
-	getSensorDepths(stat_abk, stao_nr, sqlQuerySensorDepths, vecHTS1, conn);
-	bool fullStation = getStationData(stat_abk, stao_nr, dateS, dateE, vecHTS1, vecResult, env, conn);
+	getSensorDepths(stat_abk, stao_nr, sqlQuerySensorDepths, vecHTS1, stmt);
+	bool fullStation = getStationData(stat_abk, stao_nr, dateS, dateE, vecHTS1, vecResult, env, stmt);
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
@@ -688,7 +694,7 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
  */
 void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
                       const size_t& stationindex, const std::vector<StationData>& vecStationIDs,
-                      oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+                      oracle::occi::Environment*& env, oracle::occi::Statement*& stmt)
 {
 	const double max_interval = 3./24.; //3 hours between two SWE values max
 
@@ -705,8 +711,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 
 	//query
 	try {
-		Statement *stmt = NULL;
-		stmt = conn->createStatement(sqlQuerySWEData);
+		stmt->setSQL(sqlQuerySWEData);
 		stmt->setPrefetchRowCount(max_row);
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
@@ -767,7 +772,6 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 		}
 
 		stmt->closeResultSet(rs);
-		conn->terminateStatement(stmt);
 	} catch (const exception& e){
 		throw IOException("Oracle Error when SWE data: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
@@ -832,12 +836,12 @@ void ImisIO::parseDataSet(const std::vector<std::string>& i_meteo, MeteoData& md
  */
 size_t ImisIO::getStationIDs(const std::string& station_code, const std::string& sqlQuery,
                                    std::vector<std::string>& vecStationIDs,
-                                   oracle::occi::Connection*& conn)
+                                   oracle::occi::Statement*& stmt)
 {
 	vecStationIDs.clear();
 
 	try {
-		Statement *stmt = conn->createStatement(sqlQuery);
+		stmt->setSQL(sqlQuery);
 		stmt->setString(1, station_code); // set 1st variable's value
 
 		ResultSet *rs = stmt->executeQuery();    // execute the statement stmt
@@ -858,7 +862,6 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 		}
 
 		stmt->closeResultSet(rs);
-		conn->terminateStatement(stmt);
 		return cols.size();
 	} catch (const exception& e){
 		throw IOException("Oracle Error when reading stations' id: " + string(e.what()), AT); //Translation of OCCI exception to IOException
@@ -875,12 +878,12 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
  */
 size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
                                      const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
-                                     oracle::occi::Connection*& conn)
+                                     oracle::occi::Statement*& stmt)
 {
 	vecHTS1.clear();
 
 	try {
-		Statement *stmt = conn->createStatement(sqlQuery);
+		stmt->setSQL(sqlQuery);
 		stmt->setString(1, stat_abk); // set 1st variable's value
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 
@@ -894,7 +897,6 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
 		}
 
 		stmt->closeResultSet(rs);
-		conn->terminateStatement(stmt);
 		return cols.size();
 	} catch (const exception& e){
 		throw IOException("Oracle Error when reading sensors' depths: " + string(e.what()), AT); //Translation of OCCI exception to IOException
@@ -913,12 +915,12 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
  */
 size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
                                         const std::string& sqlQuery, std::vector<std::string>& vecMetaData,
-                                        oracle::occi::Connection*& conn)
+                                        oracle::occi::Statement*& stmt)
 {
 	vecMetaData.clear();
 
 	try {
-		Statement *stmt = conn->createStatement(sqlQuery);
+		stmt->setSQL(sqlQuery);
 		stmt->setString(1, stat_abk); // set 1st variable's value
 		stmt->setString(2, stao_nr);  // set 2nd variable's value
 
@@ -932,7 +934,6 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 		}
 
 		stmt->closeResultSet(rs);
-		conn->terminateStatement(stmt);
 	} catch (const exception& e){
 		throw IOException("Oracle Error when reading stations' metadata: " + string(e.what()), AT); //Translation of OCCI exception to IOException
 	}
@@ -960,23 +961,21 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
                             const Date& dateS, const Date& dateE,
                             const std::vector<std::string>& vecHTS1,
                             std::vector< std::vector<std::string> >& vecMeteoData,
-                            oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
+                            oracle::occi::Environment*& env, oracle::occi::Statement*& stmt)
 {
 	vecMeteoData.clear();
 	bool fullStation = true;
 	const size_t max_row = static_cast<size_t>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
 	try {
-		Statement *stmt = NULL;
-
 		const map<string, string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
 		if (it != mapDriftStation.end()) {
-			stmt = conn->createStatement(sqlQueryMeteoDataDrift);
+			stmt->setSQL(sqlQueryMeteoDataDrift);
 			string drift_stat_abk, drift_stao_nr;
 			parseStationID(it->second, drift_stat_abk, drift_stao_nr);
 			stmt->setString(5, drift_stat_abk);
 			stmt->setString(6, drift_stao_nr);
 		} else {
-			stmt = conn->createStatement(sqlQueryMeteoData);
+			stmt->setSQL(sqlQueryMeteoData);
 			fullStation = false;
 		}
 		stmt->setPrefetchRowCount(max_row);
@@ -1010,7 +1009,6 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		}
 
 		stmt->closeResultSet(rs);
-		conn->terminateStatement(stmt);
 		return fullStation;
 	} catch (const exception& e){
 		throw IOException("Oracle Error when reading stations' data: " + string(e.what()), AT); //Translation of OCCI exception to IOException

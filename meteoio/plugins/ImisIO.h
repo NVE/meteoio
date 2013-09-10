@@ -106,26 +106,26 @@ class ImisIO : public IOInterface {
 
 		size_t getStationIDs(const std::string& stat_code,
 		                     const std::string& sqlQuery, std::vector<std::string>& vecStationMetaData,
-		                     oracle::occi::Connection*& conn);
+		                     oracle::occi::Statement*& stmt);
 		size_t getStationMetaData(const std::string& stat_abk, const std::string& stao_nr,
 		                          const std::string& sqlQuery, std::vector<std::string>& vecMetaData,
-		                          oracle::occi::Connection*& conn);
+		                          oracle::occi::Statement*& stmt);
 		size_t getSensorDepths(const std::string& stat_abk, const std::string& stao_nr,
 		                       const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
-		                       oracle::occi::Connection*& conn);
+		                       oracle::occi::Statement*& stmt);
 		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,
 		                    const Date& dateS, const Date& dateE,
 		                    const std::vector<std::string>& i_vecHTS1,
 		                    std::vector< std::vector<std::string> >& vecMeteoData,
-		                    oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+		                    oracle::occi::Environment*& env, oracle::occi::Statement*& stmt);
 
 		void parseDataSet(const std::vector<std::string>& meteo_in, MeteoData& md, bool& _fullStation);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		              const size_t& stationindex, const std::vector<StationData>& vecStationID,
-		              oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+		              oracle::occi::Environment*& env, oracle::occi::Statement*& stmt);
 		void readSWE(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo,
 		             const size_t& stationindex, const std::vector<StationData>& vecStationIDs,
-		             oracle::occi::Environment*& env, oracle::occi::Connection*& conn);
+		             oracle::occi::Environment*& env, oracle::occi::Statement*& stmt);
 		void readStationIDs(std::vector<std::string>& vecStationID);
 		void parseStationID(const std::string& stationID, std::string& stnAbbrev, std::string& stnNumber);
 
