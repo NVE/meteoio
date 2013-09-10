@@ -114,7 +114,7 @@ class ImisIO : public IOInterface {
 		                       const std::string& sqlQuery, std::vector<std::string>& vecHTS1,
 		                       oracle::occi::Connection*& conn);
 		bool getStationData(const std::string& stat_abk, const std::string& stao_nr,
-		                    const std::vector<int>& datestart, const std::vector<int>& dateend,
+		                    const Date& dateS, const Date& dateE,
 		                    const std::vector<std::string>& i_vecHTS1,
 		                    std::vector< std::vector<std::string> >& vecMeteoData,
 		                    oracle::occi::Environment*& env, oracle::occi::Connection*& conn);

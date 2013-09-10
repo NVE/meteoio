@@ -17,6 +17,7 @@
 */
 #include "ImisIO.h"
 #include <meteoio/meteolaws/Meteoconst.h>
+#include <meteoio/MathOptim.h>
 
 using namespace std;
 using namespace oracle;
@@ -638,21 +639,17 @@ void ImisIO::readData(const Date& dateStart, const Date& dateEnd, std::vector< s
 
 	string stat_abk, stao_nr;
 	vector< vector<string> > vecResult;
-	vector<int> datestart = vector<int>(5);
-	vector<int> dateend   = vector<int>(5);
 
 	// Moving back to the IMIS timezone (UTC+1)
 	Date dateS(dateStart), dateE(dateEnd);
 	dateS.setTimeZone(in_tz);
 	dateE.setTimeZone(in_tz);
-	dateS.getDate(datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
-	dateE.getDate(dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
 
 	//get data for one specific station
 	std::vector<std::string> vecHTS1;
 	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
 	getSensorDepths(stat_abk, stao_nr, sqlQuerySensorDepths, vecHTS1, conn);
-	bool fullStation = getStationData(stat_abk, stao_nr, datestart, dateend, vecHTS1, vecResult, env, conn);
+	bool fullStation = getStationData(stat_abk, stao_nr, dateS, dateE, vecHTS1, vecResult, env, conn);
 
 	MeteoData tmpmd;
 	tmpmd.meta = vecStationIDs.at(stationindex);
@@ -704,10 +701,13 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 	string stat_abk, stao_nr;
 	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
 
+	const size_t max_row = static_cast<size_t>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
+
 	//query
 	try {
 		Statement *stmt = NULL;
 		stmt = conn->createStatement(sqlQuerySWEData);
+		stmt->setPrefetchRowCount(max_row);
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
 		int year, month, day, hour, minutes;
@@ -951,20 +951,20 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
  * Each record returned are vector of strings which are pushed back in vecMeteoData.
  * @param stat_abk :     a string key of ams.v_ams_raw
  * @param stao_nr :      a string key of ams.v_ams_raw
- * @param datestart :    a vector of five(5) integer corresponding to the recording date
- * @param dateend :      a vector of five(5) integer corresponding to the recording date
+ * @param dateS :        begining of the recording date
+ * @param dateE :        end of the recording date
  * @param vecMeteoData : a vector of vector of string in which data will be filled
  * @param return number of columns retrieved
  */
 bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao_nr,
-                            const std::vector<int>& datestart, const std::vector<int>& dateend,
+                            const Date& dateS, const Date& dateE,
                             const std::vector<std::string>& vecHTS1,
                             std::vector< std::vector<std::string> >& vecMeteoData,
                             oracle::occi::Environment*& env, oracle::occi::Connection*& conn)
 {
 	vecMeteoData.clear();
 	bool fullStation = true;
-
+	const size_t max_row = static_cast<size_t>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
 	try {
 		Statement *stmt = NULL;
 
@@ -979,10 +979,14 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 			stmt = conn->createStatement(sqlQueryMeteoData);
 			fullStation = false;
 		}
+		stmt->setPrefetchRowCount(max_row);
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
-		const occi::Date begindate(env, datestart[0], datestart[1], datestart[2], datestart[3], datestart[4]);
-		const occi::Date enddate(env, dateend[0], dateend[1], dateend[2], dateend[3], dateend[4]);
+		int year, month, day, hour, minutes;
+		dateS.getDate(year, month, day, hour, minutes);
+		const occi::Date begindate(env, year, month, day, hour, minutes);
+		dateE.getDate(year, month, day, hour, minutes);
+		const occi::Date enddate(env, year, month, day, hour, minutes);
 		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
 		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
