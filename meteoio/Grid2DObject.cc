@@ -25,8 +25,8 @@ namespace mio {
 Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
 	if(this != &source) {
 		grid2D = source.grid2D;
-		ncols = source.ncols;
-		nrows = source.nrows;
+		//ncols = source.ncols;
+		//nrows = source.nrows;
 		cellsize = source.cellsize;
 		llcorner = source.llcorner;
 	}
@@ -41,28 +41,28 @@ Grid2DObject::Grid2DObject() : grid2D(), ncols(0), nrows(0), cellsize(0), llcorn
 {
 }
 
-Grid2DObject::Grid2DObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
                            const double& i_cellsize, const Coords& i_llcorner) : grid2D(i_ncols, i_nrows, IOUtils::nodata), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner)
 {
 	//set metadata, grid2D already successfully created
 	//setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
-Grid2DObject::Grid2DObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
                            const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D) : grid2D(i_grid2D), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner)
 {
 	//set(i_ncols, i_nrows, i_cellsize, i_llcorner, i_grid2D);
 }
 
-Grid2DObject::Grid2DObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
                            const double& i_cellsize, const Coords& i_llcorner, const double& init) : grid2D(i_ncols, i_nrows, init), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner)
 {
 	//set metadata, grid2D already successfully created
 	//setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
-Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const unsigned int& i_nx, const unsigned int& i_ny,
-                           const unsigned int& i_ncols, const unsigned int& i_nrows)
+Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, const size_t& i_ny,
+                           const size_t& i_ncols, const size_t& i_nrows)
 	: grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows), ncols(i_ncols), nrows(i_nrows), cellsize(i_grid2Dobj.cellsize), llcorner(i_grid2Dobj.llcorner)
 {
 	//setValues(i_ncols, i_nrows, i_grid2Dobj.cellsize);
@@ -192,21 +192,21 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 	return error_code;
 }
 
-void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
+void Grid2DObject::set(const size_t& i_ncols, const size_t& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner)
 {
 	grid2D.resize(i_ncols, i_nrows, IOUtils::nodata);
 	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
-void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
+void Grid2DObject::set(const size_t& i_ncols, const size_t& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner, const double& init)
 {
 	grid2D.resize(i_ncols, i_nrows, init);
 	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
 }
 
-void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
+void Grid2DObject::set(const size_t& i_ncols, const size_t& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
 {
 	//Test for equality in size: Only compatible Array2D<double> grids are permitted
@@ -223,16 +223,16 @@ void Grid2DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
 	grid2D = i_grid2D;
 }
 
-void Grid2DObject::size(unsigned int& o_ncols, unsigned int& o_nrows) const {
+void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {
 	o_ncols = ncols;
 	o_nrows = nrows;
 }
 
-unsigned int Grid2DObject::getNx() const {
+size_t Grid2DObject::getNx() const {
 	return ncols;
 }
 
-unsigned int Grid2DObject::getNy() const {
+size_t Grid2DObject::getNy() const {
 	return nrows;
 }
 
@@ -246,7 +246,7 @@ bool Grid2DObject::isEmpty() const {
 	return (ncols==0 && nrows==0);
 }
 
-void Grid2DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows,
+void Grid2DObject::setValues(const size_t& i_ncols, const size_t& i_nrows,
                              const double& i_cellsize)
 {
 	ncols = i_ncols;
@@ -254,7 +254,7 @@ void Grid2DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_
 	cellsize = i_cellsize;
 }
 
-void Grid2DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows,
+void Grid2DObject::setValues(const size_t& i_ncols, const size_t& i_nrows,
                              const double& i_cellsize, const Coords& i_llcorner)
 {
 	setValues(i_ncols, i_nrows, i_cellsize);
@@ -280,9 +280,9 @@ bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const s
 	if ((thresholds.size()+1) != ids.size()) {
 		throw IOException("Can't start clusterization, cluster definition list doesnt fit id definition list", AT);
 	}
-	const unsigned int count = ncols*nrows;
+	const size_t count = ncols*nrows;
 	const size_t nscl = thresholds.size();
-	for (unsigned int jj = 0; jj< count; jj++){
+	for (size_t jj = 0; jj< count; jj++){
 		const double& val = grid2D(jj);
 		if (val!=IOUtils::nodata){
 			size_t i = 0;
@@ -295,19 +295,19 @@ bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const s
 	return true;
 }
 
-double& Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy) {
+double& Grid2DObject::operator()(const size_t& ix, const size_t& iy) {
 	return grid2D(ix,iy);
 }
 
-double Grid2DObject::operator()(const unsigned int& ix, const unsigned int& iy) const {
+double Grid2DObject::operator()(const size_t& ix, const size_t& iy) const {
 	return grid2D(ix,iy);
 }
 
-double& Grid2DObject::operator()(const unsigned int& i) {
+double& Grid2DObject::operator()(const size_t& i) {
 	return grid2D(i);
 }
 
-double Grid2DObject::operator()(const unsigned int& i) const {
+double Grid2DObject::operator()(const size_t& i) const {
 	return grid2D(i);
 }
 

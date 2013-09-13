@@ -42,8 +42,8 @@ Grid3DObject::Grid3DObject()
 }
 
 Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3Dobj,
-                           const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-                           const unsigned int& i_nwidths, const unsigned int& i_nheights, const unsigned int& i_ndepths)
+                           const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+                           const size_t& i_nwidths, const size_t& i_nheights, const size_t& i_ndepths)
       : grid3D(i_grid3Dobj.grid3D, i_nx,i_ny,i_nz, i_nwidths,i_nheights,i_ndepths), llcorner(i_grid3Dobj.llcorner),
         cellsize(i_grid3Dobj.cellsize), z(), ncols(i_nwidths), nrows(i_nheights), ndepths(i_ndepths), z_is_absolute(true)
 {
@@ -58,7 +58,7 @@ Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3Dobj,
 	}
 }
 
-Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner)
               : grid3D(i_ncols, i_nrows, i_ndepths, IOUtils::nodata), llcorner(i_llcorner),
                 cellsize(i_cellsize), z(), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true)
@@ -67,7 +67,7 @@ Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nr
 	//setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
-Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner, const double& init)
               : grid3D(i_ncols, i_nrows, i_ndepths, init), llcorner(i_llcorner),
                 cellsize(i_cellsize), z(), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true)
@@ -75,7 +75,7 @@ Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nr
 	//setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
-Grid3DObject::Grid3DObject(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
               : grid3D(i_grid3D), llcorner(i_llcorner),
                 cellsize(i_cellsize), z(), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true)
@@ -214,21 +214,21 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 	return error_code;
 }
 
-void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                        const double& i_cellsize, const Coords& i_llcorner)
 {
 	grid3D.resize(i_ncols, i_nrows, i_ndepths, IOUtils::nodata);
 	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
-void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                        const double& i_cellsize, const Coords& i_llcorner, const double& init)
 {
 	grid3D.resize(i_ncols, i_nrows, i_ndepths, init);
 	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
 }
 
-void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                        const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
 {
 	//Test for equality in size: Only compatible Array3D<double> grids are permitted
@@ -243,22 +243,22 @@ void Grid3DObject::set(const unsigned int& i_ncols, const unsigned int& i_nrows,
 	grid3D = i_grid3D; //copy by value
 }
 
-void Grid3DObject::size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const
+void Grid3DObject::size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) const
 {
 	o_ncols = ncols;
 	o_nrows = nrows;
 	o_ndepths = ndepths;
 }
 
-unsigned int Grid3DObject::getNx() const {
+size_t Grid3DObject::getNx() const {
 	return ncols;
 }
 
-unsigned int Grid3DObject::getNy() const {
+size_t Grid3DObject::getNy() const {
 	return nrows;
 }
 
-unsigned int Grid3DObject::getNz() const {
+size_t Grid3DObject::getNz() const {
 	return ndepths;
 }
 
@@ -271,7 +271,7 @@ bool Grid3DObject::isEmpty() const {
 	return (ncols==0 && nrows==0 && ndepths==0);
 }
 
-void Grid3DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+void Grid3DObject::setValues(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                              const double& i_cellsize)
 {
 	ncols = i_ncols;
@@ -280,7 +280,7 @@ void Grid3DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_
 	cellsize = i_cellsize;
 }
 
-void Grid3DObject::setValues(const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepths,
+void Grid3DObject::setValues(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                              const double& i_cellsize, const Coords& i_llcorner)
 {
 	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize);
@@ -297,29 +297,29 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 	}
 }
 
-void Grid3DObject::extractLayer(const unsigned int& i_z, Grid2DObject& layer)
+void Grid3DObject::extractLayer(const size_t& i_z, Grid2DObject& layer)
 {
 	layer.set(ncols, nrows, cellsize, llcorner);
-	for(unsigned int jj=0; jj<nrows; jj++) {
-		for(unsigned int ii=0; ii<ncols; ii++) {
+	for(size_t jj=0; jj<nrows; jj++) {
+		for(size_t ii=0; ii<ncols; ii++) {
 			layer.grid2D(ii,jj) = grid3D(ii,jj,i_z);
 		}
 	}
 }
 
-double& Grid3DObject::operator()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) {
+double& Grid3DObject::operator()(const size_t& ix, const size_t& iy, const size_t& iz) {
 	return grid3D(ix,iy,iz);
 }
 
-double Grid3DObject::operator()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) const {
+double Grid3DObject::operator()(const size_t& ix, const size_t& iy, const size_t& iz) const {
 	return grid3D(ix,iy,iz);
 }
 
-double& Grid3DObject::operator()(const unsigned int& i) {
+double& Grid3DObject::operator()(const size_t& i) {
 	return grid3D(i);
 }
 
-double Grid3DObject::operator()(const unsigned int& i) const {
+double Grid3DObject::operator()(const size_t& i) const {
 	return grid3D(i);
 }
 
@@ -380,7 +380,7 @@ void Grid3DObject::Serialize(POPBuffer &buf, bool pack)
 		buf.Pack(&ndepths,1);
 		buf.Pack(&cellsize,1);
 		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
-		//unsigned int x,y,z;
+		//size_t x,y,z;
 		//grid3D.size(x,y,z);
 		marshal_DOUBLE3D(buf, grid3D, 0, FLAG_MARSHAL, NULL);
 	}

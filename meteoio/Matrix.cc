@@ -35,30 +35,30 @@ Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0)
 	resize((unsigned)rows,(unsigned)cols);
 }
 
-Matrix::Matrix(const unsigned int& n, const double& init) : vecData(n*n, 0.), ncols(n), nrows(n) {
-	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
+Matrix::Matrix(const size_t& n, const double& init) : vecData(n*n, 0.), ncols(n), nrows(n) {
+	for(size_t ii=1; ii<=n; ii++) operator()(ii,ii) = init;
 }
 
-void Matrix::identity(const unsigned int& n, const double& init) {
+void Matrix::identity(const size_t& n, const double& init) {
 	resize(n,n,0.);
-	for(unsigned int ii=1; ii<=n; ii++) operator()(ii,ii) = init;
+	for(size_t ii=1; ii<=n; ii++) operator()(ii,ii) = init;
 }
 
-void Matrix::resize(const unsigned int& rows, const unsigned int& cols) {
+void Matrix::resize(const size_t& rows, const size_t& cols) {
 	clear();
 	vecData.resize(rows*cols);
 	nrows = rows;
 	ncols = cols;
 }
 
-void Matrix::resize(const unsigned int& rows, const unsigned int& cols, const double& init) {
+void Matrix::resize(const size_t& rows, const size_t& cols, const double& init) {
 	clear();
 	vecData.resize(rows*cols, init);
 	ncols = cols;
 	nrows = rows;
 }
 
-void Matrix::size(unsigned int& rows, unsigned int& cols) const{
+void Matrix::size(size_t& rows, size_t& cols) const{
 	rows=nrows;
 	cols=ncols;
 }
@@ -71,11 +71,11 @@ void Matrix::clear() {
 void Matrix::random(const double& range) {
 	srand((unsigned)time(0));
 
-	for(unsigned int ii=0; ii<vecData.size(); ii++)
+	for(size_t ii=0; ii<vecData.size(); ii++)
 		vecData[ii] = (double)rand()/(double)RAND_MAX*range;
 }
 
-double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
+double& Matrix::operator ()(const size_t& i, const size_t& j) {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
 		std::stringstream ss;
@@ -86,7 +86,7 @@ double& Matrix::operator ()(const unsigned int& i, const unsigned int& j) {
 	return vecData[(j-1) + (i-1)*ncols];
 }
 
-double Matrix::operator ()(const unsigned int& i, const unsigned int& j) const {
+double Matrix::operator ()(const size_t& i, const size_t& j) const {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
 		std::stringstream ss;
@@ -99,27 +99,27 @@ double Matrix::operator ()(const unsigned int& i, const unsigned int& j) const {
 
 const std::string Matrix::toString() const {
 	std::stringstream os;
-	const unsigned int wd=6;
+	const size_t wd=6;
 	os << "\n┌ ";
-	for(unsigned int jj=1; jj<=(ncols*(wd+1)); jj++)
+	for(size_t jj=1; jj<=(ncols*(wd+1)); jj++)
 		os << " ";
 	os << " ┐\n";
-	for(unsigned int ii=1; ii<=nrows; ii++) {
+	for(size_t ii=1; ii<=nrows; ii++) {
 		os << "│ ";
-		for (unsigned int jj=1; jj<=ncols; jj++) {
+		for (size_t jj=1; jj<=ncols; jj++) {
 			os << std::setw(wd) << std::fixed << std::setprecision(2) << operator()(ii,jj) << " ";
 		}
 		os << " │\n";
 	}
 	os << "└ ";
-	for(unsigned int jj=1; jj<=(ncols*(wd+1)); jj++)
+	for(size_t jj=1; jj<=(ncols*(wd+1)); jj++)
 		os << " ";
 	os << " ┘\n";
 	return os.str();
 }
 
 bool Matrix::operator==(const Matrix& in) const {
-	unsigned int in_nrows, in_ncols;
+	size_t in_nrows, in_ncols;
 	in.size(in_nrows, in_ncols);
 
 	if(nrows!=in_nrows || ncols!=in_ncols)
@@ -225,10 +225,10 @@ Matrix& Matrix::operator*=(const Matrix& rhs) {
 	Matrix result(nrows,rhs.ncols);
 
 	//fill product matrix
-	for(unsigned int i=1; i<=result.nrows; i++) {
-		for(unsigned int j=1; j<=result.ncols; j++) {
+	for(size_t i=1; i<=result.nrows; i++) {
+		for(size_t j=1; j<=result.ncols; j++) {
 			double sum=0.;
-			for(unsigned int idx=1; idx<=ncols; idx++) {
+			for(size_t idx=1; idx<=ncols; idx++) {
 				sum += operator()(i,idx) * rhs(idx,j);
 			}
 			result(i,j) = sum;
@@ -287,7 +287,7 @@ double Matrix::scalar() const {
 }
 
 double Matrix::dot(const Matrix& A, const Matrix& B) {
-	unsigned int Acols, Arows, Bcols, Brows;
+	size_t Acols, Arows, Bcols, Brows;
 	A.size(Arows, Acols);
 	B.size(Brows, Bcols);
 
@@ -307,7 +307,7 @@ double Matrix::dot(const Matrix& A, const Matrix& B) {
 	}
 
 	double sum=0.;
-	for(unsigned int i=1; i<=Arows; i++) {
+	for(size_t i=1; i<=Arows; i++) {
 		sum += A(i,1)*B(i,1);
 	}
 
@@ -320,8 +320,8 @@ Matrix Matrix::T(const Matrix& m) {
 
 Matrix Matrix::getT() const {
 	Matrix result(ncols, nrows);
-	for(unsigned int i=1; i<=result.nrows; i++) {
-		for(unsigned int j=1; j<=result.ncols; j++) {
+	for(size_t i=1; i<=result.nrows; i++) {
+		for(size_t j=1; j<=result.ncols; j++) {
 			result(i,j) = operator()(j,i);
 		}
 	}
@@ -344,7 +344,7 @@ double Matrix::det() const {
 	if(LU(L,U)==false) return 0.;
 
 	double product=1.;
-	for(unsigned int i=1; i<=nrows; i++) product *= U(i,i);
+	for(size_t i=1; i<=nrows; i++) product *= U(i,i);
 
 	return product;
 }
@@ -359,28 +359,28 @@ bool Matrix::LU(Matrix& L, Matrix& U) const {
 		throw IOException(tmp.str(), AT);
 	}
 
-	const unsigned int n = nrows;
+	const size_t n = nrows;
 	U.clear();
 	U = *this;
 	L.identity(n, 1.); //initialized as identity matrix, then populated
 	const Matrix& A = *this;
 
-	for(unsigned int k=1; k<=n; k++) {
+	for(size_t k=1; k<=n; k++) {
 		//compute U elements
-		for(unsigned int j=1; j<k; j++) {
+		for(size_t j=1; j<k; j++) {
 			U(k,j) = 0.;
 		}
-		for(unsigned int j=k; j<=n; j++) {
+		for(size_t j=k; j<=n; j++) {
 			double sum=0.;
-			for(unsigned int m=1; m<=(k-1); m++) sum += L(k,m)*U(m,j);
+			for(size_t m=1; m<=(k-1); m++) sum += L(k,m)*U(m,j);
 			U(k,j) = A(k,j) - sum;
 		}
 
 		if( k<n && IOUtils::checkEpsilonEquality(U(k,k), 0., epsilon) ) return false; //we can not compute L
 		//compute L elements
-		for(unsigned int i=k+1; i<=n; i++) {
+		for(size_t i=k+1; i<=n; i++) {
 			double sum=0.;
-			for(unsigned int m=1; m<=(k-1); m++) sum += L(i,m)*U(m,k);
+			for(size_t m=1; m<=(k-1); m++) sum += L(i,m)*U(m,k);
 			L(i,k) = (A(i,k) - sum) / U(k,k);
 		}
 	}
@@ -396,7 +396,7 @@ Matrix Matrix::getInv() const {
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
-	const unsigned int n = nrows;
+	const size_t n = nrows;
 
 	Matrix U;
 	Matrix L;
@@ -407,32 +407,32 @@ Matrix Matrix::getInv() const {
 	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
 	//we start by forward solving LY=I with Y=UX
 	Matrix Y(n, n);
-	for(unsigned int i=1; i<=n; i++) {
+	for(size_t i=1; i<=n; i++) {
 		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
 			throw IOException("The given matrix can not be inversed", AT);
 		}
 		Y(i,i) = 1./L(i,i); //j==i
-		for(unsigned int j=1; j<i; j++) { //j<i
+		for(size_t j=1; j<i; j++) { //j<i
 			double sum=0.;
-			for(unsigned int k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
+			for(size_t k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
 				sum += L(i,k) * Y(k,j);
 			}
 			Y(i,j) = -1./L(i,i) * sum;
 		}
-		for(unsigned int j=i+1; j<=n; j++) { //j>i
+		for(size_t j=i+1; j<=n; j++) { //j>i
 			Y(i,j) = 0.;
 		}
 	}
 
 	//now, we backward solve UX=Y
 	Matrix X(n,n);
-	for(unsigned int i=n; i>=1; i--) { //lines
+	for(size_t i=n; i>=1; i--) { //lines
 		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //HACK: actually, only U(n,n) needs checking
 			throw IOException("The given matrix is singular and can not be inversed", AT);
 		}
-		for(unsigned int j=1; j<=n; j++) { //lines
+		for(size_t j=1; j<=n; j++) { //lines
 			double sum=0.;
-			for(unsigned int k=i+1; k<=n; k++) {
+			for(size_t k=i+1; k<=n; k++) {
 				sum += U(i,k) * X(k,j);
 			}
 			X(i,j) = (Y(i,j) - sum) / U(i,i);
@@ -450,7 +450,7 @@ bool Matrix::inv() {
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
-	const unsigned int n = nrows;
+	const size_t n = nrows;
 
 	Matrix U;
 	Matrix L;
@@ -461,32 +461,32 @@ bool Matrix::inv() {
 	//we solve AX=I with X=A-1. Since A=LU, then LUX = I
 	//we start by forward solving LY=I with Y=UX
 	Matrix Y(n, n);
-	for(unsigned int i=1; i<=n; i++) {
+	for(size_t i=1; i<=n; i++) {
 		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
 			return false;
 		}
 		Y(i,i) = 1./L(i,i); //j==i
-		for(unsigned int j=1; j<i; j++) { //j<i
+		for(size_t j=1; j<i; j++) { //j<i
 			double sum=0.;
-			for(unsigned int k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
+			for(size_t k=i-1; k>=1; k--) { //equivalent to 1 -> i-1
 				sum += L(i,k) * Y(k,j);
 			}
 			Y(i,j) = -1./L(i,i) * sum;
 		}
-		for(unsigned int j=i+1; j<=n; j++) { //j>i
+		for(size_t j=i+1; j<=n; j++) { //j>i
 			Y(i,j) = 0.;
 		}
 	}
 
 	//now, we backward solve UX=Y
 	Matrix& X = *this; //we write the solution over the input matrix
-	for(unsigned int i=n; i>=1; i--) { //lines
+	for(size_t i=n; i>=1; i--) { //lines
 		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //actually, only U(n,n) needs checking
 			return false;
 		}
-		for(unsigned int j=1; j<=n; j++) { //lines
+		for(size_t j=1; j<=n; j++) { //lines
 			double sum=0.;
-			for(unsigned int k=i+1; k<=n; k++) {
+			for(size_t k=i+1; k<=n; k++) {
 				sum += U(i,k) * X(k,j);
 			}
 			X(i,j) = (Y(i,j) - sum) / U(i,i);
@@ -498,7 +498,7 @@ bool Matrix::inv() {
 
 bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 //This uses an LU decomposition followed by backward and forward solving for A·X=B
-	unsigned int Anrows,Ancols, Bnrows, Bncols;
+	size_t Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
 	if(Anrows!=Ancols) {
 		std::stringstream tmp;
@@ -514,8 +514,8 @@ bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 		tmp << "(" << Bnrows << "," << Bncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
-	const unsigned int n = Anrows;
-	const unsigned int m = Bncols;
+	const size_t n = Anrows;
+	const size_t m = Bncols;
 
 	Matrix U;
 	Matrix L;
@@ -526,13 +526,13 @@ bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	//we solve AX=B. Since A=LU, then LUX = B
 	//we start by forward solving LY=B with Y=UX
 	Matrix Y(n, m);
-	for(unsigned int i=1; i<=n; i++) {
+	for(size_t i=1; i<=n; i++) {
 		if(IOUtils::checkEpsilonEquality(L(i,i), 0., epsilon)) {
 			return false;
 		}
-		for(unsigned int j=1; j<=m; j++) {
+		for(size_t j=1; j<=m; j++) {
 			double sum=0.;
-			for(unsigned int k=1; k<i; k++) {
+			for(size_t k=1; k<i; k++) {
 				sum += L(i,k) * Y(k,j);
 			}
 			Y(i,j) = (B(i,j) - sum) / L(i,i);
@@ -541,14 +541,14 @@ bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 
 	//now, we backward solve UX=Y
 	X.resize(n,m); //we need to ensure that X has the correct dimensions
-	for(unsigned int i=n; i>=1; i--) { //lines
+	for(size_t i=n; i>=1; i--) { //lines
 		if(IOUtils::checkEpsilonEquality(U(i,i), 0., epsilon)) { //actually, only U(n,n) needs checking
 			//singular matrix
 			return false;
 		}
-		for(unsigned int j=1; j<=m; j++) {
+		for(size_t j=1; j<=m; j++) {
 			double sum = 0.;
-			for(unsigned int k=i+1; k<=n; k++) {
+			for(size_t k=i+1; k<=n; k++) {
 				sum += U(i,k) * X(k,j);
 			}
 			X(i,j) = (Y(i,j) - sum) / U(i,i);
@@ -568,7 +568,7 @@ Matrix Matrix::solve(const Matrix& A, const Matrix& B) {
 
 bool Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 { //Thomas algorithm for tridiagonal matrix solving of A·X=B
-	unsigned int Anrows,Ancols, Bnrows, Bncols;
+	size_t Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
 	if(Anrows!=Ancols) {
 		std::stringstream tmp;
@@ -591,11 +591,11 @@ bool Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 		throw IOException(tmp.str(), AT);
 	}
 
-	const unsigned int n = Anrows;
+	const size_t n = Anrows;
 	std::vector<double> b(n+1), c(n+1), v(n+1); //so we can keep the same index as for the matrix
 
 	b[1] = A(1,1); v[1] = B(1,1); //otherwise they would never be defined
-	for(unsigned int i=2; i<=n; i++) {
+	for(size_t i=2; i<=n; i++) {
 		if(IOUtils::checkEpsilonEquality(b[i-1], 0., epsilon))
 			return false;
 		const double b_i = A(i,i);
@@ -609,7 +609,7 @@ bool Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 
 	X.resize(n,1); //we need to ensure that X has the correct dimensions
 	X(n,1) = v[n] / b[n];
-	for(unsigned int i=n-1; i>=1; i--) {
+	for(size_t i=n-1; i>=1; i--) {
 		X(i,1) = ( v[i] - c[i]*X(i+1,1) ) / b[i];
 	}
 
@@ -634,8 +634,8 @@ bool Matrix::isIdentity() const {
 	}
 
 	bool is_identity=true;
-	for(unsigned int i=1; i<=nrows; i++) {
-		for(unsigned int j=1; j<=ncols; j++) {
+	for(size_t i=1; i<=nrows; i++) {
+		for(size_t j=1; j<=ncols; j++) {
 			const double val = operator()(i,j);
 			if(i!=j) {
 				if(IOUtils::checkEpsilonEquality(val,0.,epsilon_mtr)==false) {
@@ -658,15 +658,15 @@ bool Matrix::isIdentity(const Matrix& A) {
 	return A.isIdentity();
 }
 
-void Matrix::partialPivoting(std::vector<unsigned int>& pivot_idx) {
+void Matrix::partialPivoting(std::vector<size_t>& pivot_idx) {
 	pivot_idx.clear();
 
 	//bad luck: if a row has several elements that are max of their columns,
 	//we don't optimize its position. Ie: we can end up with a small element
 	//on the diagonal
-	for(unsigned int j=1; j<=ncols; j++) {
-		const unsigned int old_i = j;
-		const unsigned int new_i = findMaxInCol(j);
+	for(size_t j=1; j<=ncols; j++) {
+		const size_t old_i = j;
+		const size_t new_i = findMaxInCol(j);
 		if(new_i!=j) { //ie: pivoting needed
 			swapRows(old_i, new_i);
 			pivot_idx.push_back(new_i);
@@ -676,17 +676,17 @@ void Matrix::partialPivoting(std::vector<unsigned int>& pivot_idx) {
 }
 
 void Matrix::partialPivoting() {
-	std::vector<unsigned int> pivot_idx;
+	std::vector<size_t> pivot_idx;
 	partialPivoting(pivot_idx);
 }
 
 void Matrix::maximalPivoting() {
-	std::vector<unsigned int> pivot_idx;
+	std::vector<size_t> pivot_idx;
 	Matrix tmp( *this );
 
-	for(unsigned int i=1; i<=nrows; i++) {
+	for(size_t i=1; i<=nrows; i++) {
 		const double scale = operator()(i,findMaxInRow(i));
-		for(unsigned int j=1; j<=ncols; j++) {
+		for(size_t j=1; j<=ncols; j++) {
 			operator()(i,j) /= scale;
 		}
 	}
@@ -701,18 +701,18 @@ void Matrix::maximalPivoting() {
 	std::vector<double> e(ncols+1); //so we remain compatible with matrix index
 	double g=0., x=0.;
 
-	for(unsigned int i=1; i<=ncols; i++) {
+	for(size_t i=1; i<=ncols; i++) {
 		e[i]=g; s=0.; l=i+1;
-		for(unsigned int j=i; j<=m; j++) s += ( operator()(i,j)*operator()(i,j) );
+		for(size_t j=i; j<=m; j++) s += ( operator()(i,j)*operator()(i,j) );
 	}
 }*/
 
 //return the index of the line containing the highest absolute value at column col
-unsigned int Matrix::findMaxInCol(const unsigned int &col) {
-	unsigned int row_idx = 0;
+size_t Matrix::findMaxInCol(const size_t &col) {
+	size_t row_idx = 0;
 	double max_val=0.;
 
-	for(unsigned int i=1; i<=nrows; i++) {
+	for(size_t i=1; i<=nrows; i++) {
 		const double val = fabs( operator()(i,col) );
 		if( val>max_val) {
 			max_val=val;
@@ -723,11 +723,11 @@ unsigned int Matrix::findMaxInCol(const unsigned int &col) {
 }
 
 //return the index of the line containing the highest absolute value at column col
-unsigned int Matrix::findMaxInRow(const unsigned int &row) {
-	unsigned int col_idx = 0;
+size_t Matrix::findMaxInRow(const size_t &row) {
+	size_t col_idx = 0;
 	double max_val=0.;
 
-	for(unsigned int j=1; j<=ncols; j++) {
+	for(size_t j=1; j<=ncols; j++) {
 		const double val = fabs( operator()(row,j) );
 		if( val>max_val) {
 			max_val=val;
@@ -738,8 +738,8 @@ unsigned int Matrix::findMaxInRow(const unsigned int &row) {
 }
 
 
-void Matrix::swapRows(const unsigned int &i1, const unsigned int &i2) {
-	for(unsigned int j=1; j<=ncols; j++) {
+void Matrix::swapRows(const size_t &i1, const size_t &i2) {
+	for(size_t j=1; j<=ncols; j++) {
 		const double tmp = operator()(i2,j);
 		operator()(i2,j) = operator()(i1,j);
 		operator()(i1,j) = tmp;

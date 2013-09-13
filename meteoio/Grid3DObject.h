@@ -48,16 +48,16 @@ class Grid3DObject{
 #endif
 	public:
 		typedef struct GRID_POINT_3D { //TODO: this potentially conflicts with the definition in Grid2DObject
-			unsigned int ix; ///<grid index along X
-			unsigned int iy; ///<grid index along Y
-			unsigned int iz; ///<grid index along Z
+			size_t ix; ///<grid index along X
+			size_t iy; ///<grid index along Y
+			size_t iz; ///<grid index along Z
 		} grid_point_3d;
 
 		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
-		double& operator ()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz);
-		double operator ()(const unsigned int& ix, const unsigned int& iy, const unsigned int& iz) const;
-		double& operator ()(const unsigned int& i);
-		double operator ()(const unsigned int& i) const;
+		double& operator ()(const size_t& ix, const size_t& iy, const size_t& iz);
+		double operator ()(const size_t& ix, const size_t& iy, const size_t& iz) const;
+		double& operator ()(const size_t& i);
+		double operator ()(const size_t& i) const;
 
 		const std::string toString() const;
 		friend std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid);
@@ -75,49 +75,49 @@ class Grid3DObject{
 		* a subspace of the space spanned by the i_grid3Dobj
 		*/
 		Grid3DObject(const Grid3DObject& i_grid3Dobj,
-		             const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		             const unsigned int& i_nwidths, const unsigned int& i_nheights, const unsigned int& i_ndepths);
+		             const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+		             const size_t& i_nwidths, const size_t& i_nheights, const size_t& i_ndepths);
 
-		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		Grid3DObject(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		             const double& cellsize, const Coords& i_llcorner);
 
-		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		Grid3DObject(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		             const double& cellsize, const Coords& i_llcorner, const double& init);
 
-		Grid3DObject(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		Grid3DObject(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		             const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D);
 
 		/**
 		* @brief Set all variables in one go.
-		* @param ncols (unsigned int&) number of colums in the grid3D (1st dimension)
-		* @param nrows (unsigned int&) number of rows in the grid3D (2nd dimension)
-		* @param depths (unsigned int&) number of depth in the grid3D (3rd dimension)
-		* @param cellsize (double&) value for cellsize in grid3D
+		* @param ncols number of colums in the grid3D (1st dimension)
+		* @param nrows number of rows in the grid3D (2nd dimension)
+		* @param depths number of depth in the grid3D (3rd dimension)
+		* @param cellsize value for cellsize in grid3D
 		* @param i_llcorner lower left corner coordinates
 		*/
-		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& depths,
+		void set(const size_t& ncols, const size_t& nrows, const size_t& depths,
 		         const double& cellsize, const Coords& i_llcorner);
 		/**
 		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double>
 		* will be destroyed and recreated to size ncols x nrows.
 		*
-		* @param ncols (unsigned int&) number of colums in the grid3D
-		* @param nrows (unsigned int&) number of rows in the grid3D
-		* @param ndepths (unsigned int&) number of depth in the grid3D (3rd dimension)
-		* @param cellsize (double&) value for cellsize in grid3D
+		* @param ncols number of colums in the grid3D
+		* @param nrows number of rows in the grid3D
+		* @param ndepths number of depth in the grid3D (3rd dimension)
+		* @param cellsize value for cellsize in grid3D
 		* @param i_llcorner lower left corner coordinates
-		* @param grid3D_in (Array\<double\>&) grid to be copied by value
+		* @param grid3D_in grid to be copied by value
 		*/
-		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		void set(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		         const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D_in);
 
-		void set(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		void set(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		         const double& cellsize, const Coords& i_llcorner, const double& init);
 
-		void size(unsigned int& o_ncols, unsigned int& o_nrows, unsigned int& o_ndepths) const;
-		unsigned int getNx() const;
-		unsigned int getNy() const;
-		unsigned int getNz() const;
+		void size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) const;
+		size_t getNx() const;
+		size_t getNy() const;
+		size_t getNz() const;
 
 		/**
 		* @brief deletes the data, but keeps geolocalization
@@ -154,8 +154,8 @@ class Grid3DObject{
 		* @brief check if the current Grid3DObject has the same geolocalization attributes
 		* as another Grid3DObject. The grid coordinates (xllcorner & yllcorner) are NOT
 		* checked as these might be tweaked for convenience (like between input grid and local grid)
-		* @param target (Grid3DObject) grid to compare to
-		* @return (bool) true if same geolocalization
+		* @param target grid to compare to
+		* @return true if same geolocalization
 		*/
 		bool isSameGeolocalization(const Grid3DObject& target);
 
@@ -164,19 +164,19 @@ class Grid3DObject{
 		* @param i_z layer to extract
 		* @param layer extracted 2D grid
 		*/
-		void extractLayer(const unsigned int& i_z, Grid2DObject& layer);
+		void extractLayer(const size_t& i_z, Grid2DObject& layer);
 
 		Array3D<double> grid3D;
 		Coords llcorner;
 		double cellsize;
 		std::vector<double> z; ///> Vector of depths
-		unsigned int ncols, nrows, ndepths;
+		size_t ncols, nrows, ndepths;
 		bool z_is_absolute; ///> Are z coordinates absolute or relative to a DEM?
 
  protected:
-		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		void setValues(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 			const double& cellsize);
-		void setValues(const unsigned int& ncols, const unsigned int& nrows, const unsigned int& ndepths,
+		void setValues(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 			const double& cellsize, const Coords& i_llcorner);
 
 		/**

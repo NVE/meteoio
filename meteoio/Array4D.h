@@ -52,10 +52,10 @@ template<class T> class Array4D {
 		* @param i_sizeZ length of the z dimension of the new array
 		*/
 		Array4D(const Array4D<T>& i_array4D,
-		        const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		        const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ);
+		        const size_t& i_nw, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+		        const size_t& i_sizeW, const size_t& i_sizeX, const size_t& i_sizeY, const size_t& i_sizeZ);
 
-		Array4D(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
+		Array4D(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz);
 
 		/**
 		* A constructor that creates an array filled with constant values
@@ -65,7 +65,7 @@ template<class T> class Array4D {
 		* @param i_sizeZ length of the z dimension of the new array
 		* @param init initial value to fill the array with
 		*/
-		Array4D(const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ, const T& init);
+		Array4D(const size_t& i_sizeW, const size_t& i_sizeX, const size_t& i_sizeY, const size_t& i_sizeZ, const T& init);
 
 		/**
 		* A method that can be used to create an Array4D object that is contained in the
@@ -82,8 +82,8 @@ template<class T> class Array4D {
 		* @param i_sizeZ length of the z dimension of the new array
 		*/
 		void subset(const Array4D<T>& i_array4D,
-		            const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		            const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ);
+		            const size_t& i_nw, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+		            const size_t& i_sizeW, const size_t& i_sizeX, const size_t& i_sizeY, const size_t& i_sizeZ);
 
 		/**
 		* @brief A method that can be used to insert a subplane into an existing Array4D object
@@ -100,10 +100,10 @@ template<class T> class Array4D {
 		* @param i_sizeZ length of the z dimension of the new array
 		*/
 		void fill(const Array4D<T>& i_array4D,
-		          const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		          const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ);
+		          const size_t& i_nw, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+		          const size_t& i_sizeW, const size_t& i_sizeX, const size_t& i_sizeY, const size_t& i_sizeZ);
 
-		void fill(const Array4D<T>& i_array4D, const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz);
+		void fill(const Array4D<T>& i_array4D, const size_t& i_nw, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz);
 
 		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
@@ -118,13 +118,13 @@ template<class T> class Array4D {
 		*/
 		bool getKeepNodata();
 
-		void resize(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
-		void resize(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
-		void size(unsigned int& anw, unsigned int& anx, unsigned int& any, unsigned int& anz) const;
-		unsigned int getNw() const;
-		unsigned int getNx() const;
-		unsigned int getNy() const;
-		unsigned int getNz() const;
+		void resize(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz);
+		void resize(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz, const T& init);
+		void size(size_t& anw, size_t& anx, size_t& any, size_t& anz) const;
+		size_t getNw() const;
+		size_t getNx() const;
+		size_t getNy() const;
+		size_t getNz() const;
 		void clear();
 		bool isEmpty() const;
 
@@ -164,10 +164,10 @@ template<class T> class Array4D {
 		bool checkEpsilonEquality(const Array4D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array4D<double>& rhs1, const Array4D<double>& rhs2, const double& epsilon);
 
-		T& operator ()(const unsigned int& i);
-		const T operator ()(const unsigned int& i) const;
-		T& operator ()(const unsigned int& w, const unsigned int& x, const unsigned int& y, const unsigned int& z);
-		const T operator ()(const unsigned int& w, const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
+		T& operator ()(const size_t& i);
+		const T operator ()(const size_t& i) const;
+		T& operator ()(const size_t& w, const size_t& x, const size_t& y, const size_t& z);
+		const T operator ()(const size_t& w, const size_t& x, const size_t& y, const size_t& z) const;
 
 		Array4D<T>& operator =(const Array4D<T>&);
 		Array4D<T>& operator =(const T& value);
@@ -197,16 +197,16 @@ template<class T> class Array4D {
 
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
-		unsigned int nw;
-		unsigned int nx;
-		unsigned int ny;
-		unsigned int nz;
-		unsigned int nwnx; //xw time nx
-		unsigned int nwnxny; //xw time nx times ny
+		size_t nw;
+		size_t nx;
+		size_t ny;
+		size_t nz;
+		size_t nwnx; //xw time nx
+		size_t nwnxny; //xw time nx times ny
 		bool keep_nodata;
 };
 
-template<class T> inline T& Array4D<T>::operator()(const unsigned int& i) {
+template<class T> inline T& Array4D<T>::operator()(const size_t& i) {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
@@ -214,7 +214,7 @@ template<class T> inline T& Array4D<T>::operator()(const unsigned int& i) {
 #endif
 }
 
-template<class T> inline const T Array4D<T>::operator()(const unsigned int& i) const {
+template<class T> inline const T Array4D<T>::operator()(const size_t& i) const {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
@@ -222,7 +222,7 @@ template<class T> inline const T Array4D<T>::operator()(const unsigned int& i) c
 #endif
 }
 
-template<class T> inline T& Array4D<T>::operator()(const unsigned int& w, const unsigned int& x, const unsigned int& y, const unsigned int& z) {
+template<class T> inline T& Array4D<T>::operator()(const size_t& w, const size_t& x, const size_t& y, const size_t& z) {
 #ifndef NOSAFECHECKS
 	if ((w >= nw) || (x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;
@@ -236,7 +236,7 @@ template<class T> inline T& Array4D<T>::operator()(const unsigned int& w, const 
 	return vecData[w + x*nw + y*nwnx + z*nwnxny];
 }
 
-template<class T> inline const T Array4D<T>::operator()(const unsigned int& w, const unsigned int& x, const unsigned int& y, const unsigned int& z) const {
+template<class T> inline const T Array4D<T>::operator()(const size_t& w, const size_t& x, const size_t& y, const size_t& z) const {
 #ifndef NOSAFECHECKS
 	if ((w >= nw) || (x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;
@@ -253,16 +253,16 @@ template<class T> Array4D<T>::Array4D() : vecData(), nw(0), nx(0), ny(0), nz(0),
 }
 
 template<class T> Array4D<T>::Array4D(const Array4D<T>& i_array4D,
-                                      const unsigned int& i_nw,const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-                                      const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ)
+                                      const size_t& i_nw,const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+                                      const size_t& i_sizeW, const size_t& i_sizeX, const size_t& i_sizeY, const size_t& i_sizeZ)
                                : vecData(i_sizeW*i_sizeX*i_sizeY*i_sizeZ), nw(i_sizeW), nx(i_sizeX), ny(i_sizeY), nz(i_sizeZ), nwnx(i_sizeW*i_sizeX), nwnxny(i_sizeW*i_sizeX*i_sizeY), keep_nodata(true)
 {
 	subset(i_array4D, i_nw, i_nx, i_ny, i_nz, i_sizeW, i_sizeX, i_sizeY, i_sizeZ);
 }
 
 template<class T> void Array4D<T>::subset(const Array4D<T>& i_array4D,
-                                     const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-                                     const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ)
+                                     const size_t& i_nw, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+                                     const size_t& i_sizeW, const size_t& i_sizeX, const size_t& i_sizeY, const size_t& i_sizeZ)
 {
 
 	if (((i_nw+i_sizeW) > i_array4D.nw) || ((i_nx+i_sizeX) > i_array4D.nx) || ((i_ny+i_sizeY) > i_array4D.ny) || ((i_nz+i_sizeZ) > i_array4D.nz)) {
@@ -278,10 +278,10 @@ template<class T> void Array4D<T>::subset(const Array4D<T>& i_array4D,
 
 	resize(i_sizeW, i_sizeX, i_sizeY, i_sizeZ); //create new Array4D object
 	//Copy by value subspace
-	for (unsigned int ii=0; ii<nz; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int kk=0; kk<nx; kk++) {
-				for (unsigned int ll=0; ll<nw; ll++)
+	for (size_t ii=0; ii<nz; ii++) {
+		for (size_t jj=0; jj<ny; jj++) {
+			for (size_t kk=0; kk<nx; kk++) {
+				for (size_t ll=0; ll<nw; ll++)
 				//Running through the vector in order of memory alignment
 					operator()(ll,kk,jj,ii) = i_array4D(i_nw+ll, i_nx+kk, i_ny+jj, i_nz+ii);
 			}
@@ -289,16 +289,16 @@ template<class T> void Array4D<T>::subset(const Array4D<T>& i_array4D,
 	}
 }
 
-template<class T> void Array4D<T>::fill(const Array4D<T>& i_array4D, const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz)
+template<class T> void Array4D<T>::fill(const Array4D<T>& i_array4D, const size_t& i_nw, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz)
 {
-	unsigned int i_sizeW, i_sizeX, i_sizeY, i_sizeZ;
+	size_t i_sizeW, i_sizeX, i_sizeY, i_sizeZ;
 	i_array4D.size(i_sizeW, i_sizeX, i_sizeY, i_sizeZ);
 	fill(i_array4D, i_nw, i_nx, i_ny, i_nz, i_sizeW, i_sizeX, i_sizeY, i_sizeZ);
 }
 
 template<class T> void Array4D<T>::fill(const Array4D<T>& i_array4D,
-                                     const unsigned int& i_nw, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-                                     const unsigned int& i_sizeW, const unsigned int& i_sizeX, const unsigned int& i_sizeY, const unsigned int& i_sizeZ)
+                                     const size_t& i_nw, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+                                     const size_t& i_sizeW, const size_t& i_sizeX, const size_t& i_sizeY, const size_t& i_sizeZ)
 {
 
 	if (((i_nw+i_sizeW) > i_array4D.nw) || ((i_nx+i_sizeX) > i_array4D.nx) || ((i_ny+i_sizeY) > i_array4D.ny) || ((i_nz+i_sizeZ) > i_array4D.nz)) {
@@ -313,14 +313,14 @@ template<class T> void Array4D<T>::fill(const Array4D<T>& i_array4D,
 		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
 
 	//Copy by value subspace
-	for (unsigned int ii=i_nz; ii<(i_nz+i_sizeZ); ii++) {
-		for (unsigned int jj=i_ny; jj<(i_ny+i_sizeY); jj++) {
-			for (unsigned int kk=i_nx; kk<(i_nx+i_sizeX); kk++) {
-				for (unsigned int ll=i_nw; ll<(i_nw+i_sizeW); ll++) {
-					const unsigned int iw = ll-i_nw;
-					const unsigned int ix = kk-i_nx;
-					const unsigned int iy = jj-i_ny;
-					const unsigned int iz = ii-i_nz;
+	for (size_t ii=i_nz; ii<(i_nz+i_sizeZ); ii++) {
+		for (size_t jj=i_ny; jj<(i_ny+i_sizeY); jj++) {
+			for (size_t kk=i_nx; kk<(i_nx+i_sizeX); kk++) {
+				for (size_t ll=i_nw; ll<(i_nw+i_sizeW); ll++) {
+					const size_t iw = ll-i_nw;
+					const size_t ix = kk-i_nx;
+					const size_t iy = jj-i_ny;
+					const size_t iz = ii-i_nz;
 					operator()(ll,kk,jj,ii) = i_array4D(iw,ix, iy, iz);
 				}
 			}
@@ -328,13 +328,13 @@ template<class T> void Array4D<T>::fill(const Array4D<T>& i_array4D,
 	}
 }
 
-template<class T> Array4D<T>::Array4D(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz)
+template<class T> Array4D<T>::Array4D(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz)
                              : vecData(anw*anx*any*anz), nw(anw), nx(anx), ny(any), nz(anz), nwnx(anw*anx), nwnxny(anw*anx*any),  keep_nodata(true)
 {
 	//resize(anw, anx, any, anz);
 }
 
-template<class T> Array4D<T>::Array4D(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init)
+template<class T> Array4D<T>::Array4D(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz, const T& init)
                              : vecData(anw*anx*any*anz, init), nw(anw), nx(anx), ny(any), nz(anz), nwnx(anw*anx), nwnxny(anw*anx*any),  keep_nodata(true)
 {
 	//resize(anw, anx, any, anz, init);
@@ -348,7 +348,7 @@ template<class T> bool Array4D<T>::getKeepNodata() {
 	return keep_nodata;
 }
 
-template<class T> void Array4D<T>::resize(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
+template<class T> void Array4D<T>::resize(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz) {
 	clear();  //we won't be able to "rescue" old values, so we reset the whole vector
 	vecData.resize(anw*anx*any*anz);
 	nw = anw;
@@ -359,7 +359,7 @@ template<class T> void Array4D<T>::resize(const unsigned int& anw, const unsigne
 	nwnxny = nw*nx*ny;
 }
 
-template<class T> void Array4D<T>::resize(const unsigned int& anw, const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
+template<class T> void Array4D<T>::resize(const size_t& anw, const size_t& anx, const size_t& any, const size_t& anz, const T& init) {
 	clear();  //we won't be able to "rescue" old values, so we reset the whole vector
 	vecData.resize(anw*anx*any*anz, init);
 	nw = anw;
@@ -370,26 +370,26 @@ template<class T> void Array4D<T>::resize(const unsigned int& anw, const unsigne
 	nwnxny = nw*nx*ny;
 }
 
-template<class T> void Array4D<T>::size(unsigned int& anw, unsigned int& anx, unsigned int& any, unsigned int& anz) const {
+template<class T> void Array4D<T>::size(size_t& anw, size_t& anx, size_t& any, size_t& anz) const {
 	anw=nw;
 	anx=nx;
 	any=ny;
 	anz=nz;
 }
 
-template<class T> unsigned int Array4D<T>::getNw() const {
+template<class T> size_t Array4D<T>::getNw() const {
 	return nw;
 }
 
-template<class T> unsigned int Array4D<T>::getNx() const {
+template<class T> size_t Array4D<T>::getNx() const {
 	return nx;
 }
 
-template<class T> unsigned int Array4D<T>::getNy() const {
+template<class T> size_t Array4D<T>::getNy() const {
 	return ny;
 }
 
-template<class T> unsigned int Array4D<T>::getNz() const {
+template<class T> size_t Array4D<T>::getNz() const {
 	return nz;
 }
 
@@ -405,12 +405,12 @@ template<class T> bool Array4D<T>::isEmpty() const {
 template<class T> const std::string Array4D<T>::toString() const {
 	std::stringstream os;
 	os << "<array4d>\n";
-	for (unsigned int ll=0; ll<nw; ll++) {
+	for (size_t ll=0; ll<nw; ll++) {
 		os << "dim4[" << ll << "]\n";
-		for (unsigned int kk=0; kk<nz; kk++) {
+		for (size_t kk=0; kk<nz; kk++) {
 			os << "depth[" << kk << "]\n";
-			for(unsigned int ii=0; ii<nx; ii++) {
-				for (unsigned int jj=0; jj<ny; jj++) {
+			for(size_t ii=0; ii<nx; ii++) {
+				for (size_t jj=0; jj<ny; jj++) {
 					os << operator()(ii,jj,kk,ll) << " ";
 				}
 				os << "\n";
@@ -445,16 +445,16 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array4D<P>& array
 template<class T> T Array4D<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();
-	const unsigned int nwyz = nwnxny*nz;
+	const size_t nwyz = nwnxny*nz;
 
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
 			if(val<min) min=val;
 		}
 		return min;
 	} else {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
 			if(val!=IOUtils::nodata && val<min) min=val;
 		}
@@ -466,16 +466,16 @@ template<class T> T Array4D<T>::getMin() const {
 template<class T> T Array4D<T>::getMax() const {
 
 	T max = -std::numeric_limits<T>::max();
-	const unsigned int nwyz = nwnxny*nz;
+	const size_t nwyz = nwnxny*nz;
 
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
 			if(val>max) max=val;
 		}
 		return max;
 	} else {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
 			if(val!=IOUtils::nodata && val>max) max=val;
 		}
@@ -487,18 +487,18 @@ template<class T> T Array4D<T>::getMax() const {
 template<class T> T Array4D<T>::getMean() const {
 
 	T mean = 0;
-	const unsigned int nwyz = nwnxny*nz;
+	const size_t nwyz = nwnxny*nz;
 
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
 			mean += val;
 		}
 		if(nwyz>0) return mean/(T)(nwyz);
 		else return (T)0;
 	} else {
-		unsigned int count = 0;
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		size_t count = 0;
+		for (size_t jj=0; jj<nwyz; jj++) {
 			const T val = vecData[jj];
 			if(val!=IOUtils::nodata) {
 				mean += val;
@@ -512,13 +512,13 @@ template<class T> T Array4D<T>::getMean() const {
 
 template<class T> size_t Array4D<T>::getCount() const
 {
-	const unsigned int nwyz = nwnxny*nz;
+	const size_t nwyz = nwnxny*nz;
 
 	if(keep_nodata==false) {
 		return (size_t)nwyz;
 	} else {
 		size_t count = 0;
-		for (unsigned int ii=0; ii<nwyz; ii++) {
+		for (size_t ii=0; ii<nwyz; ii++) {
 			if(vecData[ii]!=IOUtils::nodata) count++;
 		}
 		return count;
@@ -527,14 +527,14 @@ template<class T> size_t Array4D<T>::getCount() const
 
 template<class T> void Array4D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
-		const unsigned int nwyz = nwnxny*nz;
+		const size_t nwyz = nwnxny*nz;
 		if(keep_nodata==false) {
-			for (unsigned int jj=0; jj<nwyz; jj++) {
+			for (size_t jj=0; jj<nwyz; jj++) {
 				T& val = vecData[jj];
 				if(val<0) val=-val;
 			}
 		} else {
-			for (unsigned int jj=0; jj<nwyz; jj++) {
+			for (size_t jj=0; jj<nwyz; jj++) {
 				T& val = vecData[jj];
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
@@ -554,8 +554,8 @@ template<class T> const Array4D<T> Array4D<T>::getAbs() const {
 template<class T> bool Array4D<T>::checkEpsilonEquality(const Array4D<double>& rhs, const double& epsilon) const {
 	if(nw!=rhs.nw || nx!=rhs.nx || ny!=rhs.ny || nz!=rhs.nz) return false;
 
-	const unsigned int nwyz = nwnxny*nz;
-	for (unsigned int jj=0; jj<nwyz; jj++)
+	const size_t nwyz = nwnxny*nz;
+	for (size_t jj=0; jj<nwyz; jj++)
 		if(IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
 
 	return true;
@@ -594,13 +594,13 @@ template<class T> Array4D<T>& Array4D<T>::operator+=(const Array4D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Add to every single member of the Array4D<T>
-	const unsigned int nwyz = nwnxny*nz;
+	const size_t nwyz = nwnxny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			vecData[jj] += rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -622,13 +622,13 @@ template<class T> const Array4D<T> Array4D<T>::operator+(const Array4D<T>& rhs)
 template<class T> Array4D<T>& Array4D<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array4D<T>
-	const unsigned int nwyz = nwnxny*nz;
+	const size_t nwyz = nwnxny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			vecData[jj] += rhs;
 		}
 	} else {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			if(vecData[jj]!=IOUtils::nodata)
 				vecData[jj] += rhs;
 		}
@@ -655,13 +655,13 @@ template<class T> Array4D<T>& Array4D<T>::operator-=(const Array4D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Substract to every single member of the Array4D<T>
-	const unsigned int nwyz = nwnxny*nz;
+	const size_t nwyz = nwnxny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			vecData[jj] -= rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nwyz; jj++) {
+		for (size_t jj=0; jj<nwyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -704,13 +704,13 @@ template<class T> Array4D<T>& Array4D<T>::operator*=(const Array4D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Multiply every single member of the Array4D<T>
-	const unsigned int nwxyz = nwnxny*nz;
+	const size_t nwxyz = nwnxny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwxyz; jj++) {
+		for (size_t jj=0; jj<nwxyz; jj++) {
 			vecData[jj] *= rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nwxyz; jj++) {
+		for (size_t jj=0; jj<nwxyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -732,13 +732,13 @@ template<class T> const Array4D<T> Array4D<T>::operator*(const Array4D<T>& rhs)
 template<class T> Array4D<T>& Array4D<T>::operator*=(const T& rhs)
 {
 	//Multiply every single member of the Array4D<T>
-	const unsigned int nwxyz = nwnxny*nz;
+	const size_t nwxyz = nwnxny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwxyz; jj++) {
+		for (size_t jj=0; jj<nwxyz; jj++) {
 			vecData[jj] *= rhs;
 		}
 	} else {
-		for (unsigned int jj=0; jj<nwxyz; jj++) {
+		for (size_t jj=0; jj<nwxyz; jj++) {
 			if(vecData[jj]!=IOUtils::nodata)
 				vecData[jj] *= rhs;
 		}
@@ -765,13 +765,13 @@ template<class T> Array4D<T>& Array4D<T>::operator/=(const Array4D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Divide every single member of the Array4D<T>
-	const unsigned int nwxyz = nwnxny*nz;
+	const size_t nwxyz = nwnxny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nwxyz; jj++) {
+		for (size_t jj=0; jj<nwxyz; jj++) {
 			vecData[jj] /= rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nwxyz; jj++) {
+		for (size_t jj=0; jj<nwxyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -805,13 +805,13 @@ template<class T> const Array4D<T> Array4D<T>::operator/(const T& rhs)
 }
 
 template<class T> bool Array4D<T>::operator==(const Array4D<T>& in) const {
-	unsigned int in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz(), in_nw=in.getNw();
+	size_t in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz(), in_nw=in.getNw();
 
 	if(nx!=in_nx || ny!=in_ny || nz!=in_nz || nw!=in_nw)
 		return false;
 
-	const unsigned int nwxyz = nx*ny*nz*nw;
-	for(unsigned int jj=0; jj<nwxyz; jj++)
+	const size_t nwxyz = nx*ny*nz*nw;
+	for(size_t jj=0; jj<nwxyz; jj++)
 		if( !IOUtils::checkEpsilonEquality( vecData[jj] , in.vecData[jj], 1e-6) ) return false;
 
 	return true;

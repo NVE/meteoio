@@ -40,14 +40,14 @@ namespace mio {
 
 template<class T> class Array1D {
 	public:
-		Array1D(const unsigned int& asize=0);
+		Array1D(const size_t& asize=0);
 
 		/**
 		* A constructor that creates an array filled with constant values
 		* @param asize size of the new array
 		* @param init initial value to fill the array with
 		*/
-		Array1D(const unsigned int& asize, const T& init);
+		Array1D(const size_t& asize, const T& init);
 
 		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
@@ -62,16 +62,16 @@ template<class T> class Array1D {
 		*/
 		bool getKeepNodata();
 
-		void size(unsigned int& nx) const;
-		unsigned int getNx() const;
+		void size(size_t& nx) const;
+		size_t getNx() const;
 
-		void resize(const unsigned int& asize);
-		void resize(const unsigned int& asize, const T& init);
+		void resize(const size_t& asize);
+		void resize(const size_t& asize, const T& init);
 		void clear();
 		bool isEmpty() const;
 
 		void insertAt(const int& index, T e);
-		void removeAt(const unsigned int& index);
+		void removeAt(const size_t& index);
 
 		/**
 		* @brief returns the minimum value contained in the grid
@@ -110,10 +110,10 @@ template<class T> class Array1D {
 		bool checkEpsilonEquality(const Array1D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array1D<double>& rhs1, const Array1D<double>& rhs2, const double& epsilon);
 
-		T& operator [](const unsigned int& index);
-		const T operator [](const unsigned int& index) const;
-		T& operator ()(const unsigned int& index);
-		const T operator ()(const unsigned int& index) const;
+		T& operator [](const size_t& index);
+		const T operator [](const size_t& index) const;
+		T& operator ()(const size_t& index);
+		const T operator ()(const size_t& index) const;
 
 		Array1D<T>& operator =(const Array1D<T>&);
 		Array1D<T>& operator =(const T& value);
@@ -143,17 +143,17 @@ template<class T> class Array1D {
 
 	protected:
 		std::vector<T> vecData; ///<the actual data structure, that holds the objects of type T
-		unsigned int nx; ///<this is introduced to omit the costly vecData.size()
+		size_t nx; ///<this is introduced to omit the costly vecData.size()
 		bool keep_nodata;
 };
 
-template<class T> Array1D<T>::Array1D(const unsigned int& asize)
+template<class T> Array1D<T>::Array1D(const size_t& asize)
                   : vecData(asize), nx(asize), keep_nodata(true)
 {
 	//resize(asize);
 }
 
-template<class T> Array1D<T>::Array1D(const unsigned int& asize, const T& init)
+template<class T> Array1D<T>::Array1D(const size_t& asize, const T& init)
                  : vecData(asize, init), nx(asize), keep_nodata(true)
 {
 	//resize(asize, init);
@@ -167,27 +167,27 @@ template<class T> bool Array1D<T>::getKeepNodata() {
 	return keep_nodata;
 }
 
-template<class T> void Array1D<T>::size(unsigned int& o_nx) const {
+template<class T> void Array1D<T>::size(size_t& o_nx) const {
 	o_nx = nx;
 }
 
-template<class T> unsigned int Array1D<T>::getNx() const {
+template<class T> size_t Array1D<T>::getNx() const {
 	return nx;
 }
 
-template<class T> void Array1D<T>::resize(const unsigned int& asize) {
+template<class T> void Array1D<T>::resize(const size_t& asize) {
 	vecData.clear();
 	vecData.resize(asize);
 	nx = asize;
 }
 
-template<class T> void Array1D<T>::resize(const unsigned int& asize, const T& init) {
+template<class T> void Array1D<T>::resize(const size_t& asize, const T& init) {
 	vecData.clear();
 	vecData.resize(asize, init);
 	nx = asize;
 }
 
-template<class T> inline T& Array1D<T>::operator()(const unsigned int& index) {
+template<class T> inline T& Array1D<T>::operator()(const size_t& index) {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
 		std::stringstream ss;
@@ -199,7 +199,7 @@ template<class T> inline T& Array1D<T>::operator()(const unsigned int& index) {
 	return vecData[index];
 }
 
-template<class T> inline const T Array1D<T>::operator()(const unsigned int& index) const {
+template<class T> inline const T Array1D<T>::operator()(const size_t& index) const {
 #ifndef NOSAFECHECKS
 	if (index >= nx) {
 		std::stringstream ss;
@@ -211,7 +211,7 @@ template<class T> inline const T Array1D<T>::operator()(const unsigned int& inde
 	return vecData[index];
 }
 
-template<class T> inline T& Array1D<T>::operator [](const unsigned int& index) {
+template<class T> inline T& Array1D<T>::operator [](const size_t& index) {
 #ifndef NOSAFECHECKS
 	return vecData.at(index);
 #else
@@ -219,7 +219,7 @@ template<class T> inline T& Array1D<T>::operator [](const unsigned int& index) {
 #endif
 }
 
-template<class T> inline const T Array1D<T>::operator [](const unsigned int& index) const {
+template<class T> inline const T Array1D<T>::operator [](const size_t& index) const {
 #ifndef NOSAFECHECKS
 	return vecData.at(index);
 #else
@@ -239,7 +239,7 @@ template<class T> bool Array1D<T>::isEmpty() const {
 template<class T> const std::string Array1D<T>::toString() const {
 	std::stringstream os;
 	os << "<array1d>\n";
-	for(unsigned int ii=0; ii<nx; ii++) {
+	for(size_t ii=0; ii<nx; ii++) {
 		os << vecData[ii] << " ";
 	}
 	os << "\n</array1d>\n";
@@ -275,7 +275,7 @@ template<class T> void Array1D<T>::insertAt(const int& index, T e) {
 	}
 }
 
-template<class T> void Array1D<T>::removeAt(const unsigned int& index) {
+template<class T> void Array1D<T>::removeAt(const size_t& index) {
 	if (index < vecData.size()) {
 		vecData.erase(vecData.begin()+index);
 		nx--;
@@ -287,13 +287,13 @@ template<class T> T Array1D<T>::getMin() const {
 	T min = std::numeric_limits<T>::max();
 
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val<min) min=val;
 		}
 		return min;
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val!=IOUtils::nodata && val<min) min=val;
 		}
@@ -307,13 +307,13 @@ template<class T> T Array1D<T>::getMax() const {
 	T max = -std::numeric_limits<T>::max();
 
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val>max) max=val;
 		}
 		return max;
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val!=IOUtils::nodata && val>max) max=val;
 		}
@@ -327,16 +327,16 @@ template<class T> T Array1D<T>::getMean() const {
 	T mean = 0;
 
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			mean += val;
 		}
-		const unsigned int count = nx;
+		const size_t count = nx;
 		if(count>0) return mean/(T)(count);
 		else return (T)0;
 	} else {
-		unsigned int count = 0;
-		for (unsigned int ii=0; ii<nx; ii++) {
+		size_t count = 0;
+		for (size_t ii=0; ii<nx; ii++) {
 			const T val = vecData[ii];
 			if(val!=IOUtils::nodata) {
 				mean += val;
@@ -354,7 +354,7 @@ template<class T> size_t Array1D<T>::getCount() const
 		return (size_t)nx;
 	} else {
 		size_t count = 0;
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			if(vecData[ii]!=IOUtils::nodata) count++;
 		}
 		return count;
@@ -364,12 +364,12 @@ template<class T> size_t Array1D<T>::getCount() const
 template<class T> void Array1D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
 		if(keep_nodata==false) {
-			for (unsigned int ii=0; ii<nx; ii++) {
+			for (size_t ii=0; ii<nx; ii++) {
 				T& val = vecData[ii];
 				if(val<0) val=-val;
 			}
 		} else {
-			for (unsigned int ii=0; ii<nx; ii++) {
+			for (size_t ii=0; ii<nx; ii++) {
 				T& val = vecData[ii];
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
@@ -388,7 +388,7 @@ template<class T> const Array1D<T> Array1D<T>::getAbs() const {
 template<class T> bool Array1D<T>::checkEpsilonEquality(const Array1D<double>& rhs, const double& epsilon) const {
 	if(nx!=rhs.nx) return false;
 
-	for (unsigned int jj=0; jj<nx; jj++)
+	for (size_t jj=0; jj<nx; jj++)
 		if(IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
 
 	return true;
@@ -425,11 +425,11 @@ template<class T> Array1D<T>& Array1D<T>::operator+=(const Array1D<T>& rhs)
 
 	//Add to every single member of the Array1D<T>
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			vecData[ii] += rhs(ii);
 		}
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
 				vecData[ii] = IOUtils::nodata;
 			else
@@ -452,11 +452,11 @@ template<class T> Array1D<T>& Array1D<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array1D<T>
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			vecData[ii] += rhs;
 		}
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			if(vecData[ii]!=IOUtils::nodata)
 				vecData[ii] += rhs;
 		}
@@ -485,11 +485,11 @@ template<class T> Array1D<T>& Array1D<T>::operator-=(const Array1D<T>& rhs)
 
 	//Substract to every single member of the Array1D<T>
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			vecData[ii] -= rhs(ii);
 		}
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
 				vecData[ii] = IOUtils::nodata;
 			else
@@ -533,11 +533,11 @@ template<class T> Array1D<T>& Array1D<T>::operator*=(const Array1D<T>& rhs)
 	}
 	//Multiply every single member of the Array1D<T>
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			vecData[ii] *= rhs(ii);
 		}
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
 				vecData[ii] = IOUtils::nodata;
 			else
@@ -560,11 +560,11 @@ template<class T> Array1D<T>& Array1D<T>::operator*=(const T& rhs)
 {
 	//Multiply every single member of the Array1D<T>
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			vecData[ii] *= rhs;
 		}
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			if(vecData[ii]!=IOUtils::nodata)
 				vecData[ii] *= rhs;
 		}
@@ -592,11 +592,11 @@ template<class T> Array1D<T>& Array1D<T>::operator/=(const Array1D<T>& rhs)
 	}
 	//Divide every single member of the Array1D<T>
 	if(keep_nodata==false) {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			vecData[ii] /= rhs(ii);
 		}
 	} else {
-		for (unsigned int ii=0; ii<nx; ii++) {
+		for (size_t ii=0; ii<nx; ii++) {
 			if(vecData[ii]==IOUtils::nodata || rhs(ii)==IOUtils::nodata)
 				vecData[ii] = IOUtils::nodata;
 			else
@@ -630,12 +630,12 @@ template<class T> const Array1D<T> Array1D<T>::operator/(const T& rhs)
 }
 
 template<class T> bool Array1D<T>::operator==(const Array1D<T>& in) const {
-	unsigned int in_nx=in.getNx();
+	size_t in_nx=in.getNx();
 
 	if(nx!=in_nx)
 		return false;
 
-	for(unsigned int jj=0; jj<nx; jj++)
+	for(size_t jj=0; jj<nx; jj++)
 		if( !IOUtils::checkEpsilonEquality( vecData[jj] , in.vecData[jj], 1e-6) ) return false;
 
 	return true;

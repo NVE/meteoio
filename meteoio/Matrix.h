@@ -51,7 +51,7 @@ class Matrix {
 		* @param cols number of columns of the new matrix
 		*/
 		Matrix(const int& rows, const int& cols);
-		Matrix(const unsigned int& rows, const unsigned int& cols) : vecData(rows*cols), ncols(cols), nrows(rows) {};
+		Matrix(const size_t& rows, const size_t& cols) : vecData(rows*cols), ncols(cols), nrows(rows) {};
 
 		/**
 		* @brief A constructor that creates a matrix filled with constant values
@@ -59,14 +59,14 @@ class Matrix {
 		* @param cols number of columns of the new matrix
 		* @param init initial value to fill the matrix with
 		*/
-		Matrix(const unsigned int& rows, const unsigned int& cols, const double& init) : vecData(rows*cols, init), ncols(cols), nrows(rows) {};
+		Matrix(const size_t& rows, const size_t& cols, const double& init) : vecData(rows*cols, init), ncols(cols), nrows(rows) {};
 
 		/**
 		* @brief A constructor that creates a diagonal matrix of size n
 		* @param n dimension of the new square matrix
 		* @param init initial value to fill the matrix with
 		*/
-		Matrix(const unsigned int& n, const double& init);
+		Matrix(const size_t& n, const double& init);
 
 		/**
 		* @brief Copy constructor
@@ -79,17 +79,17 @@ class Matrix {
 		* @param n dimension of the new square matrix
 		* @param init initial value to fill the matrix with
 		*/
-		void identity(const unsigned int& n, const double& init);
+		void identity(const size_t& n, const double& init);
 
-		void resize(const unsigned int& rows, const unsigned int& cols);
-		void resize(const unsigned int& rows, const unsigned int& cols, const double& init);
+		void resize(const size_t& rows, const size_t& cols);
+		void resize(const size_t& rows, const size_t& cols, const double& init);
 
 		/**
 		* @brief get the dimensions of the current object
 		* @param rows number of rows of the matrix
 		* @param cols number of columns of the matrix
 		*/
-		void size(unsigned int& rows, unsigned int& cols) const;
+		void size(size_t& rows, size_t& cols) const;
 
 		/**
 		* @brief free the memory and set the matrix dimensions to (0,0)
@@ -102,8 +102,8 @@ class Matrix {
 		*/
 		void random(const double& range);
 
-		double& operator ()(const unsigned int& x, const unsigned int& y);
-		double operator ()(const unsigned int& x, const unsigned int& y) const;
+		double& operator ()(const size_t& x, const size_t& y);
+		double operator ()(const size_t& x, const size_t& y) const;
 
 		/**
 		* @brief Converts a 1x1 matrix to a scalar.
@@ -205,7 +205,7 @@ class Matrix {
 		* (see https://secure.wikimedia.org/wikipedia/en/wiki/Pivot_element)
 		* @param pivot_idx new indices (to apply when solving A * X = B, for example
 		*/
-		void partialPivoting(std::vector<unsigned int>& pivot_idx);
+		void partialPivoting(std::vector<size_t>& pivot_idx);
 		void partialPivoting();
 
 		void maximalPivoting();
@@ -251,12 +251,12 @@ class Matrix {
 
 	protected:
 		std::vector<double> vecData;
-		unsigned int ncols;
-		unsigned int nrows;
+		size_t ncols;
+		size_t nrows;
 
-		unsigned int findMaxInCol(const unsigned int &col);
-		unsigned int findMaxInRow(const unsigned int &row);
-		void swapRows(const unsigned int &i1, const unsigned int &i2);
+		size_t findMaxInCol(const size_t &col);
+		size_t findMaxInRow(const size_t &row);
+		void swapRows(const size_t &i1, const size_t &i2);
 };
 
 } //end namespace

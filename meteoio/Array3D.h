@@ -40,14 +40,14 @@ template <class T> class Array3DProxy2;
 template <class T> class Array3DProxy {
  	public:
 		friend class Array3D<T>;
-		Array3DProxy2<T> operator[](const unsigned int& i_any) {
+		Array3DProxy2<T> operator[](const size_t& i_any) {
 			return Array3DProxy2<T>(array3D, anx, i_any);
 		}
 
  	private:
- 		Array3DProxy(Array3D<T>& i_array3D, const unsigned int& i_anx) : array3D(i_array3D), anx(i_anx){}
+ 		Array3DProxy(Array3D<T>& i_array3D, const size_t& i_anx) : array3D(i_array3D), anx(i_anx){}
 		Array3D<T>& array3D;
-		const unsigned int anx;
+		const size_t anx;
 };
 
 /**
@@ -60,16 +60,16 @@ template <class T> class Array3DProxy {
 template <class T> class Array3DProxy2 {
  	public:
 		friend class Array3DProxy<T>;
-		T& operator[](const unsigned int& i_anz) {
+		T& operator[](const size_t& i_anz) {
 			return array3D(anx, any, i_anz);
 		}
 
 	private:
- 		Array3DProxy2(Array3D<T>& i_array3D, const unsigned int& i_anx,
-				    const unsigned int& i_any) : array3D(i_array3D), anx(i_anx), any(i_any){}
+ 		Array3DProxy2(Array3D<T>& i_array3D, const size_t& i_anx,
+				    const size_t& i_any) : array3D(i_array3D), anx(i_anx), any(i_any){}
 		Array3D<T>& array3D;
-		const unsigned int anx;
-		const unsigned int any;
+		const size_t anx;
+		const size_t any;
 };
 
 /**
@@ -98,8 +98,8 @@ template<class T> class Array3D {
 		* @param i_ndepth number of depths of the new array
 		*/
 		Array3D(const Array3D<T>& i_array3D,
-		        const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		        const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
+		        const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+		        const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepth);
 
 		/**
 		* A constructor that creates an array of a given size
@@ -107,7 +107,7 @@ template<class T> class Array3D {
 		* @param any number of rows of the new array
 		* @param anz number of rows of the new array
 		*/
-		Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
+		Array3D(const size_t& anx, const size_t& any, const size_t& anz);
 
 		/**
 		* A constructor that creates an array filled with constant values
@@ -116,7 +116,7 @@ template<class T> class Array3D {
 		* @param anz number of depths of the new array
 		* @param init initial value to fill the array with
 		*/
-		Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
+		Array3D(const size_t& anx, const size_t& any, const size_t& anz, const T& init);
 
 		/**
 		* A method that can be used to create an Array3D object that is contained in the
@@ -131,8 +131,8 @@ template<class T> class Array3D {
 		* @param i_ndepth number of depths of the new array
 		*/
 		void subset(const Array3D<T>& i_array3D,
-		            const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		            const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
+		            const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+		            const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepth);
 
 		/**
 		* @brief A method that can be used to insert a subplane into an existing Array2D object
@@ -147,10 +147,10 @@ template<class T> class Array3D {
 		* @param i_ndepth number of depths of the new array
 		*/
 		void fill(const Array3D<T>& i_array3D,
-		          const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-		          const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth);
+		          const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+		          const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepth);
 
-		void fill(const Array3D<T>& i_array3D, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz);
+		void fill(const Array3D<T>& i_array3D, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz);
 
 		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
@@ -165,12 +165,12 @@ template<class T> class Array3D {
 		*/
 		bool getKeepNodata();
 
-		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz);
-		void resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init);
-		void size(unsigned int& anx, unsigned int& any, unsigned int& anz) const;
-		unsigned int getNx() const;
-		unsigned int getNy() const;
-		unsigned int getNz() const;
+		void resize(const size_t& anx, const size_t& any, const size_t& anz);
+		void resize(const size_t& anx, const size_t& any, const size_t& anz, const T& init);
+		void size(size_t& anx, size_t& any, size_t& anz) const;
+		size_t getNx() const;
+		size_t getNy() const;
+		size_t getNz() const;
 		void clear();
 		bool isEmpty() const;
 
@@ -210,11 +210,11 @@ template<class T> class Array3D {
 		bool checkEpsilonEquality(const Array3D<double>& rhs, const double& epsilon) const;
 		static bool checkEpsilonEquality(const Array3D<double>& rhs1, const Array3D<double>& rhs2, const double& epsilon);
 
-		T& operator ()(const unsigned int& i);
-		const T operator ()(const unsigned int& i) const;
-		T& operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z);
-		const T operator ()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const;
-		Array3DProxy<T> operator[](const unsigned int& i);
+		T& operator ()(const size_t& i);
+		const T operator ()(const size_t& i) const;
+		T& operator ()(const size_t& x, const size_t& y, const size_t& z);
+		const T operator ()(const size_t& x, const size_t& y, const size_t& z) const;
+		Array3DProxy<T> operator[](const size_t& i);
 
 		Array3D<T>& operator =(const Array3D<T>&);
 		Array3D<T>& operator =(const T& value);
@@ -244,14 +244,14 @@ template<class T> class Array3D {
 
 	protected:
 		std::vector<T> vecData; ///< The actual objects are stored in a one-dimensional vector
-		unsigned int nx;
-		unsigned int ny;
-		unsigned int nz;
-		unsigned int nxny; //nx times ny
+		size_t nx;
+		size_t ny;
+		size_t nz;
+		size_t nxny; //nx times ny
 		bool keep_nodata;
 };
 
-template<class T> inline T& Array3D<T>::operator()(const unsigned int& i) {
+template<class T> inline T& Array3D<T>::operator()(const size_t& i) {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
@@ -259,7 +259,7 @@ template<class T> inline T& Array3D<T>::operator()(const unsigned int& i) {
 #endif
 }
 
-template<class T> inline const T Array3D<T>::operator()(const unsigned int& i) const {
+template<class T> inline const T Array3D<T>::operator()(const size_t& i) const {
 #ifndef NOSAFECHECKS
 	return vecData.at(i);
 #else
@@ -267,7 +267,7 @@ template<class T> inline const T Array3D<T>::operator()(const unsigned int& i) c
 #endif
 }
 
-template<class T> inline T& Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) {
+template<class T> inline T& Array3D<T>::operator()(const size_t& x, const size_t& y, const size_t& z) {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;
@@ -281,7 +281,7 @@ template<class T> inline T& Array3D<T>::operator()(const unsigned int& x, const 
 	return vecData[x + y*nx + z*nxny];
 }
 
-template<class T> inline const T Array3D<T>::operator()(const unsigned int& x, const unsigned int& y, const unsigned int& z) const {
+template<class T> inline const T Array3D<T>::operator()(const size_t& x, const size_t& y, const size_t& z) const {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
 		std::stringstream ss;
@@ -293,7 +293,7 @@ template<class T> inline const T Array3D<T>::operator()(const unsigned int& x, c
 	return vecData[x + y*nx + z*nxny];
 }
 
-template<class T> Array3DProxy<T> Array3D<T>::operator[](const unsigned int& i) {
+template<class T> Array3DProxy<T> Array3D<T>::operator[](const size_t& i) {
 	return Array3DProxy<T>(*this, i);
 }
 
@@ -302,16 +302,16 @@ template<class T> Array3D<T>::Array3D() : vecData(), nx(0), ny(0), nz(0), nxny(0
 }
 
 template<class T> Array3D<T>::Array3D(const Array3D<T>& i_array3D,
-                                      const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-                                      const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
+                                      const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+                                      const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepth)
                                : vecData(i_ncols*i_nrows*i_ndepth), nx(i_ncols), ny(i_nrows), nz(i_ndepth), nxny(i_ncols*i_nrows), keep_nodata(true)
 {
 	subset(i_array3D, i_nx, i_ny, i_nz, i_ncols, i_nrows, i_ndepth);
 }
 
 template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
-                                     const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-                                     const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
+                                     const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+                                     const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepth)
 {
 
 	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz)) {
@@ -327,9 +327,9 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 
 	resize(i_ncols, i_nrows, i_ndepth); //create new Array3D object
 	//Copy by value subspace
-	for (unsigned int ii=0; ii<nz; ii++) {
-		for (unsigned int jj=0; jj<ny; jj++) {
-			for (unsigned int kk=0; kk<nx; kk++) {
+	for (size_t ii=0; ii<nz; ii++) {
+		for (size_t jj=0; jj<ny; jj++) {
+			for (size_t kk=0; kk<nx; kk++) {
 				//Running through the vector in order of memory alignment
 				operator()(kk,jj,ii) = i_array3D(i_nx+kk, i_ny+jj, i_nz+ii);
 			}
@@ -337,16 +337,16 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 	}
 }
 
-template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D, const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz)
+template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz)
 {
-	unsigned int i_ncols, i_nrows, i_ndepth;
+	size_t i_ncols, i_nrows, i_ndepth;
 	i_array3D.size(i_ncols, i_nrows, i_ndepth);
 	fill(i_array3D, i_nx, i_ny, i_nz, i_ncols, i_nrows, i_ndepth);
 }
 
 template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
-                                     const unsigned int& i_nx, const unsigned int& i_ny, const unsigned int& i_nz,
-                                     const unsigned int& i_ncols, const unsigned int& i_nrows, const unsigned int& i_ndepth)
+                                     const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
+                                     const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepth)
 {
 
 	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz)) {
@@ -361,25 +361,25 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 		throw IndexOutOfBoundsException("Filling an array with a null sized array!", AT);
 
 	//Copy by value subspace
-	for (unsigned int ii=i_nz; ii<(i_nz+i_ndepth); ii++) {
-		for (unsigned int jj=i_ny; jj<(i_ny+i_nrows); jj++) {
-			for (unsigned int kk=i_nx; kk<(i_nx+i_ncols); kk++) {
-				const unsigned int ix = kk-i_nx;
-				const unsigned int iy = jj-i_ny;
-				const unsigned int iz = ii-i_nz;
+	for (size_t ii=i_nz; ii<(i_nz+i_ndepth); ii++) {
+		for (size_t jj=i_ny; jj<(i_ny+i_nrows); jj++) {
+			for (size_t kk=i_nx; kk<(i_nx+i_ncols); kk++) {
+				const size_t ix = kk-i_nx;
+				const size_t iy = jj-i_ny;
+				const size_t iz = ii-i_nz;
 				operator()(kk,jj,ii) = i_array3D(ix, iy, iz);
 			}
 		}
 	}
 }
 
-template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz)
+template<class T> Array3D<T>::Array3D(const size_t& anx, const size_t& any, const size_t& anz)
                              : vecData(anx*any*anz), nx(anx), ny(any), nz(anz), nxny(anx*any), keep_nodata(true)
 {
 	//resize(anx, any, anz);
 }
 
-template<class T> Array3D<T>::Array3D(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init)
+template<class T> Array3D<T>::Array3D(const size_t& anx, const size_t& any, const size_t& anz, const T& init)
                              : vecData(anx*any*anz, init), nx(anx), ny(any), nz(anz), nxny(anx*any), keep_nodata(true)
 {
 	//resize(anx, any, anz, init);
@@ -393,7 +393,7 @@ template<class T> bool Array3D<T>::getKeepNodata() {
 	return keep_nodata;
 }
 
-template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz) {
+template<class T> void Array3D<T>::resize(const size_t& anx, const size_t& any, const size_t& anz) {
 	clear();  //we won't be able to "rescue" old values, so we reset the whole vector
 	vecData.resize(anx*any*anz);
 	nx = anx;
@@ -402,7 +402,7 @@ template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigne
 	nxny = nx*ny;
 }
 
-template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigned int& any, const unsigned int& anz, const T& init) {
+template<class T> void Array3D<T>::resize(const size_t& anx, const size_t& any, const size_t& anz, const T& init) {
 	clear();  //we won't be able to "rescue" old values, so we reset the whole vector
 	vecData.resize(anx*any*anz, init);
 	nx = anx;
@@ -411,21 +411,21 @@ template<class T> void Array3D<T>::resize(const unsigned int& anx, const unsigne
 	nxny = nx*ny;
 }
 
-template<class T> void Array3D<T>::size(unsigned int& anx, unsigned int& any, unsigned int& anz) const {
+template<class T> void Array3D<T>::size(size_t& anx, size_t& any, size_t& anz) const {
 	anx=nx;
 	any=ny;
 	anz=nz;
 }
 
-template<class T> unsigned int Array3D<T>::getNx() const {
+template<class T> size_t Array3D<T>::getNx() const {
 	return nx;
 }
 
-template<class T> unsigned int Array3D<T>::getNy() const {
+template<class T> size_t Array3D<T>::getNy() const {
 	return ny;
 }
 
-template<class T> unsigned int Array3D<T>::getNz() const {
+template<class T> size_t Array3D<T>::getNz() const {
 	return nz;
 }
 
@@ -441,10 +441,10 @@ template<class T> bool Array3D<T>::isEmpty() const {
 template<class T> const std::string Array3D<T>::toString() const {
 	std::ostringstream os;
 	os << "<array3d>\n";
-	for (unsigned int kk=0; kk<nz; kk++) {
+	for (size_t kk=0; kk<nz; kk++) {
 		os << "depth[" << kk << "]\n";
-		for(unsigned int ii=0; ii<nx; ii++) {
-			for (unsigned int jj=0; jj<ny; jj++) {
+		for(size_t ii=0; ii<nx; ii++) {
+			for (size_t jj=0; jj<ny; jj++) {
 				os << operator()(ii,jj,kk) << " ";
 			}
 			os << "\n";
@@ -476,16 +476,16 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array3D<P>& array
 template<class T> T Array3D<T>::getMin() const {
 
 	T min = std::numeric_limits<T>::max();
-	const unsigned int nxyz = ny*nx*nz;
+	const size_t nxyz = ny*nx*nz;
 
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
 			if(val<min) min=val;
 		}
 		return min;
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
 			if(val!=IOUtils::nodata && val<min) min=val;
 		}
@@ -497,16 +497,16 @@ template<class T> T Array3D<T>::getMin() const {
 template<class T> T Array3D<T>::getMax() const {
 
 	T max = -std::numeric_limits<T>::max();
-	const unsigned int nxyz = ny*nx*nz;
+	const size_t nxyz = ny*nx*nz;
 
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
 			if(val>max) max=val;
 		}
 		return max;
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
 			if(val!=IOUtils::nodata && val>max) max=val;
 		}
@@ -518,18 +518,18 @@ template<class T> T Array3D<T>::getMax() const {
 template<class T> T Array3D<T>::getMean() const {
 
 	T mean = 0;
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
 			mean += val;
 		}
 		if(nxyz>0) return mean/(T)(nxyz);
 		else return (T)0;
 	} else {
-		unsigned int count = 0;
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		size_t count = 0;
+		for (size_t jj=0; jj<nxyz; jj++) {
 			const T val = vecData[jj];
 			if(val!=IOUtils::nodata) {
 				mean += val;
@@ -543,13 +543,13 @@ template<class T> T Array3D<T>::getMean() const {
 
 template<class T> size_t Array3D<T>::getCount() const
 {
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 
 	if(keep_nodata==false) {
 		return (size_t)nxyz;
 	} else {
 		size_t count = 0;
-		for (unsigned int ii=0; ii<nxyz; ii++) {
+		for (size_t ii=0; ii<nxyz; ii++) {
 			if(vecData[ii]!=IOUtils::nodata) count++;
 		}
 		return count;
@@ -558,14 +558,14 @@ template<class T> size_t Array3D<T>::getCount() const
 
 template<class T> void Array3D<T>::abs() {
 	if(std::numeric_limits<T>::is_signed) {
-		const unsigned int nxyz = nx*ny*nz;
+		const size_t nxyz = nx*ny*nz;
 		if(keep_nodata==false) {
-			for (unsigned int jj=0; jj<nxyz; jj++) {
+			for (size_t jj=0; jj<nxyz; jj++) {
 				T& val = vecData[jj];
 				if(val<0) val=-val;
 			}
 		} else {
-			for (unsigned int jj=0; jj<nxyz; jj++) {
+			for (size_t jj=0; jj<nxyz; jj++) {
 				T& val = vecData[jj];
 				if(val<0 && val!=IOUtils::nodata) val=-val;
 			}
@@ -584,8 +584,8 @@ template<class T> const Array3D<T> Array3D<T>::getAbs() const {
 template<class T> bool Array3D<T>::checkEpsilonEquality(const Array3D<double>& rhs, const double& epsilon) const {
 	if(nx!=rhs.nx || ny!=rhs.ny || nz!=rhs.nz) return false;
 
-	const unsigned int nxyz = nx*ny*nz;
-	for (unsigned int jj=0; jj<nxyz; jj++)
+	const size_t nxyz = nx*ny*nz;
+	for (size_t jj=0; jj<nxyz; jj++)
 		if(IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
 
 	return true;
@@ -622,13 +622,13 @@ template<class T> Array3D<T>& Array3D<T>::operator+=(const Array3D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Add to every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			vecData[jj] += rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -650,13 +650,13 @@ template<class T> const Array3D<T> Array3D<T>::operator+(const Array3D<T>& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator+=(const T& rhs)
 {
 	//Add to every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			vecData[jj] += rhs;
 		}
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			if(vecData[jj]!=IOUtils::nodata)
 				vecData[jj] += rhs;
 		}
@@ -683,13 +683,13 @@ template<class T> Array3D<T>& Array3D<T>::operator-=(const Array3D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Substract to every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			vecData[jj] -= rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -732,13 +732,13 @@ template<class T> Array3D<T>& Array3D<T>::operator*=(const Array3D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Multiply every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			vecData[jj] *= rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -760,13 +760,13 @@ template<class T> const Array3D<T> Array3D<T>::operator*(const Array3D<T>& rhs)
 template<class T> Array3D<T>& Array3D<T>::operator*=(const T& rhs)
 {
 	//Multiply every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			vecData[jj] *= rhs;
 		}
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			if(vecData[jj]!=IOUtils::nodata)
 				vecData[jj] *= rhs;
 		}
@@ -793,13 +793,13 @@ template<class T> Array3D<T>& Array3D<T>::operator/=(const Array3D<T>& rhs)
 		throw IOException(ss.str(), AT);
 	}
 	//Divide every single member of the Array3D<T>
-	const unsigned int nxyz = nx*ny*nz;
+	const size_t nxyz = nx*ny*nz;
 	if(keep_nodata==false) {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			vecData[jj] /= rhs(jj);
 		}
 	} else {
-		for (unsigned int jj=0; jj<nxyz; jj++) {
+		for (size_t jj=0; jj<nxyz; jj++) {
 			if(vecData[jj]==IOUtils::nodata || rhs(jj)==IOUtils::nodata)
 				vecData[jj] = IOUtils::nodata;
 			else
@@ -833,13 +833,13 @@ template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
 }
 
 template<class T> bool Array3D<T>::operator==(const Array3D<T>& in) const {
-	unsigned int in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz();
+	size_t in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz();
 
 	if(nx!=in_nx || ny!=in_ny || nz!=in_nz)
 		return false;
 
-	const unsigned int nxyz = nx*ny*nz;
-	for(unsigned int jj=0; jj<nxyz; jj++)
+	const size_t nxyz = nx*ny*nz;
+	for(size_t jj=0; jj<nxyz; jj++)
 		if( !IOUtils::checkEpsilonEquality( vecData[jj] , in.vecData[jj], 1e-6) ) return false;
 
 	return true;
