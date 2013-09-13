@@ -239,30 +239,32 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	fout << setprecision(6) << fixed;
 
 	try {
-		fout << "north:" << (llcorner.getNorthing()+grid_in.cellsize*grid_in.nrows) << "\n";
+		fout << "north:" << (llcorner.getNorthing()+grid_in.cellsize*(double)grid_in.nrows) << "\n";
 		fout << "south:" << llcorner.getNorthing() << "\n";
-		fout << "east:"  << (llcorner.getEasting()+grid_in.cellsize*grid_in.ncols)  << "\n";
+		fout << "east:"  << (llcorner.getEasting()+grid_in.cellsize*(double)grid_in.ncols)  << "\n";
 		fout << "west:"  << llcorner.getEasting() << "\n";
 		fout << "rows:"  << grid_in.nrows << "\n";
 		fout << "cols:"  << grid_in.ncols << "\n";
 
-		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
-			unsigned int ll = 0;
-			for (ll=0; ll < (grid_in.ncols-1); ll++){
-				if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
-					fout << "* ";
-				} else {
-					fout << grid_in.grid2D(ll, kk) << " ";
+		if(grid_in.nrows>0) {
+			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
+				size_t ll = 0;
+				for (ll=0; ll < (grid_in.ncols-1); ll++){
+					if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
+						fout << "* ";
+					} else {
+						fout << grid_in.grid2D(ll, kk) << " ";
+					}
 				}
-			}
 
-			//The last value in a line does not have a trailing " "
-			if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
-				fout << "*";
-			} else {
-				fout << grid_in.grid2D(ll, kk);
+				//The last value in a line does not have a trailing " "
+				if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
+					fout << "*";
+				} else {
+					fout << grid_in.grid2D(ll, kk);
+				}
+				fout << "\n";
 			}
-			fout << "\n";
 		}
 	} catch(const std::exception& e) {
 		cerr << "[E] " << AT << ": " << e.what() << std::endl;

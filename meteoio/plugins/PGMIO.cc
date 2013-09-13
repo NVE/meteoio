@@ -278,15 +278,17 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		fout << nr_colors << "\n";
 
 		//writing the data
-		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
-			for (unsigned int ll=0; ll < grid_in.ncols; ll++) {
-				const double value = grid_in.grid2D(ll, kk);
-				if(value!=IOUtils::nodata)
-					fout << static_cast<unsigned int>( floor((grid_in.grid2D(ll, kk)-min_value)*scaling)+1 ) << " ";
-				else
-					fout << "0" << " ";
+		if(grid_in.nrows>0) {
+			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
+				for (size_t ll=0; ll < grid_in.ncols; ll++) {
+					const double value = grid_in.grid2D(ll, kk);
+					if(value!=IOUtils::nodata)
+						fout << static_cast<unsigned int>( floor((grid_in.grid2D(ll, kk)-min_value)*scaling)+1 ) << " ";
+					else
+						fout << "0" << " ";
+				}
+				fout << "\n";
 			}
-			fout << "\n";
 		}
 	} catch(...) {
 		cerr << "[E] error when writing PGM grid \"" << full_name << "\" " << AT << ": "<< endl;

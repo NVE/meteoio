@@ -352,11 +352,13 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		fout << "cellsize " << setw(23-9) << setprecision(3) << grid_in.cellsize << "\n";
 		fout << "NODATA_value " << (int)(IOUtils::nodata) << "\n";
 
-		for (unsigned int kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
-			for (unsigned int ll=0; ll < grid_in.ncols; ll++){
-				fout << grid_in.grid2D(ll, kk) << " ";
+		if(grid_in.nrows>0) {
+			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
+				for (size_t ll=0; ll < grid_in.ncols; ll++){
+					fout << grid_in.grid2D(ll, kk) << " ";
+				}
+				fout << "\n";
 			}
-			fout << "\n";
 		}
 	} catch(...) {
 		cerr << "[E] error when writing ARC grid \"" << full_name << "\" " << AT << ": "<< endl;

@@ -141,8 +141,8 @@ bool FitLeastSquare::computeFit() {
 	Matrix dLambda; //parameters variations
 	initDLambda(dLambda);
 
-	Matrix A((unsigned int)nPts, (unsigned int)nParam);
-	Matrix dBeta(nPts,(unsigned int)1);
+	Matrix A(nPts, nParam);
+	Matrix dBeta(nPts, (size_t)1);
 
 	unsigned int iter = 0;
 	do {

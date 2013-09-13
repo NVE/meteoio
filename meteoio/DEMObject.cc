@@ -856,7 +856,7 @@ double DEMObject::getCurvature(double A[4][4]) {
 			count++;
 		}
 
-		if(count != 0.) return 1./count * sum;
+		if(count != 0.) return 1./(double)count * sum;
 	}
 	curvature_failures++;
 	return IOUtils::nodata;
@@ -967,15 +967,15 @@ double DEMObject::avgHeight(const double& z1, const double &z2, const double& z3
 
 void DEMObject::getNeighbours(const size_t i, const size_t j, double A[4][4]) {
 //this fills a 3x3 table containing the neighboring values
-		A[1][1] = safeGet(i-1, j+1);
-		A[1][2] = safeGet(i, j+1);
-		A[1][3] = safeGet(i+1, j+1);
-		A[2][1] = safeGet(i-1, j);
-		A[2][2] = safeGet(i, j);
-		A[2][3] = safeGet(i+1, j);
-		A[3][1] = safeGet(i-1, j-1);
-		A[3][2] = safeGet(i, j-1);
-		A[3][3] = safeGet(i+1, j-1);
+		A[1][1] = safeGet((signed)i-1, (signed)j+1);
+		A[1][2] = safeGet((signed)i, (signed)j+1);
+		A[1][3] = safeGet((signed)i+1, (signed)j+1);
+		A[2][1] = safeGet((signed)i-1, (signed)j);
+		A[2][2] = safeGet((signed)i, (signed)j);
+		A[2][3] = safeGet((signed)i+1, (signed)j);
+		A[3][1] = safeGet((signed)i-1, (signed)j-1);
+		A[3][2] = safeGet((signed)i, (signed)j-1);
+		A[3][3] = safeGet((signed)i+1, (signed)j-1);
 }
 
 double DEMObject::safeGet(const int i, const int j)
