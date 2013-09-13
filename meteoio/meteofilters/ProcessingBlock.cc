@@ -177,7 +177,7 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 ProcessingBlock::ProcessingBlock(const std::string& name) : properties(), block_name(name)
 {}
 
-void ProcessingBlock::convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
+void ProcessingBlock::convert_args(const size_t& min_nargs, const size_t& max_nargs,
                                const std::vector<std::string>& vec_args, std::vector<double>& dbl_args)
 {
 	if ((vec_args.size() < min_nargs) || (vec_args.size() > max_nargs))
@@ -213,8 +213,8 @@ const std::string ProcessingProperties::toString() const
 	std::stringstream os;
 	const double h_before = time_before.getJulian()*24.;
 	const double h_after = time_after.getJulian()*24.;
-	const unsigned int p_before = points_before;
-	const unsigned int p_after = points_after;
+	const size_t p_before = points_before;
+	const size_t p_after = points_after;
 
 	os << "{";
 	if(h_before>0. || h_after>0.) os << "-" << h_before << " +" << h_after << " h; ";

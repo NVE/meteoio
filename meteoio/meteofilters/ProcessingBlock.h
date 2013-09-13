@@ -43,8 +43,8 @@ class ProcessingProperties {
 		Duration time_before;
 		Duration time_after;
 
-		unsigned int points_before;
-		unsigned int points_after;
+		size_t points_before;
+		size_t points_after;
 
 		proc_stage stage;
 };
@@ -62,7 +62,7 @@ class ProcessingBlock {
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
-		void convert_args(const unsigned int& min_nargs, const unsigned int& max_nargs,
+		void convert_args(const size_t& min_nargs, const size_t& max_nargs,
 		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);
 
 		std::string getName() const;

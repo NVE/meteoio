@@ -491,7 +491,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	const double llcorner_y = grid.llcorner.getNorthing();
 	const double cellsize = grid.cellsize;
 
-	Matrix Ginv((unsigned int)(nrOfMeasurments+1), (unsigned int)(nrOfMeasurments+1));
+	Matrix Ginv(nrOfMeasurments+1, nrOfMeasurments+1);
 
 	//fill the Ginv matrix
 	for(size_t j=1; j<=nrOfMeasurments; j++) {
@@ -522,7 +522,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	//invert the matrix
 	Ginv.inv();
 
-	Matrix G0((unsigned int)(nrOfMeasurments+1), (unsigned int)1);
+	Matrix G0(nrOfMeasurments+1, (size_t)1);
 	//now, calculate each point
 	for(size_t j=0; j<grid.nrows; j++) {
 		for(size_t i=0; i<grid.ncols; i++) {
