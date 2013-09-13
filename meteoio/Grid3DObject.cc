@@ -52,9 +52,9 @@ Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3Dobj,
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
-		llcorner.setXY( llcorner.getEasting()+i_nx*i_grid3Dobj.cellsize,
-		                llcorner.getNorthing()+i_ny*i_grid3Dobj.cellsize,
-		                llcorner.getAltitude()+i_nz*i_grid3Dobj.cellsize );
+		llcorner.setXY( llcorner.getEasting()+static_cast<double>(i_nx)*i_grid3Dobj.cellsize,
+		                llcorner.getNorthing()+static_cast<double>(i_ny)*i_grid3Dobj.cellsize,
+		                llcorner.getAltitude()+static_cast<double>(i_nz)*i_grid3Dobj.cellsize );
 	}
 }
 

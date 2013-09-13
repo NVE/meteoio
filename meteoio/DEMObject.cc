@@ -51,13 +51,13 @@ DEMObject::DEMObject(const slope_type& i_algorithm)
 
 /**
 * @brief Constructor that sets variables.
-* @param i_ncols (unsigned int) number of colums in the grid2D
-* @param i_nrows (unsigned int) number of rows in the grid2D
-* @param i_cellsize (double) value for cellsize in grid2D
+* @param i_ncols number of colums in the grid2D
+* @param i_nrows number of rows in the grid2D
+* @param i_cellsize value for cellsize in grid2D
 * @param i_llcorner lower lower corner point
 * @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
                      const double& i_cellsize, const Coords& i_llcorner, const slope_type& i_algorithm)
            : Grid2DObject(i_ncols, i_nrows, i_cellsize, i_llcorner),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
@@ -72,15 +72,15 @@ DEMObject::DEMObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
 
 /**
 * @brief Constructor that sets variables.
-* @param i_ncols (unsigned int) number of colums in the grid2D
-* @param i_nrows (unsigned int) number of rows in the grid2D
-* @param i_cellsize (double) value for cellsize in grid2D
+* @param i_ncols number of colums in the grid2D
+* @param i_nrows number of rows in the grid2D
+* @param i_cellsize value for cellsize in grid2D
 * @param i_llcorner lower lower corner point
-* @param i_altitude (Array2D\<double\>&) grid2D of elevations
-* @param i_update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param i_altitude grid2D of elevations
+* @param i_update also update slope/normals/curvatures and their min/max? (default=true)
 * @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
+DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
                      const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_altitude,
                      const bool& i_update, const slope_type& i_algorithm)
            : Grid2DObject(i_ncols, i_nrows, i_cellsize, i_llcorner, i_altitude),
@@ -101,8 +101,8 @@ DEMObject::DEMObject(const unsigned int& i_ncols, const unsigned int& i_nrows,
 
 /**
 * @brief Constructor that sets variables from a Grid2DObject
-* @param i_dem (Grid2DObject&) grid contained in a Grid2DObject
-* @param i_update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param i_dem grid contained in a Grid2DObject
+* @param i_update also update slope/normals/curvatures and their min/max? (default=true)
 * @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slope_type& i_algorithm)
@@ -125,16 +125,16 @@ DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slop
 /**
 * @brief Constructor that sets variables from a subset of another DEMObject,
 * given an origin (X,Y) (first index being 0) and a number of columns and rows
-* @param i_dem (DEMObject&) dem contained in a DEMDObject
-* @param i_nx (unsigned int&) X coordinate of the new origin
-* @param i_ny (unsigned int&) Y coordinate of the new origin
-* @param i_ncols (unsigned int&) number of columns for the subset dem
-* @param i_nrows (unsigned int&) number of rows for the subset dem
-* @param i_update (bool) also update slope/normals/curvatures and their min/max? (default=true)
+* @param i_dem dem contained in a DEMDObject
+* @param i_nx X coordinate of the new origin
+* @param i_ny Y coordinate of the new origin
+* @param i_ncols number of columns for the subset dem
+* @param i_nrows number of rows for the subset dem
+* @param i_update also update slope/normals/curvatures and their min/max? (default=true)
 * @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const DEMObject& i_dem, const unsigned int& i_nx, const unsigned int& i_ny,
-                     const unsigned int& i_ncols, const unsigned int& i_nrows,
+DEMObject::DEMObject(const DEMObject& i_dem, const size_t& i_nx, const size_t& i_ny,
+                     const size_t& i_ncols, const size_t& i_nrows,
                      const bool& i_update, const slope_type& i_algorithm)
            : Grid2DObject(i_dem, i_nx,i_ny, i_ncols,i_nrows),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
@@ -157,7 +157,7 @@ DEMObject::DEMObject(const DEMObject& i_dem, const unsigned int& i_nx, const uns
 	} else {
 		//if the object is NOT in automatic update, we manually copy all non-empty arrays
 		//from the original set
-		unsigned int nx, ny;
+		size_t nx, ny;
 
 		i_dem.slope.size(nx, ny);
 		if(nx>0 && ny>0) {
@@ -210,7 +210,7 @@ int DEMObject::getUpdatePpt() const {
 * @brief Force the computation of the local slope, azimuth, normal vector and curvature.
 * It has to be called manually since it can require some time to compute. Without this call,
 * the above mentionned parameters are NOT up to date.
-* @param algorithm (slope_type&) algorithm to use for computing slope, azimuth and normals
+* @param algorithm algorithm to use for computing slope, azimuth and normals
 */
 void DEMObject::update(const slope_type& algorithm) {
 //This method recomputes the attributes that are not read as parameters
@@ -238,7 +238,7 @@ void DEMObject::update(const slope_type& algorithm) {
 * @brief Force the computation of the local slope, azimuth, normal vector and curvature.
 * It has to be called manually since it can require some time to compute. Without this call,
 * the above mentionned parameters are NOT up to date.
-* @param algorithm (const string&) algorithm to use for computing slope, azimuth and normals
+* @param algorithm algorithm to use for computing slope, azimuth and normals
 * it is either:
 * - HICK that uses the maximum downhill slope method (Dunn and Hickey, 1998)
 * - FLEMING uses a 4 neighbors algorithm (Fleming and Hoffer, 1979)
@@ -320,8 +320,8 @@ void DEMObject::printFailures() {
 	bool header=true;
 
 	if(update_flag&SLOPE) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( size_t j = 0; j < nrows; j++ ) {
+			for ( size_t i = 0; i < ncols; i++ ) {
 				if((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 					if(header==true) {
 						cerr << "[i] DEM slope could not be computed at the following points \n";
@@ -335,8 +335,8 @@ void DEMObject::printFailures() {
 	}
 
 	if(update_flag&CURVATURE) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( size_t j = 0; j < nrows; j++ ) {
+			for ( size_t i = 0; i < ncols; i++ ) {
 				if((curvature(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 					if(header==true) {
 						cerr << "[i] DEM curvature could not be computed at the following points \n";
@@ -364,8 +364,8 @@ void DEMObject::printFailures() {
 */
 void DEMObject::sanitize() {
 	if(slope_failures>0 || curvature_failures>0) {
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( size_t j = 0; j < nrows; j++ ) {
+			for ( size_t i = 0; i < ncols; i++ ) {
 				if(update_flag&SLOPE) {
 					if((slope(i,j)==IOUtils::nodata) && (grid2D(i,j)!=IOUtils::nodata)) {
 						grid2D(i,j) = IOUtils::nodata;
@@ -422,7 +422,7 @@ double DEMObject::horizontalDistance(Coords point1, const Coords& point2)
 double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
 	std::vector<GRID_POINT_2D> vec_points;
 	double distance=0.;
-	unsigned int last_point=0; //point 0 is always the starting point
+	size_t last_point=0; //point 0 is always the starting point
 
 	//Checking that both points use the same projection is done in getPointsBetween()
 	getPointsBetween(point1, point2, vec_points);
@@ -430,11 +430,11 @@ double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
 		return 0.;
 	}
 
-	for(unsigned int ii=1; ii<vec_points.size(); ii++) {
-		const unsigned int ix1=vec_points[last_point].ix;
-		const unsigned int iy1=vec_points[last_point].iy;
-		const unsigned int ix2=vec_points[ii].ix;
-		const unsigned int iy2=vec_points[ii].iy;
+	for(size_t ii=1; ii<vec_points.size(); ii++) {
+		const size_t ix1=vec_points[last_point].ix;
+		const size_t iy1=vec_points[last_point].iy;
+		const size_t ix2=vec_points[ii].ix;
+		const size_t iy2=vec_points[ii].iy;
 
 		if(grid2D(ix2,iy2)!=IOUtils::nodata) {
 			if(grid2D(ix1,iy1)!=IOUtils::nodata) {
@@ -603,7 +603,7 @@ double DEMObject::getHorizon(const Coords& point, const double& bearing) {
 
 	//going through every point and looking for the highest tangent (which is also the highest angle)
 	double max_tangent = 0.;
-	for (unsigned int ii=0; ii < vec_points.size(); ii++) {
+	for (size_t ii=0; ii < vec_points.size(); ii++) {
 		const int ix = (int)vec_points[ii].ix;
 		const int iy = (int)vec_points[ii].iy;
 		const double delta_height = grid2D(ix, iy) - height0;
@@ -658,8 +658,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	//Now, calculate the parameters using the previously defined function pointer
-	for ( unsigned int j = 0; j < nrows; j++ ) {
-		for ( unsigned int i = 0; i < ncols; i++ ) {
+	for ( size_t j = 0; j < nrows; j++ ) {
+		for ( size_t i = 0; i < ncols; i++ ) {
 			if( grid2D(i,j) == IOUtils::nodata ) {
 				if(update_flag&SLOPE) {
 					slope(i,j) = azi(i,j) = IOUtils::nodata;
@@ -693,8 +693,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	if((update_flag&SLOPE) && (algorithm==D8)) { //extra processing required: discretization
-		for ( unsigned int j = 0; j < nrows; j++ ) {
-			for ( unsigned int i = 0; i < ncols; i++ ) {
+		for ( size_t j = 0; j < nrows; j++ ) {
+			for ( size_t i = 0; i < ncols; i++ ) {
 					//TODO: process flats by an extra algorithm
 					if(azi(i,j)!=IOUtils::nodata)
 						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
@@ -837,7 +837,7 @@ double DEMObject::getCurvature(double A[4][4]) {
 
 		const double sqrt2 = sqrt(2.);
 		double sum=0.;
-		unsigned int count=0;
+		size_t count=0;
 
 		if(Zwe!=IOUtils::nodata) {
 			sum += 0.5*(A[2][2]-Zwe);
@@ -965,7 +965,7 @@ double DEMObject::avgHeight(const double& z1, const double &z2, const double& z3
 	return IOUtils::nodata;
 }
 
-void DEMObject::getNeighbours(const unsigned int i, const unsigned int j, double A[4][4]) {
+void DEMObject::getNeighbours(const size_t i, const size_t j, double A[4][4]) {
 //this fills a 3x3 table containing the neighboring values
 		A[1][1] = safeGet(i-1, j+1);
 		A[1][2] = safeGet(i, j+1);

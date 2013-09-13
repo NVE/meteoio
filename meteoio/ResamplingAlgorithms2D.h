@@ -44,7 +44,7 @@ class ResamplingAlgorithms2D {
 		static void Bilinear(Grid2DObject &o_grid, const Grid2DObject &i_grid);
 		static void NearestNeighbour(Grid2DObject &o_grid, const Grid2DObject &i_grid);
 
-		static double bilinear_pixel(const Grid2DObject &i_grid, const unsigned int &org_ii, const unsigned int &org_jj, const unsigned int &org_ncols, const unsigned int &org_nrows, const double &x, const double &y);
+		static double bilinear_pixel(const Grid2DObject &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_ncols, const size_t &org_nrows, const double &x, const double &y);
 		static double BSpline_weight(const double &x);
 };
 } //end namespace

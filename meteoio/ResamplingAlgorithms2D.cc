@@ -30,8 +30,8 @@ namespace mio {
 const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject &i_grid, const double &factor)
 {
 	const double cellsize = i_grid.cellsize/factor;
-	const unsigned int ncols = (unsigned int)Optim::round( i_grid.ncols*factor );
-	const unsigned int nrows = (unsigned int)Optim::round( i_grid.nrows*factor );
+	const size_t ncols = (size_t)Optim::round( i_grid.ncols*factor );
+	const size_t nrows = (size_t)Optim::round( i_grid.nrows*factor );
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
 	Bilinear(o_grid, i_grid); //GridObjects always keep nodata
@@ -41,8 +41,8 @@ const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject
 const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DObject &i_grid, const double &factor)
 {
 	const double cellsize = i_grid.cellsize/factor;
-	const unsigned int ncols = (unsigned int)Optim::round( i_grid.ncols*factor );
-	const unsigned int nrows = (unsigned int)Optim::round( i_grid.nrows*factor );
+	const size_t ncols = (size_t)Optim::round( i_grid.ncols*factor );
+	const size_t nrows = (size_t)Optim::round( i_grid.nrows*factor );
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
 	cubicBSpline(o_grid, i_grid); //GridObjects always keep nodata
@@ -52,8 +52,8 @@ const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DOb
 const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &i_grid, const double &factor)
 {
 	const double cellsize = i_grid.cellsize/factor;
-	const unsigned int ncols = (unsigned int)Optim::round( i_grid.ncols*factor );
-	const unsigned int nrows = (unsigned int)Optim::round( i_grid.nrows*factor );
+	const size_t ncols = (size_t)Optim::round( i_grid.ncols*factor );
+	const size_t nrows = (size_t)Optim::round( i_grid.nrows*factor );
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
 	NearestNeighbour(o_grid, i_grid); //GridObjects always keep nodata
@@ -65,24 +65,24 @@ const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &
 ///////////////////////////////////////////////////////////////////////
 void ResamplingAlgorithms2D::NearestNeighbour(Grid2DObject &o_grid, const Grid2DObject &i_grid)
 {
-	const unsigned int org_ncols = i_grid.ncols;
-	const unsigned int org_nrows = i_grid.nrows;
+	const size_t org_ncols = i_grid.ncols;
+	const size_t org_nrows = i_grid.nrows;
 	const double scale_x = (double)o_grid.ncols / (double)org_ncols;
 	const double scale_y = (double)o_grid.nrows / (double)org_nrows;
 
-	for (unsigned int jj=0; jj<o_grid.nrows; jj++) {
-		unsigned int org_jj = (unsigned int) Optim::round( (double)jj/scale_y );
+	for (size_t jj=0; jj<o_grid.nrows; jj++) {
+		size_t org_jj = (size_t) Optim::round( (double)jj/scale_y );
 		if(org_jj>=org_nrows) org_jj=org_nrows-1;
 
-		for (unsigned int ii=0; ii<o_grid.ncols; ii++) {
-			unsigned int org_ii = (unsigned int) Optim::round( (double)ii/scale_x );
+		for (size_t ii=0; ii<o_grid.ncols; ii++) {
+			size_t org_ii = (size_t) Optim::round( (double)ii/scale_x );
 			if(org_ii>=org_ncols) org_ii=org_ncols-1;
 			o_grid(ii,jj) = i_grid(org_ii, org_jj);
 		}
 	}
 }
 
-double ResamplingAlgorithms2D::bilinear_pixel(const Grid2DObject &i_grid, const unsigned int &org_ii, const unsigned int &org_jj, const unsigned int &org_ncols, const unsigned int &org_nrows, const double &x, const double &y)
+double ResamplingAlgorithms2D::bilinear_pixel(const Grid2DObject &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_ncols, const size_t &org_nrows, const double &x, const double &y)
 {
 	if(org_jj>=(org_nrows-1) || org_ii>=(org_ncols-1)) return i_grid(org_ii, org_jj);
 
@@ -131,19 +131,19 @@ double ResamplingAlgorithms2D::bilinear_pixel(const Grid2DObject &i_grid, const 
 
 void ResamplingAlgorithms2D::Bilinear(Grid2DObject &o_grid, const Grid2DObject &i_grid)
 {
-	const unsigned int org_ncols = i_grid.ncols;
-	const unsigned int org_nrows = i_grid.nrows;
+	const size_t org_ncols = i_grid.ncols;
+	const size_t org_nrows = i_grid.nrows;
 	const double scale_x = (double)o_grid.ncols / (double)org_ncols;
 	const double scale_y = (double)o_grid.nrows / (double)org_nrows;
 
-	for (unsigned int jj=0; jj<o_grid.nrows; jj++) {
+	for (size_t jj=0; jj<o_grid.nrows; jj++) {
 		const double org_y = (double)jj/scale_y;
-		const unsigned int org_jj = static_cast<unsigned int>( org_y );
+		const size_t org_jj = static_cast<size_t>( org_y );
 		const double y = org_y - (double)org_jj; //normalized y, between 0 and 1
 
-		for (unsigned int ii=0; ii<o_grid.ncols; ii++) {
+		for (size_t ii=0; ii<o_grid.ncols; ii++) {
 			const double org_x = (double)ii/scale_x;
-			const unsigned int org_ii = static_cast<unsigned int>( org_x );
+			const size_t org_ii = static_cast<size_t>( org_x );
 			const double x = org_x - (double)org_ii; //normalized x, between 0 and 1
 
 			o_grid(ii,jj) = bilinear_pixel(i_grid, org_ii, org_jj, org_ncols, org_nrows, x, y);
@@ -163,19 +163,19 @@ double ResamplingAlgorithms2D::BSpline_weight(const double &x) {
 
 void ResamplingAlgorithms2D::cubicBSpline(Grid2DObject &o_grid, const Grid2DObject &i_grid)
 {//see http://paulbourke.net/texture_colour/imageprocess/
-	const unsigned int org_ncols = i_grid.ncols;
-	const unsigned int org_nrows = i_grid.nrows;
+	const size_t org_ncols = i_grid.ncols;
+	const size_t org_nrows = i_grid.nrows;
 	const double scale_x = (double)o_grid.ncols / (double)org_ncols;
 	const double scale_y = (double)o_grid.nrows / (double)org_nrows;
 
-	for (unsigned int jj=0; jj<o_grid.nrows; jj++) {
+	for (size_t jj=0; jj<o_grid.nrows; jj++) {
 		const double org_y = (double)jj/scale_y;
-		const unsigned int org_jj = static_cast<unsigned int>( org_y );
+		const size_t org_jj = static_cast<size_t>( org_y );
 		const double dy = org_y - (double)org_jj; //normalized y, between 0 and 1
 
-		for (unsigned int ii=0; ii<o_grid.ncols; ii++) {
+		for (size_t ii=0; ii<o_grid.ncols; ii++) {
 			const double org_x = (double)ii/scale_x;
-			const unsigned int org_ii = static_cast<unsigned int>( org_x );
+			const size_t org_ii = static_cast<size_t>( org_x );
 			const double dx = org_x - (double)org_ii; //normalized x, between 0 and 1
 
 			double F = 0., max=-std::numeric_limits<double>::max(), min=std::numeric_limits<double>::max();

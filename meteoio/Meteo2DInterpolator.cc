@@ -193,9 +193,9 @@ size_t Meteo2DInterpolator::getArgumentsForAlgorithm(const std::string& param,
 
 void Meteo2DInterpolator::checkMinMax(const double& minval, const double& maxval, Grid2DObject& gridobj)
 {
-	const unsigned int nxy = gridobj.getNx() * gridobj.getNy();
+	const size_t nxy = gridobj.getNx() * gridobj.getNy();
 
-	for (unsigned int ii=0; ii<nxy; ii++){
+	for (size_t ii=0; ii<nxy; ii++){
 		double& value = gridobj.grid2D(ii);
 		if (value == IOUtils::nodata){
 			continue;

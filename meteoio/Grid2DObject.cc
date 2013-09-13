@@ -25,8 +25,8 @@ namespace mio {
 Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
 	if(this != &source) {
 		grid2D = source.grid2D;
-		//ncols = source.ncols;
-		//nrows = source.nrows;
+		ncols = source.ncols;
+		nrows = source.nrows;
 		cellsize = source.cellsize;
 		llcorner = source.llcorner;
 	}
@@ -37,29 +37,16 @@ Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
  * Default constructor.
  * grid2D attribute is initialized by Array2D default constructor.
  */
-Grid2DObject::Grid2DObject() : grid2D(), ncols(0), nrows(0), cellsize(0), llcorner()
-{
-}
+Grid2DObject::Grid2DObject() : grid2D(), ncols(0), nrows(0), cellsize(0), llcorner() {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
-                           const double& i_cellsize, const Coords& i_llcorner) : grid2D(i_ncols, i_nrows, IOUtils::nodata), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner)
-{
-	//set metadata, grid2D already successfully created
-	//setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
-}
+                           const double& i_cellsize, const Coords& i_llcorner) : grid2D(i_ncols, i_nrows, IOUtils::nodata), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
-                           const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D) : grid2D(i_grid2D), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner)
-{
-	//set(i_ncols, i_nrows, i_cellsize, i_llcorner, i_grid2D);
-}
+                           const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D) : grid2D(i_grid2D), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
-                           const double& i_cellsize, const Coords& i_llcorner, const double& init) : grid2D(i_ncols, i_nrows, init), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner)
-{
-	//set metadata, grid2D already successfully created
-	//setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
-}
+                           const double& i_cellsize, const Coords& i_llcorner, const double& init) : grid2D(i_ncols, i_nrows, init), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner) {}
 
 Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, const size_t& i_ny,
                            const size_t& i_ncols, const size_t& i_nrows)
@@ -71,8 +58,8 @@ Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, 
 	//and we shift it by the correct X and Y distance
 	//llcorner = i_grid2Dobj.llcorner;
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
-		llcorner.setXY( llcorner.getEasting()+i_nx*i_grid2Dobj.cellsize,
-		                llcorner.getNorthing()+i_ny*i_grid2Dobj.cellsize, IOUtils::nodata);
+		llcorner.setXY( llcorner.getEasting()+static_cast<double>(i_nx)*i_grid2Dobj.cellsize,
+		                llcorner.getNorthing()+static_cast<double>(i_ny)*i_grid2Dobj.cellsize, IOUtils::nodata);
 	}
 }
 

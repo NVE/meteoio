@@ -76,18 +76,18 @@ class DEMObject : public Grid2DObject {
 
 		DEMObject(const slope_type& i_algorithm=DFLT);
 
-		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+		DEMObject(const size_t& ncols_in, const size_t& nrows_in,
 		          const double& cellsize_in, const Coords& llcorner_in, const slope_type& i_algorithm=DFLT);
 
-		DEMObject(const unsigned int& ncols_in, const unsigned int& nrows_in,
+		DEMObject(const size_t& ncols_in, const size_t& nrows_in,
 		          const double& cellsize_in, const Coords& llcorner_in, const Array2D<double>& altitude_in,
 		          const bool& i_update=true, const slope_type& i_algorithm=DFLT);
 
 		DEMObject(const Grid2DObject& dem_in, const bool& i_update=true, const slope_type& i_algorithm=DFLT);
 
 		DEMObject (const DEMObject& i_dem,
-		           const unsigned int& i_nx, const unsigned int& i_ny, //Point in the plane
-		           const unsigned int& i_ncols, const unsigned int& i_nrows, //dimensions of the sub-plane
+		           const size_t& i_nx, const size_t& i_ny, //Point in the plane
+		           const size_t& i_ncols, const size_t& i_nrows, //dimensions of the sub-plane
 		           const bool& i_update=true, const slope_type& i_algorithm=DFLT);
 
 		void setDefaultAlgorithm(const slope_type& i_algorithm);
@@ -126,13 +126,13 @@ class DEMObject : public Grid2DObject {
 		double fillMissingGradient(const double& delta1, const double& delta2);
 		void surfaceGradient(double& dx_sum, double& dy_sum, double A[4][4]);
 		double avgHeight(const double& z1, const double &z2, const double& z3);
-		void getNeighbours(const unsigned int i, const unsigned int j, double A[4][4]);
+		void getNeighbours(const size_t i, const size_t j, double A[4][4]);
 		double safeGet(const int i, const int j);
 
 		int update_flag;
 		slope_type dflt_algorithm;
-		unsigned int slope_failures; ///<contains the number of points that have an elevation but no slope
-		unsigned int curvature_failures; ///<contains the number of points that have an elevation but no curvature
+		size_t slope_failures; ///<contains the number of points that have an elevation but no slope
+		size_t curvature_failures; ///<contains the number of points that have an elevation but no curvature
 };
 } //end namespace
 
