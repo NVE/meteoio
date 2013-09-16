@@ -385,8 +385,8 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 	//check arguments
 	const size_t n = X.size();
-	if(n==0)
-		throw NoAvailableDataException("Trying to calculate linear regression with no data points", AT);
+	if(n<2)
+		throw NoAvailableDataException("Trying to calculate linear regression with too few data points", AT);
 	if(n!=Y.size())
 		throw IOException("Vectors should have the same size for linear regression!", AT);
 
@@ -400,8 +400,8 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 			count++;
 		}
 	}
-	if(count==0)
-		throw NoAvailableDataException("Trying to calculate linear regression with no valid data points", AT);
+	if(count<2)
+		throw NoAvailableDataException("Trying to calculate linear regression with too few valid data points", AT);
 	x_avg /= (double)count;
 	y_avg /= (double)count;
 

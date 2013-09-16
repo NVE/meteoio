@@ -725,7 +725,7 @@ void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
 }
 
 int A3DIO::create1DFile(const std::vector< std::vector<MeteoData> >& data)
-{//TODO: add check for stations' positions
+{
 	std::string tmp_path;
 	cfg.getValue("METEOPATH", "Output", tmp_path);
 	const size_t sta_nr = data.size();

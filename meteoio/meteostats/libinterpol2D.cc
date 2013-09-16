@@ -70,7 +70,7 @@ inline double Interpol2D::InvHorizontalDistance(const double& X1, const double& 
 * @return (double) distance in m
 */
 inline double Interpol2D::HorizontalDistance(const DEMObject& dem, const int& i, const int& j, const double& X2, const double& Y2)
-{//TODO: store DEM easting/northing, etc as private members
+{
 	//This function computes the horizontal distance between two points
 	//coordinates are given in a square, metric grid system
 	//for grid points toward real coordinates

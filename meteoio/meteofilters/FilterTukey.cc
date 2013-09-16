@@ -91,7 +91,7 @@ double FilterTukey::getStdDev(const std::vector<MeteoData>& ivec, const unsigned
 	return sqrt(variance);
 }
 
-double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int& i, const unsigned int& param)
+double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const size_t& i, const unsigned int& param)
 {
 	//exit if we don't have the required data points
 	if( i<4 || i>=(ivec.size()-4) ) {
@@ -100,12 +100,12 @@ double FilterTukey::getU3(const std::vector<MeteoData>& ivec, const unsigned int
 
 	//prepare intermediate variances
 	std::vector<double> u2;
-	for(int ii=-1; ii<=1; ii++) {
+	for(char ii=-1; ii<=1; ii++) {
 		std::vector<double> u1;
-		for(int jj=-1; jj<=1; jj++) {
+		for(char jj=-1; jj<=1; jj++) {
 			std::vector<double> u;
-			for(int kk=-2; kk<=2; kk++) {
-				const size_t index = (unsigned)((signed)i + kk + jj + ii);
+			for(char kk=-2; kk<=2; kk++) {
+				const size_t index = (i + (kk + jj + ii));
 				const double value = ivec[index](param);
 				if(value!=IOUtils::nodata)
 					u.push_back( value );
@@ -159,7 +159,7 @@ void FilterTukey::parse_args(std::vector<std::string> vec_args)
 		throw InvalidArgumentException("Invalid window size configuration for filter " + getName(), AT);
 	}
 
-	min_data_points = (unsigned int)floor(filter_args[0]);
+	min_data_points = (size_t)floor(filter_args[0]);
 	min_time_span = Duration(filter_args[1] / 86400.0, 0.);
 }
 

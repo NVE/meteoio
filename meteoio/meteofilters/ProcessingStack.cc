@@ -34,7 +34,7 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 		tmp << param_name << "::arg" << (ii+1);
 
 		getArgumentsForFilter(cfg, tmp.str(), vec_args); //Read arguments
-		filter_stack.push_back(BlockFactory::getBlock(block_name, vec_args));
+		filter_stack.push_back( BlockFactory::getBlock(block_name, vec_args) );
 	}
 }
 
@@ -102,7 +102,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 					}
 					appliedFilter = true;
 
-					(*filter_stack[jj]).process(param, tmp, ovec[ii]);
+					(*filter_stack[jj]).process(static_cast<unsigned int>(param), tmp, ovec[ii]);
 
 					if (tmp.size() == ovec[ii].size()){
 						if ((jj+1) != filter_stack.size()){//after the last filter not necessary
