@@ -22,7 +22,7 @@ using namespace std;
 namespace mio {
 
 Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
-                     : cfg(in_cfg), window_size(2.*86400.),
+                     : cfg(in_cfg), window_size(86400.),
                        mapAlgorithms()
 {
 	//default window_size is 2 julian days
@@ -33,7 +33,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 
 	//read the Config object to create the resampling algorithms for each
 	//MeteoData::Parameters parameter (i.e. each member variable like ta, p, hnw, ...)
-	for (unsigned int ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
+	for (size_t ii=0; ii<MeteoData::nrOfParameters; ii++){ //loop over all MeteoData member variables
 		const std::string parname = MeteoData::getParameterName(ii); //Current parameter name
 		vector<string> vecArgs;
 		const string algo_name = getInterpolationForParameter(parname, vecArgs);

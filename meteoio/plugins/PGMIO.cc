@@ -96,7 +96,8 @@ size_t PGMIO::getNextHeader(std::vector<std::string>& vecString, const std::stri
 
 void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name)
 {
-	unsigned int ncols, nrows, nr_colors;
+	size_t ncols, nrows;
+	unsigned int nr_colors;
 	double xllcorner, yllcorner, cellsize;
 	double tmp_val, val_min, val_max;
 	std::vector<std::string> tmpvec;
@@ -153,7 +154,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		const double scale_factor = (val_max-val_min)/(double)(nr_colors-2); //because 256 colors = 0 to 255!! and color0 = nodata
 
 		//Read one line after the other and parse values into Grid2DObject
-		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
+		for (size_t kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln); //read complete line
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
@@ -163,7 +164,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 				throw InvalidFormatException(ss.str(), AT);
 			}
 
-			for (unsigned int ll=0; ll < ncols; ll++){
+			for (size_t ll=0; ll < ncols; ll++){
 				if (!IOUtils::convertString(tmp_val, tmpvec[ll], std::dec)) {
 					throw ConversionFailedException("For Grid2D value in line: " + line + " in file " + full_name, AT);
 				}

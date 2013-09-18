@@ -121,7 +121,7 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (vecStationName.empty())
 		readStationNames(); //reads station names into vector<string> vecStationName
 
-	unsigned int indexStart=0, indexEnd=vecStationName.size();
+	size_t indexStart=0, indexEnd=vecStationName.size();
 
 	//The following part decides whether all the stations are rebuffered or just one station
 	if (stationindex == IOUtils::npos){
@@ -136,7 +136,7 @@ void BormaIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 	}
 
-	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		bufferData(dateStart, dateEnd, vecMeteo, ii);
 	}
 }
@@ -217,7 +217,7 @@ bool BormaIO::bufferData(const Date& dateStart, const Date& dateEnd,
 		return false;
 	}
 
-	for (unsigned int ii=0; ii<vecFiles.size(); ii++) {
+	for (size_t ii=0; ii<vecFiles.size(); ii++) {
 		MeteoData meteoData;
 		StationData stationData;
 		xmlExtractData(vecFiles[ii], vecDate[ii], meteoData, stationData);

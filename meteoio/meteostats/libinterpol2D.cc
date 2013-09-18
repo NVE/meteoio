@@ -145,8 +145,8 @@ void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid) {
                              grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
-	for (unsigned int j=0; j<grid.nrows; j++) {
-		for (unsigned int i=0; i<grid.ncols; i++) {
+	for (size_t j=0; j<grid.nrows; j++) {
+		for (size_t i=0; i<grid.ncols; i++) {
 			const double& cell_altitude=dem.grid2D(i,j);
 			if (cell_altitude!=IOUtils::nodata) {
 				grid.grid2D(i,j) = Atmosphere::stdAirPressure(cell_altitude);
@@ -169,8 +169,8 @@ void Interpol2D::constant(const double& value, const DEMObject& dem, Grid2DObjec
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//fills a data table with constant values
-	for (unsigned int j=0; j<grid.nrows; j++) {
-		for (unsigned int i=0; i<grid.ncols; i++) {
+	for (size_t j=0; j<grid.nrows; j++) {
+		for (size_t i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = value;
 			} else {
@@ -218,8 +218,8 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//run algorithm
-	for (unsigned int j=0; j<grid.nrows; j++) {
-		for (unsigned int i=0; i<grid.ncols; i++) {
+	for (size_t j=0; j<grid.nrows; j++) {
+		for (size_t i=0; i<grid.ncols; i++) {
 			//LL_IDW_pixel returns nodata when appropriate
 			double r;
 			const double value = LLIDW_pixel(i,j,vecData_in, vecStations_in, dem, nrOfNeighbors, r); //TODO: precompute in vectors
@@ -237,7 +237,7 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 }
 
 //calculate a local pixel for LocalLapseIDW
-double Interpol2D::LLIDW_pixel(const unsigned int& i, const unsigned int& j,
+double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                 const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                 const DEMObject& dem, const size_t& nrOfNeighbors, double& r2)
 {
@@ -315,8 +315,8 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 	const double xllcorner = dem.llcorner.getEasting();
 	const double yllcorner = dem.llcorner.getNorthing();
 	const double cellsize = dem.cellsize;
-	for (unsigned int j=0; j<grid.nrows; j++) {
-		for (unsigned int i=0; i<grid.ncols; i++) {
+	for (size_t j=0; j<grid.nrows; j++) {
+		for (size_t i=0; i<grid.ncols; i++) {
 			if (dem.grid2D(i,j)!=IOUtils::nodata) {
 				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize), (yllcorner+j*cellsize),
 				                           vecData_in, vecEastings, vecNorthings);
@@ -370,8 +370,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 	if(dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
 	if(dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
 
-	for (unsigned int j=0;j<VW.nrows;j++) {
-		for (unsigned int i=0;i<VW.ncols;i++){
+	for (size_t j=0;j<VW.nrows;j++) {
+		for (size_t i=0;i<VW.ncols;i++){
 			speed = VW.grid2D(i,j);
 			if(speed==0.) continue; //we can not apply any correction factor!
 			dir = DW.grid2D(i,j);
@@ -442,8 +442,8 @@ void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2D
 	}
 	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
 
-	for (unsigned int j=0;j<grid.nrows;j++) {
-		for (unsigned int i=0;i<grid.ncols;i++) {
+	for (size_t j=0;j<grid.nrows;j++) {
+		for (size_t i=0;i<grid.ncols;i++) {
 			// Get input data
 			const double slope = dem.slope(i, j);
 			const double curvature = dem.curvature(i, j);

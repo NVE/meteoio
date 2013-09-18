@@ -164,7 +164,7 @@ void ARCIO::cleanup() throw()
 void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name)
 {
 	int i_ncols, i_nrows;
-	unsigned int ncols, nrows;
+	size_t ncols, nrows;
 	double xllcorner, yllcorner, cellsize, plugin_nodata;
 	double tmp;
 	std::string line;
@@ -209,8 +209,8 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		if((i_ncols<0) || (i_nrows<0)) {
 			throw IOException("Number of rows or columns in 2D Grid read as \"nodata\", in file: " + full_name, AT);
 		}
-		ncols = (unsigned int)i_ncols;
-		nrows = (unsigned int)i_nrows;
+		ncols = (size_t)i_ncols;
+		nrows = (size_t)i_nrows;
 
 		//compute/check WGS coordinates (considered as the true reference) according to the projection as defined in cfg
 		Coords location(coordin, coordinparam);
@@ -219,9 +219,9 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		//Initialize the 2D grid
 		grid_out.set(ncols, nrows, cellsize, location);
 
-		unsigned int nr_empty=0;
+		size_t nr_empty=0;
 		//Read one line after the other and parse values into Grid2DObject
-		for (unsigned int kk=nrows-1; (kk < nrows); kk--) {
+		for (size_t kk=nrows-1; (kk < nrows); kk--) {
 			getline(fin, line, eoln);
 			if(line.empty()) { //so we can tolerate empty lines
 				kk++; //to keep the same kk at the next iteration
@@ -232,7 +232,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10);
 
-			for (unsigned int ll=0; ll < ncols; ll++){
+			for (size_t ll=0; ll < ncols; ll++){
 				iss >> std::skipws >> tmp;
 				if (iss.fail()) {
 					ostringstream ss;

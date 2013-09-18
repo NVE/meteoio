@@ -374,7 +374,7 @@ namespace IOUtils {
 	* @param[out] startx calculated start index for the current slice
 	* @param[out] nx calculated number of cells (in the desired dimension) of the current slice
 	*/
-	void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers, const unsigned int &wk, unsigned int& startx, unsigned int& nx);
+	void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, const unsigned int &wk, size_t& startx, size_t& nx);
 
 	/**
 	* @class file_indexer

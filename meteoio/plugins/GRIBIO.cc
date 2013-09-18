@@ -402,10 +402,10 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& rea
 			throw InvalidArgumentException("Unsupported geometry: cells can not be represented by square cells!", AT);
 		}
 	}
-	grid_out.set(static_cast<unsigned int>(Ni), static_cast<unsigned int>(Nj), .5*(cellsize_x+cellsize_y), llcorner);
-	unsigned int i=0;
-	for(unsigned int jj=0; jj<(unsigned)Nj; jj++) {
-		for(unsigned int ii=0; ii<(unsigned)Ni; ii++)
+	grid_out.set(static_cast<size_t>(Ni), static_cast<size_t>(Nj), .5*(cellsize_x+cellsize_y), llcorner);
+	size_t i=0;
+	for(size_t jj=0; jj<(unsigned)Nj; jj++) {
+		for(size_t ii=0; ii<(unsigned)Ni; ii++)
 			grid_out(ii,jj) = values[i++];
 	}
 	free(values);
@@ -543,8 +543,8 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 
 		VW.set(U.ncols, U.nrows, U.cellsize, U.llcorner);
 		DW.set(U.ncols, U.nrows, U.cellsize, U.llcorner);
-		for(unsigned int jj=0; jj<VW.nrows; jj++) {
-			for(unsigned int ii=0; ii<VW.ncols; ii++) {
+		for(size_t jj=0; jj<VW.nrows; jj++) {
+			for(size_t ii=0; ii<VW.ncols; ii++) {
 				VW(ii,jj) = sqrt( Optim::pow2(U(ii,jj)) + Optim::pow2(V(ii,jj)) );
 				DW(ii,jj) = fmod( atan2( U(ii,jj), V(ii,jj) ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
@@ -569,8 +569,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			Grid2DObject ta;
 			read2DGrid_indexed(11.2, 105, 2, date, ta); //T_2M
 			read2DGrid_indexed(17.2, 105, 2, date, grid_out); //TD_2M
-			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+			for(size_t jj=0; jj<grid_out.nrows; jj++) {
+				for(size_t ii=0; ii<grid_out.ncols; ii++) {
 					grid_out(ii,jj) = Atmosphere::DewPointtoRh(grid_out(ii,jj), ta(ii,jj), true);
 				}
 			}
@@ -626,8 +626,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	}
 	if(parameter==MeteoGrids::AZI) {
 		read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
-		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.nrows; jj++) {
+			for(size_t ii=0; ii<grid_out.ncols; ii++) {
 				grid_out(ii,jj) = fmod( grid_out(ii,jj)*Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
@@ -639,16 +639,16 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	 //we need to use VW, DW, correct for re-projection and recompute U,V
 	if(parameter==MeteoGrids::U) {
 		readWind(filename, date);
-		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.nrows; jj++) {
+			for(size_t ii=0; ii<grid_out.ncols; ii++) {
 				grid_out(ii,jj) = VW(ii,jj)*sin(DW(ii,jj)*Cst::to_rad);
 			}
 		}
 	}
 	if(parameter==MeteoGrids::V) {
 		readWind(filename, date);
-		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.nrows; jj++) {
+			for(size_t ii=0; ii<grid_out.ncols; ii++) {
 				grid_out(ii,jj) = VW(ii,jj)*cos(DW(ii,jj)*Cst::to_rad);
 			}
 		}
@@ -674,8 +674,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		//we need to compute the wind at 7.5m
 		Grid2DObject Z0;
 		if(read2DGrid_indexed(83.2, 1, 0, date, Z0)) { //Z0
-			for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-				for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+			for(size_t jj=0; jj<grid_out.nrows; jj++) {
+				for(size_t ii=0; ii<grid_out.ncols; ii++) {
 					grid_out(ii,jj) = Atmosphere::windLogProfile(grid_out(ii,jj), 10., 7.5, Z0(ii,jj));
 				}
 			}
@@ -775,7 +775,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	bool meta_ok=false; //set to true once the metadata have been read
 
 	//find index of first time step
-	unsigned int idx_start;
+	size_t idx_start;
 	bool start_found=false;
 	for(idx_start=0; idx_start<cache_meteo_files.size(); idx_start++) {
 		if(dateStart<cache_meteo_files[idx_start].first) {
@@ -787,7 +787,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if(idx_start>0) idx_start--; //start with first element before dateStart (useful for resampling)
 
 	try {
-		for(unsigned int ii=idx_start; ii<cache_meteo_files.size(); ii++) {
+		for(size_t ii=idx_start; ii<cache_meteo_files.size(); ii++) {
 			const Date& date = cache_meteo_files[ii].first;
 			if(date>dateEnd) break;
 			const std::string filename = meteopath_in+"/"+cache_meteo_files[ii].second;
@@ -810,7 +810,7 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			std::vector<MeteoData> Meteo;
 			readMeteoStep(meta, lats, lons, date, Meteo);
-			for(unsigned int jj=0; jj<vecPts.size(); jj++)
+			for(size_t jj=0; jj<vecPts.size(); jj++)
 				vecMeteo[jj].push_back(Meteo[jj]);
 		}
 	} catch(...) {
@@ -824,13 +824,13 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats, double *lons)
 { //remove potential duplicates. Returns true if some have been removed
-	const unsigned int npoints = vecPoints.size();
+	const size_t npoints = vecPoints.size();
 	std::vector<size_t> deletions;
 	deletions.reserve(npoints);
-	for(unsigned int ii=0; ii<npoints; ii++) {
+	for(size_t ii=0; ii<npoints; ii++) {
 		const double lat = lats[ii];
 		const double lon = lons[ii];
-		for(unsigned int jj=ii+1; jj<npoints; jj++) {
+		for(size_t jj=ii+1; jj<npoints; jj++) {
 			if(lat==lats[jj] && lon==lons[jj]) {
 				deletions.push_back(jj);
 			}
@@ -838,8 +838,8 @@ bool GRIBIO::removeDuplicatePoints(std::vector<Coords>& vecPoints, double *lats,
 	}
 
 	//we need to erase from the end in order to keep the index unchanged...
-	for(unsigned int ii=deletions.size(); ii>0; ii--) {
-		const unsigned int index=deletions[ii-1];
+	for(size_t ii=deletions.size(); ii>0; ii--) {
+		const size_t index=deletions[ii-1];
 		vecPoints.erase(vecPoints.begin()+index);
 	}
 
@@ -861,7 +861,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		throw IOException("Can not find DEM grid in GRIB file!", AT);
 	}
 
-	const long npoints = vecPoints.size();
+	const size_t npoints = vecPoints.size();
 	double latitudeOfSouthernPole, longitudeOfSouthernPole;
 	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
 	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
@@ -872,7 +872,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 	GRIB_CHECK(grib_get_long(h,"Ni",&Ni),0);
 
 	//build GRIB local coordinates for the points
-	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+	for(size_t ii=0; ii<npoints; ii++) {
 		Coords::trueLatLonToRotated(latitudeOfNorthernPole, longitudeOfNorthernPole, vecPoints[ii].getLat(), vecPoints[ii].getLon(), lats[ii], lons[ii]);
 	}
 
@@ -896,7 +896,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 	}
 
 	//fill metadata
-	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+	for(size_t ii=0; ii<npoints; ii++) {
 		StationData sd;
 		sd.position.setProj(coordin, coordinparam);
 		double true_lat, true_lon;
@@ -965,17 +965,17 @@ bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, con
 	return false;
 }
 
-void GRIBIO::fillMeteo(double *values, const MeteoData::Parameters& param, const long& npoints, std::vector<MeteoData> &Meteo) {
-	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+void GRIBIO::fillMeteo(double *values, const MeteoData::Parameters& param, const size_t& npoints, std::vector<MeteoData> &Meteo) {
+	for(size_t ii=0; ii<npoints; ii++) {
 		Meteo[ii](param) = values[ii];
 	}
 }
 
 void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, double *lons, const Date i_date, std::vector<MeteoData> &Meteo)
 {
-	const long npoints = stations.size();
+	const size_t npoints = stations.size();
 
-	for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+	for(size_t ii=0; ii<npoints; ii++) {
 		MeteoData md;
 		md.meta = stations[ii];
 		md.date = i_date;
@@ -992,7 +992,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	if(readMeteoValues(11.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::TSG, npoints, Meteo); //T_G
 	if(readMeteoValues(52.2, 105, 2, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::RH, npoints, Meteo); //RELHUM_2M
 	else if(readMeteoValues(17.2, 105, 2, i_date, npoints, lats, lons, values)) { //TD_2M
-		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		for(size_t ii=0; ii<npoints; ii++) {
 			if(Meteo[ii](MeteoData::TA)!=IOUtils::nodata)
 				Meteo[ii](MeteoData::RH) = Atmosphere::DewPointtoRh(values[ii], Meteo[ii](MeteoData::TA), true);
 		}
@@ -1003,14 +1003,14 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	if(readMeteoValues(66.2, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::HS, npoints, Meteo);
 	else if(readMeteoValues(133.201, 1, 0, i_date, npoints, lats, lons, values)  //RHO_SNOW
 	   && readMeteoValues(65.2, 1, 0, i_date, npoints, lats, lons, values2)) { //W_SNOW
-		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		for(size_t ii=0; ii<npoints; ii++) {
 			Meteo[ii](MeteoData::HS) = values2[ii] / values[ii];
 		}
 	}
 
 	//radiation parameters
 	if(readMeteoValues(115.2, 1, 0, i_date, npoints, lats, lons, values)) { //long wave
-		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		for(size_t ii=0; ii<npoints; ii++) {
 			Meteo[ii](MeteoData::ISWR) = -values[ii];
 		}
 	} else if(readMeteoValues(25.201, 1, 0, i_date, npoints, lats, lons, values)) fillMeteo(values, MeteoData::ILWR, npoints, Meteo); //ALWD_S
@@ -1019,13 +1019,13 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	else {
 		if(readMeteoValues(23.201, 1, 0, i_date, npoints, lats, lons, values) //ASWDIFD_S
 		   && readMeteoValues(22.201, 1, 0, i_date, npoints, lats, lons, values2)) { //ASWDIR_S
-			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			for(size_t ii=0; ii<npoints; ii++) {
 				Meteo[ii](MeteoData::ISWR) = values[ii] + values2[ii];
 			}
 		}
 	}
 	if(readMeteoValues(84.2, 1, 0, i_date, npoints, lats, lons, values)) { //ALB_RAD
-		for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+		for(size_t ii=0; ii<npoints; ii++) {
 			if(Meteo[ii](MeteoData::ISWR)!=IOUtils::nodata) Meteo[ii](MeteoData::RSWR) = Meteo[ii](MeteoData::ISWR) * values[ii]/100.;
 		}
 	}
@@ -1036,7 +1036,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	else {
 		if(readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
 		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
-			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			for(size_t ii=0; ii<npoints; ii++) {
 				Meteo[ii](MeteoData::DW) = fmod( atan2( values2[ii], values[ii] ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
@@ -1045,7 +1045,7 @@ void GRIBIO::readMeteoStep(std::vector<StationData> &stations, double *lats, dou
 	else {
 		if(readMeteoValues(34.2, 105, 10, i_date, npoints, lats, lons, values) //V_10M
 		   && readMeteoValues(33.2, 105, 10, i_date, npoints, lats, lons, values2)) { //U_10M
-			for(unsigned int ii=0; ii<(unsigned)npoints; ii++) {
+			for(size_t ii=0; ii<npoints; ii++) {
 				Meteo[ii](MeteoData::VW) =  sqrt( Optim::pow2(values[ii]) + Optim::pow2(values2[ii]) );
 			}
 		}

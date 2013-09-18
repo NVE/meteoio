@@ -79,7 +79,7 @@ class Interpol2D {
 		static double IDWCore(const double& x, const double& y,
 		                      const std::vector<double>& vecData_in,
 		                      const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings);
-		static double LLIDW_pixel(const unsigned int& i, const unsigned int& j,
+		static double LLIDW_pixel(const size_t& i, const size_t& j,
 		                          const std::vector<double>& vecData_in,
 		                          const std::vector<StationData>& vecStations_in,
 		                          const DEMObject& dem, const size_t& nrOfNeighbors, double& r2);

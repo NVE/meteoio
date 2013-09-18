@@ -159,8 +159,8 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		Grid2DObject V;
 		readGridLayer("u", 2, grid_out); //U
 		readGridLayer("v", 2, V);
-		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.nrows; jj++) {
+			for(size_t ii=0; ii<grid_out.ncols; ii++) {
 				grid_out(ii,jj) = sqrt( Optim::pow2(grid_out(ii,jj)) + Optim::pow2(V(ii,jj)) );
 			}
 		}
@@ -169,8 +169,8 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		Grid2DObject V;
 		readGridLayer("u", 2, grid_out); //U
 		readGridLayer("v", 2, V);
-		for(unsigned int jj=0; jj<grid_out.nrows; jj++) {
-			for(unsigned int ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.nrows; jj++) {
+			for(size_t ii=0; ii<grid_out.ncols; ii++) {
 				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
 			}
 		}
@@ -236,9 +236,9 @@ void ARPSIO::read3DGrid(Grid3DObject& grid_out, const std::string& i_name)
 	moveToMarker(parameter);
 
 	//read the data we are interested in
-	for (unsigned int ix = 0; ix < dimx; ix++) {
-		for (unsigned int iy = 0; iy < dimy; iy++) {
-			for (unsigned int iz = 0; iz < dimz; iz++) {
+	for (size_t ix = 0; ix < dimx; ix++) {
+		for (size_t iy = 0; iy < dimy; iy++) {
+			for (size_t iz = 0; iz < dimz; iz++) {
 				double tmp;
 				if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
 					grid_out.grid3D(ix,iy,iz) = tmp;
@@ -481,8 +481,8 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 	// move to the begining of the layer of interest
 	if(layer>1) {
 		double tmp;
-		const unsigned int jmax=dimx*dimy*(layer-1);
-		for (unsigned int j = 0; j < jmax; j++)
+		const size_t jmax=dimx*dimy*(layer-1);
+		for (size_t j = 0; j < jmax; j++)
 			if(fscanf(fin," %16lf%*[\n]",&tmp)==EOF) {
 				cleanup();
 				throw InvalidFormatException("Fail to skip data layers in file "+filename, AT);
@@ -490,8 +490,8 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 	}
 
 	//read the data we are interested in
-	for (unsigned int iy = 0; iy < dimy; iy++) {
-		for (unsigned int ix = 0; ix < dimx; ix++) {
+	for (size_t iy = 0; iy < dimy; iy++) {
+		for (size_t ix = 0; ix < dimx; ix++) {
 			double tmp;
 			if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
 				grid.grid2D(ix,iy) = tmp;

@@ -415,7 +415,7 @@ void CosmoXMLIO::writeMeteoDataDescription(std::stringstream& XMLdata)
 void CosmoXMLIO::writeMeteo(const std::vector<MeteoData>& vecMeteo, std::stringstream& XMLdata)
 {
 	XMLdata << "<col>\n<ttable id=\"data\">\n";
-	for(unsigned int jj=0; jj<vecMeteo.size(); jj++) {
+	for(size_t jj=0; jj<vecMeteo.size(); jj++) {
 		XMLdata << "<row>\n";
 		XMLdata << "<col id=\"identifier\">" << vecMeteo[jj].meta.getStationName() << "</col>\n";
 		Date tmp_date(vecMeteo[jj].date);
@@ -452,7 +452,7 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 	string filename, meteopath_out, line;
 	stringstream XMLdata;
 	cfg.getValue("METEOPATH", "Output", meteopath_out);
-	for (unsigned int ii=0; ii < vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii < vecMeteo.size(); ii++) {
 		//Test existence of element 0
 		if(vecMeteo[ii].empty()) {
 			cerr << "[E] Station " << ii+1 << " exists but contains no data! Skip writing it...\n";

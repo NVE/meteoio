@@ -788,7 +788,7 @@ std::string printFractionalDay(const double& fractional) {
 	return tmp.str();
 }
 
-void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers, const unsigned int &wk, unsigned int& startx, unsigned int& nx)
+void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, const unsigned int &wk, size_t& startx, size_t& nx)
 {
 	if(nbworkers>dimx) {
 		std::stringstream ss;
@@ -796,8 +796,8 @@ void getArraySliceParams(const unsigned int& dimx, const unsigned int& nbworkers
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	const unsigned int nx_avg = dimx / nbworkers;
-	const unsigned int remainder = dimx % nbworkers;
+	const size_t nx_avg = dimx / nbworkers;
+	const size_t remainder = dimx % nbworkers;
 
 	if(wk<=remainder) { //distribute remainder, 1 extra column per worker, on first workers
 		nx = nx_avg+1;

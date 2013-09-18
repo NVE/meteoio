@@ -236,7 +236,7 @@ const std::string Meteo2DInterpolator::toString() const {
 	std::map<std::string, std::vector<InterpolationAlgorithm*> >::const_iterator iter;
 	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
 		os << setw(10) << iter->first << "::";
-		for(unsigned int jj=0; jj<iter->second.size(); jj++) {
+		for(size_t jj=0; jj<iter->second.size(); jj++) {
 			os << iter->second[jj]->algo << " ";
 		}
 		os << "\n";

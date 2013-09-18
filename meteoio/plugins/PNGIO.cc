@@ -373,7 +373,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	png_set_background(png_ptr, &background, PNG_BACKGROUND_GAMMA_SCREEN, true, 1.0);
 }
 
-unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nrows, const double &min, const double &max, Array2D<double> &legend_array)
+unsigned int PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
 {
 	if(has_legend) {
 		const legend leg(nrows, min, max);
@@ -388,8 +388,8 @@ unsigned int PNGIO::setLegend(const unsigned int &ncols, const unsigned int &nro
 
 void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr, png_infop& info_ptr)
 {
-	const unsigned int ncols = grid.ncols;
-	const unsigned int nrows = grid.nrows;
+	const size_t ncols = grid.ncols;
+	const size_t nrows = grid.nrows;
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	unsigned char channels;
@@ -408,7 +408,7 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 
 	// Write image data
 	if(indexed_png) {
-		for(int y=(signed)nrows-1 ; y>=0 ; y--) {
+		for(size_t y=(nrows-1) ; y-- > 0; ) {
 			unsigned int x=0;
 			for(; x<ncols ; x++) {
 				const unsigned int i=x*channels;
@@ -425,7 +425,7 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 			png_write_row(png_ptr, row);
 		}
 	} else {
-		for(int y=(signed)nrows-1 ; y>=0 ; y--) {
+		for(size_t y=(nrows-1) ; y -- > 0; ) {
 			unsigned int x=0;
 			for(; x<ncols ; x++) {
 				const unsigned int i=x*channels;
@@ -492,7 +492,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	//scale input image
 	const Grid2DObject grid = scaleGrid(grid_in);
-	const unsigned int ncols = grid.ncols, nrows = grid.nrows;
+	const size_t ncols = grid.ncols, nrows = grid.nrows;
 	if(ncols==0 || nrows==0) return;
 
 	const double min = grid.grid2D.getMin();
@@ -537,7 +537,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 	//scale input image
 	Grid2DObject grid = scaleGrid(grid_in);
-	const unsigned int ncols = grid.ncols, nrows = grid.nrows;
+	const size_t ncols = grid.ncols, nrows = grid.nrows;
 	if(ncols==0 || nrows==0) return;
 
 	double min = grid.grid2D.getMin();

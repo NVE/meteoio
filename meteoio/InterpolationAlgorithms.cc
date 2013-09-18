@@ -382,8 +382,8 @@ double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parame
 
 	date = i_date;
 	param = in_param;
-	vecData.clear();
-	vecMeta.clear();
+	vecData.clear(); vecMeta.clear();
+	vecDataTA.clear(); vecDataRH.clear();
 
 	nrOfMeasurments = 0;
 	iomanager.getMeteoData(date, vecMeteo);
@@ -396,7 +396,7 @@ double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parame
 		}
 	}
 
-	if (vecDataTA.empty() || nrOfMeasurments==0)
+	if (nrOfMeasurments==0)
 		return 0.0;
 	if( (nrOfMeasurments<vecDataRH.size()/2) || ( nrOfMeasurments<2 ) )
 		return 0.6;
@@ -414,10 +414,9 @@ void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta); //get TA interpolation from call back to Meteo2DInterpolator
 
-	//here, RH->Td, interpolations, Td->RH
-	std::vector<double> vecTd(vecDataRH.size(), 0.0); // init to 0.0
-
+	//RH->Td, interpolations, Td->RH
 	//Compute dew point temperatures at stations
+	std::vector<double> vecTd(vecDataRH.size());
 	for (size_t ii=0; ii<vecDataRH.size(); ii++){
 		vecTd[ii] = Atmosphere::RhtoDewPoint(vecDataRH[ii], vecDataTA[ii], 1);
 	}
@@ -430,8 +429,8 @@ void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	retrend(dem, trend, grid);
 
 	//Recompute Rh from the interpolated td
-	for (unsigned int jj=0; jj<grid.nrows; jj++) {
-		for (unsigned int ii=0; ii<grid.ncols; ii++) {
+	for (size_t jj=0; jj<grid.nrows; jj++) {
+		for (size_t ii=0; ii<grid.ncols; ii++) {
 			double &value = grid.grid2D(ii,jj);
 			if(value!=IOUtils::nodata)
 				value = Atmosphere::DewPointtoRh(value, ta.grid2D(ii,jj), 1);
@@ -447,8 +446,8 @@ double ILWRAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Para
 
 	date = i_date;
 	param = in_param;
-	vecData.clear();
-	vecMeta.clear();
+	vecData.clear(); vecMeta.clear();
+	vecDataEA.clear();
 
 	nrOfMeasurments = 0;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
@@ -459,7 +458,7 @@ double ILWRAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Para
 		}
 	}
 
-	if (vecDataEA.empty() ||  nrOfMeasurments==0)
+	if (nrOfMeasurments==0)
 		return 0.0;
 
 	return 0.9;
@@ -483,8 +482,8 @@ void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	retrend(dem, trend, grid);
 
 	//Recompute Rh from the interpolated td
-	for (unsigned int jj=0; jj<grid.nrows; jj++) {
-		for (unsigned int ii=0; ii<grid.ncols; ii++) {
+	for (size_t jj=0; jj<grid.nrows; jj++) {
+		for (size_t ii=0; ii<grid.ncols; ii++) {
 			double &value = grid.grid2D(ii,jj);
 			value = Atmosphere::blkBody_Radiation(value, ta.grid2D(ii,jj));
 		}
@@ -499,8 +498,8 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, co
 
 	date = i_date;
 	param = in_param;
-	vecData.clear();
-	vecMeta.clear();
+	vecData.clear(); vecMeta.clear();
+	vecDataVW.clear(); vecDataDW.clear();
 
 	nrOfMeasurments = 0;
 	iomanager.getMeteoData(date, vecMeteo);
@@ -513,7 +512,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, co
 		}
 	}
 
-	if (vecDataVW.empty() || vecDataDW.empty() || nrOfMeasurments==0)
+	if (nrOfMeasurments==0)
 		return 0.0;
 	if( (nrOfMeasurments<vecDataVW.size()/2) || ( nrOfMeasurments<2 ) )
 		return 0.6;
@@ -543,18 +542,18 @@ void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObj
 std::string USERInterpolation::getGridFileName() const
 {
 //HACK: use read2DGrid(grid, MeteoGrid::Parameters, Date) instead?
-	const std::string ext=std::string(".asc");
 	if (vecArgs.size() != 1){
 		throw InvalidArgumentException("Please provide the path to the grids for the USER interpolation algorithm", AT);
 	}
+	const std::string ext(".asc");
 	const std::string& grid_path = vecArgs[0];
-	std::string gridname = grid_path + std::string("/");
+	std::string gridname = grid_path + "/";
 
 	if(!vecMeteo.empty()) {
 		const Date& timestep = vecMeteo.at(0).date;
-		gridname = gridname + timestep.toString(Date::NUM) + std::string("_") + MeteoData::getParameterName(param) + ext;
+		gridname =  gridname + timestep.toString(Date::NUM) + "_" + MeteoData::getParameterName(param) + ext;
 	} else {
-		gridname = gridname + std::string("Default") + std::string("_") + MeteoData::getParameterName(param) + ext;
+		gridname = gridname + "Default" + "_" + MeteoData::getParameterName(param) + ext;
 	}
 
 	return gridname;
@@ -564,8 +563,7 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 {
 	date = i_date;
 	param = in_param;
-	nrOfMeasurments = 0;
-	const std::string filename = getGridFileName();
+	filename = getGridFileName();
 
 	if (!IOUtils::validFileName(filename)) {
 		cerr << "[E] Invalid grid filename for USER interpolation algorithm: " << filename << "\n";
@@ -580,8 +578,6 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 
 void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
-	const std::string filename = getGridFileName();
-
 	iomanager.read2DGrid(grid, filename);
 	if(!grid.isSameGeolocalization(dem)) {
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that has not the same georeferencing as the DEM!", AT);
@@ -640,13 +636,13 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 	distData.clear();
 	variData.clear();
 
-	for(unsigned int j=0; j<nrOfMeasurments; j++) {
+	for(size_t j=0; j<nrOfMeasurments; j++) {
 		const Coords& st1 = vecMeta[j].position;
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();
 		const double val1 = vecData[j];
 
-		for(unsigned int i=0; i<j; i++) {
+		for(size_t i=0; i<j; i++) {
 			//compute distance between stations
 			const Coords& st2 = vecMeta[i].position;
 			const double val2 = vecData[i];

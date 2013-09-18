@@ -392,18 +392,18 @@ void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data, int maxsize, int flag, POP
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
-		unsigned int nx,ny;
+		size_t nx,ny;
 		data.size(nx,ny);
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
 		bool keep_nodata = data.getKeepNodata();
 		buf.Pack(&keep_nodata,1);
 		if (nx>0 && ny>0) {
-			const unsigned int nxy=nx*ny;
+			const size_t nxy=nx*ny;
 			buf.Pack(&data(0,0), nxy);
 		}
 	} else {
-		unsigned int nx,ny;
+		size_t nx,ny;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
 		bool keep_nodata;
@@ -411,7 +411,7 @@ void marshal_DOUBLE2D(POPBuffer &buf, DOUBLE2D &data, int maxsize, int flag, POP
 		data.setKeepNodata(keep_nodata);
 		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-			const unsigned int nxy=nx*ny;
+			const size_t nxy=nx*ny;
 			buf.UnPack(&data(0,0),nxy);
 		} else
 			data.clear();
@@ -423,7 +423,7 @@ void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data, int maxsize, int flag, POP
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
-		unsigned int nx,ny,nz;
+		size_t nx,ny,nz;
 		data.size(nx,ny,nz);
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
@@ -431,11 +431,11 @@ void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data, int maxsize, int flag, POP
 		bool keep_nodata = data.getKeepNodata();
 		buf.Pack(&keep_nodata,1);
 		if (nx>0 && ny>0 && nz>0) {
-			const unsigned int nxyz=nx*ny*nz;
+			const size_t nxyz=nx*ny*nz;
 			buf.Pack(&data(0,0,0),nxyz);
 		}
 	} else {
-		unsigned int nx,ny,nz;
+		size_t nx,ny,nz;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
 		buf.UnPack(&nz,1);
@@ -444,7 +444,7 @@ void marshal_DOUBLE3D(POPBuffer &buf, DOUBLE3D &data, int maxsize, int flag, POP
 		data.setKeepNodata(keep_nodata);
 		if (nx>0 && ny>0 && nz>0) {
 			data.resize(nx,ny,nz);
-			const unsigned int nxyz=nx*ny*nz;
+			const size_t nxyz=nx*ny*nz;
 			buf.UnPack(&data(0,0,0),nxyz);
 		} else
 			data.clear();
@@ -456,18 +456,18 @@ void marshal_INT2D(POPBuffer &buf, INT2D &data, int maxsize, int flag, POPMemspo
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
-		unsigned int nx, ny;
+		size_t nx, ny;
 		data.size(nx,ny);
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
 		bool keep_nodata = data.getKeepNodata();
 		buf.Pack(&keep_nodata,1);
 		if (nx>0 && ny>0) {
-			const unsigned int nxy=nx*ny;
+			const size_t nxy=nx*ny;
 			buf.Pack(&data(0,0), nxy);
 		}
 	} else {
-		unsigned int nx,ny;
+		size_t nx,ny;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
 		bool keep_nodata;
@@ -475,7 +475,7 @@ void marshal_INT2D(POPBuffer &buf, INT2D &data, int maxsize, int flag, POPMemspo
 		data.setKeepNodata(keep_nodata);
 		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-			const unsigned int nxy=nx*ny;
+			const size_t nxy=nx*ny;
 			buf.UnPack(&data(0,0), nxy);
 		} else
 			data.clear();
@@ -487,18 +487,18 @@ void marshal_CHAR2D(POPBuffer &buf, CHAR2D &data, int maxsize, int flag, POPMems
 	(void)maxsize;
 	(void)*temp;
 	if (flag & FLAG_MARSHAL) {
-		unsigned int nx, ny;
+		size_t nx, ny;
 		data.size(nx,ny);
 		buf.Pack(&nx,1);
 		buf.Pack(&ny,1);
 		bool keep_nodata = data.getKeepNodata();
 		buf.Pack(&keep_nodata,1);
 		if (nx>0 && ny>0) {
-			const unsigned int nxy=nx*ny;
+			const size_t nxy=nx*ny;
 			buf.Pack(&data(0,0), nxy);
 		}
 	} else {
-		unsigned int nx,ny;
+		size_t nx,ny;
 		buf.UnPack(&nx,1);
 		buf.UnPack(&ny,1);
 		bool keep_nodata;
@@ -506,7 +506,7 @@ void marshal_CHAR2D(POPBuffer &buf, CHAR2D &data, int maxsize, int flag, POPMems
 		data.setKeepNodata(keep_nodata);
 		if (nx>0 && ny>0) {
 			data.resize(nx,ny);
-			const unsigned int nxy=nx*ny;
+			const size_t nxy=nx*ny;
 			buf.UnPack(&data(0,0), nxy);
 		} else
 			data.clear();

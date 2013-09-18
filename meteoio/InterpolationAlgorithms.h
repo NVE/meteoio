@@ -372,11 +372,12 @@ class USERInterpolation : public InterpolationAlgorithm {
 		USERInterpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), filename() {nrOfMeasurments=0;}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::string getGridFileName() const;
+		std::string filename;
 };
 
 /**

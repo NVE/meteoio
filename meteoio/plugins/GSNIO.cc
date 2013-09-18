@@ -198,7 +198,7 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	if (vecMeta.empty()) //if there are no stations -> return
 		return;
 
-	unsigned int indexStart=0, indexEnd=vecMeta.size();
+	size_t indexStart=0, indexEnd=vecMeta.size();
 
 	//The following part decides whether all the stations are rebuffered or just one station
 	if (stationindex == IOUtils::npos){
@@ -213,7 +213,7 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 	}
 
-	for (unsigned int ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 		reverse(vecMeteo[ii].begin(), vecMeteo[ii].end()); //this is necessary because GSN data comes sorted descending by date
 	}

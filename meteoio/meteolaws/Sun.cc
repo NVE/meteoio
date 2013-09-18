@@ -325,7 +325,7 @@ const std::string SunObject::toString() const
 	os << "Lat/Long/Alt\t" << std::setw(7) << latitude << "° " << std::setw(7) << longitude << "° " << std::setprecision(0) << std::setw(4) << altitude << "\n";
 	os << "Elev. thresh.\t" << std::setprecision(1) << elevation_threshold << "°\n";
 
-	const unsigned int colw=10;
+	const int colw=10;
 	os << std::setw(colw) << "" << std::fixed << std::setw(colw) << std::setprecision(1) << "toa";
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << "direct";
 	os << std::fixed << std::setw(colw) << std::setprecision(1) << "diffuse";

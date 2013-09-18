@@ -70,7 +70,7 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 		else if(q>=1.) vecResults[ii] = vecTemp.back();
 		else {
 			const double pos = static_cast<double>(vecSize - 1) * q;
-			const unsigned int ind = static_cast<unsigned int>(pos);
+			const size_t ind = static_cast<size_t>(pos);
 			const double delta = pos - static_cast<double>(ind);
 			const double i1 = vecTemp[ind];
 			const double i2 = vecTemp[ind+1];
@@ -505,8 +505,8 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 	const double r_thres = 0.7;
 	const size_t nb_pts = in_X.size();
 	//we want at least 4 points AND 85% of the initial data set kept in the regression
-	const unsigned int min_dataset = (unsigned int)Optim::floor( 0.85*(double)nb_pts );
-	const unsigned int min_pts = (min_dataset>4)? min_dataset : 4;
+	const size_t min_dataset = (size_t)Optim::floor( 0.85*(double)nb_pts );
+	const size_t min_pts = (min_dataset>4)? min_dataset : 4;
 	double a=A,b,r; //a needs to be initiallized to A in case of fixed_rate
 
 	LinRegression(in_X, in_Y, A, B, R, mesg, fixed_rate);

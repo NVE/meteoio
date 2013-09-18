@@ -475,7 +475,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 		if ((vecX.size() != vecY.size()) || (vecY.size() != vecLat.size()) || (vecLat.size() != vecLon.size()) || (vecLon.size() != vecAlt.size()))
 			throw InvalidFormatException("Your GEOtop METAFILE " + metafile + " does not contain a consistent number of meta data fields", AT);
 
-		for (unsigned int i = 0; i < vecX.size(); i++) {
+		for (size_t i = 0; i < vecX.size(); i++) {
 			std::vector<double> tmpdata = std::vector<double>(5);
 
 			if (!IOUtils::convertString(tmpdata.at(x), vecX.at(i),	std::dec))

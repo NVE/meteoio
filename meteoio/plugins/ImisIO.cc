@@ -308,7 +308,7 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 
 
 	Statement *stmt = conn->createStatement();
-	for (unsigned int ii=0; ii<vecStationID.size(); ii++) {
+	for (size_t ii=0; ii<vecStationID.size(); ii++) {
 		// Retrieve the station IDs - this only needs to be done once per instance
 		string stat_abk, stao_nr, station_name;
 		parseStationID(vecStationID[ii], stat_abk, stao_nr);
@@ -345,7 +345,7 @@ void ImisIO::readStationMetaData(oracle::occi::Connection*& conn)
 		} else {
 			vector<string> tmpname;
 			IOUtils::readLineToVec(station_name, tmpname, ' ');
-			unsigned int jj=1;
+			size_t jj=1;
 			while (jj < tmpname.size()) {
 				if (tmpname.at(jj) != "-") {
 					tmpname.at(0) += "_" + tmpname.at(jj);
