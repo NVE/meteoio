@@ -315,13 +315,13 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 	const double xllcorner = dem.llcorner.getEasting();
 	const double yllcorner = dem.llcorner.getNorthing();
 	const double cellsize = dem.cellsize;
-	for (size_t j=0; j<grid.nrows; j++) {
-		for (size_t i=0; i<grid.ncols; i++) {
-			if (dem.grid2D(i,j)!=IOUtils::nodata) {
-				grid.grid2D(i,j) = IDWCore((xllcorner+i*cellsize), (yllcorner+j*cellsize),
+	for (size_t jj=0; jj<grid.nrows; jj++) {
+		for (size_t ii=0; ii<grid.ncols; ii++) {
+			if (dem.grid2D(ii,jj)!=IOUtils::nodata) {
+				grid.grid2D(ii,jj) = IDWCore((xllcorner+double(ii)*cellsize), (yllcorner+double(jj)*cellsize),
 				                           vecData_in, vecEastings, vecNorthings);
 			} else {
-				grid.grid2D(i,j) = IOUtils::nodata;
+				grid.grid2D(ii,jj) = IOUtils::nodata;
 			}
 		}
 	}
