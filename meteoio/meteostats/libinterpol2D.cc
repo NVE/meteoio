@@ -433,42 +433,154 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 * @param dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
 * @param ta array of air temperatures used to determine if precipitation is rain or snow
 * @param grid 2D array of precipitation to fill
-* @author Florian Kobierska, Jan Magnusson and Mathias Bavay
+* @author Florian Kobierska, Jan Magnusson, Rob Spence and Mathias Bavay
 */
-void Interpol2D::PrecipSnow(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
+void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
 {
 	if(!grid.isSameGeolocalization(dem)) {
 		throw IOException("Requested grid does not match the geolocalization of the DEM", AT);
 	}
-	const double dem_max_curvature=dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
+	const double dem_max_curvature = dem.max_curvature, dem_range_curvature=(dem.max_curvature-dem.min_curvature);
+	const double orig_mean = grid.grid2D.getMean();
 
-	for (size_t j=0;j<grid.nrows;j++) {
-		for (size_t i=0;i<grid.ncols;i++) {
-			// Get input data
-			const double slope = dem.slope(i, j);
-			const double curvature = dem.curvature(i, j);
-			double val = grid.grid2D(i, j);
+    for (size_t j=0;j<grid.nrows;j++) {
+        for (size_t i=0;i<grid.ncols;i++) {
+            const double slope = dem.slope(i, j);
+            const double curvature = dem.curvature(i, j);
+            double val = grid.grid2D(i, j);
 
-			if(ta.grid2D(i, j)<=273.15) {
+            if(ta.grid2D(i,j)<=273.15) {
 				//we only modify the grid of precipitations if air temperature
 				//at this point is below or at freezing
-				if(slope==IOUtils::nodata || curvature==IOUtils::nodata) {
-					val = IOUtils::nodata;
-				} else if (slope>60.) {
-					//No snow precipitation happens for these slopes
-					val = 0.;
-				} else if (slope>40.) {
-					//Linear transition from no snow to 100% snow
-					val *= (60.-slope)/20.;
-				} //else: unchanged
 
-				if(val!=IOUtils::nodata && dem_range_curvature!=0.) {
-					//cf Huss
-					grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
+                if(slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
+
+                if(val!=IOUtils::nodata && dem_range_curvature!=0.) {
+                    //cf Huss
+                    grid.grid2D(i, j) = val*(0.5-(curvature-dem_max_curvature)/dem_range_curvature);
+                }
+            }
+        }
+    }
+
+    //HACK: correction for precipitation sum over the whole domain
+	//this is a cheap/crappy way of compensating for the spatial redistribution of snow on the slopes
+	const double new_mean = grid.grid2D.getMean();
+	if(new_mean!=0.) grid.grid2D *= orig_mean/new_mean;
+
+}
+
+void Interpol2D::steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest)
+{
+    double max_slope = 0.;
+	d_i_dest = 0, d_j_dest = 0;
+
+    //loop around all adjacent cells to find the cell with the steepest downhill slope
+    for(short d_i=-1; d_i<=1; d_i++){
+        for(short d_j=-1; d_j<=1; d_j++){
+            const double elev_pt1 = dem.grid2D(ii, jj);
+            const double elev_pt2 = dem.grid2D(ii + d_i, jj + d_j);
+            const double precip_1 = grid.grid2D(ii, jj);
+            const double precip_2 = grid.grid2D(ii + d_i, jj + d_j);
+            const double height_ratio = (elev_pt1+precip_1) / (elev_pt2+precip_2);
+            const double new_slope = dem.slope(ii + d_i, jj + d_j);
+
+            if ((new_slope>max_slope) && (height_ratio>1.)){
+                max_slope = new_slope;
+                d_i_dest = d_i;
+                d_j_dest = d_j;
+            }
+        }
+    }
+}
+
+double Interpol2D::depositAroundCell(const DEMObject& dem, const size_t& ii, const size_t& jj, const double& precip, Grid2DObject &grid)
+{
+	//else add precip to the cell and remove the same amount from the precip variable
+	grid.grid2D(ii, jj) += precip;
+	double distributed_precip = precip;
+
+	for(short d_i=-1;d_i<=1;d_i++){
+		for(short d_j=-1;d_j<=1;d_j++){
+			const double elev_pt1 = dem.grid2D(ii, jj);
+			const double elev_pt2 = dem.grid2D(ii + d_i, jj + d_j);
+			const double precip_1 = grid.grid2D(ii, jj);
+			const double precip_2 = grid.grid2D(ii + d_i, jj + d_j);
+			const double height_ratio = (elev_pt1+precip_1) / (elev_pt2+precip_2);
+
+			if ((d_i!=0)||(d_j!=0)){
+				if (height_ratio>1.){
+					grid.grid2D(ii + d_i, jj + d_j) += precip;
+					distributed_precip += precip;
 				}
 			}
 		}
 	}
+
+	return distributed_precip;
+}
+
+/**
+*@brief redistribute precip from steeper slopes to gentler slopes by following the steepest path from top to bottom
+*and gradually depositing precip during descent
+*@param precip variable to keep track of removed and deposited precip in order to maintain a (roughly) constant global sum
+*@param counter variable that is increased during descent in order to deposit more precip towards the foot
+*of the slope than at the top
+*@param height_ratio ratio of the height of the dem plus accumulated precip height between one cell and the next
+*in order to determine a route down the slope
+*@author Rob Spence and Mathias Bavay
+*/
+void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
+{
+    for (size_t jj=1; jj<(grid.nrows-1); jj++) {
+		for (size_t ii=1; ii<(grid.ncols-1); ii++) {
+            if(grid.grid2D(ii,jj)==IOUtils::nodata) continue;
+
+            //we only modify the grid of precipitations if air temperature
+            //at this point is below or at freezing
+            if(ta.grid2D(ii, jj)<=273.15) {
+                const double slope = dem.slope(ii, jj);
+                const double curvature = dem.curvature(ii, jj);
+
+                if(slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
+
+                if (slope>40.) { //redistribution only above 40 degrees
+                    //remove all precip above 60 deg or linearly decrease it
+                    double precip = (slope>60.)? grid.grid2D(ii, jj) : grid.grid2D(ii, jj) * ((40.-slope)/-30.);
+
+                    grid.grid2D(ii, jj) -= precip; //we will redistribute the precipitation in a different way
+
+                    const double increment = precip / 50.; //break removed precip into smaller amounts to be redistributed
+                    double counter = 0.5;                  //counter will determine amount of precip deposited
+
+                    size_t ii_dest = ii, jj_dest = jj;
+					while(precip>0.) {
+                        short d_i, d_j;
+                        steepestDescentDisplacement(dem, grid, ii_dest, jj_dest, d_i, d_j);
+                        //move to the destination cell
+                        ii_dest += d_i;
+                        jj_dest += d_j;
+
+                        //if (((ii_dest+d_i)<0) || ((jj_dest+d_j)<0) || ((ii_dest+d_i)>=grid.ncols)|| ((jj_dest+d_j)>=grid.nrows)) {
+                        if ((ii_dest==0) || (jj_dest==0) || (ii_dest==(grid.ncols-1))|| (jj_dest==(grid.nrows-1))){
+                                //we are getting out of the domain: deposit local contribution
+                                grid.grid2D(ii_dest, jj_dest) += counter*increment;
+                                break;
+                        }
+                        if(d_i==0 && d_j==0) {
+                                //local minimum, everything stays here...
+                                grid.grid2D(ii_dest, jj_dest) += precip;
+                                break;
+                        }
+
+                        else {precip -= depositAroundCell(dem, ii_dest, jj_dest, counter*increment, grid);
+                        counter += 0.25; //greater amount of precip is deposited as we move down the slope
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**

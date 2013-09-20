@@ -56,7 +56,7 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 	} else if (algoname == "USER"){// read user provided grid
 		return new USERInterpolation(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "HNW_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
-		return new SnowHNWInterpolation(i_mi, i_vecArgs, i_algoname, iom);
+  		return new SnowHNWInterpolation(i_mi, i_vecArgs, i_algoname, iom);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -604,6 +604,9 @@ double SnowHNWInterpolation::getQualityRating(const Date& i_date, const MeteoDat
 
 void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+    info.clear(); info.str("");
+    if(internal_dem.isEmpty())
+        internal_dem=dem;
 	info.clear(); info.str("");
 	//retrieve optional arguments
 	std::string base_algo;
@@ -621,21 +624,22 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
 	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
 	algorithm->getQualityRating(date, param);
-	algorithm->calculate(dem, grid);
+	algorithm->calculate(internal_dem, grid);
 	info << algorithm->getInfo();
 	const double orig_mean = grid.grid2D.getMean();
 
 	 //get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;
-	mi.interpolate(date, dem, MeteoData::TA, ta);
+	mi.interpolate(date, internal_dem, MeteoData::TA, ta);
 
 	//slope/curvature correction for solid precipitation
-	Interpol2D::PrecipSnow(dem, ta, grid);
+	Interpol2D::SteepSlopeRedistribution(internal_dem, ta, grid);
+    //Interpol2D::CurvatureCorrection(internal_dem, ta, grid);
+    //add "virtual snow height" to the internal dem
+    for(size_t ii=0; ii<dem.ncols*dem.nrows; ++ii)
+        internal_dem.grid2D(ii) += 3.*grid.grid2D(ii);
 
-	//HACK: correction for precipitation sum over the whole domain
-	//this is a cheap/crappy way of compensating for the spatial redistribution of snow on the slopes
-	const double new_mean = grid.grid2D.getMean();
-	if(new_mean!=0.) grid.grid2D *= orig_mean/new_mean;
+    iomanager.write2DGrid(internal_dem, MeteoGrids::DEM, date);
 }
 
 void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData)
