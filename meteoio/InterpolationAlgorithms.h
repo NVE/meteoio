@@ -163,7 +163,7 @@ class InterpolationAlgorithm {
 		std::vector<MeteoData> vecMeteo;
 		std::vector<double> vecData; ///<store the measurement for the given parameter
 		std::vector<StationData> vecMeta; ///<store the station data for the given parameter
-		std::ostringstream info; ///<to store some extra information about the interoplation process
+		std::ostringstream info; ///<to store some extra information about the interplation process
 		MeteoData::Parameters param; ///<the parameter that we will interpolate
 		size_t nrOfMeasurments; ///<the available number of measurements
 		IOManager& iomanager;

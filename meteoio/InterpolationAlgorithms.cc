@@ -279,6 +279,7 @@ double ConstLapseRateAlgorithm::getQualityRating(const Date& i_date, const Meteo
 
 void ConstLapseRateAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
@@ -328,6 +329,7 @@ double IDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 
 void IDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
@@ -355,7 +357,8 @@ double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoD
 
 void LocalIDWLapseAlgorithm::calculate(const DEMObject& /*dem*/, Grid2DObject& /*grid*/)
 {
-	/*if (nrOfMeasurments == 0)
+	/*info.clear(); info.str("");
+	if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
 	//Set regression coefficients
@@ -406,6 +409,7 @@ double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parame
 
 void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
@@ -466,6 +470,7 @@ double ILWRAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Para
 
 void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
@@ -522,6 +527,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, co
 
 void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
@@ -598,6 +604,7 @@ double SnowHNWInterpolation::getQualityRating(const Date& i_date, const MeteoDat
 
 void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	//retrieve optional arguments
 	std::string base_algo;
 	if (vecArgs.empty()){
@@ -696,6 +703,7 @@ double OrdinaryKrigingAlgorithm::getQualityRating(const Date& i_date, const Mete
 
 void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
 	if(!computeVariogram()) //only refresh once a month, or once a week, etc
@@ -705,6 +713,7 @@ void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& gri
 
 void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	info.clear(); info.str("");
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
 	vector<double> vecAltitudes;

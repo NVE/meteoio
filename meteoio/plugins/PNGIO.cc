@@ -768,7 +768,7 @@ std::string PNGIO::decimal_to_dms(const double& decimal) {
 	const double m = floor( ((decimal - (double)d)*60.)*100. ) / 100.;
 	const double s = 3600.*(decimal - (double)d) - 60.*m;
 
-	std::stringstream dms;
+	std::ostringstream dms;
 	dms << d << "/1 " << static_cast<int>(m*100) << "/100 " << fixed << setprecision(6) << s << "/1";
 	return dms.str();
 }
