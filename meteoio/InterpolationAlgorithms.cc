@@ -639,6 +639,7 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	for(size_t ii=0; ii<dem.ncols*dem.nrows; ++ii)
 		internal_dem.grid2D(ii) += 3.*grid.grid2D(ii);
 
+	internal_dem.update();
 }
 
 void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData)
