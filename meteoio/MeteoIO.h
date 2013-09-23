@@ -26,6 +26,7 @@
 #endif
 
 //list in alphabetical order
+//find meteoio -name "*.h" | sort
 #include <meteoio/Array1D.h>
 #include <meteoio/Array2D.h>
 #include <meteoio/Array3D.h>
@@ -33,9 +34,12 @@
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Config.h>
 #include <meteoio/Coords.h>
+#include <meteoio/DataGenerator.h>
 #include <meteoio/Date.h>
 #include <meteoio/DEMObject.h>
+#include <meteoio/exports.h>
 #include <meteoio/FilterProperties.h>
+#include <meteoio/GeneratorAlgorithms.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/Grid2DObject.h>
 #include <meteoio/Grid3DObject.h>
@@ -46,40 +50,40 @@
 #include <meteoio/IOManager.h>
 #include <meteoio/IOPlugin.h>
 #include <meteoio/IOUtils.h>
-#include <meteoio/meteostats/libfit1D.h>
-//#include <meteoio/meteostats/libfit1DCore.h>
-#include <meteoio/meteostats/libinterpol1D.h>
-#include <meteoio/meteostats/libinterpol2D.h>
 //#include <meteoio/MainPage.h> //only for doxygen
 //#include <meteoio/marshal_meteoio.h> //only for popc
+#include <meteoio/MathOptim.h>
 #include <meteoio/Matrix.h>
+//#include <meteoio/MessageBoxX11.h>
 #include <meteoio/Meteo1DInterpolator.h>
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/MeteoData.h>
+
 #include <meteoio/meteofilters/FilterBlock.h>
-//#include <meteoio/meteofilters/FilterMeanAvg.h>
-//#include <meteoio/meteofilters/FilterMedianAvg.h>
-//#include <meteoio/meteofilters/FilterWindAvg.h>
-//#include <meteoio/meteofilters/FilterMinMax.h>
+//skip all the filters' implementations header files
 #include <meteoio/meteofilters/ProcessingBlock.h>
 #include <meteoio/meteofilters/ProcessingStack.h>
-//#include <meteoio/meteofilters/FilterRate.h>
-//#include <meteoio/meteofilters/FilterHNWMelt.h>
-//#include <meteoio/meteofilters/FilterStdDev.h>
-//#include <meteoio/meteofilters/FilterTukey.h>
 #include <meteoio/meteofilters/WindowedFilter.h>
+
 //#include <meteoio/MeteoIO.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h>
 #include <meteoio/meteolaws/Sun.h>
 #include <meteoio/meteolaws/Suntrajectory.h>
+
 #include <meteoio/MeteoProcessor.h>
-#include <meteoio/MathOptim.h>
+//#include <meteoio/meteostats/libfit1DCore.h>
+#include <meteoio/meteostats/libfit1D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
+#include <meteoio/meteostats/libinterpol2D.h>
+
+//skip all plugins' implementations header files
+#include <meteoio/plugins/libsmet.h>
+
 #include <meteoio/ResamplingAlgorithms.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/StationData.h>
 #include <meteoio/Timer.h>
-#include <meteoio/plugins/libsmet.h>
 
 #ifdef _POPC_
 #include <meteoio/marshal_meteoio.h>
