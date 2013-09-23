@@ -35,7 +35,7 @@ class Zero : public FitModel {
 
 class SimpleLinear : public FitModel {
 	public:
-		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "SimpleLinear";};
+		SimpleLinear() : fixed_lapse_rate(IOUtils::nodata) {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "SimpleLinear";};
 		void setData(const std::vector<double>& in_X, const std::vector<double>& in_Y);
 		bool fit();
 		double f(const double& x) const;
@@ -47,7 +47,7 @@ class SimpleLinear : public FitModel {
 
 class NoisyLinear : public SimpleLinear {
 	public:
-		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "NoisyLinear";};
+		NoisyLinear() {fit_ready = false; nParam = 2; min_nb_pts = 2; regname = "NoisyLinear";};
 		bool fit();
 };
 

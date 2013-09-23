@@ -53,7 +53,9 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * (one per interpolation algorithm). Please notice that some algorithms may require extra arguments.
  * Then, each algorithm will be evaluated (through the use of its rating method) and receive a grade (that might
  * depend on the number of available data, the quality of the data, etc). The algorithm that receives the higher
- * score within the user list, will be used for interpolating the selected variable. An example of such section is given below:
+ * score within the user list, will be used for interpolating the selected variable at the given timestep. This means that at another
+ * timestep, the same parameter might get interpolated by a different algorithm.
+ * An example of such section is given below:
  * @code
  * [Interpolations2D]
  * TA::algorithms = IDW_LAPSE CST_LAPSE
