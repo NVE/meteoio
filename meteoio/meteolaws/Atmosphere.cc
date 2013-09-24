@@ -217,7 +217,7 @@ double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
 /**
 * @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
 * This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
-* Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+* Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.x
 * @param RH relative humidity (between 0 and 1)
 * @param TA air temperature (K)
 * @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
