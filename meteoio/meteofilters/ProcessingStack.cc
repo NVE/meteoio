@@ -77,9 +77,9 @@ void ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string
 void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
-	ovec.resize( ivec.size() );
 	const size_t nr_of_filters = filter_stack.size();
 	const size_t nr_stations = ivec.size();
+	ovec.resize( nr_stations );
 
 	for (size_t ii=0; ii<nr_stations; ii++){ //for every station
 		if( ivec[ii].empty() ) continue; //no data, nothing to do!
@@ -92,18 +92,14 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 			//Now call the filters in a row
 			bool appliedFilter = false;
 			for (size_t jj=0; jj<nr_of_filters; jj++){
-				if (second_pass){
-					if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::first
-						|| (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
-						continue;
-				}
-				if (!second_pass){
-					if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::second
-						|| (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
-						continue;
-				}
-				appliedFilter = true;
+				const ProcessingProperties::proc_stage& filter_stage = filter_stack[jj]->getProperties().stage;
+				if ( second_pass && ((filter_stage==ProcessingProperties::first) || (filter_stage==ProcessingProperties::none)) )
+					continue;
 
+				if ( !second_pass && ((filter_stage==ProcessingProperties::second) || (filter_stage==ProcessingProperties::none)) )
+					continue;
+
+				appliedFilter = true;
 				(*filter_stack[jj]).process(static_cast<unsigned int>(param), tmp, ovec[ii]);
 
 				if (tmp.size() == ovec[ii].size()){

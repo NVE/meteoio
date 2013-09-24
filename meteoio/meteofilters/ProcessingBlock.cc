@@ -180,10 +180,11 @@ ProcessingBlock::ProcessingBlock(const std::string& name) : properties(), block_
 void ProcessingBlock::convert_args(const size_t& min_nargs, const size_t& max_nargs,
                                const std::vector<std::string>& vec_args, std::vector<double>& dbl_args) const
 {
-	if ((vec_args.size() < min_nargs) || (vec_args.size() > max_nargs))
+	const size_t nr_of_args = vec_args.size();
+	if ((nr_of_args < min_nargs) || (nr_of_args > max_nargs))
 		throw InvalidArgumentException("Wrong number of arguments for filter/processing element \"" + getName() + "\"", AT);
 
-	for (size_t ii=0; ii<vec_args.size(); ii++){
+	for (size_t ii=0; ii<nr_of_args; ii++){
 		double tmp = IOUtils::nodata;
 		IOUtils::convertString(tmp, vec_args[ii]);
 		dbl_args.push_back(tmp);
