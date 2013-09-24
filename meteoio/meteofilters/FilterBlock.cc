@@ -25,17 +25,6 @@ FilterBlock::FilterBlock(const std::string& filter_name) : ProcessingBlock(filte
 
 FilterBlock::~FilterBlock() {}
 
-bool FilterBlock::is_soft(std::vector<std::string>& vec_args) {
-	if (!vec_args.empty()){
-		if (vec_args.front() == "soft"){
-			vec_args.erase(vec_args.begin());
-			return true;
-		}
-	}
-
-	return false;
-}
-
 void FilterBlock::extract_dbl_vector(const unsigned int& param, const std::vector<MeteoData>& ivec,
                                      std::vector<double>& ovec)
 {

@@ -59,7 +59,7 @@ void FilterMinMax::parse_args(std::vector<std::string> vec_args)
 	is_soft = false;
 
 	if (vec_args.size() > 2){
-		is_soft = FilterBlock::is_soft(vec_args);
+		is_soft = ProcessingBlock::is_soft(vec_args);
 	}
 
 	convert_args(2, 4, vec_args, filter_args);

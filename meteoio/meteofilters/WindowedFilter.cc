@@ -99,7 +99,7 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
  * @param end the end index of the window
  * @return true if success, false if a window could not be computed
  */
-bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec, size_t& start, size_t& end)
+bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec, size_t& start, size_t& end) const
 {	/*
 	The principle is too compute the first index that matches the minimum number of points criteria,
 	the the one that matches the minimum time window,

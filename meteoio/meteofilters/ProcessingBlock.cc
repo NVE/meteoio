@@ -178,7 +178,7 @@ ProcessingBlock::ProcessingBlock(const std::string& name) : properties(), block_
 {}
 
 void ProcessingBlock::convert_args(const size_t& min_nargs, const size_t& max_nargs,
-                               const std::vector<std::string>& vec_args, std::vector<double>& dbl_args)
+                               const std::vector<std::string>& vec_args, std::vector<double>& dbl_args) const
 {
 	if ((vec_args.size() < min_nargs) || (vec_args.size() > max_nargs))
 		throw InvalidArgumentException("Wrong number of arguments for filter/processing element \"" + getName() + "\"", AT);
@@ -188,6 +188,17 @@ void ProcessingBlock::convert_args(const size_t& min_nargs, const size_t& max_na
 		IOUtils::convertString(tmp, vec_args[ii]);
 		dbl_args.push_back(tmp);
 	}
+}
+
+bool ProcessingBlock::is_soft(std::vector<std::string>& vec_args) {
+	if (!vec_args.empty()){
+		if (vec_args.front() == "soft"){
+			vec_args.erase(vec_args.begin());
+			return true;
+		}
+	}
+
+	return false;
 }
 
 std::string ProcessingBlock::getName() const {

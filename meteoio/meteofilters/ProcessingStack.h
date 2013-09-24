@@ -48,10 +48,10 @@ class ProcessingStack {
 		const std::string toString() const;
 
 	private:
-		static size_t getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments);
+		static void getArgumentsForFilter(const Config& cfg, const std::string& keyname, std::vector<std::string>& vecArguments);
 
 		std::vector<ProcessingBlock*> filter_stack; //for now: strictly linear chain of processing blocks
-		std::string param_name;
+		const std::string param_name;
 };
 
 } //end namespace

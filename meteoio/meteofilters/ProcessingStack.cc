@@ -40,8 +40,6 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 
 ProcessingStack::~ProcessingStack()
 {
-	//this is suboptimal, shared_ptr<> would be the preference
-	//it's unfortunately a part of boost only
 	for (size_t ii=0; ii<filter_stack.size(); ii++)
 		delete filter_stack[ii];
 }
@@ -67,59 +65,62 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
 	}
 }
 
-size_t ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
+void ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
                                                     std::vector<std::string>& vecArguments)
 {
 	// Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
 	cfg.getValue(keyname, "Filters", vecArguments, IOUtils::nothrow);
-	return vecArguments.size();
 }
 
+//this method applies the whole processing stack for all the stations, all the data points for one meteo param
+//(as defined in the constructor)
 void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
                               std::vector< std::vector<MeteoData> >& ovec, const bool& second_pass)
 {
 	ovec.resize( ivec.size() );
+	const size_t nr_of_filters = filter_stack.size();
+	const size_t nr_stations = ivec.size();
 
-	for (size_t ii=0; ii<ivec.size(); ii++){ //for every station
-		if (!ivec[ii].empty()){
-			//pick one element and check whether the param_name parameter exists
-			const size_t param = ivec[ii].front().getParameterIndex(param_name);
-			if (param != IOUtils::npos){
-				std::vector<MeteoData> tmp = ivec[ii];
+	for (size_t ii=0; ii<nr_stations; ii++){ //for every station
+		if( ivec[ii].empty() ) continue; //no data, nothing to do!
 
-				//Now call the filters in a row
-				bool appliedFilter = false;
-				for (size_t jj=0; jj<filter_stack.size(); jj++){
-					if (second_pass){
-						if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::first
-						    || (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
-							continue;
-					}
-					if (!second_pass){
-						if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::second
-						    || (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
-							continue;
-					}
-					appliedFilter = true;
+		//pick one element and check whether the param_name parameter exists
+		const size_t param = ivec[ii].front().getParameterIndex(param_name);
+		if (param != IOUtils::npos){
+			std::vector<MeteoData> tmp( ivec[ii] );
 
-					(*filter_stack[jj]).process(static_cast<unsigned int>(param), tmp, ovec[ii]);
-
-					if (tmp.size() == ovec[ii].size()){
-						if ((jj+1) != filter_stack.size()){//after the last filter not necessary
-							for (size_t kk=0; kk<ovec[ii].size(); kk++){
-								tmp[kk](param) = ovec[ii][kk](param);
-							}
-						}
-					} else {
-						tmp = ovec[ii];
-					}
+			//Now call the filters in a row
+			bool appliedFilter = false;
+			for (size_t jj=0; jj<nr_of_filters; jj++){
+				if (second_pass){
+					if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::first
+						|| (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
+						continue;
 				}
+				if (!second_pass){
+					if ((*filter_stack[jj]).getProperties().stage==ProcessingProperties::second
+						|| (*filter_stack[jj]).getProperties().stage==ProcessingProperties::none)
+						continue;
+				}
+				appliedFilter = true;
 
-				if (!appliedFilter) //if not a single filter was applied
-					ovec[ii] = ivec[ii]; //just copy input to output
-			} else {
-				ovec[ii] = ivec[ii]; //just copy input to output
+				(*filter_stack[jj]).process(static_cast<unsigned int>(param), tmp, ovec[ii]);
+
+				if (tmp.size() == ovec[ii].size()){
+					if ((jj+1) != nr_of_filters){//after the last filter not necessary
+						for (size_t kk=0; kk<ovec[ii].size(); kk++){
+							tmp[kk](param) = ovec[ii][kk](param);
+						}
+					}
+				} else {
+					tmp = ovec[ii];
+				}
 			}
+
+			if (!appliedFilter) //if not a single filter was applied
+				ovec[ii] = ivec[ii]; //just copy input to output
+		} else {
+			ovec[ii] = ivec[ii]; //just copy input to output
 		}
 	}
 }

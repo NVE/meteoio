@@ -62,9 +62,6 @@ class ProcessingBlock {
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec) = 0;
 
-		void convert_args(const size_t& min_nargs, const size_t& max_nargs,
-		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args);
-
 		std::string getName() const;
 		const ProcessingProperties& getProperties() const;
 		const std::string toString() const;
@@ -72,8 +69,13 @@ class ProcessingBlock {
 	protected:
 		ProcessingBlock(const std::string& name); ///< protected constructor only to be called by children
 
+		void convert_args(const size_t& min_nargs, const size_t& max_nargs,
+		                  const std::vector<std::string>& vec_args, std::vector<double>& dbl_args) const;
+
+		static bool is_soft(std::vector<std::string>& vec_args);
+
 		ProcessingProperties properties;
-		std::string block_name;
+		const std::string block_name;
 };
 
 class BlockFactory {

@@ -42,15 +42,14 @@ class WindowedFilter : public FilterBlock {
 		WindowedFilter(const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
-		                     std::vector<MeteoData>& ovec) = 0; //HACK: param should be size_t
-
-		static unsigned int get_centering(std::vector<std::string>& vec_args);
+		                     std::vector<MeteoData>& ovec) = 0;
 
 	protected:
+		static unsigned int get_centering(std::vector<std::string>& vec_args);
 		const std::vector<const MeteoData*>& get_window(const size_t& index,
 		                                                const std::vector<MeteoData>& ivec);
 		bool get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec,
-		                      size_t& start, size_t& end);
+		                      size_t& start, size_t& end) const;
 
 		Duration min_time_span;
 		Centering centering;

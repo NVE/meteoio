@@ -69,7 +69,7 @@ void FilterMeanAvg::parse_args(std::vector<std::string> vec_args)
 	vector<double> filter_args;
 
 	if (vec_args.size() > 2){
-		is_soft = FilterBlock::is_soft(vec_args);
+		is_soft = ProcessingBlock::is_soft(vec_args);
 	}
 
 	if (vec_args.size() > 2)

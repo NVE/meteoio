@@ -97,7 +97,7 @@ void ProcUnventilatedT::parse_args(std::vector<std::string> vec_args) {
 
 	is_soft = false;
 	if (!vec_args.empty()){
-		is_soft = FilterBlock::is_soft(vec_args);
+		is_soft = ProcessingBlock::is_soft(vec_args);
 	}
 
 	convert_args(0, 1, vec_args, filter_args);
