@@ -86,6 +86,7 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 		md.setResampled(false);
 	}
 
+	//now, perform the resampling
 	for(size_t ii=0; ii<md.getNrOfParameters(); ii++) {
 		const std::string parname = md.getNameForParameter(ii); //Current parameter name
 		const map< string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);

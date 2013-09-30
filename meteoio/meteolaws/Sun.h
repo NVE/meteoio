@@ -62,17 +62,22 @@ class SunObject {
 		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
 		double getSplitting(const double& iswr_measured) const;
 
+		double approxTOADailySum() const;
+
 		//SunTrajectory position;
 		SunMeeus position;
 
-		double getJulian(const double& TZ);
+		double getJulian(const double& TZ) const;
 
 		const std::string toString() const;
 	private:
 		void update();
 		void getBeamPotential(const double& sun_elevation, const double& Eccentricity_corr,
-		                  const double& ta, const double& rh, const double& pressure, const double& mean_albedo,
-		                  double& R_toa, double& R_direct, double& R_diffuse);
+		                      const double& ta, const double& rh, const double& pressure, const double& mean_albedo,
+		                      double& R_toa, double& R_direct, double& R_diffuse) const;
+		void getClearSky(const double& sun_elevation, const double& R_toa,
+		                 const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
+		                 double& R_direct, double& R_diffuse) const;
 
 	private:
 		double julian_gmt;

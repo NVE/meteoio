@@ -542,15 +542,15 @@ double Date::rnd(const double& julian, const unsigned int& precision, const RND&
 		throw InvalidArgumentException("Can not round dates to 0 seconds precision!", AT);
 
 	double integral;
-	const double fractional = modf(julian, &integral);
+	const double fractional = modf(julian-.5, &integral);
 	const double rnd_factor = (3600*24)/(double)precision;
 
 	if(type==CLOSEST)
-		return integral + (double)Optim::round( fractional*rnd_factor ) / rnd_factor;
+		return integral + (double)Optim::round( fractional*rnd_factor ) / rnd_factor + .5;
 	if(type==UP)
-		return integral + (double)Optim::ceil( fractional*rnd_factor ) / rnd_factor;
+		return integral + (double)Optim::ceil( fractional*rnd_factor ) / rnd_factor + .5;
 	if(type==DOWN)
-		return integral + (double)Optim::floor( fractional*rnd_factor ) / rnd_factor;
+		return integral + (double)Optim::floor( fractional*rnd_factor ) / rnd_factor + .5;
 
 	throw UnknownValueException("Unknown rounding strategy!", AT);
 	return julian;

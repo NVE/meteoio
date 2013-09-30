@@ -88,7 +88,7 @@ double SunObject::getElevationThresh() const {
 	return elevation_threshold;
 }
 
-double SunObject::getJulian(const double& TZ) {
+double SunObject::getJulian(const double& TZ) const {
 	return (julian_gmt+TZ/24.);
 }
 
@@ -115,10 +115,8 @@ void SunObject::update() {
 //see http://www.meteoexploration.com/products/solarcalc.php for a validation calculator
 void SunObject::getBeamPotential(const double& sun_elevation, const double& Eccentricity_corr,
                                  const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
-                                 double& R_toa, double& R_direct, double& R_diffuse)
+                                 double& R_toa, double& R_direct, double& R_diffuse) const
 {
-	//these pow cost us a lot here, but replacing them by fastPow() has a large impact o accuracy (because of the exp())
-
 	if(ta==IOUtils::nodata || rh==IOUtils::nodata || pressure==IOUtils::nodata || ground_albedo==IOUtils::nodata) {
 		R_toa = IOUtils::nodata;
 		R_direct = IOUtils::nodata;
@@ -130,114 +128,122 @@ void SunObject::getBeamPotential(const double& sun_elevation, const double& Ecce
 		R_direct = 0.;
 		R_diffuse = 0.;
 	} else {
-		const double olt = 0.32;   //ozone layer thickness (cm) U.S.standard = 0.34 cm
-		const double w0 = 0.9;     //fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
-		const double fc = 0.84;    //fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
-		const double alpha = 1.3;  //wavelength exponent (Iqbal(1983) p.118). Good average value: 1.3+/-0.5. Related to the size distribution of the particules
-		const double beta = 0.03;  //amount of particules index (Iqbal(1983) p.118). Between 0 & .5 and above.
-		const double zenith = 90. - sun_elevation; //this is the TRUE zenith because the elevation is the TRUE elevation
-		const double cos_zenith = cos(zenith*Cst::to_rad); //this uses true zenith angle
-
-		// relative optical air mass Young (1994), see http://en.wikipedia.org/wiki/Airmass
-		//const double mr = 1. / (cos_zenith + 0.50572 * pow( 96.07995-zenith , -1.6364 )); //pbl: this should use apparent zenith angle, and we only get true zenith angle here...
-		// relative optical air mass, Young, A. T. 1994. Air mass and refraction. Applied Optics. 33:1108–1110.
-		const double mr = ( 1.002432*cos_zenith*cos_zenith + 0.148386*cos_zenith + 0.0096467) /
-		                  ( cos_zenith*cos_zenith*cos_zenith + 0.149864*cos_zenith*cos_zenith
-		                  + 0.0102963*cos_zenith +0.000303978);
-
-		// actual air mass: because mr is applicable for standard pressure
-		// it is modified for other pressures (in Iqbal (1983), p.100)
-		// pressure in Pa
-		const double ma = mr * (pressure/101325.);
-
-		// the equations for all the transmittances of the individual atmospheric constituents
-		// are from Bird and Hulstrom (1980, 1981) and can be found summarized in Iqbal (1983)
-		// on the quoted pages
-
-		// broadband transmittance by Rayleigh scattering (Iqbal (1983), p.189)
-		const double taur = exp( -0.0903 * pow(ma,0.84) * (1. + ma - pow(ma,1.01)) );
-
-		// broadband transmittance by ozone (Iqbal (1983), p.189)
-		const double u3 = olt * mr; // ozone relative optical path length
-		const double alpha_oz = 0.1611 * u3 * pow(1. + 139.48 * u3, -0.3035) -
-		                        0.002715 * u3 / ( 1. + 0.044  * u3 + 0.0003 * u3 * u3); //ozone absorbance
-		const double tauoz = 1. - alpha_oz;
-
-		// broadband transmittance by uniformly mixed gases (Iqbal (1983), p.189)
-		const double taug = exp( -0.0127 * pow(ma, 0.26) );
-
-		// saturation vapor pressure in Pa
-		//const double Ps = exp( 26.23 - 5416./ta ); //as used for the parametrization
-		const double Ps = Atmosphere::waterSaturationPressure(ta);
-
-		// Leckner (1978) (in Iqbal (1983), p.94), reduced precipitable water
-		const double w = 0.493 * rh * Ps / ta;
-
-		// pressure corrected relative optical path length of precipitable water (Iqbal (1983), p.176)
-		// pressure and temperature correction not necessary since it is included in its numerical constant
-		const double u1 = w * mr;
-
-		// broadband transmittance by water vapor (in Iqbal (1983), p.189)
-		const double tauw = 1. - 2.4959 * u1  / (pow(1.0 + 79.034 * u1, 0.6828) + 6.385 * u1);
-
-		// broadband total transmittance by aerosols (in Iqbal (1983), pp.189-190)
-		// using Angstroem's turbidity formula Angstroem (1929, 1930) for the aerosol thickness
-		// in Iqbal (1983), pp.117-119
-		// aerosol optical depth at wavelengths 0.38 and 0.5 micrometer
-		const double ka1 = beta * pow(0.38, -alpha);
-		const double ka2 = beta * pow(0.5, -alpha);
-
-		// broadband aerosol optical depth:
-		const double ka  = 0.2758 * ka1 + 0.35 * ka2;
-
-		// total aerosol transmittance function for the two wavelengths 0.38 and 0.5 micrometer:
-		const double taua = exp( -pow(ka, 0.873) * (1. + ka - pow(ka, 0.7088)) * pow(ma, 0.9108) );
-
-		// broadband transmittance by aerosols due to absorption only (Iqbal (1983) p. 190)
-		const double tauaa = 1. - (1. - w0) * (1. - ma + pow(ma, 1.06)) * (1. - taua);
-
-		// broadband transmittance function due to aerosols scattering only
-		// Iqbal (1983) p. 146 (Bird and Hulstrom (1981))
-		const double tauas = taua / tauaa;
-
-		// direct normal solar irradiance in range 0.3 to 3.0 micrometer (Iqbal (1983) ,p.189)
-		// 0.9751 is for this wavelength range.
-		// Bintanja (1996) (see Corripio (2002)) introduced a correction beta_z for increased
-		// transmittance with altitude that is linear up to 3000 m and than fairly constant up to 5000 - 6000 m
-		const double beta_z = (altitude<3000.)? 2.2*1.e-5*altitude : 2.2*1.e-5*3000.;
-
-		//Now calculating the radiation
-		//Top of atmosphere radiation (it will always be positive, because we check for sun elevation before)
-		const double tau_commons = tauoz * taug * tauw * taua;
-
 		R_toa = Cst::solcon * (1.+Eccentricity_corr);
+		getClearSky(sun_elevation, R_toa, ta, rh, pressure, ground_albedo, R_direct, R_diffuse);
+	}
+}
 
-		//Direct radiation. All transmitances, including Rayleigh scattering (Iqbal (1983), p.189)
-		R_direct = 0.9751*( taur * tau_commons + beta_z ) * R_toa ;
+void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
+                            const double& ta, const double& rh, const double& pressure, const double& ground_albedo,
+                            double& R_direct, double& R_diffuse) const
+{
+	//these pow cost us a lot here, but replacing them by fastPow() has a large impact o accuracy (because of the exp())
+	const double olt = 0.32;   //ozone layer thickness (cm) U.S.standard = 0.34 cm
+	const double w0 = 0.9;     //fraction of energy scattered to total attenuation by aerosols (Bird and Hulstrom(1981))
+	const double fc = 0.84;    //fraction of forward scattering to total scattering (Bird and Hulstrom(1981))
+	const double alpha = 1.3;  //wavelength exponent (Iqbal(1983) p.118). Good average value: 1.3+/-0.5. Related to the size distribution of the particules
+	const double beta = 0.03;  //amount of particules index (Iqbal(1983) p.118). Between 0 & .5 and above.
+	const double zenith = 90. - sun_elevation; //this is the TRUE zenith because the elevation is the TRUE elevation
+	const double cos_zenith = cos(zenith*Cst::to_rad); //this uses true zenith angle
 
-		// Diffuse radiation from the sky
-		// Rayleigh-scattered diffuse radiation after the first pass through atmosphere (Iqbal (1983), p.190)
-		const double Idr = 0.79 * R_toa * tau_commons * 0.5 * (1. - taur ) / (1. - ma + pow( ma,1.02 ));
+	// relative optical air mass Young (1994), see http://en.wikipedia.org/wiki/Airmass
+	//const double mr = 1. / (cos_zenith + 0.50572 * pow( 96.07995-zenith , -1.6364 )); //pbl: this should use apparent zenith angle, and we only get true zenith angle here...
+	// relative optical air mass, Young, A. T. 1994. Air mass and refraction. Applied Optics. 33:1108–1110.
+	const double mr = ( 1.002432*cos_zenith*cos_zenith + 0.148386*cos_zenith + 0.0096467) /
+	                  ( cos_zenith*cos_zenith*cos_zenith + 0.149864*cos_zenith*cos_zenith
+	                  + 0.0102963*cos_zenith +0.000303978);
 
-		// aerosol scattered diffuse radiation after the first pass through atmosphere (Iqbal (1983), p.190)
-		const double Ida = 0.79 * R_toa * tau_commons * fc  * (1. - tauas) / (1. - ma + pow( ma,1.02 ));
+	// actual air mass: because mr is applicable for standard pressure
+	// it is modified for other pressures (in Iqbal (1983), p.100)
+	// pressure in Pa
+	const double ma = mr * (pressure/101325.);
 
-		// cloudless sky albedo Bird and Hulstrom (1980, 1981) (in Iqbal (1983) p. 190)
-		//in Iqbal, it is recomputed with ma=1.66*pressure/101325.; and alb_sky=0.0685+0.17*(1.-taua_p)*w0;
-		const double alb_sky = 0.0685 + (1. - fc) * (1. - tauas);
+	// the equations for all the transmittances of the individual atmospheric constituents
+	// are from Bird and Hulstrom (1980, 1981) and can be found summarized in Iqbal (1983)
+	// on the quoted pages
 
-		// multiple reflected diffuse radiation between surface and sky (Iqbal (1983), p.154)
-		const double Idm = (Idr + Ida + R_direct) * ground_albedo * alb_sky / (1. - ground_albedo * alb_sky);
+	// broadband transmittance by Rayleigh scattering (Iqbal (1983), p.189)
+	const double taur = exp( -0.0903 * pow(ma,0.84) * (1. + ma - pow(ma,1.01)) );
 
-		R_diffuse = (Idr + Ida + Idm)*cos_zenith; //Iqbal always "project" diffuse radiation on the horizontal
+	// broadband transmittance by ozone (Iqbal (1983), p.189)
+	const double u3 = olt * mr; // ozone relative optical path length
+	const double alpha_oz = 0.1611 * u3 * pow(1. + 139.48 * u3, -0.3035) -
+	                        0.002715 * u3 / ( 1. + 0.044  * u3 + 0.0003 * u3 * u3); //ozone absorbance
+	const double tauoz = 1. - alpha_oz;
 
-		if( sun_elevation < elevation_threshold ) {
-			//if the Sun is too low on the horizon, we put all the radiation as diffuse
-			//the splitting calculation that might take place later on will reflect this
-			//instead point radiation, it becomes the radiation of a horizontal sky above the domain
-			R_diffuse += R_direct*cos_zenith; //HACK
-			R_direct = 0.;
-		}
+	// broadband transmittance by uniformly mixed gases (Iqbal (1983), p.189)
+	const double taug = exp( -0.0127 * pow(ma, 0.26) );
+
+	// saturation vapor pressure in Pa
+	//const double Ps = exp( 26.23 - 5416./ta ); //as used for the parametrization
+	const double Ps = Atmosphere::waterSaturationPressure(ta);
+
+	// Leckner (1978) (in Iqbal (1983), p.94), reduced precipitable water
+	const double w = 0.493 * rh * Ps / ta;
+
+	// pressure corrected relative optical path length of precipitable water (Iqbal (1983), p.176)
+	// pressure and temperature correction not necessary since it is included in its numerical constant
+	const double u1 = w * mr;
+
+	// broadband transmittance by water vapor (in Iqbal (1983), p.189)
+	const double tauw = 1. - 2.4959 * u1  / (pow(1.0 + 79.034 * u1, 0.6828) + 6.385 * u1);
+
+	// broadband total transmittance by aerosols (in Iqbal (1983), pp.189-190)
+	// using Angstroem's turbidity formula Angstroem (1929, 1930) for the aerosol thickness
+	// in Iqbal (1983), pp.117-119
+	// aerosol optical depth at wavelengths 0.38 and 0.5 micrometer
+	const double ka1 = beta * pow(0.38, -alpha);
+	const double ka2 = beta * pow(0.5, -alpha);
+
+	// broadband aerosol optical depth:
+	const double ka  = 0.2758 * ka1 + 0.35 * ka2;
+
+	// total aerosol transmittance function for the two wavelengths 0.38 and 0.5 micrometer:
+	const double taua = exp( -pow(ka, 0.873) * (1. + ka - pow(ka, 0.7088)) * pow(ma, 0.9108) );
+
+	// broadband transmittance by aerosols due to absorption only (Iqbal (1983) p. 190)
+	const double tauaa = 1. - (1. - w0) * (1. - ma + pow(ma, 1.06)) * (1. - taua);
+
+	// broadband transmittance function due to aerosols scattering only
+	// Iqbal (1983) p. 146 (Bird and Hulstrom (1981))
+	const double tauas = taua / tauaa;
+
+	// direct normal solar irradiance in range 0.3 to 3.0 micrometer (Iqbal (1983) ,p.189)
+	// 0.9751 is for this wavelength range.
+	// Bintanja (1996) (see Corripio (2002)) introduced a correction beta_z for increased
+	// transmittance with altitude that is linear up to 3000 m and than fairly constant up to 5000 - 6000 m
+	const double beta_z = (altitude<3000.)? 2.2*1.e-5*altitude : 2.2*1.e-5*3000.;
+
+	//Now calculating the radiation
+	//Top of atmosphere radiation (it will always be positive, because we check for sun elevation before)
+	const double tau_commons = tauoz * taug * tauw * taua;
+
+	// Diffuse radiation from the sky
+	// Rayleigh-scattered diffuse radiation after the first pass through atmosphere (Iqbal (1983), p.190)
+	const double Idr = 0.79 * R_toa * tau_commons * 0.5 * (1. - taur ) / (1. - ma + pow( ma,1.02 ));
+
+	// aerosol scattered diffuse radiation after the first pass through atmosphere (Iqbal (1983), p.190)
+	const double Ida = 0.79 * R_toa * tau_commons * fc  * (1. - tauas) / (1. - ma + pow( ma,1.02 ));
+
+	// cloudless sky albedo Bird and Hulstrom (1980, 1981) (in Iqbal (1983) p. 190)
+	//in Iqbal, it is recomputed with ma=1.66*pressure/101325.; and alb_sky=0.0685+0.17*(1.-taua_p)*w0;
+	const double alb_sky = 0.0685 + (1. - fc) * (1. - tauas);
+
+
+	//Now, we compute the direct and diffuse radiation components
+	//Direct radiation. All transmitances, including Rayleigh scattering (Iqbal (1983), p.189)
+	R_direct = 0.9751*( taur * tau_commons + beta_z ) * R_toa ;
+
+	// multiple reflected diffuse radiation between surface and sky (Iqbal (1983), p.154)
+	const double Idm = (Idr + Ida + R_direct) * ground_albedo * alb_sky / (1. - ground_albedo * alb_sky);
+	R_diffuse = (Idr + Ida + Idm)*cos_zenith; //Iqbal always "project" diffuse radiation on the horizontal
+
+	if( sun_elevation < elevation_threshold ) {
+		//if the Sun is too low on the horizon, we put all the radiation as diffuse
+		//the splitting calculation that might take place later on will reflect this
+		//instead point radiation, it becomes the radiation of a horizontal sky above the domain
+		R_diffuse += R_direct*cos_zenith; //HACK
+		R_direct = 0.;
 	}
 }
 
@@ -312,6 +318,29 @@ double SunObject::getSplitting(const double& iswr_modeled, const double& iswr_me
 double SunObject::getSplitting(const double& iswr_measured) const
 {
 	return getSplitting(beam_toa, iswr_measured);
+}
+
+/**
+ * @brief Approximate the daily sum of top of atmosphere solar radiation.
+ * The daily sum is considered to be the integrated solar radiation over the current day. This uses approximations for the solar declination:
+ * N. J. Rosenberg, <i>"Microclimate: The Biological Environment"</i>, Wiley, 1974, p495
+ * and for the daily sum of top of atmosphere solar radiation:
+ * M. T. Walter et al., <i>"Process-based snowmelt modeling: does it require more input data than temperature-index modeling?"</i>, Journal of Hydrology, <b>300</b>, 2005, pp65-75.
+ * @return Top Of Atmosphere Radiation projected on the horizontal (W/m²)
+ */
+double SunObject::approxTOADailySum() const
+{
+	const double solcon = Cst::solcon * 24.*3600.; // W/m²/day
+	const Date date(julian_gmt, 0.);
+	const int J = date.getJulianDayNumber();
+	const double lat_rad = latitude*Cst::to_rad;
+
+	const double declination = 0.4102 * sin( 2.*Cst::PI * static_cast<double>((J-80)/365) ); //Rosenberg 1974
+
+	const double toa_h = solcon/Cst::PI * ( acos(-tan(declination)*tan(lat_rad)) * sin(lat_rad)*sin(declination)
+	                                       + cos(lat_rad)*cos(declination) * sin( acos(-tan(declination)*tan(lat_rad))) );
+
+	return toa_h;
 }
 
 const std::string SunObject::toString() const

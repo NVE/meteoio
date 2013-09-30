@@ -211,5 +211,25 @@ class Accumulate : public ResamplingAlgorithms {
 		bool strict;
 };
 
+/**
+ * @brief Generate solar radiation out of daily sum
+ * Daily sums of solar radiation (once, per day, any time during the day) are compared to the potential radiation, leading to an atmospheric loss factor.
+ * This loss factor is then applied to the potential solar radiation calculated at the requested time.
+ * @code
+ * ISWR::resample   = daily_solar
+ * @endcode
+ */
+class Daily_solar : public ResamplingAlgorithms {
+	public:
+		Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+
+		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
+		std::string toString() const;
+	private:
+		static size_t getNearestValidPt(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date);
+		static const double soil_albedo, snow_albedo, snow_thresh;
+};
+
 } //end namespace
 #endif

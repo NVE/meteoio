@@ -16,6 +16,9 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/ResamplingAlgorithms.h>
+#include <meteoio/MathOptim.h>
+#include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteolaws/Sun.h>
 #include <cmath>
 #include <algorithm>
 
@@ -35,6 +38,8 @@ ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::strin
 		return new NearestNeighbour(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "ACCUMULATE"){
 		return new Accumulate(algoname, parname, dflt_window_size, vecArgs);
+	} else if (algoname == "DAILY_SOLAR"){
+		return new Daily_solar(algoname, parname, dflt_window_size, vecArgs);
 	} else {
 		throw IOException("The resampling algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -80,7 +85,7 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 
 	const Date dateStart = resampling_date - window_size;
 
-	for (size_t ii=pos; (ii--) > 0; ) {
+	for (size_t ii=pos; ii-- >0; ) {
 		if (vecM[ii].date < dateStart) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata){
 			indexP1 = ii;
@@ -195,8 +200,6 @@ void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& p
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
-	const Date resampling_date = md.date;
-
 	if (position == ResamplingAlgorithms::exact_match) {
 		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
@@ -210,6 +213,7 @@ void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& p
 	    || ((!extrapolate) && (position == ResamplingAlgorithms::begin)))
 		return;
 
+	const Date resampling_date = md.date;
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	const bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
@@ -277,8 +281,6 @@ void LinearResampling::resample(const size_t& index, const ResamplingPosition& p
 	if (index >= vecM.size())
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 
-	const Date resampling_date = md.date;
-
 	if (position == ResamplingAlgorithms::exact_match) {
 		const double value = vecM[index](paramindex);
 		if (value != IOUtils::nodata) {
@@ -292,6 +294,7 @@ void LinearResampling::resample(const size_t& index, const ResamplingPosition& p
 	    || ((!extrapolate) && (position == ResamplingAlgorithms::begin)))
 		return;
 
+	const Date resampling_date = md.date;
 	size_t indexP1=IOUtils::npos, indexP2=IOUtils::npos;
 	getNearestValidPts(index, paramindex, vecM, resampling_date, window_size, indexP1, indexP2);
 	bool foundP1=(indexP1!=IOUtils::npos), foundP2=(indexP2!=IOUtils::npos);
@@ -427,6 +430,111 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 
 	//write out sum
 	md(paramindex) = sum;
+}
+
+const double Daily_solar::soil_albedo = .23; //grass
+const double Daily_solar::snow_albedo = .85; //snow
+const double Daily_solar::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+Daily_solar::Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs)
+{
+	const size_t nr_args = vecArgs.size();
+	if(nr_args>0) {
+		throw InvalidArgumentException("Too many arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+	}
+}
+
+std::string Daily_solar::toString() const
+{
+	stringstream ss;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
+	return ss.str();
+}
+
+size_t Daily_solar::getNearestValidPt(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date)
+{
+	size_t indexP1=IOUtils::npos;
+	size_t indexP2=IOUtils::npos;
+
+	//look for daily sum before the current point
+	Date dateStart( resampling_date );
+	dateStart.rnd(24*3600, Date::DOWN);
+	if(dateStart==resampling_date) //if resampling_date=midnight GMT, the rounding lands on the exact same date
+		dateStart -= 1.;
+	for (size_t ii=pos; ii-- >0; ) {
+		if (vecM[ii].date < dateStart) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata){
+			indexP1 = ii;
+			break;
+		}
+	}
+
+	//look for daily sum after the current point
+	Date dateEnd( resampling_date );
+	dateEnd.rnd(24*3600, Date::UP);
+	for (size_t ii=pos; ii<vecM.size(); ++ii) {
+		if (vecM[ii].date > dateEnd) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata) {
+			indexP2 = ii;
+			break;
+		}
+	}
+
+	if(indexP1!=IOUtils::npos && indexP2!=IOUtils::npos)
+		throw IOException("More than one daily sum of solar radiation found for "+resampling_date.toString(Date::ISO)+" !", AT);
+
+	if(indexP1!=IOUtils::npos) return indexP1;
+	if(indexP2!=IOUtils::npos) return indexP2;
+	return IOUtils::npos;
+}
+
+void Daily_solar::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+                           const std::vector<MeteoData>& vecM, MeteoData& md) const
+{
+	if (index >= vecM.size())
+		throw IOException("The index of the element to be resampled is out of bounds", AT);
+
+	if(paramindex!=MeteoData::ISWR && paramindex!=MeteoData::RSWR)
+		throw IOException("This method only applies to short wave radiation! (either ISWR or RSWR)", AT);
+
+	md.setResampled(true);
+
+	const size_t indexP = getNearestValidPt(index, paramindex, vecM, md.date);
+	if(indexP==IOUtils::npos) //no daily sum found for the current day
+		return;
+
+	const double lat = md.meta.position.getLat();
+	const double lon = md.meta.position.getLon();
+	const double alt = md.meta.position.getAltitude();
+	if(lat==IOUtils::nodata || lon==IOUtils::nodata || alt==IOUtils::nodata) return;
+
+	double P = md(MeteoData::P);
+	double TA = md(MeteoData::TA);
+	double RH = md(MeteoData::RH);
+	double HS = md(MeteoData::HS);
+	double albedo = 0.5;
+
+	if (P==IOUtils::nodata) P = Atmosphere::stdAirPressure(alt);
+	if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+		albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+	if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
+		//set TA & RH so the reduced precipitable water will get an average value
+		TA=274.98;
+		RH=0.666;
+	}
+
+	SunObject sun(lat, lon, alt, md.date.getJulian(), md.date.getTimeZone());
+	sun.calculateRadiation(TA, RH, P, albedo);
+	double toa, direct, diffuse;
+	sun.getHorizontalRadiation(toa, direct, diffuse);
+	const double sum_toa_h = sun.approxTOADailySum();
+	//const double loss_factor = (sum_toa_h>0.)? vecM[indexP](paramindex) / sum_toa_h : 0.;
+	const double loss_factor = 1.;
+
+	if(paramindex==MeteoData::ISWR)
+		md(paramindex) = loss_factor * (toa);
+	else
+		md(paramindex) = loss_factor * (toa) * albedo;
 }
 
 } //namespace
