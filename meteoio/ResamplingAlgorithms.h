@@ -68,6 +68,7 @@ namespace mio {
  * - nearest:  nearest neighbor data resampling, see NearestNeighbour
  * - linear: linear data resampling, see LinearResampling
  * - accumulate: data re-accumulation as suitable for precipitations, see Accumulate
+ * - daily_solar: generate solar radiation (ISWR or RSWR) from daily sums, see Daily_solar
  */
 
 /**
@@ -98,7 +99,7 @@ class ResamplingAlgorithms {
 		std::string getAlgo() const {return algo;};
 
 		virtual void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md) const = 0;
+		              const std::vector<MeteoData>& vecM, MeteoData& md) = 0;
 
 		virtual std::string toString() const = 0;
 
@@ -136,7 +137,7 @@ class NoResampling : public ResamplingAlgorithms {
 		NoResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
+		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 };
 
@@ -158,7 +159,7 @@ class NearestNeighbour : public ResamplingAlgorithms {
 		NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
+		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
 		bool extrapolate;
@@ -181,7 +182,7 @@ class LinearResampling : public ResamplingAlgorithms {
 		LinearResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
+		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
 		bool extrapolate;
@@ -204,7 +205,7 @@ class Accumulate : public ResamplingAlgorithms {
 		Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
+		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
 		double accumulate_period; //internally, in julian days
@@ -212,9 +213,11 @@ class Accumulate : public ResamplingAlgorithms {
 };
 
 /**
- * @brief Generate solar radiation out of daily sum
+ * @brief Generate solar radiation out of daily sums.
  * Daily sums of solar radiation (once, per day, any time during the day) are compared to the potential radiation, leading to an atmospheric loss factor.
  * This loss factor is then applied to the potential solar radiation calculated at the requested time.
+ * When using this algorithm for RSWR, an albedo is required. A default value of 0.5 is used. If the snow height is available and greater than a 10cm threshold,
+ * a snow albedo is used. Below this threshold, a soil albedo is used.
  * @code
  * ISWR::resample   = daily_solar
  * @endcode
@@ -224,11 +227,22 @@ class Daily_solar : public ResamplingAlgorithms {
 		Daily_solar(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
 
 		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-		              const std::vector<MeteoData>& vecM, MeteoData& md) const;
+		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
-		static size_t getNearestValidPt(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date);
+		size_t getNearestValidPt(const std::vector<MeteoData>& vecM, const size_t& paramindex,  const size_t& stat_idx, const size_t& pos) const;
+		double getSolarInterpol(const Date& resampling_date, const size_t& stat_idx) const;
+		double compRadiation(const double& lat, const double& lon, const double& alt, const double& HS, const size_t& stat_idx);
+		size_t getStationIndex(const std::string& key);
+		void setDayStartAndEnd(const Date& resampling_date, const size_t& stat_idx);
+
+		std::vector< std::vector<double> > radiation;
+		std::vector<std::string> station_index;
+		std::vector<Date> dateStart, dateEnd;
+		std::vector<double> loss_factor;
+
 		static const double soil_albedo, snow_albedo, snow_thresh;
+		static const size_t samples_per_day;
 };
 
 } //end namespace
