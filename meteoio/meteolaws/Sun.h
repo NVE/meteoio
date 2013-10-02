@@ -62,8 +62,6 @@ class SunObject {
 		double getSplitting(const double& iswr_modeled, const double& iswr_measured) const;
 		double getSplitting(const double& iswr_measured) const;
 
-		double approxTOADailySum() const;
-
 		//SunTrajectory position;
 		SunMeeus position;
 

@@ -320,29 +320,6 @@ double SunObject::getSplitting(const double& iswr_measured) const
 	return getSplitting(beam_toa, iswr_measured);
 }
 
-/**
- * @brief Approximate the daily sum of top of atmosphere solar radiation.
- * The daily sum is considered to be the integrated solar radiation over the current day. This uses approximations for the solar declination:
- * N. J. Rosenberg, <i>"Microclimate: The Biological Environment"</i>, Wiley, 1974, p495
- * and for the daily sum of top of atmosphere solar radiation:
- * M. T. Walter et al., <i>"Process-based snowmelt modeling: does it require more input data than temperature-index modeling?"</i>, Journal of Hydrology, <b>300</b>, 2005, pp65-75.
- * @return Top Of Atmosphere Radiation projected on the horizontal (W/m²)
- */
-double SunObject::approxTOADailySum() const
-{
-	const double solcon = Cst::solcon * 24.*3600.; // W/m²/day
-	const Date date(julian_gmt, 0.);
-	const int J = date.getJulianDayNumber();
-	const double lat_rad = latitude*Cst::to_rad;
-
-	const double declination = 0.4102 * sin( 2.*Cst::PI * static_cast<double>((J-80)/365) ); //Rosenberg 1974
-
-	const double toa_h = solcon/Cst::PI * ( acos(-tan(declination)*tan(lat_rad)) * sin(lat_rad)*sin(declination)
-	                                       + cos(lat_rad)*cos(declination) * sin( acos(-tan(declination)*tan(lat_rad))) );
-
-	return toa_h;
-}
-
 const std::string SunObject::toString() const
 {
 	std::ostringstream os;
