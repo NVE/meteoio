@@ -33,7 +33,8 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 		std::ostringstream tmp;
 		tmp << param_name << "::arg" << (ii+1);
 
-		getArgumentsForFilter(cfg, tmp.str(), vec_args); //Read arguments
+		//Read arguments
+		cfg.getValue(tmp.str(), "Filters", vec_args, IOUtils::nothrow);
 		filter_stack.push_back( BlockFactory::getBlock(block_name, vec_args) );
 	}
 }
@@ -63,13 +64,6 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
 		if (properties.time_after > o_properties.time_after)
 			o_properties.time_after = properties.time_after;
 	}
-}
-
-void ProcessingStack::getArgumentsForFilter(const Config& cfg, const std::string& keyname,
-                                                    std::vector<std::string>& vecArguments)
-{
-	// Retrieve the values for a given 'keyname' and store them in a vector calles 'vecArguments'
-	cfg.getValue(keyname, "Filters", vecArguments, IOUtils::nothrow);
 }
 
 //this method applies the whole processing stack for all the stations, all the data points for one meteo param

@@ -64,13 +64,13 @@ class MeteoProcessor {
 
 		bool resample(const Date& date, const std::vector<MeteoData>& ivec, MeteoData& md);
 
-		void getWindowSize(ProcessingProperties& o_properties);
+		void getWindowSize(ProcessingProperties& o_properties) const;
 
 		const std::string toString() const;
 
  	private:
-		size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters) const;
-		void compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current) const;
+		static void getParameters(const Config& cfg, std::set<std::string>& set_parameters);
+		static void compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current);
 
 		Meteo1DInterpolator mi1d;
 		std::map<std::string, ProcessingStack*> processing_stack;

@@ -118,7 +118,7 @@ class DataGenerator {
 		const std::string toString() const;
 
 	private:
-		static size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
+		static void getParameters(const Config& cfg, std::set<std::string>& set_parameters);
 		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
 		static size_t getArgumentsForAlgorithm(const Config& cfg, const std::string& parname,
 		                                const std::string& algorithm,

@@ -25,7 +25,7 @@ MeteoProcessor::MeteoProcessor(const Config& cfg) : mi1d(cfg), processing_stack(
 {
 	//Parse [Filters] section, create processing stack for each configured parameter
 	set<string> set_of_used_parameters;
-	get_parameters(cfg, set_of_used_parameters);
+	getParameters(cfg, set_of_used_parameters);
 
 	for (set<string>::const_iterator it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it){
 		ProcessingStack* tmp = new ProcessingStack(cfg, *it);
@@ -40,7 +40,7 @@ MeteoProcessor::~MeteoProcessor()
 		delete it->second;
 }
 
-size_t MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& set_parameters) const
+void MeteoProcessor::getParameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
 	std::vector<std::string> vec_keys;
 	cfg.findKeys(vec_keys, std::string(), "Filters");
@@ -52,11 +52,9 @@ size_t MeteoProcessor::get_parameters(const Config& cfg, std::set<std::string>& 
 			set_parameters.insert(tmp);
 		}
 	}
-
-	return set_parameters.size();
 }
 
-void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties)
+void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties) const
 {
 	ProcessingProperties tmp;
 
@@ -70,7 +68,7 @@ void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties)
 	compareProperties(tmp, o_properties);
 }
 
-void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current) const
+void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current)
 {
 	current.points_before = MAX(current.points_before, newprop.points_before);
 	current.points_after = MAX(current.points_after, newprop.points_after);

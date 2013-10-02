@@ -110,7 +110,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 void DataGenerator::setAlgorithms(const Config& cfg)
 {
 	set<string> set_of_used_parameters;
-	get_parameters(cfg, set_of_used_parameters);
+	getParameters(cfg, set_of_used_parameters);
 
 	set<string>::const_iterator it;
 	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
@@ -132,7 +132,7 @@ void DataGenerator::setAlgorithms(const Config& cfg)
 	}
 }
 
-size_t DataGenerator::get_parameters(const Config& cfg, std::set<std::string>& set_parameters)
+void DataGenerator::getParameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
 	std::vector<std::string> vec_keys;
 	cfg.findKeys(vec_keys, std::string(), "Generators");
@@ -144,8 +144,6 @@ size_t DataGenerator::get_parameters(const Config& cfg, std::set<std::string>& s
 			set_parameters.insert( IOUtils::strToUpper(tmp) );
 		}
 	}
-
-	return set_parameters.size();
 }
 
 size_t DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms)
