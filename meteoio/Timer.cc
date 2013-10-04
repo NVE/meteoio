@@ -26,6 +26,7 @@
 	#undef min
 #else
 	#include <sys/time.h>
+	#include <sys/resource.h>
 #endif
 
 #include "Timer.h"
