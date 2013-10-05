@@ -223,7 +223,7 @@ void Coords::merge(const Coords& coord2) {
 * The Coords is bound by "<Coords>" and "</Coords>" on separate lines
 */
 const std::string Coords::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<Coords>\n";
 	os << "Altitude\t" << altitude << "\n";
 	os << "Lat/Long\t" << printLatLon() << "\n";
@@ -410,7 +410,7 @@ int Coords::getGridK() const {
 void Coords::getProj(std::string& proj_type, std::string& proj_args) const {
 	proj_type = coordsystem;
 	if(coordsystem=="LOCAL") {
-		std::stringstream dms;
+		std::ostringstream dms;
 		dms << "(" << decimal_to_dms(ref_latitude) << " , " << decimal_to_dms(ref_longitude) << ")";
 		proj_args=dms.str();
 	} else {
@@ -423,7 +423,7 @@ void Coords::getProj(std::string& proj_type, std::string& proj_args) const {
 * @return lat/lon
 */
 std::string Coords::printLatLon() const {
-	std::stringstream dms;
+	std::ostringstream dms;
 	dms << "(" << decimal_to_dms(latitude) << " , " << decimal_to_dms(longitude) << ")";
 
 	return dms.str();
@@ -735,7 +735,7 @@ short int Coords::getEPSG() const {
 	if(coordsystem=="PROJ4") {
 		const int tmp = atoi(coordparam.c_str());
 		if(tmp<0 || tmp>32767) {
-			std::stringstream ss;
+			std::ostringstream ss;
 			ss << "Invalid EPSG code argument: " << tmp << ". It should be between 0 and 32767! (please check EPSG registry)";
 			throw InvalidArgumentException(ss.str(), AT);
 		}
@@ -756,7 +756,7 @@ void Coords::setEPSG(const int epsg) {
 	std::string coord_sys, coord_param;
 
 	if(epsg<0 || epsg>32767) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Invalid epsg code " << epsg << " (it should be between 0 and 32767)!";
 		throw InvalidArgumentException(ss.str(), AT);
 	}

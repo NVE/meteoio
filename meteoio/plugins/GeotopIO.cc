@@ -505,7 +505,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 				throw;
 			}
 
-			stringstream ss;
+			ostringstream ss;
 			ss << "Station_" << stationNumber;
 			vecStation.push_back(StationData(coordinate, ss.str()));
 

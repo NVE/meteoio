@@ -181,7 +181,7 @@ double SunTrajectory::getSolarTime(const double& TZ) const
 
 const std::string SunTrajectory::toString() const
 {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<SunTrajectory>\n";
 	os << std::fixed << std::setprecision(4);
 	os << "Julian (gmt)\t" << julian_gmt << "\n";

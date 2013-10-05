@@ -224,13 +224,13 @@ void SNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 bool SNIO::readStationMetaData(const std::string& metafile, const std::string& stationID, StationData& sd)
 {
 	if (!IOUtils::validFileName(metafile)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "\"" << metafile << "\" is not a valid file name. Please check your METAFILE key!";
 		throw InvalidFileNameException(metafile, AT);
 	}
 
 	if (!IOUtils::fileExists(metafile)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "File \"" << metafile << "\" does not exist. Please check your METAFILE key!";
 		throw FileNotFoundException(ss.str(), AT);
 	}
@@ -365,7 +365,7 @@ void SNIO::readMetaData()
 		StationData sd(Coords(), station_id);
 		if (!metafile.empty()) { //a metafile has been provided, so get metadata
 			if (readStationMetaData(inpath+ "/" +metafile, station_id, sd) == false) {
-				stringstream msg;
+				ostringstream msg;
 				msg << "No metadata found for station " << station_id << " in " << metafile;
 				throw NoAvailableDataException(msg.str(), AT);
 			}
@@ -551,7 +551,7 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": not enough measured temperatures data", AT);
 
 	for (size_t jj = 1; jj <= number_meas_temperatures; jj++) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "TS" << (jj);
 		md.addParameter(ss.str());
 		md(ss.str()) = tmpdata[ii++];
@@ -561,7 +561,7 @@ bool SNIO::parseMeteoLine(const std::vector<std::string>& vecLine, const std::st
 		throw InvalidFormatException("Reading station "+md.meta.stationID+", at "+file_pos(filename, linenr)+": not enough solute data", AT);
 
 	for (size_t jj = 0 ; jj < number_of_solutes; jj++) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "CONC" << jj;
 		md.addParameter(ss.str());
 		md(ss.str()) = tmpdata[ii++];
@@ -740,7 +740,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 
 		// Write optional values
 		//TS[]: snow temperatures
-		stringstream ss;
+		ostringstream ss;
 		for (size_t kk=1; kk<100; kk++) {
 			ss.str("");
 			ss << "TS" << kk;
@@ -851,7 +851,7 @@ void SNIO::convertUnits(MeteoData& meteo)
 			rh /= 100;
 	}
 
-	stringstream ss;
+	ostringstream ss;
 	for (size_t ii=1; ii<50; ii++){
 		ss.str("");
 		ss << "TS" << ii;

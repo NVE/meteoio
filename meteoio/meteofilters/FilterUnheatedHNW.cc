@@ -32,7 +32,7 @@ void FilterUnheatedHNW::process(const unsigned int& param, const std::vector<Met
                         std::vector<MeteoData>& ovec)
 {
 	if(param!=MeteoData::HNW) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Can not use " << getName() << " processing on " << MeteoData::getParameterName(param);
 		throw InvalidArgumentException(ss.str(), AT);
 	}

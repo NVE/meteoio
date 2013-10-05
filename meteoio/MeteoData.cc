@@ -377,7 +377,7 @@ void MeteoData::merge(const MeteoData& meteo2)
 {
 	if( !date.isUndef() && !meteo2.date.isUndef() && date!=meteo2.date) {
 		//the data must be time synchronized!
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to merge MeteoData at " << date.toString(Date::ISO);
 		ss << " with MeteoData at " << meteo2.date.toString(Date::ISO);
 		throw InvalidArgumentException(ss.str(), AT);

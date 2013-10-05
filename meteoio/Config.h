@@ -196,7 +196,7 @@ class Config {
 
 			try {
 				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, vecT, opt);
-			} catch(const std::exception& e){
+			} catch(const std::exception&){
 				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+new_section+"::"+new_key, AT);
 			}
 		}
@@ -251,7 +251,7 @@ class Config {
 
 			try {
 				IOUtils::getValueForKey<T>(properties, new_section + "::" + new_key, t, opt);
-			} catch(const std::exception& e){
+			} catch(const std::exception&){
 				throw UnknownValueException("[E] Error in "+sourcename+": no value for key "+new_section+"::"+new_key, AT);
 			}
 		}
@@ -268,7 +268,7 @@ class Config {
 				T tmp;
 				try {
 					IOUtils::getValueForKey<T>(properties, full_key, tmp, IOUtils::dothrow);
-				} catch(const std::exception& e){
+				} catch(const std::exception&){
 					throw UnknownValueException("[E] Error in "+sourcename+" reading key "+full_key, AT);
 				}
 				vecT.push_back(tmp);

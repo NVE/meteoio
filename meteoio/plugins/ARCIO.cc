@@ -180,7 +180,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	fin.clear();
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
@@ -245,7 +245,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		}
 	} catch(const std::exception& e) {
 		cleanup();
-		std::stringstream msg;
+		std::ostringstream msg;
 		msg << "[E] Error when reading ARC grid \"" << full_name << "\" : " << e.what();
 		throw InvalidFormatException(msg.str(), AT);
 	}
@@ -333,7 +333,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	std::string full_name = grid2dpath_out+"/"+name;
 	fout.open(full_name.c_str());
 	if (fout.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}

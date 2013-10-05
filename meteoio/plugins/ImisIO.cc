@@ -735,7 +735,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 
 		while (rs->next() == true) { //loop over timesteps
 			if(cols.size()!=2) {
-				stringstream ss;
+				ostringstream ss;
 				ss << "For station " << vecStationIDs.at(stationindex).getStationID() << ", ";
 				ss << "snowpack SWE query returned " << cols.size() << " columns, while 2 were expected";
 				throw UnknownValueException(ss.str(), AT);

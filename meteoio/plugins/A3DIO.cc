@@ -237,7 +237,7 @@ void A3DIO::read1DStation(StationData& sd)
 		sd.setStationData(location, "meteo1d", "Meteo1D station");
 	} catch(const std::exception& e) {
 		fin.close();
-		std::stringstream msg;
+		std::ostringstream msg;
 		msg << "[E] Error while reading header of file \"" << meteo1d << "\": " << e.what();
 		throw InvalidFormatException(msg.str(), AT);
 	}
@@ -295,7 +295,7 @@ void A3DIO::read1DMeteo(const Date& dateStart, const Date& dateEnd, std::vector<
 		}
 	} catch(...) {
 		fin.close();
-		std::stringstream msg;
+		std::ostringstream msg;
 		msg << "[E] Error processing data section of file " << meteo1d << " possibly at line \"" << line << "\"";
 		throw InvalidFormatException(msg.str(), AT);
 	}
@@ -389,7 +389,7 @@ void A3DIO::read2DMeteo(std::vector< std::vector<MeteoData> >& vecMeteo)
 	if (nr_stations < 1) {
 		string tmp;
 		cfg.getValue("METEOPATH", "Input", tmp);
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "[E] No stations metadata found between between " << startDate.toString(Date::ISO) << " and " << endDate.toString(Date::ISO);
 		ss << " in header of 2D meteo files in " << tmp;
 		throw InvalidFormatException(ss.str(), AT);
@@ -555,7 +555,7 @@ void A3DIO::read2DMeteoData(const std::string& filename, const std::string& para
 		const size_t cols_found = IOUtils::readLineToVec(line_in, tmpvec);
 		if (cols_found!=columns) { //Every station has to have its own column
 			fin.close();
-			std::stringstream ss;
+			std::ostringstream ss;
 			ss << "[E] Premature End of Line or no data for date " << vecM[0][bufferindex].date.toString(Date::FULL);
 			ss << " in file \"" << filename << "\"";
 			ss << " (expected data for " << columns << " stations, found " << cols_found << " data fields instead)";

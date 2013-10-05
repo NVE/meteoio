@@ -86,7 +86,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	std::string backtrace_info = "\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
 	for (unsigned int ii=1; ii<(unsigned)tracesize; ii++) {
 	#ifdef __GNUC__
-		std::stringstream ss;
+		std::ostringstream ss;
 		char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
 		for (char *p = symbols[ii]; *p; ++p) {
 			// find parantheses and +address offset surrounding mangled name

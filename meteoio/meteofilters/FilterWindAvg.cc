@@ -38,7 +38,7 @@ void FilterWindAvg::process(const unsigned int& param, const std::vector<MeteoDa
                             std::vector<MeteoData>& ovec)
 {
 	if(param!=MeteoData::VW && param!=MeteoData::DW) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Can not use WIND_AVG processing on " << MeteoData::getParameterName(param);
 		throw InvalidArgumentException(ss.str(), AT);
 	}

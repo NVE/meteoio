@@ -277,7 +277,7 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 			iohandler.readMeteoData(new_buffer_end, new_buffer_end+chunk_size, tmp_meteo_buffer);
 
 			if (tmp_meteo_buffer.size() != buffer_size) {
-				stringstream ss;
+				ostringstream ss;
 				ss << "The number of stations changed over time from " << buffer_size << " to " << tmp_meteo_buffer.size() << ", ";
 				ss << "this is not handled yet!";
 				throw IOException(ss.str(), AT);
@@ -367,8 +367,8 @@ void BufferedIOHandler::write2DGrid(const Grid2DObject& grid_in, const MeteoGrid
 void BufferedIOHandler::clearBuffer() {
 	IndexBufferedGrids.clear();
 	vec_buffer_meteo.clear();
-	buffer_start = 0.;
-	buffer_end = 0.;
+	buffer_start = Date(0., 0.);
+	buffer_end = Date(0., 0.);
 	mapBufferedGrids.clear();
 }
 

@@ -170,7 +170,7 @@ void GRIBIO::readStations(std::vector<Coords> &vecPoints)
 	string current_station;
 	do {
 		current_station.clear();
-		stringstream ss;
+		ostringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
 		IOUtils::stripComments(current_station);
@@ -309,7 +309,7 @@ void GRIBIO::getDate(grib_handle* h, Date &base, double &d1, double &d2) {
 			step_units = 30./(24.*60.);
 			break;
 		default:
-			std::stringstream ss;
+			std::ostringstream ss;
 			ss << "GRIB file using stepUnits=" << stepUnits << ", which is not supported";
 			throw InvalidFormatException(ss.str(), AT);
 	}
@@ -368,7 +368,7 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cell_x, double &cell_y
 	/*const double cellsize_x_ll = Coords::lon_degree_lenght(ll_latitude)*d_j;
 	const double cellsize_x_ur = Coords::lon_degree_lenght(ur_latitude)*d_j;
 	if( fabs(cellsize_x_ll-cellsize_x_ur)/cellsize_x > 1./100.) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Cell size varying too much in the x direction between lower left and upper right corner: ";
 		ss << cellsize_x_ll << "m to " << cellsize_x_ur << "m";
 		throw IOException(ss.str(), AT);
@@ -386,7 +386,7 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& rea
 	size_t values_len= 0;
 	GRIB_CHECK(grib_get_size(h,"values",&values_len),0);
 	if(values_len!=(unsigned)(Ni*Nj)) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Declaring grid of size " << Ni << "x" << Nj << "=" << Ni*Nj << " ";
 		ss << "but containing " << values_len << " values. This is inconsistent!";
 		throw InvalidArgumentException(ss.str(), AT);
@@ -455,7 +455,7 @@ void GRIBIO::read2DGrid(Grid2DObject& grid_out, const std::string& i_name)
 	const std::string filename = grid2dpath_in+"/"+i_name;
 	fp = fopen(filename.c_str(),"r");
 	if(fp==NULL) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
@@ -482,7 +482,7 @@ void GRIBIO::indexFile(const std::string& filename)
 {
 	fp = fopen(filename.c_str(),"r");
 	if(fp==NULL) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
@@ -663,7 +663,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	}
 
 	if(grid_out.isEmpty()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << filename << "\"";
 		throw NoAvailableDataException(ss.str(), AT);
@@ -902,10 +902,10 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 		double true_lat, true_lon;
 		Coords::rotatedToTrueLatLon(latitudeOfNorthernPole, longitudeOfNorthernPole, outlats[ii], outlons[ii], true_lat, true_lon);
 		sd.position.setLatLon(true_lat, true_lon, values[ii]);
-		stringstream ss;
+		ostringstream ss;
 		ss << "Point_" << indexes[ii];
 		sd.stationID=ss.str();
-		stringstream ss2;
+		ostringstream ss2;
 		ss2 << "GRIB point (" << indexes[ii] % Ni << "," << indexes[ii] / Ni << ")";
 		sd.stationName=ss2.str();
 		stations.push_back(sd);

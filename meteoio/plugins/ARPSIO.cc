@@ -214,7 +214,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 	}
 
 	if(grid_out.isEmpty()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << name << "\"";
 		throw NoAvailableDataException(ss.str(), AT);
@@ -398,7 +398,7 @@ void ARPSIO::initializeTrueARPS(const char curr_line[ARPS_MAX_LINE_LENGTH])
 		zcoord.push_back( v1 );
 	}
 	if(zcoord.size()!=dimz) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Expected " << dimz << " z coordinates in file \""+filename+"\", found " << zcoord.size();
 		cleanup();
 		throw InvalidFormatException(ss.str(), AT);
@@ -465,7 +465,7 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 {
 	if(layer<1 || layer>dimz) {
 		cleanup();
-		stringstream tmp;
+		ostringstream tmp;
 		tmp << "Layer " << layer << " does not exist in ARPS file " << filename << " (nr layers=" << dimz << ")";
 		throw IndexOutOfBoundsException(tmp.str(), AT);
 	}

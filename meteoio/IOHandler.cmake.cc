@@ -407,7 +407,7 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 				for (size_t kk=0; kk<nr_of_params; ++kk) {
 					const size_t param_index = vecMeteo[ii][jj].getParameterIndex(copy_parameter[kk]);
 					if (param_index == IOUtils::npos) {
-						std::stringstream ss;
+						std::ostringstream ss;
 						ss << "At " << vecMeteo[ii][jj].date.toString(Date::ISO) << ", station " << vecMeteo[ii][jj].meta.stationID;
 						ss << " has no parameter \"" << copy_parameter[kk] << "\" to copy!\n";
 						throw InvalidArgumentException(ss.str(), AT);
@@ -433,7 +433,7 @@ const std::string IOHandler::toString()
 const std::string IOHandler::toString() const
 #endif
 {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<IOHandler>\n";
 	os << "Config& cfg = " << hex << &cfg << dec << "\n";
 

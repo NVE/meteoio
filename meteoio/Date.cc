@@ -553,8 +553,6 @@ double Date::rnd(const double& julian, const unsigned int& precision, const RND&
 		return integral + (double)Optim::floor( fractional*rnd_factor ) / rnd_factor + .5;
 
 	throw UnknownValueException("Unknown rounding strategy!", AT);
-	return julian;
-
 }
 
 /**
@@ -833,7 +831,7 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 		calculateValues(julian_out, year_out, month_out, day_out, hour_out, minute_out);
 	}
 
-	stringstream tmpstr;
+	ostringstream tmpstr;
 	switch(type) {
 		case(ISO_TZ):
 		case(ISO):
@@ -1012,14 +1010,14 @@ void Date::plausibilityCheck(const int& in_year, const int& in_month, const int&
 	    || ((in_day > daysLeapYear[in_month-1]) && isLeapYear(in_year))
 	    || (in_hour < 0) || (in_hour > 24)
 	    || (in_minute < 0) || (in_minute > 59)) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Invalid Date requested: " << in_year << "-" << in_month;
 		ss << "-" << in_day << "T" << in_hour << ":" << in_minute;
 		throw IOException(ss.str(), AT);
 	}
 
 	if ((in_hour == 24) && (in_minute != 0)) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Invalid Date requested: " << in_year << "-" << in_month;
 		ss << "-" << in_day << "T" << in_hour << ":" << in_minute;
 		throw IOException(ss.str(), AT);

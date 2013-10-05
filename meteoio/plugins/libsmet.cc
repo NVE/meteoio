@@ -246,7 +246,7 @@ void SMETWriter::set_header_value(const std::string& key, const double& value)
 {
 	//check if key is decimal, transform to string and add to header
 	if (SMETCommon::all_decimal_header_values.find(key) != SMETCommon::all_decimal_header_values.end()){
-		stringstream ss;
+		ostringstream ss;
 		if ((key == "latitude") || (key == "longitude") || (key == "easting") || (key == "northing")){
 			ss << fixed << setprecision(6) << value;
 		} else if (key == "altitude"){
@@ -260,7 +260,7 @@ void SMETWriter::set_header_value(const std::string& key, const double& value)
 		set_header_value(key, ss.str());
 	} else {
 		//It's a non-standard header value
-		stringstream ss;
+		ostringstream ss;
 		ss << value; //for nodata
 		set_header_value(key, ss.str());
 	}
@@ -416,7 +416,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 {
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
@@ -462,7 +462,7 @@ void SMETWriter::write(const std::vector<double>& data)
 {
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
@@ -576,7 +576,7 @@ void SMETWriter::write_data_line_binary(const std::vector<double>& data)
 		fout.close();
 		fout.open(filename.c_str(), ios::out | ios::app | ios::binary); //reopen as binary file
 		if (fout.fail()) {
-			stringstream ss;
+			ostringstream ss;
 			ss << "Error writing to file \"" << filename << "\", possible reason: " << strerror(errno);
 			throw SMETException(ss.str(), SMET_AT);
 		}
@@ -659,7 +659,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 	fin.clear();
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw SMETException(ss.str(), SMET_AT);
@@ -694,7 +694,7 @@ std::string SMETReader::get_field_name(const size_t& nr_of_field)
 	if (nr_of_field < nr_of_fields){
 		return vec_fieldnames[nr_of_field];
 	} else {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Trying to access field #" << nr_of_field << " (starting from 0) of " << nr_of_fields << " fields in file \"" << filename << "\". ";
 		ss << "This is out of bounds!";
 		throw SMETException(ss.str(), SMET_AT);
@@ -845,7 +845,7 @@ void SMETReader::process_header()
 		const size_t Nfields = (timestamp_present)? nr_of_fields+1 : nr_of_fields;
 		const size_t Noffset = (timestamp_present)? nr_offset+1 : nr_offset;
 		const size_t Nmultiplier =(timestamp_present)? nr_multiplier+1 : nr_multiplier;
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "File \"" << filename << "\" has " << Nfields << " data fields, but specifies ";
 		ss << Noffset << " offsets and " << Nmultiplier << " multipliers. ";
 		ss << "The number of offsets and multipliers MUST fit the number of fields, including the (optional) timestamp column.";
@@ -963,7 +963,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 	fin.clear();
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
@@ -1014,7 +1014,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 	ifstream fin;
 	fin.open (filename.c_str(), mode);
 	if (fin.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
@@ -1111,7 +1111,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 				throw;
 			}
 		} else {
-			std::stringstream ss;
+			std::ostringstream ss;
 			ss << "File \'" << filename << "\' declares " << nr_of_data_fields << " columns ";
 			ss << "but this does not match the following line:\n" << line << "\n";
 			throw SMETException(ss.str(), SMET_AT);

@@ -67,7 +67,7 @@ void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_s
 {
 	//perform check on date_start and date_end
 	if (date_end < date_start) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to push data set from " << date_start.toString(Date::ISO) << " to " << date_end.toString(Date::ISO) << ". ";
 		ss << " Obviously, date_start should be less than date_end!";
 		throw InvalidArgumentException(ss.str(), AT);

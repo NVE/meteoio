@@ -117,7 +117,7 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 
 const std::string ProcessingStack::toString() const
 {
-	std::stringstream os;
+	std::ostringstream os;
 	//os << "<ProcessingStack>";
 	os << setw(10) << param_name << "::";
 

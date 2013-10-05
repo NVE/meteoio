@@ -198,7 +198,7 @@ void Grid2DObject::set(const size_t& i_ncols, const size_t& i_nrows,
 {
 	//Test for equality in size: Only compatible Array2D<double> grids are permitted
 	if ((i_ncols != i_grid2D.getNx()) || (i_nrows != i_grid2D.getNy())) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to initialize a ( " << i_ncols << " x " << i_nrows << " ) Grid2DObject with a ";
 		ss << "( " << i_grid2D.getNx() << " x " << i_grid2D.getNy() << " ) 2D array";
 		throw IOException(ss.str(), AT);

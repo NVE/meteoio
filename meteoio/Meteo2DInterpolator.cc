@@ -214,7 +214,7 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 	for (size_t ii=0; ii<vec_meteo.size(); ii++) {
 		const StationData& meta = vec_meteo[ii].meta;
 		if(!meta.position.isSameProj(dem.llcorner)) {
-			std::stringstream os;
+			std::ostringstream os;
 			std::string type, args;
 			meta.position.getProj(type, args);
 			os << "Station " << meta.stationID << " is using projection (" << type << " " << args << ") ";

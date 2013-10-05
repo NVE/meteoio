@@ -141,7 +141,7 @@ NoResampling::NoResampling(const std::string& i_algoname, const std::string& i_p
 
 std::string NoResampling::toString() const
 {
-	stringstream ss;
+	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
 	ss << "[ ]";
 	return ss.str();
@@ -189,7 +189,7 @@ NearestNeighbour::NearestNeighbour(const std::string& i_algoname, const std::str
 
 std::string NearestNeighbour::toString() const
 {
-	stringstream ss;
+	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
 	ss << "[ window_size=" << window_size << " extrapolate=" << extrapolate << " ]";
 	return ss.str();
@@ -270,7 +270,7 @@ LinearResampling::LinearResampling(const std::string& i_algoname, const std::str
 
 std::string LinearResampling::toString() const
 {
-	stringstream ss;
+	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
 	ss << "[ window_size=" << window_size << " extrapolate=" << extrapolate << " ]";
 	return ss.str();
@@ -346,7 +346,7 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 		IOUtils::convertString(accumulate_period, vecArgs[0]);
 		accumulate_period /= 86400.; //user uses seconds, internally julian day is used
 		if(accumulate_period<=0.) {
-			std::stringstream tmp;
+			std::ostringstream tmp;
 			tmp << "Invalid accumulation period (" << accumulate_period << ") for \"" << i_parname << "::" << i_algoname << "\"";
 			throw InvalidArgumentException(tmp.str(), AT);
 		}
@@ -363,7 +363,7 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 
 std::string Accumulate::toString() const
 {
-	stringstream ss;
+	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
 	ss << "[ accumulate_period=" << accumulate_period << " strict=" << strict << " ]";
 	return ss.str();
@@ -449,7 +449,7 @@ Daily_solar::Daily_solar(const std::string& i_algoname, const std::string& i_par
 
 std::string Daily_solar::toString() const
 {
-	stringstream ss;
+	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
 	return ss.str();
 }

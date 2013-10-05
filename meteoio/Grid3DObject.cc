@@ -233,7 +233,7 @@ void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_
 {
 	//Test for equality in size: Only compatible Array3D<double> grids are permitted
 	if ((i_ncols != i_grid3D.getNx()) || (i_nrows != i_grid3D.getNy()) || (i_ndepths != i_grid3D.getNz())) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to initialize a ( " << i_ncols << " x " << i_nrows << " x " << i_ndepths << " ) Grid3DObject with a ";
 		ss << "( " << i_grid3D.getNx() << " x " << i_grid3D.getNy() << " x " << i_grid3D.getNz() << " ) 3D array";
 		throw IOException(ss.str(), AT);

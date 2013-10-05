@@ -18,6 +18,7 @@
 #include <meteoio/GeneratorAlgorithms.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteolaws/Meteoconst.h>
 
 using namespace std;
 
@@ -111,12 +112,12 @@ bool SinGenerator::generate(const size_t& param, MeteoData& md)
 			const double julian = md.date.getJulian();
 			t = (julian - Optim::intPart(julian) - phase) + .25; //watch out: julian day starts at noon!
 		} else {
-			std::stringstream ss;
+			std::ostringstream ss;
 			ss << "Invalid period \"" << type << "\" specified for the " << algo << " generator";
 			throw InvalidArgumentException(ss.str(), AT);
 		}
 
-		const double w = 2.*M_PI;
+		const double w = 2.*Cst::PI;
 		value = amplitude * sin(w*t) + offset;
 	}
 

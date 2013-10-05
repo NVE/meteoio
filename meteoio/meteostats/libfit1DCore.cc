@@ -38,7 +38,7 @@ std::string FitModel::getInfo() const {
 void FitModel::setGuess(const std::vector<double>& lambda_in) {
 	const size_t nGuess = lambda_in.size();
 	if(nGuess!=nParam) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Provided " << nGuess << " guesses for " << nParam << " parameters ";
 		ss << "for regression model " << regname << "!";
 		throw InvalidArgumentException(ss.str(), AT);
@@ -119,13 +119,13 @@ bool FitLeastSquare::checkInputs()
 	nPts=X.size();
 
 	if( nPts!=Y.size() ) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "X vector and Y vector don't match! " << nPts << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
 	if(nPts<min_nb_pts) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Only " << nPts << " data points for " << regname << " regression model.";
 		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
 		infoString = ss.str();
@@ -178,7 +178,7 @@ bool FitLeastSquare::computeFit() {
 	const double R2 = Matrix::dot(dBeta, dBeta);
 
 	//building infoString
-	stringstream ss;
+	ostringstream ss;
 	ss << "Computed regression with " << regname << " model ";
 	ss << "- Sum of square residuals = " << R2 << " , max_delta = " << max_delta << " ";
 	ss << "- " << iter << " iterations";

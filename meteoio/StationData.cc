@@ -102,7 +102,7 @@ double StationData::getAzimuth() const {
 }
 
 const std::string StationData::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<station>" << "\n"
 	   << std::setprecision(10) << position.toString()
 	   << "ID:    " << getStationID() << "\n"

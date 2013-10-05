@@ -100,13 +100,13 @@ bool SimpleLinear::checkInputs()
 	nPts=X.size();
 
 	if( nPts!=Y.size() ) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
 	if(nPts<min_nb_pts) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Only " << nPts << " data points for " << regname << " regression model.";
 		ss << " Expecting at least " << min_nb_pts << " for this model!\n";
 		infoString = ss.str();
@@ -127,7 +127,7 @@ bool SimpleLinear::fit()
 
 	Lambda.clear();
 	double a,b,r;
-	std::stringstream mesg;
+	std::ostringstream mesg;
 
 	if(fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::LinRegression(X, Y, a, b, r, mesg);
@@ -152,7 +152,7 @@ bool NoisyLinear::fit()
 
 	Lambda.clear();
 	double a,b,r;
-	std::stringstream mesg;
+	std::ostringstream mesg;
 
 	if(fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);

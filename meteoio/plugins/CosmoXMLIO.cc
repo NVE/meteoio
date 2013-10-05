@@ -208,7 +208,7 @@ double CosmoXMLIO::getDoubleValue(xmlpp::TextReader& reader) {
 	double value;
 	const string Svalue = getValue(reader);
 	if( IOUtils::convertString(value, Svalue) == false) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Can not parse (double)" << Svalue;
 		throw ConversionFailedException(ss.str(), AT);
 	}
@@ -236,7 +236,7 @@ Date CosmoXMLIO::getDateValue(xmlpp::TextReader& reader) {
 	Date date;
 	const string Svalue = getValue(reader);
 	if( IOUtils::convertString(date, Svalue, in_tz) == false) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Can not parse (date)" << Svalue;
 		throw ConversionFailedException(ss.str(), AT);
 	}
@@ -479,7 +479,7 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 		//Save file
 		std::string stat_id = vecMeteo[ii][0].meta.getStationID();
 		if(stat_id.empty()) {
-			stringstream ss;
+			ostringstream ss;
 			ss << "station" << ii;
 			stat_id = ss.str();
 		}

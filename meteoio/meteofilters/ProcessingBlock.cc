@@ -222,7 +222,7 @@ const ProcessingProperties& ProcessingBlock::getProperties() const {
 
 const std::string ProcessingProperties::toString() const
 {
-	std::stringstream os;
+	std::ostringstream os;
 	const double h_before = time_before.getJulian()*24.;
 	const double h_after = time_after.getJulian()*24.;
 	const size_t p_before = points_before;

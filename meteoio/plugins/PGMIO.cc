@@ -113,7 +113,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	fin.clear();
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
@@ -158,7 +158,7 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			getline(fin, line, eoln); //read complete line
 
 			if (IOUtils::readLineToVec(line, tmpvec) != ncols) {
-				stringstream ss;
+				ostringstream ss;
 				ss << "Invalid number of columns at line " << nrows-kk << " in file \"" << full_name << "\". ";
 				ss << "Expecting " << ncols << " columns\n";
 				throw InvalidFormatException(ss.str(), AT);
@@ -248,7 +248,7 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	const unsigned int nr_colors = 256;
 	fout.open(full_name.c_str());
 	if (fout.fail()) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}

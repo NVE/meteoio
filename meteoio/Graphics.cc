@@ -154,7 +154,7 @@ unsigned int legend::getLegendWidth() {
 
 void legend::writeLine(const double& val, const unsigned int& px_row)
 {
-	std::stringstream ss;
+	std::ostringstream ss;
 	//const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
 	//ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val; //improve this format...
 	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << val;
@@ -175,7 +175,7 @@ void legend::writeLine(const double& val, const unsigned int& px_row)
 	}
 
 	for(size_t i=0; i<ss.str().size(); i++) {
-		char c=ss.str()[i];
+		const char c=ss.str()[i];
 		const unsigned int px_col = (unsigned int)i*(char_width+char_space)+x_offset;
 		if(c=='0') writeChar(font_0, px_col, px_row);
 		if(c=='1') writeChar(font_1, px_col, px_row);
@@ -345,7 +345,7 @@ void Gradient::setModel(const Type& i_type)
 
 void Gradient::setNrOfLevels(const unsigned char& i_nr_unique_levels) {
 	if(i_nr_unique_levels<=reserved_idx) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Insufficient number of colors requested for gradient: ask for more than ";
 		ss << reserved_idx << " colors!";
 		throw InvalidArgumentException(ss.str(), AT);
@@ -414,7 +414,7 @@ void Gradient::getColor(const double& val, unsigned char& index) const
 	if(delta==0) { //otherwise constant data throughout the grid makes a division by zero...
 #ifndef NOSAFECHECKS
 		if((nr_unique_cols/2 + reserved_idx) > std::numeric_limits<unsigned char>::max()) {
-			std::stringstream ss;
+			std::ostringstream ss;
 			ss << "[E] Number of unique colors in gradient and/or reserved index too large to fit in index: ";
 			ss << (nr_unique_cols/2 + reserved_idx) << " when it should be at most " << std::numeric_limits<unsigned char>::max();
 			throw IndexOutOfBoundsException(ss.str(), AT);
@@ -477,7 +477,7 @@ void Gradient::getPalette(std::vector<unsigned char> &palette, size_t &nr_colors
 
 	const size_t nr_entries = palette.size();
 	if((nr_entries%3) != 0) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Error when creating color palette: " << nr_entries << " data points ";
 		ss << "for 3 channels palette is impossible! (colors are interlaced)";
 		throw IOException(ss.str(), AT);
@@ -491,7 +491,7 @@ double Gradient_model::getInterpol(const double& val, const std::vector<double>&
 	const size_t nr = i_X.size();
 #ifndef NOSAFECHECKS
 	if(i_Y.size()!=nr) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "For color gradients interpolations, both X and Y vectors must have the same size! ";
 		ss << "There are " << i_X.size() << " abscissa for " << i_Y.size() << " ordinates.";
 		throw IOException(ss.str(), AT);

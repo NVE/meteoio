@@ -34,7 +34,7 @@ IOPlugin& IOPlugin::operator=(const IOPlugin& source)
 }
 
 const std::string IOPlugin::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	const int pt_w=8;
 	os << "<IOPlugin>" << std::setw(10) << classname;
 	os << "," << std::showbase << std::setw(pt_w+2) << io;

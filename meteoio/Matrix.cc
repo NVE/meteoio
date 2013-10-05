@@ -27,7 +27,7 @@ const double Matrix::epsilon_mtr = 1e-6; //for comparing two matrix
 
 Matrix::Matrix(const int& rows, const int& cols) : vecData(), ncols(0), nrows(0) {
 	if(rows<0 || cols<0) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying construct a matrix with negative dimensions: ";
 		tmp << "(" << rows << "," << cols << ")";
 		throw IOException(tmp.str(), AT);
@@ -78,7 +78,7 @@ void Matrix::random(const double& range) {
 double& Matrix::operator ()(const size_t& i, const size_t& j) {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to access matrix[" << i << "," << j << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
@@ -89,7 +89,7 @@ double& Matrix::operator ()(const size_t& i, const size_t& j) {
 double Matrix::operator ()(const size_t& i, const size_t& j) const {
 #ifndef NOSAFECHECKS
 	if ((i<1) || (i > nrows) || (j<1) || (j > ncols)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to access matrix[" << i << "," << j << "]";
 		throw IndexOutOfBoundsException(ss.str(), AT);
 	}
@@ -98,7 +98,7 @@ double Matrix::operator ()(const size_t& i, const size_t& j) const {
 }
 
 const std::string Matrix::toString() const {
-	std::stringstream os;
+	std::ostringstream os;
 	const size_t wd=6;
 	os << "\n┌ ";
 	for(size_t jj=1; jj<=(ncols*(wd+1)); jj++)
@@ -138,7 +138,7 @@ bool Matrix::operator!=(const Matrix& in) const {
 Matrix& Matrix::operator+=(const Matrix& rhs) {
 	//check dimensions compatibility
 	if(nrows!=rhs.nrows || ncols!=rhs.ncols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to add two matrix with incompatible dimensions: ";
 		tmp << "(" << nrows << "," << ncols << ") * ";
 		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
@@ -177,7 +177,7 @@ const Matrix Matrix::operator+(const double& rhs) const {
 Matrix& Matrix::operator-=(const Matrix& rhs) {
 	//check dimensions compatibility
 	if(nrows!=rhs.nrows || ncols!=rhs.ncols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to substract two matrix with incompatible dimensions: ";
 		tmp << "(" << nrows << "," << ncols << ") * ";
 		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
@@ -214,7 +214,7 @@ const Matrix Matrix::operator-(const double& rhs) const {
 Matrix& Matrix::operator*=(const Matrix& rhs) {
 	//check dimensions compatibility
 	if(ncols!=rhs.nrows) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to multiply two matrix with incompatible dimensions: ";
 		tmp << "(" << nrows << "," << ncols << ") * ";
 		tmp << "(" << rhs.nrows << "," << rhs.ncols << ")";
@@ -278,7 +278,7 @@ double Matrix::scalar(const Matrix& m) {
 
 double Matrix::scalar() const {
 	if(ncols!=1 || nrows!=1) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to get scalar value of a non (1x1) matrix ";
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
@@ -292,14 +292,14 @@ double Matrix::dot(const Matrix& A, const Matrix& B) {
 	B.size(Brows, Bcols);
 
 	if(Acols!=1 || Bcols!=1) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to get dot product of non vector matrix ";
 		tmp << "(" << Arows << "," << Acols << ") · ";
 		tmp << "(" << Brows << "," << Bcols << ") · ";
 		throw IOException(tmp.str(), AT);
 	}
 	if(Arows!=Brows) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to get dot product of incompatible matrix ";
 		tmp << "(" << Arows << "," << Acols << ") · ";
 		tmp << "(" << Brows << "," << Bcols << ") · ";
@@ -335,7 +335,7 @@ void Matrix::T() {
 
 double Matrix::det() const {
 	if(nrows!=ncols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to calculate the determinant of a non-square matrix ";
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
@@ -353,7 +353,7 @@ bool Matrix::LU(Matrix& L, Matrix& U) const {
 //Dolittle algorithm, cf http://math.fullerton.edu/mathews/numerical/linear/dol/dol.html
 //HACK: there is no permutation matrix, so it might not be able to give a decomposition...
 	if(nrows!=ncols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to calculate the LU decomposition of a non-square matrix ";
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
@@ -391,7 +391,7 @@ Matrix Matrix::getInv() const {
 //This uses an LU decomposition followed by backward and forward solving for the inverse
 //See for example Press, William H.; Flannery, Brian P.; Teukolsky, Saul A.; Vetterling, William T. (1992), "LU Decomposition and Its Applications", Numerical Recipes in FORTRAN: The Art of Scientific Computing (2nd ed.), Cambridge University Press, pp. 34–42
 	if(nrows!=ncols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to invert a non-square matrix ";
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
@@ -445,7 +445,7 @@ Matrix Matrix::getInv() const {
 bool Matrix::inv() {
 //same as getInv() const but we write the final result on top of the input matrix
 	if(nrows!=ncols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to invert a non-square matrix ";
 		tmp << "(" << nrows << "," << ncols << ") !";
 		throw IOException(tmp.str(), AT);
@@ -501,14 +501,14 @@ bool Matrix::solve(const Matrix& A, const Matrix& B, Matrix& X) {
 	size_t Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
 	if(Anrows!=Ancols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to solve A·X=B with A non square matrix ";
 		tmp << "(" << Anrows << "," << Ancols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
 	B.size(Bnrows, Bncols);
 	if(Anrows!=Bnrows)  {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to solve A·X=B with A and B of incompatible dimensions ";
 		tmp << "(" << Anrows << "," << Ancols << ") and (";
 		tmp << "(" << Bnrows << "," << Bncols << ") !";
@@ -571,21 +571,21 @@ bool Matrix::TDMA_solve(const Matrix& A, const Matrix& B, Matrix& X)
 	size_t Anrows,Ancols, Bnrows, Bncols;
 	A.size(Anrows, Ancols);
 	if(Anrows!=Ancols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to solve A·X=B with A non square matrix ";
 		tmp << "(" << Anrows << "," << Ancols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
 	B.size(Bnrows, Bncols);
 	if(Anrows!=Bnrows)  {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to solve A·X=B with A and B of incompatible dimensions ";
 		tmp << "(" << Anrows << "," << Ancols << ") and (";
 		tmp << "(" << Bnrows << "," << Bncols << ") !";
 		throw IOException(tmp.str(), AT);
 	}
 	if(Bncols!=1) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "Trying to solve A·X=B but B is not a vector! It is ";
 		tmp << "(" << Bnrows << "," << Bncols << ") !";
 		throw IOException(tmp.str(), AT);
@@ -627,7 +627,7 @@ Matrix Matrix::TDMA_solve(const Matrix& A, const Matrix& B) {
 
 bool Matrix::isIdentity() const {
 	if(nrows!=ncols) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "A non-square matrix ";
 		tmp << "(" << nrows << "," << ncols << ") can not be the identity matrix!";
 		throw IOException(tmp.str(), AT);

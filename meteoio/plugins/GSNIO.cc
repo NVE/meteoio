@@ -460,7 +460,7 @@ void GSNIO::readStationNames()
 	string current_station;
 	do {
 		current_station = string("");
-		stringstream ss;
+		ostringstream ss;
 		ss << "STATION" << current_stationnr;
 		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
 

@@ -184,14 +184,14 @@ void PNGIO::parse_size(const std::string& size_spec, unsigned int& width, unsign
 	if(sscanf(size_spec.c_str(), "%u %u%31s", &width, &height, rest) < 2)
 	if(sscanf(size_spec.c_str(), "%u*%u%31s", &width, &height, rest) < 2)
 	if(sscanf(size_spec.c_str(), "%ux%u%31s", &width, &height, rest) < 2) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Can not parse PNGIO size specification \"" << size_spec << "\"";
 		throw InvalidFormatException(ss.str(), AT);
 	}
 	std::string tmp(rest);
 	IOUtils::trim(tmp);
 	if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Invalid PNGIO size specification \"" << size_spec << "\"";
 		throw InvalidFormatException(ss.str(), AT);
 	}
@@ -298,7 +298,7 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 	else if(scaling=="bilinear")
 		return ResamplingAlgorithms2D::BilinearResampling(grid_in, factor);
 	else {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Grid scaling algorithm \"" << scaling << "\" unknown";
 		throw UnknownValueException(ss.str(), AT);
 	}
@@ -313,7 +313,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	errno=0;
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL) {
-		stringstream ss;
+		ostringstream ss;
 		ss << "Error openning file \"" << filename << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
@@ -684,7 +684,7 @@ void PNGIO::createMetadata(const Grid2DObject& grid)
 {
 	const double lat = grid.llcorner.getLat();
 	const double lon = grid.llcorner.getLon();
-	stringstream ss;
+	ostringstream ss;
 
 	metadata_key.clear();
 	metadata_text.clear();

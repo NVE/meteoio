@@ -575,7 +575,7 @@ void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std
 	}
 
 	if(gridify(pointlim)==false) {
-		std::stringstream tmp;
+		std::ostringstream tmp;
 		tmp << "[E] Wrong destination point calculated for bearing " << bearing;
 		throw InvalidArgumentException(tmp.str(), AT);
 	}

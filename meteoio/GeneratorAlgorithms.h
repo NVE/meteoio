@@ -25,6 +25,10 @@
 #include <set>
 #include <string>
 
+#ifdef WIN32
+	#pragma warning(disable:4512) //we don't need any = operator!
+#endif
+
 namespace mio {
 
 /**

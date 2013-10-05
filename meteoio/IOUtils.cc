@@ -55,7 +55,7 @@ double round(const double& x) {
 #endif
 
 std::string getLibVersion() {
-	std::stringstream ss;
+	std::ostringstream ss;
 	ss << _VERSION << " compiled on " << __DATE__ << " " << __TIME__;
 	return ss.str();
 }
@@ -396,7 +396,7 @@ void readKeyValueHeader(std::map<std::string,std::string>& headermap,
 			if(result) {
 				headermap[key] = value;
 			} else { //  means if ((key == "") || (value==""))
-				std::stringstream out;
+				std::ostringstream out;
 				out << "Invalid key value pair in line: " << linenr << " of header";
 				throw IOException(out.str(), AT);
 			}
@@ -461,7 +461,7 @@ size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data)
 		iss >> std::skipws >> tmp;
 
 		if (iss.fail()) {
-			std::stringstream ss;
+			std::ostringstream ss;
 			ss << "Can not read column " << vec_data.size()+1 << " in data line \"" << line_in << "\"";
 			throw InvalidFormatException(ss.str(), AT);
 		}
@@ -779,7 +779,7 @@ std::string printFractionalDay(const double& fractional) {
 	const double minutes=floor((fractional*24.-hours)*60.);
 	const double seconds=fractional*24.*3600.-hours*3600.-minutes*60.;
 
-	std::stringstream tmp;
+	std::ostringstream tmp;
 	tmp << std::fixed << std::setfill('0') << std::setprecision(0);
 	tmp << std::setw(2) << hours << ":";
 	tmp << std::setw(2) << minutes << ":";
@@ -791,7 +791,7 @@ std::string printFractionalDay(const double& fractional) {
 void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, const unsigned int &wk, size_t& startx, size_t& nx)
 {
 	if(nbworkers>dimx) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Can not split " << dimx << " columns in " << nbworkers << " bands!";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
@@ -874,7 +874,7 @@ size_t FileIndexer::binarySearch(const Date& soughtdate) const
 
 const std::string FileIndexer::toString() const
 {
-	std::stringstream os;
+	std::ostringstream os;
 	os << "<FileIndexer>\n";
 	for(size_t ii=0; ii<vecIndex.size(); ii++)
 		os << "\t" << "[" << ii << "] - " << vecIndex[ii].date.toString(Date::ISO) << " -> #" << std::hex << vecIndex[ii].pos << std::dec << "\n";

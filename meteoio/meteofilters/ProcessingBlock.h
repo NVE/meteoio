@@ -23,6 +23,10 @@
 #include <string>
 #include <set>
 
+#ifdef WIN32
+	#pragma warning(disable:4512) //we don't need any = operator!
+#endif
+
 namespace mio {
 
 class ProcessingProperties {

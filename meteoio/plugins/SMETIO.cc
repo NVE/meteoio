@@ -443,7 +443,7 @@ void SMETIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd);
 
 		if (sd.stationID.empty()){
-			stringstream ss;
+			ostringstream ss;
 			ss << "Station" << ii+1;
 			sd.stationID = ss.str();
 		}
@@ -525,7 +525,7 @@ void SMETIO::generateHeaderInfo(const StationData& sd, const bool& i_outputIsAsc
 	 * - timezone
 	 * - meta data (lat/lon/alt or east/north/alt/epsg if not part of data section)
 	 */
-	stringstream ss;
+	ostringstream ss;
 
 	mywriter.set_header_value("station_id", sd.stationID);
 	if (!sd.stationName.empty())
