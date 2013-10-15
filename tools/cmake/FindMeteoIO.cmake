@@ -12,11 +12,11 @@ IF(WIN32)
 	SET(SEARCH_PATH
 		ENV LIB
 		${SRC_DIR}/meteoio/lib
-		${SRC_DIR}/../../meteoio/lib)
+		${SRC_DIR}/../../meteoio/lib
 		${METEOIO_ROOT1}/lib
 		${METEOIO_ROOT2}/lib
 		${METEOIO_ROOT3}/lib
-		${METEOIO_ROOT4}/lib
+		${METEOIO_ROOT4}/lib)
 	IF(MSVC)
 		FIND_LIBRARY(METEOIO_LIBRARY
 			NAMES libmeteoio.lib
