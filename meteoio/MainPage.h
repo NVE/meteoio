@@ -344,6 +344,8 @@ namespace mio {
  * @endcode
  * Which will replace any value greater than 280 Kelvin by 260 Kelvin.
  *
+ * Another good example is the FilterUnheatedHNW that uses a combination of several meteorological parameters to filter the
+ * precipitation.
  */
 
 /**

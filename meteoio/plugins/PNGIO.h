@@ -64,15 +64,15 @@ class PNGIO : public IOInterface {
 
 	private:
 		void setOptions();
-		void parse_size(const std::string& size_spec, unsigned int& width, unsigned int& height);
+		void parse_size(const std::string& size_spec, size_t& width, size_t& height);
 		double getScaleFactor(const double& grid_w, const double& grid_h);
 		void createMetadata(const Grid2DObject& grid);
 		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
 		Grid2DObject scaleGrid(const Grid2DObject& grid_in);
-		void setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const unsigned int &width, const unsigned int &height);
+		void setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height);
 		void writeWorldFile(const Grid2DObject& grid_in, const std::string& filename);
-		unsigned int setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array);
-		void writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr, png_infop& info_ptr);
+		size_t setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array);
+		void writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const size_t &full_width, const png_structp &png_ptr, png_infop& info_ptr);
 		void setPalette(const Gradient &gradient, png_structp& png_ptr, png_infop& info_ptr, png_color *palette);
 		void closePNG(png_structp& png_ptr, png_infop& info_ptr, png_color *palette);
 		std::string decimal_to_dms(const double& decimal);
@@ -89,7 +89,7 @@ class PNGIO : public IOInterface {
 		std::string grid2dpath;
 
 		std::string scaling;
-		unsigned int min_w, min_h, max_w, max_h;
+		size_t min_w, min_h, max_w, max_h;
 
 		std::vector<std::string> metadata_key, metadata_text;
 

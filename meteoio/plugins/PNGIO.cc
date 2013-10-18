@@ -178,12 +178,12 @@ void PNGIO::setOptions()
 	if(tmp!=IOUtils::unodata) nr_levels=static_cast<unsigned char>(tmp);
 }
 
-void PNGIO::parse_size(const std::string& size_spec, unsigned int& width, unsigned int& height)
+void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& height)
 {
 	char rest[32] = "";
-	if(sscanf(size_spec.c_str(), "%u %u%31s", &width, &height, rest) < 2)
-	if(sscanf(size_spec.c_str(), "%u*%u%31s", &width, &height, rest) < 2)
-	if(sscanf(size_spec.c_str(), "%ux%u%31s", &width, &height, rest) < 2) {
+	if(sscanf(size_spec.c_str(), "%zu %zu%31s", &width, &height, rest) < 2)
+	if(sscanf(size_spec.c_str(), "%zu*%zu%31s", &width, &height, rest) < 2)
+	if(sscanf(size_spec.c_str(), "%zux%zu%31s", &width, &height, rest) < 2) {
 		std::ostringstream ss;
 		ss << "Can not parse PNGIO size specification \"" << size_spec << "\"";
 		throw InvalidFormatException(ss.str(), AT);
@@ -304,7 +304,7 @@ Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 	}
 }
 
-void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const unsigned int &width, const unsigned int &height)
+void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop& info_ptr, const size_t &width, const size_t &height)
 {
 	// Open file for writing (binary mode)
 	if (!IOUtils::validFileName(filename)) {
@@ -373,12 +373,12 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	png_set_background(png_ptr, &background, PNG_BACKGROUND_GAMMA_SCREEN, true, 1.0);
 }
 
-unsigned int PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
+size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
 {
 	if(has_legend) {
 		const legend leg(nrows, min, max);
 		legend_array = leg.getLegend();
-		unsigned int nx, ny;
+		size_t nx, ny;
 		legend_array.size(nx,ny);
 		return (ncols+nx);
 	} else {
@@ -386,7 +386,7 @@ unsigned int PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const do
 	}
 }
 
-void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &legend_array, const Gradient &gradient, const unsigned int &full_width, const png_structp &png_ptr, png_infop& info_ptr)
+void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& legend_array, const Gradient& gradient, const size_t& full_width, const png_structp& png_ptr, png_infop& info_ptr)
 {
 	const size_t ncols = grid.ncols;
 	const size_t nrows = grid.nrows;
@@ -409,15 +409,15 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 	// Write image data
 	if(indexed_png) {
 		for(size_t y=(nrows-1) ; y-- > 0; ) {
-			unsigned int x=0;
+			size_t x=0;
 			for(; x<ncols ; x++) {
-				const unsigned int i=x*channels;
+				const size_t i=x*channels;
 				unsigned char index;
 				gradient.getColor(grid(x,y), index);
 				row[i]=static_cast<png_byte>(index);
 			}
 			for(; x<full_width; x++) {
-				const unsigned int i=x*channels;
+				const size_t i=x*channels;
 				unsigned char index;
 				gradient.getColor(legend_array(x-ncols,y), index);
 				row[i]=static_cast<png_byte>(index);
@@ -426,9 +426,9 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 		}
 	} else {
 		for(size_t y=(nrows-1) ; y -- > 0; ) {
-			unsigned int x=0;
+			size_t x=0;
 			for(; x<ncols ; x++) {
-				const unsigned int i=x*channels;
+				const size_t i=x*channels;
 				unsigned char r,g,b;
 				bool a;
 				gradient.getColor(grid(x,y), r,g,b,a);
@@ -439,7 +439,7 @@ void PNGIO::writeDataSection(const Grid2DObject &grid, const Array2D<double> &le
 				}
 			}
 			for(; x<full_width; x++) {
-				const unsigned int i=x*channels;
+				const size_t i=x*channels;
 				unsigned char r,g,b;
 				bool a;
 				gradient.getColor(legend_array(x-ncols,y), r,g,b,a);
@@ -492,7 +492,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	//scale input image
 	const Grid2DObject grid = scaleGrid(grid_in);
-	const size_t ncols = grid.ncols, nrows = grid.nrows;
+	const size_t ncols = grid_in.ncols, nrows = grid_in.nrows;
 	if(ncols==0 || nrows==0) return;
 
 	const double min = grid.grid2D.getMin();
@@ -502,7 +502,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 	if(indexed_png) gradient.setNrOfLevels(nr_levels);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
-	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
+	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(full_name, png_ptr, info_ptr, full_width, nrows);
 	if(indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
@@ -537,7 +537,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 	//scale input image
 	Grid2DObject grid = scaleGrid(grid_in);
-	const size_t ncols = grid.ncols, nrows = grid.nrows;
+	const size_t ncols = grid_in.ncols, nrows = grid_in.nrows;
 	if(ncols==0 || nrows==0) return;
 
 	double min = grid.grid2D.getMin();
@@ -630,7 +630,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 	gradient.setNrOfLevels(nr_levels);
 
 	Array2D<double> legend_array; //it will remain empty if there is no legend
-	const unsigned int full_width = setLegend(ncols, nrows, min, max, legend_array);
+	const size_t full_width = setLegend(ncols, nrows, min, max, legend_array);
 
 	setFile(filename, png_ptr, info_ptr, full_width, nrows);
 	if(indexed_png) setPalette(gradient, png_ptr, info_ptr, palette);
