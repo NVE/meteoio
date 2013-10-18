@@ -52,6 +52,10 @@ namespace mio {
  * - USEANETZ: use ANETZ stations to provide precipitations for normal IMIS stations. Almost each IMIS station is associated with one or two ANETZ stations and does a weighted average to get what should be its local precipitations if no local precipitation has been found (either nodata or 0).
  * - USE_IMIS_HNW: if set to false (default), all IMIS precipitation will be deleted (since IMIS stations don't have heated rain gauges, their precipitation measurements are not good in winter conditions). If set to true, the precipitation measurements will be accepted from IMIS stations. In this case, it is strongly advised to apply the filter FilterUnheatedHNW to detect snow melting in the rain gauge.
  * - USE_SNOWPACK_HNW: if set to true, the SNOWPACK simulated Snow Water Equivalent from the database will be used to compute HNW. Data gaps greater than 3 hours on SWE will lead to unchanged hnw while all data that can properly be computed will <b>overwrite</b> hnw. (default=false)
+ *
+ * It is possible to use both USE_IMIS_HNW and USE_SNOWPACK_HNW to create composite HNW (from SNOWPACK in the snow season and from IMIS otherwise).
+ * In such a case, as soon as SNOWPACK SWE > 0, all previous HNW data will be deleted (ie those potentially coming from IMIS_HNW).
+ * But if there is no SNOWPACK data, the IMIS measurements will be kept.
  */
 
 const double ImisIO::plugin_nodata = -999.; ///< plugin specific nodata value
@@ -744,17 +748,20 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 			IOUtils::convertString(d, rs->getString(1), 1.);
 			double curr_swe;
 			IOUtils::convertString(curr_swe, rs->getString(2));
+			//looking for matching timestamp in the vecMeteo
+			while(ii_serie<serie_len && vecMeteo[stationindex][ii_serie].date<d) ii_serie++;
+			if(ii_serie>=serie_len) return;
+
+			if(curr_swe>0.) vecMeteo[stationindex][ii_serie](MeteoData::HNW) = IOUtils::nodata; //invalidate any potential IMIS HNW
+
 			if(prev_swe!=IOUtils::nodata && curr_swe!=IOUtils::nodata) {
 				 //valid values for Delta computation
 				if((d.getJulian()-prev_date.getJulian())<=max_interval) {
 					//data not too far apart, so we accept it for Delta SWE
-					//looking for matching timestamp in the vecMeteo
-					while(ii_serie<serie_len && vecMeteo[stationindex][ii_serie].date<d) ii_serie++;
-					if(ii_serie>=serie_len) return;
 					if(vecMeteo[stationindex][ii_serie].date==d) {
 						//we found the matching timestamp -> writing Delta(SWE) as hnw
 						const double new_hnw_sum = curr_swe - prev_swe;
-						if(new_hnw_sum>0.) vecMeteo[stationindex][ii_serie](MeteoData::HNW) = new_hnw_sum;
+						if(curr_swe>0. && new_hnw_sum>=0.) vecMeteo[stationindex][ii_serie](MeteoData::HNW) = new_hnw_sum;
 						prev_swe = curr_swe;
 						prev_date = d;
 					}
