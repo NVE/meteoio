@@ -112,20 +112,19 @@ void GeotopIO::initParamNames(std::map<std::string, size_t>& mapParam) {
 	mapParam["Swglob"] = MeteoData::ISWR;
 }
 
-void GeotopIO::writeMeteoData(
-		const std::vector<std::vector<MeteoData> >& vecMeteo,
-		const std::string&) {
-	string path;
-	vector<string> vecSequence;
-	vector<int> ymdhm = vector<int> (5);
+void GeotopIO::writeMeteoData( const std::vector<std::vector<MeteoData> >& vecMeteo,
+                               const std::string&) {
 	map<string, size_t> mapParam;
 	initParamNames(mapParam);
+
+	string path;
 	cfg.getValue("METEOPATH", "Output", path);
+	vector<string> vecSequence;
 	cfg.getValue("METEOSEQ", "Output", vecSequence);
 
 	//Check whether vecSequence is valid, that is the keys are part of mapParam
 	for (size_t ii = 0; ii < vecSequence.size(); ii++) {
-		map<string, size_t>::iterator it = mapParam.find(vecSequence[ii]);
+		const map<string, size_t>::const_iterator it = mapParam.find(vecSequence[ii]);
 		if (it == mapParam.end())
 			throw InvalidFormatException("Key " + vecSequence[ii]
 					+ " invalid in io.ini:METEOSEQ", AT);
@@ -141,12 +140,12 @@ void GeotopIO::writeMeteoData(
 			coord.setProj(coordout, coordoutparam); //Setting the output projection
 			fout.precision(12);
 			fout << coord.getEasting() << "\t" << coord.getNorthing() << "\t"
-					<< coord.getLat() << "\t" << coord.getLon() << "\t"
-					<< coord.getAltitude() << "\t" << plugin_nodata << "\t"
-					<< plugin_nodata << "\t" << plugin_nodata << "\t"
-					<< plugin_nodata << "\t" << plugin_nodata << "\t"
-					<< plugin_nodata << "\t" << plugin_nodata << "\t"
-					<< plugin_nodata << endl;
+				<< coord.getLat() << "\t" << coord.getLon() << "\t"
+				<< coord.getAltitude() << "\t" << plugin_nodata << "\t"
+				<< plugin_nodata << "\t" << plugin_nodata << "\t"
+				<< plugin_nodata << "\t" << plugin_nodata << "\t"
+				<< plugin_nodata << "\t" << plugin_nodata << "\t"
+				<< plugin_nodata << endl;
 		}
 	}
 	fout << "\n2: stringbin metocolnames\n"
@@ -154,6 +153,7 @@ void GeotopIO::writeMeteoData(
 	fout.close(); //finished writing meta data
 
 	//Writing actual meteo files
+	vector<int> ymdhm = vector<int> (5);
 	for (size_t ii = 0; ii < vecMeteo.size(); ii++) {
 		ostringstream ss;
 		ss.fill('0');
@@ -166,15 +166,15 @@ void GeotopIO::writeMeteoData(
 		fout << fixed << showpoint << setprecision(5);
 
 		for (size_t jj = 0; jj < vecMeteo.at(ii).size(); jj++) {
-			ss.str(""); //clear the stringstream
 			Date tmp_date(vecMeteo[ii][jj].date);
 			tmp_date.setTimeZone(out_tz);
 			tmp_date.getDate(ymdhm[0], ymdhm[1], ymdhm[2], ymdhm[3], ymdhm[4]);
 
 			//the date will be written in the form "DD/MM/YYYY hh:mm"
+			ss.str(""); //clear the stringstream
 			ss << setw(2) << ymdhm[2] << "/" << setw(2) << ymdhm[1] << "/"
-					<< ymdhm[0] << " " // DD/MM/YYYY
-					<< setw(2) << ymdhm[3] << ":" << setw(2) << ymdhm[4]; // hh:mm
+				<< ymdhm[0] << " " // DD/MM/YYYY
+				<< setw(2) << ymdhm[3] << ":" << setw(2) << ymdhm[4]; // hh:mm
 
 			MeteoData tmpmd = vecMeteo[ii][jj];
 			convertUnitsBack(tmpmd);
@@ -193,7 +193,7 @@ void GeotopIO::writeMeteoData(
 					ss << ", " << plugin_nodata;
 				else
 					ss << ", " << setprecision(7) << tmpmd(
-							mapParam[vecSequence[kk]]);
+						mapParam[vecSequence[kk]]);
 			}
 			fout << ss.str() << "\n";
 		}
@@ -215,10 +215,9 @@ void GeotopIO::readStationData(const Date&, std::vector<StationData>& vecMeta) {
 }
 
 void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
-		std::vector<std::vector<MeteoData> >& vecMeteo, const size_t& /*stationindex*/) {
-	vector<std::string> tmpvec;
-	string line, filename, path, prefix;
+                             std::vector<std::vector<MeteoData> >& vecMeteo, const size_t& /*stationindex*/) {
 	vecMeteo.clear();
+	string line, filename, path, prefix;
 
 	cfg.getValue("METEOPATH", "Input", path);
 	cfg.getValue("METEOPREFIX", "Input", prefix);
@@ -236,6 +235,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	cerr << "[i] GEOtopIO: Found " << nr_of_stations << " station(s)" << std::endl;
 
+	vector<std::string> tmpvec;
 	for (size_t ii = 0; ii < nr_of_stations; ii++) {
 		vecMeteo.push_back(vector<MeteoData> ());
 
@@ -261,7 +261,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		//Go through file, save key value pairs
 		try {
 			getline(fin, line, eoln); //read complete line meta information
-			size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
+			const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
 
 			std::vector<size_t> indices;
 			MeteoData md;
@@ -275,12 +275,12 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 			//The following 4 lines are an optimization to jump to the correct position in the file
 			streampos current_fpointer = -1; //the filepointer for the current date
-			map<Date, streampos>::const_iterator it = vec_streampos.at(ii).find(dateStart);
+			const map<Date, streampos>::const_iterator it = vec_streampos.at(ii).find(dateStart);
 			if (it != vec_streampos.at(ii).end())
 				fin.seekg(it->second); //jump to position in the file
 
 			while (!fin.eof()) {
-				streampos tmp_fpointer = fin.tellg();
+				const streampos tmp_fpointer = fin.tellg();
 				getline(fin, line, eoln); //read complete line of data
 
 				if (IOUtils::readLineToVec(line, tmpvec, ',') != ncols) {
@@ -323,7 +323,7 @@ void GeotopIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 }
 
 void GeotopIO::parseDate(const std::string& datestring,
-		const std::string& fileandline, Date& date) {
+                         const std::string& fileandline, Date& date) {
 	/*
 	 * In order to be more flexible with the date parsing in GEOtop meteo files,
 	 * this function will allow any date format common to GEOtop to be accepted
@@ -334,8 +334,7 @@ void GeotopIO::parseDate(const std::string& datestring,
 
 	//parsing the day
 	size_t found1 = datestring.find_first_of("/-", 0);
-	if (!IOUtils::convertString(ymdhm.at(2), datestring.substr(0, found1),
-			std::dec)) //day
+	if (!IOUtils::convertString(ymdhm.at(2), datestring.substr(0, found1), std::dec)) //day
 		throw InvalidFormatException(fileandline, AT);
 
 	//parsing the month
@@ -368,14 +367,13 @@ void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std
                                std::vector<size_t>& indices, MeteoData& md) {
 	//Go through the columns and seek out which parameter corresponds with which column
 	for (size_t jj = 1; jj < tmpvec.size(); jj++) { //skip field 1, that one is reserved for the date
-		std::map<std::string, size_t>::iterator it = mapColumnNames.find(tmpvec[jj]);
+		const std::map<std::string, size_t>::iterator it = mapColumnNames.find(tmpvec[jj]);
 		if (it != mapColumnNames.end()) {
 			size_t index = it->second;
 			if (index == IOUtils::npos){
 				index = md.addParameter(it->first);
 			}
 			indices.push_back(index);
-			//cerr << tmpvec[jj] << "=> index " << index << endl;
 		} else {
 			indices.push_back(IOUtils::npos);
 			cerr << "[w] Column '" << tmpvec[jj] << "' in file " << filename << " will be ignored!" << endl;
@@ -386,13 +384,11 @@ void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std
 
 void GeotopIO::parseMetaData(const std::string& head, const std::string& datastr, std::vector<std::string>& tmpvec) {
 	tmpvec.clear();
-	string mdata = datastr.substr(head.length() + 1, datastr.length() + 1);
+	const string mdata = datastr.substr(head.length() + 1, datastr.length() + 1);
 	IOUtils::readLineToVec(mdata, tmpvec, ',');
 }
 
 void GeotopIO::readMetaData(const std::string& metafile) {
-	std::string line;
-
 	//vector indexes correspond to meteo data
 	int x = 0, y = 1, lat = 2, lon = 3, elv = 4;
 
@@ -419,6 +415,7 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 	size_t meta_counter = 0;
 
 	try {
+		std::string line;
 		Coords coordinate(coordin, coordinparam);
 		while (!fin.eof()) {
 			getline(fin, line, eoln); //read complete line of data
@@ -522,8 +519,8 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 
 std::string GeotopIO::getValueForKey(const std::string& line)
 {
-	size_t pos_start = line.find("\"");
-	size_t pos_end = line.find("\"", pos_start+1);
+	const size_t pos_start = line.find("\"");
+	const size_t pos_end = line.find("\"", pos_start+1);
 
 	if ((pos_start != string::npos) && (pos_end != string::npos)) {
 		string param_name = line.substr(pos_start+1, pos_end - pos_start - 1);
