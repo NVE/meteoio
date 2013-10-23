@@ -31,6 +31,10 @@
 #include <iostream>
 #include <ctime>
 
+#ifndef WIN32
+	#include <sys/resource.h>
+#endif
+
 namespace mio {
 
 /**
@@ -48,6 +52,7 @@ public:
 	void stop();
 	void reset();
 	double getElapsed() const;
+
 protected:
 	long double getCurrentTime() const;
 
@@ -55,6 +60,34 @@ protected:
 	double elapsed;
 	bool isRunning;
 };
+
+#ifndef WIN32
+/**
+ * @class UsageTimer
+ * @author Thomas Egger
+ */
+class UsageTimer {
+ public:
+	UsageTimer();
+	void start();
+	void restart();
+	void stop();
+	void reset();
+
+	double getElapsed();
+	double getElapsedUserTime();
+	double getElapsedSystemTime();
+	
+ protected:
+	void getElapsedTimes();
+
+	static const int who;
+
+	struct rusage start_usage, current_usage;
+	bool is_running;
+	double user_time, sys_time, elapsed;
+};
+#endif
 
 } //end namespace mio
 #endif

@@ -26,7 +26,6 @@
 	#undef min
 #else
 	#include <sys/time.h>
-	#include <sys/resource.h>
 #endif
 
 #include "Timer.h"
@@ -111,6 +110,85 @@ long double Timer::getCurrentTime() const {
 	gettimeofday(&tp,NULL);
 	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.0e-6;
 	return t;
+}
+
+	
+#endif
+
+#ifndef WIN32
+const int UsageTimer::who = RUSAGE_SELF;
+
+UsageTimer::UsageTimer() : start_usage(), current_usage(), is_running(false), user_time(0.), sys_time(0.), elapsed(0.) {}
+
+void	UsageTimer::start()
+{
+	if (!is_running) {
+		is_running = true;
+		getrusage(UsageTimer::who, &start_usage);
+	}
+}
+
+void UsageTimer::stop() 
+{
+	if (is_running) {
+		getElapsedTimes();
+		is_running = false;
+	}
+}
+
+void UsageTimer::restart() 
+{
+	reset();
+	is_running = true;
+}
+
+void UsageTimer::reset() {
+	user_time = sys_time = elapsed= 0.;
+}
+
+double UsageTimer::getElapsed()
+{
+	if (is_running) {
+		getElapsedTimes();
+	}
+
+	return elapsed;
+}
+
+double UsageTimer::getElapsedUserTime()
+{
+	if (is_running) {
+		getElapsedTimes();
+	}
+
+	return user_time;
+}
+
+double UsageTimer::getElapsedSystemTime()
+{
+	if (is_running) {
+		getElapsedTimes();
+	}
+
+	return sys_time;
+}
+
+void UsageTimer::getElapsedTimes()
+{
+	getrusage(UsageTimer::who, &current_usage);
+	
+	//calculate start point
+	double start_user_time = static_cast<double>(start_usage.ru_utime.tv_sec) + static_cast<double>(start_usage.ru_utime.tv_usec) / 1000000.;
+	double start_sys_time  = static_cast<double>(start_usage.ru_stime.tv_sec) + static_cast<double>(start_usage.ru_stime.tv_usec) / 1000000.;
+	
+	//calculate end point
+	double end_user_time = static_cast<double>(current_usage.ru_utime.tv_sec) + static_cast<double>(current_usage.ru_utime.tv_usec) / 1000000;
+	double end_sys_time  = static_cast<double>(current_usage.ru_stime.tv_sec) + static_cast<double>(current_usage.ru_stime.tv_usec) / 1000000;
+
+	//calculate different elapsed times
+	user_time = end_user_time - start_user_time;
+	sys_time = end_sys_time - start_sys_time;
+	elapsed = sys_time + user_time;
 }
 #endif
 

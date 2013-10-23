@@ -107,7 +107,7 @@ class StationData {
 
 		/**
 		* @brief Simple merge strategy.
-		* If some fields of the first argument are empty, they will be filled by the macthing field from the
+		* If some fields of the first argument are empty, they will be filled by the matching field from the
 		* second argument.
 		* @param sd1 first StationData to merge, highest priority
 		* @param sd2 second StationData to merge, lowest priority
