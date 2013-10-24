@@ -8,7 +8,7 @@ using namespace mio; //The MeteoIO namespace is called mio
 //Obviously, a large number will fill your screen with the output.
 int main(int /*argc*/, char** argv) {
 
-	unsigned int n;
+	size_t n;
 	IOUtils::convertString(n, argv[1]);
 
 	//we create a suqare matrix of size n, filled with random numbers
