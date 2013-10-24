@@ -1,6 +1,6 @@
 /***********************************************************************************/
 /*                   Copyright GridGroup, EIA-FR 2010                              */
-/*  Copyright 2010 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2010-2013 WSL Institute for Snow and Avalanche Research  SLF-DAVOS   */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -108,19 +108,19 @@ long double Timer::getCurrentTime() const {
 long double Timer::getCurrentTime() const {
 	timeval tp;
 	gettimeofday(&tp,NULL);
-	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.0e-6;
+	const long double t = static_cast<long double>(tp.tv_sec) + static_cast<long double>(tp.tv_usec)*1.e-6;
 	return t;
 }
 
-	
+
 #endif
 
 #ifndef WIN32
 const int UsageTimer::who = RUSAGE_SELF;
 
-UsageTimer::UsageTimer() : start_usage(), current_usage(), is_running(false), user_time(0.), sys_time(0.), elapsed(0.) {}
+UsageTimer::UsageTimer() : start_usage(), current_usage(), user_time(0.), sys_time(0.), elapsed(0.), is_running(false) {}
 
-void	UsageTimer::start()
+void UsageTimer::start()
 {
 	if (!is_running) {
 		is_running = true;
@@ -128,7 +128,7 @@ void	UsageTimer::start()
 	}
 }
 
-void UsageTimer::stop() 
+void UsageTimer::stop()
 {
 	if (is_running) {
 		getElapsedTimes();
@@ -136,7 +136,7 @@ void UsageTimer::stop()
 	}
 }
 
-void UsageTimer::restart() 
+void UsageTimer::restart()
 {
 	reset();
 	is_running = true;
@@ -176,19 +176,19 @@ double UsageTimer::getElapsedSystemTime()
 void UsageTimer::getElapsedTimes()
 {
 	getrusage(UsageTimer::who, &current_usage);
-	
+
 	//calculate start point
-	double start_user_time = static_cast<double>(start_usage.ru_utime.tv_sec) + static_cast<double>(start_usage.ru_utime.tv_usec) / 1000000.;
-	double start_sys_time  = static_cast<double>(start_usage.ru_stime.tv_sec) + static_cast<double>(start_usage.ru_stime.tv_usec) / 1000000.;
-	
+	const long double start_user_time = static_cast<long double>(start_usage.ru_utime.tv_sec) + static_cast<long double>(start_usage.ru_utime.tv_usec)*1e-6;
+	const long double start_sys_time  = static_cast<long double>(start_usage.ru_stime.tv_sec) + static_cast<long double>(start_usage.ru_stime.tv_usec)*1e-6;
+
 	//calculate end point
-	double end_user_time = static_cast<double>(current_usage.ru_utime.tv_sec) + static_cast<double>(current_usage.ru_utime.tv_usec) / 1000000;
-	double end_sys_time  = static_cast<double>(current_usage.ru_stime.tv_sec) + static_cast<double>(current_usage.ru_stime.tv_usec) / 1000000;
+	const long double end_user_time = static_cast<long double>(current_usage.ru_utime.tv_sec) + static_cast<long double>(current_usage.ru_utime.tv_usec)*1e-6;
+	const long double end_sys_time  = static_cast<long double>(current_usage.ru_stime.tv_sec) + static_cast<long double>(current_usage.ru_stime.tv_usec)*1e-6;
 
 	//calculate different elapsed times
-	user_time = end_user_time - start_user_time;
-	sys_time = end_sys_time - start_sys_time;
-	elapsed = sys_time + user_time;
+	user_time = static_cast<double>( end_user_time - start_user_time );
+	sys_time = static_cast<double>( end_sys_time - start_sys_time );
+	elapsed = static_cast<double>( sys_time + user_time );
 }
 #endif
 

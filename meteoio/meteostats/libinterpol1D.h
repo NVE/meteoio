@@ -50,8 +50,8 @@ class Interpol1D {
 		static double covariance(const std::vector<double>& z1, const std::vector<double>& z2);
 
 		static void LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg, const bool& fixed_rate=false);
-		static int NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::ostringstream& mesg, const bool& fixed_rate=false);
-		static int twoLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, const double& bilin_inflection, std::vector<double>& coeffs);
+		static void NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::ostringstream& mesg, const bool& fixed_rate=false);
+		static void twoLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, const double& bilin_inflection, std::vector<double>& coeffs);
 		static void LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg);
 		static void ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg);
 
@@ -59,6 +59,7 @@ class Interpol1D {
 		static bool ptOK(const double& x, const double& y);
 		static void LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg);
 		static bool pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r);
+		static double pt_line_distance(const double& x, const double& y, const double& a, const double& b);
 };
 
 } //end namespace

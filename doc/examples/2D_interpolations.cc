@@ -24,12 +24,10 @@ int main(int /*argc*/, char** argv) {
 	Grid2DObject param;
 	io.interpolate(d1, dem, MeteoData::TA, param);
 	io.write2DGrid(param, MeteoGrids::TA, d1);
-	//io.interpolate(d1, dem, MeteoData::HNW, param);
-	//io.write2DGrid(param, MeteoGrids::HNW, d1);
+	io.interpolate(d1, dem, MeteoData::HNW, param);
+	io.write2DGrid(param, MeteoGrids::HNW, d1);
 	io.interpolate(d1, dem, MeteoData::RH, param);
 	io.write2DGrid(param, MeteoGrids::RH, d1);
-	//io.interpolate(d1, dem, MeteoData::ILWR, param);
-	//io.write2DGrid(param, MeteoGrids::ILWR, d1);
 
 	return 0;
 }

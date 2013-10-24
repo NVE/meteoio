@@ -49,7 +49,6 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 		if(value!=IOUtils::nodata)
 			vecTemp.push_back(value);
 	}
-	std::sort( vecTemp.begin(), vecTemp.end()); //since we will process several values, we sort the vector
 
 	//we will store results in a new vector
 	std::vector<double> vecResults(Qsize, IOUtils::nodata);
@@ -64,6 +63,7 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 	}
 
 	//compute quantiles
+	std::sort( vecTemp.begin(), vecTemp.end()); //since we will process several values, we sort the vector
 	for(size_t ii=0; ii<Qsize; ii++) {
 		const double q = quartiles[ii];
 		if(q<=0.) vecResults[ii] = vecTemp.front();
@@ -81,7 +81,7 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 }
 
 //small helper function for checking if a point can be used when computing a vector derivative
-bool Interpol1D::ptOK(const double& x, const double& y) {
+inline bool Interpol1D::ptOK(const double& x, const double& y) {
 	return (x!=IOUtils::nodata && y!=IOUtils::nodata);
 }
 
@@ -168,7 +168,7 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
 	}
 }
 
-bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r) {
+inline bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r) {
 	return l.first < r.first;
 }
 
@@ -336,8 +336,7 @@ double Interpol1D::variance(const std::vector<double>& X)
 	return variance;
 }
 
-double Interpol1D::std_dev(const std::vector<double>& X)
-{
+double Interpol1D::std_dev(const std::vector<double>& X) {
 	return sqrt(variance(X));
 }
 
@@ -363,6 +362,23 @@ double Interpol1D::covariance(const std::vector<double>& X, const std::vector<do
 	}
 	if(count<=1) return IOUtils::nodata;
 	return sum/((double)count-1.);
+}
+
+/**
+* @brief Computes the distance between a point (x,y) and a line y=ax+b
+* @param x x coordinates of the point
+* @param y y coordinates of the point
+* @param a slope of the line
+* @param c origin of the line
+* @return distance of the point to the line
+*/
+double Interpol1D::pt_line_distance(const double& x, const double& y, const double& a, const double& c) {
+	if(a==0.) return abs(y-c); //horizontal line
+
+	//for ax+by+c=0; for us, b=-1
+	const double b = -1.;
+	const double d = abs(a*x +b*y + c) * Optim::invSqrt( a*a + b*b );
+	return d;
 }
 
 /**
@@ -393,10 +409,10 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 	//computing x_avg and y_avg
 	double x_avg=0., y_avg=0.;
 	size_t count=0;
-	for (size_t i=0; i<n; i++) {
-		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
-			x_avg += X[i];
-			y_avg += Y[i];
+	for (size_t ii=0; ii<n; ii++) {
+		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+			x_avg += X[ii];
+			y_avg += Y[ii];
 			count++;
 		}
 	}
@@ -407,11 +423,11 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 
 	//computing sx, sy, sxy
 	double sx=0., sy=0., sxy=0.;
-	for (size_t i=0; i<n; i++) {
-		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
-			sx += (X[i]-x_avg) * (X[i]-x_avg);
-			sy += (Y[i]-y_avg) * (Y[i]-y_avg);
-			sxy += (X[i]-x_avg) * (Y[i]-y_avg);
+	for (size_t ii=0; ii<n; ii++) {
+		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+			sx += (X[ii]-x_avg) * (X[ii]-x_avg);
+			sy += (Y[ii]-y_avg) * (Y[ii]-y_avg);
+			sxy += (X[ii]-x_avg) * (Y[ii]-y_avg);
 		}
 	}
 
@@ -457,10 +473,10 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 	//computing x_avg and y_avg
 	int count=0;
 	double x_avg=0, y_avg=0;
-	for (size_t i=0; i<n; i++) {
-		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
-			x_avg += X[i];
-			y_avg += Y[i];
+	for (size_t ii=0; ii<n; ii++) {
+		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+			x_avg += X[ii];
+			y_avg += Y[ii];
 			count++;
 		}
 	}
@@ -473,10 +489,10 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 	b = y_avg - a*x_avg;
 
 	double TSS=0, SSR=0; //Total Sum of Squares and Sum of Squared Residuals
-	for (size_t i=0; i<n; i++) {
-		if(X[i]!=IOUtils::nodata && Y[i]!=IOUtils::nodata) {
-			SSR += Optim::pow2( Y[i] - (a*X[i]+b) );
-			TSS += Optim::pow2( Y[i] );
+	for (size_t ii=0; ii<n; ii++) {
+		if(X[ii]!=IOUtils::nodata && Y[ii]!=IOUtils::nodata) {
+			SSR += Optim::pow2( Y[ii] - (a*X[ii]+b) );
+			TSS += Optim::pow2( Y[ii] );
 		}
 	}
 	if(TSS!=0) {
@@ -497,53 +513,44 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 * @param R linear regression coefficient
 * @param mesg information message if something fishy is detected
 * @param fixed_rate force the lapse rate? (default=false)
-* @return EXIT_SUCCESS or EXIT_FAILURE
 */
-int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::ostringstream& mesg, const bool& fixed_rate)
+void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::ostringstream& mesg, const bool& fixed_rate)
 {
 	//finds the linear regression for points (x,y,z,Value)
 	const double r_thres = 0.7;
 	const size_t nb_pts = in_X.size();
-	//we want at least 4 points AND 85% of the initial data set kept in the regression
-	const size_t min_dataset = (size_t)Optim::floor( 0.85*(double)nb_pts );
+	//we want at least 4 points AND 75% of the initial data set kept in the regression
+	const size_t min_dataset = (size_t)Optim::floor( 0.75*(double)nb_pts );
 	const size_t min_pts = (min_dataset>4)? min_dataset : 4;
-	double a=A,b,r; //a needs to be initiallized to A in case of fixed_rate
 
 	LinRegression(in_X, in_Y, A, B, R, mesg, fixed_rate);
-	if(R>=r_thres)
-		return EXIT_SUCCESS;
+	if(R>=r_thres) return;
 
 	std::vector<double> X(in_X), Y(in_Y);
 	size_t nb_valid_pts = nb_pts;
 
 	while(R<r_thres && nb_valid_pts>min_pts) {
 		//we try to remove the one point in the data set that is the worst
-		R=0.;
 		size_t index_bad=0;
-		for (size_t i=0; i<nb_pts; i++) {
-			//invalidating alternatively each point
-			const double Y_tmp=Y[i]; Y[i]=IOUtils::nodata;
-			LinRegression(X, Y, a, b, r, mesg, fixed_rate);
-			Y[i]=Y_tmp;
-
-			if (fabs(r)>fabs(R)) {
-				A=a; //if fixed_rate, a=A anyway...
-				B=b;
-				R=r;
-				index_bad=i;
+		double max_dist = -1.;
+		for (size_t ii=0; ii<nb_pts; ii++) {
+			if(Y[ii]==IOUtils::nodata) continue;
+			const double dist = pt_line_distance(X[ii], Y[ii], A, B);
+			if(dist>max_dist) {
+				max_dist = dist;
+				index_bad = ii;
 			}
 		}
-		//the worst point has been found, we overwrite it
+		//the worst point has been found, we remove it
 		Y[index_bad] = IOUtils::nodata;
 		nb_valid_pts--;
+		LinRegression(X, Y, A, B, R, mesg, fixed_rate);
 	}
 
 	//check if r is reasonnable
 	if (R<r_thres) {
 		mesg << "[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
 	}
-
-	return EXIT_SUCCESS;
 }
 
 /**
@@ -553,9 +560,8 @@ int Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::v
 * @param in_Y vector of Y coordinates (same order as X)
 * @param bilin_inflection inflection point absissa
 * @param coeffs a,b,r coefficients in a vector
-* @return EXIT_SUCCESS or EXIT_FAILURE
 */
-int Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, const double& bilin_inflection, std::vector<double>& coeffs)
+void Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, const double& bilin_inflection, std::vector<double>& coeffs)
 {
 	//build segments
 	std::vector<double> X1, Y1, X2, Y2;
@@ -574,22 +580,18 @@ int Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::vec
 		}
 	}
 
-	double a1, b1, r1;
-	double a2, b2, r2;
 	//first segment
+	double a1, b1, r1;
 	std::ostringstream mesg1;
-	const int code1 = NoisyLinRegression(X1, Y1, a1, b1, r1, mesg1);
+	NoisyLinRegression(X1, Y1, a1, b1, r1, mesg1);
 
 	//second segment
+	double a2, b2, r2;
 	std::ostringstream mesg2;
-	const int code2 = NoisyLinRegression(X2, Y2, a2, b2, r2, mesg2);
-
-	if(code1==EXIT_FAILURE && code2==EXIT_FAILURE)
-		return EXIT_FAILURE;
+	NoisyLinRegression(X2, Y2, a2, b2, r2, mesg2);
 
 	coeffs.push_back(a1); coeffs.push_back(b1);
 	coeffs.push_back(a2); coeffs.push_back(b2);
-	return EXIT_SUCCESS;
 }
 
 /**

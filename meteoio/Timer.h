@@ -77,15 +77,15 @@ class UsageTimer {
 	double getElapsed();
 	double getElapsedUserTime();
 	double getElapsedSystemTime();
-	
+
  protected:
 	void getElapsedTimes();
 
 	static const int who;
 
 	struct rusage start_usage, current_usage;
-	bool is_running;
 	double user_time, sys_time, elapsed;
+	bool is_running;
 };
 #endif
 
