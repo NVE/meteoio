@@ -65,7 +65,7 @@ class PNGIO : public IOInterface {
 	private:
 		void setOptions();
 		void parse_size(const std::string& size_spec, size_t& width, size_t& height);
-		double getScaleFactor(const double& grid_w, const double& grid_h);
+		double getScaleFactor(const size_t& grid_w, const size_t& grid_h);
 		void createMetadata(const Grid2DObject& grid);
 		void writeMetadata(png_structp &png_ptr, png_infop &info_ptr);
 		Grid2DObject scaleGrid(const Grid2DObject& grid_in);

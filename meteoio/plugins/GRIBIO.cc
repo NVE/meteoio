@@ -269,8 +269,8 @@ void GRIBIO::getDate(grib_handle* h, Date &base, double &d1, double &d2) {
 	GRIB_CHECK(grib_get_long(h,"dataDate",&dataDate),0);
 	GRIB_CHECK(grib_get_long(h,"dataTime",&dataTime),0);
 
-	const int year=dataDate/10000, month=dataDate/100-year*100, day=dataDate-month*100-year*10000;
-	const int hour=dataTime/100, minutes=dataTime-hour*100;
+	const int year=static_cast<int>(dataDate/10000), month=static_cast<int>(dataDate/100-year*100), day=static_cast<int>(dataDate-month*100-year*10000);
+	const int hour=static_cast<int>(dataTime/100), minutes=static_cast<int>(dataTime-hour*100);
 	base.setDate(year, month, day, hour, minutes, tz_in);
 
 	//reading offset to base date/time, as used for forecast, computed at time t for t+offset
@@ -314,8 +314,8 @@ void GRIBIO::getDate(grib_handle* h, Date &base, double &d1, double &d2) {
 			throw InvalidFormatException(ss.str(), AT);
 	}
 
-	d1 = startStep*step_units;
-	d2 = endStep*step_units;
+	d1 = static_cast<double>(startStep*step_units);
+	d2 = static_cast<double>(endStep*step_units);
 }
 
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cell_x, double &cell_y)
@@ -916,7 +916,7 @@ bool GRIBIO::readMeteoMeta(std::vector<Coords>& vecPoints, std::vector<StationDa
 	return true;
 }
 
-bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const long& npoints, double *lats, double *lons, double *values)
+bool GRIBIO::readMeteoValues(const double& marsParam, const long& levelType, const long& i_level, const Date& i_date, const size_t& npoints, double *lats, double *lons, double *values)
 {
 	GRIB_CHECK(grib_index_select_double(idx,"marsParam",marsParam),0);
 	GRIB_CHECK(grib_index_select_long(idx,"indicatorOfTypeOfLevel", levelType),0);

@@ -20,6 +20,7 @@
 #include <meteoio/Graphics.h>
 #include <meteoio/meteolaws/Meteoconst.h>
 
+#include <cstring>
 #include <algorithm>
 #include <errno.h>
 #include <zlib.h>
@@ -197,7 +198,7 @@ void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& heig
 	}
 }
 
-double PNGIO::getScaleFactor(const double& grid_w, const double& grid_h)
+double PNGIO::getScaleFactor(const size_t& grid_w, const size_t& grid_h)
 {
 	if(grid_w==0 || grid_h==0) {
 		return 1.;
@@ -376,7 +377,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &min, const double &max, Array2D<double> &legend_array)
 {
 	if(has_legend) {
-		const legend leg(nrows, min, max);
+		const legend leg(static_cast<unsigned int>(nrows), min, max);
 		legend_array = leg.getLegend();
 		size_t nx, ny;
 		legend_array.size(nx,ny);
@@ -657,7 +658,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 	const double cellsize = grid_in.cellsize;
 	Coords world_ref = grid_in.llcorner;
 	world_ref.setProj(coordout, coordoutparam);
-	world_ref.moveByXY(.5*cellsize, (grid_in.nrows+.5)*cellsize); //moving to center of upper left cell
+	world_ref.moveByXY(.5*cellsize, (double(grid_in.nrows)+.5)*cellsize); //moving to center of upper left cell
 
 	std::ofstream fout;
 	fout.open(world_file.c_str());
