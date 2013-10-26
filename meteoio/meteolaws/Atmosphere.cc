@@ -560,7 +560,7 @@ double Atmosphere::ILWR_parametrized(const double& lat, const double& lon, const
 	}
 	if(lat!=ND && lon!=ND && altitude!=ND && julian!=ND && TZ!=ND && RH!=ND && TA!=ND && ISWR!=ND && ISWR>iswr_thresh) {
 		const double ilwr_p = Unsworth_ilwr(lat, lon, altitude, julian, TZ, RH, TA, ISWR);
-		if(ilwr_p!=IOUtils::nodata) return ilwr_p; //it might have been that we could not compute (for low solar angles)
+		if(ilwr_p!=ND) return ilwr_p; //it might have been that we could not compute (for low solar angles)
 	}
 	if(RH!=ND && TA!=ND) {
 		return Brutsaert_ilwr(RH, TA);
