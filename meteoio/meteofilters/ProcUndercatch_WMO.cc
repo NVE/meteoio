@@ -25,8 +25,8 @@ namespace mio {
 
 const double ProcUndercatch_WMO::Tsnow_WMO=-2., ProcUndercatch_WMO::Train_WMO=2.; //WMO values from Yan et al (2001)
 
-ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector<std::string>& vec_args)
-                   : ProcessingBlock("UNDERCATCH_WMO"), type(cst),
+ProcUndercatch_WMO::ProcUndercatch_WMO(const std::vector<std::string>& vec_args, const std::string& name)
+                   : ProcessingBlock(name), type(cst),
                      factor_snow(1.3), factor_mixed(1.1), Tsnow(Tsnow_WMO), Train(Train_WMO)
 {
 	parse_args(vec_args);
@@ -37,7 +37,7 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
                         std::vector<MeteoData>& ovec)
 {
 	if(param!=MeteoData::HNW)
-		throw InvalidArgumentException("Trying to use UNDERCATCH_WMO filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
+		throw InvalidArgumentException("Trying to use "+getName()+" filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
 	ovec = ivec;
 
 	for (size_t ii=0; ii<ovec.size(); ii++){

@@ -22,8 +22,8 @@ using namespace std;
 
 namespace mio {
 
-ProcExpSmoothing::ProcExpSmoothing(const std::vector<std::string>& vec_args)
-                 : WindowedFilter("EXP_SMOOTHING"), alpha(.5)
+ProcExpSmoothing::ProcExpSmoothing(const std::vector<std::string>& vec_args, const std::string& name)
+                 : WindowedFilter(name), alpha(.5)
 {
 	parse_args(vec_args);
 
@@ -51,7 +51,7 @@ void ProcExpSmoothing::process(const unsigned int& param, const std::vector<Mete
 
 double ProcExpSmoothing::calcExpSmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos)
 {
-	const size_t max_len = MAX(pos-start, end-pos);
+	const size_t max_len = max(pos-start, end-pos);
 	bool initCompleted = false;
 	double expavg = IOUtils::nodata;
 

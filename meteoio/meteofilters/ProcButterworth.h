@@ -42,7 +42,7 @@ namespace mio {
 
 class ProcButterworth : public ProcessingBlock {
 	public:
-		ProcButterworth(const std::vector<std::string>& vec_args);
+		ProcButterworth(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

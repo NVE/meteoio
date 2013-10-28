@@ -25,7 +25,7 @@ namespace mio {
 
 const double FilterTukey::k = 1.5; ///<How many times the stddev allowed as deviation to the smooth signal for valid points
 
-FilterTukey::FilterTukey(const std::vector<std::string>& vec_args) : WindowedFilter("TUKEY")
+FilterTukey::FilterTukey(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
 {
 	parse_args(vec_args);
 

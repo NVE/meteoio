@@ -23,8 +23,8 @@ using namespace std;
 
 namespace mio {
 
-ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector<std::string>& vec_args)
-                     : ProcessingBlock("UNDERCATCH_HAMON"), type(sh)
+ProcUndercatch_Hamon::ProcUndercatch_Hamon(const std::vector<std::string>& vec_args, const std::string& name)
+                     : ProcessingBlock(name), type(sh)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::first; //for the rest: default values
@@ -34,7 +34,7 @@ void ProcUndercatch_Hamon::process(const unsigned int& param, const std::vector<
                         std::vector<MeteoData>& ovec)
 {
 	if(param!=MeteoData::HNW)
-		throw InvalidArgumentException("Trying to use UNDERCATCH_HAMON filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
+		throw InvalidArgumentException("Trying to use "+getName()+" filter on " + MeteoData::getParameterName(param) + " but it can only be applied to precipitation!!" + getName(), AT);
 	ovec = ivec;
 
 	for (size_t ii=0; ii<ovec.size(); ii++){

@@ -23,8 +23,8 @@ using namespace std;
 
 namespace mio {
 
-ProcButterworth::ProcButterworth(const std::vector<std::string>& vec_args)
-                  : ProcessingBlock("BUTTERWORTH"), X(3, IOUtils::nodata), Y(3, IOUtils::nodata), cutoff(0.)
+ProcButterworth::ProcButterworth(const std::vector<std::string>& vec_args, const std::string& name)
+                  : ProcessingBlock(name), X(3, IOUtils::nodata), Y(3, IOUtils::nodata), cutoff(0.)
 {
 	parse_args(vec_args);
 	properties.points_before = 2;

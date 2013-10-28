@@ -97,79 +97,48 @@ namespace mio {
  *
  */
 
-std::set<std::string> BlockFactory::availableBlocks;
-const bool BlockFactory::__init = BlockFactory::initStaticData();
-
-bool BlockFactory::initStaticData()
-{
-	availableBlocks.insert("MIN");
-	availableBlocks.insert("MAX");
-	availableBlocks.insert("MIN_MAX");
-	availableBlocks.insert("MEAN_AVG");
-	availableBlocks.insert("MEDIAN_AVG");
-	availableBlocks.insert("WIND_AVG");
-	availableBlocks.insert("STD_DEV");
-	availableBlocks.insert("RATE");
-	availableBlocks.insert("TUKEY");
-	availableBlocks.insert("MAD");
-	availableBlocks.insert("BUTTERWORTH");
-	availableBlocks.insert("UNHEATED_RAINGAUGE");
-	availableBlocks.insert("UNDERCATCH_WMO");
-	availableBlocks.insert("UNDERCATCH_HAMON");
-	availableBlocks.insert("UNVENTILATED_T");
-	availableBlocks.insert("ADD");
-	availableBlocks.insert("MULT");
-	availableBlocks.insert("EXP_SMOOTHING");
-	availableBlocks.insert("WMA_SMOOTHING");
-	return true;
-}
-
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args)
 {
-	//Check whether algorithm theoretically exists
-	if (availableBlocks.find(blockname) == availableBlocks.end())
-		throw UnknownValueException("The processing block '"+blockname+"' does not exist" , AT);
-
 	if (blockname == "MIN"){
-		return new FilterMin(vec_args);
+		return new FilterMin(vec_args, blockname);
 	} else if (blockname == "MAX"){
-		return new FilterMax(vec_args);
+		return new FilterMax(vec_args, blockname);
 	} else if (blockname == "MIN_MAX"){
-		return new FilterMinMax(vec_args);
+		return new FilterMinMax(vec_args, blockname);
 	} else if (blockname == "MEAN_AVG"){
-		return new FilterMeanAvg(vec_args);
+		return new FilterMeanAvg(vec_args, blockname);
 	} else if (blockname == "MEDIAN_AVG"){
-		return new FilterMedianAvg(vec_args);
+		return new FilterMedianAvg(vec_args, blockname);
 	} else if (blockname == "WIND_AVG"){
-		return new FilterWindAvg(vec_args);
+		return new FilterWindAvg(vec_args, blockname);
 	} else if (blockname == "STD_DEV"){
-		return new FilterStdDev(vec_args);
+		return new FilterStdDev(vec_args, blockname);
 	} else if (blockname == "RATE"){
-		return new FilterRate(vec_args);
+		return new FilterRate(vec_args, blockname);
 	} else if (blockname == "TUKEY"){
-		return new FilterTukey(vec_args);
+		return new FilterTukey(vec_args, blockname);
 	} else if (blockname == "MAD"){
-		return new FilterMAD(vec_args);
+		return new FilterMAD(vec_args, blockname);
 	} else if (blockname == "BUTTERWORTH"){
-		return new ProcButterworth(vec_args);
+		return new ProcButterworth(vec_args, blockname);
 	} else if (blockname == "UNHEATED_RAINGAUGE"){
-		return new FilterUnheatedHNW(vec_args);
+		return new FilterUnheatedHNW(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_WMO"){
-		return new ProcUndercatch_WMO(vec_args);
+		return new ProcUndercatch_WMO(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_HAMON"){
-		return new ProcUndercatch_Hamon(vec_args);
+		return new ProcUndercatch_Hamon(vec_args, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
-		return new ProcUnventilatedT(vec_args);
+		return new ProcUnventilatedT(vec_args, blockname);
 	} else if (blockname == "MULT"){
-		return new ProcMult(vec_args);
+		return new ProcMult(vec_args, blockname);
 	} else if (blockname == "ADD"){
-		return new ProcAdd(vec_args);
+		return new ProcAdd(vec_args, blockname);
 	} else if (blockname == "EXP_SMOOTHING"){
-		return new ProcExpSmoothing(vec_args);
+		return new ProcExpSmoothing(vec_args, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){
-		return new ProcWMASmoothing(vec_args);
+		return new ProcWMASmoothing(vec_args, blockname);
 	} else {
-		throw IOException("The processing block '"+blockname+"' has not been declared! " , AT);
+		throw IOException("The processing block '"+blockname+"' does not exist! " , AT);
 	}
 
 }

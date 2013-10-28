@@ -45,7 +45,7 @@ namespace mio {
  */
 class FilterTukey : public WindowedFilter {
 	public:
-		FilterTukey(const std::vector<std::string>& vec_args);
+		FilterTukey(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

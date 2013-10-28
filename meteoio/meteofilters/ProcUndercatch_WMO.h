@@ -64,7 +64,7 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
 
 class ProcUndercatch_WMO : public ProcessingBlock {
 	public:
-		ProcUndercatch_WMO(const std::vector<std::string>& vec_args);
+		ProcUndercatch_WMO(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

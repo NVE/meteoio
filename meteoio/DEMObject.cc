@@ -481,7 +481,7 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_
 
 	if(ix1==ix2) {
 		//special case of vertical alignement
-		for(int iy=MIN(iy1,iy2); iy<=MAX(iy1,iy2); iy++) {
+		for(int iy=min(iy1,iy2); iy<=max(iy1,iy2); iy++) {
 			GRID_POINT_2D pts;
 			pts.ix = ix1;
 			pts.iy = iy;
@@ -496,7 +496,7 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_
 		for(int ix=ix1; ix<=ix2; ix++) {
 			//extension of the line segment (ix, ix+1) along the Y axis
 			int y1 = (int)floor( a*(double)ix+b );
-			//const int y2 = MIN( (int)floor( a*((double)ix+1)+b ) , iy2);
+			//const int y2 = min( (int)floor( a*((double)ix+1)+b ) , iy2);
 			int y2 = (int)floor( a*((double)ix+1)+b );
 			if(ix==ix2 && y1==iy2) {
 				//we don't want to overshoot when reaching the target cell
@@ -869,21 +869,21 @@ double DEMObject::steepestGradient(double A[4][4]) {
 
 	if(A[2][2]!=IOUtils::nodata) {
 		if(A[1][1]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[1][1])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[1][1])/(cellsize*sqrt2) );
 		if(A[1][2]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[1][2])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[1][2])/(cellsize) );
 		if(A[1][3]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[1][3])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[1][3])/(cellsize*sqrt2) );
 		if(A[2][1]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[2][1])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[2][1])/(cellsize) );
 		if(A[2][3]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[2][3])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[2][3])/(cellsize) );
 		if(A[3][1]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[3][1])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[3][1])/(cellsize*sqrt2) );
 		if(A[3][2]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[3][2])/(cellsize) );
+			smax = max( smax, fabs(A[2][2] - A[3][2])/(cellsize) );
 		if(A[3][3]!=IOUtils::nodata)
-			smax = MAX( smax, fabs(A[2][2] - A[3][3])/(cellsize*sqrt2) );
+			smax = max( smax, fabs(A[2][2] - A[3][3])/(cellsize*sqrt2) );
 	}
 
 	if(smax<0.)

@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-ProcWMASmoothing::ProcWMASmoothing(const std::vector<std::string>& vec_args) : WindowedFilter("WMA_SMOOTHING")
+ProcWMASmoothing::ProcWMASmoothing(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
 {
 	parse_args(vec_args);
 
@@ -49,7 +49,7 @@ void ProcWMASmoothing::process(const unsigned int& param, const std::vector<Mete
 
 double ProcWMASmoothing::calcWMASmoothing(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, const size_t& pos)
 { //such as WMA = 1*X1 + 2*X2 + ... + n*Xn and then normalized by the sum of weights = (1+2+3+...+n)
-	const size_t max_len = MAX(pos-start, end-pos);
+	const size_t max_len = max(pos-start, end-pos);
 	double wma = 0.;
 	size_t norm = 0;
 

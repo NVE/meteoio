@@ -39,6 +39,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new UnsworthGenerator(vecArgs, i_algoname);
 	} else if (algoname == "POT_RADIATION"){
 		return new PotRadGenerator(vecArgs, i_algoname);
+	} else if (algoname == "HS_SWE"){
+		return new HSSweGenerator(vecArgs, i_algoname);
 	} else {
 		throw IOException("The generator algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -428,6 +430,160 @@ double PotRadGenerator::getSolarIndex(const double& ta, const double& rh, const 
 	const double b1 = 0.75, b2 = 3.4;
 	const double karsten_Si = 1. - (b1 * pow(cloudiness, b2));
 	return karsten_Si;
+}
+
+
+const double HSSweGenerator::soil_albedo = .23; //grass
+const double HSSweGenerator::snow_albedo = .85; //snow
+const double HSSweGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+const double HSSweGenerator::thresh_rh = .7;
+const double HSSweGenerator::thresh_Dt = 3.;
+const double HSSweGenerator::thresh_iswr = 30.; //minimum radiation to consider it is daylight
+const double HSSweGenerator::thresh_solarIndex = .4; //threshold for clear sky
+const bool HSSweGenerator::soft = true;
+void HSSweGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	if(vecArgs.size()>0) { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
+}
+
+bool HSSweGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
+{//HACK: modify prototype so we can get the full vector + the index of the replacement
+	return false; //all missing values could be filled
+}
+
+bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(param!=MeteoData::HNW)
+		throw InvalidArgumentException("Trying to use "+algo+" generator on " + MeteoData::getParameterName(param) + " but it can only be applied to HNW!!", AT);
+
+	if(vecMeteo.empty()) return true;
+
+	//Find first point that is not IOUtils::nodata
+	size_t last_good = IOUtils::npos;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		if (vecMeteo[ii](MeteoData::HS) != IOUtils::nodata){
+			last_good = ii;
+			break;
+		}
+	}
+
+	if (last_good == IOUtils::npos) //can not find a good point to start
+		return false;
+
+	const double lat = vecMeteo.front().meta.position.getLat();
+	const double lon = vecMeteo.front().meta.position.getLon();
+	const double alt = vecMeteo.front().meta.position.getAltitude();
+	if(lat!=IOUtils::nodata && lon!=IOUtils::nodata && alt!=IOUtils::nodata) {
+		sun.setLatLon(lat, lon, alt);
+		sun_ok = true;
+	} else {
+		sun_ok = false;
+	}
+
+	bool all_filled = (last_good>0)? false : true;
+	for(size_t ii=last_good+1; ii<vecMeteo.size(); ii++) {
+		const double HS_curr = vecMeteo[ii](MeteoData::HS);
+		if(HS_curr==IOUtils::nodata) continue;
+
+		const size_t start_idx = last_good+1;
+		const double HS_prev = vecMeteo[last_good](MeteoData::HS);
+		const double HS_delta = HS_curr - HS_prev;
+
+		//if HS_delta<0 or ==0, we don't do anything,
+		//we let the user define a Cst generator to set the remaining nodata to 0
+		if(HS_delta>0.) {
+			const double rho = newSnowDensity(vecMeteo[ii]);
+			const double precip = HS_delta * rho; //in kg/m2 or mm
+			distributeHNW(precip, start_idx, ii, vecMeteo);
+		} else
+			all_filled = false;
+
+		last_good=ii;
+	}
+
+	return all_filled;
+}
+
+double HSSweGenerator::newSnowDensity(const MeteoData& md) const
+{ //Zwart parametrization
+	const double vw = max(2., md(MeteoData::VW));
+	const double rh = md(MeteoData::RH);
+	const double ta = md(MeteoData::TA) - Cst::t_water_triple_pt;
+	const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.3;
+
+	double arg = beta01 + beta1*ta + beta2*asin(sqrt(rh)) + beta3*log10(vw);
+	if(ta>=-14.)
+		arg += beta02; // += beta2*ta;
+
+	return min( pow(10., arg), 250. ); //limit the density to 250 kg/m3
+}
+
+void HSSweGenerator::distributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, std::vector<MeteoData>& vecMeteo)
+{
+	const size_t nr_elems = end_idx-start_idx+1;
+	std::vector<unsigned char> vecScores(end_idx-start_idx+1);
+
+	//assign a score for each timestep according to the possibility of precipitation
+	size_t nr_score1 = 0, nr_score2 = 0, nr_score3 = 0; //count how many in each possible score categories
+	for(size_t ii=0; ii<nr_elems; ii++) {
+		unsigned char score = 0;
+		const double rh = vecMeteo[ii+start_idx](MeteoData::RH);
+		const double ta = vecMeteo[ii+start_idx](MeteoData::TA);
+		const double tss = vecMeteo[ii+start_idx](MeteoData::TSS);
+		const double hs = vecMeteo[ii+start_idx](MeteoData::HS);
+
+		//trying to get some radiation information
+		double iswr = vecMeteo[ii+start_idx](MeteoData::ISWR);
+		const double rswr = vecMeteo[ii+start_idx](MeteoData::RSWR);
+		double albedo = .5;
+		if(iswr!=IOUtils::nodata && rswr!=IOUtils::nodata)
+			albedo = rswr / iswr;
+		else if(hs!=IOUtils::nodata)
+			albedo = (hs>=snow_thresh)? snow_albedo : soil_albedo;
+
+		if(iswr==IOUtils::nodata && rswr!=IOUtils::nodata)
+			iswr = rswr / albedo;
+
+		//assign the scores
+		if(rh!=IOUtils::nodata && rh>=thresh_rh) //enough moisture for precip
+			score++;
+		if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)<=thresh_Dt ) //cloudy sky condition
+			score++;
+		if(iswr!=IOUtils::nodata && iswr>thresh_iswr && sun_ok) { //low radiation compared to clear sky
+			sun.setDate(vecMeteo[ii+start_idx].date.getJulian(true), 0.);
+			const double p=vecMeteo[ii+start_idx](MeteoData::P);
+			if(p==IOUtils::nodata)
+				sun.calculateRadiation(ta, rh, albedo);
+			else
+				sun.calculateRadiation(ta, rh, p, albedo);
+
+			double toa, direct, diffuse;
+			sun.getHorizontalRadiation(toa, direct, diffuse);
+			const double solarIndex = iswr / (direct+diffuse);
+			if(solarIndex<=thresh_solarIndex)
+				score++;
+		}
+
+		if(score==1) nr_score1++;
+		if(score==2) nr_score2++;
+		if(score==3) nr_score3++;
+
+		vecScores[ii] = score;
+	}
+
+	//distribute the precipitation on the time steps that have the highest scores
+	const unsigned char winning_scores = (nr_score3>0)? 3 : (nr_score2>0)? 2 : (nr_score1>0)? 1 : 0;
+	const size_t nr_winning_scores = (nr_score3>0)? nr_score3 : (nr_score2>0)? nr_score2 : (nr_score1>0)? nr_score1 : nr_elems;
+	const double precip_increment =  precip / double(nr_winning_scores);
+
+	for(size_t ii=0; ii<nr_elems; ii++) {
+		if(winning_scores>0 && vecScores[ii]==winning_scores) {
+			vecMeteo[ii+start_idx](MeteoData::HNW) = precip_increment;
+		} else
+			vecMeteo[ii+start_idx](MeteoData::HNW) = 0.; //all other time steps set to 0
+	}
 }
 
 } //namespace

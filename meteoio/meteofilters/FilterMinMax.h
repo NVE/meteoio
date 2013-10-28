@@ -48,7 +48,7 @@ namespace mio {
 
 class FilterMinMax : public FilterBlock {
 	public:
-		FilterMinMax(const std::vector<std::string>& vec_args);
+		FilterMinMax(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

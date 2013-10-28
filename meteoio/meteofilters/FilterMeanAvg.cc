@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-FilterMeanAvg::FilterMeanAvg(const std::vector<std::string>& vec_args) : WindowedFilter("MEAN_AVG")
+FilterMeanAvg::FilterMeanAvg(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
 {
 	parse_args(vec_args);
 

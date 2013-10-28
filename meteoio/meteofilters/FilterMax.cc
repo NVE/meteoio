@@ -21,8 +21,8 @@ using namespace std;
 
 namespace mio {
 
-FilterMax::FilterMax(const std::vector<std::string>& vec_args)
-          : FilterBlock("MAX"), max_val(0.), max_soft(0.), is_soft(true)
+FilterMax::FilterMax(const std::vector<std::string>& vec_args, const std::string& name)
+          : FilterBlock(name), max_val(0.), max_soft(0.), is_soft(true)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values

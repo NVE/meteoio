@@ -182,13 +182,18 @@ void PNGIO::setOptions()
 void PNGIO::parse_size(const std::string& size_spec, size_t& width, size_t& height)
 {
 	char rest[32] = "";
-	if(sscanf(size_spec.c_str(), "%zu %zu%31s", &width, &height, rest) < 2)
-	if(sscanf(size_spec.c_str(), "%zu*%zu%31s", &width, &height, rest) < 2)
-	if(sscanf(size_spec.c_str(), "%zux%zu%31s", &width, &height, rest) < 2) {
+	unsigned int w,h;
+	if(sscanf(size_spec.c_str(), "%u %u%31s", &w, &h, rest) < 2)
+	if(sscanf(size_spec.c_str(), "%u*%u%31s", &w, &h, rest) < 2)
+	if(sscanf(size_spec.c_str(), "%ux%u%31s", &w, &h, rest) < 2) {
 		std::ostringstream ss;
 		ss << "Can not parse PNGIO size specification \"" << size_spec << "\"";
 		throw InvalidFormatException(ss.str(), AT);
 	}
+
+	width = static_cast<size_t>(w);
+	height = static_cast<size_t>(h);
+
 	std::string tmp(rest);
 	IOUtils::trim(tmp);
 	if ((tmp.length() > 0) && tmp[0] != '#' && tmp[0] != ';') {//if line holds more than one value it's invalid

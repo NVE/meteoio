@@ -36,13 +36,6 @@
 #include <limits>
 #include <cmath>
 
-#ifndef MAX
-#define MAX(x,y)    (((x) < (y)) ? (y) : (x))
-#endif
-#ifndef MIN
-#define MIN(x,y)    (((x) < (y)) ? (x) : (y))
-#endif
-
 #ifndef C_TO_K
 #define C_TO_K( T ) ( T + Cst::t_water_freezing_pt )	  // degree Celsius to kelvin
 #endif
@@ -144,7 +137,7 @@ namespace IOUtils {
 	* @param in_path the path string to cleanup
 	* @param resolve resolve links, convert relative paths, etc? (default=false)
 	*/
-	std::string cleanPath(const std::string& in_path, const bool& resolve=false);
+	std::string cleanPath(std::string in_path, const bool& resolve=false);
 
 	/**
 	* @brief returns the extension part of a given filename.
@@ -204,9 +197,9 @@ namespace IOUtils {
 	                      std::string &key, std::string &value, const bool& setToUpperCase=false);
 
 	void toUpper(std::string& str);
-	std::string strToUpper(const std::string &str);
+	std::string strToUpper(std::string str);
 	void toLower(std::string& str);
-	std::string strToLower(const std::string &str);
+	std::string strToLower(std::string str);
 	bool isNumeric(std::string input, const unsigned int& nBase=10);
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);

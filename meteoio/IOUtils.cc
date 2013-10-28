@@ -123,34 +123,32 @@ void copy_file(const std::string& src, const std::string& dest)
 	fout.close();
 }
 
-std::string cleanPath(const std::string& in_path, const bool& resolve)
+std::string cleanPath(std::string in_path, const bool& resolve)
 {
 	if(!resolve) { //do not resolve links, relative paths, etc
-		std::string out_path(in_path);
-		std::replace(out_path.begin(), out_path.end(), '\\', '/');
-		return out_path;
+		std::replace(in_path.begin(), in_path.end(), '\\', '/');
+		return in_path;
 	} else {
 	#ifdef WIN32
 		//if this would not suffice, see http://pdh11.blogspot.ch/2009/05/pathcanonicalize-versus-what-it-says-on.html
 		char **ptr = NULL;
 		char *out_buff = (char*)calloc(MAX_PATH, sizeof(char));
 		const DWORD status = GetFullPathName(in_path.c_str(), MAX_PATH, out_buff, ptr);
-		std::string out_path = (status!=0 && status<=MAX_PATH)? out_buff : in_path;
+		if(status!=0 && status<=MAX_PATH) in_path = out_buff;
 		free(out_buff);
 
-		std::replace(out_path.begin(), out_path.end(), '\\', '/');
-		return out_path;
+		std::replace(in_path.begin(), in_path.end(), '\\', '/');
+		return in_path;
 	#else //POSIX
-		std::string out_path(in_path);
-		std::replace(out_path.begin(), out_path.end(), '\\', '/');
+		std::replace(in_path.begin(), in_path.end(), '\\', '/');
 
-		char *real_path = realpath(out_path.c_str(), NULL); //POSIX
+		char *real_path = realpath(in_path.c_str(), NULL); //POSIX
 		if(real_path!=NULL) {
 			const std::string tmp(real_path);
 			free(real_path);
 			return tmp;
 		} else
-			return out_path; //something failed in realpath, keep it as it is
+			return in_path; //something failed in realpath, keep it as it is
 	#endif
 	}
 }
@@ -221,16 +219,16 @@ void toLower(std::string& str) {
 	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
 
-std::string strToUpper(const std::string &str) {
-    std::string strcopy(str.size(), 0);
-    std::transform(str.begin(), str.end(), strcopy.begin(), ::toupper);
-    return strcopy;
+std::string strToUpper(std::string str) {
+	//based on http://cpp-next.com/archive/2009/08/want-speed-pass-by-value/
+	//it is better to let the compiler copy (or not!) the parameters
+	std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+	return str;
 }
 
-std::string strToLower(const std::string &str) {
-    std::string strcopy(str.size(), 0);
-    std::transform(str.begin(), str.end(), strcopy.begin(), ::tolower);
-    return strcopy;
+std::string strToLower(std::string str) {
+	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+	return str;
 }
 
 bool isNumeric(std::string str, const unsigned int& nBase)
@@ -734,7 +732,7 @@ size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bo
 	const double curr_date = soughtdate.getJulian(true);
 	const double raw_pos = (curr_date-start_date) / (end_date-start_date) * static_cast<double>(max_idx); //always >=0
 	const size_t start_idx = (size_t)floor(raw_pos*.9);
-	const size_t end_idx = MIN( (size_t)ceil(raw_pos*1.1), max_idx);
+	const size_t end_idx = std::min( (size_t)ceil(raw_pos*1.1), max_idx);
 
 	//first and last index of the search interval, either using our initial guess or the full vector
 	size_t first = (curr_date >= vecM[start_idx].date.getJulian(true))? start_idx : 0;

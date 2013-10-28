@@ -43,7 +43,7 @@ namespace mio {
 
 class FilterMAD : public WindowedFilter {
 	public:
-		FilterMAD(const std::vector<std::string>& vec_args);
+		FilterMAD(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

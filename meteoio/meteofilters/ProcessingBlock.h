@@ -85,10 +85,6 @@ class ProcessingBlock {
 class BlockFactory {
 	public:
 		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector<std::string>& vec_args);
-
-		static std::set<std::string> availableBlocks; ///<all blocks that exist
-		static const bool __init;    ///<helper variable to enable the init of static collection data
-		static bool initStaticData();///<initialize the static availableBlocks
 };
 
 } //end namespace

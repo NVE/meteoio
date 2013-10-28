@@ -21,8 +21,8 @@ using namespace std;
 
 namespace mio {
 
-FilterMinMax::FilterMinMax(const std::vector<std::string>& vec_args)
-             : FilterBlock("MIN_MAX"), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(true)
+FilterMinMax::FilterMinMax(const std::vector<std::string>& vec_args, const std::string& name)
+             : FilterBlock(name), min_val(0.), max_val(0.), min_soft(0.), max_soft(0.), is_soft(true)
 
 {
 	parse_args(vec_args);

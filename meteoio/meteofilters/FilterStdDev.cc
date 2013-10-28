@@ -24,7 +24,7 @@ namespace mio {
 
 const double FilterStdDev::sigma = 2.; ///<How many times the stddev allowed for valid points
 
-FilterStdDev::FilterStdDev(const std::vector<std::string>& vec_args) : WindowedFilter("STD_DEV")
+FilterStdDev::FilterStdDev(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
 {
 	parse_args(vec_args);
 

@@ -28,8 +28,8 @@ const double ProcUnventilatedT::snow_albedo = .85; //snow
 const double ProcUnventilatedT::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 const double ProcUnventilatedT::vw_thresh = 0.1; //wind speed threshold
 
-ProcUnventilatedT::ProcUnventilatedT(const std::vector<std::string>& vec_args)
-                  : ProcessingBlock("UNVENTILATED_T"), usr_albedo(dflt_albedo),
+ProcUnventilatedT::ProcUnventilatedT(const std::vector<std::string>& vec_args, const std::string& name)
+                  : ProcessingBlock(name), usr_albedo(dflt_albedo),
                     is_soft(true), nakamura(true)
 {
 	parse_args(vec_args);

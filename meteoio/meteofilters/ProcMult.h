@@ -39,7 +39,7 @@ namespace mio {
 
 class ProcMult : public ProcessingBlock {
 	public:
-		ProcMult(const std::vector<std::string>& vec_args);
+		ProcMult(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);

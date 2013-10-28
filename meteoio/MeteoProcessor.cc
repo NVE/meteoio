@@ -70,8 +70,8 @@ void MeteoProcessor::getWindowSize(ProcessingProperties& o_properties) const
 
 void MeteoProcessor::compareProperties(const ProcessingProperties& newprop, ProcessingProperties& current)
 {
-	current.points_before = MAX(current.points_before, newprop.points_before);
-	current.points_after = MAX(current.points_after, newprop.points_after);
+	current.points_before = max(current.points_before, newprop.points_before);
+	current.points_after = max(current.points_after, newprop.points_after);
 
 	if (newprop.time_before > current.time_before)
 		current.time_before = newprop.time_before;

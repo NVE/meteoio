@@ -23,7 +23,7 @@ using namespace std;
 
 namespace mio {
 
-FilterWindAvg::FilterWindAvg(const std::vector<std::string>& vec_args) : WindowedFilter("WIND_AVG")
+FilterWindAvg::FilterWindAvg(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name)
 {
 	parse_args(vec_args);
 
@@ -39,7 +39,7 @@ void FilterWindAvg::process(const unsigned int& param, const std::vector<MeteoDa
 {
 	if(param!=MeteoData::VW && param!=MeteoData::DW) {
 		ostringstream ss;
-		ss << "Can not use WIND_AVG processing on " << MeteoData::getParameterName(param);
+		ss << "Can not use " << getName() << " processing on " << MeteoData::getParameterName(param);
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 

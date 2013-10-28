@@ -55,8 +55,8 @@ void ProcessingStack::getWindowSize(ProcessingProperties& o_properties)
 	for (size_t jj=0; jj<filter_stack.size(); jj++){
 		const ProcessingProperties& properties = (*filter_stack[jj]).getProperties();
 
-		o_properties.points_before = MAX(o_properties.points_before, properties.points_before);
-		o_properties.points_after = MAX(o_properties.points_after, properties.points_after);
+		o_properties.points_before = max(o_properties.points_before, properties.points_before);
+		o_properties.points_after = max(o_properties.points_after, properties.points_after);
 
 		if (properties.time_before > o_properties.time_before)
 			o_properties.time_before = properties.time_before;

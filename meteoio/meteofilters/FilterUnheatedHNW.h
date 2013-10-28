@@ -44,7 +44,7 @@ namespace mio {
 
 class FilterUnheatedHNW : public FilterBlock {
 	public:
-		FilterUnheatedHNW(const std::vector<std::string>& vec_args);
+		FilterUnheatedHNW(const std::vector<std::string>& vec_args, const std::string& name);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
@@ -52,8 +52,7 @@ class FilterUnheatedHNW : public FilterBlock {
 	private:
 		void parse_args(std::vector<std::string> vec_args);
 
-		double thresh_rh;
-		double thresh_Dt;
+		double thresh_rh, thresh_Dt;
 		bool soft;
 };
 

@@ -21,8 +21,8 @@ using namespace std;
 
 namespace mio {
 
-FilterUnheatedHNW::FilterUnheatedHNW(const std::vector<std::string>& vec_args)
-                  : FilterBlock("UNHEATED_RAINGAUGE"), thresh_rh(0.), thresh_Dt(0.), soft(true)
+FilterUnheatedHNW::FilterUnheatedHNW(const std::vector<std::string>& vec_args, const std::string& name)
+                  : FilterBlock(name), thresh_rh(0.), thresh_Dt(0.), soft(true)
 {
 	parse_args(vec_args);
 	properties.stage = ProcessingProperties::both; //for the rest: default values
@@ -47,7 +47,7 @@ void FilterUnheatedHNW::process(const unsigned int& param, const std::vector<Met
 			const double ta = ivec[ii](MeteoData::TA);
 			const double tss = ivec[ii](MeteoData::TSS);
 
-			if (rh!=IOUtils::nodata &&  rh<thresh_rh) //not enough humidity for precipitation
+			if (rh!=IOUtils::nodata && rh<thresh_rh) //not enough humidity for precipitation
 				tmp = 0.;
 			if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)>thresh_Dt ) //clear sky condition
 				tmp = 0.;

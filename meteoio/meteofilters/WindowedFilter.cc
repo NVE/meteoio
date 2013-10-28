@@ -22,8 +22,8 @@ using namespace std;
 namespace mio {
 
 WindowedFilter::WindowedFilter(const std::string& name)
-	: FilterBlock(name), min_time_span(0.0, 0.), centering(WindowedFilter::center),
-	  last_start(0), last_end(0), min_data_points(1), vec_window(), is_soft(false)
+               : FilterBlock(name), min_time_span(0.0, 0.), centering(WindowedFilter::center),
+                 last_start(0), last_end(0), min_data_points(1), vec_window(), is_soft(false)
 {}
 
 unsigned int WindowedFilter::get_centering(std::vector<std::string>& vec_args)
@@ -126,7 +126,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(!is_soft) return false;
 			start_time_idx=0; //first possible element
 		}
-		const size_t elements_left = MAX(index - start_time_idx, start_elements);
+		const size_t elements_left = max(index - start_time_idx, start_elements);
 		start = index - elements_left;
 
 		//get end of window
@@ -138,7 +138,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(!is_soft) return false;
 			end_time_idx=ivec.size()-1; //last possible element
 		}
-		const size_t elements_right = MAX(end_time_idx - index, end_elements);
+		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
 	}
 
@@ -155,7 +155,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(!is_soft) return false;
 			end_time_idx=ivec.size()-1; //last possible element
 		}
-		const size_t elements_right = MAX(end_time_idx - index, end_elements);
+		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
 
 		//get start of window
@@ -168,7 +168,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(!is_soft) return false;
 			end_time_idx=0; //first possible element
 		}
-		const size_t elements_left = MAX(index - start_time_idx, start_elements);
+		const size_t elements_left = max(index - start_time_idx, start_elements);
 		start = index - elements_left;
 	}
 
@@ -186,7 +186,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(!is_soft) return false;
 			start_time_idx=0; //first possible element
 		}
-		const size_t elements_left = MAX(index - start_time_idx, start_elements);
+		const size_t elements_left = max(index - start_time_idx, start_elements);
 		start = index - elements_left;
 
 		//get end of ideal window
@@ -201,7 +201,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(!is_soft) return false;
 			end_time_idx=ivec.size()-1; //last possible element
 		}
-		const size_t elements_right = MAX(end_time_idx - index, end_elements);
+		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
 
 		//now, check (and modify) if the window could not be centered
@@ -215,7 +215,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(end_tm_idx==IOUtils::npos) {
 				end_tm_idx=ivec.size()-1; //last possible element
 			}
-			const size_t elems_right = MAX(end_tm_idx - index, end_elems);
+			const size_t elems_right = max(end_tm_idx - index, end_elems);
 			end = index + elems_right;
 		} else { //we hit the right border
 			//get again the start of window
@@ -226,7 +226,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 			if(start_tm_idx==IOUtils::npos) {
 				end_time_idx=0; //first possible element
 			}
-			const size_t elems_left = MAX(index - start_tm_idx, start_elems);
+			const size_t elems_left = max(index - start_tm_idx, start_elems);
 			start = index - elems_left;
 		}
 	}
