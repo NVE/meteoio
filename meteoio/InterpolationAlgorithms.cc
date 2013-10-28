@@ -29,7 +29,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
                                                        Meteo2DInterpolator& i_mi,
                                                        const std::vector<std::string>& i_vecArgs, IOManager& iom)
 {
-    const std::string algoname( IOUtils::strToUpper(i_algoname) );
+	const std::string algoname( IOUtils::strToUpper(i_algoname) );
+
 	if (algoname == "CST"){// constant fill
 		return new ConstAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "STD_PRESS"){// standard air pressure interpolation
@@ -626,7 +627,7 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	algorithm->calculate(internal_dem, grid);
 	info << algorithm->getInfo();
 
-    //get TA interpolation from call back to Meteo2DInterpolator
+	 //get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;
 	mi.interpolate(date, internal_dem, MeteoData::TA, ta);
 
@@ -636,8 +637,8 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 	//add "virtual snow height" to the internal dem
 	for(size_t ii=0; ii<(dem.ncols*dem.nrows); ++ii)
-		internal_dem.grid2D(ii) += ((grid.grid2D(ii))*(1e-02));
-    internal_dem.update();
+		internal_dem.grid2D(ii) += grid.grid2D(ii)*1e-2;
+	internal_dem.update();
 }
 
 void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData)
