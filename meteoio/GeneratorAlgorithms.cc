@@ -453,6 +453,8 @@ bool HSSweGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 	return false; //all missing values could be filled
 }
 
+//when we can not guarantee HNW=0, we leave it at nodata. Therefore, it is highly recommended to
+//run through a Cst=0 data generator afterward
 bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(param!=MeteoData::HNW)
@@ -472,6 +474,7 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 	if (last_good == IOUtils::npos) //can not find a good point to start
 		return false;
 
+	//try to setup a Sun object to compute the potential radiation
 	const double lat = vecMeteo.front().meta.position.getLat();
 	const double lon = vecMeteo.front().meta.position.getLon();
 	const double alt = vecMeteo.front().meta.position.getAltitude();
@@ -491,14 +494,13 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 		const double HS_prev = vecMeteo[last_good](MeteoData::HS);
 		const double HS_delta = HS_curr - HS_prev;
 
-		//if HS_delta<0 or ==0, we don't do anything,
-		//we let the user define a Cst generator to set the remaining nodata to 0
 		if(HS_delta>0.) {
 			const double rho = newSnowDensity(vecMeteo[ii]);
 			const double precip = HS_delta * rho; //in kg/m2 or mm
 			distributeHNW(precip, start_idx, ii, vecMeteo);
-		} else
+		} else {
 			all_filled = false;
+		}
 
 		last_good=ii;
 	}
@@ -507,7 +509,8 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 }
 
 double HSSweGenerator::newSnowDensity(const MeteoData& md) const
-{ //Zwart parametrization
+{ //C. Zwart, "Significance of new-snow properties for snowcover development",
+//master's thesis, 2007, Institute for Marine and Atmospheric Research, University of Utrecht, 78 pp.
 	const double vw = max(2., md(MeteoData::VW));
 	const double rh = md(MeteoData::RH);
 	const double ta = md(MeteoData::TA) - Cst::t_water_triple_pt;
@@ -517,7 +520,7 @@ double HSSweGenerator::newSnowDensity(const MeteoData& md) const
 	if(ta>=-14.)
 		arg += beta02; // += beta2*ta;
 
-	return min( pow(10., arg), 250. ); //limit the density to 250 kg/m3
+	return min( max(30., pow(10., arg)), 250. ); //limit the density to the [30, 250] kg/m3 range
 }
 
 void HSSweGenerator::distributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, std::vector<MeteoData>& vecMeteo)
@@ -527,7 +530,7 @@ void HSSweGenerator::distributeHNW(const double& precip, const size_t& start_idx
 
 	//assign a score for each timestep according to the possibility of precipitation
 	size_t nr_score1 = 0, nr_score2 = 0, nr_score3 = 0; //count how many in each possible score categories
-	for(size_t ii=0; ii<nr_elems; ii++) {
+	for(size_t ii=0; ii<nr_elems; ii++) { //we keep a local index "ii" for the scores
 		unsigned char score = 0;
 		const double rh = vecMeteo[ii+start_idx](MeteoData::RH);
 		const double ta = vecMeteo[ii+start_idx](MeteoData::TA);
@@ -566,18 +569,19 @@ void HSSweGenerator::distributeHNW(const double& precip, const size_t& start_idx
 				score++;
 		}
 
+		//counters to know how many points received each possible scores
 		if(score==1) nr_score1++;
 		if(score==2) nr_score2++;
 		if(score==3) nr_score3++;
-
-		vecScores[ii] = score;
+		vecScores[ii] = score; //score for the current point
 	}
 
-	//distribute the precipitation on the time steps that have the highest scores
+	//find out what is the highest score and how many points received it, so we can compute the precipitation increment for each point
 	const unsigned char winning_scores = (nr_score3>0)? 3 : (nr_score2>0)? 2 : (nr_score1>0)? 1 : 0;
 	const size_t nr_winning_scores = (nr_score3>0)? nr_score3 : (nr_score2>0)? nr_score2 : (nr_score1>0)? nr_score1 : nr_elems;
 	const double precip_increment =  precip / double(nr_winning_scores);
 
+	//distribute the precipitation on the time steps that have the highest scores
 	for(size_t ii=0; ii<nr_elems; ii++) {
 		if(winning_scores>0 && vecScores[ii]==winning_scores) {
 			vecMeteo[ii+start_idx](MeteoData::HNW) = precip_increment;
