@@ -65,17 +65,23 @@ namespace mio {
  * @section gribio_units Units
  * As specified by WMO.
  *
+ * @section files_naming Files naming scheme
+ * When a grid is read by providing the filename to open, any file name will obviously work. Otherwise, the file names have to follow the pattern:\n
+ * {GRID2DPREFIX}{ISO8601 numerical UTC date}{GRID2DEXT}\n
+ * By default, GRID2DPREFIX is empty and GRID2DEXT is ".grb". This means that by default, a grib file containing data for 2013-10-15T12:00 would be:
+ * "201310151200.grb". Since the grid extension contains the ".", it is possible to use it for a file name suffix as well.
+ *
  * @section gribio_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: coordinate system (see Coords)
  * - COORDPARAM: extra coordinates parameters (see Coords)
  * - GRID2DPATH: path where to find the grids
  * - GRID2DPREFIX: prefix to append when generating a file name for reading (ie: something like "laf" for Cosmo-Analysis-full domain), optional
- * - GRID2DEXT: grib file extension, or <i>none</i> for no file extension (default: .grb)
+ * - GRID2DEXT: grib file extension, or <i>none</i> for no file extension (default: ".grb")
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
  * - METEOPATH: path where to find the grids for extracting time series at special points
- * - METEOEXT: file extension, or <i>none</i> for no file extension (default: .grb)
+ * - METEOEXT: file extension, or <i>none</i> for no file extension (default: ".grb")
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,
  * it will be removed from the list.
