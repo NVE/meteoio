@@ -123,5 +123,6 @@ ENDIF(BUILD_STATIC_LIBS)
 
 IF(WIN32) #handle the special case of WIN32 needing import libraries
 	FILE(GLOB_RECURSE importlibs "lib/libmeteo*.lib")
-	INSTALL(FILES ${importlibs} DESTINATION lib COMPONENT libraries)
+	FILE(GLOB_RECURSE dlls "lib/libmeteo*.dll") #bug: otherwise, dlls are missing
+	INSTALL(FILES ${dlls} ${importlibs} DESTINATION lib COMPONENT libraries)
 ENDIF(WIN32)

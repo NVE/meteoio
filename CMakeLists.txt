@@ -180,6 +180,12 @@ INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT head
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
 INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteostats COMPONENT headers)
 
+IF(WIN32) #only having it in meteoio/CMake... is not enough...
+	FILE(GLOB_RECURSE importlibs "lib/libmeteo*.lib")
+	FILE(GLOB_RECURSE dlls "lib/libmeteo*.dll")
+	INSTALL(FILES ${dlls} ${importlibs} DESTINATION lib COMPONENT libraries)
+ENDIF(WIN32)
+
 ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
 	COMMAND cmake -E remove "lib/libmeteo*.${DLL_EXT}" "lib/libmeteo*.${STAT_EXT}" "lib/libmeteo*.lib"
@@ -278,7 +284,7 @@ SET(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${PACKAGE_EXTRA}-${VERSION}-${
 
 #installation by components for formats that support it
 #SET(CPACK_COMPONENTS_ALL_GROUPS_IN_ONE_PACKAGE 1)
-SET(CPACK_COMPONENTS_ALL libraries headers plugins documentation examples)
+SET(CPACK_COMPONENTS_ALL libraries headers documentation examples)
 SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "MeteoIO library")
 SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "The MeteoIO library itself")
 SET(CPACK_COMPONENT_LIBRARIES_GROUP Runtime)
@@ -312,11 +318,11 @@ IF(UNIX)
 		SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 		SET(CPACK_DEBIAN_PACKAGE_NAME "meteoio")
 		SET(CPACK_DEBIAN_PACKAGE_SECTION "devel")
-		SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6, libproj0") #objdump -p lib/libmeteoio.so | grep NEEDED | tr -s ' ' | cut -d' ' -f3 | tr '\n' ','
+		SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libstdc++6") #objdump -p lib/libmeteoio.so | grep NEEDED | tr -s ' ' | cut -d' ' -f3 | tr '\n' ','
 		SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386") #dpkg --print-architecture
 		SET(CPACK_RPM_PACKAGE_NAME "meteoio")
 		SET(CPACK_RPM_PACKAGE_LICENSE "LPGLv3")
-		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6, libproj4") #simply libproj for OpenSuse
+		SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++6") #simply libproj for OpenSuse
 		SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
 		SET(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 	ENDIF(APPLE)
