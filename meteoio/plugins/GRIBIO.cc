@@ -69,7 +69,8 @@ namespace mio {
  * When a grid is read by providing the filename to open, any file name will obviously work. Otherwise, the file names have to follow the pattern:\n
  * {GRID2DPREFIX}{ISO8601 numerical UTC date}{GRID2DEXT}\n
  * By default, GRID2DPREFIX is empty and GRID2DEXT is ".grb". This means that by default, a grib file containing data for 2013-10-15T12:00 would be:
- * "201310151200.grb". Since the grid extension contains the ".", it is possible to use it for a file name suffix as well.
+ * "201310151200.grb". Since the grid extension contains the ".", it is possible to use it for a file name suffix as well. For example, to read files
+ * named like "lfff201310151200_z" one would provide GRID2DPREFIX="lfff" and GRID2DEXT="_z".
  *
  * @section gribio_keywords Keywords
  * This plugin uses the following keywords:

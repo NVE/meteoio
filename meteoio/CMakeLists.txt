@@ -1,17 +1,9 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
-SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
-SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
-OPTION( BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON )
-IF(WIN32)
-	#otherwise the lib files are not generated
-	SET(BUILD_STATIC_LIBS ON)
-ELSE(WIN32)
-	OPTION( BUILD_STATIC_LIBS "Set to ON to build static libraries" OFF )
-ENDIF(WIN32)
-IF(APPLE)
-	SET(EXTRA_LINK_FLAGS "-framework CoreFoundation")
-ENDIF(APPLE)
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteostats/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
 IF(PROJ4)
 	FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
@@ -23,11 +15,6 @@ IF(PROJ4)
 		ADD_DEFINITIONS(-DPROJ4)
 	ENDIF(MSVC)
 ENDIF(PROJ4)
-
-INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteostats/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
 
 IF(POPC)
 	#FIND_PACKAGE(Popc REQUIRED)
@@ -133,3 +120,8 @@ IF(BUILD_STATIC_LIBS)
 		COMPONENT libraries
 	)
 ENDIF(BUILD_STATIC_LIBS)
+
+IF(WIN32) #handle the special case of WIN32 needing import libraries
+	FILE(GLOB_RECURSE importlibs "lib/libmeteo*.lib")
+	INSTALL(FILES ${importlibs} DESTINATION lib COMPONENT libraries)
+ENDIF(WIN32)

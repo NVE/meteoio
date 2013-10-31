@@ -1,5 +1,7 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
+CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cmake.cc ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cc )
+
 IF(PLUGIN_ARCIO)
 	SET(plugins_sources ${plugins_sources} plugins/ARCIO.cc)
 ENDIF(PLUGIN_ARCIO)
@@ -91,6 +93,4 @@ ENDIF(PLUGIN_SMETIO)
 IF(PLUGIN_SNIO)
 	SET(plugins_sources ${plugins_sources} plugins/SNIO.cc)
 ENDIF(PLUGIN_SNIO)
-
-CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cmake.cc ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cc )
 

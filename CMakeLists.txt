@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 # Version of library
@@ -18,8 +18,12 @@ ADD_SUBDIRECTORY(meteoio)
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
-#SET(DEBUG_ARITHM ON CACHE BOOL "Force crash the application when doing an arithmetic exception")
-OPTION( BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON )
+OPTION(BUILD_SHARED_LIBS "Set to ON to build dynamic libraries" ON)
+IF(WIN32)
+	SET(BUILD_STATIC_LIBS ON) #otherwise the lib files are not generated
+ELSE(WIN32)
+	OPTION(BUILD_STATIC_LIBS "Set to ON to build static libraries" OFF)
+ENDIF(WIN32)
 INCLUDE("${CMAKE_MODULE_PATH}/BuildVersion.cmake")
 BuildVersion()
 
@@ -51,6 +55,7 @@ ELSE(MSVC)
 	ENDIF(POPC)
 	IF(APPLE)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wno-sign-conversion -Wno-shorten-64-to-32") #for now, keep clang quiet
+		SET(EXTRA_LINK_FLAGS "-framework CoreFoundation")
 	ENDIF(APPLE)
 	IF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi") #Android does not like ansi...
@@ -156,11 +161,6 @@ SET(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
 SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
 
-#some cmake specific things //HACK: should it not be in the plugin Cmake?
-IF (GSOAPPP AND NOT EXISTS ${GSOAPPP})
-	SET(GSOAPPP NOTFOUND CACHE FORCE)
-ENDIF(GSOAPPP AND NOT EXISTS ${GSOAPPP})
-
 ###########################################################
 #for the install target
 FILE(GLOB hfiles "meteoio/*.h")
@@ -179,14 +179,6 @@ INSTALL(FILES ${hpluginfiles} DESTINATION include/meteoio/plugins COMPONENT head
 INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT headers)
 INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
 INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteostats COMPONENT headers)
-
-IF(WIN32) #handle the special case of WIN32 needing import libraries
-	FILE(GLOB_RECURSE importlibs "lib/libmeteo*.lib")
-ENDIF(WIN32)
-FILE(GLOB_RECURSE solibs "lib/libmeteo*.${DLL_EXT}")
-FILE(GLOB_RECURSE alibs "lib/*.${STAT_EXT}")
-
-INSTALL(FILES ${solibs} ${importlibs} ${alibs} DESTINATION lib COMPONENT libraries)
 
 ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
@@ -403,8 +395,3 @@ IF(BUILD_TESTING)
 	INCLUDE(CTest) # This makes ENABLE_TESTING() and gives support for Dashboard
 	ADD_SUBDIRECTORY(tests)
 ENDIF(BUILD_TESTING)
-
-
-
-
-
