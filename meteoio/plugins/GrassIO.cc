@@ -218,7 +218,7 @@ void GrassIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GrassIO::readSpecialPoints(std::vector<Coords>&)
+void GrassIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

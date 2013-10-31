@@ -236,7 +236,7 @@ void ImisIO::readAssimilationData(const Date&, Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ImisIO::readSpecialPoints(std::vector<Coords>&)
+void ImisIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

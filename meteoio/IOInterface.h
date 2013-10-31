@@ -222,7 +222,7 @@ class IOInterface {
 		* This allows for example to get a list of points where to produce more detailed outputs.
 		* @param pts (std::vector<Coords>) A vector of points coordinates
 		*/
-		virtual void readSpecialPoints(std::vector<Coords>& pts) = 0;
+		virtual void readPOI(std::vector<Coords>& pts) = 0;
 
 		/**
 		* @brief Write a Grid2DObject

@@ -349,9 +349,9 @@ void BufferedIOHandler::push_meteo_data(const Date& date_start, const Date& date
 	vec_buffer_meteo = vecMeteo;
 }
 
-void BufferedIOHandler::readSpecialPoints(std::vector<Coords>& in_cpa)
+void BufferedIOHandler::readPOI(std::vector<Coords>& in_cpa)
 {
-	iohandler.readSpecialPoints(in_cpa);
+	iohandler.readPOI(in_cpa);
 }
 
 void BufferedIOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& in_name)

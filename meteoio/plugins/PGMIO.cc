@@ -236,7 +236,7 @@ void PGMIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMet
 	throw IOException("Nothing implemented here", AT);
 }
 
-void PGMIO::readSpecialPoints(std::vector<Coords>&)
+void PGMIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

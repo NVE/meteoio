@@ -683,10 +683,10 @@ void A3DIO::read2DMeteoHeader(const std::string& filename, std::map<std::string,
 	}
 }
 
-void A3DIO::readSpecialPoints(std::vector<Coords>& pts)
+void A3DIO::readPOI(std::vector<Coords>& pts)
 {
 	std::string filename;
-	cfg.getValue("SPECIALPTSFILE", "Input", filename);
+	cfg.getValue("POIFILE", "Input", filename);
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}

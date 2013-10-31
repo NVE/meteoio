@@ -490,7 +490,7 @@ void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vec
 	}
 }
 
-void CosmoXMLIO::readSpecialPoints(std::vector<Coords>&)
+void CosmoXMLIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

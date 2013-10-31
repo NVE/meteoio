@@ -52,7 +52,7 @@ class A3DIO : public IOInterface {
 		                            const std::string& name="");
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
-		virtual void readSpecialPoints(std::vector<Coords>& pts);
+		virtual void readPOI(std::vector<Coords>& pts);
 
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);

@@ -45,7 +45,7 @@ class IOManager {
 		void readDEM(DEMObject& dem_out);
 		void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
 		void readLanduse(Grid2DObject& landuse_out);
-		void readSpecialPoints(std::vector<Coords>& pts);
+		void readPOI(std::vector<Coords>& pts);
 		void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 		void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 		//end legacy support

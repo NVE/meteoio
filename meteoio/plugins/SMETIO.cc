@@ -698,10 +698,10 @@ bool SMETIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 	return true;
 }
 
-void SMETIO::readSpecialPoints(std::vector<Coords>& pts)
+void SMETIO::readPOI(std::vector<Coords>& pts)
 {
 	std::string filename;
-	cfg.getValue("SPECIALPTSFILE", "Input", filename);
+	cfg.getValue("POIFILE", "Input", filename);
 	if (!IOUtils::fileExists(filename)) {
 		throw FileNotFoundException(filename, AT);
 	}

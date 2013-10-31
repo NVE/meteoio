@@ -417,7 +417,7 @@ void BormaIO::readAssimilationData(const Date&, Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void BormaIO::readSpecialPoints(std::vector<Coords>&)
+void BormaIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

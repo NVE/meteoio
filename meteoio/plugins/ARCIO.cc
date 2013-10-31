@@ -322,7 +322,7 @@ void ARCIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&, const s
 	throw IOException("Nothing implemented here", AT);
 }
 
-void ARCIO::readSpecialPoints(std::vector<Coords>&)
+void ARCIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

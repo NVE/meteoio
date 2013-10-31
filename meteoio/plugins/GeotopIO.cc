@@ -536,7 +536,7 @@ void GeotopIO::readAssimilationData(const Date&, Grid2DObject&) {
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GeotopIO::readSpecialPoints(std::vector<Coords>&) {
+void GeotopIO::readPOI(std::vector<Coords>&) {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);
 }

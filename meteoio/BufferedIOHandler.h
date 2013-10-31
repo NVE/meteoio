@@ -101,7 +101,7 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readDEM(DEMObject& dem_out);
 		virtual void readAssimilationData(const Date& date_in, Grid2DObject& da_out);
 		virtual void readLanduse(Grid2DObject& landuse_out);
-		virtual void readSpecialPoints(std::vector<Coords>& pts);
+		virtual void readPOI(std::vector<Coords>& pts);
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< METEO_SET >& vecMeteo,
 		                           const size_t& stationindex=IOUtils::npos);

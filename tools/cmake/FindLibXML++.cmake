@@ -8,7 +8,7 @@
 include(LibFindMacros)
 
 # Dependencies
-libfind_package(LibXML++ LibXML2)
+libfind_package(LibXML++ LibXml2)
 libfind_package(LibXML++ Glibmm)
 
 # Use pkg-config to get hints about paths
@@ -36,7 +36,7 @@ find_library(LibXML++_LIBRARY
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
-set(LibXML++_PROCESS_INCLUDES LibXML++_INCLUDE_DIR LibXML++Config_INCLUDE_DIR LibXML2_INCLUDE_DIRS Glibmm_INCLUDE_DIRS)
-set(LibXML++_PROCESS_LIBS LibXML++_LIBRARY LibXML2_LIBRARIES Glibmm_LIBRARIES)
+set(LibXML++_PROCESS_INCLUDES LibXML++_INCLUDE_DIR LibXML++Config_INCLUDE_DIR LIBXML2_INCLUDE_DIR Glibmm_INCLUDE_DIRS)
+set(LibXML++_PROCESS_LIBS LibXML++_LIBRARY LIBXML2_LIBRARIES Glibmm_LIBRARIES)
 libfind_process(LibXML++)
 

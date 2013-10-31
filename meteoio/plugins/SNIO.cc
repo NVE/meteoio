@@ -806,7 +806,7 @@ void SNIO::writeStationMeteo(const std::vector<MeteoData>& vecmd, const std::str
 }
 
 
-void SNIO::readSpecialPoints(std::vector<Coords>&)
+void SNIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

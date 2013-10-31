@@ -1068,7 +1068,7 @@ void GRIBIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMe
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GRIBIO::readSpecialPoints(std::vector<Coords>&)
+void GRIBIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

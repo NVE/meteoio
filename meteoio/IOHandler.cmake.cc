@@ -335,9 +335,9 @@ void IOHandler::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 	plugin->readAssimilationData(date_in, da_out);
 }
 
-void IOHandler::readSpecialPoints(std::vector<Coords>& pts) {
-	IOInterface *plugin = getPlugin("SPECIALPTS", "Input");
-	plugin->readSpecialPoints(pts);
+void IOHandler::readPOI(std::vector<Coords>& pts) {
+	IOInterface *plugin = getPlugin("POI", "Input");
+	plugin->readPOI(pts);
 }
 
 void IOHandler::write2DGrid(const Grid2DObject& grid_in, const std::string& name)

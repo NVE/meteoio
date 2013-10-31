@@ -103,7 +103,7 @@ void TEMPLATE::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vec
 	throw IOException("Nothing implemented here", AT);
 }
 
-void TEMPLATE::readSpecialPoints(std::vector<Coords>&)
+void TEMPLATE::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

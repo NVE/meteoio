@@ -504,7 +504,7 @@ void GSNIO::readAssimilationData(const Date&, Grid2DObject&)
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::readSpecialPoints(std::vector<Coords>&)
+void GSNIO::readPOI(std::vector<Coords>&)
 {
 	//Nothing so far
 	throw IOException("Nothing implemented here", AT);

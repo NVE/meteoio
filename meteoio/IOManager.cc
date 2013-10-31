@@ -427,12 +427,12 @@ void IOManager::readAssimilationData(const Date& date, Grid2DObject& grid2D)
 	}
 }
 
-void IOManager::readSpecialPoints(std::vector<Coords>& cpa)
+void IOManager::readPOI(std::vector<Coords>& cpa)
 {
 	if (processing_level == IOManager::raw){
-		rawio.readSpecialPoints(cpa);
+		rawio.readPOI(cpa);
 	} else {
-		bufferedio.readSpecialPoints(cpa);
+		bufferedio.readPOI(cpa);
 	}
 }
 
