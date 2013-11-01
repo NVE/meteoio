@@ -281,7 +281,8 @@ namespace mio {
  * @page dev_processing Processing elements developer's guide
  *
  * In order to add a new filter/processing element to the already existing set of components, the developer only needs to
- * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteofilters.
+ * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteofilters (depending on the kind of filter
+ * that is developed).
  * It is important to understand that the processing elements operate on a "per parameter" basis.
  * This means that an element might be executed for the parameter TA and another one for the parameter HNW, so the
  * algorithm only has to deal with a generic processing method based on double values.
@@ -289,39 +290,36 @@ namespace mio {
  * To implement a new processing element, the following steps are necessary:
  *
  * -# Implementing the element, as a derived class of ProcessingBlock or FilterBlock or WindowedFilter, by creating
- *    two files: the header file and its
- *    implementation file, in the meteofilters subdirectory of the source code.
- *    The class will contain two public methods: a constructor
- *    that takes a vector of strings containing the element's arguments and a method
+ *    two files: the header file and its implementation file, in the meteofilters subdirectory of the source code.
+ *    The class will contain two public methods: a constructor and a "process" method and at least one private method,
+ *    "parse_args" to read the arguments from a provided vector of strings.
+ *    -# The <b>constructor</b> takes a vector of strings containing the element's arguments and a constant string (that contains
+ *    the block name, for example for printing in an error message from which filter/block it comes). The constructor
+ *    would therefore have a declaration similar to:
+ *    @code
+ *    FilterMax::FilterMax(const std::vector<std::string>& vec_args, const std::string& name)
+ *    @endcode
+ *    -# The <b>process</b> method applies the element to the provided vector of values, for a meteo parameter pointed to by index.
+ *    This index is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
+ *    parameters). The constructor must set up porcessing.stage to mark if the filter should be applied only during the
+ *    first pass (ie before the resampling), or both at the first and second pass (ie before and after resampling).
+ *    Its declaration is such as:
  *    @code
  *    process(const unsigned int& index, const std::vector<MeteoData>& ivec, std::vector<MeteoData>& ovec)
  *    @endcode
- *    that
- *    applies the element to the provided vector of values, for a meteo parameter pointed to by index. This index
- *    is the MeteoData parameter that this filter shall be run upon (see MeteoData for the enumeration of
- *    parameters). The constructor must set up properties.for_second_pass to mark if the filter can be applied
- *    a second time during a second pass, that is after resampling.
- *    A private method
+ *    -# The private <b>parse_args</b> method reads the arguments from a vector of strings, with the following declaration:
  *    @code
  *    parse_args(std::vector<std::string> vec_args)
  *    @endcode
- *    is also implemented to extract the numerical
- *    values out of the vector of strings of arguments.
  * -# Adding the created implementation file to meteofilters/CMakeLists.txt in a similar way as for the other
  *    filters
- * -# Registering the filter within the function BlockFactory::initStaticData(), by simply adding a line
- *    similar to (in meteofilters/ProcessingBlocks.cc):
- *    @code
- *    availableBlocks.insert("MIN");
- *    @endcode
- *    Where the filter key can be freely chosen (although it has to be unique and easy/meanigful to the end user
- *    who will use it in his configuration file)
  * -# Adding the filter in the processing loop, in BlockFactory::getBlock(), by adding three lines similar to:
  *    @code
  *     else if (blockname == "MIN_MAX"){
  *     		return new FilterMinMax(vec_args);
  * 	}
  *    @endcode
+ *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
  * -# Including the filter's header file in meteofilters/ProcessingBlocks.cc
  *
  * The class FilterMax can be used as an example of implementation of a basic filter that will check whether a
