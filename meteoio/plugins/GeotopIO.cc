@@ -390,7 +390,7 @@ void GeotopIO::parseMetaData(const std::string& head, const std::string& datastr
 
 void GeotopIO::readMetaData(const std::string& metafile) {
 	//vector indexes correspond to meteo data
-	int x = 0, y = 1, lat = 2, lon = 3, elv = 4;
+	size_t x = 0, y = 1, lat = 2, lon = 3, elv = 4;
 
 	std::vector<std::string> tmpvec;
 	unsigned int stationNumber = 1; //Since the stations don't have a name, they will be numbered

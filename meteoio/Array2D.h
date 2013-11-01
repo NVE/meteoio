@@ -400,7 +400,7 @@ template<class P> std::iostream& operator<<(std::iostream& os, const Array2D<P>&
 	os.write(reinterpret_cast<const char*>(&array.keep_nodata), sizeof(array.keep_nodata));
 	os.write(reinterpret_cast<const char*>(&array.nx), sizeof(array.nx));
 	os.write(reinterpret_cast<const char*>(&array.ny), sizeof(array.ny));
-	os.write(reinterpret_cast<const char*>(&array.vecData[0]), array.nx*array.ny*sizeof(P));
+	os.write(reinterpret_cast<const char*>(&array.vecData[0]), (array.nx*array.ny)*sizeof(P));
 	return os;
 }
 
@@ -409,7 +409,7 @@ template<class P> std::iostream& operator>>(std::iostream& is, Array2D<P>& array
 	is.read(reinterpret_cast<char*>(&array.nx), sizeof(array.nx));
 	is.read(reinterpret_cast<char*>(&array.ny), sizeof(array.ny));
 	array.vecData.resize(array.nx*array.ny);
-	is.read(reinterpret_cast<char*>(&array.vecData[0]), array.nx*array.ny*sizeof(P)); //30 times faster than assign() or copy()
+	is.read(reinterpret_cast<char*>(&array.vecData[0]), (array.nx*array.ny)*sizeof(P)); //30 times faster than assign() or copy()
 	return is;
 }
 

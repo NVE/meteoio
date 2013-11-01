@@ -2,6 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 #SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/tools/cmake/")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
+PROJECT(meteoio)
 # Version of library
 SET(VERSION_MAJOR 2 CACHE INTERNAL "")
 SET(VERSION_MINOR 4 CACHE INTERNAL "")
@@ -10,12 +11,6 @@ SET(VERSION_PATCH 0 CACHE INTERNAL "")
 SET(POPCC popcc)
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
-
-PROJECT(meteoio)
-ADD_SUBDIRECTORY(meteoio/plugins)
-ADD_SUBDIRECTORY(meteoio/meteolaws)
-ADD_SUBDIRECTORY(meteoio/meteofilters)
-ADD_SUBDIRECTORY(meteoio)
 
 ###########################################################
 #platform specific. First, compiler specific flags, then system specific flags
@@ -54,10 +49,6 @@ ELSE(MSVC)
 	ELSE(POPC)
 		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
 	ENDIF(POPC)
-	IF(APPLE)
-		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wno-sign-conversion -Wno-shorten-64-to-32") #for now, keep clang quiet
-		SET(EXTRA_LINK_FLAGS "-framework CoreFoundation")
-	ENDIF(APPLE)
 	IF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi") #Android does not like ansi...
 		IF(WIN32) #for gcc on windows
@@ -82,7 +73,8 @@ IF(UNIX)
 		SET(PLATFORM "-DAPPLE")
 		SET(DLL_EXT "dylib*")
 		SET(STAT_EXT "a")
-		#SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation") #bug in cmake: this has no effect for frameworks
+		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -Wno-sign-conversion") #for now, keep clang quiet
+		SET(CMAKE_SHARED_LINKER_FLAGS "-framework CoreFoundation")
 		#set(CMAKE_OSX_SYSROOT iphoneos2.2.1) #for IOS
 		#set(CMAKE_OSX_ARCHITECTURES $(ARCHS_STANDARD_32_BIT)) #for IOS
 	ELSE(APPLE)
@@ -144,6 +136,12 @@ SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING 
 
 MESSAGE(STATUS "DEBUG CXXFLAGS  : ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "RELEASE CXXFLAGS: ${CMAKE_CXX_FLAGS_RELEASE}")
+
+#Add subdirectory, so they can inherit all variables defined above
+ADD_SUBDIRECTORY(meteoio/plugins)
+ADD_SUBDIRECTORY(meteoio/meteolaws)
+ADD_SUBDIRECTORY(meteoio/meteofilters)
+ADD_SUBDIRECTORY(meteoio)
 ###########################################################
 #plugins
 SET(PLUGIN_A3DIO ON CACHE BOOL "Compilation A3DIO ON or OFF")

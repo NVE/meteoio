@@ -180,10 +180,10 @@ void ResamplingAlgorithms2D::cubicBSpline(Grid2DObject &o_grid, const Grid2DObje
 
 			double F = 0., max=-std::numeric_limits<double>::max(), min=std::numeric_limits<double>::max();
 			unsigned int avg_count = 0;
-			for(int n=-1; n<=2; n++) {
-				for(int m=-1; m<=2; m++) {
+			for(short n=-1; n<=2; n++) {
+				for(short m=-1; m<=2; m++) {
 					if(((signed)org_ii+m)<0 || ((signed)org_ii+m)>=(signed)org_ncols || ((signed)org_jj+n)<0 || ((signed)org_jj+n)>=(signed)org_nrows) continue;
-					const double pixel = i_grid((signed)org_ii+m, (signed)org_jj+n);
+					const double pixel = i_grid(org_ii+m, org_jj+n);
 					if(pixel!=IOUtils::nodata) {
 						F += pixel * BSpline_weight(m-dx) * BSpline_weight(dy-n);
 						avg_count++;
