@@ -173,8 +173,8 @@ namespace mio {
  * - [General] : The documentation about this section is found in ??. It currently contains the PLUGIN_PATH key that
  *               points to the place where to find the plugins as well as some buffering keys (see BufferedIOHandler).
  * - [Input] : This section contains the list of all the plugins that you want to use as well as their parameters. You can
- *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for special points
- *             (key=SPECIALPTS), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
+ *             use one plugin for the meteorological data (key=METEO), one for grids (key=GRID2D), one for the Points Of Interest
+ *             (key=POI), one for data assimilation (key=DA), one for landuse (key=LANDUSE) and one for Digital
  *             Elevation Model (key=DEM). Please see \ref plugins for the available plugins. Afterwards, each plugin comes
  *             with its own set of keys, as specified in the plugin's documentation. Morevover, the geographic coordinate
  *             system should often be specified, as explained in \ref coords. For the meteorological parameters, it is also

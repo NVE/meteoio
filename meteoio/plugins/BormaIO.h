@@ -48,7 +48,6 @@ class BormaIO : public IOInterface {
 		BormaIO(const std::string& configfile);
 		BormaIO(const BormaIO&);
 		BormaIO(const Config&);
-		~BormaIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& dem_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -81,7 +80,6 @@ class BormaIO : public IOInterface {
 		xmlpp::Node* xmlGetNode(xmlpp::Node* parentNode, const std::string& nodename);
 		Date stringToDate(const std::string& tmp) const;
 		bool validFilename(const std::string& tmp) const;
-		void cleanup() throw();
 		void getFiles(const std::string& stationsname, const Date& start_date, const Date& end_date,
 		              std::vector<std::string>& vecFiles, std::vector<Date>& vecDate);
 		void readStationNames(void);
@@ -89,17 +87,18 @@ class BormaIO : public IOInterface {
 		                std::vector< std::vector<MeteoData> >& vecMeteo,
 		                const unsigned int& stationnr);
 
-		size_t nr_stations; //number of stations to read from
-		double in_tz;
-		std::ifstream fin; //Input file streams
 		std::vector<std::string> vecStationName;
+		const Config cfg;
+		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		double in_tz;
+		size_t nr_stations; //number of stations to read from
+
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const double default_tz; //default timezone
 		static const double pivot_year; //pivot year for Y2K suppport
 		static const std::string dflt_extension;
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 
-		const Config cfg;
+
 };
 
 } //end namespace mio

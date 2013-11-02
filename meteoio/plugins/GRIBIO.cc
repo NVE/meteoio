@@ -81,7 +81,7 @@ namespace mio {
  * - GRID2DEXT: grib file extension, or <i>none</i> for no file extension (default: ".grb")
  * - GRIB_DEM_UPDATE: recompute slope/azimuth from the elevations when reading a DEM (default=false,
  * that is we use the slope and azimuth included in the GRIB file)
- * - METEOPATH: path where to find the grids for extracting time series at special points
+ * - METEOPATH: path where to find the grids for extracting time series at the given points
  * - METEOEXT: file extension, or <i>none</i> for no file extension (default: ".grb")
  * - STATION#: coordinates for virtual stations (if using GRIB as METEO plugin). Each station is given by its coordinates and the closest
  * grid point will be chosen. Coordinates are given one one line as "lat lon" or "xcoord ycoord epsg_code". If a point leads to duplicate grid points,

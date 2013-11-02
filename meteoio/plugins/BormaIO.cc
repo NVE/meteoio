@@ -50,30 +50,20 @@ const double BormaIO::default_tz = +1.; //default timezone
 const double BormaIO::pivot_year = 80.; //pivot year for Y2K suppport
 const std::string BormaIO::dflt_extension = ".xml";
 
-BormaIO::BormaIO(const std::string& configfile) : cfg(configfile)
+BormaIO::BormaIO(const std::string& configfile)
+        : vecStationName(), cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(),
+          in_tz(default_tz), nr_stations(0)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = default_tz;
 	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
 }
 
-BormaIO::BormaIO(const Config& cfgreader) : cfg(cfgreader)
+BormaIO::BormaIO(const Config& cfgreader)
+        : vecStationName(), cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(),
+          in_tz(default_tz), nr_stations(0)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	in_tz = default_tz;
 	cfg.getValue("TIME_ZONE","Input",in_tz,IOUtils::nothrow);
-}
-
-BormaIO::~BormaIO() throw()
-{
-	cleanup();
-}
-
-void BormaIO::cleanup() throw()
-{
-	if (fin.is_open()) {//close fin if open
-		fin.close();
-	}
 }
 
 void BormaIO::read2DGrid(Grid2DObject&, const std::string&)

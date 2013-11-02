@@ -79,7 +79,7 @@ namespace mio {
  * - DEM, for Digital Elevation Maps
  * - LANDUSE, for land cover information
  * - GRID2D, for generic 2D grids (they can contain meteo fields and be recognized as such or arbitrary gridded data)
- * - SPECIALPTS, for a list of points that can be used for providing extra information at some specific location (extracting time series at a few selected points, etc)
+ * - POI, for a list of Points Of Interest that can be used for providing extra information at some specific location (extracting time series at a few selected points, etc)
  *
  * A plugin is "connected" to a given data source category simply by giving its keyword as value for the data source key:
  * @code
@@ -94,7 +94,7 @@ namespace mio {
  * So far the following plugins have been implemented (by keyword for the io.ini key/value config file). Please read the documentation for each plugin in order to know the plugin-specific keywords:
  * <center><table border="1">
  * <tr><th>Plugin keyword</th><th>Provides</th><th>Description</th><th>Extra requirements</th></tr>
- * <tr><td>\subpage a3d "A3D"</td><td>meteo, specialpts</td><td>original Alpine3D meteo files</td><td></td></tr>
+ * <tr><td>\subpage a3d "A3D"</td><td>meteo, poi</td><td>original Alpine3D meteo files</td><td></td></tr>
  * <tr><td>\subpage arc "ARC"</td><td>dem, landuse, grid2d</td><td>ESRI/ARC ascii grid files</td><td></td></tr>
  * <tr><td>\subpage arps "ARPS"</td><td>dem, grid2d</td><td>ARPS ascii formatted grids</td><td></td></tr>
  * <tr><td>\subpage borma "BORMA"</td><td>meteo</td><td>Borma xml meteo files</td><td><A HREF="http://libxmlplusplus.sourceforge.net/">libxml++</A></td></tr>
@@ -106,7 +106,7 @@ namespace mio {
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pngio "PNG"</td><td>dem, grid2d</td><td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
- * <tr><td>\subpage smetio "SMET"</td><td>meteo, specialpts</td><td>SMET data files</td><td></td></tr>
+ * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
  * <i><SUP>1</SUP>In order to rebuild the soap bindings for GSN, <A HREF="http://gsoap2.sourceforge.net/">gsoap</A> is required. This is only relevant to the plugin developers.</i>

@@ -53,7 +53,7 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - SPECIALPTSFILE: a path+file name to the a file containing grid coordinates of special points of interest (for special outputs)
+ * - POIFILE: a path+file name to the a file containing grid coordinates of Points of Interest (for special outputs)
  */
 
 const double A3DIO::plugin_nodata = -9999.0; //plugin specific nodata value
