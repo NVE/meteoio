@@ -108,8 +108,10 @@ class ResamplingAlgorithms {
 		virtual std::string toString() const = 0;
 
  	protected:
-		static double funcval(size_t position, const size_t& paramindex, const std::vector<MeteoData>& vecM,
-		                      const Date& date, const bool& start_pt);
+		static double partialAccumulateAtLeft(const std::vector<MeteoData>& vecM, const size_t& paramindex,
+		                                      const size_t& pos, const Date& curr_date);
+		static double partialAccumulateAtRight(const std::vector<MeteoData>& vecM, const size_t& paramindex,
+		                                       const size_t& pos, const Date& curr_date);
 		static void getNearestValidPts(const size_t& pos, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date,
 		                               const double& window_size, size_t& indexP1, size_t& indexP2);
 		static double linearInterpolation(const double& x1, const double& y1,
@@ -212,6 +214,10 @@ class Accumulate : public ResamplingAlgorithms {
 		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
+		size_t findStartOfPeriod(const std::vector<MeteoData>& vecM, const size_t& index, const Date& dateStart);
+		double upsampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
+		double downsampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
+		
 		double accumulate_period; //internally, in julian days
 		bool strict;
 };
