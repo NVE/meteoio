@@ -191,9 +191,9 @@ const std::string SunTrajectory::toString() const
 	os << std::setprecision(2);
 	os << "Azi./Elev.\t" << std::setw(7)<< SolarAzimuthAngle << "° " << std::setw(7) << SolarElevation << "°\n";
 	os << "RA/decl.\t" << std::setw(7) << SunRightAscension << "° " << std::setw(7) << SunDeclination << "°\n";
-	os << "Sunrise (gmt)\t" << IOUtils::printFractionalDay(SunRise) << "\n";
-	os << "SolarNoon (gmt)\t" << IOUtils::printFractionalDay(SolarNoon) << "\n";
-	os << "Sunset (gmt)\t" << IOUtils::printFractionalDay(SunSet) << "\n";
+	os << "Sunrise (gmt)\t" << IOUtils::printFractionalDay(SunRise - longitude*1./15.*1./24.) << "\n";
+	os << "SolarNoon (gmt)\t" << IOUtils::printFractionalDay(SolarNoon - longitude*1./15.*1./24.) << "\n";
+	os << "Sunset (gmt)\t" << IOUtils::printFractionalDay(SunSet - longitude*1./15.*1./24.) << "\n";
 	os << "Daylight\t" << IOUtils::printFractionalDay(SunlightDuration/(60.*24.)) << "\n";
 	os << "</SunTrajectory>\n";
 	os << std::setfill(' ');
@@ -366,7 +366,7 @@ void SunMeeus::update() {
 	if(cos_HAsunrise>=-1. && cos_HAsunrise<=1.) {
 		const double HA_sunrise = acos( cos_HAsunrise ) * Cst::to_deg;
 		SunRise = SolarNoon - HA_sunrise*4./1440.; //in days, in LST
-		SunSet = .5 + (SolarNoon + HA_sunrise*4.)/1440.; //in days, in LST
+		SunSet = SolarNoon + HA_sunrise*4./1440.; //in days, in LST
 		SunlightDuration = 8.*HA_sunrise;
 	} else if(cos_HAsunrise<-1.) { //the sun never sets
 		SunRise = IOUtils::nodata;
