@@ -215,8 +215,8 @@ class Accumulate : public ResamplingAlgorithms {
 		std::string toString() const;
 	private:
 		size_t findStartOfPeriod(const std::vector<MeteoData>& vecM, const size_t& index, const Date& dateStart);
-		double upsampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
-		double downsampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
+		double easySampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
+		double complexSampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
 		
 		double accumulate_period; //internally, in julian days
 		bool strict;
