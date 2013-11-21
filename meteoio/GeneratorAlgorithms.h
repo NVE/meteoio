@@ -228,19 +228,20 @@ class PotRadGenerator : public GeneratorAlgorithm {
 class HSSweGenerator : public GeneratorAlgorithm {
 	public:
 		HSSweGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), sun(), sun_ok(false) { parse_args(vecArgs); }
+			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+		
+		static void SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo/*, SunObject *Sun*/);
+		static void CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
 		double newSnowDensity(const MeteoData& md) const;
-		void distributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, std::vector<MeteoData>& vecMeteo);
 		SunObject sun;
 
 		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 		static const double thresh_rh, thresh_Dt, thresh_iswr, thresh_solarIndex;
 		static const bool soft;
-		bool sun_ok;
 };
 
 } //end namespace mio

@@ -200,10 +200,15 @@ class LinearResampling : public ResamplingAlgorithms {
  * This is for example needed for converting rain gauges measurements read every 10 minutes to
  * hourly precipitation measurements. Remarks:
  * - the accumulation period has to be provided as an argument (in seconds)
- * - if giving as a second argument "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
+ * - if giving the argument "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
+ *  - if the data has been measured on intervals greater than the sampling interval of the data file (for example, 24 hours accumulations written once per day in an hourly file, the other timesteps receiving nodata), the measured accumulation period can be provided as first argument. Please note that this period can not be smaller than the requested sampling period and that the requested sampling period can not have a time offset with the sampling period. Moreover, only regular sampling is currently supported for such data sets.
  * @code
  * HNW::resample   = accumulate
  * HNW::accumulate = 3600
+ * @endcode
+ * @code
+ * HNW::resample   = accumulate
+ * HNW::accumulate = 86400 3600
  * @endcode
  */
 class Accumulate : public ResamplingAlgorithms {
@@ -214,10 +219,16 @@ class Accumulate : public ResamplingAlgorithms {
 		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
-		size_t findStartOfPeriod(const std::vector<MeteoData>& vecM, const size_t& index, const Date& dateStart);
-		double easySampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
-		double complexSampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date);
+		static size_t findStartOfPeriod(const std::vector<MeteoData>& vecM, const size_t& index, const Date& dateStart);
+		size_t getStationIndex(const std::string& key);
+		size_t distributeMeasurements(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const Date& resampling_date, std::vector<MeteoData> &vecResult);
+		double easySampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date) const;
+		double complexSampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date) const;
+		void coreResample(const size_t& index, const size_t& paramindex, const std::vector<MeteoData>& vecM, const Date& resampling_date, MeteoData& md) const;
 		
+		std::vector< std::vector<MeteoData> > vecCache;//for storing precipitation redistribution
+		std::vector<std::string> station_index;
+		double measured_period; //internally, in julian days
 		double accumulate_period; //internally, in julian days
 		bool strict;
 };

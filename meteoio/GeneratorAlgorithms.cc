@@ -439,7 +439,7 @@ const double HSSweGenerator::snow_thresh = .1; //if snow height greater than thi
 const double HSSweGenerator::thresh_rh = .7;
 const double HSSweGenerator::thresh_Dt = 3.;
 const double HSSweGenerator::thresh_iswr = 30.; //minimum radiation to consider it is daylight
-const double HSSweGenerator::thresh_solarIndex = .4; //threshold for clear sky
+const double HSSweGenerator::thresh_solarIndex = .7; //threshold for clear sky
 const bool HSSweGenerator::soft = true;
 void HSSweGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
@@ -475,15 +475,14 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 		return false;
 
 	//try to setup a Sun object to compute the potential radiation
-	const double lat = vecMeteo.front().meta.position.getLat();
+	/*const double lat = vecMeteo.front().meta.position.getLat();
 	const double lon = vecMeteo.front().meta.position.getLon();
 	const double alt = vecMeteo.front().meta.position.getAltitude();
+	SunObject *sun_ptr=NULL;
 	if(lat!=IOUtils::nodata && lon!=IOUtils::nodata && alt!=IOUtils::nodata) {
 		sun.setLatLon(lat, lon, alt);
-		sun_ok = true;
-	} else {
-		sun_ok = false;
-	}
+		sun_ptr = &sun;
+	}*/
 
 	bool all_filled = (last_good>0)? false : true;
 	for(size_t ii=last_good+1; ii<vecMeteo.size(); ii++) {
@@ -497,7 +496,7 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 		if(HS_delta>0.) {
 			const double rho = newSnowDensity(vecMeteo[ii]);
 			const double precip = HS_delta * rho; //in kg/m2 or mm
-			distributeHNW(precip, start_idx, ii, vecMeteo);
+			SmartDistributeHNW(precip, start_idx, ii, param, vecMeteo/*, sun_ptr*/);
 		} else {
 			all_filled = false;
 		}
@@ -523,10 +522,22 @@ double HSSweGenerator::newSnowDensity(const MeteoData& md) const
 	return min( max(30., pow(10., arg)), 250. ); //limit the density to the [30, 250] kg/m3 range
 }
 
-void HSSweGenerator::distributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, std::vector<MeteoData>& vecMeteo)
+//distribute the precipitation equally on all time steps in [start_idx ; end_idx]
+void HSSweGenerator::CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo)
+{//HACK handle the case of non-uniform sampling rate!
+	const size_t nr_intervals = end_idx-start_idx+1;
+	const double precip_increment = precip / (nr_intervals);
+	
+	for(size_t ii=start_idx; ii<=end_idx; ii++) {
+		vecMeteo[ii](paramindex) = precip_increment;
+	}
+}
+
+//distribute the given precipitation amount equally on the timesteps that have the highest probability of precipitation
+void HSSweGenerator::SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo/*, SunObject *Sun*/)
 {
 	const size_t nr_elems = end_idx-start_idx+1;
-	std::vector<unsigned char> vecScores(end_idx-start_idx+1);
+	std::vector<unsigned char> vecScores(nr_elems);
 
 	//assign a score for each timestep according to the possibility of precipitation
 	size_t nr_score1 = 0, nr_score2 = 0, nr_score3 = 0; //count how many in each possible score categories
@@ -554,20 +565,20 @@ void HSSweGenerator::distributeHNW(const double& precip, const size_t& start_idx
 			score++;
 		if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)<=thresh_Dt ) //cloudy sky condition
 			score++;
-		if(iswr!=IOUtils::nodata && iswr>thresh_iswr && sun_ok) { //low radiation compared to clear sky
-			sun.setDate(vecMeteo[ii+start_idx].date.getJulian(true), 0.);
+		/*if(iswr!=IOUtils::nodata && iswr>thresh_iswr && Sun!=NULL) { //low radiation compared to clear sky
+			Sun->setDate(vecMeteo[ii+start_idx].date.getJulian(true), 0.);
 			const double p=vecMeteo[ii+start_idx](MeteoData::P);
 			if(p==IOUtils::nodata)
-				sun.calculateRadiation(ta, rh, albedo);
+				Sun->calculateRadiation(ta, rh, albedo);
 			else
-				sun.calculateRadiation(ta, rh, p, albedo);
+				Sun->calculateRadiation(ta, rh, p, albedo);
 
 			double toa, direct, diffuse;
-			sun.getHorizontalRadiation(toa, direct, diffuse);
+			Sun->getHorizontalRadiation(toa, direct, diffuse);
 			const double solarIndex = iswr / (direct+diffuse);
 			if(solarIndex<=thresh_solarIndex)
 				score++;
-		}
+		}*/
 
 		//counters to know how many points received each possible scores
 		if(score==1) nr_score1++;
@@ -578,15 +589,15 @@ void HSSweGenerator::distributeHNW(const double& precip, const size_t& start_idx
 
 	//find out what is the highest score and how many points received it, so we can compute the precipitation increment for each point
 	const unsigned char winning_scores = (nr_score3>0)? 3 : (nr_score2>0)? 2 : (nr_score1>0)? 1 : 0;
-	const size_t nr_winning_scores = (nr_score3>0)? nr_score3 : (nr_score2>0)? nr_score2 : (nr_score1>0)? nr_score1 : nr_elems;
+	const size_t nr_winning_scores = (nr_score3>0)? nr_score3 : (nr_score2>0)? nr_score2 : (nr_score1>0)? nr_score1 : nr_elems-1;
 	const double precip_increment =  precip / double(nr_winning_scores);
 
 	//distribute the precipitation on the time steps that have the highest scores
 	for(size_t ii=0; ii<nr_elems; ii++) {
-		if(winning_scores>0 && vecScores[ii]==winning_scores) {
-			vecMeteo[ii+start_idx](MeteoData::HNW) = precip_increment;
+		if(vecScores[ii]==winning_scores) {
+			vecMeteo[ii+start_idx](paramindex) = precip_increment;
 		} else
-			vecMeteo[ii+start_idx](MeteoData::HNW) = 0.; //all other time steps set to 0
+			vecMeteo[ii+start_idx](paramindex) = 0.; //all other time steps set to 0
 	}
 }
 

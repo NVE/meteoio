@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/ResamplingAlgorithms.h>
+#include <meteoio/GeneratorAlgorithms.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Sun.h>
@@ -352,27 +353,42 @@ void LinearResampling::resample(const size_t& index, const ResamplingPosition& p
 	md(paramindex) = linearInterpolation(jul1, val1, jul2, val2, resampling_date.getJulian(true));
 }
 
+
 Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
-           : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), accumulate_period(0.), strict(false)
+           : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), 
+           vecCache(), station_index(), 
+           measured_period(IOUtils::nodata), accumulate_period(IOUtils::nodata), strict(false)
 {
 	const size_t nr_args = vecArgs.size();
-	if (nr_args==1 || nr_args==2) {
-		IOUtils::convertString(accumulate_period, vecArgs[0]);
-		accumulate_period /= 86400.; //user uses seconds, internally julian day is used
-		if(accumulate_period<=0.) {
-			std::ostringstream tmp;
-			tmp << "Invalid accumulation period (" << accumulate_period << ") for \"" << i_parname << "::" << i_algoname << "\"";
-			throw InvalidArgumentException(tmp.str(), AT);
-		}
-		if(nr_args==2) {
-			if(vecArgs[1]=="strict")
-				strict=true;
-			else
-				throw InvalidArgumentException("Invalid argument \""+vecArgs[1]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
-		}
-	} else {
-		throw InvalidArgumentException("Please provide accumulation period (in seconds) for \""+i_parname+"::"+i_algoname+"\"", AT);
+	if(nr_args<1 || nr_args>3)
+		throw InvalidArgumentException("Please at least provide accumulation period (in seconds) for \""+i_parname+"::"+i_algoname+"\"", AT);
+	
+	vector<double> numArgs;
+	for(size_t ii=0; ii<nr_args; ii++) {
+		if(IOUtils::isNumeric(vecArgs[ii])) {
+			double tmp;
+			IOUtils::convertString(tmp, vecArgs[ii]);
+			tmp /= 86400.; //user uses seconds, internally julian day is used
+			if(tmp<=0.) {
+				std::ostringstream ss;
+				ss << "Invalid accumulation period (" << accumulate_period << ") for \"" << i_parname << "::" << i_algoname << "\"";
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			numArgs.push_back( tmp );
+		} else if (vecArgs[ii]=="strict" && !strict) {
+			if(strict) //do not set strict more than once!
+				throw InvalidArgumentException("Do not provide \"strict\" more than once for \""+i_parname+"::"+i_algoname+"\"", AT);
+			strict = true;
+		} else throw InvalidArgumentException("Invalid argument \""+vecArgs[ii]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
 	}
+	
+	if(numArgs.size()==1) {
+		accumulate_period = numArgs[0];
+	} else if(numArgs.size()==2) {
+		measured_period = numArgs[0];
+		accumulate_period = numArgs[1];
+	} else //this should never happen
+		throw InvalidArgumentException("Too many arguments provided for \""+i_parname+"::"+i_algoname+"\"", AT);
 }
 
 std::string Accumulate::toString() const
@@ -398,7 +414,7 @@ size_t Accumulate::findStartOfPeriod(const std::vector<MeteoData>& vecM, const s
 	return start_idx;
 }
 
-double Accumulate::easySampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date)
+double Accumulate::easySampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& /*index*/, const size_t& start_idx, const Date& dateStart, const Date& resampling_date) const
 {//to keep in mind: start_idx is last index <= dateStart and index is first index >= resampling_date
 	double sum = IOUtils::nodata;
 	const double start_val = partialAccumulateAtLeft(vecM, paramindex, start_idx, dateStart);
@@ -410,7 +426,7 @@ double Accumulate::easySampling(const std::vector<MeteoData>& vecM, const size_t
 	return sum;
 }
 
-double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date)
+double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const size_t& start_idx, const Date& dateStart, const Date& resampling_date) const
 {//to keep in mind: start_idx is last index <= dateStart and index is first index >= resampling_date
 	double sum = IOUtils::nodata;
 	//resample begining point, in the [start_idx ; start_idx+1] interval
@@ -438,17 +454,92 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 	return sum;
 }
 
-//index is the first element AFTER the resampling_date
-void Accumulate::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
-                          const std::vector<MeteoData>& vecM, MeteoData& md)
+//do we already have this station?
+size_t Accumulate::getStationIndex(const std::string& key)
 {
-	if (index >= vecM.size())
-		throw IOException("The index of the element to be resampled is out of bounds", AT);
-	if(position==ResamplingAlgorithms::begin || position==ResamplingAlgorithms::end)
-		return;
+	const size_t nr_stations = station_index.size();
+	for(size_t ii=0; ii<nr_stations; ++ii) {
+		if(station_index[ii]==key)
+			return ii;
+	}
+
+	return IOUtils::npos;
+}
+
+//when an accumulation was measured on a period greater than the sampling period of the input data,
+//for example when accumulating over 1 day but reporting values every hours, this has to be called
+//to distribute the data over the extra timesteps (marked as "nodata" but this does not really
+//means "nodata")
+size_t Accumulate::distributeMeasurements(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const Date& resampling_date, std::vector<MeteoData> &vecResult)
+{
+	vecResult.resize(0);
 	
-	md(paramindex) = IOUtils::nodata;
-	const Date resampling_date = md.date;
+	//find the next accumulated value
+	size_t end_idx = IOUtils::npos; //first index that has data
+	const Date dateMaxEnd = resampling_date + measured_period;
+	for(size_t idx=index; idx<vecM.size(); idx++) {
+		const Date curr_date = vecM[idx].date;
+		if(curr_date > dateMaxEnd) //current point would fall outside the accumulation period anyway
+			break; 
+		if(vecM[idx](paramindex)!=IOUtils::nodata) {
+			end_idx = idx;
+			break;
+		}
+	}
+	if(end_idx==IOUtils::npos) {
+		std::ostringstream ss;
+		ss << "Redistribution of precipitation before reaccumulation failed: precipitation value required ";
+		ss << "in the " << resampling_date.toString(Date::ISO) << " - " << dateMaxEnd.toString(Date::ISO) << " interval!\n";
+		throw NoAvailableDataException(ss.str(), AT);
+	}
+	
+	const Date dateEnd = vecM[end_idx].date;
+	const double precip = vecM[end_idx](paramindex);
+	
+	//find the start date of the measured accumulation period
+	const Date dateStart = vecM[end_idx].date - measured_period;
+	size_t start_idx = IOUtils::npos; // last index <= (dateEnd - measured_period)
+	for (size_t idx=index; idx--> 0; ) {
+		const Date curr_date = vecM[idx].date;
+		if(curr_date <= dateStart) {
+			start_idx = idx;
+			break;
+		}
+		if(vecM[idx](paramindex)!=IOUtils::nodata) { //this means the measured period is wrong
+			const double interval = dateEnd.getJulian(true) - curr_date.getJulian(true);
+			std::ostringstream ss;
+			ss << "Accumulation period for \"" << parname;
+			ss << "\" found to be " << interval*86400. << " for " << dateEnd.toString(Date::ISO);
+			ss << " when " << measured_period*86400. << " was given as arguments of \"" << algo << "\"";
+			throw IOException(ss.str(), AT);
+		}
+	}
+	if(precip==0. && start_idx==IOUtils::npos) {
+		//even if we don't know the start of the period, we can redistribute 0!
+		start_idx = 0;
+	}
+
+	if(start_idx==IOUtils::npos) {
+		std::ostringstream ss;
+		ss << "Redistribution of precipitation before reaccumulation failed: precipitation value required ";
+		ss << "at " << dateStart.toString(Date::ISO) << "!\n";
+		throw NoAvailableDataException(ss.str(), AT);
+	}
+	if(precip!=0 && dateStart!=vecM[start_idx].date) {
+		throw IOException("Currently, only multiples of the data sampling rate are allowed for accumulation periods!", AT);
+	}
+	
+	//HACK handle the case of non-uniform sampling rate!
+	vecResult.assign(vecM.begin()+start_idx, vecM.begin()+end_idx+1);
+	//HSSweGenerator::CstDistributeHNW(precip, 1, vecResult.size()-1, paramindex, vecResult);
+	HSSweGenerator::SmartDistributeHNW(precip, 1, vecResult.size()-1, paramindex, vecResult/*, &Sun*/);
+	
+	return index-(start_idx);
+}
+
+void Accumulate::coreResample(const size_t& index, const size_t& paramindex,
+                              const std::vector<MeteoData>& vecM, const Date& resampling_date, MeteoData& md) const
+{
 	const Date dateStart(resampling_date.getJulian() - accumulate_period, resampling_date.getTimeZone());
 	const size_t start_idx = findStartOfPeriod(vecM, index, dateStart);
 	if (start_idx==IOUtils::npos) {//No acceptable starting point found
@@ -466,6 +557,43 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 		//and upsampling when resampled period falls accross a measurement timestamp
 		const double sum = complexSampling(vecM, paramindex, index, start_idx, dateStart, resampling_date);
 		md(paramindex) = sum; //if resampling was unsuccesful, sum==IOUtils::nodata
+	}
+}
+
+//index is the first element AFTER the resampling_date
+void Accumulate::resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+                          const std::vector<MeteoData>& vecM, MeteoData& md)
+{
+	if (index >= vecM.size())
+		throw IOException("The index of the element to be resampled is out of bounds", AT);
+	if(position==ResamplingAlgorithms::begin || position==ResamplingAlgorithms::end)
+		return;
+	
+	md(paramindex) = IOUtils::nodata;
+	const Date resampling_date = md.date;
+	
+	if(measured_period==IOUtils::nodata) {
+		coreResample(index, paramindex, vecM, resampling_date, md);
+	} else {
+		size_t new_index = IOUtils::npos;
+		const string key = md.meta.stationID;
+		size_t stat_idx = getStationIndex(key);
+		if(stat_idx!=IOUtils::npos) { //station is known
+			const Date cache_start = vecCache[stat_idx].front().date;
+			const Date cache_end = vecCache[stat_idx].back().date;
+			if(resampling_date<cache_start || resampling_date>cache_end) {
+				new_index = distributeMeasurements(vecM, paramindex, index, resampling_date, vecCache[stat_idx]);
+			} else
+				new_index = IOUtils::seek(resampling_date, vecCache[stat_idx], false);
+		} else { //a new station is created
+			station_index.push_back( key );
+			vector<MeteoData> tmp;
+			new_index = distributeMeasurements(vecM, paramindex, index, resampling_date, tmp);
+			vecCache.push_back( tmp );
+			stat_idx = vecCache.size()-1;
+		}
+		
+		coreResample(new_index, paramindex, vecCache[stat_idx], resampling_date, md);
 	}
 }
 
