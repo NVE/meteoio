@@ -159,6 +159,9 @@ class SinGenerator : public GeneratorAlgorithm {
  * @class StandardPressureGenerator
  * @brief Standard atmospheric pressure generator.
  * Generate a standard atmosphere's pressure, depending on the local elevation.
+ * * @code
+ * P::generators = STD_PRESS
+ * @endcode
  */
 class StandardPressureGenerator : public GeneratorAlgorithm {
 	public:
@@ -184,6 +187,10 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
  * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
  * in order to compute ISWR from RSWR.
+ * @code
+ * ILWR::generators = UNSWORTH
+ * @endcode
+ * 
  */
 class UnsworthGenerator : public GeneratorAlgorithm {
 	public:
@@ -210,6 +217,9 @@ class UnsworthGenerator : public GeneratorAlgorithm {
  * clear sky! If no TA or RH is available, average values will be used
  * (in order to get an average value for the precipitable water vapor).
  * @note This relies on SunObject to perform the heavy duty computation.
+ * @code
+ * ISWR::generators = POT_RADIATION
+ * @endcode
  */
 class PotRadGenerator : public GeneratorAlgorithm {
 	public:
@@ -228,19 +238,17 @@ class PotRadGenerator : public GeneratorAlgorithm {
 class HSSweGenerator : public GeneratorAlgorithm {
 	public:
 		HSSweGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 		
-		static void SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo/*, SunObject *Sun*/);
-		static void CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo);
+		static void SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
+		static void CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
 		double newSnowDensity(const MeteoData& md) const;
-		SunObject sun;
 
-		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
-		static const double thresh_rh, thresh_Dt, thresh_iswr, thresh_solarIndex;
+		static const double thresh_rh, thresh_Dt;
 		static const bool soft;
 };
 

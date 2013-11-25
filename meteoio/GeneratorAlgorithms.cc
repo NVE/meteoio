@@ -433,13 +433,8 @@ double PotRadGenerator::getSolarIndex(const double& ta, const double& rh, const 
 }
 
 
-const double HSSweGenerator::soil_albedo = .23; //grass
-const double HSSweGenerator::snow_albedo = .85; //snow
-const double HSSweGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 const double HSSweGenerator::thresh_rh = .7;
 const double HSSweGenerator::thresh_Dt = 3.;
-const double HSSweGenerator::thresh_iswr = 30.; //minimum radiation to consider it is daylight
-const double HSSweGenerator::thresh_solarIndex = .7; //threshold for clear sky
 const bool HSSweGenerator::soft = true;
 void HSSweGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
@@ -474,16 +469,6 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 	if (last_good == IOUtils::npos) //can not find a good point to start
 		return false;
 
-	//try to setup a Sun object to compute the potential radiation
-	/*const double lat = vecMeteo.front().meta.position.getLat();
-	const double lon = vecMeteo.front().meta.position.getLon();
-	const double alt = vecMeteo.front().meta.position.getAltitude();
-	SunObject *sun_ptr=NULL;
-	if(lat!=IOUtils::nodata && lon!=IOUtils::nodata && alt!=IOUtils::nodata) {
-		sun.setLatLon(lat, lon, alt);
-		sun_ptr = &sun;
-	}*/
-
 	bool all_filled = (last_good>0)? false : true;
 	for(size_t ii=last_good+1; ii<vecMeteo.size(); ii++) {
 		const double HS_curr = vecMeteo[ii](MeteoData::HS);
@@ -496,7 +481,7 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 		if(HS_delta>0.) {
 			const double rho = newSnowDensity(vecMeteo[ii]);
 			const double precip = HS_delta * rho; //in kg/m2 or mm
-			SmartDistributeHNW(precip, start_idx, ii, param, vecMeteo/*, sun_ptr*/);
+			SmartDistributeHNW(precip, start_idx, ii, param, vecMeteo);
 		} else {
 			all_filled = false;
 		}
@@ -523,81 +508,84 @@ double HSSweGenerator::newSnowDensity(const MeteoData& md) const
 }
 
 //distribute the precipitation equally on all time steps in [start_idx ; end_idx]
-void HSSweGenerator::CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo)
-{//HACK handle the case of non-uniform sampling rate!
-	const size_t nr_intervals = end_idx-start_idx+1;
-	const double precip_increment = precip / (nr_intervals);
+//it also handles non-uniform sampling rates
+void HSSweGenerator::CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
+{
+	if(precip==IOUtils::nodata) return;
 	
-	for(size_t ii=start_idx; ii<=end_idx; ii++) {
-		vecMeteo[ii](paramindex) = precip_increment;
+	if(precip==0.) { //no precip, just fill with zeroes
+		for(size_t ii=start_idx; ii<=end_idx; ii++)
+			vecM[ii](paramindex) = 0.;
+		return;
+	} else {
+		if(start_idx==0)
+			throw IOException("Can not distribute without having the first data interval!", AT);
+		
+		const double total_dur = vecM[end_idx].date.getJulian(true) - vecM[start_idx-1].date.getJulian(true);
+		for(size_t ii=start_idx; ii<=end_idx; ii++) {
+			const double dur = vecM[ii].date.getJulian(true) - vecM[ii-1].date.getJulian(true);
+			vecM[ii](paramindex) = precip * dur/total_dur;
+		}
 	}
 }
 
 //distribute the given precipitation amount equally on the timesteps that have the highest probability of precipitation
-void HSSweGenerator::SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecMeteo/*, SunObject *Sun*/)
+//it also handles non-uniform sampling rates
+void HSSweGenerator::SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
 {
+	if(precip==IOUtils::nodata) return;
+	if(precip==0.) {
+		CstDistributeHNW(precip, start_idx, end_idx, paramindex, vecM);
+		return;
+	}
+	
+	if(start_idx==0)
+		throw IOException("Can not distribute without having the first data interval!", AT);
+	
 	const size_t nr_elems = end_idx-start_idx+1;
 	std::vector<unsigned char> vecScores(nr_elems);
 
 	//assign a score for each timestep according to the possibility of precipitation
-	size_t nr_score1 = 0, nr_score2 = 0, nr_score3 = 0; //count how many in each possible score categories
+	size_t nr_score1 = 0, nr_score2 = 0; //count how many in each possible score categories
+	double duration1 = 0., duration2 = 0.; //sum to calculate the total duration of each scores
 	for(size_t ii=0; ii<nr_elems; ii++) { //we keep a local index "ii" for the scores
 		unsigned char score = 0;
-		const double rh = vecMeteo[ii+start_idx](MeteoData::RH);
-		const double ta = vecMeteo[ii+start_idx](MeteoData::TA);
-		const double tss = vecMeteo[ii+start_idx](MeteoData::TSS);
-		const double hs = vecMeteo[ii+start_idx](MeteoData::HS);
-
-		//trying to get some radiation information
-		double iswr = vecMeteo[ii+start_idx](MeteoData::ISWR);
-		const double rswr = vecMeteo[ii+start_idx](MeteoData::RSWR);
-		double albedo = .5;
-		if(iswr!=IOUtils::nodata && rswr!=IOUtils::nodata)
-			albedo = rswr / iswr;
-		else if(hs!=IOUtils::nodata)
-			albedo = (hs>=snow_thresh)? snow_albedo : soil_albedo;
-
-		if(iswr==IOUtils::nodata && rswr!=IOUtils::nodata)
-			iswr = rswr / albedo;
+		const double rh = vecM[ii+start_idx](MeteoData::RH);
+		const double ta = vecM[ii+start_idx](MeteoData::TA);
+		const double tss = vecM[ii+start_idx](MeteoData::TSS);
 
 		//assign the scores
 		if(rh!=IOUtils::nodata && rh>=thresh_rh) //enough moisture for precip
 			score++;
 		if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)<=thresh_Dt ) //cloudy sky condition
 			score++;
-		/*if(iswr!=IOUtils::nodata && iswr>thresh_iswr && Sun!=NULL) { //low radiation compared to clear sky
-			Sun->setDate(vecMeteo[ii+start_idx].date.getJulian(true), 0.);
-			const double p=vecMeteo[ii+start_idx](MeteoData::P);
-			if(p==IOUtils::nodata)
-				Sun->calculateRadiation(ta, rh, albedo);
-			else
-				Sun->calculateRadiation(ta, rh, p, albedo);
-
-			double toa, direct, diffuse;
-			Sun->getHorizontalRadiation(toa, direct, diffuse);
-			const double solarIndex = iswr / (direct+diffuse);
-			if(solarIndex<=thresh_solarIndex)
-				score++;
-		}*/
 
 		//counters to know how many points received each possible scores
-		if(score==1) nr_score1++;
-		if(score==2) nr_score2++;
-		if(score==3) nr_score3++;
+		if(score==1) {
+			nr_score1++;
+			const double duration = vecM[ii+start_idx].date.getJulian(true) - vecM[ii+start_idx-1].date.getJulian(true);
+			duration1 += duration;
+		}
+		if(score==2) {
+			nr_score2++;
+			const double duration = vecM[ii+start_idx].date.getJulian(true) - vecM[ii+start_idx-1].date.getJulian(true);
+			duration2 += duration;
+		}
 		vecScores[ii] = score; //score for the current point
 	}
 
 	//find out what is the highest score and how many points received it, so we can compute the precipitation increment for each point
-	const unsigned char winning_scores = (nr_score3>0)? 3 : (nr_score2>0)? 2 : (nr_score1>0)? 1 : 0;
-	const size_t nr_winning_scores = (nr_score3>0)? nr_score3 : (nr_score2>0)? nr_score2 : (nr_score1>0)? nr_score1 : nr_elems-1;
-	const double precip_increment =  precip / double(nr_winning_scores);
-
+	const unsigned char winning_scores = (nr_score2>0)? 2 : (nr_score1>0)? 1 : 0;
+	const double whole_duration = vecM[end_idx].date.getJulian(true) - vecM[start_idx-1].date.getJulian(true);
+	const double winning_duration = (winning_scores==2)? duration2 : (winning_scores==1)? duration1 : whole_duration;
+	
 	//distribute the precipitation on the time steps that have the highest scores
 	for(size_t ii=0; ii<nr_elems; ii++) {
 		if(vecScores[ii]==winning_scores) {
-			vecMeteo[ii+start_idx](paramindex) = precip_increment;
+			const double duration = vecM[ii+start_idx].date.getJulian(true) - vecM[ii+start_idx-1].date.getJulian(true);
+			vecM[ii+start_idx](paramindex) = precip * duration/winning_duration;
 		} else
-			vecMeteo[ii+start_idx](paramindex) = 0.; //all other time steps set to 0
+			vecM[ii+start_idx](paramindex) = 0.; //all other time steps set to 0
 	}
 }
 

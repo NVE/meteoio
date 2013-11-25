@@ -100,7 +100,6 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 	indexP2=IOUtils::npos;
 
 	const Date dateStart = resampling_date - window_size;
-
 	for (size_t ii=pos; ii-- >0; ) {
 		if (vecM[ii].date < dateStart) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata){
@@ -111,7 +110,6 @@ void ResamplingAlgorithms::getNearestValidPts(const size_t& pos, const size_t& p
 
 	//make sure the search window remains window_size
 	const Date dateEnd = (indexP1 != IOUtils::npos)? vecM[indexP1].date+window_size : resampling_date+window_size;
-
 	for (size_t ii=pos; ii<vecM.size(); ++ii) {
 		if (vecM[ii].date > dateEnd) break;
 		if (vecM[ii](paramindex) != IOUtils::nodata) {
@@ -529,10 +527,9 @@ size_t Accumulate::distributeMeasurements(const std::vector<MeteoData>& vecM, co
 		throw IOException("Currently, only multiples of the data sampling rate are allowed for accumulation periods!", AT);
 	}
 	
-	//HACK handle the case of non-uniform sampling rate!
 	vecResult.assign(vecM.begin()+start_idx, vecM.begin()+end_idx+1);
 	//HSSweGenerator::CstDistributeHNW(precip, 1, vecResult.size()-1, paramindex, vecResult);
-	HSSweGenerator::SmartDistributeHNW(precip, 1, vecResult.size()-1, paramindex, vecResult/*, &Sun*/);
+	HSSweGenerator::SmartDistributeHNW(precip, 1, vecResult.size()-1, paramindex, vecResult);
 	
 	return index-(start_idx);
 }
