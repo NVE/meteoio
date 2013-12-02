@@ -201,7 +201,7 @@ class LinearResampling : public ResamplingAlgorithms {
  * hourly precipitation measurements. Remarks:
  * - the accumulation period has to be provided as an argument (in seconds)
  * - if giving the argument "strict", nodatas will propagate (ie. a single nodata in the input will force the re-accumulated value to be nodata). By default, all valid values are aggregated and only pure nodata intervals produce a nodata in the output.
- *  - if the data has been measured on intervals greater than the sampling interval of the data file (for example, 24 hours accumulations written once per day in an hourly file, the other timesteps receiving nodata), the measured accumulation period can be provided as first argument. Please note that this period can not be smaller than the requested sampling period and that the requested sampling period can not have a time offset with the sampling period. Moreover, only regular sampling is currently supported for such data sets.
+ *  - if the data has been measured on intervals greater than the sampling interval of the data file (for example, 24 hours accumulations written once per day in an hourly file, the other timesteps receiving nodata), the measured accumulation period can be provided as first argument. Please note that this period can not be smaller than the requested sampling period and that the requested sampling period can not have a time offset with the sampling period.
  * @code
  * HNW::resample   = accumulate
  * HNW::accumulate = 3600

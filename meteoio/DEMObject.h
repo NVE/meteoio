@@ -30,8 +30,10 @@ namespace mio {
 
 /**
  * @class DEMObject
- * @brief A class to represent DEMs: reads elevation grids, computes local slope, azimuth, curvature.
- * The nodata parameter is supposed to be IOUtils::nodata.
+ * @brief A class to represent DEMs and automatically compute some properties.
+ * This class stores elevation grids and their georeferencing, expressed as the lower-left coordinates, the cellsize (cells are assumed to be square) and a nodata code for potentially empty cells (The nodata parameter is supposed to be IOUtils::nodata).
+ * This class also automatically computes local slope, azimuth, curvature, normals and minimal/maximal for normalization.
+ * Various algorithms are available to compute these properties (see mio::DEMObject::slope_type) and it is possible to toggle between automatic refresh or not. Several other DEM related values can be computed, such as the horizon, displacements within the DEM, etc
  *
  * @ingroup data_str
  * @author Gaël Rosset - Mathias Bavay

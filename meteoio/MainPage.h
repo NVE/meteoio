@@ -89,15 +89,15 @@ namespace mio {
  * Since MeteoIO is a library, you, as an end user, will have a limited direct exposure to it: the library is called by the program that you are using, not directly by yourself. You will basically have to set some parameters in a configuration file that defines how MeteoIO has to behave. This configuration file is often named "io.ini" and follows the INI file format standard (see http://en.wikipedia.org/wiki/INI_file). In order to understand how this file is structured, let us first have a look at the general structure of MeteoIO and afterward the structure of this configuration file and where to find the available configuration parameters.
  *
  * @section MeteoIO_structure General MeteoIO structure
- * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules:
- * - a set of plugins for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
- * - a set of filters and processing elements for applying transformations to the data (for example, a filter might remove all data that is out of range)
- * - a set of spatial interpolation algorithms (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
+ * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
+ * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
+ * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
+ * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
  *
  * Moreover, a few assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort of coordinates) and very often you will also need to provide a Digital Elevation Model. Therefore, you will also notice a few extra modules that come to play on the visible side:
- * - a module to deal with Digital Elevation Models. Such module will, for example, interpret a grid of data as a grid of elevations and compute a grid of slopes.
- * - a module to deal with coordinate systems. Such module will require you to define which coordinate system are your data in and transparently handle potential coordinate conversions in the program that you are using.
- * - a module to deal with configuration files. The program that you are using might be using this module for other configuration files.
+ * - a module to deal with \ref DEMObject "Digital Elevation Models". Such module will for example interpret a grid of data as a grid of elevations and compute a grid of slopes.
+ * - a module to deal with \ref coords "coordinate systems". Such module will require you to define which coordinate system are your data in and transparently handle potential coordinate conversions in the program that you are using.
+ * - a module to deal with \ref mio::Config "configuration files". The program that you are using might be using this module for other configuration files.
  *
  * @section Config Configuration file
  * @anchor config_doc
