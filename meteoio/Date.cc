@@ -531,7 +531,9 @@ bool Date::isLeapYear() const {
 }
 
 /**
- * @brief Round a julian date to a given precision
+ * @brief Round a julian date to a given precision.
+ * If you want to round a local date, do NOT provide it as gmt julian but as local julian,
+ * otherwise things like rounding to the next day would be shifted by TimeZone.
  * @param julian date to round
  * @param precision round date to the given precision, in seconds
  * @param type rounding strategy (default: CLOSEST)
@@ -561,14 +563,18 @@ double Date::rnd(const double& julian, const unsigned int& precision, const RND&
  * @param type rounding strategy (default: CLOSEST)
  */
 void Date::rnd(const unsigned int& precision, const RND& type) {
-	if(!undef)
-		gmt_julian = rnd(gmt_julian, precision, type);
+	if(!undef) {
+		const double rnd_julian = rnd( getJulian(false), precision, type ); //round local time
+		setDate(rnd_julian, timezone, dst);
+	}
 }
 
 const Date Date::rnd(const Date& indate, const unsigned int& precision, const RND& type) {
 	Date tmp(indate);
-	if(!tmp.undef)
-		tmp.gmt_julian = rnd(tmp.gmt_julian, precision, type);
+	if(!tmp.undef) {
+		const double rnd_julian = rnd( tmp.getJulian(false), precision, type ); //round local time
+		tmp.setDate(rnd_julian, tmp.getTimeZone(), tmp.getDST());
+	}
 
 	return tmp;
 }
