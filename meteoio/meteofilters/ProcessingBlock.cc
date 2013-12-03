@@ -31,6 +31,7 @@
 #include <meteoio/meteofilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteofilters/ProcUndercatch_Hamon.h>
 #include <meteoio/meteofilters/ProcUnventilatedT.h>
+#include <meteoio/meteofilters/ProcUnshade.h>
 #include <meteoio/meteofilters/ProcAdd.h>
 #include <meteoio/meteofilters/ProcMult.h>
 #include <meteoio/meteofilters/ProcExpSmoothing.h>
@@ -129,6 +130,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcUndercatch_Hamon(vec_args, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vec_args, blockname);
+	} else if (blockname == "UNSHADE"){
+		return new ProcUnshade(vec_args, blockname);
 	} else if (blockname == "MULT"){
 		return new ProcMult(vec_args, blockname);
 	} else if (blockname == "ADD"){
