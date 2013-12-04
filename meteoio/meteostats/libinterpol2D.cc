@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <cmath>
+#include <algorithm>
 
 #include <meteoio/meteostats/libinterpol2D.h>
 #include <meteoio/meteolaws/Atmosphere.h>

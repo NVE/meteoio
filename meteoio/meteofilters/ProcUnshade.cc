@@ -22,7 +22,7 @@ using namespace std;
 
 namespace mio {
 
-ProcUnshade::ProcUnshade(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name), max_gap(3.5)
+ProcUnshade::ProcUnshade(const std::vector<std::string>& vec_args, const std::string& name) : WindowedFilter(name), max_gap(2)
 {
 	parse_args(vec_args);
 
@@ -38,35 +38,35 @@ void ProcUnshade::process(const unsigned int& param, const std::vector<MeteoData
 {
 	if(param!=MeteoData::ISWR && param!=MeteoData::RSWR)
 		throw InvalidArgumentException("Trying to use "+getName()+" filter on " + MeteoData::getParameterName(param) + " but it can only be applied to iswr/rswr!!" + getName(), AT);
+	if( ivec.empty() ) return;
 	
 	ovec = ivec;
+	const size_t nr_data = ovec.size();
 	vector<double> vecAlbedo, vecJulian;
 	
 	//build the vector of albedos
-	for (size_t ii=0; ii<ovec.size(); ii++) {
+	for (size_t ii=0; ii<nr_data; ii++) {
 		const double iswr = ovec[ii](MeteoData::ISWR);
 		const double rswr = ovec[ii](MeteoData::RSWR);
 		
 		if(iswr<=0. && rswr<=0.) continue;
-		
+		const double curr_julian = ovec[ii].date.getJulian(true);
 		const double albedo = (iswr!=IOUtils::nodata && rswr!=IOUtils::nodata)? rswr / (iswr+1e-6) : IOUtils::nodata;
+		
+		vecJulian.push_back( curr_julian );
 		if(albedo>0. && albedo<1.)
 			vecAlbedo.push_back( albedo );
 		else
 			vecAlbedo.push_back( IOUtils::nodata );
-		
-		vecJulian.push_back( ovec[ii].date.getJulian(true) );
 	}
 
-	//filter the albedo
-	if( !MADFilter(vecAlbedo) ) return; //HACK: do it piecewise on a window!
-	
-	//reinterpolate the albedos
+	//filter and reinterpolate the albedo
+	if( !filterAlbedo(vecJulian, vecAlbedo) ) return;
 	if( !linInterpolate(vecJulian, vecAlbedo) ) return;
 	
 	//apply the albedo correction
 	size_t alb_idx = 0;
-	for (size_t ii=0; ii<ovec.size(); ii++) {
+	for (size_t ii=0; ii<nr_data; ii++) {
 		double& iswr = ovec[ii](MeteoData::ISWR);
 		double& rswr = ovec[ii](MeteoData::RSWR);
 		
@@ -94,15 +94,41 @@ void ProcUnshade::process(const unsigned int& param, const std::vector<MeteoData
 	}
 }
 
-bool ProcUnshade::MADFilter(std::vector<double> &data)
+bool ProcUnshade::filterAlbedo(const std::vector<double>& julian, std::vector<double> &data) const
+{
+	if(julian.empty()) return false;
+	
+	vector<double> vecWindow;
+	double start_julian = julian[0];
+	size_t start_idx = 0;
+	
+	for(size_t ii=0; ii<data.size(); ii++) { //piecewise MAD filter on a data window
+		if(data[ii]!=IOUtils::nodata) vecWindow.push_back( data[ii] );
+		
+		const double curr_julian = julian[ii];
+		if( (curr_julian-start_julian) >= max_gap) {
+			if( !MADFilter(start_idx, vecWindow, data) ) return false;
+			vecWindow.resize(0);
+			start_julian = curr_julian;
+			start_idx = ii;
+		}
+	}
+	
+	if(!vecWindow.empty())
+		if( !MADFilter(start_idx, vecWindow, data) ) return false;
+	
+	return true;
+}
+
+bool ProcUnshade::MADFilter(const size_t& start_idx, std::vector<double> &vecWindow, std::vector<double> &data)
 {
 	const double K = 1. / 0.6745;
 	double mad     = IOUtils::nodata;
 	double median  = IOUtils::nodata;
 	
 	try {
-		median = Interpol1D::getMedian(data);
-		mad    = Interpol1D::getMedianAverageDeviation(data);
+		median = Interpol1D::getMedian(vecWindow, false); //we aleady handled nodata
+		mad    = Interpol1D::getMedianAverageDeviation(vecWindow, false);
 	} catch(const exception&){
 		return false;
 	}
@@ -113,8 +139,8 @@ bool ProcUnshade::MADFilter(std::vector<double> &data)
 	const double lower_lim = median - 3.*sigma;
 	const double upper_lim = median + 3.*sigma;
 	
-	for(size_t ii=0; ii<data.size(); ii++) {
-		double& value = data[ii];
+	for(size_t ii=0; ii<vecWindow.size(); ii++) {
+		double& value = data[start_idx+ii];
 		if( value!=IOUtils::nodata && ((value>upper_lim) || (value<lower_lim)) ) {
 			value = IOUtils::nodata;
 		}
@@ -141,11 +167,13 @@ void ProcUnshade::interpolFill(const size_t& start_idx, const size_t& end_idx, c
 		data[ii] = a * julian[ii] + b;
 }
 
-bool ProcUnshade::linInterpolate(const std::vector<double>& julian, std::vector<double> &data)
+bool ProcUnshade::linInterpolate(const std::vector<double>& julian, std::vector<double> &data) const
 {
+	const size_t nr_data = data.size();
+	
 	//get starting point
 	size_t start_idx = IOUtils::npos;
-	for(size_t ii=0; ii<data.size(); ii++) {
+	for(size_t ii=0; ii<nr_data; ii++) {
 		if(data[ii]!=IOUtils::nodata) {
 			start_idx = ii;
 			break;
@@ -154,7 +182,7 @@ bool ProcUnshade::linInterpolate(const std::vector<double>& julian, std::vector<
 	
 	if(start_idx==IOUtils::npos) return false;
 	
-	for(size_t ii=start_idx+1; ii<data.size(); ii++) {
+	for(size_t ii=start_idx+1; ii<nr_data; ii++) {
 		if(data[ii]!=IOUtils::nodata) {
 			if( ii!=start_idx+1 && (julian[ii]-julian[start_idx])<=max_gap )
 				interpolFill(start_idx, ii, julian, data);

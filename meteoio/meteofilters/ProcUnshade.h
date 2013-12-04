@@ -46,10 +46,11 @@ class ProcUnshade : public WindowedFilter {
 		                     std::vector<MeteoData>& ovec);
 
 	private:
-		bool MADFilter(std::vector<double>& data);
-		bool linInterpolate(const std::vector<double>& julian, std::vector<double> &data);
-		void interpolFill(const size_t& start_idx, const size_t& end_idx, const std::vector<double>& julian, std::vector<double> &data);
+		bool filterAlbedo(const std::vector<double>& julian, std::vector<double> &data) const;
+		bool linInterpolate(const std::vector<double>& julian, std::vector<double> &data) const;
 		void parse_args(std::vector<std::string> vec_args);
+		static bool MADFilter(const size_t& start_idx, std::vector<double> &vecWindow, std::vector<double> &data);
+		static void interpolFill(const size_t& start_idx, const size_t& end_idx, const std::vector<double>& julian, std::vector<double> &data);
 		
 		double max_gap; ///<largest albedo gap that will still be interpolated, in days
 };

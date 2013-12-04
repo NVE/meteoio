@@ -22,7 +22,6 @@
 #include <meteoio/IOUtils.h>
 
 #include <vector>
-#include <algorithm>
 
 namespace mio {
 
@@ -43,8 +42,8 @@ class Interpol1D {
 		static double weightedMean(const double& d1, const double& d2, const double& weight=1.);
 		static double weightedMean(const std::vector<double>& vecData, const std::vector<double>& weight);
 		static double arithmeticMean(const std::vector<double>& vecData);
-		static double getMedian(const std::vector<double>& vecData);
-		static double getMedianAverageDeviation(const std::vector<double>& vecData);
+		static double getMedian(const std::vector<double>& vecData, const bool& keep_nodata=true);
+		static double getMedianAverageDeviation(std::vector<double> vecData, const bool& keep_nodata=true);
 		static double variance(const std::vector<double>& X);
 		static double std_dev(const std::vector<double>& X);
 		static double covariance(const std::vector<double>& z1, const std::vector<double>& z2);
@@ -56,6 +55,7 @@ class Interpol1D {
 		static void ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg);
 
 	private:
+		static double getMedianCore(std::vector<double> vecData);
 		static bool ptOK(const double& x, const double& y);
 		static void LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg);
 		static bool pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r);

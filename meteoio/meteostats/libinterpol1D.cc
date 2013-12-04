@@ -248,58 +248,68 @@ double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 		return IOUtils::nodata;
 }
 
-double Interpol1D::getMedian(const std::vector<double>& vecData)
+double Interpol1D::getMedianCore(std::vector<double> vecData)
 {
 //This uses a sorting algorithm for getting middle element
 //as much more efficient than full sorting (O(n) compared to O(n log(n))
-	if (vecData.empty())
-		throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
-
-	vector<double> vecTemp;
-	for(size_t i=0; i<vecData.size(); i++) {
-		const double& value=vecData[i];
-		if(value!=IOUtils::nodata)
-			vecTemp.push_back(value);
-	}
-
-	const size_t vecSize = vecTemp.size();
+	const size_t vecSize = vecData.size();
 	if (vecSize == 0)
 		return IOUtils::nodata;
 
 	if ((vecSize % 2) == 1){ //uneven
 		const int middle = (int)(vecSize/2);
-		nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
-		return *(vecTemp.begin()+middle);
+		nth_element(vecData.begin(), vecData.begin()+middle, vecData.end());
+		return *(vecData.begin()+middle);
 	} else { //use arithmetic mean of element n/2 and n/2-1
 		const int middle = (int)(vecSize/2);
-		nth_element(vecTemp.begin(), vecTemp.begin()+middle-1, vecTemp.end());
-		const double m1 = *(vecTemp.begin()+middle-1);
-		nth_element(vecTemp.begin(), vecTemp.begin()+middle, vecTemp.end());
-		const double m2 = *(vecTemp.begin()+middle);
+		nth_element(vecData.begin(), vecData.begin()+middle-1, vecData.end());
+		const double m1 = *(vecData.begin()+middle-1);
+		nth_element(vecData.begin(), vecData.begin()+middle, vecData.end());
+		const double m2 = *(vecData.begin()+middle);
 		return weightedMean( m1, m2, 0.5);
 	}
 }
 
-double Interpol1D::getMedianAverageDeviation(const std::vector<double>& vecData)
+
+double Interpol1D::getMedian(const std::vector<double>& vecData, const bool& keep_nodata)
+{
+//This uses a sorting algorithm for getting middle element
+//as much more efficient than full sorting (O(n) compared to O(n log(n))
+	if(keep_nodata) {
+		if (vecData.empty())
+			throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
+
+		vector<double> vecTemp;
+		for(size_t i=0; i<vecData.size(); i++) {
+			const double& value=vecData[i];
+			if(value!=IOUtils::nodata)
+				vecTemp.push_back(value);
+		}
+
+		return getMedianCore(vecTemp);
+	} else {
+		return getMedianCore(vecData);
+	}
+}
+
+double Interpol1D::getMedianAverageDeviation(std::vector<double> vecData, const bool& keep_nodata)
 {
 	if (vecData.empty())
 		throw NoAvailableDataException("Trying to calculate MAD with no data points", AT);
 
-	vector<double> vecWindow(vecData);
-
-	const double median = Interpol1D::getMedian(vecWindow);
+	const double median = Interpol1D::getMedian(vecData, keep_nodata);
 	if(median==IOUtils::nodata)
 		return IOUtils::nodata;
 
-	//Calculate vector of deviations and write each value back into the vecWindow
-	for(size_t ii=0; ii<vecWindow.size(); ii++){
-		double& value = vecWindow[ii];
+	//Calculate vector of deviations and write each value back into the vecData
+	for(size_t ii=0; ii<vecData.size(); ii++){
+		double& value = vecData[ii];
 		if(value!=IOUtils::nodata)
 			value = std::abs(value - median);
 	}
 
 	//Calculate the median of the deviations
-	const double mad = Interpol1D::getMedian(vecWindow);
+	const double mad = Interpol1D::getMedian(vecData, keep_nodata);
 
 	return mad;
 }
