@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteofilters/ProcessingBlock.h>
+#include <meteoio/meteofilters/FilterSuppr.h>
 #include <meteoio/meteofilters/FilterMin.h>
 #include <meteoio/meteofilters/FilterMax.h>
 #include <meteoio/meteofilters/FilterMinMax.h>
@@ -74,6 +75,7 @@ namespace mio {
  *
  * @section processing_available Available processing elements
  * New filters can easily be developed. The filters that are currently available are the following:
+ * - SUPPR: delete all data, see FilterSuppr
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - MIN_MAX: range check filter, see FilterMinMax
@@ -100,7 +102,9 @@ namespace mio {
 
 ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args)
 {
-	if (blockname == "MIN"){
+	if (blockname == "SUPPR"){
+		return new FilterSuppr(vec_args, blockname);
+	} else if (blockname == "MIN"){
 		return new FilterMin(vec_args, blockname);
 	} else if (blockname == "MAX"){
 		return new FilterMax(vec_args, blockname);

@@ -198,7 +198,7 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
 		double albedo = .5;
-		if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+		if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=0 || ISWR<=0) {
 			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 
@@ -260,7 +260,7 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 			}
 
 			double albedo = .5;
-			if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata) {
+			if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=0 || ISWR<=0) {
 				if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
 					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
 

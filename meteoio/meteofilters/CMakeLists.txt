@@ -1,6 +1,7 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
 SET(meteofilters_sources
+	meteofilters/FilterSuppr.cc
 	meteofilters/FilterMin.cc
 	meteofilters/FilterMax.cc
 	meteofilters/FilterMinMax.cc
