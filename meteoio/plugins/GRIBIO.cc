@@ -514,7 +514,7 @@ void GRIBIO::indexFile(const std::string& filename)
 			throw IOException("Unable to create grib handle for \""+filename+"\"", AT);
 		}
 
-		//llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this sets llcorner, cellsize and bearing_offset
+		llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this sets llcorner, cellsize and bearing_offset
 		if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
 			throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
 		}
