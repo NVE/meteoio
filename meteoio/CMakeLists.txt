@@ -16,6 +16,14 @@ IF(PROJ4)
 	ENDIF(MSVC)
 ENDIF(PROJ4)
 
+IF(DATA_QA)
+	IF(MSVC)
+		ADD_DEFINITIONS(/DDATA_QA) #it looks like some VC++ versions don't support -D syntax
+	ELSE(MSVC)
+		ADD_DEFINITIONS(-DDATA_QA)
+	ENDIF(MSVC)
+ENDIF(DATA_QA)
+
 IF(POPC)
 	#FIND_PACKAGE(Popc REQUIRED)
 	SET(popc_sources marshal_meteoio.cc)

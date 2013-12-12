@@ -159,6 +159,7 @@ SET(PLUGIN_PNGIO OFF CACHE BOOL "Compilation PNGIO ON or OFF")
 SET(PLUGIN_SMETIO ON CACHE BOOL "Compilation SMETIO ON or OFF")
 SET(PLUGIN_SNIO ON CACHE BOOL "Compilation SNIO ON or OFF")
 SET(PROJ4 OFF CACHE BOOL "Use PROJ4 for the class MapProj ON or OFF")
+SET(DATA_QA OFF CACHE BOOL "Data Quality Assurance outputs ON or OFF")
 
 ###########################################################
 #for the install target

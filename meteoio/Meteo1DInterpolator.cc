@@ -98,6 +98,13 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 			mapAlgorithms[parname] = ResamplingAlgorithmsFactory::getAlgorithm(algo_name, parname, window_size, vecArgs);;
 			mapAlgorithms[parname]->resample(index, elementpos, ii, vecM, md);
 		}
+
+		#ifdef DATA_QA
+		if((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {
+			const string algo_name = it->second->getAlgo();
+			cout << "[DATA_QA] Resampling " << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << "\n";
+		}
+		#endif
 	}
 
 	return true; //successfull resampling

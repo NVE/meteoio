@@ -81,9 +81,10 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 		//pick one element and check whether the param_name parameter exists
 		const size_t param = ivec[ii].front().getParameterIndex(param_name);
 		if (param != IOUtils::npos){
+			//since all filters start with ovec=ivec, maybe we could just swap pointers instead for copying
 			std::vector<MeteoData> tmp( ivec[ii] );
 
-			//Now call the filters in a row
+			//Now call the filters one after another for the current station and parameter
 			bool appliedFilter = false;
 			for (size_t jj=0; jj<nr_of_filters; jj++){
 				const ProcessingProperties::proc_stage& filter_stage = filter_stack[jj]->getProperties().stage;
@@ -97,13 +98,27 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 				(*filter_stack[jj]).process(static_cast<unsigned int>(param), tmp, ovec[ii]);
 
 				if (tmp.size() == ovec[ii].size()){
+					#ifdef DATA_QA
+					for(size_t kk=0; kk<ovec[ii].size(); kk++) {
+						const double orig = tmp[kk](param);
+						const double filtered = ovec[ii][kk](param);
+						if(orig!=filtered) {
+							const string parname = tmp[kk].getNameForParameter(param);
+							const string filtername = (*filter_stack[jj]).getName();
+							cout << "[DATA_QA] Filtering " << parname << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << "\n";
+						}
+					}
+					#endif
 					if ((jj+1) != nr_of_filters){//after the last filter not necessary
 						for (size_t kk=0; kk<ovec[ii].size(); kk++){
 							tmp[kk](param) = ovec[ii][kk](param);
 						}
 					}
 				} else {
-					tmp = ovec[ii];
+					ostringstream ss;
+					ss << "The filter \"" << (*filter_stack[jj]).getName() << "\" received " << tmp.size();
+					ss << " timestamps and returned " << ovec[ii].size() << " timestamps!";
+					throw IndexOutOfBoundsException(ss.str(), AT);
 				}
 			}
 
