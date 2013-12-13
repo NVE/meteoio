@@ -159,7 +159,7 @@ class SinGenerator : public GeneratorAlgorithm {
  * @class StandardPressureGenerator
  * @brief Standard atmospheric pressure generator.
  * Generate a standard atmosphere's pressure, depending on the local elevation.
- * * @code
+ * @code
  * P::generators = STD_PRESS
  * @endcode
  */
@@ -190,7 +190,7 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
  * @code
  * ILWR::generators = UNSWORTH
  * @endcode
- * 
+ *
  */
 class UnsworthGenerator : public GeneratorAlgorithm {
 	public:
@@ -241,7 +241,7 @@ class HSSweGenerator : public GeneratorAlgorithm {
 			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
-		
+
 		static void SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 		static void CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM);
 	private:

@@ -47,13 +47,11 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 		double t = ovec[ii](MeteoData::TA);
 		if(t==IOUtils::nodata) continue; //we MUST have air temperature in order to filter
 		t=K_TO_C(t); //t in celsius
-		precip_type precip=mixed;
-		if(t<=Tsnow) precip=snow;
-		if(t>=Train) precip=rain;
+		precip_type precip = (t<=Tsnow)? snow : (t>=Train)? rain : mixed;
 
 		//We don't use Tmax, Tmin, Tmean but only the current temperature instead
-		if (tmp == IOUtils::nodata || tmp==0. || precip==rain) {
-			continue; //preserve nodata values and no precip or purely liquid precip
+		if (tmp == IOUtils::nodata || tmp==0.) {
+			continue; //preserve nodata values and no precip
 		} else if(type==cst) {
 			if(precip==snow) tmp *= factor_snow;
 			if(precip==mixed) tmp *= factor_mixed;
@@ -62,12 +60,11 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 			double k=100.;
 			if(precip==snow) k=100.-0.44*VW*VW-1.98*VW;
 			if(precip==mixed) {
-				if(t==IOUtils::nodata) continue;
 				k=97.29-3.18*VW+0.58*t-0.67*t; //Tmax, Tmin
 			}
 			tmp *= 100./k;
 		} else if(type==tretyakov) {
-			if(VW==IOUtils::nodata || t==IOUtils::nodata) continue;
+			if(VW==IOUtils::nodata) continue;
 			double k=100.;
 			if(VW>8.5) VW=8.5; //the fits have been calibrated until 8.5 m/s
 			if(precip==snow) k=103.11-8.67*VW+0.30*t; //Tmax
@@ -100,14 +97,35 @@ void ProcUndercatch_WMO::process(const unsigned int& param, const std::vector<Me
 			if(precip==snow) k=100. / (1.+.346*VW);
 			if(precip==mixed) k=100. / (1.+.0856*VW);
 			tmp *= 100./k;
+		} else if(type==cspg) {
+			if(VW==IOUtils::nodata) continue;
+			double k=100.;
+			if(precip==snow) k=100.*exp(-0.056*VW); //VW in 0 - 6.2
+			if(precip==rain) k=100.*exp(-0.041*VW); //VW in 0 - 7.3
+			if(precip==mixed) {
+				const double Ksnow = 100.*exp(-0.056*VW);
+				const double Krain = 100.*exp(-0.041*VW);
+				const double td = (t<-2.)? -2. : (t>2.)? 2. : t;
+				k = Ksnow - (Ksnow-Krain)*(td+2.)/4.; //Tmean
+			}
+			tmp *= 100./k;
+		} else if(type==geonorsh) {
+			if(VW==IOUtils::nodata) continue;
+			double k=100.;
+			if(precip==snow) k=100.*exp(-0.135*VW); //VW in 0 - 6
+			if(precip==rain) k=100.*exp(-0.113*VW); //VW in 0 - 5
+			if(precip==mixed) {
+				const double Ksnow = 100.*exp(-0.135*VW);
+				const double Krain = 100.*exp(-0.113*VW);
+				const double td = (t<-2.)? -2. : (t>2.)? 2. : t;
+				k = Ksnow - (Ksnow-Krain)*(td+2.)/4.; //Tmean
+			}
+			tmp *= 100./k;
 		} else if(type==hellmann) {
 			if(VW==IOUtils::nodata) continue;
 			double k=100.;
 			if(precip==snow) k=100.+1.13*VW*VW-19.45*VW;
-			if(precip==mixed) {
-				if(t==IOUtils::nodata) continue;
-				k=96.63+0.41*VW*VW-9.84*VW+5.95*t; //Tmean
-			}
+			if(precip==mixed) k=96.63+0.41*VW*VW-9.84*VW+5.95*t; //Tmean
 			tmp *= 100./k;
 		}  else if(type==hellmannsh) {
 			if(VW==IOUtils::nodata) continue;
@@ -150,6 +168,10 @@ void ProcUndercatch_WMO::parse_args(std::vector<std::string> filter_args)
 		type=us8unsh;
 	} else if(filter_args[0]=="rt3_jp") {
 		type=rt3_jp;
+	} else if(filter_args[0]=="cspg") {
+		type=cspg;
+	} else if(filter_args[0]=="geonorsh") {
+		type=geonorsh;
 	} else if(filter_args[0]=="hellmann") {
 		type=hellmann;
 	} else if(filter_args[0]=="hellmannsh") {

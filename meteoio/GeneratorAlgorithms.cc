@@ -512,7 +512,7 @@ double HSSweGenerator::newSnowDensity(const MeteoData& md) const
 void HSSweGenerator::CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
 {
 	if(precip==IOUtils::nodata) return;
-	
+
 	if(precip==0.) { //no precip, just fill with zeroes
 		for(size_t ii=start_idx; ii<=end_idx; ii++)
 			vecM[ii](paramindex) = 0.;
@@ -520,7 +520,7 @@ void HSSweGenerator::CstDistributeHNW(const double& precip, const size_t& start_
 	} else {
 		if(start_idx==0)
 			throw IOException("Can not distribute without having the first data interval!", AT);
-		
+
 		const double total_dur = vecM[end_idx].date.getJulian(true) - vecM[start_idx-1].date.getJulian(true);
 		for(size_t ii=start_idx; ii<=end_idx; ii++) {
 			const double dur = vecM[ii].date.getJulian(true) - vecM[ii-1].date.getJulian(true);
@@ -538,10 +538,10 @@ void HSSweGenerator::SmartDistributeHNW(const double& precip, const size_t& star
 		CstDistributeHNW(precip, start_idx, end_idx, paramindex, vecM);
 		return;
 	}
-	
+
 	if(start_idx==0)
 		throw IOException("Can not distribute without having the first data interval!", AT);
-	
+
 	const size_t nr_elems = end_idx-start_idx+1;
 	std::vector<unsigned char> vecScores(nr_elems);
 
@@ -575,10 +575,10 @@ void HSSweGenerator::SmartDistributeHNW(const double& precip, const size_t& star
 	}
 
 	//find out what is the highest score and how many points received it, so we can compute the precipitation increment for each point
-	const unsigned char winning_scores = (nr_score2>0)? 2 : (nr_score1>0)? 1 : 0;
+	const unsigned char winning_scores = (nr_score2>0)? (unsigned char)2 : (nr_score1>0)? (unsigned char)1 : (unsigned char)0;
 	const double whole_duration = vecM[end_idx].date.getJulian(true) - vecM[start_idx-1].date.getJulian(true);
 	const double winning_duration = (winning_scores==2)? duration2 : (winning_scores==1)? duration1 : whole_duration;
-	
+
 	//distribute the precipitation on the time steps that have the highest scores
 	for(size_t ii=0; ii<nr_elems; ii++) {
 		if(vecScores[ii]==winning_scores) {

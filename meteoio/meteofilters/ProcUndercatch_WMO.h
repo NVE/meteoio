@@ -36,7 +36,7 @@ namespace mio {
  * the overview given by <i>"Literature Study on the Correction of Precipitation Measurements"</i>, Annette Wagner, 2009.
  * The correction parameters for the shielded Hellmann gauge (German version) are from <i>"Wind-induced Precipitation Undercatch
 of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 1999, pp 57-80 while the correction for Japanese RT-3 gauges comes from
-* <i>"Performance of Japanese precipitation gauges in winter"</i>, K. Yokoyama, H. Ohno, Y. Kominami, S. Inoue and T. Kawakata, Seppyo, <b>65</b>, 2003, pp 303-316 (in Japanese with English summary).
+* <i>"Performance of Japanese precipitation gauges in winter"</i>, K. Yokoyama, H. Ohno, Y. Kominami, S. Inoue and T. Kawakata, Seppyo, <b>65</b>, 2003, pp 303-316 (in Japanese with English summary). The correction for the Chinese Standard Precipitation Gauge is from <i>"A Bias-Corrected Precipitation Climatology for China"</i>, B. Ye, Y. Daqing, D. Yongjian, H. Tianding, K. Toshio, 2004, Journal of Hydrometeorology, <b>5</b>, 1147–1160.
  *
  * These correction methods process pure snow and mixed precipitation differently, with the following thresholds:
  * - pure snow below -2 C
@@ -50,9 +50,11 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * - cst {factor for snow} {factor for mixed precipitation} - this applies a constant factor to the precipitation. Optionally, the snow and rain threshold temperatures can be given instead of relying on the above values (by adding them at the end of the line).
  * - Nipher - National standard rain gauge in Canada, shielded
  * - Tretyakov - Designed in USSR in the 1950s, deployed by some national networks in ex-USSR territories, shielded
- * - US8sh - US national 8\" rain gauge, shielded
+ * - US8sh - US national 8\" rain gauge, shielded (Alter shield)
  * - US8unsh - US national 8\" rain gauge, unshielded
  * - RT3_Jp - Japanese network RT-3 rain gauge. This uses an ad-hoc rain/snow splitting method.
+ * - Cspg - China Standard Precipitation Gauge, unshielded
+ * - Geonorsh -Geonor rain gauge with Alter shield. The mixed precipitation is computed accroding to the same principles as in (Ye, 2004).
  * - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded
  * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
  *
@@ -77,6 +79,8 @@ class ProcUndercatch_WMO : public ProcessingBlock {
 			us8sh,
 			us8unsh,
 			rt3_jp,
+			cspg,
+			geonorsh,
 			hellmann,
 			hellmannsh
 		} sensor_type;
