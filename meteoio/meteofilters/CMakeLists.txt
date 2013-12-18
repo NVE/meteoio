@@ -18,6 +18,7 @@ SET(meteofilters_sources
 	meteofilters/ProcUnshade.cc
 	meteofilters/ProcUndercatch_WMO.cc
 	meteofilters/ProcUndercatch_Hamon.cc
+	meteofilters/ProcUndercatch_Forland.cc
 	meteofilters/ProcAdd.cc
 	meteofilters/ProcMult.cc
 	meteofilters/ProcExpSmoothing.cc

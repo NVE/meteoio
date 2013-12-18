@@ -30,6 +30,7 @@
 #include <meteoio/meteofilters/FilterMAD.h>
 #include <meteoio/meteofilters/ProcButterworth.h>
 #include <meteoio/meteofilters/ProcUndercatch_WMO.h>
+#include <meteoio/meteofilters/ProcUndercatch_Forland.h>
 #include <meteoio/meteofilters/ProcUndercatch_Hamon.h>
 #include <meteoio/meteofilters/ProcUnventilatedT.h>
 #include <meteoio/meteofilters/ProcUnshade.h>
@@ -95,6 +96,7 @@ namespace mio {
  * - ADD: adds a given offset to the data, see ProcAdd
  * - MULT: multiply the data by a given factor, see ProcMult
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
+ * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
  *
@@ -130,6 +132,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new FilterUnheatedHNW(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_WMO"){
 		return new ProcUndercatch_WMO(vec_args, blockname);
+	} else if (blockname == "UNDERCATCH_FORLAND"){
+		return new ProcUndercatch_Forland(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_HAMON"){
 		return new ProcUndercatch_Hamon(vec_args, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
