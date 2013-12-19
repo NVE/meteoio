@@ -76,7 +76,6 @@ namespace mio {
  *
  * @section processing_available Available processing elements
  * New filters can easily be developed. The filters that are currently available are the following:
- * - SUPPR: delete all data, see FilterSuppr
  * - MIN: minimum check filter, see FilterMin
  * - MAX: maximum check filter, see FilterMax
  * - MIN_MAX: range check filter, see FilterMinMax
@@ -86,15 +85,18 @@ namespace mio {
  * - TUKEY: Tukey53H spike detection, based on median, see FilterTukey
  * - UNHEATED_RAINGAUGE: detection of snow melting in a rain gauge, see FilterUnheatedHNW
  *
- * A few data transformations are also supported besides filtering:
+ * Some data transformations are also supported besides filtering, both very basic and generic data transformations:
+ * - SUPPR: delete all data, see FilterSuppr
+ * - ADD: adds a given offset to the data, see ProcAdd
+ * - MULT: multiply the data by a given factor, see ProcMult
+ *
+ * As well as more specific data transformations:
  * - EXP_SMOOTHING: exponential smoothing of data, see ProcExpSmoothing
  * - WMA_SMOOTHING: weighted moving average smoothing of data, see ProcWMASmoothing
  * - BUTTERWORTH: low pass butterworth filter, see ProcButterworth
  * - MEDIAN_AVG: running median average over a given window, see FilterMedianAvg
  * - MEAN_AVG: running mean average over a given window, see FilterMeanAvg
  * - WIND_AVG: vector average over a given window, see FilterWindAvg (currently, getting both vw AND dw is broken)
- * - ADD: adds a given offset to the data, see ProcAdd
- * - MULT: multiply the data by a given factor, see ProcMult
  * - UNDERCATCH_WMO: WMO rain gauge correction for undercatch, using various correction models, see ProcUndercatch_WMO
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon

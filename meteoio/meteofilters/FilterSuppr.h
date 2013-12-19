@@ -30,7 +30,7 @@ namespace mio {
  * @author Mathias Bavay
  * @date   2013-12-06
  * @brief Suppression filter.
- * This filter simply reject all values. This is convenient to quickly turn a parameter off 
+ * This filter simply reject all values. This is convenient to quickly turn a parameter off
  * without modifying the original data.
  * @code
  * ILWR::filter1	= suppr
