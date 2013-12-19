@@ -54,7 +54,7 @@ of the Hellmann Gauges"</i>, Daqing Yang et al, Nordic Hydrology, <b>30</b>, 199
  * - US8unsh - US national 8\" rain gauge, unshielded
  * - RT3_Jp - Japanese network RT-3 rain gauge. This uses an ad-hoc rain/snow splitting method.
  * - Cspg - China Standard Precipitation Gauge, unshielded
- * - Geonorsh -Geonor rain gauge with Alter shield. The mixed precipitation is computed accroding to the same principles as in (Ye, 2004).
+ * - Geonorsh - Geonor rain gauge with Alter shield. The mixed precipitation is computed according to the same principles as in (Ye, 2004).
  * - Hellmann - the most widely used rain gauge in the world, with some country specific variations, unshielded
  * - Hellmannsh - Hellmann rain gauge with shield, mixed precipitation from a fit on the published data
  *

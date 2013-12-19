@@ -34,13 +34,13 @@ namespace mio {
  * This implements the method for precipitation correction as described in <i>"Manual for operational correction of Nordic precipitation data"</i>, E. Førland, P. Allerup, B. Dahlström, E. Elomaa, T. Jónsson, H. Madsen, P. Perälä Rissanen, H. Vedin, and F. Vejen, 1996, Tech. Rep. <b>24/96</b>, Norske Meteorologiske Institutt.
  * Specific coefficients have been calculated by N. Wever for the Davos Weisflujoch experimental field. The type of gauge must be provided as argumemt:
  * - wfj - shielded Hellmann gauge as used at Weissflujoch (Switzerland)
- * - Hellmann
- * - Swedish
- * - Norvegian
- * - Finnish
- * - Tretyakov
- * - Belfort
- * - Geonor
+ * - Hellmann - unshielded
+ * - Swedish - Nipher shield
+ * - Norvegian - Nipher shield
+ * - Finnish - Tretyakov
+ * - Tretyakov - Tretyakov
+ * - Belfort - Alter shield
+ * - Geonor - Alter shield
  *
  * @code
  * HNW::filter1	= undercatch_forland

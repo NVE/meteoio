@@ -16,6 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/meteofilters/ProcUndercatch_Forland.h>
+#include <meteoio/meteolaws/Meteoconst.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <cmath>
 
@@ -23,7 +24,8 @@ using namespace std;
 
 namespace mio {
 
-const double ProcUndercatch_Forland::Tsnow_WMO=-2., ProcUndercatch_Forland::Train_WMO=2.; //WMO values from Yan et al (2001)
+//WMO values from Yan et al (2001)
+const double ProcUndercatch_Forland::Tsnow_WMO=-2.+Cst::t_water_freezing_pt, ProcUndercatch_Forland::Train_WMO=2.+Cst::t_water_freezing_pt;
 
 ProcUndercatch_Forland::ProcUndercatch_Forland(const std::vector<std::string>& vec_args, const std::string& name)
                        : ProcessingBlock(name), type(wfj)
@@ -42,13 +44,11 @@ void ProcUndercatch_Forland::process(const unsigned int& param, const std::vecto
 	for (size_t ii=0; ii<ovec.size(); ii++){
 		double& tmp = ovec[ii](param);
 		const double VW = ovec[ii](MeteoData::VW);
-		double TA = ovec[ii](MeteoData::TA);
+		const double TA = ovec[ii](MeteoData::TA);
 
 		if (tmp == IOUtils::nodata || tmp==0. || VW==IOUtils::nodata || TA==IOUtils::nodata) {
 			continue; //preserve nodata values and no precip or purely liquid precip
 		}
-
-		TA = K_TO_C(TA); //convert to celsius
 
 		if(TA<=Tsnow_WMO)
 			tmp *= solidPrecipitation(TA, VW);
@@ -74,6 +74,7 @@ void ProcUndercatch_Forland::process(const unsigned int& param, const std::vecto
 //TA in celsius
 double ProcUndercatch_Forland::solidPrecipitation(double TA, double VW)
 {
+	TA = K_TO_C(TA); //convert to celsius
 	if(type!=wfj)
 		VW = Atmosphere::windLogProfile(VW, 10., 2.); //impact seems minimal
 	else
