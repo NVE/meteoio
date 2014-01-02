@@ -138,12 +138,13 @@ void UsageTimer::stop()
 
 void UsageTimer::restart()
 {
+	is_running = false;
 	reset();
-	is_running = true;
+	start();
 }
 
 void UsageTimer::reset() {
-	user_time = sys_time = elapsed= 0.;
+	user_time = sys_time = elapsed = 0.;
 }
 
 double UsageTimer::getElapsed()
