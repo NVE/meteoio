@@ -201,8 +201,7 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 
 /*
 * @brief Grid filling function:
-* Similar to Interpol2D::LapseIDW but using a limited number of stations for each cell. We also assume a two segments regression for altitude detrending with
-* a fixed 1200m above sea level inflection point.
+* Similar to Interpol2D::LapseIDW but using a limited number of stations for each cell.
 * @param vecData_in input values to use for the IDW
 * @param vecStations_in position of the "values" (altitude and coordinates)
 * @param dem array of elevations (dem)
@@ -210,7 +209,7 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 * @param grid 2D array to fill
 * @param r2 average r² coefficient of the lapse rate regressions
 */
-/*void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
+void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                const DEMObject& dem, const size_t& nrOfNeighbors,
                                Grid2DObject& grid, double& r2)
 {
@@ -239,15 +238,15 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 
 //calculate a local pixel for LocalLapseIDW
 double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
-                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                                const DEMObject& dem, const size_t& nrOfNeighbors, double& r2)
+                               const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
+                               const DEMObject& dem, const size_t& nrOfNeighbors, double& r2)
 {
 	const double& cell_altitude=dem.grid2D(i,j);
 	if(cell_altitude==IOUtils::nodata)
 		return IOUtils::nodata;
 
 	std::vector< std::pair<double, size_t> > list;
-	std::vector<double> X, Y, coeffs;
+	std::vector<double> X, Y;
 
 	//fill vectors with appropriate neighbors
 	const double x = dem.llcorner.getEasting()+i*dem.cellsize;
@@ -255,7 +254,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	getNeighbors(x, y, vecStations_in, list);
 	const size_t max_stations = std::min(list.size(), nrOfNeighbors);
 	for(size_t st=0; st<max_stations; st++) {
-		const size_t st_index=list[st].second;
+		const size_t st_index = list[st].second;
 		const double value = vecData_in[st_index];
 		const double alt = vecStations_in[st_index].position.getAltitude();
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
@@ -267,9 +266,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	//compute lapse rate
 	if(X.empty())
 		return IOUtils::nodata;
-	coeffs.resize(7,0.);
-	//BiLinRegression(X, Y, coeffs);
-	r2=coeffs[3]*coeffs[6]; //Is it correct?
+	const Fit1D trend(Fit1D::NOISY_LINEAR, X, Y);
 
 	//compute local pixel value
 	unsigned int count=0;
@@ -277,13 +274,12 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	const double scale=0.;
 	for(size_t st=0; st<max_stations; st++) {
 		const size_t st_index=list[st].second;
-		const double value = vecData_in[st_index];
 		const double alt = vecStations_in[st_index].position.getAltitude();
+		const double value = vecData_in[st_index];
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
-			//const double contrib = LinProject(value, alt, cell_altitude, coeffs);
-			//const double contrib = BiLinProject(value, alt, cell_altitude, coeffs);
+			const double contrib = value - trend(alt);
 			const double weight = Optim::invSqrt( list[st].first + scale + 1.e-6 );
-			//pixel_value += weight*contrib;
+			pixel_value += weight*contrib + trend(alt);
 			norm += weight;
 			count++;
 		}
@@ -293,7 +289,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 		return (pixel_value/norm);
 	else
 		return IOUtils::nodata;
-}*/
+}
 
 /**
 * @brief Grid filling function:

@@ -41,9 +41,9 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new IDWAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "IDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill
 		return new IDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
-	} /*else if (algoname == "LIDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
+	} else if (algoname == "LIDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
 		return new LocalIDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
-	}*/ else if (algoname == "RH"){// relative humidity interpolation
+	} else if (algoname == "RH"){// relative humidity interpolation
 		return new RHAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ILWR"){// long wave radiation interpolation
 		return new ILWRAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
@@ -343,6 +343,17 @@ void IDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	retrend(dem, trend, grid);
 }
 
+LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
+                                               const std::string& i_algo, IOManager& iom)
+                      : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), nrOfNeighbors(0)
+{
+	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
+		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the IDW_LAPSE algorithm", AT);
+	}
+}
+
 double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	date = i_date;
@@ -355,26 +366,15 @@ double LocalIDWLapseAlgorithm::getQualityRating(const Date& i_date, const MeteoD
 	return 0.7;
 }
 
-void LocalIDWLapseAlgorithm::calculate(const DEMObject& /*dem*/, Grid2DObject& /*grid*/)
+void LocalIDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
-	/*info.clear(); info.str("");
+	info.clear(); info.str("");
 	if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
-	//Set regression coefficients
-	std::vector<double> vecCoefficients(4, 0.0);
-
-	size_t nrOfNeighbors=0;
-	//Get the optional arguments for the algorithm: lapse rate, lapse rate usage
-	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
-		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the IDW_LAPSE algorithm", AT);
-	}
-
 	double r2=0.;
 	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2);
-	info << "r^2=" << Optim::pow2( r2 );*/
+	info << "r^2=" << Optim::pow2( r2 );
 }
 
 double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
