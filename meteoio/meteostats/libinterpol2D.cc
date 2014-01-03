@@ -239,7 +239,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 //calculate a local pixel for LocalLapseIDW
 double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                               const DEMObject& dem, const size_t& nrOfNeighbors, double& r2)
+                               const DEMObject& dem, const size_t& nrOfNeighbors, double& /*r2*/)
 {
 	const double& cell_altitude=dem.grid2D(i,j);
 	if(cell_altitude==IOUtils::nodata)
