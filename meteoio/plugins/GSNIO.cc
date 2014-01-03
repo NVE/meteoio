@@ -16,7 +16,6 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "GSNIO.h"
-#include "gsn/GSNWebServiceSoap12Binding.nsmap"
 
 using namespace std;
 
@@ -64,35 +63,25 @@ namespace mio {
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - ENDPOINT: The URL of the web service e.g. http://planetdata.epfl.ch:22001/services/GSNWebService/
- * - PROXY: an IP address or a resolveable hostname
- * - PROXYPORT: the port the proxy is listening on
- * - PROXYUSER: (if necessary) a proxy username
- * - PROXYPASS: (if necessary) a proxy password
  * - STATION#: station code for the given number #
  *
  * If no STATION keys are given, the full list of ALL stations in GSN will be printed out and used.
  *
- * @section license Licensing
- * This software is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- *
- * Part of the software embedded in this product is gSOAP software.
- * Portions created by gSOAP are Copyright (C) 2001-2009 Robert A. van Engelen, Genivia inc. All Rights Reserved.
- * THE SOFTWARE IN THIS PRODUCT WAS IN PART PROVIDED BY GENIVIA INC AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT  NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const int GSNIO::soap_timeout = 120; //120 seconds connect time out
+const int GSNIO::https_timeout = 120; //120 seconds connect time out
 
 GSNIO::GSNIO(const std::string& configfile)
-      : gsn(), cfg(configfile), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), hostname(), port(), userid(), passwd(), proxyport(-1), default_timezone(1.)
+      : cfg(configfile), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
+        endpoint(), hostname(), port(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const Config& cfgreader)
-      : gsn(), cfg(cfgreader), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), hostname(), port(), userid(), passwd(), proxyport(-1), default_timezone(1.)
+      : cfg(cfgreader), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
+        endpoint(), hostname(), port(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -108,42 +97,10 @@ void GSNIO::initGSNConnection(){
 		IOUtils::convertString(default_timezone, tmp_timezone);
 	}
 
-	//soap_init(&gsn);
-	//soap_init2(&gsn, SOAP_IO_KEEPALIVE, SOAP_IO_KEEPALIVE);
-	gsn.connect_timeout = soap_timeout;
-
 	cfg.getValue("ENDPOINT", "INPUT", endpoint, IOUtils::nothrow);
 	if (!endpoint.empty()){
-		gsn.soap_endpoint = endpoint.c_str();
+		//gsn.soap_endpoint = endpoint.c_str();
 		cerr << "\tUsing GSN Endpoint: " << endpoint << "\n";
-	}
-
-	/*
-	 * Trying to read proxy settings:
-	 * - Firstly the hostname and port (both have to be provided).
-	 * - If this succeeds then the username and password will be read
-	 * - parameters not set will be set to ""
-	 */
-	try {
-		cfg.getValue("PROXY", "INPUT", hostname, IOUtils::nothrow);
-		if (hostname.empty()) return;
-		cfg.getValue("PROXYPORT", "INPUT", port, IOUtils::nothrow);
-		if (port.empty()) return;
-
-		if (!IOUtils::convertString(proxyport, port, std::dec))
-			throw ConversionFailedException(std::string(), AT);
-		if (proxyport < 1)
-			throw IOException(std::string(),AT);
-
-		gsn.proxy_host = hostname.c_str();
-		gsn.proxy_port = proxyport;
-
-		cfg.getValue("PROXYUSER", "INPUT", userid);
-		gsn.proxy_userid = userid.c_str();
-		cfg.getValue("PROXYPASS", "INPUT", passwd);
-		gsn.proxy_passwd = passwd.c_str();
-	} catch(...){
-		//Whatever happens here can be ignored, because the proxy settings are optional
 	}
 }
 
@@ -221,6 +178,7 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void GSNIO::readMetaData()
 {
+	/*
 	vecMeta.clear();
 
 	if (vecStationName.empty())
@@ -303,11 +261,12 @@ void GSNIO::readMetaData()
 
 		vecMeta.push_back(sd);
 	}
+	*/
 }
 
-void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field,
-                           MeteoData& md, std::vector<size_t>& index)
+void GSNIO::map_parameters(MeteoData& /*md*/, std::vector<size_t>& /*index*/)
 {
+	/*
 	for (size_t ii=0; ii<field.size(); ii++) {
 		const string field_name = IOUtils::strToUpper( *field.at(ii)->name );
 
@@ -340,10 +299,12 @@ void GSNIO::map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*
 			index.push_back(IOUtils::npos);
 		}
 	}
+	*/
 }
 
-void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
+void GSNIO::readData(const Date& /*dateStart*/, const Date& /*dateEnd*/, std::vector<MeteoData>& /*vecMeteo*/, const size_t& /*stationindex*/)
 {
+	/*
 	_ns1__getMultiData data_req;
 	_ns1__getMultiDataResponse data;
 
@@ -404,10 +365,10 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 			}
 		}
 	}
+	*/
 }
 
-void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present,
-                                std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo, ns2__GSNWebService_USCOREStreamElement* streamElement)
+void GSNIO::parse_streamElement(const std::vector<size_t>& /*index*/, const bool& /*olwr_present*/, std::vector<MeteoData>& /*vecMeteo*/, MeteoData& /*tmpmeteo*/)
 {
 	/**
 	 * This procedure takes a streamElement pointer from either the _ns1__getNextDataResponse
@@ -415,6 +376,7 @@ void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& ol
 	 * (tmpmeteo). Finally it adjusts the units and calculates TSS from OLWR if necessary and
 	 * possible.
 	 */
+	/*
 	double tt;
 	IOUtils::convertString(tt, *streamElement->timed);
 	tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
@@ -437,6 +399,7 @@ void GSNIO::parse_streamElement(const std::vector<size_t>& index, const bool& ol
 
 	vecMeteo.push_back(tmpmeteo);
 	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
+	*/
 }
 
 double GSNIO::olwr_to_tss(const double& olwr) {
@@ -478,11 +441,12 @@ void GSNIO::readStationNames()
 	}
 }
 
-void GSNIO::listSensors(std::vector<std::string>& vec_names)
+void GSNIO::listSensors(std::vector<std::string>& /*vec_names*/)
 {
 	/**
 	 * Retrieve all station names, that are available in the current GSN instance
 	 */
+	/*
 	_ns1__listVirtualSensorNamesResponse sensor_names;
 	_ns1__listVirtualSensorNames sensor_req;
 
@@ -496,6 +460,7 @@ void GSNIO::listSensors(std::vector<std::string>& vec_names)
 		soap_print_fault(&gsn, stderr);
 		throw IOException("Error in communication with GSN",AT);
 	}
+	*/
 }
 
 void GSNIO::readAssimilationData(const Date&, Grid2DObject&)

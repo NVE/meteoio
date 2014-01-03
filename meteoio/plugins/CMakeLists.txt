@@ -45,28 +45,10 @@ IF(PLUGIN_GEOTOPIO)
 ENDIF(PLUGIN_GEOTOPIO)
 
 IF(PLUGIN_GSNIO)
-	#HACK
-	#gsoap generates files that do lots of warnings, there is nothing we can do about it -> off
-	IF(NOT MSVC)
-		SET_SOURCE_FILES_PROPERTIES(plugins/gsn/soapC.cpp PROPERTIES COMPILE_FLAGS "-w")
-		SET_SOURCE_FILES_PROPERTIES(plugins/gsn/stdsoap2.cpp PROPERTIES COMPILE_FLAGS "-w")
-		SET_SOURCE_FILES_PROPERTIES(plugins/gsn/soapGSNWebServiceSoap12BindingProxy.cpp PROPERTIES COMPILE_FLAGS "-w")
-		SET_SOURCE_FILES_PROPERTIES(plugins/GSNIO.cc PROPERTIES COMPILE_FLAGS "-Wno-long-long")
-	ENDIF(NOT MSVC)
-	IF(MSVC)
-		SET_SOURCE_FILES_PROPERTIES(plugins/gsn/soapC.cpp PROPERTIES COMPILE_FLAGS "/W0")
-		SET_SOURCE_FILES_PROPERTIES(plugins/gsn/stdsoap2.cpp PROPERTIES COMPILE_FLAGS "/W0")
-		SET_SOURCE_FILES_PROPERTIES(plugins/gsn/soapGSNWebServiceSoap12BindingProxy.cpp PROPERTIES COMPILE_FLAGS "/W0")
-	ENDIF(MSVC)
-
-	IF(WIN32)
-		IF(MINGW)
-			ADD_DEFINITIONS(-D_isnan=isnan)
-		ENDIF(MINGW)
-		SET(EXTRA_LINK_LIBS "ws2_32")
-	ENDIF(WIN32)
-
-	SET(plugins_sources ${plugins_sources} plugins/GSNIO.cc plugins/gsn/soapGSNWebServiceSoap12BindingProxy.cpp plugins/gsn/soapC.cpp plugins/gsn/stdsoap2.cpp)
+	FIND_PACKAGE(CURL REQUIRED)
+	INCLUDE_DIRECTORIES(SYSTEM ${CURL_INCLUDE_DIRS})
+	SET(plugin_libs ${plugin_libs} ${CURL_LIBRARIES})
+	SET(plugins_sources ${plugins_sources} plugins/GSNIO.cc)
 ENDIF(PLUGIN_GSNIO)
 
 IF(PLUGIN_IMISIO)

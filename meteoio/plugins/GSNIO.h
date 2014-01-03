@@ -18,33 +18,6 @@
 #ifndef __GSNIO_H__
 #define __GSNIO_H__
 
-#include <math.h>
-#define _isnan isnan
-
-//This is big hack to allow older versions of gcc to turn warnings off in soap files
-//hopefully we would soon get better soap files and would scrap the whole mess...
-#if defined(__GNUC__) && defined(__DEBUG)
-	//#pragma GCC diagnostic push_options
-	#pragma GCC diagnostic ignored "-Wall"
-	#pragma GCC diagnostic ignored "-Weffc++"
-	#pragma GCC diagnostic ignored "-Wlong-long"
-	#pragma GCC diagnostic ignored "-Wshadow"
-	#include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
-	//#include "gsn/GSNWebServiceSoap12Binding.nsmap"
-	//#pragma GCC diagnostic pop_options
-	#pragma GCC diagnostic warning "-Wall"
-	#pragma GCC diagnostic warning "-Weffc++"
-	#pragma GCC diagnostic warning "-Wlong-long"
-	#pragma GCC diagnostic warning "-Wshadow"
-#else
-	#include "gsn/soapGSNWebServiceSoap12BindingProxy.h"
-	//#include "gsn/GSNWebServiceSoap12Binding.nsmap"
-#endif
-
-#ifdef WIN32 //because we collected c**p from windows.h that was included by gsoap
-	#undef max
-	#undef min
-#endif
 
 #include <meteoio/Config.h>
 #include <meteoio/IOInterface.h>
@@ -62,7 +35,7 @@ namespace mio {
 
 /**
  * @class GSNIO
- * @brief This class enables the access to the GSN web service
+ * @brief This class enables the access to the GSN RESTful web service
  *
  * @ingroup plugins
  * @author Thomas Egger
@@ -102,22 +75,19 @@ class GSNIO : public IOInterface {
 		void readStationNames();
 		void readMetaData();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void map_parameters(const std::vector<ns2__GSNWebService_USCOREDataField*>& field, MeteoData& md,
-		                    std::vector<size_t>& index);
+		void map_parameters(MeteoData& md, std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);
 		void parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present,
-				  std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo, ns2__GSNWebService_USCOREStreamElement* streamElement);
+				  std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo);
 
-		GSNWebServiceSoap12BindingProxy gsn;
 		const Config cfg;
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
-		std::string endpoint, hostname, port, userid, passwd; ///< Variables for proxy configuration
-		int proxyport;                                        ///< Variable for proxy configuration
+		std::string endpoint, hostname, port, userid, passwd; ///< Variables for endpoint configuration
 		double default_timezone;
 
-		static const int soap_timeout; //time out for soap connections
+		static const int https_timeout; //time out for https connections
 };
 
 } //end namespace mio

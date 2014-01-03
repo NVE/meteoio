@@ -1,3 +1,0 @@
-wsdl2h -g GSNWebService.wsdl
-soapcpp2 -2 -C -L -x -w -i GSNWebService.h
-rm *Soap11*
