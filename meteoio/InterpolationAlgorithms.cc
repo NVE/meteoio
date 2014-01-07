@@ -657,7 +657,7 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 			const double val2 = vecData[i];
 			const double DX = x1-st2.getEasting();
 			const double DY = y1-st2.getNorthing();
-			const double distance = Optim::fastSqrt_Q3(Optim::pow2(DX) + Optim::pow2(DY));
+			const double distance = Optim::fastSqrt_Q3( Optim::pow2(DX) + Optim::pow2(DY) );
 
 			distData.push_back(distance);
 			variData.push_back( 0.5*Optim::pow2(val1-val2) );
@@ -672,10 +672,6 @@ bool OrdinaryKrigingAlgorithm::computeVariogram()
 
 	std::vector<string> vario_types( vecArgs );
 	if(vario_types.empty()) vario_types.push_back("LINVARIO");
-	/*std::vector<string> vario_types;
-	vario_types.push_back("SPHERICVARIO");
-	vario_types.push_back("EXPVARIO");
-	vario_types.push_back("LINVARIO");*/
 
 	size_t args_index=0;
 	do {

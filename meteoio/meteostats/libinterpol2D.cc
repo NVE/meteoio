@@ -567,7 +567,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector<StationData>& vecStations, const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid)
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
-	size_t nrOfMeasurments = vecStations.size();
+	const size_t nrOfMeasurments = vecStations.size();
 	//precompute various coordinates in the grid
 	const double llcorner_x = grid.llcorner.getEasting();
 	const double llcorner_y = grid.llcorner.getNorthing();
