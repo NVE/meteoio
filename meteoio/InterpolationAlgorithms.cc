@@ -350,7 +350,7 @@ LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const 
 	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
 		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
 	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the IDW_LAPSE algorithm", AT);
+		throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the IDW_LAPSE algorithm", AT);
 	}
 }
 
@@ -372,9 +372,8 @@ void LocalIDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (nrOfMeasurments == 0)
 		throw IOException("Interpolation FAILED for parameter " + MeteoData::getParameterName(param), AT);
 
-	double r2=0.;
-	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid, r2);
-	info << "r^2=" << Optim::pow2( r2 );
+	Interpol2D::LocalLapseIDW(vecData, vecMeta, dem, nrOfNeighbors, grid);
+	info << "using nearest " << nrOfNeighbors << " neighbors";
 }
 
 double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)

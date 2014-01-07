@@ -56,7 +56,7 @@ class Interpol2D {
 		static void LocalLapseIDW(const std::vector<double>& vecData_in,
 		                          const std::vector<StationData>& vecStations_in,
 		                          const DEMObject& dem, const size_t& nrOfNeighbors,
-		                          Grid2DObject& grid, double& r2);
+		                          Grid2DObject& grid);
 		static void SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW);
 		static void CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
 		static void SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid);
@@ -83,7 +83,7 @@ class Interpol2D {
 		static double LLIDW_pixel(const size_t& i, const size_t& j,
 		                          const std::vector<double>& vecData_in,
 		                          const std::vector<StationData>& vecStations_in,
-		                          const DEMObject& dem, const size_t& nrOfNeighbors, double& r2);
+		                          const DEMObject& dem, const size_t& nrOfNeighbors);
 
 		static void steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest);
 		static double depositAroundCell(const DEMObject& dem, const size_t& ii, const size_t& jj, const double& precip, Grid2DObject &grid);

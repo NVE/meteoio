@@ -79,6 +79,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
  * - IDW: Inverse Distance Weighting averaging (see IDWAlgorithm)
  * - IDW_LAPSE: Inverse Distance Weighting averaging with reprojection to the elevation of the cell (see IDWLapseAlgorithm)
+ * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
@@ -86,7 +87,6 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
- * <!-- - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm) -->
  *
  * @section interpol2D_lapse Lapse rates
  * Several algorithms use elevation trends, currently modelled as a linear relation. The slope of this linear relation can
@@ -277,8 +277,8 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
  * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
  * The closest n stations (n being given as an extra argument of <i>"idw_lapse"</i>) to each pixel are
  * used to compute the local lapse rate, allowing to project the contributions of these n stations to the
- * local pixel with an inverse distance weight. We also assume a two segments regression for altitude detrending with
- * a fixed 1200m above sea level inflection point.
+ * local pixel with an inverse distance weight. Beware, this method sometimes produces very sharp transitions
+ * as it spatially moves from one station's area of influence to another one!
  */
 class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:

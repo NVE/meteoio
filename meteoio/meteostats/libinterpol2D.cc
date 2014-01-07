@@ -199,49 +199,35 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 	return (parameter/norm); //normalization
 }
 
-/*
-* @brief Grid filling function:
+/** @brief Grid filling function:
 * Similar to Interpol2D::LapseIDW but using a limited number of stations for each cell.
 * @param vecData_in input values to use for the IDW
 * @param vecStations_in position of the "values" (altitude and coordinates)
 * @param dem array of elevations (dem)
 * @param nrOfNeighbors number of neighboring stations to use for each pixel
 * @param grid 2D array to fill
-* @param r2 average r² coefficient of the lapse rate regressions
 */
 void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                const DEMObject& dem, const size_t& nrOfNeighbors,
-                               Grid2DObject& grid, double& r2)
+                               Grid2DObject& grid)
 {
-	unsigned int count=0;
-	double sum=0;
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//run algorithm
 	for (size_t j=0; j<grid.nrows; j++) {
 		for (size_t i=0; i<grid.ncols; i++) {
 			//LL_IDW_pixel returns nodata when appropriate
-			double r;
-			const double value = LLIDW_pixel(i,j,vecData_in, vecStations_in, dem, nrOfNeighbors, r); //TODO: precompute in vectors
-			grid.grid2D(i,j) = value;
-			if(value!=IOUtils::nodata) {
-				sum += fabs(r);
-				count++;
-			}
+			grid.grid2D(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors); //TODO: precompute in vectors
 		}
 	}
-	if(count>0)
-		r2 = sum/(double)count;
-	else
-		r2 = 0.;
 }
 
 //calculate a local pixel for LocalLapseIDW
 double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
-                               const DEMObject& dem, const size_t& nrOfNeighbors, double& /*r2*/)
+                               const DEMObject& dem, const size_t& nrOfNeighbors)
 {
-	const double& cell_altitude=dem.grid2D(i,j);
+	const double cell_altitude = dem.grid2D(i,j);
 	if(cell_altitude==IOUtils::nodata)
 		return IOUtils::nodata;
 
@@ -264,8 +250,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	}
 
 	//compute lapse rate
-	if(X.empty())
-		return IOUtils::nodata;
+	if(X.empty()) return IOUtils::nodata;
 	const Fit1D trend(Fit1D::NOISY_LINEAR, X, Y);
 
 	//compute local pixel value
@@ -279,14 +264,14 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
 			const double contrib = value - trend(alt);
 			const double weight = Optim::invSqrt( list[st].first + scale + 1.e-6 );
-			pixel_value += weight*contrib + trend(alt);
+			pixel_value += weight*contrib;
 			norm += weight;
 			count++;
 		}
 	}
 
 	if(count>0)
-		return (pixel_value/norm);
+		return (pixel_value/norm) + trend(cell_altitude);
 	else
 		return IOUtils::nodata;
 }
