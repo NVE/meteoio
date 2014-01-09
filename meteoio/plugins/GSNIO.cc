@@ -62,18 +62,22 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - ENDPOINT: The URL of the web service e.g. http://planetdata.epfl.ch:22001/services/GSNWebService/
- * - STATION#: station code for the given number #
+ * - URL: The URL of the RESTful web service e.g. http://planetdata.epfl.ch:22001/rest
+ * - USER: The username to access the service
+ * - PASS: The password to authenticate the USER
+ * - STATION#: station code for the given number #, e. g. la_fouly_1034
  *
- * If no STATION keys are given, the full list of ALL stations in GSN will be printed out and used.
+ * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
+ * This may result in a long download.
  *
  */
 
-const int GSNIO::https_timeout = 120; //120 seconds connect time out
+const int GSNIO::http_timeout = 120; //120 seconds connect time out
+const std::string GSNIO::list_sensors_endpoint = "sensors";
 
 GSNIO::GSNIO(const std::string& configfile)
       : cfg(configfile), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), hostname(), port(), userid(), passwd(), default_timezone(1.)
+        endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -81,7 +85,7 @@ GSNIO::GSNIO(const std::string& configfile)
 
 GSNIO::GSNIO(const Config& cfgreader)
       : cfg(cfgreader), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), hostname(), port(), userid(), passwd(), default_timezone(1.)
+        endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -89,19 +93,56 @@ GSNIO::GSNIO(const Config& cfgreader)
 
 GSNIO::~GSNIO() throw(){}
 
-void GSNIO::initGSNConnection(){
-	//default timezone
-	string tmp_timezone;
-	cfg.getValue("TIME_ZONE", "Input", tmp_timezone, IOUtils::nothrow);
-	if (!tmp_timezone.empty()){
-		IOUtils::convertString(default_timezone, tmp_timezone);
+size_t GSNIO::data_write(void* buf, size_t size, size_t nmemb, void* userp)
+{
+	if(userp)
+	{
+		std::ostream& os = *static_cast<std::ostream*>(userp);
+		std::streamsize len = size * nmemb;
+		if(os.write(static_cast<char*>(buf), len))
+			return len;
 	}
 
-	cfg.getValue("ENDPOINT", "INPUT", endpoint, IOUtils::nothrow);
-	if (!endpoint.empty()){
-		//gsn.soap_endpoint = endpoint.c_str();
-		cerr << "\tUsing GSN Endpoint: " << endpoint << "\n";
+	return 0;
+}
+
+CURLcode GSNIO::curl_read(const std::string& url_base, std::ostream& os)
+{
+	CURLcode code(CURLE_FAILED_INIT);
+	CURL* curl = curl_easy_init();
+
+	const string url = endpoint + url_base + "?username=" + userid + "&password=" + passwd;
+
+	if (curl) {
+		if(CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
+		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L))
+		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L))
+		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FILE, &os))
+		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_TIMEOUT, GSNIO::http_timeout))
+		   && CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_URL, url.c_str())))
+		{
+			code = curl_easy_perform(curl);
+		}
+		curl_easy_cleanup(curl);
 	}
+
+	return code;
+}
+
+void GSNIO::initGSNConnection() {
+	curl_global_init(CURL_GLOBAL_ALL);
+
+	default_timezone = IOUtils::nodata;
+	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
+
+	cfg.getValue("URL", "Input", endpoint, IOUtils::nothrow);
+	if (!endpoint.empty()){
+		if (*endpoint.rbegin() != '/') endpoint += "/";
+		cerr << "\tUsing GSN Endpoint: " << endpoint << endl;
+	}
+
+	cfg.getValue("USER", "Input", userid);
+	cfg.getValue("PASS", "Input", passwd);
 }
 
 void GSNIO::read2DGrid(Grid2DObject&, const std::string&)
@@ -178,12 +219,13 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void GSNIO::readMetaData()
 {
-	/*
+	
 	vecMeta.clear();
 
 	if (vecStationName.empty())
 		readStationNames(); //reads station names into vector<string> vecStationName
 
+	/*
 	for (size_t ii=0; ii<vecStationName.size(); ii++) {
 		//retrieve meta info current station
 		std::string name;
@@ -435,7 +477,7 @@ void GSNIO::readStationNames()
 		current_stationnr++;
 	} while (!current_station.empty());
 
-	if (vecStationName.empty()){
+	if (!vecStationName.empty()){
 		//just take all sensors available
 		listSensors(vecStationName);
 	}
@@ -445,7 +487,18 @@ void GSNIO::listSensors(std::vector<std::string>& /*vec_names*/)
 {
 	/**
 	 * Retrieve all station names, that are available in the current GSN instance
+	 * and which are accessible for the current user (see Input::USER)
 	 */
+
+	std::ostringstream oss;
+	if (curl_read(list_sensors_endpoint, oss) == CURLE_OK) {
+		// Web page successfully written to string
+		std::string html = oss.str();
+		cout << html << endl;
+	} else {
+		throw IOException("Could not retrieve list of sensors", AT);
+	}
+
 	/*
 	_ns1__listVirtualSensorNamesResponse sensor_names;
 	_ns1__listVirtualSensorNames sensor_req;

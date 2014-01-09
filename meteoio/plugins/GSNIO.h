@@ -31,6 +31,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <curl/curl.h>
+
 namespace mio {
 
 /**
@@ -39,7 +41,7 @@ namespace mio {
  *
  * @ingroup plugins
  * @author Thomas Egger
- * @date   2009-09-25
+ * @date   2014-01-10
  */
 
 class GSNIO : public IOInterface {
@@ -79,15 +81,18 @@ class GSNIO : public IOInterface {
 		double olwr_to_tss(const double& olwr);
 		void parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present,
 				  std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo);
+		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
+		CURLcode curl_read(const std::string& url, std::ostream& os);
 
 		const Config cfg;
 		std::vector<std::string> vecStationName;
 		std::vector<StationData> vecMeta;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
-		std::string endpoint, hostname, port, userid, passwd; ///< Variables for endpoint configuration
+		std::string endpoint, userid, passwd; ///< Variables for endpoint configuration
 		double default_timezone;
 
-		static const int https_timeout; //time out for https connections
+		static const int http_timeout; //time out for http connections
+		static const std::string list_sensors_endpoint;
 };
 
 } //end namespace mio
