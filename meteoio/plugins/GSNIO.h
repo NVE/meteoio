@@ -77,6 +77,8 @@ class GSNIO : public IOInterface {
 		void readStationNames();
 		void readMetaData();
 		void getAllStations();
+		void save_station(const std::string& id, const std::string& name, const double& lat, const double& lon, 
+		                  const double& alt, const double& slope_angle, const double& slope_azi);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(MeteoData& md, std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);

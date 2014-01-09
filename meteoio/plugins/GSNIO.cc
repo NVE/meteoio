@@ -76,7 +76,7 @@ const int GSNIO::http_timeout = 30; // seconds until connect time out for libcur
 const std::string GSNIO::list_sensors_endpoint = "sensors";
 
 GSNIO::GSNIO(const std::string& configfile)
-      : cfg(configfile), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
+      : cfg(configfile), vecStationName(), vecMeta(), vecAllMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -84,7 +84,7 @@ GSNIO::GSNIO(const std::string& configfile)
 }
 
 GSNIO::GSNIO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(), vecMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
+      : cfg(cfgreader), vecStationName(), vecMeta(), vecAllMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
         endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -503,6 +503,24 @@ void GSNIO::readStationNames()
 	*/
 }
 
+void GSNIO::save_station(const std::string& id, const std::string& name, const double& lat, const double& lon, 
+                         const double& alt, const double& slope_angle, const double& slope_azi)
+{
+	Coords current_coord(coordin, coordinparam);
+	current_coord.setLatLon(lat, lon, alt);
+	StationData sd(current_coord, id, name);
+					
+	if (slope_angle != IOUtils::nodata){
+		if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
+			sd.setSlope(slope_angle, 0.); //expostion: north assumed
+		} else {
+			sd.setSlope(slope_angle, slope_azi);
+		}
+	}
+
+	vecAllMeta.push_back(sd);
+}
+
 void GSNIO::getAllStations()
 {
 	/**
@@ -531,19 +549,7 @@ void GSNIO::getAllStations()
 			if (!line.compare(0, vsname_str.size(), vsname_str)) {
 
 				if (valid == 15) { // Last station was valid: store StationData
-					Coords current_coord(coordin, coordinparam);
-					current_coord.setLatLon(lat, lon, alt);
-					StationData sd(current_coord, id, name);
-					
-					if (slope_angle != IOUtils::nodata){
-						if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
-							sd.setSlope(slope_angle, 0.); //expostion: north assumed
-						} else {
-							sd.setSlope(slope_angle, slope_azi);
-						}
-					}
-
-					vecAllMeta.push_back(sd);
+					save_station(id, name, lat, lon, alt, slope_angle, slope_azi);
 				}
 
 				id = line.substr(vsname_str.size());
@@ -573,6 +579,10 @@ void GSNIO::getAllStations()
 					slope_azi = IOUtils::bearing(azi);
 				}
 			}
+		}
+
+		if (valid == 15) { // Last station was valid: store StationData
+			save_station(id, name, lat, lon, alt, slope_angle, slope_azi);
 		}
 	} else {
 		throw IOException("Could not retrieve list of sensors", AT);
