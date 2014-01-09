@@ -76,6 +76,7 @@ class GSNIO : public IOInterface {
 		void initGSNConnection();
 		void readStationNames();
 		void readMetaData();
+		void getAllStations();
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(MeteoData& md, std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);
@@ -86,7 +87,7 @@ class GSNIO : public IOInterface {
 
 		const Config cfg;
 		std::vector<std::string> vecStationName;
-		std::vector<StationData> vecMeta;
+		std::vector<StationData> vecMeta, vecAllMeta;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, userid, passwd; ///< Variables for endpoint configuration
 		double default_timezone;

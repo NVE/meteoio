@@ -65,14 +65,14 @@ namespace mio {
  * - URL: The URL of the RESTful web service e.g. http://planetdata.epfl.ch:22001/rest
  * - USER: The username to access the service
  * - PASS: The password to authenticate the USER
- * - STATION#: station code for the given number #, e. g. la_fouly_1034
+ * - STATION#: station code for the given number #, e. g. la_fouly_1034 (case sensitive!)
  *
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
  * This may result in a long download.
  *
  */
 
-const int GSNIO::http_timeout = 120; //120 seconds connect time out
+const int GSNIO::http_timeout = 30; // seconds until connect time out for libcurl
 const std::string GSNIO::list_sensors_endpoint = "sensors";
 
 GSNIO::GSNIO(const std::string& configfile)
@@ -106,12 +106,12 @@ size_t GSNIO::data_write(void* buf, size_t size, size_t nmemb, void* userp)
 	return 0;
 }
 
-CURLcode GSNIO::curl_read(const std::string& url_base, std::ostream& os)
+CURLcode GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 {
 	CURLcode code(CURLE_FAILED_INIT);
 	CURL* curl = curl_easy_init();
 
-	const string url = endpoint + url_base + "?username=" + userid + "&password=" + passwd;
+	const string url = endpoint + url_query;
 
 	if (curl) {
 		if(CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
@@ -224,6 +224,23 @@ void GSNIO::readMetaData()
 
 	if (vecStationName.empty())
 		readStationNames(); //reads station names into vector<string> vecStationName
+
+	
+	// Get Meta Data for all stations first
+	getAllStations();
+
+	if (!vecStationName.empty()) {
+		for (size_t ii=0; ii<vecStationName.size(); ii++) {
+			for (size_t jj=0; jj<vecAllMeta.size(); jj++) {
+				if (vecAllMeta[jj].stationID == vecStationName[ii]) {
+					vecMeta.push_back(vecAllMeta[jj]);
+				}
+			}
+		}
+	} else {
+		vecMeta = vecAllMeta;
+	}
+
 
 	/*
 	for (size_t ii=0; ii<vecStationName.size(); ii++) {
@@ -456,13 +473,14 @@ void GSNIO::readStationNames()
 {
 	/**
 	 * Parse through the io.ini file and copy the desired station names STATION#
-	 * into vecStationName, if no stations are configured explicitly simply take
-	 * all stations that are available in the current GSN instance
+	 * into vecStationName, if no stations are configured all stations with 
+	 * meteo data will be taken into account
 	 */
 	vecStationName.clear();
 
 	size_t current_stationnr = 1;
 	string current_station;
+
 	do {
 		current_station = string("");
 		ostringstream ss;
@@ -477,27 +495,97 @@ void GSNIO::readStationNames()
 		current_stationnr++;
 	} while (!current_station.empty());
 
-	if (!vecStationName.empty()){
+	/*
+	if (vecStationName.empty()){
 		//just take all sensors available
 		listSensors(vecStationName);
+	}
+	*/
+}
+
+void GSNIO::getAllStations()
+{
+	/**
+	 * Retrieve all station names, that are available in the current GSN instance
+	 * and which are accessible for the current user (see Input::USER)
+	 */
+	const string vsname_str = "# vsname:";
+	const string altitude_str = "# altitude:";
+	const string longitude_str = "# longitude:";
+	const string latitude_str = "# latitude:";
+	const string slope_str = "# slope:";
+	const string exposition_str = "# exposition:";
+	const string name_str = "# name:";
+
+	stringstream ss;
+	string line = "";
+
+	vecAllMeta.clear();	
+
+	if (curl_read(list_sensors_endpoint + "?username=" + userid + "&password=" + passwd, ss) == CURLE_OK) {
+		string name="", id="", azi="";
+		double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
+		unsigned int valid = 0;
+
+		while (getline(ss, line)) {
+			if (!line.compare(0, vsname_str.size(), vsname_str)) {
+
+				if (valid == 15) { // Last station was valid: store StationData
+					Coords current_coord(coordin, coordinparam);
+					current_coord.setLatLon(lat, lon, alt);
+					StationData sd(current_coord, id, name);
+					
+					if (slope_angle != IOUtils::nodata){
+						if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
+							sd.setSlope(slope_angle, 0.); //expostion: north assumed
+						} else {
+							sd.setSlope(slope_angle, slope_azi);
+						}
+					}
+
+					vecAllMeta.push_back(sd);
+				}
+
+				id = line.substr(vsname_str.size());
+				IOUtils::trim(id);
+				slope_angle = slope_azi = IOUtils::nodata;
+				name  = azi = "";
+				valid = 1;
+			} else if (!line.compare(0, altitude_str.size(), altitude_str)) {
+				IOUtils::convertString(alt, line.substr(altitude_str.size()));
+				valid |= 2;
+			} else if (!line.compare(0, latitude_str.size(), latitude_str)) {
+				IOUtils::convertString(lat, line.substr(latitude_str.size()));
+				valid |= 4;
+			} else if (!line.compare(0, longitude_str.size(), longitude_str)) {
+				IOUtils::convertString(lon, line.substr(longitude_str.size()));
+				valid |= 8;
+			} else if (!line.compare(0, name_str.size(), name_str)) { // optional
+				name = line.substr(name_str.size());
+				IOUtils::trim(name);
+			} else if (!line.compare(0, slope_str.size(), slope_str)) { //optional
+				IOUtils::convertString(slope_angle, line.substr(slope_str.size()));
+			} else if (!line.compare(0, exposition_str.size(), exposition_str)) { //optional
+				azi = line.substr(exposition_str.size());
+				if (IOUtils::isNumeric(azi)) {
+					IOUtils::convertString(slope_azi, azi);
+				} else {
+					slope_azi = IOUtils::bearing(azi);
+				}
+			}
+		}
+	} else {
+		throw IOException("Could not retrieve list of sensors", AT);
 	}
 }
 
 void GSNIO::listSensors(std::vector<std::string>& /*vec_names*/)
 {
 	/**
-	 * Retrieve all station names, that are available in the current GSN instance
-	 * and which are accessible for the current user (see Input::USER)
+	 * Parse through the io.ini file and copy the desired station names STATION#
+	 * into vecStationName, if no stations are configured explicitly simply take
+	 * all stations that are available in the current GSN instance
 	 */
-
-	std::ostringstream oss;
-	if (curl_read(list_sensors_endpoint, oss) == CURLE_OK) {
-		// Web page successfully written to string
-		std::string html = oss.str();
-		cout << html << endl;
-	} else {
-		throw IOException("Could not retrieve list of sensors", AT);
-	}
 
 	/*
 	_ns1__listVirtualSensorNamesResponse sensor_names;
