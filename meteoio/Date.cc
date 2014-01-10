@@ -32,7 +32,7 @@ const float Date::Unix_offset = 2440587.5; ///<offset between julian date and Un
 const float Date::Excel_offset = 2415018.5;  ///<offset between julian date and Excel dates (note that excel invented some days...)
 const float Date::Matlab_offset = 1721058.5; ///<offset between julian date and Matlab dates
 
-const double Date::epsilon=1./(24.*3601.); ///< minimum difference between two dates. 1 second in units of days, 3601 is intentional
+const double Date::epsilon=1./(24.*3600.025); ///< minimum difference between two dates. 1 second in units of days. 3600.025 is intentional
 //NOTE: For the comparison operators, we assume that dates are positive so we can bypass a call to abs()
 
 // CONSTUCTORS
