@@ -80,10 +80,10 @@ class GSNIO : public IOInterface {
 		void save_station(const std::string& id, const std::string& name, const double& lat, const double& lon, 
 		                  const double& alt, const double& slope_angle, const double& slope_azi);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void map_parameters(MeteoData& md, std::vector<size_t>& index);
+		void map_parameters(const std::string& fields, MeteoData& md, std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);
-		void parse_streamElement(const std::vector<size_t>& index, const bool& olwr_present,
-				  std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo);
+		void parse_streamElement(const std::string& line, const std::vector<size_t>& index, 
+		                         const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo);
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
 		CURLcode curl_read(const std::string& url, std::ostream& os);
 
@@ -95,7 +95,7 @@ class GSNIO : public IOInterface {
 		double default_timezone;
 
 		static const int http_timeout; //time out for http connections
-		static const std::string list_sensors_endpoint;
+		static const std::string sensors_endpoint;
 };
 
 } //end namespace mio
