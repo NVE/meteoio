@@ -328,19 +328,20 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	stringstream ss;
 	string line = "";
 	bool fields_detected = false;
-	cout << "End date: " << dateEnd.toString(Date::ISO) << endl;
+
 	string request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
 	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00" + "&username=" + userid + "&password=" + passwd;
 
-	cout << "Requesting: " << request << endl;
-	
-	if (curl_read(request, ss) == CURLE_OK) {
-		while (getline(ss, line)) {
-			MeteoData tmpmeteo;
-			vector<size_t> index;
-			bool olwr_present = false;
-			tmpmeteo.meta = vecMeta.at(stationindex);
+	//cout << "Requesting: " << request << endl;
+	//cout << "End date: " << dateEnd.toString(Date::ISO) << endl;
 
+	if (curl_read(request, ss) == CURLE_OK) {
+		MeteoData tmpmeteo;
+		vector<size_t> index;
+		bool olwr_present = false;
+		tmpmeteo.meta = vecMeta.at(stationindex);
+
+		while (getline(ss, line)) {
 			if (!fields_detected && (line.size() && (line[0] == '#'))) { //Detect fields, it's the first line without a colon
 				size_t found = line.find(":");
 				if (found == string::npos) {
@@ -363,7 +364,7 @@ void GSNIO::map_parameters(const std::string& fields, MeteoData& md, std::vector
 {
 	std::vector<std::string> field;
 
-	cout << fields << endl;
+	//cout << fields << endl;
 	IOUtils::readLineToVec(fields.substr(2), field, ',');
 
 	for (size_t ii=0; ii<field.size(); ii++) {
@@ -406,7 +407,7 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 	IOUtils::readLineToVec(line, data, ',');	
 	if (data.size() < 2) return; // Malformed for sure
 
-	cout << "Attempting to parse: " << line << endl;
+	//cout << "Attempting to parse: " << line << endl;
 
 	//The first or the second element is a UNIX timestamp, let's see which one
 	double timestamp;
@@ -421,21 +422,22 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 	tmpmeteo.date.setUnixDate((time_t)(floor(timestamp/1000.0)));
 	tmpmeteo.date.setTimeZone(default_timezone);
 
-	for (size_t jj=2; jj<data.size(); jj++){
+	for (size_t jj=2; jj<data.size(); jj++) {
 		const string value = IOUtils::strToUpper(data[jj]);
-		if (index[jj-2] != IOUtils::npos){
+		if (index[jj] != IOUtils::npos){
 			if (value != "NULL"){
-				IOUtils::convertString(tmpmeteo(index[jj-2]), value);
+				IOUtils::convertString(tmpmeteo(index[jj]), value);
 			} else {
-				tmpmeteo(index[jj-2]) = IOUtils::nodata;
+				tmpmeteo(index[jj]) = IOUtils::nodata;
 			}
 		}
 	}
 
+			//	cout << tmpmeteo.toString() << endl;
 	convertUnits(tmpmeteo);
 	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
 		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
-
+		//	cout << tmpmeteo.toString() << endl;
 	vecMeteo.push_back(tmpmeteo);
 	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
 
@@ -546,7 +548,6 @@ CURLcode GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 	CURL* curl = curl_easy_init();
 
 	const string url = endpoint + url_query;
-	cout << url << endl;
 
 	if (curl) {
 		if(CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
