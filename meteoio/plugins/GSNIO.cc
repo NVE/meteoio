@@ -318,9 +318,16 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 	}
 
+
+	//cout << "Trying to fetch data for: " << dateStart.toString(Date::ISO) << "  until  " << dateEnd.toString(Date::ISO) << endl;
 	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
+		//cout << "size: " << vecMeteo[ii].size()<< endl;
+		//for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++) {
+			//cout << vecMeteo[ii][jj].date.toString(Date::ISO) << ": " << vecMeteo[ii][jj](MeteoData::TA) << endl;
+		//}
 	}
+	
 }
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
@@ -433,44 +440,14 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 		}
 	}
 
-			//	cout << tmpmeteo.toString() << endl;
+	//cout << tmpmeteo.toString() << endl;
 	convertUnits(tmpmeteo);
 	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
 		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
-		//	cout << tmpmeteo.toString() << endl;
-	vecMeteo.push_back(tmpmeteo);
-	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
-
-	/**
-	 * This procedure takes a streamElement pointer from either the _ns1__getNextDataResponse
-	 * or _ns1__getMultiDataResponse and parses the field elements into a MeteoData object
-	 * (tmpmeteo). Finally it adjusts the units and calculates TSS from OLWR if necessary and
-	 * possible.
-	 */
-	/*
-	double tt;
-	IOUtils::convertString(tt, *streamElement->timed);
-	tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
-	tmpmeteo.date.setTimeZone(default_timezone);
-
-	for (size_t jj=0; jj < streamElement->field.size(); jj++){
-		const string value = IOUtils::strToUpper( streamElement->field.at(jj)->__item );
-		if (index[jj] != IOUtils::npos){
-			if (value != "NULL"){
-				IOUtils::convertString(tmpmeteo(index[jj]), value);
-			} else {
-				tmpmeteo(index[jj]) = IOUtils::nodata;
-			}
-		}
-	}
-
-	convertUnits(tmpmeteo);
-	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
-		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
+	//cout << tmpmeteo.toString() << endl;
 
 	vecMeteo.push_back(tmpmeteo);
 	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
-	*/
 }
 
 double GSNIO::olwr_to_tss(const double& olwr) {
@@ -739,4 +716,36 @@ void GSNIO::listSensors(std::vector<std::string>& /*vec_names*/)
 			}
 		}
 	}
+	*/
+
+
+	/**
+	 * This procedure takes a streamElement pointer from either the _ns1__getNextDataResponse
+	 * or _ns1__getMultiDataResponse and parses the field elements into a MeteoData object
+	 * (tmpmeteo). Finally it adjusts the units and calculates TSS from OLWR if necessary and
+	 * possible.
+	 */
+	/*
+	double tt;
+	IOUtils::convertString(tt, *streamElement->timed);
+	tmpmeteo.date.setUnixDate((time_t)(floor(tt/1000.0)));
+	tmpmeteo.date.setTimeZone(default_timezone);
+
+	for (size_t jj=0; jj < streamElement->field.size(); jj++){
+		const string value = IOUtils::strToUpper( streamElement->field.at(jj)->__item );
+		if (index[jj] != IOUtils::npos){
+			if (value != "NULL"){
+				IOUtils::convertString(tmpmeteo(index[jj]), value);
+			} else {
+				tmpmeteo(index[jj]) = IOUtils::nodata;
+			}
+		}
+	}
+
+	convertUnits(tmpmeteo);
+	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
+		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
+
+	vecMeteo.push_back(tmpmeteo);
+	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
 	*/
