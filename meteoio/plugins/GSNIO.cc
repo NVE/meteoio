@@ -76,16 +76,16 @@ const int GSNIO::http_timeout = 60; // seconds until connect time out for libcur
 const std::string GSNIO::sensors_endpoint = "sensors";
 
 GSNIO::GSNIO(const std::string& configfile)
-      : cfg(configfile), vecStationName(), vecMeta(), vecAllMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), userid(), passwd(), default_timezone(1.)
+      : cfg(configfile), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(), 
+        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
 }
 
 GSNIO::GSNIO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(), vecMeta(), vecAllMeta(), coordin(), coordinparam(), coordout(), coordoutparam(),
-        endpoint(), userid(), passwd(), default_timezone(1.)
+      : cfg(cfgreader), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(), 
+        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -352,10 +352,16 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 
 		while (getline(ss, line)) {
 			if (!fields_detected && (line.size() && (line[0] == '#'))) { //Detect fields, it's the first line without a colon
-				size_t found = line.find(":");
-				if (found == string::npos) {
+				if (line.find(":") == string::npos) {
 					fields_detected = true;
-					map_parameters(line, tmpmeteo, index);
+
+					//Try to fetch next line and see if it's another meta info line
+					streampos pos = ss.tellp();
+					string units = "";
+					getline(ss, units);
+					ss.seekp(pos);
+					
+					map_parameters(line, units, tmpmeteo, index);
 					olwr_present = tmpmeteo.param_exists("OLWR");
 				}
 			}
@@ -369,12 +375,19 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	}
 }
 
-void GSNIO::map_parameters(const std::string& fields, MeteoData& md, std::vector<size_t>& index)
+void GSNIO::map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index)
 {
-	std::vector<std::string> field;
+	vector<string> field;
+	vector<string> unit;
 
 	//cout << fields << endl;
+	//cout << units << endl;
+
 	IOUtils::readLineToVec(fields.substr(2), field, ',');
+	
+	if ((units.size() > 2) && (units.find(",") != string::npos)) {
+		IOUtils::readLineToVec(units.substr(2), unit, ',');
+	}
 
 	for (size_t ii=0; ii<field.size(); ii++) {
 		const string field_name = IOUtils::strToUpper(field[ii]);
@@ -404,8 +417,19 @@ void GSNIO::map_parameters(const std::string& fields, MeteoData& md, std::vector
 			index.push_back(MeteoData::HNW);
 		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS"){
 			index.push_back(MeteoData::TSS);
-		} else {
-			index.push_back(IOUtils::npos);
+		} else { //this is an extra parameter
+			md.addParameter(field_name);
+			size_t parindex = md.getParameterIndex(field_name);
+			index.push_back(parindex);
+
+			if (unit.size() > ii) {
+				const string& name = unit[ii];
+				if (name == "%") {
+					multiplier[parindex] = 0.01;
+				} else if (name.size() == 2 && (int)((unsigned char)name[0]) == 176 && name[1] == 'C') { //in °C, UTF8
+					offset[parindex] = 273.15;
+				}
+			}
 		}
 	}
 }
@@ -506,6 +530,18 @@ void GSNIO::convertUnits(MeteoData& meteo)
 	double& hs = meteo(MeteoData::HS);
 	if (hs != IOUtils::nodata)
 		hs /= 100.;
+
+	// For all parameters that have either an offset or an multiplier to bring to MKSA
+	map<size_t, double>::iterator it;
+	for (it = multiplier.begin(); it != multiplier.end(); it++) {
+		double& tmp = meteo(it->first);
+		if (tmp != IOUtils::nodata) tmp *= it->second;
+	}
+
+	for (it = offset.begin(); it != offset.end(); it++) {
+		double& tmp = meteo(it->first);
+		if (tmp != IOUtils::nodata) tmp += it->second;
+	}
 }
 
 size_t GSNIO::data_write(void* buf, size_t size, size_t nmemb, void* userp)

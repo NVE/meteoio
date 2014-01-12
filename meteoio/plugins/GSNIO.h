@@ -30,6 +30,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+//#include <cstdint>
 
 #include <curl/curl.h>
 
@@ -80,7 +81,7 @@ class GSNIO : public IOInterface {
 		void save_station(const std::string& id, const std::string& name, const double& lat, const double& lon, 
 		                  const double& alt, const double& slope_angle, const double& slope_azi);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void map_parameters(const std::string& fields, MeteoData& md, std::vector<size_t>& index);
+		void map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);
 		void parse_streamElement(const std::string& line, const std::vector<size_t>& index, 
 		                         const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo);
@@ -89,6 +90,7 @@ class GSNIO : public IOInterface {
 
 		const Config cfg;
 		std::vector<std::string> vecStationName;
+		std::map<size_t, double> multiplier, offset;
 		std::vector<StationData> vecMeta, vecAllMeta;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, userid, passwd; ///< Variables for endpoint configuration
