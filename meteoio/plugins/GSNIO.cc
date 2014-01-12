@@ -72,7 +72,7 @@ namespace mio {
  *
  */
 
-const int GSNIO::http_timeout = 20; // seconds until connect time out for libcurl
+const int GSNIO::http_timeout = 60; // seconds until connect time out for libcurl
 const std::string GSNIO::sensors_endpoint = "sensors";
 
 GSNIO::GSNIO(const std::string& configfile)
@@ -102,7 +102,7 @@ void GSNIO::initGSNConnection() {
 	cfg.getValue("URL", "Input", endpoint, IOUtils::nothrow);
 	if (!endpoint.empty()){
 		if (*endpoint.rbegin() != '/') endpoint += "/";
-		cerr << "\tUsing GSN Endpoint: " << endpoint << endl;
+		cerr << "[i] Using GSN Endpoint: " << endpoint << endl;
 	}
 
 	cfg.getValue("USER", "Input", userid);
@@ -167,6 +167,10 @@ void GSNIO::readMetaData()
 					vecMeta.push_back(vecAllMeta[jj]);
 				}
 			}
+
+			if (vecMeta.size() != (ii+1)) { // could not find station in list of available stations
+				throw NoAvailableDataException("Could not retrieve meta data for station " + vecStationName[ii], AT);
+			}
 		}
 	} else { //otherwise use all available stations
 		vecMeta = vecAllMeta;
@@ -193,15 +197,14 @@ void GSNIO::readStationNames()
 
 		if (!current_station.empty()){
 			vecStationName.push_back(current_station); //add station name to vector of all station names
-			cerr << "\tRead stationname '" << current_station << "'\n";
+			cerr << "[i] Adding GSN stationname '" << current_station << "'\n";
 		}
 
 		current_stationnr++;
 	} while (!current_station.empty());
 
 	/*
-	if (vecStationName.empty()){
-		//just take all sensors available
+	if (vecStationName.empty()) { //just take all sensors available
 		listSensors(vecStationName);
 	}
 	*/
@@ -214,7 +217,7 @@ void GSNIO::save_station(const std::string& id, const std::string& name, const d
 	current_coord.setLatLon(lat, lon, alt);
 	StationData sd(current_coord, id, name);
 					
-	if (slope_angle != IOUtils::nodata){
+	if (slope_angle != IOUtils::nodata) {
 		if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
 			sd.setSlope(slope_angle, 0.); //expostion: north assumed
 		} else {
@@ -318,14 +321,13 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 	}
 
-
 	//cout << "Trying to fetch data for: " << dateStart.toString(Date::ISO) << "  until  " << dateEnd.toString(Date::ISO) << endl;
 	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
-		//cout << "size: " << vecMeteo[ii].size()<< endl;
-		//for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++) {
-			//cout << vecMeteo[ii][jj].date.toString(Date::ISO) << ": " << vecMeteo[ii][jj](MeteoData::TA) << endl;
-		//}
+		// cout << "size: " << vecMeteo[ii].size()<< endl;
+		// for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++) {
+		// 	cout << vecMeteo[ii][jj].date.toString(Date::ISO) << ": " << vecMeteo[ii][jj](MeteoData::TA) << endl;
+		// }
 	}
 	
 }
