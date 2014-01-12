@@ -377,9 +377,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 
 void GSNIO::map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index)
 {
-	vector<string> field;
-	vector<string> unit;
-
+	vector<string> field, unit;
 	//cout << fields << endl;
 	//cout << units << endl;
 
