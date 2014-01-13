@@ -72,7 +72,6 @@ class GSNIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		void listSensors(std::vector<std::string>& vec_names);
 		void convertUnits(MeteoData& meteo);
 		void initGSNConnection();
 		void readStationNames();
