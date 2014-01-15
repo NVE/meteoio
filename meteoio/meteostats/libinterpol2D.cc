@@ -235,8 +235,8 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	std::vector<double> X, Y;
 
 	//fill vectors with appropriate neighbors
-	const double x = dem.llcorner.getEasting()+i*dem.cellsize;
-	const double y = dem.llcorner.getNorthing()+j*dem.cellsize;
+	const double x = dem.llcorner.getEasting()+static_cast<double>(i)*dem.cellsize;
+	const double y = dem.llcorner.getNorthing()+static_cast<double>(j)*dem.cellsize;
 	getNeighbors(x, y, vecStations_in, list);
 	const size_t max_stations = std::min(list.size(), nrOfNeighbors);
 	for(size_t st=0; st<max_stations; st++) {

@@ -588,7 +588,7 @@ void ImisIO::calculatePsum(const Date& dateStart, const Date& dateEnd,
 		}
 
 		if ((counter_of_elements > 0) && (counter_of_elements < 6)) //this is mystical, but kind of a guess of the future
-			tmp_psum = tmp_psum*6/counter_of_elements;
+			tmp_psum = tmp_psum*6./static_cast<double>(counter_of_elements);
 
 		vec_current_station.push_back(tmp_psum);
 
@@ -711,7 +711,7 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 	string stat_abk, stao_nr;
 	parseStationID(vecStationIDs.at(stationindex).getStationID(), stat_abk, stao_nr);
 
-	const size_t max_row = static_cast<size_t>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
+	const unsigned int max_row = static_cast<unsigned int>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
 
 	//query
 	try {
@@ -855,7 +855,7 @@ size_t ImisIO::getStationIDs(const std::string& station_code, const std::string&
 		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
-			for (size_t ii=1; ii<=cols.size(); ii++) {
+			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
 				vecStationIDs.push_back(rs->getString(ii));
 			}
 		}
@@ -898,7 +898,7 @@ size_t ImisIO::getSensorDepths(const std::string& stat_abk, const std::string& s
 		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
-			for (size_t ii=1; ii<=cols.size(); ii++) {
+			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
 				vecHTS1.push_back(rs->getString(ii));
 			}
 		}
@@ -935,7 +935,7 @@ size_t ImisIO::getStationMetaData(const std::string& stat_abk, const std::string
 		const vector<MetaData> cols = rs->getColumnListMetaData();
 
 		while (rs->next() == true) {
-			for (size_t ii=1; ii<=cols.size(); ii++) {
+			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
 				vecMetaData.push_back(rs->getString(ii));
 			}
 		}
@@ -972,7 +972,7 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 {
 	vecMeteoData.clear();
 	bool fullStation = true;
-	const size_t max_row = static_cast<size_t>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
+	const unsigned int max_row = static_cast<unsigned int>( Optim::ceil( (dateE.getJulian()-dateS.getJulian())*24.*2. ) ); //for prefetching
 	try {
 		const map<string, string>::const_iterator it = mapDriftStation.find(stat_abk+stao_nr);
 		if (it != mapDriftStation.end()) {
@@ -1004,11 +1004,11 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		vector<string> vecData;
 		while (rs->next() == true) {
 			vecData.clear();
-			for (size_t ii=1; ii<=cols.size(); ii++) {
+			for (unsigned int ii=1; ii<=static_cast<unsigned int>(cols.size()); ii++) {
 				vecData.push_back(rs->getString(ii));
 			}
 			if (fullStation) {
-				for (size_t ii=0; ii<vecHTS1.size(); ii++) {
+				for (unsigned int ii=0; ii<static_cast<unsigned int>(vecHTS1.size()); ii++) {
 					vecData.push_back(vecHTS1.at(ii));
 				}
 			}
@@ -1034,7 +1034,7 @@ void ImisIO::convertSnowTemperature(MeteoData& meteo, const std::string& paramet
 void ImisIO::convertSensorDepth(MeteoData& meteo, const std::string& parameter)
 {
 	if (meteo.param_exists(parameter)) {
-		const unsigned int idx = meteo.getParameterIndex(parameter);
+		const size_t idx = meteo.getParameterIndex(parameter);
 		if(meteo(idx)!=IOUtils::nodata)
 			meteo(idx) /= 100.; // centimetre to metre
 	}
