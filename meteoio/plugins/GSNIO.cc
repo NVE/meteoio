@@ -23,18 +23,19 @@ namespace mio {
 /**
  * @page gsn GSN
  * @section gsn_format Format
- * This plugin reads meteorological data from GSN (Global Sensor Network, see <a href="http://sourceforge.net/apps/trac/gsn/"> GSN home page</a>) as a web service. It therefore requires GSoap.
+ * This plugin reads meteorological data from GSN (Global Sensor Network, see <a href="http://sourceforge.net/apps/trac/gsn/"> GSN home page</a>)
+ * via the RESTful web service. To compile the plugin you need to have the <a href="http://curl.haxx.se/">CURL library</a> with its headers present.
  * @subsection gsn_fields Field mapping
  * The following GSN fields are read from GSN and mapped to MeteoData attributes:
  * <center><table border="0">
  * <tr><td>
  * <table border="1">
  * <tr><th>GSN attribute</th><th>MeteoData field</th></tr>
- * <tr><td>RELATIVE_HUMIDITY</td><td>MeteoData::RH</td></tr>
- * <tr><td>AIR_TEMPERATURE</td><td>MeteoData::TA</td></tr>
+ * <tr><td>RELATIVE_HUMIDITY or AIR_HUMID</td><td>MeteoData::RH</td></tr>
+ * <tr><td>AIR_TEMPERATURE or AIR_TEMP</td><td>MeteoData::TA</td></tr>
  * <tr><td>WIND_DIRECTION</td><td>MeteoData::DW</td></tr>
  * <tr><td>WIND_SPEED_MAX</td><td>MeteoData::VW_MAX</td></tr>
- * <tr><td>WIND_SPEED_SCALAR_AV</td><td>MeteoData::VW</td></tr>
+ * <tr><td>WIND_SPEED_SCALAR_AV or WIND_SPEED</td><td>MeteoData::VW</td></tr>
  * <tr><td>INCOMING_SHORTWAVE_RADIATION</td><td>MeteoData::ISWR</td></tr>
  * <tr><td>INCOMING_LONGWAVE_RADIATION</td><td>MeteoData::ILWR</td></tr>
  * <tr><td>OUTGOING_SHORTWAVE_RADIATION</td><td>MeteoData::RSWR</td></tr>
@@ -45,10 +46,14 @@ namespace mio {
  * <tr><td>SOLAR_RAD</td><td>MeteoData::ISWR</td></tr>
  * </table></td></tr>
  * </table></center>
- * Please keep in mind that the names in GSN have currently not been standardized. This means that any sensor that does not use the above names will not be properly supported (some fields might be missing)!
+ * Please keep in mind that the names in GSN have currently not been standardized. This means that any sensor that does 
+ * not use the above names will not be properly supported (fields will not be missing but might appear under a different name)!
  *
  * @section gsn_units Units
- * The units are assumed to be the following:
+ * The units of measurements are sometimes listed in the response headers, they are then parsed by the plugin and if known, 
+ * like <b>°C</b> or <b>\%</b>, offsets and multipliers are set to convert the data to MKSA
+ *
+ * Otherwise the units are assumed to be the following:
  * - temperatures in celsius
  * - relative humidity in %
  * - wind speed in m/s
@@ -352,10 +357,14 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 			}
 		}
 
+		if (units.empty() || fields.empty()) {
+			throw InvalidFormatException("Invalid header for station " + tmpmeteo.meta.stationID, AT);
+		}
+
 		map_parameters(fields, units, tmpmeteo, index);
 		olwr_present = tmpmeteo.param_exists("OLWR");
 		
-		do { //parse data section
+		do { //parse data section, the first line should already be buffered
 			parse_streamElement(line, index, olwr_present, vecMeteo, tmpmeteo);
 		} while (getline(ss, line));
 	} else {
@@ -531,12 +540,11 @@ void GSNIO::convertUnits(MeteoData& meteo)
 
 size_t GSNIO::data_write(void* buf, size_t size, size_t nmemb, void* userp)
 {
-	if(userp)
-	{
-		std::ostream& os = *static_cast<std::ostream*>(userp);
-		std::streamsize len = size * nmemb;
-		if(os.write(static_cast<char*>(buf), len))
-			return len;
+	if (userp) {
+		ostream& os = *static_cast<ostream*>(userp);
+		streamsize len = size * nmemb;
+		
+		if (os.write(static_cast<char*>(buf), len)) return len;
 	}
 
 	return 0;
