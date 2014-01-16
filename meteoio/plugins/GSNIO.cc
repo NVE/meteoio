@@ -318,10 +318,6 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	//cout << "Trying to fetch data for: " << dateStart.toString(Date::ISO) << "  until  " << dateEnd.toString(Date::ISO) << endl;
 	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
-		// cout << "size: " << vecMeteo[ii].size()<< endl;
-		// for (unsigned int jj=0; jj<vecMeteo[ii].size(); jj++) {
-		// 	cout << vecMeteo[ii][jj].date.toString(Date::ISO) << ": " << vecMeteo[ii][jj](MeteoData::TA) << endl;
-		// }
 	}
 	
 }
@@ -335,9 +331,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 
 	string request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
 	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00" + "&username=" + userid + "&password=" + passwd;
-
 	//cout << "Requesting: " << request << endl;
-	//cout << "End date: " << dateEnd.toString(Date::ISO) << endl;
 
 	if (curl_read(request, ss) == CURLE_OK) {
 		vector<size_t> index;
@@ -459,11 +453,9 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 		}
 	}
 
-	//cout << tmpmeteo.toString() << endl;
 	convertUnits(tmpmeteo);
 	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
 		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
-	//cout << tmpmeteo.toString() << endl;
 
 	vecMeteo.push_back(tmpmeteo);
 	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
