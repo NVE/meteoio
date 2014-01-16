@@ -328,9 +328,10 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
+	const string fields_str = "# fields:";
+	const string units_str = "# units:";
+
 	stringstream ss;
-	string line = "";
-	bool fields_detected = false;
 
 	string request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
 	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00" + "&username=" + userid + "&password=" + passwd;
@@ -339,31 +340,30 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	//cout << "End date: " << dateEnd.toString(Date::ISO) << endl;
 
 	if (curl_read(request, ss) == CURLE_OK) {
-		MeteoData tmpmeteo;
 		vector<size_t> index;
 		bool olwr_present = false;
+
+		MeteoData tmpmeteo;
 		tmpmeteo.meta = vecMeta.at(stationindex);
 
-		while (getline(ss, line)) {
-			if (!fields_detected && (line.size() && (line[0] == '#'))) { //Detect fields, it's the first line without a colon
-				if (line.find(":") == string::npos) {
-					fields_detected = true;
+		string line = "", fields="", units="";
+		while (getline(ss, line)) { //parse header section
 
-					//Try to fetch next line and see if it's another meta info line
-					streampos pos = ss.tellp();
-					string units = "";
-					getline(ss, units);
-					ss.seekp(pos);
-					
-					map_parameters(line, units, tmpmeteo, index);
-					olwr_present = tmpmeteo.param_exists("OLWR");
-				}
-			}
-
-			if (line.size() && (line[0] != '#')) { // data
-				parse_streamElement(line, index, olwr_present, vecMeteo, tmpmeteo);
+			if (line.size() && (line[0] != '#')) break;
+			
+			if (!line.compare(0, fields_str.size(), fields_str)) {
+				fields = line.substr(fields_str.size());
+			} else if (!line.compare(0, units_str.size(), units_str)) {
+				units = line.substr(units_str.size()) + " "; // the extra space is important if no units are specified
 			}
 		}
+
+		map_parameters(fields, units, tmpmeteo, index);
+		olwr_present = tmpmeteo.param_exists("OLWR");
+		
+		do { //parse data section
+			parse_streamElement(line, index, olwr_present, vecMeteo, tmpmeteo);
+		} while (getline(ss, line));
 	} else {
 		throw IOException("Could not retrieve data for station " + vecMeta[stationindex].stationID, AT);
 	}
@@ -375,10 +375,11 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	//cout << fields << endl;
 	//cout << units << endl;
 
-	IOUtils::readLineToVec(fields.substr(2), field, ',');
-	
-	if ((units.size() > 2) && (units.find(",") != string::npos)) {
-		IOUtils::readLineToVec(units.substr(2), unit, ',');
+	IOUtils::readLineToVec(fields, field, ',');
+	IOUtils::readLineToVec(units, unit, ',');
+
+	if (field.size() != unit.size()) {
+		throw InvalidFormatException("Fields and units are inconsistent for station " + md.meta.stationID, AT);
 	}
 
 	for (size_t ii=0; ii<field.size(); ii++) {
@@ -414,13 +415,15 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 			size_t parindex = md.getParameterIndex(field_name);
 			index.push_back(parindex);
 
-			if (unit.size() > ii) {
-				const string& name = unit[ii];
-				if (name == "%") {
-					multiplier[parindex] = 0.01;
-				} else if (name.size() == 2 && (int)((unsigned char)name[0]) == 176 && name[1] == 'C') { //in °C, UTF8
-					offset[parindex] = 273.15;
-				}
+			//For the parameters unknown to MeteoIO we can store the units qualification °C, %, etc
+			//and make it possible for the values to be converted to MKSA in the convertUnits procedure
+			string name = unit[ii];
+			IOUtils::trim(name);
+
+			if (name == "%") {
+				multiplier[parindex] = 0.01;
+			} else if (name.size() == 2 && (int)((unsigned char)name[0]) == 176 && name[1] == 'C') { //in °C, UTF8
+				offset[parindex] = 273.15;
 			}
 		}
 	}
@@ -449,12 +452,10 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 
 	for (size_t jj=2; jj<data.size(); jj++) {
 		const string value = IOUtils::strToUpper(data[jj]);
-		if (index[jj] != IOUtils::npos){
-			if (value != "NULL"){
-				IOUtils::convertString(tmpmeteo(index[jj]), value);
-			} else {
-				tmpmeteo(index[jj]) = IOUtils::nodata;
-			}
+		if (value != "NULL"){
+			IOUtils::convertString(tmpmeteo(index[jj]), value);
+		} else {
+			tmpmeteo(index[jj]) = IOUtils::nodata;
 		}
 	}
 
