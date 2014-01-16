@@ -96,7 +96,7 @@ class GSNIO : public IOInterface {
 		double default_timezone;
 
 		static const int http_timeout; //time out for http connections
-		static const std::string sensors_endpoint;
+		static const std::string sensors_endpoint, null_string;
 };
 
 } //end namespace mio

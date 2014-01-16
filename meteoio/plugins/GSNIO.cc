@@ -79,6 +79,7 @@ namespace mio {
 
 const int GSNIO::http_timeout = 60; // seconds until connect time out for libcurl
 const std::string GSNIO::sensors_endpoint = "sensors";
+const std::string GSNIO::null_string = "null";
 
 GSNIO::GSNIO(const std::string& configfile)
       : cfg(configfile), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(), 
@@ -375,44 +376,50 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 void GSNIO::map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index)
 {
 	vector<string> field, unit;
+	size_t timestamp_field = IOUtils::npos;
 	//cout << fields << endl;
 	//cout << units << endl;
 
 	IOUtils::readLineToVec(fields, field, ',');
 	IOUtils::readLineToVec(units, unit, ',');
 
-	if (field.size() != unit.size()) {
+	if ((field.size() != unit.size()) || (field.size() < 2)) {
 		throw InvalidFormatException("Fields and units are inconsistent for station " + md.meta.stationID, AT);
 	}
 
 	for (size_t ii=0; ii<field.size(); ii++) {
 		const string field_name = IOUtils::strToUpper(field[ii]);
 
-		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID"){
+		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID") {
 			index.push_back(MeteoData::RH);
-		} else if (field_name == "AIR_TEMPERATURE" || field_name == "TA" || field_name == "AIR_TEMP"){
+		} else if (field_name == "AIR_TEMPERATURE" || field_name == "TA" || field_name == "AIR_TEMP") {
 			index.push_back(MeteoData::TA);
-		} else if (field_name == "WIND_DIRECTION" || field_name == "DW"){
+		} else if (field_name == "WIND_DIRECTION" || field_name == "DW") {
 			index.push_back(MeteoData::DW);
-		} else if (field_name == "WIND_SPEED_MAX" || field_name == "VW_MAX"){
+		} else if (field_name == "WIND_SPEED_MAX" || field_name == "VW_MAX") {
 			index.push_back(MeteoData::VW_MAX);
-		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW" || field_name == "WIND_SPEED"){
+		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW" || field_name == "WIND_SPEED") {
 			index.push_back(MeteoData::VW);
-		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD"){
+		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD") {
 			index.push_back(MeteoData::ISWR);
-		} else if (field_name == "INCOMING_LONGWAVE_RADIATION" || field_name == "ILWR"){
+		} else if (field_name == "INCOMING_LONGWAVE_RADIATION" || field_name == "ILWR") {
 			index.push_back(MeteoData::ILWR);
-		} else if (field_name == "OUTGOING_SHORTWAVE_RADIATION" || field_name == "RSWR"){
+		} else if (field_name == "OUTGOING_SHORTWAVE_RADIATION" || field_name == "RSWR") {
 			index.push_back(MeteoData::RSWR);
-		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION" || field_name == "RLWR"){ //is used to calculate TSS
+		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION" || field_name == "RLWR") { //is used to calculate TSS
 			md.addParameter("OLWR");
 			index.push_back(md.getParameterIndex("OLWR"));
-		} else if (field_name == "SNOW_HEIGHT" || field_name == "HS1"){
+		} else if (field_name == "SNOW_HEIGHT" || field_name == "HS1") {
 			index.push_back(MeteoData::HS);
-		} else if (field_name == "RAIN_METER" || field_name == "PINT"){
+		} else if (field_name == "RAIN_METER" || field_name == "PINT") {
 			index.push_back(MeteoData::HNW);
-		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS"){
+		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS") {
 			index.push_back(MeteoData::TSS);
+		} else if (field_name == "TIMESTAMP") {
+			timestamp_field = ii;
+			index.push_back(IOUtils::npos);
+		} else if (field_name == "TIME") {
+			index.push_back(IOUtils::npos);
 		} else { //this is an extra parameter
 			md.addParameter(field_name);
 			size_t parindex = md.getParameterIndex(field_name);
@@ -430,6 +437,12 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 			}
 		}
 	}
+
+	if (timestamp_field != IOUtils::npos) { //store timestamp index at index[0]
+		index[0] = timestamp_field;
+	} else {
+		throw InvalidFormatException("No timestamp field for station " + md.meta.stationID, AT);
+	}
 }
 
 void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_t>& index, const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo)
@@ -438,24 +451,15 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 	IOUtils::readLineToVec(line, data, ',');	
 	if (data.size() < 2) return; // Malformed for sure
 
-	//cout << "Attempting to parse: " << line << endl;
-
-	//The first or the second element is a UNIX timestamp, let's see which one
+	//The timestamp index is stored in index[0]
 	double timestamp;
-	if (IOUtils::isNumeric(data[0])) {
-		IOUtils::convertString(timestamp, data[0]);
-	} else if (IOUtils::isNumeric(data[1])) {
-		IOUtils::convertString(timestamp, data[1]);
-	} else {
-		throw InvalidFormatException("No date string present when reading meteo data for station + " + tmpmeteo.meta.stationID, AT);
-	}
-
+	IOUtils::convertString(timestamp, data[index[0]]);
 	tmpmeteo.date.setUnixDate((time_t)(floor(timestamp/1000.0)));
 	tmpmeteo.date.setTimeZone(default_timezone);
 
 	for (size_t jj=2; jj<data.size(); jj++) {
-		const string value = IOUtils::strToUpper(data[jj]);
-		if (value != "NULL"){
+		const string& value = data[jj];
+		if (value != GSNIO::null_string){
 			IOUtils::convertString(tmpmeteo(index[jj]), value);
 		} else {
 			tmpmeteo(index[jj]) = IOUtils::nodata;
