@@ -39,7 +39,7 @@ void FilterSuppr::process(const unsigned int& param, const std::vector<MeteoData
 
 
 void FilterSuppr::parse_args(std::vector<std::string> vec_args) {
-	
+
 	if ( !vec_args.empty() )
 		throw InvalidArgumentException("Wrong number of arguments for filter " + getName(), AT);
 }

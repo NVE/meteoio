@@ -93,6 +93,10 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
 
 /**
  * @brief A function that computes the start and end for a window for the 'index' element from ivec
+ * The principle is too compute the first index that matches the minimum number of points criteria,
+ * and the one that matches the minimum time window, then combine them (with the equivalent of OR: we take the MIN index).
+ * Afterward, we compute the last index [...] for number of points and the last index [...] for the time window
+ * and combine them (with the equivalent of OR: we take the MIN index) or vice versa for right centering.
  * @param index The index of the element in ivec that requires a window
  * @param ivec The original sequence of data points
  * @param start the start index of the window
@@ -100,15 +104,7 @@ const std::vector<const MeteoData*>& WindowedFilter::get_window(const size_t& in
  * @return true if success, false if a window could not be computed
  */
 bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<MeteoData>& ivec, size_t& start, size_t& end) const
-{	/*
-	The principle is too compute the first index that matches the minimum number of points criteria,
-	the the one that matches the minimum time window,
-	then combine them (with the equivalent of OR: we take the MIN index).
-	Afterward, we compute the last index [...] for number of points
-	and the last index [...] for the time window
-	and combine them (with the equivalent of OR: we take the MIN index).
-	(or vice versa for right centering)
-	*/
+{
 	const Date date = ivec[index].date;
 	start = end = index; //for proper initial value, so we can bail out without worries
 
@@ -121,22 +117,22 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		}
 		const Date start_date = date - min_time_span;
 		size_t start_time_idx = IOUtils::seek(start_date, ivec, false); //start time criteria
-		if(start_time_idx!=IOUtils::npos) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
+		if(start_time_idx!=IOUtils::npos) start_time_idx = (start_time_idx>0)? start_time_idx-1 : IOUtils::npos;
 		if(start_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
-			start_time_idx=0; //first possible element
+			start_time_idx = 0; //first possible element
 		}
 		const size_t elements_left = max(index - start_time_idx, start_elements);
 		start = index - elements_left;
 
 		//get end of window
 		if(!is_soft) return true; //with end=index
-		size_t end_elements = (min_data_points>(elements_left+1))?min_data_points - (elements_left + 1):0;
+		const size_t end_elements = (min_data_points>(elements_left+1))? min_data_points - (elements_left + 1) : 0;
 		const Date end_date = ivec[start].date+min_time_span;
-		size_t end_time_idx = (end_date>date)?IOUtils::seek(end_date, ivec, false):index; //end time criteria
+		size_t end_time_idx = (end_date>date)? IOUtils::seek(end_date, ivec, false) : index; //end time criteria
 		if(end_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
-			end_time_idx=ivec.size()-1; //last possible element
+			end_time_idx = ivec.size()-1; //last possible element
 		}
 		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
@@ -153,20 +149,20 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		size_t end_time_idx = IOUtils::seek(end_date, ivec, false); //end time criteria
 		if(end_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
-			end_time_idx=ivec.size()-1; //last possible element
+			end_time_idx = ivec.size()-1; //last possible element
 		}
 		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
 
 		//get start of window
 		if(!is_soft) return true; //with start=index
-		size_t start_elements = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
+		const size_t start_elements = (min_data_points>(elements_right+1))? min_data_points - (elements_right + 1) : 0;
 		const Date start_date = ivec[end].date-min_time_span;
 		size_t start_time_idx = (start_date<date)?IOUtils::seek(start_date, ivec, false):index; //start time criteria
-		if(start_time_idx!=IOUtils::npos && start_time_idx!=index) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
+		if(start_time_idx!=IOUtils::npos && start_time_idx!=index) start_time_idx = (start_time_idx>0)? start_time_idx-1 : IOUtils::npos;
 		if(start_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
-			end_time_idx=0; //first possible element
+			end_time_idx = 0; //first possible element
 		}
 		const size_t elements_left = max(index - start_time_idx, start_elements);
 		start = index - elements_left;
@@ -181,10 +177,10 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		}
 		const Date start_date = date - min_time_span/2;
 		size_t start_time_idx = IOUtils::seek(start_date, ivec, false); //start time criteria
-		if(start_time_idx!=IOUtils::npos) start_time_idx = (start_time_idx>0)?start_time_idx-1:IOUtils::npos;
+		if(start_time_idx!=IOUtils::npos) start_time_idx = (start_time_idx>0)? start_time_idx-1 : IOUtils::npos;
 		if(start_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
-			start_time_idx=0; //first possible element
+			start_time_idx = 0; //first possible element
 		}
 		const size_t elements_left = max(index - start_time_idx, start_elements);
 		start = index - elements_left;
@@ -199,7 +195,7 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		size_t end_time_idx = IOUtils::seek(end_date, ivec, false); //end time criteria
 		if(end_time_idx==IOUtils::npos) {
 			if(!is_soft) return false;
-			end_time_idx=ivec.size()-1; //last possible element
+			end_time_idx = ivec.size()-1; //last possible element
 		}
 		const size_t elements_right = max(end_time_idx - index, end_elements);
 		end = index + elements_right;
@@ -209,22 +205,22 @@ bool WindowedFilter::get_window_specs(const size_t& index, const std::vector<Met
 		if(!is_soft) return false;
 		if(elements_left<elements_right) { //we hit the left border
 			//get again the end of window
-			size_t end_elems = (min_data_points>(elements_left+1))?min_data_points - (elements_left + 1):0;
+			size_t end_elems = (min_data_points>(elements_left+1))? min_data_points - (elements_left + 1) : 0;
 			const Date end_dt = ivec[start].date+min_time_span;
-			size_t end_tm_idx = (end_dt>date)?IOUtils::seek(end_dt, ivec, false):index; //end time criteria
+			size_t end_tm_idx = (end_dt>date)? IOUtils::seek(end_dt, ivec, false) : index; //end time criteria
 			if(end_tm_idx==IOUtils::npos) {
-				end_tm_idx=ivec.size()-1; //last possible element
+				end_tm_idx = ivec.size()-1; //last possible element
 			}
 			const size_t elems_right = max(end_tm_idx - index, end_elems);
 			end = index + elems_right;
 		} else { //we hit the right border
 			//get again the start of window
-			size_t start_elems = (min_data_points>(elements_right+1))?min_data_points - (elements_right + 1):0;
+			size_t start_elems = (min_data_points>(elements_right+1))? min_data_points - (elements_right + 1) : 0;
 			const Date start_dt = ivec[end].date-min_time_span;
-			size_t start_tm_idx = (start_dt<date)?IOUtils::seek(start_dt, ivec, false):index; //start time criteria
-			if(start_tm_idx!=IOUtils::npos && start_tm_idx!=index) start_tm_idx = (start_tm_idx>0)?start_tm_idx-1:IOUtils::npos;
+			size_t start_tm_idx = (start_dt<date)? IOUtils::seek(start_dt, ivec, false) : index; //start time criteria
+			if(start_tm_idx!=IOUtils::npos && start_tm_idx!=index) start_tm_idx = (start_tm_idx>0)? start_tm_idx-1 : IOUtils::npos;
 			if(start_tm_idx==IOUtils::npos) {
-				end_time_idx=0; //first possible element
+				end_time_idx = 0; //first possible element
 			}
 			const size_t elems_left = max(index - start_tm_idx, start_elems);
 			start = index - elems_left;
