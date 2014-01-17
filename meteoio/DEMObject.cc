@@ -382,6 +382,39 @@ void DEMObject::sanitize() {
 }
 
 /**
+* @brief Computes the hillshade for the dem
+* This "fake illumination" method is used to better show the relief on maps.
+* @param elev elevation (in degrees) of the source of light
+* @param azimuth azimuth (in degrees) of the source of light
+* @param hillshade grid that will be properly resized and contain the illumination
+*
+*/
+void DEMObject::getHillshade(Grid2DObject &hillshade, const double& elev, const double& azimuth) const
+{
+	hillshade.set(ncols, nrows, cellsize, llcorner);
+
+	if(slope.isEmpty() || azi.isEmpty())
+		throw InvalidArgumentException("Hillshade computation requires slope and azimuth!", AT);
+
+	const double zenith_rad = (90.-elev)*Cst::to_rad;
+	const double azimuth_rad = azimuth*Cst::to_rad;
+
+	for ( size_t j = 0; j < nrows; j++ ) {
+		for ( size_t i = 0; i < ncols; i++ ) {
+			const double alt = grid2D(i,j);
+			const double sl = slope(i,j);
+			const double az = azi(i,j);
+			if(alt!=IOUtils::nodata && sl!=IOUtils::nodata && az!=IOUtils::nodata) {
+				const double sl_rad = sl*Cst::to_rad;
+				const double tmp = cos(zenith_rad) * cos(sl_rad) + sin(zenith_rad) * sin(sl_rad) * cos(azimuth_rad-az*Cst::to_rad);
+				hillshade(i,j) = (tmp>=0.)? tmp : 0.;
+			} else
+				hillshade(i,j) = IOUtils::nodata;
+		}
+	}
+}
+
+/**
 * @brief Computes the horizontal distance between two points in a metric grid
 * @param xcoord1 east coordinate of the first point
 * @param ycoord1 north coordinate of the first point
