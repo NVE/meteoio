@@ -377,6 +377,8 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 {
 	vector<string> field, unit;
 	size_t timestamp_field = IOUtils::npos;
+	multiplier.clear();
+	offset.clear();
 	//cout << fields << endl;
 	//cout << units << endl;
 
@@ -451,15 +453,15 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 	static double timestamp;
 	static const size_t timestamp_index = index[0];
 
-	IOUtils::readLineToVec(line, data, ',');	
-	if (data.size() < 2) return; // Malformed for sure
+	const size_t size = IOUtils::readLineToVec(line, data, ',');
+	if (size < 2) return; // Malformed for sure, retire gracefully, no exception thrown
 
 	//The timestamp index is stored in index[0]
 	IOUtils::convertString(timestamp, data[timestamp_index]);
 	tmpmeteo.date.setUnixDate((time_t)(floor(timestamp/1000.0)));
 	tmpmeteo.date.setTimeZone(default_timezone);
 
-	for (size_t jj=2; jj<data.size(); jj++) {
+	for (size_t jj=2; jj<size; jj++) {
 		const string& value = data[jj];
 		if (value != GSNIO::null_string){
 			IOUtils::convertString(tmpmeteo(index[jj]), value);
