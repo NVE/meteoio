@@ -21,6 +21,7 @@
 #include <meteoio/IOUtils.h> //HACK: move FileIndexer in a plugins specific file
 
 #include <cmath>
+#include <cstdlib>
 #include <string>
 #include <sstream>
 #include <iostream>

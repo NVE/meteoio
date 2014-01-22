@@ -82,11 +82,14 @@ bool SMETCommon::initStaticData()
 
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
-	istringstream ss(in_string);
-	double value;
-	if (!(ss >> value)) throw SMETException("Value \"" + in_string + "\" cannot be converted to double", SMET_AT);
+	char* end;
+	double value = strtod(in_string.c_str(),&end);
 
-	return value;
+	if (*end == '\0') {
+		return value;
+	} else {
+		throw SMETException("Value \"" + in_string + "\" cannot be converted to double", SMET_AT);
+	}
 }
 
 int SMETCommon::convert_to_int(const std::string& in_string)
