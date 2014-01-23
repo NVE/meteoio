@@ -83,6 +83,8 @@ class SMETCommon {
 	private:
 		static const bool __init;     ///<helper variable to enable the init of static collection data
 		static bool initStaticData(); ///<initialize the static collections
+		static char* conversion_end;
+		static double conversion_value;
 };
 
 /**

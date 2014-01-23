@@ -26,6 +26,8 @@ using namespace smet; //HACK POPC
 namespace smet {
 
 const std::string SMETCommon::smet_version = "1.1";
+char* SMETCommon::conversion_end = NULL;
+double SMETCommon::conversion_value = 0.0;
 set<string> SMETCommon::all_mandatory_header_keys = set<std::string>();
 set<string> SMETCommon::all_optional_header_keys  = set<std::string>();
 set<string> SMETCommon::all_decimal_header_values = set<std::string>();
@@ -82,11 +84,10 @@ bool SMETCommon::initStaticData()
 
 double SMETCommon::convert_to_double(const std::string& in_string)
 {
-	char* end;
-	double value = strtod(in_string.c_str(),&end);
+	conversion_value = strtod(in_string.c_str(), &conversion_end);
 
-	if (*end == '\0') {
-		return value;
+	if (*conversion_end == '\0') {
+		return conversion_value;
 	} else {
 		throw SMETException("Value \"" + in_string + "\" cannot be converted to double", SMET_AT);
 	}
