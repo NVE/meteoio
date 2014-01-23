@@ -544,6 +544,60 @@ template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_ba
 	return true;
 }
 
+template<> bool convertString<double>(double& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
+{
+	if (f == std::dec) {
+		//First check if string is empty
+		const char* start = str.c_str();
+		while(*start && std::isspace(*start)) start++;
+		if (*start == '\0' || *start == '#' || *start == ';') { // line empty or comment
+			t = static_cast<double> (nodata);
+			return true;
+		}
+
+		//string is not empty
+		char* end;
+		t = strtod(str.c_str(), &end); //would strip leading whitespaces, but already done
+
+		if (*end == '\0') { //conversion successful
+			return true;
+		} else { // conversion might have worked, let's check what is left
+			while((*end != '\0') && std::isspace(*end)) end++;
+
+			if (*end == '\0' || *end == '#' || *end == ';') { // we allow the number to be followed by a comment
+				return true;
+			}
+
+			return false; // Invalid string to convert to double
+		}
+	}
+
+	std::string s(str);
+	trim(s); //delete trailing and leading whitespaces and tabs
+	if (s.empty()) {
+		t = static_cast<double> (nodata);
+		return true;
+	}
+
+	std::istringstream iss(s);
+	iss.setf(std::ios::fixed);
+	iss.precision(std::numeric_limits<double>::digits10); //try to read values with maximum precision
+	iss >> f >> t; //Convert first part of stream with the formatter (e.g. std::dec, std::oct)
+
+	if (iss.fail()) {
+		//Conversion failed
+		return false;
+	}
+	std::string tmp;
+	getline(iss,  tmp); //get rest of line, if any
+	trim(tmp);
+	if (!tmp.empty() && tmp[0] != '#' && tmp[0] != ';') {
+		//if line holds more than one value it's invalid
+		return false;
+	}
+	return true;
+}
+
 template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&))
 {
 	std::string s(str);

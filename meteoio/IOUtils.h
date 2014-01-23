@@ -245,6 +245,7 @@ namespace IOUtils {
 		}
 	}
 	// fully specialized template functions (implementation must not be in header)
+	template<> bool convertString<double>(double& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<std::string>(std::string& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<bool>(bool& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
 	template<> bool convertString<unsigned int>(unsigned int& t, const std::string& str, std::ios_base& (*f)(std::ios_base&));
