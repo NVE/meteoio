@@ -142,7 +142,12 @@ class BufferedIOHandler : public IOInterface {
 
 	private:
 		//private methods
-		const std::vector<METEO_SET>& get_complete_buffer(Date& start, Date& end);
+		void readMeteoData(const Date& dateStart, const Date& dateEnd,
+		                   const size_t& stationindex=IOUtils::npos);
+
+		const std::vector<METEO_SET>& getFullBuffer(Date& start, Date& end);
+
+		void getBufferInterval(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo);
 
 		void push_meteo_data(const Date& date_start, const Date& date_end,
 		                     const std::vector< METEO_SET >& vecMeteo);

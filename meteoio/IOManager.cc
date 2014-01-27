@@ -142,7 +142,7 @@ void IOManager::fill_filtered_cache()
 {
 	if ((IOManager::filtered & processing_level) == IOManager::filtered){
 		//ask the bufferediohandler for the whole buffer
-		const vector< METEO_SET >& buffer = bufferedio.get_complete_buffer(fcache_start, fcache_end);
+		const vector< METEO_SET >& buffer = bufferedio.getFullBuffer(fcache_start, fcache_end);
 		meteoprocessor.process(buffer, filtered_cache);
 	}
 }
@@ -197,8 +197,7 @@ void IOManager::add_to_cache(const Date& i_date, const METEO_SET& vecMeteo)
 	point_cache[i_date] = vecMeteo;
 }
 
-//data can be raw or processed (filtered, resampled)
-size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
+size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
 	vector< vector<MeteoData> > vec_cache;
@@ -230,7 +229,7 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		const bool cached = (fcache_start <= i_date-proc_properties.time_before) && (fcache_end >= i_date+proc_properties.time_after);
 		if (!cached) {
 			//explicit caching, this forces the bufferediohandler to rebuffer, if necessary
-			bufferedio.readMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after, vec_cache); //HACK: vec_cache is not used
+			bufferedio.readMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after);
 			fill_filtered_cache();
 		}
 		data = &filtered_cache;
@@ -256,6 +255,16 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	if ((IOManager::generated & processing_level) == IOManager::generated){
 		dataGenerator.fillMissing(vecMeteo);
 	}
+
+	return vecMeteo.size();
+}
+
+//data can be raw or processed (filtered, resampled)
+size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
+{
+	vecMeteo.clear();
+
+	getTrueMeteoData(i_date, vecMeteo);
 
 	//Store result in the local cache
 	add_to_cache(i_date, vecMeteo);

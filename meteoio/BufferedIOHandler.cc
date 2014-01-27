@@ -236,7 +236,13 @@ double BufferedIOHandler::getAvgSamplingRate() const
 	return IOUtils::nodata;
 }
 
-const std::vector< METEO_SET >& BufferedIOHandler::get_complete_buffer(Date& start, Date& end)
+/**
+ * @brief return all the buffered data as well as the start and end dates
+ * @param start start date of the buffer
+ * @param end end date of the buffer
+ * @return complete buffer
+ */
+const std::vector< METEO_SET >& BufferedIOHandler::getFullBuffer(Date& start, Date& end)
 {
 	start = buffer_start;
 	end   = buffer_end;
@@ -244,11 +250,44 @@ const std::vector< METEO_SET >& BufferedIOHandler::get_complete_buffer(Date& sta
 	return vec_buffer_meteo; //return reference
 }
 
+/**
+ * @brief return all the buffered data between the given dates
+ * @param date_start requested start date of the buffer
+ * @param date_end requested end date of the buffer
+ * @param data vector to fill with the buffered data
+ */
+void BufferedIOHandler::getBufferInterval(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo)
+{
+	//1. Prepare the output vector
+	const size_t buffer_size = vec_buffer_meteo.size();
+	vecMeteo.clear();
+	vecMeteo.reserve(buffer_size);
+
+	//2. Copy appropriate data into vecMeteo for each station
+	for (size_t ii=0; ii<buffer_size; ii++){ //loop through stations
+		vecMeteo.push_back(vector<MeteoData>()); //insert one empty vector of MeteoData
+
+		if (vec_buffer_meteo[ii].empty()) continue; //no data in buffer for this station
+
+		size_t pos_start = IOUtils::seek(date_start, vec_buffer_meteo[ii], false);
+		if (pos_start == IOUtils::npos) pos_start = 0;
+
+		size_t pos_end = IOUtils::seek(date_end, vec_buffer_meteo[ii], false);//HACK:: edit IOUtils::seek to accept an offset
+		if (pos_end == IOUtils::npos) pos_end = vec_buffer_meteo[ii].size() - 1; //just copy until the end of the buffer
+
+		if (vec_buffer_meteo[ii][pos_end].date > date_end){
+			if (pos_end > pos_start) pos_end--;
+		} else {
+			pos_end++;
+		}
+		vecMeteo[ii].reserve(pos_end-pos_start+1); //weird that the "insert" does not handle it internally...
+		vecMeteo[ii].insert(vecMeteo[ii].begin(), vec_buffer_meteo[ii].begin()+pos_start, vec_buffer_meteo[ii].begin()+pos_end);
+	}
+}
+
 void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end,
-                                      std::vector< METEO_SET >& vecMeteo,
                                       const size_t& /*stationindex*/)
 {
-	vecMeteo.clear();
 	const Date new_buffer_start(date_start-buff_before); //taking centering into account
 	Date new_buffer_end(new_buffer_start + chunk_size);
 	vector< vector<MeteoData> > tmp_meteo_buffer; //it must be here -> adresses copied in 2. are still valid
@@ -298,28 +337,14 @@ void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_e
 			buffer_end = new_buffer_end;
 		}
 	}
+}
 
-	//2. Copy appropriate data into vecMeteo
-	vecMeteo.reserve(buffer_size);
-	for (size_t ii=0; ii<buffer_size; ii++){ //loop through stations
-		vecMeteo.push_back(vector<MeteoData>()); //insert one empty vector of MeteoData
-
-		if (vec_buffer_meteo[ii].empty()) continue; //no data in buffer for this station
-
-		size_t pos_start = IOUtils::seek(date_start, vec_buffer_meteo[ii], false);
-		if (pos_start == IOUtils::npos) pos_start = 0;
-
-		size_t pos_end = IOUtils::seek(date_end, vec_buffer_meteo[ii], false);//HACK:: edit IOUtils::seek to accept an offset
-		if (pos_end == IOUtils::npos) pos_end = vec_buffer_meteo[ii].size() - 1; //just copy until the end of the buffer
-
-		if (vec_buffer_meteo[ii][pos_end].date > date_end){
-			if (pos_end > pos_start) pos_end--;
-		} else {
-			pos_end++;
-		}
-		vecMeteo[ii].reserve(pos_end-pos_start+1); //weird that the "insert" does not handle it internally...
-		vecMeteo[ii].insert(vecMeteo[ii].begin(), vec_buffer_meteo[ii].begin()+pos_start, vec_buffer_meteo[ii].begin()+pos_end);
-	}
+void BufferedIOHandler::readMeteoData(const Date& date_start, const Date& date_end,
+                                      std::vector< METEO_SET >& vecMeteo,
+                                      const size_t& stationindex)
+{
+	readMeteoData(date_start, date_end, stationindex);
+	getBufferInterval(date_start, date_end, vecMeteo);
 }
 
 void BufferedIOHandler::bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_SET >& vecvecMeteo){

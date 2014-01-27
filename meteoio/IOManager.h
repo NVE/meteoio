@@ -241,6 +241,7 @@ class IOManager {
 		void fill_filtered_cache();
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
 		                         std::vector< METEO_SET >& vec_meteo);
+		size_t getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo);
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler rawio;
