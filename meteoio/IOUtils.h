@@ -207,7 +207,7 @@ namespace IOUtils {
 	void readKeyValueHeader(std::map<std::string, std::string>& headermap,
 	                        std::istream& bs,
 	                        const size_t& linecount=1,
-	                        const std::string& delimiter="=");
+	                        const std::string& delimiter="=", const bool& keep_case=false);
 
 
 	/**

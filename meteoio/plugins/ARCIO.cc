@@ -195,7 +195,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 		IOUtils::getValueForKey(header, "xllcorner", xllcorner);
 		IOUtils::getValueForKey(header, "yllcorner", yllcorner);
 		IOUtils::getValueForKey(header, "cellsize", cellsize);
-		IOUtils::getValueForKey(header, "NODATA_value", plugin_nodata);
+		IOUtils::getValueForKey(header, "nodata_value", plugin_nodata);
 
 		i_ncols = IOUtils::standardizeNodata(i_ncols, plugin_nodata);
 		i_nrows = IOUtils::standardizeNodata(i_nrows, plugin_nodata);
