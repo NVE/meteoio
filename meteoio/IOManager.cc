@@ -258,10 +258,8 @@ size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 			if (index != IOUtils::npos)
 				vecMeteo.push_back(vec_cache[ii][index]); //Insert station into vecMeteo
 		}
-
 		return vecMeteo.size();
 	}
-
 
 	//2.  Check which data point is available, buffered locally
 	const map<Date, vector<MeteoData> >::const_iterator it = point_cache.find(i_date);
@@ -333,9 +331,10 @@ size_t IOManager::getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	}
 
 	//fill meteo parameters
+	string info_string;
 	for(size_t param=0; param<v_params.size(); param++) {
 		std::vector<double> result;
-		interpolate(i_date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result);
+		interpolate(i_date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result, info_string);
 		for(size_t ii=0; ii<v_coords.size(); ii++)
 			vecMeteo[ii](v_params[param]) = result[ii];
 	}
@@ -421,12 +420,6 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 
 		Grid2DObject result_grid;
 		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
-		if (ii == 0) {
-			cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam)
-				<< " point wise for " << vec_coords.size() << " points"
-				<< " (" << info_string << ") " << endl;
-		}
-
 		result.push_back(result_grid.grid2D(0,0));
 	}
 	skip_virtual_stations = false;
