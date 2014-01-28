@@ -173,48 +173,16 @@ void GRIBIO::setOptions()
 void GRIBIO::readStations(std::vector<Coords> &vecPoints)
 {
 	cfg.getValue("METEOPATH", "Input", meteopath_in);
-	size_t current_stationnr = 1;
-	string current_station;
-	do {
-		current_station.clear();
-		ostringstream ss;
-		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
-		IOUtils::stripComments(current_station);
 
-		if (!current_station.empty()) {
-			addStation(current_station, vecPoints);
-			std::cerr <<  "\tRead virtual station " << vecPoints.back().printLatLon() << "\n";
-		}
-		current_stationnr++;
-	} while (!current_station.empty());
-}
+	std::vector<std::string> vecStation;
+	cfg.getValues("STATION", "INPUT", vecStation);
+	for(size_t ii=0; ii<vecStation.size(); ii++) {
+		Coords tmp(coordin, coordinparam, vecStation[ii]);
+		if(!tmp.isNodata())
+			vecPoints.push_back( tmp );
 
-void GRIBIO::addStation(const std::string& coord_spec, std::vector<Coords> &vecPoints)
-{
-	std::istringstream iss(coord_spec);
-	double coord1=IOUtils::nodata, coord2=IOUtils::nodata;
-	int epsg=IOUtils::inodata;
-
-	iss >> std::skipws >> coord1;
-	iss >> std::skipws >> coord2;
-	iss >> std::skipws >> epsg;
-
-	if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata && epsg!=IOUtils::inodata) {
-		Coords point;
-		point.setEPSG(epsg);
-		point.setXY(coord1, coord2, IOUtils::nodata);
-		vecPoints.push_back(point);
-		return;
+		std::cerr <<  "\tRead virtual station " << vecPoints.back().printLatLon() << "\n";
 	}
-	if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
-		Coords point(coordin, coordinparam);
-		point.setLatLon(coord1, coord2, IOUtils::nodata);
-		vecPoints.push_back(point);
-		return;
-	}
-
-	throw InvalidArgumentException("Coordinate specification \""+coord_spec+"\" is invalid!", AT);
 }
 
 void GRIBIO::listKeys(grib_handle** h, const std::string& filename)

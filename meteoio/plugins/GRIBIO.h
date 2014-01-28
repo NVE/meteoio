@@ -71,7 +71,6 @@ class GRIBIO : public IOInterface {
 		void read2DGrid(const std::string& filename, Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
 		void readWind(const std::string& filename, const Date& date);
 		void indexFile(const std::string& filename);
-		void addStation(const std::string& coord_spec, std::vector<Coords> &vecPoints);
 		void readStations(std::vector<Coords> &vecPoints);
 		void listKeys(grib_handle** h, const std::string& filename);
 		void scanMeteoPath();
