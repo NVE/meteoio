@@ -28,7 +28,7 @@ int main(int /*argc*/, char** argv) {
 	Grid2DObject param, ref;
 	int status = EXIT_SUCCESS;
 
-	io.interpolate(d1, dem, MeteoData::TA, param);
+	io.getMeteoData(d1, dem, MeteoData::TA, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::TA, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_TA_ref.asc");
@@ -37,7 +37,7 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.interpolate(d1, dem, MeteoData::TSS, param);
+	io.getMeteoData(d1, dem, MeteoData::TSS, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::TSS, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_TSS_ref.asc");
@@ -46,7 +46,7 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.interpolate(d1, dem, MeteoData::TSG, param);
+	io.getMeteoData(d1, dem, MeteoData::TSG, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::TSG, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_TSG_ref.asc");
@@ -55,7 +55,7 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.interpolate(d1, dem, MeteoData::HNW, param);
+	io.getMeteoData(d1, dem, MeteoData::HNW, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::HNW, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_HNW_ref.asc");
@@ -64,7 +64,7 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.interpolate(d1, dem, MeteoData::RH, param);
+	io.getMeteoData(d1, dem, MeteoData::RH, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::RH, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_RH_ref.asc");
@@ -73,7 +73,7 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.interpolate(d1, dem, MeteoData::VW, param);
+	io.getMeteoData(d1, dem, MeteoData::VW, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::VW, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_VW_ref.asc");
@@ -82,7 +82,7 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.interpolate(d1, dem, MeteoData::RSWR, param);
+	io.getMeteoData(d1, dem, MeteoData::RSWR, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::RSWR, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_RSWR_ref.asc");
@@ -91,7 +91,7 @@ int main(int /*argc*/, char** argv) {
 		}
 	}
 
-	io.interpolate(d1, dem, MeteoData::P, param);
+	io.getMeteoData(d1, dem, MeteoData::P, param);
 	if(gen_ref) io.write2DGrid(param, MeteoGrids::P, d1);
 	else {
 		io.read2DGrid(ref, date_str+"_P_ref.asc");

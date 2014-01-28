@@ -23,6 +23,7 @@
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/MeteoData.h>
+#include <meteoio/Coords.h>
 
 namespace mio {
 
@@ -137,54 +138,18 @@ class IOManager {
 		 * @param result grid returned filled with the requested data
 		 * @return true if the grid got filled
 		 */
-#ifdef _POPC_ //HACK popc
-		bool getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result);
-#else
+
 		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result);
-#endif
 
-#ifdef _POPC_ //HACK popc
-		bool getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result, std::string& info_string);
-#else
 		bool getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 		                 Grid2DObject& result, std::string& info_string);
-#endif
 
-#ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
-		                 Grid2DObject& result);
-#else
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result);
-#endif
-
-#ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
-		                 Grid2DObject& result, std::string& info_string);
-#else
-		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-		                 Grid2DObject& result, std::string& info_string);
-#endif
-
-#ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-				 /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result);
-#else
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result);
-#endif
 
-#ifdef _POPC_ //HACK popc
-		void interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-				 /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result,
-				 std::string& info_string);
-#else
 		void interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
 				 const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string);
-#endif
 
 		/**
 		 * @brief Set the desired ProcessingLevel of the IOManager instance
@@ -221,11 +186,8 @@ class IOManager {
 		 */
 		double getAvgSamplingRate() const;
 
-#ifdef _POPC_ //HACK popc
-		void writeMeteoData(/*const*/ std::vector< METEO_SET >& vecMeteo, /*const*/ std::string& name/*=""*/);
-#else
 		void writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name="");
-#endif
+
 		/**
 		 * @brief Returns a copy of the internal Config object.
 		 * This is convenient to clone an iomanager
@@ -238,10 +200,12 @@ class IOManager {
 		void add_to_cache(const Date& i_date, const METEO_SET& vecMeteo);
 
 	private:
+		void initVirtualStations();
 		void fill_filtered_cache();
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
 		                         std::vector< METEO_SET >& vec_meteo);
 		size_t getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo);
+		size_t getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo);
 
 		const Config cfg; ///< we keep this Config object as full copy, so the original one can get out of scope/be destroyed
 		IOHandler rawio;
@@ -249,12 +213,18 @@ class IOManager {
 		MeteoProcessor meteoprocessor;
 		Meteo2DInterpolator interpolator;
 		DataGenerator dataGenerator;
-		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
 
+		std::vector<size_t> v_params; ///< Parameters for virtual stations
+		std::vector<Coords> v_coords; ///< Coordinates for virtual stations
+		std::vector<StationData> v_stations; ///< metadata for virtual stations
+
+		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
 		std::map<Date, METEO_SET > point_cache;  ///< stores already resampled data points
 		std::vector< METEO_SET > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
 		unsigned int processing_level;
+		bool virtual_stations; ///< compute the meteo values at virtual stations
+		bool skip_virtual_stations; ///< skip virtual stations in subsequent calls to prevent recursive calls...
 };
 } //end namespace
 #endif

@@ -24,12 +24,59 @@ namespace mio {
 
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg),
                                             meteoprocessor(cfg), interpolator(cfg), dataGenerator(cfg),
+                                            v_params(), v_coords(), v_stations(),
                                             proc_properties(), point_cache(), filtered_cache(),
                                             fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
-                                            processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated)
+                                            processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated),
+                                            virtual_stations(false), skip_virtual_stations(false)
 {
 	meteoprocessor.getWindowSize(proc_properties);
 	interpolator.setIOManager(*this); //because "*this" does not necessarily exist in the initialization list...
+	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
+	if(virtual_stations) {
+		initVirtualStations();
+	}
+}
+
+void IOManager::initVirtualStations()
+{
+	if(!cfg.keyExists("DEM", "Input"))
+		throw NoAvailableDataException("In order to use virtual stations, please provide a DEM!", AT);
+	DEMObject dem;
+	bufferedio.readDEM(dem);
+
+	//get virtual stations coordinates
+	std::string coordin, coordinparam, coordout, coordoutparam;
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+
+	std::vector<std::string> vecStation;
+	cfg.getValues("Vstation", "INPUT", vecStation);
+	for(size_t ii=0; ii<vecStation.size(); ii++) {
+		Coords tmp(coordin, coordinparam, vecStation[ii]);
+		if(!tmp.isNodata())
+			v_coords.push_back( tmp );
+	}
+
+	//create stations' metadata
+	for(size_t ii=0; ii<v_coords.size(); ii++) {
+		if(!dem.gridify(v_coords[ii])) {
+			ostringstream ss;
+			ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM";
+			throw NoAvailableDataException(ss.str(), AT);
+		}
+
+		const size_t i = v_coords[ii].getGridI(), j = v_coords[ii].getGridJ();
+		v_coords[ii].setAltitude(dem(i,j), false);
+
+		ostringstream name;
+		name << "Virtual_Station_" << ii+1;
+		ostringstream id;
+		id << "VIR" << ii+1;
+		StationData sd(v_coords[ii], id.str(), name.str());
+		sd.setSlope(dem.slope(i,j), dem.azi(i,j));
+
+		v_stations.push_back( sd );
+	}
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
@@ -259,23 +306,59 @@ size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	return vecMeteo.size();
 }
 
+size_t IOManager::getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo)
+{
+	vecMeteo.clear();
+	METEO_SET vecTrueMeteo;
+	getTrueMeteoData(i_date, vecTrueMeteo);
+	if(vecTrueMeteo.empty()) return 0;
+
+	if(v_params.empty()) {
+		//get parameters to interpolate if not already done
+		//we need valid data in order to handle extra parameters
+		std::vector<std::string> vecStr;
+		cfg.getValue("Virtual_parameters", "Input", vecStr);
+		for(size_t ii=0; ii<vecStr.size(); ii++) {
+			v_params.push_back( vecTrueMeteo[0].getParameterIndex(vecStr[ii]) );
+		}
+	}
+
+	DEMObject dem;
+	bufferedio.readDEM(dem);
+
+	//create stations without measurements
+	for(size_t ii=0; ii<v_stations.size(); ii++) {
+		MeteoData md(i_date, v_stations[ii]);
+		vecMeteo.push_back( md );
+	}
+
+	//fill meteo parameters
+	for(size_t param=0; param<v_params.size(); param++) {
+		std::vector<double> result;
+		interpolate(i_date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result);
+		for(size_t ii=0; ii<v_coords.size(); ii++)
+			vecMeteo[ii](v_params[param]) = result[ii];
+	}
+
+	return vecMeteo.size();
+}
+
 //data can be raw or processed (filtered, resampled)
 size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
 
-	getTrueMeteoData(i_date, vecMeteo);
+	if(!virtual_stations || skip_virtual_stations)
+		getTrueMeteoData(i_date, vecMeteo);
+	else
+		getVirtualMeteoData(i_date, vecMeteo);
 
 	//Store result in the local cache
 	add_to_cache(i_date, vecMeteo);
 	return vecMeteo.size();
 }
 
-#ifdef _POPC_ //HACK popc
-void IOManager::writeMeteoData(/*const*/ std::vector< METEO_SET >& vecMeteo, /*const*/ std::string& name)
-#else
 void IOManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const std::string& name)
-#endif
 {
 	if (processing_level == IOManager::raw){
 		rawio.writeMeteoData(vecMeteo, name);
@@ -284,65 +367,27 @@ void IOManager::writeMeteoData(const std::vector< METEO_SET >& vecMeteo, const s
 	}
 }
 
-#ifdef _POPC_ //HACK popc
-bool IOManager::getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-                  Grid2DObject& result)
-#else
 bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                   Grid2DObject& result)
-#endif
 {
 	string info_string;
-	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+	const bool status = getMeteoData(date, dem, meteoparam, result, info_string);
 	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
 	cerr << " (" << info_string << ") " << endl;
+	return status;
+}
+
+bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                  Grid2DObject& result, std::string& info_string)
+{
+	skip_virtual_stations = true;
+	interpolator.interpolate(date, dem, meteoparam, result, info_string);
+	skip_virtual_stations = false;
 	return (!result.isEmpty());
 }
 
-#ifdef _POPC_ //HACK popc
-bool IOManager::getMeteoData(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-                  Grid2DObject& result, std::string& info_string)
-#else
-bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                  Grid2DObject& result, std::string& info_string)
-#endif
-{
-	interpolator.interpolate(date, dem, meteoparam, result, info_string);
-	return (!result.isEmpty());
-}
-
-#ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
-                            Grid2DObject& result)
-#else
-void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            Grid2DObject& result)
-#endif
-{
-	string info_string;
-	interpolate(date, dem, meteoparam, result, info_string);
-	cerr << "[i] Interpolating " << MeteoData::getParameterName(meteoparam);
-	cerr << " (" << info_string << ") " << endl;
-}
-
-#ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters meteoparam,
-                            Grid2DObject& result, std::string& info_string)
-#else
-void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            Grid2DObject& result, std::string& info_string)
-#endif
-{
-	interpolator.interpolate(date, dem, meteoparam, result, info_string);
-}
-
-#ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-                            /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result)
-#else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result)
-#endif
 {
 	string info_string;
 	interpolate(date, dem, meteoparam, in_coords, result, info_string);
@@ -350,16 +395,11 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 	cerr << " (" << info_string << ") " << endl;
 }
 
-#ifdef _POPC_ //HACK popc
-void IOManager::interpolate(/*const*/ Date& date, /*const*/ DEMObject& dem, /*const*/ MeteoData::Parameters& meteoparam,
-                            /*const*/ std::vector<Coords>& in_coords, std::vector<double>& result,
-                            std::string& info_string)
-#else
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
-#endif
 {
 	result.clear();
+	skip_virtual_stations = true;
 
 	vector<Coords> vec_coords = in_coords;
 
@@ -389,6 +429,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 
 		result.push_back(result_grid.grid2D(0,0));
 	}
+	skip_virtual_stations = false;
 }
 
 void IOManager::read2DGrid(Grid2DObject& grid2D, const std::string& filename)

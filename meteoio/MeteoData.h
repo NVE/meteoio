@@ -129,6 +129,13 @@ class MeteoData {
 		MeteoData(const Date& in_date);
 
 		/**
+		* @brief A constructor that sets the measurment time and meta data
+		* @param in_date A Date object representing the time of the measurement
+		* @param meta_in A StationData object containing the meta data
+		*/
+		MeteoData(const Date& date_in, const StationData& meta_in);
+
+		/**
 		* @brief A setter function for the measurement date
 		* @param in_date A Date object representing the time of the measurement
 		*/

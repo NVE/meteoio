@@ -172,6 +172,10 @@ MeteoData::MeteoData(const Date& date_in)
          : date(date_in), meta(), param_name(s_default_paramname), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
 { }
 
+MeteoData::MeteoData(const Date& date_in, const StationData& meta_in)
+         : date(date_in), meta(meta_in), param_name(s_default_paramname), data(MeteoData::nrOfParameters, IOUtils::nodata), nrOfAllParameters(MeteoData::nrOfParameters), resampled(false)
+{ }
+
 void MeteoData::setDate(const Date& in_date)
 {
 	date = in_date;

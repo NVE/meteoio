@@ -339,6 +339,40 @@ Coords::Coords(const Coords& c) : ref_latitude(c.ref_latitude), ref_longitude(c.
                    coordsystem(c.coordsystem), coordparam(c.coordparam), distance_algo(c.distance_algo) {}
 
 /**
+* @brief Local projection onstructor: this constructor is only suitable for building a local projection.
+* Such a projection defines easting and northing as the distance (in meters) to a reference point
+* which coordinates have to be provided here.
+* @param[in] in_coordinatesystem string identifying the coordinate system to use
+* @param[in] in_parameters string giving some additional parameters for the projection (empty string if not applicable)
+* @param[in] coord_spec coordinate specification
+*
+* The coordinate specification is given as either: "easting northing epsg" or "lat lon".
+*/
+Coords::Coords(const std::string& in_coordinatesystem, const std::string& in_parameters, const std::string& coord_spec)
+       : ref_latitude(IOUtils::nodata), ref_longitude(IOUtils::nodata),
+         altitude(IOUtils::nodata), latitude(IOUtils::nodata), longitude(IOUtils::nodata),
+         easting(IOUtils::nodata), northing(IOUtils::nodata),
+         grid_i(IOUtils::inodata), grid_j(IOUtils::inodata), grid_k(IOUtils::inodata),
+         coordsystem(in_coordinatesystem), coordparam(in_parameters), distance_algo(GEO_COSINE)
+{
+	std::istringstream iss(coord_spec);
+	double coord1=IOUtils::nodata, coord2=IOUtils::nodata;
+	int epsg=IOUtils::inodata;
+
+	iss >> std::skipws >> coord1;
+	iss >> std::skipws >> coord2;
+	iss >> std::skipws >> epsg;
+
+	if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata && epsg!=IOUtils::inodata) {
+		setEPSG(epsg);
+		setXY(coord1, coord2, IOUtils::nodata);
+		setProj(in_coordinatesystem, in_parameters);
+	} else if(coord1!=IOUtils::nodata && coord2!=IOUtils::nodata) {
+		setLatLon(coord1, coord2, IOUtils::nodata);
+	}
+}
+
+/**
 * @brief Returns the East coordinate in the configured projection system
 * @return easting
 */
