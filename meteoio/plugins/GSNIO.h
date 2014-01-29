@@ -26,11 +26,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string>
-#include <sstream>
-#include <iostream>
 #include <vector>
-#include <algorithm>
-//#include <cstdint>
 
 #include <curl/curl.h>
 
@@ -74,15 +70,14 @@ class GSNIO : public IOInterface {
 	private:
 		void convertUnits(MeteoData& meteo);
 		void initGSNConnection();
-		void readStationNames();
 		void readMetaData();
 		void getAllStations();
-		void save_station(const std::string& id, const std::string& name, const double& lat, const double& lon, 
+		void save_station(const std::string& id, const std::string& name, const double& lat, const double& lon,
 		                  const double& alt, const double& slope_angle, const double& slope_azi);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index);
 		double olwr_to_tss(const double& olwr);
-		void parse_streamElement(const std::string& line, const std::vector<size_t>& index, 
+		void parse_streamElement(const std::string& line, const std::vector<size_t>& index,
 		                         const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo);
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
 		CURLcode curl_read(const std::string& url, std::ostream& os);

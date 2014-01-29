@@ -17,6 +17,10 @@
 */
 #include "GSNIO.h"
 
+#include <algorithm>
+#include <sstream>
+#include <iostream>
+
 using namespace std;
 
 namespace mio {
@@ -46,11 +50,11 @@ namespace mio {
  * <tr><td>SOLAR_RAD</td><td>MeteoData::ISWR</td></tr>
  * </table></td></tr>
  * </table></center>
- * Please keep in mind that the names in GSN have currently not been standardized. This means that any sensor that does 
+ * Please keep in mind that the names in GSN have currently not been standardized. This means that any sensor that does
  * not use the above names will not be properly supported (fields will not be missing but might appear under a different name)!
  *
  * @section gsn_units Units
- * The units of measurements are sometimes listed in the response headers, they are then parsed by the plugin and if known, 
+ * The units of measurements are sometimes listed in the response headers, they are then parsed by the plugin and if known,
  * like <b>°C</b> or <b>\%</b>, offsets and multipliers are set to convert the data to MKSA
  *
  * Otherwise the units are assumed to be the following:
@@ -67,9 +71,9 @@ namespace mio {
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Input] section
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
- * - URL: The URL of the RESTful web service e.g. http://planetdata.epfl.ch:22001/rest
- * - USER: The username to access the service
- * - PASS: The password to authenticate the USER
+ * - GSN_URL: The URL of the RESTful web service e.g. http://planetdata.epfl.ch:22001/rest
+ * - GSN_USER: The username to access the service
+ * - GSN_PASS: The password to authenticate the USER
  * - STATION#: station code for the given number #, e. g. la_fouly_1034 (case sensitive!)
  *
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
@@ -82,7 +86,7 @@ const std::string GSNIO::sensors_endpoint = "sensors";
 const std::string GSNIO::null_string = "null";
 
 GSNIO::GSNIO(const std::string& configfile)
-      : cfg(configfile), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(), 
+      : cfg(configfile), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(),
         coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -90,7 +94,7 @@ GSNIO::GSNIO(const std::string& configfile)
 }
 
 GSNIO::GSNIO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(), 
+      : cfg(cfgreader), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(),
         coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -105,14 +109,14 @@ void GSNIO::initGSNConnection() {
 	default_timezone = IOUtils::nodata;
 	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
 
-	cfg.getValue("URL", "Input", endpoint, IOUtils::nothrow);
+	cfg.getValue("GSN_URL", "Input", endpoint, IOUtils::nothrow);
 	if (!endpoint.empty()){
 		if (*endpoint.rbegin() != '/') endpoint += "/";
 		cerr << "[i] Using GSN Endpoint: " << endpoint << endl;
 	}
 
-	cfg.getValue("USER", "Input", userid);
-	cfg.getValue("PASS", "Input", passwd);
+	cfg.getValue("GSN_USER", "Input", userid);
+	cfg.getValue("GSN_PASS", "Input", passwd);
 }
 
 void GSNIO::read2DGrid(Grid2DObject&, const std::string&)
@@ -156,13 +160,12 @@ void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 	vecStation = vecMeta;
 }
 void GSNIO::readMetaData()
-{	
+{
 	vecMeta.clear();
 
 	if (vecStationName.empty())
-		readStationNames(); //reads station names into vector<string> vecStationName
+		cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
 
-	
 	//Get Meta Data for all stations first
 	getAllStations();
 
@@ -183,40 +186,13 @@ void GSNIO::readMetaData()
 	}
 }
 
-void GSNIO::readStationNames()
-{
-	/**
-	 * Parse through the io.ini file and copy the desired station names STATION#
-	 * into vecStationName, if no stations are configured all stations with 
-	 * meteo data will be taken into account
-	 */
-	vecStationName.clear();
-
-	size_t current_stationnr = 1;
-	string current_station;
-
-	do {
-		current_station = string("");
-		ostringstream ss;
-		ss << "STATION" << current_stationnr;
-		cfg.getValue(ss.str(), "Input", current_station, IOUtils::nothrow);
-
-		if (!current_station.empty()){
-			vecStationName.push_back(current_station); //add station name to vector of all station names
-			cerr << "[i] Adding GSN stationname '" << current_station << "'\n";
-		}
-
-		current_stationnr++;
-	} while (!current_station.empty());
-}
-
-void GSNIO::save_station(const std::string& id, const std::string& name, const double& lat, const double& lon, 
+void GSNIO::save_station(const std::string& id, const std::string& name, const double& lat, const double& lon,
                          const double& alt, const double& slope_angle, const double& slope_azi)
 {
 	Coords current_coord(coordin, coordinparam);
 	current_coord.setLatLon(lat, lon, alt);
 	StationData sd(current_coord, id, name);
-					
+
 	if (slope_angle != IOUtils::nodata) {
 		if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
 			sd.setSlope(slope_angle, 0.); //expostion: north assumed
@@ -232,23 +208,23 @@ void GSNIO::getAllStations()
 {
 	/**
 	 * Retrieve all station names, that are available in the current GSN instance
-	 * and which are accessible for the current user (see Input::USER)
+	 * and which are accessible for the current user (see Input::GSN_USER)
 	 */
-	const string vsname_str = "# vsname:";
-	const string altitude_str = "# altitude:";
-	const string longitude_str = "# longitude:";
-	const string latitude_str = "# latitude:";
-	const string slope_str = "# slope:";
-	const string exposition_str = "# exposition:";
-	const string name_str = "# name:";
+	const string vsname_str("# vsname:");
+	const string altitude_str("# altitude:");
+	const string longitude_str("# longitude:");
+	const string latitude_str("# latitude:");
+	const string slope_str("# slope:");
+	const string exposition_str("# exposition:");
+	const string name_str("# name:");
 
 	stringstream ss;
-	string line = "";
+	string line("");
 
-	vecAllMeta.clear();	
+	vecAllMeta.clear();
 
 	if (curl_read(sensors_endpoint + "?username=" + userid + "&password=" + passwd, ss) == CURLE_OK) {
-		string name="", id="", azi="";
+		string name(""), id(""), azi("");
 		double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
 		unsigned int valid = 0;
 
@@ -325,13 +301,13 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 	}
-	
+
 }
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
-	const string fields_str = "# fields:";
-	const string units_str = "# units:";
+	const string fields_str("# fields:");
+	const string units_str("# units:");
 
 	stringstream ss;
 
@@ -346,11 +322,11 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		MeteoData tmpmeteo;
 		tmpmeteo.meta = vecMeta.at(stationindex);
 
-		string line = "", fields="", units="";
+		string line(""), fields(""), units("");
 		while (getline(ss, line)) { //parse header section
 
 			if (line.size() && (line[0] != '#')) break;
-			
+
 			if (!line.compare(0, fields_str.size(), fields_str)) {
 				fields = line.substr(fields_str.size());
 			} else if (!line.compare(0, units_str.size(), units_str)) {
@@ -364,7 +340,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 
 		map_parameters(fields, units, tmpmeteo, index);
 		olwr_present = tmpmeteo.param_exists("OLWR");
-		
+
 		do { //parse data section, the first line should already be buffered
 			parse_streamElement(line, index, olwr_present, vecMeteo, tmpmeteo);
 		} while (getline(ss, line));
@@ -534,7 +510,7 @@ void GSNIO::convertUnits(MeteoData& meteo)
 		hs /= 100.;
 
 	// For all parameters that have either an offset or an multiplier to bring to MKSA
-	map<size_t, double>::iterator it;
+	map<size_t, double>::const_iterator it;
 	for (it = multiplier.begin(); it != multiplier.end(); it++) {
 		double& tmp = meteo(it->first);
 		if (tmp != IOUtils::nodata) tmp *= it->second;
@@ -551,7 +527,7 @@ size_t GSNIO::data_write(void* buf, size_t size, size_t nmemb, void* userp)
 	if (userp) {
 		ostream& os = *static_cast<ostream*>(userp);
 		streamsize len = size * nmemb;
-		
+
 		if (os.write(static_cast<char*>(buf), len)) return len;
 	}
 
