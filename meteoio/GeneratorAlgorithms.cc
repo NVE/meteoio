@@ -35,6 +35,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new SinGenerator(vecArgs, i_algoname);
 	} else if (algoname == "STD_PRESS"){
 		return new StandardPressureGenerator(vecArgs, i_algoname);
+	} else if (algoname == "BRUTSAERT"){
+		return new BrutsaertGenerator(vecArgs, i_algoname);
 	} else if (algoname == "UNSWORTH"){
 		return new UnsworthGenerator(vecArgs, i_algoname);
 	} else if (algoname == "POT_RADIATION"){
@@ -172,6 +174,42 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 
 	return true; //all missing values could be filled
 }
+
+
+void BrutsaertGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	//Get the optional arguments for the algorithm: constant value to use
+	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
+}
+
+bool BrutsaertGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if(value==IOUtils::nodata) {
+		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
+		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
+
+		value = Atmosphere::Brutsaert_ilwr(RH, TA);
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool BrutsaertGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(vecMeteo.empty()) return true;
+
+	bool all_filled = true;
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		const bool status = generate(param, vecMeteo[ii]);
+		if(status==false) all_filled=false;
+	}
+
+	return all_filled;
+}
+
 
 const double UnsworthGenerator::soil_albedo = .23; //grass
 const double UnsworthGenerator::snow_albedo = .85; //snow

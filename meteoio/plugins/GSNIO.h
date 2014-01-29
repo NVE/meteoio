@@ -68,7 +68,7 @@ class GSNIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		void convertUnits(MeteoData& meteo);
+		void convertUnits(MeteoData& meteo) const;
 		void initGSNConnection();
 		void readMetaData();
 		void getAllStations();
@@ -76,9 +76,9 @@ class GSNIO : public IOInterface {
 		                  const double& alt, const double& slope_angle, const double& slope_azi);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(const std::string& fields, const std::string& units, MeteoData& md, std::vector<size_t>& index);
-		double olwr_to_tss(const double& olwr);
+		static double olwr_to_tss(const double& olwr);
 		void parse_streamElement(const std::string& line, const std::vector<size_t>& index,
-		                         const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo);
+		                         const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo) const;
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
 		CURLcode curl_read(const std::string& url, std::ostream& os);
 

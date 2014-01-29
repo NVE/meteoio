@@ -63,6 +63,7 @@ namespace mio {
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
+ * - BRUTSAERT: use a Brutsaert clear sky model to generate ILWR from TA, RH (see BrutsaertGenerator)
  * - UNSWORTH: use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
  * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
@@ -174,6 +175,28 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
 };
 
 /**
+ * @class BrutsaertGenerator
+ * @brief ILWR clear sky Brutsaert parametrization
+ * Use a Brutsaert clear sky model to estimate ILWR from RH, TA.
+ * This uses the formula from Brutsaert -- <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
+ * Journal of Water Resources Research, <b>11</b>, No. 5, October 1975, pp 742-744.
+ * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
+ * @code
+ * ILWR::generators = BRUTSAERT
+ * @endcode
+ *
+ */
+class BrutsaertGenerator : public GeneratorAlgorithm {
+	public:
+		BrutsaertGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		void parse_args(const std::vector<std::string>& vecArgs);
+};
+
+/**
  * @class UnsworthGenerator
  * @brief ILWR parametrization using TA, RH, ISWR
  * Use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate
@@ -186,7 +209,7 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
  * during the times when no ISWR is available if such ratio is not too old (ie. no more than 1 day old).
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
  * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
- * in order to compute ISWR from RSWR.
+ * in order to compute ISWR from RSWR. Finally, if no short wave measurement is available, it uses a Dilley clear sky model.
  * @code
  * ILWR::generators = UNSWORTH
  * @endcode
@@ -214,8 +237,8 @@ class UnsworthGenerator : public GeneratorAlgorithm {
  * (as a function of the location and the date). Please note that although this is the radiation as perceived
  * at ground level (on the horizontal). If an incoming long wave measurement is available, it corrects the
  * generated iswr for cloudiness (basically doing like UnsworthGenerator in reverse), otherwise this assumes
- * clear sky! If no TA or RH is available, average values will be used
- * (in order to get an average value for the precipitable water vapor).
+ * clear sky! If no TA or RH is available, average values will be used (in order to get an average value
+ * for the precipitable water vapor).
  * @note This relies on SunObject to perform the heavy duty computation.
  * @code
  * ISWR::generators = POT_RADIATION

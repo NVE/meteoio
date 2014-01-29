@@ -79,6 +79,14 @@ namespace mio {
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
  * This may result in a long download.
  *
+ * @code
+ * METEO	= GSN
+ * GSN_URL	= http://montblanc.slf.ch:22001/rest
+ * GSN_USER	= mylogin
+ * GSN_PASS	= mypasswd
+ * STATION1	= wind_tunnel_meteo
+ * @endcode
+ *
  */
 
 const int GSNIO::http_timeout = 60; // seconds until connect time out for libcurl
@@ -297,7 +305,6 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 		}
 	}
 
-	//cout << "Trying to fetch data for: " << dateStart.toString(Date::ISO) << "  until  " << dateEnd.toString(Date::ISO) << endl;
 	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 	}
@@ -309,11 +316,10 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	const string fields_str("# fields:");
 	const string units_str("# units:");
 
-	stringstream ss;
-
-	string request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
+	const string request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
 	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00" + "&username=" + userid + "&password=" + passwd;
-	//cout << "Requesting: " << request << endl;
+
+	stringstream ss;
 
 	if (curl_read(request, ss) == CURLE_OK) {
 		vector<size_t> index;
@@ -355,8 +361,6 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	size_t timestamp_field = IOUtils::npos;
 	multiplier.clear();
 	offset.clear();
-	//cout << fields << endl;
-	//cout << units << endl;
 
 	IOUtils::readLineToVec(fields, field, ',');
 	IOUtils::readLineToVec(units, unit, ',');
@@ -366,9 +370,9 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	}
 
 	for (size_t ii=0; ii<field.size(); ii++) {
-		const string field_name = IOUtils::strToUpper(field[ii]);
+		const string field_name( IOUtils::strToUpper(field[ii]) );
 
-		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID") {
+		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID" || field_name == "REL_HUMIDITY") {
 			index.push_back(MeteoData::RH);
 		} else if (field_name == "AIR_TEMPERATURE" || field_name == "TA" || field_name == "AIR_TEMP") {
 			index.push_back(MeteoData::TA);
@@ -391,8 +395,10 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 			index.push_back(MeteoData::HS);
 		} else if (field_name == "RAIN_METER" || field_name == "PINT") {
 			index.push_back(MeteoData::HNW);
-		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS") {
+		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS" || field_name == "SNOW_SURFACE_TEMPERATURE") {
 			index.push_back(MeteoData::TSS);
+		} else if (field_name == "ATM_PRESSURE" || field_name == "P") {
+			index.push_back(MeteoData::P);
 		} else if (field_name == "TIMESTAMP") {
 			timestamp_field = ii;
 			index.push_back(IOUtils::npos);
@@ -400,12 +406,12 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 			index.push_back(IOUtils::npos);
 		} else { //this is an extra parameter
 			md.addParameter(field_name);
-			size_t parindex = md.getParameterIndex(field_name);
+			const size_t parindex = md.getParameterIndex(field_name);
 			index.push_back(parindex);
 
 			//For the parameters unknown to MeteoIO we can store the units qualification °C, %, etc
 			//and make it possible for the values to be converted to MKSA in the convertUnits procedure
-			string name = unit[ii];
+			string name( unit[ii] );
 			IOUtils::trim(name);
 
 			if (name == "%") {
@@ -423,7 +429,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	}
 }
 
-void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_t>& index, const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo)
+void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_t>& index, const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo) const
 {
 	static vector<string> data;
 	static double timestamp;
@@ -486,7 +492,7 @@ void GSNIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&, cons
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::convertUnits(MeteoData& meteo)
+void GSNIO::convertUnits(MeteoData& meteo) const
 {
 	//converts C to Kelvin, converts RH to [0,1]
 	double& ta = meteo(MeteoData::TA);
@@ -526,7 +532,7 @@ size_t GSNIO::data_write(void* buf, size_t size, size_t nmemb, void* userp)
 {
 	if (userp) {
 		ostream& os = *static_cast<ostream*>(userp);
-		streamsize len = size * nmemb;
+		const streamsize len = size * nmemb;
 
 		if (os.write(static_cast<char*>(buf), len)) return len;
 	}
