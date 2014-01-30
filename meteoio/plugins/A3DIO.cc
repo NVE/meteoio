@@ -212,11 +212,11 @@ void A3DIO::read1DStation(StationData& sd)
 	try {
 		//Read in station meta data
 		IOUtils::readKeyValueHeader(header, fin, 5, "="); //Read in 5 lines as header
-		IOUtils::getValueForKey(header, "Latitude", latitude);
-		IOUtils::getValueForKey(header, "Longitude", longitude);
-		IOUtils::getValueForKey(header, "X_Coord", xcoord);
-		IOUtils::getValueForKey(header, "Y_Coord", ycoord);
-		IOUtils::getValueForKey(header, "Altitude", altitude);
+		IOUtils::getValueForKey(header, "latitude", latitude);
+		IOUtils::getValueForKey(header, "longitude", longitude);
+		IOUtils::getValueForKey(header, "x_coord", xcoord);
+		IOUtils::getValueForKey(header, "y_coord", ycoord);
+		IOUtils::getValueForKey(header, "altitude", altitude);
 
 		latitude = IOUtils::standardizeNodata(latitude, plugin_nodata);
 		longitude = IOUtils::standardizeNodata(longitude, plugin_nodata);
