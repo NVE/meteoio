@@ -442,6 +442,8 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 				meta_counter |= 16;
 			} else if (line.find("HeaderIPrec") == 0) {
 				mapColumnNames[getValueForKey(line)] = MeteoData::HNW;
+			} else if (line.find("HeaderAirPress") == 0) {
+				mapColumnNames[getValueForKey(line)] = MeteoData::P;
 			} else if (line.find("HeaderWindVelocity") == 0) {
 				mapColumnNames[getValueForKey(line)] = MeteoData::VW;
 			} else if (line.find("HeaderWindDirection") == 0) {
@@ -570,6 +572,10 @@ void GeotopIO::convertUnitsBack(MeteoData& meteo) {
 	double& rh = meteo(MeteoData::RH);
 	if (rh != IOUtils::nodata)
 		rh *= 100.;
+
+	double& p = meteo(MeteoData::P);
+	if (p != IOUtils::nodata)
+		p /= 100.; //from Pascal to mbar
 }
 
 void GeotopIO::convertUnits(MeteoData& meteo) {
@@ -591,6 +597,10 @@ void GeotopIO::convertUnits(MeteoData& meteo) {
 	double& rh = meteo(MeteoData::RH);
 	if (rh != IOUtils::nodata)
 		rh /= 100.;
+
+	double& p = meteo(MeteoData::P);
+	if (p != IOUtils::nodata)
+		p *= 100.; //from mbar to Pascal
 }
 
 } //namespace
