@@ -16,6 +16,7 @@ SET(meteofilters_sources
 	meteofilters/ProcButterworth.cc
 	meteofilters/ProcUnventilatedT.cc
 	meteofilters/ProcUnshade.cc
+	meteofilters/ProcHNWDistribute.cc
 	meteofilters/ProcUndercatch_WMO.cc
 	meteofilters/ProcUndercatch_Hamon.cc
 	meteofilters/ProcUndercatch_Forland.cc

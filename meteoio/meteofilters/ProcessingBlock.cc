@@ -32,6 +32,7 @@
 #include <meteoio/meteofilters/ProcUndercatch_WMO.h>
 #include <meteoio/meteofilters/ProcUndercatch_Forland.h>
 #include <meteoio/meteofilters/ProcUndercatch_Hamon.h>
+#include <meteoio/meteofilters/ProcHNWDistribute.h>
 #include <meteoio/meteofilters/ProcUnventilatedT.h>
 #include <meteoio/meteofilters/ProcUnshade.h>
 #include <meteoio/meteofilters/ProcAdd.h>
@@ -101,6 +102,7 @@ namespace mio {
  * - UNDERCATCH_FORLAND: Forland1996 rain gauge correction for solid and liquid undercatch, using various correction models, see ProcUndercatch_Forland
  * - UNDERCATCH_HAMON: Hamon1973 rain gauge correction for undercatch, see ProcUndercatch_Hamon
  * - UNVENTILATED_T: unventilated temperature sensor correction, see ProcUnventilatedT
+ * - HNW_DISTRIBUTE: distribute accumulated precipitation over preceeding timesteps, see ProcHNWDistribute
  *
  */
 
@@ -138,6 +140,8 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 		return new ProcUndercatch_Forland(vec_args, blockname);
 	} else if (blockname == "UNDERCATCH_HAMON"){
 		return new ProcUndercatch_Hamon(vec_args, blockname);
+	} else if (blockname == "HNW_DISTRIBUTE"){
+		return new ProcHNWDistribute(vec_args, blockname);
 	} else if (blockname == "UNVENTILATED_T"){
 		return new ProcUnventilatedT(vec_args, blockname);
 	} else if (blockname == "UNSHADE"){

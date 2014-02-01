@@ -59,7 +59,7 @@ double ResamplingAlgorithms::partialAccumulateAtLeft(const std::vector<MeteoData
 
 	const double jul1 = vecM[pos].date.getJulian(true);
 	const double jul2 = vecM[end].date.getJulian(true);
-	
+
 	const double left_accumulation = linearInterpolation(jul1, 0., jul2, valend, curr_date.getJulian(true));
 
 	return left_accumulation;
@@ -77,9 +77,9 @@ double ResamplingAlgorithms::partialAccumulateAtRight(const std::vector<MeteoDat
 
 	const double jul1 = vecM[pos].date.getJulian(true);
 	const double jul2 = vecM[end].date.getJulian(true);
-	
+
 	const double left_accumulation = linearInterpolation(jul1, 0., jul2, valend, curr_date.getJulian(true));
-	
+
 	return valend - left_accumulation;
 }
 
@@ -353,14 +353,14 @@ void LinearResampling::resample(const size_t& index, const ResamplingPosition& p
 
 
 Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
-           : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), 
-           vecCache(), station_index(), 
+           : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs),
+           vecCache(), station_index(),
            measured_period(IOUtils::nodata), accumulate_period(IOUtils::nodata), strict(false)
 {
 	const size_t nr_args = vecArgs.size();
 	if(nr_args<1 || nr_args>3)
 		throw InvalidArgumentException("Please at least provide accumulation period (in seconds) for \""+i_parname+"::"+i_algoname+"\"", AT);
-	
+
 	vector<double> numArgs;
 	for(size_t ii=0; ii<nr_args; ii++) {
 		if(IOUtils::isNumeric(vecArgs[ii])) {
@@ -379,7 +379,7 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 			strict = true;
 		} else throw InvalidArgumentException("Invalid argument \""+vecArgs[ii]+"\" for \""+i_parname+"::"+i_algoname+"\"", AT);
 	}
-	
+
 	if(numArgs.size()==1) {
 		accumulate_period = numArgs[0];
 	} else if(numArgs.size()==2) {
@@ -417,8 +417,8 @@ double Accumulate::easySampling(const std::vector<MeteoData>& vecM, const size_t
 	double sum = IOUtils::nodata;
 	const double start_val = partialAccumulateAtLeft(vecM, paramindex, start_idx, dateStart);
 	const double end_val = partialAccumulateAtLeft(vecM, paramindex, start_idx, resampling_date);
-	
-	if(start_val!=IOUtils::nodata && end_val!=IOUtils::nodata) 
+
+	if(start_val!=IOUtils::nodata && end_val!=IOUtils::nodata)
 		sum = end_val - start_val;
 
 	return sum;
@@ -432,7 +432,7 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 	if(start_value!=IOUtils::nodata)
 		sum=start_value;
 	else if(strict) return IOUtils::nodata;
-	
+
 	//sum all whole periods AFTER the begining point, in the [start_idx+2 ; index-1] interval
 	for(size_t idx=(start_idx+2); idx<index; idx++) {
 		const double curr_value = vecM[idx](paramindex);
@@ -448,7 +448,7 @@ double Accumulate::complexSampling(const std::vector<MeteoData>& vecM, const siz
 		if(sum!=IOUtils::nodata) sum += end_val;
 		else sum = end_val;
 	} else if(strict) return IOUtils::nodata;
-	
+
 	return sum;
 }
 
@@ -471,14 +471,14 @@ size_t Accumulate::getStationIndex(const std::string& key)
 size_t Accumulate::distributeMeasurements(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& index, const Date& resampling_date, std::vector<MeteoData> &vecResult)
 {
 	vecResult.resize(0);
-	
+
 	//find the next accumulated value
 	size_t end_idx = IOUtils::npos; //first index that has data
 	const Date dateMaxEnd = resampling_date + measured_period;
 	for(size_t idx=index; idx<vecM.size(); idx++) {
 		const Date curr_date = vecM[idx].date;
 		if(curr_date > dateMaxEnd) //current point would fall outside the accumulation period anyway
-			break; 
+			break;
 		if(vecM[idx](paramindex)!=IOUtils::nodata) {
 			end_idx = idx;
 			break;
@@ -490,10 +490,10 @@ size_t Accumulate::distributeMeasurements(const std::vector<MeteoData>& vecM, co
 		ss << "in the " << resampling_date.toString(Date::ISO) << " - " << dateMaxEnd.toString(Date::ISO) << " interval!\n";
 		throw NoAvailableDataException(ss.str(), AT);
 	}
-	
+
 	const Date dateEnd = vecM[end_idx].date;
 	const double precip = vecM[end_idx](paramindex);
-	
+
 	//find the start date of the measured accumulation period
 	const Date dateStart = vecM[end_idx].date - measured_period;
 	size_t start_idx = IOUtils::npos; // last index <= (dateEnd - measured_period)
@@ -526,11 +526,11 @@ size_t Accumulate::distributeMeasurements(const std::vector<MeteoData>& vecM, co
 	if(precip!=0 && dateStart!=vecM[start_idx].date) {
 		throw IOException("Currently, only multiples of the data sampling rate are allowed for accumulation periods!", AT);
 	}
-	
+
 	vecResult.assign(vecM.begin()+start_idx, vecM.begin()+end_idx+1);
 	//HSSweGenerator::CstDistributeHNW(precip, 1, vecResult.size()-1, paramindex, vecResult);
 	HSSweGenerator::SmartDistributeHNW(precip, 1, vecResult.size()-1, paramindex, vecResult);
-	
+
 	return index-(start_idx);
 }
 
@@ -565,10 +565,10 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 		throw IOException("The index of the element to be resampled is out of bounds", AT);
 	if(position==ResamplingAlgorithms::begin || position==ResamplingAlgorithms::end)
 		return;
-	
+
 	md(paramindex) = IOUtils::nodata;
 	const Date resampling_date = md.date;
-	
+
 	if(measured_period==IOUtils::nodata) {
 		coreResample(index, paramindex, vecM, resampling_date, md);
 	} else {
@@ -589,7 +589,7 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 			vecCache.push_back( tmp );
 			stat_idx = vecCache.size()-1;
 		}
-		
+
 		coreResample(new_index, paramindex, vecCache[stat_idx], resampling_date, md);
 	}
 }
