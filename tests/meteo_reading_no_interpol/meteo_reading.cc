@@ -22,12 +22,12 @@ const double res_Met_3[]	= {273.6963,		274.3309,		273.9969,		274.6983,		274.0971
 const double res_Met_4[]	= {263.8,		266.12,			265.6,			268.74,			265.64,			267.24,			262.5}; // TSS
 const double res_Met_5 []	= {0.57,		0.95,			1.9,			1.41,			0.35,			0.72,			1.47}; // HS
 const double res_Met_6 []	= {2.9,			0.6,			2.,			0.2,			2.5,			1.5,			0.3}; // VW
-const double res_Met_7 []	= {335.,		138,			98,			216,			268.,			187,			107}; // DW
+const double res_Met_7 []	= {335.,		138.,			98.,			216.,			268.,			187.,			107.}; // DW
 const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // VW_MAX
-const double res_Met_9 []	= {119.5,		105.5,			86.5,			67,			120.5,			105,			115.5}; //RSWR
+const double res_Met_9 []	= {119.5,		105.5,			86.5,			67.,			120.5,			105.,			115.5}; //RSWR
 const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
 const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
-const double res_Met_12 []	= {IOUtils::nodata,	2.256777784,		IOUtils::nodata,	4.,			5.160045665,		0.,			2.879157679}; // HNW
+const double res_Met_12 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	4.,			5.160045665,		0.,			IOUtils::nodata}; // HNW
 
 
 // methode do controll content of Meteo Data !!
@@ -183,10 +183,10 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 	return status;
 }
 
-//Test if data read at 2008-12-01T15:35:00 are correct
+//Test if data read at 2008-12-01T15:00:00 are correct
 int main() {
 	bool status = true;
-	Date d1(2008, 12, 1, 15, 0, 0, 1);
+	Date d1(2008, 12, 1, 15, 0, 1);
 	std::vector<MeteoData> vecMeteo;
 
 	Config cfg("io.ini");

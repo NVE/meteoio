@@ -361,8 +361,12 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 	if(nr_args<1 || nr_args>2)
 		throw InvalidArgumentException("Please at least provide accumulation period (in seconds) for \""+i_parname+"::"+i_algoname+"\"", AT);
 
+	bool period_read = false;
 	for(size_t ii=0; ii<nr_args; ii++) {
 		if(IOUtils::isNumeric(vecArgs[ii])) {
+			if(period_read==true)
+				throw InvalidArgumentException("Two arguments "+i_algoname+" resampling has been deprecated! Please use the \"HNW_Distribute\" Processing Element instead!", AT);
+
 			IOUtils::convertString(accumulate_period, vecArgs[ii]);
 			accumulate_period /= 86400.; //user uses seconds, internally julian day is used
 			if(accumulate_period<=0.) {
@@ -370,6 +374,7 @@ Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parna
 				ss << "Invalid accumulation period (" << accumulate_period << ") for \"" << i_parname << "::" << i_algoname << "\"";
 				throw InvalidArgumentException(ss.str(), AT);
 			}
+			period_read = true;
 		} else if (vecArgs[ii]=="strict" && !strict) {
 			if(strict) //do not set strict more than once!
 				throw InvalidArgumentException("Do not provide \"strict\" more than once for \""+i_parname+"::"+i_algoname+"\"", AT);

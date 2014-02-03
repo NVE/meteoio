@@ -26,7 +26,7 @@ const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	
 const double res_Met_9 []	= {84.79166651,		81.29166661,		67.83333342,		50.37500004,		88.41666666,		85.45833337,		87.4999999}; //RSWR
 const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
 const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
-const double res_Met_12 []	= {IOUtils::nodata,	3.57323147,		IOUtils::nodata,	2.255830171,		3.593920512,		0.,			1.19964904}; // HNW
+const double res_Met_12 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.255830171,		3.593920512,		0.,			0.}; // HNW
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
@@ -184,7 +184,7 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 //Test if data read at 2008-12-01T15:35:00 are correct
 int main() {
 	bool status = true;
-	Date d1(2008, 12, 1, 15, 35, 0, 1);
+	Date d1(2008, 12, 1, 15, 35, 1);
 	std::vector<MeteoData> vecMeteo;
 
 	Config cfg("io.ini");
