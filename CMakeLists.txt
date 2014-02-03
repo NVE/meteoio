@@ -185,6 +185,10 @@ IF(WIN32) #only having it in meteoio/CMake... is not enough...
 	FILE(GLOB_RECURSE dlls "lib/libmeteo*.dll")
 	INSTALL(FILES ${dlls} ${importlibs} DESTINATION lib COMPONENT libraries)
 ENDIF(WIN32)
+IF(APPLE) #only having it in meteoio/CMake... is not enough...
+	FILE(GLOB_RECURSE dlls "lib/libmeteo*.dylib")
+	INSTALL(FILES ${dlls} DESTINATION lib COMPONENT libraries)
+ENDIF(APPLE)
 
 ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove CMakeCache.txt CPackSourceConfig.cmake CPackConfig.cmake CTestTestfile.cmake DartConfiguration.tcl cmake_install.cmake cmake_uninstall.cmake install_manifest.txt Makefile
