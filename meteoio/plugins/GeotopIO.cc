@@ -46,6 +46,9 @@ namespace mio {
  */
 
 const double GeotopIO::plugin_nodata = -9999.0; //plugin specific nodata value
+const size_t GeotopIO::sw_direct = 9999;
+const size_t GeotopIO::sw_diffuse = 9998;
+const size_t GeotopIO::cloud_factor = 9997;
 
 GeotopIO::GeotopIO(const std::string& configfile)
          : cfg(configfile), in_tz(0.), out_tz(0.), nr_of_stations(IOUtils::npos),
@@ -370,8 +373,14 @@ void GeotopIO::identify_fields(const std::vector<std::string>& tmpvec, const std
 		const std::map<std::string, size_t>::iterator it = mapColumnNames.find(tmpvec[jj]);
 		if (it != mapColumnNames.end()) {
 			size_t index = it->second;
-			if (index == IOUtils::npos){
+			if (index == IOUtils::npos) {
 				index = md.addParameter(it->first);
+			} else if (index == GeotopIO::sw_direct) {
+				index = md.addParameter("SWdirect");
+			} else if (index == GeotopIO::sw_diffuse) {
+				index = md.addParameter("SWdiffuse");
+			} else if (index == GeotopIO::cloud_factor) {
+				index = md.addParameter("CloudFactor");
 			}
 			indices.push_back(index);
 		} else {
@@ -456,6 +465,12 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 				mapColumnNames[getValueForKey(line)] = MeteoData::ISWR;
 			} else if (line.find("HeaderCloudSWTransmissivity") == 0) {
 				mapColumnNames[getValueForKey(line)] = MeteoData::RSWR;
+			} else if (line.find("HeaderSWdirect") == 0) {
+				mapColumnNames[getValueForKey(line)] = GeotopIO::sw_direct;
+			} else if (line.find("HeaderSWdiffuse") == 0) {
+				mapColumnNames[getValueForKey(line)] = GeotopIO::sw_diffuse;
+			} else if (line.find("HeaderCloudFactor") == 0) {
+				mapColumnNames[getValueForKey(line)] = GeotopIO::cloud_factor;
 			} else if (line.find("NumberOfMeteoStations") == 0) {
 				size_t pos = line.find("=");
 				string val = line.substr(pos+1);

@@ -86,6 +86,7 @@ class GeotopIO : public IOInterface {
 		std::map<std::string, size_t> mapColumnNames;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		static const size_t sw_direct, sw_diffuse, cloud_factor;
 };
 
 } //end namespace
