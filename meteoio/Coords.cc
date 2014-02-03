@@ -748,7 +748,7 @@ short int Coords::getEPSG() const {
 		short int zoneNumber;
 		char zoneLetter;
 		parseUTMZone(coordparam, zoneLetter, zoneNumber);
-		if(zoneLetter >= 'M') {
+		if(zoneLetter >= 'N') {
 			//northern hemisphere. We KNOW it will fit in a short int
 			return (static_cast<short int>(32600+zoneNumber));
 		} else {
@@ -805,7 +805,7 @@ void Coords::setEPSG(const int epsg) {
 		coord_sys.assign("UTM");
 		const int zoneNumber = epsg-32600;
 		std::ostringstream osstream;
-		osstream << zoneNumber << "P";
+		osstream << zoneNumber << "N";
 		coord_param=osstream.str();
 		found=true;
 	}
@@ -814,7 +814,7 @@ void Coords::setEPSG(const int epsg) {
 		coord_sys.assign("UTM");
 		const int zoneNumber = epsg-32700;
 		std::ostringstream osstream;
-		osstream << zoneNumber << "N";
+		osstream << zoneNumber << "M";
 		coord_param=osstream.str();
 		found=true;
 	}
@@ -1182,8 +1182,8 @@ int Coords::getUTMZone(const double i_latitude, const double i_longitude, std::s
 	else if((32 > i_latitude) && (i_latitude >= 24)) zoneLetter = 'R';
 	else if((24 > i_latitude) && (i_latitude >= 16)) zoneLetter = 'Q';
 	else if((16 > i_latitude) && (i_latitude >= 8)) zoneLetter = 'P';
-	else if(( 8 > i_latitude) && (i_latitude >= 0)) zoneLetter = 'N';
-	else if(( 0 > i_latitude) && (i_latitude >= -8)) zoneLetter = 'M';
+	else if(( 8 > i_latitude) && (i_latitude >= 0)) zoneLetter = 'N'; //first zone of Northern hemisphere
+	else if(( 0 > i_latitude) && (i_latitude >= -8)) zoneLetter = 'M'; //first zone of Southern hemisphere
 	else if((-8 > i_latitude) && (i_latitude >= -16)) zoneLetter = 'L';
 	else if((-16 > i_latitude) && (i_latitude >= -24)) zoneLetter = 'K';
 	else if((-24 > i_latitude) && (i_latitude >= -32)) zoneLetter = 'J';
@@ -1295,7 +1295,7 @@ void Coords::UTM_to_WGS84(double east_in, double north_in, double& lat_out, doub
 	//set reference parameters: central meridian of the zone, true northing and easting
 	//please note that the special zones still use the reference meridian as given by their zone number (ie: even if it might not be central anymore)
 	const int long0 = ((int)zoneNumber - 1)*6 - 180 + 3;  //+3 puts origin in "middle" of zone as required for the projection meridian (might not be the middle for special zones)
-	if(zoneLetter<='N') {
+	if(zoneLetter<='M') {
 		north_in -= 10000000.0; //offset used for southern hemisphere
 	}
 	east_in -= 500000.0; //longitude offset: x coordinate is relative to central meridian
@@ -1451,7 +1451,7 @@ void Coords::parseUTMZone(const std::string& zone_info, char& zoneLetter, short 
 			throw InvalidFormatException("Can not parse given UTM zone: "+zone_info,AT);
 	}
 	if(zoneNumber<1 || zoneNumber>60) {
-		throw InvalidFormatException("Invalid UTM zone: "+zone_info+" (zone should be between 1 and 60, zone letter in [C-N, P-X])",AT);
+		throw InvalidFormatException("Invalid UTM zone: "+zone_info+" (zone should be between 1 and 60, zone letter in [C-M, N-X])",AT);
 	}
 	zoneLetter = (char)toupper(zoneLetter); //just in case... (sorry for the pun!)
 	if(zoneLetter=='Y' || zoneLetter=='Z' || zoneLetter=='A' || zoneLetter=='B') {
