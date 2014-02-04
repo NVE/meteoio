@@ -493,15 +493,15 @@ void GeotopIO::readMetaData(const std::string& metafile) {
 			std::vector<double> tmpdata = std::vector<double>(5);
 
 			if (!IOUtils::convertString(tmpdata.at(x), vecX.at(i),	std::dec))
-				throw InvalidFormatException(metafile + ": " + line, AT);
+				throw InvalidFormatException(metafile + ": Error converting X coordinate: " + vecX.at(x), AT);
 			if (!IOUtils::convertString(tmpdata.at(y), vecY.at(i), std::dec))
-				throw InvalidFormatException(metafile + ": " + line, AT);
+				throw InvalidFormatException(metafile + ": Error converting Y coordinate: " + vecY.at(x), AT);
 			if (!IOUtils::convertString(tmpdata.at(lat),	vecLat.at(i), std::dec))
-				throw InvalidFormatException(metafile + ": " + line, AT);
+				throw InvalidFormatException(metafile + ": Error converting latitude value: " + vecLat.at(x), AT);
 			if (!IOUtils::convertString(tmpdata.at(lon),	vecLon.at(i), std::dec))
-				throw InvalidFormatException(metafile + ": " + line, AT);
+				throw InvalidFormatException(metafile + ": Error converting longitude value: " + vecLon.at(x), AT);
 			if (!IOUtils::convertString(tmpdata.at(elv),	vecAlt.at(i), std::dec))
-				throw InvalidFormatException(metafile + ": " + line, AT);
+				throw InvalidFormatException(metafile + ": Error converting altitude value: " + vecAlt.at(x), AT);
 
 			tmpdata[0] = IOUtils::standardizeNodata(tmpdata[0], plugin_nodata);
 			tmpdata[1] = IOUtils::standardizeNodata(tmpdata[1], plugin_nodata);
