@@ -132,6 +132,8 @@ void IOManager::push_meteo_data(const ProcessingLevel& level, const Date& date_s
 	} else {
 		throw InvalidArgumentException("The processing level is invalid (should be raw OR filtered)", AT);
 	}
+
+	point_cache.clear(); //clear point cache, so that we don't return resampled values of deprecated data
 }
 
 size_t IOManager::getStationData(const Date& date, STATIONS_SET& vecStation)
@@ -242,6 +244,11 @@ void IOManager::add_to_cache(const Date& i_date, const METEO_SET& vecMeteo)
 	}
 
 	point_cache[i_date] = vecMeteo;
+}
+
+void IOManager::clear_cache()
+{
+	point_cache.clear();
 }
 
 size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)

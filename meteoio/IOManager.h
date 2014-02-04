@@ -197,7 +197,20 @@ class IOManager {
 
 		const std::string toString() const;
 
+		/**
+		 * @brief Add a METEO_SET for a specific instance to the point cache. This is a way to manipulate
+		 * MeteoData variables and be sure that the manipulated values are later used for requests 
+		 * regarding that specific date (e.g. 2D interpolations)
+		 *
+		 * @param i_date Representing a point in time
+		 * @param vecMeteo A vector of MeteoData objects to be copied into the point cache
+		 */
 		void add_to_cache(const Date& i_date, const METEO_SET& vecMeteo);
+
+		/**
+		 * @brief Clear the point cache. All resampled values are dismissed, will need to be recalculated.
+		 */		
+		void clear_cache();
 
 	private:
 		void initVirtualStations();
