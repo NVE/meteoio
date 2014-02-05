@@ -69,6 +69,13 @@ IF(PLUGIN_PNGIO)
 	SET(plugins_sources ${plugins_sources} plugins/PNGIO.cc)
 ENDIF(PLUGIN_PNGIO)
 
+IF(PLUGIN_PSQLIO)
+	#FIND_PACKAGE(PNG REQUIRED)
+	#INCLUDE_DIRECTORIES(SYSTEM ${PNG_INCLUDE_DIR})
+	#SET(plugin_libs ${plugin_libs} ${PNG_LIBRARY})
+	SET(plugins_sources ${plugins_sources} plugins/PSQLIO.cc)
+ENDIF(PLUGIN_PSQLIO)
+
 IF(PLUGIN_SMETIO)
 	SET(plugins_sources ${plugins_sources} plugins/SMETIO.cc)
 ENDIF(PLUGIN_SMETIO)
