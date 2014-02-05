@@ -18,7 +18,6 @@
 #include "PSQLIO.h"
 
 using namespace std;
-using namespace pqxx;
 
 namespace mio {
 /**

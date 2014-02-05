@@ -21,7 +21,7 @@
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
 
-#include <pqxx/pqxx>
+#include <libpq-fe.h>
 #include <string>
 
 namespace mio {
