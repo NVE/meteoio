@@ -32,6 +32,7 @@
 #cmakedefine PLUGIN_BORMAIO
 #cmakedefine PLUGIN_COSMOXMLIO
 #cmakedefine PLUGIN_GSNIO
+#cmakedefine PLUGIN_PSQLIO
 
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/plugins/A3DIO.h>
@@ -64,6 +65,10 @@
 
 #ifdef PLUGIN_PNGIO
 #include <meteoio/plugins/PNGIO.h>
+#endif
+
+#ifdef PLUGIN_PSQLIO
+#include <meteoio/plugins/PSQLIO.h>
 #endif
 
 using namespace std;
@@ -106,6 +111,7 @@ namespace mio {
  * <tr><td>\subpage imis "IMIS"</td><td>meteo</td><td>connects to the IMIS database</td><td><A HREF="http://docs.oracle.com/cd/B12037_01/appdev.101/b10778/introduction.htm">Oracle's OCCI library</A></td></tr>
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pngio "PNG"</td><td>dem, grid2d</td><td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
+ * <tr><td>\subpage pngio "PSQL"</td><td>meteo</td><td>connects to PostgreSQL database</td><td></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
@@ -166,6 +172,9 @@ void IOHandler::registerPlugins()
 #endif
 #ifdef PLUGIN_GSNIO
 	mapPlugins["GSN"]       = IOPlugin("GSNIO", NULL, &IOPlugin::createInstance<GSNIO>);
+#endif
+#ifdef PLUGIN_PSQLIO
+	mapPlugins["PSQL"]       = IOPlugin("PSQLIO", NULL, &IOPlugin::createInstance<PSQLIO>);
 #endif
 }
 
