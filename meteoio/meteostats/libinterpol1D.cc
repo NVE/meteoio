@@ -560,6 +560,7 @@ void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::
 	//check if r is reasonnable
 	if (R<r_thres) {
 		mesg << "[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
+		mesg.copyfmt(std::ios(NULL)); //restore precision
 	}
 }
 
