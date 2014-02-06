@@ -17,13 +17,15 @@
 */
 #include "PSQLIO.h"
 
+#include <libpq-fe.h>
+
 using namespace std;
 
 namespace mio {
 /**
- * @page template PSQLIO
+ * @page psqlio PSQLIO
  * @section psql_format Format
- * 
+ *
  *
  * @section psql_units Units
  *
