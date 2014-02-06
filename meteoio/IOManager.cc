@@ -329,7 +329,7 @@ size_t IOManager::getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 	}
 
 	DEMObject dem;
-	bufferedio.readDEM(dem);
+	bufferedio.readDEM(dem); //this is not a big deal since it will be in the buffer
 
 	//create stations without measurements
 	for(size_t ii=0; ii<v_stations.size(); ii++) {

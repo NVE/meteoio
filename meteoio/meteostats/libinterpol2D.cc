@@ -142,8 +142,9 @@ inline double Interpol2D::weightInvDistN(const double& d2)
 * @param dem array of elevations (dem)
 * @param grid 2D array to fill
 */
-void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid) {
-                             grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
+{
+	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (size_t j=0; j<grid.nrows; j++) {

@@ -74,6 +74,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  *
  * @section interpol2D_keywords Available algorithms
  * The keywords defining the algorithms are the following:
+ * - NONE: returns a nodata filled grid (see NoneAlgorithm)
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each cell (see StandardPressureAlgorithm)
  * - CST: constant value in each cell (see ConstAlgorithm)
  * - CST_LAPSE: constant value reprojected to the elevation of the cell (see ConstLapseRateAlgorithm)
@@ -176,6 +177,23 @@ class AlgorithmFactory {
 		static InterpolationAlgorithm* getAlgorithm(const std::string& i_algoname,
 		                                            Meteo2DInterpolator& i_mi,
 		                                            const std::vector<std::string>& i_vecArgs, IOManager& iom);
+};
+
+/**
+ * @class NoneAlgorithm
+ * @brief Returns a nodata filled grid
+ * This allows to tolerate missing data, which can be usefull if an alternate strategy could
+ * later be used to generate the data (ie. a parametrization). This algorithm will only run
+ * after all others failed.
+ */
+class NoneAlgorithm : public InterpolationAlgorithm {
+	public:
+		NoneAlgorithm(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, IOManager& iom)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
 
 /**

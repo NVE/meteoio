@@ -141,14 +141,9 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 
 	//finally execute the algorithm with the best quality rating or throw an exception
 	if(maxQualityRating<=0.0)
-		throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+param_name, AT);
+		throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+param_name+" on "+date.toString(Date::ISO_TZ), AT);
 	vecAlgs[bestalgorithm]->calculate(dem, result);
 	InfoString = vecAlgs[bestalgorithm]->getInfo();
-
-	//check that the output grid is using the same projection as the dem
-	if(!result.llcorner.isSameProj(dem.llcorner)) {
-		throw IOException("The output grid is not using the same geographic projection as the DEM", AT);
-	}
 
 	//Run soft min/max filter for RH, HNW and HS
 	if (meteoparam == MeteoData::RH){
