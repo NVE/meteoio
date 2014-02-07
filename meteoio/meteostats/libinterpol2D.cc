@@ -149,11 +149,11 @@ void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
 	//provide each point with an altitude dependant pressure... it is worth what it is...
 	for (size_t j=0; j<grid.nrows; j++) {
 		for (size_t i=0; i<grid.ncols; i++) {
-			const double& cell_altitude=dem.grid2D(i,j);
+			const double& cell_altitude=dem(i,j);
 			if (cell_altitude!=IOUtils::nodata) {
-				grid.grid2D(i,j) = Atmosphere::stdAirPressure(cell_altitude);
+				grid(i,j) = Atmosphere::stdAirPressure(cell_altitude);
 			} else {
-				grid.grid2D(i,j) = IOUtils::nodata;
+				grid(i,j) = IOUtils::nodata;
 			}
 		}
 	}
@@ -173,10 +173,10 @@ void Interpol2D::constant(const double& value, const DEMObject& dem, Grid2DObjec
 	//fills a data table with constant values
 	for (size_t j=0; j<grid.nrows; j++) {
 		for (size_t i=0; i<grid.ncols; i++) {
-			if (dem.grid2D(i,j)!=IOUtils::nodata) {
-				grid.grid2D(i,j) = value;
+			if (dem(i,j)!=IOUtils::nodata) {
+				grid(i,j) = value;
 			} else {
-				grid.grid2D(i,j) = IOUtils::nodata;
+				grid(i,j) = IOUtils::nodata;
 			}
 		}
 	}
@@ -218,7 +218,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 	for (size_t j=0; j<grid.nrows; j++) {
 		for (size_t i=0; i<grid.ncols; i++) {
 			//LL_IDW_pixel returns nodata when appropriate
-			grid.grid2D(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors); //TODO: precompute in vectors
+			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors); //TODO: precompute in vectors
 		}
 	}
 }
@@ -228,7 +228,7 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                                const DEMObject& dem, const size_t& nrOfNeighbors)
 {
-	const double cell_altitude = dem.grid2D(i,j);
+	const double cell_altitude = dem(i,j);
 	if(cell_altitude==IOUtils::nodata)
 		return IOUtils::nodata;
 
@@ -300,11 +300,11 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 	const double cellsize = dem.cellsize;
 	for (size_t jj=0; jj<grid.nrows; jj++) {
 		for (size_t ii=0; ii<grid.ncols; ii++) {
-			if (dem.grid2D(ii,jj)!=IOUtils::nodata) {
-				grid.grid2D(ii,jj) = IDWCore((xllcorner+double(ii)*cellsize), (yllcorner+double(jj)*cellsize),
+			if (dem(ii,jj)!=IOUtils::nodata) {
+				grid(ii,jj) = IDWCore((xllcorner+double(ii)*cellsize), (yllcorner+double(jj)*cellsize),
 				                           vecData_in, vecEastings, vecNorthings);
 			} else {
-				grid.grid2D(ii,jj) = IOUtils::nodata;
+				grid(ii,jj) = IOUtils::nodata;
 			}
 		}
 	}
@@ -355,16 +355,16 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 
 	for (size_t j=0;j<VW.nrows;j++) {
 		for (size_t i=0;i<VW.ncols;i++){
-			speed = VW.grid2D(i,j);
+			speed = VW(i,j);
 			if(speed==0.) continue; //we can not apply any correction factor!
-			dir = DW.grid2D(i,j);
+			dir = DW(i,j);
 			beta = dem->slope(i, j)*Cst::to_rad;
 			azi = dem->azi(i, j)*Cst::to_rad;
 			curvature = dem->curvature(i, j);
 
 			if(speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
-				VW.grid2D(i, j) = IOUtils::nodata;
-				DW.grid2D(i, j) = IOUtils::nodata;
+				VW(i, j) = IOUtils::nodata;
+				DW(i, j) = IOUtils::nodata;
 			} else {
 				//convert direction to rad
 				dir *= Cst::to_rad;
@@ -393,12 +393,12 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 				Od = -0.5 * slopeDir * sin(2.*(azi - dir));
 
 				// Calculate the terrain-modified wind speed
-				VW.grid2D(i, j) = Ww * speed;
+				VW(i, j) = Ww * speed;
 
 				// Add the diverting factor to the wind direction and convert to degrees
-				DW.grid2D(i, j) = (dir + Od) * Cst::to_deg;
-				if( DW.grid2D(i, j)>360. ) {
-					DW.grid2D(i, j) -= 360.;
+				DW(i, j) = (dir + Od) * Cst::to_deg;
+				if( DW(i, j)>360. ) {
+					DW(i, j) -= 360.;
 				}
 			}
 		}
@@ -430,13 +430,13 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 
 	for (size_t j=0;j<grid.nrows;j++) {
 		for (size_t i=0;i<grid.ncols;i++) {
-			if(ta.grid2D(i,j)>273.15) continue; //modify the grid of precipitations only if air temperature is below or at freezing
+			if(ta(i,j)>273.15) continue; //modify the grid of precipitations only if air temperature is below or at freezing
 
 			const double slope = dem.slope(i, j);
 			const double curvature = dem.curvature(i, j);
 			if(slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
 
-			double& val = grid.grid2D(i, j);
+			double& val = grid(i, j);
 			if(val!=IOUtils::nodata && dem_range_curvature!=0.) { //cf Huss
 				val *= 0.5-(curvature-dem_max_curvature) / dem_range_curvature;
 			}
@@ -458,10 +458,10 @@ void Interpol2D::steepestDescentDisplacement(const DEMObject& dem, const Grid2DO
 	//loop around all adjacent cells to find the cell with the steepest downhill slope
 	for(short d_i=-1; d_i<=1; d_i++) {
 		for(short d_j=-1; d_j<=1; d_j++) {
-			const double elev_pt1 = dem.grid2D(ii, jj);
-			const double elev_pt2 = dem.grid2D(ii + d_i, jj + d_j);
-			const double precip_1 = grid.grid2D(ii, jj);
-			const double precip_2 = grid.grid2D(ii + d_i, jj + d_j);
+			const double elev_pt1 = dem(ii, jj);
+			const double elev_pt2 = dem(ii + d_i, jj + d_j);
+			const double precip_1 = grid(ii, jj);
+			const double precip_2 = grid(ii + d_i, jj + d_j);
 			const double height_ratio = (elev_pt1+precip_1) / (elev_pt2+precip_2);
 			const double new_slope = dem.slope(ii + d_i, jj + d_j);
 
@@ -477,20 +477,20 @@ void Interpol2D::steepestDescentDisplacement(const DEMObject& dem, const Grid2DO
 double Interpol2D::depositAroundCell(const DEMObject& dem, const size_t& ii, const size_t& jj, const double& precip, Grid2DObject &grid)
 {
 	//else add precip to the cell and remove the same amount from the precip variable
-	grid.grid2D(ii, jj) += precip;
+	grid(ii, jj) += precip;
 	double distributed_precip = precip;
 
 	for(short d_i=-1;d_i<=1;d_i++){
 		for(short d_j=-1;d_j<=1;d_j++){
-			const double elev_pt1 = dem.grid2D(ii, jj);
-			const double elev_pt2 = dem.grid2D(ii + d_i, jj + d_j);
-			const double precip_1 = grid.grid2D(ii, jj);
-			const double precip_2 = grid.grid2D(ii + d_i, jj + d_j);
+			const double elev_pt1 = dem(ii, jj);
+			const double elev_pt2 = dem(ii + d_i, jj + d_j);
+			const double precip_1 = grid(ii, jj);
+			const double precip_2 = grid(ii + d_i, jj + d_j);
 			const double height_ratio = (elev_pt1+precip_1) / (elev_pt2+precip_2);
 
 			if ((d_i!=0)||(d_j!=0)){
 				if (height_ratio>1.){
-					grid.grid2D(ii + d_i, jj + d_j) += precip;
+					grid(ii + d_i, jj + d_j) += precip;
 					distributed_precip += precip;
 				}
 			}
@@ -512,8 +512,8 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 {
 	for (size_t jj=1; jj<(grid.nrows-1); jj++) {
 		for (size_t ii=1; ii<(grid.ncols-1); ii++) {
-			if(grid.grid2D(ii,jj)==IOUtils::nodata) continue;
-			if(ta.grid2D(ii, jj)>273.15) continue; //modify precipitation only for air temperatures at or below freezing
+			if(grid(ii,jj)==IOUtils::nodata) continue;
+			if(ta(ii, jj)>273.15) continue; //modify precipitation only for air temperatures at or below freezing
 
 			const double slope = dem.slope(ii, jj);
 			const double curvature = dem.curvature(ii, jj);
@@ -521,8 +521,8 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 			if(slope<=40.) continue; //redistribution only above 40 degrees
 
 			//remove all precip above 60 deg or linearly decrease it
-			double precip = (slope>60.)? grid.grid2D(ii, jj) : grid.grid2D(ii, jj) * ((40.-slope)/-30.);
-			grid.grid2D(ii, jj) -= precip; //we will redistribute the precipitation in a different way
+			double precip = (slope>60.)? grid(ii, jj) : grid(ii, jj) * ((40.-slope)/-30.);
+			grid(ii, jj) -= precip; //we will redistribute the precipitation in a different way
 
 			const double increment = precip / 50.; //break removed precip into smaller amounts to be redistributed
 			double counter = 0.5;                  //counter will determine amount of precip deposited
@@ -535,15 +535,14 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 				ii_dest += d_i;
 				jj_dest += d_j;
 
-				//if (((ii_dest+d_i)<0) || ((jj_dest+d_j)<0) || ((ii_dest+d_i)>=grid.ncols)|| ((jj_dest+d_j)>=grid.nrows)) {
 				if ((ii_dest==0) || (jj_dest==0) || (ii_dest==(grid.ncols-1))|| (jj_dest==(grid.nrows-1))){
 					//we are getting out of the domain: deposit local contribution
-					grid.grid2D(ii_dest, jj_dest) += counter*increment;
+					grid(ii_dest, jj_dest) += counter*increment;
 					break;
 				}
 				if(d_i==0 && d_j==0) {
 					//local minimum, everything stays here...
-					grid.grid2D(ii_dest, jj_dest) += precip;
+					grid(ii_dest, jj_dest) += precip;
 					break;
 				}
 
@@ -553,6 +552,16 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 		}
 	}
 }
+
+// double Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const double& alpha1, const double& alpha2, const size_t& ii, const size_t& jj)
+// {
+//
+// 	const double inv_distance = optim::invSqrt( Optim::pow2(xv-ii) + Optim::pow2(yv-jj) );
+// 	const double delta_elev = dem(xv, yv) - dem(ii, jj);
+// 	const double sx = atan(delta_elev*inv_distance);
+//
+// 	//take max
+// }
 
 /**
 * @brief Ordinary Kriging matrix formulation
@@ -631,7 +640,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 			for(size_t st=0; st<nrOfMeasurments; st++) {
 				p += lambda(st+1,1) * vecData[st]; //matrix starts at 1, not 0
 			}
-			grid.grid2D(i,j) = p;
+			grid(i,j) = p;
 		}
 	}
 }

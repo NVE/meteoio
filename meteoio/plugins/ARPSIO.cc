@@ -494,7 +494,7 @@ void ARPSIO::readGridLayer(const std::string& parameter, const unsigned int& lay
 		for (size_t ix = 0; ix < dimx; ix++) {
 			double tmp;
 			if(fscanf(fin," %16lf%*[\n]",&tmp)==1) {
-				grid.grid2D(ix,iy) = tmp;
+				grid(ix,iy) = tmp;
 			} else {
 				cleanup();
 				throw InvalidFormatException("Fail to read data layer in file "+filename, AT);

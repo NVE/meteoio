@@ -302,7 +302,7 @@ void Grid3DObject::extractLayer(const size_t& i_z, Grid2DObject& layer)
 	layer.set(ncols, nrows, cellsize, llcorner);
 	for(size_t jj=0; jj<nrows; jj++) {
 		for(size_t ii=0; ii<ncols; ii++) {
-			layer.grid2D(ii,jj) = grid3D(ii,jj,i_z);
+			layer(ii,jj) = grid3D(ii,jj,i_z);
 		}
 	}
 }

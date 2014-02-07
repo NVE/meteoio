@@ -149,9 +149,9 @@ void GrassIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename)
 
 				if(tmp_val <= plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
-					grid_out.grid2D(ll, kk) = IOUtils::nodata;
+					grid_out(ll, kk) = IOUtils::nodata;
 				} else {
-					grid_out.grid2D(ll, kk) = tmp_val;
+					grid_out(ll, kk) = tmp_val;
 				}
 			}
 		}
@@ -250,18 +250,18 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 				size_t ll = 0;
 				for (ll=0; ll < (grid_in.ncols-1); ll++){
-					if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
+					if (grid_in(ll,kk) == IOUtils::nodata) {
 						fout << "* ";
 					} else {
-						fout << grid_in.grid2D(ll, kk) << " ";
+						fout << grid_in(ll, kk) << " ";
 					}
 				}
 
 				//The last value in a line does not have a trailing " "
-				if (grid_in.grid2D(ll,kk) == IOUtils::nodata) {
+				if (grid_in(ll,kk) == IOUtils::nodata) {
 					fout << "*";
 				} else {
-					fout << grid_in.grid2D(ll, kk);
+					fout << grid_in(ll, kk);
 				}
 				fout << "\n";
 			}

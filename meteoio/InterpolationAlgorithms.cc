@@ -209,7 +209,7 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 	for(size_t ii=0; ii<nxy; ii++) {
 		double &val = grid(ii);
 		if(val!=IOUtils::nodata)
-			val += trend.f( dem.grid2D(ii) );
+			val += trend.f( dem(ii) );
 	}
 }
 
@@ -452,9 +452,9 @@ void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	//Recompute Rh from the interpolated td
 	for (size_t jj=0; jj<grid.nrows; jj++) {
 		for (size_t ii=0; ii<grid.ncols; ii++) {
-			double &value = grid.grid2D(ii,jj);
+			double &value = grid(ii,jj);
 			if(value!=IOUtils::nodata)
-				value = Atmosphere::DewPointtoRh(value, ta.grid2D(ii,jj), 1);
+				value = Atmosphere::DewPointtoRh(value, ta(ii,jj), 1);
 		}
 	}
 }
@@ -507,8 +507,8 @@ void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	//Recompute Rh from the interpolated td
 	for (size_t jj=0; jj<grid.nrows; jj++) {
 		for (size_t ii=0; ii<grid.ncols; ii++) {
-			double &value = grid.grid2D(ii,jj);
-			value = Atmosphere::blkBody_Radiation(value, ta.grid2D(ii,jj));
+			double &value = grid(ii,jj);
+			value = Atmosphere::blkBody_Radiation(value, ta(ii,jj));
 		}
 	}
 }
@@ -626,8 +626,6 @@ double SnowHNWInterpolation::getQualityRating(const Date& i_date, const MeteoDat
 void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	if(internal_dem.isEmpty())
-        internal_dem=dem;
 	info.clear(); info.str("");
 	//retrieve optional arguments
 	std::string base_algo;
@@ -645,21 +643,16 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
 	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
 	algorithm->getQualityRating(date, param);
-	algorithm->calculate(internal_dem, grid);
+	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
 
 	 //get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;
-	mi.interpolate(date, internal_dem, MeteoData::TA, ta);
+	mi.interpolate(date, dem, MeteoData::TA, ta);
 
 	//slope/curvature correction for solid precipitation
-	Interpol2D::SteepSlopeRedistribution(internal_dem, ta, grid);
-	//Interpol2D::CurvatureCorrection(internal_dem, ta, grid);
-
-	//add "virtual snow height" to the internal dem
-	for(size_t ii=0; ii<(dem.ncols*dem.nrows); ++ii)
-		internal_dem.grid2D(ii) += grid.grid2D(ii)*1e-2;
-	internal_dem.update();
+	Interpol2D::SteepSlopeRedistribution(dem, ta, grid);
+	//Interpol2D::CurvatureCorrection(dem, ta, grid);
 }
 
 

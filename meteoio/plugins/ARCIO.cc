@@ -240,7 +240,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 					ss << ncols << " columns of doubles expected";
 					throw InvalidFormatException(ss.str(), AT);
 				}
-				grid_out.grid2D(ll, kk) = IOUtils::standardizeNodata(tmp, plugin_nodata);
+				grid_out(ll, kk) = IOUtils::standardizeNodata(tmp, plugin_nodata);
 			}
 		}
 	} catch(const std::exception& e) {
@@ -355,7 +355,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		if(grid_in.nrows>0) {
 			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 				for (size_t ll=0; ll < grid_in.ncols; ll++){
-					fout << grid_in.grid2D(ll, kk) << " ";
+					fout << grid_in(ll, kk) << " ";
 				}
 				fout << "\n";
 			}

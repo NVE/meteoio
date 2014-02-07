@@ -107,7 +107,7 @@ void fulfillDoubleArray(const Grid2DObject&  p,
 		size_t iknx = 0;
 		for (size_t kk = 0; kk < p.nrows; kk++){
 			for (size_t ll=0; ll < p.ncols; ll++)
-				dest[knx + ll] = p.grid2D(ll+iknx);
+				dest[knx + ll] = p(ll+iknx);
 			knx+=p.ncols;
 			iknx+=p.ncols;
 		}
@@ -117,7 +117,7 @@ void fulfillDoubleArray(const Grid2DObject&  p,
 		size_t iknx = 0;
 		for (size_t kk = p.nrows-1; kk >=0; kk--){
 			for (size_t ll=p.ncols -1; ll >=0; ll--)
-				dest[knx + ll] = p.grid2D(p.ncols -1-ll+iknx);
+				dest[knx + ll] = p(p.ncols -1-ll+iknx);
 			knx-=p.ncols;
 			iknx+=p.ncols;
 		}
@@ -127,7 +127,7 @@ void fulfillDoubleArray(const Grid2DObject&  p,
 		size_t iknx = 0;
 		for (size_t kk = 0; kk < p.nrows; kk++){
 			for (size_t ll=p.ncols -1; ll >=0; ll--)
-				dest[knx+ ll] = p.grid2D(p.ncols -1-ll+iknx);
+				dest[knx+ ll] = p(p.ncols -1-ll+iknx);
 			knx+=p.ncols;
 			iknx+=p.ncols;
 		}
@@ -137,7 +137,7 @@ void fulfillDoubleArray(const Grid2DObject&  p,
 		size_t iknx = 0;
 		for (size_t kk = (signed)p.nrows-1; kk >=0; kk--){
 			for (size_t ll=0; ll < p.ncols; ll++)
-				dest[knx + ll] = p.grid2D(ll+iknx);
+				dest[knx + ll] = p(ll+iknx);
 			knx-=p.ncols;
 			iknx+=p.ncols;
 		}
@@ -147,7 +147,7 @@ void fulfillDoubleArray(const Grid2DObject&  p,
 		size_t iknx = 0;
 		for (size_t kk = 0; kk < p.nrows; kk++){
 			for (size_t ll=0; ll < p.ncols; ll++)
-				dest[knx + ll] = p.grid2D(ll+iknx);
+				dest[knx + ll] = p(ll+iknx);
 			knx+=p.ncols;
 			iknx+=p.ncols;
 		}
@@ -264,14 +264,3 @@ double* executeInterpolation(char* algorithm, char* iointerface,
 }
 
 #endif
-
-
-
-
-
-
-
-
-
-
-

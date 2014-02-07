@@ -171,9 +171,9 @@ void PGMIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 
 				if(tmp_val==plugin_nodata) {
 					//replace file's nodata by uniform, internal nodata
-					grid_out.grid2D(ll, kk) = IOUtils::nodata;
+					grid_out(ll, kk) = IOUtils::nodata;
 				} else {
-					grid_out.grid2D(ll, kk) = (tmp_val-1)*scale_factor+val_min; //because color0 = nodata
+					grid_out(ll, kk) = (tmp_val-1)*scale_factor+val_min; //because color0 = nodata
 				}
 			}
 		}
@@ -282,9 +282,9 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		if(grid_in.nrows>0) {
 			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
 				for (size_t ll=0; ll < grid_in.ncols; ll++) {
-					const double value = grid_in.grid2D(ll, kk);
+					const double value = grid_in(ll, kk);
 					if(value!=IOUtils::nodata)
-						fout << static_cast<unsigned int>( floor((grid_in.grid2D(ll, kk)-min_value)*scaling)+1 ) << " ";
+						fout << static_cast<unsigned int>( floor((grid_in(ll, kk)-min_value)*scaling)+1 ) << " ";
 					else
 						fout << "0" << " ";
 				}

@@ -427,11 +427,9 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
 		SnowHNWInterpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), internal_dem() {}
+  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
-    private:
-        DEMObject internal_dem;
 };
 
 /**

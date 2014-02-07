@@ -427,7 +427,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 
 		Grid2DObject result_grid;
 		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
-		result.push_back(result_grid.grid2D(0,0));
+		result.push_back(result_grid(0,0));
 	}
 	skip_virtual_stations = false;
 }
