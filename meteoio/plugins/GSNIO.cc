@@ -167,6 +167,7 @@ void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 
 	vecStation = vecMeta;
 }
+
 void GSNIO::readMetaData()
 {
 	vecMeta.clear();

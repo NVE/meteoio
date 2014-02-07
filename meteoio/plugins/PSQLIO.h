@@ -60,11 +60,19 @@ class PSQLIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		void getParameters();
 		void cleanup() throw();
+		void open_connection();
+		PGresult *get_data(const std::string& sqlcommand);
+		void close_connection(PGconn *conn);
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string endpoint, port, dbname, userid, passwd; ///< Variables for endpoint configuration
+		std::vector<std::string> vecFixedStationID, vecMobileStationID;
+		PGconn *psql; ///<holds the current connection
+		std::string sql_meta;
 };
 
 } //namespace
