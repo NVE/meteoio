@@ -23,6 +23,7 @@
 
 #include <libpq-fe.h>
 #include <string>
+#include <algorithm>
 
 namespace mio {
 
@@ -61,18 +62,26 @@ class PSQLIO : public IOInterface {
 
 	private:
 		void getParameters();
-		void cleanup() throw();
 		void open_connection();
-		PGresult *get_data(const std::string& sqlcommand);
+		PGresult* get_data(const std::string& sqlcommand);
+		bool replace(std::string& str, const std::string& from, const std::string& to);
+		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
+		void map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index);
+		void parse_row(PGresult* result, const int& row, const int& cols, 
+		               MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
 		void close_connection(PGconn *conn);
+		void convertUnits(MeteoData& meteo) const;
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, port, dbname, userid, passwd; ///< Variables for endpoint configuration
-		std::vector<std::string> vecFixedStationID, vecMobileStationID;
 		PGconn *psql; ///<holds the current connection
-		std::string sql_meta;
+		double default_timezone;
+		std::vector<StationData> vecMeta;
+		std::map<size_t, double> multiplier, offset;
+		std::vector<std::string> vecFixedStationID, vecMobileStationID;
+		std::string sql_meta, sql_data;
 };
 
 } //namespace
