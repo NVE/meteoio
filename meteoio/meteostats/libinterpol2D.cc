@@ -553,15 +553,139 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 	}
 }
 
-// double Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const double& alpha1, const double& alpha2, const size_t& ii, const size_t& jj)
-// {
-//
-// 	const double inv_distance = optim::invSqrt( Optim::pow2(xv-ii) + Optim::pow2(yv-jj) );
-// 	const double delta_elev = dem(xv, yv) - dem(ii, jj);
-// 	const double sx = atan(delta_elev*inv_distance);
-//
-// 	//take max
-// }
+//compute the Winstral sx factor for one single direction and one single point (ii,jj) in dem up to dmax distance
+double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj)
+{
+	const double inv_dmax = 1./dmax;
+	const double alpha_rad = bearing*Cst::to_rad;
+	const double ref_altitude = dem(ii, jj);
+	const double cellsize_sq = Optim::pow2(dem.cellsize);
+	const size_t ncols = dem.ncols, nrows = dem.nrows;
+
+	double max_sx = 0.;
+	int ll=(int)ii, mm=(int)jj;
+	size_t nb_cells = 1;
+	while( !(ll<0 || ll>(signed)ncols-1 || mm<0 || mm>(signed)nrows-1) ) {
+		//compute local sx
+		const double altitude = dem(ll, mm);
+		if(altitude==mio::IOUtils::nodata) continue; //jump over nodata cells
+		const double delta_elev = altitude - ref_altitude;
+		const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+
+		//stop if distance>dmax
+		if(inv_distance<inv_dmax) break;
+
+		const double sx = atan(delta_elev*inv_distance);
+
+		//update max_sx if necessary
+		if( fabs(sx)>fabs(max_sx) ) max_sx = sx;
+
+		//move to next cell
+		nb_cells++;
+		ll = (int)ii + (int)round( ((double)nb_cells)*sin(alpha_rad) ); //alpha is a bearing
+		mm = (int)jj + (int)round( ((double)nb_cells)*cos(alpha_rad) ); //alpha is a bearing
+	}
+
+	return max_sx;
+}
+
+//compute the Winstral sx factor around one direction and for one single point (ii,jj) in dem up to dmax distance
+//and return the average Sx
+double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing1, const double& bearing2,
+                                   const double& step, const size_t& ii, const size_t& jj)
+{
+	double sum = 0.;
+	unsigned short count=0;
+	for(double bearing=bearing1; bearing<=bearing2; bearing += step) {
+		sum += WinstralSX_core(dem, dmax, bearing, ii, jj);
+		count++;
+	}
+
+	if(count==0) return IOUtils::nodata;
+	return sum/(double)count;
+}
+
+/**
+* @brief Compute Winstral Sx exposure coefficient
+* This implements the wind exposure coefficient for one bearing as in
+* <i>"Simulating wind fields and snow redistribution using terrain‐based parameters to model
+* snow accumulation and melt over a semi‐arid mountain catchment."</i>, Winstral, Adam, and Danny Marks, Hydrological Processes <b>16.18</b> (2002), pp3585-3603.
+* @param dem digital elevation model
+* @param dmax search radius
+* @param in_bearing wind direction to consider
+* @param grid 2D array of precipitation to fill
+* @author Mathias Bavay
+*/
+void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
+{
+	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+
+	const double bearing_inc = 5.;
+	const double bearing_width = 30.;
+	const double bearing1 = in_bearing - bearing_width/2.;
+	const double bearing2 = in_bearing + bearing_width/2.;
+
+	const size_t ncols = dem.ncols, nrows = dem.nrows;
+	for(size_t jj = 0; jj<nrows; jj++) {
+		for(size_t ii = 0; ii<ncols; ii++) {
+			grid(ii,jj) = WinstralSX_core(dem, dmax, bearing1, bearing2, bearing_inc, ii, jj);
+		}
+	}
+}
+
+/*void Interpol2D::Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
+{
+	WinstralSX(dem, dmax, in_bearing, grid);
+
+	//now remove deposition that happens too far from erosion
+	for(size_t jj = 0; jj<nrows; jj++) {
+		for(size_t ii = 0; ii<ncols; ii++) {
+
+		}
+	}
+}*/
+
+void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid)
+{
+	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);
+
+	const double bearing_inc = 5.;
+	const double bearing_width = 30.;
+	const double bearing1 = in_bearing - bearing_width/2.;
+	const double bearing2 = in_bearing + bearing_width/2.;
+
+	const double cellsize_sq = Optim::pow2(dem.cellsize);
+	const double inv_sepdist = 1./sepdist;
+	const size_t n_sep = static_cast<size_t>( ceil( 0.5*sepdist/dem.cellsize ) ); //separation distance as a number of cells
+
+	const size_t ncols = dem.ncols, nrows = dem.nrows;
+	for(size_t jj = 0; jj<nrows; jj++) {
+		for(size_t ii = 0; ii<ncols; ii++) {
+			double sum = 0.;
+			unsigned short count=0;
+
+			const size_t mm_min = (jj>n_sep)? jj-n_sep : 0;
+			const size_t mm_max = min(nrows, jj+n_sep+1); //+1, to use"<"
+			const size_t ll_min = (ii>n_sep)? ii-n_sep : 0;
+			const size_t ll_max = min(ncols, ii+n_sep+1); //+1, to use"<"
+
+			for(size_t mm = mm_min; mm<mm_max; mm++) {
+				for(size_t ll = ll_min; ll<ll_max; ll++) {
+					const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+					if(inv_distance<inv_sepdist) continue;
+
+					const double val = WinstralSX_core(dem, dmax, bearing1, bearing2, bearing_inc, ll, mm);
+					if(val!=IOUtils::nodata) {
+						sum += val;
+						count++;
+					}
+				}
+			}
+
+			if(count!=0) grid(ii,jj) = sum/(double)count;
+		}
+	}
+}
 
 /**
 * @brief Ordinary Kriging matrix formulation
