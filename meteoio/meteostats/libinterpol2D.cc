@@ -554,46 +554,82 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 }
 
 //compute the Winstral sx factor for one single direction and one single point (ii,jj) in dem up to dmax distance
-double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj)
+double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
 	const double inv_dmax = 1./dmax;
 	const double alpha_rad = bearing*Cst::to_rad;
-	const double ref_altitude = dem(ii, jj);
+	const double ref_altitude = dem(i, j);
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
-	const size_t ncols = dem.ncols, nrows = dem.nrows;
+	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
+	const int ncols = static_cast<int>(dem.ncols), nrows = static_cast<int>(dem.nrows);
 
-	double max_sx = 0.;
-	int ll=(int)ii, mm=(int)jj;
-	size_t nb_cells = 1;
-	while( !(ll<0 || ll>(signed)ncols-1 || mm<0 || mm>(signed)nrows-1) ) {
-		//compute local sx
+	double max_tan_sx = 0.;
+	int ll=ii, mm=jj;
+	size_t nb_cells = 0;
+	while( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
 		const double altitude = dem(ll, mm);
 		if(altitude==mio::IOUtils::nodata) continue; //jump over nodata cells
-		const double delta_elev = altitude - ref_altitude;
-		const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+		if( !(ll==ii && mm==jj) ) {
+			//compute local sx
+			const double delta_elev = altitude - ref_altitude;
+			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+			if(inv_distance<inv_dmax) break; //stop if distance>dmax
 
-		//stop if distance>dmax
-		if(inv_distance<inv_dmax) break;
+			const double tan_sx = delta_elev*inv_distance;
 
-		const double sx = atan(delta_elev*inv_distance);
-
-		//update max_sx if necessary
-		if( fabs(sx)>fabs(max_sx) ) max_sx = sx;
+			//update max_tan_sx if necessary. We compare and tan(sx) in order to avoid computing atan()
+			if( fabs(tan_sx)>fabs(max_tan_sx) ) max_tan_sx = tan_sx;
+		}
 
 		//move to next cell
 		nb_cells++;
-		ll = (int)ii + (int)round( ((double)nb_cells)*sin(alpha_rad) ); //alpha is a bearing
-		mm = (int)jj + (int)round( ((double)nb_cells)*cos(alpha_rad) ); //alpha is a bearing
+		ll = ii + (int)round( ((double)nb_cells)*sin(alpha_rad) ); //alpha is a bearing
+		mm = jj + (int)round( ((double)nb_cells)*cos(alpha_rad) ); //alpha is a bearing
 	}
 
-	return max_sx;
+	return atan(max_tan_sx); //return max_sx
+}
+
+//Get the distance-weighted average of Sx for one single direction and one single point (ii,jj) in dem up to dmax distance
+double Interpol2D::AvgSX_core(const DEMObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
+{
+	const double inv_dmax = 1./dmax;
+	const double alpha_rad = bearing*Cst::to_rad;
+	const double cellsize_sq = Optim::pow2(dem.cellsize);
+	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
+	const int ncols = static_cast<int>(dem.ncols), nrows = static_cast<int>(dem.nrows);
+
+	double sum_sx = 0.;
+	int ll=ii, mm=jj;
+	size_t nb_cells = 0;
+	while( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
+		//compute local sx
+		const double altitude = dem(ll, mm);
+		if(altitude==mio::IOUtils::nodata) continue; //jump over nodata cells
+		if( !(ll==ii && mm==jj) ) {
+			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+			if(inv_distance<inv_dmax) break; //stop if distance>dmax
+
+			sum_sx += sx(ll,mm);
+		}
+
+		//move to next cell
+		nb_cells++;
+		ll = ii + (int)round( ((double)nb_cells)*sin(alpha_rad) ); //alpha is a bearing
+		mm = jj + (int)round( ((double)nb_cells)*cos(alpha_rad) ); //alpha is a bearing
+	}
+
+	if(nb_cells==0.) return 0.;
+	return sum_sx/(double)nb_cells;
 }
 
 //compute the Winstral sx factor around one direction and for one single point (ii,jj) in dem up to dmax distance
 //and return the average Sx
-double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing1, const double& bearing2,
+double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, double bearing1, double bearing2,
                                    const double& step, const size_t& ii, const size_t& jj)
 {
+	if(bearing1>bearing2) std::swap(bearing1, bearing2);
+
 	double sum = 0.;
 	unsigned short count=0;
 	for(double bearing=bearing1; bearing<=bearing2; bearing += step) {
@@ -633,17 +669,38 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 	}
 }
 
-/*void Interpol2D::Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
+void Interpol2D::Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
 {
-	WinstralSX(dem, dmax, in_bearing, grid);
+	Grid2DObject sx;
+	WinstralSX(dem, dmax, in_bearing, sx);
+
+	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);
+
+	const double bearing_inc = 5.;
+	const double bearing_width = 30.;
+	const double bearing1 = in_bearing - bearing_width/2.;
+	const double bearing2 = in_bearing + bearing_width/2.;
+	const size_t ncols = dem.ncols, nrows = dem.nrows;
 
 	//now remove deposition that happens too far from erosion
 	for(size_t jj = 0; jj<nrows; jj++) {
 		for(size_t ii = 0; ii<ncols; ii++) {
+			double sum = 0.;
+			unsigned short count=0;
+			for(double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
+				sum += AvgSX_core(dem, sx, dmax, bearing, ii, jj);
+				count++;
+			}
 
+			const double val = (count>0)? sum/(double)count : 0.;
+
+			if(sx(ii,jj)<=0)
+				grid(ii,jj) = sx(ii,jj);
+			else if(val<0.) grid(ii,jj) = sx(ii,jj) - val;
+			else grid(ii,jj) = 0.;
 		}
 	}
-}*/
+}
 
 void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid)
 {

@@ -64,8 +64,11 @@ class Interpol2D {
 		                      const std::vector<StationData>& vecStations,
 		                      const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid);
 
+
 		static void WinstralSX(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 		static void WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid);
+		static double AvgSX_core(const DEMObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj);
+		static void Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 
 	private:
 		//generic functions
@@ -91,7 +94,7 @@ class Interpol2D {
 		static void steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest);
 		static double depositAroundCell(const DEMObject& dem, const size_t& ii, const size_t& jj, const double& precip, Grid2DObject &grid);
 		static double WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj);
-		static double WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing1, const double& bearing2,
+		static double WinstralSX_core(const DEMObject& dem, const double& dmax, double bearing1, double bearing2,
 		                              const double& step, const size_t& ii, const size_t& jj);
 
 		//weighting methods
