@@ -65,7 +65,7 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 }
 
 size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Parameters& i_param,
-                                             std::vector<double>& o_vecData)
+                                       std::vector<double>& o_vecData)
 {
 	iomanager.getMeteoData(i_date, vecMeteo);
 	o_vecData.clear();
@@ -80,7 +80,7 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Para
 }
 
 size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Parameters& i_param,
-                                             std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta)
+                                       std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta)
 {
 	iomanager.getMeteoData(i_date, vecMeteo);
 	o_vecData.clear();
@@ -97,7 +97,7 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Para
 }
 
 size_t InterpolationAlgorithm::getStationAltitudes(const std::vector<StationData>& i_vecMeta,
-                                                         std::vector<double>& o_vecData) const
+                                                   std::vector<double>& o_vecData)
 {
 	o_vecData.clear();
 	for (size_t ii=0; ii<i_vecMeta.size(); ii++){
@@ -180,7 +180,7 @@ void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, c
 }
 
 
-void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat) const
+void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt, const double& max_alt)
 {
 	if(vecDat.size() != vecAltitudes.size()) {
 		std::ostringstream ss;
@@ -189,13 +189,14 @@ void InterpolationAlgorithm::detrend(const Fit1D& trend, const std::vector<doubl
 	}
 
 	for(size_t ii=0; ii<vecAltitudes.size(); ii++) {
+		const double altitude = std::min( std::max(vecAltitudes[ii], min_alt), max_alt );
 		double &val = vecDat[ii];
 		if(val!=IOUtils::nodata)
-			val -= trend( vecAltitudes[ii] );
+			val -= trend( altitude );
 	}
 }
 
-void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid) const
+void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt, const double& max_alt)
 {
 	const size_t nxy = grid.getNx()*grid.getNy();
 	const size_t dem_nxy = dem.grid2D.getNx()*dem.grid2D.getNy();
@@ -207,9 +208,10 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 	}
 
 	for(size_t ii=0; ii<nxy; ii++) {
+		const double altitude = std::min( std::max(dem(ii), min_alt), max_alt );
 		double &val = grid(ii);
 		if(val!=IOUtils::nodata)
-			val += trend.f( dem(ii) );
+			val += trend.f( altitude );
 	}
 }
 

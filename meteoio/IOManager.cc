@@ -407,7 +407,7 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 	result.clear();
 	skip_virtual_stations = true;
 
-	vector<Coords> vec_coords = in_coords;
+	vector<Coords> vec_coords(in_coords);
 
 	for (size_t ii=0; ii<vec_coords.size(); ii++) {
 		const bool gridify_success = dem.gridify(vec_coords[ii]);
