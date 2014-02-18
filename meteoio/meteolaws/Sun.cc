@@ -61,8 +61,8 @@ void SunObject::setDate(const double& i_julian, const double& TZ)
 
 	//if the date was new or if the previous date had not lead to an update -> update now
 	if(latitude!=IOUtils::nodata && longitude!=IOUtils::nodata && altitude!=IOUtils::nodata &&
-	   (beam_toa==IOUtils::nodata || beam_direct==IOUtils::nodata || beam_diffuse==IOUtils::nodata)) {
-			update();
+	  (beam_toa==IOUtils::nodata || beam_direct==IOUtils::nodata || beam_diffuse==IOUtils::nodata)) {
+		update();
 	}
 }
 
@@ -219,11 +219,12 @@ void SunObject::getClearSky(const double& sun_elevation, const double& R_toa,
 	const double tau_commons = tauoz * taug * tauw * taua;
 
 	// Diffuse radiation from the sky
+	const double factor = 0.79 * R_toa * tau_commons / (1. - ma + pow( ma,1.02 ));  //avoid recomputing pow() twice
 	// Rayleigh-scattered diffuse radiation after the first pass through atmosphere (Iqbal (1983), p.190)
-	const double Idr = 0.79 * R_toa * tau_commons * 0.5 * (1. - taur ) / (1. - ma + pow( ma,1.02 ));
+	const double Idr = factor * 0.5 * (1. - taur );
 
 	// aerosol scattered diffuse radiation after the first pass through atmosphere (Iqbal (1983), p.190)
-	const double Ida = 0.79 * R_toa * tau_commons * fc  * (1. - tauas) / (1. - ma + pow( ma,1.02 ));
+	const double Ida = factor * fc  * (1. - tauas);
 
 	// cloudless sky albedo Bird and Hulstrom (1980, 1981) (in Iqbal (1983) p. 190)
 	//in Iqbal, it is recomputed with ma=1.66*pressure/101325.; and alb_sky=0.0685+0.17*(1.-taua_p)*w0;

@@ -218,6 +218,47 @@ namespace Optim {
 		return b; //single iteration, otherwise set a=b and do it again
 	}
 
+	/**
+	* @brief Optimized version of 10^x
+	* This works for 0 <= x <= 1 and offers a theoritical precision of 5e-5
+	* Source: Approximations for digital comnputers, Cecil Hastings, JR, Princeton University Press, 1955.
+	*
+	* Tests have shown a maximum error of 7e-5 and an almost 4x speed up.
+	* Please benchmark your code before deciding to use this!!
+	* @param x argument
+	* @return 10^x with x in [0;1]
+	*/
+	inline double pow10(double x) {
+		const double a1 = 1.1499196;
+		const double a2 = 0.6774323;
+		const double a3 = 0.2080030;
+		const double a4 = 0.1268089;
+
+		const double x2 = x*x;
+		const double tmp = 1. + a1*x + a2*x*x + a3*x*x2 + a4*x2*x2;
+		return tmp*tmp;
+	}
+
+	/**
+	* @brief Optimized version of ln(1+x)
+	* This works for 0 <= x <= 1 and offers a theoritical precision of 5e-5
+	* Source: Approximations for digital comnputers, Cecil Hastings, JR, Princeton University Press, 1955.
+	*
+	* Tests have shown a maximum error of 2.5e-3 and a 1.7x speed up.
+	* Please benchmark your code before deciding to use this!!
+	* @param x argument
+	* @return ln(1+x) with x in [0;1]
+	*/
+	inline double ln_1plusX(double x) {
+		const double a1 = 0.9974442;
+		const double a2 = -.4712839;
+		const double a3 = 0.2256685;
+		const double a4 = -.0587527;
+
+		const double x2 = x*x;
+		return a1*x + a2*x2 + a3*x*x2 + a4*x2*x2;
+	}
+
 }
 
 } //end namespace
