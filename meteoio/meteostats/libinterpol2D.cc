@@ -186,14 +186,16 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
                            const std::vector<double>& vecEastings, const std::vector<double>& vecNorthings)
 {
 	//The value at any given cell is the sum of the weighted contribution from each source
-	const size_t n_stations=vecEastings.size();
-	double parameter=0., norm=0.;
-	const double scale = 1.e6;
+	const size_t n_stations = vecEastings.size();
+	double parameter = 0., norm = 0.;
+	const double scale = 1.e3;
+	const double alpha = 1.;
 
 	for (size_t i=0; i<n_stations; i++) {
-		const double DX=x-vecEastings[i];
-		const double DY=y-vecNorthings[i];
-		const double weight = Optim::invSqrt( DX*DX + DY*DY + scale ); //use the optimized 1/sqrt approximation
+		const double DX = x-vecEastings[i];
+		const double DY = y-vecNorthings[i];
+		const double dist = Optim::invSqrt( DX*DX + DY*DY + scale*scale ); //use the optimized 1/sqrt approximation
+		const double weight = (alpha==1.)? dist : Optim::fastPow(dist, alpha);
 		parameter += weight*vecData_in[i];
 		norm += weight;
 	}

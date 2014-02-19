@@ -127,20 +127,21 @@ bool SimpleLinear::fit()
 
 	Lambda.clear();
 	double a,b,r;
-	std::ostringstream mesg;
+	std::string mesg;
+	std::ostringstream ss;
 
 	if(fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::LinRegression(X, Y, a, b, r, mesg);
-		mesg << "Computed regression with " << regname << " model - r=" << r;
+		ss << mesg << "Computed regression with " << regname << " model - r=" << r;
 	} else {
 		a = fixed_lapse_rate;
 		Interpol1D::LinRegression(X, Y, a, b, r, mesg, true);
-		mesg << "Computed regression with " << regname << " model ";
-		mesg << "(fixed lapse rate=" << a << ") - r=" << r;
+		ss << mesg << "Computed regression with " << regname << " model ";
+		ss << "(fixed lapse rate=" << a << ") - r=" << r;
 	}
 	Lambda.push_back(a);
 	Lambda.push_back(b);
-	infoString = mesg.str();
+	infoString = ss.str();
 	fit_ready = true;
 	return true;
 }
@@ -152,20 +153,21 @@ bool NoisyLinear::fit()
 
 	Lambda.clear();
 	double a,b,r;
-	std::ostringstream mesg;
+	std::string mesg;
+	std::ostringstream ss;
 
 	if(fixed_lapse_rate==IOUtils::nodata) {
 		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg);
-		mesg << "Computed regression with " << regname << " model - r=" << r;
+		ss << mesg  << "Computed regression with " << regname << " model - r=" << r;
 	} else {
 		a = fixed_lapse_rate;
 		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
-		mesg << "Computed regression with " << regname << " model ";
-		mesg << "(fixed lapse rate=" << a << ") - r=" << r;
+		ss << mesg  << "Computed regression with " << regname << " model ";
+		ss << "(fixed lapse rate=" << a << ") - r=" << r;
 	}
 	Lambda.push_back(a);
 	Lambda.push_back(b);
-	infoString = mesg.str();
+	infoString = ss.str();
 	fit_ready = true;
 	return true;
 }

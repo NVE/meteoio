@@ -402,7 +402,7 @@ double Interpol1D::pt_line_distance(const double& x, const double& y, const doub
 * @param mesg information message if something fishy is detected
 * @param fixed_rate force the lapse rate? (default=false)
 */
-void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg, const bool& fixed_rate)
+void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg, const bool& fixed_rate)
 {
 	if(fixed_rate) {
 		LinRegressionFixedRate(X, Y, a, b, r, mesg);
@@ -448,7 +448,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 		a = 0.;
 		b = y_avg;
 		r = 1.;
-		mesg << "[W] Computing linear regression on data at identical X\n";
+		mesg = "[W] Computing linear regression on data at identical X\n";
 		return;
 	}
 	a = sxy / sx;
@@ -472,7 +472,7 @@ void Interpol1D::LinRegression(const std::vector<double>& X, const std::vector<d
 * @param r absolute value of linear regression coefficient
 * @param mesg information message if something fishy is detected
 */
-void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg)
+void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg)
 {	//check arguments
 	const size_t n = X.size();
 	if(n==0)
@@ -509,7 +509,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 		r = 1. - SSR/TSS;
 	} else {
 		r = 1.; //when all Y[i]=0 we automatically pick up the best possible fit. But r does not mean anything...
-		mesg << "[W] Computing fixed lapse rate linear regression on data all at Y=0\n";
+		mesg = "[W] Computing fixed lapse rate linear regression on data all at Y=0\n";
 	}
 }
 
@@ -524,7 +524,7 @@ void Interpol1D::LinRegressionFixedRate(const std::vector<double>& X, const std:
 * @param mesg information message if something fishy is detected
 * @param fixed_rate force the lapse rate? (default=false)
 */
-void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::ostringstream& mesg, const bool& fixed_rate)
+void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::vector<double>& in_Y, double& A, double& B, double& R, std::string& mesg, const bool& fixed_rate)
 {
 	//finds the linear regression for points (x,y,z,Value)
 	const double r_thres = 0.7;
@@ -533,8 +533,11 @@ void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::
 	const size_t min_dataset = (size_t)Optim::floor( 0.75*(double)nb_pts );
 	const size_t min_pts = (min_dataset>4)? min_dataset : 4;
 
+	std::ostringstream ss;
+
 	LinRegression(in_X, in_Y, A, B, R, mesg, fixed_rate);
 	if(R>=r_thres) return;
+	ss << mesg;
 
 	std::vector<double> X(in_X), Y(in_Y);
 	size_t nb_valid_pts = nb_pts;
@@ -555,13 +558,14 @@ void Interpol1D::NoisyLinRegression(const std::vector<double>& in_X, const std::
 		Y[index_bad] = IOUtils::nodata;
 		nb_valid_pts--;
 		LinRegression(X, Y, A, B, R, mesg, fixed_rate);
+		ss << mesg;
 	}
 
 	//check if r is reasonnable
 	if (R<r_thres) {
-		mesg << "[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
-		mesg.copyfmt(std::ios(NULL)); //restore precision
+		ss << "\n[W] Poor regression coefficient: " << std::setprecision(4) << R << "\n";
 	}
+	mesg = ss.str();
 }
 
 /**
@@ -593,12 +597,12 @@ void Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::ve
 
 	//first segment
 	double a1, b1, r1;
-	std::ostringstream mesg1;
+	std::string mesg1;
 	NoisyLinRegression(X1, Y1, a1, b1, r1, mesg1);
 
 	//second segment
 	double a2, b2, r2;
-	std::ostringstream mesg2;
+	std::string mesg2;
 	NoisyLinRegression(X2, Y2, a2, b2, r2, mesg2);
 
 	coeffs.push_back(a1); coeffs.push_back(b1);
@@ -615,7 +619,7 @@ void Interpol1D::twoLinRegression(const std::vector<double>& in_X, const std::ve
 * @param r regression coefficient
 * @param mesg information message if something fishy is detected
 */
-void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg)
+void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg)
 {
 	std::vector<double> x( X.size() );
 
@@ -637,7 +641,7 @@ void Interpol1D::LogRegression(const std::vector<double>& X, const std::vector<d
 * @param r regression coefficient
 * @param mesg information message if something fishy is detected
 */
-void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::ostringstream& mesg)
+void Interpol1D::ExpRegression(const std::vector<double>& X, const std::vector<double>& Y, double& a, double& b, double& r, std::string& mesg)
 {
 	std::vector<double> y( Y.size() );
 
