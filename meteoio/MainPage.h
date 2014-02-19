@@ -282,7 +282,8 @@ namespace mio {
  *
  * In order to add a new filter/processing element to the already existing set of components, the developer only needs to
  * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteofilters (depending on the kind of filter
- * that is developed).
+ * that is developed). Templates header and code files are available to get you started, look into the "meteofilters" subdirectory of the source directory (files "template.cc" and "template.h").
+ *
  * It is important to understand that the processing elements operate on a "per parameter" basis.
  * This means that an element might be executed for the parameter TA and another one for the parameter HNW, so the
  * algorithm only has to deal with a generic processing method based on double values.
@@ -322,7 +323,8 @@ namespace mio {
  *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
  * -# Including the filter's header file in meteofilters/ProcessingBlocks.cc
  *
- * The class FilterMax can be used as an example of implementation of a basic filter that will check whether a
+ * Although you are encouraged to use the provided templates (files "template.cc" and "template.h" in the meteofilters subdirectory),
+ * the class FilterMax can be used as an example of implementation of a basic filter that will check whether a
  * value is greater than an argument
  * supplied to the filter and if so changes the value either to IOUtils::nodata (normal operation) or to the
  * maximum value supplied in the argument (soft mode of operation). An example section in the io.ini file supplied
