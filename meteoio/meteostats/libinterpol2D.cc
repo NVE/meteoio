@@ -259,14 +259,16 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 	//compute local pixel value
 	unsigned int count=0;
 	double pixel_value=0., norm=0.;
-	const double scale=0.;
+	const double scale = 1.;
+	const double alpha = 1.;
 	for(size_t st=0; st<max_stations; st++) {
-		const size_t st_index=list[st].second;
+		const size_t st_index = list[st].second;
 		const double alt = vecStations_in[st_index].position.getAltitude();
 		const double value = vecData_in[st_index];
 		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
 			const double contrib = value - trend(alt);
-			const double weight = Optim::invSqrt( list[st].first + scale + 1.e-6 );
+			const double dist = Optim::invSqrt( list[st].first + scale*scale + 1.e-6 );
+			const double weight = (alpha==1.)? dist : Optim::fastPow(dist, alpha);
 			pixel_value += weight*contrib;
 			norm += weight;
 			count++;
