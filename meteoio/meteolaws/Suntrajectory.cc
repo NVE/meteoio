@@ -409,16 +409,12 @@ void SunMeeus::update() {
 	AtmosphericRefraction /= 3600.;
 
 	SolarElevationAtm = SolarElevation + AtmosphericRefraction; //correction for the effects of the atmosphere
+	const double cos_SAA = (sin(latitude*Cst::to_rad)*cos(SolarZenithAngle*Cst::to_rad) - sin(SunDeclination*Cst::to_rad)) /
+	                       (cos(latitude*Cst::to_rad)*sin(SolarZenithAngle*Cst::to_rad));
 	if( HourAngle>0. ) {
-		SolarAzimuthAngle = fmod( acos(
-		                     (sin(latitude*Cst::to_rad)*cos(SolarZenithAngle*Cst::to_rad) - sin(SunDeclination*Cst::to_rad)) /
-		                     (cos(latitude*Cst::to_rad)*sin(SolarZenithAngle*Cst::to_rad)))*Cst::to_deg + 180.
-		                    , 360. );
+		SolarAzimuthAngle = fmod( acos( std::min( 1., std::max(-1., cos_SAA) ) )*Cst::to_deg + 180., 360. );
 	} else {
-		SolarAzimuthAngle = fmod( 540. - acos(
-		                     (sin(latitude*Cst::to_rad)*cos(SolarZenithAngle*Cst::to_rad) - sin(SunDeclination*Cst::to_rad)) /
-		                     (cos(latitude*Cst::to_rad)*sin(SolarZenithAngle*Cst::to_rad)))*Cst::to_deg
-		                    ,  360. );
+		SolarAzimuthAngle = fmod( 540. - acos( std::min( 1., std::max(-1., cos_SAA) ) )*Cst::to_deg,  360. );
 	}
 }
 
