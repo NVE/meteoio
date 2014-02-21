@@ -21,6 +21,8 @@
 #include <sstream>
 #include <iostream>
 
+#include <curl/curl.h>
+
 using namespace std;
 
 namespace mio {
@@ -232,7 +234,7 @@ void GSNIO::getAllStations()
 
 	vecAllMeta.clear();
 
-	if (curl_read(sensors_endpoint + "?username=" + userid + "&password=" + passwd, ss) == CURLE_OK) {
+	if (curl_read(sensors_endpoint + "?username=" + userid + "&password=" + passwd, ss)) {
 		string name(""), id(""), azi("");
 		double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
 		unsigned int valid = 0;
@@ -322,7 +324,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 
 	stringstream ss;
 
-	if (curl_read(request, ss) == CURLE_OK) {
+	if (curl_read(request, ss)) {
 		vector<size_t> index;
 		bool olwr_present = false;
 
@@ -541,7 +543,7 @@ size_t GSNIO::data_write(void* buf, size_t size, size_t nmemb, void* userp)
 	return 0;
 }
 
-CURLcode GSNIO::curl_read(const std::string& url_query, std::ostream& os)
+bool GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 {
 	CURLcode code(CURLE_FAILED_INIT);
 	CURL* curl = curl_easy_init();
@@ -561,7 +563,10 @@ CURLcode GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 		curl_easy_cleanup(curl);
 	}
 
-	return code;
+	if(code!=CURLE_OK)
+		std::cout << "[E] " << curl_easy_strerror(code) << "\n";
+
+	return (code==CURLE_OK);
 }
 
 } //namespace

@@ -28,8 +28,6 @@
 #include <string>
 #include <vector>
 
-#include <curl/curl.h>
-
 namespace mio {
 
 /**
@@ -80,7 +78,7 @@ class GSNIO : public IOInterface {
 		void parse_streamElement(const std::string& line, const std::vector<size_t>& index,
 		                         const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo) const;
 		static size_t data_write(void* buf, size_t size, size_t nmemb, void* userp);
-		CURLcode curl_read(const std::string& url, std::ostream& os);
+		bool curl_read(const std::string& url, std::ostream& os);
 
 		const Config cfg;
 		std::vector<std::string> vecStationName;
