@@ -865,15 +865,13 @@ void SMETReader::read_header(std::ifstream& fin)
 	SMETCommon::stripComments(line);
 	SMETCommon::readLineToVec(line, tmpvec);
 	checkSignature(tmpvec, isAscii);
-std::cerr << "Line read:" << line << "\n";
+
 	//2. Read Header
-	while (!fin.eof() && (fin.peek() != '[')) {//skip lines until '[' is found
+	while (!fin.eof() && (fin.peek() != '[')) //skip lines until '[' is found
 		getline(fin, line, eoln);
-		std::cerr << "Seek:" << line << "\n";
-	}
 
 	getline(fin, line, eoln);
-std::cerr << "Header line read:" << line << "\n";
+
 	SMETCommon::stripComments(line);
 	SMETCommon::trim(line);
 	SMETCommon::toUpper(line);
@@ -1113,7 +1111,7 @@ void SMETReader::read_data_ascii(std::ifstream& fin, std::vector<std::string>& v
 				}
 				current_fpointer = tmp_fpointer;
 			} catch(SMETException&) {
-				std::cerr << "Error reading file \"" << filename << "\" at line \"" << line << "\"" << std::endl;
+				cerr << "Error reading file \"" << filename << "\" at line \"" << line << "\"" << endl;
 				throw;
 			}
 		} else {
