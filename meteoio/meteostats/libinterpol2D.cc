@@ -753,6 +753,50 @@ void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const doub
 * @brief Ordinary Kriging matrix formulation
 * This implements the matrix formulation of Ordinary Kriging, as shown (for example) in
 * <i>"Statistics for spatial data"</i>, Noel A. C. Cressie, John Wiley & Sons, revised edition, 1993, pp122.
+*
+* First, Ordinary kriging assumes stationarity of the mean of all random variables. We start by solving the following system:
+* \f{eqnarray*}{
+* \mathbf{\lambda} &  = & \mathbf{\Gamma_0^{-1}} \cdot \mathbf{\gamma^*} \\
+* \left[
+* \begin{array}{c}
+* \lambda_1 \\
+* \vdots \\
+* \lambda_i \\
+* \mu
+* \end{array}
+* \right]
+* &
+* =
+* &
+* {
+* \left[
+* \begin{array}{cccc}
+* \Gamma_{1,1} & \cdots & \Gamma_{1,i} & 1      \\
+* \vdots       & \ddots & \vdots       & \vdots \\
+* \Gamma_{i,1} & \cdots & \Gamma_{i,i} & 1      \\
+* 1            & \cdots & 1            & 0
+* \end{array}
+* \right]
+* }^{-1}
+* \cdot
+* \left[
+* \begin{array}{c}
+* \gamma^*_1 \\
+* \vdots \\
+* \gamma^*_i \\
+* 1
+* \end{array}
+* \right]
+* \f}
+* where the \f$\lambda_i\f$ are the interpolation weights (at each station i), \f$\mu\f$ is the Lagrange multiplier (used to minimize the error),
+* \f$\Gamma_{i,j}\f$ is the covariance between the stations i and j and \f$\gamma^*_i\f$ the covariances between the station i and
+* the local position where the interpolation has to be computed (this covariance is computed based on distance, using the variogram that gives
+* covariance = f(distance)). Once the \f$\lambda_i\f$ have been computed, the local, interpolated value is computed as
+* \f[
+* \mathbf{X^*} = \sum \mathbf{\lambda_i} * \mathbf{X_i}
+* \f]
+* where \f$X_i\f$ is the value measured at station i.
+*
 * @param vecData vector containing the values as measured at the stations
 * @param vecStations vector of stations
 * @param dem digital elevation model

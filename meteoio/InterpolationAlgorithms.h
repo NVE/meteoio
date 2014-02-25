@@ -437,13 +437,13 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
  * @brief Ordinary kriging.
  * This implements ordinary krigging (see https://secure.wikimedia.org/wikipedia/en/wiki/Kriging)
  * with user-selectable variogram model (see https://secure.wikimedia.org/wikipedia/en/wiki/Variogram).
- * The variogram and krigging
- * coefficients are re-computed fresh for each new grid (or time step).
+ * More details about the specific computation steps of kriging are provided in Interpol2D::ODKriging.
  *
  * The variogram is currently computed with the current data (as 1/2*(X1-X2)^2), which makes it quite
  * uninteresting... The next improvement will consist in calculating the covariances (used to build the
  * variogram) from time series (thus reflecting the time-correlation between stations).
  *
+ * Please note that the variogram and krigging coefficients are re-computed fresh for each new grid (or time step).
  * The available variogram models are found in Fit1D::regression and given as optional arguments
  * (by default, LINVARIO is used). Several models can be given, the first that can fit the data will be used
  * for the current timestep:
