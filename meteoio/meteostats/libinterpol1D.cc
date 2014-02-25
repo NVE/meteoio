@@ -201,8 +201,6 @@ double Interpol1D::weightedMean(const double& d1, const double& d2, const double
 double Interpol1D::weightedMean(const std::vector<double>& vecData, const std::vector<double>& weight)
 {
 	const size_t nPts = vecData.size();
-	if (nPts == 0)
-		throw NoAvailableDataException("Trying to calculate an arithmetic mean with no data points", AT);
 	if(nPts != weight.size()) {
 		std::ostringstream ss;
 		ss << "Computing weighted mean of a vector of size " << nPts;
@@ -229,8 +227,6 @@ double Interpol1D::weightedMean(const std::vector<double>& vecData, const std::v
 double Interpol1D::arithmeticMean(const std::vector<double>& vecData)
 {
 	const size_t nPts = vecData.size();
-	if (nPts == 0)
-		throw NoAvailableDataException("Trying to calculate an arithmetic mean with no data points", AT);
 
 	unsigned int count=0;
 	double sum = 0.0;
@@ -276,8 +272,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData, const bool& kee
 //This uses a sorting algorithm for getting middle element
 //as much more efficient than full sorting (O(n) compared to O(n log(n))
 	if(keep_nodata) {
-		if (vecData.empty())
-			throw NoAvailableDataException("Trying to calculate a median with no data points", AT);
+		if (vecData.empty()) return IOUtils::nodata;
 
 		vector<double> vecTemp;
 		for(size_t i=0; i<vecData.size(); i++) {
@@ -294,8 +289,7 @@ double Interpol1D::getMedian(const std::vector<double>& vecData, const bool& kee
 
 double Interpol1D::getMedianAverageDeviation(std::vector<double> vecData, const bool& keep_nodata)
 {
-	if (vecData.empty())
-		throw NoAvailableDataException("Trying to calculate MAD with no data points", AT);
+	if (vecData.empty()) return IOUtils::nodata;
 
 	const double median = Interpol1D::getMedian(vecData, keep_nodata);
 	if(median==IOUtils::nodata)

@@ -108,9 +108,10 @@ void Interpol2D::getNeighbors(const double& x, const double& y,
 //convert a vector of stations into two vectors of eastings and northings
 void Interpol2D::buildPositionsVectors(const std::vector<StationData>& vecStations, std::vector<double>& vecEastings, std::vector<double>& vecNorthings)
 {
-	vecEastings.resize( vecStations.size() );
-	vecNorthings.resize( vecStations.size() );
-	for (size_t i=0; i<vecStations.size(); i++) {
+	const size_t nr_stations = vecStations.size();
+	vecEastings.resize( nr_stations );
+	vecNorthings.resize( nr_stations );
+	for (size_t i=0; i<nr_stations; i++) {
 		const Coords& position = vecStations[i].position;
 		vecEastings[i] = position.getEasting();
 		vecNorthings[i] = position.getNorthing();

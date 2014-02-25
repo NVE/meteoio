@@ -865,18 +865,21 @@ void SMETReader::read_header(std::ifstream& fin)
 	SMETCommon::stripComments(line);
 	SMETCommon::readLineToVec(line, tmpvec);
 	checkSignature(tmpvec, isAscii);
-
+std::cerr << "Line read:" << line << "\n";
 	//2. Read Header
-	while (!fin.eof() && (fin.peek() != '[')) //skip lines until '[' is found
+	while (!fin.eof() && (fin.peek() != '[')) {//skip lines until '[' is found
 		getline(fin, line, eoln);
+		std::cerr << "Seek:" << line << "\n";
+	}
 
 	getline(fin, line, eoln);
+std::cerr << "Header line read:" << line << "\n";
 	SMETCommon::stripComments(line);
 	SMETCommon::trim(line);
 	SMETCommon::toUpper(line);
 
 	if (line != "[HEADER]")
-		throw;// InvalidFormatException("Section " + line + " in "+ filename + " invalid", AT);
+		throw SMETException("Read \"" + line + "\" in "+ filename + " when expecting \"[HEADER]\"", AT);
 
 	while (!fin.eof() && (fin.peek() != '[')){ //Read until next section
 		getline(fin, line, eoln);

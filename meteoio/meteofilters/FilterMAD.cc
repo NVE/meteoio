@@ -52,19 +52,13 @@ void FilterMAD::process(const unsigned int& param, const std::vector<MeteoData>&
 void FilterMAD::MAD_filter_point(const std::vector<MeteoData>& ivec, const unsigned int& param, const size_t& start, const size_t& end, double &value)
 {
 	const double K = 1. / 0.6745;
-	double mad     = IOUtils::nodata;
-	double median  = IOUtils::nodata;
 
 	std::vector<double> data( end-start+1 );
 	for(size_t ii=start; ii<=end; ii++) data[ii-start] = ivec[ii](param);
 
 	//Calculate MAD
-	try {
-		median = Interpol1D::getMedian(data);
-		mad    = Interpol1D::getMedianAverageDeviation(data);
-	} catch(const exception&){
-		return;
-	}
+	const double median = Interpol1D::getMedian(data);
+	const double mad    = Interpol1D::getMedianAverageDeviation(data);
 
 	if( median==IOUtils::nodata || mad==IOUtils::nodata ) return;
 

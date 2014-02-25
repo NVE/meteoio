@@ -256,6 +256,12 @@ class Config {
 			}
 		}
 
+		/**
+		 * @brief Template function to retrieve a vector of values of class T for a certain key pattern
+		 * @param[in] keystart std::string representing a pattern for the key in the key/value file
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[out] vecT a vector of class T into which the values for the corresponding keys are saved
+		 */
 		template <typename T> void getValues(const std::string& keystart, const std::string& section, std::vector<T>& vecT) const
 		{
 			vecT.clear();
