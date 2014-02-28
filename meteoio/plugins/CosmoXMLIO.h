@@ -24,12 +24,12 @@ along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 #include <meteoio/Coords.h>
 #include <meteoio/IOExceptions.h>
 
-#include <libxml++/libxml++.h>
-#include <libxml++/parsers/textreader.h>
-
 #include <string>
 #include <sstream>
 #include <iostream>
+
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
 
 namespace mio {
 
@@ -39,15 +39,17 @@ namespace mio {
 * This is the plugin for reading the XML data genereated by FieldExtra, the post-processor
 * of the MeteoSwiss COSMO meteorological model.
 *
-* @author Marc Diebold
-* @date   January/February 2011
+* @author Mathias Bavay
+* @date   2014
 */
 class CosmoXMLIO : public IOInterface {
 	public:
 		CosmoXMLIO(const std::string& configfile);
 		CosmoXMLIO(const CosmoXMLIO&);
-		CosmoXMLIO(const Config& cfgreader);
+		CosmoXMLIO(const Config& cfg);
 		~CosmoXMLIO() throw();
+
+		CosmoXMLIO& operator=(const CosmoXMLIO&); ///<Assignement operator, required because of pointer member
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
 		virtual void read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date);
@@ -66,25 +68,25 @@ class CosmoXMLIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
-		void cleanup() throw();
-		std::string getValue(xmlpp::TextReader& reader);
-		double getDoubleValue(xmlpp::TextReader& reader);
-		Date getDateValue(xmlpp::TextReader& reader);
-		double c2k(const double& value);
-		double k2c(const double& value);
+		void openIn_XML(const std::string& in_meteofile);
+		void closeIn_XML() throw();
+		bool parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd);
+		bool parseMeteoDataPoint(const Date& dateStart, const Date& dateEnd, const xmlNodePtr &element, MeteoData &md) const;
 
-		void finishMeteo(const double& latitude, const double& longitude, const double& altitude,
-					double& dew_point, MeteoData& meteo);
-		void writeHeader(std::stringstream& XMLdata);	//Write the first lines of the XML output file
-		void writeLocationHeader(const StationData& station, std::stringstream& XMLdata);
-		void writeMeteoDataDescription(std::stringstream& XMLdata);	//Write the middle of the XML output file
-		void writeMeteo(const std::vector<MeteoData>& vecMeteo, std::stringstream& XMLdata);
-		void writeFooter(std::stringstream& XMLdata);	//Write the last lines of the XML output file
+		bool parseMeteoData(const Date& dateStart, const Date& dateEnd, const std::string& station_id,
+		                    const StationData& sd, const xmlXPathContextPtr& xpathCtx, std::vector<MeteoData> &vecMeteo) const;
 
-		const Config cfg;
-		static const std::string dflt_extension;
+		std::map<std::string, std::string> xml_stations_id; //mapping between true station ID and the messy id used in the xml
+		std::vector<std::string> input_id; //user specified stations to read
+		std::string meteofile; //file containing all the data, for all the stations
 		double plugin_nodata; //plugin specific no data value
+
+		xmlDocPtr in_doc;
+		xmlXPathContextPtr in_xpathCtx;
+
 		static const double in_tz, out_tz; //plugin specific time zones
+		static const std::string xml_namespace, StationData_xpath, MeteoData_xpath;
+
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };
 

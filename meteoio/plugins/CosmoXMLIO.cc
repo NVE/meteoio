@@ -24,6 +24,15 @@
 #include <fstream>
 #include <string>
 
+//#include <libxml/parser.h>
+#include <libxml/tree.h>
+//#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+
+#if !defined(LIBXML_XPATH_ENABLED) || !defined(LIBXML_SAX1_ENABLED)
+	#error Please enable XPATH and SAX1 in your version of libxml!
+#endif
+
 using namespace std;
 
 namespace mio {
@@ -38,20 +47,21 @@ namespace mio {
  *
  * @section cosmoxml_units Units
  * The units are assumed to be the following:
- * - temperatures in celsius
- * - dew point in celsius (input)
- * - relative humidity in % (output)
+ * - temperatures in K
+ * - relative humidity in %
  * - wind speed in m/s
  * - precipitations in mm/h
  * - radiation in W/m²
- * - maximal wind speed in m/s (not implemented yet...)
+ * - snow height in cm
+ * - maximal wind speed in m/s
  *
  * @section cosmoxml_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS:  input coordinate system (see Coords) specified in the [Input] section
+ * - METEO:     specify COSMOXML for [Input] section
  * - METEOPATH: string containing the path to the xml files to be read, specified in the [Input] section
- * - METEOPATH: string containing the path where the XML files have to be written, specified in the [Output] section
- * - METEO:     specify COSMOXML for [Input] and/or [Output] section(s)
+ * - METEOFILE: specify the xml file to read the data from
+ * - STATION#: ID of the station to read
  *
  * Example:
  * @code
@@ -59,31 +69,101 @@ namespace mio {
  * COORDSYS	= CH1903
  * METEO	= COSMOXML
  * METEOPATH	= ./input/meteoXMLdata
- * [Output]
- * METEO	= COSMOXML
- * METEOPATH	= ./output/meteoXMLdata
+ * METEOFILE	= cosmo2.xml
+ * STATION1	= ATT
+ * STATION2	= EGH
  * @endcode
  */
 
 const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
 const double CosmoXMLIO::out_tz = 0.; //Plugin specific time zone
-const std::string CosmoXMLIO::dflt_extension = ".xml";
+const std::string CosmoXMLIO::xml_namespace = "http://www.meteoswiss.ch/xmlns/modeltemplate/2";
+const std::string CosmoXMLIO::StationData_xpath = "//ch:datainformation/ch:data-tables/ch:data/ch:row/ch:col";
+const std::string CosmoXMLIO::MeteoData_xpath = "//ch:valueinformation/ch:values-tables/ch:data/ch:row/ch:col";
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
-           : cfg(configfile), plugin_nodata(-999.), coordin(), coordinparam(), coordout(), coordoutparam()
+           : xml_stations_id(), input_id(), meteofile(), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
+             coordin(), coordinparam(), coordout(), coordoutparam()
 {
+	LIBXML_TEST_VERSION
+	Config cfg(configfile);
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValues("STATION", "INPUT", input_id);
+	cfg.getValue("METEOFILE", "INPUT", meteofile);
+	std::string meteopath;
+	cfg.getValue("METEOPATH", "INPUT", meteopath);
+	meteofile = meteopath + "/" + meteofile;
 }
 
-CosmoXMLIO::CosmoXMLIO(const Config& cfgreader)
-           : cfg(cfgreader), plugin_nodata(-999.), coordin(), coordinparam(), coordout(), coordoutparam()
+CosmoXMLIO::CosmoXMLIO(const Config& cfg)
+           : xml_stations_id(), input_id(), meteofile(), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
+             coordin(), coordinparam(), coordout(), coordoutparam()
 {
+	LIBXML_TEST_VERSION
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	cfg.getValues("STATION", "INPUT", input_id);
+	cfg.getValue("METEOFILE", "INPUT", meteofile);
+	std::string meteopath;
+	cfg.getValue("METEOPATH", "INPUT", meteopath);
+	meteofile = meteopath + "/" + meteofile;
+}
+
+CosmoXMLIO& CosmoXMLIO::operator=(const CosmoXMLIO& source) {
+	if(this != &source) {
+		xml_stations_id = source.xml_stations_id;
+		input_id = source.input_id;
+		meteofile = source.meteofile;
+		plugin_nodata = source.plugin_nodata;
+		in_doc = NULL;
+		in_xpathCtx = NULL;
+		coordin = source.coordin;
+		coordinparam = source.coordinparam;
+		coordout = source.coordout;
+		coordoutparam = source.coordoutparam;
+	}
+	return *this;
 }
 
 CosmoXMLIO::~CosmoXMLIO() throw()
 {
+	closeIn_XML();
+}
 
+void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
+{
+	if(in_doc!=NULL) return; //the file has already been read
+
+	xmlInitParser();
+	xmlKeepBlanksDefault(0);
+
+	in_doc = xmlParseFile(in_meteofile.c_str());
+	if (in_doc == NULL) {
+		throw FileNotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
+	}
+
+	if(in_xpathCtx!=NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
+	in_xpathCtx = xmlXPathNewContext(in_doc);
+	if(in_xpathCtx == NULL) {
+		closeIn_XML();
+		throw IOException("Unable to create new XPath context", AT);
+	}
+
+	if(xmlXPathRegisterNs(in_xpathCtx,  (const xmlChar*)"ch", (const xmlChar*)xml_namespace.c_str()) != 0) {
+		throw IOException("Unable to register namespace with prefix", AT);
+	}
+}
+
+void CosmoXMLIO::closeIn_XML() throw()
+{
+	if(in_xpathCtx!=NULL) {
+		xmlXPathFreeContext(in_xpathCtx);
+		in_xpathCtx = NULL;
+	}
+	if(in_doc!=NULL) {
+		xmlFreeDoc(in_doc);
+		in_doc = NULL;
+	}
+	xmlCleanupParser();
 }
 
 void CosmoXMLIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*_name*/)
@@ -116,378 +196,177 @@ void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*d
 	throw IOException("Nothing implemented here", AT);
 }
 
-void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationData>& vecStation)
+bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd)
 {
-	//Get all files from directory
-	string meteopath, station_path;
- 	cfg.getValue("METEOPATH", "Input", meteopath);
-	if (meteopath.empty())
-		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
-	const string pattern = dflt_extension;
-	list<string> dirlist;
-	IOUtils::readDirectory(meteopath, dirlist, pattern);
-	dirlist.sort();
+	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+station_id+"']/.."; //ie parent node containing the pattern
+	const std::string attribute = "id";
 
-	vecStation.clear(); //Initialize Station Vector
+	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
+	if(xpathObj == NULL) return false;
 
-	for( list<string>::iterator itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {
-		//Loop over all stations in the meteopath directory
-		station_path = meteopath + "/" + *itr;
+	//check the number of matches
+	const xmlNodeSetPtr &metadata = xpathObj->nodesetval;
+	const int nr_metadata = (metadata) ? metadata->nodeNr : 0;
+	if(nr_metadata==0)
+		throw NoAvailableDataException("No metadata found for station \""+station_id+"\"", AT);
+	if(nr_metadata>1)
+		throw InvalidFormatException("Multiple definition of metadata for station \""+station_id+"\"", AT);
 
-		StationData sd;
-		//Initialize variables
-		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
-		string station_name, station_ID;
-		bool is_first=true;
-		Date first_date=IOUtils::nodata, last_date=IOUtils::nodata, date_read=IOUtils::nodata;
+	//collect all the data fields
+	std::string xml_id;
+	double altitude = IOUtils::nodata, latitude = IOUtils::nodata, longitude = IOUtils::nodata;
+	//start from the first child until the last one
+	for (xmlNode *cur_node = metadata->nodeTab[0]->children; cur_node; cur_node = cur_node->next) {
+		if (cur_node->type == XML_ELEMENT_NODE) {
+			xmlChar *att = xmlGetProp(cur_node, (const xmlChar *)attribute.c_str());
+			const std::string field( (char*)(att) );
+			xmlFree(att);
 
-		//Read station and meteo data
-		xmlpp::TextReader reader(station_path);
-		while(reader.read()) {
-			if(reader.has_attributes()) {
-				reader.move_to_first_attribute();
-				const string key=reader.get_value();
-				//StationData
-				if(key=="identifier") station_name = getValue(reader);
-				if(key=="station_abbreviation") station_ID = getValue(reader);
-				if(key=="station.height") altitude = getDoubleValue(reader);
-				if(key=="station.latitude") latitude = getDoubleValue(reader);
-				if(key=="station.longitude") longitude = getDoubleValue(reader);
- 				if(key=="missing_value_code") plugin_nodata = getDoubleValue(reader);
-				//Test used to write station data only if the given date is in the station data interval
-				if(key=="reference_ts") {
-					if(!is_first) {
-						//Check date
-						date_read = getDateValue(reader);
-						if (date_read < first_date) {
-							first_date = date_read;
-						}
-						if (date_read > last_date) {
-							last_date = date_read;
-						}
-					} else {
-						//First date to be read -> is first and last date
-						first_date = getDateValue(reader);
-						last_date = first_date;
-						is_first = false;
-					}
-				}
-				//End of date test
+			if (cur_node->children->type == XML_TEXT_NODE) {
+				const std::string value( (char*)(cur_node->children->content) );
+
+				if(field=="identifier") xml_id = value;
+				else if(field=="station_abbreviation") sd.stationID = value;
+				else if(field=="station_name") sd.stationName = value;
+				else if(field=="model_station_height") IOUtils::convertString(altitude, value);
+				else if(field=="model_station_latitude") IOUtils::convertString(latitude, value);
+				else if(field=="model_station_longitude") IOUtils::convertString(longitude, value);
+				else if(field=="missing_value_code") IOUtils::convertString(plugin_nodata, value);
 			}
 		}
+	}
 
-		//Write station data if the given date is in the station data interval
-		if ((station_date > first_date) && (station_date < last_date)) {
-			sd.stationName = station_name;
-			sd.stationID = station_ID;
-			sd.position.setLatLon(latitude, longitude, altitude);
-			vecStation.push_back(sd);	//Store results in vecStation
+	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata || altitude==IOUtils::nodata)
+		throw NoAvailableDataException("Some station location information is missing for station \""+station_id+"\"", AT);
+	sd.position.setProj(coordin, coordinparam);
+	sd.position.setLatLon(latitude, longitude, altitude);
+
+	if(xml_id.empty())
+		throw NoAvailableDataException("XML station id missing for station \""+station_id+"\"", AT);
+	xml_stations_id[station_id] = xml_id;
+
+	xmlXPathFreeObject(xpathObj);
+	return true;
+}
+
+void CosmoXMLIO::readStationData(const Date& /*station_date*/, std::vector<StationData>& vecStation)
+{
+	vecStation.clear();
+	openIn_XML(meteofile);
+
+	//read all the stations' metadata
+	for(size_t ii=0; ii<input_id.size(); ii++) {
+		StationData sd;
+		if(!parseStationData(input_id[ii], in_xpathCtx, sd)) {
+			closeIn_XML();
+			throw IOException("Unable to evaluate xpath expression \""+input_id[ii]+"\"", AT);
 		}
-
-		//Write station data for any date
-// 		sd.stationName = station_name;
-// 		sd.stationID = station_ID;
-// 		sd.position.setLatLon(latitude, longitude, altitude);
-// 		vecStation.push_back(sd);	//Store results in vecStation
-
-	}
-}
-
-//Use parser to get value corresponding to a key
-std::string CosmoXMLIO::getValue(xmlpp::TextReader& reader) {
-	reader.move_to_element();
-	reader.read();
-	const string value = reader.get_value();
-	reader.read();
-	reader.read();
-	return( value );
-}
-
-//Conversion from string to double of the value read by the parser
-double CosmoXMLIO::getDoubleValue(xmlpp::TextReader& reader) {
-	double value;
-	const string Svalue = getValue(reader);
-	if( IOUtils::convertString(value, Svalue) == false) {
-		ostringstream ss;
-		ss << "Can not parse (double)" << Svalue;
-		throw ConversionFailedException(ss.str(), AT);
-	}
-	return IOUtils::standardizeNodata(value, plugin_nodata);
-}
-
-//Conversion °C to °K
-double CosmoXMLIO::c2k(const double& value) {
-	if(value!=IOUtils::nodata)
-		return C_TO_K(value);
-	else
-		return value;
-}
-
-//Conversion °K to °C
-double CosmoXMLIO::k2c(const double& value) {
-	if(value!=IOUtils::nodata)
-		return K_TO_C(value);
-	else
-		return value;
-}
-
-//Conversion from string to Date of the value read by the parser
-Date CosmoXMLIO::getDateValue(xmlpp::TextReader& reader) {
-	Date date;
-	const string Svalue = getValue(reader);
-	if( IOUtils::convertString(date, Svalue, in_tz) == false) {
-		ostringstream ss;
-		ss << "Can not parse (date)" << Svalue;
-		throw ConversionFailedException(ss.str(), AT);
-	}
-	return date;
-}
-
-//Converts dew point to humidity and writes station position
-void CosmoXMLIO::finishMeteo(const double& latitude, const double& longitude, const double& altitude,
-                             double& dew_point, MeteoData& meteo) {
-	// Set position
-	if(altitude!=IOUtils::nodata && latitude!=IOUtils::nodata && longitude!=IOUtils::nodata) {
-		meteo.meta.position.setLatLon(latitude, longitude, altitude);
-	} else {
-		throw InvalidFormatException("Meteo data found, but no position information", AT);
+		vecStation.push_back(sd);
 	}
 
-	//Set RH
-	if ((meteo(MeteoData::TA) != IOUtils::nodata) && (dew_point != IOUtils::nodata)) {
-		meteo(MeteoData::RH) = Atmosphere::DewPointtoRh(dew_point, meteo(MeteoData::TA), TRUE);
-	}
-
-	//Reset dew_point
-	dew_point = IOUtils::nodata;
+	//closeIn_XML(); //let the destructor close it when appropriate
 }
 
-//----------> Read Station and Meteo data, uses all stations in the "meteopath" directory <----------
+bool CosmoXMLIO::parseMeteoDataPoint(const Date& dateStart, const Date& dateEnd, const xmlNodePtr &element, MeteoData &md) const
+{
+	const std::string attribute = "id";
+	double iswr_dir = IOUtils::nodata, iswr_diff = IOUtils::nodata;
+
+	//collect all the data fields
+	for (xmlNode *cur_node = element; cur_node; cur_node = cur_node->next) {
+		if (cur_node->type == XML_ELEMENT_NODE) {
+			xmlChar *att = xmlGetProp(cur_node, (const xmlChar *)attribute.c_str());
+			const std::string field( (char*)(att) );
+			xmlFree(att);
+
+			if (cur_node->children->type == XML_TEXT_NODE) {
+				const std::string value( (char*)(cur_node->children->content) );
+				if(field=="reference_ts") {
+					IOUtils::convertString(md.date, value, in_tz);
+					if(md.date<dateStart || md.date>dateEnd) return false; //HACK return for real if >dateEnd
+				} else {
+					double tmp;
+					IOUtils::convertString(tmp, value);
+					tmp = IOUtils::standardizeNodata(tmp, plugin_nodata);
+
+					//HACK for now, we hard-code the fields mapping
+					if(field=="108005") md(MeteoData::TA) = tmp;
+					else if(field=="108014") md(MeteoData::RH) = tmp/100.;
+					else if(field=="108015") md(MeteoData::VW) = tmp;
+					else if(field=="108017") md(MeteoData::DW) = tmp;
+					else if(field=="108018") md(MeteoData::VW_MAX) = tmp;
+					else if(field=="108023") md(MeteoData::HNW) = tmp;
+					else if(field=="108060") md(MeteoData::HS) = tmp/100.;
+					else if(field=="108062") md(MeteoData::TSS) = tmp;
+					else if(field=="108064") iswr_diff = tmp;
+					else if(field=="108065") iswr_dir = tmp;
+					else if(field=="108066") md(MeteoData::RSWR) = tmp;
+					else if(field=="108067") md(MeteoData::ILWR) = tmp; //108068=olwr
+				}
+			}
+		}
+	}
+
+	if(iswr_diff!=IOUtils::nodata && iswr_dir!=IOUtils::nodata)
+		md(MeteoData::ISWR) = iswr_diff+iswr_dir;
+
+	return true;
+}
+
+bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, const std::string& station_id, const StationData& sd, const xmlXPathContextPtr& xpathCtx, std::vector<MeteoData> &vecMeteo) const
+{
+	const std::string xpath = MeteoData_xpath+"[@id='identifier' and text()='"+station_id+"']";
+
+	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
+	if(xpathObj == NULL) return false;
+
+	//check the number of matches
+	const xmlNodeSetPtr &data = xpathObj->nodesetval;
+	const int nr_data = (data) ? data->nodeNr : 0;
+	if(nr_data==0)
+		throw NoAvailableDataException("No data found for station \""+station_id+"\"", AT);
+
+	//loop over all data for this station_id
+	for(int ii=0; ii<nr_data; ii++) {
+		MeteoData md( Date(), sd);
+
+		if(parseMeteoDataPoint(dateStart, dateEnd, data->nodeTab[ii], md)) //add to vector if this is a valid point
+			vecMeteo.push_back( md );
+	}
+
+	xmlXPathFreeObject(xpathObj);
+	return true;
+}
+
 void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                                std::vector< std::vector<MeteoData> >& vecMeteo,
                                const size_t&)
 {
-	//Get all files from directory
-	string meteopath, station_path;
- 	cfg.getValue("METEOPATH", "Input", meteopath);
-	if (meteopath.empty())
-		throw ConversionFailedException("Error while reading value for METEOPATH", AT);
-	const string pattern = "xml";
-	list<string> dirlist;
-	IOUtils::readDirectory(meteopath, dirlist, pattern);
-	dirlist.sort();
+	vecMeteo.clear();
+	openIn_XML(meteofile);
 
-	vecMeteo.clear();	//Initialize Meteo Vector
+	std::vector<StationData> sd;
+	readStationData(dateStart, sd);
 
-	vecMeteo.insert(vecMeteo.begin(), dirlist.size(), std::vector<MeteoData>());	//Allocation for the vectors
-	list<string>::iterator itr;	//To loop in the stations list
-
-	unsigned int ii=0;	//Declare and initialize counter (to know which station we are dealing with)
-	for( itr = dirlist.begin(); itr != dirlist.end(); itr++ ) {	//Loop over all stations in the meteopath directory
-		station_path = meteopath + "/" + *itr;
-
-		MeteoData meteo;
-		//Initialize variables
-		double altitude=IOUtils::nodata, latitude=IOUtils::nodata, longitude=IOUtils::nodata;
-		double dew_point=IOUtils::nodata;
-		bool is_first=true;
-		bool next_station = false;
-
-		//Read station and meteo data
-		xmlpp::TextReader reader(station_path);
-		while(reader.read()) {
-			if(reader.has_attributes()) {
-				reader.move_to_first_attribute();
-				const string key=reader.get_value();
-				//StationData
-				if(key=="identifier") meteo.meta.stationName = getValue(reader);
-				if(key=="station_abbreviation") meteo.meta.stationID = getValue(reader);
-				if(key=="station.height") altitude = getDoubleValue(reader);
-				if(key=="station.latitude") latitude = getDoubleValue(reader);
-				if(key=="station.longitude") longitude = getDoubleValue(reader);
-	// 			if(key=="model_station_height") altitude = getDoubleValue(reader);
-	// 			if(key=="model_station_latitude") latitude = getDoubleValue(reader);
-	// 			if(key=="model_station_longitude") longitude = getDoubleValue(reader);
- 				if(key=="missing_value_code") plugin_nodata = getDoubleValue(reader);
-
-				//MeteoData
-				if(key=="T_2M") meteo(MeteoData::TA) = c2k( getDoubleValue(reader) );
-				if(key=="TD_2M") dew_point = c2k( getDoubleValue(reader) );
-				if(key=="GLOB") meteo(MeteoData::ISWR) = getDoubleValue(reader);
-				if(key=="TOT_PREC") meteo(MeteoData::HNW) = getDoubleValue(reader);
-				if(key=="FF_10M") meteo(MeteoData::VW) = getDoubleValue(reader);
-				if(key=="VMAX_10M") meteo(MeteoData::VW_MAX) = getDoubleValue(reader);
-				if(key=="reference_ts") {
-					if(!is_first) {
-						//We can finish our object and push it.
-						//Before we check if it is in the right time interval
-						if (meteo.date < dateStart) {
-							meteo.reset();
-							meteo.date = getDateValue(reader);
-							//Go to the next entry
-							continue;
-						}
-						if (meteo.date > dateEnd) {
-							meteo.reset();
-							//Go to the next station
-							next_station = true;
-							break;
-						}
-						finishMeteo(latitude, longitude, altitude, dew_point, meteo);
-						vecMeteo[ii].push_back( meteo );
-					} else {
-						//Nothing in memory to be written when we meet the first date entry
-						is_first = false;
-					}
-					meteo.reset();
-					meteo.date = getDateValue(reader);
-				}
-			}
+	//read all the stations' data
+	for(size_t ii=0; ii<input_id.size(); ii++) {
+		const string station_id = xml_stations_id[ input_id[ii] ];
+		vector<MeteoData> vecTmp;
+		if(!parseMeteoData(dateStart, dateEnd, station_id, sd[ii], in_xpathCtx, vecTmp)) {
+			closeIn_XML();
+			throw IOException("Unable to evaluate xpath expression \""+input_id[ii]+"\"", AT);
 		}
-		if (next_station==true) continue;
-		finishMeteo(latitude, longitude, altitude, dew_point, meteo);
-		vecMeteo[ii].push_back( meteo );
-		reader.close();
-		ii++;
+		vecMeteo.push_back(vecTmp);
 	}
+
+	closeIn_XML();
 }
 
-//Writes header and description of station data
-void CosmoXMLIO::writeHeader(std::stringstream& XMLdata)
-{
-	XMLdata << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	XMLdata << "<!DOCTYPE tree-table-xml SYSTEM \"tree-table-xml.dtd\">\n<tree-table-xml>\n";
-	XMLdata << "<ttable id=\"MeteoIO->GribXML_save\">\n<row>\n<col id=\"datainformation-tables\">\n<ttable id=\"metadata\">\n";
-	XMLdata << "<row>\n<col id=\"id\">identifier</col>\n<col id=\"element\">unique composed identifier</col>\n<col id=\"unit\">character</col>\n<col id=\"class\">java.lang.String</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">station_abbreviation</col>\n<col id=\"element\">station abbrevation</col>\n<col id=\"unit\">character</col>\n<col id=\"class\">java.lang.String</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">station_height</col>\n<col id=\"element\">station height</col>\n<col id=\"unit\">m</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">station_latitude</col>\n<col id=\"element\">station latitude</col>\n<col id=\"unit\">degree</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">4</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">station_longitude</col>\n<col id=\"element\">station longitude</col>\n<col id=\"unit\">degree</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">4</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">model_station_height</col>\n<col id=\"element\">height of model grid point associated to station</col>\n<col id=\"unit\">m</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">model_station_latitude</col>\n<col id=\"element\">latitude of model grid point associated to station</col>\n<col id=\"unit\">degree</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">4</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">model_station_longitude</col>\n<col id=\"element\">longitude of model grid point associated to station</col>\n<col id=\"unit\">degree</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">4</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">data_cat_number</col>\n<col id=\"element\">data cat number</col>\n<col id=\"unit\">decimal code</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">data_cat_description</col>\n<col id=\"element\">data cat description</col>\n<col id=\"unit\">character</col>\n<col id=\"class\">java.lang.String</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">0</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">model_configuration</col>\n<col id=\"element\">model configuration</col>\n<col id=\"unit\">decimal code</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">missing_value_code</col>\n<col id=\"element\">missing value code</col>\n<col id=\"unit\">code</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">model_run_dt</col>\n<col id=\"element\">model run date (UTC)</col>\n<col id=\"unit\">YYYYMMDDHHmm</col>\n<col id=\"class\">java.lang.String</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "</ttable>\n<!-- metadata datainformation section -->\n</col>\n";
-}
-
-//Writes station data
-void CosmoXMLIO::writeLocationHeader(const StationData& station, std::stringstream& XMLdata)
-{
-		XMLdata << "<col>\n<ttable id=\"data\">\n<row>" << "\n";
-		XMLdata << "<col id=\"identifier\">" << station.getStationName() << "</col>\n";
-		XMLdata << "<col id=\"station_abbreviation\">" << station.getStationID() << "</col>\n";
-
-		//Same altitude, latitude and longitude data for station and model.
-		XMLdata << "<col id=\"station.height\">" << station.position.getAltitude() << "</col>\n";
-		XMLdata << "<col id=\"station.latitude\">" << station.position.getLat() << "</col>\n";
-		XMLdata << "<col id=\"station.longitude\">" << station.position.getLon() << "</col>\n";
- 		XMLdata << "<col id=\"model_station_height\">" << station.position.getAltitude() << "</col>\n";
-		XMLdata << "<col id=\"model_station_latitude\">" << station.position.getLat() << "</col>\n";
-		XMLdata << "<col id=\"model_station_longitude\">" << station.position.getLon() << "</col>\n";
-// 		XMLdata << "<col id=\"data_cat_number\">" << "TO DO!" << "</col>\n";
-// 		XMLdata << "<col id=\"data_cat_description\">" << "TO DO!" << "</col>\n";
-// 		XMLdata << "<col id=\"model_configuration\">" << "TO DO!" << "</col>\n";
- 		XMLdata << "<col id=\"missing_value_code\">" << IOUtils::nodata << "</col>\n";
-// 		XMLdata << "<col id=\"model_run_dt\">" << "TO DO!" << "</col>\n";
-}
-
-//Writes description of meteo data
-void CosmoXMLIO::writeMeteoDataDescription(std::stringstream& XMLdata)
-{
-	XMLdata << "</row>\n</ttable>\n<!-- data datainformation section -->\n</col></row>\n";
-	XMLdata << "<row>\n<col id=\"values-tables\">\n<ttable id=\"metadata\">\n";
-	XMLdata << "<row>\n<col id=\"id\">identifier</col>\n<col id=\"element\">unique composed identifier</col>\n<col id=\"unit\">character</col>\n<col id=\"class\">java.lang.String</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">reference_ts</col>\n<col id=\"element\">timestamp (UTC)</col>\n<col id=\"unit\">YYYYMMDDHHmm</col>\n<col id=\"class\">java.lang.String</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">0</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">T_2M</col>\n<col id=\"element\">Temperature 2m above ground, height corrected</col>\n<col id=\"unit\">degree Celsius</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">TD_2M</col>\n<col id=\"element\">Dew point temperature 2 m above ground, height corrected</col>\n<col id=\"unit\">degree Celsius</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">GLOB</col>\n<col id=\"element\">Global radiation</col>\n<col id=\"unit\">W/m^2</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">TOT_PREC</col>\n<col id=\"element\">Total precipitation, hourly sum</col>\n<col id=\"unit\">mm</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">FF_10M</col>\n<col id=\"element\">Wind speed 10m above ground</col>\n<col id=\"unit\">m/s</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "<row>\n<col id=\"id\">VMAX_10M</col>\n<col id=\"element\">Wind gusts 10m above ground</col>\n<col id=\"unit\">m/s</col>\n<col id=\"class\">java.lang.Double</col>\n<col id=\"decimal-precision\" class=\"java.lang.Integer\">1</col>\n<col id=\"scale\" class=\"java.lang.Integer\">1</col>\n<col id=\"mandatory\" class=\"java.lang.Boolean\">1</col>\n</row>\n";
-	XMLdata << "</ttable>\n<!-- metadata values section -->\n</col>\n";
-}
-
-//Writes meteo data
-void CosmoXMLIO::writeMeteo(const std::vector<MeteoData>& vecMeteo, std::stringstream& XMLdata)
-{
-	XMLdata << "<col>\n<ttable id=\"data\">\n";
-	for(size_t jj=0; jj<vecMeteo.size(); jj++) {
-		XMLdata << "<row>\n";
-		XMLdata << "<col id=\"identifier\">" << vecMeteo[jj].meta.getStationName() << "</col>\n";
-		Date tmp_date(vecMeteo[jj].date);
-		tmp_date.setTimeZone(out_tz);
-		XMLdata << "<col id=\"reference_ts\">" << tmp_date.toString(Date::NUM) << "</col>\n";
-		XMLdata << "<col id=\"T_2M\">" << k2c(vecMeteo[jj](MeteoData::TA)) << "</col>\n";
-
-		if ((vecMeteo[jj](MeteoData::RH) == IOUtils::nodata) || (vecMeteo[jj](MeteoData::TA) == IOUtils::nodata)) {
-			XMLdata << "<col id=\"TD_2M\">" << IOUtils::nodata << "</col>\n";
-		} else {
-			const double dew_point=Atmosphere::RhtoDewPoint(vecMeteo[jj](MeteoData::RH), vecMeteo[jj](MeteoData::TA), TRUE);
-			XMLdata << "<col id=\"TD_2M\">" << k2c(dew_point) << "</col>\n";
-		}
-
-		XMLdata << "<col id=\"GLOB\">" << vecMeteo[jj](MeteoData::ISWR) << "</col>\n";
-		XMLdata << "<col id=\"TOT_PREC\">" << vecMeteo[jj](MeteoData::HNW) << "</col>\n";
-		XMLdata << "<col id=\"FF_10M\">" << vecMeteo[jj](MeteoData::VW) << "</col>\n";
-		XMLdata << "<col id=\"VMAX_10M\">" << vecMeteo[jj](MeteoData::VW_MAX) << "</col>\n";
-		XMLdata << "</row>\n";
-	}
-}
-
-//Writes last lines of the file
-void CosmoXMLIO::writeFooter(std::stringstream& XMLdata)
-{
-	XMLdata << "</ttable>\n<!-- data values section -->\n</col>\n";
-	XMLdata << "</row>\n</ttable>\n</tree-table-xml>\n";
-}
-
-void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo,
+void CosmoXMLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
                                 const std::string&)
 {
-	ofstream fout;
-	string filename, meteopath_out, line;
-	stringstream XMLdata;
-	cfg.getValue("METEOPATH", "Output", meteopath_out);
-	for (size_t ii=0; ii < vecMeteo.size(); ii++) {
-		//Test existence of element 0
-		if(vecMeteo[ii].empty()) {
-			cerr << "[E] Station " << ii+1 << " exists but contains no data! Skip writing it...\n";
-			continue;
-		}
-
-		XMLdata.str();	//Initialize XMLdata stringstream
-
-		//Write the first part of the XML file (header and station data description)
-		writeHeader(XMLdata);
-
-		//Insert station data
-		writeLocationHeader( vecMeteo[ii].front().meta, XMLdata );
-
-		//Write the second part of the XML file (meteo data description)
-		writeMeteoDataDescription(XMLdata);
-
-		//Insert meteo data
-		writeMeteo(vecMeteo[ii], XMLdata);
-
-		//Write the last part of the XML file (after meteo data, only a few lines)
-		writeFooter(XMLdata);
-
-		//Save file
-		std::string stat_id = vecMeteo[ii][0].meta.getStationID();
-		if(stat_id.empty()) {
-			ostringstream ss;
-			ss << "station" << ii;
-			stat_id = ss.str();
-		}
-		filename = meteopath_out + "/" + stat_id + "_" + vecMeteo[ii][0].date.toString(Date::NUM) + ".xml";
-		fout.open(filename.c_str());
-		fout << XMLdata.str();
-		fout.close();
-	}
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
 }
 
 void CosmoXMLIO::readPOI(std::vector<Coords>&)
@@ -508,9 +387,5 @@ void CosmoXMLIO::write2DGrid(const Grid2DObject&, const MeteoGrids::Parameters&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void CosmoXMLIO::cleanup() throw()
-{
-
-}
-
 } //namespace
+

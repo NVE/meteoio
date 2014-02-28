@@ -759,6 +759,7 @@ const Date Date::operator/(const double& value) const {
 *   - 'Z' like in 2013-02-13T19:43Z, meaning GMT
 *   - '+01' like in 2013-02-13T20:43+01 meaning GMT+1
 *   - '+0130' like in 2013-02-13T21:13+0130 meaning GMT+1.5
+*   - '+01:30' like in 2013-02-13T21:13+01:30 meaning GMT+1.5
 *   - '-0515' like in 2013-02-13T15:28-0515 meaning GMT-5.25
 * See https://en.wikipedia.org/wiki/ISO_8601 for more information
 * @param timezone_iso time zone string
