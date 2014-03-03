@@ -68,17 +68,22 @@ class CosmoXMLIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		typedef enum METEOREADSTATUS { read_ok, read_continue, read_stop } MeteoReadStatus;
+
+		void init(const Config& cfg);
+		static void scanMeteoPath(const std::string& meteopath_in, std::vector< std::pair<Date,std::string> > &meteo_files);
+		size_t getFileIdx(const Date& start_date) const;
 		void openIn_XML(const std::string& in_meteofile);
 		void closeIn_XML() throw();
 		bool parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd);
-		bool parseMeteoDataPoint(const Date& dateStart, const Date& dateEnd, const xmlNodePtr &element, MeteoData &md) const;
+		MeteoReadStatus parseMeteoDataPoint(const Date& dateStart, const Date& dateEnd, const xmlNodePtr &element, MeteoData &md) const;
 
 		bool parseMeteoData(const Date& dateStart, const Date& dateEnd, const std::string& station_id,
 		                    const StationData& sd, const xmlXPathContextPtr& xpathCtx, std::vector<MeteoData> &vecMeteo) const;
 
+		std::vector< std::pair<Date,std::string> > cache_meteo_files; //cache of meteo files in METEOPATH
 		std::map<std::string, std::string> xml_stations_id; //mapping between true station ID and the messy id used in the xml
 		std::vector<std::string> input_id; //user specified stations to read
-		std::string meteofile; //file containing all the data, for all the stations
 		double plugin_nodata; //plugin specific no data value
 
 		xmlDocPtr in_doc;
@@ -86,6 +91,7 @@ class CosmoXMLIO : public IOInterface {
 
 		static const double in_tz, out_tz; //plugin specific time zones
 		static const std::string xml_namespace, StationData_xpath, MeteoData_xpath;
+		static const std::string meteo_ext;
 
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 };

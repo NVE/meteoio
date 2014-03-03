@@ -115,7 +115,7 @@ namespace IOUtils {
 	* The matching is very primitive: it only looks for the substring "pattern" in the file names.
 	* If this substrings exists, the file matches.
 	* @param path directory containing the files
-	* @param dirlist list of mathcing file names
+	* @param dirlist list of matching file names
 	* @param pattern optional pattern that must be part of the file names
 	*/
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="");

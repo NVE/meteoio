@@ -719,13 +719,13 @@ void GRIBIO::scanMeteoPath()
 	dirlist.sort();
 
 	//Check date in every filename and cache it
-	std::list<std::string>::iterator it = dirlist.begin();
+	std::list<std::string>::const_iterator it = dirlist.begin();
 	while ((it != dirlist.end())) {
 		const std::string& filename = *it;
-		std::string::size_type spos = filename.find_first_of("0123456789");
+		const std::string::size_type spos = filename.find_first_of("0123456789");
 		Date date;
 		IOUtils::convertString(date, filename.substr(spos,10), tz_in);
-		std::pair<Date,std::string> tmp(date, filename);
+		const std::pair<Date,std::string> tmp(date, filename);
 
 		cache_meteo_files.push_back(tmp);
 		it++;
