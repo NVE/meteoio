@@ -306,11 +306,44 @@ void PSQLIO::map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>
 	}
 }
 
-void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
+bool PSQLIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	/**
+	 * This function checks whether all the MeteoData elements in vecMeteo are consistent
+	 * regarding their meta data (position information, station name). If they are consistent
+	 * true is returned, otherwise false
+	 */
+
+	if (!vecMeteo.empty()) //to get the station data even when in bug 87 conditions
+		sd = vecMeteo[0].meta;
+
+	for (size_t ii=1; ii<vecMeteo.size(); ii++){
+		const Coords& p1 = vecMeteo[ii-1].meta.position;
+		const Coords& p2 = vecMeteo[ii].meta.position;
+		if (p1 != p2) {
+			//we don't mind if p1==nodata or p2==nodata
+			if(p1.isNodata()==false && p2.isNodata()==false) return false;
+		}
+	}
+
+	return true;
+}
+
+void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
+{
+	//Loop through all stations
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		//1. check consistency of station data position -> write location in header or data section
+		StationData sd;
+		sd.position.setProj(coordout, coordoutparam);
+		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd); // sd will hold valid meta info
+
+		if (isConsistent) { //static station
+			
+		} else { //mobile station
+
+		}
+	}
 }
 
 void PSQLIO::readPOI(std::vector<Coords>&)

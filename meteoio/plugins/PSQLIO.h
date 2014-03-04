@@ -70,6 +70,7 @@ class PSQLIO : public IOInterface {
 		void parse_row(PGresult* result, const int& row, const int& cols, 
 		               MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
 		void close_connection(PGconn *conn);
+		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		void convertUnits(MeteoData& meteo) const;
 
 		const Config cfg;
