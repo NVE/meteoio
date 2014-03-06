@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -17,18 +17,10 @@
 */
 #include "CosmoXMLIO.h"
 #include <meteoio/meteolaws/Atmosphere.h>
+
 #include <sstream>
 
-//To read a text file
-#include <iostream>
-#include <fstream>
-#include <string>
-
-//#include <libxml/parser.h>
-#include <libxml/tree.h>
-//#include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
-
 #if !defined(LIBXML_XPATH_ENABLED) || !defined(LIBXML_SAX1_ENABLED)
 	#error Please enable XPATH and SAX1 in your version of libxml!
 #endif
@@ -74,11 +66,15 @@ namespace mio {
  * - METEO:     specify COSMOXML for [Input] section
  * - METEOPATH: string containing the path to the xml files to be read, specified in the [Input] section
  * - METEOFILE: specify the xml file to read the data from (optional)
+ * - METEO_PREFIX: file name prefix appearing before the date (optional)
+ * - METEO_EXT: file extension (default: ".xml", give "none" to get an empty string)
  * - STATION#: ID of the station to read
  *
- * If no METEOFILE is provided, all ".xml" files in the METEOPATH directory will be read. They <i>must</i> contain the date of
- * the first data formatted as ISO8601 numerical UTC date in their file name. For example, a file containing simulated
+ * If no METEOFILE is provided, all ".xml" files in the METEOPATH directory will be read, if they match the METEO_PREFIX and METEO_EXT.
+ * They <i>must</i> contain the date of the first data formatted as ISO8601 numerical UTC date in their file name. For example, a file containing simulated
  * meteorological fields from 2014-03-03T12:00 until 2014-03-05T00:00 could be named such as "cosmo_201403031200.xml"
+ * If some numbers appear <i>before</i> the numerical date, they must be provided as METEO_PREFIX so the plugin can
+ * properly extract the date.
  *
  * Example:
  * @code
@@ -97,11 +93,10 @@ const double CosmoXMLIO::out_tz = 0.; //Plugin specific time zone
 const std::string CosmoXMLIO::xml_namespace = "http://www.meteoswiss.ch/xmlns/modeltemplate/2";
 const std::string CosmoXMLIO::StationData_xpath = "//ch:datainformation/ch:data-tables/ch:data/ch:row/ch:col";
 const std::string CosmoXMLIO::MeteoData_xpath = "//ch:valueinformation/ch:values-tables/ch:data/ch:row/ch:col";
-const std::string CosmoXMLIO::meteo_ext = "xml";
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
-           : cache_meteo_files(), xml_stations_id(), input_id(), plugin_nodata(-999.),
-             in_doc(NULL), in_xpathCtx(NULL),
+           : cache_meteo_files(), xml_stations_id(), input_id(),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
              coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	Config cfg(configfile);
@@ -109,8 +104,8 @@ CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
 }
 
 CosmoXMLIO::CosmoXMLIO(const Config& cfg)
-           : cache_meteo_files(), xml_stations_id(), input_id(), plugin_nodata(-999.),
-             in_doc(NULL), in_xpathCtx(NULL),
+           : cache_meteo_files(), xml_stations_id(), input_id(),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
              coordin(), coordinparam(), coordout(), coordoutparam()
 {
 	init(cfg);
@@ -126,6 +121,9 @@ void CosmoXMLIO::init(const Config& cfg)
 	cfg.getValue("METEOPATH", "INPUT", meteopath);
 	std::string meteofile;
 	cfg.getValue("METEOFILE", "INPUT", meteofile, IOUtils::nothrow);
+	cfg.getValue("METEO_PREFIX", "INPUT", meteo_prefix, IOUtils::nothrow);
+	cfg.getValue("METEO_EXT", "INPUT", meteo_ext, IOUtils::nothrow);
+	if( IOUtils::strToUpper(meteo_ext)=="NONE" ) meteo_ext="";
 
 	if(!meteofile.empty()) {
 		meteofile = meteopath + "/" + meteofile;
@@ -157,7 +155,7 @@ CosmoXMLIO::~CosmoXMLIO() throw()
 	closeIn_XML();
 }
 
-void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<Date,std::string> > &meteo_files)
+void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<Date,std::string> > &meteo_files) const
 {
 	meteo_files.clear();
 	std::list<std::string> dirlist;
@@ -165,12 +163,19 @@ void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< st
 	dirlist.sort();
 
 	//Check date in every filename and cache it
+	const size_t prefix_len = meteo_prefix.size();
 	std::list<std::string>::const_iterator it = dirlist.begin();
 	while ((it != dirlist.end())) {
 		const std::string& filename = *it;
-		const std::string::size_type spos = filename.find_first_of("0123456789");
+		const std::string::size_type prefix_pos = (prefix_len==0)? 0 : filename.find_first_of(meteo_prefix);
+		if(prefix_pos==string::npos) continue;
+
+		const size_t start_pos = prefix_pos+prefix_len+1;
+		if(start_pos>=filename.size()) continue;
+
+		const std::string::size_type date_pos = filename.find_first_of("0123456789", start_pos);
 		Date date;
-		IOUtils::convertString(date, filename.substr(spos,10), in_tz);
+		IOUtils::convertString(date, filename.substr(date_pos,10), in_tz);
 		const std::pair<Date,std::string> tmp(date, filename);
 
 		meteo_files.push_back(tmp);
@@ -190,7 +195,7 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 		throw FileNotFoundException("Could not open/parse file \""+in_meteofile+"\"", AT);
 	}
 
-	if(in_xpathCtx!=NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
+	if(in_xpathCtx != NULL) xmlXPathFreeContext(in_xpathCtx); //free variable if this was not freed before
 	in_xpathCtx = xmlXPathNewContext(in_doc);
 	if(in_xpathCtx == NULL) {
 		closeIn_XML();
@@ -307,8 +312,7 @@ size_t CosmoXMLIO::getFileIdx(const Date& start_date) const
 	if(cache_meteo_files.size()==1) {
 		return 0;
 	} else {
-		size_t idx;
-		for(idx=1; idx<cache_meteo_files.size(); idx++) {
+		for(size_t idx=1; idx<cache_meteo_files.size(); idx++) {
 			if(start_date>=cache_meteo_files[idx-1].first && start_date<cache_meteo_files[idx].first) {
 				return idx--;
 			}
@@ -385,6 +389,10 @@ CosmoXMLIO::MeteoReadStatus CosmoXMLIO::parseMeteoDataPoint(const Date& dateStar
 
 	if(iswr_diff!=IOUtils::nodata && iswr_dir!=IOUtils::nodata)
 		md(MeteoData::ISWR) = iswr_diff+iswr_dir;
+
+	//because of the Kalman filter applied on VW, sometimes VW_MAX<VW
+	if(md(MeteoData::VW)!=IOUtils::nodata && md(MeteoData::VW_MAX)!=IOUtils::nodata && md(MeteoData::VW_MAX)<md(MeteoData::VW))
+		md(MeteoData::VW_MAX) = md(MeteoData::VW);
 
 	return read_ok;
 }
