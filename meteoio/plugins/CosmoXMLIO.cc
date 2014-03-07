@@ -73,8 +73,8 @@ namespace mio {
  * If no METEOFILE is provided, all ".xml" files in the METEOPATH directory will be read, if they match the METEO_PREFIX and METEO_EXT.
  * They <i>must</i> contain the date of the first data formatted as ISO8601 numerical UTC date in their file name. For example, a file containing simulated
  * meteorological fields from 2014-03-03T12:00 until 2014-03-05T00:00 could be named such as "cosmo_201403031200.xml"
- * If some numbers appear <i>before</i> the numerical date, they must be provided as METEO_PREFIX so the plugin can
- * properly extract the date.
+ * If some numbers appear <i>before</i> the numerical date, they must be provided as part of METEO_PREFIX so the plugin can
+ * properly extract the date (for MeteoSwiss, this must be set to "VNMH49").
  *
  * Example:
  * @code
@@ -89,15 +89,15 @@ namespace mio {
  */
 
 const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
-const double CosmoXMLIO::out_tz = 0.; //Plugin specific time zone
-const std::string CosmoXMLIO::xml_namespace = "http://www.meteoswiss.ch/xmlns/modeltemplate/2";
-const std::string CosmoXMLIO::StationData_xpath = "//ch:datainformation/ch:data-tables/ch:data/ch:row/ch:col";
-const std::string CosmoXMLIO::MeteoData_xpath = "//ch:valueinformation/ch:values-tables/ch:data/ch:row/ch:col";
+const xmlChar* CosmoXMLIO::xml_attribute = (const xmlChar *)"id";
+const xmlChar* CosmoXMLIO::xml_namespace = (const xmlChar *)"http://www.meteoswiss.ch/xmlns/modeltemplate/2";
+const std::string CosmoXMLIO::StationData_xpath = "//ns:datainformation/ns:data-tables/ns:data/ns:row/ns:col";
+const std::string CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col";
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
            : cache_meteo_files(), xml_stations_id(), input_id(),
              meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
-             coordin(), coordinparam(), coordout(), coordoutparam()
+             coordin(), coordinparam()
 {
 	Config cfg(configfile);
 	init(cfg);
@@ -106,7 +106,7 @@ CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
 CosmoXMLIO::CosmoXMLIO(const Config& cfg)
            : cache_meteo_files(), xml_stations_id(), input_id(),
              meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
-             coordin(), coordinparam(), coordout(), coordoutparam()
+             coordin(), coordinparam()
 {
 	init(cfg);
 }
@@ -115,19 +115,20 @@ void CosmoXMLIO::init(const Config& cfg)
 {
 	LIBXML_TEST_VERSION
 
+	string coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+
 	cfg.getValues("STATION", "INPUT", input_id);
-	std::string meteopath;
-	cfg.getValue("METEOPATH", "INPUT", meteopath);
-	std::string meteofile;
-	cfg.getValue("METEOFILE", "INPUT", meteofile, IOUtils::nothrow);
+
+	const std::string meteopath = cfg.get("METEOPATH", "INPUT");
+	const std::string meteofile = cfg.get("METEOFILE", "INPUT", IOUtils::nothrow);
 	cfg.getValue("METEO_PREFIX", "INPUT", meteo_prefix, IOUtils::nothrow);
 	cfg.getValue("METEO_EXT", "INPUT", meteo_ext, IOUtils::nothrow);
 	if( IOUtils::strToUpper(meteo_ext)=="NONE" ) meteo_ext="";
 
 	if(!meteofile.empty()) {
-		meteofile = meteopath + "/" + meteofile;
-		const std::pair<Date,std::string> tmp(Date(), meteofile);
+		const string file_and_path = meteopath + "/" + meteofile;
+		const std::pair<Date,std::string> tmp(Date(), file_and_path);
 		cache_meteo_files.push_back( tmp );
 	} else {
 		scanMeteoPath(meteopath, cache_meteo_files);
@@ -144,8 +145,6 @@ CosmoXMLIO& CosmoXMLIO::operator=(const CosmoXMLIO& source) {
 		in_xpathCtx = NULL;
 		coordin = source.coordin;
 		coordinparam = source.coordinparam;
-		coordout = source.coordout;
-		coordoutparam = source.coordoutparam;
 	}
 	return *this;
 }
@@ -158,6 +157,7 @@ CosmoXMLIO::~CosmoXMLIO() throw()
 void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<Date,std::string> > &meteo_files) const
 {
 	meteo_files.clear();
+
 	std::list<std::string> dirlist;
 	IOUtils::readDirectory(meteopath_in, dirlist, meteo_ext);
 	dirlist.sort();
@@ -202,7 +202,7 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 		throw IOException("Unable to create new XPath context", AT);
 	}
 
-	if(xmlXPathRegisterNs(in_xpathCtx,  (const xmlChar*)"ch", (const xmlChar*)xml_namespace.c_str()) != 0) {
+	if(xmlXPathRegisterNs(in_xpathCtx,  (const xmlChar*)"ns", xml_namespace) != 0) {
 		throw IOException("Unable to register namespace with prefix", AT);
 	}
 }
@@ -253,7 +253,6 @@ void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*d
 bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd)
 {
 	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+station_id+"']/.."; //ie parent node containing the pattern
-	const std::string attribute = "id";
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
 	if(xpathObj == NULL) return false;
@@ -272,12 +271,12 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 	//start from the first child until the last one
 	for (xmlNode *cur_node = metadata->nodeTab[0]->children; cur_node; cur_node = cur_node->next) {
 		if (cur_node->type == XML_ELEMENT_NODE) {
-			xmlChar *att = xmlGetProp(cur_node, (const xmlChar *)attribute.c_str());
-			const std::string field( (char*)(att) );
+			xmlChar *att = xmlGetProp(cur_node, xml_attribute);
+			const std::string field( (const char*)(att) );
 			xmlFree(att);
 
 			if (cur_node->children->type == XML_TEXT_NODE) {
-				const std::string value( (char*)(cur_node->children->content) );
+				const std::string value( (const char*)(cur_node->children->content) );
 
 				if(field=="identifier") xml_id = value;
 				else if(field=="station_abbreviation") sd.stationID = value;
@@ -301,6 +300,56 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 
 	xmlXPathFreeObject(xpathObj);
 	return true;
+}
+
+CosmoXMLIO::MeteoReadStatus CosmoXMLIO::parseMeteoDataPoint(const Date& dateStart, const Date& dateEnd, const xmlNodePtr &element, MeteoData &md) const
+{
+	double iswr_dir = IOUtils::nodata, iswr_diff = IOUtils::nodata;
+
+	//collect all the data fields
+	for (xmlNode *cur_node = element; cur_node; cur_node = cur_node->next) {
+		if (cur_node->type == XML_ELEMENT_NODE) {
+			xmlChar *att = xmlGetProp(cur_node, xml_attribute);
+			const std::string field( (const char*)(att) );
+			xmlFree(att);
+
+			if (cur_node->children->type == XML_TEXT_NODE) {
+				const std::string value( (const char*)(cur_node->children->content) );
+				if(field=="reference_ts") {
+					IOUtils::convertString(md.date, value, in_tz);
+					if(md.date<dateStart) return read_continue;
+					if(md.date>dateEnd) return read_stop;
+				} else {
+					double tmp;
+					IOUtils::convertString(tmp, value);
+					tmp = IOUtils::standardizeNodata(tmp, plugin_nodata);
+
+					//HACK for now, we hard-code the fields mapping
+					if(field=="108005") md(MeteoData::TA) = tmp;
+					else if(field=="108014") md(MeteoData::RH) = tmp/100.;
+					else if(field=="108015") md(MeteoData::VW) = tmp;
+					else if(field=="108017") md(MeteoData::DW) = tmp;
+					else if(field=="108018") md(MeteoData::VW_MAX) = tmp;
+					else if(field=="108023") md(MeteoData::HNW) = tmp;
+					else if(field=="108060") md(MeteoData::HS) = tmp/100.;
+					else if(field=="108062") md(MeteoData::TSS) = tmp;
+					else if(field=="108064") iswr_diff = tmp;
+					else if(field=="108065") iswr_dir = tmp;
+					else if(field=="108066") md(MeteoData::RSWR) = tmp;
+					else if(field=="108067") md(MeteoData::ILWR) = tmp; //108068=olwr
+				}
+			}
+		}
+	}
+
+	if(iswr_diff!=IOUtils::nodata && iswr_dir!=IOUtils::nodata)
+		md(MeteoData::ISWR) = iswr_diff+iswr_dir;
+
+	//because of the Kalman filter applied on VW, sometimes VW_MAX<VW
+	if(md(MeteoData::VW)!=IOUtils::nodata && md(MeteoData::VW_MAX)!=IOUtils::nodata && md(MeteoData::VW_MAX)<md(MeteoData::VW))
+		md(MeteoData::VW_MAX) = md(MeteoData::VW);
+
+	return read_ok;
 }
 
 size_t CosmoXMLIO::getFileIdx(const Date& start_date) const
@@ -338,63 +387,12 @@ void CosmoXMLIO::readStationData(const Date& station_date, std::vector<StationDa
 		StationData sd;
 		if(!parseStationData(input_id[ii], in_xpathCtx, sd)) {
 			closeIn_XML();
-			throw IOException("Unable to evaluate xpath expression \""+input_id[ii]+"\"", AT);
+			throw IOException("Unable to evaluate xpath expression for station \""+input_id[ii]+"\"", AT);
 		}
 		vecStation.push_back(sd);
 	}
 
 	closeIn_XML();
-}
-
-CosmoXMLIO::MeteoReadStatus CosmoXMLIO::parseMeteoDataPoint(const Date& dateStart, const Date& dateEnd, const xmlNodePtr &element, MeteoData &md) const
-{
-	const std::string attribute = "id";
-	double iswr_dir = IOUtils::nodata, iswr_diff = IOUtils::nodata;
-
-	//collect all the data fields
-	for (xmlNode *cur_node = element; cur_node; cur_node = cur_node->next) {
-		if (cur_node->type == XML_ELEMENT_NODE) {
-			xmlChar *att = xmlGetProp(cur_node, (const xmlChar *)attribute.c_str());
-			const std::string field( (char*)(att) );
-			xmlFree(att);
-
-			if (cur_node->children->type == XML_TEXT_NODE) {
-				const std::string value( (char*)(cur_node->children->content) );
-				if(field=="reference_ts") {
-					IOUtils::convertString(md.date, value, in_tz);
-					if(md.date<dateStart) return read_continue;
-					if(md.date>dateEnd) return read_stop;
-				} else {
-					double tmp;
-					IOUtils::convertString(tmp, value);
-					tmp = IOUtils::standardizeNodata(tmp, plugin_nodata);
-
-					//HACK for now, we hard-code the fields mapping
-					if(field=="108005") md(MeteoData::TA) = tmp;
-					else if(field=="108014") md(MeteoData::RH) = tmp/100.;
-					else if(field=="108015") md(MeteoData::VW) = tmp;
-					else if(field=="108017") md(MeteoData::DW) = tmp;
-					else if(field=="108018") md(MeteoData::VW_MAX) = tmp;
-					else if(field=="108023") md(MeteoData::HNW) = tmp;
-					else if(field=="108060") md(MeteoData::HS) = tmp/100.;
-					else if(field=="108062") md(MeteoData::TSS) = tmp;
-					else if(field=="108064") iswr_diff = tmp;
-					else if(field=="108065") iswr_dir = tmp;
-					else if(field=="108066") md(MeteoData::RSWR) = tmp;
-					else if(field=="108067") md(MeteoData::ILWR) = tmp; //108068=olwr
-				}
-			}
-		}
-	}
-
-	if(iswr_diff!=IOUtils::nodata && iswr_dir!=IOUtils::nodata)
-		md(MeteoData::ISWR) = iswr_diff+iswr_dir;
-
-	//because of the Kalman filter applied on VW, sometimes VW_MAX<VW
-	if(md(MeteoData::VW)!=IOUtils::nodata && md(MeteoData::VW_MAX)!=IOUtils::nodata && md(MeteoData::VW_MAX)<md(MeteoData::VW))
-		md(MeteoData::VW_MAX) = md(MeteoData::VW);
-
-	return read_ok;
 }
 
 bool CosmoXMLIO::parseMeteoData(const Date& dateStart, const Date& dateEnd, const std::string& station_id, const StationData& sd, const xmlXPathContextPtr& xpathCtx, std::vector<MeteoData> &vecMeteo) const
@@ -446,7 +444,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			StationData sd;
 			if(!parseStationData(input_id[ii], in_xpathCtx, sd)) {
 				closeIn_XML();
-				throw IOException("Unable to evaluate xpath expression \""+input_id[ii]+"\"", AT);
+				throw IOException("Unable to evaluate xpath expression for station \""+input_id[ii]+"\"", AT);
 			}
 			vecStation.push_back(sd);
 		}
@@ -457,7 +455,7 @@ void CosmoXMLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 			vector<MeteoData> vecTmp;
 			if(!parseMeteoData(dateStart, nextDate, station_id, vecStation[ii], in_xpathCtx, vecTmp)) {
 				closeIn_XML();
-				throw IOException("Unable to evaluate xpath expression \""+input_id[ii]+"\"", AT);
+				throw IOException("Unable to evaluate xpath expression for station \""+input_id[ii]+"\"", AT);
 			}
 			vecMeteo.push_back(vecTmp);
 		}

@@ -88,10 +88,12 @@ class CosmoXMLIO : public IOInterface {
 		xmlDocPtr in_doc;
 		xmlXPathContextPtr in_xpathCtx;
 
-		static const double in_tz, out_tz; //plugin specific time zones
-		static const std::string xml_namespace, StationData_xpath, MeteoData_xpath;
+		static const double in_tz; //plugin specific time zones
+		static const xmlChar* xml_attribute;
+		static const xmlChar* xml_namespace;
+		static const std::string StationData_xpath, MeteoData_xpath;
 
-		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::string coordin, coordinparam; //projection parameters
 };
 
 } //namespace
