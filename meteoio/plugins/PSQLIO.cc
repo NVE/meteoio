@@ -42,7 +42,7 @@ const double PSQLIO::plugin_nodata = -999.; //plugin specific nodata value. It c
 
 PSQLIO::PSQLIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(), 
 									   dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(), multiplier(), offset(),
-                                                vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data()
+                                                vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getParameters();
@@ -50,10 +50,44 @@ PSQLIO::PSQLIO(const std::string& configfile) : cfg(configfile), coordin(), coor
 
 PSQLIO::PSQLIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(), 
 								  dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(), multiplier(), offset(),
-                                          vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data()
+                                          vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getParameters();
+}
+
+PSQLIO::PSQLIO(const PSQLIO& in) : cfg(in.cfg), coordin(in.coordin), coordinparam(in.coordinparam), coordout(in.coordout), 
+							coordoutparam(in.coordoutparam), endpoint(in.endpoint), port(in.port), dbname(in.dbname), userid(in.userid), 
+							passwd(in.passwd), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta), multiplier(in.multiplier), 
+							offset(in.offset), vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID), 
+							sql_meta(in.sql_meta), sql_data(in.sql_data), shadowed_parameters(in.shadowed_parameters) {}
+
+PSQLIO& PSQLIO::operator=(const PSQLIO& in)
+{
+      PSQLIO tmp(in);
+
+	 swap(cfg, tmp.cfg);
+	 swap(coordin, tmp.coordin);
+	 swap(coordinparam, tmp.coordinparam);
+	 swap(coordout, tmp.coordout);
+	 swap(coordoutparam, tmp.coordoutparam);
+	 swap(endpoint, tmp.endpoint);
+	 swap(port, tmp.port);
+	 swap(dbname, tmp.dbname);
+	 swap(userid, tmp.userid);
+	 swap(passwd, tmp.passwd);
+	 swap(psql, tmp.psql);
+	 swap(default_timezone, tmp.default_timezone);
+	 swap(vecMeta, tmp.vecMeta);
+	 swap(multiplier, tmp.multiplier);
+	 swap(offset, tmp.offset);
+	 swap(vecFixedStationID, tmp.vecFixedStationID);
+	 swap(vecMobileStationID, tmp.vecMobileStationID);
+	 swap(sql_meta, tmp.sql_meta);
+	 swap(sql_data, tmp.sql_data);
+	 swap(shadowed_parameters, tmp.shadowed_parameters);
+
+      return *this;
 }
 
 PSQLIO::~PSQLIO() throw()

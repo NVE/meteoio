@@ -62,6 +62,8 @@ class PSQLIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& filename);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
+		PSQLIO& operator=(const PSQLIO& in);
+
 	private:
 		void getParameters();
 		void create_shadow_map(const std::string& exclude_file);
@@ -76,7 +78,7 @@ class PSQLIO : public IOInterface {
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		void convertUnits(MeteoData& meteo) const;
 
-		const Config cfg;
+		Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, port, dbname, userid, passwd; ///< Variables for endpoint configuration
