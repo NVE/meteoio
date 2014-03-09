@@ -75,10 +75,56 @@ void PSQLIO::getParameters()
 	cfg.getValue("STATIONS", "Input", stations);
 	IOUtils::readLineToVec(stations, vecFixedStationID, ',');
 
+	string exclude_file("");
+	cfg.getValue("EXCLUDE", "Input", exclude_file, IOUtils::nothrow);
+	if (IOUtils::fileExists(exclude_file)) {
+		create_shadow_map(exclude_file);
+	}
+
 	cfg.getValue("SQL_META", "Input", sql_meta);
 	cfg.getValue("SQL_DATA", "Input", sql_data);
 
 	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
+}
+
+void PSQLIO::create_shadow_map(const std::string& exclude_file)
+{
+	std::ifstream fin; //Input file streams
+	fin.open(exclude_file.c_str(), std::ifstream::in);
+	if (fin.fail()) throw FileAccessException(exclude_file, AT);
+
+	try {
+		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		
+		vector<string> tmpvec;
+		string line("");
+		
+		while (!fin.eof()) { //Go through file
+			getline(fin, line, eoln); //read complete line meta information
+			IOUtils::stripComments(line);
+			const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
+
+			if (ncols > 1) {
+				set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
+				shadowed_parameters[tmpvec[0]] = tmpset;
+			}
+		}
+	} catch (const std::exception&) {
+		fin.close();
+		throw;
+	}
+	/*
+	map< string, set<string> >::iterator it;
+	set<string>::iterator setit;
+	for (it = shadowed_parameters.begin(); it != shadowed_parameters.end(); ++it) {
+		cout << "Shadowed for station " << it->first << "   ";
+		for (setit = it->second.begin(); setit != it->second.end(); ++setit) {
+			cout << *setit << ";";
+		}
+		cout << endl;
+	}
+	*/
+	fin.close();
 }
 
 void PSQLIO::read2DGrid(Grid2DObject& /*grid_out*/, const std::string& /*name_in*/)
@@ -257,8 +303,10 @@ void PSQLIO::parse_row(PGresult* result, const int& row, const int& cols, MeteoD
 	IOUtils::convertString(md.date, PQgetvalue(result, row, 0), 0.0);
 
 	for (int ii=1; ii<cols; ii++) {
-		string val(PQgetvalue(result, row, ii));
-		if (!val.empty()) IOUtils::convertString(tmp(index[ii]), val);
+		if (index[ii] != IOUtils::npos) {
+			string val(PQgetvalue(result, row, ii));
+			if (!val.empty()) IOUtils::convertString(tmp(index[ii]), val);
+		}
 	}
 
 	convertUnits(tmp);	
@@ -272,9 +320,19 @@ void PSQLIO::map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>
 
 	int columns = PQnfields(result);
 
+	set<string> shadowed;
+	map< string, set<string> >::iterator it = shadowed_parameters.find(md.meta.stationID);
+	if (it != shadowed_parameters.end()) shadowed = it->second;
+
 	for (int ii=0; ii<columns; ii++) {
 		const string field_name(IOUtils::strToUpper(PQfname(result, ii)));
 		//cout << "field(" << ii << "): " << field_name << endl;
+
+		const bool is_in = shadowed.find(field_name) != shadowed.end();
+		if (is_in) { // Certain parameters may be shadowed
+			index.push_back(IOUtils::npos);
+			continue;
+		}
 
 		if (field_name == "RH") {
 			index.push_back(MeteoData::RH);

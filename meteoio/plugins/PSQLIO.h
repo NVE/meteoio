@@ -23,6 +23,8 @@
 
 #include <libpq-fe.h>
 #include <string>
+#include <set>
+#include <map>
 #include <algorithm>
 
 namespace mio {
@@ -62,6 +64,7 @@ class PSQLIO : public IOInterface {
 
 	private:
 		void getParameters();
+		void create_shadow_map(const std::string& exclude_file);
 		void open_connection();
 		PGresult* get_data(const std::string& sqlcommand);
 		bool replace(std::string& str, const std::string& from, const std::string& to);
@@ -83,6 +86,7 @@ class PSQLIO : public IOInterface {
 		std::map<size_t, double> multiplier, offset;
 		std::vector<std::string> vecFixedStationID, vecMobileStationID;
 		std::string sql_meta, sql_data;
+		std::map< std::string, std::set<std::string> > shadowed_parameters;
 };
 
 } //namespace
