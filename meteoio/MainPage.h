@@ -88,6 +88,19 @@ namespace mio {
  * @page general General concepts
  * Since MeteoIO is a library, you, as an end user, will have a limited direct exposure to it: the library is called by the program that you are using, not directly by yourself. You will basically have to set some parameters in a configuration file that defines how MeteoIO has to behave. This configuration file is often named "io.ini" and follows the INI file format standard (see http://en.wikipedia.org/wiki/INI_file). In order to understand how this file is structured, let us first have a look at the general structure of MeteoIO and afterward the structure of this configuration file and where to find the available configuration parameters.
  *
+ * @section typical_setup Typical setup
+ * \image html typical_setup.png "typical setup of MeteoIO for operational applications"
+ * \image latex typical_setup.eps "typical setup of MeteoIO for operational applications" width=0.9\textwidth
+ * MeteoIO has been designed to accomodate both the needs of carefully crafted simulations for a specific purpose/study and for the needs of operational
+ * simulations that run automatically and unattended. A typical setup for such operational applications consists of a data acquisition system
+ * (made of various sensors, usually mounted on a common mast, thus seen as belonging to a station and some system to bring the data back to some sort
+ * of data repository), a data storage system that usually has some way of also distributing the data (often a database but sometimes only data files on a disk)
+ * and is mostly seen as the data source by the application, some applications using the data and producing results that are published to
+ * their end users (either to an automated system that one can connect to or to some visualization tool that one can use to explore the results).
+ *
+ * In this setup, MeteoIO is the "glue" between the numerical model at the core of the application and the data sources on one hand and the
+ * publication system on the other hand.
+ *
  * @section MeteoIO_structure General MeteoIO structure
  * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
  * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
@@ -120,7 +133,7 @@ namespace mio {
  * @endcode
  *
  * @subsection Config_structure Configuration file structure
- * MeteoIO imposes a minimum structure to the configuration file: It must contain the [General], [Input] and [Output] sections. If any filter is to be used, a [Filters] section has to be present and if any spatial interpolation is to be used, an [Interpolations2D] section has to be present. A minimal set of keys has to be there, an potentially a number of optional keys. Moreover, the program that you are using might also impose you some specific keys or sections.
+ * MeteoIO imposes a minimum structure to the configuration %file: It must contain the [General], [Input] and [Output] sections. If any filter is to be used, a [Filters] section has to be present and if any spatial interpolation is to be used, an [Interpolations2D] section has to be present. A minimal set of keys has to be there, an potentially a number of optional keys. Moreover, the program that you are using might also impose you some specific keys or sections.
  * The keys and their location in the configuration file (ie: to which section they belong) depends on the module that is actually using them. The optional keys depend on the specific options handled by each specific module (or plugin, or algorithm). Therefore, we can draw the following skeleton:
  * @code
  * [General]
@@ -158,6 +171,7 @@ namespace mio {
  *
  * @subsection Finding_docs Where to find the proper documentation
  * As can be seen from the previous example, each plugin, each filter or each interpolation algorithm might have its own parameters. Therefore, this is the documentation of each specific plugin/filter/algorithm that has to be used in order to figure out what can be configured when it (see the next sections in the welcome page).
+ *
  */
 
 /**
