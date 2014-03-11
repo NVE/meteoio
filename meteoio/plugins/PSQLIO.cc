@@ -139,6 +139,10 @@ void PSQLIO::create_shadow_map(const std::string& exclude_file)
 			const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
 
 			if (ncols > 1) {
+				for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+					IOUtils::toUpper(*it);
+				}
+
 				set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
 				shadowed_parameters[tmpvec[0]] = tmpset;
 			}
