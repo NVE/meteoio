@@ -328,7 +328,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if (png_ptr == NULL) {
 		fclose(fp); fp=NULL;
-		throw IOException("Could not allocate write structure", AT);
+		throw IOException("Could not allocate write structure. Are you running with the same version of libpng that you linked to?", AT);
 	}
 
 	// Initialize info structure
@@ -384,8 +384,7 @@ size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &
 	if(has_legend) {
 		const legend leg(static_cast<unsigned int>(nrows), min, max);
 		legend_array = leg.getLegend();
-		size_t nx, ny;
-		legend_array.size(nx,ny);
+		const size_t nx = legend_array.getNx();
 		return (ncols+nx);
 	} else {
 		return ncols;
@@ -398,18 +397,13 @@ void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& le
 	const size_t nrows = grid.nrows;
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
-	unsigned char channels;
-	if(indexed_png)
-		channels = 1;
-	else
-		channels = 3; //4 for rgba
-
+	const unsigned char channels = (indexed_png)? 1 : 3; //4 for rgba
 	png_bytep row = (png_bytep)calloc(channels*sizeof(png_byte), full_width);
 	if(row==NULL) {
 		fclose(fp); fp=NULL;
 		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
 		free(png_ptr);
-		throw IOException("Can not allocate row memory in PNGIO!", AT);
+		throw IOException("Can not allocate row memory for PNG!", AT);
 	}
 
 	// Write image data
@@ -498,7 +492,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	//scale input image
 	const Grid2DObject grid = scaleGrid(grid_in);
-	const size_t ncols = grid_in.ncols, nrows = grid_in.nrows;
+	const size_t ncols = grid.ncols, nrows = grid.nrows;
 	if(ncols==0 || nrows==0) return;
 
 	const double min = grid.grid2D.getMin();
@@ -543,7 +537,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 	//scale input image
 	Grid2DObject grid = scaleGrid(grid_in);
-	const size_t ncols = grid_in.ncols, nrows = grid_in.nrows;
+	const size_t ncols = grid.ncols, nrows = grid.nrows;
 	if(ncols==0 || nrows==0) return;
 
 	double min = grid.grid2D.getMin();

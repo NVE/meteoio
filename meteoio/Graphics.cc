@@ -155,8 +155,6 @@ unsigned int legend::getLegendWidth() {
 void legend::writeLine(const double& val, const unsigned int& px_row)
 {
 	std::ostringstream ss;
-	//const unsigned int precision = text_chars_nb-6; //full width - (sgn, dot, "e", sgn, two digits exponent)
-	//ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << std::setprecision(precision) << val; //improve this format...
 	ss << std::setfill (' ') << std::setw(text_chars_nb) << std::left << val;
 	if(ss.str().size()>text_chars_nb) {
 		//the generated text is too long, so putting another constraint (ie setw is brain dead)
