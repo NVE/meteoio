@@ -38,6 +38,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new StandardPressureGenerator(vecArgs, i_algoname);
 	} else if (algoname == "BRUTSAERT"){
 		return new BrutsaertGenerator(vecArgs, i_algoname);
+	} else if (algoname == "DILLEY"){
+		return new DilleyGenerator(vecArgs, i_algoname);
 	} else if (algoname == "UNSWORTH"){
 		return new UnsworthGenerator(vecArgs, i_algoname);
 	} else if (algoname == "POT_RADIATION"){
@@ -51,6 +53,13 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 
 std::string GeneratorAlgorithm::getAlgo() const {
 	return algo;
+}
+
+void GeneratorAlgorithm::parse_args(const std::vector<std::string>& vecArgs)
+{
+	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -140,13 +149,6 @@ bool SinGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMete
 	return true; //all missing values could be filled
 }
 
-void StandardPressureGenerator::parse_args(const std::vector<std::string>& vecArgs)
-{
-	//Get the optional arguments for the algorithm: constant value to use
-	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
-	}
-}
 
 bool StandardPressureGenerator::generate(const size_t& param, MeteoData& md)
 {
@@ -177,14 +179,6 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 }
 
 
-void BrutsaertGenerator::parse_args(const std::vector<std::string>& vecArgs)
-{
-	//Get the optional arguments for the algorithm: constant value to use
-	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
-	}
-}
-
 bool BrutsaertGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
@@ -212,17 +206,36 @@ bool BrutsaertGenerator::generate(const size_t& param, std::vector<MeteoData>& v
 }
 
 
+bool DilleyGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if(value==IOUtils::nodata) {
+		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
+		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
+
+		value = Atmosphere::Dilley_ilwr(RH, TA);
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool DilleyGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(vecMeteo.empty()) return true;
+
+	bool all_filled = true;
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		const bool status = generate(param, vecMeteo[ii]);
+		if(status==false) all_filled=false;
+	}
+
+	return all_filled;
+}
+
+
 const double UnsworthGenerator::soil_albedo = .23; //grass
 const double UnsworthGenerator::snow_albedo = .85; //snow
 const double UnsworthGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-
-void UnsworthGenerator::parse_args(const std::vector<std::string>& vecArgs)
-{
-	//Get the optional arguments for the algorithm: constant value to use
-	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
-	}
-}
 
 bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 {
@@ -252,10 +265,11 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 
 		const double julian = md.date.getJulian(true);
 		const double ilwr_dilley = Atmosphere::Dilley_ilwr(RH, TA);
-		const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : ilwr_dilley;
+		const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : IOUtils::nodata;
 
 		if(ISWR==IOUtils::nodata || ISWR<5.) {
 			value = ilwr_no_iswr;
+			if(value==IOUtils::nodata) return false;
 		} else {
 			sun.setLatLon(lat, lon, alt);
 			sun.setDate(julian, 0.);
@@ -267,6 +281,7 @@ bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
 
 			if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
 				value = ilwr_no_iswr;
+				if(value==IOUtils::nodata) return false;
 				return true;
 			}
 			last_cloudiness_ratio = ilwr_uns / ilwr_dilley;
@@ -314,10 +329,11 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 
 			const double julian = vecMeteo[ii].date.getJulian(true);
 			const double ilwr_dilley = Atmosphere::Dilley_ilwr(RH, TA);
-			const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : ilwr_dilley;
+			const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : IOUtils::nodata;
 
 			if(ISWR==IOUtils::nodata || ISWR<5.) {
 				value = ilwr_no_iswr;
+				if(value==IOUtils::nodata) all_filled=false;
 			} else {
 				sun.setDate(julian, 0.);
 				sun.calculateRadiation(TA, RH, albedo);
@@ -327,6 +343,7 @@ bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 
 				if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
 					value = ilwr_no_iswr;
+					if(value==IOUtils::nodata) all_filled=false;
 					continue;
 				}
 				last_cloudiness_ratio = ilwr_uns / ilwr_dilley;

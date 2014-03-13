@@ -65,6 +65,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
 	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
 		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
+
 		for(size_t station=0; station<vecMeteo.size(); station++) { //process this parameter on all stations
 			const size_t param = vecMeteo[station].getParameterIndex(it->first);
 			if(param==IOUtils::npos) continue;

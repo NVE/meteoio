@@ -56,6 +56,8 @@ namespace mio {
  * RH::Cst        = .7
  *
  * P::generators  = STD_PRESS
+ *
+ * ILWR::generators = Unsworth Dilley
  * @endcode
  *
  * @section generators_keywords Available generators
@@ -64,7 +66,8 @@ namespace mio {
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
  * - BRUTSAERT: use a Brutsaert clear sky model to generate ILWR from TA, RH (see BrutsaertGenerator)
- * - UNSWORTH: use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
+ * - DILLEY: use a Dilley clear sky model to generate ILWR from TA, RH (see DilleyGenerator)
+ * - UNSWORTH: use an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
  * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
  * @section generators_biblio Bibliography
@@ -102,7 +105,7 @@ class GeneratorAlgorithm {
 		virtual bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo) = 0;
 		std::string getAlgo() const;
  	protected:
-		virtual void parse_args(const std::vector<std::string>& /*i_vecArgs*/) = 0;
+		virtual void parse_args(const std::vector<std::string>& i_vecArgs);
 		const std::string algo;
 };
 
@@ -170,8 +173,6 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
 			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
-	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
 };
 
 /**
@@ -192,8 +193,26 @@ class BrutsaertGenerator : public GeneratorAlgorithm {
 			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
-	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
+};
+
+/**
+ * @class DilleyGenerator
+ * @brief ILWR clear sky Dilley parametrization
+ * This uses the formula from Dilley and O'Brien -- "Estimating downward clear sky
+ * long-wave irradiance at the surface from screen temperature and precipitable water",
+ * Q. J. R. Meteorolo. Soc., <b>124</b>, 1998, pp 1391-1401.
+ * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
+ * @code
+ * ILWR::generators = DILLEY
+ * @endcode
+ *
+ */
+class DilleyGenerator : public GeneratorAlgorithm {
+	public:
+		DilleyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 };
 
 /**
@@ -209,7 +228,8 @@ class BrutsaertGenerator : public GeneratorAlgorithm {
  * during the times when no ISWR is available if such ratio is not too old (ie. no more than 1 day old).
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
  * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
- * in order to compute ISWR from RSWR. Finally, if no short wave measurement is available, it uses a Dilley clear sky model.
+ * in order to compute ISWR from RSWR. Finally, it is recommended to also use a Dilley or Brutsaert clear sky generator
+ * for the case of no available short wave measurement (by declaring the clear sky generator \em after Unsworth).
  * @code
  * ILWR::generators = UNSWORTH
  * @endcode
@@ -222,7 +242,6 @@ class UnsworthGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
-		void parse_args(const std::vector<std::string>& vecArgs);
 		SunObject sun;
 		double last_cloudiness_ratio; //last ratio of cloudiness
 		double last_cloudiness_julian; //time of such ratio
