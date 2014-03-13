@@ -69,6 +69,7 @@ namespace mio {
  * - METEO_PREFIX: file name prefix appearing before the date (optional)
  * - METEO_EXT: file extension (default: ".xml", give "none" to get an empty string)
  * - STATION#: ID of the station to read
+ * - IMIS_STATIONS: if set to true, all station IDs provided above will be stripped of their number (to match MeteoCH naming scheme)
  *
  * If no METEOFILE is provided, all ".xml" files in the METEOPATH directory will be read, if they match the METEO_PREFIX and METEO_EXT.
  * They <i>must</i> contain the date of the first data formatted as ISO8601 numerical UTC date in their file name. For example, a file containing simulated
@@ -96,7 +97,7 @@ const std::string CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), in_doc(NULL), in_xpathCtx(NULL),
              coordin(), coordinparam()
 {
 	Config cfg(configfile);
@@ -105,7 +106,7 @@ CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
 
 CosmoXMLIO::CosmoXMLIO(const Config& cfg)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), in_doc(NULL), in_xpathCtx(NULL),
              coordin(), coordinparam()
 {
 	init(cfg);
@@ -119,6 +120,7 @@ void CosmoXMLIO::init(const Config& cfg)
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
 	cfg.getValues("STATION", "INPUT", input_id);
+	cfg.getValue("IMIS_STATIONS", "INPUT", imis_stations, IOUtils::nothrow);
 
 	const std::string meteopath = cfg.get("METEOPATH", "INPUT");
 	const std::string meteofile = cfg.get("METEOFILE", "INPUT", IOUtils::nothrow);
@@ -252,7 +254,8 @@ void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*d
 
 bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd)
 {
-	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+station_id+"']/.."; //ie parent node containing the pattern
+	const std::string xpath_id = (imis_stations)? station_id.substr(0, station_id.find_first_of("0123456789")) : station_id;
+	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //ie parent node containing the pattern
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
 	if(xpathObj == NULL) return false;
@@ -279,7 +282,7 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 				const std::string value( (const char*)(cur_node->children->content) );
 
 				if(field=="identifier") xml_id = value;
-				else if(field=="station_abbreviation") sd.stationID = value;
+				//else if(field=="station_abbreviation") sd.stationID = value;
 				else if(field=="station_name") sd.stationName = value;
 				else if(field=="model_station_height") IOUtils::convertString(altitude, value);
 				else if(field=="model_station_latitude") IOUtils::convertString(latitude, value);
@@ -288,6 +291,8 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 			}
 		}
 	}
+
+	sd.stationID = station_id;
 
 	if(latitude==IOUtils::nodata || longitude==IOUtils::nodata || altitude==IOUtils::nodata)
 		throw NoAvailableDataException("Some station location information is missing for station \""+station_id+"\"", AT);

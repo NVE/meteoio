@@ -84,6 +84,7 @@ class CosmoXMLIO : public IOInterface {
 		std::vector<std::string> input_id; //user specified stations to read
 		std::string meteo_prefix, meteo_ext; //for the file naming scheme
 		double plugin_nodata; //plugin specific no data value
+		bool imis_stations; //to make the station ID like an IMIS station ID
 
 		xmlDocPtr in_doc;
 		xmlXPathContextPtr in_xpathCtx;
