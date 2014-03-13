@@ -32,6 +32,7 @@
 #cmakedefine PLUGIN_BORMAIO
 #cmakedefine PLUGIN_COSMOXMLIO
 #cmakedefine PLUGIN_GSNIO
+#cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_PSQLIO
 
 #include <meteoio/plugins/ARCIO.h>
@@ -61,6 +62,10 @@
 
 #ifdef PLUGIN_GSNIO
 #include <meteoio/plugins/GSNIO.h>
+#endif
+
+#ifdef PLUGIN_NETCDFIO
+#include <meteoio/plugins/NetCDFIO.h>
 #endif
 
 #ifdef PLUGIN_PNGIO
@@ -172,8 +177,11 @@ void IOHandler::registerPlugins()
 #ifdef PLUGIN_GSNIO
 	mapPlugins["GSN"]       = IOPlugin("GSNIO", NULL, &IOPlugin::createInstance<GSNIO>);
 #endif
+#ifdef PLUGIN_NETCDFIO
+	mapPlugins["NETCDF"]    = IOPlugin("NetCDFIO", NULL, &IOPlugin::createInstance<NetCDFIO>);
+#endif
 #ifdef PLUGIN_PSQLIO
-	mapPlugins["PSQL"]       = IOPlugin("PSQLIO", NULL, &IOPlugin::createInstance<PSQLIO>);
+	mapPlugins["PSQL"]      = IOPlugin("PSQLIO", NULL, &IOPlugin::createInstance<PSQLIO>);
 #endif
 }
 

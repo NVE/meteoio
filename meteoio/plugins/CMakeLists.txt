@@ -76,6 +76,13 @@ IF(PLUGIN_PSQLIO)
 	SET(plugins_sources ${plugins_sources} plugins/PSQLIO.cc)
 ENDIF(PLUGIN_PSQLIO)
 
+IF(PLUGIN_NETCDFIO)
+	FIND_PACKAGE(NetCDF REQUIRED)
+	INCLUDE_DIRECTORIES(SYSTEM ${NETCDF_INCLUDE_DIR})
+	SET(plugin_libs ${plugin_libs} ${NETCDF_LIBRARY})
+	SET(plugins_sources ${plugins_sources} plugins/NetCDFIO.cc)
+ENDIF(PLUGIN_NETCDFIO)
+
 IF(PLUGIN_SMETIO)
 	SET(plugins_sources ${plugins_sources} plugins/SMETIO.cc)
 ENDIF(PLUGIN_SMETIO)
