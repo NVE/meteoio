@@ -66,6 +66,7 @@ namespace mio {
  *    -# subscribe to <A HREF="https://freecode.com/projects/meteoio">MeteoIO's release announcements</A>
  * -# End User documentation
  *    -# \subpage general "General concepts"
+ *    -# \subpage configuration "Configuration file"
  *    -# \subpage plugins "Available plugins" and usage
  *    -# \subpage coords "Available coordinate systems" and usage
  *    -# \subpage processing "Available processing elements" and usage
@@ -86,7 +87,13 @@ namespace mio {
 
  /**
  * @page general General concepts
- * Since MeteoIO is a library, you, as an end user, will have a limited direct exposure to it: the library is called by the program that you are using, not directly by yourself. You will basically have to set some parameters in a configuration file that defines how MeteoIO has to behave. This configuration file is often named "io.ini" and follows the INI file format standard (see http://en.wikipedia.org/wiki/INI_file). In order to understand how this file is structured, let us first have a look at the general structure of MeteoIO and afterward the structure of this configuration file and where to find the available configuration parameters.
+ * A large number of the problems encountered by users of numerical models working on large meteorological data sets can be traced back to the Input/Output functionality.
+ * This comes from the focus of the model developers on the core modeling issues at the expanse of the I/O routines that are costly to properly implement. Therefore
+ * the I/O routines often lack flexibility and robustness. When using numerical models in operational applications, this becomes a major drawback and a regular
+ * source of problems.
+ *
+ * The MeteoIO library has been designed to address this issue. It is an additional layer between the data and the numerical model, handling the retrieval of data
+ * from various data sources as well as the data pre-processing.
  *
  * @section typical_setup Typical setup
  * \image html typical_setup.png "typical setup of MeteoIO for operational applications"
@@ -102,19 +109,36 @@ namespace mio {
  * publication system on the other hand.
  *
  * @section MeteoIO_structure General MeteoIO structure
+ * @anchor general_structure
+ * \image html meteoio_workflow.png "MeteoIO workflow"
+ * \image latex meteoio_workflow.eps "MeteoIO workflow" width=0.9\textwidth
  * MeteoIO can be seen as a set of modules that is focused on the handling of input/output operations (including data preparation) for numerical simulations in the realm of earth sciences. On the visible side, it offers the following modules, working on a pre-determined set of \ref meteoparam "meteorological parameters" or on parameters added by the developer:
  * - a set of \ref plugins "plugins" for accessing the data (for example, a plugin might be responsible for fetching the raw data from a given database)
  * - a set of \ref processing "filters and processing elements" for applying transformations to the data (for example, a filter might remove all data that is out of range)
+ * - a set of \ref resampling "resampling" algorithms to temporally interpolate the data at the required timestamp
+ * - a set of \ref generators "parametrizations" to generate data/meteorological parameters when they could not be interpolated
  * - a set of \ref interpol2d "spatial interpolation algorithms" (for example, such an algorithm might perform Inverse Distance Weighting for filling a grid with spatially interpolated data)
+ *
+ * Each of these steps can be configured and fine tuned according to the needs of the model and the wishes of the user.
  *
  * Moreover, a few assumptions are made about the data that you are using: each data point has to be associated with a geographic location (defined by some sort of coordinates) and very often you will also need to provide a Digital Elevation Model. Therefore, you will also notice a few extra modules that come to play on the visible side:
  * - a module to deal with \ref DEMObject "Digital Elevation Models". Such module will for example interpret a grid of data as a grid of elevations and compute a grid of slopes.
  * - a module to deal with \ref coords "coordinate systems". Such module will require you to define which coordinate system are your data in and transparently handle potential coordinate conversions in the program that you are using.
  * - a module to deal with \ref mio::Config "configuration files". The program that you are using might be using this module for other configuration files.
  *
- * @section Config Configuration file
+ */
+
+ /**
+ * @page configuration Configuration file
  * @anchor config_doc
- * @subsection Config_syntax Configuration file syntax
+ * Since MeteoIO is a library, you, as an end user, will not be directly exposed to it: the library is called by the program that you are using,
+ * not directly by yourself. You will basically have to set some parameters in a configuration file that defines how MeteoIO has to behave.
+ * This configuration file is often named "io.ini" and follows the <A HREF="http://en.wikipedia.org/wiki/INI_file">INI file format</A> standard.
+ *
+ * It is highly recommended that you first understand the \ref general_structure "general structure" of MeteoIO before moving forward. We will then show the
+ * configuration file syntax and then the configuration file structure.
+ *
+ * @section Config_syntax Configuration file syntax
  * The configuration inputs/outputs file is divided in sections. Each section name is enclosed in brackets.
  * @code
  * [My_section]
@@ -132,7 +156,7 @@ namespace mio {
  * TA::algorithms = IDW_LAPSE CST_LAPSE
  * @endcode
  *
- * @subsection Config_structure Configuration file structure
+ * @section Config_structure Configuration file structure
  * MeteoIO imposes a minimum structure to the configuration %file: It must contain the [General], [Input] and [Output] sections. If any filter is to be used, a [Filters] section has to be present and if any spatial interpolation is to be used, an [Interpolations2D] section has to be present. A minimal set of keys has to be there, an potentially a number of optional keys. Moreover, the program that you are using might also impose you some specific keys or sections.
  * The keys and their location in the configuration file (ie: to which section they belong) depends on the module that is actually using them. The optional keys depend on the specific options handled by each specific module (or plugin, or algorithm). Therefore, we can draw the following skeleton:
  * @code
@@ -169,8 +193,10 @@ namespace mio {
  *
  * It is also possible (for advanced use) to import another configuration file, see in the \ref config_import "Config class" documentation.
  *
- * @subsection Finding_docs Where to find the proper documentation
- * As can be seen from the previous example, each plugin, each filter or each interpolation algorithm might have its own parameters. Therefore, this is the documentation of each specific plugin/filter/algorithm that has to be used in order to figure out what can be configured when it (see the next sections in the welcome page).
+ * @section Finding_docs Where to find the proper documentation
+ * As can be seen from the previous example, each plugin, each filter or each interpolation algorithm might have its own parameters. Therefore,
+ * this is the documentation of each specific plugin/filter/algorithm that has to be used in order to figure out what can be configured when it is used
+ * (see the next sections in the welcome page).
  *
  */
 
