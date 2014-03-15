@@ -59,6 +59,8 @@ class Atmosphere {
 		static double Dilley_ilwr(const double& RH, const double& TA);
 		static double Prata_emissivity(const double& RH, const double& TA);
 		static double Prata_ilwr(const double& RH, const double& TA);
+		static double Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness);
+		static double Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Kasten_cloudiness(const double& solarIndex);
 		static double ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
 		                                const double& julian, const double& TZ,

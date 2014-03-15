@@ -21,6 +21,7 @@
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h>
 #include <meteoio/meteolaws/Sun.h>
+#include <meteoio/MathOptim.h>
 #include <meteoio/IOUtils.h>
 
 namespace mio {
@@ -353,6 +354,42 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
 	const double epsilon = Prata_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+* @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
+* This is according to Konzelmann, Thomas, et al. <i>"Parameterization of global and longwave incoming radiation
+* for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
+* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
+* @return emissivity (between 0 and 1)
+*/
+double Atmosphere::Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+	const double ea = RH * waterSaturationPressure(TA); //screen-level water vapor pressure
+	const double exponent = 1./8.;
+
+	const double epsilon_cs = 0.23 + 0.484*pow( ea/TA, exponent ); //clear sky emissivity
+	const double epsilon_oc = 0.952; //fully overcast sky emissivity
+
+	const double weight = Optim::pow4(cloudiness); //weight for the weighted average between clear sky and overcast
+
+	const double epsilon_cloudy = (1. - weight)*epsilon_cs + weight*epsilon_oc;
+	return epsilon_cloudy;
+}
+
+/**
+* @brief Evaluate the long wave radiation from RH, TA and cloudiness.
+* This is according to Konzelmann, Thomas, et al. <i>"Parameterization of global and longwave incoming radiation
+* for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
+* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
+* @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+	const double ea = Konzelmann_emissivity(RH, TA, cloudiness);
+	return blkBody_Radiation(ea, TA);
 }
 
 /**
