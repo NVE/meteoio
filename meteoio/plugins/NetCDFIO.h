@@ -21,6 +21,7 @@
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
 
+#include <netcdf.h>
 #include <string>
 
 namespace mio {
@@ -59,6 +60,14 @@ class NetCDFIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		void open_file(const std::string& filename, const int& omode, int& ncid);
+		void get_variable(const int& ncid, const std::string& varname, int& varid);
+		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
+		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
+		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
+		void close_file(const std::string& filename, const int& ncid);
+		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname);
+		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, double* const& lat, double* const& lon);
 		void cleanup() throw();
 
 		const Config cfg;

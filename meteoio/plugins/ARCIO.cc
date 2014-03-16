@@ -232,7 +232,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 			iss.setf(std::ios::fixed);
 			iss.precision(std::numeric_limits<double>::digits10);
 
-			for (size_t ll=0; ll < ncols; ll++){
+			for (size_t ll=0; ll < ncols; ll++) {
 				iss >> std::skipws >> tmp;
 				if (iss.fail()) {
 					ostringstream ss;

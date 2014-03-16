@@ -321,7 +321,7 @@ namespace IOUtils {
 
 	/**
 	* @brief Standardize a given value to use MeteoIO's internal nodata value (if applicable)
-	* @tparam T           [in] The type wanted for the return value (template type parameter).
+	* @tparam T[in] The type wanted for the return value (template type parameter).
 	* @param[in] value  the value to check/convert
 	* @param[in] plugin_nodata plugin-specific nodata value
 	* @return checked/converted value
