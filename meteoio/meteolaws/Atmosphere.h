@@ -43,10 +43,19 @@ class Atmosphere {
 		static double windChill(const double& TA, const double& VW);
 		static double heatIndex(const double& TA, const double& RH);
 
-		static double Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness);
-		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
+		//clear sky emissivity
 		static double Brutsaert_emissivity(const double& RH, const double& TA);
 		static double Brutsaert_ilwr(const double& RH, const double& TA);
+		static double Dilley_emissivity(const double& RH, const double& TA);
+		static double Dilley_ilwr(const double& RH, const double& TA);
+		static double Prata_emissivity(const double& RH, const double& TA);
+		static double Prata_ilwr(const double& RH, const double& TA);
+
+		//cloudy sky emissivity
+		static double Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness);
+		static double Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness);
+		static double Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness);
+		static double Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Crawford_ilwr(const double& RH, const double& TA, const double& iswr_meas, const double& iswr_clear_sky, const unsigned char& month, const double& cloudiness=IOUtils::nodata);
 		static double Crawford_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
@@ -55,12 +64,6 @@ class Atmosphere {
 		static double Unsworth_ilwr(const double& lat, const double& lon, const double& altitude,
 		                            const double& julian, const double& TZ,
 		                            const double& RH, const double& TA, const double& ISWR, const double& cloudiness=IOUtils::nodata);
-		static double Dilley_emissivity(const double& RH, const double& TA);
-		static double Dilley_ilwr(const double& RH, const double& TA);
-		static double Prata_emissivity(const double& RH, const double& TA);
-		static double Prata_ilwr(const double& RH, const double& TA);
-		static double Konzelmann_emissivity(const double& RH, const double& TA, const double& cloudiness);
-		static double Konzelmann_ilwr(const double& RH, const double& TA, const double& cloudiness);
 		static double Kasten_cloudiness(const double& solarIndex);
 		static double ILWR_parametrized(const double& lat, const double& lon, const double& altitude,
 		                                const double& julian, const double& TZ,

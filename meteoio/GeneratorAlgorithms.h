@@ -65,17 +65,24 @@ namespace mio {
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
- * - BRUTSAERT: use a Brutsaert clear sky model to generate ILWR from TA, RH (see BrutsaertGenerator)
- * - DILLEY: use a Dilley clear sky model to generate ILWR from TA, RH (see DilleyGenerator)
+ * - CLEARSKY: use a clear sky model to generate ILWR from TA, RH (see ClearSkyGenerator)
+ * - ALLSKY: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyGenerator)
  * - UNSWORTH: use an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
  * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
- * - <i>"Long-wave radiation at the ground"</i>, Unsworth and Monteith, Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24
- * - <i>"Estimating downward clear sky long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Dilley and O'Brien, Q. J. R. Meteorolo. Soc., Vol. 124, 1998, doi:10.1002/qj.49712454903
- * - <i>"Solar and terrestrial radiation dependent on the amount and type of cloud"</i>, Kasten and Czeplak, 1980, Solar energy, 24.2, pp 177-189
- * - <i>"Astronomical Algorithms"</i>, Meeus, second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA
+ * - Brutsaert -- <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>, Journal of Water Resources
+ * Research, <b>11</b>, No. 5, October 1975, pp 742-744.
+ * - Prata -- <i>"A new long-wave formula for estimating downward clear-sky radiation at the surface"</i>, Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
+* - Dilley and O'Brien -- <i>"Estimating downward clear sky long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Q. J. R. Meteorolo. Soc., Vol. 124, 1998, doi:10.1002/qj.49712454903
+ * - Kasten and Czeplak -- <i>"Solar and terrestrial radiation dependent on the amount and type of cloud"</i>, 1980, Solar energy, 24.2, pp 177-189
+ * - Omstedt -- <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>, Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+ * - Konzelmann et al. -- <i>"Parameterization of global and longwave incoming radiation for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
+ * - Crawford and Duchon -- <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
+ * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
+ * - Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>, Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24
+ * - Meeus -- <i>"Astronomical Algorithms"</i>, second edition, 1998, Willmann-Bell, Inc., Richmond, VA, USA
  *
  *
  * @author Mathias Bavay
@@ -176,43 +183,72 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
 };
 
 /**
- * @class BrutsaertGenerator
- * @brief ILWR clear sky Brutsaert parametrization
- * Use a Brutsaert clear sky model to estimate ILWR from RH, TA.
- * This uses the formula from Brutsaert -- <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
+ * @class ClearSkyGenerator
+ * @brief ILWR clear sky parametrization
+ * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations:
+ *  - Brutsaert -- <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
  * Journal of Water Resources Research, <b>11</b>, No. 5, October 1975, pp 742-744.
+ *  - Dilley and O'Brien -- <i>"Estimating downward clear sky
+ * long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Q. J. R. Meteorolo. Soc., <b>124</b>, 1998, pp 1391-1401.
+ *  - Prata -- <i>"A new long-wave formula for estimating downward clear-sky radiation at the surface"</i>, Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
  * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
  * @code
- * ILWR::generators = BRUTSAERT
+ * ILWR::generators = clearsky
+ * ILWR::clearsky = Dilley
  * @endcode
  *
  */
-class BrutsaertGenerator : public GeneratorAlgorithm {
+class ClearSkyGenerator : public GeneratorAlgorithm {
 	public:
-		BrutsaertGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		ClearSkyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), model(BRUTSAERT) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		void parse_args(const std::vector<std::string>& vecArgs);
+		typedef enum PARAMETRIZATION {
+			BRUTSAERT,
+			DILLEY,
+			PRATA
+		} parametrization;
+		parametrization model;
 };
 
 /**
- * @class DilleyGenerator
- * @brief ILWR clear sky Dilley parametrization
- * This uses the formula from Dilley and O'Brien -- "Estimating downward clear sky
- * long-wave irradiance at the surface from screen temperature and precipitable water",
- * Q. J. R. Meteorolo. Soc., <b>124</b>, 1998, pp 1391-1401.
- * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
+ * @class AllSkyGenerator
+ * @brief ILWR all sky parametrization
+ * HACK: the cloud fraction is currently NOT implemented! This will come shortly...
+ * Using air temperature (TA) and relative humidity (RH) ands cloud fraction (),
+ * this offers the choice of several all-sky parametrizations:
+ *  - Omstedt -- <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
+ * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+ *  - Konzelmann et al. -- <i>"Parameterization of global and longwave incoming radiation
+ * for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
+ *  - Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
+ * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
+ *  - Crawford and Duchon -- <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
+ * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  * @code
- * ILWR::generators = DILLEY
+ * ILWR::generators = allsky
+ * ILWR::allsky = Omstedt
  * @endcode
  *
  */
-class DilleyGenerator : public GeneratorAlgorithm {
+class AllSkyGenerator : public GeneratorAlgorithm {
 	public:
-		DilleyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		AllSkyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		void parse_args(const std::vector<std::string>& vecArgs);
+		typedef enum PARAMETRIZATION {
+			OMSTEDT,
+			KONZELMANN,
+			UNSWORTH,
+			CRAWFORD
+		} parametrization;
+		parametrization model;
 };
 
 /**

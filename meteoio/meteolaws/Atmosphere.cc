@@ -216,42 +216,6 @@ double Atmosphere::virtualTemperatureFactor(const double& e, const double& p) {
 }
 
 /**
-* @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
-* This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
-* Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.x
-* @param RH relative humidity (between 0 and 1)
-* @param TA air temperature (K)
-* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
-* @return emissivity (between 0 and 1)
-*/
-double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) {
-	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
-	const double eps_w = 0.97;
-	const double a1 = 0.68;
-	const double a2 = 0.0036;
-	const double a3 = 0.18;
-
-	const double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
-	if(ea > 1.0)
-		return 1.0;
-	return ea;
-}
-
-/**
-* @brief Evaluate the long wave radiation from RH, TA and cloudiness.
-* This is according to A. Omstedt, "A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin",
-* Tellus, 42 A, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
-* @param RH relative humidity (between 0 and 1)
-* @param TA air temperature (K)
-* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
-* @return long wave radiation (W/m^2)
-*/
-double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) {
-	const double ea = Omstedt_emissivity(RH, TA, cloudiness);
-	return blkBody_Radiation(ea, TA);
-}
-
-/**
  * @brief Evaluate the atmosphere emissivity for clear sky.
  * This uses the formula from Brutsaert -- "On a Derivable
  * Formula for Long-Wave Radiation From Clear Skies", Journal of Water Resources
@@ -354,6 +318,42 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
 	const double epsilon = Prata_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+* @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
+* This is according to A. Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
+* Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
+* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
+* @return emissivity (between 0 and 1)
+*/
+double Atmosphere::Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness) {
+	const double e0 = RH * waterSaturationPressure(TA); //water vapor pressure
+	const double eps_w = 0.97;
+	const double a1 = 0.68;
+	const double a2 = 0.0036;
+	const double a3 = 0.18;
+
+	const double ea = (eps_w * (a1 + a2 * sqrt(e0)) * (1. + a3 * cloudiness * cloudiness)); //emissivity
+	if(ea > 1.0)
+		return 1.0;
+	return ea;
+}
+
+/**
+* @brief Evaluate the long wave radiation from RH, TA and cloudiness.
+* This is according to A. Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
+* Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
+* @param RH relative humidity (between 0 and 1)
+* @param TA air temperature (K)
+* @param cloudiness cloudiness (between 0 and 1, 0 being clear sky)
+* @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Omstedt_ilwr(const double& RH, const double& TA, const double& cloudiness) {
+	const double ea = Omstedt_emissivity(RH, TA, cloudiness);
+	return blkBody_Radiation(ea, TA);
 }
 
 /**

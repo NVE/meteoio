@@ -36,10 +36,10 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new SinGenerator(vecArgs, i_algoname);
 	} else if (algoname == "STD_PRESS"){
 		return new StandardPressureGenerator(vecArgs, i_algoname);
-	} else if (algoname == "BRUTSAERT"){
-		return new BrutsaertGenerator(vecArgs, i_algoname);
-	} else if (algoname == "DILLEY"){
-		return new DilleyGenerator(vecArgs, i_algoname);
+	} else if (algoname == "CLEARSKY"){
+		return new ClearSkyGenerator(vecArgs, i_algoname);
+	} else if (algoname == "ALLSKY"){
+		return new AllSkyGenerator(vecArgs, i_algoname);
 	} else if (algoname == "UNSWORTH"){
 		return new UnsworthGenerator(vecArgs, i_algoname);
 	} else if (algoname == "POT_RADIATION"){
@@ -179,20 +179,41 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 }
 
 
-bool BrutsaertGenerator::generate(const size_t& param, MeteoData& md)
+void ClearSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	//Get the optional arguments for the algorithm: constant value to use
+	if(vecArgs.size()==1) {
+		const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
+
+		if (user_algo=="BRUTSAERT") model = BRUTSAERT;
+		else if (user_algo=="DILLEY") model = DILLEY;
+		else if (user_algo=="PRATA") model = PRATA;
+		else
+			throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
+}
+
+bool ClearSkyGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value==IOUtils::nodata) {
+	if (value==IOUtils::nodata) {
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
-		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
+		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
-		value = Atmosphere::Brutsaert_ilwr(RH, TA);
+		if (model==BRUTSAERT)
+			value = Atmosphere::Brutsaert_ilwr(RH, TA);
+		else if (model==DILLEY)
+			value = Atmosphere::Dilley_ilwr(RH, TA);
+		else if (model==PRATA)
+			value = Atmosphere::Prata_ilwr(RH, TA);
 	}
 
 	return true; //all missing values could be filled
 }
 
-bool BrutsaertGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool ClearSkyGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(vecMeteo.empty()) return true;
 
@@ -206,20 +227,47 @@ bool BrutsaertGenerator::generate(const size_t& param, std::vector<MeteoData>& v
 }
 
 
-bool DilleyGenerator::generate(const size_t& param, MeteoData& md)
+void AllSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
+{
+	//Get the optional arguments for the algorithm: constant value to use
+	if(vecArgs.size()==1) {
+		const std::string user_algo = IOUtils::strToUpper(vecArgs[0]);
+
+		if (user_algo=="OMSTEDT") model = OMSTEDT;
+		else if (user_algo=="KONZELMANN") model = KONZELMANN;
+		else if (user_algo=="UNSWORTH") model = UNSWORTH;
+		else if (user_algo=="CRAWFORD") model = CRAWFORD;
+		else
+			throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
+	}
+}
+
+bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
-	if(value==IOUtils::nodata) {
-		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
-		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
+	if (value==IOUtils::nodata) {
+		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), cloudiness=0.5; //HACK: read cloudiness from meteoData!
+		if (TA==IOUtils::nodata || RH==IOUtils::nodata || cloudiness==IOUtils::nodata) return false;
 
-		value = Atmosphere::Dilley_ilwr(RH, TA);
+		if (model==OMSTEDT)
+			value = Atmosphere::Omstedt_ilwr(RH, TA, cloudiness);
+		else if (model==KONZELMANN)
+			value = Atmosphere::Konzelmann_ilwr(RH, TA, cloudiness);
+		else if (model==UNSWORTH)
+			value = Atmosphere::Unsworth_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, cloudiness);
+		else if (model==CRAWFORD) {
+			int year, month, day;
+			md.date.getDate(year, month, day);
+			value = Atmosphere::Crawford_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, static_cast<unsigned char>(month), cloudiness);
+		}
 	}
 
 	return true; //all missing values could be filled
 }
 
-bool DilleyGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool AllSkyGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(vecMeteo.empty()) return true;
 
