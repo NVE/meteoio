@@ -103,7 +103,7 @@ class DEMObject : public Grid2DObject {
 		void printFailures();
 		void sanitize();
 
-		void getHillshade(Grid2DObject &hillshade, const double& elev=38., const double& azimuth=0.) const;
+		Grid2DObject getHillshade(const double& elev=38., const double& azimuth=0.) const;
 		double horizontalDistance(const double& xcoord1, const double& ycoord1, const double& xcoord2, const double& ycoord2);
 		double horizontalDistance(Coords point1, const Coords& point2);
 		double terrainDistance(Coords point1, const Coords& point2);

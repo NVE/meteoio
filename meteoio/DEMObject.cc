@@ -386,12 +386,12 @@ void DEMObject::sanitize() {
 * This "fake illumination" method is used to better show the relief on maps.
 * @param elev elevation (in degrees) of the source of light
 * @param azimuth azimuth (in degrees) of the source of light
-* @param hillshade grid that will be properly resized and contain the illumination
+* @return hillshade grid that containing the illumination
 *
 */
-void DEMObject::getHillshade(Grid2DObject &hillshade, const double& elev, const double& azimuth) const
+Grid2DObject DEMObject::getHillshade(const double& elev, const double& azimuth) const
 {
-	hillshade.set(ncols, nrows, cellsize, llcorner);
+	Grid2DObject hillshade(ncols, nrows, cellsize, llcorner);
 
 	if(slope.isEmpty() || azi.isEmpty())
 		throw InvalidArgumentException("Hillshade computation requires slope and azimuth!", AT);
@@ -412,6 +412,8 @@ void DEMObject::getHillshade(Grid2DObject &hillshade, const double& elev, const 
 				hillshade(i,j) = IOUtils::nodata;
 		}
 	}
+
+	return hillshade;
 }
 
 /**

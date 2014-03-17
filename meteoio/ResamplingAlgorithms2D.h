@@ -39,12 +39,16 @@ class ResamplingAlgorithms2D {
 		static const Grid2DObject BilinearResampling(const Grid2DObject &i_grid, const double &factor);
 		static const Grid2DObject cubicBSplineResampling(const Grid2DObject &i_grid, const double &factor);
 
-	private:
-		static void cubicBSpline(Grid2DObject &o_grid, const Grid2DObject &i_grid);
-		static void Bilinear(Grid2DObject &o_grid, const Grid2DObject &i_grid);
-		static void NearestNeighbour(Grid2DObject &o_grid, const Grid2DObject &i_grid);
+		static const Array2D<double> NearestNeighbour(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
+		static const Array2D<double> BilinearResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
+		static const Array2D<double> cubicBSplineResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y);
 
-		static double bilinear_pixel(const Grid2DObject &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_ncols, const size_t &org_nrows, const double &x, const double &y);
+	private:
+		static void cubicBSpline(Array2D<double> &o_grid, const Array2D<double> &i_grid);
+		static void Bilinear(Array2D<double> &o_grid, const Array2D<double> &i_grid);
+		static void NearestNeighbour(Array2D<double> &o_grid, const Array2D<double> &i_grid);
+
+		static double bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_ncols, const size_t &org_nrows, const double &x, const double &y);
 		static double BSpline_weight(const double &x);
 };
 } //end namespace

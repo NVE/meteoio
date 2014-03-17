@@ -34,7 +34,7 @@ const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject
 	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
-	Bilinear(o_grid, i_grid); //GridObjects always keep nodata
+	Bilinear(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
 	return o_grid;
 }
 
@@ -45,7 +45,7 @@ const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DOb
 	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
-	cubicBSpline(o_grid, i_grid); //GridObjects always keep nodata
+	cubicBSpline(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
 	return o_grid;
 }
 
@@ -56,35 +56,62 @@ const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &
 	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
-	NearestNeighbour(o_grid, i_grid); //GridObjects always keep nodata
+	NearestNeighbour(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
+	return o_grid;
+}
+
+const Array2D<double> ResamplingAlgorithms2D::NearestNeighbour(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+	const size_t nx = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor_x ));
+	const size_t ny = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor_y ));
+	Array2D<double> o_grid(nx, ny);
+
+	NearestNeighbour(o_grid, i_grid);
+	return o_grid;
+}
+
+const Array2D<double> ResamplingAlgorithms2D::BilinearResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+	const size_t nx = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor_x ));
+	const size_t ny = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor_y ));
+	Array2D<double> o_grid(nx, ny);
+
+	Bilinear(o_grid, i_grid);
+	return o_grid;
+}
+
+const Array2D<double> ResamplingAlgorithms2D::cubicBSplineResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+	const size_t nx = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor_x ));
+	const size_t ny = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor_y ));
+	Array2D<double> o_grid(nx, ny);
+
+	cubicBSpline(o_grid, i_grid);
 	return o_grid;
 }
 
 ///////////////////////////////////////////////////////////////////////
 //Private Methods
 ///////////////////////////////////////////////////////////////////////
-void ResamplingAlgorithms2D::NearestNeighbour(Grid2DObject &o_grid, const Grid2DObject &i_grid)
+void ResamplingAlgorithms2D::NearestNeighbour(Array2D<double> &o_grid, const Array2D<double> &i_grid)
 {
-	const size_t org_ncols = i_grid.ncols;
-	const size_t org_nrows = i_grid.nrows;
-	const double scale_x = (double)o_grid.ncols / (double)org_ncols;
-	const double scale_y = (double)o_grid.nrows / (double)org_nrows;
+	const size_t org_nx = i_grid.getNx(), org_ny = i_grid.getNy();
+	const size_t dest_nx = o_grid.getNx(), dest_ny = o_grid.getNy();
+	const double scale_x = (double)dest_nx / (double)org_nx;
+	const double scale_y = (double)dest_ny / (double)org_ny;
 
-	for (size_t jj=0; jj<o_grid.nrows; jj++) {
+	for (size_t jj=0; jj<dest_ny; jj++) {
 		size_t org_jj = (size_t) Optim::round( (double)jj/scale_y );
-		if(org_jj>=org_nrows) org_jj=org_nrows-1;
+		if(org_jj>=org_ny) org_jj=org_ny-1;
 
-		for (size_t ii=0; ii<o_grid.ncols; ii++) {
+		for (size_t ii=0; ii<dest_nx; ii++) {
 			size_t org_ii = (size_t) Optim::round( (double)ii/scale_x );
-			if(org_ii>=org_ncols) org_ii=org_ncols-1;
+			if(org_ii>=org_nx) org_ii=org_nx-1;
 			o_grid(ii,jj) = i_grid(org_ii, org_jj);
 		}
 	}
 }
 
-double ResamplingAlgorithms2D::bilinear_pixel(const Grid2DObject &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_ncols, const size_t &org_nrows, const double &x, const double &y)
+double ResamplingAlgorithms2D::bilinear_pixel(const Array2D<double> &i_grid, const size_t &org_ii, const size_t &org_jj, const size_t &org_nx, const size_t &org_ny, const double &x, const double &y)
 {
-	if(org_jj>=(org_nrows-1) || org_ii>=(org_ncols-1)) return i_grid(org_ii, org_jj);
+	if(org_jj>=(org_ny-1) || org_ii>=(org_nx-1)) return i_grid(org_ii, org_jj);
 
 	const double f_0_0 = i_grid(org_ii, org_jj);
 	const double f_1_0 = i_grid(org_ii+1, org_jj);
@@ -129,24 +156,24 @@ double ResamplingAlgorithms2D::bilinear_pixel(const Grid2DObject &i_grid, const 
 	return value;
 }
 
-void ResamplingAlgorithms2D::Bilinear(Grid2DObject &o_grid, const Grid2DObject &i_grid)
+void ResamplingAlgorithms2D::Bilinear(Array2D<double> &o_grid, const Array2D<double> &i_grid)
 {
-	const size_t org_ncols = i_grid.ncols;
-	const size_t org_nrows = i_grid.nrows;
-	const double scale_x = (double)o_grid.ncols / (double)org_ncols;
-	const double scale_y = (double)o_grid.nrows / (double)org_nrows;
+	const size_t org_nx = i_grid.getNx(), org_ny = i_grid.getNy();
+	const size_t dest_nx = o_grid.getNx(), dest_ny = o_grid.getNy();
+	const double scale_x = (double)dest_nx / (double)org_nx;
+	const double scale_y = (double)dest_ny / (double)org_ny;
 
-	for (size_t jj=0; jj<o_grid.nrows; jj++) {
+	for (size_t jj=0; jj<dest_ny; jj++) {
 		const double org_y = (double)jj/scale_y;
 		const size_t org_jj = static_cast<size_t>( org_y );
 		const double y = org_y - (double)org_jj; //normalized y, between 0 and 1
 
-		for (size_t ii=0; ii<o_grid.ncols; ii++) {
+		for (size_t ii=0; ii<dest_nx; ii++) {
 			const double org_x = (double)ii/scale_x;
 			const size_t org_ii = static_cast<size_t>( org_x );
 			const double x = org_x - (double)org_ii; //normalized x, between 0 and 1
 
-			o_grid(ii,jj) = bilinear_pixel(i_grid, org_ii, org_jj, org_ncols, org_nrows, x, y);
+			o_grid(ii,jj) = bilinear_pixel(i_grid, org_ii, org_jj, org_nx, org_ny, x, y);
 		}
 	}
 }
@@ -161,19 +188,19 @@ double ResamplingAlgorithms2D::BSpline_weight(const double &x) {
 	return 1./6.*R;
 }
 
-void ResamplingAlgorithms2D::cubicBSpline(Grid2DObject &o_grid, const Grid2DObject &i_grid)
+void ResamplingAlgorithms2D::cubicBSpline(Array2D<double> &o_grid, const Array2D<double> &i_grid)
 {//see http://paulbourke.net/texture_colour/imageprocess/
-	const size_t org_ncols = i_grid.ncols;
-	const size_t org_nrows = i_grid.nrows;
-	const double scale_x = (double)o_grid.ncols / (double)org_ncols;
-	const double scale_y = (double)o_grid.nrows / (double)org_nrows;
+	const size_t org_nx = i_grid.getNx(), org_ny = i_grid.getNy();
+	const size_t dest_nx = o_grid.getNx(), dest_ny = o_grid.getNy();
+	const double scale_x = (double)dest_nx / (double)org_nx;
+	const double scale_y = (double)dest_ny / (double)org_ny;
 
-	for (size_t jj=0; jj<o_grid.nrows; jj++) {
+	for (size_t jj=0; jj<dest_ny; jj++) {
 		const double org_y = (double)jj/scale_y;
 		const size_t org_jj = static_cast<size_t>( org_y );
 		const double dy = org_y - (double)org_jj; //normalized y, between 0 and 1
 
-		for (size_t ii=0; ii<o_grid.ncols; ii++) {
+		for (size_t ii=0; ii<dest_nx; ii++) {
 			const double org_x = (double)ii/scale_x;
 			const size_t org_ii = static_cast<size_t>( org_x );
 			const double dx = org_x - (double)org_ii; //normalized x, between 0 and 1
@@ -182,24 +209,24 @@ void ResamplingAlgorithms2D::cubicBSpline(Grid2DObject &o_grid, const Grid2DObje
 			unsigned int avg_count = 0;
 			for(short n=-1; n<=2; n++) {
 				for(short m=-1; m<=2; m++) {
-					if(((signed)org_ii+m)<0 || ((signed)org_ii+m)>=(signed)org_ncols || ((signed)org_jj+n)<0 || ((signed)org_jj+n)>=(signed)org_nrows) continue;
+					if (((signed)org_ii+m)<0 || ((signed)org_ii+m)>=(signed)org_nx || ((signed)org_jj+n)<0 || ((signed)org_jj+n)>=(signed)org_ny) continue;
 					const double pixel = i_grid(org_ii+m, org_jj+n);
-					if(pixel!=IOUtils::nodata) {
+					if (pixel!=IOUtils::nodata) {
 						F += pixel * BSpline_weight(m-dx) * BSpline_weight(dy-n);
 						avg_count++;
-						if(pixel>max) max=pixel;
-						if(pixel<min) min=pixel;
+						if (pixel>max) max=pixel;
+						if (pixel<min) min=pixel;
 					}
 				}
 			}
 
-			if(avg_count==16) { //normal bicubic
+			if (avg_count==16) { //normal bicubic
 				o_grid(ii,jj) = F*(16/avg_count);
-				if(o_grid(ii,jj)>max) o_grid(ii,jj)=max; //try to limit overshoot
-				else if(o_grid(ii,jj)<min) o_grid(ii,jj)=min; //try to limit overshoot
-			} else if(avg_count==0) o_grid(ii,jj) = IOUtils::nodata; //nodata-> nodata
+				if (o_grid(ii,jj)>max) o_grid(ii,jj)=max; //try to limit overshoot
+				else if (o_grid(ii,jj)<min) o_grid(ii,jj)=min; //try to limit overshoot
+			} else if (avg_count==0) o_grid(ii,jj) = IOUtils::nodata; //nodata-> nodata
 			else //not enought data points -> bilinear for this pixel
-				o_grid(ii,jj) = bilinear_pixel(i_grid, org_ii, org_jj, org_ncols, org_nrows, dx, dy);
+				o_grid(ii,jj) = bilinear_pixel(i_grid, org_ii, org_jj, org_nx, org_ny, dx, dy);
 
 		}
 	}
