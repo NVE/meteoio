@@ -40,8 +40,6 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new ClearSkyGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ALLSKY"){
 		return new AllSkyGenerator(vecArgs, i_algoname);
-	} else if (algoname == "UNSWORTH"){
-		return new UnsworthGenerator(vecArgs, i_algoname);
 	} else if (algoname == "POT_RADIATION"){
 		return new PotRadGenerator(vecArgs, i_algoname);
 	} else if (algoname == "HS_SWE"){
@@ -256,6 +254,8 @@ double AllSkyGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
 	double ISWR=md(MeteoData::ISWR);
 
+	is_night = false;
+
 	double albedo = .5;
 	if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=0 || ISWR<=0) {
 		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
@@ -274,7 +274,6 @@ double AllSkyGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 		is_night = true;
 		return IOUtils::nodata;
 	}
-	is_night = false;
 
 	if (ISWR==IOUtils::nodata) return IOUtils::nodata; //no way to get ISWR
 
@@ -283,11 +282,19 @@ double AllSkyGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 	sun.getHorizontalRadiation(toa, direct, diffuse);
 	const double iswr_clear_sky = direct+diffuse;
 
+	//at sunrise or sunset, we might get clf<0 or clf>1 -> return nodata in order to use interpolation instead
+	if (iswr_clear_sky<5. || iswr_clear_sky<ISWR) {
+		is_night = true;
+		return IOUtils::nodata;
+	}
+
 	if (clf_model==KASTEN) {
 		const double clf = Atmosphere::Kasten_cloudiness(ISWR/iswr_clear_sky);
+		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
 	} else if (clf_model==CLF_CRAWFORD) {
 		const double clf = 1. - ISWR/iswr_clear_sky;
+		if (clf<0. || clf>1.) return IOUtils::nodata;
 		return clf;
 	} else
 		return IOUtils::nodata; //this should never happen
@@ -300,10 +307,12 @@ bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
-		const double julian_gmt = md.date.getJulian(true);
-
 		double cloudiness=0.5; //HACK: read cloudiness from meteoData!
 		cloudiness=IOUtils::nodata;
+
+		const string station_hash = md.meta.stationID + ":" + md.meta.stationName;
+		const double julian_gmt = md.date.getJulian(true);
+		bool cloudiness_from_cache = false;
 
 		//try to get a cloudiness value
 		if (cloudiness==IOUtils::nodata) {
@@ -319,7 +328,13 @@ bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
 			if (cloudiness==IOUtils::nodata && !is_night) return false;
 
 			if (is_night) { //interpolate the cloudiness over the night
-				if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness;
+				const map< string, pair<double, double> >::const_iterator it = last_cloudiness.find(station_hash);
+				if (it==last_cloudiness.end()) return false;
+
+				cloudiness_from_cache = true;
+				const double last_cloudiness_julian = it->second.first;
+				const double last_cloudiness_value = it->second.second;
+				if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness_value;
 				else return false;
 			}
 		}
@@ -337,9 +352,9 @@ bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
 			value = Atmosphere::Crawford_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, static_cast<unsigned char>(month), cloudiness);
 		}
 
-		//save the valid cloudiness
-		last_cloudiness = cloudiness;
-		last_cloudiness_julian = julian_gmt;
+		//save the last valid cloudiness
+		if (!cloudiness_from_cache)
+			last_cloudiness[station_hash] = pair<double,double>( julian_gmt, cloudiness );
 	}
 
 	return true; //all missing values could be filled
@@ -358,129 +373,6 @@ bool AllSkyGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 	return all_filled;
 }
 
-
-const double UnsworthGenerator::soil_albedo = .23; //grass
-const double UnsworthGenerator::snow_albedo = .85; //snow
-const double UnsworthGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-
-bool UnsworthGenerator::generate(const size_t& param, MeteoData& md)
-{
-	double &value = md(param);
-	if(value==IOUtils::nodata) {
-		const double lat = md.meta.position.getLat();
-		const double lon = md.meta.position.getLon();
-		const double alt = md.meta.position.getAltitude();
-
-		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
-		double ISWR=md(MeteoData::ISWR);
-		if(TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
-
-		double albedo = .5;
-		if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=0 || ISWR<=0) {
-			if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-				albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
-
-			if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-				ISWR = RSWR / albedo;
-			}
-		} else {
-			albedo = RSWR / ISWR;
-			if(albedo>=1.) albedo=0.99;
-			if(albedo<=0.) albedo=0.01;
-		}
-
-		const double julian = md.date.getJulian(true);
-		const double ilwr_dilley = Atmosphere::Dilley_ilwr(RH, TA);
-		const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : IOUtils::nodata;
-
-		if(ISWR==IOUtils::nodata || ISWR<5.) {
-			value = ilwr_no_iswr;
-			if(value==IOUtils::nodata) return false;
-		} else {
-			sun.setLatLon(lat, lon, alt);
-			sun.setDate(julian, 0.);
-
-			sun.calculateRadiation(TA, RH, albedo);
-			double toa, direct, diffuse;
-			sun.getHorizontalRadiation(toa, direct, diffuse);
-			const double ilwr_uns = Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct+diffuse);
-
-			if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
-				value = ilwr_no_iswr;
-				if(value==IOUtils::nodata) return false;
-				return true;
-			}
-			last_cloudiness_ratio = ilwr_uns / ilwr_dilley;
-			last_cloudiness_julian = julian;
-			value = ilwr_uns;
-		}
-	}
-
-	return true; //all missing values could be filled
-}
-
-bool UnsworthGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
-{
-	if(vecMeteo.empty()) return true;
-
-	const double lat = vecMeteo.front().meta.position.getLat();
-	const double lon = vecMeteo.front().meta.position.getLon();
-	const double alt = vecMeteo.front().meta.position.getAltitude();
-	sun.setLatLon(lat, lon, alt);
-
-	bool all_filled = true;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
-		double &value = vecMeteo[ii](param);
-		if(value==IOUtils::nodata) {
-			const double TA=vecMeteo[ii](MeteoData::TA), RH=vecMeteo[ii](MeteoData::RH), HS=vecMeteo[ii](MeteoData::HS), RSWR=vecMeteo[ii](MeteoData::RSWR);
-			double ISWR=vecMeteo[ii](MeteoData::ISWR);
-			if(TA==IOUtils::nodata || RH==IOUtils::nodata) {
-				all_filled = false;
-				continue;
-			}
-
-			double albedo = .5;
-			if(RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=0 || ISWR<=0) {
-				if(HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
-					albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
-
-				if(ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
-					ISWR = RSWR / albedo;
-				}
-			} else {
-				albedo = RSWR / ISWR;
-				if(albedo>=1.) albedo=0.99;
-				if(albedo<=0.) albedo=0.01;
-			}
-
-			const double julian = vecMeteo[ii].date.getJulian(true);
-			const double ilwr_dilley = Atmosphere::Dilley_ilwr(RH, TA);
-			const double ilwr_no_iswr = ((julian - last_cloudiness_julian) < 1.)? ilwr_dilley*last_cloudiness_ratio : IOUtils::nodata;
-
-			if(ISWR==IOUtils::nodata || ISWR<5.) {
-				value = ilwr_no_iswr;
-				if(value==IOUtils::nodata) all_filled=false;
-			} else {
-				sun.setDate(julian, 0.);
-				sun.calculateRadiation(TA, RH, albedo);
-				double toa, direct, diffuse;
-				sun.getHorizontalRadiation(toa, direct, diffuse);
-				const double ilwr_uns = Atmosphere::Unsworth_ilwr(RH, TA, ISWR, direct+diffuse);
-
-				if(ilwr_uns==IOUtils::nodata || ilwr_uns<=0.) {
-					value = ilwr_no_iswr;
-					if(value==IOUtils::nodata) all_filled=false;
-					continue;
-				}
-				last_cloudiness_ratio = ilwr_uns / ilwr_dilley;
-				last_cloudiness_julian = julian;
-				value = ilwr_uns;
-			}
-		}
-	}
-
-	return all_filled;
-}
 
 const double PotRadGenerator::soil_albedo = .23; //grass
 const double PotRadGenerator::snow_albedo = .85; //snow

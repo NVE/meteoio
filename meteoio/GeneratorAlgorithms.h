@@ -67,7 +67,6 @@ namespace mio {
  * - SIN: sinusoidal variation (see SinGenerator)
  * - CLEARSKY: use a clear sky model to generate ILWR from TA, RH (see ClearSkyGenerator)
  * - ALLSKY: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyGenerator)
- * - UNSWORTH: use an Unsworth cloud sky model to generate ILWR from TA, RH, ISWR (see UnsworthGenerator)
  * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
  * @section generators_biblio Bibliography
@@ -186,11 +185,11 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
  * @class ClearSkyGenerator
  * @brief ILWR clear sky parametrization
  * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations:
- *  - Brutsaert -- <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
+ *  - BRUTSAERT -- from Brutsaert, <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
  * Journal of Water Resources Research, <b>11</b>, No. 5, October 1975, pp 742-744.
- *  - Dilley and O'Brien -- <i>"Estimating downward clear sky
+ *  - DILLEY -- from Dilley and O'Brien, <i>"Estimating downward clear sky
  * long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Q. J. R. Meteorolo. Soc., <b>124</b>, 1998, pp 1391-1401.
- *  - Prata -- <i>"A new long-wave formula for estimating downward clear-sky radiation at the surface"</i>, Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
+ *  - PRATA -- from Prata, <i>"A new long-wave formula for estimating downward clear-sky radiation at the surface"</i>, Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
  * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
  * @code
  * ILWR::generators = clearsky
@@ -220,17 +219,25 @@ class ClearSkyGenerator : public GeneratorAlgorithm {
  * HACK: the cloud fraction is currently NOT implemented! This will come shortly...
  * Using air temperature (TA) and relative humidity (RH) ands cloud fraction (),
  * this offers the choice of several all-sky parametrizations:
- *  - Omstedt -- <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
+ *  - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
  * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
- *  - Konzelmann et al. -- <i>"Parameterization of global and longwave incoming radiation
+ *  - KONZELMANN -- from Konzelmann et al., <i>"Parameterization of global and longwave incoming radiation
  * for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
- *  - Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
- * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
- *  - Crawford and Duchon -- <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
+ *  - UNSWORTH -- from Unsworth and Monteith, <i>"Long-wave radiation at the ground"</i>,
+ * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following (Dilley, 1998).
+ *  - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  *
- * If no cloudiness is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr).
- * This relies on (Kasten, 1980) except for Crawfor that provides it own parametrization.
+ * If no cloudiness is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
+ * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980)
+ * except for Crawfor that provides its own parametrization.
+ * The last evaluation of cloudiness is used all along during the times when no ISWR is available if such ratio
+ * is not too old (ie. no more than 1 day old).
+ * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
+ * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
+ * in order to compute ISWR from RSWR.
+ * Finally, it is recommended to also use a clear sky generator (declared after this one)
+ * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code
  * ILWR::generators = allsky
  * ILWR::allsky = Omstedt
@@ -241,7 +248,7 @@ class AllSkyGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), clf_model(KASTEN),
-		                 last_cloudiness(1.), last_cloudiness_julian(0.) { parse_args(vecArgs); }
+		                 last_cloudiness() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
@@ -262,43 +269,7 @@ class AllSkyGenerator : public GeneratorAlgorithm {
 		} clf_parametrization;
 		clf_parametrization clf_model;
 
-		//HACK: put these in maps, so this could work for multiple stations!
-		double last_cloudiness; //last valid cloudiness
-		double last_cloudiness_julian; //time of such cloudiness
-
-		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
-};
-
-/**
- * @class UnsworthGenerator
- * @brief ILWR parametrization using TA, RH, ISWR
- * Use a Dilley clear sky model coupled with an Unsworth cloud sky model to generate
- * ILWR from TA, RH, ISWR.
- * This uses the formula from Unsworth and Monteith -- <i>"Long-wave radiation at the ground"</i>,
- * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
- * A parametrization (according to Kasten and Czeplak (1980)) using the current location (lat, lon, altitude)
- * and ISWR is used to parametrize the cloud cover.
- * The last evaluation of cloudiness (as a ratio of cloudy_ilwr / clear_sky_ilwr) is used all along
- * during the times when no ISWR is available if such ratio is not too old (ie. no more than 1 day old).
- * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
- * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
- * in order to compute ISWR from RSWR. Finally, it is recommended to also use a Dilley or Brutsaert clear sky generator
- * for the case of no available short wave measurement (by declaring the clear sky generator \em after Unsworth).
- * @code
- * ILWR::generators = UNSWORTH
- * @endcode
- *
- */
-class UnsworthGenerator : public GeneratorAlgorithm {
-	public:
-		UnsworthGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), sun(), last_cloudiness_ratio(1.), last_cloudiness_julian(0.) { parse_args(vecArgs); }
-		bool generate(const size_t& param, MeteoData& md);
-		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
-	private:
-		SunObject sun;
-		double last_cloudiness_ratio; //last ratio of cloudiness
-		double last_cloudiness_julian; //time of such ratio
+		std::map< std::string, std::pair<double, double> > last_cloudiness; //as < station_hash, <julian_gmt, cloudiness> >
 
 		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 };
