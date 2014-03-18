@@ -228,6 +228,9 @@ class ClearSkyGenerator : public GeneratorAlgorithm {
  * Q. J. R. Meteorolo. Soc., Vol. 101, 1975, pp 13-24 coupled with a clear sky emissivity following Dilley, 1998.
  *  - Crawford and Duchon -- <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
+ *
+ * If no cloudiness is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr).
+ * This relies on (Kasten, 1980) except for Crawfor that provides it own parametrization.
  * @code
  * ILWR::generators = allsky
  * ILWR::allsky = Omstedt
@@ -237,11 +240,14 @@ class ClearSkyGenerator : public GeneratorAlgorithm {
 class AllSkyGenerator : public GeneratorAlgorithm {
 	public:
 		AllSkyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
-			: GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT) { parse_args(vecArgs); }
+		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), clf_model(KASTEN),
+		                 last_cloudiness(1.), last_cloudiness_julian(0.) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		void parse_args(const std::vector<std::string>& vecArgs);
+		double getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night);
+
 		typedef enum PARAMETRIZATION {
 			OMSTEDT,
 			KONZELMANN,
@@ -249,6 +255,18 @@ class AllSkyGenerator : public GeneratorAlgorithm {
 			CRAWFORD
 		} parametrization;
 		parametrization model;
+
+		typedef enum CLF_PARAMETRIZATION {
+			KASTEN,
+			CLF_CRAWFORD
+		} clf_parametrization;
+		clf_parametrization clf_model;
+
+		//HACK: put these in maps, so this could work for multiple stations!
+		double last_cloudiness; //last valid cloudiness
+		double last_cloudiness_julian; //time of such cloudiness
+
+		static const double soil_albedo, snow_albedo, snow_thresh; //to try using rswr if not iswr is given
 };
 
 /**

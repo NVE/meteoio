@@ -227,6 +227,10 @@ bool ClearSkyGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 }
 
 
+const double AllSkyGenerator::soil_albedo = .23; //grass
+const double AllSkyGenerator::snow_albedo = .85; //snow
+const double AllSkyGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+
 void AllSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
@@ -239,18 +243,88 @@ void AllSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
 		else if (user_algo=="CRAWFORD") model = CRAWFORD;
 		else
 			throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
+
+		if (model==CRAWFORD) clf_model = CLF_CRAWFORD;
 	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" generator", AT);
 	}
+}
+
+double AllSkyGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night)
+{
+	//we know that TA and RH are available, otherwise we would not get called
+	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
+	double ISWR=md(MeteoData::ISWR);
+
+	double albedo = .5;
+	if (RSWR==IOUtils::nodata || ISWR==IOUtils::nodata || RSWR<=0 || ISWR<=0) {
+		if (HS!=IOUtils::nodata) //no big deal if we can not adapt the albedo
+			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+
+		if (ISWR==IOUtils::nodata && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+			ISWR = RSWR / albedo;
+		}
+	} else {
+		albedo = RSWR / ISWR;
+		if (albedo>=1.) albedo=0.99;
+		if (albedo<=0.) albedo=0.01;
+	}
+
+	if (ISWR<5.) {
+		is_night = true;
+		return IOUtils::nodata;
+	}
+	is_night = false;
+
+	if (ISWR==IOUtils::nodata) return IOUtils::nodata; //no way to get ISWR
+
+	sun.calculateRadiation(TA, RH, albedo);
+	double toa, direct, diffuse;
+	sun.getHorizontalRadiation(toa, direct, diffuse);
+	const double iswr_clear_sky = direct+diffuse;
+
+	if (clf_model==KASTEN) {
+		const double clf = Atmosphere::Kasten_cloudiness(ISWR/iswr_clear_sky);
+		return clf;
+	} else if (clf_model==CLF_CRAWFORD) {
+		const double clf = 1. - ISWR/iswr_clear_sky;
+		return clf;
+	} else
+		return IOUtils::nodata; //this should never happen
 }
 
 bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if (value==IOUtils::nodata) {
-		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), cloudiness=0.5; //HACK: read cloudiness from meteoData!
-		if (TA==IOUtils::nodata || RH==IOUtils::nodata || cloudiness==IOUtils::nodata) return false;
+		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
+		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
 
+		const double julian_gmt = md.date.getJulian(true);
+
+		double cloudiness=0.5; //HACK: read cloudiness from meteoData!
+		cloudiness=IOUtils::nodata;
+
+		//try to get a cloudiness value
+		if (cloudiness==IOUtils::nodata) {
+			const double lat = md.meta.position.getLat();
+			const double lon = md.meta.position.getLon();
+			const double alt = md.meta.position.getAltitude();
+			SunObject sun;
+			sun.setLatLon(lat, lon, alt);
+			sun.setDate(julian_gmt, 0.);
+
+			bool is_night;
+			cloudiness = getCloudiness(md, sun, is_night);
+			if (cloudiness==IOUtils::nodata && !is_night) return false;
+
+			if (is_night) { //interpolate the cloudiness over the night
+				if ((julian_gmt - last_cloudiness_julian) < 1.) cloudiness = last_cloudiness;
+				else return false;
+			}
+		}
+
+		//run the ILWR parametrization
 		if (model==OMSTEDT)
 			value = Atmosphere::Omstedt_ilwr(RH, TA, cloudiness);
 		else if (model==KONZELMANN)
@@ -262,6 +336,10 @@ bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
 			md.date.getDate(year, month, day);
 			value = Atmosphere::Crawford_ilwr(RH, TA, IOUtils::nodata, IOUtils::nodata, static_cast<unsigned char>(month), cloudiness);
 		}
+
+		//save the valid cloudiness
+		last_cloudiness = cloudiness;
+		last_cloudiness_julian = julian_gmt;
 	}
 
 	return true; //all missing values could be filled
