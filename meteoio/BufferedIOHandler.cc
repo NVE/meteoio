@@ -22,8 +22,8 @@ using namespace std;
 namespace mio {
 
 BufferedIOHandler::BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg)
-        : iohandler(in_iohandler), cfg(in_cfg), vec_buffer_meteo(), mapBufferedGrids(), IndexBufferedGrids(),
-          buffer_start(), buffer_end(), chunk_size(), buff_before(), max_grids(10)
+	: iohandler(in_iohandler), cfg(in_cfg), vec_buffer_meteo(), mapBufferedGrids(), dem_buffer(),
+       IndexBufferedGrids(), buffer_start(), buffer_end(), chunk_size(), buff_before(), max_grids(10)
 {
 	setDfltBufferProperties();
 }
@@ -33,6 +33,7 @@ BufferedIOHandler& BufferedIOHandler::operator=(const BufferedIOHandler& source)
 		iohandler = source.iohandler;
 		vec_buffer_meteo = source.vec_buffer_meteo;
 		mapBufferedGrids = source.mapBufferedGrids;
+		dem_buffer = source.dem_buffer;
 		IndexBufferedGrids = source.IndexBufferedGrids;
 		buffer_start = source.buffer_start;
 		buffer_end = source.buffer_end;
@@ -86,30 +87,32 @@ void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const MeteoGrids:
 	}
 }
 
-void BufferedIOHandler::readDEM(DEMObject& in_grid2Dobj)
+void BufferedIOHandler::readDEM(DEMObject& demobj)
 {
-	if(max_grids>0) {
-		const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find("/:DEM");
-		if (it != mapBufferedGrids.end()) {
-			//already in map. If the update properties have changed,
+	if (max_grids>0) {
+		if (dem_buffer.size() == 1) {
+			//already in buffer. If the update properties have changed,
 			//we copy the ones given in input and force the update of the object
-			const DEMObject::update_type in_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
-			const DEMObject::slope_type in_slope_alg = (DEMObject::slope_type)in_grid2Dobj.getDefaultAlgorithm();
-			in_grid2Dobj = (*it).second;
-			const DEMObject::update_type buff_ppt = (DEMObject::update_type)in_grid2Dobj.getUpdatePpt();
-			const DEMObject::slope_type buff_slope_alg = (DEMObject::slope_type)in_grid2Dobj.getDefaultAlgorithm();
-			if(in_ppt!=buff_ppt || in_slope_alg!=buff_slope_alg) {
-				in_grid2Dobj.setDefaultAlgorithm(in_slope_alg);
-				in_grid2Dobj.setUpdatePpt(in_ppt);
-				in_grid2Dobj.update();
+			const DEMObject::update_type in_ppt = (DEMObject::update_type)demobj.getUpdatePpt();
+			const DEMObject::slope_type in_slope_alg = (DEMObject::slope_type)demobj.getDefaultAlgorithm();
+
+			demobj = dem_buffer[0];
+			const DEMObject::update_type buff_ppt = (DEMObject::update_type)demobj.getUpdatePpt();
+			const DEMObject::slope_type buff_slope_alg = (DEMObject::slope_type)demobj.getDefaultAlgorithm();
+
+			if (in_ppt!=buff_ppt || in_slope_alg!=buff_slope_alg) {
+				demobj.setDefaultAlgorithm(in_slope_alg);
+				demobj.setUpdatePpt(in_ppt);
+				demobj.update();
 			}
+
 			return;
 		}
 
-		iohandler.readDEM(in_grid2Dobj);
-		mapBufferedGrids["/:DEM"] = in_grid2Dobj; //the STL containers make a copy
+		iohandler.readDEM(demobj);
+		dem_buffer.push_back(demobj); //the STL containers make a copy
 	} else {
-		iohandler.readDEM(in_grid2Dobj);
+		iohandler.readDEM(demobj);
 	}
 }
 

@@ -162,6 +162,7 @@ class BufferedIOHandler : public IOInterface {
 
 		std::vector< METEO_SET > vec_buffer_meteo;
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
+		std::vector<DEMObject> dem_buffer;
 		std::vector<std::string> IndexBufferedGrids;
 
 		Date buffer_start, buffer_end;
