@@ -22,6 +22,7 @@
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
 #include <meteoio/MathOptim.h> //math optimizations
+#include <meteoio/ResamplingAlgorithms2D.h> //for Winstral
 
 using namespace std;
 
@@ -559,7 +560,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 }
 
 //compute the Winstral sx factor for one single direction and one single point (ii,jj) in dem up to dmax distance
-double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
+double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
 	const double inv_dmax = 1./dmax;
 	const double alpha_rad = bearing*Cst::to_rad;
@@ -596,7 +597,7 @@ double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, con
 }
 
 //Get the distance-weighted average of Sx for one single direction and one single point (ii,jj) in dem up to dmax distance
-double Interpol2D::AvgSX_core(const DEMObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
+double Interpol2D::AvgSX_core(const Grid2DObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
 	const double inv_dmax = 1./dmax;
 	const double alpha_rad = bearing*Cst::to_rad;
@@ -628,24 +629,6 @@ double Interpol2D::AvgSX_core(const DEMObject& dem, const Grid2DObject& sx, cons
 	return sum_sx/(double)nb_cells;
 }
 
-//compute the Winstral sx factor around one direction and for one single point (ii,jj) in dem up to dmax distance
-//and return the average Sx
-double Interpol2D::WinstralSX_core(const DEMObject& dem, const double& dmax, double bearing1, double bearing2,
-                                   const double& step, const size_t& ii, const size_t& jj)
-{
-	if(bearing1>bearing2) std::swap(bearing1, bearing2);
-
-	double sum = 0.;
-	unsigned short count=0;
-	for(double bearing=bearing1; bearing<=bearing2; bearing += step) {
-		sum += WinstralSX_core(dem, dmax, bearing, ii, jj);
-		count++;
-	}
-
-	if(count==0) return IOUtils::nodata;
-	return sum/(double)count;
-}
-
 /**
 * @brief Compute Winstral Sx exposure coefficient
 * This implements the wind exposure coefficient for one bearing as in
@@ -669,42 +652,60 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 	const size_t ncols = dem.ncols, nrows = dem.nrows;
 	for(size_t jj = 0; jj<nrows; jj++) {
 		for(size_t ii = 0; ii<ncols; ii++) {
-			grid(ii,jj) = WinstralSX_core(dem, dmax, bearing1, bearing2, bearing_inc, ii, jj);
+			double sum = 0.;
+			unsigned short count=0;
+			for(double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
+				sum += WinstralSX_core(dem, dmax, bearing, ii, jj);
+				count++;
+			}
+
+			grid(ii,jj) = (count>0)? sum/(double)count : IOUtils::nodata;
 		}
 	}
 }
 
 void Interpol2D::Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
 {
+	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);
+
 	Grid2DObject sx;
 	WinstralSX(dem, dmax, in_bearing, sx);
 
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);
+	const double scale = dem.cellsize / 50.; //we consider that 50 meters is a good averaging distance
+	const Grid2DObject tmp_dem = (scale<1.)? ResamplingAlgorithms2D::BilinearResampling( dem, scale ) : dem;
+
+	Grid2DObject sd(tmp_dem.ncols, tmp_dem.nrows, tmp_dem.cellsize, tmp_dem.llcorner, IOUtils::nodata);
 
 	const double bearing_inc = 5.;
 	const double bearing_width = 30.;
 	const double bearing1 = in_bearing - bearing_width/2.;
 	const double bearing2 = in_bearing + bearing_width/2.;
-	const size_t ncols = dem.ncols, nrows = dem.nrows;
 
-	//now remove deposition that happens too far from erosion
-	for(size_t jj = 0; jj<nrows; jj++) {
-		for(size_t ii = 0; ii<ncols; ii++) {
+	//compute where deposition is possible
+	for(size_t jj = 0; jj<sd.nrows; jj++) {
+		for(size_t ii = 0; ii<sd.ncols; ii++) {
 			double sum = 0.;
 			unsigned short count=0;
 			for(double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
-				sum += AvgSX_core(dem, sx, dmax, bearing, ii, jj);
+				sum += AvgSX_core(tmp_dem, sx, dmax, bearing, ii, jj);
 				count++;
 			}
 
-			const double val = (count>0)? sum/(double)count : 0.;
+			sd(ii,jj) = (count>0)? sum/(double)count : 0.;
+		}
+	}
 
+	//now remove deposition that happens too far from erosion
+	if(scale<1.) sd = ResamplingAlgorithms2D::BilinearResampling( sd, 1./scale ); //we should be back at sx dimensions
+	for(size_t jj = 0; jj<sd.nrows; jj++) {
+		for(size_t ii = 0; ii<sd.ncols; ii++) {
 			if(sx(ii,jj)<=0)
 				grid(ii,jj) = sx(ii,jj);
-			else if(val<0.) grid(ii,jj) = sx(ii,jj) - val;
+			else if(sd(ii,jj)<0.) grid(ii,jj) = sx(ii,jj) - sd(ii,jj);
 			else grid(ii,jj) = 0.;
 		}
 	}
+
 }
 
 void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid)
@@ -736,7 +737,14 @@ void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const doub
 					const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
 					if(inv_distance<inv_sepdist) continue;
 
-					const double val = WinstralSX_core(dem, dmax, bearing1, bearing2, bearing_inc, ll, mm);
+					double tmp_sum = 0.;
+					unsigned short tmp_count=0;
+					for(double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
+						tmp_sum += WinstralSX_core(dem, dmax, bearing, ii, jj);
+						tmp_count++;
+					}
+
+					const double val = (tmp_count>0)? tmp_sum/(double)tmp_count : IOUtils::nodata;
 					if(val!=IOUtils::nodata) {
 						sum += val;
 						count++;
@@ -790,8 +798,8 @@ void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const doub
 * \f}
 * where the \f$\lambda_i\f$ are the interpolation weights (at each station i), \f$\mu\f$ is the Lagrange multiplier (used to minimize the error),
 * \f$\Gamma_{i,j}\f$ is the covariance between the stations i and j and \f$\gamma^*_i\f$ the covariances between the station i and
-* the local position where the interpolation has to be computed (this covariance is computed based on distance, using the variogram that gives
-* covariance = f(distance)). Once the \f$\lambda_i\f$ have been computed, the local, interpolated value is computed as
+* the local position where the interpolation has to be computed. This covariance is computed based on distance, using the variogram that gives
+* covariance = f(distance). Once the \f$\lambda_i\f$ have been computed, the locally interpolated value is computed as
 * \f[
 * \mathbf{X^*} = \sum \mathbf{\lambda_i} * \mathbf{X_i}
 * \f]
