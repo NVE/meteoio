@@ -221,7 +221,7 @@ namespace Optim {
 	/**
 	* @brief Optimized version of 10^x
 	* This works for 0 <= x <= 1 and offers a theoritical precision of 5e-5
-	* Source: Approximations for digital comnputers, Cecil Hastings, JR, Princeton University Press, 1955.
+	* Source: Approximations for digital computers, Cecil Hastings, JR, Princeton University Press, 1955.
 	*
 	* Tests have shown a maximum error of 7e-5 and an almost 4x speed up.
 	* Please benchmark your code before deciding to use this!!
@@ -242,7 +242,7 @@ namespace Optim {
 	/**
 	* @brief Optimized version of ln(1+x)
 	* This works for 0 <= x <= 1 and offers a theoritical precision of 5e-5
-	* Source: Approximations for digital comnputers, Cecil Hastings, JR, Princeton University Press, 1955.
+	* Source: Approximations for digital computers, Cecil Hastings, JR, Princeton University Press, 1955.
 	*
 	* Tests have shown a maximum error of 2.5e-3 and a 1.7x speed up.
 	* Please benchmark your code before deciding to use this!!
