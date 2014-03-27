@@ -15,6 +15,7 @@ The necessary data set for these examples lies in "input" directory. It contains
 	data_converter.cc : read data, process it as specified in the configuration file and write it out (potentially
 	                    in a different file format, therefore converting the data to another format)
 	dem_reading.cc : read a DEM, show some statistics about it and write it back (potentially converting it)
+	grid2d_reading.cc: read a grid containing temperatures, show it and perform some computation on the grid
 	matrix.cc : basic matrix arithmetic
 	meteo_reading.cc : read one timestep and shows the meteo data at this step
 	sun.cc : calculate solar radiation at a given place and time
