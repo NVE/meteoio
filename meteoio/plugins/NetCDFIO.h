@@ -20,6 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
+#include <meteoio/ResamplingAlgorithms2D.h>
 
 #include <netcdf.h>
 #include <string>
@@ -61,13 +62,24 @@ class NetCDFIO : public IOInterface {
 
 	private:
 		void open_file(const std::string& filename, const int& omode, int& ncid);
+		void create_file(const std::string& filename, const int& cmode, int& ncid);
 		void get_variable(const int& ncid, const std::string& varname, int& varid);
 		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
 		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
 		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
+		void write_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
+		void define_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
+		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
+		void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
+		void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
+		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
+		void end_definitions(const std::string& filename, const int& ncid);
 		void close_file(const std::string& filename, const int& ncid);
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname);
-		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, double* const& lat, double* const& lon);
+		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
+                                    double* const& lat, double* const& lon, double& factor);
+		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
+		void fill_data(const Grid2DObject& grid, double*& data);
 		void cleanup() throw();
 
 		const Config cfg;
