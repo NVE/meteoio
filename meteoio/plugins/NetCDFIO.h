@@ -64,6 +64,8 @@ class NetCDFIO : public IOInterface {
 		void open_file(const std::string& filename, const int& omode, int& ncid);
 		void create_file(const std::string& filename, const int& cmode, int& ncid);
 		void get_variable(const int& ncid, const std::string& varname, int& varid);
+		bool check_variable(const int& ncid, const std::string& varname);
+		size_t get_1D_var_len(const int& ncid, const std::string& varname);
 		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
 		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
 		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
@@ -73,6 +75,7 @@ class NetCDFIO : public IOInterface {
 		void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
 		void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
+		void start_definitions(const std::string& filename, const int& ncid);
 		void end_definitions(const std::string& filename, const int& ncid);
 		void close_file(const std::string& filename, const int& ncid);
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname);

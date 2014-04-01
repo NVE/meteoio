@@ -211,6 +211,32 @@ void NetCDFIO::get_variable(const int& ncid, const std::string& varname, int& va
 		throw IOException("Could not retrieve varid for variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
+bool NetCDFIO::check_variable(const int& ncid, const std::string& varname)
+{
+	int varid;
+	int status = nc_inq_varid(ncid, varname.c_str(), &varid);
+
+	if (status != NC_NOERR) return false;
+
+	return true;
+}
+
+size_t NetCDFIO::get_1D_var_len(const int& ncid, const std::string& varname)
+{
+	int dimidp;
+	size_t length = 0;
+
+	int status = nc_inq_dimid(ncid, varname.c_str(), &dimidp);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve dimid for dimension '" + varname + "': " + nc_strerror(status), AT);
+
+	status = nc_inq_dimlen(ncid, dimidp, &length);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve dim length for dimension '" + varname + "': " + nc_strerror(status), AT);
+
+	return length;
+}
+
 void NetCDFIO::get_dimension(const int& ncid, const std::string& varname, const int& varid, 
                              std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen)
 {
@@ -286,6 +312,14 @@ void NetCDFIO::add_2D_variable(const int& ncid, const std::string& varname, cons
 	int status = nc_def_var(ncid, varname.c_str(), xtype, 2, &dimids[0], &varid);
 	if (status != NC_NOERR)
 		throw IOException("Could not define variable '" + varname + "': " + nc_strerror(status), AT);
+}
+
+void NetCDFIO::start_definitions(const std::string& filename, const int& ncid)
+{
+	int status = nc_redef(ncid);
+	if (status != NC_NOERR)
+		throw IOException("Could not open define mode for file '" + filename + "': " + nc_strerror(status), AT);
+
 }
 
 void NetCDFIO::end_definitions(const std::string& filename, const int& ncid)
@@ -372,13 +406,48 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 	fill_data(grid_in, data);
 
 	int ncid, did_lat, did_lon, vid_lat, vid_lon, vid_alt;
+	bool create_dimensions = false;
+	bool create_variable = false;
 
 	if (exists) {
 		open_file(vec_argument[0], NC_WRITE, ncid);
+		start_definitions(vec_argument[0], ncid);
+
+		if (check_variable(ncid, vec_argument[1])) { // variable exists
+			vector<int> dimid, dim_varid;
+			vector<string> dimname;
+			vector<size_t> dimlen;
+
+			get_variable(ncid, vec_argument[1], vid_alt);
+			get_dimension(ncid, vec_argument[1], vid_alt, dimid, dim_varid, dimname, dimlen);
+
+			if ((dimname[0] == "lat" && dimname[1] == "lon") && (dimlen[0]==grid_in.nrows && dimlen[1]==grid_in.ncols)) {
+				vid_lat = dim_varid[0];
+				vid_lon = dim_varid[1];
+			} else {
+				throw IOException("Variable '" + vec_argument[1]  + "' already defined with different dimensions in file '"+ vec_argument[0]  +"'", AT);
+			}
+		} else { // variable does not exist, but maybe dimensions already exist
+			create_variable = true;
+
+			if (check_variable(ncid, "lat") && check_variable(ncid, "lon")) {
+				if ((get_1D_var_len(ncid, "lat") != grid_in.nrows) || (get_1D_var_len(ncid, "lon") != grid_in.ncols)) {
+					throw IOException("lat or lon already defined with different deimensions in file '"+ vec_argument[0]  +"'", AT);
+				}
+			} else if (check_variable(ncid, "lat") || check_variable(ncid, "lon")) {
+				throw IOException("lat or lon already defined in file '"+ vec_argument[0]  +"'", AT);
+			} else {
+				create_dimensions = true;
+			}
+		}
 	} else {
 		create_file(vec_argument[0], NC_CLASSIC_MODEL, ncid);
 		add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
-		
+
+		create_variable = create_dimensions = true;
+	}
+
+	if (create_dimensions) {
 		define_dimension(ncid, "lat", grid_in.nrows, did_lat);
 		add_1D_variable(ncid, "lat", NC_DOUBLE, did_lat, vid_lat);
 		add_attributes_for_variable(ncid, vid_lat, "lat");
@@ -386,16 +455,18 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 		define_dimension(ncid, "lon", grid_in.ncols, did_lon);
 		add_1D_variable(ncid, "lon", NC_DOUBLE, did_lon, vid_lon);
 		add_attributes_for_variable(ncid, vid_lon, "lon");
+	}
 
-		add_2D_variable(ncid, "alt", NC_DOUBLE, did_lat, did_lon, vid_alt);
-		add_attributes_for_variable(ncid, vid_alt, "alt");
+	if (create_variable) {
+		add_2D_variable(ncid, vec_argument[1], NC_DOUBLE, did_lat, did_lon, vid_alt);
+		add_attributes_for_variable(ncid, vid_alt, vec_argument[1]);
 	}
 
 	end_definitions(vec_argument[0], ncid);
 
 	write_data(ncid, "lat", vid_lat, lat_array);
 	write_data(ncid, "lon", vid_lon, lon_array);
-	write_data(ncid, "alt", vid_alt, data);
+	write_data(ncid, vec_argument[1], vid_alt, data);
 
 	close_file(vec_argument[0], ncid);
 	delete[] lat_array; delete[] lon_array; delete[] data;
