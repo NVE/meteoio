@@ -231,8 +231,7 @@ double Atmosphere::Brutsaert_emissivity(const double& RH, const double& TA) {
 	const double exponent = 1./7.;
 	const double ea = 1.24 * pow( (e0_mBar / TA), exponent);
 
-	if(ea>1.0)
-		return 1.;
+	if(ea>1.0) return 1.;
 	return ea;
 }
 
@@ -259,15 +258,14 @@ double Atmosphere::Brutsaert_ilwr(const double& RH, const double& TA) {
  * and the ratio of this long wave to a black body emission gives an emissivity.
  * @param RH relative humidity (between 0 and 1)
  * @param TA near surface air temperature (K)
- * @return long wave radiation (W/m^2)
+ * @return clear sky emissivity
 */
 double Atmosphere::Dilley_emissivity(const double& RH, const double& TA) {
 	const double ilwr_dilley = Dilley_ilwr(RH, TA);
 	const double ilwr_blkbody = blkBody_Radiation(1., TA);
 	const double ea = ilwr_dilley/ilwr_blkbody;
 
-	if(ea>1.0)
-		return 1.;
+	if(ea>1.0) return 1.;
 	return ea;
 }
 
@@ -295,15 +293,14 @@ double Atmosphere::Dilley_ilwr(const double& RH, const double& TA) {
  * downward clear-sky radiation at the surface", Q. J. R. Meteorolo. Soc., <b>122</b>, 1996, pp 1127-1151.
  * @param RH relative humidity (between 0 and 1)
  * @param TA near surface air temperature (K)
- * @return long wave radiation (W/m^2)
+ * @return clear sky emissivity
 */
 double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 	const double e0 = RH * waterSaturationPressure(TA) * 0.001; //water vapor pressure, kPa
 	const double w = 4650.*e0/TA; //precipitable water, Prata 1996
 	const double ea = 1. - (1.+w)*exp( -sqrt(1.2+3.*w) );
 
-	if(ea>1.0)
-		return 1.;
+	if(ea>1.0) return 1.;
 	return ea;
 }
 
@@ -317,6 +314,62 @@ double Atmosphere::Prata_emissivity(const double& RH, const double& TA) {
 */
 double Atmosphere::Prata_ilwr(const double& RH, const double& TA) {
 	const double epsilon = Prata_emissivity(RH, TA);
+	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+ * @brief Evaluate the atmosphere emissivity for clear sky.
+ * This uses the formula from Clark & Allen -- "The estimation of atmospheric radiation for clear and
+ * cloudy skies", Proceedings of the second national passive solar conference, <b>2</b>, 1978, p 676.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return clear sky emissivity
+*/
+double Atmosphere::Clark_emissivity(const double& RH, const double& TA) {
+	const double Tdp = RhtoDewPoint(RH, TA, false);
+	const double ea = 0.787 + 0.0028 * (Tdp-Cst::t_water_triple_pt);
+	return ea;
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear sky.
+ * This uses the formula from Clark & Allen -- "The estimation of atmospheric radiation for clear and
+ * cloudy skies", Proceedings of the second national passive solar conference, <b>2</b>, 1978, p 676.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Clark_ilwr(const double& RH, const double& TA) {
+	const double epsilon = Clark_emissivity(RH, TA);
+	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
+ * @brief Evaluate the atmosphere emissivity for clear sky.
+ * This uses the formula from Tang, Etzion and Meir -- "Estimates of clear night sky emissivity in the
+ * Negev Highlands, Israel", Energy Conversion and Management, <b>45.11</b>, 2004, pp 1831-1843.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return clear sky emissivity
+*/
+double Atmosphere::Tang_emissivity(const double& RH, const double& TA) {
+	const double Tdp = RhtoDewPoint(RH, TA, false);
+	const double ea = 0.754 + 0.0044 * (Tdp-Cst::t_water_triple_pt);
+
+	if(ea>1.0) return 1.;
+	return ea;
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear sky.
+ * This uses the formula from Tang, Etzion and Meir -- "Estimates of clear night sky emissivity in the
+ * Negev Highlands, Israel", Energy Conversion and Management, <b>45.11</b>, 2004, pp 1831-1843.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
+	const double epsilon = Tang_emissivity(RH, TA);
 	return blkBody_Radiation(epsilon, TA);
 }
 

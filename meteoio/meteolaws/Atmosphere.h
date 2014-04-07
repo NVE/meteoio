@@ -50,6 +50,10 @@ class Atmosphere {
 		static double Dilley_ilwr(const double& RH, const double& TA);
 		static double Prata_emissivity(const double& RH, const double& TA);
 		static double Prata_ilwr(const double& RH, const double& TA);
+		static double Clark_emissivity(const double& RH, const double& TA);
+		static double Clark_ilwr(const double& RH, const double& TA);
+		static double Tang_emissivity(const double& RH, const double& TA);
+		static double Tang_ilwr(const double& RH, const double& TA);
 
 		//cloudy sky emissivity
 		static double Omstedt_emissivity(const double& RH, const double& TA, const double& cloudiness);

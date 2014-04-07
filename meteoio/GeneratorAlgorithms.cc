@@ -186,6 +186,8 @@ void ClearSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
 		if (user_algo=="BRUTSAERT") model = BRUTSAERT;
 		else if (user_algo=="DILLEY") model = DILLEY;
 		else if (user_algo=="PRATA") model = PRATA;
+		else if (user_algo=="CLARK") model = CLARK;
+		else if (user_algo=="TANG") model = TANG;
 		else
 			throw InvalidArgumentException("Unknown parametrization \""+user_algo+"\" supplied for the "+algo+" generator", AT);
 	} else { //incorrect arguments, throw an exception
@@ -206,6 +208,10 @@ bool ClearSkyGenerator::generate(const size_t& param, MeteoData& md)
 			value = Atmosphere::Dilley_ilwr(RH, TA);
 		else if (model==PRATA)
 			value = Atmosphere::Prata_ilwr(RH, TA);
+		else if (model==CLARK)
+			value = Atmosphere::Clark_ilwr(RH, TA);
+		else if (model==TANG)
+			value = Atmosphere::Tang_ilwr(RH, TA);
 	}
 
 	return true; //all missing values could be filled

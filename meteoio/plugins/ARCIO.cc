@@ -44,6 +44,7 @@ namespace mio {
  * - C is the field capacity
  *
  * <center><table border="0">
+ * <caption>PREVAH land cover codes</caption>
  * <tr><td>
  * <table border="1">
  * <tr><th>land use (vegetation)</th><th>Prevah land use classes</th></tr>
