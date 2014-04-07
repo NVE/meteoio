@@ -70,6 +70,7 @@ namespace mio {
  * - METEO_EXT: file extension (default: ".xml", give "none" to get an empty string)
  * - STATION#: ID of the station to read
  * - IMIS_STATIONS: if set to true, all station IDs provided above will be stripped of their number (to match MeteoCH naming scheme)
+ * - USE_MODEL_LOC: if set to false, the true station location (lat, lon, altitude) is used. Otherwise, it uses the model location (default)
  *
  * If no METEOFILE is provided, all ".xml" files in the METEOPATH directory will be read, if they match the METEO_PREFIX and METEO_EXT.
  * They <i>must</i> contain the date of the first data formatted as ISO8601 numerical UTC date in their file name. For example, a file containing simulated
@@ -92,12 +93,13 @@ namespace mio {
 const double CosmoXMLIO::in_tz = 0.; //Plugin specific timezone
 const xmlChar* CosmoXMLIO::xml_attribute = (const xmlChar *)"id";
 const xmlChar* CosmoXMLIO::xml_namespace = (const xmlChar *)"http://www.meteoswiss.ch/xmlns/modeltemplate/2";
+const xmlChar* CosmoXMLIO::xml_namespace_abrev = (const xmlChar*)"ns";
 const std::string CosmoXMLIO::StationData_xpath = "//ns:datainformation/ns:data-tables/ns:data/ns:row/ns:col";
 const std::string CosmoXMLIO::MeteoData_xpath = "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col";
 
 CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_xpathCtx(NULL),
              coordin(), coordinparam()
 {
 	Config cfg(configfile);
@@ -106,7 +108,7 @@ CosmoXMLIO::CosmoXMLIO(const std::string& configfile)
 
 CosmoXMLIO::CosmoXMLIO(const Config& cfg)
            : cache_meteo_files(), xml_stations_id(), input_id(),
-             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), in_doc(NULL), in_xpathCtx(NULL),
+             meteo_prefix(), meteo_ext(".xml"), plugin_nodata(-999.), imis_stations(false), use_model_loc(true), in_doc(NULL), in_xpathCtx(NULL),
              coordin(), coordinparam()
 {
 	init(cfg);
@@ -121,6 +123,7 @@ void CosmoXMLIO::init(const Config& cfg)
 
 	cfg.getValues("STATION", "INPUT", input_id);
 	cfg.getValue("IMIS_STATIONS", "INPUT", imis_stations, IOUtils::nothrow);
+	cfg.getValue("USE_MODEL_LOC", "INPUT", use_model_loc, IOUtils::nothrow);
 
 	const std::string meteopath = cfg.get("METEOPATH", "INPUT");
 	const std::string meteofile = cfg.get("METEOFILE", "INPUT", IOUtils::nothrow);
@@ -204,7 +207,7 @@ void CosmoXMLIO::openIn_XML(const std::string& in_meteofile)
 		throw IOException("Unable to create new XPath context", AT);
 	}
 
-	if(xmlXPathRegisterNs(in_xpathCtx,  (const xmlChar*)"ns", xml_namespace) != 0) {
+	if(xmlXPathRegisterNs(in_xpathCtx,  xml_namespace_abrev, xml_namespace) != 0) {
 		throw IOException("Unable to register namespace with prefix", AT);
 	}
 }
@@ -284,10 +287,17 @@ bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathC
 				if(field=="identifier") xml_id = value;
 				//else if(field=="station_abbreviation") sd.stationID = value;
 				else if(field=="station_name") sd.stationName = value;
-				else if(field=="model_station_height") IOUtils::convertString(altitude, value);
-				else if(field=="model_station_latitude") IOUtils::convertString(latitude, value);
-				else if(field=="model_station_longitude") IOUtils::convertString(longitude, value);
 				else if(field=="missing_value_code") IOUtils::convertString(plugin_nodata, value);
+
+				if(use_model_loc) {
+					if(field=="station_height") IOUtils::convertString(altitude, value);
+					else if(field=="station_latitude") IOUtils::convertString(latitude, value);
+					else if(field=="station_longitude") IOUtils::convertString(longitude, value);
+				} else {
+					if(field=="model_station_height") IOUtils::convertString(altitude, value);
+					else if(field=="model_station_latitude") IOUtils::convertString(latitude, value);
+					else if(field=="model_station_longitude") IOUtils::convertString(longitude, value);
+				}
 			}
 		}
 	}
@@ -329,7 +339,7 @@ CosmoXMLIO::MeteoReadStatus CosmoXMLIO::parseMeteoDataPoint(const Date& dateStar
 					IOUtils::convertString(tmp, value);
 					tmp = IOUtils::standardizeNodata(tmp, plugin_nodata);
 
-					//HACK for now, we hard-code the fields mapping
+					//for now, we hard-code the fields mapping
 					if(field=="108005") md(MeteoData::TA) = tmp;
 					else if(field=="108014") md(MeteoData::RH) = tmp/100.;
 					else if(field=="108015") md(MeteoData::VW) = tmp;

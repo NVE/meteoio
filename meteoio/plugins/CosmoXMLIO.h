@@ -85,6 +85,7 @@ class CosmoXMLIO : public IOInterface {
 		std::string meteo_prefix, meteo_ext; //for the file naming scheme
 		double plugin_nodata; //plugin specific no data value
 		bool imis_stations; //to make the station ID like an IMIS station ID
+		bool use_model_loc; //for each station, use the model location instead of the true station location (default=true)
 
 		xmlDocPtr in_doc;
 		xmlXPathContextPtr in_xpathCtx;
@@ -92,6 +93,7 @@ class CosmoXMLIO : public IOInterface {
 		static const double in_tz; //plugin specific time zones
 		static const xmlChar* xml_attribute;
 		static const xmlChar* xml_namespace;
+		static const xmlChar* xml_namespace_abrev;
 		static const std::string StationData_xpath, MeteoData_xpath;
 
 		std::string coordin, coordinparam; //projection parameters
