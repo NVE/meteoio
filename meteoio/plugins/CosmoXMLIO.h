@@ -89,6 +89,7 @@ class CosmoXMLIO : public IOInterface {
 
 		xmlDocPtr in_doc;
 		xmlXPathContextPtr in_xpathCtx;
+		xmlCharEncoding in_encoding;
 
 		static const double in_tz; //plugin specific time zones
 		static const xmlChar* xml_attribute;
