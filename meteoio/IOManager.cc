@@ -22,6 +22,17 @@ using namespace std;
 
 namespace mio {
 
+IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), rawio(cfg), bufferedio(rawio, cfg),
+                                            meteoprocessor(cfg), interpolator(cfg), dataGenerator(cfg),
+                                            v_params(), v_coords(), v_stations(),
+                                            proc_properties(), point_cache(), filtered_cache(),
+                                            fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
+                                            processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated),
+                                            virtual_stations(false), skip_virtual_stations(false)
+{
+	initIOManager();
+}
+
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg),
                                             meteoprocessor(cfg), interpolator(cfg), dataGenerator(cfg),
                                             v_params(), v_coords(), v_stations(),
@@ -29,6 +40,11 @@ IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(r
                                             fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
                                             processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated),
                                             virtual_stations(false), skip_virtual_stations(false)
+{
+	initIOManager();
+}
+
+void IOManager::initIOManager()
 {
 	meteoprocessor.getWindowSize(proc_properties);
 	interpolator.setIOManager(*this); //because "*this" does not necessarily exist in the initialization list...

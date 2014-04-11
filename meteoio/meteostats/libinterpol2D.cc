@@ -24,6 +24,8 @@
 #include <meteoio/MathOptim.h> //math optimizations
 #include <meteoio/ResamplingAlgorithms2D.h> //for Winstral
 
+#include <meteoio/Timer.h> //HACK temporary for benchamrks
+
 using namespace std;
 
 namespace mio {
@@ -562,6 +564,8 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 //compute the Winstral sx factor for one single direction and one single point (ii,jj) in dem up to dmax distance
 double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
+	const double dmin = 20.; //cells closer than dmin don't play any role
+	const double inv_dmin = 1./dmin;
 	const double inv_dmax = 1./dmax;
 	const double alpha_rad = bearing*Cst::to_rad;
 	const double ref_altitude = dem(i, j);
@@ -569,8 +573,9 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
 	const int ncols = static_cast<int>(dem.ncols), nrows = static_cast<int>(dem.nrows);
 
-	double max_tan_sx = 0.;
 	int ll=ii, mm=jj;
+
+	double max_tan_sx = 0.;
 	size_t nb_cells = 0;
 	while( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
 		const double altitude = dem(ll, mm);
@@ -579,6 +584,7 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 			//compute local sx
 			const double delta_elev = altitude - ref_altitude;
 			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+			if(inv_distance>inv_dmin) continue; //don't consider cells closer than dmin
 			if(inv_distance<inv_dmax) break; //stop if distance>dmax
 
 			const double tan_sx = delta_elev*inv_distance;
@@ -599,6 +605,8 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 //Get the distance-weighted average of Sx for one single direction and one single point (ii,jj) in dem up to dmax distance
 double Interpol2D::AvgSX_core(const Grid2DObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
+	const double dmin = 20.; //cells closer than dmin don't play any role
+	const double inv_dmin = 1./dmin;
 	const double inv_dmax = 1./dmax;
 	const double alpha_rad = bearing*Cst::to_rad;
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
@@ -614,6 +622,7 @@ double Interpol2D::AvgSX_core(const Grid2DObject& dem, const Grid2DObject& sx, c
 		if(altitude==mio::IOUtils::nodata) continue; //jump over nodata cells
 		if( !(ll==ii && mm==jj) ) {
 			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+			if(inv_distance>inv_dmin) continue; //don't consider cells closer than dmin
 			if(inv_distance<inv_dmax) break; //stop if distance>dmax
 
 			sum_sx += sx(ll,mm);
@@ -697,15 +706,17 @@ void Interpol2D::Winstral_deposition(const DEMObject& dem, const double& dmax, c
 
 	//now remove deposition that happens too far from erosion
 	if(scale<1.) sd = ResamplingAlgorithms2D::BilinearResampling( sd, 1./scale ); //we should be back at sx dimensions
-	for(size_t jj = 0; jj<sd.nrows; jj++) {
-		for(size_t ii = 0; ii<sd.ncols; ii++) {
+
+	const size_t jj_max = min(sd.nrows, grid.nrows); //HACK
+	const size_t ii_max = min(sd.ncols, grid.ncols);
+	for(size_t jj = 0; jj<jj_max; jj++) {
+		for(size_t ii = 0; ii<ii_max; ii++) {
 			if(sx(ii,jj)<=0)
 				grid(ii,jj) = sx(ii,jj);
 			else if(sd(ii,jj)<0.) grid(ii,jj) = sx(ii,jj) - sd(ii,jj);
 			else grid(ii,jj) = 0.;
 		}
 	}
-
 }
 
 void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid)

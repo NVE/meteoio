@@ -354,7 +354,7 @@ class ILWRAlgorithm : public InterpolationAlgorithm {
 
 /**
  * @class SimpleWindInterpolationAlgorithm
- * @brief Curvature/slope influenced  wind interpolation algorithm.
+ * @brief Curvature/slope influenced wind interpolation algorithm.
  * This is an implementation of the method described in (Liston & Elder, 2006): the wind speed and direction are
  * spatially interpolated using IDWLapseAlgorithm for the wind speed and using the user defined wind direction
  * interpolation algorithm. Then, the wind speed and direction fields are altered by wind weighting factors
@@ -371,6 +371,28 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
+};
+
+/**
+ * @class WinstralAlgorithm
+ * @brief DEM-based wind-exposure interpolation algorithm.
+ * This is an implementation of the method described in Winstral, Elder, & Davis,
+ * <i>"Spatial snow modeling of wind-redistributed snow using terrain-based parameters"</i>, 2002,
+ * Journal of Hydrometeorology, <b>3(5)</b>, 524-538.
+ * The DEM is used to compute wind exposure factors that are used to alter the precipitation fields.
+ * It is usually a good idea to provide a DEM that also contain the accumulated snow height in order
+ * to get a progrfessive softening of the terrain features.
+ */
+class WinstralAlgorithm : public InterpolationAlgorithm {
+	public:
+		WinstralAlgorithm(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, IOManager& iom)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		void initGrid(const DEMObject& dem, Grid2DObject& grid);
 };
 
 /**

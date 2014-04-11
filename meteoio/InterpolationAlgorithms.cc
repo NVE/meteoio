@@ -51,6 +51,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new ILWRAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "WIND_CURV"){// wind velocity interpolation (using a heuristic terrain effect)
 		return new SimpleWindInterpolationAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+	} else if (algoname == "WINSTRAL"){// Winstral wind exposure factor
+		return new WinstralAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ODKRIG"){// ordinary kriging
 		return new OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ODKRIG_LAPSE"){// ordinary kriging with lapse rate
@@ -369,7 +371,7 @@ LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const 
 	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
 		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
 	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the IDW_LAPSE algorithm", AT);
+		throw InvalidArgumentException("Please provide the number of nearest neighbors to use for the "+algo+" algorithm", AT);
 	}
 }
 
@@ -567,11 +569,93 @@ void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObj
 }
 
 
+double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+{
+	//This algorithm is only valid for HNW (we could add HS later)
+	if (in_param!=MeteoData::HNW)
+		return 0.0;
+
+	date = i_date;
+	param = in_param;
+	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+
+	if (nrOfMeasurments==0)
+		return 0.0;
+
+	return 0.9;
+}
+
+void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
+{
+	//retrieve optional arguments
+	std::string base_algo;
+	if (vecArgs.empty()){
+		base_algo=std::string("IDW_LAPSE");
+	} else if (vecArgs.size() == 1){
+		IOUtils::convertString(base_algo, vecArgs[0]);
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+	}
+
+	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
+	IOUtils::toUpper(base_algo);
+	vector<string> vecArgs2;
+	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
+	algorithm->getQualityRating(date, param);
+	algorithm->calculate(dem, grid);
+	info << algorithm->getInfo();
+}
+
+void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
+{
+	info.clear(); info.str("");
+	initGrid(dem, grid);
+
+	//get synoptic wind direction
+	const double synoptic_bearing = 0.; //HACK
+	//two options:
+	// 1) locate the stations in DEM and check if they are higher than their surroundings within a given radius
+	// 2) simply compute a mean or median direction
+	// (2) can be used on all the stations selected in (1)
+
+	//compute wind exposure factor
+	Grid2DObject Sx;
+	Interpol2D::WinstralSX(dem, 300., synoptic_bearing, Sx);
+
+	//use the Sx to tweak the precipitation field
+	//get the scaling parameters
+	const double min_sx = Sx.grid2D.getMin(); //negative
+	const double max_sx = Sx.grid2D.getMax(); //positive
+	double sum_erosion=0., sum_deposition=0.;
+	//erosion: fully eroded at min_sx
+	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		const double sx = Sx(ii);
+		double &val = grid(ii);
+		if (sx<0.) {
+			sum_erosion += val*sx/min_sx;
+			val *= 1. - sx/min_sx;
+		}
+		else sum_deposition += val;
+	}
+
+	//deposition: garantee mass balance conservation
+	const double ratio = sum_erosion/sum_deposition;
+	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		const double sx = Sx(ii);
+		double &val = grid(ii);
+		if (sx>0.) {
+			val *= (1. + sx/max_sx) * ratio;
+		}
+	}
+}
+
+
 std::string USERInterpolation::getGridFileName() const
 {
 //HACK: use read2DGrid(grid, MeteoGrid::Parameters, Date) instead?
 	if (vecArgs.size() != 1){
-		throw InvalidArgumentException("Please provide the path to the grids for the USER interpolation algorithm", AT);
+		throw InvalidArgumentException("Please provide the path to the grids for the "+algo+" interpolation algorithm", AT);
 	}
 	const std::string ext(".asc");
 	const std::string& grid_path = vecArgs[0];
@@ -594,7 +678,7 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 	filename = getGridFileName();
 
 	if (!IOUtils::validFileName(filename)) {
-		cerr << "[E] Invalid grid filename for USER interpolation algorithm: " << filename << "\n";
+		cerr << "[E] Invalid grid filename for "+algo+" interpolation algorithm: " << filename << "\n";
 		return 0.0;
 	}
 	if(IOUtils::fileExists(filename)) {
@@ -628,7 +712,7 @@ double SnowHNWInterpolation::getQualityRating(const Date& i_date, const MeteoDat
 void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	info.clear(); info.str("");
+
 	//retrieve optional arguments
 	std::string base_algo;
 	if (vecArgs.empty()){
@@ -636,7 +720,7 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	} else if (vecArgs.size() == 1){
 		IOUtils::convertString(base_algo, vecArgs[0]);
 	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the HNW_SNOW algorithm", AT);
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
 	}
 
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)

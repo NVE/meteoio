@@ -38,6 +38,7 @@ class IOManager {
 			num_of_levels = 1 << 4
 		};
 
+		IOManager(const std::string& filename_in);
 		IOManager(const Config& i_cfg);
 
 		//Legacy support to support functionality of the IOInterface superclass:
@@ -213,6 +214,7 @@ class IOManager {
 		void clear_cache();
 
 	private:
+		void initIOManager();
 		void initVirtualStations();
 		void fill_filtered_cache();
 		bool read_filtered_cache(const Date& start_date, const Date& end_date,
