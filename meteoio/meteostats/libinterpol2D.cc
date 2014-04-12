@@ -673,6 +673,60 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 	}
 }
 
+/**
+* @brief Alter a precipitation field with the Winstral Sx exposure coefficient
+* This implements the wind exposure coefficient (Sx) for one bearing as in
+* <i>"Simulating wind fields and snow redistribution using terrain‐based parameters to model
+* snow accumulation and melt over a semi‐arid mountain catchment."</i>, Winstral, Adam, and Danny Marks, Hydrological Processes <b>16.18</b> (2002), pp3585-3603.
+*
+* A linear correlation between erosion coefficients and eroded mass is assumed, that is that the points with maximum erosion get all their
+* precipitation removed. The eroded mass is then distributed on the cells with positive Sx (with a linear correlation between positive Sx and deposited
+* mass) and enforcing mass conservation within the domain.
+* @param dem digital elevation model
+* @param dmax search radius
+* @param in_bearing wind direction to consider
+* @param grid 2D array of precipitation to fill
+* @author Mathias Bavay
+*/
+void Interpol2D::Winstral(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
+{
+	//compute wind exposure factor
+	Grid2DObject Sx;
+	WinstralSX(dem, dmax, in_bearing, Sx);
+
+	//get the scaling parameters
+	const double min_sx = Sx.grid2D.getMin(); //negative
+	const double max_sx = Sx.grid2D.getMax(); //positive
+	double sum_erosion=0., sum_deposition=0.;
+
+	//erosion: fully eroded at min_sx
+	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		const double sx = Sx(ii);
+		double &val = grid(ii);
+		if (sx<0.) {
+			const double eroded = val * sx/min_sx;
+			sum_erosion += eroded;
+			val -= eroded;
+		}
+		else { //at this point, we can only compute the sum of deposition
+			const double deposited = sx/max_sx;
+			sum_deposition += deposited;
+		}
+	}
+
+	//deposition: garantee mass balance conservation
+	//-> we now have the proper scaling factor so we can deposit in individual cells
+	const double ratio = sum_erosion/sum_deposition;
+	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		const double sx = Sx(ii);
+		double &val = grid(ii);
+		if (sx>0.) {
+			const double deposited = ratio * sx/max_sx;
+			val += deposited;
+		}
+	}
+}
+
 void Interpol2D::Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);

@@ -64,7 +64,7 @@ class Interpol2D {
 		                      const std::vector<StationData>& vecStations,
 		                      const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid);
 
-		static void WinstralSX(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
+		static void Winstral(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 
 	private:
 		//generic functions
@@ -93,6 +93,7 @@ class Interpol2D {
 		static double WinstralSX_core(const Grid2DObject& dem, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj);
 		static double AvgSX_core(const Grid2DObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj);
 
+		static void WinstralSX(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 		static void WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid);
 		static void Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 

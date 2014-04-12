@@ -613,41 +613,14 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	initGrid(dem, grid);
 
 	//get synoptic wind direction
-	const double synoptic_bearing = 0.; //HACK
+	const double synoptic_bearing = 315.; //HACK
 	//two options:
 	// 1) locate the stations in DEM and check if they are higher than their surroundings within a given radius
 	// 2) simply compute a mean or median direction
 	// (2) can be used on all the stations selected in (1)
 
-	//compute wind exposure factor
-	Grid2DObject Sx;
-	Interpol2D::WinstralSX(dem, 300., synoptic_bearing, Sx);
-
-	//use the Sx to tweak the precipitation field
-	//get the scaling parameters
-	const double min_sx = Sx.grid2D.getMin(); //negative
-	const double max_sx = Sx.grid2D.getMax(); //positive
-	double sum_erosion=0., sum_deposition=0.;
-	//erosion: fully eroded at min_sx
-	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
-		const double sx = Sx(ii);
-		double &val = grid(ii);
-		if (sx<0.) {
-			sum_erosion += val*sx/min_sx;
-			val *= 1. - sx/min_sx;
-		}
-		else sum_deposition += val;
-	}
-
-	//deposition: garantee mass balance conservation
-	const double ratio = sum_erosion/sum_deposition;
-	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
-		const double sx = Sx(ii);
-		double &val = grid(ii);
-		if (sx>0.) {
-			val *= (1. + sx/max_sx) * ratio;
-		}
-	}
+	//alter the field with Winstral and the chosen wind direction
+	Interpol2D::Winstral(dem, 300., synoptic_bearing, grid);
 }
 
 
