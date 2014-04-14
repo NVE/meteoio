@@ -420,7 +420,7 @@ void SMETWriter::write(const std::vector<std::string>& vec_timestamp, const std:
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		ostringstream ss;
-		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -466,7 +466,7 @@ void SMETWriter::write(const std::vector<double>& data)
 	fout.open(filename.c_str(), ios::binary);
 	if (fout.fail()) {
 		ostringstream ss;
-		ss << "Error openning file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << filename << "\" for writing, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -663,7 +663,7 @@ SMETReader::SMETReader(const std::string& in_fname)
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii does end of line translation, which messes up the pointer code
 	if (fin.fail()) {
 		ostringstream ss;
-		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
 		ss << " Please check file existence and permissions!";
 		throw SMETException(ss.str(), SMET_AT);
 	}
@@ -968,7 +968,7 @@ void SMETReader::read(std::vector<std::string>& vec_timestamp, std::vector<doubl
 	fin.open (filename.c_str(), ios::in|ios::binary); //ascii mode messes up pointer code on windows (automatic eol translation)
 	if (fin.fail()) {
 		ostringstream ss;
-		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 
@@ -1019,7 +1019,7 @@ void SMETReader::read(std::vector<double>& vec_data)
 	fin.open (filename.c_str(), mode);
 	if (fin.fail()) {
 		ostringstream ss;
-		ss << "Error openning file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << filename << "\" for reading, possible reason: " << strerror(errno);
 		throw SMETException(ss.str(), SMET_AT);
 	}
 

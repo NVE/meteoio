@@ -320,7 +320,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	fp = fopen(filename.c_str(), "wb");
 	if (fp == NULL) {
 		ostringstream ss;
-		ss << "Error openning file \"" << filename << "\", possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << filename << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
 

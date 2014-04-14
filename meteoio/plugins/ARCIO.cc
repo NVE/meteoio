@@ -182,7 +182,7 @@ void ARCIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_
 	fin.open (full_name.c_str(), ifstream::in);
 	if (fin.fail()) {
 		ostringstream ss;
-		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
 
@@ -335,7 +335,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	fout.open(full_name.c_str());
 	if (fout.fail()) {
 		ostringstream ss;
-		ss << "Error openning file \"" << full_name << "\", possible reason: " << strerror(errno);
+		ss << "Error opening file \"" << full_name << "\", possible reason: " << strerror(errno);
 		throw FileAccessException(ss.str(), AT);
 	}
 
