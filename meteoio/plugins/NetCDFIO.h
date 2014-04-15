@@ -61,19 +61,35 @@ class NetCDFIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
+		void copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out);
+		std::string get_varname(const MeteoGrids::Parameters& parameter);
+		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
+		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void open_file(const std::string& filename, const int& omode, int& ncid);
 		void create_file(const std::string& filename, const int& cmode, int& ncid);
+		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
+		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
 		void get_variable(const int& ncid, const std::string& varname, int& varid);
 		bool check_variable(const int& ncid, const std::string& varname);
+		bool check_dim_var(const int& ncid, const std::string& dimname);
 		size_t get_1D_var_len(const int& ncid, const std::string& varname);
+		void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
+		void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
 		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
 		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
+		void read_data(const int& ncid, const std::string& varname, const int& varid,
+		               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
 		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 		void write_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
+		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid, const size_t& pos_start, double*& data);
+		size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
+		size_t append_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 		void define_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
 		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
 		void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
 		void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
+		void add_2D_record(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record, const int& dimid1, const int& dimid2, int& varid);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
 		void start_definitions(const std::string& filename, const int& ncid);
 		void end_definitions(const std::string& filename, const int& ncid);
@@ -83,11 +99,12 @@ class NetCDFIO : public IOInterface {
                                     double* const& lat, double* const& lon, double& factor);
 		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
 		void fill_data(const Grid2DObject& grid, double*& data);
-		void cleanup() throw();
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
+		static const std::string time_str, lat_str, lon_str, z_str, ta_str, rh_str;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		std::vector<StationData> vecMetaData;
 };
 
 } //namespace
