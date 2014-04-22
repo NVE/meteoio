@@ -286,15 +286,16 @@ class Config {
 		 *         it returns the number of matches (partial matches are considered) and writes all the keys
 		 *         into a vector\<string\> that is handed to the function as reference
 		 * @param[out] vecResult A vector that will hold all keys that partially match keystart
-		 * @param[in] keystart A string representing the beginning of a key to search for
+		 * @param[in] keymatch A string representing the beginning of a key to search for
 		 * @param[in] section A string defining which section to search through (default: GENERAL)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
 		 * @code
 		 *  vector<string> myVec;
 		 *  size_t nrOfMatches = findKeys(myVec, "TA::", "Filters");
 		 * @endcode
 		 */
 		size_t findKeys(std::vector<std::string>& vecResult,
-		               const std::string& keystart, std::string section="GENERAL") const;
+		               const std::string& keymatch, std::string section="GENERAL", const bool& anywhere=false) const;
 
 		static const std::string defaultSection;
 

@@ -253,23 +253,40 @@ std::string Config::getSourceName() const
 	return sourcename;
 }
 
-size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& keystart,
-                        std::string section) const
+size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& keymatch,
+                        std::string section, const bool& anywhere) const
 {
 	vecResult.clear();
 
 	if (section.empty()) //enforce the default section if user tries to give empty section string
 		section = defaultSection;
 
-	const string tmp_keystart = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keystart);
-	//Loop through keys, look for substring match - push it into vecResult
-	for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it){
-		const string tmp = (it->first).substr(0, tmp_keystart.length());
-		const int matchcount = tmp_keystart.compare(tmp);
+	const size_t section_len = section.length();
 
-		if (matchcount == 0){ //perfect match
-			const string tmp2 = (it->first).substr(section.length() + 2);
-			vecResult.push_back(tmp2);
+	//Loop through keys, look for match - push it into vecResult
+	if (anywhere) {
+		const string key_pattern = IOUtils::strToUpper(keymatch);
+		const string section_pattern = IOUtils::strToUpper(section);
+
+		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
+			const size_t found_section = (it->first).find(section_pattern, 0);
+			if (found_section==string::npos) continue; //not in the right section
+
+			const size_t found_pos = (it->first).find(key_pattern, section_len);
+			if (found_pos!=string::npos) { //found it!
+				const string tmp2 = (it->first).substr(section_len + 2); //from pos to the end
+				vecResult.push_back(tmp2);
+			}
+		}
+	} else {
+		const string key_pattern = IOUtils::strToUpper(section) + "::" + IOUtils::strToUpper(keymatch);
+
+		for (map<string,string>::const_iterator it=properties.begin(); it != properties.end(); ++it) {
+			const size_t found_pos = (it->first).find(key_pattern, 0);
+			if (found_pos==0) { //found it!
+				const string tmp2 = (it->first).substr(section_len + 2); //from pos to the end
+				vecResult.push_back(tmp2);
+			}
 		}
 	}
 

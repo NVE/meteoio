@@ -36,10 +36,10 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new SinGenerator(vecArgs, i_algoname);
 	} else if (algoname == "STD_PRESS"){
 		return new StandardPressureGenerator(vecArgs, i_algoname);
-	} else if (algoname == "CLEARSKY"){
-		return new ClearSkyGenerator(vecArgs, i_algoname);
-	} else if (algoname == "ALLSKY"){
-		return new AllSkyGenerator(vecArgs, i_algoname);
+	} else if (algoname == "CLEARSKY_LW"){
+		return new ClearSkyLWGenerator(vecArgs, i_algoname);
+	} else if (algoname == "ALLSKY_LW"){
+		return new AllSkyLWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "POT_RADIATION"){
 		return new PotRadGenerator(vecArgs, i_algoname);
 	} else if (algoname == "HS_SWE"){
@@ -177,7 +177,7 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 }
 
 
-void ClearSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void ClearSkyLWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
 	if(vecArgs.size()==1) {
@@ -195,7 +195,7 @@ void ClearSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
 	}
 }
 
-bool ClearSkyGenerator::generate(const size_t& param, MeteoData& md)
+bool ClearSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if (value==IOUtils::nodata) {
@@ -217,7 +217,7 @@ bool ClearSkyGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool ClearSkyGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool ClearSkyLWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(vecMeteo.empty()) return true;
 
@@ -231,11 +231,11 @@ bool ClearSkyGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 }
 
 
-const double AllSkyGenerator::soil_albedo = .23; //grass
-const double AllSkyGenerator::snow_albedo = .85; //snow
-const double AllSkyGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+const double AllSkyLWGenerator::soil_albedo = .23; //grass
+const double AllSkyLWGenerator::snow_albedo = .85; //snow
+const double AllSkyLWGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
 
-void AllSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
+void AllSkyLWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
 	if(vecArgs.size()==1) {
@@ -254,7 +254,7 @@ void AllSkyGenerator::parse_args(const std::vector<std::string>& vecArgs)
 	}
 }
 
-double AllSkyGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night)
+double AllSkyLWGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool &is_night)
 {
 	//we know that TA and RH are available, otherwise we would not get called
 	const double TA=md(MeteoData::TA), RH=md(MeteoData::RH), HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR);
@@ -306,7 +306,7 @@ double AllSkyGenerator::getCloudiness(const MeteoData& md, SunObject& sun, bool 
 		return IOUtils::nodata; //this should never happen
 }
 
-bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
+bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if (value==IOUtils::nodata) {
@@ -366,7 +366,7 @@ bool AllSkyGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool AllSkyGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool AllSkyLWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(vecMeteo.empty()) return true;
 

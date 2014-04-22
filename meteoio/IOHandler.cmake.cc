@@ -332,6 +332,7 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	checkTimestamps(vecMeteo);
 
 	copy_parameters(stationindex, vecMeteo);
+	//create_parameters(stationindex, vecMeteo);
 }
 #ifdef _POPC_
 void IOHandler::writeMeteoData(std::vector<METEO_SET>& vecMeteo,
@@ -372,16 +373,15 @@ void IOHandler::parse_copy_config()
 {
 	/**
 	 * Parse [Input] section for potential parameters that the user wants
-	 * duplicated (starting with 'COPY::')
+	 * duplicated (as '%%::COPY = %%')
 	 */
 	vector<string> copy_keys;
-	const size_t nrOfMatches = cfg.findKeys(copy_keys, "COPY::", "Input");
+	const size_t nrOfMatches = cfg.findKeys(copy_keys, "::COPY", "Input", true); //search anywhere in key
 
 	for (size_t ii=0; ii<nrOfMatches; ++ii) {
-		const string name_of_copy = copy_keys[ii].substr(6);
+		const string name_of_copy = copy_keys[ii].substr( 0, copy_keys[ii].find_first_of(":") );
 		string initial_name;
 		cfg.getValue(copy_keys[ii], "Input", initial_name);
-
 		if ((name_of_copy.length() > 0) && (initial_name.length() > 0)){
 			copy_parameter.push_back(initial_name);
 			copy_name.push_back(name_of_copy);
@@ -395,7 +395,7 @@ void IOHandler::parse_copy_config()
 * configuration copies a certain present meteo parameter to another one, named by the
 * user in the [Input] section of the io.ini, e.g.
 * [Input]
-* COPY::TA2 = TA
+* TA2::COPY = TA
 * means that TA2 will be the name of a new parameter in MeteoData with the copied value
 * of the meteo parameter MeteoData::TA
 */
@@ -440,6 +440,11 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 		}
 		indices.clear(); //may change for every station
 	}
+}
+
+void IOHandler::create_parameters(const size_t& /*stationindex*/, std::vector< METEO_SET >& /*vecMeteo*/) const
+{
+
 }
 
 

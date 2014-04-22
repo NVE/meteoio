@@ -579,6 +579,9 @@ const std::string IOManager::toString() const {
 		}
 	}
 
+	//display configured generators
+	os << dataGenerator.toString();
+
 	os << "</IOManager>\n";
 	return os.str();
 }

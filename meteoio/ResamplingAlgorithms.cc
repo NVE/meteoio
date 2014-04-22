@@ -205,7 +205,7 @@ std::string NearestNeighbour::toString() const
 {
 	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
-	ss << "[ window_size=" << window_size << " extrapolate=" << extrapolate << " ]";
+	ss << "[ window_size=" << window_size << " extrapolate=" << boolalpha << extrapolate << noboolalpha << " ]";
 	return ss.str();
 }
 
@@ -286,7 +286,7 @@ std::string LinearResampling::toString() const
 {
 	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
-	ss << "[ window_size=" << window_size << " extrapolate=" << extrapolate << " ]";
+	ss << "[ window_size=" << window_size << " extrapolate=" << boolalpha << extrapolate << noboolalpha << " ]";
 	return ss.str();
 }
 
@@ -387,7 +387,7 @@ std::string Accumulate::toString() const
 {
 	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
-	ss << "[ accumulate_period=" << accumulate_period << " strict=" << strict << " ]";
+	ss << "[ period=" << accumulate_period << " strict=" << boolalpha << strict << noboolalpha << " ]";
 	return ss.str();
 }
 

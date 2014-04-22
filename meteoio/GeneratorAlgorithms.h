@@ -57,7 +57,7 @@ namespace mio {
  *
  * P::generators  = STD_PRESS
  *
- * ILWR::generators = Unsworth Dilley
+ * ILWR::generators = AllSky_LW ClearSky_LW
  * @endcode
  *
  * @section generators_keywords Available generators
@@ -65,8 +65,8 @@ namespace mio {
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
- * - CLEARSKY: use a clear sky model to generate ILWR from TA, RH (see ClearSkyGenerator)
- * - ALLSKY: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyGenerator)
+ * - CLEARSKYLW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
+ * - ALLSKYLW: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyLWGenerator)
  * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
  * @section generators_biblio Bibliography
@@ -184,7 +184,7 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
 };
 
 /**
- * @class ClearSkyGenerator
+ * @class ClearSkyLWGenerator
  * @brief ILWR clear sky parametrization
  * Using air temperature (TA) and relative humidity (RH), this offers the choice of several clear sky parametrizations:
  *  - BRUTSAERT -- from Brutsaert, <i>"On a Derivable Formula for Long-Wave Radiation From Clear Skies"</i>,
@@ -198,14 +198,14 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
  * Negev Highlands, Israel"</i>, Energy Conversion and Management, <b>45.11</b>, 2004, pp 1831-1843.
  * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
  * @code
- * ILWR::generators = clearsky
- * ILWR::clearsky = Dilley
+ * ILWR::generators = clearsky_LW
+ * ILWR::clearsky_lw = Dilley
  * @endcode
  *
  */
-class ClearSkyGenerator : public GeneratorAlgorithm {
+class ClearSkyLWGenerator : public GeneratorAlgorithm {
 	public:
-		ClearSkyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		ClearSkyLWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), model(BRUTSAERT) { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
@@ -222,7 +222,7 @@ class ClearSkyGenerator : public GeneratorAlgorithm {
 };
 
 /**
- * @class AllSkyGenerator
+ * @class AllSkyLWGenerator
  * @brief ILWR all sky parametrization
  * HACK: the cloud fraction is currently NOT implemented! This will come shortly...
  * Using air temperature (TA) and relative humidity (RH) ands cloud fraction (),
@@ -247,14 +247,14 @@ class ClearSkyGenerator : public GeneratorAlgorithm {
  * Finally, it is recommended to also use a clear sky generator (declared after this one)
  * for the case of no available short wave measurement (by declaring the ClearSky generator \em after AllSky).
  * @code
- * ILWR::generators = allsky
- * ILWR::allsky = Omstedt
+ * ILWR::generators = allsky_LW
+ * ILWR::allsky_lw = Omstedt
  * @endcode
  *
  */
-class AllSkyGenerator : public GeneratorAlgorithm {
+class AllSkyLWGenerator : public GeneratorAlgorithm {
 	public:
-		AllSkyGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		AllSkyLWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 		               : GeneratorAlgorithm(vecArgs, i_algo), model(OMSTEDT), clf_model(KASTEN),
 		                 last_cloudiness() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);

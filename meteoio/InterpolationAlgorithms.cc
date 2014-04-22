@@ -619,6 +619,8 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	// 2) simply compute a mean or median direction
 	// (2) can be used on all the stations selected in (1)
 
+	//look for
+
 	//alter the field with Winstral and the chosen wind direction
 	Interpol2D::Winstral(dem, 300., synoptic_bearing, grid);
 }

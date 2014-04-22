@@ -136,7 +136,7 @@ void DataGenerator::setAlgorithms(const Config& cfg)
 void DataGenerator::getParameters(const Config& cfg, std::set<std::string>& set_parameters)
 {
 	std::vector<std::string> vec_keys;
-	cfg.findKeys(vec_keys, std::string(), "Generators");
+	cfg.findKeys(vec_keys, "::generators", "Generators", true); //search anywhere in key
 
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
@@ -181,7 +181,7 @@ size_t DataGenerator::getArgumentsForAlgorithm(const Config& cfg,
 const std::string DataGenerator::toString() const {
 	std::ostringstream os;
 	os << "<DataGenerator>\n";
-	os << "Generators defined: " << generators_defined << "\n";
+	os << "Generators defined: " << std::boolalpha << generators_defined << std::noboolalpha << "\n";
 	os << "User list of generators:\n";
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapAlgorithms.begin();
 	for (; iter != mapAlgorithms.end(); ++iter) {
