@@ -77,6 +77,7 @@ namespace mio {
  * - Dilley and O'Brien -- <i>"Estimating downward clear sky long-wave irradiance at the surface from screen temperature and precipitable water"</i>, Q. J. R. Meteorolo. Soc., Vol. 124, 1998, doi:10.1002/qj.49712454903
  * - Clark & Allen -- <i>"The estimation of atmospheric radiation for clear and cloudy skies"</i>, Proceedings of the second national passive solar conference, <b>2</b>, 1978, p 676.
  * - Tang et al. -- <i>"Estimates of clear night sky emissivity in the Negev Highlands, Israel"</i>, Energy Conversion and Management, <b>45.11</b>, 2004, pp 1831-1843.
+ * - Idso -- <i>"A set of equations for full spectrum and 8 to 14 um and 10.5 to 12.5 um thermal radiation from cloudless skies"</i>, Water Resources Research, <b>17</b>, 1981, pp 295-304.
  * - Kasten and Czeplak -- <i>"Solar and terrestrial radiation dependent on the amount and type of cloud"</i>, 1980, Solar energy, 24.2, pp 177-189
  * - Omstedt -- <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>, Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
  * - Konzelmann et al. -- <i>"Parameterization of global and longwave incoming radiation for the Greenland Ice Sheet."</i> Global and Planetary change <b>9.1</b> (1994): 143-164.
@@ -196,6 +197,9 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
  * cloudy skies"</i>, Proceedings of the second national passive solar conference, <b>2</b>, 1978, p 676.
  *  - TANG -- from Tang et al., <i>"Estimates of clear night sky emissivity in the
  * Negev Highlands, Israel"</i>, Energy Conversion and Management, <b>45.11</b>, 2004, pp 1831-1843.
+ *  - IDSO -- from Idso, <i>"A set of equations for full spectrum and 8 to 14 um and
+ * 10.5 to 12.5 um thermal radiation from cloudless skies"</i>, Water Resources Research, <b>17</b>, 1981, pp 295-304.
+ *
  * Please keep in mind that for energy balance modeling, this significantly underestimate the ILWR input.
  * @code
  * ILWR::generators = clearsky_LW
@@ -216,7 +220,8 @@ class ClearSkyLWGenerator : public GeneratorAlgorithm {
 			DILLEY,
 			PRATA,
 			CLARK,
-			TANG
+			TANG,
+			IDSO
 		} parametrization;
 		parametrization model;
 };

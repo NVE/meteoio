@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2013 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ namespace mio {
 */ //explain how to use the generators for the end user
 
 DataGenerator::DataGenerator(const Config& cfg)
-              : mapAlgorithms(), generators_defined(false)
+              : mapGenerators(), mapCreators(), generators_defined(false), creators_defined(false)
 {
 	setAlgorithms(cfg);
 }
@@ -35,7 +35,14 @@ DataGenerator::DataGenerator(const Config& cfg)
 DataGenerator::~DataGenerator()
 { //we have to deallocate the memory allocated by "new GeneratorAlgorithm()"
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+
+	for(it=mapGenerators.begin(); it!=mapGenerators.end(); ++it) {
+		std::vector<GeneratorAlgorithm*> &vec = it->second;
+		for(size_t ii=0; ii<vec.size(); ii++)
+			delete vec[ii];
+	}
+
+	for(it=mapCreators.begin(); it!=mapCreators.end(); ++it) {
 		std::vector<GeneratorAlgorithm*> &vec = it->second;
 		for(size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
@@ -45,8 +52,10 @@ DataGenerator::~DataGenerator()
 DataGenerator& DataGenerator::operator=(const DataGenerator& source)
 {
 	if(this != &source) {
-		mapAlgorithms = source.mapAlgorithms;
+		mapGenerators = source.mapGenerators;
+		mapCreators = source.mapCreators;
 		generators_defined = source.generators_defined;
+		creators_defined = source.creators_defined;
 	}
 	return *this;
 }
@@ -63,7 +72,7 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 	if(!generators_defined) return; //no generators defined by the end user
 
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+	for(it=mapGenerators.begin(); it!=mapGenerators.end(); ++it) {
 		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
 
 		for(size_t station=0; station<vecMeteo.size(); station++) { //process this parameter on all stations
@@ -88,7 +97,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 	if(!generators_defined) return; //no generators defined by the end user
 
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+	for(it=mapGenerators.begin(); it!=mapGenerators.end(); ++it) {
 		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
 
 		for(size_t station=0; station<vecVecMeteo.size(); station++) { //process this parameter on all stations
@@ -127,7 +136,7 @@ void DataGenerator::setAlgorithms(const Config& cfg)
 		}
 
 		if(nrOfAlgorithms>0) {
-			mapAlgorithms[parname] = vecGenerators;
+			mapGenerators[parname] = vecGenerators;
 			generators_defined = true;
 		}
 	}
@@ -183,8 +192,8 @@ const std::string DataGenerator::toString() const {
 	os << "<DataGenerator>\n";
 	os << "Generators defined: " << std::boolalpha << generators_defined << std::noboolalpha << "\n";
 	os << "User list of generators:\n";
-	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapAlgorithms.begin();
-	for (; iter != mapAlgorithms.end(); ++iter) {
+	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapGenerators.begin();
+	for (; iter != mapGenerators.end(); ++iter) {
 		os << setw(10) << iter->first << " :: ";
 		for(size_t jj=0; jj<iter->second.size(); jj++) {
 			os << iter->second[jj]->getAlgo() << " ";

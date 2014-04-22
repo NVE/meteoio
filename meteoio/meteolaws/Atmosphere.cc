@@ -374,6 +374,35 @@ double Atmosphere::Tang_ilwr(const double& RH, const double& TA) {
 }
 
 /**
+ * @brief Evaluate the atmosphere emissivity for clear sky.
+ * This uses the formula from Idso -- "A set of equations for full spectrum and 8 to 14 um and
+ * 10.5 to 12.5 um thermal radiation from cloudless skies", Water Resources Research, <b>17</b>, 1981, pp 295-304.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return clear sky emissivity
+*/
+double Atmosphere::Idso_emissivity(const double& RH, const double& TA) {
+	const double e0 = RH * waterSaturationPressure(TA) * 0.0001; //water vapor pressure, mbar
+	const double ea = 0.70 + 5.95e-5 * e0 * exp(1500./TA);
+
+	if(ea>1.0) return 1.;
+	return ea;
+}
+
+/**
+ * @brief Evaluate the long wave radiation for clear sky.
+ * This uses the formula from Idso -- "A set of equations for full spectrum and 8 to 14 um and
+ * 10.5 to 12.5 um thermal radiation from cloudless skies", Water Resources Research, <b>17</b>, 1981, pp 295-304.
+ * @param RH relative humidity (between 0 and 1)
+ * @param TA near surface air temperature (K)
+ * @return long wave radiation (W/m^2)
+*/
+double Atmosphere::Idso_ilwr(const double& RH, const double& TA) {
+	const double epsilon = Idso_emissivity(RH, TA);
+	return blkBody_Radiation(epsilon, TA);
+}
+
+/**
 * @brief Evaluate the atmosphere emissivity from the water vapor pressure and cloudiness.
 * This is according to A. Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
 * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.

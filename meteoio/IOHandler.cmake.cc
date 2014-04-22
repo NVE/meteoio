@@ -332,7 +332,6 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	checkTimestamps(vecMeteo);
 
 	copy_parameters(stationindex, vecMeteo);
-	//create_parameters(stationindex, vecMeteo);
 }
 #ifdef _POPC_
 void IOHandler::writeMeteoData(std::vector<METEO_SET>& vecMeteo,
@@ -441,12 +440,6 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 		indices.clear(); //may change for every station
 	}
 }
-
-void IOHandler::create_parameters(const size_t& /*stationindex*/, std::vector< METEO_SET >& /*vecMeteo*/) const
-{
-
-}
-
 
 #ifdef _POPC_
 const std::string IOHandler::toString()

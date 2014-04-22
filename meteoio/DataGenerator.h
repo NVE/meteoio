@@ -107,7 +107,8 @@ class DataGenerator {
 #endif
  	public:
 		DataGenerator(const Config& cfg);
-		DataGenerator(const DataGenerator& c) : mapAlgorithms(c.mapAlgorithms), generators_defined(c.generators_defined) {};
+		DataGenerator(const DataGenerator& c) : mapGenerators(c.mapGenerators), mapCreators(c.mapCreators),
+		                                        generators_defined(c.generators_defined), creators_defined(c.creators_defined) {};
 		~DataGenerator();
 
 		void fillMissing(METEO_SET& vecMeteo) const;
@@ -125,8 +126,9 @@ class DataGenerator {
 		                                std::vector<std::string>& vecArgs);
 		void setAlgorithms(const Config& cfg);
 
-		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapAlgorithms; //per parameter data generators algorithms
-		bool generators_defined; //if true, there are some generators to run. if false, nothing to do
+		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapGenerators; //per parameter data generators algorithms
+		std::map< std::string, std::vector<GeneratorAlgorithm*> > mapCreators; //per parameter data creators algorithms
+		bool generators_defined, creators_defined; //if true, there are some generators to run. if false, nothing to do
 };
 
 } //end namespace

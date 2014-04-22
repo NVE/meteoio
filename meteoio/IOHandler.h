@@ -85,7 +85,6 @@ class IOHandler : public IOInterface {
 		void parse_copy_config();
 		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
-		void create_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 
 		const Config& cfg;
 		std::map<std::string, IOPlugin> mapPlugins;
