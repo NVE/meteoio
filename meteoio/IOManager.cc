@@ -194,6 +194,7 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 
 		if ((IOManager::generated & processing_level) == IOManager::generated){
 			dataGenerator.fillMissing(vecVecMeteo);
+			dataGenerator.createParameters(vecVecMeteo);
 		}
 	}
 
@@ -207,7 +208,7 @@ void IOManager::fill_filtered_cache()
 {
 	if ((IOManager::filtered & processing_level) == IOManager::filtered){
 		//ask the bufferediohandler for the whole buffer
-		const vector< METEO_SET >& buffer = bufferedio.getFullBuffer(fcache_start, fcache_end);
+		const vector< METEO_SET >& buffer( bufferedio.getFullBuffer(fcache_start, fcache_end) );
 		meteoprocessor.process(buffer, filtered_cache);
 	}
 }
@@ -322,6 +323,7 @@ size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 
 	if ((IOManager::generated & processing_level) == IOManager::generated){
 		dataGenerator.fillMissing(vecMeteo);
+		dataGenerator.createParameters(vecMeteo);
 	}
 
 	return vecMeteo.size();

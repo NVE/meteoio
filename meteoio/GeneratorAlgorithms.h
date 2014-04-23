@@ -40,6 +40,10 @@ namespace mio {
  * cases, even fully arbitrary data might be helpful (replacing missing value by a given constant so a model can
  * run over the data gap).
  *
+ * Another usage scenario is to create new parameters fully based on parametrizations. In such a case, the "generator" is called
+ * a "creator" and behaves the same way as a generator, except that it creates an additional parameter. It is declared as
+ * {new_parameter}::create = {data generators}.
+ *
  * @note it is generally not advised to use data generators in combination with spatial interpolations as this would
  * potentially mix measured and generated values in the resulting grid. It is therefore advised to turn the data generators
  * off and let the spatial interpolations algorithms adjust to the amount of measured data.
@@ -58,6 +62,9 @@ namespace mio {
  * P::generators  = STD_PRESS
  *
  * ILWR::generators = AllSky_LW ClearSky_LW
+ *
+ * TAU_CLD::create  = CST
+ * TA_CLD::Cst      = 0.5
  * @endcode
  *
  * @section generators_keywords Available generators

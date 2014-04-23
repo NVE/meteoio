@@ -29,7 +29,11 @@ namespace mio {
 DataGenerator::DataGenerator(const Config& cfg)
               : mapGenerators(), mapCreators(), generators_defined(false), creators_defined(false)
 {
-	setAlgorithms(cfg);
+	setAlgorithms(cfg, "::generators", mapGenerators);
+	generators_defined = !mapGenerators.empty();
+
+	setAlgorithms(cfg, "::create", mapCreators);
+	creators_defined = !mapCreators.empty();
 }
 
 DataGenerator::~DataGenerator()
@@ -37,13 +41,13 @@ DataGenerator::~DataGenerator()
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::iterator it;
 
 	for(it=mapGenerators.begin(); it!=mapGenerators.end(); ++it) {
-		std::vector<GeneratorAlgorithm*> &vec = it->second;
+		std::vector<GeneratorAlgorithm*> &vec( it->second );
 		for(size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
 	}
 
 	for(it=mapCreators.begin(); it!=mapCreators.end(); ++it) {
-		std::vector<GeneratorAlgorithm*> &vec = it->second;
+		std::vector<GeneratorAlgorithm*> &vec( it->second );
 		for(size_t ii=0; ii<vec.size(); ii++)
 			delete vec[ii];
 	}
@@ -73,9 +77,9 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
 	for(it=mapGenerators.begin(); it!=mapGenerators.end(); ++it) {
-		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
 
-		for(size_t station=0; station<vecMeteo.size(); station++) { //process this parameter on all stations
+		for(size_t station=0; station<vecMeteo.size(); ++station) { //process this parameter on all stations
 			const size_t param = vecMeteo[station].getParameterIndex(it->first);
 			if(param==IOUtils::npos) continue;
 
@@ -98,12 +102,65 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 
 	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
 	for(it=mapGenerators.begin(); it!=mapGenerators.end(); ++it) {
-		const std::vector<GeneratorAlgorithm*> vecGenerators = it->second;
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
 
-		for(size_t station=0; station<vecVecMeteo.size(); station++) { //process this parameter on all stations
+		for(size_t station=0; station<vecVecMeteo.size(); ++station) { //process this parameter on all stations
 			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
 			if(param==IOUtils::npos) continue;
 
+			size_t jj=0;
+			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecVecMeteo[station]) != true) jj++;
+		}
+	}
+}
+
+/**
+ * @brief create new parameters from parametrizations
+ * This relies on data creators defined by the user for each meteo parameters.
+ * This loops over the defined generators and stops as soon as all points
+ * have been successfully created.
+ * @param vecMeteo vector containing one point for each station
+ */
+void DataGenerator::createParameters(METEO_SET& vecMeteo) const
+{
+	if(!creators_defined) return; //no creators defined by the end user
+
+	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
+	for(it=mapCreators.begin(); it!=mapCreators.end(); ++it) {
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
+
+		for(size_t station=0; station<vecMeteo.size(); ++station) { //process this parameter on all stations
+			const size_t param = vecMeteo[station].addParameter( it->first );
+
+			size_t jj=0;
+			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecMeteo[station]) != true) jj++;
+		}
+	}
+}
+
+/**
+ * @brief create new parameters from parametrizations
+ * This relies on data creators defined by the user for each meteo parameters.
+ * This loops over the defined generators and stops as soon as all points
+ * have been successfully created.
+ * @param vecVecMeteo vector containing a timeserie for each station
+ */
+void DataGenerator::createParameters(std::vector<METEO_SET>& vecVecMeteo) const
+{
+	if(!creators_defined) return; //no creators defined by the end user
+
+	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator it;
+	for(it=mapCreators.begin(); it!=mapCreators.end(); ++it) {
+		const std::vector<GeneratorAlgorithm*> vecGenerators( it->second );
+
+		for(size_t station=0; station<vecVecMeteo.size(); ++station) { //process this parameter on all stations
+			//create the new parameter
+			for(size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
+				vecVecMeteo[station][ii].addParameter( it->first );
+			}
+			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
+
+			//fill the new parameter
 			size_t jj=0;
 			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecVecMeteo[station]) != true) jj++;
 		}
@@ -115,18 +172,20 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
  * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
  * Concept of this constructor: loop over all MeteoData::Parameters and then look
  * for configuration of interpolation algorithms within the Config object.
- * @param cfg configuration object to use for getting the algorithms configuration
+ * @param[in] cfg configuration object to use for getting the algorithms configuration
+ * @param[in] key_pattern pattern used to match the keys defining DataGenerators algorithms (for example "::generators")
+ * @param[out] mapAlgorithms map storing the DataGenerators for each meteorological parameter (as string)
  */
-void DataGenerator::setAlgorithms(const Config& cfg)
+void DataGenerator::setAlgorithms(const Config& cfg, const std::string& key_pattern, std::map< std::string, std::vector<GeneratorAlgorithm*> > &mapAlgorithms)
 {
 	set<string> set_of_used_parameters;
-	getParameters(cfg, set_of_used_parameters);
+	getParameters(cfg, key_pattern, set_of_used_parameters);
 
 	set<string>::const_iterator it;
 	for (it = set_of_used_parameters.begin(); it != set_of_used_parameters.end(); ++it) {
 		std::vector<std::string> tmpAlgorithms;
-		const std::string parname = *it;
-		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
+		const std::string parname( *it );
+		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, key_pattern, parname, tmpAlgorithms);
 
 		std::vector<GeneratorAlgorithm*> vecGenerators(nrOfAlgorithms);
 		for(size_t jj=0; jj<nrOfAlgorithms; jj++) {
@@ -136,34 +195,34 @@ void DataGenerator::setAlgorithms(const Config& cfg)
 		}
 
 		if(nrOfAlgorithms>0) {
-			mapGenerators[parname] = vecGenerators;
-			generators_defined = true;
+			mapAlgorithms[parname] = vecGenerators;
 		}
 	}
 }
 
-void DataGenerator::getParameters(const Config& cfg, std::set<std::string>& set_parameters)
+void DataGenerator::getParameters(const Config& cfg, const std::string& key_pattern, std::set<std::string>& set_parameters)
 {
+	set_parameters.clear();
 	std::vector<std::string> vec_keys;
-	cfg.findKeys(vec_keys, "::generators", "Generators", true); //search anywhere in key
+	cfg.findKeys(vec_keys, key_pattern, "Generators", true); //search anywhere in key
 
 	for (size_t ii=0; ii<vec_keys.size(); ii++) {
 		const size_t found = vec_keys[ii].find_first_of(":");
 		if (found != std::string::npos){
-			const string tmp = vec_keys[ii].substr(0,found);
+			const string tmp( vec_keys[ii].substr(0,found) );
 			set_parameters.insert( IOUtils::strToUpper(tmp) );
 		}
 	}
 }
 
-size_t DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms)
+size_t DataGenerator::getAlgorithmsForParameter(const Config& cfg, const std::string& key_pattern, const std::string& parname, std::vector<std::string>& vecAlgorithms)
 {
 	// This function retrieves the user defined generator algorithms for
 	// parameter 'parname' by querying the Config object
 	vecAlgorithms.clear();
 
 	std::vector<std::string> vecKeys;
-	cfg.findKeys(vecKeys, parname+"::generators", "Generators");
+	cfg.findKeys(vecKeys, parname+key_pattern, "Generators");
 
 	if (vecKeys.size() > 1)
 		throw IOException("Multiple definitions of " + parname + "::generators in config file", AT);;
@@ -191,14 +250,27 @@ const std::string DataGenerator::toString() const {
 	std::ostringstream os;
 	os << "<DataGenerator>\n";
 	os << "Generators defined: " << std::boolalpha << generators_defined << std::noboolalpha << "\n";
-	os << "User list of generators:\n";
-	std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapGenerators.begin();
-	for (; iter != mapGenerators.end(); ++iter) {
-		os << setw(10) << iter->first << " :: ";
-		for(size_t jj=0; jj<iter->second.size(); jj++) {
-			os << iter->second[jj]->getAlgo() << " ";
+	if (generators_defined) {
+		os << "User list of generators:\n";
+		for (std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapGenerators.begin(); iter != mapGenerators.end(); ++iter) {
+			os << setw(10) << iter->first << " :: ";
+			for(size_t jj=0; jj<iter->second.size(); jj++) {
+				os << iter->second[jj]->getAlgo() << " ";
+			}
+			os << "\n";
 		}
-		os << "\n";
+	}
+
+	os << "Creators defined: " << std::boolalpha << creators_defined << std::noboolalpha << "\n";
+	if (creators_defined) {
+		os << "User list of creators:\n";
+		for (std::map< std::string, std::vector<GeneratorAlgorithm*> >::const_iterator iter = mapCreators.begin(); iter != mapCreators.end(); ++iter) {
+			os << setw(10) << iter->first << " :: ";
+			for(size_t jj=0; jj<iter->second.size(); jj++) {
+				os << iter->second[jj]->getAlgo() << " ";
+			}
+			os << "\n";
+		}
 	}
 
 	os << "</DataGenerator>\n";
