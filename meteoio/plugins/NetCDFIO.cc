@@ -39,26 +39,60 @@ namespace mio {
  */
 
 const double NetCDFIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
-const std::string NetCDFIO::time_str = "time";
 const std::string NetCDFIO::lat_str = "lat";
 const std::string NetCDFIO::lon_str = "lon";
 const std::string NetCDFIO::z_str = "z";
 const std::string NetCDFIO::ta_str = "temperature";
 const std::string NetCDFIO::rh_str = "humidity";
 
-	NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), coordin(""), coordinparam(""), coordout(""), coordoutparam(""), vecMetaData()
+const std::string NetCDFIO::cf_time = "time";
+const std::string NetCDFIO::cf_units = "units";
+const std::string NetCDFIO::cf_days = "days since ";
+const std::string NetCDFIO::cf_seconds = "seconds since ";
+
+const std::string NetCDFIO::xx_altitude = "ZS";
+const std::string NetCDFIO::xx_aspect = "aspect";
+const std::string NetCDFIO::xx_slope = "slope";
+
+std::map<size_t, string> NetCDFIO::paramname;
+const bool NetCDFIO::__init = NetCDFIO::initStaticData();
+
+bool NetCDFIO::initStaticData()
 {
-	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	//Associate unsigned int value and a string representation of a meteo parameter
+	paramname[MeteoData::TA] = "Tair";
+	paramname[MeteoData::RH] = "HUMREL";
+	paramname[MeteoData::VW] = "Wind";
+	paramname[MeteoData::DW] = "Wind_DIR";
+
+	return true;
 }
 
-NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), coordin(""), coordinparam(""), coordout(""), coordoutparam(""), vecMetaData()
+NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), coordin(""), coordinparam(""), coordout(""), coordoutparam(""),
+                                                    in_dflt_TZ(0.), out_dflt_TZ(0.), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	parseInputOutputSection();
+}
+
+NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), coordin(""), coordinparam(""), coordout(""), coordoutparam(""),
+                                              in_dflt_TZ(0.), out_dflt_TZ(0.), vecMetaData()
+{
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+	parseInputOutputSection();
 }
 
 NetCDFIO::~NetCDFIO() throw()
 {
 
+}
+
+void NetCDFIO::parseInputOutputSection()
+{
+	//default timezones
+	in_dflt_TZ = out_dflt_TZ = IOUtils::nodata;
+	cfg.getValue("TIME_ZONE", "Input", in_dflt_TZ, IOUtils::nothrow);
+	cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
 }
 
 void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
@@ -94,7 +128,7 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 
 	cout << "Dimensions: " << dimlen[1] << " x " << dimlen[2] << " (" << dimlen[0]  << "timesteps)" << endl;
 
-	size_t pos = find_record(ncid, NetCDFIO::time_str, dimid[0], date.getModifiedJulianDate());
+	size_t pos = find_record(ncid, NetCDFIO::cf_time, dimid[0], date.getModifiedJulianDate());
 	if (pos == IOUtils::npos) 
 		throw IOException("No record for date " + date.toString(Date::ISO), AT);
 
@@ -281,21 +315,28 @@ void NetCDFIO::readStationData(const Date&, std::vector<StationData>& vecStation
 
 void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStation)
 {
-	int vid_alt, vid_lat, vid_lon, dimid;
+	int vid_alt, vid_lat, vid_lon, vid_aspect, vid_slope, dimid;
 	size_t dimlen;
 
+	//HACK: could check dimension of all the vars, must be 'Number_of_points'
 	get_dimension(ncid, "Number_of_points", dimid, dimlen);
-	get_variable(ncid, "ZS", vid_alt);
+	get_variable(ncid, NetCDFIO::xx_altitude, vid_alt);
 	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lat_str), vid_lat);
 	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lon_str), vid_lon);
+	get_variable(ncid, NetCDFIO::xx_aspect, vid_aspect);
+	get_variable(ncid, NetCDFIO::xx_slope, vid_slope);
 
 	double *alt = new double[dimlen];
 	double *lat = new double[dimlen];
 	double *lon = new double[dimlen];
+	double *aspect = new double[dimlen];
+	double *slope = new double[dimlen];
 
 	read_data(ncid, "ZS", vid_alt, alt);
 	read_data(ncid, NetCDFIO::lat_str, vid_lat, lat);
 	read_data(ncid, NetCDFIO::lon_str, vid_lon, lon);
+	read_data(ncid, NetCDFIO::lat_str, vid_aspect, aspect);
+	read_data(ncid, NetCDFIO::lat_str, vid_slope, slope);
 
 	//Parse to StationData objects
 	Coords location(coordin, coordinparam);
@@ -313,18 +354,204 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 		ss.str("");
 		
 		StationData tmp(location, id, name);
+		double aspect_bearing = (aspect[ii] < 0) ? 0 : aspect[ii]; // aspect allowed to be -1... HACK
+		tmp.setSlope(slope[ii], aspect_bearing);
 		vecStation.push_back(tmp);
+
+		//cout << "Station " << (ii+1) << "  alt: " << alt[ii] << "  aspect: " << aspect_bearing << "  slope: " << slope[ii] << endl;
 	}
 
-	delete[] alt; delete[] lat; delete[] lon;
+	delete[] alt; delete[] lat; delete[] lon; delete[] aspect; delete[] slope;
 }
 
-void NetCDFIO::readMeteoData(const Date& /*dateStart*/, const Date& /*dateEnd*/,
-                             std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                             const size_t&)
+void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, const size_t&)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	vecMeteo.clear();
+
+	string filename("");
+	cfg.getValue("METEOFILE", "Input", filename);
+
+	int ncid;
+	open_file(filename, NC_NOWRITE, ncid);
+
+	if (vecMetaData.empty()) readMetaData(ncid, vecMetaData);
+
+	if (!vecMetaData.empty()) { //at least one station exists
+		size_t index_start, index_end;
+		vector<Date> vec_date;
+		get_indices(ncid, dateStart, dateEnd, index_start, index_end, vec_date); //get indices for dateStart and dateEnd
+		
+		if ((index_start != IOUtils::npos) && (index_end != IOUtils::npos)) {
+			map<size_t, string> map_parameters;
+			get_parameters(ncid, map_parameters); //get a list of parameters present
+			
+			readData(ncid, index_start, vec_date, map_parameters, vecMeteo);
+		}
+	}
+
+	close_file(filename, ncid);
+}
+
+void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<size_t, std::string>& map_parameters, std::vector< std::vector<MeteoData> >& vecMeteo)
+{
+	size_t number_of_stations = vecMetaData.size();
+	size_t number_of_records = vec_date.size();
+	
+	//Allocate all the MeteoData objects
+	vector<MeteoData> tmp_vec(number_of_records);
+	for (size_t jj=0; jj<number_of_records; jj++) tmp_vec[jj].date = vec_date[jj]; //set correct date for every record
+
+	for (size_t ii=0; ii<number_of_stations; ii++) {
+		for (size_t jj=0; jj<number_of_records; jj++) tmp_vec[jj].meta = vecMetaData[ii]; //adapt meta data
+		vecMeteo.push_back(tmp_vec);
+	}
+
+	//allocate enough linear space for each parameter
+	map<size_t, double*> map_data;
+	for (map<size_t, string>::const_iterator it = map_parameters.begin(); it != map_parameters.end(); it++) {
+		double* data = new double[number_of_stations*number_of_records];
+		map_data[it->first] = data;
+
+		const string& varname = it->second;
+
+		int varid; 
+		get_variable(ncid, varname, varid);
+		read_data_2D(ncid, varname, varid, index_start, number_of_records, number_of_stations, data);
+	}
+
+	copy_data(map_data, number_of_stations, number_of_records, vecMeteo); 
+
+	for (map<size_t, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
+		delete[] it->second;
+	}
+}
+
+void NetCDFIO::copy_data(const std::map<size_t, double*> map_data, const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo)
+{
+	//adapt units, adapt nodata
+	for (size_t ii=0; ii<number_of_stations; ii++) {
+		for (size_t jj=0; jj<number_of_records; jj++) {
+			for (map<size_t, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
+				vecMeteo[ii][jj](it->first) = (it->second)[jj];
+			}
+		}
+	}
+}
+
+void NetCDFIO::get_parameters(const int& ncid, std::map<size_t, std::string>& map_parameters)
+{
+	map<size_t, string>::iterator it;
+	for (it = paramname.begin(); it != paramname.end(); it++) {
+		if (check_variable(ncid, it->second)) {
+			cout << "Found parameter: " << it->second << endl; 
+			map_parameters[it->first] = it->second;
+		}
+	}
+
+	//HACK: check dimensions?
+}
+
+void NetCDFIO::get_indices(const int& ncid, const Date& dateStart, const Date& dateEnd, size_t& indexStart, size_t& indexEnd, std::vector<Date>& vecDate)
+{
+	//get dimid for time
+	int varid, dimid;
+	size_t dimlen;
+	get_dimension(ncid, NetCDFIO::cf_time, dimid, dimlen);
+	get_variable(ncid, NetCDFIO::cf_time, varid);
+
+	//get attributes, calculate offset date
+	string units_str;
+	NetCDFIO::TimeUnit unit_type;
+	Date offset;
+	get_attribute(ncid, NetCDFIO::cf_time, varid, NetCDFIO::cf_units, units_str);
+	calculate_offset(units_str, unit_type, offset); //HACK: should only be exctracted once
+
+	//read values, find indices
+	double *time = new double[dimlen];
+	read_data(ncid, NetCDFIO::cf_time, varid, time);
+
+	bool start_found = false;
+	indexStart = indexEnd = IOUtils::npos;
+
+	//check whether search makes any sense
+	bool search = true;
+	if (dimlen > 0) {
+		Date time_start(offset), time_end(offset);
+	
+		double start = time[0];
+		double end = time[dimlen-1];
+
+		if (unit_type == seconds) {
+			start /= 86400;
+			end   /= 86400;
+		}
+		time_start += Date(start, in_dflt_TZ);
+		time_end += Date(end, in_dflt_TZ);
+
+		if (time_start > dateEnd) search = false;
+		if (time_end < dateStart) search = false;
+	}
+
+	if (search) {
+		for (size_t ii=0; ii<dimlen; ii++) {
+			if (unit_type == seconds) {
+				time[ii] /= 86400;
+			}
+
+			Date tmp_date = offset + Date(time[ii], in_dflt_TZ);
+			
+			//cout << ii << "  julian: " << time[ii];
+			//cout << "\t" << tmp_date.toString(Date::ISO) << endl;
+			
+			if (!start_found && (dateStart <= tmp_date && tmp_date <= dateEnd)) {
+				start_found = true;
+				indexStart = ii;
+			} else if (start_found && (tmp_date > dateEnd)) {
+				indexEnd = ii-1;
+				break;
+			}
+
+			if (start_found) vecDate.push_back(tmp_date);
+		}
+
+		if (start_found && (indexEnd == IOUtils::npos)) {
+			indexEnd = dimlen-1;
+		}
+	}
+	/*
+	cout << "vecDate:" << vecDate.size() << endl;
+	vector<Date>::iterator it;
+	for (it = vecDate.begin(); it != vecDate.end(); it++) {
+		cout << (*it).toString() << endl;
+	}
+	*/
+	cout << dateStart.toString(Date::ISO) << "  -  " << dateEnd.toString(Date::ISO) << endl;
+	cout << "indexStart: " << indexStart << "  indexEnd: " << indexEnd << endl;
+
+	delete[] time;
+}
+
+void NetCDFIO::calculate_offset(const std::string& units, NetCDFIO::TimeUnit& time_unit, Date& offset)
+{
+	string tmp(units);
+	size_t found_sec = units.find(NetCDFIO::cf_seconds);
+	size_t found_day = units.find(NetCDFIO::cf_days);
+
+	if (found_sec != string::npos) {
+		time_unit = seconds;
+		tmp = tmp.substr(found_sec + NetCDFIO::cf_seconds.size());
+	} else if (found_day != string::npos) {
+		time_unit = days;
+		tmp = tmp.substr(found_day+ + NetCDFIO::cf_days.size());
+	} else {
+		throw InvalidFormatException("Variable '"+NetCDFIO::cf_time+"' has no valid attribute 'units'" , AT);
+	}
+	
+	bool success = IOUtils::convertString(offset, tmp, in_dflt_TZ);
+	if (!success) throw InvalidFormatException("Cannot parse time: " + tmp, AT);
+
+	//cout << "Parsing : " << tmp << endl;
+	//cout << offset.toString() << endl;
 }
 
 void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
@@ -445,9 +672,9 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 		}
 
 		//check if a time dimension/variable already exists
-		if (check_dim_var(ncid, NetCDFIO::time_str)) {
-			get_dimension(ncid, NetCDFIO::time_str, did_time);
-			get_variable(ncid, NetCDFIO::time_str, vid_time);			
+		if (check_dim_var(ncid, NetCDFIO::cf_time)) {
+			get_dimension(ncid, NetCDFIO::cf_time, did_time);
+			get_variable(ncid, NetCDFIO::cf_time, vid_time);			
 		} else {
 			create_time = true;
 		}
@@ -481,7 +708,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 		write_data(ncid, NetCDFIO::lon_str, vid_lon, lon_array);
 	}
 
-	size_t pos_start = append_record(ncid, NetCDFIO::time_str, vid_time, date.getModifiedJulianDate());
+	size_t pos_start = append_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
 	write_data(ncid, varname, vid_var, grid_in, pos_start, data);
 
 	close_file(filename, ncid);
@@ -512,9 +739,9 @@ void NetCDFIO::create_latlon_dimensions(const int& ncid, const Grid2DObject& gri
 
 void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& vid_time)
 {
-	define_dimension(ncid, NetCDFIO::time_str, NC_UNLIMITED, did_time);
-	add_1D_variable(ncid, NetCDFIO::time_str, NC_DOUBLE, did_time, vid_time); // julian day
-	add_attributes_for_variable(ncid, vid_time, NetCDFIO::time_str);
+	define_dimension(ncid, NetCDFIO::cf_time, NC_UNLIMITED, did_time);
+	add_1D_variable(ncid, NetCDFIO::cf_time, NC_DOUBLE, did_time, vid_time); // julian day
+	add_attributes_for_variable(ncid, vid_time, NetCDFIO::cf_time);
 }
 
 void NetCDFIO::fill_data(const Grid2DObject& grid, double*& data)
@@ -542,9 +769,9 @@ void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, co
 		add_attribute(ncid, varid, "units", "m");
 		add_attribute(ncid, varid, "positive", "up");
 		add_attribute(ncid, varid, "axis", "Z");
-	} else if (varname == NetCDFIO::time_str) {
-		add_attribute(ncid, varid, "standard_name", NetCDFIO::time_str);
-		add_attribute(ncid, varid, "long_name", NetCDFIO::time_str);
+	} else if (varname == NetCDFIO::cf_time) {
+		add_attribute(ncid, varid, "standard_name", NetCDFIO::cf_time);
+		add_attribute(ncid, varid, "long_name", NetCDFIO::cf_time);
 		add_attribute(ncid, varid, "units", "days since 1858-11-17 00:00:00");
 	}
 }
@@ -642,6 +869,26 @@ void NetCDFIO::get_dimension(const int& ncid, const std::string& dimname, int& d
 		throw IOException("Could not retrieve length for dimension '" + dimname + "': " + nc_strerror(status), AT);
 }
 
+void NetCDFIO::get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value)
+{
+	size_t attr_len;
+
+     int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve attribute '" + attr_name + "'for var '" + varname + "': " + nc_strerror(status), AT);
+     
+     char* value = new char[attr_len + 1]; // +1 for trailing null
+
+     status = nc_get_att_text(ncid, varid, attr_name.c_str(), value);
+	if (status != NC_NOERR)
+		throw IOException("Could not read attribute '" + attr_name + "'for var '" + varname + "': " + nc_strerror(status), AT);
+
+     value[attr_len] = '\0';
+	attr_value = string(value);
+
+	delete[] value;
+}
+
 bool NetCDFIO::check_variable(const int& ncid, const std::string& varname)
 {
 	int varid;
@@ -706,6 +953,17 @@ void NetCDFIO::get_dimension(const int& ncid, const std::string& varname, const 
 		dimname.push_back(string(name));
 		dimlen.push_back(length);
 	}
+}
+
+void NetCDFIO::read_data_2D(const int& ncid, const std::string& varname, const int& varid,
+                            const size_t& record, const size_t& nr_of_records, const size_t& length, double*& data)
+{
+	size_t start[] = {record, 0};
+     size_t count[] = {nr_of_records, length};
+
+	int status = nc_get_vara_double(ncid, varid, start, count, data);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);	
 }
 
 void NetCDFIO::read_data(const int& ncid, const std::string& varname, const int& varid,

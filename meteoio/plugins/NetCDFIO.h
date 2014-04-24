@@ -37,6 +37,8 @@ namespace mio {
  */
 class NetCDFIO : public IOInterface {
 	public:
+		enum TimeUnit { seconds, hours, days };
+
 		NetCDFIO(const std::string& configfile);
 		NetCDFIO(const NetCDFIO&);
 		NetCDFIO(const Config& cfgreader);
@@ -61,9 +63,15 @@ class NetCDFIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		void parseInputOutputSection();
+		void get_parameters(const int& ncid, std::map<size_t, std::string>& map_parameters);
+		void copy_data(const std::map<size_t, double*> map_data, const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
+		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<size_t, std::string>& map_parameters, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
 		void copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out);
 		std::string get_varname(const MeteoGrids::Parameters& parameter);
+		void get_indices(const int& ncid, const Date& dateStart, const Date& dateEnd, size_t& indexStart, size_t& indexEnd, std::vector<Date>& vecDate);
+		void calculate_offset(const std::string& units, NetCDFIO::TimeUnit& time_unit, Date& offset);
 		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
 		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void open_file(const std::string& filename, const int& omode, int& ncid);
@@ -78,8 +86,11 @@ class NetCDFIO : public IOInterface {
 		void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
 		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
 		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
+		void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value);
 		void read_data(const int& ncid, const std::string& varname, const int& varid,
 		               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
+		void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
+		                  const size_t& record, const size_t& count, const size_t& length, double*& data);
 		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 		void write_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid, const size_t& pos_start, double*& data);
@@ -102,8 +113,15 @@ class NetCDFIO : public IOInterface {
 
 		const Config cfg;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const std::string time_str, lat_str, lon_str, z_str, ta_str, rh_str;
+		static const std::string lat_str, lon_str, z_str, ta_str, rh_str;
+		static const std::string cf_time, cf_units, cf_days, cf_seconds;
+		static const std::string xx_altitude, xx_aspect, xx_slope;
+		static std::map<size_t, std::string> paramname; ///<Associate a name with meteo parameters in Parameters
+		static const bool __init;    ///<helper variable to enable the init of static collection data
+		static bool initStaticData();///<initialize the static map
+
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
+		double in_dflt_TZ, out_dflt_TZ;     //default time zones
 		std::vector<StationData> vecMetaData;
 };
 
