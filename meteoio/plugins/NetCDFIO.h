@@ -64,9 +64,9 @@ class NetCDFIO : public IOInterface {
 
 	private:
 		void parseInputOutputSection();
-		void get_parameters(const int& ncid, std::map<size_t, std::string>& map_parameters);
-		void copy_data(const std::map<size_t, double*> map_data, const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
-		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<size_t, std::string>& map_parameters, std::vector< std::vector<MeteoData> >& vecMeteo);
+		void get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data);
+		void copy_data(const int& ncid, const std::map<std::string, double*> map_data, const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
+		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters, const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
 		void copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out);
 		std::string get_varname(const MeteoGrids::Parameters& parameter);
@@ -91,6 +91,7 @@ class NetCDFIO : public IOInterface {
 		               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
 		void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
 		                  const size_t& record, const size_t& count, const size_t& length, double*& data);
+		void read_value(const int& ncid, const std::string& varname, const int& varid, double& data);
 		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 		void write_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid, const size_t& pos_start, double*& data);
@@ -115,8 +116,8 @@ class NetCDFIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string lat_str, lon_str, z_str, ta_str, rh_str;
 		static const std::string cf_time, cf_units, cf_days, cf_seconds;
-		static const std::string xx_altitude, xx_aspect, xx_slope;
-		static std::map<size_t, std::string> paramname; ///<Associate a name with meteo parameters in Parameters
+		static const std::string cnrm_altitude, cnrm_aspect, cnrm_slope;
+		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map
 
