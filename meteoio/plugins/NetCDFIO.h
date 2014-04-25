@@ -65,7 +65,8 @@ class NetCDFIO : public IOInterface {
 	private:
 		void parseInputOutputSection();
 		void get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data);
-		void copy_data(const int& ncid, const std::map<std::string, double*> map_data, const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
+		void copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data, 
+		               const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters, const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
 		void copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out);
@@ -116,7 +117,9 @@ class NetCDFIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string lat_str, lon_str, z_str, ta_str, rh_str;
 		static const std::string cf_time, cf_units, cf_days, cf_seconds;
-		static const std::string cnrm_altitude, cnrm_aspect, cnrm_slope;
+		static const std::string cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
+		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr;
+
 		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map

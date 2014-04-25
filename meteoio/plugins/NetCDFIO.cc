@@ -54,6 +54,20 @@ const std::string NetCDFIO::cf_seconds = "seconds since ";
 const std::string NetCDFIO::cnrm_altitude = "ZS";
 const std::string NetCDFIO::cnrm_aspect = "aspect";
 const std::string NetCDFIO::cnrm_slope = "slope";
+const std::string NetCDFIO::cnrm_ta = "Tair";
+const std::string NetCDFIO::cnrm_rh = "HUMREL";
+const std::string NetCDFIO::cnrm_vw = "Wind";
+const std::string NetCDFIO::cnrm_dw = "Wind_DIR";
+const std::string NetCDFIO::cnrm_qair = "Qair";
+const std::string NetCDFIO::cnrm_co2air = "CO2air";
+const std::string NetCDFIO::cnrm_theorsw = "theorSW";
+const std::string NetCDFIO::cnrm_neb = "NEB";
+const std::string NetCDFIO::cnrm_hnw = "Rainf";
+const std::string NetCDFIO::cnrm_snowf = "Snowf";
+const std::string NetCDFIO::cnrm_swr_direct = "DIR_SWdown";
+const std::string NetCDFIO::cnrm_swr_diffuse = "SCA_SWdown";
+const std::string NetCDFIO::cnrm_p = "PSurf";
+const std::string NetCDFIO::cnrm_ilwr = "LWdown";
 
 std::map<std::string, size_t> NetCDFIO::paramname;
 const bool NetCDFIO::__init = NetCDFIO::initStaticData();
@@ -61,16 +75,20 @@ const bool NetCDFIO::__init = NetCDFIO::initStaticData();
 bool NetCDFIO::initStaticData()
 {
 	//Associate unsigned int value and a string representation of a meteo parameter
-	paramname["Tair"] = MeteoData::TA;
-	//	paramname["Qair"] = IOUtils::npos; // not a standard MeteoIO parameter
-	paramname["HUMREL"] = MeteoData::RH;
-	paramname["Wind"] = MeteoData::VW;
-	paramname["Wind_DIR"] = MeteoData::DW;
-	paramname["Rainf"] = MeteoData::HNW;
-	paramname["Snowf"] = IOUtils::npos; // not a standard MeteoIO parameter
-	paramname["theorSW"] = MeteoData::ISWR;
-	paramname["PSurf"] = MeteoData::P;
-	paramname["LWdown"] = MeteoData::ILWR;
+	paramname[cnrm_ta] = MeteoData::TA;
+	//paramname[cnrm_qair] = IOUtils::npos; // not a standard MeteoIO parameter
+	//paramname[cnrm_co2air] = IOUtils::npos; // not a standard MeteoIO parameter
+	//paramname[cnrm_neb] = IOUtils::npos; // not a standard MeteoIO parameter
+	//paramname[cnrm_theorsw] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_rh] = MeteoData::RH;
+	paramname[cnrm_vw] = MeteoData::VW;
+	paramname[cnrm_dw] = MeteoData::DW;
+	paramname[cnrm_hnw] = IOUtils::npos;
+	paramname[cnrm_snowf] = IOUtils::npos;
+	paramname[cnrm_swr_direct] = IOUtils::npos;
+	paramname[cnrm_swr_diffuse] = IOUtils::npos;
+	paramname[cnrm_p] = MeteoData::P;
+	paramname[cnrm_ilwr] = MeteoData::ILWR;
 
 	return true;
 }
@@ -327,11 +345,11 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 
 	//HACK: could check dimension of all the vars, must be 'Number_of_points'
 	get_dimension(ncid, "Number_of_points", dimid, dimlen);
-	get_variable(ncid, NetCDFIO::cnrm_altitude, vid_alt);
+	get_variable(ncid, cnrm_altitude, vid_alt);
 	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lat_str), vid_lat);
 	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lon_str), vid_lon);
-	get_variable(ncid, NetCDFIO::cnrm_aspect, vid_aspect);
-	get_variable(ncid, NetCDFIO::cnrm_slope, vid_slope);
+	get_variable(ncid, cnrm_aspect, vid_aspect);
+	get_variable(ncid, cnrm_slope, vid_slope);
 
 	double *alt = new double[dimlen];
 	double *lat = new double[dimlen];
@@ -425,45 +443,42 @@ void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::v
 		int varid; 
 		get_variable(ncid, varname, varid);
 		read_data_2D(ncid, varname, varid, index_start, number_of_records, number_of_stations, data);
-
 	}
 
-	copy_data(ncid, map_data, number_of_stations, number_of_records, vecMeteo); 
+	copy_data(ncid, map_parameters, map_data, number_of_stations, number_of_records, vecMeteo); 
 
 	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
 		delete[] it->second;
 	}
 }
 
-void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, double*> map_data, const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo)
+void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data, 
+                         const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	//adapt units, adapt nodata
 	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
 		const string& varname = it->first;
 
 		//find correct handling for each parameter
-		bool simple_copy = false, mutiply_copy = false, snowf = false;
+		bool simple_copy = false, mutiply_copy = false, hnw_measurement = false, sw_measurement = false;
 		double multiplier = IOUtils::nodata;
-		size_t param = paramname[varname]; //must exist, at this point we know it does
+		size_t param = map_parameters.find(varname)->second; //must exist, at this point we know it does
 
-		if ((varname == "Snowf") || (varname == "Rainf")) {
-			int varid;
-			get_variable(ncid, "FRC_TIME_STP", varid);
-			read_value(ncid, "FRC_TIME_STP", varid, multiplier);
-			
-			if (multiplier <= 0) throw InvalidArgumentException("The variable FRC_TIME_STP is invalid", AT);
-		}
-		
 		if (param == IOUtils::npos) {
-			if (varname == "Snowf") {
-				snowf = true;
+			if ((varname == cnrm_snowf) || (varname == cnrm_hnw)) {
+				int varid;
+				get_variable(ncid, "FRC_TIME_STP", varid);
+				read_value(ncid, "FRC_TIME_STP", varid, multiplier);
+				
+				if (multiplier <= 0) throw InvalidArgumentException("The variable FRC_TIME_STP is invalid", AT);
+
+				hnw_measurement = true;
+			} else if ((varname == cnrm_swr_diffuse) || (varname == cnrm_swr_direct)) {
+				sw_measurement = true;
 			}
 		} else {
-			if (varname == "HUMREL") {
+			if (varname == cnrm_rh) {
 				mutiply_copy = true;
 				multiplier = 0.01;
-			} else if (varname == "Rainf") {
-				mutiply_copy = true;
 			} else {
 				simple_copy = true;
 			}
@@ -487,11 +502,17 @@ void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, double*> m
 					} else {
 						vecMeteo[ii][jj](param) = value * multiplier;
 					}
-				} else if (snowf) {
-					double& hnw = vecMeteo[ii][jj](MeteoData::HNW);
+				} else if (hnw_measurement) {
 					if (!nodata) {
+						double& hnw = vecMeteo[ii][jj](MeteoData::HNW);
 						if (hnw == IOUtils::nodata) hnw = 0.0;
 						hnw += value * multiplier;
+					}
+				} else if (sw_measurement) {
+					if (!nodata) {
+						double& iswr = vecMeteo[ii][jj](MeteoData::ISWR);
+						if (iswr == IOUtils::nodata) iswr = 0.0;
+						iswr += value; 
 					}
 				}
 			}
@@ -499,18 +520,23 @@ void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, double*> m
 	}
 }
 
-void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData&)
+void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data)
 {
-	//TODO: Build template
-
-	for (map<string, size_t>::iterator it = paramname.begin(); it != paramname.end(); it++) {
+	for (map<string, size_t>::const_iterator it = paramname.begin(); it != paramname.end(); it++) {
 		if (check_variable(ncid, it->first)) {
-			//cout << "Found parameter: " << it->first << endl; 
-			map_parameters[it->first] = it->second;
+			const string& name = it->first;
+			size_t index = it->second;
+
+			//cout << "Found parameter: " << name << endl; 
+			if ((name == cnrm_theorsw) || (name == cnrm_qair) || (name == cnrm_co2air) || (name == cnrm_neb)) {
+			 	index = meteo_data.addParameter(name);
+			}
+
+			map_parameters[it->first] = index;
 		}
 	}
 
-	//HACK: check dimensions?
+	//TODO: check dimensions?
 }
 
 void NetCDFIO::get_indices(const int& ncid, const Date& dateStart, const Date& dateEnd, size_t& indexStart, size_t& indexEnd, std::vector<Date>& vecDate)
