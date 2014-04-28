@@ -315,9 +315,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 	if (value==IOUtils::nodata) {
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
-
-		double cloudiness=0.5; //HACK: read cloudiness from meteoData!
-		cloudiness=IOUtils::nodata;
+		double cloudiness = (md.param_exists("TAU_CLD"))? Atmosphere::Kasten_cloudiness( md("TAU_CLD") ) : IOUtils::nodata;
 
 		const string station_hash = md.meta.stationID + ":" + md.meta.stationName;
 		const double julian_gmt = md.date.getJulian(true);

@@ -193,8 +193,8 @@ size_t IOManager::getMeteoData(const Date& dateStart, const Date& dateEnd, std::
 		}
 
 		if ((IOManager::generated & processing_level) == IOManager::generated){
-			dataGenerator.fillMissing(vecVecMeteo);
 			dataGenerator.createParameters(vecVecMeteo);
+			dataGenerator.fillMissing(vecVecMeteo);
 		}
 	}
 
@@ -321,9 +321,9 @@ size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		}
 	}
 
-	if ((IOManager::generated & processing_level) == IOManager::generated){
-		dataGenerator.fillMissing(vecMeteo);
+	if ((IOManager::generated & processing_level) == IOManager::generated) {
 		dataGenerator.createParameters(vecMeteo);
+		dataGenerator.fillMissing(vecMeteo);
 	}
 
 	return vecMeteo.size();

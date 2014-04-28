@@ -42,6 +42,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("ISWR");
 	paramname.push_back("RSWR");
 	paramname.push_back("ILWR");
+	//paramname.push_back("TAU_CLD");
 	paramname.push_back("HS");
 	paramname.push_back("HNW");
 	paramname.push_back("TSG");
@@ -92,6 +93,7 @@ bool MeteoData::initStaticData()
 	static_meteoparamname[RSWR]   = "RSWR";
 	static_meteoparamname[ISWR]   = "ISWR";
 	static_meteoparamname[ILWR]   = "ILWR";
+	//static_meteoparamname[TAU_CLD]= "TAU_CLD";
 	static_meteoparamname[HNW]    = "HNW";
 
 	s_default_paramname.push_back("P");
@@ -106,6 +108,7 @@ bool MeteoData::initStaticData()
 	s_default_paramname.push_back("RSWR");
 	s_default_paramname.push_back("ISWR");
 	s_default_paramname.push_back("ILWR");
+	//s_default_paramname.push_back("TAU_CLD");
 	s_default_paramname.push_back("HNW");
 
 	return true;

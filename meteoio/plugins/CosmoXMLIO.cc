@@ -309,8 +309,10 @@ void CosmoXMLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*d
 
 bool CosmoXMLIO::parseStationData(const std::string& station_id, const xmlXPathContextPtr& xpathCtx, StationData &sd)
 {
+	//match something like "//ns:valueinformation/ns:values-tables/ns:data/ns:row/ns:col[@id='station_abbreviation' and text()='ATT']/.."
+	//the namespace "ns" has been previously defined
 	const std::string xpath_id = (imis_stations)? station_id.substr(0, station_id.find_first_of("0123456789")) : station_id;
-	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //ie parent node containing the pattern
+	const std::string xpath = StationData_xpath+"[@id='station_abbreviation' and text()='"+xpath_id+"']/.."; //and we take the parent node <row>
 
 	xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath.c_str(), xpathCtx);
 	if(xpathObj == NULL) return false;
