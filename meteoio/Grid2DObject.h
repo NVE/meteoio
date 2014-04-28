@@ -80,6 +80,8 @@ class Grid2DObject {
 		Grid2DObject(const size_t& ncols, const size_t& nrows,
 		             const double& cellsize, const Coords& i_llcorner, const double& init);
 
+		Grid2DObject(const Grid2DObject& i_grid, const double& init);
+
 		Grid2DObject(const size_t& ncols, const size_t& nrows,
 		             const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
@@ -179,10 +181,10 @@ class Grid2DObject {
 		bool clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids);
 
 		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
+		Coords llcorner; ///<lower left corner of the grid
+		double cellsize; ///<dimension in meters of a cell (considered to be square)
 		size_t ncols; ///<number of columns in the grid //HACK should point to grid2D.nx
 		size_t nrows; ///<number of rows in the grid
-		double cellsize; ///<dimension in meters of a cell (considered to be square)
-		Coords llcorner; ///<lower left corner of the grid
 
  protected:
 		void setValues(const size_t& ncols, const size_t& nrows,

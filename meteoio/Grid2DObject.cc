@@ -37,23 +37,30 @@ Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
  * Default constructor.
  * grid2D attribute is initialized by Array2D default constructor.
  */
-Grid2DObject::Grid2DObject() : grid2D(), ncols(0), nrows(0), cellsize(0), llcorner() {}
+Grid2DObject::Grid2DObject() : grid2D(), llcorner(), cellsize(0.), ncols(0), nrows(0) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
-                           const double& i_cellsize, const Coords& i_llcorner) : grid2D(i_ncols, i_nrows, IOUtils::nodata), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner) {}
+                           const double& i_cellsize, const Coords& i_llcorner)
+              : grid2D(i_ncols, i_nrows, IOUtils::nodata), llcorner(i_llcorner),
+                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
-                           const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D) : grid2D(i_grid2D), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner) {}
+                           const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
+              : grid2D(i_grid2D), llcorner(i_llcorner), cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
-                           const double& i_cellsize, const Coords& i_llcorner, const double& init) : grid2D(i_ncols, i_nrows, init), ncols(i_ncols), nrows(i_nrows), cellsize(i_cellsize), llcorner(i_llcorner) {}
+                           const double& i_cellsize, const Coords& i_llcorner, const double& init)
+              : grid2D(i_ncols, i_nrows, init), llcorner(i_llcorner), cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows) {}
+
+Grid2DObject::Grid2DObject(const Grid2DObject& i_grid, const double& init)
+              : grid2D(i_grid.ncols, i_grid.nrows, init), llcorner(i_grid.llcorner), cellsize(i_grid.cellsize),
+                ncols(i_grid.ncols), nrows(i_grid.nrows) {}
 
 Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, const size_t& i_ny,
                            const size_t& i_ncols, const size_t& i_nrows)
-	: grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows), ncols(i_ncols), nrows(i_nrows), cellsize(i_grid2Dobj.cellsize), llcorner(i_grid2Dobj.llcorner)
+              : grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows), llcorner(i_grid2Dobj.llcorner), cellsize(i_grid2Dobj.cellsize),
+                ncols(i_ncols), nrows(i_nrows)
 {
-	//setValues(i_ncols, i_nrows, i_grid2Dobj.cellsize);
-
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
 	//llcorner = i_grid2Dobj.llcorner;

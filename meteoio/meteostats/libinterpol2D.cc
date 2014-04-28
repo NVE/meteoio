@@ -561,6 +561,32 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 	}
 }
 
+//Compute the wind direction changes by the terrain, see Ryan, "a mathematical model for diagnosis
+//and prediction of surface winds in mountainous terrain", 1977, journal of applied meteorology, 16, 6
+/**
+ * @brief compute the change of wind direction by the local terrain
+ * This is according to Ryan, <i>"a mathematical model for diagnosis and prediction of surface
+ * winds in mountainous terrain"</i>, 1977, journal of applied meteorology, <b>16</b>, 6.
+ * @param dem array of elevations (dem). The slope and azimuth must have been updated as they are required for the DEM analysis.
+ * @param grid 2D array of wind direction to fill
+ * @author Mathias Bavay
+ */
+void Interpol2D::RyanWindDir(const DEMObject& dem, Grid2DObject &grid)
+{
+	for(size_t ii=0; ii<grid.getNx()*grid.getNy(); ii++) {
+		const double azi = dem.azi(ii);
+		const double slope = dem.slope(ii);
+		if (azi==IOUtils::nodata || slope==IOUtils::nodata) {
+			grid(ii) = IOUtils::nodata;
+			continue;
+		}
+
+		const double Yd = 100.*tan(slope*Cst::to_rad);
+		const double Fd = -0.225 * std::min(Yd, 100.) * sin(2.*(grid(ii)-azi)*Cst::to_rad);
+		grid(ii) += Fd;
+	}
+}
+
 //compute the Winstral sx factor for one single direction and one single point (ii,jj) in dem up to dmax distance
 double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
@@ -655,8 +681,9 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 
 	const double bearing_inc = 5.;
 	const double bearing_width = 30.;
-	const double bearing1 = in_bearing - bearing_width/2.;
-	const double bearing2 = in_bearing + bearing_width/2.;
+	double bearing1 = fmod( in_bearing - bearing_width/2., 360. );
+	double bearing2 = fmod( in_bearing + bearing_width/2., 360. );
+	if (bearing1>bearing2) std::swap(bearing1, bearing2);
 
 	const size_t ncols = dem.ncols, nrows = dem.nrows;
 	for(size_t jj = 0; jj<nrows; jj++) {

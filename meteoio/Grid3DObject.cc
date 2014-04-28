@@ -37,51 +37,41 @@ Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
 }
 
 Grid3DObject::Grid3DObject()
-              : grid3D(), llcorner(), cellsize(0.), z(), ncols(0), nrows(0), ndepths(0), z_is_absolute(true)
-{
-}
+             : grid3D(), z(), llcorner(), cellsize(0.), ncols(0), nrows(0), ndepths(0), z_is_absolute(true) {}
 
-Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3Dobj,
+Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3D,
                            const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
                            const size_t& i_nwidths, const size_t& i_nheights, const size_t& i_ndepths)
-      : grid3D(i_grid3Dobj.grid3D, i_nx,i_ny,i_nz, i_nwidths,i_nheights,i_ndepths), llcorner(i_grid3Dobj.llcorner),
-        cellsize(i_grid3Dobj.cellsize), z(), ncols(i_nwidths), nrows(i_nheights), ndepths(i_ndepths), z_is_absolute(true)
+      : grid3D(i_grid3D.grid3D, i_nx,i_ny,i_nz, i_nwidths,i_nheights,i_ndepths), z(i_grid3D.z), llcorner(i_grid3D.llcorner),
+        cellsize(i_grid3D.cellsize), ncols(i_nwidths), nrows(i_nheights), ndepths(i_ndepths), z_is_absolute(true)
 {
-	//setValues(i_nwidths, i_nheights, i_ndepths, i_grid3Dobj.cellsize);
-
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
 	if( (llcorner.getEasting()!=IOUtils::nodata) && (llcorner.getNorthing()!=IOUtils::nodata) ) {
-		llcorner.setXY( llcorner.getEasting()+static_cast<double>(i_nx)*i_grid3Dobj.cellsize,
-		                llcorner.getNorthing()+static_cast<double>(i_ny)*i_grid3Dobj.cellsize,
-		                llcorner.getAltitude()+static_cast<double>(i_nz)*i_grid3Dobj.cellsize );
+		llcorner.setXY( llcorner.getEasting()+static_cast<double>(i_nx)*i_grid3D.cellsize,
+		                llcorner.getNorthing()+static_cast<double>(i_ny)*i_grid3D.cellsize,
+		                llcorner.getAltitude()+static_cast<double>(i_nz)*i_grid3D.cellsize );
 	}
 }
 
 Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner)
-              : grid3D(i_ncols, i_nrows, i_ndepths, IOUtils::nodata), llcorner(i_llcorner),
-                cellsize(i_cellsize), z(), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true)
-
-{
-	//setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
-}
+              : grid3D(i_ncols, i_nrows, i_ndepths, IOUtils::nodata), z(), llcorner(i_llcorner),
+                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true) {}
 
 Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner, const double& init)
-              : grid3D(i_ncols, i_nrows, i_ndepths, init), llcorner(i_llcorner),
-                cellsize(i_cellsize), z(), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true)
-{
-	//setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
-}
+              : grid3D(i_ncols, i_nrows, i_ndepths, init), z(), llcorner(i_llcorner),
+                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true) {}
+
+Grid3DObject::Grid3DObject(const Grid3DObject& i_grid, const double& init)
+              : grid3D(i_grid.ncols, i_grid.nrows, i_grid.ndepths, init), z(i_grid.z), llcorner(i_grid.llcorner),
+                cellsize(i_grid.cellsize), ncols(i_grid.ncols), nrows(i_grid.nrows), ndepths(i_grid.ndepths), z_is_absolute(i_grid.z_is_absolute) {}
 
 Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
-              : grid3D(i_grid3D), llcorner(i_llcorner),
-                cellsize(i_cellsize), z(), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true)
-{
-	//set(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner, i_grid3D);
-}
+              : grid3D(i_grid3D), z(), llcorner(i_llcorner),
+                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true) {}
 
 bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
 {

@@ -74,15 +74,17 @@ class Grid3DObject{
 		* one passed as i_grid3Dobj argument. The resulting Grid3DObject is a by value copy of
 		* a subspace of the space spanned by the i_grid3Dobj
 		*/
-		Grid3DObject(const Grid3DObject& i_grid3Dobj,
+		Grid3DObject(const Grid3DObject& i_grid3D,
 		             const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
-		             const size_t& i_nwidths, const size_t& i_nheights, const size_t& i_ndepths);
+		             const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths);
 
 		Grid3DObject(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		             const double& cellsize, const Coords& i_llcorner);
 
 		Grid3DObject(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		             const double& cellsize, const Coords& i_llcorner, const double& init);
+
+		Grid3DObject(const Grid3DObject& i_grid, const double& init);
 
 		Grid3DObject(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		             const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D);
@@ -167,9 +169,9 @@ class Grid3DObject{
 		void extractLayer(const size_t& i_z, Grid2DObject& layer);
 
 		Array3D<double> grid3D;
+		std::vector<double> z; ///> Vector of depths
 		Coords llcorner;
 		double cellsize;
-		std::vector<double> z; ///> Vector of depths
 		size_t ncols, nrows, ndepths;
 		bool z_is_absolute; ///> Are z coordinates absolute or relative to a DEM?
 
