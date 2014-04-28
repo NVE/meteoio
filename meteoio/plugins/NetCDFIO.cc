@@ -51,6 +51,9 @@ const std::string NetCDFIO::cf_units = "units";
 const std::string NetCDFIO::cf_days = "days since ";
 const std::string NetCDFIO::cf_seconds = "seconds since ";
 
+const std::string NetCDFIO::cnrm_points = "Number_of_points";
+const std::string NetCDFIO::cnrm_latitude = "LAT";
+const std::string NetCDFIO::cnrm_longitude = "LON";
 const std::string NetCDFIO::cnrm_altitude = "ZS";
 const std::string NetCDFIO::cnrm_aspect = "aspect";
 const std::string NetCDFIO::cnrm_slope = "slope";
@@ -70,6 +73,7 @@ const std::string NetCDFIO::cnrm_p = "PSurf";
 const std::string NetCDFIO::cnrm_ilwr = "LWdown";
 
 std::map<std::string, size_t> NetCDFIO::paramname;
+std::map<std::string, std::string> NetCDFIO::map_name;
 const bool NetCDFIO::__init = NetCDFIO::initStaticData();
 
 bool NetCDFIO::initStaticData()
@@ -89,6 +93,13 @@ bool NetCDFIO::initStaticData()
 	paramname[cnrm_swr_diffuse] = IOUtils::npos;
 	paramname[cnrm_p] = MeteoData::P;
 	paramname[cnrm_ilwr] = MeteoData::ILWR;
+
+	map_name["TA"] = cnrm_ta;
+	map_name["RH"] = cnrm_rh;
+	map_name["ILWR"] = cnrm_ilwr;
+	map_name["P"] = cnrm_p;
+	map_name["VW"] = cnrm_vw;
+	map_name["DW"] = cnrm_dw;
 
 	return true;
 }
@@ -344,7 +355,7 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 	size_t dimlen;
 
 	//HACK: could check dimension of all the vars, must be 'Number_of_points'
-	get_dimension(ncid, "Number_of_points", dimid, dimlen);
+	get_dimension(ncid, cnrm_points, dimid, dimlen);
 	get_variable(ncid, cnrm_altitude, vid_alt);
 	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lat_str), vid_lat);
 	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lon_str), vid_lon);
@@ -418,11 +429,12 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 	close_file(filename, ncid);
 }
 
-void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters, const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo)
+void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, 
+                        const std::map<std::string, size_t>& map_parameters, const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
 	size_t number_of_stations = vecMetaData.size();
 	size_t number_of_records = vec_date.size();
-	
+
 	//Allocate all the MeteoData objects
 	vector<MeteoData> tmp_vec(number_of_records, meteo_data);
 	for (size_t jj=0; jj<number_of_records; jj++) tmp_vec[jj].date = vec_date[jj]; //set correct date for every record
@@ -474,6 +486,8 @@ void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, size_t>& m
 				hnw_measurement = true;
 			} else if ((varname == cnrm_swr_diffuse) || (varname == cnrm_swr_direct)) {
 				sw_measurement = true;
+			} else {
+				throw IOException("Don't know how to deal with parameter " + varname, AT);
 			}
 		} else {
 			if (varname == cnrm_rh) {
@@ -642,11 +656,183 @@ void NetCDFIO::calculate_offset(const std::string& units, NetCDFIO::TimeUnit& ti
 	//cout << offset.toString() << endl;
 }
 
-void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/,
-                              const std::string&)
+void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
-	//Nothing so far
-	throw IOException("Nothing implemented here", AT);
+	size_t number_of_stations = vecMeteo.size();
+	if (number_of_stations == 0) return; //Nothing to write
+
+	size_t number_of_records = vecMeteo[0].size();
+
+	string filename("");
+	cfg.getValue("METEOFILE", "Output", filename);
+
+	int ncid, did_time, vid_time, did_points;
+	bool create_time = false, create_points = false, create_locations = false, create_variables = false;
+	bool exists = IOUtils::fileExists(filename);
+
+	double* dates;
+	map<string, double*> map_data_1D, map_data_2D;
+	map_data_1D[IOUtils::strToUpper(NetCDFIO::lat_str)] = new double[number_of_stations];
+	map_data_1D[IOUtils::strToUpper(NetCDFIO::lon_str)] = new double[number_of_stations];
+	map_data_1D[cnrm_altitude] = new double[number_of_stations];
+	map_data_1D[cnrm_aspect] = new double[number_of_stations];
+	map_data_1D[cnrm_slope] = new double[number_of_stations];
+
+	map<string, int> varid;
+	map<size_t, string> map_param_name;
+
+	get_parameters(vecMeteo, map_param_name, map_data_1D, dates);
+
+	if (exists) {
+		open_file(filename, NC_WRITE, ncid);
+		start_definitions(filename, ncid);
+	} else {
+		create_file(filename, NC_CLASSIC_MODEL, ncid);
+		create_time = create_points = create_locations = create_variables = true;
+	}
+
+	if (create_time) create_time_dimension(ncid, did_time, vid_time);
+	if (create_points) add_dimension(ncid, cnrm_points, number_of_stations, did_points);
+	if (create_locations) create_meta_data(ncid, did_points, map_data_1D, varid);
+	if (create_variables) create_parameters(ncid, did_time, did_points, number_of_records, number_of_stations, map_param_name, map_data_2D, varid);
+
+	end_definitions(filename, ncid);
+
+	copy_data(number_of_stations, number_of_records, vecMeteo, map_param_name, map_data_2D);
+
+	write_record(ncid, NetCDFIO::cf_time, vid_time, number_of_records, dates);
+
+	for (map<string, double*>::const_iterator it = map_data_1D.begin(); it != map_data_1D.end(); it++) {
+		const string& varname = it->first;
+		write_data(ncid, varname, varid[varname], map_data_1D[varname]);
+		delete[] it->second;
+	}
+
+	for (map<string, double*>::const_iterator it = map_data_2D.begin(); it != map_data_2D.end(); it++) {
+		const string& varname = it->first;
+		write_data(ncid, varname, varid[varname], map_data_2D[varname]);
+		delete[] it->second;
+	}
+
+	close_file(filename, ncid);
+
+	delete[] dates;
+}
+
+void NetCDFIO::copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo,
+                         const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D)
+{
+	for (map<size_t, string>::const_iterator it = map_param_name.begin(); it != map_param_name.end(); it++) {
+		const size_t& param = it->first;
+		const string& varname = it->second;
+		cout << "Copying " << varname << endl;
+
+		double* data = map_data_2D[varname];
+
+		for (size_t ii=0; ii<number_of_stations; ii++) {
+			for (size_t jj=0; jj<number_of_records; jj++) {
+				data[jj*number_of_stations + ii] = vecMeteo[ii][jj](param);
+			} 
+		}
+	}
+}
+
+void NetCDFIO::create_meta_data(const int& ncid, const int& did, std::map<std::string, double*>& map_data_1D, std::map<std::string, int>& varid)
+{
+	for (map<string, double*>::const_iterator it = map_data_1D.begin(); it != map_data_1D.end(); it++) {
+		int vid;
+		const string& varname = it->first;
+
+		add_1D_variable(ncid, varname, NC_DOUBLE, did, vid);
+		add_attribute(ncid, vid, "_FillValue", plugin_nodata);
+		add_attributes_for_variable(ncid, vid, varname);		
+
+		varid[varname] = vid;
+	}
+}
+
+void NetCDFIO::create_parameters(const int& ncid, const int& did_time, const int& did_points, const size_t& number_of_records,
+						   const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
+                                 std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid)
+{
+	map<string, string>::const_iterator it_cnrm;
+	
+	for (map<size_t, string>::iterator it = map_param_name.begin(); it != map_param_name.end();) {
+		string& varname = it->second;
+		cout << "Adding parameter: " << varname << endl;
+
+		it_cnrm = map_name.find(varname);
+		if (it_cnrm != map_name.end()) {
+			const string& cnrm_name = it_cnrm->second;
+			varname = cnrm_name;
+
+			int vid;
+
+			double* data = new double[number_of_records*number_of_stations];
+			map_data_2D[cnrm_name] = data;
+
+			add_2D_variable(ncid, cnrm_name, NC_DOUBLE, did_time, did_points, vid);
+			add_attribute(ncid, vid, "_FillValue", plugin_nodata);
+			add_attributes_for_variable(ncid, vid, varname);		
+
+			varid[varname] = vid;
+			it++;
+		} else {
+			map_param_name.erase(it++);
+		}
+	}	
+}
+
+void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_1D, double*& dates)
+{
+	size_t number_of_records = vecMeteo[0].size();
+	dates = new double[number_of_records];
+
+	for (size_t ii=0; ii<number_of_records; ii++) {
+		dates[ii] = vecMeteo[0][ii].date.getModifiedJulianDate();
+	}
+
+	size_t nr_of_parameters = 0;
+	if (vecMeteo[0].size() > 0) nr_of_parameters = vecMeteo[0][0].getNrOfParameters();
+
+	vector<bool> vec_param_in_use(nr_of_parameters, false);
+	vector<string> vec_param_name(nr_of_parameters, "");
+
+	//Check consistency, dates must be existent everywhere
+	bool inconsistent = false;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (number_of_records != vecMeteo[ii].size()) inconsistent = true;
+		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
+			const MeteoData& meteo_data = vecMeteo[ii][jj];
+
+			if (dates[jj] != meteo_data.date.getModifiedJulianDate()) inconsistent = true;
+
+			if (jj == 0) {
+				map_data_1D[IOUtils::strToUpper(NetCDFIO::lat_str)][ii] = meteo_data.meta.position.getLat();
+				map_data_1D[IOUtils::strToUpper(NetCDFIO::lon_str)][ii] = meteo_data.meta.position.getLon();
+				map_data_1D[cnrm_altitude][ii] = meteo_data.meta.position.getAltitude();
+				map_data_1D[cnrm_slope][ii] = meteo_data.meta.getSlopeAngle();
+				map_data_1D[cnrm_aspect][ii] = meteo_data.meta.getAzimuth();
+			}
+
+			//Check which parameters are in use
+			for (size_t kk=0; kk<nr_of_parameters; kk++) {
+				if (!vec_param_in_use[kk]){
+					if (meteo_data(kk) != IOUtils::nodata){
+						vec_param_in_use[kk] = true;
+						vec_param_name[kk] = meteo_data.getNameForParameter(kk);
+					}
+				}
+			}
+		}
+	}
+
+	if (inconsistent) throw IOException("Inconsistent dates in vecMeteo between different stations", AT);
+
+	for (size_t kk=0; kk<nr_of_parameters; kk++) {
+		if (vec_param_in_use[kk])
+			map_param_name[kk] = vec_param_name[kk];
+	}
 }
 
 void NetCDFIO::readPOI(std::vector<Coords>&)
@@ -816,18 +1002,18 @@ std::string NetCDFIO::get_varname(const MeteoGrids::Parameters& parameter)
 
 void NetCDFIO::create_latlon_dimensions(const int& ncid, const Grid2DObject& grid_in, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon)
 {
-	define_dimension(ncid, NetCDFIO::lat_str, grid_in.nrows, did_lat);
+	add_dimension(ncid, NetCDFIO::lat_str, grid_in.nrows, did_lat);
 	add_1D_variable(ncid, NetCDFIO::lat_str, NC_DOUBLE, did_lat, vid_lat);
 	add_attributes_for_variable(ncid, vid_lat, NetCDFIO::lat_str);
 
-	define_dimension(ncid, NetCDFIO::lon_str, grid_in.ncols, did_lon);
+	add_dimension(ncid, NetCDFIO::lon_str, grid_in.ncols, did_lon);
 	add_1D_variable(ncid, NetCDFIO::lon_str, NC_DOUBLE, did_lon, vid_lon);
 	add_attributes_for_variable(ncid, vid_lon, NetCDFIO::lon_str);
 }
 
 void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& vid_time)
 {
-	define_dimension(ncid, NetCDFIO::cf_time, NC_UNLIMITED, did_time);
+	add_dimension(ncid, NetCDFIO::cf_time, NC_UNLIMITED, did_time);
 	add_1D_variable(ncid, NetCDFIO::cf_time, NC_DOUBLE, did_time, vid_time); // julian day
 	add_attributes_for_variable(ncid, vid_time, NetCDFIO::cf_time);
 }
@@ -846,11 +1032,11 @@ void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, co
 	if (varname == NetCDFIO::lat_str) {
 		add_attribute(ncid, varid, "standard_name", "latitude");
 		add_attribute(ncid, varid, "long_name", "latitude");
-		add_attribute(ncid, varid, "units", "degreesnorth");
+		add_attribute(ncid, varid, "units", "degrees_north");
 	} else if (varname == NetCDFIO::lon_str) {
 		add_attribute(ncid, varid, "standard_name", "longitude");
 		add_attribute(ncid, varid, "long_name", "longitude");
-		add_attribute(ncid, varid, "units", "degreeseast");
+		add_attribute(ncid, varid, "units", "degrees_east");
 	} else if (varname == NetCDFIO::z_str) {
 		add_attribute(ncid, varid, "standard_name", "altitude");
 		add_attribute(ncid, varid, "long_name", "height above mean sea level");
@@ -861,6 +1047,42 @@ void NetCDFIO::add_attributes_for_variable(const int& ncid, const int& varid, co
 		add_attribute(ncid, varid, "standard_name", NetCDFIO::cf_time);
 		add_attribute(ncid, varid, "long_name", NetCDFIO::cf_time);
 		add_attribute(ncid, varid, "units", "days since 1858-11-17 00:00:00");
+	} else if (varname == NetCDFIO::cnrm_altitude) {
+		add_attribute(ncid, varid, "long_name", "altitude");
+		add_attribute(ncid, varid, "units", "m");
+	} else if (varname == NetCDFIO::cnrm_aspect) {
+		add_attribute(ncid, varid, "long_name", "slope aspect");
+		add_attribute(ncid, varid, "units", "degrees from north");
+	} else if (varname == NetCDFIO::cnrm_slope) {
+		add_attribute(ncid, varid, "long_name", "slope angle");
+		add_attribute(ncid, varid, "units", "degrees from horizontal");
+	} else if (varname == NetCDFIO::cnrm_latitude) {
+		add_attribute(ncid, varid, "long_name", "latitude");
+		add_attribute(ncid, varid, "units", "degrees_north");
+	} else if (varname == NetCDFIO::cnrm_longitude) {
+		add_attribute(ncid, varid, "long_name", "longitude");
+		add_attribute(ncid, varid, "units", "degrees_east");
+	} else if (varname == NetCDFIO::cnrm_ta) {
+		add_attribute(ncid, varid, "long_name", "Near Surface Air Temperature");
+		add_attribute(ncid, varid, "units", "K");
+	} else if (varname == NetCDFIO::cnrm_altitude) {
+		add_attribute(ncid, varid, "long_name", "altitude");
+		add_attribute(ncid, varid, "units", "m");
+	} else if (varname == NetCDFIO::cnrm_altitude) {
+		add_attribute(ncid, varid, "long_name", "altitude");
+		add_attribute(ncid, varid, "units", "m");
+	} else if (varname == NetCDFIO::cnrm_altitude) {
+		add_attribute(ncid, varid, "long_name", "altitude");
+		add_attribute(ncid, varid, "units", "m");
+	} else if (varname == NetCDFIO::cnrm_altitude) {
+		add_attribute(ncid, varid, "long_name", "altitude");
+		add_attribute(ncid, varid, "units", "m");
+	} else if (varname == NetCDFIO::cnrm_altitude) {
+		add_attribute(ncid, varid, "long_name", "altitude");
+		add_attribute(ncid, varid, "units", "m");
+	} else if (varname == NetCDFIO::cnrm_altitude) {
+		add_attribute(ncid, varid, "long_name", "altitude");
+		add_attribute(ncid, varid, "units", "m");
 	}
 }
 
@@ -1125,6 +1347,16 @@ size_t NetCDFIO::find_record(const int& ncid, const std::string& varname, const 
 	return IOUtils::npos; // data not found
 }
 
+void NetCDFIO::write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& length, double*& data)
+{
+	size_t start[] = {0};
+     size_t count[] = {length};
+
+	int status = nc_put_vara_double(ncid, varid, start, count, data);
+	if (status != NC_NOERR)
+		throw IOException("Could not write data for variable '" + varname + "': " + nc_strerror(status), AT);	
+}
+
 size_t NetCDFIO::append_record(const int& ncid, const std::string& varname, const int& varid, const double& data)
 {
 	int dimid, status;
@@ -1154,11 +1386,18 @@ size_t NetCDFIO::append_record(const int& ncid, const std::string& varname, cons
 	return dimlen;
 }
 
-void NetCDFIO::define_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid)
+void NetCDFIO::add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid)
 {
 	int status = nc_def_dim(ncid, dimname.c_str(), length, &dimid);
 	if (status != NC_NOERR)
 		throw IOException("Could not define dimension '" + dimname + "': " + nc_strerror(status), AT);
+}
+
+void NetCDFIO::add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value)
+{
+	int status = nc_put_att_double(ncid, varid, attr_name.c_str(), NC_DOUBLE, 1, &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not add attribute '" + attr_name + "': " + nc_strerror(status), AT);
 }
 
 void NetCDFIO::add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value)

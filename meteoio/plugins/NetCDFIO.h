@@ -29,7 +29,7 @@ namespace mio {
 
 /**
  * @class NetCDFIO
- * @brief This (empty) class is to be used as a template for developing new plugins
+ * @brief This plug-in allows reading and writing of NetCDF files formatted according to CNRM standard.
  *
  * @ingroup plugins
  * @author Thomas Egger
@@ -64,10 +64,20 @@ class NetCDFIO : public IOInterface {
 
 	private:
 		void parseInputOutputSection();
+		void create_parameters(const int& ncid, const int& did_time, const int& did_points, const size_t& number_of_records,
+		                       const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
+		                       std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid);
+		void create_meta_data(const int& ncid, const int& did, std::map<std::string, double*>& map_data_1D, std::map<std::string, int>& varid);
+		void get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_1D, double*& dates);
 		void get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data);
+		size_t get_dates(const std::vector< std::vector<MeteoData> >& vecMeteo, double*& dates);
+		void copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<std::string, double*>& map_data_2D);
+		void copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo,
+                         const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D);
 		void copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data, 
 		               const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
-		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters, const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
+		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters,
+		              const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
 		void copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out);
 		std::string get_varname(const MeteoGrids::Parameters& parameter);
@@ -98,11 +108,14 @@ class NetCDFIO : public IOInterface {
 		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid, const size_t& pos_start, double*& data);
 		size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 		size_t append_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
-		void define_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
+		void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& length, double*& data);
+		void add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
 		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
+		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
 		void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
 		void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
-		void add_2D_record(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record, const int& dimid1, const int& dimid2, int& varid);
+		void add_2D_record(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record,
+		                   const int& dimid1, const int& dimid2, int& varid);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
 		void start_definitions(const std::string& filename, const int& ncid);
 		void end_definitions(const std::string& filename, const int& ncid);
@@ -117,10 +130,11 @@ class NetCDFIO : public IOInterface {
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string lat_str, lon_str, z_str, ta_str, rh_str;
 		static const std::string cf_time, cf_units, cf_days, cf_seconds;
-		static const std::string cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
+		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
 		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr;
 
 		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
+		static std::map<std::string, std::string> map_name; ///Associate MeteoIO parameter names with CNRM parameter names
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map
 

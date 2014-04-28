@@ -660,10 +660,10 @@ void SMETIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, cons
 	 * If a parameter is in use, then vecParamInUse[index_of_parameter] is set to true and the column
 	 * name is set in vecColumnName[index_of_parameter]
 	 */
-	for (size_t ii=0; ii<vecMeteo.size(); ii++){
-		for (size_t jj=0; jj<nr_parameters; jj++){
-			if (!vecParamInUse[jj]){
-				if (vecMeteo[ii](jj) != IOUtils::nodata){
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		for (size_t jj=0; jj<nr_parameters; jj++) {
+			if (!vecParamInUse[jj]) {
+				if (vecMeteo[ii](jj) != IOUtils::nodata) {
 					vecParamInUse[jj] = true;
 					vecColumnName.at(jj) = vecMeteo[ii].getNameForParameter(jj);
 				}
