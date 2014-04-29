@@ -68,10 +68,10 @@ class NetCDFIO : public IOInterface {
 		                       const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
 		                       std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid);
 		void create_meta_data(const int& ncid, const int& did, std::map<std::string, double*>& map_data_1D, std::map<std::string, int>& varid);
-		void get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_1D, double*& dates);
+		void get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name,
+		                    std::map<std::string, double*>& map_data_1D, double*& dates);
 		void get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data);
 		size_t get_dates(const std::vector< std::vector<MeteoData> >& vecMeteo, double*& dates);
-		void copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<std::string, double*>& map_data_2D);
 		void copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo,
                          const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D);
 		void copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data, 
@@ -85,8 +85,27 @@ class NetCDFIO : public IOInterface {
 		void calculate_offset(const std::string& units, NetCDFIO::TimeUnit& time_unit, Date& offset);
 		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
 		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
+
+
+		//libnetcdf wrappers
+		//Opening, creating, closing dataset
 		void open_file(const std::string& filename, const int& omode, int& ncid);
 		void create_file(const std::string& filename, const int& cmode, int& ncid);
+		void start_definitions(const std::string& filename, const int& ncid);
+		void end_definitions(const std::string& filename, const int& ncid);
+		void close_file(const std::string& filename, const int& ncid);
+
+		//Adding variables
+		void add_0D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, int& varid);
+		void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
+		void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
+		void add_3D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record,
+		                     const int& dimid1, const int& dimid2, int& varid);
+
+		//Adding attributes
+		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
+		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
+
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
 		void get_variable(const int& ncid, const std::string& varname, int& varid);
@@ -110,34 +129,28 @@ class NetCDFIO : public IOInterface {
 		size_t append_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 		void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& length, double*& data);
 		void add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
-		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
-		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
-		void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
-		void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
-		void add_2D_record(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record,
-		                   const int& dimid1, const int& dimid2, int& varid);
+
+
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
-		void start_definitions(const std::string& filename, const int& ncid);
-		void end_definitions(const std::string& filename, const int& ncid);
-		void close_file(const std::string& filename, const int& ncid);
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname);
 		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
                                     double* const& lat, double* const& lon, double& factor);
 		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
 		void fill_data(const Grid2DObject& grid, double*& data);
 
-		const Config cfg;
+		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		static const std::string lat_str, lon_str, z_str, ta_str, rh_str;
 		static const std::string cf_time, cf_units, cf_days, cf_seconds;
 		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
-		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr;
+		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr, cnrm_timestep;
 
 		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
 		static std::map<std::string, std::string> map_name; ///Associate MeteoIO parameter names with CNRM parameter names
 		static const bool __init;    ///<helper variable to enable the init of static collection data
 		static bool initStaticData();///<initialize the static map
 
+		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;     //default time zones
 		std::vector<StationData> vecMetaData;
