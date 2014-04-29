@@ -602,10 +602,11 @@ void NetCDFIO::get_indices(const int& ncid, const Date& dateStart, const Date& d
 				time[ii] /= 86400;
 			}
 
-			Date tmp_date = offset + Date(time[ii], in_dflt_TZ);
+			Date tmp_date = offset + Date(time[ii], 0.0);
 			
-			//cout << ii << "  julian: " << time[ii];
-			//cout << "\t" << tmp_date.toString(Date::ISO) << endl;
+			// cout << ii << "  julian: " << time[ii];
+			// cout << "\t" << tmp_date.toString(Date::ISO);
+			// cout << "\t" << setprecision(15) << tmp_date.getModifiedJulianDate() << endl;
 			
 			if (!start_found && (dateStart <= tmp_date && tmp_date <= dateEnd)) {
 				start_found = true;
@@ -622,13 +623,13 @@ void NetCDFIO::get_indices(const int& ncid, const Date& dateStart, const Date& d
 			indexEnd = dimlen-1;
 		}
 	}
-	/*
-	cout << "vecDate:" << vecDate.size() << endl;
-	vector<Date>::iterator it;
-	for (it = vecDate.begin(); it != vecDate.end(); it++) {
-		cout << (*it).toString() << endl;
-	}
-	*/
+
+	// cout << "vecDate:" << vecDate.size() << endl;
+	// vector<Date>::iterator it;
+	// for (it = vecDate.begin(); it != vecDate.end(); it++) {
+	// 	cout << (*it).toString(Date::ISO) << "   tz: " << (*it).getTimeZone() << "    MJ: " << setprecision(15) << (*it).getModifiedJulianDate() << endl;
+	// }
+
 	//cout << dateStart.toString(Date::ISO) << "  -  " << dateEnd.toString(Date::ISO) << endl;
 	//cout << "indexStart: " << indexStart << "  indexEnd: " << indexEnd << endl;
 
@@ -654,8 +655,8 @@ void NetCDFIO::calculate_offset(const std::string& units, NetCDFIO::TimeUnit& ti
 	bool success = IOUtils::convertString(offset, tmp, in_dflt_TZ);
 	if (!success) throw InvalidFormatException("Cannot parse time: " + tmp, AT);
 
-	//cout << "Parsing : " << tmp << endl;
-	//cout << offset.toString() << endl;
+	// cout << "Parsing : " << tmp << endl;
+	// cout << offset.toString() << endl;
 }
 
 void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
@@ -808,6 +809,7 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 
 	double interval = 0;
 	for (size_t ii=0; ii<number_of_records; ii++) {
+		//		cout << "Date: " << vecMeteo[0][ii].date.toString(Date::ISO) << "   tz: " << vecMeteo[0][ii].date.getTimeZone()<< "    MJ: " <<  setprecision(15) << vecMeteo[0][ii].date.getModifiedJulianDate() <<endl;
 		dates[ii] = vecMeteo[0][ii].date.getModifiedJulianDate();
 
 		if (ii == 1) interval = round((dates[ii] - dates[ii-1]) * 86400.);
