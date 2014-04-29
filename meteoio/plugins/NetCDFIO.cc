@@ -809,9 +809,7 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 
 	double interval = 0;
 	for (size_t ii=0; ii<number_of_records; ii++) {
-		//		cout << "Date: " << vecMeteo[0][ii].date.toString(Date::ISO) << "   tz: " << vecMeteo[0][ii].date.getTimeZone()<< "    MJ: " <<  setprecision(15) << vecMeteo[0][ii].date.getModifiedJulianDate() <<endl;
 		dates[ii] = vecMeteo[0][ii].date.getModifiedJulianDate();
-
 		if (ii == 1) interval = round((dates[ii] - dates[ii-1]) * 86400.);
 	}
 
