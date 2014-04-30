@@ -87,9 +87,18 @@ class NetCDFIO : public IOInterface {
 		void calculate_offset(const std::string& units, NetCDFIO::TimeUnit& time_unit, Date& offset);
 		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
 		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
+		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname);
+		void fill_data(const Grid2DObject& grid, double*& data);
+		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
+                                    double* const& lat, double* const& lon, double& factor);
+		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
+		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
+		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
+		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
 
 
-		//libnetcdf wrappers
+		/* libnetcdf wrappers */
+
 		//Opening, creating, closing dataset
 		void open_file(const std::string& filename, const int& omode, int& ncid);
 		void create_file(const std::string& filename, const int& cmode, int& ncid);
@@ -107,38 +116,39 @@ class NetCDFIO : public IOInterface {
 		//Adding attributes
 		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
 		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
-
-		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
-		void create_time_dimension(const int& ncid, int& did_time, int& vid_time);
-		void get_variable(const int& ncid, const std::string& varname, int& varid);
-		bool check_variable(const int& ncid, const std::string& varname);
-		bool check_dim_var(const int& ncid, const std::string& dimname);
-		size_t get_1D_var_len(const int& ncid, const std::string& varname);
-		void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
-		void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
-		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
-		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
 		void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value);
+
+		//Adding dimensions
+		void add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
+
+
+		//Reading data from NetCDF file
 		void read_data(const int& ncid, const std::string& varname, const int& varid,
 		               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
 		void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
 		                  const size_t& record, const size_t& count, const size_t& length, double*& data);
 		void read_value(const int& ncid, const std::string& varname, const int& varid, double& data);
 		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
+
+		//Writing data to NetCDF file
 		void write_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid, const size_t& pos_start, double*& data);
+
+		//Dealing with variables that have dimension NC_UNLIMITED
 		size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 		size_t append_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
 		void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& length, double*& data);
-		void add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
 
+		//Dealing with variables and dimensions
+		bool check_dim_var(const int& ncid, const std::string& dimname);
+		bool check_variable(const int& ncid, const std::string& varname);
+		size_t get_1D_var_len(const int& ncid, const std::string& varname);
+		void get_variable(const int& ncid, const std::string& varname, int& varid);
+		void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
+		void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
+		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
+		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
 
-		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
-		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname);
-		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
-                                    double* const& lat, double* const& lon, double& factor);
-		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
-		void fill_data(const Grid2DObject& grid, double*& data);
 
 		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
