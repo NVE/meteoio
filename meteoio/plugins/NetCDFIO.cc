@@ -671,7 +671,9 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 
 	int ncid, did_time, vid_time, did_points;
 	bool create_time = false, create_points = false, create_locations = false, create_variables = false;
+
 	bool exists = IOUtils::fileExists(filename);
+	if (exists) remove(filename.c_str()); // file is deleted if it exists
 
 	double* dates;
 	map<string, double*> map_data;
@@ -686,13 +688,8 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 
 	get_parameters(vecMeteo, map_param_name, map_data, dates);
 
-	if (exists) {
-		open_file(filename, NC_WRITE, ncid);
-		start_definitions(filename, ncid);
-	} else {
-		create_file(filename, NC_CLASSIC_MODEL, ncid);
-		create_time = create_points = create_locations = create_variables = true;
-	}
+	create_file(filename, NC_CLASSIC_MODEL, ncid);
+	create_time = create_points = create_locations = create_variables = true;
 
 	if (create_time) create_time_dimension(ncid, did_time, vid_time);
 	if (create_points) add_dimension(ncid, cnrm_points, number_of_stations, did_points);

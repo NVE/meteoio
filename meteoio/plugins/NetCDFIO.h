@@ -24,6 +24,8 @@
 
 #include <netcdf.h>
 #include <string>
+#include <cmath>
+#include <cstdio>
 
 namespace mio {
 
