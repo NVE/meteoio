@@ -826,7 +826,7 @@ void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const doub
 
 			for(size_t mm = mm_min; mm<mm_max; mm++) {
 				for(size_t ll = ll_min; ll<ll_max; ll++) {
-					const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
+					const double inv_distance = Optim::invSqrt( cellsize_sq*(static_cast<double>(Optim::pow2(ll-ii)) + static_cast<double>(Optim::pow2(mm-jj))) );
 					if(inv_distance<inv_sepdist) continue;
 
 					double tmp_sum = 0.;
