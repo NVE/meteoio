@@ -1120,6 +1120,8 @@ void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, doub
 		if (lon_array[ii] != lon[ii])
 			throw IOException("Error while writing grid - grid and lat/lon coordinates are inconsistent", AT);
 	}
+
+	delete[] lat; delete[] lon;
 }
 
 //
