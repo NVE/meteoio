@@ -21,6 +21,7 @@
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 
 #include <netcdf.h>
 #include <string>
@@ -90,7 +91,7 @@ class NetCDFIO : public IOInterface {
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname);
 		void fill_data(const Grid2DObject& grid, double*& data);
 		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
-                                    double* const& lat, double* const& lon, double& factor);
+                                    double const * lat, double const* lon, double& factor_x, double& factor_y);
 		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
