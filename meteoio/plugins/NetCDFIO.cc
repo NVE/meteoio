@@ -153,90 +153,66 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 
 	string varname = get_varname(parameter);
 
+	read2DGrid_internal(grid_out, filename, varname, date);
+}
+
+void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const std::string& varname, const Date& date)
+{
+	bool read_record = false;
+	size_t lat_index = 0, lon_index = 1;
+
 	int ncid, varid;
 	vector<int> dimid, dim_varid;
 	vector<string> dimname;
 	vector<size_t> dimlen;
 
+	if (date != Date()) read_record = true;
+
 	open_file(filename, NC_NOWRITE, ncid);
 	get_variable(ncid, varname, varid);
 	get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
-	if (dimid.size()!=3 || dimlen[0]<1 || dimlen[1]<2 || dimlen[2]<2)
-		throw IOException("Variable '" + varname + "' may only have three dimensions, all have to have length >1", AT);
+	if (read_record) {
+		lat_index = 1;
+		lon_index = 2;
 
-	cout << "Dimensions: " << dimlen[1] << " x " << dimlen[2] << " (" << dimlen[0]  << "timesteps)" << endl;
+		if (dimid.size()!=3 || dimlen[0]<1 || dimlen[lat_index]<2 || dimlen[lon_index]<2)
+			throw IOException("Variable '" + varname + "' may only have three dimensions, all have to at least have length 1", AT);
+	} else if (dimid.size()!=2 || dimlen[lat_index]<2 || dimlen[lon_index]<2) {
+		throw IOException("Variable '" + varname + "' may only have two dimensions and both have to have length >1", AT);
+	}
 
-	size_t pos = find_record(ncid, NetCDFIO::cf_time, dimid[0], date.getModifiedJulianDate());
-	if (pos == IOUtils::npos)
-		throw IOException("No record for date " + date.toString(Date::ISO), AT);
+	double *lat = new double[dimlen[lat_index]];
+	double *lon = new double[dimlen[lon_index]];
+	double *grid = new double[dimlen[lat_index]*dimlen[lon_index]];
 
-	double *lat = new double[dimlen[1]];
-	double *lon = new double[dimlen[2]];
-	double *grid = new double[dimlen[1]*dimlen[2]];
+	read_data(ncid, dimname[lat_index], dim_varid[lat_index], lat);
+	read_data(ncid, dimname[lon_index], dim_varid[lon_index], lon);
 
-	read_data(ncid, varname, varid, pos, dimlen[1], dimlen[2], grid);
-	read_data(ncid, dimname[1], dim_varid[1], lat);
-	read_data(ncid, dimname[2], dim_varid[2], lon);
+	if (read_record) {
+		size_t pos = find_record(ncid, NetCDFIO::cf_time, dimid[0], date.getModifiedJulianDate());
+		if (pos == IOUtils::npos)
+			throw IOException("No record for date " + date.toString(Date::ISO), AT);
 
-	copy_grid(dimlen[1], dimlen[2], lat, lon, grid, grid_out);
+		read_data(ncid, varname, varid, pos, dimlen[lat_index], dimlen[lon_index], grid);
+	} else {
+		read_data(ncid, varname, varid, grid);
+	}
+
+	copy_grid(dimlen[lat_index], dimlen[lon_index], lat, lon, grid, grid_out);
 
 	close_file(filename, ncid);
 
 	delete[] lat; delete[] lon; delete[] grid;
-
-	cout << "Grid2DObject: " << grid_out.ncols << " x " << grid_out.nrows << "  Cellsize: " << grid_out.cellsize << endl;
-}
-
-void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const std::string& varname)
-{
-	int ncid, varid;
-	vector<int> dimid, dim_varid;
-	vector<string> dimname;
-	vector<size_t> dimlen;
-
-	open_file(filename, NC_NOWRITE, ncid);
-	get_variable(ncid, varname, varid);
-	get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
-
-	if (dimid.size()!=2 || dimlen[0]<2 || dimlen[1]<2)
-		throw IOException("Variable '" + varname + "' may only have two dimensions and both have to have length >1", AT);
-
-	cout << "Dimensions: " << dimlen[1] << " x " << dimlen[0] << endl;
-
-	double *lat = new double[dimlen[0]];
-	double *lon = new double[dimlen[1]];
-	double *grid = new double[dimlen[0]*dimlen[1]];
-
-	read_data(ncid, varname, varid, grid);
-	read_data(ncid, dimname[0], dim_varid[0], lat);
-	read_data(ncid, dimname[1], dim_varid[1], lon);
-
-	copy_grid(dimlen[0], dimlen[1], lat, lon, grid, grid_out);
-
-	close_file(filename, ncid);
-
-	delete[] lat;
-	delete[] lon;
-	delete[] grid;
-
-	cout << "Grid2DObject: " << grid_out.ncols << " x " << grid_out.nrows << "  Cellsize: " << grid_out.cellsize << endl;
 }
 
 void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out)
 {
-	cout << "Starting to copy to Grid2DObject...";
-
 	Coords location(coordin, coordinparam);
 	location.setLatLon(lat[0], lon[0], grid[0]);
 
-	// Coords urcorner(coordin, coordinparam);
-	// urcorner.setLatLon(lat[latlen-1], lon[lonlen-1], IOUtils::nodata);
-
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
 	double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
-
-	cout << "Detected a cellsize of: " << cellsize << endl;
 
 	grid_out.set(lonlen, latlen, cellsize, location);
 
@@ -247,93 +223,41 @@ void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, double*& la
 	}
 
 	if (resampling_factor_x != IOUtils::nodata) {
-		cout << "Resampling required... " << endl;
 		grid_out.grid2D = ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
-
 		grid_out.ncols = grid_out.grid2D.getNx();
 		grid_out.nrows = grid_out.grid2D.getNy();
-		/*
-		cout << setprecision(20) << setw(20) << endl;
-		// Calculate actual cellsize
-		Coords tmp_coord(grid_out.llcorner);
-		tmp_coord.setGridIndex(grid_out.ncols-1, grid_out.nrows-1, IOUtils::nodata, true); //UR Corner
-		bool result = grid_out.gridify(tmp_coord);
-		cout << tmp_coord.toString() << endl;
-		cout << (result ? "true": "false") << endl;
-		// Adapt cellsize
-
-		double real_cellsize = (tmp_coord.getEasting() - location.getEasting()) / (grid_out.ncols-1);
-		cout << "Real UR Lat: " << tmp_coord.getLat() << endl;
-		cout << "Real UR Lon: " << tmp_coord.getLon() << endl;
-		cout << "Real cellsize: " << real_cellsize << endl;
-
-		result = grid_out.gridify(urcorner);
-		cout << (result ? "true": "false") << endl;
-		cout << urcorner.toString() << endl;
-		*/
 	}
 }
 
 double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen,
                                     double const* lat, double const* lon, double& factor_x, double& factor_y)
 {
-	cout << setprecision(20) << setw(20) << endl;
-
-	//lat[0] = 5;
-
-	Coords location(coordin, coordinparam);
-	location.setLatLon(lat[0], lon[0], IOUtils::nodata);
+	Coords llcorner(coordin, coordinparam);
+	llcorner.setLatLon(lat[0], lon[0], IOUtils::nodata);
 
 	Coords urcorner(coordin, coordinparam);
 	urcorner.setLatLon(lat[latlen-1], lon[lonlen-1], IOUtils::nodata);
 
-	// cout << "LLCORNER: " << lat[0] << ", " << lon[0] << endl;
-	// cout << location.toString() << endl;
-
-	// cout << "URCORNER: " << lat[latlen-1] << ", " << lon[lonlen-1] << endl;
-	// cout << urcorner.toString() << endl;
-	double ll_easting=location.getEasting(), ll_northing=location.getNorthing(), ur_easting=urcorner.getEasting(), ur_northing=urcorner.getNorthing(); 
+	double ll_easting=llcorner.getEasting(), ll_northing=llcorner.getNorthing();
+	double ur_easting=urcorner.getEasting(), ur_northing=urcorner.getNorthing(); 
 
 	double distanceX = ur_easting - ll_easting;
 	double distanceY = ur_northing - ll_northing;
 
-	double cellsize_x = distanceX / (lonlen-1);
+	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
+	double cellsize_x = distanceX / (lonlen-1); 
 	double cellsize_y = distanceY / (latlen-1);
 
-	// cout << "DistanceX: " <<  distanceX << endl;;
-	// cout << "DistanceY: " <<  distanceY << endl;;
-
-	// cout << "Lat[0]: " << lat[0] << "   Lat[end]: " << lat[latlen-1] << endl;
-	// cout << "Lon[0]: " << lon[0] << "   Lon[end]: " << lon[lonlen-1] << endl;
-
-	bool equal = IOUtils::checkEpsilonEquality(cellsize_x, cellsize_y, 0.8);
-
-	// cout << endl;
-
-	// cout << "Latlen: " << Coords::lat_degree_lenght(lat[latlen/2]) << endl;
-	// cout << "Lonlen: " << Coords::lon_degree_lenght(lat[latlen/2]) << endl;
-
-	// cout << "CellsizeX: " << cellsize_x << endl;
-	// cout << "CellsizeY: " << cellsize_y << endl;
-	// The following is quintessential to achieve numerical stability
-	// Maximum precision for the grid read through this plugin: cm
-	double value =  max(cellsize_x, cellsize_y)*100.0;
+	// We're using a precision for the cellsize that is equal to 1cm, more precision makes ensuing
+	// calculations numerically instable
+	double value =  max(cellsize_x, cellsize_y) * 100.0;
 	double cellsize = floor(value) / 100.0;
-	// cout << "Cellsize to use: " << cellsize << endl; 
 
-	//HACK: Check which cellsize is larger, use that one
-	if (equal && 0) {
-		cout << "Seems quite equal" << endl;
-		return Interpol1D::weightedMean(cellsize_x, cellsize_y, 0.5);
+	if (cellsize_x == cellsize_y) {
+		return cellsize_x;
 	} else {
 		factor_x =  cellsize_x / cellsize;
 		factor_y =  cellsize_y / cellsize;
-		// cout << "FactorX: " << factor_x << endl;
-		// cout << "FactorY: " << factor_y << endl;
-		// cout << "Amounts to: " << Optim::round(factor_x*latlen) << endl;
-
-		// cout << "PointX: " << Optim::round(factor_x*lonlen)*cellsize + ll_easting << endl;
-		// cout << "PointY: " << Optim::round(factor_y*latlen)*cellsize + ll_northing << endl;
 
 		return cellsize;
 	}
