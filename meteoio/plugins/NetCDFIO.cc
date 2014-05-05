@@ -172,7 +172,7 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	get_variable(ncid, varname, varid);
 	get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
-	if (read_record) {
+	if (read_record) { // In case we're reading a record the first index is always the record index
 		lat_index = 1;
 		lon_index = 2;
 
@@ -1073,18 +1073,14 @@ void NetCDFIO::calculate_dimensions(const Grid2DObject& grid, double*& lat_array
 	lat_array[0] = grid.llcorner.getLat();
 	lon_array[0] = grid.llcorner.getLon();
 
-	Coords tmp_coord(grid.llcorner);
-	tmp_coord.setGridIndex(grid.ncols-1, grid.nrows-1, IOUtils::nodata, true); // upper right corner
-	grid.gridify(tmp_coord);
+	// The idea is to use the difference in coordinates of the upper right and the lower left
+	// corner to calculate the lat/lon intervals between cells
+	Coords urcorner(grid.llcorner);
+	urcorner.setGridIndex(grid.ncols-1, grid.nrows-1, IOUtils::nodata, true);
+	grid.gridify(urcorner);
 	
-	double ur_lat = tmp_coord.getLat();
-	double ur_lon = tmp_coord.getLon();
-
-	double lat_distance = ur_lat - lat_array[0];
-	double lon_distance = ur_lon - lon_array[0];
-
-	double lat_interval = lat_distance / (grid.nrows-1);
-	double lon_interval = lon_distance / (grid.ncols-1);
+	double lat_interval = (urcorner.getLat() - lat_array[0]) / (grid.nrows-1);
+	double lon_interval = (urcorner.getLon() - lon_array[0]) / (grid.ncols-1);
 
 	for (size_t ii=1; ii<grid.nrows; ii++) {
 		lat_array[ii] = lat_array[0] + lat_interval*ii;
