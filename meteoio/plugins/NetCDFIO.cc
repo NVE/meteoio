@@ -204,7 +204,8 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	delete[] lat; delete[] lon; delete[] grid;
 }
 
-void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out)
+void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+                         const double * const grid, Grid2DObject& grid_out)
 {
 	Coords location(coordin, coordinparam);
 	location.setLatLon(lat[0], lon[0], grid[0]);
@@ -234,8 +235,8 @@ void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, double*& la
  * determine a factor that will be used for resampling the grid to likewise consist of 
  * quadratic cells.
  */
-double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen,
-                                    double const* lat, double const* lon, double& factor_x, double& factor_y)
+double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+                                    double& factor_x, double& factor_y)
 {
 	Coords llcorner(coordin, coordinparam);
 	llcorner.setLatLon(lat[0], lon[0], IOUtils::nodata);
@@ -658,7 +659,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 
 	copy_data(number_of_stations, number_of_records, vecMeteo, map_param_name, map_data);
 
-	write_record(ncid, NetCDFIO::cf_time, vid_time, number_of_records, dates);
+	write_record(ncid, NetCDFIO::cf_time, vid_time, 0, number_of_records, dates);
 	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
 		const string& varname = it->first;
 		write_data(ncid, varname, varid[varname], map_data[varname]);
@@ -928,7 +929,7 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	}
 
 	if (is_record) {
-		size_t pos_start = append_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
+		size_t pos_start = add_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
 		write_data(ncid, varname, vid_var, grid_in, pos_start, data);
 	} else {
 		write_data(ncid, varname, vid_var, data);
@@ -1242,7 +1243,12 @@ void NetCDFIO::read_data_2D(const int& ncid, const std::string& varname, const i
 
 void NetCDFIO::read_value(const int& ncid, const std::string& varname, const int& varid, double& data)
 {
-	size_t index[] = {0};
+	read_value(ncid, varname, varid, 0, data);
+}
+
+void NetCDFIO::read_value(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, double& data)
+{
+	size_t index[] = {pos};
 
 	int status = nc_get_var1_double(ncid, varid, index, &data);
 	if (status != NC_NOERR)
@@ -1268,14 +1274,15 @@ void NetCDFIO::read_data(const int& ncid, const std::string& varname, const int&
 		throw IOException("Could not retrieve data for variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
-void NetCDFIO::write_data(const int& ncid, const std::string& varname, const int& varid, double*& data)
+void NetCDFIO::write_data(const int& ncid, const std::string& varname, const int& varid, const double * const data)
 {
 	int status = nc_put_var_double(ncid, varid, data);
 	if (status != NC_NOERR)
 		throw IOException("Could not write data for variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
-void NetCDFIO::write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid, const size_t& pos_start, double*& data)
+void NetCDFIO::write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid,
+                          const size_t& pos_start, const double * const data)
 {
 	size_t start[] = {pos_start, 0, 0};
 	size_t count[] = {1, grid.nrows, grid.ncols};
@@ -1286,6 +1293,40 @@ void NetCDFIO::write_data(const int& ncid, const std::string& varname, const int
 	}
 }
 
+// Adding a record value (e.g. timestamp), in case it doesn't already exist and
+// that the value is greater than the last record variable value. For example, 
+// timestamps have to be strictly monotonically increasing or already existent.
+size_t NetCDFIO::add_record(const int& ncid, const std::string& varname, const int& varid, const double& data)
+{
+	int dimid;
+	size_t dimlen;
+
+	get_dimension(ncid, varname, dimid, dimlen);
+
+	//check if record already exists
+	if (dimlen > 0) {
+		double last_value = IOUtils::nodata;
+		read_value(ncid, varname, varid, dimlen-1, last_value);
+
+		if (last_value == data) return (dimlen - 1); //The timestamp already exists
+
+		if (last_value > data) {
+			size_t pos = find_record(ncid, varname, dimid, data); // Search for a possible match
+
+			if (pos != IOUtils::npos) {
+				return pos;
+			} else {
+				throw IOException("The variable '" + varname + "' has to be linearly increasing", AT);
+			}
+		}
+	}
+
+	write_record(ncid, varname, varid, dimlen, 1, &data);
+	return dimlen;
+}
+
+// Finding a certain record variable value (e.g. timestamp) by retrieving all
+// record values and then performing a linear search
 size_t NetCDFIO::find_record(const int& ncid, const std::string& varname, const int& varid, const double& data)
 {
 	int dimid;
@@ -1295,59 +1336,34 @@ size_t NetCDFIO::find_record(const int& ncid, const std::string& varname, const 
 
 	//check if record already exists
 	if (dimlen > 0) {
-		double *timesteps = new double[dimlen];
-		read_data(ncid, varname, varid, timesteps);
+		double *record_value = new double[dimlen];
+		read_data(ncid, varname, varid, record_value);
 
 		for (size_t ii=0; ii<dimlen; ii++) {
-			if (timesteps[ii] == data) {
-				delete[] timesteps;
+			if (record_value[ii] == data) {
+				delete[] record_value;
 				return ii;
 			}
 		}
 
-		delete[] timesteps;
+		delete[] record_value;
 	}
 
 	return IOUtils::npos; // data not found
 }
 
-void NetCDFIO::write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& length, double*& data)
+// In case the dimension length of the record variable is less than start_pos
+// values will be added (containing the _FillValue) until a length of start_pos-1 
+// has been reached. Finally the length amount elements from start_pos and on
+// will be added.
+void NetCDFIO::write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& start_pos, const size_t& length, const double * const data)
 {
-	size_t start[] = {0};
+	size_t start[] = {start_pos};
      size_t count[] = {length};
 
 	int status = nc_put_vara_double(ncid, varid, start, count, data);
 	if (status != NC_NOERR)
-		throw IOException("Could not write data for variable '" + varname + "': " + nc_strerror(status), AT);
-}
-
-size_t NetCDFIO::append_record(const int& ncid, const std::string& varname, const int& varid, const double& data)
-{
-	int dimid, status;
-	size_t dimlen;
-
-	get_dimension(ncid, varname, dimid, dimlen);
-
-	//check if record already exists
-	if (dimlen > 0) {
-		double last_value = IOUtils::nodata;
-		const size_t index_read[] = {dimlen-1};
-
-		status = nc_get_var1_double(ncid, varid, index_read, &last_value);
-		if (status != NC_NOERR)
-			throw IOException("Could not retrieve last value for record '" + varname + "': " + nc_strerror(status), AT);
-		cout << "Last time value: " << last_value << endl;
-
-		if (last_value == data) return (dimlen - 1); //The timestamp already exists
-	}
-
-	const size_t index[] = {dimlen}; //append at the end
-
-	status = nc_put_var1_double(ncid, varid, index, &data);
-	if (status != NC_NOERR)
-		throw IOException("Could not write data for record '" + varname + "': " + nc_strerror(status), AT);
-
-	return dimlen;
+		throw IOException("Could not write data for record variable '" + varname + "': " + nc_strerror(status), AT);
 }
 
 void NetCDFIO::add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid)

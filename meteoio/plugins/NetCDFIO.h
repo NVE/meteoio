@@ -82,7 +82,6 @@ class NetCDFIO : public IOInterface {
 		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters,
 		              const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
-		void copy_grid(const size_t& latlen, const size_t& lonlen, double*& lat, double*& lon, double*& grid, Grid2DObject& grid_out);
 		std::string get_varname(const MeteoGrids::Parameters& parameter);
 		void get_indices(const int& ncid, const Date& dateStart, const Date& dateEnd, size_t& indexStart, size_t& indexEnd, std::vector<Date>& vecDate);
 		void calculate_offset(const std::string& units, NetCDFIO::TimeUnit& time_unit, Date& offset);
@@ -91,8 +90,10 @@ class NetCDFIO : public IOInterface {
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date());
 		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date=Date());
 		void fill_data(const Grid2DObject& grid, double*& data);
-		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
-                                    double const * lat, double const* lon, double& factor_x, double& factor_y);
+		void copy_grid(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+		               const double * const grid, Grid2DObject& grid_out);
+		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
+		                          double& factor_x, double& factor_y);
 		void calculate_dimensions(const Grid2DObject& grid, double*& lat_array, double*& lon_array);
 		void add_attributes_for_variable(const int& ncid, const int& varid, const std::string& varname);
 		void create_latlon_dimensions(const int& ncid, const Grid2DObject& grid, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
@@ -130,16 +131,19 @@ class NetCDFIO : public IOInterface {
 		void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
 		                  const size_t& record, const size_t& count, const size_t& length, double*& data);
 		void read_value(const int& ncid, const std::string& varname, const int& varid, double& data);
+		void read_value(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, double& data);
 		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 
 		//Writing data to NetCDF file
-		void write_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
-		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid, const size_t& pos_start, double*& data);
+		void write_data(const int& ncid, const std::string& varname, const int& varid, const double * const data);
+		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid,
+		                const size_t& pos_start, const double * const data);
 
 		//Dealing with variables that have dimension NC_UNLIMITED
 		size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
-		size_t append_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
-		void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& length, double*& data);
+		size_t add_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
+		void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& pos,
+		                  const size_t& length, const double * const data);
 
 		//Dealing with variables and dimensions
 		bool check_dim_var(const int& ncid, const std::string& dimname);
