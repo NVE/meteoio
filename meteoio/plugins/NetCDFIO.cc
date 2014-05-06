@@ -158,7 +158,7 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 
 void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const std::string& varname, const Date& date)
 {
-	bool read_record = (date != Date());
+	bool is_record = (date != Date());
 	size_t lat_index = 0, lon_index = 1;
 
 	int ncid, varid;
@@ -170,7 +170,7 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	get_variable(ncid, varname, varid);
 	get_dimension(ncid, varname, varid, dimid, dim_varid, dimname, dimlen);
 
-	if (read_record) { // In case we're reading a record the first index is always the record index
+	if (is_record) { // In case we're reading a record the first index is always the record index
 		lat_index = 1;
 		lon_index = 2;
 
@@ -187,7 +187,7 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 	read_data(ncid, dimname[lat_index], dim_varid[lat_index], lat);
 	read_data(ncid, dimname[lon_index], dim_varid[lon_index], lon);
 
-	if (read_record) {
+	if (is_record) {
 		size_t pos = find_record(ncid, NetCDFIO::cf_time, dimid[0], date.getModifiedJulianDate());
 		if (pos == IOUtils::npos)
 			throw IOException("No record for date " + date.toString(Date::ISO), AT);
@@ -824,6 +824,7 @@ void NetCDFIO::readPOI(std::vector<Coords>&)
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& arguments)
 {
+	// arguments is a string of the format filname:varname
 	vector<string> vec_argument;
 	IOUtils::readLineToVec(arguments, vec_argument, ':');
 
@@ -1056,6 +1057,8 @@ void NetCDFIO::calculate_dimensions(const Grid2DObject& grid, double*& lat_array
 	double lat_interval = (urcorner.getLat() - lat_array[0]) / (grid.nrows-1);
 	double lon_interval = (urcorner.getLon() - lon_array[0]) / (grid.ncols-1);
 
+	// The method to use interval*ii is consistent with the corresponding 
+	// calculation of the Grid2DObject::gridify method -> numerical stability
 	for (size_t ii=1; ii<grid.nrows; ii++) {
 		lat_array[ii] = lat_array[0] + lat_interval*ii;
 	}
