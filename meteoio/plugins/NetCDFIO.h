@@ -89,6 +89,7 @@ class NetCDFIO : public IOInterface {
 		void check_consistency(const int& ncid, const Grid2DObject& grid, double*& lat_array, double*& lon_array,
 		                       int& did_lat, int& did_lon, int& vid_lat, int& vid_lon);
 		void read2DGrid_internal(Grid2DObject& grid_out, const std::string& full_name, const std::string& varname, const Date& date=Date());
+		void write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date=Date());
 		void fill_data(const Grid2DObject& grid, double*& data);
 		double calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
                                     double const * lat, double const* lon, double& factor_x, double& factor_y);

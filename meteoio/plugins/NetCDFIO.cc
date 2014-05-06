@@ -158,15 +158,13 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& 
 
 void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& filename, const std::string& varname, const Date& date)
 {
-	bool read_record = false;
+	bool read_record = (date != Date());
 	size_t lat_index = 0, lon_index = 1;
 
 	int ncid, varid;
 	vector<int> dimid, dim_varid;
 	vector<string> dimname;
 	vector<size_t> dimlen;
-
-	if (date != Date()) read_record = true;
 
 	open_file(filename, NC_NOWRITE, ncid);
 	get_variable(ncid, varname, varid);
@@ -229,6 +227,13 @@ void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, double*& la
 	}
 }
 
+/* The Grid2DObject holds data and meta data for quadratic cells. However the NetCDF file
+ * stores the grid as discrete latitude and longitude values. It is necessary to calculate
+ * the distance between the edges of the grid and determine the cellsize. This cellsize may
+ * be different for X and Y directions. We then choose one cellsize for our grid and 
+ * determine a factor that will be used for resampling the grid to likewise consist of 
+ * quadratic cells.
+ */
 double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen,
                                     double const* lat, double const* lon, double& factor_x, double& factor_y)
 {
@@ -825,72 +830,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 	if (vec_argument.size() != 2)
 		throw InvalidArgumentException("The format for the arguments to NetCDFIO::write2DGrid is filename:varname", AT);
 
-	const string& filename = vec_argument[0];
-	const string& varname = vec_argument[1];
-
-	bool exists = IOUtils::fileExists(filename);
-
-	double *lat_array = new double[grid_in.nrows];
-	double *lon_array = new double[grid_in.ncols];
-	double *data = new double[grid_in.nrows * grid_in.ncols];
-
-	calculate_dimensions(grid_in, lat_array, lon_array);
-	fill_data(grid_in, data);
-
-	int ncid, did_lat, did_lon, vid_lat, vid_lon, vid_var;
-	bool create_dimensions(false), create_variable(false);
-
-	if (exists) {
-		open_file(filename, NC_WRITE, ncid);
-
-		//check of lat/lon are defined and consistent
-		if (check_dim_var(ncid, NetCDFIO::lat_str) && check_dim_var(ncid, NetCDFIO::lon_str)) {
-			check_consistency(ncid, grid_in, lat_array, lon_array, did_lat, did_lon, vid_lat, vid_lon);
-		} else {
-			create_dimensions = true;
-		}
-
-		if (check_variable(ncid, varname)) { // variable exists
-			get_variable(ncid, varname, vid_var);
-
-			vector<int> dimid, dim_varid;
-			vector<string> dimname;
-			vector<size_t> dimlen;
-
-			get_dimension(ncid, vec_argument[1], vid_var, dimid, dim_varid, dimname, dimlen);
-
-			if ((dimname[0] != NetCDFIO::lat_str) || (dimname[1] != NetCDFIO::lon_str) || (dimlen[0]!=grid_in.nrows) || (dimlen[1]!=grid_in.ncols))
-				throw IOException("Variable '" + vec_argument[1]  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
-		} else {
-			create_variable = true;
-		}
-
-		start_definitions(filename, ncid);
-	} else {
-		create_file(filename, NC_CLASSIC_MODEL, ncid);
-		add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
-
-		create_variable = create_dimensions = true;
-	}
-
-	if (create_dimensions) create_latlon_dimensions(ncid, grid_in, did_lat, did_lon, vid_lat, vid_lon);
-
-	if (create_variable) {
-		add_2D_variable(ncid, vec_argument[1], NC_DOUBLE, did_lat, did_lon, vid_var);
-		add_attributes_for_variable(ncid, vid_var, vec_argument[1]);
-	}
-
-	end_definitions(filename, ncid);
-
-	if (create_dimensions) {
-		write_data(ncid, NetCDFIO::lat_str, vid_lat, lat_array);
-		write_data(ncid, NetCDFIO::lon_str, vid_lon, lon_array);
-	}
-
-	write_data(ncid, vec_argument[1], vid_var, data);
-
-	close_file(filename, ncid);
-	delete[] lat_array; delete[] lon_array; delete[] data;
+	write2DGrid_internal(grid_in, vec_argument[0], vec_argument[1]);
 }
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
@@ -899,6 +839,13 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 	cfg.getValue("GRID2DFILE", "Output", filename);
 
 	string varname = get_varname(parameter);
+
+	write2DGrid_internal(grid_in, filename, varname, date);
+}
+
+void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::string& filename, const std::string& varname, const Date& date)
+{
+	bool is_record = (date != Date());
 	bool exists = IOUtils::fileExists(filename);
 
 	double *lat_array = new double[grid_in.nrows];
@@ -913,24 +860,40 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 
 	if (exists) {
 		open_file(filename, NC_WRITE, ncid);
-
+		
 		//check of lat/lon are defined and consistent
 		if (check_dim_var(ncid, NetCDFIO::lat_str) && check_dim_var(ncid, NetCDFIO::lon_str)) {
 			check_consistency(ncid, grid_in, lat_array, lon_array, did_lat, did_lon, vid_lat, vid_lon);
 		} else {
 			create_dimensions = true;
 		}
-
-		//check if a time dimension/variable already exists
-		if (check_dim_var(ncid, NetCDFIO::cf_time)) {
-			get_dimension(ncid, NetCDFIO::cf_time, did_time);
-			get_variable(ncid, NetCDFIO::cf_time, vid_time);
-		} else {
-			create_time = true;
+		
+		if (is_record) {
+			//check if a time dimension/variable already exists
+			if (check_dim_var(ncid, NetCDFIO::cf_time)) {
+				get_dimension(ncid, NetCDFIO::cf_time, did_time);
+				get_variable(ncid, NetCDFIO::cf_time, vid_time);
+			} else {
+				create_time = true;
+			}
 		}
-
+		
 		if (check_variable(ncid, varname)) { // variable exists
-			get_variable(ncid, varname, vid_var); //HACK check dimensionality
+			get_variable(ncid, varname, vid_var);
+			
+			vector<int> dimid, dim_varid;
+			vector<string> dimname;
+			vector<size_t> dimlen;
+			
+			get_dimension(ncid, varname, vid_var, dimid, dim_varid, dimname, dimlen);
+			
+			if (is_record) {
+				if ((dimname.size() != 3) || (dimname[0] != cf_time) || (dimname[1] != lat_str) || (dimname[2] != lon_str) || (dimlen[1]!=grid_in.nrows) || (dimlen[2]!=grid_in.ncols))
+					throw IOException("Variable '" + varname  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
+			} else {
+				if ((dimname[0] != NetCDFIO::lat_str) || (dimname[1] != NetCDFIO::lon_str) || (dimlen[0]!=grid_in.nrows) || (dimlen[1]!=grid_in.ncols))
+					throw IOException("Variable '" + varname  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
+			}
 		} else {
 			create_variable = true;
 		}
@@ -939,15 +902,20 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 	} else {
 		create_file(filename, NC_CLASSIC_MODEL, ncid);
 		add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
+		
+		create_variable = create_dimensions = true;
 
-		create_variable = create_dimensions = create_time = true;
+		if (is_record) create_time = true;
 	}
 
 	if (create_dimensions) create_latlon_dimensions(ncid, grid_in, did_lat, did_lon, vid_lat, vid_lon);
 	if (create_time) create_time_dimension(ncid, did_time, vid_time);
 
-	if (create_variable) {
+	if (is_record && create_variable) {
 		add_3D_variable(ncid, varname, NC_DOUBLE, did_time, did_lat, did_lon, vid_var);
+		add_attributes_for_variable(ncid, vid_var, varname);
+	} else if (create_variable) {
+		add_2D_variable(ncid, varname, NC_DOUBLE, did_lat, did_lon, vid_var);
 		add_attributes_for_variable(ncid, vid_var, varname);
 	}
 
@@ -958,8 +926,12 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parame
 		write_data(ncid, NetCDFIO::lon_str, vid_lon, lon_array);
 	}
 
-	size_t pos_start = append_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
-	write_data(ncid, varname, vid_var, grid_in, pos_start, data);
+	if (is_record) {
+		size_t pos_start = append_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
+		write_data(ncid, varname, vid_var, grid_in, pos_start, data);
+	} else {
+		write_data(ncid, varname, vid_var, data);
+	}
 
 	close_file(filename, ncid);
 	delete[] lat_array; delete[] lon_array; delete[] data;
@@ -972,6 +944,8 @@ std::string NetCDFIO::get_varname(const MeteoGrids::Parameters& parameter)
 	if (parameter == MeteoGrids::TA) varname = NetCDFIO::ta_str;
 	else if (parameter == MeteoGrids::RH) varname = NetCDFIO::rh_str;
 	else if (parameter == MeteoGrids::DEM) varname = NetCDFIO::z_str;
+
+	//TODO: complete mapping
 
 	return varname;
 }
