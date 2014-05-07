@@ -254,8 +254,8 @@ double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
 	double cellsize_x = distanceX / (lonlen-1); 
 	double cellsize_y = distanceY / (latlen-1);
 
-	// We're using a precision for the cellsize that is equal to 1cm, more precision makes ensuing
-	// calculations numerically instable
+	// We're using a precision for the cellsize that is equal to 1cm, more 
+	// precision makes ensuing calculations numerically instable
 	double value =  max(cellsize_x, cellsize_y) * 100.0;
 	double cellsize = floor(value) / 100.0;
 
@@ -293,7 +293,7 @@ void NetCDFIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_
 
 void NetCDFIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
-	if (!vecMetaData.empty()) {
+	if (!vecMetaData.empty()) { // We already have meta data
 		vecStation = vecMetaData;
 		return;
 	}
@@ -312,16 +312,16 @@ void NetCDFIO::readStationData(const Date&, std::vector<StationData>& vecStation
 
 void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStation)
 {
-	int vid_alt, vid_lat, vid_lon, vid_aspect, vid_slope, dimid;
-	size_t dimlen;
+	vecStation.clear();
 
-	//HACK: could check dimension of all the vars, must be 'Number_of_points'
+	int dimid;
+	size_t dimlen;
+	map<string, int> map_vid;
+
 	get_dimension(ncid, cnrm_points, dimid, dimlen);
-	get_variable(ncid, cnrm_altitude, vid_alt);
-	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lat_str), vid_lat);
-	get_variable(ncid, IOUtils::strToUpper(NetCDFIO::lon_str), vid_lon);
-	get_variable(ncid, cnrm_aspect, vid_aspect);
-	get_variable(ncid, cnrm_slope, vid_slope);
+	if (dimlen == 0) return; // There are no stations
+
+	get_meta_data_ids(ncid, map_vid);
 
 	double *alt = new double[dimlen];
 	double *lat = new double[dimlen];
@@ -329,11 +329,11 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 	double *aspect = new double[dimlen];
 	double *slope = new double[dimlen];
 
-	read_data(ncid, "ZS", vid_alt, alt);
-	read_data(ncid, NetCDFIO::lat_str, vid_lat, lat);
-	read_data(ncid, NetCDFIO::lon_str, vid_lon, lon);
-	read_data(ncid, NetCDFIO::lat_str, vid_aspect, aspect);
-	read_data(ncid, NetCDFIO::lat_str, vid_slope, slope);
+	read_data(ncid, cnrm_altitude, map_vid[cnrm_altitude], alt);
+	read_data(ncid, cnrm_latitude, map_vid[cnrm_latitude], lat);
+	read_data(ncid, cnrm_longitude, map_vid[cnrm_longitude], lon);
+	read_data(ncid, cnrm_aspect, map_vid[cnrm_aspect], aspect);
+	read_data(ncid, cnrm_slope, map_vid[cnrm_slope], slope);
 
 	//Parse to StationData objects
 	Coords location(coordin, coordinparam);
@@ -351,14 +351,31 @@ void NetCDFIO::readMetaData(const int& ncid, std::vector<StationData>& vecStatio
 		ss.str("");
 
 		StationData tmp(location, id, name);
-		double aspect_bearing = (aspect[ii] < 0) ? 0 : aspect[ii]; // aspect allowed to be -1... HACK
+		double aspect_bearing = (aspect[ii] < 0) ? 0 : aspect[ii]; // aspect allowed to be -1 in CNRM format...
 		tmp.setSlope(slope[ii], aspect_bearing);
 		vecStation.push_back(tmp);
-
-		//cout << "Station " << (ii+1) << "  alt: " << alt[ii] << "  aspect: " << aspect_bearing << "  slope: " << slope[ii] << endl;
 	}
 
 	delete[] alt; delete[] lat; delete[] lon; delete[] aspect; delete[] slope;
+}
+
+void NetCDFIO::get_meta_data_ids(const int& ncid, std::map<std::string, int>& map_vid)
+{
+	const string names[] = {cnrm_altitude, cnrm_latitude, cnrm_longitude, cnrm_aspect, cnrm_slope};
+	vector<string> varname(names, names + sizeof(names) / sizeof(names[0]));
+
+	vector<string> dimensions;
+	dimensions.push_back(cnrm_points); // All variables have to have the dimension cnrm_points
+
+	for (vector<string>::const_iterator it = varname.begin(); it != varname.end(); it++) {
+		int varid;
+		const string& name = *it;
+
+		get_variable(ncid, name, varid);
+		check_dimensions(ncid, name, varid, dimensions);
+
+		map_vid[name] = varid;
+	}
 }
 
 void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::vector< std::vector<MeteoData> >& vecMeteo, const size_t&)
@@ -1199,9 +1216,36 @@ size_t NetCDFIO::get_1D_var_len(const int& ncid, const std::string& varname)
 	return length;
 }
 
+void NetCDFIO::check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names)
+{
+	int dimids[NC_MAX_VAR_DIMS], ndimsp;
+
+	int status = nc_inq_var(ncid, varid, NULL, NULL, &ndimsp, dimids, NULL);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve dimensions for variable '" + varname + "': " + nc_strerror(status), AT);
+
+	if ((int)names.size() != ndimsp)
+		throw IOException("Variable '" + varname  + "' fails dimension check", AT);
+
+	for (int ii=0; ii<ndimsp; ii++) {
+		char name[NC_MAX_NAME+1];
+
+		status = nc_inq_dimname(ncid, dimids[ii], name);
+		if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+
+		const string dimname = string(name);
+		bool exists = (find(names.begin(), names.end(), dimname) != names.end());
+
+		if (!exists)
+			throw IOException("Variable '" + varname  + "' fails dimension check", AT);
+	}
+}
+
 void NetCDFIO::get_dimension(const int& ncid, const std::string& varname, const int& varid,
                              std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen)
 {
+	dimid.clear(); dim_varid.clear(); dimname.clear(); dimlen.clear();
+
 	int dimids[NC_MAX_VAR_DIMS], ndimsp;
 
 	int status = nc_inq_var(ncid, varid, NULL, NULL, &ndimsp, dimids, NULL);

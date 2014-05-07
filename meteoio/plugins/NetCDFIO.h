@@ -27,6 +27,7 @@
 #include <string>
 #include <cmath>
 #include <cstdio>
+#include <algorithm>
 
 namespace mio {
 
@@ -82,6 +83,7 @@ class NetCDFIO : public IOInterface {
 		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters,
 		              const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readMetaData(const int& ncid, std::vector<StationData>& vecStation);
+		void get_meta_data_ids(const int& ncid, std::map<std::string, int>& map_vid);
 		std::string get_varname(const MeteoGrids::Parameters& parameter);
 		void get_indices(const int& ncid, const Date& dateStart, const Date& dateEnd, size_t& indexStart, size_t& indexEnd, std::vector<Date>& vecDate);
 		void calculate_offset(const std::string& units, NetCDFIO::TimeUnit& time_unit, Date& offset);
@@ -150,6 +152,7 @@ class NetCDFIO : public IOInterface {
 		bool check_variable(const int& ncid, const std::string& varname);
 		size_t get_1D_var_len(const int& ncid, const std::string& varname);
 		void get_variable(const int& ncid, const std::string& varname, int& varid);
+		void check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names);
 		void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
 		void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
 		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
