@@ -161,8 +161,7 @@ class NetCDFIO : public IOInterface {
 
 		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const std::string lat_str, lon_str, z_str, ta_str, rh_str;
-		static const std::string cf_time, cf_units, cf_days, cf_seconds;
+		static const std::string cf_time, cf_units, cf_days, cf_seconds, cf_latitude, cf_longitude, cf_altitude, cf_ta, cf_rh, cf_p;
 		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
 		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr, cnrm_timestep;
 
