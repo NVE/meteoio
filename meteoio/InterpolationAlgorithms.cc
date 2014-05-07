@@ -579,6 +579,12 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
+	if (vecArgs.size() == 2) { //fixed wind direction
+		IOUtils::convertString(synoptic_bearing, vecArgs[1]);
+	} else { //incorrect arguments, throw an exception
+		throw InvalidArgumentException("Please provide the wind direction to use for the "+algo+" algorithm", AT);
+	}
+
 	if (nrOfMeasurments==0)
 		return 0.0;
 
@@ -591,7 +597,7 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	std::string base_algo;
 	if (vecArgs.empty()){
 		base_algo=std::string("IDW_LAPSE");
-	} else if (vecArgs.size() == 1){
+	} else if (vecArgs.size() <= 2){
 		IOUtils::convertString(base_algo, vecArgs[0]);
 	} else { //incorrect arguments, throw an exception
 		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
@@ -607,22 +613,48 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	info << algorithm->getInfo();
 }
 
+double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo)
+{
+	// 1) locate the stations in DEM and check if they are higher than their surroundings within a given radius
+	// 2) simply compute a mean or median direction
+	// (2) can be used on all the stations selected in (1)
+
+	double ve=0.0, vn=0.0;
+	size_t count=0;
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		const double VW = vecMeteo[ii](MeteoData::VW);
+		const double DW = vecMeteo[ii](MeteoData::DW);
+		if(VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
+			ve += VW * sin(DW*Cst::to_rad);
+			vn += VW * cos(DW*Cst::to_rad);
+			count++;
+		}
+	}
+
+	if(count!=0) {
+		ve /= static_cast<double>(count);
+		vn /= static_cast<double>(count);
+
+		//const double meanspeed = sqrt(ve*ve + vn*vn);
+		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+		return meandirection;
+	}
+
+	return IOUtils::nodata;
+}
+
 void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 	initGrid(dem, grid);
 
-	//get synoptic wind direction
-	const double synoptic_bearing = 315.; //HACK
-	//two options:
-	// 1) locate the stations in DEM and check if they are higher than their surroundings within a given radius
-	// 2) simply compute a mean or median direction
-	// (2) can be used on all the stations selected in (1)
+	//get synoptic wind direction. Three options:
+	// a) use a fixed wind direction b) use a user provided list of directions c) get it from the data
 
-	//look for
+	//synoptic_bearing = (vecMeteo);
 
 	//alter the field with Winstral and the chosen wind direction
-	Interpol2D::Winstral(dem, 300., synoptic_bearing, grid);
+	Interpol2D::Winstral(dem, 300., synoptic_bearing, grid); //HACK
 }
 
 

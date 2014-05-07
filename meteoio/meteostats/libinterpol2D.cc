@@ -605,8 +605,7 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 	size_t nb_cells = 0;
 	while( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
 		const double altitude = dem(ll, mm);
-		if(altitude==mio::IOUtils::nodata) continue; //jump over nodata cells
-		if( !(ll==ii && mm==jj) ) {
+		if( (altitude!=mio::IOUtils::nodata) && !(ll==ii && mm==jj) ) {
 			//compute local sx
 			const double delta_elev = altitude - ref_altitude;
 			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
