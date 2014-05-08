@@ -369,7 +369,7 @@ void NetCDFIO::get_meta_data_ids(const int& ncid, std::map<std::string, int>& ma
 	vector<string> dimensions;
 	dimensions.push_back(cnrm_points); // All variables have to have the dimension cnrm_points
 
-	for (vector<string>::const_iterator it = varname.begin(); it != varname.end(); it++) {
+	for (vector<string>::const_iterator it = varname.begin(); it != varname.end(); ++it) {
 		int varid;
 		const string& name = *it;
 
@@ -426,7 +426,7 @@ void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::v
 
 	// Allocate enough linear space for each parameter and read the data from NetCDF
 	map<string, double*> map_data;
-	for (map<string, size_t>::const_iterator it = map_parameters.begin(); it != map_parameters.end(); it++) {
+	for (map<string, size_t>::const_iterator it = map_parameters.begin(); it != map_parameters.end(); ++it) {
 		double* data = new double[number_of_stations*number_of_records];
 		const string& varname = it->first;
 
@@ -439,7 +439,7 @@ void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::v
 
 	copy_data(ncid, map_parameters, map_data, number_of_stations, number_of_records, vecMeteo);
 
-	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
+	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); ++it) {
 		delete[] it->second;
 	}
 }
@@ -453,7 +453,7 @@ void NetCDFIO::readData(const int& ncid, const size_t& index_start, const std::v
 void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data,
                          const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo)
 {
-	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
+	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); ++it) {
 		const string& varname = it->first;
 
 		//find correct handling for each parameter
@@ -533,7 +533,7 @@ void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& ma
 	dimensions.push_back(cnrm_points);
 	dimensions.push_back(cf_time);
 
-	for (map<string, size_t>::const_iterator it = paramname.begin(); it != paramname.end(); it++) {
+	for (map<string, size_t>::const_iterator it = paramname.begin(); it != paramname.end(); ++it) {
 		if (check_variable(ncid, it->first)) {
 			const string& name = it->first;
 			size_t index = it->second;
@@ -688,7 +688,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 	copy_data(number_of_stations, number_of_records, vecMeteo, map_param_name, map_data);
 
 	write_record(ncid, NetCDFIO::cf_time, vid_time, 0, number_of_records, dates);
-	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); it++) {
+	for (map<string, double*>::const_iterator it = map_data.begin(); it != map_data.end(); ++it) {
 		const string& varname = it->first;
 		write_data(ncid, varname, varid[varname], map_data[varname]);
 		delete[] it->second;
@@ -705,7 +705,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 void NetCDFIO::copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo,
                          const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D)
 {
-	for (map<size_t, string>::const_iterator it = map_param_name.begin(); it != map_param_name.end(); it++) {
+	for (map<size_t, string>::const_iterator it = map_param_name.begin(); it != map_param_name.end(); ++it) {
 		const size_t& param = it->first;
 		const string& varname = it->second;
 
@@ -743,7 +743,7 @@ void NetCDFIO::copy_data(const size_t& number_of_stations, const size_t& number_
 // Create meta data variables in the NetCDF dataset
 void NetCDFIO::create_meta_data(const int& ncid, const int& did, std::map<std::string, double*>& map_data_1D, std::map<std::string, int>& varid)
 {
-	for (map<string, double*>::const_iterator it = map_data_1D.begin(); it != map_data_1D.end(); it++) {
+	for (map<string, double*>::const_iterator it = map_data_1D.begin(); it != map_data_1D.end(); ++it) {
 		int vid;
 		const string& varname = it->first;
 
@@ -787,7 +787,7 @@ void NetCDFIO::create_parameters(const int& ncid, const int& did_time, const int
 			add_attributes_for_variable(ncid, vid, varname);
 
 			varid[varname] = vid;
-			it++;
+			++it;
 		} else {
 			map_param_name.erase(it++);
 		}
@@ -1193,11 +1193,9 @@ void NetCDFIO::get_dimension(const int& ncid, const std::string& dimname, int& d
 
 void NetCDFIO::get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen)
 {
-	int status = nc_inq_dimid(ncid, dimname.c_str(), &dimid);
-	if (status != NC_NOERR)
-		throw IOException("Could not retrieve dimid for dimension '" + dimname + "': " + nc_strerror(status), AT);
+	get_dimension(ncid, dimname, dimid);
 
-	status = nc_inq_dimlen(ncid, dimid, &dimlen);
+	int status = nc_inq_dimlen(ncid, dimid, &dimlen);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve length for dimension '" + dimname + "': " + nc_strerror(status), AT);
 }
@@ -1239,22 +1237,6 @@ bool NetCDFIO::check_dim_var(const int& ncid, const std::string& dimname)
 	if (status != NC_NOERR) return false;
 
 	return check_variable(ncid, dimname);
-}
-
-size_t NetCDFIO::get_1D_var_len(const int& ncid, const std::string& varname)
-{
-	int dimidp;
-	size_t length = 0;
-
-	int status = nc_inq_dimid(ncid, varname.c_str(), &dimidp);
-	if (status != NC_NOERR)
-		throw IOException("Could not retrieve dimid for dimension '" + varname + "': " + nc_strerror(status), AT);
-
-	status = nc_inq_dimlen(ncid, dimidp, &length);
-	if (status != NC_NOERR)
-		throw IOException("Could not retrieve dim length for dimension '" + varname + "': " + nc_strerror(status), AT);
-
-	return length;
 }
 
 void NetCDFIO::check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names)

@@ -435,7 +435,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd); // sd will hold valid meta info
 
 		if (isConsistent) { //static station
-
+			
 		} else { //mobile station
 
 		}
@@ -490,12 +490,12 @@ void PSQLIO::convertUnits(MeteoData& meteo) const
 	// For all parameters that have either an offset or an multiplier to bring to MKSA
 	/*
 	map<size_t, double>::const_iterator it;
-	for (it = multiplier.begin(); it != multiplier.end(); it++) {
+	for (it = multiplier.begin(); it != multiplier.end(); ++it) {
 		double& tmp = meteo(it->first);
 		if (tmp != IOUtils::nodata) tmp *= it->second;
 	}
 
-	for (it = offset.begin(); it != offset.end(); it++) {
+	for (it = offset.begin(); it != offset.end(); ++it) {
 		double& tmp = meteo(it->first);
 		if (tmp != IOUtils::nodata) tmp += it->second;
 	}

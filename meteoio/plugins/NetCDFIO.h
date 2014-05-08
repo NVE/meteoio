@@ -150,7 +150,6 @@ class NetCDFIO : public IOInterface {
 		//Dealing with variables and dimensions
 		bool check_dim_var(const int& ncid, const std::string& dimname);
 		bool check_variable(const int& ncid, const std::string& varname);
-		size_t get_1D_var_len(const int& ncid, const std::string& varname);
 		void get_variable(const int& ncid, const std::string& varname, int& varid);
 		void check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names);
 		void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
