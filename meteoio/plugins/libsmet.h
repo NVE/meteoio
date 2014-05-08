@@ -18,7 +18,7 @@
 #ifndef __LIBSMET_H__
 #define __LIBSMET_H__
 
-#include <meteoio/FilesUtils.h>
+#include <meteoio/FileUtils.h>
 
 #include <cmath>
 #include <cstdlib>

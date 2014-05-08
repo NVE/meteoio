@@ -21,7 +21,7 @@
 #include <meteoio/IOManager.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/IOUtils.h>
-#include <meteoio/FilesUtils.h>
+#include <meteoio/FileUtils.h>
 
 using namespace std;
 

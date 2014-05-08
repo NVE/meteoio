@@ -19,7 +19,7 @@
 #define __CONFIGREADER_H__
 
 #include <meteoio/IOUtils.h>
-#include <meteoio/FilesUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOExceptions.h>
 
 #include <cstdio>
