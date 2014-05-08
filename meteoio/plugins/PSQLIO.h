@@ -31,7 +31,7 @@ namespace mio {
 
 /**
  * @class PSQLIO
- * @brief 
+ * @brief
  *
  * @ingroup plugins
  * @author Thomas Egger
@@ -72,7 +72,7 @@ class PSQLIO : public IOInterface {
 		bool replace(std::string& str, const std::string& from, const std::string& to);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index);
-		void parse_row(PGresult* result, const int& row, const int& cols, 
+		void parse_row(PGresult* result, const int& row, const int& cols,
 		               MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
 		void close_connection(PGconn *conn);
 		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);

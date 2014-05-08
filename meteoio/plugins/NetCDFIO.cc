@@ -233,8 +233,8 @@ void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, const doubl
 /* The Grid2DObject holds data and meta data for quadratic cells. However the NetCDF file
  * stores the grid as discrete latitude and longitude values. It is necessary to calculate
  * the distance between the edges of the grid and determine the cellsize. This cellsize may
- * be different for X and Y directions. We then choose one cellsize for our grid and 
- * determine a factor that will be used for resampling the grid to likewise consist of 
+ * be different for X and Y directions. We then choose one cellsize for our grid and
+ * determine a factor that will be used for resampling the grid to likewise consist of
  * quadratic cells.
  */
 double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
@@ -247,16 +247,16 @@ double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
 	urcorner.setLatLon(lat[latlen-1], lon[lonlen-1], IOUtils::nodata);
 
 	double ll_easting=llcorner.getEasting(), ll_northing=llcorner.getNorthing();
-	double ur_easting=urcorner.getEasting(), ur_northing=urcorner.getNorthing(); 
+	double ur_easting=urcorner.getEasting(), ur_northing=urcorner.getNorthing();
 
 	double distanceX = ur_easting - ll_easting;
 	double distanceY = ur_northing - ll_northing;
 
 	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
-	double cellsize_x = distanceX / (lonlen-1); 
+	double cellsize_x = distanceX / (lonlen-1);
 	double cellsize_y = distanceY / (latlen-1);
 
-	// We're using a precision for the cellsize that is equal to 1cm, more 
+	// We're using a precision for the cellsize that is equal to 1cm, more
 	// precision makes ensuing calculations numerically instable
 	double value =  max(cellsize_x, cellsize_y) * 100.0;
 	double cellsize = floor(value) / 100.0;
@@ -522,9 +522,9 @@ void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, size_t>& m
 }
 
 // Go through all known CNRM parameters defined in the map paramname and check which ones are present
-// in the current NetCDF dataset. A map called map_parameters will associate all parameters present 
-// with MeteoData parameters or IOUtils::npos). If the CNRM parameter does not have a corresponding 
-// parameter in the meteo_data object we can add a new parameter (e.g. cnrm_theorsw) or if the situation 
+// in the current NetCDF dataset. A map called map_parameters will associate all parameters present
+// with MeteoData parameters or IOUtils::npos). If the CNRM parameter does not have a corresponding
+// parameter in the meteo_data object we can add a new parameter (e.g. cnrm_theorsw) or if the situation
 // is more complex (e.g. rainfall is measured with two parameters) we deal with the situation in copy_data().
 // Furthermore the dimensions of each present parameter are checked.
 void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data)
@@ -795,9 +795,9 @@ void NetCDFIO::create_parameters(const int& ncid, const int& did_time, const int
 }
 
 // Retrieve the parameters in use (parameters, that are different from nodata
-// for at least one timestamp for at least one station) and store them in 
+// for at least one timestamp for at least one station) and store them in
 // map_param_name. map_param_name associates a MeteoData parameter index with a
-// string name, that is the CNRM name for the parameter to use in the NetCDF 
+// string name, that is the CNRM name for the parameter to use in the NetCDF
 // file. Furthermore this method copies the meta data into the appropriate C
 // arrays. The timestep interval is also calculated and added to the map_data_1D
 void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMeteo, std::map<size_t, std::string>& map_param_name,
@@ -905,14 +905,14 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 
 	if (exists) {
 		open_file(filename, NC_WRITE, ncid);
-		
+
 		//check of lat/lon are defined and consistent
 		if (check_dim_var(ncid, cf_latitude) && check_dim_var(ncid, cf_longitude)) {
 			check_consistency(ncid, grid_in, lat_array, lon_array, did_lat, did_lon, vid_lat, vid_lon);
 		} else {
 			create_dimensions = true;
 		}
-		
+
 		if (is_record) {
 			//check if a time dimension/variable already exists
 			if (check_dim_var(ncid, NetCDFIO::cf_time)) {
@@ -922,16 +922,16 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 				create_time = true;
 			}
 		}
-		
+
 		if (check_variable(ncid, varname)) { // variable exists
 			get_variable(ncid, varname, vid_var);
-			
+
 			vector<int> dimid, dim_varid;
 			vector<string> dimname;
 			vector<size_t> dimlen;
-			
+
 			get_dimension(ncid, varname, vid_var, dimid, dim_varid, dimname, dimlen);
-			
+
 			if (is_record) {
 				if ((dimname.size() != 3) || (dimname[0] != cf_time) || (dimname[1] != cf_latitude) || (dimname[2] != cf_longitude) || (dimlen[1]!=grid_in.nrows) || (dimlen[2]!=grid_in.ncols))
 					throw IOException("Variable '" + varname  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
@@ -947,7 +947,7 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	} else {
 		create_file(filename, NC_CLASSIC_MODEL, ncid);
 		add_attribute(ncid, NC_GLOBAL, "Conventions", "CF-1.3");
-		
+
 		create_variable = create_dimensions = true;
 
 		if (is_record) create_time = true;
@@ -1112,11 +1112,11 @@ void NetCDFIO::calculate_dimensions(const Grid2DObject& grid, double*& lat_array
 	Coords urcorner(grid.llcorner);
 	urcorner.setGridIndex(grid.ncols-1, grid.nrows-1, IOUtils::nodata, true);
 	grid.gridify(urcorner);
-	
+
 	double lat_interval = (urcorner.getLat() - lat_array[0]) / (grid.nrows-1);
 	double lon_interval = (urcorner.getLon() - lon_array[0]) / (grid.ncols-1);
 
-	// The method to use interval*ii is consistent with the corresponding 
+	// The method to use interval*ii is consistent with the corresponding
 	// calculation of the Grid2DObject::gridify method -> numerical stability
 	for (size_t ii=1; ii<grid.nrows; ii++) {
 		lat_array[ii] = lat_array[0] + lat_interval*ii;
@@ -1379,7 +1379,7 @@ void NetCDFIO::write_data(const int& ncid, const std::string& varname, const int
 }
 
 // Adding a record value (e.g. timestamp), in case it doesn't already exist and
-// that the value is greater than the last record variable value. For example, 
+// that the value is greater than the last record variable value. For example,
 // timestamps have to be strictly monotonically increasing or already existent.
 size_t NetCDFIO::add_record(const int& ncid, const std::string& varname, const int& varid, const double& data)
 {
@@ -1438,7 +1438,7 @@ size_t NetCDFIO::find_record(const int& ncid, const std::string& varname, const 
 }
 
 // In case the dimension length of the record variable is less than start_pos
-// values will be added (containing the _FillValue) until a length of start_pos-1 
+// values will be added (containing the _FillValue) until a length of start_pos-1
 // has been reached. Finally the length amount elements from start_pos and on
 // will be added.
 void NetCDFIO::write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& start_pos, const size_t& length, const double * const data)

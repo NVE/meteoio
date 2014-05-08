@@ -78,7 +78,7 @@ class NetCDFIO : public IOInterface {
 		size_t get_dates(const std::vector< std::vector<MeteoData> >& vecMeteo, double*& dates);
 		void copy_data(const size_t& number_of_stations, const size_t& number_of_records, const std::vector< std::vector<MeteoData> >& vecMeteo,
                          const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D);
-		void copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data, 
+		void copy_data(const int& ncid, const std::map<std::string, size_t>& map_parameters, const std::map<std::string, double*> map_data,
 		               const size_t& number_of_stations, const size_t& number_of_records, std::vector< std::vector<MeteoData> >& vecMeteo);
 		void readData(const int& ncid, const size_t& index_start, const std::vector<Date>& vec_date, const std::map<std::string, size_t>& map_parameters,
 		              const MeteoData& meteo_data, std::vector< std::vector<MeteoData> >& vecMeteo);
@@ -155,7 +155,7 @@ class NetCDFIO : public IOInterface {
 		void check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names);
 		void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
 		void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
-		void get_dimension(const int& ncid, const std::string& varname, const int& varid, 
+		void get_dimension(const int& ncid, const std::string& varname, const int& varid,
 		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
 
 

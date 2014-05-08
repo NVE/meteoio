@@ -40,7 +40,7 @@ namespace mio {
 
 const double PSQLIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-PSQLIO::PSQLIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(), 
+PSQLIO::PSQLIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
 									   dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(), multiplier(), offset(),
                                                 vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
@@ -48,7 +48,7 @@ PSQLIO::PSQLIO(const std::string& configfile) : cfg(configfile), coordin(), coor
 	getParameters();
 }
 
-PSQLIO::PSQLIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(), 
+PSQLIO::PSQLIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
 								  dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(), multiplier(), offset(),
                                           vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
@@ -56,10 +56,10 @@ PSQLIO::PSQLIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinpara
 	getParameters();
 }
 
-PSQLIO::PSQLIO(const PSQLIO& in) : cfg(in.cfg), coordin(in.coordin), coordinparam(in.coordinparam), coordout(in.coordout), 
-							coordoutparam(in.coordoutparam), endpoint(in.endpoint), port(in.port), dbname(in.dbname), userid(in.userid), 
-							passwd(in.passwd), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta), multiplier(in.multiplier), 
-							offset(in.offset), vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID), 
+PSQLIO::PSQLIO(const PSQLIO& in) : cfg(in.cfg), coordin(in.coordin), coordinparam(in.coordinparam), coordout(in.coordout),
+							coordoutparam(in.coordoutparam), endpoint(in.endpoint), port(in.port), dbname(in.dbname), userid(in.userid),
+							passwd(in.passwd), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta), multiplier(in.multiplier),
+							offset(in.offset), vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID),
 							sql_meta(in.sql_meta), sql_data(in.sql_data), shadowed_parameters(in.shadowed_parameters) {}
 
 PSQLIO& PSQLIO::operator=(const PSQLIO& in)
@@ -129,10 +129,10 @@ void PSQLIO::create_shadow_map(const std::string& exclude_file)
 
 	try {
 		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
-		
+
 		vector<string> tmpvec;
 		string line("");
-		
+
 		while (!fin.eof()) { //Go through file
 			getline(fin, line, eoln); //read complete line meta information
 			IOUtils::stripComments(line);
@@ -319,7 +319,7 @@ void PSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Me
 	if (result) {
 		int rows = PQntuples(result);
 		int columns = PQnfields(result);
-		
+
 		vector<size_t> index;
 		MeteoData tmpmeteo;
 		tmpmeteo.meta = vecMeta.at(stationindex);
@@ -347,7 +347,7 @@ void PSQLIO::parse_row(PGresult* result, const int& row, const int& cols, MeteoD
 		}
 	}
 
-	convertUnits(tmp);	
+	convertUnits(tmp);
 	vecMeteo.push_back(tmp);
 }
 
@@ -435,7 +435,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd); // sd will hold valid meta info
 
 		if (isConsistent) { //static station
-			
+
 		} else { //mobile station
 
 		}
@@ -538,7 +538,7 @@ PGresult *PSQLIO::get_data(const string& sql_command)
 		// options.align     = 1;    /* Pad short columns for alignment   */
 		// options.fieldSep  = "|";  /* Use a pipe as the field separator */
 		// PQprint(stdout, result, &options);
-		
+
 	} else {
 		//cout << "BAD SELECT: " << PQresStatus(status) << endl;
 		PQclear(result);
