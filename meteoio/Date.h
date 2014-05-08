@@ -136,6 +136,7 @@ class Date {
 		static const Date rnd(const Date& indate, const unsigned int& precision, const RND& type=CLOSEST);
 		static double parseTimeZone(const std::string& timezone_iso);
 
+		static std::string printFractionalDay(const double& fractional);
 		const std::string toString(FORMATS type, const bool& gmt=false) const;
 		const std::string toString() const;
 		friend std::iostream& operator<<(std::iostream& os, const Date& date);

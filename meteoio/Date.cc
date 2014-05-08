@@ -15,10 +15,12 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <cmath>
+#include <cstdio>
+
 #include <meteoio/Date.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/MathOptim.h>
-#include <cmath>
 
 using namespace std;
 
@@ -810,6 +812,25 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 	} else {
 		return IOUtils::nodata;
 	}
+}
+
+/**
+* @brief Nicely format an hour given as fractional day into a human readable hour.
+* @param fractional fractional day (ie: fractional part of a julian date)
+* @return string containing a human readable time
+*/
+std::string printFractionalDay(const double& fractional) {
+	const double hours=floor(fractional*24.);
+	const double minutes=floor((fractional*24.-hours)*60.);
+	const double seconds=fractional*24.*3600.-hours*3600.-minutes*60.;
+
+	std::ostringstream tmp;
+	tmp << std::fixed << std::setfill('0') << std::setprecision(0);
+	tmp << std::setw(2) << hours << ":";
+	tmp << std::setw(2) << minutes << ":";
+	tmp << std::setw(2) << seconds;
+
+	return tmp.str();
 }
 
 /**

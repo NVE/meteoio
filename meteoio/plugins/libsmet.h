@@ -18,7 +18,7 @@
 #ifndef __LIBSMET_H__
 #define __LIBSMET_H__
 
-#include <meteoio/IOUtils.h> //HACK: move FileIndexer in a plugins specific file
+#include <meteoio/FilesUtils.h>
 
 #include <cmath>
 #include <cstdlib>

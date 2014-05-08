@@ -17,9 +17,11 @@
 */
 #include <cmath>
 #include <string>
+
 #include <meteoio/meteolaws/Suntrajectory.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants
 #include <meteoio/IOExceptions.h>
+#include <meteoio/Date.h> //for printFractionalDay
 
 namespace mio {
 
@@ -191,10 +193,10 @@ const std::string SunTrajectory::toString() const
 	os << std::setprecision(2);
 	os << "Azi./Elev.\t" << std::setw(7)<< SolarAzimuthAngle << "° " << std::setw(7) << SolarElevation << "°\n";
 	os << "RA/decl.\t" << std::setw(7) << SunRightAscension << "° " << std::setw(7) << SunDeclination << "°\n";
-	os << "Sunrise (gmt)\t" << IOUtils::printFractionalDay(SunRise - longitude*1./15.*1./24.) << "\n";
-	os << "SolarNoon (gmt)\t" << IOUtils::printFractionalDay(SolarNoon - longitude*1./15.*1./24.) << "\n";
-	os << "Sunset (gmt)\t" << IOUtils::printFractionalDay(SunSet - longitude*1./15.*1./24.) << "\n";
-	os << "Daylight\t" << IOUtils::printFractionalDay(SunlightDuration/(60.*24.)) << "\n";
+	os << "Sunrise (gmt)\t" << Date::printFractionalDay(SunRise - longitude*1./15.*1./24.) << "\n";
+	os << "SolarNoon (gmt)\t" << Date::printFractionalDay(SolarNoon - longitude*1./15.*1./24.) << "\n";
+	os << "Sunset (gmt)\t" << Date::printFractionalDay(SunSet - longitude*1./15.*1./24.) << "\n";
+	os << "Daylight\t" << Date::printFractionalDay(SunlightDuration/(60.*24.)) << "\n";
 	os << "</SunTrajectory>\n";
 	os << std::setfill(' ');
 	return os.str();

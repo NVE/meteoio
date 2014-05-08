@@ -20,6 +20,8 @@
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/IOManager.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/IOUtils.h>
+#include <meteoio/FilesUtils.h>
 
 using namespace std;
 
@@ -578,6 +580,10 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+
+	//option 1: fixed DW
+	//option 2: specify the station to take DW from
+	//option 3: compute DW from multiple stations
 
 	if (vecArgs.size() == 2) { //fixed wind direction
 		IOUtils::convertString(synoptic_bearing, vecArgs[1]);

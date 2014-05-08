@@ -18,23 +18,17 @@
 #ifndef __IOUTILS_H__
 #define __IOUTILS_H__
 
+#include <string>
+#include <map>
+#include <vector>
+#include <cstdlib>
+#include <limits>
+#include <cmath>
+
 #include <meteoio/Coords.h>
 #include <meteoio/Date.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/meteolaws/Meteoconst.h>
-
-#include <sstream>
-#include <string>
-#include <map>
-#include <vector>
-#include <list>
-#include <cstdlib>
-#include <iostream>
-#include <cstdio>
-#include <fstream>
-#include <cctype>
-#include <limits>
-#include <cmath>
 
 #ifndef C_TO_K
 #define C_TO_K( T ) ( T + Cst::t_water_freezing_pt )	  // degree Celsius to kelvin
@@ -84,14 +78,6 @@ namespace IOUtils {
 	size_t seek(const Date& soughtdate, const std::vector<MeteoData>& vecM, const bool& exactmatch=true);
 
 	/**
-	 * @brief Copies a files from one location to another
-	 * @author Thomas Egger
-	 * @param src  The filename of the file to be copied
-	 * @param dest The filename of the file to copy to (will be created or overwritten)
-	 */
-	void copy_file(const std::string& src, const std::string& dest);
-
-	/**
 	* @brief Converts a compass bearing to a trigonometric angle
 	* @param bearing compass bearing (0° on top, clockwise, in [0°, 360°[)
 	* @return trigonometric angle (0° on the right, counterclockwise, in [0, 2PI[)
@@ -111,66 +97,11 @@ namespace IOUtils {
 	double bearing(std::string bearing_str);
 
 	/**
-	* @brief Build a list of file in a given directory.
-	* The matching is very primitive: it only looks for the substring "pattern" in the file names.
-	* If this substrings exists, the file matches.
-	* @param path directory containing the files
-	* @param dirlist list of matching file names
-	* @param pattern optional pattern that must be part of the file names
-	*/
-	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="");
-
-	bool validFileName(const std::string& filename);
-
-	bool fileExists(const std::string& filename);
-
-	/**
 	* @brief Retrieve the user name
 	* This checks various environment variables (USERNAME, USER, LOGNAME).
 	* @return user name
 	*/
 	std::string getLogName();
-
-	/**
-	* @brief Replace "\" by "/" in a string so that a path string is cross plateform, optionally resolve
-	* links, convert relative paths to absolute paths, etc
-	* @param in_path the path string to cleanup
-	* @param resolve resolve links, convert relative paths, etc? (default=false)
-	*/
-	std::string cleanPath(std::string in_path, const bool& resolve=false);
-
-	/**
-	* @brief returns the extension part of a given filename.
-	* The extension is defined as all the non-whitespace characters after the last '.'
-	* in the filename.
-	* @param filename filename to extract the extension from
-	* @return extension
-	*/
-	std::string getExtension(const std::string& filename);
-
-	/**
-	* @brief remove the extension part of a given filename.
-	* The extension is defined as all the non-whitespace characters after the last '.'
-	* in the filename.
-	* @param filename filename to remove the extension from
-	* @return filename without extension (the '.' is also removed)
-	*/
-	std::string removeExtension(const std::string& filename);
-
-	/**
-	* @brief returns the path preceeding a given filename.
-	* @param filename filename to extract the path from
-	* @param resolve resolve links, convert relative paths, etc? (default=false)
-	* @return path
-	*/
-	std::string getPath(const std::string& filename, const bool& resolve=false);
-
-	/**
-	* @brief extract the file name from a path+filename string.
-	* @param path path to extract the true filename from
-	* @return filename
-	*/
-	std::string getFilename(const std::string& path);
 
 	/**
 	* @brief Removes trailing and leading whitespaces, tabs and newlines from a string.
@@ -179,10 +110,6 @@ namespace IOUtils {
 	void trim(std::string &s);
 
 	void stripComments(std::string& str);
-
-	char getEoln(std::istream& fin);
-
-	void skipLines(std::istream& fin, const size_t& nbLines, const char& eoln='\n');
 
 	/**
 	* @brief read a string line, parse it and save it into a map object, that is passed by reference
@@ -204,11 +131,6 @@ namespace IOUtils {
 	size_t readLineToVec(const std::string& line_in, std::vector<double>& vec_data);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString);
 	size_t readLineToVec(const std::string& line_in, std::vector<std::string>& vecString, const char& delim);
-	void readKeyValueHeader(std::map<std::string, std::string>& headermap,
-	                        std::istream& bs,
-	                        const size_t& linecount=1,
-	                        const std::string& delimiter="=", const bool& keep_case=false);
-
 
 	/**
 	* @brief Convert a string to the requested type (template function).
@@ -352,13 +274,6 @@ namespace IOUtils {
 	void getTimeZoneParameters(const Config& cfg, double& tz_in, double& tz_out);
 
 	/**
-	* @brief Nicely format an hour given as fractional day into a human readable hour.
-	* @param fractional fractional day (ie: fractional part of a julian date)
-	* @return string containing a human readable time
-	*/
-	std::string printFractionalDay(const double& fractional);
-
-	/**
 	* @brief Returns the parameters for splitting an array in several, balanced sub-arrays.
 	* This is mostly usefull for parallel calculations, where an array will be split and sent to different
 	* workers.
@@ -369,57 +284,6 @@ namespace IOUtils {
 	* @param[out] nx calculated number of cells (in the desired dimension) of the current slice
 	*/
 	void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, const unsigned int &wk, size_t& startx, size_t& nx);
-
-	/**
-	* @class file_indexer
-	* @brief helps building an index of stream positions
-	* to quickly jump closer to the proper position in an file
-	*
-	* @ingroup plugins
-	* @author Mathias Bavay
-	* @date   2012-11-30
-	*/
-	class FileIndexer {
-		public:
-			FileIndexer() : vecIndex() {};
-
-			/**
-			* @brief Add a new position to the index
-			* @param[in] i_date date of the new position
-			* @param[in] i_pos streampos position
-			*/
-			void setIndex(const Date& i_date, const std::streampos& i_pos);
-			void setIndex(const std::string& i_date, const std::streampos& i_pos);
-			void setIndex(const double& i_date, const std::streampos& i_pos);
-
-			/**
-			* @brief Get the file position suitable for a given date
-			* @param[in] i_date date for which a position is requested
-			* @return closest streampos position before the requested date,
-			* -1 if nothing could be found (empty index)
-			*/
-			std::streampos getIndex(const Date& i_date) const;
-			std::streampos getIndex(const std::string& i_date) const;
-			std::streampos getIndex(const double& i_date) const;
-
-			const std::string toString() const;
-
-		private:
-			struct file_index {
-				file_index(const Date& i_date, const std::streampos& i_pos) : date(i_date), pos(i_pos) {};
-				bool operator<(const file_index& a) const {
-					return date < a.date;
-				}
-				bool operator>(const file_index& a) const {
-					return date > a.date;
-				}
-				Date date;
-				std::streampos pos;
-			};
-			size_t binarySearch(const Date& soughtdate) const;
-
-			std::vector< struct file_index > vecIndex;
-	};
 
 } //end namespace IOUtils
 
