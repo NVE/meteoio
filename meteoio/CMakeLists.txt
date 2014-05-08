@@ -59,7 +59,7 @@ SET(meteoio_sources
 	Config.cc
 	IOExceptions.cc
 	IOUtils.cc
-	FilesUtils.cc
+	FileUtils.cc
 	MeteoData.cc
 	plugins/libsmet.cc
 	${plugins_sources}

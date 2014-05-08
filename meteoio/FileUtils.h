@@ -14,8 +14,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __FILESUTILS_H__
-#define __FILESUTILS_H__
+#ifndef __FILEUTILS_H__
+#define __FILEUTILS_H__
 
 #include <sstream>
 #include <string>

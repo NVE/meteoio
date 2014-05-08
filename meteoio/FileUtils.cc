@@ -31,7 +31,7 @@
 	#include <sys/stat.h>
 #endif
 
-#include <meteoio/FilesUtils.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/IOUtils.h>
 
 namespace mio {
