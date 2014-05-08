@@ -258,11 +258,15 @@ double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Par
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	if (nrOfMeasurments == 0){
-		return 0.0;
-	} else if (nrOfMeasurments == 1){
+	if (nrOfMeasurments == 0) {
+		if (vecArgs.size()==1) {
+			IOUtils::convertString(user_cst, vecArgs[0]);
+			user_provided = true;
+			return 0.01;
+		} else return 0.0;
+	} else if (nrOfMeasurments == 1) {
 		return 0.8;
-	} else if (nrOfMeasurments > 1){
+	} else if (nrOfMeasurments > 1) {
 		return 0.2;
 	}
 
@@ -270,7 +274,10 @@ double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Par
 }
 
 void ConstAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
-	Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
+	if (!user_provided)
+		Interpol2D::constant(Interpol1D::arithmeticMean(vecData), dem, grid);
+	else
+		Interpol2D::constant(user_cst, dem, grid);
 }
 
 

@@ -200,15 +200,20 @@ class NoneAlgorithm : public InterpolationAlgorithm {
  * @class ConstAlgorithm
  * @brief Constant filling interpolation algorithm.
  * Fill the grid with the average of the inputs for this parameter.
+ * Optionally, it is also possible to provide the constant that should be used if no measurements
+ * are avaiblable.
  */
 class ConstAlgorithm : public InterpolationAlgorithm {
 	public:
 		ConstAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), user_cst(0.), user_provided(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		double user_cst;
+		bool user_provided;
 };
 
 /**

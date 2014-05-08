@@ -819,7 +819,7 @@ double Date::parseTimeZone(const std::string& timezone_iso)
 * @param fractional fractional day (ie: fractional part of a julian date)
 * @return string containing a human readable time
 */
-std::string printFractionalDay(const double& fractional) {
+std::string Date::printFractionalDay(const double& fractional) {
 	const double hours=floor(fractional*24.);
 	const double minutes=floor((fractional*24.-hours)*60.);
 	const double seconds=fractional*24.*3600.-hours*3600.-minutes*60.;
