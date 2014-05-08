@@ -752,14 +752,19 @@ void GRIBIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	//find index of first time step
 	size_t idx_start;
 	bool start_found=false;
-	for(idx_start=0; idx_start<cache_meteo_files.size(); idx_start++) {
+	for (idx_start=0; idx_start<cache_meteo_files.size(); idx_start++) {
 		if(dateStart<cache_meteo_files[idx_start].first) {
 			start_found=true;
 			break;
 		}
 	}
-	if(start_found==false) return;
-	if(idx_start>0) idx_start--; //start with first element before dateStart (useful for resampling)
+
+	if (start_found==false) {
+		free(lats); free(lons);
+		return;
+	}
+
+	if (idx_start>0) idx_start--; //start with first element before dateStart (useful for resampling)
 
 	try {
 		for(size_t ii=idx_start; ii<cache_meteo_files.size(); ii++) {
