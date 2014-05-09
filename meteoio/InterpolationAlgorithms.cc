@@ -259,11 +259,16 @@ double ConstAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Par
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
 	if (nrOfMeasurments == 0) {
-		if (vecArgs.size()==1) {
+		const size_t nr_args = vecArgs.size();
+
+		if (nr_args>1)
+			throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+		if (nr_args==1) {
 			IOUtils::convertString(user_cst, vecArgs[0]);
 			user_provided = true;
 			return 0.01;
-		} else return 0.0;
+		} else
+			return 0.0;
 	} else if (nrOfMeasurments == 1) {
 		return 0.8;
 	} else if (nrOfMeasurments > 1) {
