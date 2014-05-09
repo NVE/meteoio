@@ -386,9 +386,12 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
  * Journal of Hydrometeorology, <b>3(5)</b>, 524-538.
  * The DEM is used to compute wind exposure factors that are used to alter the precipitation fields.
  * It is usually a good idea to provide a DEM that also contain the accumulated snow height in order
- * to get a progrfessive softening of the terrain features.
- * It takes two arguments: the base algorithm to generate the initial wind field and the
- * synoptic wind direction.
+ * to get a progressive softening of the terrain features.
+ * It takes the following arguments: the base algorithm to generate the initial wind field, the
+ * synoptic wind direction or the station_id of the station to get the wind direction from. All these arguments
+ * are optional but in order to make it possible to distinguish the arguments, it is not possible to only
+ * provide one argument of type "string" (in such a case, the second one must be provided and the order
+ * defines which is which).
  * @code
  * HNW::algorithms    = WINSTRAL
  * HNW::winstral = idw_lapse 180
@@ -399,14 +402,14 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 		WinstralAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), synoptic_bearing(0.) {}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
-		void initGrid(const DEMObject& dem, Grid2DObject& grid);
+		void getParameters(std::string &base_algo, double &synoptic_bearing) const;
+		void initGrid(const std::string& base_algo, const DEMObject& dem, Grid2DObject& grid);
+		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, const std::string& algo);
 		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo);
-
-		double synoptic_bearing;
 };
 
 /**

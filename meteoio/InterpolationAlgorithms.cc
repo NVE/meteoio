@@ -593,42 +593,67 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
 
-	//option 1: fixed DW
-	//option 2: specify the station to take DW from
-	//option 3: compute DW from multiple stations
-
-	if (vecArgs.size() == 2) { //fixed wind direction
-		IOUtils::convertString(synoptic_bearing, vecArgs[1]);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Please provide the wind direction to use for the "+algo+" algorithm", AT);
-	}
-
 	if (nrOfMeasurments==0)
 		return 0.0;
 
-	return 0.9;
+	return 0.99;
 }
 
-void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
+void WinstralAlgorithm::getParameters(std::string &base_algo, double &synoptic_bearing) const
 {
-	//retrieve optional arguments
-	std::string base_algo;
-	if (vecArgs.empty()){
-		base_algo=std::string("IDW_LAPSE");
-	} else if (vecArgs.size() <= 2){
-		IOUtils::convertString(base_algo, vecArgs[0]);
-	} else { //incorrect arguments, throw an exception
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-	}
+	//option 0: compute DW from multiple stations
+	//option 1: fixed DW
+	//option 2: specify the station_id to take DW from
+	base_algo = "IDW_LAPSE";
 
+	const size_t nr_args = vecArgs.size();
+	if (nr_args==0) {
+		synoptic_bearing = getSynopticBearing(vecMeteo);
+		if (synoptic_bearing==IOUtils::nodata)
+			throw IOException("Synoptic wind could not be computed by the "+algo+" algorithm", AT);
+		return;
+	} else if (nr_args==1) {
+		if (IOUtils::isNumeric(vecArgs[0]))
+			IOUtils::convertString(synoptic_bearing, vecArgs[0]);
+		else
+			throw InvalidArgumentException("Please provide both the base interpolation method and the station_id to use for wind direction for the "+algo+" algorithm", AT);
+		return;
+	} else if (nr_args==2) {
+		if (IOUtils::isNumeric(vecArgs[0])) {
+			IOUtils::convertString(synoptic_bearing, vecArgs[0]);
+			base_algo = IOUtils::strToUpper( vecArgs[1] );
+		} else if (IOUtils::isNumeric(vecArgs[1]))  {
+			IOUtils::convertString(synoptic_bearing, vecArgs[1]);
+			base_algo = IOUtils::strToUpper( vecArgs[0] );
+		} else {
+			base_algo = IOUtils::strToUpper( vecArgs[0] );
+			const string ref_station( vecArgs[1] );
+			synoptic_bearing = getSynopticBearing(vecMeteo, ref_station, algo);
+		}
+		return;
+	} else
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+}
+
+void WinstralAlgorithm::initGrid(const std::string& base_algo, const DEMObject& dem, Grid2DObject& grid)
+{
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
-	IOUtils::toUpper(base_algo);
 	vector<string> vecArgs2;
 	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
 	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
+}
+
+double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, const std::string& algo)
+{
+	for(size_t ii=0; ii<vecMeteo.size(); ++ii) {
+		if (vecMeteo[ii].meta.stationID==ref_station)
+			return vecMeteo[ii](MeteoData::DW);
+	}
+
+	throw InvalidArgumentException("Station \""+ref_station+"\" should be used as reference station for the "+algo+" algorithm but has not been found", AT);
 }
 
 double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo)
@@ -664,12 +689,11 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-	initGrid(dem, grid);
 
-	//get synoptic wind direction. Three options:
-	// a) use a fixed wind direction b) use a user provided list of directions c) get it from the data
-
-	//synoptic_bearing = (vecMeteo);
+	string base_algo, ref_station;
+	double synoptic_bearing;
+	getParameters(base_algo, synoptic_bearing);
+	initGrid(base_algo, dem, grid);
 
 	//alter the field with Winstral and the chosen wind direction
 	Interpol2D::Winstral(dem, 300., synoptic_bearing, grid); //HACK

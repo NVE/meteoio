@@ -42,7 +42,7 @@ namespace mio {
  *
  * Another usage scenario is to create new parameters fully based on parametrizations. In such a case, the "generator" is called
  * a "creator" and behaves the same way as a generator, except that it creates an additional parameter. It is declared as
- * {new_parameter}::create = {data generators}.
+ * {new_parameter}::%create = {data generators}.
  *
  * @note it is generally not advised to use data generators in combination with spatial interpolations as this would
  * potentially mix measured and generated values in the resulting grid. It is therefore advised to turn the data generators
