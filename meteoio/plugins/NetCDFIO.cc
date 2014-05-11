@@ -25,8 +25,19 @@ namespace mio {
 /**
  * @page netcdf NetCDF
  * @section netcdf_format Format
- * *Put here the informations about the standard format that is implemented*
- * http://cfconventions.org/1.6.html
+ * In order to promote creation, access and sharing of scientific data, the NetCDF format has been
+ * created as a machine-independent format. NetCDF (network Common Data Form) is therefore an interface
+ * for array-oriented data access and a library that provides an implementation of the interface. The
+ * <A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF software</A> was developed
+ * at the <A HREF="http://www.unidata.ucar.edu/">Unidata Program Center</A> in Boulder, Colorado.
+ *
+ * The <A HREF="http://cfconventions.org/1.6.html">conventions</A> for climate and forecast (CF) metadata
+ * are designed to promote the processing and sharing of netCDF files. The conventions define metadata
+ * that provide a definitive description of what the data represents, and the spatial and temporal properties of the data.
+ * This plugin follows such conventions as well as the naming extensions defined by the
+ * <A HREF="http://www.cnrm.meteo.fr/">CNRM</A>.
+ *
+ * *Put here the more informations about the standard format that is implemented*
  *
  * @section netcdf_units Units
  *
@@ -39,6 +50,18 @@ namespace mio {
  * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output; [Input] and [Output] section
  * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
+ *
+ * @section example Example use
+ * @code
+ * [Input]
+ * DEM     = NETCDF
+ * DEMFILE = ./input/Aster_tile.nc
+ * DEMVAR  = z
+ * @endcode
+ *
+ * @section Compilation
+ * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
+ * their development files in your package manager.
  */
 
 const double NetCDFIO::plugin_nodata = -9999999.; //CNRM-GAME nodata value

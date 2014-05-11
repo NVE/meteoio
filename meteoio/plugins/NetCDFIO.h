@@ -105,56 +105,56 @@ class NetCDFIO : public IOInterface {
 		/* libnetcdf wrappers */
 
 		//Opening, creating, closing dataset
-		void open_file(const std::string& filename, const int& omode, int& ncid);
-		void create_file(const std::string& filename, const int& cmode, int& ncid);
-		void start_definitions(const std::string& filename, const int& ncid);
-		void end_definitions(const std::string& filename, const int& ncid);
-		void close_file(const std::string& filename, const int& ncid);
+		static void open_file(const std::string& filename, const int& omode, int& ncid);
+		static void create_file(const std::string& filename, const int& cmode, int& ncid);
+		static void start_definitions(const std::string& filename, const int& ncid);
+		static void end_definitions(const std::string& filename, const int& ncid);
+		static void close_file(const std::string& filename, const int& ncid);
 
 		//Adding variables
-		void add_0D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, int& varid);
-		void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
-		void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
-		void add_3D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record,
+		static void add_0D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, int& varid);
+		static void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
+		static void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
+		static void add_3D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record,
 		                     const int& dimid1, const int& dimid2, int& varid);
 
 		//Adding attributes
-		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
-		void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
-		void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value);
+		static void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
+		static void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const double& attr_value);
+		static void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, std::string& attr_value);
 
 		//Adding dimensions
-		void add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
+		static void add_dimension(const int& ncid, const std::string& dimname, const size_t& length, int& dimid);
 
 
 		//Reading data from NetCDF file
-		void read_data(const int& ncid, const std::string& varname, const int& varid,
+		static void read_data(const int& ncid, const std::string& varname, const int& varid,
 		               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
-		void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
+		static void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
 		                  const size_t& record, const size_t& count, const size_t& length, double*& data);
-		void read_value(const int& ncid, const std::string& varname, const int& varid, double& data);
-		void read_value(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, double& data);
-		void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
+		static void read_value(const int& ncid, const std::string& varname, const int& varid, double& data);
+		static void read_value(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, double& data);
+		static void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);
 
 		//Writing data to NetCDF file
-		void write_data(const int& ncid, const std::string& varname, const int& varid, const double * const data);
-		void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid,
+		static void write_data(const int& ncid, const std::string& varname, const int& varid, const double * const data);
+		static void write_data(const int& ncid, const std::string& varname, const int& varid, const Grid2DObject& grid,
 		                const size_t& pos_start, const double * const data);
 
 		//Dealing with variables that have dimension NC_UNLIMITED
-		size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
-		size_t add_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
-		void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& pos,
+		static size_t find_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
+		static size_t add_record(const int& ncid, const std::string& varname, const int& varid, const double& data);
+		static void write_record(const int& ncid, const std::string& varname, const int& varid, const size_t& pos,
 		                  const size_t& length, const double * const data);
 
 		//Dealing with variables and dimensions
-		bool check_dim_var(const int& ncid, const std::string& dimname);
-		bool check_variable(const int& ncid, const std::string& varname);
-		void get_variable(const int& ncid, const std::string& varname, int& varid);
-		void check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names);
-		void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
-		void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
-		void get_dimension(const int& ncid, const std::string& varname, const int& varid,
+		static bool check_dim_var(const int& ncid, const std::string& dimname);
+		static bool check_variable(const int& ncid, const std::string& varname);
+		static void get_variable(const int& ncid, const std::string& varname, int& varid);
+		static void check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names);
+		static void get_dimension(const int& ncid, const std::string& dimname, int& dimid);
+		static void get_dimension(const int& ncid, const std::string& dimname, int& dimid, size_t& dimlen);
+		static void get_dimension(const int& ncid, const std::string& varname, const int& varid,
 		                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen);
 
 
