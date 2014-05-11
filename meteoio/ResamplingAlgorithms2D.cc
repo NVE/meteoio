@@ -19,6 +19,7 @@
 #include <meteoio/MathOptim.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <cmath>
+#include <sstream>
 
 using namespace std;
 
@@ -29,6 +30,11 @@ namespace mio {
  */
 const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject &i_grid, const double &factor)
 {
+	if (factor<=0) {
+		ostringstream ss;
+		ss << "Rescaling factor " << factor << " is invalid!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 	const double cellsize = i_grid.cellsize/factor;
 	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
 	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
@@ -40,6 +46,11 @@ const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject
 
 const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DObject &i_grid, const double &factor)
 {
+	if (factor<=0) {
+		ostringstream ss;
+		ss << "Rescaling factor " << factor << " is invalid!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 	const double cellsize = i_grid.cellsize/factor;
 	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
 	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
@@ -51,6 +62,11 @@ const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DOb
 
 const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &i_grid, const double &factor)
 {
+	if (factor<=0) {
+		ostringstream ss;
+		ss << "Rescaling factor " << factor << " is invalid!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 	const double cellsize = i_grid.cellsize/factor;
 	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
 	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
@@ -61,6 +77,11 @@ const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &
 }
 
 const Array2D<double> ResamplingAlgorithms2D::NearestNeighbour(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+	if (factor_x<=0 || factor_y<=0) {
+		ostringstream ss;
+		ss << "Rescaling factors (" << factor_x << "," << factor_y << ") are invalid!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 	const size_t nx = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor_x ));
 	const size_t ny = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor_y ));
 	Array2D<double> o_grid(nx, ny);
@@ -70,15 +91,24 @@ const Array2D<double> ResamplingAlgorithms2D::NearestNeighbour(const Array2D<dou
 }
 
 const Array2D<double> ResamplingAlgorithms2D::BilinearResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+	if (factor_x<=0 || factor_y<=0) {
+		ostringstream ss;
+		ss << "Rescaling factors (" << factor_x << "," << factor_y << ") are invalid!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 	const size_t nx = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor_x ));
 	const size_t ny = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor_y ));
 	Array2D<double> o_grid(nx, ny);
-
 	Bilinear(o_grid, i_grid);
 	return o_grid;
 }
 
 const Array2D<double> ResamplingAlgorithms2D::cubicBSplineResampling(const Array2D<double> &i_grid, const double &factor_x, const double &factor_y) {
+	if (factor_x<=0 || factor_y<=0) {
+		ostringstream ss;
+		ss << "Rescaling factors (" << factor_x << "," << factor_y << ") are invalid!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
 	const size_t nx = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor_x ));
 	const size_t ny = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor_y ));
 	Array2D<double> o_grid(nx, ny);
