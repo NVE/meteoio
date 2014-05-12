@@ -109,10 +109,10 @@ bool NetCDFIO::initStaticData()
 {
 	//Associate unsigned int value and a string representation of a meteo parameter
 	paramname[cnrm_ta] = MeteoData::TA;
-	//paramname[cnrm_qair] = IOUtils::npos; // not a standard MeteoIO parameter
-	//paramname[cnrm_co2air] = IOUtils::npos; // not a standard MeteoIO parameter
-	//paramname[cnrm_neb] = IOUtils::npos; // not a standard MeteoIO parameter
-	//paramname[cnrm_theorsw] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_qair] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_co2air] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_neb] = IOUtils::npos; // not a standard MeteoIO parameter
+	paramname[cnrm_theorsw] = IOUtils::npos; // not a standard MeteoIO parameter
 	paramname[cnrm_rh] = MeteoData::RH;
 	paramname[cnrm_vw] = MeteoData::VW;
 	paramname[cnrm_dw] = MeteoData::DW;
@@ -131,6 +131,10 @@ bool NetCDFIO::initStaticData()
 	map_name["DW"] = cnrm_dw;
 	map_name["ISWR"] = cnrm_swr_direct;
 	map_name["HNW"] = cnrm_hnw;
+	map_name[cnrm_co2air] = cnrm_co2air;
+	map_name[cnrm_qair] = cnrm_qair;
+	map_name[cnrm_theorsw] = cnrm_theorsw;
+	map_name[cnrm_neb] = cnrm_neb;
 
 	return true;
 }
@@ -406,7 +410,8 @@ void NetCDFIO::get_meta_data_ids(const int& ncid, std::map<std::string, int>& ma
 		const string& name = *it;
 
 		get_variable(ncid, name, varid);
-		check_dimensions(ncid, name, varid, dimensions);
+		if (!check_dimensions(ncid, name, varid, dimensions))
+			throw IOException("Variable '" + name  + "' fails dimension check", AT);
 
 		map_vid[name] = varid;
 	}
@@ -553,34 +558,44 @@ void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, size_t>& m
 	}
 }
 
-// Go through all known CNRM parameters defined in the map paramname and check which ones are present
-// in the current NetCDF dataset. A map called map_parameters will associate all parameters present
-// with MeteoData parameters or IOUtils::npos). If the CNRM parameter does not have a corresponding
-// parameter in the meteo_data object we can add a new parameter (e.g. cnrm_theorsw) or if the situation
-// is more complex (e.g. rainfall is measured with two parameters) we deal with the situation in copy_data().
-// Furthermore the dimensions of each present parameter are checked.
+// Go through all variables present in the NetCDF dataset that have the correct dimensions. A map called 
+// map_parameters will associate all parameters present with MeteoData parameters or IOUtils::npos). If 
+// the CNRM parameter does not have a corresponding parameter in the meteo_data object we can add a new 
+// parameter (e.g. cnrm_theorsw) or if the situation is more complex (e.g. rainfall is measured with two
+// parameters) we deal with the situation in copy_data().
 void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data)
 {
 	vector<string> dimensions;
-	dimensions.push_back(cnrm_points);
 	dimensions.push_back(cf_time);
+	dimensions.push_back(cnrm_points);
 
-	for (map<string, size_t>::const_iterator it = paramname.begin(); it != paramname.end(); ++it) {
-		if (check_variable(ncid, it->first)) {
-			const string& name = it->first;
-			size_t index = it->second;
+	vector<string> present_parameters;
+	get_variables(ncid, dimensions, present_parameters);
 
-			//cout << "Found parameter: " << name << endl;
+	for (vector<string>::const_iterator it = present_parameters.begin(); it != present_parameters.end(); ++it) {
+		const string& name = *it;
+		//cout << "Found parameter: " << name << endl;	
+
+		// Check if parameter exists in paramname, which holds strict CNRM parameters
+		map<string, size_t>::const_iterator strict_it = paramname.find(name);
+		if (strict_it != paramname.end()) { // parameter is a part of the CNRM specification
+			size_t index = strict_it->second;
+
 			if ((name == cnrm_theorsw) || (name == cnrm_qair) || (name == cnrm_co2air) || (name == cnrm_neb)) {
 			 	index = meteo_data.addParameter(name);
 			}
 
-			map_parameters[it->first] = index;
+			map_parameters[name] = index;
+		} else if (!in_strict) { // parameter will be read anyway
+			size_t index = IOUtils::npos;
 
-			// Now check the dimensions of the current variable
-			int varid;
-			get_variable(ncid, name, varid);
-			check_dimensions(ncid, name, varid, dimensions);
+			if (meteo_data.param_exists(name)) {
+				index = meteo_data.getParameterIndex(name);
+			} else {
+			 	index = meteo_data.addParameter(name);
+			}
+
+			map_parameters[name] = index;
 		}
 	}
 }
@@ -1281,7 +1296,31 @@ bool NetCDFIO::check_dim_var(const int& ncid, const std::string& dimname)
 	return check_variable(ncid, dimname);
 }
 
-void NetCDFIO::check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names)
+// Retrieve all variables with a certain set of dimensions
+void NetCDFIO::get_variables(const int& ncid, const std::vector<std::string>& dimensions, std::vector<std::string>& variables)
+{
+	int nr_of_variables = -1;
+	int status = nc_inq_nvars(ncid, &nr_of_variables);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve variables for dataset: " + string(nc_strerror(status)), AT);
+
+	// Variable IDs in a NetCDF file are consecutive integers starting with 0
+	for (int ii=0; ii<nr_of_variables; ++ii) {
+		char name[NC_MAX_NAME+1];
+		status = nc_inq_varname(ncid, ii, name);
+		if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+
+		string varname(name);
+		const bool check = check_dimensions(ncid, varname, ii, dimensions);
+
+		if (check) variables.push_back(varname);
+		//cout << varname << " is conformant: " << (check ? "yes" : "no") << endl;
+	}
+}
+
+// NOTE: the dimension names in the vector 'names' have to have the same order
+//       as the dimensions ids retrieved for the variable
+bool NetCDFIO::check_dimensions(const int& ncid, const std::string& varname, const int& varid, const std::vector<std::string>& names)
 {
 	int dimids[NC_MAX_VAR_DIMS], ndimsp;
 
@@ -1289,8 +1328,7 @@ void NetCDFIO::check_dimensions(const int& ncid, const std::string& varname, con
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve dimensions for variable '" + varname + "': " + nc_strerror(status), AT);
 
-	if ((int)names.size() != ndimsp)
-		throw IOException("Variable '" + varname  + "' fails dimension check", AT);
+	if ((int)names.size() != ndimsp) return false;
 
 	for (int ii=0; ii<ndimsp; ii++) {
 		char name[NC_MAX_NAME+1];
@@ -1299,11 +1337,12 @@ void NetCDFIO::check_dimensions(const int& ncid, const std::string& varname, con
 		if (stat != NC_NOERR) throw IOException(nc_strerror(stat), AT);
 
 		const string dimname = string(name);
-		const bool exists = (find(names.begin(), names.end(), dimname) != names.end());
+		const bool exists = (dimname == names[ii]); //(find(names.begin(), names.end(), dimname) != names.end());
 
-		if (!exists)
-			throw IOException("Variable '" + varname  + "' fails dimension check", AT);
+		if (!exists) return false;
 	}
+
+	return true; // dimension check successfull
 }
 
 void NetCDFIO::get_dimension(const int& ncid, const std::string& varname, const int& varid,
