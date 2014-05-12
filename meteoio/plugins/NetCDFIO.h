@@ -172,6 +172,7 @@ class NetCDFIO : public IOInterface {
 		const Config cfg;
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		double in_dflt_TZ, out_dflt_TZ;     //default time zones
+		bool in_strict, out_strict;
 		std::vector<StationData> vecMetaData;
 };
 

@@ -50,6 +50,8 @@ namespace mio {
  * - DEMVAR: The variable name of the DEM within the DEMFILE; [Input] section
  * - METEOFILE: the NetCDF file which shall be used for the meteo parameter input/output; [Input] and [Output] section
  * - GRID2DFILE: the NetCDF file which shall be used for gridded input/output; [Input] and [Output] section
+ * - STRICTFORMAT: Whether the NetCDF file should be strictly compliant with the CNRM standard; Parameters not present
+ *                 in the specification will be omitted; [Input] and [Output] section
  *
  * @section example Example use
  * @code
@@ -134,14 +136,14 @@ bool NetCDFIO::initStaticData()
 }
 
 NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), coordin(""), coordinparam(""), coordout(""), coordoutparam(""),
-                                                    in_dflt_TZ(0.), out_dflt_TZ(0.), vecMetaData()
+                                                    in_dflt_TZ(0.), out_dflt_TZ(0.), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
 NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), coordin(""), coordinparam(""), coordout(""), coordoutparam(""),
-                                              in_dflt_TZ(0.), out_dflt_TZ(0.), vecMetaData()
+                                              in_dflt_TZ(0.), out_dflt_TZ(0.), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
@@ -155,6 +157,9 @@ void NetCDFIO::parseInputOutputSection()
 	in_dflt_TZ = out_dflt_TZ = IOUtils::nodata;
 	cfg.getValue("TIME_ZONE", "Input", in_dflt_TZ, IOUtils::nothrow);
 	cfg.getValue("TIME_ZONE", "Output", out_dflt_TZ, IOUtils::nothrow);
+
+	cfg.getValue("STRICTFORMAT", "Input", in_strict, IOUtils::nothrow);
+	cfg.getValue("STRICTFORMAT", "Output", out_strict, IOUtils::nothrow);
 }
 
 void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
@@ -788,35 +793,45 @@ void NetCDFIO::create_meta_data(const int& ncid, const int& did, std::map<std::s
 
 // Create the parameter variables in the NetCDF dataset, allocate memory for the
 // respective C arrays and store the variable ids in the varid map.
-// NOTE: if a parameter in map_param_name has no equivalent in the map_name map
-//       it is deleted from map_param_name and henceforth ignored.
 void NetCDFIO::create_parameters(const int& ncid, const int& did_time, const int& did_points, const size_t& number_of_records,
 						   const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
                                  std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid)
 {
 	map<string, string>::const_iterator it_cnrm;
 
+	// At this point map_param_name holds all parameters that have values different from nodata
 	for (map<size_t, string>::iterator it = map_param_name.begin(); it != map_param_name.end();) {
+		bool create = false;
 		string& varname = it->second;
 
 		it_cnrm = map_name.find(varname);
 		if (it_cnrm != map_name.end()) {
-			const string& cnrm_name = it_cnrm->second;
-			varname = cnrm_name;
+			varname = it_cnrm->second; // the offical CNRM name for the parameter
+			create = true;
+			++it;
+		} else {
+			if (out_strict) {
+				// ignore any parameters not defined in the CNRM standard:
+				// if a parameter in map_param_name has no equivalent in the map_name map
+				// it is deleted from map_param_name and henceforth ignored.
+				map_param_name.erase(it++);
+			} else {
+				create = true;
+				++it;
+			}
+		}
 
+		if (create) {
 			int vid;
 
 			double* data = new double[number_of_records*number_of_stations];
-			map_data_2D[cnrm_name] = data;
+			map_data_2D[varname] = data;
 
-			add_2D_variable(ncid, cnrm_name, NC_DOUBLE, did_time, did_points, vid);
+			add_2D_variable(ncid, varname, NC_DOUBLE, did_time, did_points, vid);
 			add_attribute(ncid, vid, "_FillValue", plugin_nodata);
 			add_attributes_for_variable(ncid, vid, varname);
 
 			varid[varname] = vid;
-			++it;
-		} else {
-			map_param_name.erase(it++);
 		}
 	}
 }
