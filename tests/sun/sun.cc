@@ -70,9 +70,9 @@ bool writeSun24h(ofstream& os, const mio::Date start_date, const double i_iswr_r
 		os << eccentricity << "\t";
 		//os << Hour Angle << "\t";
 		os << solar_azi << "\t" << solar_elev << "\t";
-		os << IOUtils::printFractionalDay(sunrise)<< "\t";
-		os << IOUtils::printFractionalDay(sunset)<< "\t";
-		os << IOUtils::printFractionalDay(tmp_daylight/minutes_per_day)<< "\t";
+		os << Date::printFractionalDay(sunrise)<< "\t";
+		os << Date::printFractionalDay(sunset)<< "\t";
+		os << Date::printFractionalDay(tmp_daylight/minutes_per_day)<< "\t";
 
 		// end line
 		os << endl;
