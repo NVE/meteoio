@@ -17,6 +17,7 @@
 */
 #include <cmath>
 #include <cstdio>
+#include <iomanip>
 
 #include <meteoio/Coords.h>
 #include <meteoio/MathOptim.h>

@@ -22,10 +22,6 @@
 
 #include <string>
 #include <sstream>
-#include <utility>
-#include <iomanip>
-#include <iostream>
-#include <ctime>
 
 //#define NEGATIVE_JULIAN
 namespace mio {

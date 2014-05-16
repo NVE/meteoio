@@ -18,6 +18,7 @@
 #ifndef __IOUTILS_H__
 #define __IOUTILS_H__
 
+#include <iostream>
 #include <string>
 #include <map>
 #include <vector>

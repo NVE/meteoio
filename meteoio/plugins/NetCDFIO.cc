@@ -38,6 +38,8 @@ namespace mio {
  * for array-oriented data access and a library that provides an implementation of the interface. The
  * <A HREF="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF software</A> was developed
  * at the <A HREF="http://www.unidata.ucar.edu/">Unidata Program Center</A> in Boulder, Colorado.
+ * In order to graphicaly explore the content and structure of NetCDF files, you can use the
+ * <A REF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse></A> java software.
  *
  * The <A HREF="http://cfconventions.org/1.6.html">conventions</A> for climate and forecast (CF) metadata
  * are designed to promote the processing and sharing of netCDF files. The conventions define metadata

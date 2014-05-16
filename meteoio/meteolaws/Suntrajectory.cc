@@ -17,6 +17,7 @@
 */
 #include <cmath>
 #include <string>
+#include <iomanip>
 
 #include <meteoio/meteolaws/Suntrajectory.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for math constants

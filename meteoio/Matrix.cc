@@ -19,6 +19,8 @@
 #include <meteoio/Matrix.h>
 #include <time.h> //needed for random()
 #include <cmath> //needed for fabs()
+#include <iostream>
+#include <iomanip>
 
 namespace mio {
 

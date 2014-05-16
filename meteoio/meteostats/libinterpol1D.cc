@@ -19,6 +19,7 @@
 #include <meteoio/MathOptim.h>
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 
 using namespace std;
 
