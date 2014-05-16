@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ namespace ncpp {
 	void add_1D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid, int& varid);
 	void add_2D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid1, const int& dimid2, int& varid);
 	void add_3D_variable(const int& ncid, const std::string& varname, const nc_type& xtype, const int& dimid_record,
-						   const int& dimid1, const int& dimid2, int& varid);
+	                     const int& dimid1, const int& dimid2, int& varid);
 
 	//Adding attributes
 	void add_attribute(const int& ncid, const int& varid, const std::string& attr_name, const std::string& attr_value);
@@ -52,9 +52,9 @@ namespace ncpp {
 
 	//Reading data from NetCDF file
 	void read_data(const int& ncid, const std::string& varname, const int& varid,
-					  const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
+	               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data);
 	void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
-						const size_t& record, const size_t& count, const size_t& length, double*& data);
+	                  const size_t& record, const size_t& count, const size_t& length, double*& data);
 	void read_value(const int& ncid, const std::string& varname, const int& varid, double& data);
 	void read_value(const int& ncid, const std::string& varname, const int& varid, const size_t& pos, double& data);
 	void read_data(const int& ncid, const std::string& varname, const int& varid, double*& data);

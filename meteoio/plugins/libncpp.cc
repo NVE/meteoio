@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -67,17 +67,17 @@ void get_attribute(const int& ncid, const std::string& varname, const int& varid
 {
 	size_t attr_len;
 
-     int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
+	int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve attribute '" + attr_name + "'for var '" + varname + "': " + nc_strerror(status), AT);
 
-     char* value = new char[attr_len + 1]; // +1 for trailing null
+	char* value = new char[attr_len + 1]; // +1 for trailing null
 
-     status = nc_get_att_text(ncid, varid, attr_name.c_str(), value);
+	status = nc_get_att_text(ncid, varid, attr_name.c_str(), value);
 	if (status != NC_NOERR)
 		throw IOException("Could not read attribute '" + attr_name + "'for var '" + varname + "': " + nc_strerror(status), AT);
 
-     value[attr_len] = '\0';
+	value[attr_len] = '\0';
 	attr_value = string(value);
 
 	delete[] value;
@@ -113,14 +113,13 @@ void get_variables(const int& ncid, const std::vector<std::string>& dimensions, 
 	// Variable IDs in a NetCDF file are consecutive integers starting with 0
 	for (int ii=0; ii<nr_of_variables; ++ii) {
 		char name[NC_MAX_NAME+1];
-		status = nc_inq_varname(ncid, ii, name);
-		if (status != NC_NOERR) throw IOException(nc_strerror(status), AT);
+		const int stat = nc_inq_varname(ncid, ii, name);
+		if (stat != NC_NOERR) throw IOException(nc_strerror(stat), AT);
 
-		string varname(name);
+		const string varname(name);
 		const bool check = check_dimensions(ncid, varname, ii, dimensions);
 
 		if (check) variables.push_back(varname);
-		//cout << varname << " is conformant: " << (check ? "yes" : "no") << endl;
 	}
 }
 
@@ -136,13 +135,13 @@ bool check_dimensions(const int& ncid, const std::string& varname, const int& va
 
 	if ((int)names.size() != ndimsp) return false;
 
-	for (int ii=0; ii<ndimsp; ii++) {
+	for (int ii=0; ii<ndimsp; ++ii) {
 		char name[NC_MAX_NAME+1];
 
 		const int stat = nc_inq_dimname(ncid, dimids[ii], name);
 		if (stat != NC_NOERR) throw IOException(nc_strerror(stat), AT);
 
-		const string dimname = string(name);
+		const string dimname(name);
 		const bool exists = (dimname == names[ii]); //(find(names.begin(), names.end(), dimname) != names.end());
 
 		if (!exists) return false;
@@ -152,7 +151,7 @@ bool check_dimensions(const int& ncid, const std::string& varname, const int& va
 }
 
 void get_dimension(const int& ncid, const std::string& varname, const int& varid,
-                             std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen)
+                   std::vector<int>& dimid, std::vector<int>& dim_varid, std::vector<std::string>& dimname, std::vector<size_t>& dimlen)
 {
 	dimid.clear(); dim_varid.clear(); dimname.clear(); dimlen.clear();
 
@@ -162,7 +161,7 @@ void get_dimension(const int& ncid, const std::string& varname, const int& varid
 	if (status != NC_NOERR)
 		throw IOException("Could not retrieve dimensions for variable '" + varname + "': " + nc_strerror(status), AT);
 
-	for (int ii=0; ii<ndimsp; ii++) {
+	for (int ii=0; ii<ndimsp; ++ii) {
 		int dimvarid;
 		size_t length=0;
 		char name[NC_MAX_NAME+1];
@@ -185,7 +184,7 @@ void get_dimension(const int& ncid, const std::string& varname, const int& varid
 }
 
 void read_data_2D(const int& ncid, const std::string& varname, const int& varid,
-                            const size_t& record, const size_t& nr_of_records, const size_t& length, double*& data)
+                  const size_t& record, const size_t& nr_of_records, const size_t& length, double*& data)
 {
 	size_t start[] = {record, 0};
 	size_t count[] = {nr_of_records, length};
@@ -211,7 +210,7 @@ void read_value(const int& ncid, const std::string& varname, const int& varid, c
 }
 
 void read_data(const int& ncid, const std::string& varname, const int& varid,
-                         const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data)
+               const size_t& pos, const size_t& latlen, const size_t& lonlen, double*& data)
 {
 	size_t start[] = {pos, 0, 0};
 	size_t count[] = {1, latlen, lonlen};
@@ -265,7 +264,7 @@ size_t add_record(const int& ncid, const std::string& varname, const int& varid,
 		if (last_value == data) return (dimlen - 1); //The timestamp already exists
 
 		if (last_value > data) {
-			size_t pos = find_record(ncid, varname, dimid, data); // Search for a possible match
+			const size_t pos = find_record(ncid, varname, dimid, data); // Search for a possible match
 
 			if (pos != IOUtils::npos) {
 				return pos;

@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -16,8 +16,15 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "NetCDFIO.h"
+#include <meteoio/ResamplingAlgorithms2D.h>
+#include <meteoio/meteostats/libinterpol1D.h>
 #include <meteoio/Timer.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/plugins/libncpp.h>
+
+#include <cmath>
+#include <cstdio>
+#include <algorithm>
 
 using namespace std;
 using namespace ncpp; // wrappers for libnetcdf
@@ -140,14 +147,14 @@ bool NetCDFIO::initStaticData()
 	return true;
 }
 
-NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), coordin(""), coordinparam(""), coordout(""), coordoutparam(""),
+NetCDFIO::NetCDFIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(),
                                                     in_dflt_TZ(0.), out_dflt_TZ(0.), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	parseInputOutputSection();
 }
 
-NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), coordin(""), coordinparam(""), coordout(""), coordoutparam(""),
+NetCDFIO::NetCDFIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(),
                                               in_dflt_TZ(0.), out_dflt_TZ(0.), in_strict(false), out_strict(false), vecMetaData()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
@@ -181,7 +188,7 @@ void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const std::string& arguments)
 
 void NetCDFIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	string filename("");
+	string filename;
 	cfg.getValue("GRID2DFILE", "Input", filename);
 
 	const string varname = get_varname(parameter);
@@ -311,7 +318,7 @@ double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
 
 void NetCDFIO::readDEM(DEMObject& dem_out)
 {
-	string filename(""), varname("");
+	string filename, varname;
 
 	cfg.getValue("DEMFILE", "Input", filename);
 	cfg.getValue("DEMVAR", "Input", varname);
@@ -338,7 +345,7 @@ void NetCDFIO::readStationData(const Date&, std::vector<StationData>& vecStation
 		return;
 	}
 
-	string filename("");
+	string filename;
 	cfg.getValue("METEOFILE", "Input", filename);
 
 	int ncid;
@@ -422,7 +429,7 @@ void NetCDFIO::readMeteoData(const Date& dateStart, const Date& dateEnd, std::ve
 {
 	vecMeteo.clear();
 
-	string filename("");
+	string filename;
 	cfg.getValue("METEOFILE", "Input", filename);
 
 	int ncid;
@@ -559,9 +566,9 @@ void NetCDFIO::copy_data(const int& ncid, const std::map<std::string, size_t>& m
 	}
 }
 
-// Go through all variables present in the NetCDF dataset that have the correct dimensions. A map called 
-// map_parameters will associate all parameters present with MeteoData parameters or IOUtils::npos). If 
-// the CNRM parameter does not have a corresponding parameter in the meteo_data object we can add a new 
+// Go through all variables present in the NetCDF dataset that have the correct dimensions. A map called
+// map_parameters will associate all parameters present with MeteoData parameters or IOUtils::npos). If
+// the CNRM parameter does not have a corresponding parameter in the meteo_data object we can add a new
 // parameter (e.g. cnrm_theorsw) or if the situation is more complex (e.g. rainfall is measured with two
 // parameters) we deal with the situation in copy_data().
 void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& map_parameters, MeteoData& meteo_data)
@@ -575,7 +582,7 @@ void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& ma
 
 	for (vector<string>::const_iterator it = present_parameters.begin(); it != present_parameters.end(); ++it) {
 		const string& name = *it;
-		//cout << "Found parameter: " << name << endl;	
+		//cout << "Found parameter: " << name << endl;
 
 		// Check if parameter exists in paramname, which holds strict CNRM parameters
 		map<string, size_t>::const_iterator strict_it = paramname.find(name);
@@ -701,7 +708,7 @@ void NetCDFIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMe
 
 	const size_t number_of_records = vecMeteo[0].size();
 
-	string filename("");
+	string filename;
 	cfg.getValue("METEOFILE", "Output", filename);
 
 	int ncid, did_time, vid_time, did_points;
@@ -772,8 +779,8 @@ void NetCDFIO::copy_data(const size_t& number_of_stations, const size_t& number_
 			simple_copy = true;
 		}
 
-		for (size_t ii=0; ii<number_of_stations; ii++) {
-			for (size_t jj=0; jj<number_of_records; jj++) {
+		for (size_t ii=0; ii<number_of_stations; ++ii) {
+			for (size_t jj=0; jj<number_of_records; ++jj) {
 				const double& value = vecMeteo[ii][jj](param);
 
 				if (value == IOUtils::nodata) {
@@ -878,9 +885,9 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 
 	//Check consistency, dates must be existent everywhere
 	bool inconsistent = false;
-	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ++ii) {
 		if (number_of_records != vecMeteo[ii].size()) inconsistent = true;
-		for (size_t jj=0; jj<vecMeteo[ii].size(); jj++) {
+		for (size_t jj=0; jj<vecMeteo[ii].size(); ++jj) {
 			const MeteoData& meteo_data = vecMeteo[ii][jj];
 
 			if (dates[jj] != meteo_data.date.getModifiedJulianDate()) inconsistent = true;
@@ -894,7 +901,7 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 			}
 
 			//Check which parameters are in use
-			for (size_t kk=0; kk<nr_of_parameters; kk++) {
+			for (size_t kk=0; kk<nr_of_parameters; ++kk) {
 				if (!vec_param_in_use[kk]){
 					if (meteo_data(kk) != IOUtils::nodata){
 						vec_param_in_use[kk] = true;
@@ -907,7 +914,7 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 
 	if (inconsistent) throw IOException("Inconsistent dates in vecMeteo between different stations", AT);
 
-	for (size_t kk=0; kk<nr_of_parameters; kk++) {
+	for (size_t kk=0; kk<nr_of_parameters; ++kk) {
 		if (vec_param_in_use[kk])
 			map_param_name[kk] = vec_param_name[kk];
 	}
@@ -938,7 +945,7 @@ void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const std::string& argum
 
 void NetCDFIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	string filename("");
+	string filename;
 	cfg.getValue("GRID2DFILE", "Output", filename);
 
 	const string varname = get_varname(parameter);
@@ -1060,8 +1067,8 @@ void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& vid_ti
 
 void NetCDFIO::fill_data(const Grid2DObject& grid, double*& data)
 {
-	for (size_t kk=0; kk<grid.nrows; kk++) {
-		for (size_t ll=0; ll<grid.ncols; ll++) {
+	for (size_t kk=0; kk<grid.nrows; ++kk) {
+		for (size_t ll=0; ll<grid.ncols; ++ll) {
 			data[kk*grid.ncols + ll] = grid.grid2D(ll,kk);
 		}
 	}
@@ -1176,11 +1183,11 @@ void NetCDFIO::calculate_dimensions(const Grid2DObject& grid, double*& lat_array
 
 	// The method to use interval*ii is consistent with the corresponding
 	// calculation of the Grid2DObject::gridify method -> numerical stability
-	for (size_t ii=1; ii<grid.nrows; ii++) {
+	for (size_t ii=1; ii<grid.nrows; ++ii) {
 		lat_array[ii] = lat_array[0] + lat_interval*ii;
 	}
 
-	for (size_t ii=1; ii<grid.ncols; ii++) {
+	for (size_t ii=1; ii<grid.ncols; ++ii) {
 		lon_array[ii] = lon_array[0] + lon_interval*ii;
 	}
 }
@@ -1205,12 +1212,12 @@ void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, doub
 	read_data(ncid, cf_latitude, vid_lat, lat);
 	read_data(ncid, cf_longitude, vid_lon, lon);
 
-	for (size_t ii=0; ii<latlen; ii++) {
+	for (size_t ii=0; ii<latlen; ++ii) {
 		if (lat_array[ii] != lat[ii])
 			throw IOException("Error while writing grid - grid and lat/lon coordinates are inconsistent", AT);
 	}
 
-	for (size_t ii=0; ii<lonlen; ii++) {
+	for (size_t ii=0; ii<lonlen; ++ii) {
 		if (lon_array[ii] != lon[ii])
 			throw IOException("Error while writing grid - grid and lat/lon coordinates are inconsistent", AT);
 	}

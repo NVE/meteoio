@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -20,14 +20,8 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
-#include <meteoio/ResamplingAlgorithms2D.h>
-#include <meteoio/meteostats/libinterpol1D.h>
-#include <meteoio/plugins/libncpp.h>
 
 #include <string>
-#include <cmath>
-#include <cstdio>
-#include <algorithm>
 
 namespace mio {
 

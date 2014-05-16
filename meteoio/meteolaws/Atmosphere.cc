@@ -805,7 +805,8 @@ double Atmosphere::DewPointtoRh(double TD, double TA, const bool& force_water)
 double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, const double& qi)
 {
 	const double SatVaporDensity = waterVaporDensity(TA, waterSaturationPressure(TA));
-	const double RH = (qi/(1.-qi))*stdDryAirDensity(altitude, TA)/SatVaporDensity;
+	const double dryAir_density = stdDryAirDensity(altitude, TA);
+	const double RH = qi/(1.-qi) * dryAir_density/SatVaporDensity;
 
 	if(RH>1.) return 1.;
 	else return RH;
@@ -821,9 +822,10 @@ double Atmosphere::specToRelHumidity(const double& altitude, const double& TA, c
 double Atmosphere::relToSpecHumidity(const double& altitude, const double& TA, const double& RH)
 {
 	const double dryAir_density = stdDryAirDensity(altitude, TA);
-	const double wetAir_density = RH * waterVaporDensity(TA,waterSaturationPressure(TA));
-	const double qi = 1./( dryAir_density/wetAir_density+1. );
-	return qi;
+	const double SatVaporDensity = waterVaporDensity(TA, waterSaturationPressure(TA));
+	const double qi_inv = dryAir_density/(RH*SatVaporDensity) + 1.;
+
+	return 1./qi_inv;
 }
 
 } //namespace
