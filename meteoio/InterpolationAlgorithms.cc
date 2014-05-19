@@ -219,6 +219,15 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 	}
 }
 
+bool InterpolationAlgorithm::allZeroes() const
+{
+	for (size_t ii=0; ii<vecData.size(); ++ii) {
+		if (abs(vecData[ii])>0)
+			return false;
+	}
+	return true;
+}
+
 /**********************************************************************************/
 /*                    Implementation of the various algorithms                    */
 /**********************************************************************************/
@@ -345,6 +354,12 @@ double IDWAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Param
 
 void IDWAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
+	//if all data points are zero, simply fill the grid with zeroes
+	if (allZeroes()) {
+		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
+		return;
+	}
+
 	Interpol2D::IDW(vecData, vecMeta, dem, grid);
 }
 
@@ -565,6 +580,13 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, co
 void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
+
+	//if all data points are zero, simply fill the grid with zeroes
+	if (allZeroes()) {
+		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
+		return;
+	}
+
 	vector<double> vecAltitudes;
 	getStationAltitudes(vecMeta, vecAltitudes);
 	if (vecAltitudes.empty())
@@ -648,7 +670,7 @@ void WinstralAlgorithm::initGrid(const std::string& base_algo, const DEMObject& 
 
 double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, const std::string& algo)
 {
-	for(size_t ii=0; ii<vecMeteo.size(); ++ii) {
+	for (size_t ii=0; ii<vecMeteo.size(); ++ii) {
 		if (vecMeteo[ii].meta.stationID==ref_station)
 			return vecMeteo[ii](MeteoData::DW);
 	}
@@ -664,7 +686,7 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 
 	double ve=0.0, vn=0.0;
 	size_t count=0;
-	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
 		const double VW = vecMeteo[ii](MeteoData::VW);
 		const double DW = vecMeteo[ii](MeteoData::DW);
 		if(VW!=IOUtils::nodata && DW!=IOUtils::nodata) {
@@ -674,7 +696,7 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 		}
 	}
 
-	if(count!=0) {
+	if (count!=0) {
 		ve /= static_cast<double>(count);
 		vn /= static_cast<double>(count);
 
@@ -689,6 +711,12 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
+
+	//if all data points are zero, simply fill the grid with zeroes
+	if (allZeroes()) {
+		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
+		return;
+	}
 
 	string base_algo, ref_station;
 	double synoptic_bearing;
@@ -710,7 +738,7 @@ std::string USERInterpolation::getGridFileName() const
 	const std::string& grid_path = vecArgs[0];
 	std::string gridname = grid_path + "/";
 
-	if(!vecMeteo.empty()) {
+	if (!vecMeteo.empty()) {
 		const Date& timestep = vecMeteo.at(0).date;
 		gridname =  gridname + timestep.toString(Date::NUM) + "_" + MeteoData::getParameterName(param) + ext;
 	} else {
@@ -853,6 +881,13 @@ double OrdinaryKrigingAlgorithm::getQualityRating(const Date& i_date, const Mete
 void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
+
+	//if all data points are zero, simply fill the grid with zeroes
+	if (allZeroes()) {
+		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
+		return;
+	}
+
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
 	if(!computeVariogram()) //only refresh once a month, or once a week, etc
