@@ -30,6 +30,20 @@ using namespace std;
 
 namespace mio {
 
+#ifdef MINGW
+	//some version of MINGW have a buggy 64 bits implementation of difftime
+	//this is Mingw bug 2152
+	static __inline__
+	double difftime( time_t __t1, time_t __t0 ) {
+		if (sizeof(time_t)==8) { //time_t is 64 bits
+			return (double)((long double)(__t1) - (long double)(__t0));
+		} else {
+			//return (double)((__int64)(__t1) - (__int64)(__t0));
+			return (double)__t1 - (double)__t0;
+		}
+	}
+#endif
+
 const int Date::daysLeapYear[12] = {31,29,31,30,31,30,31,31,30,31,30,31};
 const int Date::daysNonLeapYear[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 const double Date::DST_shift = 1.0; //in hours
@@ -105,15 +119,14 @@ void Date::setUndef(const bool& flag) {
 * @brief Set internal gmt time from system time as well as system time zone.
 */
 void Date::setFromSys() {
-	/*const time_t curr = time(NULL); //current time in UTC
-	tm local = *localtime(&curr); //convert to local time
-	const double tz = (double)local.tm_gmtoff/3600.; //time zone shift*/
-
 	const time_t curr = time(NULL);// current time in UTC
 	tm local = *gmtime(&curr);// current time in UTC, stored as tm
-	const time_t utc = (mktime(&local));// convert GMT tm to GMT time_t
+	const time_t utc = mktime(&local);// convert GMT tm to GMT time_t
+#ifndef MINGW
 	double tz = - difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
-
+#else //workaround for Mingw bug 2152
+	double tz = - mio::difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
+#endif
 	setDate( curr ); //Unix time_t setter, always in gmt
 	setTimeZone( tz );
 }

@@ -30,8 +30,10 @@ namespace mio {
 
 /**
  * @class SunObject
- * @brief A class to calculate Sun's characteristics
- *
+ * @brief A class to calculate Solar radiation characteristics
+ * This is largely based on M. Iqbal, <i>"An introduction to solar radiation"</i>, 1983, Academic Press,  ISBN: 0-12-373750-8.
+ * The Sun's position is provided by the SunTrajectory class (currently the only implemented algorithm is Meeus).
+ * All units are SI. See http://www.meteoexploration.com/products/solarcalc.php for a validation calculator.
  * @ingroup meteolaws
  * @author Mathias Bavay
  * @date   2010-06-10
