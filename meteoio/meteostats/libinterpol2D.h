@@ -65,7 +65,7 @@ class Interpol2D {
 		                      const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid);
 
 		static void RyanWindDir(const DEMObject& dem, Grid2DObject &grid);
-		static void Winstral(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
+		static void Winstral(const DEMObject& dem, const Grid2DObject& TA, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 
 		static bool allZeroes(const std::vector<double>& vecData);
 	private:

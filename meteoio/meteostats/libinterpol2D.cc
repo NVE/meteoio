@@ -314,9 +314,12 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                      const DEMObject& dem, Grid2DObject& grid)
 {
-	//if all data points are zero, simply fill the grid with zeroes
-	if (allZeroes(vecData_in)) {
+	if (allZeroes(vecData_in)) { //if all data points are zero, simply fill the grid with zeroes
 		constant(0., dem, grid);
+		return;
+	}
+	if (vecData_in.size()==1) { //if only one station, fill the grid with this value
+		constant(vecData_in[0], dem, grid);
 		return;
 	}
 
@@ -380,19 +383,19 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 	const double dem_min_curvature=dem->min_curvature;
 	double dem_range_slope=(dem->max_slope-dem_min_slope)*Cst::to_rad;
 	double dem_range_curvature=(dem->max_curvature-dem_min_curvature);
-	if(dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
-	if(dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
+	if (dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
+	if (dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
 
 	for (size_t j=0;j<VW.nrows;j++) {
 		for (size_t i=0;i<VW.ncols;i++){
 			speed = VW(i,j);
-			if(speed==0.) continue; //we can not apply any correction factor!
+			if (speed==0.) continue; //we can not apply any correction factor!
 			dir = DW(i,j);
 			beta = dem->slope(i, j)*Cst::to_rad;
 			azi = dem->azi(i, j)*Cst::to_rad;
 			curvature = dem->curvature(i, j);
 
-			if(speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
+			if (speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
 				VW(i, j) = IOUtils::nodata;
 				DW(i, j) = IOUtils::nodata;
 			} else {
@@ -400,12 +403,12 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 				dir *= Cst::to_rad;
 				//Speed and direction converted to zonal et meridional
 				//components
-				u = (-1.) * (speed * sin(dir));
-				v = (-1.) * (speed * cos(dir));
+				u = -1. * speed * sin(dir);
+				v = -1. * speed * cos(dir);
 
 				// Converted back to speed and direction
 				speed = sqrt(u*u + v*v);
-				dir = (1.5 * Cst::PI) - atan(v/u);
+				dir = 1.5 * Cst::PI - atan(v/u);
 
 				//normalize curvature and beta.
 				//Note: it should be slopeDir instead of beta, but beta is more efficient
@@ -434,7 +437,7 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 		}
 	}
 
-	if(intern_dem!=NULL) delete (intern_dem);
+	if (intern_dem!=NULL) delete (intern_dem);
 }
 
 /**
@@ -543,12 +546,12 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 	for (size_t jj=1; jj<(grid.nrows-1); jj++) {
 		for (size_t ii=1; ii<(grid.ncols-1); ii++) {
 			if(grid(ii,jj)==IOUtils::nodata) continue;
-			if(ta(ii, jj)>273.15) continue; //modify precipitation only for air temperatures at or below freezing
+			if(ta(ii, jj)>Cst::t_water_freezing_pt) continue; //modify precipitation only for air temperatures at or below freezing
 
 			const double slope = dem.slope(ii, jj);
 			const double curvature = dem.curvature(ii, jj);
-			if(slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
-			if(slope<=40.) continue; //redistribution only above 40 degrees
+			if (slope==IOUtils::nodata || curvature==IOUtils::nodata) continue;
+			if (slope<=40.) continue; //redistribution only above 40 degrees
 
 			//remove all precip above 60 deg or linearly decrease it
 			double precip = (slope>60.)? grid(ii, jj) : grid(ii, jj) * ((40.-slope)/-30.);
@@ -558,7 +561,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 			double counter = 0.5;                  //counter will determine amount of precip deposited
 
 			size_t ii_dest = ii, jj_dest = jj;
-			while(precip>0.) {
+			while (precip>0.) {
 				short d_i, d_j;
 				steepestDescentDisplacement(dem, grid, ii_dest, jj_dest, d_i, d_j);
 				//move to the destination cell
@@ -570,7 +573,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 					grid(ii_dest, jj_dest) += counter*increment;
 					break;
 				}
-				if(d_i==0 && d_j==0) {
+				if (d_i==0 && d_j==0) {
 					//local minimum, everything stays here...
 					grid(ii_dest, jj_dest) += precip;
 					break;
@@ -595,7 +598,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
  */
 void Interpol2D::RyanWindDir(const DEMObject& dem, Grid2DObject &grid)
 {
-	for(size_t ii=0; ii<grid.getNx()*grid.getNy(); ii++) {
+	for (size_t ii=0; ii<grid.getNx()*grid.getNy(); ii++) {
 		const double azi = dem.azi(ii);
 		const double slope = dem.slope(ii);
 		if (azi==IOUtils::nodata || slope==IOUtils::nodata) {
@@ -702,7 +705,7 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 * @param grid 2D array of precipitation to fill
 * @author Mathias Bavay
 */
-void Interpol2D::Winstral(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
+void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const double& dmax, const double& in_bearing, Grid2DObject& grid)
 {
 	//compute wind exposure factor
 	Grid2DObject Sx;
@@ -715,6 +718,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const double& dmax, const double
 
 	//erosion: fully eroded at min_sx
 	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		if (TA(ii)>Cst::t_water_freezing_pt) continue; //don't change liquid precipitation
 		const double sx = Sx(ii);
 		double &val = grid(ii);
 		if (sx<0.) {
@@ -732,6 +736,7 @@ void Interpol2D::Winstral(const DEMObject& dem, const double& dmax, const double
 	//-> we now have the proper scaling factor so we can deposit in individual cells
 	const double ratio = sum_erosion/sum_deposition;
 	for(size_t ii=0; ii<Sx.getNx()*Sx.getNy(); ii++) {
+		if (TA(ii)>Cst::t_water_freezing_pt) continue; //don't change liquid precipitation
 		const double sx = Sx(ii);
 		double &val = grid(ii);
 		if (sx>0.) {
@@ -801,6 +806,10 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	//if all data points are zero, simply fill the grid with zeroes
 	if (allZeroes(vecData)) {
 		constant(0., dem, grid);
+		return;
+	}
+	if (vecData.size()==1) { //if only one station, fill the grid with this value
+		constant(vecData[0], dem, grid);
 		return;
 	}
 

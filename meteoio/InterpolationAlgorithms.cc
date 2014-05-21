@@ -745,8 +745,12 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	getParameters(base_algo, synoptic_bearing);
 	initGrid(base_algo, dem, grid);
 
+	//get TA interpolation from call back to Meteo2DInterpolator
+	Grid2DObject ta;
+	mi.interpolate(date, dem, MeteoData::TA, ta);
+
 	//alter the field with Winstral and the chosen wind direction
-	Interpol2D::Winstral(dem, dmax, synoptic_bearing, grid);
+	Interpol2D::Winstral(dem, ta,  dmax, synoptic_bearing, grid);
 }
 
 
@@ -757,8 +761,7 @@ std::string USERInterpolation::getGridFileName() const
 		throw InvalidArgumentException("Please provide the path to the grids for the "+algo+" interpolation algorithm", AT);
 	}
 	const std::string ext(".asc");
-	const std::string& grid_path = vecArgs[0];
-	std::string gridname = grid_path + "/";
+	std::string gridname = vecArgs[0] + "/";
 
 	if (!vecMeteo.empty()) {
 		const Date& timestep = vecMeteo.at(0).date;
@@ -831,7 +834,7 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
 
-	 //get TA interpolation from call back to Meteo2DInterpolator
+	//get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;
 	mi.interpolate(date, dem, MeteoData::TA, ta);
 
