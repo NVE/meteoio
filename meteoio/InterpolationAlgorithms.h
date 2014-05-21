@@ -84,6 +84,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
+ * - RYAN: the wind direction is interpolated using IDW and then altered depending on the local slope (see RyanAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowHNWInterpolation)
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
@@ -158,7 +159,6 @@ class InterpolationAlgorithm {
 		void getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat, Fit1D &trend) const;
 		static void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt=-1e4, const double& max_alt=1e4);
 		static void retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt=-1e4, const double& max_alt=1e4);
-		bool allZeroes() const;
 
 		Meteo2DInterpolator& mi;
 		Date date;
@@ -380,6 +380,27 @@ class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
 };
 
 /**
+ * @class RyanAlgorithm
+ * @brief DEM-based wind direction interpolation algorithm.
+ * This is an implementation of the method described in Ryan,
+ * <i>"a mathematical model for diagnosis and prediction of surface winds in mountainous terrain"</i>,
+ * 1977, journal of applied meteorology, <b>16</b>, 6.
+ * The DEM is used to compute wind drection changes that are used to alter the wind direction fields.
+ * @code
+ * DW::algorithms    = RYAN
+ * @endcode
+ */
+class RyanAlgorithm : public InterpolationAlgorithm {
+	public:
+		RyanAlgorithm(Meteo2DInterpolator& i_mi,
+					const std::vector<std::string>& i_vecArgs,
+					const std::string& i_algo, IOManager& iom)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
+		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+};
+
+/**
  * @class WinstralAlgorithm
  * @brief DEM-based wind-exposure interpolation algorithm.
  * This is an implementation of the method described in Winstral, Elder, & Davis,
@@ -411,6 +432,8 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 		void initGrid(const std::string& base_algo, const DEMObject& dem, Grid2DObject& grid);
 		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, const std::string& algo);
 		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo);
+
+		static const double dmax;
 };
 
 /**

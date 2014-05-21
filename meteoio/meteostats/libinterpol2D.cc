@@ -34,6 +34,22 @@ const double Interpol2D::wind_yc = 0.42;
 
 //Usefull functions
 /**
+ * @brief check if the points measurements are all at zero
+ * This check can be performed to trigger optimizations: it is quicker
+ * to fill the grid directly with zeroes instead of running a complicated
+ * algorithm.
+ * @return true if all data is set to zero
+ */
+inline bool Interpol2D::allZeroes(const std::vector<double>& vecData)
+{
+	for (size_t ii=0; ii<vecData.size(); ++ii) {
+		if (abs(vecData[ii])>0)
+			return false;
+	}
+	return true;
+}
+
+/**
 * @brief Computes the horizontal distance between points, given by coordinates in a geographic grid
 * @param X1 (const double) first point's X coordinate
 * @param Y1 (const double) first point's Y coordinate
@@ -298,6 +314,12 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
 void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<StationData>& vecStations_in,
                      const DEMObject& dem, Grid2DObject& grid)
 {
+	//if all data points are zero, simply fill the grid with zeroes
+	if (allZeroes(vecData_in)) {
+		constant(0., dem, grid);
+		return;
+	}
+
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	std::vector<double> vecEastings, vecNorthings;
 	buildPositionsVectors(vecStations_in, vecEastings, vecNorthings);
@@ -582,8 +604,10 @@ void Interpol2D::RyanWindDir(const DEMObject& dem, Grid2DObject &grid)
 		}
 
 		const double Yd = 100.*tan(slope*Cst::to_rad);
-		const double Fd = -0.225 * std::min(Yd, 100.) * sin(2.*(grid(ii)-azi)*Cst::to_rad);
-		grid(ii) += Fd;
+		const double Fd = -0.225 * std::min(Yd, 100.) * sin(2.*(azi-grid(ii))*Cst::to_rad);
+		grid(ii) = fmod(grid(ii)+Fd + 360., 360.);
+		//for VW: Fu = atan(0.17*Yd) / 100;
+		//VW *= (1. - Fu);
 	}
 }
 
@@ -625,42 +649,6 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 	}
 
 	return atan(max_tan_sx); //return max_sx
-}
-
-//Get the distance-weighted average of Sx for one single direction and one single point (ii,jj) in dem up to dmax distance
-double Interpol2D::AvgSX_core(const Grid2DObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
-{
-	const double dmin = 20.; //cells closer than dmin don't play any role
-	const double inv_dmin = 1./dmin;
-	const double inv_dmax = 1./dmax;
-	const double alpha_rad = bearing*Cst::to_rad;
-	const double cellsize_sq = Optim::pow2(dem.cellsize);
-	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
-	const int ncols = static_cast<int>(dem.ncols), nrows = static_cast<int>(dem.nrows);
-
-	double sum_sx = 0.;
-	int ll=ii, mm=jj;
-	size_t nb_cells = 0;
-	while( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
-		//compute local sx
-		const double altitude = dem(ll, mm);
-		if(altitude==mio::IOUtils::nodata) continue; //jump over nodata cells
-		if( !(ll==ii && mm==jj) ) {
-			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
-			if(inv_distance>inv_dmin) continue; //don't consider cells closer than dmin
-			if(inv_distance<inv_dmax) break; //stop if distance>dmax
-
-			sum_sx += sx(ll,mm);
-		}
-
-		//move to next cell
-		nb_cells++;
-		ll = ii + (int)round( ((double)nb_cells)*sin(alpha_rad) ); //alpha is a bearing
-		mm = jj + (int)round( ((double)nb_cells)*cos(alpha_rad) ); //alpha is a bearing
-	}
-
-	if(nb_cells==0.) return 0.;
-	return sum_sx/(double)nb_cells;
 }
 
 /**
@@ -753,101 +741,6 @@ void Interpol2D::Winstral(const DEMObject& dem, const double& dmax, const double
 	}
 }
 
-void Interpol2D::Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
-{
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);
-
-	Grid2DObject sx;
-	WinstralSX(dem, dmax, in_bearing, sx);
-
-	const double scale = dem.cellsize / 50.; //we consider that 50 meters is a good averaging distance
-	const Grid2DObject tmp_dem = (scale<1.)? ResamplingAlgorithms2D::BilinearResampling( dem, scale ) : dem;
-
-	Grid2DObject sd(tmp_dem.ncols, tmp_dem.nrows, tmp_dem.cellsize, tmp_dem.llcorner, IOUtils::nodata);
-
-	const double bearing_inc = 5.;
-	const double bearing_width = 30.;
-	const double bearing1 = in_bearing - bearing_width/2.;
-	const double bearing2 = in_bearing + bearing_width/2.;
-
-	//compute where deposition is possible
-	for(size_t jj = 0; jj<sd.nrows; jj++) {
-		for(size_t ii = 0; ii<sd.ncols; ii++) {
-			double sum = 0.;
-			unsigned short count=0;
-			for(double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
-				sum += AvgSX_core(tmp_dem, sx, dmax, bearing, ii, jj);
-				count++;
-			}
-
-			sd(ii,jj) = (count>0)? sum/(double)count : 0.;
-		}
-	}
-
-	//now remove deposition that happens too far from erosion
-	if(scale<1.) sd = ResamplingAlgorithms2D::BilinearResampling( sd, 1./scale ); //we should be back at sx dimensions
-
-	const size_t jj_max = min(sd.nrows, grid.nrows); //HACK
-	const size_t ii_max = min(sd.ncols, grid.ncols);
-	for(size_t jj = 0; jj<jj_max; jj++) {
-		for(size_t ii = 0; ii<ii_max; ii++) {
-			if(sx(ii,jj)<=0)
-				grid(ii,jj) = sx(ii,jj);
-			else if(sd(ii,jj)<0.) grid(ii,jj) = sx(ii,jj) - sd(ii,jj);
-			else grid(ii,jj) = 0.;
-		}
-	}
-}
-
-void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid)
-{
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);
-
-	const double bearing_inc = 5.;
-	const double bearing_width = 30.;
-	const double bearing1 = in_bearing - bearing_width/2.;
-	const double bearing2 = in_bearing + bearing_width/2.;
-
-	const double cellsize_sq = Optim::pow2(dem.cellsize);
-	const double inv_sepdist = 1./sepdist;
-	const size_t n_sep = static_cast<size_t>( ceil( 0.5*sepdist/dem.cellsize ) ); //separation distance as a number of cells
-
-	const size_t ncols = dem.ncols, nrows = dem.nrows;
-	for(size_t jj = 0; jj<nrows; jj++) {
-		for(size_t ii = 0; ii<ncols; ii++) {
-			double sum = 0.;
-			unsigned short count=0;
-
-			const size_t mm_min = (jj>n_sep)? jj-n_sep : 0;
-			const size_t mm_max = min(nrows, jj+n_sep+1); //+1, to use"<"
-			const size_t ll_min = (ii>n_sep)? ii-n_sep : 0;
-			const size_t ll_max = min(ncols, ii+n_sep+1); //+1, to use"<"
-
-			for(size_t mm = mm_min; mm<mm_max; mm++) {
-				for(size_t ll = ll_min; ll<ll_max; ll++) {
-					const double inv_distance = Optim::invSqrt( cellsize_sq*(static_cast<double>(Optim::pow2(ll-ii)) + static_cast<double>(Optim::pow2(mm-jj))) );
-					if(inv_distance<inv_sepdist) continue;
-
-					double tmp_sum = 0.;
-					unsigned short tmp_count=0;
-					for(double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
-						tmp_sum += WinstralSX_core(dem, dmax, bearing, ii, jj);
-						tmp_count++;
-					}
-
-					const double val = (tmp_count>0)? tmp_sum/(double)tmp_count : IOUtils::nodata;
-					if(val!=IOUtils::nodata) {
-						sum += val;
-						count++;
-					}
-				}
-			}
-
-			if(count!=0) grid(ii,jj) = sum/(double)count;
-		}
-	}
-}
-
 /**
 * @brief Ordinary Kriging matrix formulation
 * This implements the matrix formulation of Ordinary Kriging, as shown (for example) in
@@ -905,6 +798,12 @@ void Interpol2D::WinstralSB(const DEMObject& dem, const double& dmax, const doub
 */
 void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector<StationData>& vecStations, const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid)
 {
+	//if all data points are zero, simply fill the grid with zeroes
+	if (allZeroes(vecData)) {
+		constant(0., dem, grid);
+		return;
+	}
+
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 	const size_t nrOfMeasurments = vecStations.size();
 	//precompute various coordinates in the grid

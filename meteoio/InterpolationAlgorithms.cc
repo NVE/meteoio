@@ -53,6 +53,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new ILWRAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "WIND_CURV"){// wind velocity interpolation (using a heuristic terrain effect)
 		return new SimpleWindInterpolationAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+	} else if (algoname == "RYAN"){// RYAN wind direction
+		return new RyanAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "WINSTRAL"){// Winstral wind exposure factor
 		return new WinstralAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ODKRIG"){// ordinary kriging
@@ -219,15 +221,6 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 	}
 }
 
-bool InterpolationAlgorithm::allZeroes() const
-{
-	for (size_t ii=0; ii<vecData.size(); ++ii) {
-		if (abs(vecData[ii])>0)
-			return false;
-	}
-	return true;
-}
-
 /**********************************************************************************/
 /*                    Implementation of the various algorithms                    */
 /**********************************************************************************/
@@ -354,12 +347,6 @@ double IDWAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Param
 
 void IDWAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
-	//if all data points are zero, simply fill the grid with zeroes
-	if (allZeroes()) {
-		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
-		return;
-	}
-
 	Interpol2D::IDW(vecData, vecMeta, dem, grid);
 }
 
@@ -582,8 +569,8 @@ void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObj
 	info.clear(); info.str("");
 
 	//if all data points are zero, simply fill the grid with zeroes
-	if (allZeroes()) {
-		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
+	if (Interpol2D::allZeroes(vecDataVW)) {
+		Interpol2D::constant(0., dem, grid);
 		return;
 	}
 
@@ -604,6 +591,41 @@ void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObj
 	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
 }
 
+
+double RyanAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+{
+	//This algorithm is only valid for DW (we could add VW later)
+	if (in_param!=MeteoData::DW)
+		return 0.0;
+
+	date = i_date;
+	param = in_param;
+	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+
+	if (nrOfMeasurments==0)
+		return 0.0;
+	if (nrOfMeasurments<2)
+		return 0.6;
+
+	return 0.9;
+}
+
+void RyanAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
+{
+	info.clear(); info.str("");
+
+	//if all data points are zero, simply fill the grid with zeroes
+	if (Interpol2D::allZeroes(vecData)) {
+		Interpol2D::constant(0., dem, grid);
+		return;
+	}
+
+	Interpol2D::IDW(vecData, vecMeta, dem, grid);
+	Interpol2D::RyanWindDir(dem, grid);
+}
+
+
+const double WinstralAlgorithm::dmax = 300.;
 
 double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
@@ -713,8 +735,8 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	//if all data points are zero, simply fill the grid with zeroes
-	if (allZeroes()) {
-		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
+	if (Interpol2D::allZeroes(vecData)) {
+		Interpol2D::constant(0., dem, grid);
 		return;
 	}
 
@@ -724,7 +746,7 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	initGrid(base_algo, dem, grid);
 
 	//alter the field with Winstral and the chosen wind direction
-	Interpol2D::Winstral(dem, 300., synoptic_bearing, grid); //HACK
+	Interpol2D::Winstral(dem, dmax, synoptic_bearing, grid);
 }
 
 
@@ -881,12 +903,6 @@ double OrdinaryKrigingAlgorithm::getQualityRating(const Date& i_date, const Mete
 void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
-
-	//if all data points are zero, simply fill the grid with zeroes
-	if (allZeroes()) {
-		grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, 0.);
-		return;
-	}
 
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
