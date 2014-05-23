@@ -25,11 +25,11 @@
 #include <limits>
 #include <iostream>
 
+//forward declaration
+namespace mio { template <class T> class Array3D; template <class T> class Array3DProxy2; }
+#include <meteoio/Array2D.h>
+
 namespace mio {
-
-template <class T> class Array3D;
-template <class T> class Array3DProxy2;
-
 /**
  * @class Array3DProxy
  * @brief The template class Array3DProxy is a helper class for the template class Array3D
@@ -135,8 +135,8 @@ template<class T> class Array3D {
 		            const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepth);
 
 		/**
-		* @brief A method that can be used to insert a subplane into an existing Array2D object
-		* that is passed as i_array2D argument. This is exactly the opposite of the subset method
+		* @brief A method that can be used to insert a subplane into an existing Array3D object
+		* that is passed as i_array3D argument. This is exactly the opposite of the subset method
 		* an can be used to rebuild an array from subsets.
 		* @param i_array3D array containing to extract the values from
 		* @param i_nx lower left corner cell X index
@@ -153,6 +153,15 @@ template<class T> class Array3D {
 		void fill(const Array3D<T>& i_array3D, const size_t& i_nx, const size_t& i_ny, const size_t& i_nz);
 
 		/**
+		* @brief insert a 2D layer in an Array3D object
+		* The (nx ,ny) dimensions of the 2D and the 3D arrays must match and the insertion depth must
+		* exist in the Array3D.
+		* @param layer layer to insert
+		* @param depth depth where the insertion should take place
+		*/
+		void insert(const Array2D<T>& layer, const size_t& depth);
+
+		/**
 		* @brief set how to process nodata values (ie: as nodata or as normal numbers)
 		* @param i_keep_nodata true means that NODATA is interpreted as NODATA, false means that it is a normal number
 		By default, arrays keep nodata.
@@ -163,7 +172,7 @@ template<class T> class Array3D {
 		* @brief get how to process nodata values (ie: as nodata or as normal numbers)
 		* @return true means that NODATA is interpreted as NODATA, false means that it is a normal number
 		*/
-		bool getKeepNodata();
+		bool getKeepNodata() const;
 
 		void resize(const size_t& anx, const size_t& any, const size_t& anz);
 		void resize(const size_t& anx, const size_t& any, const size_t& anz, const T& init);
@@ -270,7 +279,7 @@ template<class T> inline const T Array3D<T>::operator()(const size_t& i) const {
 template<class T> inline T& Array3D<T>::operator()(const size_t& x, const size_t& y, const size_t& z) {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to access array(" << x << "," << y << "," << z << ")";
 		ss << " while array is (" << nx << "," << ny << "," << nz << ")";
 		throw IndexOutOfBoundsException(ss.str(), AT);
@@ -284,7 +293,7 @@ template<class T> inline T& Array3D<T>::operator()(const size_t& x, const size_t
 template<class T> inline const T Array3D<T>::operator()(const size_t& x, const size_t& y, const size_t& z) const {
 #ifndef NOSAFECHECKS
 	if ((x >= nx) || (y >= ny) || (z >= nz))  {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to access array(" << x << "," << y << "," << z << ")";
 		ss << " while array is (" << nx << "," << ny << "," << nz << ")";
 		throw IndexOutOfBoundsException(ss.str(), AT);
@@ -315,7 +324,7 @@ template<class T> void Array3D<T>::subset(const Array3D<T>& i_array3D,
 {
 
 	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to cut an array of size (" << nx << "," << ny << "," << nz << ") ";
 		ss << "to size (" << i_ncols << "," << i_nrows << "," << i_ndepth << ") ";
 		ss << "starting at (" << i_nx << "," << i_ny << "," << i_nz << ")";
@@ -350,7 +359,7 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 {
 
 	if (((i_nx+i_ncols) > i_array3D.nx) || ((i_ny+i_nrows) > i_array3D.ny) || ((i_nz+i_ndepth) > i_array3D.nz)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Filling an array of size (" << nx << "," << ny << "," << nz << ") ";
 		ss << "with an array of size (" << i_ncols << "," << i_nrows << "," << i_ndepth << ") ";
 		ss << "starting at (" << i_nx << "," << i_ny << "," << i_nz << ")";
@@ -373,6 +382,28 @@ template<class T> void Array3D<T>::fill(const Array3D<T>& i_array3D,
 	}
 }
 
+template<class T> void Array3D<T>::insert(const Array2D<T>& layer, const size_t& depth)
+{
+	if (depth>nz) {
+		std::ostringstream ss;
+		ss << "Trying to insert layer at depth " << depth << " ";
+		ss << "in an array of size (" << nx << "," << ny << "," << nz << ") ";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+	if (layer.getNx()!=nx || layer.getNy()!=ny) {
+		std::ostringstream ss;
+		ss << "Trying to insert layer of size (" << layer.getNx() << "," << layer.getNy() << ") ";
+		ss << "in an array of size (" << nx << "," << ny << "," << nz << ") ";
+		throw IndexOutOfBoundsException(ss.str(), AT);
+	}
+	//copy plane in the correct position
+	for (size_t jj=0; jj<ny; jj++) {
+		for (size_t ii=0; ii<nx; ii++) {
+			operator()(ii,jj,depth) = layer(ii, jj);
+		}
+	}
+}
+
 template<class T> Array3D<T>::Array3D(const size_t& anx, const size_t& any, const size_t& anz)
                              : vecData(anx*any*anz), nx(anx), ny(any), nz(anz), nxny(anx*any), keep_nodata(true)
 {
@@ -389,7 +420,7 @@ template<class T> void Array3D<T>::setKeepNodata(const bool i_keep_nodata) {
 	keep_nodata = i_keep_nodata;
 }
 
-template<class T> bool Array3D<T>::getKeepNodata() {
+template<class T> bool Array3D<T>::getKeepNodata() const {
 	return keep_nodata;
 }
 
@@ -443,8 +474,8 @@ template<class T> const std::string Array3D<T>::toString() const {
 	os << "<array3d>\n";
 	for (size_t kk=0; kk<nz; kk++) {
 		os << "depth[" << kk << "]\n";
-		for(size_t ii=0; ii<nx; ii++) {
-			for (size_t jj=0; jj<ny; jj++) {
+		for(size_t jj=0; jj<ny; jj++) {
+			for (size_t ii=0; ii<nx; ii++) {
 				os << operator()(ii,jj,kk) << " ";
 			}
 			os << "\n";
@@ -616,7 +647,7 @@ template<class T> Array3D<T>& Array3D<T>::operator+=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
 	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to add two Array3D objects with different dimensions: ";
 		ss << "(" << nx << "," << ny << "," << nz << ") + (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
 		throw IOException(ss.str(), AT);
@@ -677,7 +708,7 @@ template<class T> Array3D<T>& Array3D<T>::operator-=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
 	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to substract two Array3D objects with different dimensions: ";
 		ss << "(" << nx << "," << ny << "," << nz << ") - (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
 		throw IOException(ss.str(), AT);
@@ -726,7 +757,7 @@ template<class T> Array3D<T>& Array3D<T>::operator*=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
 	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to multiply two Array3D objects with different dimensions: ";
 		ss << "(" << nx << "," << ny << "," << nz << ") * (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
 		throw IOException(ss.str(), AT);
@@ -787,7 +818,7 @@ template<class T> Array3D<T>& Array3D<T>::operator/=(const Array3D<T>& rhs)
 {
 	//They have to have equal size
 	if ((rhs.nx != nx) || (rhs.ny != ny) || (rhs.nz != nz)) {
-		std::stringstream ss;
+		std::ostringstream ss;
 		ss << "Trying to divide two Array3D objects with different dimensions: ";
 		ss << "(" << nx << "," << ny << "," << nz << ") / (" << rhs.nx << "," << rhs.ny << "," << rhs.nz << ")";
 		throw IOException(ss.str(), AT);

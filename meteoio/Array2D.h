@@ -25,10 +25,11 @@
 #include <limits>
 #include <iostream>
 
+//forward declaration
+namespace mio { template <class T> class Array2D; }
+#include <meteoio/Array3D.h>
+
 namespace mio {
-
-template <class T> class Array2D;
-
 /**
  * @class Array2DProxy
  * @brief The template class Array2DProxy is a helper class for the template class Array2D
@@ -93,6 +94,13 @@ template<class T> class Array2D {
 		        const size_t& i_ncols, const size_t& i_nrows);
 
 		/**
+		* A constructor that create an Array2D object from a layer of an Array3D
+		* @param array3D array containing to extract the values from
+		* @param depth layer depth to extract
+		*/
+		Array2D(const Array3D<T>& array3D, const size_t& depth);
+
+		/**
 		* @brief A method that can be used to cut out a subplane of an existing Array2D object
 		* that is passed as i_array2D argument. The resulting Array2D object is a by value copy of
 		* a subplane of the plane spanned by the i_array2D
@@ -131,7 +139,7 @@ template<class T> class Array2D {
 		* @brief get how to process nodata values (ie: as nodata or as normal numbers)
 		* @return true means that NODATA is interpreted as NODATA, false means that it is a normal number
 		*/
-		bool getKeepNodata();
+		bool getKeepNodata() const;
 
 		void resize(const size_t& nx, const size_t& ny);
 		void resize(const size_t& nx, const size_t& ny, const T& init);
@@ -274,6 +282,17 @@ template<class T> Array2D<T>::Array2D(const Array2D<T>& i_array2D, const size_t&
 	subset(i_array2D, i_nx, i_ny, i_ncols, i_nrows);
 }
 
+template<class T> Array2D<T>::Array2D(const Array3D<T>& array3D, const size_t& depth)
+                             : vecData(array3D.getNx()*array3D.getNy()), nx(array3D.getNx()), ny(array3D.getNy()), keep_nodata(array3D.getKeepNodata())
+{
+	//copy plane in the correct position
+	for (size_t jj=0; jj<ny; jj++) {
+		for (size_t ii=0; ii<nx; ii++) {
+			operator()(ii,jj) = array3D(ii, jj, depth);
+		}
+	}
+}
+
 template<class T> void Array2D<T>::subset(const Array2D<T>& i_array2D, const size_t& i_nx, const size_t& i_ny,
                                           const size_t& i_ncols, const size_t& i_nrows)
 {
@@ -342,7 +361,7 @@ template<class T> void Array2D<T>::setKeepNodata(const bool i_keep_nodata) {
 	keep_nodata = i_keep_nodata;
 }
 
-template<class T> bool Array2D<T>::getKeepNodata() {
+template<class T> bool Array2D<T>::getKeepNodata() const {
 	return keep_nodata;
 }
 

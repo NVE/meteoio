@@ -40,7 +40,7 @@ const double Interpol2D::wind_yc = 0.42;
  * algorithm.
  * @return true if all data is set to zero
  */
-inline bool Interpol2D::allZeroes(const std::vector<double>& vecData)
+bool Interpol2D::allZeroes(const std::vector<double>& vecData)
 {
 	for (size_t ii=0; ii<vecData.size(); ++ii) {
 		if (abs(vecData[ii])>0)
