@@ -124,9 +124,9 @@ namespace mio {
  *
  * @section data_generators Data generators
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
- * COPY::new_name = existing_parameter. For example:
+ * new_name::COPY = existing_parameter. For example:
  * @code
- * COPY::VW_avg = VW
+ * VW_avg::COPY = VW
  * @endcode
  * This creates a new parameter VW_avg that starts as an exact copy of the raw data of VW, for each station. This newly created parameter is
  * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
@@ -308,15 +308,15 @@ void IOHandler::readMeteoData(const Date& date, METEO_SET& vecMeteo)
 
 void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
 {
-	for(size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) {
+	for (size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) { //for each station
 		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
-		if(nr_timestamps==0) continue;
+		if (nr_timestamps==0) continue;
 
-		Date previous_date( vecVecMeteo[stat_idx][0].date );
-		for(size_t ii=1; ii<nr_timestamps; ++ii) {
-			const StationData& station = vecVecMeteo[stat_idx][ii].meta;
+		Date previous_date( vecVecMeteo[stat_idx].front().date );
+		for (size_t ii=1; ii<nr_timestamps; ++ii) {
 			const Date& current_date = vecVecMeteo[stat_idx][ii].date;
-			if(current_date<=previous_date) {
+			if (current_date<=previous_date) {
+				const StationData& station = vecVecMeteo[stat_idx][ii].meta;
 				throw IOException("Error at time "+current_date.toString(Date::ISO)+" for station \""+station.stationName+"\" ("+station.stationID+") : timestamps must be in increasing order and unique!", AT);
 			}
 			previous_date = current_date;
@@ -403,16 +403,11 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 {
 	if (!enable_copying) return; //Nothing configured
 
-	size_t station_start=0, station_end=vecMeteo.size();
-	if (stationindex != IOUtils::npos) {
-		if (stationindex < vecMeteo.size()) {
-			station_start = stationindex;
-			station_end   = stationindex+1;
-		} else {
-			throw IndexOutOfBoundsException("Accessing stationindex in readMeteoData that is out of bounds", AT);
-		}
-	}
+	if (stationindex != IOUtils::npos && stationindex>=vecMeteo.size())
+		throw IndexOutOfBoundsException("Accessing stationindex in readMeteoData that is out of bounds", AT);
 
+	const size_t station_start = (stationindex==IOUtils::npos)? 0 : stationindex;
+	const size_t station_end = (stationindex==IOUtils::npos)? vecMeteo.size() : stationindex+1;
 	const size_t nr_of_params = copy_parameter.size();
 	vector<size_t> indices; //will hold the indices of the parameters to be copied
 

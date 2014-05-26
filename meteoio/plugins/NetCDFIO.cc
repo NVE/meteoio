@@ -351,7 +351,6 @@ void NetCDFIO::readStationData(const Date&, std::vector<StationData>& vecStation
 	cfg.getValue("METEOFILE", "Input", filename);
 
 	int ncid;
-
 	open_file(filename, NC_NOWRITE, ncid);
 	readMetaData(ncid, vecMetaData);
 	close_file(filename, ncid);
@@ -587,7 +586,7 @@ void NetCDFIO::get_parameters(const int& ncid, std::map<std::string, size_t>& ma
 		//cout << "Found parameter: " << name << endl;
 
 		// Check if parameter exists in paramname, which holds strict CNRM parameters
-		map<string, size_t>::const_iterator strict_it = paramname.find(name);
+		const map<string, size_t>::const_iterator strict_it = paramname.find(name);
 		if (strict_it != paramname.end()) { // parameter is a part of the CNRM specification
 			size_t index = strict_it->second;
 
@@ -763,8 +762,8 @@ void NetCDFIO::copy_data(const size_t& number_of_stations, const size_t& number_
                          const std::map<size_t, std::string>& map_param_name, std::map<std::string, double*>& map_data_2D)
 {
 	for (map<size_t, string>::const_iterator it = map_param_name.begin(); it != map_param_name.end(); ++it) {
-		const size_t& param = it->first;
-		const string& varname = it->second;
+		const size_t param = it->first;
+		const string varname = it->second;
 
 		bool simple_copy = false, multiply_copy = false;
 		double multiplier = IOUtils::nodata;
@@ -822,14 +821,12 @@ void NetCDFIO::create_parameters(const int& ncid, const int& did_time, const int
 						   const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
                                  std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid)
 {
-	map<string, string>::const_iterator it_cnrm;
-
 	// At this point map_param_name holds all parameters that have values different from nodata
 	for (map<size_t, string>::iterator it = map_param_name.begin(); it != map_param_name.end();) {
 		bool create = false;
 		string& varname = it->second;
 
-		it_cnrm = map_name.find(varname);
+		const map<string, string>::const_iterator it_cnrm = map_name.find(varname);
 		if (it_cnrm != map_name.end()) {
 			varname = it_cnrm->second; // the offical CNRM name for the parameter
 			create = true;
@@ -879,9 +876,7 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 		if (ii == 1) interval = Optim::round((dates[ii] - dates[ii-1]) * 86400.);
 	}
 
-	size_t nr_of_parameters = 0;
-	if (!vecMeteo[0].empty()) nr_of_parameters = vecMeteo[0][0].getNrOfParameters();
-
+	const size_t nr_of_parameters = (!vecMeteo[0].empty())? vecMeteo[0][0].getNrOfParameters() : 0 ;
 	vector<bool> vec_param_in_use(nr_of_parameters, false);
 	vector<string> vec_param_name(nr_of_parameters, "");
 
