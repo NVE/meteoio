@@ -627,6 +627,33 @@ void RyanAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 const double WinstralAlgorithm::dmax = 300.;
 
+WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
+                                     const std::string& i_algo, IOManager& iom)
+                  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), base_algo("IDW_LAPSE"), ref_station(), user_synoptic_bearing(IOUtils::nodata)
+{
+	const size_t nr_args = vecArgs.size();
+	if (nr_args==1) {
+		if (IOUtils::isNumeric(vecArgs[0]))
+			IOUtils::convertString(user_synoptic_bearing, vecArgs[0]);
+		else
+			throw InvalidArgumentException("Please provide both the base interpolation method and the station_id to use for wind direction for the "+algo+" algorithm", AT);
+		return;
+	} else if (nr_args==2) {
+		if (IOUtils::isNumeric(vecArgs[0])) {
+			IOUtils::convertString(user_synoptic_bearing, vecArgs[0]);
+			base_algo = IOUtils::strToUpper( vecArgs[1] );
+		} else if (IOUtils::isNumeric(vecArgs[1]))  {
+			IOUtils::convertString(user_synoptic_bearing, vecArgs[1]);
+			base_algo = IOUtils::strToUpper( vecArgs[0] );
+		} else {
+			base_algo = IOUtils::strToUpper( vecArgs[0] );
+			ref_station = vecArgs[1];
+		}
+		return;
+	} else if (nr_args>2)
+		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
+}
+
 double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	//This algorithm is only valid for HNW (we could add HS later)
@@ -643,43 +670,7 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	return 0.99;
 }
 
-void WinstralAlgorithm::getParameters(std::string &base_algo, double &synoptic_bearing) const
-{
-	//option 0: compute DW from multiple stations
-	//option 1: fixed DW
-	//option 2: specify the station_id to take DW from
-	base_algo = "IDW_LAPSE";
-
-	const size_t nr_args = vecArgs.size();
-	if (nr_args==0) {
-		synoptic_bearing = getSynopticBearing(vecMeteo);
-		if (synoptic_bearing==IOUtils::nodata)
-			throw IOException("Synoptic wind could not be computed by the "+algo+" algorithm", AT);
-		return;
-	} else if (nr_args==1) {
-		if (IOUtils::isNumeric(vecArgs[0]))
-			IOUtils::convertString(synoptic_bearing, vecArgs[0]);
-		else
-			throw InvalidArgumentException("Please provide both the base interpolation method and the station_id to use for wind direction for the "+algo+" algorithm", AT);
-		return;
-	} else if (nr_args==2) {
-		if (IOUtils::isNumeric(vecArgs[0])) {
-			IOUtils::convertString(synoptic_bearing, vecArgs[0]);
-			base_algo = IOUtils::strToUpper( vecArgs[1] );
-		} else if (IOUtils::isNumeric(vecArgs[1]))  {
-			IOUtils::convertString(synoptic_bearing, vecArgs[1]);
-			base_algo = IOUtils::strToUpper( vecArgs[0] );
-		} else {
-			base_algo = IOUtils::strToUpper( vecArgs[0] );
-			const string ref_station( vecArgs[1] );
-			synoptic_bearing = getSynopticBearing(vecMeteo, ref_station, algo);
-		}
-		return;
-	} else
-		throw InvalidArgumentException("Wrong number of arguments supplied for the "+algo+" algorithm", AT);
-}
-
-void WinstralAlgorithm::initGrid(const std::string& base_algo, const DEMObject& dem, Grid2DObject& grid)
+void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 {
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
 	vector<string> vecArgs2;
@@ -700,12 +691,51 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 	throw InvalidArgumentException("Station \""+ref_station+"\" should be used as reference station for the "+algo+" algorithm but has not been found", AT);
 }
 
+//this method scans a square centered on the station for summmits
+//that would shelter the station for wind.
+//the sheltering criteria is: if ( height_difference*shade_factor > distance ) sheltered=true
+bool WinstralAlgorithm::isExposed(const DEMObject& dem, Coords location)
+{
+	if (!dem.gridify(location)) {
+		return false;
+	}
+
+	const int i_ref = location.getGridI();
+	const int j_ref = location.getGridJ();
+	const double alt_ref = location.getAltitude()+4.; //4 m mast added so flat terrain behaves properly
+	const size_t ii_ref = static_cast<size_t>(i_ref);
+	const size_t jj_ref = static_cast<size_t>(j_ref);
+
+	const double shade_factor = 5.;
+	const double cellsize = dem.cellsize;
+	const double min_dh = cellsize/shade_factor; //min_dist=cellsize -> min_dh
+	const double search_dist = (dem.grid2D.getMax() - alt_ref) * shade_factor;
+	if (search_dist<=cellsize) return true;
+	const int search_idx = Optim::ceil( search_dist/cellsize );
+
+	const size_t i_min = static_cast<size_t>(std::max( 0, i_ref-search_idx ));
+	const size_t i_max = static_cast<size_t>(std::min( static_cast<int>(dem.getNx()-1), i_ref+search_idx ));
+	const size_t j_min = static_cast<size_t>(std::max( 0, j_ref-search_idx ));
+	const size_t j_max = static_cast<size_t>(std::min( static_cast<int>(dem.getNy()-1), j_ref+search_idx ));
+
+	for (size_t jj=j_min; jj<=j_max; jj++) {
+		for (size_t ii=i_min; ii<=i_max; ii++) {
+			if (ii==ii_ref && jj==jj_ref) continue; //skip the cell containing the station!
+
+			const double dh = dem.grid2D(ii,jj) - alt_ref;
+			if (dh<=min_dh) continue; //for negative or too small dh
+			const double distance = Optim::fastSqrt_Q3( Optim::pow2(static_cast<int>(ii)-i_ref) + Optim::pow2(static_cast<int>(jj)-j_ref) ) * cellsize;
+			if (distance<dh*shade_factor) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo)
 {
-	// 1) locate the stations in DEM and check if they are higher than their surroundings within a given radius
-	// 2) simply compute a mean or median direction
-	// (2) can be used on all the stations selected in (1)
-
 	double ve=0.0, vn=0.0;
 	size_t count=0;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
@@ -717,17 +747,39 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 			count++;
 		}
 	}
-
+//HACK: use median instead of mean for exposed stations?
 	if (count!=0) {
 		ve /= static_cast<double>(count);
 		vn /= static_cast<double>(count);
 
 		//const double meanspeed = sqrt(ve*ve + vn*vn);
 		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
-		return meandirection;
+		return Optim::round(meandirection/10.)*10; //round to nearest 10 deg
 	}
 
 	return IOUtils::nodata;
+}
+
+double WinstralAlgorithm::getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& vecMeteo)
+{
+	// 1) locate the stations in DEM and check if they are higher than their surroundings within a given radius
+	// 2) simply compute a mean or median direction
+	// (2) can be used on all the stations selected in (1)
+
+	std::vector<MeteoData> stationsSubset;
+	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (isExposed(dem, vecMeteo[ii].meta.position)) {
+			//std::cout << "Station " << vecMeteo[ii].meta.stationID << " - " << vecMeteo[ii].meta.stationName << " -> DW=" << vecMeteo[ii](MeteoData::DW) << "\n";
+			stationsSubset.push_back( vecMeteo[ii] );
+		}
+	}
+
+	if (!stationsSubset.empty()) {
+		return getSynopticBearing(stationsSubset);
+	} else {
+		std::cerr << "[W] Synoptic wind direction computed from wind-sheltered stations only, the quality will strongly depend on their spatial distribution\n";
+		return  getSynopticBearing(vecMeteo);
+	}
 }
 
 void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
@@ -740,10 +792,17 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		return;
 	}
 
-	string base_algo, ref_station;
-	double synoptic_bearing;
-	getParameters(base_algo, synoptic_bearing);
-	initGrid(base_algo, dem, grid);
+	//HACK: also get Synoptic_VW and use a threshold to trigger snow transport?
+	double synoptic_bearing = user_synoptic_bearing;
+	if (synoptic_bearing==IOUtils::nodata) {
+		if (!ref_station.empty())
+			synoptic_bearing = getSynopticBearing(vecMeteo, ref_station, algo);
+		else
+			synoptic_bearing = getSynopticBearing(dem, vecMeteo);
+	}
+	info << "DW=" << synoptic_bearing << " - ";
+
+	initGrid(dem, grid);
 
 	//get TA interpolation from call back to Meteo2DInterpolator
 	Grid2DObject ta;

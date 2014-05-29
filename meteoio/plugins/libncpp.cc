@@ -83,6 +83,16 @@ void get_attribute(const int& ncid, const std::string& varname, const int& varid
 	delete[] value;
 }
 
+bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name)
+{
+	size_t attr_len;
+	const int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
+
+	if (status != NC_NOERR) return false;
+
+	return true;
+}
+
 bool check_variable(const int& ncid, const std::string& varname)
 {
 	int varid;

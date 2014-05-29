@@ -85,6 +85,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
  * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
  * - RYAN: the wind direction is interpolated using IDW and then altered depending on the local slope (see RyanAlgorithm)
+ * - WINSTRAL: the solid precipitation is redistributed by wind according to (Winstral, 2002) (see WinstralAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowHNWInterpolation)
  * - ODKRIG: ordinary kriging (see OrdinaryKrigingAlgorithm)
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
@@ -409,11 +410,20 @@ class RyanAlgorithm : public InterpolationAlgorithm {
  * The DEM is used to compute wind exposure factors that are used to alter the precipitation fields.
  * It is usually a good idea to provide a DEM that also contain the accumulated snow height in order
  * to get a progressive softening of the terrain features.
- * It takes the following arguments: the base algorithm to generate the initial wind field, the
- * synoptic wind direction or the station_id of the station to get the wind direction from. All these arguments
- * are optional but in order to make it possible to distinguish the arguments, it is not possible to only
- * provide one argument of type "string" (in such a case, the second one must be provided and the order
- * defines which is which).
+ *
+ * This method must therefore first use another algorithm to generate an initial precipitation field,
+ * and then modifies this field accordingly. This base method is "idw_lapse" by default.
+ * Then it requires a synoptic wind direction that can be provided by different means:
+ *  - without any extra argument, the stations are located in the DEM and their wind shading (or exposure)
+ * is computed. If at least one station is found that is not sheltered from the wind (in every direction), it
+ * provides the synoptic wind (in case of multiple stations, the vector average is used). Please note that
+ * the stations that are not included in the DEM are considered to be sheltered. If no such station
+ * is found, the vector average of all the available stations is used.
+ *  - by providing a fixed synoptic wind bearing that is used for all time steps
+ *  - by providing the station_id of the station to get the wind direction from. In this case, the base algorithm
+ * for generating the initial wind field must be specified in the first position.
+ *
+ * @remarks Only cells with an air temperature below freezing participate in the redistribution
  * @code
  * HNW::algorithms    = WINSTRAL
  * HNW::winstral = idw_lapse 180
@@ -422,17 +432,19 @@ class RyanAlgorithm : public InterpolationAlgorithm {
 class WinstralAlgorithm : public InterpolationAlgorithm {
 	public:
 		WinstralAlgorithm(Meteo2DInterpolator& i_mi,
-					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+		                  const std::vector<std::string>& i_vecArgs,
+		                  const std::string& i_algo, IOManager& iom);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
-		void getParameters(std::string &base_algo, double &synoptic_bearing) const;
-		void initGrid(const std::string& base_algo, const DEMObject& dem, Grid2DObject& grid);
+		void initGrid(const DEMObject& dem, Grid2DObject& grid);
+		static bool isExposed(const DEMObject& dem, Coords location);
 		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, const std::string& algo);
 		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo);
+		static double getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& vecMeteo);
 
+		std::string base_algo, ref_station;
+		double user_synoptic_bearing;
 		static const double dmax;
 };
 

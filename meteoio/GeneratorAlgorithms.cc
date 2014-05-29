@@ -36,6 +36,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new SinGenerator(vecArgs, i_algoname);
 	} else if (algoname == "STD_PRESS"){
 		return new StandardPressureGenerator(vecArgs, i_algoname);
+	} else if (algoname == "RELHUM"){
+		return new RhGenerator(vecArgs, i_algoname);
 	} else if (algoname == "CLEARSKY_LW"){
 		return new ClearSkyLWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ALLSKY_LW"){
@@ -174,6 +176,73 @@ bool StandardPressureGenerator::generate(const size_t& param, std::vector<MeteoD
 	}
 
 	return true; //all missing values could be filled
+}
+
+
+bool RhGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if(value == IOUtils::nodata) {
+		const double TA = md(MeteoData::TA);
+		if (TA==IOUtils::nodata) //nothing else we can do here
+			return false;
+
+		//first chance to compute RH
+		if (md.param_exists("TD")) {
+			const double TD = md("TD");
+			if (TD!=IOUtils::nodata)
+				value = Atmosphere::DewPointtoRh(TD, TA, false);
+		}
+
+		//second chance to try to compute RH
+		if (value==IOUtils::nodata && md.param_exists("SH")) {
+			const double SH = md("SH");
+			const double altitude = md.meta.position.getAltitude();
+			if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata)
+				value = Atmosphere::specToRelHumidity(altitude, TA, SH);
+		}
+
+		if (value==IOUtils::nodata) return false;
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool RhGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(vecMeteo.empty()) return true;
+
+	const double altitude = vecMeteo.front().meta.position.getAltitude(); //if the stations move, this has to be in the loop
+
+	bool all_filled = true;
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		double &value = vecMeteo[ii](param);
+		if(value == IOUtils::nodata) {
+			const double TA = vecMeteo[ii](MeteoData::TA);
+			if (TA==IOUtils::nodata) { //nothing else we can do here
+				all_filled=false;
+				continue;
+			}
+
+			//first chance to compute RH
+			if (vecMeteo[ii].param_exists("TD")) {
+				const double TD = vecMeteo[ii]("TD");
+				if (TD!=IOUtils::nodata)
+					value = Atmosphere::DewPointtoRh(TD, TA, false);
+			}
+
+			//second chance to try to compute RH
+			if (value==IOUtils::nodata && vecMeteo[ii].param_exists("SH")) {
+				const double SH = vecMeteo[ii]("SH");
+				if (SH!=IOUtils::nodata && altitude!=IOUtils::nodata)
+					value = Atmosphere::specToRelHumidity(altitude, TA, SH);
+			}
+
+			if (value==IOUtils::nodata) all_filled=false;
+		}
+	}
+
+	return all_filled;
 }
 
 

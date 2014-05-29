@@ -699,7 +699,10 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 * A linear correlation between erosion coefficients and eroded mass is assumed, that is that the points with maximum erosion get all their
 * precipitation removed. The eroded mass is then distributed on the cells with positive Sx (with a linear correlation between positive Sx and deposited
 * mass) and enforcing mass conservation within the domain.
+* @remarks Only cells with an air temperature below freezing participate in the redistribution
+*
 * @param dem digital elevation model
+* @param TA air temperature grid (in order to discriminate between solid and liquid precipitation)
 * @param dmax search radius
 * @param in_bearing wind direction to consider
 * @param grid 2D array of precipitation to fill

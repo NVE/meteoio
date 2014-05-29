@@ -70,6 +70,7 @@ namespace mio {
  * @section generators_keywords Available generators
  * The keywords defining the algorithms are the following:
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
+ * - RELHUM: relative humidity from other humidity measurements (see RhGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
  * - CLEARSKYLW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
@@ -190,6 +191,24 @@ class StandardPressureGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 };
+
+/**
+ * @class RhGenerator
+ * @brief Relative humidity generator.
+ * Generate the relative humidity from either dew point temperature or specific humidity and air temperature.
+ * The dew point temperature must be named "TD" and the specific humidity "SH"
+ * @code
+ * RH::generators = RELHUM
+ * @endcode
+ */
+class RhGenerator : public GeneratorAlgorithm {
+	public:
+		RhGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+};
+
 
 /**
  * @class ClearSkyLWGenerator
