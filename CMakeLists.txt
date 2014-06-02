@@ -42,7 +42,7 @@ IF(MSVC)
 	ENDIF(GUI_EXCEPTIONS)
 ELSE(MSVC)
 	#we consider that all other compilers support "-" options and silently ignore what they don't know
-	SET(WARNINGS "-Wall")
+	SET(WARNINGS "-Wall -Wno-long-long")
 	SET(PROFILING "-pg -fprofile-arcs")
 	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
 	IF(POPC)
