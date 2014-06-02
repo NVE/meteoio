@@ -22,7 +22,9 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#include <sys/resource.h>
+#ifndef MSWIN
+	#include <sys/resource.h>
+#endif
 
 #include <meteoio/IOExceptions.h>
 

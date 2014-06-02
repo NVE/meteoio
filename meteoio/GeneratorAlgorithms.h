@@ -25,7 +25,7 @@
 #include <set>
 #include <string>
 
-#ifdef MSWIN
+#ifdef MSVC
 	#pragma warning(disable:4512) //we don't need any = operator!
 #endif
 

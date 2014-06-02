@@ -23,7 +23,7 @@
 #include <string>
 #include <set>
 
-#ifdef MSWIN
+#ifdef MSVC
 	#pragma warning(disable:4512) //we don't need any = operator!
 #endif
 

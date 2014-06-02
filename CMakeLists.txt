@@ -24,6 +24,7 @@ INCLUDE("${CMAKE_SOURCE_DIR}/tools/cmake/BuildVersion.cmake")
 BuildVersion()
 
 IF(MSVC)
+	ADD_DEFINITIONS(/DMSVC)
 	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
 	SET(WARNINGS "/W4")
 	#SET(EXTRA_WARNINGS "/Wp64") #/Wall
