@@ -307,13 +307,8 @@ std::string Config::extract_section(std::string key) const
 
 std::string Config::clean_import_path(const std::string& in_path) const
 {
-#ifdef WIN32
-	const bool is_absolute = (in_path.size()>=2 && in_path[1]==':');
-#else
-	const bool is_absolute = (in_path.size()>=1 && in_path[0]=='/');
-#endif
 	//if this is a relative path, prefix the import path with the current path
-	const std::string prefix = (!is_absolute)? IOUtils::getPath(sourcename, true)+"/" : "";
+	const std::string prefix = ( IOUtils::isAbsolutePath(in_path) )? "" : IOUtils::getPath(sourcename, true)+"/";
 	const std::string path = IOUtils::getPath(prefix+in_path, true);  //clean & resolve path
 	const std::string filename = IOUtils::getFilename(in_path);
 

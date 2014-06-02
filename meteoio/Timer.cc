@@ -16,11 +16,9 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-//AUTHORS: Tuan Anh Nguyen (original implementation in popc)
-//         Mathias Bavay (port and rewrite for Alpine3D, then MeteoIO)
 
 #include <stdio.h>
-#ifdef WIN32
+#ifdef MSWIN
 	#include <windows.h>
 	#undef max
 	#undef min
@@ -88,7 +86,7 @@ double Timer::getElapsed() const {
 	return elapsed;
 }
 
-#ifdef WIN32
+#ifdef MSWIN
 long double Timer::getCurrentTime() const {
 	SYSTEMTIME systemTime;
 	GetSystemTime( &systemTime );
@@ -115,7 +113,7 @@ long double Timer::getCurrentTime() const {
 
 #endif
 
-#ifndef WIN32
+#ifndef MSWIN
 const int UsageTimer::who = RUSAGE_SELF;
 
 UsageTimer::UsageTimer() : start_usage(), current_usage(), user_time(0.), sys_time(0.), elapsed(0.), is_running(false) {}

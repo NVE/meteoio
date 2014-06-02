@@ -22,18 +22,9 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
+#include <sys/resource.h>
+
 #include <meteoio/IOExceptions.h>
-
-#include <string>
-#include <sstream>
-#include <utility>
-#include <iomanip>
-#include <iostream>
-#include <ctime>
-
-#ifndef WIN32
-	#include <sys/resource.h>
-#endif
 
 namespace mio {
 
@@ -61,7 +52,7 @@ protected:
 	bool isRunning;
 };
 
-#ifndef WIN32
+#ifndef MSWIN
 /**
  * @class UsageTimer
  * @author Thomas Egger

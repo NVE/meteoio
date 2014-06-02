@@ -35,8 +35,6 @@ namespace mio {
  */
 class NetCDFIO : public IOInterface {
 	public:
-		enum TimeUnit { seconds, hours, days };
-
 		NetCDFIO(const std::string& configfile);
 		NetCDFIO(const NetCDFIO&);
 		NetCDFIO(const Config& cfgreader);
@@ -61,6 +59,9 @@ class NetCDFIO : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
 	private:
+		enum TimeUnit { seconds, hours, days };
+		enum Naming { full, cnrm, ecmwf };
+
 		void parseInputOutputSection();
 		void create_parameters(const int& ncid, const int& did_time, const int& did_points, const size_t& number_of_records,
 		                       const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
@@ -97,9 +98,10 @@ class NetCDFIO : public IOInterface {
 
 		// Private variables
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
-		static const std::string cf_time, cf_units, cf_days, cf_seconds, cf_latitude, cf_longitude, cf_altitude, cf_ta, cf_rh, cf_p;
+		static const std::string cf_time, cf_units, cf_days, cf_hours, cf_seconds, cf_latitude, cf_longitude, cf_altitude, cf_ta, cf_rh, cf_p;
 		static const std::string cnrm_points, cnrm_latitude, cnrm_longitude, cnrm_altitude, cnrm_aspect, cnrm_slope, cnrm_ta, cnrm_rh, cnrm_vw, cnrm_dw, cnrm_qair;
 		static const std::string cnrm_co2air, cnrm_theorsw, cnrm_neb, cnrm_hnw, cnrm_snowf, cnrm_swr_direct, cnrm_swr_diffuse, cnrm_p, cnrm_ilwr, cnrm_timestep;
+		static const std::string ecmwf_ta, ecmwf_p, ecmwf_iswr, ecmwf_ilwr, ecmwf_hnw, ecmwf_u10, ecmwf_v10, ecmwf_td;
 
 		static std::map<std::string, size_t> paramname; ///<Associate a name with meteo parameters in Parameters
 		static std::map<std::string, std::string> map_name; ///Associate MeteoIO parameter names with CNRM parameter names

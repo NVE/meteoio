@@ -28,7 +28,7 @@
 		#include <meteoio/MessageBoxX11.h>
 	#endif
 #endif
-#if defined(WIN32)
+#if defined(MSWIN)
 	#include <windows.h>
 	#undef max
 	#undef min
@@ -47,7 +47,7 @@ namespace mio {
 		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
 		MessageBoxX11("Oops, something went wrong!", box_msg.c_str());
 	#endif
-	#if defined(WIN32)
+	#if defined(MSWIN)
 		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
 		MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
 	#endif
@@ -71,7 +71,7 @@ IOException::IOException(const std::string& message, const std::string& position
 IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
 #endif
 {
-#if defined(WIN32)
+#if defined(MSWIN)
 	const char *delim = strrchr(position.c_str(), '\\');
 #else
 	const char *delim = strrchr(position.c_str(), '/');

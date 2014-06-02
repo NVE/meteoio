@@ -341,7 +341,7 @@ void PNGIO::setFile(const std::string& filename, png_structp& png_ptr, png_infop
 	}
 
 	// Setup Exception handling
-#ifdef WIN32
+#ifdef MSWIN
 	#pragma warning(disable:4611) //the setjmp of libpng has been set up so that it can safely be called from c++
 #endif
 	if (setjmp(png_jmpbuf(png_ptr))) {

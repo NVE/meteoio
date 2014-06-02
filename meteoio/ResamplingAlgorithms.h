@@ -27,7 +27,7 @@
 #include <vector>
 #include <map>
 
-#ifdef WIN32
+#ifdef MSWIN
 	#pragma warning(disable:4512) //we don't need any = operator!
 #endif
 

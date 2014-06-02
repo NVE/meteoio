@@ -81,6 +81,7 @@ const double NetCDFIO::plugin_nodata = -9999999.; //CNRM-GAME nodata value
 const std::string NetCDFIO::cf_time = "time";
 const std::string NetCDFIO::cf_units = "units";
 const std::string NetCDFIO::cf_days = "days since ";
+const std::string NetCDFIO::cf_hours = "hours since ";
 const std::string NetCDFIO::cf_seconds = "seconds since ";
 const std::string NetCDFIO::cf_latitude = "lat";
 const std::string NetCDFIO::cf_longitude = "lon";
@@ -110,6 +111,15 @@ const std::string NetCDFIO::cnrm_swr_diffuse = "SCA_SWdown";
 const std::string NetCDFIO::cnrm_p = "PSurf";
 const std::string NetCDFIO::cnrm_ilwr = "LWdown";
 const std::string NetCDFIO::cnrm_timestep = "FRC_TIME_STP";
+
+const std::string NetCDFIO::ecmwf_ta = "t2m";
+const std::string NetCDFIO::ecmwf_p = "sp";
+const std::string NetCDFIO::ecmwf_iswr = "ssrd";
+const std::string NetCDFIO::ecmwf_ilwr = "strd";
+const std::string NetCDFIO::ecmwf_hnw = "tp";
+const std::string NetCDFIO::ecmwf_td = "d2m";
+const std::string NetCDFIO::ecmwf_u10 = "u10";
+const std::string NetCDFIO::ecmwf_v10 = "v10";
 
 std::map<std::string, size_t> NetCDFIO::paramname;
 std::map<std::string, std::string> NetCDFIO::map_name;
@@ -644,6 +654,10 @@ void NetCDFIO::get_indices(const int& ncid, const Date& dateStart, const Date& d
 			start /= 86400;
 			end   /= 86400;
 		}
+		if (unit_type == hours) {
+			start /= 24;
+			end   /= 24;
+		}
 		time_start += Date(start, 0.0);
 		time_end += Date(end, 0.0);
 
@@ -657,6 +671,9 @@ void NetCDFIO::get_indices(const int& ncid, const Date& dateStart, const Date& d
 		for (size_t ii=0; ii<dimlen; ii++) {
 			if (unit_type == seconds) {
 				time[ii] /= 86400;
+			}
+			if (unit_type == hours) {
+				time[ii] /= 24;
 			}
 
 			const Date tmp_date = offset + Date(time[ii], 0.0);
@@ -686,14 +703,18 @@ void NetCDFIO::calculate_offset(const std::string& units, NetCDFIO::TimeUnit& ti
 {
 	string tmp(units);
 	const size_t found_sec = units.find(NetCDFIO::cf_seconds);
+	const size_t found_hour = units.find(NetCDFIO::cf_hours);
 	const size_t found_day = units.find(NetCDFIO::cf_days);
 
 	if (found_sec != string::npos) {
 		time_unit = seconds;
 		tmp = tmp.substr(found_sec + NetCDFIO::cf_seconds.size());
+	} else if (found_hour != string::npos) {
+		time_unit = hours;
+		tmp = tmp.substr(found_hour + NetCDFIO::cf_hours.size());
 	} else if (found_day != string::npos) {
 		time_unit = days;
-		tmp = tmp.substr(found_day+ + NetCDFIO::cf_days.size());
+		tmp = tmp.substr(found_day + NetCDFIO::cf_days.size());
 	} else {
 		throw InvalidFormatException("Variable '"+NetCDFIO::cf_time+"' has no valid attribute '" + cf_units + "'" , AT);
 	}
@@ -1077,12 +1098,36 @@ std::string NetCDFIO::get_varname(const MeteoGrids::Parameters& parameter)
 {
 	string varname = MeteoGrids::getParameterName(parameter);
 
-	if (parameter == MeteoGrids::TA) varname = cf_ta;
-	else if (parameter == MeteoGrids::RH) varname = cf_rh;
-	else if (parameter == MeteoGrids::DEM) varname = cf_altitude;
-	else if (parameter == MeteoGrids::P) varname = cf_p;
+	const Naming naming_scheme=full;
 
-	//TODO: complete mapping
+	if (naming_scheme==full) {
+		if (parameter == MeteoGrids::TA) varname = cf_ta;
+		else if (parameter == MeteoGrids::RH) varname = cf_rh;
+		else if (parameter == MeteoGrids::DEM) varname = cf_altitude;
+		else if (parameter == MeteoGrids::P) varname = cf_p;
+	} else if (naming_scheme==cnrm) {
+		if (parameter == MeteoGrids::TA) varname = cnrm_ta;
+		else if (parameter == MeteoGrids::RH) varname = cnrm_rh;
+		else if (parameter == MeteoGrids::DEM) varname = cnrm_altitude;
+		else if (parameter == MeteoGrids::P) varname = cnrm_p;
+		else if (parameter == MeteoGrids::VW) varname = cnrm_vw;
+		else if (parameter == MeteoGrids::DW) varname = cnrm_dw;
+		else if (parameter == MeteoGrids::ILWR) varname = cnrm_ilwr;
+		else if (parameter == MeteoGrids::HNW) varname = cnrm_hnw; //HACK this should add snowf!
+		else if (parameter == MeteoGrids::SLOPE) varname = cnrm_slope;
+		else if (parameter == MeteoGrids::AZI) varname = cnrm_aspect;
+		//HACK: iswr=dir+diff
+		//HACK: U, V from vw, dw
+	} else if (naming_scheme==ecmwf) {
+		if (parameter == MeteoGrids::TA) varname = ecmwf_ta;
+		else if (parameter == MeteoGrids::P) varname = ecmwf_p;
+		else if (parameter == MeteoGrids::ISWR) varname = ecmwf_iswr;
+		else if (parameter == MeteoGrids::ILWR) varname = ecmwf_ilwr;
+		else if (parameter == MeteoGrids::HNW) varname = ecmwf_hnw;
+		else if (parameter == MeteoGrids::U) varname = ecmwf_u10; //HACK: height correction
+		else if (parameter == MeteoGrids::V) varname = ecmwf_v10; //HACK: height correction
+		//HACK RH from Td, VW, DW from U, V
+	}
 
 	return varname;
 }

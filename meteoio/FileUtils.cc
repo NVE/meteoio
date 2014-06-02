@@ -20,7 +20,7 @@
 #include <cstdio>
 #include <fstream>
 
-#ifdef WIN32
+#ifdef MSWIN
 	#include <windows.h>
 	#include "Shlwapi.h"
 	//removing two macros defined in windows.h
@@ -62,7 +62,7 @@ std::string cleanPath(std::string in_path, const bool& resolve)
 		std::replace(in_path.begin(), in_path.end(), '\\', '/');
 		return in_path;
 	} else {
-	#ifdef WIN32
+	#ifdef MSWIN
 		//if this would not suffice, see http://pdh11.blogspot.ch/2009/05/pathcanonicalize-versus-what-it-says-on.html
 		char **ptr = NULL;
 		char *out_buff = (char*)calloc(MAX_PATH, sizeof(char));
@@ -139,7 +139,12 @@ bool validFileName(const std::string& filename)
 	return true;
 }
 
-#ifdef WIN32
+#ifdef MSWIN
+bool isAbsolutePath(const std::string& in_path)
+{
+	return (in_path.size()>=2 && in_path[1]==':');
+}
+
 bool fileExists(const std::string& filename)
 {
 	return ( GetFileAttributes( filename.c_str() ) != INVALID_FILE_ATTRIBUTES );
@@ -178,6 +183,11 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 	FindClose(hFind);
 }
 #else
+bool isAbsolutePath(const std::string& in_path)
+{
+	return (in_path.size()>=1 && in_path[0]=='/');
+}
+
 bool fileExists(const std::string& filename)
 {
 	struct stat buffer ;

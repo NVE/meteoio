@@ -85,6 +85,13 @@ namespace IOUtils {
 	std::string getPath(const std::string& filename, const bool& resolve=false);
 
 	/**
+	* @brief checks if a path is an absolute path
+	* @param in_path string containing the path to check
+	* @return true if the given string represents an absolute path
+	*/
+	bool isAbsolutePath(const std::string& in_path);
+
+	/**
 	* @brief extract the file name from a path+filename string.
 	* @param path path to extract the true filename from
 	* @return filename
