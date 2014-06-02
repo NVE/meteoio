@@ -22,7 +22,7 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#ifndef MSWIN
+#if !defined _WIN32 && !defined __MINGW32__
 	#include <sys/resource.h>
 #endif
 
@@ -54,7 +54,7 @@ protected:
 	bool isRunning;
 };
 
-#ifndef MSWIN
+#if !defined _WIN32 && !defined __MINGW32__
 /**
  * @class UsageTimer
  * @author Thomas Egger

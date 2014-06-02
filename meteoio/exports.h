@@ -20,7 +20,7 @@
 #define __EXPORTS_H__
 
 // Generic helper definitions for shared library support
-#if defined MSWIN || defined __CYGWIN__
+#if defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__
 	#define MIO_HELPER_DLL_IMPORT __declspec(dllimport)
 	#define MIO_HELPER_DLL_EXPORT __declspec(dllexport)
 	#define MIO_HELPER_DLL_LOCAL

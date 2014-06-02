@@ -8,7 +8,7 @@
    version is entirely leak proof! (According to valgrind)
  */
 
-#ifdef LINUX
+#ifdef __linux
 
 #include <X11/X.h>
 #include <X11/Xlib.h>

@@ -18,7 +18,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <string.h>
-#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
+#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
 	#include <execinfo.h> //needed for the backtracing of the stack
 	#if defined(__GNUC__)
 		#include <sstream>
@@ -28,12 +28,12 @@
 		#include <meteoio/MessageBoxX11.h>
 	#endif
 #endif
-#if defined(MSWIN)
+#if defined _WIN32 || defined __MINGW32__
 	#include <windows.h>
 	#undef max
 	#undef min
 #endif
-#if defined(APPLE) && defined(MSG_BOX)
+#if defined(__APPLE__) && defined(MSG_BOX)
 	#include <CoreFoundation/CoreFoundation.h>
 #endif
 
@@ -43,15 +43,15 @@ namespace mio {
 
 #if defined(MSG_BOX)
 	void messageBox(const std::string& msg) {
-	#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
+	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
 		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
 		MessageBoxX11("Oops, something went wrong!", box_msg.c_str());
 	#endif
-	#if defined(MSWIN)
+	#if defined _WIN32 || defined __MINGW32__
 		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
 		MessageBox( NULL, box_msg.c_str(), TEXT("Oops, something went wrong!"), MB_OK | MB_ICONERROR );
 	#endif
-	#if defined(APPLE)
+	#if defined(__APPLE__)
 		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
 		const void* keys[] = { kCFUserNotificationAlertHeaderKey,
 				kCFUserNotificationAlertMessageKey };
@@ -71,7 +71,7 @@ IOException::IOException(const std::string& message, const std::string& position
 IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
 #endif
 {
-#if defined(MSWIN)
+#if defined _WIN32 || defined __MINGW32__ ||  defined __CYGWIN__
 	const char *delim = strrchr(position.c_str(), '\\');
 #else
 	const char *delim = strrchr(position.c_str(), '/');
@@ -79,7 +79,7 @@ IOException::IOException(const std::string& message, const std::string& position
 	const std::string where = (position.empty())? "unknown position" : ((delim)? delim+1 : position);
 	msg = "[" + where + "] " + message;
 
-#if defined(LINUX) && !defined(ANDROID) && !defined(CYGWIN)
+#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
 	void* tracearray[25]; //maximal size for backtrace: 25 pointers
 	const int tracesize = backtrace(tracearray, 25); //obtains backtrace for current thread
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings

@@ -18,7 +18,7 @@
 */
 
 #include <stdio.h>
-#ifdef MSWIN
+#if defined _WIN32 || defined __MINGW32__
 	#include <windows.h>
 	#undef max
 	#undef min
@@ -86,7 +86,7 @@ double Timer::getElapsed() const {
 	return elapsed;
 }
 
-#ifdef MSWIN
+#if defined _WIN32 || defined __MINGW32__
 long double Timer::getCurrentTime() const {
 	SYSTEMTIME systemTime;
 	GetSystemTime( &systemTime );
@@ -113,7 +113,7 @@ long double Timer::getCurrentTime() const {
 
 #endif
 
-#ifndef MSWIN
+#if !defined _WIN32 && !defined __MINGW32__
 const int UsageTimer::who = RUSAGE_SELF;
 
 UsageTimer::UsageTimer() : start_usage(), current_usage(), user_time(0.), sys_time(0.), elapsed(0.), is_running(false) {}
