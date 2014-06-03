@@ -42,7 +42,7 @@ using namespace std;
 namespace mio {
 
 #if defined(MSG_BOX)
-	void messageBox(const std::string& msg) {
+void messageBox(const std::string& msg) {
 	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
 		const string box_msg = msg + "\n\nPlease check the terminal for more information!";
 		MessageBoxX11("Oops, something went wrong!", box_msg.c_str());
@@ -62,8 +62,50 @@ namespace mio {
 		SInt32 error = 0;
 		CFUserNotificationCreate(NULL, 0, kCFUserNotificationStopAlertLevel, &error, dict);
 	#endif
-	}
+}
 #endif
+
+//this method is only called for Linux
+std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const
+{
+#ifdef __GNUC__
+	found_main=false;
+	std::ostringstream ss;
+	char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
+	for (char *p = symbols; *p; ++p) {
+		// find parantheses and +address offset surrounding mangled name
+		if (*p == '(') mangled_name = p;
+		else if (*p == '+') offset_begin = p;
+		else if (*p == ')') offset_end = p;
+	}
+
+	if (mangled_name && offset_begin && offset_end && mangled_name < offset_begin) {
+		//the line could be processed, attempt to demangle the symbol
+		*mangled_name++ = '\0'; *offset_begin++ = '\0'; *offset_end++ = '\0';
+		if (string(mangled_name)=="main") found_main=true;
+
+		int status;
+		char *real_name = abi::__cxa_demangle(mangled_name, 0, 0, &status);
+		// if demangling is successful, output the demangled function name
+		if (status == 0) {
+			const std::string tmp(real_name);
+			const size_t pos = tmp.find_first_of("(");
+			const std::string func_name = tmp.substr(0, pos);
+			const std::string func_args = tmp.substr(pos);
+			ss << "\t(" << ii << ") in \033[4m" << func_name << "\033[0m\033[01;30m" << func_args << " from \033[3m" << symbols << "\033[23m";
+		} else { // otherwise, output the mangled function name
+			ss << "\t(" << ii << ") in " << mangled_name << " from \033[3m" << symbols << "\033[23m";
+		}
+		free(real_name);
+	} else { // otherwise, print the whole line
+		ss << "\t(" << ii << ") at " << symbols;
+	}
+
+	return ss.str();
+#else
+	return "\tat " + string(symbols);
+#endif
+}
 
 #ifdef _POPC_
 IOException::IOException(const std::string& message, const std::string& position) : POPException(STD_EXCEPTION)
@@ -85,40 +127,12 @@ IOException::IOException(const std::string& message, const std::string& position
 	char** symbols = backtrace_symbols(tracearray, tracesize); //translate pointers to strings
 	std::string backtrace_info = "\n\033[01;30m**** backtrace ****\n"; //we use ASCII color codes to make the backtrace less visible/aggressive
 	for (unsigned int ii=1; ii<(unsigned)tracesize; ii++) {
-	#ifdef __GNUC__
-		std::ostringstream ss;
-		char *mangled_name = 0, *offset_begin = 0, *offset_end = 0;
-		for (char *p = symbols[ii]; *p; ++p) {
-			// find parantheses and +address offset surrounding mangled name
-			if (*p == '(') mangled_name = p;
-			else if (*p == '+') offset_begin = p;
-			else if (*p == ')') offset_end = p;
-		}
-		if (mangled_name && offset_begin && offset_end && mangled_name < offset_begin) {
-			//the line could be processed, attempt to demangle the symbol
-			*mangled_name++ = '\0'; *offset_begin++ = '\0'; *offset_end++ = '\0';
-			int status;
-			char *real_name = abi::__cxa_demangle(mangled_name, 0, 0, &status);
-			// if demangling is successful, output the demangled function name
-			if (status == 0) {
-				const std::string tmp(real_name);
-				const size_t pos = tmp.find_first_of("(");
-				const std::string func_name = tmp.substr(0, pos);
-				const std::string func_args = tmp.substr(pos);
-				ss << "\t(" << ii << ") in \033[4m" << func_name << "\033[0m\033[01;30m" << func_args << " from " << symbols[ii] << " " << offset_end << "+" << offset_begin;
-			} else { // otherwise, output the mangled function name
-				ss << "\t(" << ii << ") in " << mangled_name << " from " << symbols[ii] << " " << offset_end << "+" << offset_begin;
-			}
-			free(real_name);
-		} else { // otherwise, print the whole line
-			ss << "\t(" << ii << ") at " << symbols[ii];
-		}
-		backtrace_info += ss.str()+"\n";
-	#else
-		backtrace_info += "\tat " + string(symbols[ii]) + "\n";
-	#endif
+		bool found_main;
+		const string line = resolveSymbols( symbols[ii], ii, found_main );
+		if (found_main) break; //we hit "main" so we stop here
+		backtrace_info += line+"\n";
 	}
-	backtrace_info += "\033[0m"; //back to normal color
+	backtrace_info += "\n\033[0m"; //back to normal color
 	full_output = backtrace_info + "[" + where + "] \033[31;1m" + message + "\033[0m\n";
 	free(symbols);
 #else

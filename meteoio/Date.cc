@@ -30,7 +30,7 @@ using namespace std;
 
 namespace mio {
 
-#ifdef MINGW
+#ifdef __MINGW32__
 	//some version of MINGW have a buggy 64 bits implementation of difftime
 	//this is Mingw bug 2152
 	static __inline__
@@ -122,7 +122,7 @@ void Date::setFromSys() {
 	const time_t curr = time(NULL);// current time in UTC
 	tm local = *gmtime(&curr);// current time in UTC, stored as tm
 	const time_t utc = mktime(&local);// convert GMT tm to GMT time_t
-#ifndef MINGW
+#ifndef __MINGW32__
 	double tz = - difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
 #else //workaround for Mingw bug 2152
 	double tz = - mio::difftime(utc,curr)/3600.; //time zone shift (sign so that if curr>utc, tz>0)
@@ -1056,15 +1056,23 @@ void Date::plausibilityCheck(const int& in_year, const int& in_month, const int&
 	    || (in_hour < 0) || (in_hour > 24)
 	    || (in_minute < 0) || (in_minute > 59)) {
 		ostringstream ss;
-		ss << "Invalid Date requested: " << in_year << "-" << in_month;
-		ss << "-" << in_day << "T" << in_hour << ":" << in_minute;
+		ss << std::fixed << std::setfill('0') << std::setprecision(0);
+		ss << "Invalid Date requested: " << std::setw(4) << in_year << "-";
+		ss << std::setw(2) << in_month << "-";
+		ss << std::setw(2) << in_day << "T";
+		ss << std::setw(2) << in_hour << ":";
+		ss << std::setw(2) << in_minute;
 		throw IOException(ss.str(), AT);
 	}
 
 	if ((in_hour == 24) && (in_minute != 0)) {
 		ostringstream ss;
-		ss << "Invalid Date requested: " << in_year << "-" << in_month;
-		ss << "-" << in_day << "T" << in_hour << ":" << in_minute;
+		ss << std::fixed << std::setfill('0') << std::setprecision(0);
+		ss << "Invalid Date requested: " << std::setw(4) << in_year << "-";
+		ss << std::setw(2) << in_month << "-";
+		ss << std::setw(2) << in_day << "T";
+		ss << std::setw(2) << in_hour << ":";
+		ss << std::setw(2) << in_minute;
 		throw IOException(ss.str(), AT);
 	}
 }

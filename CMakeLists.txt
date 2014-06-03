@@ -68,6 +68,8 @@ ELSE(MSVC)
 	#ENDIF(BUILD_SHARED_LIBS)
 ENDIF(MSVC)
 
+#The following pre-processor variables are automatically defined:
+# __linux, __GNUC__, __CYGWIN__, _WIN32, __MINGW32__, __APPLE__
 IF(UNIX)
 	IF(APPLE)
 		SET(DLL_EXT "dylib*")

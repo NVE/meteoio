@@ -49,6 +49,7 @@ class MIO_API IOException : public POPException {
 		virtual const char* what() const throw();
 
 	protected:
+		std::string resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const;
 		std::string msg, full_output;
 };
 
