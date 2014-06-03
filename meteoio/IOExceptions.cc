@@ -65,7 +65,7 @@ void messageBox(const std::string& msg) {
 }
 #endif
 
-//this method is only called for Linux
+#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
 std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const
 {
 #ifdef __GNUC__
@@ -106,6 +106,7 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 	return "\tat " + string(symbols);
 #endif
 }
+#endif
 
 #ifdef _POPC_
 IOException::IOException(const std::string& message, const std::string& position) : POPException(STD_EXCEPTION)

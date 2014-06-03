@@ -49,7 +49,9 @@ class MIO_API IOException : public POPException {
 		virtual const char* what() const throw();
 
 	protected:
+	#if defined(__linux) && !defined(ANDROID) && !defined(__CYGWIN__)
 		std::string resolveSymbols(char *symbols, const unsigned int& ii, bool& found_main) const;
+	#endif
 		std::string msg, full_output;
 };
 
