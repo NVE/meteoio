@@ -17,12 +17,14 @@
 */
 #include "GRIBIO.h"
 
+#include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/meteolaws/Atmosphere.h>
 #include <meteoio/meteolaws/Meteoconst.h> //for PI
 #include <meteoio/DEMObject.h>
 #include <meteoio/MathOptim.h>
 
 #include <cmath>
+#include <iostream>
 #include <errno.h>
 #include <grib_api.h>
 
@@ -98,7 +100,7 @@ GRIBIO::GRIBIO(const std::string& configfile)
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), idx_filename(), coordin(), coordinparam(),
           VW(), DW(), wind_date(), llcorner(), fp(NULL), idx(NULL),
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
-          cellsize_x(IOUtils::nodata), cellsize_y(IOUtils::nodata),
+          cellsize_x(IOUtils::nodata), cellsize_y(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata),
           indexed(false), meteo_initialized(false), update_dem(false)
 {
 	setOptions();
@@ -109,7 +111,7 @@ GRIBIO::GRIBIO(const Config& cfgreader)
           meteo_ext(default_ext), grid2d_ext(default_ext), grid2d_prefix(), idx_filename(), coordin(), coordinparam(),
           VW(), DW(), wind_date(), llcorner(), fp(NULL), idx(NULL),
           latitudeOfNorthernPole(IOUtils::nodata), longitudeOfNorthernPole(IOUtils::nodata), bearing_offset(IOUtils::nodata),
-          cellsize_x(IOUtils::nodata), cellsize_y(IOUtils::nodata),
+          cellsize_x(IOUtils::nodata), cellsize_y(IOUtils::nodata), factor_x(IOUtils::nodata), factor_y(IOUtils::nodata),
           indexed(false), meteo_initialized(false), update_dem(false)
 {
 	setOptions();
@@ -138,6 +140,8 @@ GRIBIO& GRIBIO::operator=(const GRIBIO& source) {
 		bearing_offset = source.bearing_offset;
 		cellsize_x = source.cellsize_x;
 		cellsize_y = source.cellsize_y;
+		factor_x = source.factor_x;
+		factor_y = source.factor_y;
 		indexed = source.indexed;
 		meteo_initialized = source.meteo_initialized;
 		update_dem = source.update_dem;
@@ -155,8 +159,7 @@ void GRIBIO::setOptions()
 	std::string coordout, coordoutparam;
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 
-	string tmp;
-	cfg.getValue("GRID2D", "Input", tmp, IOUtils::nothrow);
+	const string tmp = cfg.get("GRID2D", "Input", IOUtils::nothrow);
 	if (tmp == "GRIB") { //keep it synchronized with IOHandler.cc for plugin mapping!!
 		cfg.getValue("GRID2DPATH", "Input", grid2dpath_in);
 		cfg.getValue("GRIB_DEM_UPDATE", "Input", update_dem, IOUtils::nothrow);
@@ -296,14 +299,14 @@ void GRIBIO::getDate(grib_handle* h, Date &base, double &d1, double &d2) {
 Coords GRIBIO::getGeolocalization(grib_handle* h, double &cell_x, double &cell_y)
 {
 	//getting transformation parameters
-	double angleOfRotationInDegrees;
-	GRIB_CHECK(grib_get_double(h,"angleOfRotationInDegrees",&angleOfRotationInDegrees),0);
+	double angleOfRotationInDegrees = 0.; //if the key was not found, we consider there is no rotation
+	grib_get_double(h,"angleOfRotationInDegrees",&angleOfRotationInDegrees);
 	if(angleOfRotationInDegrees!=0.) {
 		throw InvalidArgumentException("Rotated grids not supported!", AT);
 	}
-	double latitudeOfSouthernPole, longitudeOfSouthernPole;
-	GRIB_CHECK(grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole),0);
-	GRIB_CHECK(grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole),0);
+	double latitudeOfSouthernPole = -90, longitudeOfSouthernPole = -180;
+	grib_get_double(h,"latitudeOfSouthernPoleInDegrees",&latitudeOfSouthernPole);
+	grib_get_double(h,"longitudeOfSouthernPoleInDegrees",&longitudeOfSouthernPole);
 	latitudeOfNorthernPole = -latitudeOfSouthernPole;
 	longitudeOfNorthernPole = longitudeOfSouthernPole+180.;
 
@@ -372,16 +375,22 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& rea
 
 	if(read_geolocalization) {
 		llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
-		if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
+		/*if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
 			free(values);
 			throw InvalidArgumentException("Unsupported geometry: cells can not be represented by square cells!", AT);
-		}
+		}*/
 	}
 	grid_out.set(static_cast<size_t>(Ni), static_cast<size_t>(Nj), .5*(cellsize_x+cellsize_y), llcorner);
 	size_t i=0;
 	for(size_t jj=0; jj<(unsigned)Nj; jj++) {
 		for(size_t ii=0; ii<(unsigned)Ni; ii++)
 			grid_out(ii,jj) = values[i++];
+	}
+	//cells were not square, we have to resample
+	if (factor_x!=IOUtils::nodata && factor_y!=IOUtils::nodata) {
+		grid_out.grid2D = ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, factor_x, factor_y);
+		grid_out.ncols = grid_out.grid2D.getNx();
+		grid_out.nrows = grid_out.grid2D.getNy();
 	}
 	free(values);
 }
@@ -484,7 +493,10 @@ void GRIBIO::indexFile(const std::string& filename)
 
 		llcorner = getGeolocalization(h, cellsize_x, cellsize_y); //this sets llcorner, cellsize and bearing_offset
 		if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
-			throw InvalidArgumentException("Cells can not be represented by square cells. This is not supported!", AT);
+			// round to 1cm precision for numerical stability
+			const double cellsize =  Optim::round( std::min(cellsize_x, cellsize_y) * 100. ) / 100.;
+			factor_x = cellsize_x / cellsize;
+			factor_y = cellsize_y / cellsize;
 		}
 		grib_handle_delete(h);
 	} else {

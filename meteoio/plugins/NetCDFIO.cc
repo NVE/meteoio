@@ -313,10 +313,8 @@ double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, 
 	const double cellsize_x = distanceX / (lonlen-1);
 	const double cellsize_y = distanceY / (latlen-1);
 
-	// We're using a precision for the cellsize that is equal to 1cm, more
-	// precision makes ensuing calculations numerically instable
-	const double value =  max(cellsize_x, cellsize_y) * 100.0;
-	const double cellsize = floor(value) / 100.0;
+	// round to 1cm precision for numerical stability
+	const double cellsize = Optim::round( std::min(cellsize_x, cellsize_y)*100. ) / 100.;
 
 	if (cellsize_x == cellsize_y) {
 		return cellsize_x;

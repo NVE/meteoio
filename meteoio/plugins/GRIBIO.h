@@ -102,7 +102,7 @@ class GRIBIO : public IOInterface {
 		grib_index *idx; //because it needs to be kept between calls
 		double latitudeOfNorthernPole, longitudeOfNorthernPole; //for rotated coordinates
 		double bearing_offset; //to correct vectors coming from rotated lat/lon, we will add an offset to the bearing
-		double cellsize_x, cellsize_y;
+		double cellsize_x, cellsize_y, factor_x, factor_y;
 
 		static const std::string default_ext;
 		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
