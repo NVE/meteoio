@@ -342,16 +342,6 @@ Coords GRIBIO::getGeolocalization(grib_handle* h, double &cell_x, double &cell_y
 	const double cellsize=.5*(cell_x+cell_y);
 	cntr.moveByXY(-.5*(double)Ni*cellsize, -.5*(double)Nj*cellsize);
 
-	//checking that cellsize does not vary too much across the grid
-	/*const double cellsize_x_ll = Coords::lon_degree_lenght(ll_latitude)*d_j;
-	const double cellsize_x_ur = Coords::lon_degree_lenght(ur_latitude)*d_j;
-	if( fabs(cellsize_x_ll-cellsize_x_ur)/cellsize_x > 1./100.) {
-		ostringstream ss;
-		ss << "Cell size varying too much in the x direction between lower left and upper right corner: ";
-		ss << cellsize_x_ll << "m to " << cellsize_x_ur << "m";
-		throw IOException(ss.str(), AT);
-	}*/
-
 	return cntr; //this is now the ll corner
 }
 
@@ -373,13 +363,7 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& rea
 
 	GRIB_CHECK(grib_get_double_array(h,"values",values,&values_len),0);
 
-	if(read_geolocalization) {
-		llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
-		/*if( fabs(cellsize_x-cellsize_y)/cellsize_x > 1./100.) {
-			free(values);
-			throw InvalidArgumentException("Unsupported geometry: cells can not be represented by square cells!", AT);
-		}*/
-	}
+	if(read_geolocalization) llcorner = getGeolocalization(h, cellsize_x, cellsize_y);
 	grid_out.set(static_cast<size_t>(Ni), static_cast<size_t>(Nj), .5*(cellsize_x+cellsize_y), llcorner);
 	size_t i=0;
 	for(size_t jj=0; jj<(unsigned)Nj; jj++) {

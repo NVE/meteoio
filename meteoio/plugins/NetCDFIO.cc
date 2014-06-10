@@ -228,6 +228,12 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 
 		if (dimid.size()!=3 || dimlen[0]<1 || dimlen[lat_index]<2 || dimlen[lon_index]<2)
 			throw IOException("Variable '" + varname + "' may only have three dimensions, all have to at least have length 1", AT);
+	} else if (dimid.size()==3 && dimlen[0]==1) { //in case the variable is associated with a 1 element time dimension
+		lat_index = 1;
+		lon_index = 2;
+
+		if (dimlen[lat_index]<2 || dimlen[lon_index]<2)
+			throw IOException("All dimensions for variable '" + varname + "' have to at least have length 1", AT);
 	} else if (dimid.size()!=2 || dimlen[lat_index]<2 || dimlen[lon_index]<2) {
 		throw IOException("Variable '" + varname + "' may only have two dimensions and both have to have length >1", AT);
 	}
@@ -249,27 +255,66 @@ void NetCDFIO::read2DGrid_internal(Grid2DObject& grid_out, const std::string& fi
 		read_data(ncid, varname, varid, grid);
 	}
 
-	copy_grid(dimlen[lat_index], dimlen[lon_index], lat, lon, grid, grid_out);
+	double missing_value=plugin_nodata;
+	if (ncpp::check_attribute(ncid, varid, "missing_value"))
+		ncpp::get_attribute(ncid, varname, varid, "missing_value", missing_value);
+
+	copy_grid(dimlen[lat_index], dimlen[lon_index], lat, lon, grid, missing_value, grid_out);
+
+	//handle data packing if necessary
+	if (ncpp::check_attribute(ncid, varid, "scale_factor")) {
+		double scale_factor=1.;
+		ncpp::get_attribute(ncid, varname, varid, "scale_factor", scale_factor);
+		grid_out.grid2D *= scale_factor;
+	}
+	if (ncpp::check_attribute(ncid, varid, "add_offset")) {
+		double add_offset=0.;
+		ncpp::get_attribute(ncid, varname, varid, "add_offset", add_offset);
+		grid_out.grid2D += add_offset;
+	}
 
 	close_file(filename, ncid);
-
 	delete[] lat; delete[] lon; delete[] grid;
 }
 
 void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
-                         const double * const grid, Grid2DObject& grid_out)
+                         const double * const grid, const double& nodata, Grid2DObject& grid_out)
 {
-	Coords location(coordin, coordinparam);
-	location.setLatLon(lat[0], lon[0], grid[0]);
-
 	double resampling_factor_x = IOUtils::nodata, resampling_factor_y=IOUtils::nodata;
 	const double cellsize = calculate_cellsize(latlen, lonlen, lat, lon, resampling_factor_x, resampling_factor_y);
 
-	grid_out.set(lonlen, latlen, cellsize, location);
+	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
+	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
 
-	for (size_t kk=0; kk < latlen; kk++) {
-		for (size_t ll=0; ll < lonlen; ll++) {
-			grid_out(ll, kk) = IOUtils::standardizeNodata(grid[kk*lonlen + ll], plugin_nodata);
+	//computing lower left corner by using the center point as reference
+	Coords cntr(coordin, coordinparam);
+	cntr.setLatLon(cntr_lat, cntr_lon, IOUtils::nodata);
+	cntr.moveByXY(-.5*(double)(lonlen-1)*cellsize, -.5*(double)(latlen-1)*cellsize);
+
+	grid_out.set(lonlen, latlen, cellsize, cntr);
+
+	//Handle the case of llcorner/urcorner swapped
+	if (lat[0]<=lat[latlen-1]) {
+		for (size_t kk=0; kk < latlen; kk++) {
+			const size_t row = kk*lonlen;
+			if (lon[0]<=lon[lonlen-1]) {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + ll], nodata);
+			} else {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + (lonlen -1) - ll], nodata);
+			}
+		}
+	} else {
+		for (size_t kk=0; kk < latlen; kk++) {
+			const size_t row = ((latlen-1) - kk)*lonlen;
+			if (lon[0]<=lon[lonlen-1]) {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + ll], nodata);
+			} else {
+				for (size_t ll=0; ll < lonlen; ll++)
+					grid_out(ll, kk) = IOUtils::standardizeNodata(grid[row + (lonlen -1) - ll], nodata);
+			}
 		}
 	}
 
@@ -290,24 +335,12 @@ void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, const doubl
 double NetCDFIO::calculate_cellsize(const size_t& latlen, const size_t& lonlen, const double * const lat, const double * const lon,
                                     double& factor_x, double& factor_y)
 {
-	Coords llcorner(coordin, coordinparam);
-	llcorner.setLatLon(lat[0], lon[0], IOUtils::nodata);
+	const double cntr_lat = .5*(lat[0]+lat[latlen-1]);
+	const double cntr_lon = .5*(lon[0]+lon[lonlen-1]);
+	double alpha;
 
-	Coords urcorner(coordin, coordinparam);
-	urcorner.setLatLon(lat[latlen-1], lon[lonlen-1], IOUtils::nodata);
-
-	const double ll_easting=llcorner.getEasting(), ll_northing=llcorner.getNorthing();
-	const double ur_easting=urcorner.getEasting(), ur_northing=urcorner.getNorthing();
-
-	const double distanceX = ur_easting - ll_easting;
-	const double distanceY = ur_northing - ll_northing;
-	if(distanceX<0 || distanceY<0) {
-		ostringstream ss;
-		ss << "Can not compute cellsize: this is most probably due to an inappropriate input coordinate system (COORDSYS).";
-		ss << "Please configure one that can accomodate (" << llcorner.getLat() << "," << llcorner.getLon() << ") - ";
-		ss << "(" << urcorner.getLat() << "," << urcorner.getLon() << ")";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
+	const double distanceX = Coords::VincentyDistance(cntr_lat, lon[0], cntr_lat, lon[lonlen-1], alpha);
+	const double distanceY = Coords::VincentyDistance(lat[0], cntr_lon, lat[latlen-1], cntr_lon, alpha);
 
 	// lonlen, latlen are decremented by 1; n linearly connected points have (n-1) connections
 	const double cellsize_x = distanceX / (lonlen-1);

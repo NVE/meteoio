@@ -69,18 +69,31 @@ void get_attribute(const int& ncid, const std::string& varname, const int& varid
 
 	int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
 	if (status != NC_NOERR)
-		throw IOException("Could not retrieve attribute '" + attr_name + "'for var '" + varname + "': " + nc_strerror(status), AT);
+		throw IOException("Could not retrieve attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
 
 	char* value = new char[attr_len + 1]; // +1 for trailing null
 
 	status = nc_get_att_text(ncid, varid, attr_name.c_str(), value);
 	if (status != NC_NOERR)
-		throw IOException("Could not read attribute '" + attr_name + "'for var '" + varname + "': " + nc_strerror(status), AT);
+		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
 
 	value[attr_len] = '\0';
 	attr_value = string(value);
 
 	delete[] value;
+}
+
+void get_attribute(const int& ncid, const std::string& varname, const int& varid, const std::string& attr_name, double& attr_value)
+{
+	size_t attr_len;
+
+	int status = nc_inq_attlen (ncid, varid, attr_name.c_str(), &attr_len);
+	if (status != NC_NOERR)
+		throw IOException("Could not retrieve attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
+
+	status = nc_get_att_double(ncid, varid, attr_name.c_str(), &attr_value);
+	if (status != NC_NOERR)
+		throw IOException("Could not read attribute '" + attr_name + "' for var '" + varname + "': " + nc_strerror(status), AT);
 }
 
 bool check_attribute(const int& ncid, const int& varid, const std::string& attr_name)

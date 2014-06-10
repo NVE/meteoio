@@ -75,6 +75,7 @@ void legend::simpleLegend(const unsigned int &height, const double &minimum, con
 	grid.resize(total_width, height, IOUtils::nodata);
 	const double level_inc = (maximum-minimum)/(double)(nb_labels-1); //the infamous interval thing...
 
+	//vertically center legend in free space
 	if(height>=total_height) {
 		const unsigned int free_space = height-total_height;
 		const unsigned int start_legend = free_space/2; //we will start from the bottom
@@ -124,6 +125,7 @@ void legend::smartLegend(const unsigned int &height, const double &minimum, cons
 		nb_labels_norm=1;
 	}
 
+	//vertically center legend in free space
 	const unsigned int smart_height = nb_labels_norm*legend::label_height+legend::interline;
 	if(height>=smart_height) {
 		const unsigned int free_space = height-smart_height;
@@ -382,7 +384,7 @@ void Gradient::getColor(const double& val, unsigned char& r, unsigned char& g, u
 	a=false;
 	double r_d,g_d,b_d;
 	double val_norm;
-    if(autoscale && val<min) val_norm=0.;
+	if(autoscale && val<min) val_norm=0.;
 	else if(autoscale && val>max) val_norm=1.;
 	else val_norm = (val-min)/delta;
 
@@ -636,14 +638,16 @@ gr_terrain::gr_terrain(const double& /*i_min*/, const double& i_max, const bool&
 		X.push_back(1.); v_h.push_back(22.); v_s.push_back(.2); v_v.push_back(.5); //light maroon
 	} else {
 		const double snow_line = i_max - 500.;
+
 		X.push_back(0.); v_h.push_back(198.); v_s.push_back(.50); v_v.push_back(.74); //sea, light blue
 		X.push_back(0.); v_h.push_back(144.); v_s.push_back(.50); v_v.push_back(.39); //sea level, dark green
+
 		X.push_back(.4); v_h.push_back(46.); v_s.push_back(.54); v_v.push_back(.86); //yellow, 1200m
 		X.push_back(.73333); v_h.push_back(4.); v_s.push_back(.71); v_v.push_back(.53); //dark red, 2200m
 		X.push_back(.9); v_h.push_back(22.); v_s.push_back(.88); v_v.push_back(.41); //maroon, 2700m
 		X.push_back(.98333); v_h.push_back(22.); v_s.push_back(.36); v_v.push_back(.79); //light maroon, 2950m
 		X.push_back(1.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.7); //light gray == permanent snow line, 3000m
-		for(size_t i=0; i<X.size(); i++) X[i] = X[i]*snow_line/i_max; //snow line is the reference
+		for(size_t ii=2; ii<X.size(); ii++) X[ii] = X[ii]*snow_line/i_max; //snow line is the reference
 
 		X.push_back(1.); v_h.push_back(0.); v_s.push_back(0.); v_v.push_back(.95); //almost white == fully glaciated line
 	}

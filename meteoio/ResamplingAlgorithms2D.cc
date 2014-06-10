@@ -25,6 +25,22 @@ using namespace std;
 
 namespace mio {
 
+const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &i_grid, const double &factor)
+{
+	if (factor<=0) {
+		ostringstream ss;
+		ss << "Rescaling factor " << factor << " is invalid!";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+	const double cellsize = i_grid.cellsize/factor;
+	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
+	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
+	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
+
+	NearestNeighbour(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
+	return o_grid;
+}
+
 /**
  * @brief Bilinear spatial data resampling
  */
@@ -57,22 +73,6 @@ const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DOb
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
 	cubicBSpline(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
-	return o_grid;
-}
-
-const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &i_grid, const double &factor)
-{
-	if (factor<=0) {
-		ostringstream ss;
-		ss << "Rescaling factor " << factor << " is invalid!";
-		throw InvalidArgumentException(ss.str(), AT);
-	}
-	const double cellsize = i_grid.cellsize/factor;
-	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
-	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
-	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
-
-	NearestNeighbour(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
 	return o_grid;
 }
 
@@ -128,12 +128,10 @@ void ResamplingAlgorithms2D::NearestNeighbour(Array2D<double> &o_grid, const Arr
 	const double scale_y = (double)dest_ny / (double)org_ny;
 
 	for (size_t jj=0; jj<dest_ny; jj++) {
-		size_t org_jj = (size_t) Optim::round( (double)jj/scale_y );
-		if(org_jj>=org_ny) org_jj=org_ny-1;
+		const size_t org_jj = std::min( (size_t) Optim::floor( (double)jj/scale_y ) , org_ny-1 );
 
 		for (size_t ii=0; ii<dest_nx; ii++) {
-			size_t org_ii = (size_t) Optim::round( (double)ii/scale_x );
-			if(org_ii>=org_nx) org_ii=org_nx-1;
+			const size_t org_ii = std::min( (size_t) Optim::floor( (double)ii/scale_x ) , org_nx-1 );
 			o_grid(ii,jj) = i_grid(org_ii, org_jj);
 		}
 	}
