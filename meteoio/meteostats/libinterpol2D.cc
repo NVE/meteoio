@@ -29,8 +29,6 @@
 using namespace std;
 
 namespace mio {
-const double Interpol2D::wind_ys = 0.58;
-const double Interpol2D::wind_yc = 0.42;
 
 //Usefull functions
 /**
@@ -367,17 +365,8 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 	}
 	const DEMObject *dem = (recomputeDEM)? intern_dem : &i_dem;
 
-	//This method computes the speed of the wind and returns a table in 2D with this values
-	double speed;		// Wind speed (m s-1)
-	double dir;		// Wind direction
-	double u;		// Zonal component u (m s-1)
-	double v;		// Meridional component v (m s-1)
-	double beta;		// Terrain slope
-	double azi;		// Topographic slope azimuth
-	double curvature;	// Topographic curvature
-	double slopeDir;	// Slope in the direction of the wind
-	double Ww;		// Wind weighting
-	double Od;		// Diverting factor
+	const double gamma_s = 0.58; //speed weighting factor
+	const double gamma_c = 0.42; //direction weighting factor
 
 	const double dem_min_slope=dem->min_slope*Cst::to_rad;
 	const double dem_min_curvature=dem->min_curvature;
@@ -386,55 +375,43 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 	if (dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
 	if (dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
 
-	for (size_t j=0;j<VW.nrows;j++) {
-		for (size_t i=0;i<VW.ncols;i++){
-			speed = VW(i,j);
-			if (speed==0.) continue; //we can not apply any correction factor!
-			dir = DW(i,j);
-			beta = dem->slope(i, j)*Cst::to_rad;
-			azi = dem->azi(i, j)*Cst::to_rad;
-			curvature = dem->curvature(i, j);
 
-			if (speed==IOUtils::nodata || dir==IOUtils::nodata || beta==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
-				VW(i, j) = IOUtils::nodata;
-				DW(i, j) = IOUtils::nodata;
-			} else {
-				//convert direction to rad
-				dir *= Cst::to_rad;
-				//Speed and direction converted to zonal et meridional
-				//components
-				u = -1. * speed * sin(dir);
-				v = -1. * speed * cos(dir);
+	for (size_t ii=0; ii<VW.nrows*VW.ncols; ii++) {
+		const double vw = VW(ii);
+		if (vw==0.) continue; //we can not apply any correction factor!
+		const double dw = DW(ii)*Cst::to_rad;
+		const double slope = dem->slope(ii)*Cst::to_rad;
+		const double azi = dem->azi(ii)*Cst::to_rad;
+		const double curvature = dem->curvature(ii);
 
-				// Converted back to speed and direction
-				speed = sqrt(u*u + v*v);
-				dir = 1.5 * Cst::PI - atan(v/u);
-
-				//normalize curvature and beta.
-				//Note: it should be slopeDir instead of beta, but beta is more efficient
-				//to compute (only once for each dem) and it should not be that different...
-				beta = (beta - dem_min_slope)/dem_range_slope - 0.5;
-				curvature = (curvature - dem_min_curvature)/dem_range_curvature - 0.5;
-
-				// Calculate the slope in the direction of the wind
-				slopeDir = beta * cos(dir - azi);
-
-				// Calculate the wind weighting factor
-				Ww = 1. + wind_ys * slopeDir + wind_yc * curvature;
-
-				// Modify the wind direction by a diverting factor
-				Od = -0.5 * slopeDir * sin(2.*(azi - dir));
-
-				// Calculate the terrain-modified wind speed
-				VW(i, j) = Ww * speed;
-
-				// Add the diverting factor to the wind direction and convert to degrees
-				DW(i, j) = (dir + Od) * Cst::to_deg;
-				if( DW(i, j)>360. ) {
-					DW(i, j) -= 360.;
-				}
-			}
+		if (vw==IOUtils::nodata || dw==IOUtils::nodata || slope==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
+			VW(ii) = IOUtils::nodata;
+			DW(ii) = IOUtils::nodata;
+			continue;
 		}
+
+		//normalize curvature and slope.
+		//Note: it should be slopeDir instead of beta, but beta is more efficient
+		//to compute (only once for each dem) and it should not be that different...
+		const double beta = (slope - dem_min_slope)/dem_range_slope - 0.5;
+		const double curv = (curvature - dem_min_curvature)/dem_range_curvature - 0.5;
+
+		// Calculate the slope in the direction of the wind
+		const double slopeDir = beta * cos(dw - azi);
+
+		// Calculate the wind weighting factor
+		const double Ww = 1. + gamma_s * slopeDir + gamma_c * curv;
+
+		// Modify the wind direction by a diverting factor, as of Ryan 1977
+		const double Od = -0.5 * slopeDir * sin(2.*(azi - dw));
+
+		// Calculate the terrain-modified wind speed
+		VW(ii) *= Ww;
+
+		// Add the diverting factor to the wind direction and convert to degrees
+		DW(ii) = (dw + Od) * Cst::to_deg;
+		if( DW(ii)>360. )
+			DW(ii) -= 360.;
 	}
 
 	if (intern_dem!=NULL) delete (intern_dem);
@@ -593,24 +570,29 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
  * This is according to Ryan, <i>"a mathematical model for diagnosis and prediction of surface
  * winds in mountainous terrain"</i>, 1977, journal of applied meteorology, <b>16</b>, 6.
  * @param dem array of elevations (dem). The slope and azimuth must have been updated as they are required for the DEM analysis.
- * @param grid 2D array of wind direction to fill
+ * @param VW 2D array of wind speed to fill
+ * @param DW 2D array of wind direction to fill
  * @author Mathias Bavay
  */
-void Interpol2D::RyanWindDir(const DEMObject& dem, Grid2DObject &grid)
+void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW)
 {
-	for (size_t ii=0; ii<grid.getNx()*grid.getNy(); ii++) {
+	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
 		const double azi = dem.azi(ii);
 		const double slope = dem.slope(ii);
 		if (azi==IOUtils::nodata || slope==IOUtils::nodata) {
-			grid(ii) = IOUtils::nodata;
+			VW(ii) = IOUtils::nodata;
+			DW(ii) = IOUtils::nodata;
 			continue;
 		}
 
+		const double dw = DW(ii);
 		const double Yd = 100.*tan(slope*Cst::to_rad);
-		const double Fd = -0.225 * std::min(Yd, 100.) * sin(2.*(azi-grid(ii))*Cst::to_rad);
-		grid(ii) = fmod(grid(ii)+Fd + 360., 360.);
-		//for VW: Fu = atan(0.17*Yd) / 100;
-		//VW *= (1. - Fu);
+		const double Fd = -0.225 * std::min(Yd, 100.) * sin(2.*(azi-dw)*Cst::to_rad);
+		DW(ii) = fmod(dw+Fd + 360., 360.);
+
+		const double Yu = Yd; //HACK this should be the slope to the horizon upwind
+		const double Fu = atan(0.17*std::min(Yu, 100.)) / 100;
+		VW(ii) *= (1. - Fu);
 	}
 }
 

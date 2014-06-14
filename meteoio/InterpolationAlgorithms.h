@@ -160,6 +160,7 @@ class InterpolationAlgorithm {
 		void getTrend(const std::vector<double>& vecAltitudes, const std::vector<double>& vecDat, Fit1D &trend) const;
 		static void detrend(const Fit1D& trend, const std::vector<double>& vecAltitudes, std::vector<double> &vecDat, const double& min_alt=-1e4, const double& max_alt=1e4);
 		static void retrend(const DEMObject& dem, const Fit1D& trend, Grid2DObject &grid, const double& min_alt=-1e4, const double& max_alt=1e4);
+		void simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW);
 
 		Meteo2DInterpolator& mi;
 		Date date;
@@ -396,9 +397,11 @@ class RyanAlgorithm : public InterpolationAlgorithm {
 		RyanAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW() {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
+	private:
+		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
 };
 
 /**

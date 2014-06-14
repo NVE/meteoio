@@ -64,7 +64,7 @@ class Interpol2D {
 		                      const std::vector<StationData>& vecStations,
 		                      const DEMObject& dem, const Fit1D& variogram, Grid2DObject& grid);
 
-		static void RyanWindDir(const DEMObject& dem, Grid2DObject &grid);
+		static void RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW);
 		static void Winstral(const DEMObject& dem, const Grid2DObject& TA, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 
 		static bool allZeroes(const std::vector<double>& vecData);
@@ -105,12 +105,8 @@ class Interpol2D {
 		static double weightInvDist2(const double& d2);
 		double weightInvDistN(const double& d2);
 		double dist_pow; //power for the weighting method weightInvDistN
-
-	private:
-		//static members
-		const static double wind_ys; ///<coefficient for wind dependency on slope
-		const static double wind_yc; ///<coefficient for wind dependency on curvature
 };
+
 } //end namespace
 
 #endif

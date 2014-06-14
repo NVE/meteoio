@@ -221,6 +221,48 @@ void InterpolationAlgorithm::retrend(const DEMObject& dem, const Fit1D& trend, G
 	}
 }
 
+//this interpolates VW, DW by converting to u,v and then doing IDW_LAPSE before reconverting to VW, DW
+void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW)
+{
+	if (vecDataVW.size() != vecDataDW.size())
+		throw InvalidArgumentException("VW and DW vectors should have the same size!", AT);
+
+	//compute U,v
+	std::vector<double> Ve, Vn;
+	for (size_t ii=0; ii<vecDataVW.size(); ii++) {
+		Ve.push_back( vecDataVW[ii]*sin(vecDataDW[ii]*Cst::to_rad) );
+		Vn.push_back( vecDataVW[ii]*cos(vecDataDW[ii]*Cst::to_rad) );
+	}
+
+	//spatially interpolate U,V
+	vector<double> vecAltitudes;
+	getStationAltitudes(vecMeta, vecAltitudes);
+	if (vecAltitudes.empty())
+		throw IOException("Not enough data for spatially interpolating wind", AT);
+
+	Fit1D trend;
+
+	getTrend(vecAltitudes, Ve, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, Ve);
+	Interpol2D::IDW(Ve, vecMeta, dem, VW);
+	retrend(dem, trend, VW);
+
+	getTrend(vecAltitudes, Vn, trend);
+	info << trend.getInfo();
+	detrend(trend, vecAltitudes, Vn);
+	Interpol2D::IDW(Vn, vecMeta, dem, DW);
+	retrend(dem, trend, DW);
+
+	//recompute VW, DW in each cell
+	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
+		const double ve = VW(ii);
+		const double vn = DW(ii);
+		VW(ii) = sqrt(ve*ve + vn*vn);
+		DW(ii) = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+	}
+}
+
 /**********************************************************************************/
 /*                    Implementation of the various algorithms                    */
 /**********************************************************************************/
@@ -536,8 +578,8 @@ void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for VW
-	if (in_param != MeteoData::VW)
+	//This algorithm is only valid for VW or DW
+	if (in_param != MeteoData::VW && in_param != MeteoData::DW)
 		return 0.0;
 
 	date = i_date;
@@ -569,38 +611,49 @@ void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObj
 	info.clear(); info.str("");
 
 	//if all data points are zero, simply fill the grid with zeroes
-	if (Interpol2D::allZeroes(vecDataVW)) {
+	if (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) {
+		Interpol2D::constant(0., dem, grid);
+		return;
+	}
+	if (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) {
 		Interpol2D::constant(0., dem, grid);
 		return;
 	}
 
-	vector<double> vecAltitudes;
-	getStationAltitudes(vecMeta, vecAltitudes);
-	if (vecAltitudes.empty())
-		throw IOException("Not enough data for spatially interpolating parameter " + MeteoData::getParameterName(param), AT);
-
-	Grid2DObject dw;
-	mi.interpolate(date, dem, MeteoData::DW, dw); //get DW interpolation from call back to Meteo2DInterpolator
-
-	Fit1D trend;
-	getTrend(vecAltitudes, vecDataVW, trend);
-	info << trend.getInfo();
-	detrend(trend, vecAltitudes, vecDataVW);
-	Interpol2D::IDW(vecDataVW, vecMeta, dem, grid); //the meta should NOT be used for elevations!
-	retrend(dem, trend, grid);
-	Interpol2D::SimpleDEMWindInterpolate(dem, grid, dw);
+	if (param==MeteoData::VW) {
+		Grid2DObject DW;
+		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW);
+		Interpol2D::SimpleDEMWindInterpolate(dem, grid, DW);
+	}
+	if (param==MeteoData::DW) {
+		Grid2DObject VW;
+		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid);
+		Interpol2D::SimpleDEMWindInterpolate(dem, VW, grid);
+	}
 }
 
 
 double RyanAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
-	//This algorithm is only valid for DW (we could add VW later)
-	if (in_param!=MeteoData::DW)
+	//This algorithm is only valid for VW or DW
+	if (in_param != MeteoData::VW && in_param != MeteoData::DW)
 		return 0.0;
 
 	date = i_date;
 	param = in_param;
-	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+	vecData.clear(); vecMeta.clear();
+	vecDataVW.clear(); vecDataDW.clear();
+
+	nrOfMeasurments = 0;
+	iomanager.getMeteoData(date, vecMeteo);
+	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
+			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
+			vecDataDW.push_back(vecMeteo[ii](MeteoData::DW));
+			vecMeta.push_back(vecMeteo[ii].meta);
+			nrOfMeasurments++;
+		}
+	}
 
 	if (nrOfMeasurments==0)
 		return 0.0;
@@ -615,13 +668,25 @@ void RyanAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	//if all data points are zero, simply fill the grid with zeroes
-	if (Interpol2D::allZeroes(vecData)) {
+	if (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) {
+		Interpol2D::constant(0., dem, grid);
+		return;
+	}
+	if (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) {
 		Interpol2D::constant(0., dem, grid);
 		return;
 	}
 
-	Interpol2D::IDW(vecData, vecMeta, dem, grid);
-	Interpol2D::RyanWindDir(dem, grid);
+	if (param==MeteoData::VW) {
+		Grid2DObject DW;
+		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW);
+		Interpol2D::RyanWind(dem, grid, DW);
+	}
+	if (param==MeteoData::DW) {
+		Grid2DObject VW;
+		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid);
+		Interpol2D::RyanWind(dem, VW, grid);
+	}
 }
 
 
@@ -747,7 +812,7 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 			count++;
 		}
 	}
-//HACK: use median instead of mean for exposed stations?
+
 	if (count!=0) {
 		ve /= static_cast<double>(count);
 		vn /= static_cast<double>(count);
