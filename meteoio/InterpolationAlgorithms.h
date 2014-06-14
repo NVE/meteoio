@@ -83,7 +83,7 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - LIDW_LAPSE: IDW_LAPSE restricted to a local scale (n neighbor stations, see LocalIDWLapseAlgorithm)
  * - RH: the dew point temperatures are interpolated using IDW_LAPSE, then reconverted locally to relative humidity (see RHAlgorithm)
  * - ILWR: the incoming long wave radiation is converted to emissivity and then interpolated (see ILWRAlgorithm)
- * - WIND_CURV: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see SimpleWindInterpolationAlgorithm)
+ * - LISTON_WIND: the wind field (VW and DW) is interpolated using IDW_LAPSE and then altered depending on the local curvature and slope (taken from the DEM, see ListonWindAlgorithm)
  * - RYAN: the wind direction is interpolated using IDW and then altered depending on the local slope (see RyanAlgorithm)
  * - WINSTRAL: the solid precipitation is redistributed by wind according to (Winstral, 2002) (see WinstralAlgorithm)
  * - HNW_SNOW: precipitation interpolation according to (Magnusson, 2011) (see SnowHNWInterpolation)
@@ -361,17 +361,18 @@ class ILWRAlgorithm : public InterpolationAlgorithm {
 };
 
 /**
- * @class SimpleWindInterpolationAlgorithm
+ * @class ListonWindAlgorithm
  * @brief Curvature/slope influenced wind interpolation algorithm.
- * This is an implementation of the method described in (Liston & Elder, 2006): the wind speed and direction are
- * spatially interpolated using IDWLapseAlgorithm for the wind speed and using the user defined wind direction
- * interpolation algorithm. Then, the wind speed and direction fields are altered by wind weighting factors
- * and wind diverting factors (respectively) calculated from the local curvature and slope
- * (as taken from the DEM, see DEMObject).
+ * This is an implementation of the method described in G. E. Liston and K. Elder,
+ * <i>"A meteorological distribution system for high-resolution terrestrial modeling (MicroMet)"</i>, Journal of Hydrometeorology, <b>7.2</b>, 2006.
+ * The wind speed and direction are spatially interpolated using IDWLapseAlgorithm. Then, the wind speed and
+ * direction fields are altered by wind weighting factors and wind diverting factors (respectively) calculated
+ * from the local curvature and slope (as taken from the DEM, see DEMObject). The wind diverting factor is
+ * actually the same as in RyanAlgorithm.
  */
-class SimpleWindInterpolationAlgorithm : public InterpolationAlgorithm {
+class ListonWindAlgorithm : public InterpolationAlgorithm {
 	public:
-		SimpleWindInterpolationAlgorithm(Meteo2DInterpolator& i_mi,
+		ListonWindAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
 			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW() {}

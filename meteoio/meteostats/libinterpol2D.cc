@@ -343,18 +343,19 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 
 /**
 * @brief Grid filling function:
-* This implementation fills a grid using a curvature and slope algorithm, as described in "A Meteorological
-* Distribution System for High-Resolution Terrestrial Modeling (MicroMet)", Liston and Elder, 2006.
+* This implementation fills a grid using a curvature and slope algorithm, as described in
+* G. E. Liston and K. Elder, <i>"A meteorological distribution system for high-resolution terrestrial modeling (MicroMet)"</i>, Journal of Hydrometeorology, <b>7.2</b>, 2006.
 * @param i_dem array of elevations (dem). The slope must have been updated as it is required for the DEM analysis.
 * @param VW 2D array of Wind Velocity to fill
 * @param DW 2D array of Wind Direction to fill
 */
-void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW)
+void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObject& DW)
 {
 	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(i_dem))){
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
 	}
 
+	//make sure dem has the curvature that we need
 	const bool recomputeDEM = i_dem.curvature.isEmpty();
 	DEMObject *intern_dem = NULL;
 	if(recomputeDEM) {
@@ -365,53 +366,45 @@ void Interpol2D::SimpleDEMWindInterpolate(const DEMObject& i_dem, Grid2DObject& 
 	}
 	const DEMObject *dem = (recomputeDEM)? intern_dem : &i_dem;
 
+	//calculate terrain slope in the direction of the wind
+	Array2D<double> Omega_s(VW.getNx(), VW.getNy());
+	for (size_t ii=0; ii<Omega_s.getNx()*Omega_s.getNy(); ii++) {
+		const double theta = DW(ii);
+		const double beta = dem->slope(ii);
+		const double xi = dem->azi(ii);
+
+		if (theta!=IOUtils::nodata && beta!=IOUtils::nodata && xi!=IOUtils::nodata)
+			Omega_s(ii) = beta*Cst::to_rad * cos((theta-xi)*Cst::to_rad);
+		else
+			Omega_s(ii) = IOUtils::nodata;
+	}
+
+	//compute normalization factors
+	const double omega_s_min=Omega_s.getMin();
+	const double omega_s_range=(Omega_s.getMax()-omega_s_min);
+	const double omega_c_min=dem->min_curvature;
+	const double omega_c_range=(dem->max_curvature-omega_c_min);
+
+	//compute modified VW and DW
 	const double gamma_s = 0.58; //speed weighting factor
 	const double gamma_c = 0.42; //direction weighting factor
-
-	const double dem_min_slope=dem->min_slope*Cst::to_rad;
-	const double dem_min_curvature=dem->min_curvature;
-	double dem_range_slope=(dem->max_slope-dem_min_slope)*Cst::to_rad;
-	double dem_range_curvature=(dem->max_curvature-dem_min_curvature);
-	if (dem_range_slope==0.) dem_range_slope = 1.; //to avoid division by zero below
-	if (dem_range_curvature==0.) dem_range_curvature = 1.; //to avoid division by zero below
-
-
-	for (size_t ii=0; ii<VW.nrows*VW.ncols; ii++) {
+	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
 		const double vw = VW(ii);
-		if (vw==0.) continue; //we can not apply any correction factor!
-		const double dw = DW(ii)*Cst::to_rad;
-		const double slope = dem->slope(ii)*Cst::to_rad;
-		const double azi = dem->azi(ii)*Cst::to_rad;
-		const double curvature = dem->curvature(ii);
+		if (vw==0. || vw==IOUtils::nodata) continue; //we can not apply any correction factor!
+		const double dw = DW(ii);
+		if (dw==IOUtils::nodata) continue; //we can not apply any correction factor!
 
-		if (vw==IOUtils::nodata || dw==IOUtils::nodata || slope==IOUtils::nodata || azi==IOUtils::nodata || curvature==IOUtils::nodata) {
-			VW(ii) = IOUtils::nodata;
-			DW(ii) = IOUtils::nodata;
-			continue;
-		}
+		if (Omega_s(ii)==IOUtils::nodata) continue; //we can not calculate any correction factor!
+		const double omega_s = (omega_s_range!=0.)? (Omega_s(ii)-omega_s_min)/omega_s_range - 0.5 : 0.;
+		const double omega_c = (dem->curvature(ii)!=IOUtils::nodata && omega_c_range!=0.)? (dem->curvature(ii) - omega_c_min)/omega_c_range - 0.5 : 0.;
 
-		//normalize curvature and slope.
-		//Note: it should be slopeDir instead of beta, but beta is more efficient
-		//to compute (only once for each dem) and it should not be that different...
-		const double beta = (slope - dem_min_slope)/dem_range_slope - 0.5;
-		const double curv = (curvature - dem_min_curvature)/dem_range_curvature - 0.5;
-
-		// Calculate the slope in the direction of the wind
-		const double slopeDir = beta * cos(dw - azi);
-
-		// Calculate the wind weighting factor
-		const double Ww = 1. + gamma_s * slopeDir + gamma_c * curv;
-
-		// Modify the wind direction by a diverting factor, as of Ryan 1977
-		const double Od = -0.5 * slopeDir * sin(2.*(azi - dw));
-
-		// Calculate the terrain-modified wind speed
+		const double Ww = 1. + gamma_s*omega_s + gamma_c*omega_c;
 		VW(ii) *= Ww;
 
-		// Add the diverting factor to the wind direction and convert to degrees
-		DW(ii) = (dw + Od) * Cst::to_deg;
-		if( DW(ii)>360. )
-			DW(ii) -= 360.;
+		const double theta = DW(ii);
+		const double xi = dem->azi(ii);
+		const double theta_t = -0.5 * omega_s * sin( 2.*(xi-theta)*Cst::to_rad )*Cst::to_deg;
+		DW(ii) = fmod(dw+theta_t + 360., 360.);
 	}
 
 	if (intern_dem!=NULL) delete (intern_dem);
@@ -576,6 +569,10 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
  */
 void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& DW)
 {
+	if ((!VW.isSameGeolocalization(DW)) || (!VW.isSameGeolocalization(dem))){
+		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
+	}
+
 	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
 		const double azi = dem.azi(ii);
 		const double slope = dem.slope(ii);

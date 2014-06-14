@@ -51,8 +51,8 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 		return new RHAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "ILWR"){// long wave radiation interpolation
 		return new ILWRAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
-	} else if (algoname == "WIND_CURV"){// wind velocity interpolation (using a heuristic terrain effect)
-		return new SimpleWindInterpolationAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+	} else if (algoname == "LISTON_WIND"){// wind velocity interpolation (using a heuristic terrain effect)
+		return new ListonWindAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "RYAN"){// RYAN wind direction
 		return new RyanAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
 	} else if (algoname == "WINSTRAL"){// Winstral wind exposure factor
@@ -576,7 +576,7 @@ void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 }
 
 
-double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
+double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param)
 {
 	//This algorithm is only valid for VW or DW
 	if (in_param != MeteoData::VW && in_param != MeteoData::DW)
@@ -606,7 +606,7 @@ double SimpleWindInterpolationAlgorithm::getQualityRating(const Date& i_date, co
 	return 0.9;
 }
 
-void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
+void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
 	info.clear(); info.str("");
 
@@ -623,12 +623,12 @@ void SimpleWindInterpolationAlgorithm::calculate(const DEMObject& dem, Grid2DObj
 	if (param==MeteoData::VW) {
 		Grid2DObject DW;
 		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW);
-		Interpol2D::SimpleDEMWindInterpolate(dem, grid, DW);
+		Interpol2D::ListonWind(dem, grid, DW);
 	}
 	if (param==MeteoData::DW) {
 		Grid2DObject VW;
 		simpleWindInterpolate(dem, vecDataVW, vecDataDW, VW, grid);
-		Interpol2D::SimpleDEMWindInterpolate(dem, VW, grid);
+		Interpol2D::ListonWind(dem, VW, grid);
 	}
 }
 
