@@ -92,12 +92,8 @@ class Interpol2D {
 		static void steepestDescentDisplacement(const DEMObject& dem, const Grid2DObject& grid, const size_t& ii, const size_t& jj, short &d_i_dest, short &d_j_dest);
 		static double depositAroundCell(const DEMObject& dem, const size_t& ii, const size_t& jj, const double& precip, Grid2DObject &grid);
 
-		static double WinstralSX_core(const Grid2DObject& dem, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj);
-		static double AvgSX_core(const Grid2DObject& dem, const Grid2DObject& sx, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj);
-
+		static double getTanMaxSlope(const Grid2DObject& dem, const double& dmin, const double& dmax, const double& bearing, const size_t& ii, const size_t& jj);
 		static void WinstralSX(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
-		static void WinstralSB(const DEMObject& dem, const double& dmax, const double& sepdist, const double& in_bearing, Grid2DObject& grid);
-		static void Winstral_deposition(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid);
 
 		//weighting methods
 		static double weightInvDist(const double& d2);

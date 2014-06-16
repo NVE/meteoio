@@ -403,7 +403,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 
 		const double theta = DW(ii);
 		const double xi = dem->azi(ii);
-		const double theta_t = -0.5 * omega_s * sin( 2.*(xi-theta)*Cst::to_rad )*Cst::to_deg;
+		const double theta_t = -0.5 * omega_s * sin( 2.*(xi-theta)*Cst::to_rad ) * Cst::to_deg;
 		DW(ii) = fmod(dw+theta_t + 360., 360.);
 	}
 
@@ -573,30 +573,51 @@ void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& 
 		throw IOException("Requested grid VW and grid DW don't match the geolocalization of the DEM", AT);
 	}
 
-	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
-		const double azi = dem.azi(ii);
-		const double slope = dem.slope(ii);
-		if (azi==IOUtils::nodata || slope==IOUtils::nodata) {
-			VW(ii) = IOUtils::nodata;
-			DW(ii) = IOUtils::nodata;
-			continue;
+	const double shade_factor = 5.;
+	const double cellsize = dem.cellsize;
+	const double max_alt = dem.grid2D.getMax();
+
+	for (size_t jj=0; jj<VW.getNy(); jj++) {
+		for (size_t ii=0; ii<VW.getNx(); ii++) {
+			const double azi = dem.azi(ii,jj);
+			const double slope = dem.slope(ii,jj);
+			if (azi==IOUtils::nodata || slope==IOUtils::nodata) {
+				VW(ii,jj) = IOUtils::nodata;
+				DW(ii,jj) = IOUtils::nodata;
+				continue;
+			}
+
+			const double dw = DW(ii,jj);
+			const double Yd = 100.*tan(slope*Cst::to_rad);
+			const double Fd = -0.225 * std::min(Yd, 100.) * sin(2.*(azi-dw)*Cst::to_rad);
+			DW(ii,jj) = fmod(dw+Fd + 360., 360.);
+
+			const double alt_ref = dem(ii,jj); //the altitude exists, because a slope exists!
+			const double dmax = (max_alt - alt_ref) * shade_factor;
+			if (dmax<=cellsize) continue;
+
+			const double Yu = 100.*getTanMaxSlope(dem, cellsize, dmax, dw, ii, jj); //slope to the horizon upwind
+			const double Fu = atan(0.17*std::min(Yu, 100.)) / 100.;
+			VW(ii,jj) *= (1. - Fu);
 		}
-
-		const double dw = DW(ii);
-		const double Yd = 100.*tan(slope*Cst::to_rad);
-		const double Fd = -0.225 * std::min(Yd, 100.) * sin(2.*(azi-dw)*Cst::to_rad);
-		DW(ii) = fmod(dw+Fd + 360., 360.);
-
-		const double Yu = Yd; //HACK this should be the slope to the horizon upwind
-		const double Fu = atan(0.17*std::min(Yu, 100.)) / 100;
-		VW(ii) *= (1. - Fu);
 	}
 }
 
-//compute the Winstral sx factor for one single direction and one single point (ii,jj) in dem up to dmax distance
-double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
+/**
+ * @brief compute the max slope angle looking toward the horizon in a given direction
+ * The search distance is limited between dmin and dmax from the starting point (i,j).
+ * This is exactly identical with the Winstral Sx factor for a single direction. Or the upwind slope for Ryan.
+ * @param[in] dem DEM to work with
+ * @param[in] dmin minimum search distance (ie all points at less than dmin are skipped)
+ * @param[in] dmax maximum search distance
+ * @param[in] bearing direction of the search
+ * @param[in] i x index of the cell to start the search from
+ * @param[in] j y index of the cell to start the search from
+ * @return tan of the maximum slope angle from the (i,j) cell in the given direction
+ */
+double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
-	const double dmin = 20.; //cells closer than dmin don't play any role
+	//const double dmin = 20.; //cells closer than dmin don't play any role
 	const double inv_dmin = 1./dmin;
 	const double inv_dmax = 1./dmax;
 	const double alpha_rad = bearing*Cst::to_rad;
@@ -607,7 +628,7 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 
 	int ll=ii, mm=jj;
 
-	double max_tan_sx = 0.;
+	double max_tan_slope = 0.;
 	size_t nb_cells = 0;
 	while( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
 		const double altitude = dem(ll, mm);
@@ -618,10 +639,10 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 			if(inv_distance>inv_dmin) continue; //don't consider cells closer than dmin
 			if(inv_distance<inv_dmax) break; //stop if distance>dmax
 
-			const double tan_sx = delta_elev*inv_distance;
+			const double tan_slope = delta_elev*inv_distance;
 
 			//update max_tan_sx if necessary. We compare and tan(sx) in order to avoid computing atan()
-			if( fabs(tan_sx)>fabs(max_tan_sx) ) max_tan_sx = tan_sx;
+			if( fabs(tan_slope)>fabs(max_tan_slope) ) max_tan_slope = tan_slope;
 		}
 
 		//move to next cell
@@ -630,7 +651,7 @@ double Interpol2D::WinstralSX_core(const Grid2DObject& dem, const double& dmax, 
 		mm = jj + (int)round( ((double)nb_cells)*cos(alpha_rad) ); //alpha is a bearing
 	}
 
-	return atan(max_tan_sx); //return max_sx
+	return max_tan_slope;
 }
 
 /**
@@ -648,6 +669,7 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 {
 	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
 
+	const double dmin = 20.;
 	const double bearing_inc = 5.;
 	const double bearing_width = 30.;
 	double bearing1 = fmod( in_bearing - bearing_width/2., 360. );
@@ -660,7 +682,7 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 			double sum = 0.;
 			unsigned short count=0;
 			for(double bearing=bearing1; bearing<=bearing2; bearing += bearing_inc) {
-				sum += WinstralSX_core(dem, dmax, bearing, ii, jj);
+				sum += atan( getTanMaxSlope(dem, dmin, dmax, bearing, ii, jj) );
 				count++;
 			}
 
