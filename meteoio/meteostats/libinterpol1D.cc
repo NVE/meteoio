@@ -146,6 +146,44 @@ std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const s
 	return der;
 }
 
+/**
+ * @brief data binning method
+ * This bins the data into k classes of equal width (see https://en.wikipedia.org/wiki/Data_binning)
+ * @param k number of classes
+ * @param X vector of abscissae
+ * @param Y vector of ordinates
+ */
+void Interpol1D::equalBin(const size_t k, std::vector<double>& X, std::vector<double>& Y)
+{
+	const size_t Xsize = X.size();
+	if (Xsize!=Y.size()) {
+		ostringstream ss;
+		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	const double Xmin = *std::min_element(X.begin(),X.end());
+	const double Xmax = *std::max_element(X.begin(),X.end());
+	const double width = (Xmax - Xmin) / k;
+
+	std::vector<double> bins(k, 0.);
+	std::vector<size_t> counts(k, 0.);
+	for (size_t ii=0; ii<Xsize; ii++) {
+		const size_t index = Optim::floor( (X[ii]-Xmin) / width );
+		bins[index] += Y[ii];
+		counts[index]++;
+	}
+
+	X.resize(0);
+	Y.resize(0);
+	for (size_t ii=0; ii<k; ii++) {
+		if (counts[ii]>0) {
+			X.push_back( static_cast<double>(ii)*width + Xmin );
+			Y[ii] = bins[ii] / counts[ii];
+		}
+	}
+}
+
 void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
 {
 	const size_t Xsize = X.size();

@@ -968,7 +968,8 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 }
 
 
-void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData)
+//since this uses vecData, the optional detrending has already been done
+void OrdinaryKrigingAlgorithm::getDataForEmpiricalVariogram(std::vector<double> &distData, std::vector<double> &variData)
 {
 	distData.clear();
 	variData.clear();
@@ -993,10 +994,84 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 	}
 }
 
+//this gets the full data over a preceeding period
+void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData, const bool& detrend_data)
+{
+	distData.clear();
+	variData.clear();
+
+	vector<double> vecAltitudes;
+	getStationAltitudes(vecMeta, vecAltitudes);
+
+	//get all the data between "date" and "date-daysBefore"
+	const double daysBefore = 1.5;
+	const double Tstep = 1./24.;
+	std::vector< std::vector<double> > vecVecData;
+	vecVecData.insert(vecVecData.begin(), nrOfMeasurments, std::vector<double>()); //allocation for the vectors
+
+	for(Date d1 = date - daysBefore; d1<=date; d1+=Tstep) {
+		std::vector<MeteoData> Meteo;
+		iomanager.getMeteoData(d1, Meteo);
+		if (Meteo.size()!=nrOfMeasurments)
+			throw InvalidArgumentException("Only a fixed number of stations is currently suppported for "+algo, AT);
+
+		if (detrend_data) {
+			//find trend
+			std::vector<double> vecDat;
+			for(size_t ii=0; ii<Meteo.size(); ii++)
+				vecDat.push_back( Meteo[ii](param) );
+
+			Fit1D trend;
+			trend.setModel(Fit1D::NOISY_LINEAR, vecAltitudes, vecDat, false);
+			const bool status = trend.fit();
+			if (!status)
+				throw InvalidArgumentException("Could not fit variogram model to the data", AT);
+
+			//detrend the data
+			for(size_t ii=0; ii<Meteo.size(); ii++) {
+				double val = Meteo[ii](param);
+				if(val!=IOUtils::nodata)
+					val -= trend( vecAltitudes[ii] );
+
+				vecVecData.at(ii).push_back( val );
+			}
+		} else {
+			for(size_t ii=0; ii<Meteo.size(); ii++)
+				vecVecData.at(ii).push_back( Meteo[ii](param) );
+		}
+	}
+
+
+	//for each station, compute distance to other stations and
+	// variance of ( Y(current) - Y(other station) )
+	for(size_t j=0; j<nrOfMeasurments; j++) {
+		const Coords& st1 = vecMeta[j].position;
+		const double x1 = st1.getEasting();
+		const double y1 = st1.getNorthing();
+
+		for(size_t i=0; i<j; i++) { //compare with the other stations
+			//compute distance between stations
+			const Coords& st2 = vecMeta[i].position;
+			const double DX = x1-st2.getEasting();
+			const double DY = y1-st2.getNorthing();
+			const double distance = Optim::fastSqrt_Q3( Optim::pow2(DX) + Optim::pow2(DY) );
+
+			std::vector<double> Y;
+			for (size_t dt=0; dt<vecVecData[j].size(); dt++) {
+				if (vecVecData[j][dt]!=IOUtils::nodata && vecVecData[i][dt]!=IOUtils::nodata)
+					Y.push_back( vecVecData[j][dt] - vecVecData[i][dt] );
+			}
+
+			distData.push_back( distance );
+			variData.push_back( Interpol1D::variance(Y) );
+		}
+	}
+}
+
 bool OrdinaryKrigingAlgorithm::computeVariogram()
 {//return variogram fit of covariance between stations i and j
 	std::vector<double> distData, variData;
-	getDataForVariogram(distData, variData);
+	getDataForEmpiricalVariogram(distData, variData);
 
 	std::vector<string> vario_types( vecArgs );
 	if(vario_types.empty()) vario_types.push_back("LINVARIO");

@@ -542,7 +542,8 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	protected:
-		void getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData);
+		void getDataForEmpiricalVariogram(std::vector<double> &distData, std::vector<double> &variData);
+		void getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData, const bool& detrend_data=false);
 		bool computeVariogram();
 		Fit1D variogram;
 };
@@ -554,7 +555,7 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
  * This is very similar to OrdinaryKrigingAlgorithm but performs detrending on the data.
  * @code
  * TA::algorithms = ODKRIG_LAPSE
- * TA::odkrig = SPHERICVARIO
+ * TA::odkrig_lapse = SPHERICVARIO
  * @endcode
  *
  * @author Mathias Bavay
