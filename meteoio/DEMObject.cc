@@ -30,8 +30,6 @@
 using namespace std;
 
 namespace mio {
-const double dbl_max = std::numeric_limits<double>::max();
-const double dbl_min = -std::numeric_limits<double>::max();
 
 /**
 * @brief Default constructor.
@@ -40,8 +38,8 @@ const double dbl_min = -std::numeric_limits<double>::max();
 */
 DEMObject::DEMObject(const slope_type& i_algorithm)
            : Grid2DObject(), slope(), azi(), curvature(), Nx(), Ny(), Nz(),
-             min_altitude(dbl_max), min_slope(dbl_max), min_curvature(dbl_max),
-             max_altitude(dbl_min), max_slope(dbl_min), max_curvature(dbl_min),
+             min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
+             max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
              update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
@@ -61,8 +59,8 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
                      const double& i_cellsize, const Coords& i_llcorner, const slope_type& i_algorithm)
            : Grid2DObject(i_ncols, i_nrows, i_cellsize, i_llcorner),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
-             min_altitude(dbl_max), min_slope(dbl_max), min_curvature(dbl_max),
-             max_altitude(dbl_min), max_slope(dbl_min), max_curvature(dbl_min),
+             min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
+             max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
              update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
@@ -85,8 +83,8 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
                      const bool& i_update, const slope_type& i_algorithm)
            : Grid2DObject(i_ncols, i_nrows, i_cellsize, i_llcorner, i_altitude),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
-             min_altitude(dbl_max), min_slope(dbl_max), min_curvature(dbl_max),
-             max_altitude(dbl_min), max_slope(dbl_min), max_curvature(dbl_min),
+             min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
+             max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
              update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
@@ -108,8 +106,8 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
 DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slope_type& i_algorithm)
            : Grid2DObject(i_dem.ncols, i_dem.nrows, i_dem.cellsize, i_dem.llcorner, i_dem.grid2D),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
-             min_altitude(dbl_max), min_slope(dbl_max), min_curvature(dbl_max),
-             max_altitude(dbl_min), max_slope(dbl_min), max_curvature(dbl_min),
+             min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
+             max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
              update_flag(INT_MAX), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)
@@ -138,8 +136,8 @@ DEMObject::DEMObject(const DEMObject& i_dem, const size_t& i_nx, const size_t& i
                      const bool& i_update, const slope_type& i_algorithm)
            : Grid2DObject(i_dem, i_nx,i_ny, i_ncols,i_nrows),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
-             min_altitude(dbl_max), min_slope(dbl_max), min_curvature(dbl_max),
-             max_altitude(dbl_min), max_slope(dbl_min), max_curvature(dbl_min),
+             min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
+             max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
              CalculateSlope(&DEMObject::CalculateCorripio),
              update_flag(i_dem.update_flag), dflt_algorithm(i_algorithm),
              slope_failures(0), curvature_failures(0)

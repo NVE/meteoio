@@ -986,12 +986,16 @@ void OrdinaryKrigingAlgorithm::getDataForEmpiricalVariogram(std::vector<double> 
 			const double val2 = vecData[i];
 			const double DX = x1-st2.getEasting();
 			const double DY = y1-st2.getNorthing();
-			const double distance = Optim::fastSqrt_Q3( Optim::pow2(DX) + Optim::pow2(DY) );
+			//const double distance = Optim::fastSqrt_Q3( Optim::pow2(DX) + Optim::pow2(DY) );
+			const double inv_distance = Optim::invSqrt( Optim::pow2(DX) + Optim::pow2(DY) );
 
-			distData.push_back(distance);
-			variData.push_back( 0.5*Optim::pow2(val1-val2) );
+			distData.push_back( 1./inv_distance );
+			variData.push_back( inv_distance*Optim::pow2(val1-val2) );
 		}
 	}
+
+	if (distData.size()>40)
+		Interpol1D::equalCountBin(10, distData, variData);
 }
 
 //this gets the full data over a preceeding period
@@ -1066,12 +1070,16 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 			variData.push_back( Interpol1D::variance(Y) );
 		}
 	}
+
+	if (distData.size()>40)
+		Interpol1D::equalCountBin(10, distData, variData);
 }
 
-bool OrdinaryKrigingAlgorithm::computeVariogram()
+bool OrdinaryKrigingAlgorithm::computeVariogram(const bool& detrend_data)
 {//return variogram fit of covariance between stations i and j
 	std::vector<double> distData, variData;
-	getDataForEmpiricalVariogram(distData, variData);
+	//getDataForEmpiricalVariogram(distData, variData);
+	getDataForVariogram(distData, variData, detrend_data);
 
 	std::vector<string> vario_types( vecArgs );
 	if(vario_types.empty()) vario_types.push_back("LINVARIO");
@@ -1108,7 +1116,7 @@ void OrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject& gri
 
 	//optimization: getRange (from variogram fit -> exclude stations that are at distances > range (-> smaller matrix)
 	//or, get max range from io.ini, build variogram from this user defined max range
-	if(!computeVariogram()) //only refresh once a month, or once a week, etc
+	if(!computeVariogram(false)) //only refresh once a month, or once a week, etc
 		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 }
@@ -1130,7 +1138,7 @@ void LapseOrdinaryKrigingAlgorithm::calculate(const DEMObject& dem, Grid2DObject
 	info << trend.getInfo();
 	detrend(trend, vecAltitudes, vecData);
 
-	if(!computeVariogram()) //only refresh once a month, or once a week, etc
+	if(!computeVariogram(true)) //only refresh once a month, or once a week, etc
 		throw IOException("The variogram for parameter " + MeteoData::getParameterName(param) + " could not be computed!", AT);
 	Interpol2D::ODKriging(vecData, vecMeta, dem, variogram, grid);
 

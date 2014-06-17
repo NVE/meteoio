@@ -17,6 +17,8 @@
 */
 #include <meteoio/meteostats/libinterpol1D.h>
 #include <meteoio/MathOptim.h>
+#include <meteoio/meteolaws/Meteoconst.h>
+
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
@@ -24,6 +26,30 @@
 using namespace std;
 
 namespace mio {
+
+double Interpol1D::min_element(const std::vector<double>& X)
+{
+	double Xmin=Cst::dbl_max;
+	for (size_t ii=0; ii<X.size(); ii++) {
+		if (X[ii]==IOUtils::nodata) continue;
+		if (X[ii]<Xmin) Xmin=X[ii];
+	}
+	if (Xmin==Cst::dbl_max) return IOUtils::nodata;
+
+	return Xmin;
+}
+
+double Interpol1D::max_element(const std::vector<double>& X)
+{
+	double Xmax=-Cst::dbl_max;
+	for (size_t ii=0; ii<X.size(); ii++) {
+		if (X[ii]==IOUtils::nodata) continue;
+		if (X[ii]>Xmax) Xmax=X[ii];
+	}
+	if (Xmax==-Cst::dbl_max) return IOUtils::nodata;
+
+	return Xmax;
+}
 
 /**
  * @brief This function returns a vector of quantiles.
@@ -45,9 +71,9 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 
 	//in order to properly escape nodata points, we need to copy in a temporary vector
 	vector<double> vecTemp;
-	for(size_t i=0; i<Xsize; i++) {
+	for (size_t i=0; i<Xsize; i++) {
 		const double& value=X[i];
-		if(value!=IOUtils::nodata)
+		if (value!=IOUtils::nodata)
 			vecTemp.push_back(value);
 	}
 
@@ -58,17 +84,17 @@ std::vector<double> Interpol1D::quantiles(const std::vector<double>& X, const st
 	if (vecSize == 0) {
 		return vecResults; //ie: nodata values
 	}
-	if(vecSize == 1) {
+	if (vecSize == 1) {
 		std::fill(vecResults.begin(), vecResults.end(), vecTemp[0]);
 		return vecResults;
 	}
 
 	//compute quantiles
 	std::sort( vecTemp.begin(), vecTemp.end()); //since we will process several values, we sort the vector
-	for(size_t ii=0; ii<Qsize; ii++) {
+	for (size_t ii=0; ii<Qsize; ii++) {
 		const double q = quartiles[ii];
-		if(q<=0.) vecResults[ii] = vecTemp.front();
-		else if(q>=1.) vecResults[ii] = vecTemp.back();
+		if (q<=0.) vecResults[ii] = vecTemp.front();
+		else if (q>=1.) vecResults[ii] = vecTemp.back();
 		else {
 			const double pos = static_cast<double>(vecSize - 1) * q;
 			const size_t ind = static_cast<size_t>(pos);
@@ -97,12 +123,12 @@ inline bool Interpol1D::ptOK(const double& x, const double& y) {
 std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const std::vector<double>& Y)
 {
 	const size_t n = X.size();
-	if(n!=Y.size()) {
+	if (n!=Y.size()) {
 		ostringstream ss;
 		ss << "X vector and Y vector don't match! " << n << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
-	if(n<2) {
+	if (n<2) {
 		ostringstream ss;
 		ss << "X and Y vector only contain " << n << "points, it is not possible to compute a derivative!\n";
 		throw InvalidArgumentException(ss.str(), AT);
@@ -114,12 +140,12 @@ std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const s
 		const double x=X[0], x1=X[1];
 		const double y=Y[0], y1=Y[1];
 		const double Dx_r=x1-x;
-		if(ptOK(x,y) && ptOK(x1,y1) && Dx_r!=0.)
+		if (ptOK(x,y) && ptOK(x1,y1) && Dx_r!=0.)
 			der[0] = (y1-y) / Dx_r;
 	}
 
 	//centered derivative if possible
-	for(size_t i=1; i<(n-1); i++) {
+	for (size_t i=1; i<(n-1); i++) {
 		const double x0=X[i-1], x=X[i], x1=X[i+1];
 		const double y0=Y[i-1], y=Y[i], y1=Y[i+1];
 		const double Dx_r=x1-x, Dx_c=x1-x0, Dx_l=x-x0;
@@ -128,9 +154,9 @@ std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const s
 		const double left = (ptOK(x,y) && ptOK(x0,y0) && Dx_l!=0.)? (y-y0) / Dx_l : IOUtils::nodata;
 		const double centered = (ptOK(x0,y0) && ptOK(x1,y1) && Dx_c!=0.)? (y1-y0) / Dx_c : IOUtils::nodata;
 
-		if(centered!=IOUtils::nodata) der[i] = centered;
-		else if(right!=IOUtils::nodata) der[i] = right;
-		else if(left!=IOUtils::nodata) der[i] = left;
+		if (centered!=IOUtils::nodata) der[i] = centered;
+		else if (right!=IOUtils::nodata) der[i] = right;
+		else if (left!=IOUtils::nodata) der[i] = left;
 	}
 
 	//left hand derivative
@@ -139,7 +165,7 @@ std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const s
 		const double x0=X[last-1], x=X[last];
 		const double y0=Y[last-1], y=Y[last];
 		const double Dx_l=x-x0;
-		if(ptOK(x,y) && ptOK(x0,y0) && Dx_l!=0.)
+		if (ptOK(x,y) && ptOK(x0,y0) && Dx_l!=0.)
 			der[last] = (y-y0) / Dx_l;
 	}
 
@@ -153,7 +179,7 @@ std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const s
  * @param X vector of abscissae
  * @param Y vector of ordinates
  */
-void Interpol1D::equalBin(const size_t k, std::vector<double>& X, std::vector<double>& Y)
+void Interpol1D::equalBin(const size_t k, std::vector<double> &X, std::vector<double> &Y)
 {
 	const size_t Xsize = X.size();
 	if (Xsize!=Y.size()) {
@@ -161,10 +187,12 @@ void Interpol1D::equalBin(const size_t k, std::vector<double>& X, std::vector<do
 		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
+	if (k>=Xsize || Xsize<2) return;
 
-	const double Xmin = *std::min_element(X.begin(),X.end());
-	const double Xmax = *std::max_element(X.begin(),X.end());
-	const double width = (Xmax - Xmin) / k;
+	const double Xmin = min_element(X);
+	const double Xmax = max_element(X);
+	if (Xmin==IOUtils::nodata || Xmax==IOUtils::nodata) return;
+	const double width = (Xmax - Xmin) / (k - 1);
 
 	std::vector<double> bins(k, 0.);
 	std::vector<size_t> counts(k, 0.);
@@ -174,41 +202,85 @@ void Interpol1D::equalBin(const size_t k, std::vector<double>& X, std::vector<do
 		counts[index]++;
 	}
 
-	X.resize(0);
-	Y.resize(0);
+	X.clear();
+	Y.clear();
 	for (size_t ii=0; ii<k; ii++) {
 		if (counts[ii]>0) {
-			X.push_back( static_cast<double>(ii)*width + Xmin );
-			Y[ii] = bins[ii] / counts[ii];
+			X.push_back( static_cast<double>(ii)*width + Xmin + .5*width);
+			Y.push_back( bins[ii] / static_cast<double>(counts[ii]) );
 		}
 	}
 }
 
+void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vector<double> &Y)
+{
+	if (X.size()!=Y.size()) {
+		ostringstream ss;
+		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
+		throw InvalidArgumentException(ss.str(), AT);
+	}
+
+	sort(X, Y); //this also removes nodata points
+	const size_t Xsize = X.size();
+	if (k>=Xsize) return;
+
+	const size_t count_per_class = static_cast<size_t>( Optim::ceil( Xsize/k ) ); //so last class might have less elements
+	double sum_X=0, sum_Y=0.;
+	size_t count=0;
+	std::vector<double> X_bin, Y_bin;
+	for (size_t ii=0; ii<Xsize; ii++) {
+		sum_X += X[ii];
+		sum_Y += Y[ii];
+		count++;
+		if (count>=count_per_class && ((Xsize-ii)>count_per_class || (ii+1)==Xsize) ) { //last class is bigger
+			X_bin.push_back( sum_X/count );
+			Y_bin.push_back( sum_Y/count );
+			sum_X=0.;
+			sum_Y=0.;
+			count=0;
+		}
+	}
+
+	X = X_bin;
+	Y = Y_bin;
+}
+
+inline bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r) {
+	return l.first < r.first;
+}
+
+/**
+ * @brief This function sort the X and Y vectors by increasing X.
+ * The nodata values (both in X and Y) are removed, meaning that the vector length might not
+ * be kept.
+ * @param X vector of abscissae
+ * @param Y vector of ordinates
+ */
 void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
 {
 	const size_t Xsize = X.size();
-	if(Xsize!=Y.size()) {
+	if (Xsize!=Y.size()) {
 		ostringstream ss;
 		ss << "X vector and Y vector don't match! " << Xsize << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	std::vector< std::pair<double,double> > new_vec( Xsize );
-	for(size_t i=0; i<Xsize; i++) {
+	std::vector< std::pair<double,double> > new_vec;
+	for (size_t i=0; i<Xsize; i++) {
+		if (X[i]==IOUtils::nodata || Y[i]==IOUtils::nodata) continue;
 		const std::pair<double,double> tmp(X[i],Y[i]);
-		new_vec[i] = tmp;
+		new_vec.push_back( tmp );
 	}
 
 	std::sort( new_vec.begin(), new_vec.end(), pair_comparator );
 
-	for(size_t i=0; i<Xsize; i++) {
+	const size_t newSize = new_vec.size();
+	X.resize( newSize );
+	Y.resize( newSize );
+	for (size_t i=0; i<newSize; i++) {
 		X[i] = new_vec[i].first;
 		Y[i] = new_vec[i].second;
 	}
-}
-
-inline bool Interpol1D::pair_comparator(const std::pair<double, double>& l, const std::pair<double, double>& r) {
-	return l.first < r.first;
 }
 
 /**

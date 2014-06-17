@@ -544,7 +544,7 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 	protected:
 		void getDataForEmpiricalVariogram(std::vector<double> &distData, std::vector<double> &variData);
 		void getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData, const bool& detrend_data=false);
-		bool computeVariogram();
+		bool computeVariogram(const bool& detrend_data=false);
 		Fit1D variogram;
 };
 

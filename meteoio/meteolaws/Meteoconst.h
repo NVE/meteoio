@@ -18,6 +18,8 @@
 #ifndef __METEOCONST_H__
 #define __METEOCONST_H__
 
+#include <limits>
+
 namespace mio {
 
 namespace Cst {
@@ -61,6 +63,9 @@ namespace Cst {
 	const double InvSqrt2 = 0.707106781186547524401; // 1/sqrt(2)
 	const double to_rad = PI/180.; // conversion factor from deg to rad
 	const double to_deg = 180./PI; // conversion factor from rad to deg
+
+	const double dbl_max = std::numeric_limits<double>::max();
+	const double dbl_min = -std::numeric_limits<double>::max();
 } //end CST namespace
 
 } //end namespace
