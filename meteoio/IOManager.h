@@ -234,12 +234,14 @@ class IOManager {
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
 
 		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
+		std::map<Date, METEO_SET > virtual_point_cache;  ///< stores already resampled virtual data points
 		std::map<Date, METEO_SET > point_cache;  ///< stores already resampled data points
 		std::vector< METEO_SET > filtered_cache; ///< stores already filtered data intervals
 		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
 		unsigned int processing_level;
 		bool virtual_stations; ///< compute the meteo values at virtual stations
 		bool skip_virtual_stations; ///< skip virtual stations in subsequent calls to prevent recursive calls...
+		bool interpol_use_full_dem; ///< use full dem for point-wise spatial interpolations
 };
 } //end namespace
 #endif

@@ -240,19 +240,24 @@ void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const s
 	if (vecAltitudes.empty())
 		throw IOException("Not enough data for spatially interpolating wind", AT);
 
-	Fit1D trend;
+	if (vecDataVW.size()>=4) { //at least for points to perform detrending
+		Fit1D trend;
 
-	getTrend(vecAltitudes, Ve, trend);
-	info << trend.getInfo();
-	detrend(trend, vecAltitudes, Ve);
-	Interpol2D::IDW(Ve, vecMeta, dem, VW);
-	retrend(dem, trend, VW);
+		getTrend(vecAltitudes, Ve, trend);
+		info << trend.getInfo();
+		detrend(trend, vecAltitudes, Ve);
+		Interpol2D::IDW(Ve, vecMeta, dem, VW);
+		retrend(dem, trend, VW);
 
-	getTrend(vecAltitudes, Vn, trend);
-	info << trend.getInfo();
-	detrend(trend, vecAltitudes, Vn);
-	Interpol2D::IDW(Vn, vecMeta, dem, DW);
-	retrend(dem, trend, DW);
+		getTrend(vecAltitudes, Vn, trend);
+		info << trend.getInfo();
+		detrend(trend, vecAltitudes, Vn);
+		Interpol2D::IDW(Vn, vecMeta, dem, DW);
+		retrend(dem, trend, DW);
+	} else {
+		Interpol2D::IDW(Ve, vecMeta, dem, VW);
+		Interpol2D::IDW(Vn, vecMeta, dem, DW);
+	}
 
 	//recompute VW, DW in each cell
 	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
@@ -619,7 +624,6 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 		Interpol2D::constant(0., dem, grid);
 		return;
 	}
-
 	if (param==MeteoData::VW) {
 		Grid2DObject DW;
 		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW);
@@ -999,30 +1003,45 @@ void OrdinaryKrigingAlgorithm::getDataForEmpiricalVariogram(std::vector<double> 
 }
 
 //this gets the full data over a preceeding period
+//we can not rely on the data in vecData/vecMeta since they filter nodata points
+//and we need to do our own nodata handling here (to keep stations' indices constant)
 void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData, std::vector<double> &variData, const bool& detrend_data)
 {
 	distData.clear();
 	variData.clear();
 
-	vector<double> vecAltitudes;
-	getStationAltitudes(vecMeta, vecAltitudes);
-
 	//get all the data between "date" and "date-daysBefore"
 	const double daysBefore = 1.5;
 	const double Tstep = 1./24.;
+	Date d1 = date - daysBefore;
 	std::vector< std::vector<double> > vecVecData;
-	vecVecData.insert(vecVecData.begin(), nrOfMeasurments, std::vector<double>()); //allocation for the vectors
+	std::vector<MeteoData> Meteo;
+	iomanager.getMeteoData(d1, Meteo);
+	const size_t nrMeteo = Meteo.size();
+	vecVecData.insert(vecVecData.begin(), nrMeteo, std::vector<double>()); //allocation for the vectors
 
-	for(Date d1 = date - daysBefore; d1<=date; d1+=Tstep) {
-		std::vector<MeteoData> Meteo;
+	//get the stations altitudes
+	vector<double> vecAltitudes;
+	for (size_t ii=0; ii<nrMeteo; ii++){
+		const double& alt = Meteo[ii].meta.position.getAltitude();
+		if (alt != IOUtils::nodata) {
+			vecAltitudes.push_back(alt);
+		}
+	}
+
+	for(; d1<=date; d1+=Tstep) {
 		iomanager.getMeteoData(d1, Meteo);
-		if (Meteo.size()!=nrOfMeasurments)
-			throw InvalidArgumentException("Only a fixed number of stations is currently suppported for "+algo, AT);
+		if (Meteo.size()!=nrMeteo) {
+			std::ostringstream ss;
+			ss << "Number of stations varying between " << nrMeteo << " and " << Meteo.size();
+			ss << ". This is currently not supported for " << algo << "!";
+			throw InvalidArgumentException(ss.str(), AT);
+		}
 
 		if (detrend_data) {
 			//find trend
 			std::vector<double> vecDat;
-			for(size_t ii=0; ii<Meteo.size(); ii++)
+			for(size_t ii=0; ii<nrMeteo; ii++)
 				vecDat.push_back( Meteo[ii](param) );
 
 			Fit1D trend;
@@ -1032,7 +1051,7 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 				throw InvalidArgumentException("Could not fit variogram model to the data", AT);
 
 			//detrend the data
-			for(size_t ii=0; ii<Meteo.size(); ii++) {
+			for(size_t ii=0; ii<nrMeteo; ii++) {
 				double val = Meteo[ii](param);
 				if(val!=IOUtils::nodata)
 					val -= trend( vecAltitudes[ii] );
@@ -1040,7 +1059,7 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 				vecVecData.at(ii).push_back( val );
 			}
 		} else {
-			for(size_t ii=0; ii<Meteo.size(); ii++)
+			for(size_t ii=0; ii<nrMeteo; ii++)
 				vecVecData.at(ii).push_back( Meteo[ii](param) );
 		}
 	}
@@ -1048,7 +1067,7 @@ void OrdinaryKrigingAlgorithm::getDataForVariogram(std::vector<double> &distData
 
 	//for each station, compute distance to other stations and
 	// variance of ( Y(current) - Y(other station) )
-	for(size_t j=0; j<nrOfMeasurments; j++) {
+	for(size_t j=0; j<nrMeteo; j++) {
 		const Coords& st1 = vecMeta[j].position;
 		const double x1 = st1.getEasting();
 		const double y1 = st1.getNorthing();

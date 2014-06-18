@@ -25,10 +25,10 @@ namespace mio {
 IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), rawio(cfg), bufferedio(rawio, cfg),
                                             meteoprocessor(cfg), interpolator(cfg), dataGenerator(cfg),
                                             v_params(), v_coords(), v_stations(),
-                                            proc_properties(), point_cache(), filtered_cache(),
+                                            proc_properties(), virtual_point_cache(), point_cache(), filtered_cache(),
                                             fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
                                             processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated),
-                                            virtual_stations(false), skip_virtual_stations(false)
+                                            virtual_stations(false), skip_virtual_stations(false), interpol_use_full_dem(false)
 {
 	initIOManager();
 }
@@ -36,10 +36,10 @@ IOManager::IOManager(const std::string& filename_in) : cfg(filename_in), rawio(c
 IOManager::IOManager(const Config& i_cfg) : cfg(i_cfg), rawio(cfg), bufferedio(rawio, cfg),
                                             meteoprocessor(cfg), interpolator(cfg), dataGenerator(cfg),
                                             v_params(), v_coords(), v_stations(),
-                                            proc_properties(), point_cache(), filtered_cache(),
+                                            proc_properties(), virtual_point_cache(), point_cache(), filtered_cache(),
                                             fcache_start(Date(0.0, 0.)), fcache_end(Date(0.0, 0.)), //this should not matter, since 0 is still way back before any real data...
                                             processing_level(IOManager::filtered | IOManager::resampled | IOManager::generated),
-                                            virtual_stations(false), skip_virtual_stations(false)
+                                            virtual_stations(false), skip_virtual_stations(false), interpol_use_full_dem(false)
 {
 	initIOManager();
 }
@@ -93,6 +93,8 @@ void IOManager::initVirtualStations()
 
 		v_stations.push_back( sd );
 	}
+
+	cfg.getValue("Interpol_Use_Full_DEM", "Input", interpol_use_full_dem, IOUtils::nothrow);
 }
 
 void IOManager::setProcessingLevel(const unsigned int& i_level)
@@ -256,7 +258,7 @@ bool IOManager::read_filtered_cache(const Date& start_date, const Date& end_date
 void IOManager::add_to_cache(const Date& i_date, const METEO_SET& vecMeteo)
 {
 	//Check cache size, delete oldest elements if necessary
-	if (point_cache.size() > 2000){
+	if (point_cache.size() > 2000) {
 		point_cache.clear();
 	}
 
@@ -332,35 +334,43 @@ size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 size_t IOManager::getVirtualMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
+
+	// Check if data is available in cache
+	const map<Date, vector<MeteoData> >::const_iterator it = virtual_point_cache.find(i_date);
+	if (it != virtual_point_cache.end()){
+		vecMeteo = it->second;
+		return vecMeteo.size();
+	}
+
+	//get data from real input stations
 	METEO_SET vecTrueMeteo;
 	getTrueMeteoData(i_date, vecTrueMeteo);
-	if(vecTrueMeteo.empty()) return 0;
+	if (vecTrueMeteo.empty()) return 0;
 
-	if(v_params.empty()) {
+	if (v_params.empty()) {
 		//get parameters to interpolate if not already done
 		//we need valid data in order to handle extra parameters
 		std::vector<std::string> vecStr;
 		cfg.getValue("Virtual_parameters", "Input", vecStr);
-		for(size_t ii=0; ii<vecStr.size(); ii++) {
+		for (size_t ii=0; ii<vecStr.size(); ii++) {
 			v_params.push_back( vecTrueMeteo[0].getParameterIndex(vecStr[ii]) );
 		}
 	}
 
-	DEMObject dem;
-	bufferedio.readDEM(dem); //this is not a big deal since it will be in the buffer
-
 	//create stations without measurements
-	for(size_t ii=0; ii<v_stations.size(); ii++) {
+	for (size_t ii=0; ii<v_stations.size(); ii++) {
 		MeteoData md(i_date, v_stations[ii]);
 		vecMeteo.push_back( md );
 	}
 
 	//fill meteo parameters
+	DEMObject dem;
+	bufferedio.readDEM(dem); //this is not a big deal since it will be in the buffer
 	string info_string;
-	for(size_t param=0; param<v_params.size(); param++) {
+	for (size_t param=0; param<v_params.size(); param++) {
 		std::vector<double> result;
 		interpolate(i_date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result, info_string);
-		for(size_t ii=0; ii<v_coords.size(); ii++)
+		for (size_t ii=0; ii<v_coords.size(); ii++)
 			vecMeteo[ii](v_params[param]) = result[ii];
 	}
 
@@ -372,13 +382,18 @@ size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {
 	vecMeteo.clear();
 
-	if(!virtual_stations || skip_virtual_stations)
+	if(!virtual_stations || skip_virtual_stations) {
 		getTrueMeteoData(i_date, vecMeteo);
-	else
+		add_to_cache(i_date, vecMeteo); //Store result in the local cache
+	} else {
 		getVirtualMeteoData(i_date, vecMeteo);
+		//Store result in the local cache
+		if (virtual_point_cache.size() > 2000) {
+			virtual_point_cache.clear();
+		}
+		virtual_point_cache[i_date] = vecMeteo;
+	}
 
-	//Store result in the local cache
-	add_to_cache(i_date, vecMeteo);
 	return vecMeteo.size();
 }
 
@@ -427,25 +442,44 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 
 	vector<Coords> vec_coords(in_coords);
 
-	for (size_t ii=0; ii<vec_coords.size(); ii++) {
-		const bool gridify_success = dem.gridify(vec_coords[ii]);
+	if (interpol_use_full_dem) {
+		Grid2DObject result_grid;
+		interpolator.interpolate(date, dem, meteoparam, result_grid, info_string);
+		const bool gridify_success = dem.gridify(vec_coords);
 		if (!gridify_success)
 			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
 
-		//Make new DEM with just one point, namely the one specified by vec_coord[ii]
-		//Copy all other properties of the big DEM into the new one
-		DEMObject one_point_dem(dem, (unsigned)vec_coords[ii].getGridI(), (unsigned)vec_coords[ii].getGridJ(), 1, 1, false);
+		for (size_t ii=0; ii<vec_coords.size(); ii++) {
+			//we know the i,j are positive because of gridify_success
+			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
+			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
+			result.push_back( result_grid(pt_i,pt_j) );
+		}
+	} else {
+		for (size_t ii=0; ii<vec_coords.size(); ii++) {
+			const bool gridify_success = dem.gridify(vec_coords[ii]);
+			if (!gridify_success)
+				throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
 
-		one_point_dem.min_altitude = dem.min_altitude;
-		one_point_dem.max_altitude = dem.max_altitude;
-		one_point_dem.min_slope = dem.min_slope;
-		one_point_dem.max_slope = dem.max_slope;
-		one_point_dem.min_curvature = dem.min_curvature;
-		one_point_dem.max_curvature = dem.max_curvature;
+			//we know the i,j are positive because of gridify_success
+			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
+			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
 
-		Grid2DObject result_grid;
-		interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
-		result.push_back(result_grid(0,0));
+			//Make new DEM with just one point, namely the one specified by vec_coord[ii]
+			//Copy all other properties of the big DEM into the new one
+			DEMObject one_point_dem(dem, pt_i, pt_j, 1, 1, false);
+
+			one_point_dem.min_altitude = dem.min_altitude;
+			one_point_dem.max_altitude = dem.max_altitude;
+			one_point_dem.min_slope = dem.min_slope;
+			one_point_dem.max_slope = dem.max_slope;
+			one_point_dem.min_curvature = dem.min_curvature;
+			one_point_dem.max_curvature = dem.max_curvature;
+
+			Grid2DObject result_grid;
+			interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
+			result.push_back(result_grid(0,0));
+		}
 	}
 	skip_virtual_stations = false;
 }
