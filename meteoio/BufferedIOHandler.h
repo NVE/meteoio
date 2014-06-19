@@ -154,13 +154,14 @@ class BufferedIOHandler : public IOInterface {
 
 		void setDfltBufferProperties();
 		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_SET >& vecvecMeteo);
-		void bufferGrid(const Grid2DObject& in_grid2Dobj, const std::string& in_filename);
+		void addToBuffer(const Grid2DObject& in_grid2Dobj, const std::string& grid_hash);
+		bool getFromBuffer(const std::string& grid_hash, Grid2DObject& grid) const;
 
 		//private members
 		IOHandler& iohandler;
 		const Config& cfg;
 
-		std::vector< METEO_SET > vec_buffer_meteo;
+		std::vector< METEO_SET > vec_buffer_meteo; ///< This is the buffer for time series
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 		std::vector<DEMObject> dem_buffer;
 		std::vector<std::string> IndexBufferedGrids;

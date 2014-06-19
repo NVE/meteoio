@@ -437,50 +437,8 @@ void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoD
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                             const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 {
-	result.clear();
 	skip_virtual_stations = true;
-
-	vector<Coords> vec_coords(in_coords);
-
-	if (interpol_use_full_dem) {
-		Grid2DObject result_grid;
-		interpolator.interpolate(date, dem, meteoparam, result_grid, info_string);
-		const bool gridify_success = dem.gridify(vec_coords);
-		if (!gridify_success)
-			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
-
-		for (size_t ii=0; ii<vec_coords.size(); ii++) {
-			//we know the i,j are positive because of gridify_success
-			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
-			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
-			result.push_back( result_grid(pt_i,pt_j) );
-		}
-	} else {
-		for (size_t ii=0; ii<vec_coords.size(); ii++) {
-			const bool gridify_success = dem.gridify(vec_coords[ii]);
-			if (!gridify_success)
-				throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
-
-			//we know the i,j are positive because of gridify_success
-			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
-			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
-
-			//Make new DEM with just one point, namely the one specified by vec_coord[ii]
-			//Copy all other properties of the big DEM into the new one
-			DEMObject one_point_dem(dem, pt_i, pt_j, 1, 1, false);
-
-			one_point_dem.min_altitude = dem.min_altitude;
-			one_point_dem.max_altitude = dem.max_altitude;
-			one_point_dem.min_slope = dem.min_slope;
-			one_point_dem.max_slope = dem.max_slope;
-			one_point_dem.min_curvature = dem.min_curvature;
-			one_point_dem.max_curvature = dem.max_curvature;
-
-			Grid2DObject result_grid;
-			interpolator.interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
-			result.push_back(result_grid(0,0));
-		}
-	}
+	interpolator.interpolate(date, dem, meteoparam, in_coords, interpol_use_full_dem, result, info_string);
 	skip_virtual_stations = false;
 }
 

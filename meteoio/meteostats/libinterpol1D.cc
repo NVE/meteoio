@@ -220,7 +220,7 @@ void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vect
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	sort(X, Y); //this also removes nodata points
+	sort(X, Y, false); //also remove nodata points
 	const size_t Xsize = X.size();
 	if (k>=Xsize) return;
 
@@ -255,8 +255,9 @@ inline bool Interpol1D::pair_comparator(const std::pair<double, double>& l, cons
  * be kept.
  * @param X vector of abscissae
  * @param Y vector of ordinates
+ * @param keep_nodata should nodata values be kept? (default=true)
  */
-void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
+void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y, const bool& keep_nodata)
 {
 	const size_t Xsize = X.size();
 	if (Xsize!=Y.size()) {
@@ -267,7 +268,8 @@ void Interpol1D::sort(std::vector<double>& X, std::vector<double>& Y)
 
 	std::vector< std::pair<double,double> > new_vec;
 	for (size_t i=0; i<Xsize; i++) {
-		if (X[i]==IOUtils::nodata || Y[i]==IOUtils::nodata) continue;
+		if ( !keep_nodata && (X[i]==IOUtils::nodata || Y[i]==IOUtils::nodata) )
+			continue;
 		const std::pair<double,double> tmp(X[i],Y[i]);
 		new_vec.push_back( tmp );
 	}

@@ -44,44 +44,50 @@ BufferedIOHandler& BufferedIOHandler::operator=(const BufferedIOHandler& source)
 	return *this;
 }
 
-void BufferedIOHandler::bufferGrid(const Grid2DObject& in_grid2Dobj, const std::string& in_filename)
+void BufferedIOHandler::addToBuffer(const Grid2DObject& in_grid2Dobj, const std::string& grid_hash)
 {
+	if (max_grids==0) return;
+
 	if(IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid
-		mapBufferedGrids.erase( mapBufferedGrids.find( IndexBufferedGrids[0] ) );
+		mapBufferedGrids.erase( mapBufferedGrids.find( IndexBufferedGrids.front() ) );
 		IndexBufferedGrids.erase( IndexBufferedGrids.begin() );
 	}
-	mapBufferedGrids[in_filename] = in_grid2Dobj;
-	IndexBufferedGrids.push_back( in_filename  );
+	mapBufferedGrids[ grid_hash ] = in_grid2Dobj;
+	IndexBufferedGrids.push_back( grid_hash  );
+}
+
+bool BufferedIOHandler::getFromBuffer(const std::string& grid_hash, Grid2DObject& grid) const
+{
+	if (IndexBufferedGrids.empty())
+		return false;
+
+	const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find( grid_hash );
+	if (it != mapBufferedGrids.end()) { //already in map
+		grid = (*it).second;
+		return true;
+	}
+
+	return false;
 }
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const std::string& in_filename)
 {
-	if(max_grids>0) {
-		const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find(in_filename);
-		if (it != mapBufferedGrids.end()) { //already in map
-			in_grid2Dobj = (*it).second;
-			return;
-		}
+	if (getFromBuffer(in_filename, in_grid2Dobj))
+		return;
 
-		iohandler.read2DGrid(in_grid2Dobj, in_filename);
-		bufferGrid(in_grid2Dobj, in_filename); //the STL containers make a copy
-	} else {
-		iohandler.read2DGrid(in_grid2Dobj, in_filename);
-	}
+	iohandler.read2DGrid(in_grid2Dobj, in_filename);
+	addToBuffer(in_grid2Dobj, in_filename);
 }
 
 void BufferedIOHandler::read2DGrid(Grid2DObject& in_grid2Dobj, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	if(max_grids>0) {
-		const string buffer_name = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
-		const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find(buffer_name);
-		if (it != mapBufferedGrids.end()) { //already in map
-			in_grid2Dobj = (*it).second;
+	if (max_grids>0) {
+		const string grid_hash = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
+		if (getFromBuffer(grid_hash, in_grid2Dobj))
 			return;
-		}
 
 		iohandler.read2DGrid(in_grid2Dobj, parameter, date);
-		bufferGrid(in_grid2Dobj, buffer_name); //the STL containers make a copy
+		addToBuffer(in_grid2Dobj, grid_hash); //the STL containers make a copy
 	} else {
 		iohandler.read2DGrid(in_grid2Dobj, parameter, date);
 	}
@@ -118,34 +124,25 @@ void BufferedIOHandler::readDEM(DEMObject& demobj)
 
 void BufferedIOHandler::readLanduse(Grid2DObject& in_grid2Dobj)
 {
-	if(max_grids>0) {
-		const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find("/:LANDUSE");
-		if (it != mapBufferedGrids.end()) { //already in map
-			in_grid2Dobj = (*it).second;
-			return;
-		}
+	if (getFromBuffer("/:LANDUSE", in_grid2Dobj))
+		return;
 
-		iohandler.readLanduse(in_grid2Dobj);
-		mapBufferedGrids["/:LANDUSE"] = in_grid2Dobj; //the STL containers make a copy
-	} else {
-		iohandler.readLanduse(in_grid2Dobj);
-	}
+	iohandler.readLanduse(in_grid2Dobj);
+	addToBuffer(in_grid2Dobj, "/:LANDUSE");
 }
 
 //HACK: manage buffering of assimilation grids! Why not considering them normal grids?
-void BufferedIOHandler::readAssimilationData(const Date& in_date, Grid2DObject& in_grid2Dobj)
+void BufferedIOHandler::readAssimilationData(const Date& date, Grid2DObject& in_grid2Dobj)
 {
 	if(max_grids>0) {
-		const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find("/:ASSIMILATIONDATA" + in_date.toString(Date::FULL));
-		if (it != mapBufferedGrids.end()) { //already in map
-			in_grid2Dobj = (*it).second;
+		const string grid_hash = "/:ASSIMILATIONDATA"+date.toString(Date::ISO);
+		if (getFromBuffer(grid_hash, in_grid2Dobj))
 			return;
-		}
 
-		iohandler.readAssimilationData(in_date, in_grid2Dobj);
-		mapBufferedGrids["/:ASSIMILATIONDATA" + in_date.toString(Date::FULL)] = in_grid2Dobj; //the STL containers make a copy
+		iohandler.readAssimilationData(date, in_grid2Dobj);
+		addToBuffer(in_grid2Dobj, grid_hash); //the STL containers make a copy
 	} else {
-		iohandler.readAssimilationData(in_date, in_grid2Dobj);
+		iohandler.readAssimilationData(date, in_grid2Dobj);
 	}
 }
 
@@ -393,11 +390,11 @@ void BufferedIOHandler::write2DGrid(const Grid2DObject& grid_in, const MeteoGrid
 }
 
 void BufferedIOHandler::clearBuffer() {
-	IndexBufferedGrids.clear();
 	vec_buffer_meteo.clear();
 	buffer_start = Date(0., 0.);
 	buffer_end = Date(0., 0.);
 	mapBufferedGrids.clear();
+	IndexBufferedGrids.clear();
 }
 
 const std::string BufferedIOHandler::toString() const

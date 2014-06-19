@@ -23,20 +23,31 @@ using namespace std;
 namespace mio {
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom)
-                    : cfg(i_cfg), iomanager(&i_iom), algorithms_ready(false), mapAlgorithms()
+                    : cfg(i_cfg), iomanager(&i_iom), mapBufferedGrids(), IndexBufferedGrids(),
+                      mapAlgorithms(), max_grids(10), algorithms_ready(false)
 {
+	setDfltBufferProperties();
 	setAlgorithms();
 }
 
 Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg)
-                    : cfg(i_cfg), iomanager(NULL), algorithms_ready(false), mapAlgorithms() {}
+                    : cfg(i_cfg), iomanager(NULL), mapBufferedGrids(), IndexBufferedGrids(),
+                      mapAlgorithms(), max_grids(10), algorithms_ready(false)
+{
+	setDfltBufferProperties();
+	//setAlgorithms(); we can not call it since we don't have an iomanager yet!
+}
+
+Meteo2DInterpolator::Meteo2DInterpolator(const Meteo2DInterpolator& c)
+                    : cfg(c.cfg), iomanager(c.iomanager), mapBufferedGrids(c.mapBufferedGrids), IndexBufferedGrids(c.IndexBufferedGrids),
+                      mapAlgorithms(c.mapAlgorithms), max_grids(c.max_grids), algorithms_ready(c.algorithms_ready) {}
 
 Meteo2DInterpolator::~Meteo2DInterpolator()
 {
 	std::map<std::string, std::vector<InterpolationAlgorithm*> >::iterator iter;
 	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
 		const vector<InterpolationAlgorithm*>& vecAlgs = iter->second;
-		for(size_t ii=0; ii<vecAlgs.size(); ++ii)
+		for (size_t ii=0; ii<vecAlgs.size(); ++ii)
 			delete vecAlgs[ii];
 	}
 }
@@ -45,12 +56,53 @@ Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& s
 {
 	//since this uses an IOManager on a given machine/node, since the pointers point to entry points
 	//in the compiled code, they should remain valid and therefore can be copied
-	if(this != &source) {
+	if (this != &source) {
 		//cfg: can not be copied
 		iomanager = source.iomanager;
+		mapBufferedGrids = source.mapBufferedGrids;
+		IndexBufferedGrids = source.IndexBufferedGrids;
 		mapAlgorithms = source.mapAlgorithms;
+		algorithms_ready = source.algorithms_ready;
+		max_grids = source.max_grids;
 	}
 	return *this;
+}
+
+void Meteo2DInterpolator::setDfltBufferProperties()
+{
+	max_grids = 10; //default number of grids to keep in buffer
+	cfg.getValue("BUFF_GRIDS", "Interpolations2D", max_grids, IOUtils::nothrow);
+}
+
+void Meteo2DInterpolator::addToBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, const Grid2DObject& grid)
+{
+	if (max_grids==0) return;
+
+	if (IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid
+		mapBufferedGrids.erase( mapBufferedGrids.find( IndexBufferedGrids.front() ) );
+		IndexBufferedGrids.erase( IndexBufferedGrids.begin() );
+	}
+
+	std::ostringstream ss;
+	ss << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << "::" << date.toString(Date::ISO) << "::" << MeteoData::getParameterName(meteoparam);
+	mapBufferedGrids[ ss.str() ] = grid;
+	IndexBufferedGrids.push_back( ss.str()  );
+}
+
+bool Meteo2DInterpolator::getFromBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, Grid2DObject& grid) const
+{
+	if (IndexBufferedGrids.empty())
+		return false;
+
+	std::ostringstream ss;
+	ss << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << "::" << date.toString(Date::ISO) << "::" << MeteoData::getParameterName(meteoparam);
+	const std::map<std::string, Grid2DObject>::const_iterator it = mapBufferedGrids.find( ss.str() );
+	if (it != mapBufferedGrids.end()) { //already in map
+		grid = (*it).second;
+		return true;
+	}
+
+	return false;
 }
 
 void Meteo2DInterpolator::setIOManager(IOManager& i_iomanager) {
@@ -74,13 +126,13 @@ void Meteo2DInterpolator::setAlgorithms()
 		const size_t nrOfAlgorithms = getAlgorithmsForParameter(cfg, parname, tmpAlgorithms);
 
 		std::vector<InterpolationAlgorithm*> vecAlgorithms(nrOfAlgorithms);
-		for(size_t jj=0; jj<nrOfAlgorithms; jj++) {
+		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
 			std::vector<std::string> vecArgs;
 			getArgumentsForAlgorithm(parname, tmpAlgorithms[jj], vecArgs);
 			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *iomanager);
 		}
 
-		if(nrOfAlgorithms>0) {
+		if (nrOfAlgorithms>0) {
 			mapAlgorithms[parname] = vecAlgorithms;
 		}
 	}
@@ -114,15 +166,19 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                                       Grid2DObject& result, std::string& InfoString)
 {
-	if(iomanager==NULL)
+	if (iomanager==NULL)
 		throw IOException("No IOManager reference has been set!", AT);
-	if(!algorithms_ready)
+	if (!algorithms_ready)
 		setAlgorithms();
+
+	//Get grid from buffer if it exists
+	if (getFromBuffer(date, dem, meteoparam, result))
+		return;
 
 	//Show algorithms to be used for this parameter
 	const string param_name = MeteoData::getParameterName(meteoparam);
 	const map<string, vector<InterpolationAlgorithm*> >::iterator it = mapAlgorithms.find(param_name);
-	if(it==mapAlgorithms.end()) {
+	if (it==mapAlgorithms.end()) {
 		throw IOException("No interpolation algorithms configured for parameter "+param_name, AT);
 	}
 
@@ -140,7 +196,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 	}
 
 	//finally execute the algorithm with the best quality rating or throw an exception
-	if(maxQualityRating<=0.0)
+	if (maxQualityRating<=0.0)
 		throw IOException("No interpolation algorithm with quality rating >0 found for parameter "+param_name+" on "+date.toString(Date::ISO_TZ), AT);
 	vecAlgs[bestalgorithm]->calculate(dem, result);
 	InfoString = vecAlgs[bestalgorithm]->getInfo();
@@ -154,6 +210,56 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
 	} else if (meteoparam == MeteoData::VW){
 		Meteo2DInterpolator::checkMinMax(0.0, 10000.0, result);
+	}
+
+	addToBuffer(date, dem, meteoparam, result);
+}
+
+//HACK make sure that skip_virtual_stations = true before calling this method when using virtual stations!
+void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
+                            const std::vector<Coords>& in_coords, const bool& use_full_dem, std::vector<double>& result, std::string& info_string)
+{
+	result.clear();
+	vector<Coords> vec_coords(in_coords);
+
+	if (use_full_dem) {
+		Grid2DObject result_grid;
+		interpolate(date, dem, meteoparam, result_grid, info_string);
+		const bool gridify_success = dem.gridify(vec_coords);
+		if (!gridify_success)
+			throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
+
+		for (size_t ii=0; ii<vec_coords.size(); ii++) {
+			//we know the i,j are positive because of gridify_success
+			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
+			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
+			result.push_back( result_grid(pt_i,pt_j) );
+		}
+	} else {
+		for (size_t ii=0; ii<vec_coords.size(); ii++) {
+			const bool gridify_success = dem.gridify(vec_coords[ii]);
+			if (!gridify_success)
+				throw InvalidArgumentException("Coordinate given to interpolate is outside of dem", AT);
+
+			//we know the i,j are positive because of gridify_success
+			const size_t pt_i = static_cast<size_t>( vec_coords[ii].getGridI() );
+			const size_t pt_j = static_cast<size_t>( vec_coords[ii].getGridJ() );
+
+			//Make new DEM with just one point, namely the one specified by vec_coord[ii]
+			//Copy all other properties of the big DEM into the new one
+			DEMObject one_point_dem(dem, pt_i, pt_j, 1, 1, false);
+
+			one_point_dem.min_altitude = dem.min_altitude;
+			one_point_dem.max_altitude = dem.max_altitude;
+			one_point_dem.min_slope = dem.min_slope;
+			one_point_dem.max_slope = dem.max_slope;
+			one_point_dem.min_curvature = dem.min_curvature;
+			one_point_dem.max_curvature = dem.max_curvature;
+
+			Grid2DObject result_grid;
+			interpolate(date, one_point_dem, meteoparam, result_grid, info_string);
+			result.push_back(result_grid(0,0));
+		}
 	}
 }
 
@@ -208,7 +314,7 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 	//check that the stations are using the same projection as the dem
 	for (size_t ii=0; ii<vec_meteo.size(); ii++) {
 		const StationData& meta = vec_meteo[ii].meta;
-		if(!meta.position.isSameProj(dem.llcorner)) {
+		if (!meta.position.isSameProj(dem.llcorner)) {
 			std::ostringstream os;
 			std::string type, args;
 			meta.position.getProj(type, args);
@@ -231,10 +337,17 @@ const std::string Meteo2DInterpolator::toString() const {
 	std::map<std::string, std::vector<InterpolationAlgorithm*> >::const_iterator iter;
 	for (iter = mapAlgorithms.begin(); iter != mapAlgorithms.end(); ++iter) {
 		os << setw(10) << iter->first << "::";
-		for(size_t jj=0; jj<iter->second.size(); jj++) {
+		for (size_t jj=0; jj<iter->second.size(); jj++) {
 			os << iter->second[jj]->algo << " ";
 		}
 		os << "\n";
+	}
+
+	//cache content
+	os << "Current buffer content (" << mapBufferedGrids.size() << " grids):\n";
+	std::map<std::string, Grid2DObject>::const_iterator it1;
+	for (it1=mapBufferedGrids.begin(); it1 != mapBufferedGrids.end(); ++it1){
+		os << setw(10) << "Grid " << it1->first << "\n";
 	}
 
 	os << "</Meteo2DInterpolator>\n";
