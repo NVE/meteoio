@@ -300,7 +300,7 @@ size_t IOManager::getTrueMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 		const bool cached = (fcache_start <= i_date-proc_properties.time_before) && (fcache_end >= i_date+proc_properties.time_after);
 		if (!cached) {
 			//explicit caching, this forces the bufferediohandler to rebuffer, if necessary
-			bufferedio.readMeteoData(i_date-proc_properties.time_before, i_date+proc_properties.time_after);
+			bufferedio.fillBuffer(i_date-proc_properties.time_before, i_date+proc_properties.time_after);
 			fill_filtered_cache();
 		}
 		data = &filtered_cache;

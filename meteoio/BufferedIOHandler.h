@@ -142,18 +142,17 @@ class BufferedIOHandler : public IOInterface {
 
 	private:
 		//private methods
-		void readMeteoData(const Date& dateStart, const Date& dateEnd,
-		                   const size_t& stationindex=IOUtils::npos);
+		void fillBuffer(const Date& dateStart, const Date& dateEnd,
+		                const size_t& stationindex=IOUtils::npos);
 
 		const std::vector<METEO_SET>& getFullBuffer(Date& start, Date& end);
 
-		void getBufferInterval(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo);
+		void getFromBuffer(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo);
 
 		void push_meteo_data(const Date& date_start, const Date& date_end,
 		                     const std::vector< METEO_SET >& vecMeteo);
 
 		void setDfltBufferProperties();
-		void bufferData(const Date& date_start, const Date& date_end, std::vector< METEO_SET >& vecvecMeteo);
 		void addToBuffer(const Grid2DObject& in_grid2Dobj, const std::string& grid_hash);
 		bool getFromBuffer(const std::string& grid_hash, Grid2DObject& grid) const;
 
@@ -161,7 +160,7 @@ class BufferedIOHandler : public IOInterface {
 		IOHandler& iohandler;
 		const Config& cfg;
 
-		std::vector< METEO_SET > vec_buffer_meteo; ///< This is the buffer for time series
+		std::vector< METEO_SET > meteo_buffer; ///< This is the buffer for time series
 		std::map<std::string, Grid2DObject> mapBufferedGrids;
 		std::vector<DEMObject> dem_buffer;
 		std::vector<std::string> IndexBufferedGrids;
