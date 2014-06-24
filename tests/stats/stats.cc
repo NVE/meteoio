@@ -66,6 +66,32 @@ bool check_sort(const vector<double>& x, const vector<double>& y) {
 	return status;
 }
 
+bool check_bin(const vector<double>& x, const vector<double>& y) {
+	vector<double> X(x), Y(y);
+	Interpol1D::equalBin(3, X, Y);
+	const bool status1 = IOUtils::checkEpsilonEquality(X[0],-272.812,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(X[1],181.327,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(X[2],635.466,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y[0],176.736,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y[1],-432.179,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y[2],602.248,1e-3) ;
+
+	/*vector<double> X2(x), Y2(y);
+	Interpol1D::equalCountBin(2, X2, Y2);
+	const bool status2 = IOUtils::checkEpsilonEquality(X2[0],-201.072,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(X2[1],210.957,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y2[0],176.736,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y2[1],-156.067,1e-3) ;*/
+	const bool status2 = true;
+
+	const bool status = status1 && status2;
+	if(status)
+		std::cout << "Binning: success\n";
+	else
+		std::cout << "Binning: failed\n";
+	return status;
+}
+
 bool check_quantiles(const vector<double>& X) {
 	static const double arr[] = {.1, .2, .4, .5, .75, .95};
 	static const double results[] = {-191.9748, -107.819, -57.6047, 57.4737, 250.781, 402.4144};
@@ -87,7 +113,21 @@ bool check_quantiles(const vector<double>& X) {
 	return status;
 }
 
-bool check_basics(const vector<double>& X) {
+bool check_basics(const vector<double>& X, const vector<double>& Y) {
+	//min, max
+	const double min = Interpol1D::min_element(Y);
+	const double min_ref = -377.073;
+	const double max = Interpol1D::max_element(Y);
+	const double max_ref = 496.798;
+	const bool min_status = IOUtils::checkEpsilonEquality(min, min_ref, 1e-4);
+	const bool max_status = IOUtils::checkEpsilonEquality(max, max_ref, 1e-4);
+	if(min_status && max_status)
+		std::cout << "Min/max: success\n";
+	else {
+		std::cout << setprecision(12) << "Min should be " << min_ref << ", computed " << min << "\n";
+		std::cout << setprecision(12) << "Max should be " << max_ref << ", computed " << max << "\n";
+	}
+
 	//median
 	const double median = Interpol1D::getMedian(X);
 	const double median_ref = 57.4737;
@@ -150,7 +190,7 @@ bool check_basics(const vector<double>& X) {
 	else
 		std::cout << setprecision(12) << "Vector mean should be " << mean << ", conputed " << vector_mean << " instead\n";
 
-	return (mad_status || variance_status || median_status || stddev_status || wmean_status || vector_mean_status);
+	return (min_status || max_status || mad_status || variance_status || median_status || stddev_status || wmean_status || vector_mean_status);
 }
 
 bool check_covariance(const vector<double>& x, const vector<double>& y) {
@@ -193,12 +233,13 @@ int main() {
 	cr_fixed_vectors(x, y);
 
 	const bool sort_status = check_sort(x,y);
-	const bool basics_status = check_basics(x);
+	const bool bin_status = check_bin(x,y);
+	const bool basics_status = check_basics(x,y);
 	const bool covariance_status = check_covariance(x,y);
 	const bool der_status = check_derivative(x,y);
 	const bool quantiles_status = check_quantiles(x);
 
-	if(!basics_status || !sort_status || !quantiles_status || !covariance_status || !der_status)
+	if(!basics_status || !sort_status || !bin_status || !quantiles_status || !covariance_status || !der_status)
 		throw IOException("Statistical functions error!", AT);
 
 

@@ -792,7 +792,11 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 * where the \f$\lambda_i\f$ are the interpolation weights (at each station i), \f$\mu\f$ is the Lagrange multiplier (used to minimize the error),
 * \f$\Gamma_{i,j}\f$ is the covariance between the stations i and j and \f$\gamma^*_i\f$ the covariances between the station i and
 * the local position where the interpolation has to be computed. This covariance is computed based on distance, using the variogram that gives
-* covariance = f(distance). Once the \f$\lambda_i\f$ have been computed, the locally interpolated value is computed as
+* covariance = f(distance). The variogram is established by fitting a statistical model to all the (distance, covariance) points originating from
+* the station measurements. The statistical model of the variogram enables computing the covariance for any distance, therefore it is possible
+* to compute the \f$\gamma^*_i\f$.
+*
+* Once the \f$\lambda_i\f$ have been computed, the locally interpolated value is computed as
 * \f[
 * \mathbf{X^*} = \sum \mathbf{\lambda_i} * \mathbf{X_i}
 * \f]
