@@ -215,9 +215,8 @@ void Interpol1D::equalBin(const size_t k, std::vector<double> &X, std::vector<do
 /**
  * @brief data binning method
  * This bins the data into k classes of equal number of elements (see https://en.wikipedia.org/wiki/Data_binning).
- * The number of elements per classes is adjusted in order to reduce unevenness between casses: depending on the
- * original number of elements and the number of classes, the last class might have more or less elements as
- * the other classes.
+ * The number of elements per classes is adjusted in order to reduce unevenness between casses: for example
+ * when distributing 100 elements in 8 classes, this will generate 4 classes of 13 elements and 4 classes of 12 elements.
  * @param k number of classes
  * @param X vector of abscissae
  * @param Y vector of ordinates
@@ -235,7 +234,9 @@ void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vect
 	const size_t Xsize = X.size();
 	if (k>=Xsize) return;
 
-	const size_t count_per_class = static_cast<size_t>( Optim::round( Xsize/(double)k ) ); //distribute the elements to reduce unevenness between classes
+	const size_t count_per_class = Xsize/k;
+	const size_t remainder = Xsize % k;
+
 	double sum_X=0, sum_Y=0.;
 	size_t count=0, class_count=1;
 	std::vector<double> X_bin, Y_bin;
@@ -244,7 +245,9 @@ void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vect
 		sum_Y += Y[ii];
 		count++;
 
-		if (count>=count_per_class && class_count<k ) { //last class can be bigger or smaller
+		//the first classes receive count_per_class+1 point
+		if ((class_count<=remainder && count>count_per_class) ||
+		    (class_count>remainder && count>=count_per_class)) {
 			X_bin.push_back( sum_X/count );
 			Y_bin.push_back( sum_Y/count );
 			sum_X=0.;

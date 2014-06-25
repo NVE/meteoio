@@ -24,7 +24,7 @@ void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
 }
 
 void cr_rand_vectors(vector<double> &X, vector<double> &Y) {
-	const size_t N = 10;
+	const size_t N = 20;
 	srand( time(NULL) );
 	X.clear(); X.resize(N);
 	Y.clear(); Y.resize(N);
@@ -76,13 +76,14 @@ bool check_bin(const vector<double>& x, const vector<double>& y) {
 	                     IOUtils::checkEpsilonEquality(Y[1],-432.179,1e-3) &&
 	                     IOUtils::checkEpsilonEquality(Y[2],602.248,1e-3) ;
 
-	/*vector<double> X2(x), Y2(y);
-	Interpol1D::equalCountBin(2, X2, Y2);
-	const bool status2 = IOUtils::checkEpsilonEquality(X2[0],-201.072,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(X2[1],210.957,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(Y2[0],176.736,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(Y2[1],-156.067,1e-3) ;*/
-	const bool status2 = true;
+	vector<double> X2(x), Y2(y);
+	Interpol1D::equalCountBin(3, X2, Y2);
+	const bool status2 = IOUtils::checkEpsilonEquality(X2[0],-239.304,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(X2[1],32.7595,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(X2[2],329.589,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y2[0],282.556,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y2[1],-298.15,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y2[2],64.7283,1e-3) ;
 
 	const bool status = status1 && status2;
 	if(status)
