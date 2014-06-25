@@ -212,6 +212,16 @@ void Interpol1D::equalBin(const size_t k, std::vector<double> &X, std::vector<do
 	}
 }
 
+/**
+ * @brief data binning method
+ * This bins the data into k classes of equal number of elements (see https://en.wikipedia.org/wiki/Data_binning).
+ * The number of elements per classes is adjusted in order to reduce unevenness between casses: depending on the
+ * original number of elements and the number of classes, the last class might have more or less elements as
+ * the other classes.
+ * @param k number of classes
+ * @param X vector of abscissae
+ * @param Y vector of ordinates
+ */
 void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vector<double> &Y)
 {
 	if (X.size()!=Y.size()) {
@@ -219,26 +229,33 @@ void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vect
 		ss << "X vector and Y vector don't match! " << X.size() << "!=" << Y.size() << "\n";
 		throw InvalidArgumentException(ss.str(), AT);
 	}
+	if (k==0) throw InvalidArgumentException("It is not possible to bin into 0 classes!", AT);
 
 	sort(X, Y, false); //also remove nodata points
 	const size_t Xsize = X.size();
 	if (k>=Xsize) return;
 
-	const size_t count_per_class = static_cast<size_t>( Optim::ceil( Xsize/k ) ); //so last class might have less elements
+	const size_t count_per_class = static_cast<size_t>( Optim::round( Xsize/(double)k ) ); //distribute the elements to reduce unevenness between classes
 	double sum_X=0, sum_Y=0.;
-	size_t count=0;
+	size_t count=0, class_count=1;
 	std::vector<double> X_bin, Y_bin;
 	for (size_t ii=0; ii<Xsize; ii++) {
 		sum_X += X[ii];
 		sum_Y += Y[ii];
 		count++;
-		if (count>=count_per_class && ((Xsize-ii)>count_per_class || (ii+1)==Xsize) ) { //last class is bigger
+
+		if (count>=count_per_class && class_count<k ) { //last class can be bigger or smaller
 			X_bin.push_back( sum_X/count );
 			Y_bin.push_back( sum_Y/count );
 			sum_X=0.;
 			sum_Y=0.;
 			count=0;
+			class_count++;
 		}
+	}
+	if (count>0) { //close last class
+		X_bin.push_back( sum_X/count );
+		Y_bin.push_back( sum_Y/count );
 	}
 
 	X = X_bin;
