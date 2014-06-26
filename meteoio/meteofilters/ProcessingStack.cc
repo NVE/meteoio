@@ -23,8 +23,11 @@ namespace mio {
 
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
 {
+	 //this is required by filters that need to read some parameters in extra files
+	const string root_path = cfg.getSourceName();
 	vector<string> vecFilters;
 	cfg.getValues(parname+"::filter", "Filters", vecFilters);
+
 	const size_t nr_of_filters = vecFilters.size();
 	for (size_t ii=0; ii<nr_of_filters; ii++){
 		//create a processing block for each filter
@@ -35,7 +38,7 @@ ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) 
 
 		//Read arguments
 		cfg.getValue(tmp.str(), "Filters", vec_args, IOUtils::nothrow);
-		filter_stack.push_back( BlockFactory::getBlock(block_name, vec_args) );
+		filter_stack.push_back( BlockFactory::getBlock(block_name, vec_args, root_path) );
 	}
 }
 

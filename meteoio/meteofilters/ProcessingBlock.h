@@ -78,13 +78,15 @@ class ProcessingBlock {
 
 		static bool is_soft(std::vector<std::string>& vec_args);
 
+		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections);
+
 		ProcessingProperties properties;
 		const std::string block_name;
 };
 
 class BlockFactory {
 	public:
-		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector<std::string>& vec_args);
+		static ProcessingBlock* getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const std::string& root_path);
 };
 
 } //end namespace

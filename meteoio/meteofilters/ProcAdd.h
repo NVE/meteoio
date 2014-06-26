@@ -30,24 +30,37 @@ namespace mio {
  * @author Mathias Bavay
  * @date   2012-02-06
  * @brief Add an offset to the values.
- * This simply adds to all values a given constant.
+ * This adds to all values a given offset. Either a fixed value is given as single argument or a period
+ * (hourly/daily/monthly) as well as a filename (and absolute or relative path) containing the offsets to apply.
+ * This file must contain in the first column the indices (months from 1 to 12 or days from 1 to 366 or hours from 0 to 23)
+ * and the matching offset in the second column. Comments following the same syntax as in the ini file are accepted, missing
+ * indices are treated as 0.
  * @code
- * TSS::filter1	= add
- * TSS::arg1	= 0.5
+ * TA::filter1	= add
+ * TA::arg1	= 2.5
+ *
+ * TSG::filter1	= add
+ * TSG::arg1	= daily input/TSG_corr.dat
  * @endcode
  */
 
 class ProcAdd : public ProcessingBlock {
 	public:
-		ProcAdd(const std::vector<std::string>& vec_args, const std::string& name);
+		ProcAdd(const std::vector<std::string>& vec_args, const std::string& name, const std::string& i_root_path);
 
 		virtual void process(const unsigned int& param, const std::vector<MeteoData>& ivec,
 		                     std::vector<MeteoData>& ovec);
 
+	protected:
+		static void readCorrections(const std::string& filter, const std::string& filename, const char& c_type, std::vector<double> &corrections);
+
 	private:
 		void parse_args(const std::vector<std::string>& vec_args);
 
+		std::vector<double> vecOffsets;
+		std::string root_path;
 		double offset;
+		char type;
 };
 
 } //end namespace

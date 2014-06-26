@@ -15,6 +15,12 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <fstream>
+#include <sstream>
+#include <errno.h>
+#include <cstring>
+
+#include <meteoio/FileUtils.h>
 #include <meteoio/meteofilters/ProcessingBlock.h>
 #include <meteoio/meteofilters/FilterSuppr.h>
 #include <meteoio/meteofilters/FilterMin.h>
@@ -106,7 +112,7 @@ namespace mio {
  *
  */
 
-ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args)
+ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std::vector<std::string>& vec_args, const std::string& root_path)
 {
 	if (blockname == "SUPPR"){
 		return new FilterSuppr(vec_args, blockname);
@@ -147,9 +153,9 @@ ProcessingBlock* BlockFactory::getBlock(const std::string& blockname, const std:
 	} else if (blockname == "UNSHADE"){
 		return new ProcUnshade(vec_args, blockname);
 	} else if (blockname == "MULT"){
-		return new ProcMult(vec_args, blockname);
+		return new ProcMult(vec_args, blockname, root_path);
 	} else if (blockname == "ADD"){
-		return new ProcAdd(vec_args, blockname);
+		return new ProcAdd(vec_args, blockname, root_path);
 	} else if (blockname == "EXP_SMOOTHING"){
 		return new ProcExpSmoothing(vec_args, blockname);
 	} else if (blockname == "WMA_SMOOTHING"){
@@ -190,6 +196,62 @@ bool ProcessingBlock::is_soft(std::vector<std::string>& vec_args) {
 
 std::string ProcessingBlock::getName() const {
 	return block_name;
+}
+
+void ProcessingBlock::readCorrections(const std::string& filter, const std::string& filename, const char& c_type, const double& init, std::vector<double> &corrections)
+{
+	std::ifstream fin(filename.c_str());
+	if (fin.fail()) {
+		std::ostringstream ss;
+		ss << "Filter " << filter << ": ";
+		ss << "error opening file \"" << filename << "\", possible reason: " << std::strerror(errno);
+		throw FileAccessException(ss.str(), AT);
+	}
+
+	if (c_type=='m') corrections.resize(12, init);
+	else if (c_type=='d') corrections.resize(366, init);
+	else if (c_type=='h') corrections.resize(24, init);
+	const size_t maxIndex = corrections.size();
+	const size_t minIndex = (c_type=='h')? 0 : 1;
+
+	char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+
+	try {
+		size_t index, lcount=0;
+		double value;
+		do {
+			lcount++;
+			std::string line;
+			getline(fin, line, eoln); //read complete line
+			IOUtils::stripComments(line);
+			IOUtils::trim(line);
+			if (line.empty()) continue;
+
+			std::istringstream iss(line);
+			iss.setf(std::ios::fixed);
+			iss.precision(std::numeric_limits<double>::digits10);
+			iss >> std::skipws >> index;
+			if ( !iss || index<minIndex || (index-minIndex)>=maxIndex) {
+				std::ostringstream ss;
+				ss << "Invalid index in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+			iss >> std::skipws >> value;
+			if ( !iss ){
+				std::ostringstream ss;
+				ss << "Invalid value in file " << filename << " at line " << lcount;
+				throw InvalidArgumentException(ss.str(), AT);
+			}
+
+			corrections.at( index-minIndex ) = value;
+		} while (!fin.eof());
+		fin.close();
+	} catch (const std::exception&){
+		if (fin.is_open()) {//close fin if open
+			fin.close();
+		}
+		throw;
+	}
 }
 
 ProcessingBlock::~ProcessingBlock() {}
