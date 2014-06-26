@@ -192,12 +192,14 @@ void Interpol1D::equalBin(const size_t k, std::vector<double> &X, std::vector<do
 	const double Xmin = min_element(X);
 	const double Xmax = max_element(X);
 	if (Xmin==IOUtils::nodata || Xmax==IOUtils::nodata) return;
-	const double width = (Xmax - Xmin) / (k - 1);
+	const double width = (Xmax - Xmin) / k;
 
 	std::vector<double> bins(k, 0.);
 	std::vector<size_t> counts(k, 0.);
 	for (size_t ii=0; ii<Xsize; ii++) {
-		const size_t index = Optim::floor( (X[ii]-Xmin) / width );
+		if (X[ii]==IOUtils::nodata || Y[ii]==IOUtils::nodata) continue;
+		
+		const size_t index = (X[ii]!=Xmax)? Optim::floor( (X[ii]-Xmin) / width ) : k-1;
 		bins[index] += Y[ii];
 		counts[index]++;
 	}

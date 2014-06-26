@@ -69,12 +69,16 @@ bool check_sort(const vector<double>& x, const vector<double>& y) {
 bool check_bin(const vector<double>& x, const vector<double>& y) {
 	vector<double> X(x), Y(y);
 	Interpol1D::equalBin(3, X, Y);
-	const bool status1 = IOUtils::checkEpsilonEquality(X[0],-272.812,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(X[1],181.327,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(X[2],635.466,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(Y[0],176.736,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(Y[1],-432.179,1e-3) &&
-	                     IOUtils::checkEpsilonEquality(Y[2],602.248,1e-3) ;
+	const bool status1 = IOUtils::checkEpsilonEquality(X[0],-348.502,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(X[1],-45.743,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(X[2],257.016,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y[0],421.516,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y[1],-22.9112,1e-3) &&
+	                     IOUtils::checkEpsilonEquality(Y[2],-82.3982,1e-3) ;
+	if (!status1) {
+		std::cout << "equalBin returned:\n";
+		print_vectors(X, Y);
+	}
 
 	vector<double> X2(x), Y2(y);
 	Interpol1D::equalCountBin(3, X2, Y2);
@@ -84,6 +88,11 @@ bool check_bin(const vector<double>& x, const vector<double>& y) {
 	                     IOUtils::checkEpsilonEquality(Y2[0],282.556,1e-3) &&
 	                     IOUtils::checkEpsilonEquality(Y2[1],-298.15,1e-3) &&
 	                     IOUtils::checkEpsilonEquality(Y2[2],64.7283,1e-3) ;
+
+	if (!status2) {
+		std::cout << "equalCountBin returned:\n";
+		print_vectors(X2, Y2);
+	}
 
 	const bool status = status1 && status2;
 	if(status)
