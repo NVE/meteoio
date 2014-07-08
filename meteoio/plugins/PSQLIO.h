@@ -23,15 +23,13 @@
 
 #include <libpq-fe.h>
 #include <string>
-#include <set>
 #include <map>
-#include <algorithm>
 
 namespace mio {
 
 /**
  * @class PSQLIO
- * @brief
+ * @brief This plugin connects to a generic PostgreSQL server to retrieve its meteorological data.
  *
  * @ingroup plugins
  * @author Thomas Egger
@@ -41,7 +39,7 @@ class PSQLIO : public IOInterface {
 	public:
 		PSQLIO(const std::string& configfile);
 		PSQLIO(const PSQLIO&);
-		PSQLIO(const Config& cfgreader);
+		PSQLIO(const Config& cfg);
 		~PSQLIO() throw();
 
 		virtual void read2DGrid(Grid2DObject& grid_out, const std::string& parameter="");
@@ -65,30 +63,29 @@ class PSQLIO : public IOInterface {
 		PSQLIO& operator=(const PSQLIO& in);
 
 	private:
-		void getParameters();
+		void getParameters(const Config& cfg);
 		void create_shadow_map(const std::string& exclude_file);
 		void open_connection();
 		PGresult* get_data(const std::string& sqlcommand);
-		bool replace(std::string& str, const std::string& from, const std::string& to);
+		static bool replace(std::string& str, const std::string& from, const std::string& to);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index);
-		void parse_row(PGresult* result, const int& row, const int& cols,
-		               MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
+		static void parse_row(PGresult* result, const int& row, const int& cols,
+		                      MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
 		void close_connection(PGconn *conn);
-		bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
-		void convertUnits(MeteoData& meteo) const;
+		static bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
+		static void convertUnits(MeteoData& meteo);
 
-		Config cfg;
-		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, port, dbname, userid, passwd; ///< Variables for endpoint configuration
 		PGconn *psql; ///<holds the current connection
 		double default_timezone;
 		std::vector<StationData> vecMeta;
-		std::map<size_t, double> multiplier, offset;
 		std::vector<std::string> vecFixedStationID, vecMobileStationID;
 		std::string sql_meta, sql_data;
 		std::map< std::string, std::set<std::string> > shadowed_parameters;
+
+		static const double plugin_nodata; //plugin specific nodata value, e.g. -999
 };
 
 } //namespace

@@ -73,8 +73,8 @@ namespace mio {
  * - RELHUM: relative humidity from other humidity measurements (see RhGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
- * - CLEARSKYLW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
- * - ALLSKYLW: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyLWGenerator)
+ * - CLEARSKY_LW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
+ * - ALLSKY_LW: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyLWGenerator)
  * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
  *
  * @section generators_biblio Bibliography

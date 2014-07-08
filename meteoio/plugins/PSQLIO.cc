@@ -15,6 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <set>
+#include <algorithm>
 #include "PSQLIO.h"
 
 using namespace std;
@@ -23,50 +25,65 @@ namespace mio {
 /**
  * @page psqlio PSQLIO
  * @section psql_format Format
- *
+ * This plugin connects to a <i>generic</i> <A HREF="www.postgresql.org/">PostgreSQL</A> server to retrieve its meteorological data. The server
+ * parameters must be provided as well as the queries to retrieve the stations' data and metadata. In order to compile this plugin,
+ * the development package of libpq is required (this is the PostgreSQL c client library).
  *
  * @section psql_units Units
+ * Units are assumed to be pure SI, except:
+ *  - temperatures in °C
+ *  - relative humidity in %
+ *  - snow heights in cm
+ *  - pressures in mbar
  *
+ * It is otherwise always possible to convert units for some specific parameters through the use of filters (ADD and/or MULT for example).
  *
  * @section psql_keywords Keywords
  * This plugin uses the following keywords:
- * - COORDSYS: coordinate system (see Coords); [Input] and [Output] section
- * - COORDPARAM: extra coordinates parameters (see Coords); [Input] and [Output] section
- * - PSQL_URL: The URL or IP of the database server
- * - PSQL_DB: The name of the database to access
- * - PSQL_USER: The username to access the server
- * - PSQL_PASS: The password to authenticate the PSQL_USER
+ * - COORDSYS: coordinate system (see Coords); [Input] section
+ * - COORDPARAM: extra coordinates parameters (see Coords); [Input] section
+ * - database connection keywords; [Input] section:
+ *      - PSQL_URL: The URL or IP of the database server
+ *      - PSQL_PORT: the port to use to connect
+ *      - PSQL_DB: The name of the database to access
+ *      - PSQL_USER: The username to access the server
+ *      - PSQL_PASS: The password to authenticate the PSQL_USER
+ * - database structure keywords; [Input] section
+ *      - SQL_META: query to use to get the stations' metadata
+ *      - SQL_DATA: query to use to get the stations' data
+ * - STATION#: ID of the station to read; [Input] section
+ * - EXCLUDE: file containing a list of parameters to exclude, per station (optionnal; [Input] section)
  */
 
 const double PSQLIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-PSQLIO::PSQLIO(const std::string& configfile) : cfg(configfile), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
-									   dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(), multiplier(), offset(),
+PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
+                                                dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(),
                                                 vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
+	Config cfg(configfile);
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	getParameters();
+	getParameters(cfg);
 }
 
-PSQLIO::PSQLIO(const Config& cfgreader) : cfg(cfgreader), coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
-								  dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(), multiplier(), offset(),
+PSQLIO::PSQLIO(const Config& cfg) : coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
+                                          dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(),
                                           vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
-	getParameters();
+	getParameters(cfg);
 }
 
-PSQLIO::PSQLIO(const PSQLIO& in) : cfg(in.cfg), coordin(in.coordin), coordinparam(in.coordinparam), coordout(in.coordout),
-							coordoutparam(in.coordoutparam), endpoint(in.endpoint), port(in.port), dbname(in.dbname), userid(in.userid),
-							passwd(in.passwd), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta), multiplier(in.multiplier),
-							offset(in.offset), vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID),
-							sql_meta(in.sql_meta), sql_data(in.sql_data), shadowed_parameters(in.shadowed_parameters) {}
+PSQLIO::PSQLIO(const PSQLIO& in) : coordin(in.coordin), coordinparam(in.coordinparam), coordout(in.coordout),
+                                   coordoutparam(in.coordoutparam), endpoint(in.endpoint), port(in.port), dbname(in.dbname), userid(in.userid),
+                                   passwd(in.passwd), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta),
+                                   vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID),
+                                   sql_meta(in.sql_meta), sql_data(in.sql_data), shadowed_parameters(in.shadowed_parameters) {}
 
 PSQLIO& PSQLIO::operator=(const PSQLIO& in)
 {
-      PSQLIO tmp(in);
+	PSQLIO tmp(in);
 
-	 swap(cfg, tmp.cfg);
 	 swap(coordin, tmp.coordin);
 	 swap(coordinparam, tmp.coordinparam);
 	 swap(coordout, tmp.coordout);
@@ -79,8 +96,6 @@ PSQLIO& PSQLIO::operator=(const PSQLIO& in)
 	 swap(psql, tmp.psql);
 	 swap(default_timezone, tmp.default_timezone);
 	 swap(vecMeta, tmp.vecMeta);
-	 swap(multiplier, tmp.multiplier);
-	 swap(offset, tmp.offset);
 	 swap(vecFixedStationID, tmp.vecFixedStationID);
 	 swap(vecMobileStationID, tmp.vecMobileStationID);
 	 swap(sql_meta, tmp.sql_meta);
@@ -90,12 +105,9 @@ PSQLIO& PSQLIO::operator=(const PSQLIO& in)
       return *this;
 }
 
-PSQLIO::~PSQLIO() throw()
-{
+PSQLIO::~PSQLIO() throw() {}
 
-}
-
-void PSQLIO::getParameters()
+void PSQLIO::getParameters(const Config& cfg)
 {
 	port = "5432"; //The default PostgreSQL port
 
@@ -105,13 +117,13 @@ void PSQLIO::getParameters()
 	cfg.getValue("PSQL_USER", "Input", userid);
 	cfg.getValue("PSQL_PASS", "Input", passwd);
 
-	string stations("");
+	string stations;
 	cfg.getValue("STATIONS", "Input", stations);
 	IOUtils::readLineToVec(stations, vecFixedStationID, ',');
 
-	string exclude_file("");
+	string exclude_file;
 	cfg.getValue("EXCLUDE", "Input", exclude_file, IOUtils::nothrow);
-	if (IOUtils::fileExists(exclude_file)) {
+	if (!exclude_file.empty() && IOUtils::fileExists(exclude_file)) {
 		create_shadow_map(exclude_file);
 	}
 
@@ -128,10 +140,10 @@ void PSQLIO::create_shadow_map(const std::string& exclude_file)
 	if (fin.fail()) throw FileAccessException(exclude_file, AT);
 
 	try {
-		char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
 		vector<string> tmpvec;
-		string line("");
+		string line;
 
 		while (!fin.eof()) { //Go through file
 			getline(fin, line, eoln); //read complete line meta information
@@ -144,24 +156,14 @@ void PSQLIO::create_shadow_map(const std::string& exclude_file)
 				}
 
 				set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
-				shadowed_parameters[tmpvec[0]] = tmpset;
+				shadowed_parameters[ tmpvec[0] ] = tmpset;
 			}
 		}
 	} catch (const std::exception&) {
 		fin.close();
 		throw;
 	}
-	/*
-	map< string, set<string> >::iterator it;
-	set<string>::iterator setit;
-	for (it = shadowed_parameters.begin(); it != shadowed_parameters.end(); ++it) {
-		cout << "Shadowed for station " << it->first << "   ";
-		for (setit = it->second.begin(); setit != it->second.end(); ++setit) {
-			cout << *setit << ";";
-		}
-		cout << endl;
-	}
-	*/
+
 	fin.close();
 }
 
@@ -292,7 +294,7 @@ void PSQLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 bool PSQLIO::replace(std::string& str, const std::string& from, const std::string& to)
 {
-    size_t start_pos = str.find(from);
+    const size_t start_pos = str.find(from);
     if(start_pos == std::string::npos)
         return false;
     str.replace(start_pos, from.length(), to);
@@ -313,8 +315,6 @@ void PSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Me
 	replace(sql_query, "DATE_START", date_start);
 	replace(sql_query, "DATE_END", date_end);
 
-	// cout << sql_query << endl;
-
 	PGresult *result = get_data(sql_query);
 	if (result) {
 		int rows = PQntuples(result);
@@ -332,7 +332,6 @@ void PSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Me
 
 		PQclear(result);
 	}
-
 }
 
 void PSQLIO::parse_row(PGresult* result, const int& row, const int& cols, MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo)
@@ -342,7 +341,7 @@ void PSQLIO::parse_row(PGresult* result, const int& row, const int& cols, MeteoD
 
 	for (int ii=1; ii<cols; ii++) {
 		if (index[ii] != IOUtils::npos) {
-			string val(PQgetvalue(result, row, ii));
+			string val( PQgetvalue(result, row, ii) );
 			if (!val.empty()) IOUtils::convertString(tmp(index[ii]), val);
 		}
 	}
@@ -353,19 +352,14 @@ void PSQLIO::parse_row(PGresult* result, const int& row, const int& cols, MeteoD
 
 void PSQLIO::map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index)
 {
-	multiplier.clear();
-	offset.clear();
-
-	int columns = PQnfields(result);
+	const int columns = PQnfields(result);
 
 	set<string> shadowed;
 	map< string, set<string> >::iterator it = shadowed_parameters.find(md.meta.stationID);
 	if (it != shadowed_parameters.end()) shadowed = it->second;
 
 	for (int ii=0; ii<columns; ii++) {
-		const string field_name(IOUtils::strToUpper(PQfname(result, ii)));
-		//cout << "field(" << ii << "): " << field_name << endl;
-
+		const string field_name( IOUtils::strToUpper(PQfname(result, ii)) );
 		const bool is_in = shadowed.find(field_name) != shadowed.end();
 		if (is_in) { // Certain parameters may be shadowed
 			index.push_back(IOUtils::npos);
@@ -402,14 +396,13 @@ void PSQLIO::map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>
 	}
 }
 
+/**
+* This function checks whether all the MeteoData elements in vecMeteo are consistent
+* regarding their meta data (position information, station name). If they are consistent
+* true is returned, otherwise false
+*/
 bool PSQLIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd)
 {
-	/**
-	 * This function checks whether all the MeteoData elements in vecMeteo are consistent
-	 * regarding their meta data (position information, station name). If they are consistent
-	 * true is returned, otherwise false
-	 */
-
 	if (!vecMeteo.empty()) //to get the station data even when in bug 87 conditions
 		sd = vecMeteo[0].meta;
 
@@ -425,21 +418,24 @@ bool PSQLIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationDat
 	return true;
 }
 
-void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
+void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& /*vecMeteo*/, const std::string&)
 {
+	//Nothing so far
+	throw IOException("Nothing implemented here", AT);
+
 	//Loop through all stations
-	for (size_t ii=0; ii<vecMeteo.size(); ii++){
+	/*for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		//1. check consistency of station data position -> write location in header or data section
 		StationData sd;
 		sd.position.setProj(coordout, coordoutparam);
 		const bool isConsistent = checkConsistency(vecMeteo.at(ii), sd); // sd will hold valid meta info
 
 		if (isConsistent) { //static station
-			
+
 		} else { //mobile station
 
 		}
-	}
+	}*/
 }
 
 void PSQLIO::readPOI(std::vector<Coords>&)
@@ -460,7 +456,7 @@ void PSQLIO::write2DGrid(const Grid2DObject& /*grid_in*/, const MeteoGrids::Para
 	throw IOException("Nothing implemented here", AT);
 }
 
-void PSQLIO::convertUnits(MeteoData& meteo) const
+void PSQLIO::convertUnits(MeteoData& meteo)
 {
 	//converts °C to Kelvin, converts RH to [0,1]
 	double& ta = meteo(MeteoData::TA);
@@ -486,25 +482,11 @@ void PSQLIO::convertUnits(MeteoData& meteo) const
 	double& p = meteo(MeteoData::P); //is in mbar
 	if (p != IOUtils::nodata)
 		p *= 100.;
-
-	// For all parameters that have either an offset or an multiplier to bring to MKSA
-	/*
-	map<size_t, double>::const_iterator it;
-	for (it = multiplier.begin(); it != multiplier.end(); ++it) {
-		double& tmp = meteo(it->first);
-		if (tmp != IOUtils::nodata) tmp *= it->second;
-	}
-
-	for (it = offset.begin(); it != offset.end(); ++it) {
-		double& tmp = meteo(it->first);
-		if (tmp != IOUtils::nodata) tmp += it->second;
-	}
-	*/
 }
 
 void PSQLIO::open_connection()
 {
-	string connect = "hostaddr = '" + endpoint +
+	const string connect = "hostaddr = '" + endpoint +
 		"' port = '" + port +
 		"' dbname = '" + dbname +
 		"' user = '" + userid +
@@ -520,8 +502,6 @@ void PSQLIO::open_connection()
 		cerr << "ERROR" << PQstatus(psql) << endl;
 		throw IOException("PSQLIO connection error: PQstatus(psql) != CONNECTION_OK", AT);
 	}
-
-	//cout << "Connection established" << endl;
 }
 
 PGresult *PSQLIO::get_data(const string& sql_command)
@@ -552,7 +532,6 @@ PGresult *PSQLIO::get_data(const string& sql_command)
 void PSQLIO::close_connection(PGconn *conn)
 {
     PQfinish(conn);
-    //cout << "Connection closed" << endl;
 }
 
 } //namespace
