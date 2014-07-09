@@ -29,6 +29,40 @@ namespace mio {
  * parameters must be provided as well as the queries to retrieve the stations' data and metadata. In order to compile this plugin,
  * the development package of libpq is required (this is the PostgreSQL c client library).
  *
+ * @subsection psql_meta_query Metadata query
+ * This query is used to retrieve the stations' metadata. This SQL query string should retrieve the following columns as result set (in this very order):
+ *
+ *      id (int), name (string), x (easting as double), y (northing as double), altitude (height above sea level as double), epsg (int)
+ *
+ * The user is allowed to select stations with the STATIONS keyword (see below). That is why the SQL query has to end with a 'WHERE id_column_name IN' clause, for example:
+ *
+ *      SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN
+ *
+ * @subsection psql_data_query Data query
+ * This query is used to retrieve the data for the user selected stations within a given time interval.
+ * The SQL query may retrieve the following columns as result set (any order, only date is mandatory):
+ *
+ *      date (mandatory, as date), ta (double), rh (double), p (double), vw (double), dw (double), iprec (the HNW value, double), iswr (double)
+ *
+ * The SQL query must retrieve the data for one station only, which has to be specified as \a STATIONID (this will be dynamically replaced by the plugin).
+ * To set the upper and lower bounds for the date the SQL query has to contain \a DATE_START and \a DATE_END. These keywords will be dynamically replaced by
+ * the plugin with the correct date. Furthermore the resultset should be ordered by date ascending. An example for a correct SQL data query string is therefore:
+ *
+ *      SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date>=''DATE_START'' AND date<=''DATE_END'' ORDER BY date
+ *
+ * @subsection psql_exclude_file Exclude file
+ * It is possible to exclude specific parameters from specific stations. This is done by listing in a CSV file for each station id, which parameters should be excluded.
+ * An example of an exclude file is given below:
+ * @code
+ *       # Example of an exclude file, comment line
+ *       ; another comment line
+ *       ; the parameters to exclude are specified as comma separated values:
+ *       # stationid,parameter1,parameter2
+ *       1,p,RH,Iprec
+ *       230,RH
+ *       231,RH
+ * @endcode
+ *
  * @section psql_units Units
  * Units are assumed to be pure SI, except:
  *  - temperatures in °C
@@ -49,31 +83,11 @@ namespace mio {
  *      - PSQL_USER: The username to access the server
  *      - PSQL_PASS: The password to authenticate the PSQL_USER
  * - database structure keywords; [Input] section
- *      - SQL_META: SQL query to use to get the stations' metadata. This SQL query string should retrieve the following columns as result set (in this very order):<br>
- *        id (int), name (string), x (easting as double), y (northing as double), altitude (height above sea level as double), epsg (int)
- *
- *        The user is allowed to select stations with the STATIONS keyword (see below). That is why the SQL query has to end with a 'WHERE id_column_name IN' clause, for example:
- *
- *            SELECT id, station_name AS name, x_coord AS x, y_coord AS y, z AS altitude, epsg from all_stations WHERE id IN
- * 
- *      - SQL_DATA: SQL query to use to get the stations' data. The SQL query may retrieve the following columns as result set (any order, only date is mandatory):<br>
- *        date (mandatory, as date), ta (double), rh (double), p (double), vw (double), dw (double), iprec (the HNW value, double), iswr (double)
- *
- *        The SQL query must retrieve the data for one station only, which has to be specified as STATIONID. To set the upper and lower bounds for the date the SQL query has to contain
- *        DATE_START and DATE_END. These keywords will be replaced by the plugin with the correct date. Furthermore the resultset should be ordered by date ascending. 
- *        An example for a correct SQL data query string is therefore:
- *
- *            SELECT * FROM all_measurements WHERE id = ''STATIONID'' AND date>=''DATE_START'' AND date<=''DATE_END'' ORDER BY date
+ *      - SQL_META: SQL query to use to get the stations' metadata.
+ *      - SQL_DATA: SQL query to use to get the stations' data.
  * - STATIONS: CSV of station ids that the user is interested in
- * - EXCLUDE: File containing a list of parameters to exclude listed per station id (CSV). An example of an exclude file is given below. This key is optional; [Input] section
- *            
- *       # Example of an exclude file, comment line
- *       ; another comment line
- *       ; the parameters to exclude are specified as comma separated values:
- *       # stationid,parameter1,parameter2
- *       1,p,RH,Iprec
- *       230,RH
- *       231,RH
+ * - EXCLUDE: File containing a list of parameters to exclude listed per station id (optional; [Input] section)
+ *
  */
 
 const double PSQLIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
