@@ -67,10 +67,8 @@ namespace mio {
  * Units are assumed to be pure SI, except:
  *  - temperatures in °C
  *  - relative humidity in %
- *  - snow heights in cm
- *  - pressures in mbar
- *
- * It is otherwise always possible to convert units for some specific parameters through the use of filters (ADD and/or MULT for example).
+ *  - snow height in cm
+ *  - pressure in mbar
  *
  * @section psql_keywords Keywords
  * This plugin uses the following keywords:
@@ -85,7 +83,7 @@ namespace mio {
  * - database structure keywords; [Input] section
  *      - SQL_META: SQL query to use to get the stations' metadata.
  *      - SQL_DATA: SQL query to use to get the stations' data.
- * - STATIONS: CSV of station ids that the user is interested in
+ * - STATIONS: comma separated list of station ids that the user is interested in; [Input] section
  * - EXCLUDE: File containing a list of parameters to exclude listed per station id (optional; [Input] section)
  *
  */
