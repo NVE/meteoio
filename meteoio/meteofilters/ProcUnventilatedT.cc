@@ -125,7 +125,9 @@ void ProcUnventilatedT::parse_args(std::vector<std::string> vec_args)
 		} else {
 			const string strArg( IOUtils::strToUpper(vec_args[0]) );
 			if (strArg=="NAKAMURA")
-				nakamura=true;
+				nakamura = true;
+			else if (strArg=="HUWALD")
+				nakamura = false;
 			else if (strArg=="SUPPR")
 				throw InvalidArgumentException("Invalid use of the SUPPR option for filter " + getName(), AT);
 			else
@@ -141,6 +143,9 @@ void ProcUnventilatedT::parse_args(std::vector<std::string> vec_args)
 
 		if (strArg=="NAKAMURA") {
 			nakamura = true;
+			usr_albedo = dblArg;
+		} else if (strArg=="HUWALD") {
+			nakamura = false;
 			usr_albedo = dblArg;
 		} else if (strArg=="SUPPR") {
 			usr_vw_thresh = dblArg;

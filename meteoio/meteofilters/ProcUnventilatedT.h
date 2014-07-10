@@ -34,7 +34,8 @@ namespace mio {
  *
  * When correcting the data, the albedo of the surroundings is required as well as the incoming or reflected short wave radiation. If a snow height is available, a generic
  * snow albedo is used when the snow height is above a given threshold, otherwise a soil albedo. This soil albedo can be provided as an option. Moreover, two corrections
- * are available: either the (Huwald, 2009)[default] or the (Nakamura, 2005). When simply deleting all suspicious air temperatures, the wind speed threshold must be provided.
+ * are available: either HUWALD (Huwald, 2009)[default] or NAKAMURA (Nakamura, 2005).
+ * When simply deleting all suspicious air temperatures (SUPPR), the wind speed threshold must be provided.
  *
  * @note This filter can ONLY be applied to air temperatures. Moreover, since it <i>might</i> depend on the radiation shield, it is highly recommended to do some tests (ie. comparisons between ventillated and unventillated sensors) before using it on a new sensor type. Hopefully a new paper would come and clarify its usability per sensor types...
  *
@@ -44,7 +45,7 @@ namespace mio {
  *
  * #using (Nakamura, 2005) with specified soil albedo
  * TA::filter2	= unventilated_T
- * TA::arg2	= nakamura 0.23
+ * TA::arg2	= Nakamura 0.23
  *
  * #simply deleting all values when VW<3. m/s
  * TA::filter2	= unventilated_T
