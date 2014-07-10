@@ -28,16 +28,27 @@ namespace mio {
  * @class  ProcUnventilatedT
  * @ingroup processing
  * @brief Filters and corrects temperatures from unventilated sensor.
- * This implements the correction described in <i>"Air Temperature Measurement Errors in Naturally Ventilated Radiation Shields"</i>, Reina Nakamura, L. Mahrt, J. Atmos. Oceanic Technol., <b>22</b>, 2005, pp 1046–1058
+ * This either deletes all air temperature values when the wind speed is below a given threshold or corrects the air temperature data according to
+ * <i>"Air Temperature Measurement Errors in Naturally Ventilated Radiation Shields"</i>, Reina Nakamura, L. Mahrt, J. Atmos. Oceanic Technol., <b>22</b>, 2005, pp 1046–1058
  * with an albedo dependency as introduced in <i>"Albedo effect on radiative errors in air temperature measurements"</i>, H. Huwald, C. W. Higgins, M.-O. Boldi, E. Bou-Zeid, M. Lehning, and M. B. Parlange, Water Resour. Res., <b>45</b>, W08431, 2009.
  *
- * If the "soft" option is given, the albedo has a value different according to snow (or no snow) on the ground. The default albedo (that is also used if snow height is nodata) can be given as a second option.
+ * When correcting the data, the albedo of the surroundings is required as well as the incoming or reflected short wave radiation. If a snow height is available, a generic
+ * snow albedo is used when the snow height is above a given threshold, otherwise a soil albedo. This soil albedo can be provided as an option. Moreover, two corrections
+ * are available: either the (Huwald, 2009)[default] or the (Nakamura, 2005). When simply deleting all suspicious air temperatures, the wind speed threshold must be provided.
  *
  * @note This filter can ONLY be applied to air temperatures. Moreover, since it <i>might</i> depend on the radiation shield, it is highly recommended to do some tests (ie. comparisons between ventillated and unventillated sensors) before using it on a new sensor type. Hopefully a new paper would come and clarify its usability per sensor types...
  *
  * @code
+ * #using (Huwald, 2009) with default soil albedo
  * TA::filter2	= unventilated_T
- * TA::arg2	= soft 0.23
+ *
+ * #using (Nakamura, 2005) with specified soil albedo
+ * TA::filter2	= unventilated_T
+ * TA::arg2	= nakamura 0.23
+ *
+ * #simply deleting all values when VW<3. m/s
+ * TA::filter2	= unventilated_T
+ * TA::arg2	= suppr 3.
  * @endcode
  *
  * @author Mathias Bavay
@@ -52,12 +63,13 @@ class ProcUnventilatedT : public ProcessingBlock {
 		                     std::vector<MeteoData>& ovec);
 
 	private:
+		void filterTA(const unsigned int& param, std::vector<MeteoData>& ovec) const;
+		void correctTA(const unsigned int& param, std::vector<MeteoData>& ovec) const;
 		void parse_args(std::vector<std::string> vec_args);
 
-		double usr_albedo;
+		double usr_albedo, usr_vw_thresh;
 		static const double dflt_albedo, soil_albedo, snow_albedo;
 		static const double snow_thresh, vw_thresh;
-		bool is_soft;
 		bool nakamura; //use Nakamura or Huwald model
 
 };
