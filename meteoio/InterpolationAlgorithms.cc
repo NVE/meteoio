@@ -1024,6 +1024,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 		}
 	}
 
+	//fill time series
 	for(; d1<=date; d1+=Tstep) {
 		iomanager.getMeteoData(d1, Meteo);
 		if (Meteo.size()!=nrStations) {
@@ -1033,7 +1034,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 			throw InvalidArgumentException(ss.str(), AT);
 		}
 
-		if (detrend_data) {
+		if (detrend_data) { //detrend data
 			//find trend
 			std::vector<double> vecDat;
 			for(size_t ii=0; ii<nrStations; ii++)
@@ -1053,7 +1054,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 
 				vecVecData.at(ii).push_back( val );
 			}
-		} else {
+		} else { //do not detrend data
 			for(size_t ii=0; ii<nrStations; ii++)
 				vecVecData.at(ii).push_back( Meteo[ii](param) );
 		}
