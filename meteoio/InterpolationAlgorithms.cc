@@ -780,7 +780,7 @@ bool WinstralAlgorithm::isExposed(const DEMObject& dem, Coords location)
 	const double min_dh = cellsize/shade_factor; //min_dist=cellsize -> min_dh
 	const double search_dist = (dem.grid2D.getMax() - alt_ref) * shade_factor;
 	if (search_dist<=cellsize) return true;
-	const int search_idx = Optim::ceil( search_dist/cellsize );
+	const int search_idx = static_cast<int>( Optim::ceil( search_dist/cellsize ) );
 
 	const size_t i_min = static_cast<size_t>(std::max( 0, i_ref-search_idx ));
 	const size_t i_max = static_cast<size_t>(std::min( static_cast<int>(dem.getNx()-1), i_ref+search_idx ));
@@ -823,7 +823,7 @@ double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMe
 
 		//const double meanspeed = sqrt(ve*ve + vn*vn);
 		const double meandirection = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
-		return Optim::round(meandirection/10.)*10; //round to nearest 10 deg
+		return static_cast<double>(Optim::round(meandirection/10.))*10.; //round to nearest 10 deg
 	}
 
 	return IOUtils::nodata;

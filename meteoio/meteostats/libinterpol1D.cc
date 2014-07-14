@@ -179,7 +179,7 @@ std::vector<double> Interpol1D::derivative(const std::vector<double>& X, const s
  * @param X vector of abscissae
  * @param Y vector of ordinates
  */
-void Interpol1D::equalBin(const size_t k, std::vector<double> &X, std::vector<double> &Y)
+void Interpol1D::equalBin(const unsigned int k, std::vector<double> &X, std::vector<double> &Y)
 {
 	const size_t Xsize = X.size();
 	if (Xsize!=Y.size()) {
@@ -198,7 +198,7 @@ void Interpol1D::equalBin(const size_t k, std::vector<double> &X, std::vector<do
 	std::vector<size_t> counts(k, 0.);
 	for (size_t ii=0; ii<Xsize; ii++) {
 		if (X[ii]==IOUtils::nodata || Y[ii]==IOUtils::nodata) continue;
-		
+
 		const size_t index = (X[ii]!=Xmax)? Optim::floor( (X[ii]-Xmin) / width ) : k-1;
 		bins[index] += Y[ii];
 		counts[index]++;
@@ -223,7 +223,7 @@ void Interpol1D::equalBin(const size_t k, std::vector<double> &X, std::vector<do
  * @param X vector of abscissae
  * @param Y vector of ordinates
  */
-void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vector<double> &Y)
+void Interpol1D::equalCountBin(const unsigned int k, std::vector<double> &X, std::vector<double> &Y)
 {
 	if (X.size()!=Y.size()) {
 		ostringstream ss;
@@ -250,8 +250,8 @@ void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vect
 		//the first classes receive count_per_class+1 point
 		if ((class_count<=remainder && count>count_per_class) ||
 		    (class_count>remainder && count>=count_per_class)) {
-			X_bin.push_back( sum_X/count );
-			Y_bin.push_back( sum_Y/count );
+			X_bin.push_back( sum_X/static_cast<double>(count) );
+			Y_bin.push_back( sum_Y/static_cast<double>(count) );
 			sum_X=0.;
 			sum_Y=0.;
 			count=0;
@@ -259,8 +259,8 @@ void Interpol1D::equalCountBin(const size_t k, std::vector<double> &X, std::vect
 		}
 	}
 	if (count>0) { //close last class
-		X_bin.push_back( sum_X/count );
-		Y_bin.push_back( sum_Y/count );
+		X_bin.push_back( sum_X/static_cast<double>(count) );
+		Y_bin.push_back( sum_Y/static_cast<double>(count) );
 	}
 
 	X = X_bin;
