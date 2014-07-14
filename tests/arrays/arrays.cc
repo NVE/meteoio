@@ -143,7 +143,7 @@ bool grid3d(const unsigned int& n) {
 	return status;
 }
 
-bool matrix(const unsigned int& n) {
+bool matrix(const size_t& n) {
 	cout << "Testing Matrix\n";
 	bool status=true;
 	Matrix I(n,1.); //build an n*n identity matrix

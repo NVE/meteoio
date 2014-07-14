@@ -114,33 +114,31 @@ bool makeDEMfiles(){
 bool compareFiles(){
 
 	bool status=true;
-	for(int i = 0; i < n_files; i++){
-
+	for(int i = 0; i < n_files; i++) {
 		// ------ Compare reference file with generated results ---------
-		cout << " --- Start comparing reference file with output file generated before for : " << files[i] << endl;
+		cout << " --- Comparing reference file with generated output file " << files[i] << endl;
 		ifstream ifref((prefix_ref+files[i]).c_str());
 		ifstream ifout(files[i].c_str());
 		string l_ref, l_out;
 
-		while (!ifref.eof())
-		{
-			if(ifout.eof()){
-				cerr << "Not enough lines generated as result!!!" << endl;
+		while (!ifref.eof()) {
+			if(ifout.eof()) {
+				cerr << "Generated file has less lines than the reference!" << endl;
 				return false;
 			}
 
 			getline(ifref,l_ref);
 			getline(ifout,l_out);
 			if (l_ref!=l_out) {
-				cerr << " ERROR, Sun generatet error at following point an error " << endl;
+				cerr << "Generated and reference files differ!" << endl;
 				cerr << "ref : \n " << l_ref << endl;
 				cerr << "out : \n " << l_out << endl;
 				status=false;
 			}
 		}
 
-		if(!ifout.eof()){
-			cerr << "To much lines generated as result!!!" << endl;
+		if(!ifout.eof()) {
+			cerr << "Generated file has more lines than the reference!" << endl;
 			status=false;
 		}
 		ifout.close();
@@ -152,11 +150,11 @@ bool compareFiles(){
 
 int main(void) {
 
-	if(!makeDEMfiles()){
+	if(!makeDEMfiles()) {
 		exit(1);
 	}
 
-	if(!compareFiles()){
+	if(!compareFiles()) {
 		exit(1);
 	}
 

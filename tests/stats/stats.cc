@@ -25,7 +25,7 @@ void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
 
 void cr_rand_vectors(vector<double> &X, vector<double> &Y) {
 	const size_t N = 20;
-	srand( time(NULL) );
+	srand( static_cast<unsigned int>(time(NULL)) );
 	X.clear(); X.resize(N);
 	Y.clear(); Y.resize(N);
 
@@ -191,7 +191,7 @@ bool check_basics(const vector<double>& X, const vector<double>& Y) {
 	}
 
 	//vector weighted mean
-	const vector<double> weights(X.size(), 1./(X.size()));
+	const vector<double> weights(X.size(), 1./static_cast<double>(X.size()));
 	const double vector_mean = Interpol1D::weightedMean(X, weights);
 	const double mean = Interpol1D::arithmeticMean(X);
 	const double vector_mean_status = IOUtils::checkEpsilonEquality(vector_mean, mean, 1e-6);
