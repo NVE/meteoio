@@ -23,7 +23,7 @@
 namespace mio {
 
 namespace Cst {
-	const double stefan_boltzmann = 5.67051e-8; // (W m-2 K-4)
+	const double stefan_boltzmann = 5.670373e-8; // (W m-2 K-4)
 	const double gravity = 9.80665; // (m s-2)
 	const double std_press = 101325.; // (Pa)
 

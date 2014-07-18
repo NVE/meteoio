@@ -143,7 +143,7 @@ class InterpolationAlgorithm {
 		InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
 		                       const std::vector<std::string>& i_vecArgs,
 		                       const std::string& i_algo, IOManager& iom) :
-		                      algo(i_algo), mi(i_mi), date(0.), vecArgs(i_vecArgs), vecMeteo(), vecData(),
+		                      algo(i_algo), mi(i_mi), date(0., 0), vecArgs(i_vecArgs), vecMeteo(), vecData(),
 		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0), iomanager(iom) {};
 		virtual ~InterpolationAlgorithm() {};
 		//if anything is not ok (wrong parameter for this algo, insufficient data, etc) -> return zero
