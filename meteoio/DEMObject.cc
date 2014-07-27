@@ -1027,6 +1027,8 @@ double DEMObject::safeGet(const int i, const int j)
 }
 
 std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
+	operator<<(os, *((Grid2DObject*)&dem));
+
 	os << dem.slope;
 	os << dem.azi;
 	os << dem.curvature;
@@ -1047,6 +1049,8 @@ std::iostream& operator<<(std::iostream& os, const DEMObject& dem) {
 }
 
 std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
+	operator>>(is, *((Grid2DObject*)&dem));
+
 	is >> dem.slope;
 	is >> dem.azi;
 	is >> dem.curvature;
