@@ -151,13 +151,8 @@ void BufferedIOHandler::readStationData(const Date& date, STATIONS_SET& vecStati
 	iohandler.readStationData(date, vecStation);
 }
 
-#ifdef _POPC_
-void BufferedIOHandler::writeMeteoData(std::vector< METEO_SET >& vecMeteo,
-                                       const std::string& name)
-#else
 void BufferedIOHandler::writeMeteoData(const std::vector< METEO_SET >& vecMeteo,
                                        const std::string& name)
-#endif
 {
 	iohandler.writeMeteoData(vecMeteo, name);
 }

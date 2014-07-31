@@ -24,15 +24,6 @@ IF(DATA_QA)
 	ENDIF(MSVC)
 ENDIF(DATA_QA)
 
-IF(POPC)
-	#FIND_PACKAGE(Popc REQUIRED)
-	SET(popc_sources marshal_meteoio.cc)
-	SET(CMAKE_CXX_COMPILER popcc) #this does not work, the user still has to do it manually
-	#INCLUDE(CMakeForceCompiler)
-	#CMAKE_FORCE_CXX_COMPILER(popcc POPCC)
-	SET(POPC_EXT "popc")
-ENDIF(POPC)
-
 SET(meteoio_sources
 	IOManager.cc
 	Matrix.cc
@@ -66,8 +57,8 @@ SET(meteoio_sources
 	${meteolaws_sources}
 	${meteostats_sources}
 	${meteofilters_sources}
-	${popc_sources}
 )
+
 IF(GUI_EXCEPTIONS)
 	IF(MSVC)
 		ADD_DEFINITIONS(/DMSG_BOX)
@@ -88,7 +79,7 @@ ENDIF(GUI_EXCEPTIONS)
 
 #shared library.
 IF(BUILD_SHARED_LIBS)
-	SET(SHAREDNAME ${PROJECT_NAME}${POPC_EXT})
+	SET(SHAREDNAME ${PROJECT_NAME})
 	ADD_LIBRARY(${SHAREDNAME} ${meteoio_sources})
 	TARGET_LINK_LIBRARIES(${SHAREDNAME} ${plugin_libs} ${LIBPROJ} ${Popc_LIBRARIES} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
 	SET_TARGET_PROPERTIES(${SHAREDNAME} PROPERTIES
@@ -111,7 +102,7 @@ ENDIF(BUILD_SHARED_LIBS)
 #static library. Please keep in mind that for Windows, a dll is a runtime
 IF(BUILD_STATIC_LIBS)
 	SET(STATICNAME ${PROJECT_NAME}_STATIC)
-	SET(STATICLIBNAME ${PROJECT_NAME}${POPC_EXT})
+	SET(STATICLIBNAME ${PROJECT_NAME})
 	ADD_LIBRARY(${STATICNAME} STATIC ${meteoio_sources})
 	TARGET_LINK_LIBRARIES(${STATICNAME} ${plugin_libs} ${LIBPROJ} ${Popc_LIBRARIES} ${EXTRA_LINK_FLAGS} ${GUI_LIBS})
 	SET_TARGET_PROPERTIES(${STATICNAME} PROPERTIES

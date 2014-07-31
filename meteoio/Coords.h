@@ -39,15 +39,8 @@ namespace mio {
  * @date   2009-01-20
 */
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class Coords : POPBase {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class Coords {
-#endif
- public:
+public:
 	///Keywords for selecting the algorithm for computing geodesic distances
 	typedef enum GEO_DISTANCES {
 		GEO_COSINE, ///< Spherical law of cosine (See http://www.movable-type.co.uk/scripts/latlong.html)

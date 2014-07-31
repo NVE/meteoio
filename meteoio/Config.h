@@ -57,14 +57,7 @@ namespace mio {
 
 class ConfigProxy;
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class Config : POPBase {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class Config {
-#endif
 	public:
 		/**
 		 * @brief Empty constructor. The user MUST later one fill the internal key/value map object

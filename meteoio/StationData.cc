@@ -144,26 +144,3 @@ std::iostream& operator>>(std::iostream& is, StationData& station) {
 }
 
 } //end namespace
-
-#ifdef _POPC_
-#include "marshal_meteoio.h"
-using namespace mio; //HACK for POPC
-void StationData::Serialize(POPBuffer &buf, bool pack)
-{
-	if (pack){
-		marshal_Coords(buf, position, 0, FLAG_MARSHAL, NULL);
-		buf.Pack(&stationID, 1);
-		buf.Pack(&stationName, 1);
-		buf.Pack(&slope, 1);
-		buf.Pack(&azi, 1);
-	}else{
-		marshal_Coords(buf, position, 0, !FLAG_MARSHAL, NULL);
-		buf.UnPack(&stationID, 1);
-		buf.UnPack(&stationName, 1);
-		buf.UnPack(&slope, 1);
-		buf.UnPack(&azi, 1);
-	}
-}
-#endif
-
-//} //namespace //HACK for POPC

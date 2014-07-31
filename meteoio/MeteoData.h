@@ -90,14 +90,7 @@ class MeteoGrids {
  * @date   2008-12-05
  */
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class MeteoData : POPBase {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class MeteoData {
-#endif
 	public:
 		/// \anchor meteoparam this enum provides indexed access to meteorological fields
 		enum Parameters {firstparam=0,

@@ -1093,33 +1093,4 @@ double Date::GMTToLocal(const double& i_gmt_julian) const {
 	}
 }
 
-#ifdef _POPC_
-#include "marshal_meteoio.h"
-using namespace mio; //HACK for POPC
-void Date::Serialize(POPBuffer &buf, bool pack)
-{
-	if (pack) {
-		buf.Pack(&timezone,1);
-		buf.Pack(&dst,1);
-		buf.Pack(&gmt_julian,1);
-		buf.Pack(&gmt_year,1);
-		buf.Pack(&gmt_month,1);
-		buf.Pack(&gmt_day,1);
-		buf.Pack(&gmt_hour,1);
-		buf.Pack(&gmt_minute,1);
-		buf.Pack(&undef,1);
-	} else {
-		buf.UnPack(&timezone,1);
-		buf.UnPack(&dst,1);
-		buf.UnPack(&gmt_julian,1);
-		buf.UnPack(&gmt_year,1);
-		buf.UnPack(&gmt_month,1);
-		buf.UnPack(&gmt_day,1);
-		buf.UnPack(&gmt_hour,1);
-		buf.UnPack(&gmt_minute,1);
-		buf.UnPack(&undef,1);
-	}
-}
-#endif
-
 } //namespace

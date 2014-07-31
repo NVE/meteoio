@@ -40,16 +40,7 @@ namespace mio {
  * @date   2009-07-20
  */
 
-#ifdef _POPC_
-class DEMObjectDummy {}; //HACK for POPC
-
-#include <paroc_base.h>
-class DEMObject : public Grid2DObject/*, POPBase*/ {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class DEMObject : public Grid2DObject {
-#endif
 	public:
 		Array2D<double> slope;
 		Array2D<double> azi;

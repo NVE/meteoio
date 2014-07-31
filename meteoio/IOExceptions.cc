@@ -108,11 +108,7 @@ std::string IOException::resolveSymbols(char *symbols, const unsigned int& ii, b
 }
 #endif
 
-#ifdef _POPC_
-IOException::IOException(const std::string& message, const std::string& position) : POPException(STD_EXCEPTION)
-#else
 IOException::IOException(const std::string& message, const std::string& position) : msg(), full_output()
-#endif
 {
 #if defined _WIN32 || defined __MINGW32__ ||  defined __CYGWIN__
 	const char *delim = strrchr(position.c_str(), '\\');
@@ -138,10 +134,6 @@ IOException::IOException(const std::string& message, const std::string& position
 	free(symbols);
 #else
 	full_output = msg+"\n";
-#endif
-#ifdef _POPC_
-	const string tmp = backtrace_info + "\n\n" + msg;
-	SetExtra(tmp.c_str());
 #endif
 }
 

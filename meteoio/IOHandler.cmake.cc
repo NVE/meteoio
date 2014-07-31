@@ -187,39 +187,20 @@ void IOHandler::registerPlugins()
 }
 
 //Copy constructor
-#ifdef _POPC_
-IOHandler::IOHandler(const IOHandler& aio)
-           : cfg(aio.cfg), mapPlugins(), copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying)
-{
-	//We might be on a different machine, even with different architecture -> rebuild plugins map
-	registerPlugins();
-}
-#else
 IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), copy_parameter(aio.copy_parameter),
              copy_name(aio.copy_name), enable_copying(aio.enable_copying)
-{
+{}
 
-}
-#endif
-
-#ifdef _POPC_
-IOHandler::IOHandler(const Config& cfgreader)
-           : cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
-#else
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
-#endif
 {
 	registerPlugins();
 	parse_copy_config();
 }
 
-#ifdef _POPC_
-IOHandler::~IOHandler(){
-#else
-IOHandler::~IOHandler() throw(){
-#endif
+IOHandler::~IOHandler() throw()
+{
 	// Get rid of the objects
 	std::map<std::string, IOPlugin>::iterator mapit;
 	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); ++mapit){
@@ -334,13 +315,9 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 
 	copy_parameters(stationindex, vecMeteo);
 }
-#ifdef _POPC_
-void IOHandler::writeMeteoData(std::vector<METEO_SET>& vecMeteo,
-                               const std::string& name)
-#else
+
 void IOHandler::writeMeteoData(const std::vector<METEO_SET>& vecMeteo,
                                const std::string& name)
-#endif
 {
 	IOInterface *plugin = getPlugin("METEO", "Output");
 	plugin->writeMeteoData(vecMeteo, name);
@@ -437,11 +414,7 @@ void IOHandler::copy_parameters(const size_t& stationindex, std::vector< METEO_S
 	}
 }
 
-#ifdef _POPC_
-const std::string IOHandler::toString()
-#else
 const std::string IOHandler::toString() const
-#endif
 {
 	std::ostringstream os;
 	os << "<IOHandler>\n";

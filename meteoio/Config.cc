@@ -356,23 +356,3 @@ void Config::write(const std::string& filename) const
 }
 
 } //end namespace
-
-#ifdef _POPC_
-#include "marshal_meteoio.h"
-using namespace mio; //HACK for POPC
-void Config::Serialize(POPBuffer &buf, bool pack)
-{
-	if (pack)
-	{
-		buf.Pack(&sourcename,1);
-		marshal_map_str_str(buf, properties, 0, FLAG_MARSHAL, NULL);
-	}
-	else
-	{
-		buf.UnPack(&sourcename,1);
-		marshal_map_str_str(buf, properties, 0, !FLAG_MARSHAL, NULL);
-	}
-}
-#endif
-
-//} //namespace //HACK for POPC

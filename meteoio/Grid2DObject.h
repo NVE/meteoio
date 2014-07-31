@@ -36,22 +36,7 @@ namespace mio {
  * @date   2008-12-20
  */
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class Grid2DObjetctDummy {}; //HACK for POPC
-
-class Grid2DObject : POPBase {
-	public:
-		/**
-		* @brief Serialize method for POPC. Used to marshall data and send it from an object to another.
-		*
-		* @param buf pointer to the communication buffer
-		* @param pack indicates if the data is sent or received
-		*/
-		virtual void Serialize(POPBuffer &buf, bool pack);
-#else
 class Grid2DObject {
-#endif
 	public:
 		///structure to contain the grid coordinates of a point in a 2D grid
 		typedef struct GRID_POINT_2D {

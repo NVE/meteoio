@@ -37,12 +37,8 @@ namespace mio {
  * @author Thomas Egger
  */
 
-#ifdef _POPC_
-#include <paroc_exception.h>
-class MIO_API IOException : public POPException {
-#else
-	class IOException : public std::exception {
-#endif
+
+class IOException : public std::exception {
 	public:
 		IOException(const std::string& message="IOException occured", const std::string& position="");
 		~IOException() throw();

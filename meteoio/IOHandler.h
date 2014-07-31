@@ -33,19 +33,12 @@ namespace mio {
 * @brief This class is the class to use for raw I/O operations. It is responsible for transparently loading the plugins
 * and it follows the interface defined by the IOInterface class with the addition of a few convenience methods.
 */
-#ifdef _POPC_
-class IOHandler {
-#else
 class IOHandler : public IOInterface {
-#endif
 	public:
 		IOHandler(const IOHandler&);
 		IOHandler(const Config&);
-	#ifdef _POPC_
-		virtual ~IOHandler();
-	#else
+
 		virtual ~IOHandler() throw();
-	#endif
 
 		IOHandler& operator=(const IOHandler&); ///<Assignement operator
 
@@ -56,13 +49,9 @@ class IOHandler : public IOInterface {
 		virtual void readLanduse(Grid2DObject& landuse_out);
 		virtual void readStationData(const Date& date,
 		                             STATIONS_SET& vecStation);
-	#ifdef _POPC_
-		virtual void writeMeteoData(std::vector<METEO_SET>& vecMeteo,
-		                            const std::string& name="");
-	#else
+
 		virtual void writeMeteoData(const std::vector<METEO_SET>& vecMeteo,
 		                            const std::string& name="");
-	#endif
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector<METEO_SET>& vecMeteo,
 		                           const size_t& stationindex=IOUtils::npos);
@@ -73,11 +62,7 @@ class IOHandler : public IOInterface {
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& name);
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
-	#ifdef _POPC_
-		const std::string toString();
-	#else
 		const std::string toString() const;
-	#endif
 
 	private:
 		void registerPlugins();

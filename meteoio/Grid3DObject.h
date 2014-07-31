@@ -36,16 +36,7 @@ namespace mio {
  * @date   2009-07-20
  */
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class Grid3DObjetctDummy {}; //HACK for POPC
-
-class Grid3DObject : POPBase {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class Grid3DObject{
-#endif
 	public:
 		typedef struct GRID_POINT_3D { //TODO: this potentially conflicts with the definition in Grid2DObject
 			size_t ix; ///<grid index along X

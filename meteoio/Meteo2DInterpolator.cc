@@ -354,46 +354,4 @@ const std::string Meteo2DInterpolator::toString() const {
 	return os.str();
 }
 
-
-#ifdef _POPC_
-#include "marshal_meteoio.h"
-using namespace mio; //HACK for POPC
-void Meteo2DInterpolator::Serialize(POPBuffer &buf, bool pack)
-{
-	/*if (pack)
-	{
-		Config cfg2(cfg);
-		cfg2.Serialize(buf, true); //cfg will now be a full copy
-		size_t nr=mapAlgorithms.size();
-		buf.Pack(&nr, 1);
-		for(std::map< std::string, std::vector<std::string> >::const_iterator it = mapAlgorithms.begin(); it != mapAlgorithms.end(); ++it) {
-			buf.Pack(&(it->first), 1); //param name
-			const size_t n = (it->second).size();
-			buf.Pack(&n, 1);
-			for(size_t ii=0; ii<n; ii++) buf.Pack(&(it->second[ii]), 1); //vector of algorithms' names
-		}
-	}
-	else
-	{
-		cfg.Serialize(buf, false); //cfg will now be a full copy
-		iomanager = new IOManager(cfg);
-
-		size_t nr=0;
-		std::string key;
-		std::vector<std::string> value;
-		buf.UnPack(&nr,1);
-		mapAlgorithms.clear();
-		for(size_t i=0; i<nr; i++) {
-			buf.UnPack(&key,1);
-			size_t vec_n;
-			buf.UnPack(vec_n, 1);
-			value.resize(vec_n);
-			for(size_t ii=0; ii<n; ii++) buf.UnPack(&value[ii], 1); //vector of algorithms' names
-			mapAlgorithms[key] = value;
-		}
-
-	}*/
-}
-#endif
-
 } //namespace

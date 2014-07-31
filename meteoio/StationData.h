@@ -37,14 +37,7 @@ namespace mio {
  * @date   2008-11-29
  */
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class StationData :POPBase {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class StationData {
-#endif
 	public:
 		//Constructors
 		/**

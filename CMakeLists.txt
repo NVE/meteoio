@@ -8,7 +8,6 @@ SET(VERSION_MAJOR 2 CACHE INTERNAL "")
 SET(VERSION_MINOR 4 CACHE INTERNAL "")
 SET(VERSION_PATCH 3 CACHE INTERNAL "")
 
-SET(POPCC popcc)
 SET(LIBPREFIX "lib") #make sure ALL plugins are libXXX for ALL plateforms
 SET(CMAKE_IMPORT_LIBRARY_PREFIX "lib") #for Visual C++ import libraries
 
@@ -44,11 +43,7 @@ ELSE(MSVC)
 	SET(WARNINGS "-Wall -Wno-long-long")
 	SET(PROFILING "-pg -fprofile-arcs")
 	SET(DEEP_WARNINGS "-Wunused-value -Wshadow -Wpointer-arith -Wconversion -Winline -Wdisabled-optimization") #-Wfloat-equal -Wpadded
-	IF(POPC)
-		SET(EXTRA_WARNINGS "-Wextra -Wno-ignored-qualifiers")
-	ELSE(POPC)
-		SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
-	ENDIF(POPC)
+	SET(EXTRA_WARNINGS "-Wextra -pedantic -Weffc++ ${DEEP_WARNINGS}") #-Weffc++
 	IF(CMAKE_COMPILER_IS_GNUCXX AND NOT ANDROID)
 		SET(EXTRA_WARNINGS "${EXTRA_WARNINGS} -ansi") #Android does not like ansi...
 		IF(WIN32) #for gcc on windows
@@ -112,20 +107,13 @@ IF(DEST STREQUAL "optimized")
 	SET(ARCH  "${ARCH_OPTIM}")
 ENDIF(DEST STREQUAL "optimized")
 
-#build for use with POPC in parallel objects
-SET(POPC OFF CACHE BOOL "Compile for POPC ON or OFF")
-
 #show exception messages in a graphical message box
 SET(GUI_EXCEPTIONS OFF CACHE BOOL "Show a message box with exceptions texts ON or OFF")
 
 ###########################################################
 #finally, SET compile flags
-IF(POPC)
-	#SET(POPC_FLAGS "-cxxmain -Dcerr=\\\"cout\\\"")
-	SET(POPC_FLAGS "-cxxmain")
-ENDIF(POPC)
 
-SET(CMAKE_CXX_FLAGS "${POPC_FLAGS} ${_VERSION} ${ARCH}" CACHE STRING "" FORCE)
+SET(CMAKE_CXX_FLAGS "${_VERSION} ${ARCH}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIM}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_DEBUG "${DEBUG} ${WARNINGS} ${EXTRA_WARNINGS}" CACHE STRING "" FORCE)
 SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
@@ -214,7 +202,6 @@ ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove_directory tests/2D_interpolations/Testing
 	COMMAND cmake -E remove tests/2D_interpolations/2009-01-19T12.00_HNW.asc tests/2D_interpolations/2009-01-19T12.00_RH.asc tests/2D_interpolations/2009-01-19T12.00_RSWR.asc tests/2D_interpolations/2009-01-19T12.00_TA.asc
 )
-
 
 ###########################################################
 #for the uninstall target

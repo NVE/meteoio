@@ -97,15 +97,8 @@ namespace mio {
  * @date   2013-03-20
  */
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class DataGenerator : POPBase {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class DataGenerator {
-#endif
- 	public:
+	public:
 		DataGenerator(const Config& cfg);
 		DataGenerator(const DataGenerator& c) : mapGenerators(c.mapGenerators), mapCreators(c.mapCreators),
 		                                        generators_defined(c.generators_defined), creators_defined(c.creators_defined) {};

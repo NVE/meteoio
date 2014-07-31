@@ -277,21 +277,4 @@ const std::string DataGenerator::toString() const {
 	return os.str();
 }
 
-
-#ifdef _POPC_
-#include "marshal_meteoio.h"
-using namespace mio; //HACK for POPC
-void DataGenerator::Serialize(POPBuffer &buf, bool pack)
-{
-	/*if (pack)
-	{
-
-	}
-	else
-	{
-
-	}*/
-}
-#endif
-
 } //namespace

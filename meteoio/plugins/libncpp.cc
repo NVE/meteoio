@@ -19,7 +19,6 @@
 
 using namespace std;
 using namespace mio;  // for the IOExceptions and IOUtils
-using namespace ncpp; // HACK POPC
 
 namespace ncpp {
 

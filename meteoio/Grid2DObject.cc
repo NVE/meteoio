@@ -334,28 +334,3 @@ std::iostream& operator>>(std::iostream& is, Grid2DObject& grid) {
 }
 
 } //namespace
-
-#ifdef _POPC_
-#include "marshal_meteoio.h"
-using namespace mio; //HACK for POPC
-void Grid2DObject::Serialize(POPBuffer &buf, bool pack)
-{
-	if (pack) {
-		buf.Pack(&ncols,1);
-		buf.Pack(&nrows,1);
-		buf.Pack(&cellsize,1);
-		marshal_Coords(buf, llcorner, 0, FLAG_MARSHAL, NULL);
-		marshal_DOUBLE2D(buf, grid2D, 0, FLAG_MARSHAL, NULL);
-	} else {
-		buf.UnPack(&ncols,1);
-		buf.UnPack(&nrows,1);
-		buf.UnPack(&cellsize,1);
-		marshal_Coords(buf, llcorner, 0, !FLAG_MARSHAL, NULL);
-		grid2D.clear();//if(grid2D!=NULL)delete(grid2D);
-		marshal_DOUBLE2D(buf, grid2D, 0, !FLAG_MARSHAL, NULL);
-	}
-}
-#endif
-
-//} //namespace //HACK for POPC
-

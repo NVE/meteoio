@@ -439,30 +439,4 @@ void MeteoData::merge(const MeteoData& meteo2)
 	}
 }
 
-
 } //namespace
-
-#ifdef _POPC_
-#include "marshal_meteoio.h"
-using namespace mio; //HACK for POPC
-void MeteoData::Serialize(POPBuffer &buf, bool pack)
-{
-	if (pack){
-		buf.Pack(&resampled,1);
-		date.Serialize(buf,true);
-		meta.Serialize(buf,true);
-		buf.Pack(&nrOfAllParameters,1);
-		buf.Pack(&param_name,1);
-		buf.Pack(&data,1);
-	} else {
-		buf.UnPack(&resampled,1);
-		date.Serialize(buf,false);
-		meta.Serialize(buf,false);
-		buf.UnPack(&nrOfAllParameters,1);
-		buf.UnPack(&param_name,1);
-		buf.UnPack(&data,1);
-		initStaticData();
-	}
-}
-#endif
-

@@ -51,7 +51,6 @@
 #include <meteoio/IOPlugin.h>
 #include <meteoio/IOUtils.h>
 //#include <meteoio/MainPage.h> //only for doxygen
-//#include <meteoio/marshal_meteoio.h> //only for popc
 #include <meteoio/MathOptim.h>
 #include <meteoio/Matrix.h>
 //#include <meteoio/MessageBoxX11.h>
@@ -84,9 +83,5 @@
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/StationData.h>
 #include <meteoio/Timer.h>
-
-#ifdef _POPC_
-#include <meteoio/marshal_meteoio.h>
-#endif
 
 #endif

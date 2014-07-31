@@ -55,16 +55,7 @@ namespace mio {
  * @date 2010-04-15
  */
 
-#ifdef _POPC_
-#include <paroc_base.h>
-class DateDummy {}; //HACK for POPC
-
-class Date : POPBase {
-	public:
-		void Serialize(POPBuffer &buf, bool pack);
-#else
 class Date {
-#endif
 	public:
 		///Keywords for selecting the date formats
 		typedef enum {

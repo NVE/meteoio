@@ -50,11 +50,7 @@ namespace mio {
 
 class MeteoFilter;
 
-#ifdef _POPC_
-class BufferedIOHandler {
-#else
 class BufferedIOHandler : public IOInterface {
-#endif
 	public:
 
 		/**
@@ -70,11 +66,8 @@ class BufferedIOHandler : public IOInterface {
 		 * @endcode
 		 */
 		BufferedIOHandler(IOHandler& in_iohandler, const Config& in_cfg);
-	#ifdef _POPC_
-		virtual ~BufferedIOHandler() {};
-	#else
+
 		virtual ~BufferedIOHandler() throw() {};
-	#endif
 
 		BufferedIOHandler& operator=(const BufferedIOHandler&); ///<Assignement operator
 
@@ -105,13 +98,8 @@ class BufferedIOHandler : public IOInterface {
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector< METEO_SET >& vecMeteo,
 		                           const size_t& stationindex=IOUtils::npos);
-#ifdef _POPC_
-		virtual void writeMeteoData(std::vector< METEO_SET >& vecMeteo,
-		                            const std::string& name="");
-#else
 		virtual void writeMeteoData(const std::vector< METEO_SET >& vecMeteo,
 		                            const std::string& name="");
-#endif
 		virtual void write2DGrid(const Grid2DObject& grid_in, const std::string& options="");
 		virtual void write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameters& parameter, const Date& date);
 
