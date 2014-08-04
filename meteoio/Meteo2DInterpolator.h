@@ -155,14 +155,15 @@ class Meteo2DInterpolator {
 		static size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
 		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
 
-		void addToBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, const Grid2DObject& grid);
-		bool getFromBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, Grid2DObject& grid) const;
+		void addToBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, const Grid2DObject& grid, const std::string& info);
+		bool getFromBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, Grid2DObject& grid, std::string& info) const;
 		void setDfltBufferProperties();
 		void setAlgorithms();
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		IOManager *iomanager; ///< Reference to IOManager object, used for callbacks, initialized during construction
 		std::map<std::string, Grid2DObject> mapBufferedGrids; ///< Buffer interpolated grids
+		std::map<std::string, std::string> mapBufferedInfos; ///< Buffer interpolations info messages
 		std::vector<std::string> IndexBufferedGrids; ///< Keep position information for easy erase fo specific grids
 		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
 		size_t max_grids; ///< How many grids to buffer
