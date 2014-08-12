@@ -20,9 +20,9 @@
 #define __METEO2DINTERPOLATOR_H__
 
 #include <meteoio/Config.h>
-#include <meteoio/Date.h>
-#include <meteoio/MeteoData.h>
-#include <meteoio/DEMObject.h>
+#include <meteoio/dataClasses/Date.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/InterpolationAlgorithms.h>
 
 #include <memory>

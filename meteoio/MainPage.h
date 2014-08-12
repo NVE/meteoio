@@ -20,7 +20,7 @@
 
 namespace mio {
 //groups
-/*! \defgroup meteolaws Meteorological Laws
+/*! \defgroup meteoLaws Meteorological Laws
    Documentation for meteorological laws and constants.
 */
 
@@ -36,8 +36,8 @@ namespace mio {
    Documentation for available data processing components. These can be used on incoming meteorological data. See \ref processing "Available data processing elements".
 */
 
-/*! \defgroup data_str Data structures
-   Documentation for available data structures.
+/*! \defgroup data_str Data classes
+   Documentation for available data classes.
 */
 
 /*! \defgroup graphics Graphical elements and operations
@@ -77,6 +77,7 @@ namespace mio {
  * -# Programing using MeteoIO
  *    -# \subpage workflow "Example Workflow"
  *    -# \subpage quick_overview "Quick overview" of the functionnality provided by MeteoIO
+ *    -# <A HREF="modules.html">Modules list</a>
  *    -# \subpage examples "Usage examples"
  * -# Expanding MeteoIO
  *    -# How to \subpage dev_plugins "write a Plugin"
@@ -321,8 +322,8 @@ namespace mio {
  * @page dev_processing Processing elements developer's guide
  *
  * In order to add a new filter/processing element to the already existing set of components, the developer only needs to
- * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteofilters (depending on the kind of filter
- * that is developed). Templates header and code files are available to get you started, look into the "meteofilters" subdirectory of the source directory (files "template.cc" and "template.h").
+ * add a class derived from either ProcessingBlock, FilterBlock or WindowedFilter in meteoio/meteoFilters (depending on the kind of filter
+ * that is developed). Templates header and code files are available to get you started, look into the "meteoFilters" subdirectory of the source directory (files "template.cc" and "template.h").
  *
  * It is important to understand that the processing elements operate on a "per parameter" basis.
  * This means that an element might be executed for the parameter TA and another one for the parameter HNW, so the
@@ -331,7 +332,7 @@ namespace mio {
  * To implement a new processing element, the following steps are necessary:
  *
  * -# Implementing the element, as a derived class of ProcessingBlock or FilterBlock or WindowedFilter, by creating
- *    two files: the header file and its implementation file, in the meteofilters subdirectory of the source code.
+ *    two files: the header file and its implementation file, in the meteoFilters subdirectory of the source code.
  *    The class will contain two public methods: a constructor and a "process" method and at least one private method,
  *    "parse_args" to read the arguments from a provided vector of strings.
  *    -# The <b>constructor</b> takes a vector of strings containing the element's arguments and a constant string (that contains
@@ -352,7 +353,7 @@ namespace mio {
  *    @code
  *    parse_args(std::vector<std::string> vec_args)
  *    @endcode
- * -# Adding the created implementation file to meteofilters/CMakeLists.txt in a similar way as for the other
+ * -# Adding the created implementation file to meteoFilters/CMakeLists.txt in a similar way as for the other
  *    filters
  * -# Adding the filter in the processing loop, in BlockFactory::getBlock(), by adding three lines similar to:
  *    @code
@@ -361,9 +362,9 @@ namespace mio {
  * 	}
  *    @endcode
  *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.
- * -# Including the filter's header file in meteofilters/ProcessingBlocks.cc
+ * -# Including the filter's header file in meteoFilters/ProcessingBlocks.cc
  *
- * Although you are encouraged to use the provided templates (files "template.cc" and "template.h" in the meteofilters subdirectory),
+ * Although you are encouraged to use the provided templates (files "template.cc" and "template.h" in the meteoFilters subdirectory),
  * the class FilterMax can be used as an example of implementation of a basic filter that will check whether a
  * value is greater than an argument
  * supplied to the filter and if so changes the value either to IOUtils::nodata (normal operation) or to the

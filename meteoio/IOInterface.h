@@ -18,13 +18,13 @@
 #ifndef __IOINTERFACE_H__
 #define __IOINTERFACE_H__
 
-#include <meteoio/Array1D.h>
-#include <meteoio/Array2D.h>
-#include <meteoio/Date.h>
-#include <meteoio/DEMObject.h>
-#include <meteoio/Grid2DObject.h>
-#include <meteoio/MeteoData.h>
-#include <meteoio/StationData.h>
+#include <meteoio/dataClasses/Array1D.h>
+#include <meteoio/dataClasses/Array2D.h>
+#include <meteoio/dataClasses/Date.h>
+#include <meteoio/dataClasses/DEMObject.h>
+#include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/dataClasses/StationData.h>
 
 #include <vector>
 

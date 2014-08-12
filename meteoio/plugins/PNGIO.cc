@@ -18,7 +18,7 @@
 #include "PNGIO.h"
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <meteoio/Graphics.h>
-#include <meteoio/meteolaws/Meteoconst.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
 
 #include <cstring>
 #include <algorithm>

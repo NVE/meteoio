@@ -18,11 +18,11 @@
 #ifndef __METEO1DINTERPOLATOR_H__
 #define __METEO1DINTERPOLATOR_H__
 
-#include <meteoio/MeteoData.h>
-#include <meteoio/StationData.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/dataClasses/StationData.h>
 #include <meteoio/Config.h>
 #include <meteoio/ResamplingAlgorithms.h>
-#include <meteoio/meteofilters/ProcessingBlock.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
 
 #include <iostream>
 #include <string>

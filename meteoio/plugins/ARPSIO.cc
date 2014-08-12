@@ -15,13 +15,13 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <meteoio/meteolaws/Meteoconst.h> //for PI
+#include <meteoio/meteoLaws/Meteoconst.h> //for PI
 #include <meteoio/MathOptim.h>
 
 #include <string.h>
 #include <algorithm>
 
-#include "ARPSIO.h"
+#include <meteoio/plugins/ARPSIO.h>
 
 using namespace std;
 

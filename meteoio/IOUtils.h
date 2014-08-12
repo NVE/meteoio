@@ -26,10 +26,10 @@
 #include <limits>
 #include <cmath>
 
-#include <meteoio/Coords.h>
-#include <meteoio/Date.h>
+#include <meteoio/dataClasses/Coords.h>
+#include <meteoio/dataClasses/Date.h>
 #include <meteoio/IOExceptions.h>
-#include <meteoio/meteolaws/Meteoconst.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
 
 #ifndef C_TO_K
 #define C_TO_K( T ) ( T + Cst::t_water_freezing_pt )	  // degree Celsius to kelvin

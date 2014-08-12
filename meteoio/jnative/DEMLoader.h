@@ -9,8 +9,8 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/Grid2DObject.h>
-#include <meteoio/DEMObject.h>
-#include <meteoio/Coords.h>
+#include <meteoio/dataClasses/DEMObject.h>
+#include <meteoio/dataClasses/Coords.h>
 
 
 typedef std::map<std::string, mio::DEMObject>  demMapType;

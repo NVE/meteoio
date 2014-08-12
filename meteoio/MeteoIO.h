@@ -26,22 +26,28 @@
 #endif
 
 //list in alphabetical order
-//find meteoio -name "*.h" | sort
-#include <meteoio/Array1D.h>
-#include <meteoio/Array2D.h>
-#include <meteoio/Array3D.h>
-#include <meteoio/Array4D.h>
+//find meteoio -name "*.h" | sort | xargs -i echo "#include <{}>"
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Config.h>
-#include <meteoio/Coords.h>
+
+#include <meteoio/dataClasses/Array1D.h>
+#include <meteoio/dataClasses/Array2D.h>
+#include <meteoio/dataClasses/Array3D.h>
+#include <meteoio/dataClasses/Array4D.h>
+#include <meteoio/dataClasses/Coords.h>
+#include <meteoio/dataClasses/Date.h>
+#include <meteoio/dataClasses/DEMObject.h>
+#include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/dataClasses/Grid3DObject.h>
+#include <meteoio/dataClasses/Matrix.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/dataClasses/StationData.h>
+
 #include <meteoio/DataGenerator.h>
-#include <meteoio/Date.h>
-#include <meteoio/DEMObject.h>
 #include <meteoio/exports.h>
+#include <meteoio/FileUtils.h>
 #include <meteoio/GeneratorAlgorithms.h>
 #include <meteoio/Graphics.h>
-#include <meteoio/Grid2DObject.h>
-#include <meteoio/Grid3DObject.h>
 #include <meteoio/InterpolationAlgorithms.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOHandler.h>
@@ -51,36 +57,36 @@
 #include <meteoio/IOUtils.h>
 //#include <meteoio/MainPage.h> //only for doxygen
 #include <meteoio/MathOptim.h>
-#include <meteoio/Matrix.h>
 //#include <meteoio/MessageBoxX11.h>
 #include <meteoio/Meteo1DInterpolator.h>
 #include <meteoio/Meteo2DInterpolator.h>
-#include <meteoio/MeteoData.h>
 
-#include <meteoio/meteofilters/FilterBlock.h>
+#include <meteoio/meteoFilters/FilterBlock.h>
 //skip all the filters' implementations header files
-#include <meteoio/meteofilters/ProcessingBlock.h>
-#include <meteoio/meteofilters/ProcessingStack.h>
-#include <meteoio/meteofilters/WindowedFilter.h>
+#include <meteoio/meteoFilters/ProcessingBlock.h>
+#include <meteoio/meteoFilters/ProcessingStack.h>
+//#include <meteoio/meteoFilters/template.h>
+#include <meteoio/meteoFilters/WindowedFilter.h>
 
 //#include <meteoio/MeteoIO.h>
-#include <meteoio/meteolaws/Atmosphere.h>
-#include <meteoio/meteolaws/Meteoconst.h>
-#include <meteoio/meteolaws/Sun.h>
-#include <meteoio/meteolaws/Suntrajectory.h>
+
+#include <meteoio/meteoLaws/Atmosphere.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
+#include <meteoio/meteoLaws/Sun.h>
+#include <meteoio/meteoLaws/Suntrajectory.h>
 
 #include <meteoio/MeteoProcessor.h>
-//#include <meteoio/meteostats/libfit1DCore.h>
-#include <meteoio/meteostats/libfit1D.h>
-#include <meteoio/meteostats/libinterpol1D.h>
-#include <meteoio/meteostats/libinterpol2D.h>
+//#include <meteoio/meteoStats/libfit1DCore.h>
+#include <meteoio/meteoStats/libfit1D.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/meteoStats/libinterpol2D.h>
 
 //skip all plugins' implementations header files
+#include <meteoio/plugins/libncpp.h>
 #include <meteoio/plugins/libsmet.h>
 
-#include <meteoio/ResamplingAlgorithms.h>
 #include <meteoio/ResamplingAlgorithms2D.h>
-#include <meteoio/StationData.h>
+#include <meteoio/ResamplingAlgorithms.h>
 #include <meteoio/Timer.h>
 
 #endif

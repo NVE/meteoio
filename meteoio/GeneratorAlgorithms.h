@@ -18,8 +18,8 @@
 #ifndef __GENERATORALGORITHMS_H__
 #define __GENERATORALGORITHMS_H__
 
-#include <meteoio/MeteoData.h>
-#include <meteoio/meteolaws/Sun.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/meteoLaws/Sun.h>
 
 #include <vector>
 #include <set>
@@ -107,7 +107,7 @@ namespace mio {
  * a totally different approach: either generic data (constant value, etc) or generate the data from other
  * meteorological parameters (relying on a parametrization, like clear sky for ILWR).
  *
- * @ingroup meteolaws
+ * @ingroup meteoLaws
  * @author Mathias Bavay
  * @date   2013-03-20
 */

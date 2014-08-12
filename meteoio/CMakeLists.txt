@@ -1,9 +1,10 @@
 INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
 
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/dataClasses/CMakeLists.txt")
 INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/plugins/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteolaws/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteostats/CMakeLists.txt")
-INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteofilters/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoLaws/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoStats/CMakeLists.txt")
+INCLUDE("${PROJECT_SOURCE_DIR}/meteoio/meteoFilters/CMakeLists.txt")
 
 IF(PROJ4)
 	FIND_PATH(LIBPROJ_INCLUDE_DIR "proj_api.h")
@@ -25,8 +26,8 @@ IF(DATA_QA)
 ENDIF(DATA_QA)
 
 SET(meteoio_sources
+	${dataClasses_sources}
 	IOManager.cc
-	Matrix.cc
 	IOPlugin.cc
 	MeteoProcessor.cc
 	ResamplingAlgorithms.cc
@@ -35,28 +36,21 @@ SET(meteoio_sources
 	InterpolationAlgorithms.cc
 	DataGenerator.cc
 	GeneratorAlgorithms.cc
-	Date.cc
 	Timer.cc
-	Grid2DObject.cc
 	IOHandler.cc
-	Coords.cc
 	Graphics.cc
 	Meteo2DInterpolator.cc
 	BufferedIOHandler.cc
-	DEMObject.cc
-	Grid3DObject.cc
 	IOInterface.cc
-	StationData.cc
 	Config.cc
 	IOExceptions.cc
 	IOUtils.cc
 	FileUtils.cc
-	MeteoData.cc
 	plugins/libsmet.cc
 	${plugins_sources}
-	${meteolaws_sources}
-	${meteostats_sources}
-	${meteofilters_sources}
+	${meteoLaws_sources}
+	${meteoStats_sources}
+	${meteoFilters_sources}
 )
 
 IF(GUI_EXCEPTIONS)

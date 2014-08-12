@@ -17,7 +17,7 @@
 */
 #include "NetCDFIO.h"
 #include <meteoio/ResamplingAlgorithms2D.h>
-#include <meteoio/meteostats/libinterpol1D.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
 #include <meteoio/Timer.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/plugins/libncpp.h>

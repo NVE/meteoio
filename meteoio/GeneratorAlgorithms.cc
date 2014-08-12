@@ -17,9 +17,9 @@
 */
 #include <meteoio/GeneratorAlgorithms.h>
 #include <meteoio/MathOptim.h>
-#include <meteoio/meteolaws/Atmosphere.h>
-#include <meteoio/meteolaws/Meteoconst.h>
-#include <meteoio/meteofilters/ProcHNWDistribute.h> //for the precipitation distribution
+#include <meteoio/meteoLaws/Atmosphere.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
+#include <meteoio/meteoFilters/ProcHNWDistribute.h> //for the precipitation distribution
 
 using namespace std;
 

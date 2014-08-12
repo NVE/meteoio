@@ -18,9 +18,9 @@
 #ifndef __RESAMPLINGALGORITHMS_H__
 #define __RESAMPLINGALGORITHMS_H__
 
-#include <meteoio/MeteoData.h>
-#include <meteoio/StationData.h>
-#include <meteoio/meteostats/libinterpol1D.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/dataClasses/StationData.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
 
 #include <iostream>
 #include <string>

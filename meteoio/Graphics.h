@@ -18,7 +18,7 @@
 #ifndef __GRAPHICS_H__
 #define __GRAPHICS_H__
 
-#include <meteoio/Array2D.h>
+#include <meteoio/dataClasses/Array2D.h>
 
 #include <string>
 #include <vector>

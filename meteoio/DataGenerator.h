@@ -20,7 +20,7 @@
 #define __DATAGENERATOR_H__
 
 #include <meteoio/Config.h>
-#include <meteoio/MeteoData.h>
+#include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/GeneratorAlgorithms.h>
 
 #include <vector>
@@ -92,7 +92,7 @@ namespace mio {
  * order to offer some high level interface. It basically reads the arguments and creates the objects for
  * the various data generators in its constructor and loop through the parameters and stations when called to fill the data.
  *
- * @ingroup meteolaws
+ * @ingroup meteoLaws
  * @author Mathias Bavay
  * @date   2013-03-20
  */

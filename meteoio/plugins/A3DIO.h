@@ -20,7 +20,7 @@
 
 #include <meteoio/IOInterface.h>
 
-#include <meteoio/Coords.h>
+#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/Config.h>
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOUtils.h>

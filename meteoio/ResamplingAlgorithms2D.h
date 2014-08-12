@@ -18,7 +18,7 @@
 #ifndef __RESAMPLINGALGORITHMS2D_H__
 #define __RESAMPLINGALGORITHMS2D_H__
 
-#include <meteoio/Grid2DObject.h>
+#include <meteoio/dataClasses/Grid2DObject.h>
 #include <iostream>
 #include <string>
 

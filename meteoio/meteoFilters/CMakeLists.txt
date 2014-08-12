@@ -1,0 +1,31 @@
+INCLUDE_DIRECTORIES("${PROJECT_SOURCE_DIR}/")
+
+SET(meteoFilters_sources
+	meteoFilters/FilterSuppr.cc
+	meteoFilters/FilterMin.cc
+	meteoFilters/FilterMax.cc
+	meteoFilters/FilterMinMax.cc
+	meteoFilters/FilterMedianAvg.cc
+	meteoFilters/FilterMeanAvg.cc
+	meteoFilters/FilterMAD.cc
+	meteoFilters/FilterWindAvg.cc
+	meteoFilters/FilterStdDev.cc
+	meteoFilters/FilterTukey.cc
+	meteoFilters/FilterRate.cc
+	meteoFilters/FilterUnheatedHNW.cc
+	meteoFilters/ProcButterworth.cc
+	meteoFilters/ProcUnventilatedT.cc
+	meteoFilters/ProcUnshade.cc
+	meteoFilters/ProcHNWDistribute.cc
+	meteoFilters/ProcUndercatch_WMO.cc
+	meteoFilters/ProcUndercatch_Hamon.cc
+	meteoFilters/ProcUndercatch_Forland.cc
+	meteoFilters/ProcAdd.cc
+	meteoFilters/ProcMult.cc
+	meteoFilters/ProcExpSmoothing.cc
+	meteoFilters/ProcWMASmoothing.cc
+	meteoFilters/FilterBlock.cc
+	meteoFilters/WindowedFilter.cc
+	meteoFilters/ProcessingBlock.cc
+	meteoFilters/ProcessingStack.cc
+)

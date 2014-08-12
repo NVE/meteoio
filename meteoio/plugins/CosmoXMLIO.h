@@ -21,7 +21,7 @@ along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 #include <meteoio/IOInterface.h>
 #include <meteoio/Config.h>
 #include <meteoio/IOUtils.h>
-#include <meteoio/Coords.h>
+#include <meteoio/dataClasses/Coords.h>
 #include <meteoio/IOExceptions.h>
 
 #include <string>

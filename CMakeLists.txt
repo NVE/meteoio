@@ -120,9 +120,10 @@ SET(CMAKE_CXX_FLAGS_CXXFLAGS "$ENV{CXXFLAGS}" CACHE STRING "" FORCE)
 MARK_AS_ADVANCED(FORCE CMAKE_CXX_FLAGS_CXXFLAGS)
 
 #Add subdirectory, so they can inherit all variables defined above
+ADD_SUBDIRECTORY(meteoio/dataClasses)
 ADD_SUBDIRECTORY(meteoio/plugins)
-ADD_SUBDIRECTORY(meteoio/meteolaws)
-ADD_SUBDIRECTORY(meteoio/meteofilters)
+ADD_SUBDIRECTORY(meteoio/meteoLaws)
+ADD_SUBDIRECTORY(meteoio/meteoFilters)
 ADD_SUBDIRECTORY(meteoio)
 ###########################################################
 #plugins

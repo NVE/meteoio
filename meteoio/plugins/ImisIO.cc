@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "ImisIO.h"
-#include <meteoio/meteolaws/Meteoconst.h>
+#include <meteoio/plugins/ImisIO.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/MathOptim.h>
 
 using namespace std;

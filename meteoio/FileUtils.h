@@ -23,7 +23,7 @@
 #include <vector>
 #include <list>
 
-#include <meteoio/Date.h>
+#include <meteoio/dataClasses/Date.h>
 
 namespace mio {
 namespace IOUtils {

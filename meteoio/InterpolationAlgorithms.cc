@@ -16,7 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <meteoio/InterpolationAlgorithms.h>
-#include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteoLaws/Atmosphere.h>
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/IOManager.h>
 #include <meteoio/MathOptim.h>

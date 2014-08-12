@@ -15,8 +15,8 @@
     You should have received a copy of the GNU Lesser General Public License
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "SNIO.h"
-#include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/plugins/SNIO.h>
+#include <meteoio/meteoLaws/Atmosphere.h>
 
 using namespace std;
 

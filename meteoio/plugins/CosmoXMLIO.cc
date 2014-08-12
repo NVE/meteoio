@@ -16,7 +16,7 @@
     along with MeteoIO.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "CosmoXMLIO.h"
-#include <meteoio/meteolaws/Atmosphere.h>
+#include <meteoio/meteoLaws/Atmosphere.h>
 
 #include <sstream>
 

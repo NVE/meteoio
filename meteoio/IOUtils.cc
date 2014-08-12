@@ -20,9 +20,8 @@
 #include <algorithm>
 
 #include <meteoio/IOUtils.h>
-#include <meteoio/meteolaws/Meteoconst.h> //for math constants
 #include <meteoio/Config.h>    // to avoid forward declaration hell
-#include <meteoio/MeteoData.h> // to avoid forward declaration hell
+#include <meteoio/dataClasses/MeteoData.h> // to avoid forward declaration hell
 
 namespace mio {
 

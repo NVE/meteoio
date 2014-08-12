@@ -17,10 +17,10 @@
 */
 #include <meteoio/ResamplingAlgorithms.h>
 #include <meteoio/MathOptim.h>
-#include <meteoio/meteolaws/Atmosphere.h>
-#include <meteoio/meteolaws/Sun.h>
-#include <meteoio/meteostats/libinterpol1D.h>
-#include <meteoio/meteofilters/ProcHNWDistribute.h> //for the precipitation distribution
+#include <meteoio/meteoLaws/Atmosphere.h>
+#include <meteoio/meteoLaws/Sun.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/meteoFilters/ProcHNWDistribute.h> //for the precipitation distribution
 
 #include <cmath>
 #include <algorithm>

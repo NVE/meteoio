@@ -18,11 +18,11 @@
 #ifndef __INTERPOLATIONALGORITHMS_H__
 #define __INTERPOLATIONALGORITHMS_H__
 
-#include <meteoio/DEMObject.h>
-#include <meteoio/MeteoData.h>
-#include <meteoio/meteostats/libinterpol1D.h>
-#include <meteoio/meteostats/libinterpol2D.h>
-#include <meteoio/meteostats/libfit1D.h>
+#include <meteoio/dataClasses/DEMObject.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/meteoStats/libinterpol1D.h>
+#include <meteoio/meteoStats/libinterpol2D.h>
+#include <meteoio/meteoStats/libfit1D.h>
 
 #include <vector>
 #include <string>

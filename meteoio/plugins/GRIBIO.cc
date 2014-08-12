@@ -18,9 +18,9 @@
 #include "GRIBIO.h"
 
 #include <meteoio/ResamplingAlgorithms2D.h>
-#include <meteoio/meteolaws/Atmosphere.h>
-#include <meteoio/meteolaws/Meteoconst.h> //for PI
-#include <meteoio/DEMObject.h>
+#include <meteoio/meteoLaws/Atmosphere.h>
+#include <meteoio/meteoLaws/Meteoconst.h> //for PI
+#include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/MathOptim.h>
 
 #include <cmath>

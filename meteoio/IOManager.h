@@ -22,8 +22,8 @@
 #include <meteoio/Meteo2DInterpolator.h>
 #include <meteoio/BufferedIOHandler.h>
 #include <meteoio/MeteoProcessor.h>
-#include <meteoio/MeteoData.h>
-#include <meteoio/Coords.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/dataClasses/Coords.h>
 
 namespace mio {
 

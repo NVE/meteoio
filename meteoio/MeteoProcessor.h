@@ -18,11 +18,11 @@
 #ifndef __METEOPROCESSOR_H__
 #define __METEOPROCESSOR_H__
 
-#include <meteoio/MeteoData.h>
-#include <meteoio/StationData.h>
+#include <meteoio/dataClasses/MeteoData.h>
+#include <meteoio/dataClasses/StationData.h>
 #include <meteoio/Config.h>
 #include <meteoio/Meteo1DInterpolator.h>
-#include <meteoio/meteofilters/ProcessingStack.h>
+#include <meteoio/meteoFilters/ProcessingStack.h>
 
 #include <vector>
 #include <set>
