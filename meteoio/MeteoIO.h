@@ -38,7 +38,6 @@
 #include <meteoio/Date.h>
 #include <meteoio/DEMObject.h>
 #include <meteoio/exports.h>
-#include <meteoio/FilterProperties.h>
 #include <meteoio/GeneratorAlgorithms.h>
 #include <meteoio/Graphics.h>
 #include <meteoio/Grid2DObject.h>
