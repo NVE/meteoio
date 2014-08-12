@@ -149,21 +149,18 @@ SET(DATA_QA OFF CACHE BOOL "Data Quality Assurance outputs ON or OFF")
 ###########################################################
 #for the install target
 FILE(GLOB hfiles "meteoio/*.h")
+FILE(GLOB hdatafiles "meteoio/dataClasses/*.h")
 FILE(GLOB hpluginfiles "meteoio/plugins/*.h")
-FILE(GLOB hlawsfiles "meteoio/meteolaws/*.h")
-FILE(GLOB hfilterfiles "meteoio/meteofilters/*.h")
-FILE(GLOB hstatsfiles "meteoio/meteostats/*.h")
+FILE(GLOB hlawsfiles "meteoio/meteoLaws/*.h")
+FILE(GLOB hfilterfiles "meteoio/meteoFilters/*.h")
+FILE(GLOB hstatsfiles "meteoio/meteoStats/*.h")
 
-IF(DEST MATCHES "par")
-	FILE(GLOB phfiles "${CMAKE_CURRENT_SOURCE_DIR}/meteoio/*.ph")
-	FILE(GLOB modules "${CMAKE_BINARY_DIR}/lib/*.module")
-	INSTALL(FILES ${modules} DESTINATION lib/meteoio COMPONENT libraries)
-ENDIF(DEST MATCHES "par")
-INSTALL(FILES ${hfiles} ${phfiles} DESTINATION include/meteoio COMPONENT headers)
+INSTALL(FILES ${hfiles} DESTINATION include/meteoio COMPONENT headers)
+INSTALL(FILES ${hdatafiles} DESTINATION include/meteoio/dataClasses COMPONENT headers)
 INSTALL(FILES ${hpluginfiles} DESTINATION include/meteoio/plugins COMPONENT headers)
-INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteolaws COMPONENT headers)
-INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteofilters COMPONENT headers)
-INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteostats COMPONENT headers)
+INSTALL(FILES ${hlawsfiles} DESTINATION include/meteoio/meteoLaws COMPONENT headers)
+INSTALL(FILES ${hfilterfiles} DESTINATION include/meteoio/meteoFilters COMPONENT headers)
+INSTALL(FILES ${hstatsfiles} DESTINATION include/meteoio/meteoStats COMPONENT headers)
 
 IF(WIN32) #only having it in meteoio/CMake... is not enough...
 	FILE(GLOB_RECURSE importlibs "lib/libmeteo*.lib")
@@ -183,8 +180,9 @@ ADD_CUSTOM_TARGET(distclean make clean
 	COMMAND cmake -E remove_directory CMakeFiles
 	COMMAND cmake -E remove_directory Testing
 	COMMAND cmake -E remove_directory meteoio/CMakeFiles
-	COMMAND cmake -E remove_directory meteoio/meteofilters/CMakeFiles
-	COMMAND cmake -E remove_directory meteoio/meteolaws/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/dataClasses/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/meteoFilters/CMakeFiles
+	COMMAND cmake -E remove_directory meteoio/meteoLaws/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/plugins/gsn/CMakeFiles
 	COMMAND cmake -E remove_directory meteoio/plugins/CMakeFiles
 	COMMAND cmake -E remove_directory tests/CMakeFiles
