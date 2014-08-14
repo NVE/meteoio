@@ -204,12 +204,12 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 //Copy constructor
 IOHandler::IOHandler(const IOHandler& aio)
-           : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), copy_parameter(aio.copy_parameter),
-             copy_name(aio.copy_name), enable_copying(aio.enable_copying)
+           : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params),
+             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying), excludes_ready(aio.excludes_ready)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
-           : IOInterface(), cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
+           : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), copy_parameter(), copy_name(), enable_copying(false), excludes_ready(false)
 {
 	parse_copy_config();
 }
@@ -226,9 +226,11 @@ IOHandler::~IOHandler() throw()
 IOHandler& IOHandler::operator=(const IOHandler& source) {
 	if(this != &source) {
 		mapPlugins = source.mapPlugins;
+		excluded_params = source.excluded_params;
 		copy_parameter = source.copy_parameter;
 		copy_name = source.copy_name;
 		enable_copying = source.enable_copying;
+		excludes_ready = source.excludes_ready;
 	}
 	return *this;
 }
@@ -271,6 +273,8 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
 	checkTimestamps(vecMeteo);
+	if (!excludes_ready) create_exclude_map();
+	exclude_params(vecMeteo);
 
 	copy_parameters(stationindex, vecMeteo);
 }
@@ -322,6 +326,73 @@ void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
 				throw IOException("Error at time "+current_date.toString(Date::ISO)+" for station \""+station.stationName+"\" ("+station.stationID+") : timestamps must be in increasing order and unique!", AT);
 			}
 			previous_date = current_date;
+		}
+	}
+}
+
+void IOHandler::create_exclude_map()
+{
+	string exclude_file;
+	cfg.getValue("EXCLUDE", "Input", exclude_file, IOUtils::nothrow);
+	excludes_ready = true;
+
+	if (exclude_file.empty()) return;
+
+	//if this is a relative path, prefix the path with the current path
+	const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : IOUtils::getPath(cfg.getSourceName(), true)+"/";
+	const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
+	const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
+
+	std::ifstream fin; //Input file streams
+	fin.open(filename.c_str(), std::ifstream::in);
+	if (fin.fail()) throw FileAccessException(filename, AT);
+
+	try {
+		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+
+		vector<string> tmpvec;
+		string line;
+
+		while (!fin.eof()) { //Go through file
+			getline(fin, line, eoln); //read complete line meta information
+			IOUtils::stripComments(line);
+			const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
+
+			if (ncols > 1) {
+				for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+					IOUtils::toUpper(*it);
+				}
+
+				const set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
+				excluded_params[ tmpvec[0] ] = tmpset;
+			}
+		}
+	} catch (const std::exception&) {
+		fin.close();
+		throw;
+	}
+
+	fin.close();
+}
+
+void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
+{
+	if (excluded_params.empty()) return;
+
+	for (size_t station=0; station<vecVecMeteo.size(); ++station) {
+		const string stationID = vecVecMeteo[station][0].meta.stationID;
+		const map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
+		if (it == excluded_params.end()) continue;
+
+		const set<string> excluded = it->second;
+
+		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
+			std::set<std::string>::const_iterator it_set;
+			for (it_set=excluded.begin(); it_set != excluded.end(); ++it_set) {
+				const string param = *it_set;
+				if (vecVecMeteo[station][ii].param_exists(param))
+					vecVecMeteo[station][ii](param) = IOUtils::nodata;
+			}
 		}
 	}
 }
@@ -406,6 +477,18 @@ const std::string IOHandler::toString() const
 		os << setw(10) << it1->first << " = " << hex <<  it1->second << dec << "\n";
 	}
 	os << "</mapPlugins>\n";
+
+	os << "<excluded_params>\n";
+	std::map< std::string, std::set<std::string> >::const_iterator it_exc;
+	for (it_exc=excluded_params.begin(); it_exc != excluded_params.end(); ++it_exc) {
+		os << setw(10) << it_exc->first << " = ";
+		std::set<std::string>::const_iterator it_set;
+		for (it_set=(it_exc->second).begin(); it_set != (it_exc->second).end(); ++it_set)
+			os << *it_set << " ";
+		os << "\n";
+	}
+	os << "</excluded_params>\n";
+
 	os << "</IOHandler>\n";
 	return os.str();
 }

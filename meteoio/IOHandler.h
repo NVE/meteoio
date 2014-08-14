@@ -22,6 +22,7 @@
 #include <meteoio/IOExceptions.h>
 
 #include <map>
+#include <set>
 #include <string>
 
 namespace mio {
@@ -66,13 +67,16 @@ class IOHandler : public IOInterface {
 		IOInterface* getPlugin(const std::string& plugin_name) const;
 		IOInterface* getPlugin(const std::string& cfgkey, const std::string& cfgsection);
 		void parse_copy_config();
+		void create_exclude_map();
 		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
+		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 
 		const Config& cfg;
 		std::map<std::string, IOInterface*> mapPlugins;
+		std::map< std::string, std::set<std::string> > excluded_params;
 		std::vector<std::string> copy_parameter, copy_name;
-		bool enable_copying;
+		bool enable_copying, excludes_ready;
 };
 
 } //namespace
