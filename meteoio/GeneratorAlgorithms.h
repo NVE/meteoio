@@ -255,8 +255,7 @@ class ClearSkyLWGenerator : public GeneratorAlgorithm {
 /**
  * @class AllSkyLWGenerator
  * @brief ILWR all sky parametrization
- * HACK: the cloud fraction is currently NOT implemented! This will come shortly...
- * Using air temperature (TA) and relative humidity (RH) ands cloud fraction (),
+ * Using air temperature (TA) and relative humidity (RH) and optionnally cloud fraction (TAU_CLD, but please note that this name is not definitive yet),
  * this offers the choice of several all-sky parametrizations:
  *  - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
  * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.

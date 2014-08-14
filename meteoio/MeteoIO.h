@@ -53,7 +53,6 @@
 #include <meteoio/IOHandler.h>
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOManager.h>
-#include <meteoio/IOPlugin.h>
 #include <meteoio/IOUtils.h>
 //#include <meteoio/MainPage.h> //only for doxygen
 #include <meteoio/MathOptim.h>

@@ -20,7 +20,6 @@
 
 #include <meteoio/IOInterface.h>
 #include <meteoio/IOExceptions.h>
-#include <meteoio/IOPlugin.h>
 
 #include <map>
 #include <string>
@@ -65,14 +64,14 @@ class IOHandler : public IOInterface {
 		const std::string toString() const;
 
 	private:
-		void registerPlugins();
-		IOInterface *getPlugin(const std::string& cfgkey, const std::string& cfgsection="GENERAL");
+		IOInterface* getPlugin(const std::string& plugin_name) const;
+		IOInterface* getPlugin(const std::string& cfgkey, const std::string& cfgsection);
 		void parse_copy_config();
 		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 
 		const Config& cfg;
-		std::map<std::string, IOPlugin> mapPlugins;
+		std::map<std::string, IOInterface*> mapPlugins;
 		std::vector<std::string> copy_parameter, copy_name;
 		bool enable_copying;
 };

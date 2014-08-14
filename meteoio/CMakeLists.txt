@@ -28,7 +28,6 @@ ENDIF(DATA_QA)
 SET(meteoio_sources
 	${dataClasses_sources}
 	IOManager.cc
-	IOPlugin.cc
 	MeteoProcessor.cc
 	ResamplingAlgorithms.cc
 	ResamplingAlgorithms2D.cc

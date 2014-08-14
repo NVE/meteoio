@@ -133,57 +133,58 @@ namespace mio {
  * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
  */
 
-void IOHandler::registerPlugins()
+IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 {
-	//mapPlugins[io.ini KEY]= IOPlugin(library file name, class name, NULL, NULL);
 #ifdef PLUGIN_ARCIO
-	mapPlugins["ARC"]       = IOPlugin("ARCIO", NULL, &IOPlugin::createInstance<ARCIO>);
+	if (plugin_name == "ARC") return new ARCIO(cfg);
 #endif
 #ifdef PLUGIN_A3DIO
-	mapPlugins["A3D"]       = IOPlugin("A3DIO", NULL, &IOPlugin::createInstance<A3DIO>);
+	if (plugin_name == "A3D") return new A3DIO(cfg);
 #endif
 #ifdef PLUGIN_ARPSIO
-	mapPlugins["ARPS"]      = IOPlugin("ARPSIO", NULL, &IOPlugin::createInstance<ARPSIO>);
+	if (plugin_name == "ARPS") return new ARPSIO(cfg);
 #endif
 #ifdef PLUGIN_GRASSIO
-	mapPlugins["GRASS"]     = IOPlugin("GrassIO", NULL, &IOPlugin::createInstance<GrassIO>);
+	if (plugin_name == "GRASS") return new GrassIO(cfg);
 #endif
 #ifdef PLUGIN_GEOTOPIO
-	mapPlugins["GEOTOP"]    = IOPlugin("GeotopIO", NULL, &IOPlugin::createInstance<GeotopIO>);
+	if (plugin_name == "GEOTOP") return new GeotopIO(cfg);
 #endif
 #ifdef PLUGIN_SMETIO
-	mapPlugins["SMET"]      = IOPlugin("SMETIO", NULL, &IOPlugin::createInstance<SMETIO>);
+	if (plugin_name == "SMET") return new SMETIO(cfg);
 #endif
 #ifdef PLUGIN_SNIO
-	mapPlugins["SNOWPACK"]  = IOPlugin("SNIO", NULL, &IOPlugin::createInstance<SNIO>);
+	if (plugin_name == "SNOWPACK") return new SNIO(cfg);
 #endif
 #ifdef PLUGIN_PGMIO
-	mapPlugins["PGM"]       = IOPlugin("PGMIO", NULL, &IOPlugin::createInstance<PGMIO>);
+	if (plugin_name == "PGM") return new PGMIO(cfg);
 #endif
 #ifdef PLUGIN_IMISIO
-	mapPlugins["IMIS"]      = IOPlugin("ImisIO", NULL, &IOPlugin::createInstance<ImisIO>);
+	if (plugin_name == "IMIS") return new ImisIO(cfg);
 #endif
 #ifdef PLUGIN_GRIBIO
-	mapPlugins["GRIB"]      = IOPlugin("GRIBIO", NULL, &IOPlugin::createInstance<GRIBIO>);
+	if (plugin_name == "GRIB") return new GRIBIO(cfg);
 #endif
 #ifdef PLUGIN_PNGIO
-	mapPlugins["PNG"]       = IOPlugin("PNGIO", NULL, &IOPlugin::createInstance<PNGIO>);
+	if (plugin_name == "PNG") return new PNGIO(cfg);
 #endif
 #ifdef PLUGIN_BORMAIO
-	mapPlugins["BORMA"]     = IOPlugin("BormaIO", NULL, &IOPlugin::createInstance<BormaIO>);
+	if (plugin_name == "BORMA") return new BormaIO(cfg);
 #endif
 #ifdef PLUGIN_COSMOXMLIO
-	mapPlugins["COSMOXML"]  = IOPlugin("CosmoXMLIO", NULL, &IOPlugin::createInstance<CosmoXMLIO>);
+	if (plugin_name == "COSMOXML") return new CosmoXMLIO(cfg);
 #endif
 #ifdef PLUGIN_GSNIO
-	mapPlugins["GSN"]       = IOPlugin("GSNIO", NULL, &IOPlugin::createInstance<GSNIO>);
+	if (plugin_name == "GSN") return new GSNIO(cfg);
 #endif
 #ifdef PLUGIN_NETCDFIO
-	mapPlugins["NETCDF"]    = IOPlugin("NetCDFIO", NULL, &IOPlugin::createInstance<NetCDFIO>);
+	if (plugin_name == "NETCDF") return new NetCDFIO(cfg);
 #endif
 #ifdef PLUGIN_PSQLIO
-	mapPlugins["PSQL"]      = IOPlugin("PSQLIO", NULL, &IOPlugin::createInstance<PSQLIO>);
+	if (plugin_name == "PSQL") return new PSQLIO(cfg);
 #endif
+
+	return NULL; //no plugin found
 }
 
 //Copy constructor
@@ -195,20 +196,15 @@ IOHandler::IOHandler(const IOHandler& aio)
 IOHandler::IOHandler(const Config& cfgreader)
            : IOInterface(), cfg(cfgreader), mapPlugins(), copy_parameter(), copy_name(), enable_copying(false)
 {
-	registerPlugins();
 	parse_copy_config();
 }
 
 IOHandler::~IOHandler() throw()
 {
 	// Get rid of the objects
-	std::map<std::string, IOPlugin>::iterator mapit;
-	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); ++mapit){
-		IOInterface*& io = (mapit->second).io;
-		if (io != NULL) {
-			delete io;
-			io = NULL;
-		}
+	std::map<std::string, IOInterface*>::iterator mapit;
+	for (mapit = mapPlugins.begin(); mapit!=mapPlugins.end(); ++mapit) {
+		delete mapit->second;
 	}
 }
 
@@ -227,19 +223,13 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 	std::string op_src;
 	cfg.getValue(cfgkey, cfgsection, op_src);
 
-	const std::map<std::string, IOPlugin>::iterator mapit = mapPlugins.find(op_src);
-	if (mapit == mapPlugins.end())
-		throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it registered in IOHandler::registerPlugins?", AT);
-	if ((mapit->second).io == NULL){
-		(mapit->second).io = (mapit->second).creator_func(cfg);
+	if (mapPlugins.find(op_src) == mapPlugins.end()) {
+		mapPlugins[op_src] = getPlugin(op_src);
+		if (mapPlugins[op_src]==NULL)
+			throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it registered in IOHandler::registerPlugins?", AT);
 	}
 
-	//Now check if it is correctly loaded
-	if ((mapit->second).io == NULL) {
-		throw IOException("Requesting to read/write data with plugin '" + op_src + "', but plugin is not loaded", AT);
-	}
-
-	return (mapit->second).io;
+	return mapPlugins[op_src];
 }
 
 void IOHandler::read2DGrid(Grid2DObject& grid_out, const std::string& i_filename)
@@ -421,10 +411,9 @@ const std::string IOHandler::toString() const
 	os << "Config& cfg = " << hex << &cfg << dec << "\n";
 
 	os << "<mapPlugins>\n";
-	os << setw(10) << "Keyword" << " = " << IOPlugin::header << "\n";
-	std::map<std::string, IOPlugin>::const_iterator it1;
-	for (it1=mapPlugins.begin(); it1 != mapPlugins.end(); ++it1){
-		os << setw(10) << it1->first << " = " <<  it1->second.toString();
+	std::map<std::string, IOInterface*>::const_iterator it1;
+	for (it1=mapPlugins.begin(); it1 != mapPlugins.end(); ++it1) {
+		os << setw(10) << it1->first << " = " << hex <<  it1->second << dec << "\n";
 	}
 	os << "</mapPlugins>\n";
 	os << "</IOHandler>\n";
