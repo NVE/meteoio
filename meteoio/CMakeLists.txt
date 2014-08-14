@@ -27,24 +27,23 @@ ENDIF(DATA_QA)
 
 SET(meteoio_sources
 	${dataClasses_sources}
-	IOManager.cc
-	MeteoProcessor.cc
-	ResamplingAlgorithms.cc
-	ResamplingAlgorithms2D.cc
-	Meteo1DInterpolator.cc
-	InterpolationAlgorithms.cc
-	DataGenerator.cc
-	GeneratorAlgorithms.cc
 	Timer.cc
-	IOHandler.cc
-	Graphics.cc
-	Meteo2DInterpolator.cc
-	BufferedIOHandler.cc
-	IOInterface.cc
 	Config.cc
 	IOExceptions.cc
 	IOUtils.cc
 	FileUtils.cc
+	Graphics.cc
+	IOManager.cc
+	IOHandler.cc
+	BufferedIOHandler.cc
+	MeteoProcessor.cc
+	ResamplingAlgorithms.cc
+	ResamplingAlgorithms2D.cc
+	InterpolationAlgorithms.cc
+	Meteo1DInterpolator.cc
+	Meteo2DInterpolator.cc
+	DataGenerator.cc
+	GeneratorAlgorithms.cc
 	plugins/libsmet.cc
 	${plugins_sources}
 	${meteoLaws_sources}

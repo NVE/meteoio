@@ -89,7 +89,7 @@ namespace mio {
  */
 class IOInterface {
 	public:
-		virtual ~IOInterface();
+		virtual ~IOInterface() {};
 
 		/**
 		* @brief A generic function for parsing 2D grids into a Grid2DObject. The string parameter shall be used for addressing the

@@ -54,7 +54,6 @@ class IOHandler : public IOInterface {
 		virtual void readMeteoData(const Date& dateStart, const Date& dateEnd,
 		                           std::vector<METEO_SET>& vecMeteo,
 		                           const size_t& stationindex=IOUtils::npos);
-		void readMeteoData(const Date& date, METEO_SET& vecMeteo);
 
 		virtual void readAssimilationData(const Date&, Grid2DObject& da_out);
 		virtual void readPOI(std::vector<Coords>& pts);

@@ -187,6 +187,21 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 	return NULL; //no plugin found
 }
 
+//this is actually an object factory
+IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection)
+{
+	std::string op_src;
+	cfg.getValue(cfgkey, cfgsection, op_src);
+
+	if (mapPlugins.find(op_src) == mapPlugins.end()) {
+		mapPlugins[op_src] = getPlugin(op_src);
+		if (mapPlugins[op_src]==NULL)
+			throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it declared in IOHandler::getPlugin?", AT);
+	}
+
+	return mapPlugins[op_src];
+}
+
 //Copy constructor
 IOHandler::IOHandler(const IOHandler& aio)
            : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), copy_parameter(aio.copy_parameter),
@@ -218,20 +233,6 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 	return *this;
 }
 
-IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& cfgsection)
-{
-	std::string op_src;
-	cfg.getValue(cfgkey, cfgsection, op_src);
-
-	if (mapPlugins.find(op_src) == mapPlugins.end()) {
-		mapPlugins[op_src] = getPlugin(op_src);
-		if (mapPlugins[op_src]==NULL)
-			throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it registered in IOHandler::registerPlugins?", AT);
-	}
-
-	return mapPlugins[op_src];
-}
-
 void IOHandler::read2DGrid(Grid2DObject& grid_out, const std::string& i_filename)
 {
 	IOInterface *plugin = getPlugin("GRID2D", "Input");
@@ -261,38 +262,6 @@ void IOHandler::readStationData(const Date& date, STATIONS_SET& vecStation)
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readStationData(date, vecStation);
-}
-
-void IOHandler::readMeteoData(const Date& date, METEO_SET& vecMeteo)
-{
-	std::vector< std::vector<MeteoData> > meteoTmpBuffer;
-	readMeteoData(date, date, meteoTmpBuffer);
-
-	vecMeteo.clear();
-	vecMeteo.reserve( meteoTmpBuffer.size() );
-
-	for (size_t ii=0; ii<meteoTmpBuffer.size(); ++ii) {//stations
-		if (!meteoTmpBuffer[ii].empty())
-			vecMeteo.push_back( meteoTmpBuffer[ii].front() );
-	}
-}
-
-void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
-{
-	for (size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) { //for each station
-		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
-		if (nr_timestamps==0) continue;
-
-		Date previous_date( vecVecMeteo[stat_idx].front().date );
-		for (size_t ii=1; ii<nr_timestamps; ++ii) {
-			const Date& current_date = vecVecMeteo[stat_idx][ii].date;
-			if (current_date<=previous_date) {
-				const StationData& station = vecVecMeteo[stat_idx][ii].meta;
-				throw IOException("Error at time "+current_date.toString(Date::ISO)+" for station \""+station.stationName+"\" ("+station.stationID+") : timestamps must be in increasing order and unique!", AT);
-			}
-			previous_date = current_date;
-		}
-	}
 }
 
 void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
@@ -336,12 +305,33 @@ void IOHandler::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Param
 	plugin->write2DGrid(grid_in, parameter, date);
 }
 
+/**
+* Make sure all timestamps are unique and in increasing order
+*/
+void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
+{
+	for (size_t stat_idx=0; stat_idx<vecVecMeteo.size(); ++stat_idx) { //for each station
+		const size_t nr_timestamps = vecVecMeteo[stat_idx].size();
+		if (nr_timestamps==0) continue;
+
+		Date previous_date( vecVecMeteo[stat_idx].front().date );
+		for (size_t ii=1; ii<nr_timestamps; ++ii) {
+			const Date& current_date = vecVecMeteo[stat_idx][ii].date;
+			if (current_date<=previous_date) {
+				const StationData& station = vecVecMeteo[stat_idx][ii].meta;
+				throw IOException("Error at time "+current_date.toString(Date::ISO)+" for station \""+station.stationName+"\" ("+station.stationID+") : timestamps must be in increasing order and unique!", AT);
+			}
+			previous_date = current_date;
+		}
+	}
+}
+
+/**
+* Parse [Input] section for potential parameters that the user wants
+* duplicated (as '%%::COPY = %%')
+*/
 void IOHandler::parse_copy_config()
 {
-	/**
-	 * Parse [Input] section for potential parameters that the user wants
-	 * duplicated (as '%%::COPY = %%')
-	 */
 	vector<string> copy_keys;
 	const size_t nrOfMatches = cfg.findKeys(copy_keys, "::COPY", "Input", true); //search anywhere in key
 
