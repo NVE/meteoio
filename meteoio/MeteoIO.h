@@ -81,7 +81,6 @@
 #include <meteoio/meteoStats/libinterpol2D.h>
 
 //skip all plugins' implementations header files
-#include <meteoio/plugins/libncpp.h>
 #include <meteoio/plugins/libsmet.h>
 
 #include <meteoio/ResamplingAlgorithms2D.h>
