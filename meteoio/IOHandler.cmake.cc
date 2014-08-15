@@ -333,13 +333,13 @@ void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
 void IOHandler::create_exclude_map()
 {
 	string exclude_file;
-	cfg.getValue("EXCLUDE", "Input", exclude_file, IOUtils::nothrow);
+	cfg.getValue("EXCLUDE_FILE", "Input", exclude_file, IOUtils::nothrow);
 	excludes_ready = true;
 
 	if (exclude_file.empty()) return;
 
 	//if this is a relative path, prefix the path with the current path
-	const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : IOUtils::getPath(cfg.getSourceName(), true)+"/";
+	const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
 	const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
 	const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
 
@@ -375,6 +375,9 @@ void IOHandler::create_exclude_map()
 	fin.close();
 }
 
+/**
+* reset to nodata the parameters marked as EXCLUDE on a per station basis
+*/
 void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 {
 	if (excluded_params.empty()) return;

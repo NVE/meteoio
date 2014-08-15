@@ -77,6 +77,12 @@ namespace IOUtils {
 	std::string removeExtension(const std::string& filename);
 
 	/**
+	* @brief returns the current working directory.
+	* @return path
+	*/
+	std::string getCWD();
+
+	/**
 	* @brief returns the path preceeding a given filename.
 	* @param filename filename to extract the path from
 	* @param resolve resolve links, convert relative paths, etc? (default=false)

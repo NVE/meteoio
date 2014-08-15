@@ -103,8 +103,8 @@ std::string removeExtension(const std::string& filename)
 {
 	const size_t start_basename = filename.find_last_of("/\\"); //we will skip the path
 	const size_t startpos = filename.find_last_of('.');
-	if( startpos==std::string::npos ) return filename;
-	if( start_basename!=std::string::npos && startpos<start_basename ) return filename;
+	if ( startpos==std::string::npos ) return filename;
+	if ( start_basename!=std::string::npos && startpos<start_basename ) return filename;
 
 	return filename.substr(0, startpos);
 }
@@ -113,7 +113,7 @@ std::string getPath(const std::string& filename, const bool& resolve)
 {
 	const std::string clean_filename = cleanPath(filename, resolve);
 	const size_t end_path = clean_filename.find_last_of("/");
-	if(end_path!=std::string::npos) {
+	if (end_path!=std::string::npos) {
 		return clean_filename.substr(0, end_path);
 	} else {
 		return cleanPath("./", resolve);
@@ -123,7 +123,7 @@ std::string getPath(const std::string& filename, const bool& resolve)
 std::string getFilename(const std::string& path)
 {
 	const size_t start_basename = path.find_last_of("/\\");
-	if(start_basename!=std::string::npos)
+	if (start_basename!=std::string::npos)
 		return path.substr(start_basename+1, std::string::npos);
 	else
 		return path;
@@ -132,7 +132,7 @@ std::string getFilename(const std::string& path)
 bool validFileName(const std::string& filename)
 {
 	const size_t startpos = filename.find_first_not_of(" \t\n"); // Find the first character position after excluding leading blank spaces
-	if((startpos!=0) || (filename==".") || (filename=="..")) {
+	if ((startpos!=0) || (filename==".") || (filename=="..")) {
 		return false;
 	}
 
@@ -150,6 +150,15 @@ bool isAbsolutePath(const std::string& in_path)
 }
 
 #if defined _WIN32 || defined __MINGW32__
+std::string getCWD()
+{
+	char buffer[MAX_PATH+1];
+	const DWORD status = GetCurrentDirectoryA(sizeof(buffer), buffer);
+	if (status==0 || status>MAX_PATH) throw IOException("Can not get current working directory", AT);
+
+	return std::string cwd( buffer );
+}
+
 bool fileExists(const std::string& filename)
 {
 	return ( GetFileAttributes( filename.c_str() ) != INVALID_FILE_ATTRIBUTES );
@@ -188,6 +197,14 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 	FindClose(hFind);
 }
 #else
+std::string getCWD()
+{
+	char buffer[1024];
+	if ( getcwd(buffer,sizeof(buffer))==NULL ) throw IOException("Can not get current working directory", AT);
+
+	return std::string( buffer );
+}
+
 bool fileExists(const std::string& filename)
 {
 	struct stat buffer ;

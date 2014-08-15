@@ -24,7 +24,7 @@ namespace mio {
 ProcessingStack::ProcessingStack(const Config& cfg, const std::string& parname) : filter_stack(), param_name(parname)
 {
 	 //this is required by filters that need to read some parameters in extra files
-	const string root_path = cfg.getSourceName();
+	const string root_path = cfg.getConfigRootDir();
 	vector<string> vecFilters;
 	cfg.getValues(parname+"::filter", "Filters", vecFilters);
 

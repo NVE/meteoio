@@ -25,13 +25,14 @@ namespace mio {
 const std::string Config::defaultSection = "GENERAL";
 
 //Constructors
-Config::Config() : properties(), imported(), sourcename()
+Config::Config() : properties(), imported(), sourcename(), configRootDir()
 {
 	//nothing is even put in the property map, the user will have to fill it by himself
 }
 
-Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename)
+Config::Config(const std::string& i_filename) : properties(), imported(), sourcename(i_filename), configRootDir(IOUtils::getPath(i_filename, true))
 {
+
 	addFile(i_filename);
 }
 
@@ -48,12 +49,14 @@ ConfigProxy Config::get(const std::string& key, const std::string& section, cons
 //Populating the property map
 void Config::addFile(const std::string& i_filename)
 {
+	if (configRootDir.empty()) configRootDir = IOUtils::getPath(i_filename, true);
 	sourcename = i_filename;
 	parseFile(i_filename);
 }
 
 void Config::addCmdLine(const std::string& cmd_line)
 {
+	if (configRootDir.empty()) configRootDir = IOUtils::getPath(IOUtils::getCWD(), true); //resolve symlinks, etc
 	sourcename = std::string("Command line");
 	parseCmdLine(cmd_line);
 }
@@ -251,6 +254,11 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 std::string Config::getSourceName() const
 {
 	return sourcename;
+}
+
+std::string Config::getConfigRootDir() const
+{
+	return configRootDir;
 }
 
 size_t Config::findKeys(std::vector<std::string>& vecResult, const std::string& keymatch,

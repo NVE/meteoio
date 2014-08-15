@@ -116,9 +116,15 @@ class Config {
 
 		/**
 		 * @brief Returns the filename that the Config object was constructed with.
-		 * @return std::string The absolute filename of the key/value file.
+		 * @return The absolute filename of the key/value file.
 		 */
 		std::string getSourceName() const;
+
+		/**
+		 * @brief Returns the directory where the root configuration file is (needed to resolv relative paths).
+		 * @return The absolute path to the root config file (resolved for symlinks, relative paths, etc).
+		 */
+		std::string getConfigRootDir() const;
 
 		/**
 		 * @brief Return if a given key exists in a given section
@@ -302,6 +308,7 @@ class Config {
 		std::map<std::string, std::string> properties; //Save key value pairs
 		std::vector<std::string> imported; //list of files already imported (to avoid circular references)
 		std::string sourcename; //description of the data source for the key/value pair
+		std::string configRootDir; //directory of the root config file
 }; //end class definition Config
 
 class ConfigProxy {

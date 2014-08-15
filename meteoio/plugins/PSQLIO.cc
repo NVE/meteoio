@@ -157,6 +157,11 @@ void PSQLIO::getParameters(const Config& cfg)
 	string exclude_file;
 	cfg.getValue("EXCLUDE", "Input", exclude_file, IOUtils::nothrow);
 	if (!exclude_file.empty() && IOUtils::fileExists(exclude_file)) {
+		//if this is a relative path, prefix the path with the current path
+		const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
+		const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
+		const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
+
 		create_shadow_map(exclude_file);
 	}
 
