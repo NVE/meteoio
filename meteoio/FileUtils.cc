@@ -156,7 +156,7 @@ std::string getCWD()
 	const DWORD status = GetCurrentDirectoryA(sizeof(buffer), buffer);
 	if (status==0 || status>MAX_PATH) throw IOException("Can not get current working directory", AT);
 
-	return std::string cwd( buffer );
+	return std::string( buffer );
 }
 
 bool fileExists(const std::string& filename)
