@@ -141,8 +141,8 @@ namespace mio {
  * to exclude for the station (the path to the file can be a relative path and will be properly resolved).
  *
  * @code
- * WFJ2::exclude = TA RH                         ;inline declaration of parameters exclusion
- * KLO3::exclude = HS HNW
+ * WFJ2::EXCLUDE = TA RH                         ;inline declaration of parameters exclusion
+ * KLO3::EXCLUDE = HS HNW
  *
  * EXCLUDE_FILE = ../input/meteo/excludes.csv    ;parameters exclusions defined in a separate file
  * @endcode
