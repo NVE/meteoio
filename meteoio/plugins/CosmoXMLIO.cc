@@ -37,7 +37,7 @@ namespace mio {
  * It requires <A HREF="http://xmlsoft.org/">libxml2</A> to compile and run. It also assumes that the station IDs are unique
  * (ie two data sets with the same station ID are considered to belong to the same station).
  *
- * @section cosmo_partners COSMO Group
+ * @section cosmoxml_cosmo_partners COSMO Group
  * This plugin has been developed primarily for reading XML files produced by COSMO (http://www.cosmo-model.org/) at MeteoSwiss.
  * COSMO (COnsortium for Small scale MOdelling) represents a non-hydrostatic limited-area atmospheric model, to be used both for operational and for research applications by the members of the consortium. The Consortium has the following members:
  *  - Germany, DWD, Deutscher Wetterdienst

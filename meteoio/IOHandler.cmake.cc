@@ -81,7 +81,8 @@ using namespace std;
 namespace mio {
  /**
  * @page plugins Plugins overview
- * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are loaded on demand (and also compiled only if requested at compile time). A plugin can therefore fail to load (for example if it does not exist) at run time.
+ * The data access is handled by a system of plugins. They all offer the same interface, meaning that a plugin can transparently be replaced by another one. Since they might rely on third party libraries for accessing the data, they have been created as plugins, that is they are  only compiled if requested when configuring the compilation with cmake.
+ * A plugin can therefore fail to run if it has not been compiled.
  *
  * @section available_categories Data sources categories
  * Several data sources categories have been defined that can be provided by a different plugin. Each data source category is defined by a specific key in the configuration file (usually, io.ini):
@@ -122,7 +123,8 @@ namespace mio {
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
  *
- * @section data_generators Data generators
+ * @section data_manipulations Data generators & exclusion
+ * @subsection data_generators Data generators
  * It is also possible to duplicate a meteorological parameter as another meteorological parameter. This is done by specifying a COPY key, following the syntax
  * new_name::COPY = existing_parameter. For example:
  * @code
@@ -131,6 +133,26 @@ namespace mio {
  * This creates a new parameter VW_avg that starts as an exact copy of the raw data of VW, for each station. This newly created parameter is
  * then processed as any other meteorological parameter (thus going through filtering, generic processing, spatial interpolations). This only current
  * limitation is that the parameter providing the raw data must be defined for all stations (even if filled with nodata, this is good enough).
+ *
+ * @subsection data_exclusion Data exclusion
+ * It is possible to exclude specific parameters from given stations (on a per station basis). This is either done by using the station ID
+ * followed by "::exclude" as key with a space delimited list of \ref meteoparam "meteorological parameters" to exclude for the station as key.
+ * Another possibility is to provide a file containing one station ID per line followed by a space delimited list of \ref meteoparam "meteorological parameters"
+ * to exclude for the station (the path to the file can be a relative path and will be properly resolved).
+ *
+ * @code
+ * WFJ2::exclude = TA RH                         ;inline declaration of parameters exclusion
+ * KLO3::exclude = HS HNW
+ *
+ * EXCLUDE_FILE = ../input/meteo/excludes.csv    ;parameters exclusions defined in a separate file
+ * @endcode
+ *
+ * In the second example (relying on a separate file), the file "../input/meteo/excludes.csv" could look like this:
+ * @code
+ * WFJ2 TA RH
+ * KLO3 HS HNW
+ * @endcode
+ *
  */
 
 IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
@@ -332,47 +354,65 @@ void IOHandler::checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const
 
 void IOHandler::create_exclude_map()
 {
+	excludes_ready = true;
 	string exclude_file;
 	cfg.getValue("EXCLUDE_FILE", "Input", exclude_file, IOUtils::nothrow);
-	excludes_ready = true;
 
-	if (exclude_file.empty()) return;
+	if (!exclude_file.empty()) {
+		//if this is a relative path, prefix the path with the current path
+		const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
+		const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
+		const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
 
-	//if this is a relative path, prefix the path with the current path
-	const std::string prefix = ( IOUtils::isAbsolutePath(exclude_file) )? "" : cfg.getConfigRootDir()+"/";
-	const std::string path = IOUtils::getPath(prefix+exclude_file, true);  //clean & resolve path
-	const std::string filename = path + "/" + IOUtils::getFilename(exclude_file);
+		std::ifstream fin; //Input file streams
+		fin.open(filename.c_str(), std::ifstream::in);
+		if (fin.fail()) throw FileAccessException(filename, AT);
 
-	std::ifstream fin; //Input file streams
-	fin.open(filename.c_str(), std::ifstream::in);
-	if (fin.fail()) throw FileAccessException(filename, AT);
+		try {
+			const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
 
-	try {
-		const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+			vector<string> tmpvec;
+			string line;
 
-		vector<string> tmpvec;
-		string line;
+			while (!fin.eof()) { //Go through file
+				getline(fin, line, eoln); //read complete line meta information
+				IOUtils::stripComments(line);
+				const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ' ');
 
-		while (!fin.eof()) { //Go through file
-			getline(fin, line, eoln); //read complete line meta information
-			IOUtils::stripComments(line);
-			const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ',');
+				if (ncols > 1) {
+					for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+						IOUtils::toUpper(*it);
+					}
 
-			if (ncols > 1) {
-				for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
-					IOUtils::toUpper(*it);
+					const set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
+					excluded_params[ tmpvec[0] ] = tmpset;
 				}
-
-				const set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
-				excluded_params[ tmpvec[0] ] = tmpset;
 			}
+		} catch (const std::exception&) {
+			fin.close();
+			throw;
 		}
-	} catch (const std::exception&) {
+
 		fin.close();
-		throw;
 	}
 
-	fin.close();
+	vector<string> exclude_keys;
+	const size_t nrOfStations = cfg.findKeys(exclude_keys, "::EXCLUDE", "Input", true);
+	for (size_t ii=0; ii<nrOfStations; ++ii) {
+		const size_t found = exclude_keys[ii].find_first_of(":");
+		if (found==std::string::npos) continue;
+
+		const string station( exclude_keys[ii].substr(0,found) );
+		std::vector<std::string> vecString;
+		cfg.getValue(exclude_keys[ii], "Input", vecString);
+		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+exclude_keys[ii]+"\"", AT);
+		for(vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
+			IOUtils::toUpper(*it);
+		}
+
+		const set<string> tmpset(vecString.begin(), vecString.end());
+		excluded_params[ station ] = tmpset;
+	}
 }
 
 /**

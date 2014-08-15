@@ -63,7 +63,7 @@ namespace mio {
  * - STRICTFORMAT: Whether the NetCDF file should be strictly compliant with the CNRM standard; Parameters not present
  *                 in the specification will be omitted; [Input] and [Output] section
  *
- * @section example Example use
+ * @section netcdf_example Example use
  * @code
  * [Input]
  * DEM     = NETCDF
@@ -71,7 +71,7 @@ namespace mio {
  * DEMVAR  = z
  * @endcode
  *
- * @section Compilation
+ * @section netcdf_compilation Compilation
  * In order to compile this plugin, you need libnetcdf (for C). For Linux, please select both the libraries and
  * their development files in your package manager.
  */

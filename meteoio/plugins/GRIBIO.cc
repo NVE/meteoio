@@ -49,7 +49,7 @@ namespace mio {
  *
  * As a side note, when calling read2DGrid(grid, filename), it will returns the first grid that is found.
  *
- * @section cosmo_partners COSMO Group
+ * @section gribio_cosmo_partners COSMO Group
  * This plugin has been developed primarily for reading GRIB files produced by COSMO (http://www.cosmo-model.org/) at MeteoSwiss.
  * COSMO (COnsortium for Small scale MOdelling) represents a non-hydrostatic limited-area atmospheric model, to be used both for operational and for research applications by the members of the consortium. The Consortium has the following members:
  *  - Germany, DWD, Deutscher Wetterdienst
@@ -67,7 +67,7 @@ namespace mio {
  * @section gribio_units Units
  * As specified by WMO.
  *
- * @section files_naming Files naming scheme
+ * @section gribio_files_naming Files naming scheme
  * When a grid is read by providing the filename to open, any file name will obviously work. Otherwise, the file names have to follow the pattern:\n
  * {GRID2DPREFIX}{ISO8601 numerical UTC date}{GRID2DEXT}\n
  * By default, GRID2DPREFIX is empty and GRID2DEXT is ".grb". This means that by default, a grib file containing data for 2013-10-15T12:00 would be:

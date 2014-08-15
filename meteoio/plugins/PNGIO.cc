@@ -30,7 +30,7 @@ using namespace std;
 namespace mio {
 /**
  * @page pngio PNGIO
- * @section template_format Format
+ * @section pngio_format Format
  * This plugin write data to the Portable Network Graphics format (see https://secure.wikimedia.org/wikipedia/en/wiki/Portable_Network_Graphics).
  * No data read has been implemented, because reading an existing file would require the exact knowlege of the color gradient that has been used
  * to create it. When writing grids, various color gradients will be used depending on the parameter that the data represents. Nodata values
@@ -38,10 +38,10 @@ namespace mio {
  * If a grid containing no data (ie: size 0x0) is sent to the plugin, then no file will be written.
  * Finally, the naming scheme for meteo grids should be: YYYY-MM-DDTHH.mm_{MeteoGrids::Parameters}.png
  *
- * @section template_units Units
+ * @section pngio_units Units
  * All units are MKSA except temperatures that are expressed in celcius.
  *
- * @section template_keywords Keywords
+ * @section pngio_keywords Keywords
  * This plugin uses the following keywords:
  * - COORDSYS: input coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra input coordinates parameters (see Coords) specified in the [Output] section
@@ -71,7 +71,7 @@ namespace mio {
  *    5426523.318065105000 (y coordinate of centre of upper left pixel in map units)
  * @endcode
  *
- * @section example Example use
+ * @section pngio_example Example use
  * @code
  * GRID2D = PNG
  * png_legend = false
@@ -79,7 +79,7 @@ namespace mio {
  * png_max_size = 1366*768
  * @endcode
  *
- * @section Compilation
+ * @section pngio_compilation
  * In order to compile this plugin, you need libpng and zlib. For Linux, please select both the libraries and their development files in your package manager.
  *
  * For Windows, you can find zlib at http://switch.dl.sourceforge.net/project/gnuwin32/zlib/1.2.3/zlib-1.2.3.exe
