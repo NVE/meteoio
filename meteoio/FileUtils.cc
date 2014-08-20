@@ -155,7 +155,8 @@ std::string getCWD()
 {
 	char buffer[MAX_PATH+1];
 	const DWORD status = GetCurrentDirectoryA(sizeof(buffer), buffer);
-	if (status==0 || status>MAX_PATH) throw IOException("Can not get current working directory", AT);
+	if (status==0 || status>MAX_PATH)
+		throw IOException("Can not get current working directory", AT);
 
 	return std::string( buffer );
 }
@@ -201,7 +202,8 @@ void readDirectory(const std::string& path, std::list<std::string>& dirlist, con
 std::string getCWD()
 {
 	char buffer[1024];
-	if ( getcwd(buffer,sizeof(buffer))==NULL ) throw IOException("Can not get current working directory", AT);
+	if ( getcwd(buffer,sizeof(buffer))==NULL )
+		throw IOException("Can not get current working directory", AT);
 
 	return std::string( buffer );
 }

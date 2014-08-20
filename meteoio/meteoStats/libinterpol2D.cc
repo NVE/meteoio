@@ -615,7 +615,6 @@ void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& 
  */
 double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, const double& dmax, const double& bearing, const size_t& i, const size_t& j)
 {
-	//const double dmin = 20.; //cells closer than dmin don't play any role
 	const double inv_dmin = 1./dmin;
 	const double inv_dmax = 1./dmax;
 	const double alpha_rad = bearing*Cst::to_rad;
@@ -634,13 +633,13 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 			//compute local sx
 			const double delta_elev = altitude - ref_altitude;
 			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
-			if(inv_distance>inv_dmin) continue; //don't consider cells closer than dmin
-			if(inv_distance<inv_dmax) break; //stop if distance>dmax
+			if(inv_distance<=inv_dmin) { //only for cells further than dmin
+				if(inv_distance<inv_dmax) break; //stop if distance>dmax
 
-			const double tan_slope = delta_elev*inv_distance;
-
-			//update max_tan_sx if necessary. We compare and tan(sx) in order to avoid computing atan()
-			if( fabs(tan_slope)>fabs(max_tan_slope) ) max_tan_slope = tan_slope;
+				const double tan_slope = delta_elev*inv_distance;
+				//update max_tan_sx if necessary. We compare and tan(sx) in order to avoid computing atan()
+				if( fabs(tan_slope)>fabs(max_tan_slope) ) max_tan_slope = tan_slope;
+			}
 		}
 
 		//move to next cell
