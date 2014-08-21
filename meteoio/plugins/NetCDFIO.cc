@@ -77,6 +77,7 @@ namespace mio {
  */
 
 const double NetCDFIO::plugin_nodata = -9999999.; //CNRM-GAME nodata value
+const double NetCDFIO::epsilon = 1.0e-10; //when comparing timestamps
 
 const std::string NetCDFIO::cf_time = "time";
 const std::string NetCDFIO::cf_units = "units";
@@ -939,7 +940,8 @@ void NetCDFIO::get_parameters(const std::vector< std::vector<MeteoData> >& vecMe
 		for (size_t jj=0; jj<vecMeteo[ii].size(); ++jj) {
 			const MeteoData& meteo_data = vecMeteo[ii][jj];
 
-			if (dates[jj] != meteo_data.date.getModifiedJulianDate()) inconsistent = true;
+			if (!IOUtils::checkEpsilonEquality(dates[jj], meteo_data.date.getModifiedJulianDate(), NetCDFIO::epsilon))
+				inconsistent = true;
 
 			if (jj == 0) {
 				map_data_1D[cnrm_latitude][ii] = meteo_data.meta.position.getLat();
