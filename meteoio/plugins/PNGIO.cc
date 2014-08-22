@@ -553,6 +553,11 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			gradient.set(Gradient::terrain, min, max, autoscale);
 	} else if(parameter==MeteoGrids::SLOPE) {
 		gradient.set(Gradient::slope, min, max, autoscale);
+	} else if(parameter==MeteoGrids::SHADE) {
+		if(!autoscale) {
+			min = 0.; max = 1.;
+		}
+		gradient.set(Gradient::blktowhite, min, max, autoscale);
 	} else if(parameter==MeteoGrids::AZI) {
 		if(!autoscale) {
 			min = 0.;
@@ -609,12 +614,12 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::blktowhite, min, max, autoscale);
-	} /*else if(parameter==MeteoGrids::TAU_CLD) {
+	} else if(parameter==MeteoGrids::TAU_CLD) {
 		if(!autoscale) {
 			min = 0.; max = 1.;
 		}
 		gradient.set(Gradient::blktowhite, min, max, autoscale);
-	}*/ else if(parameter==MeteoGrids::ISWR) {
+	} else if(parameter==MeteoGrids::ISWR) {
 		if(!autoscale) {
 			min = 0.; max = 800.;
 		}

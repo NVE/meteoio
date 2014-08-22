@@ -384,7 +384,7 @@ bool AllSkyLWGenerator::generate(const size_t& param, MeteoData& md)
 	if (value==IOUtils::nodata) {
 		const double TA=md(MeteoData::TA), RH=md(MeteoData::RH);
 		if (TA==IOUtils::nodata || RH==IOUtils::nodata) return false;
-		double cloudiness = (md.param_exists("TAU_CLD"))? Atmosphere::Kasten_cloudiness( md("TAU_CLD") ) : IOUtils::nodata;
+		double cloudiness = (md.param_exists("TAU_CLD"))? Atmosphere::Kasten_cloudiness( 1.-md("TAU_CLD") ) : IOUtils::nodata;
 
 		const string station_hash = md.meta.stationID + ":" + md.meta.stationName;
 		const double julian_gmt = md.date.getJulian(true);
@@ -465,7 +465,7 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if(value == IOUtils::nodata) {
-		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS);
+		const double ISWR=md(MeteoData::ISWR), RSWR=md(MeteoData::RSWR), HS=md(MeteoData::HS), TAU_CLD=md(MeteoData::TAU_CLD);
 		double TA=md(MeteoData::TA), RH=md(MeteoData::RH), ILWR=md(MeteoData::ILWR);
 
 		const double lat = md.meta.position.getLat();
@@ -492,7 +492,7 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 
 		sun.setLatLon(lat, lon, alt);
 		sun.setDate(md.date.getJulian(true), 0.);
-		const double solarIndex = (ILWR!=IOUtils::nodata)? getSolarIndex(TA, RH, ILWR) : 1.;
+		const double solarIndex = (TAU_CLD!=IOUtils::nodata)? TAU_CLD : (ILWR!=IOUtils::nodata)? getSolarIndex(TA, RH, ILWR) : 1.;
 
 		const double P=md(MeteoData::P);
 		if(P==IOUtils::nodata)

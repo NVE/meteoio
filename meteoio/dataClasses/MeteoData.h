@@ -54,7 +54,7 @@ class MeteoGrids {
 		                 ISWR, ///< Incoming short wave radiation
 		                 RSWR, ///< Reflected short wave radiation
 		                 ILWR, ///< Incoming long wave radiation
-		                 //TAU_CLD,  ///< Cloud transmissivity, or ISWR/ISWR_clear_sky, aka solar index
+		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 		                 HS, ///< Height of snow
 		                 HNW, ///< Water equivalent of precipitations, either solid or liquid
 		                 TSG, ///< Temperature ground surface
@@ -67,6 +67,7 @@ class MeteoGrids {
 		                 ROT, ///< Total generated runoff
 		                 ALB, ///< Albedo
 		                 DEM, ///< Digital Elevation Model
+				 SHADE, ///< Hillshade
 		                 SLOPE, ///< DEM slope angle
 		                 AZI, ///< DEM slope azimuth
 		                 lastparam=AZI};
@@ -106,7 +107,7 @@ class MeteoData {
 		                 RSWR, ///< Reflected short wave radiation
 		                 ISWR, ///< Incoming short wave radiation
 		                 ILWR, ///< Incoming long wave radiation (downwelling)
-		                 //TAU_CLD,  ///< Cloud transmissivity, or ISWR/ISWR_clear_sky, aka solar index
+		                 TAU_CLD, ///< Cloud transmissivity or ISWR/ISWR_clear_sky
 		                 HNW, ///< Water equivalent (water depth) of precipitations, either solid or liquid
 		                 lastparam=HNW};
 
