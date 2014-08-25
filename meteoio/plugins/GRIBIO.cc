@@ -373,8 +373,6 @@ void GRIBIO::read2Dlevel(grib_handle* h, Grid2DObject& grid_out, const bool& rea
 	//cells were not square, we have to resample
 	if (factor_x!=IOUtils::nodata && factor_y!=IOUtils::nodata) {
 		grid_out.grid2D = ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, factor_x, factor_y);
-		grid_out.ncols = grid_out.grid2D.getNx();
-		grid_out.nrows = grid_out.grid2D.getNy();
 	}
 	free(values);
 }
@@ -512,10 +510,10 @@ void GRIBIO::readWind(const std::string& filename, const Date& date)
 		read2DGrid_indexed(33.2, 105, 10, date, U); //U_10M, also in 110, 10 as U
 		read2DGrid_indexed(34.2, 105, 10, date, V); //V_10M, also in 110, 10 as V
 
-		VW.set(U.ncols, U.nrows, U.cellsize, U.llcorner);
-		DW.set(U.ncols, U.nrows, U.cellsize, U.llcorner);
-		for(size_t jj=0; jj<VW.nrows; jj++) {
-			for(size_t ii=0; ii<VW.ncols; ii++) {
+		VW.set(U.getNx(), U.getNy(), U.cellsize, U.llcorner);
+		DW.set(U.getNx(), U.getNy(), U.cellsize, U.llcorner);
+		for(size_t jj=0; jj<VW.getNy(); jj++) {
+			for(size_t ii=0; ii<VW.getNx(); ii++) {
 				VW(ii,jj) = sqrt( Optim::pow2(U(ii,jj)) + Optim::pow2(V(ii,jj)) );
 				DW(ii,jj) = fmod( atan2( U(ii,jj), V(ii,jj) ) * Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
@@ -540,8 +538,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 			Grid2DObject ta;
 			read2DGrid_indexed(11.2, 105, 2, date, ta); //T_2M
 			read2DGrid_indexed(17.2, 105, 2, date, grid_out); //TD_2M
-			for(size_t jj=0; jj<grid_out.nrows; jj++) {
-				for(size_t ii=0; ii<grid_out.ncols; ii++) {
+			for(size_t jj=0; jj<grid_out.getNy(); jj++) {
+				for(size_t ii=0; ii<grid_out.getNx(); ii++) {
 					grid_out(ii,jj) = Atmosphere::DewPointtoRh(grid_out(ii,jj), ta(ii,jj), true);
 				}
 			}
@@ -597,8 +595,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	}
 	if(parameter==MeteoGrids::AZI) {
 		read2DGrid_indexed(99.202, 1, 0, date, grid_out); //SLO_ASP
-		for(size_t jj=0; jj<grid_out.nrows; jj++) {
-			for(size_t ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for(size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = fmod( grid_out(ii,jj)*Cst::to_deg + 360. + bearing_offset, 360.); // turn into degrees [0;360)
 			}
 		}
@@ -610,16 +608,16 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 	 //we need to use VW, DW, correct for re-projection and recompute U,V
 	if(parameter==MeteoGrids::U) {
 		readWind(filename, date);
-		for(size_t jj=0; jj<grid_out.nrows; jj++) {
-			for(size_t ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for(size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = VW(ii,jj)*sin(DW(ii,jj)*Cst::to_rad);
 			}
 		}
 	}
 	if(parameter==MeteoGrids::V) {
 		readWind(filename, date);
-		for(size_t jj=0; jj<grid_out.nrows; jj++) {
-			for(size_t ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for(size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = VW(ii,jj)*cos(DW(ii,jj)*Cst::to_rad);
 			}
 		}

@@ -70,18 +70,15 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
 
 /**
 * @brief Constructor that sets variables.
-* @param i_ncols number of colums in the grid2D
-* @param i_nrows number of rows in the grid2D
 * @param i_cellsize value for cellsize in grid2D
 * @param i_llcorner lower lower corner point
 * @param i_altitude grid2D of elevations
 * @param i_update also update slope/normals/curvatures and their min/max? (default=true)
 * @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
-DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
-                     const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_altitude,
+DEMObject::DEMObject(const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_altitude,
                      const bool& i_update, const slope_type& i_algorithm)
-           : Grid2DObject(i_ncols, i_nrows, i_cellsize, i_llcorner, i_altitude),
+           : Grid2DObject(i_cellsize, i_llcorner, i_altitude),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
@@ -104,7 +101,7 @@ DEMObject::DEMObject(const size_t& i_ncols, const size_t& i_nrows,
 * @param i_algorithm specify the default algorithm to use for slope computation (default=DFLT)
 */
 DEMObject::DEMObject(const Grid2DObject& i_dem, const bool& i_update, const slope_type& i_algorithm)
-           : Grid2DObject(i_dem.ncols, i_dem.nrows, i_dem.cellsize, i_dem.llcorner, i_dem.grid2D),
+           : Grid2DObject(i_dem.cellsize, i_dem.llcorner, i_dem.grid2D),
              slope(), azi(), curvature(), Nx(), Ny(), Nz(),
              min_altitude(Cst::dbl_max), min_slope(Cst::dbl_max), min_curvature(Cst::dbl_max),
              max_altitude(Cst::dbl_min), max_slope(Cst::dbl_min), max_curvature(Cst::dbl_min),
@@ -216,16 +213,16 @@ void DEMObject::update(const slope_type& algorithm) {
 
 	// Creating tables
 	if(update_flag&SLOPE) {
-		slope.resize(ncols, nrows);
-		azi.resize(ncols, nrows);
+		slope.resize(getNx(), getNy());
+		azi.resize(getNx(), getNy());
 	}
 	if(update_flag&CURVATURE) {
-		curvature.resize(ncols, nrows);
+		curvature.resize(getNx(), getNy());
 	}
 	if(update_flag&NORMAL) {
-		Nx.resize(ncols, nrows);
-		Ny.resize(ncols, nrows);
-		Nz.resize(ncols, nrows);
+		Nx.resize(getNx(), getNy());
+		Ny.resize(getNx(), getNy());
+		Nz.resize(getNx(), getNy());
 	}
 
 	CalculateAziSlopeCurve(algorithm);
@@ -316,6 +313,8 @@ void DEMObject::updateAllMinMax() {
 */
 void DEMObject::printFailures() {
 	bool header=true;
+	const size_t ncols = getNx();
+	const size_t nrows = getNy();
 
 	if(update_flag&SLOPE) {
 		for ( size_t j = 0; j < nrows; j++ ) {
@@ -362,6 +361,9 @@ void DEMObject::printFailures() {
 */
 void DEMObject::sanitize() {
 	if(slope_failures>0 || curvature_failures>0) {
+		const size_t ncols = getNx();
+		const size_t nrows = getNy();
+
 		for ( size_t j = 0; j < nrows; j++ ) {
 			for ( size_t i = 0; i < ncols; i++ ) {
 				if(update_flag&SLOPE) {
@@ -389,13 +391,15 @@ void DEMObject::sanitize() {
 */
 Grid2DObject DEMObject::getHillshade(const double& elev, const double& azimuth) const
 {
-	Grid2DObject hillshade(ncols, nrows, cellsize, llcorner);
-
 	if(slope.isEmpty() || azi.isEmpty())
 		throw InvalidArgumentException("Hillshade computation requires slope and azimuth!", AT);
 
 	const double zenith_rad = (90.-elev)*Cst::to_rad;
 	const double azimuth_rad = azimuth*Cst::to_rad;
+	const size_t ncols = getNx();
+	const size_t nrows = getNy();
+
+	Grid2DObject hillshade(ncols, nrows, cellsize, llcorner);
 
 	for ( size_t j = 0; j < nrows; j++ ) {
 		for ( size_t i = 0; i < ncols; i++ ) {
@@ -547,7 +551,7 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_
 				pts.ix = ix;
 				pts.iy = iy;
 				//make sure we only return points within the dem
-				if(ix>0 && ix<(signed)ncols && iy>0 && iy<(signed)nrows) {
+				if(ix>0 && ix<(signed)getNx() && iy>0 && iy<(signed)getNy()) {
 					vec_points.push_back(pts);
 				}
 			}
@@ -577,17 +581,17 @@ void DEMObject::getPointsBetween(const Coords& point, const double& bearing, std
 	//define the boundaries according to the quadrant we are in
 	double xlim, ylim;
 	if(bear>=0. && bear<90.) {
-		xlim = (double)(ncols-1);
-		ylim = (double)(nrows-1);
+		xlim = (double)(getNx()-1);
+		ylim = (double)(getNy()-1);
 	} else if (bear>=90. && bear<180.) {
-		xlim = (double)(ncols-1);
+		xlim = (double)(getNx()-1);
 		ylim = 0.;
 	} else if (bear>=180. && bear<270.) {
 		xlim = 0.;
 		ylim = 0.;
 	} else {
 		xlim = 0.;
-		ylim = (double)(nrows-1);
+		ylim = (double)(getNy()-1);
 	}
 
 	//calculate the two possible intersections between the bearing line and the boundaries
@@ -691,8 +695,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	//Now, calculate the parameters using the previously defined function pointer
-	for ( size_t j = 0; j < nrows; j++ ) {
-		for ( size_t i = 0; i < ncols; i++ ) {
+	for ( size_t j = 0; j < getNy(); j++ ) {
+		for ( size_t i = 0; i < getNx(); i++ ) {
 			if( grid2D(i,j) == IOUtils::nodata ) {
 				if(update_flag&SLOPE) {
 					slope(i,j) = azi(i,j) = IOUtils::nodata;
@@ -726,8 +730,8 @@ void DEMObject::CalculateAziSlopeCurve(slope_type algorithm) {
 	}
 
 	if((update_flag&SLOPE) && (algorithm==D8)) { //extra processing required: discretization
-		for ( size_t j = 0; j < nrows; j++ ) {
-			for ( size_t i = 0; i < ncols; i++ ) {
+		for ( size_t j = 0; j < getNy(); j++ ) {
+			for ( size_t i = 0; i < getNx(); i++ ) {
 					//TODO: process flats by an extra algorithm
 					if(azi(i,j)!=IOUtils::nodata)
 						azi(i,j) = fmod(floor( (azi(i,j)+22.5)/45. )*45., 360.);
@@ -1016,10 +1020,10 @@ double DEMObject::safeGet(const int i, const int j)
 //that is, even for coordinates outside of the grid (where it would return nodata)
 //this is to make implementing the slope/curvature computation easier for edges, holes, etc
 
-	if(i<0 || i>=(signed)ncols) {
+	if(i<0 || i>=(signed)getNx()) {
 		return IOUtils::nodata;
 	}
-	if(j<0 || j>=(signed)nrows) {
+	if(j<0 || j>=(signed)getNy()) {
 		return IOUtils::nodata;
 	}
 
@@ -1068,6 +1072,152 @@ std::iostream& operator>>(std::iostream& is, DEMObject& dem) {
 	is.read(reinterpret_cast<char*>(&dem.slope_failures), sizeof(dem.slope_failures));
 	is.read(reinterpret_cast<char*>(&dem.curvature_failures), sizeof(dem.curvature_failures));
 	return is;
+}
+
+DEMObject& DEMObject::operator=(const double& value) {
+	grid2D = value;
+	const size_t nx = getNx(), ny = getNy();
+	slope.resize(nx, ny, 0.);
+	azi.resize(nx, ny, 0.);
+	curvature.resize(nx, ny, 0.);
+	Nx.resize(nx, ny, 0.);
+	Ny.resize(nx, ny, 0.);
+	Nz.resize(nx, ny, 0.);
+	min_altitude = grid2D.getMin();
+	max_altitude = grid2D.getMax();
+	min_slope = 0.;
+	max_slope = 0.;
+	min_curvature = 0.;
+	max_curvature = 0.;
+	return *this;
+}
+
+DEMObject& DEMObject::operator+=(const double& rhs) {
+	grid2D += rhs;
+	updateAllMinMax();
+	return *this;
+}
+
+const DEMObject DEMObject::operator+(const double& rhs) {
+	DEMObject result = *this;
+	result.grid2D += rhs;
+	result.updateAllMinMax();
+	return result;
+}
+
+DEMObject& DEMObject::operator+=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D += rhs.grid2D;
+	update();
+	return *this;
+}
+
+const DEMObject DEMObject::operator+(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	DEMObject result(*this);
+	result.grid2D += rhs.grid2D;
+	result.update();
+	return result;
+}
+
+DEMObject& DEMObject::operator-=(const double& rhs) {
+	grid2D -= rhs;
+	updateAllMinMax();
+	return *this;
+}
+
+const DEMObject DEMObject::operator-(const double& rhs) {
+	DEMObject result(*this);
+	result.grid2D -= rhs;
+	result.updateAllMinMax();
+	return result;
+}
+
+DEMObject& DEMObject::operator-=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D -= rhs.grid2D;
+	update();
+	return *this;
+}
+
+const DEMObject DEMObject::operator-(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	DEMObject result(*this);
+	result.grid2D -= rhs.grid2D;
+	result.update();
+	return result;
+}
+
+DEMObject& DEMObject::operator*=(const double& rhs) {
+	grid2D *= rhs;
+	update();
+	return *this;
+}
+
+const DEMObject DEMObject::operator*(const double& rhs) {
+	DEMObject result(*this);
+	result.grid2D *= rhs;
+	result.update();
+	return result;
+}
+
+DEMObject& DEMObject::operator*=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D *= rhs.grid2D;
+	update();
+	return *this;
+}
+
+const DEMObject DEMObject::operator*(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	DEMObject result(*this);
+	result.grid2D *= rhs.grid2D;
+	result.update();
+	return result;
+}
+
+DEMObject& DEMObject::operator/=(const double& rhs) {
+	grid2D /= rhs;
+	update();
+	return *this;
+}
+
+const DEMObject DEMObject::operator/(const double& rhs) {
+	DEMObject result(*this);
+	result.grid2D /= rhs;
+	result.update();
+	return result;
+}
+
+DEMObject& DEMObject::operator/=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D /= rhs.grid2D;
+	update();
+	return *this;
+}
+
+const DEMObject DEMObject::operator/(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	DEMObject result(*this);
+	result.grid2D /= rhs.grid2D;
+	result.update();
+	return result;
+}
+
+bool DEMObject::operator==(const DEMObject& in) const {
+	return (isSameGeolocalization(in) && grid2D==in.grid2D);
+}
+
+bool DEMObject::operator!=(const DEMObject& in) const {
+	return !(*this==in);
 }
 
 } //end namespace

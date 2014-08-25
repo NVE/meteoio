@@ -22,9 +22,9 @@ int main(void) {
 
 	io.write2DGrid(dem, MeteoGrids::DEM, Date(0.));
 
-	Grid2DObject slope(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.slope);
+	Grid2DObject slope(dem.cellsize, dem.llcorner, dem.slope);
 	io.write2DGrid(slope, MeteoGrids::SLOPE, Date(0.));
-	Grid2DObject azi(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.azi);
+	Grid2DObject azi(dem.cellsize, dem.llcorner, dem.azi);
 	io.write2DGrid(azi,"azi.png");
 
 	return 0;

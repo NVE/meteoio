@@ -63,7 +63,7 @@ bool grid2d(const unsigned int& n) {
 		}
 	}
 
-	Grid2DObject grid2(n, n, 100, llcorner, grid1.grid2D);
+	Grid2DObject grid2(100, llcorner, grid1.grid2D);
 	grid2.grid2D -= 8.;
 	grid2.grid2D /= 2.;
 	grid2.grid2D += 4.;
@@ -112,7 +112,7 @@ bool grid3d(const unsigned int& n) {
 		}
 	}
 
-	Grid3DObject grid2(n, n, n, 100, llcorner, grid1.grid3D);
+	Grid3DObject grid2(100, llcorner, grid1.grid3D);
 	grid2.grid3D -= 8.;
 	grid2.grid3D /= 2.;
 	grid2.grid3D += 4.;

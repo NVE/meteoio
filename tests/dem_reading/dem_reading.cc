@@ -72,11 +72,11 @@ bool makeDEMfiles(){
 	io.readDEM(dem);
 
 	cout << " ---- Generate file with slope values \n";
-	Grid2DObject slope(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.slope);
+	Grid2DObject slope(dem.cellsize, dem.llcorner, dem.slope);
 	io.write2DGrid(slope, MeteoGrids::SLOPE, Date(0.));
 
 	cout << " ---- Generate file with azimut values \n";
-	Grid2DObject azi(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.azi);
+	Grid2DObject azi(dem.cellsize, dem.llcorner, dem.azi);
 	io.write2DGrid(azi, MeteoGrids::AZI, Date(0.));
 
 	cout << " ---- Gridify \n"; // HACK how to controll, wath are points possible to controll

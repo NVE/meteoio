@@ -17,12 +17,12 @@ int main(void) {
 	std::cout << "Initial air temperatures grid: " << grid2.toString() << "\n";
 
 	//simple arithmetic operations (the nodata values are preserved)
-	grid2.grid2D -= 273.15;
+	grid2 -= 273.15;
 	std::cout << "Air temperatures grid in celsius: " << grid2.toString() << "\n";
 
 	//operations between grids
-	Grid2DObject grid3(grid1.ncols, grid1.nrows, grid1.cellsize, grid1.llcorner);
-	grid3.grid2D = grid1.grid2D * (grid2.grid2D / 100.); //the parenthesis are required because of constness
+	Grid2DObject grid3(grid1.getNx(), grid1.getNy(), grid1.cellsize, grid1.llcorner);
+	grid3 = grid1 * (grid2 / 100.); //the parenthesis are required because of constness
 	//std::cout << "Grids multiplication: " << grid3 << "\n";
 
 	//locate the cell that contains a specific point in real world coordinates
@@ -44,7 +44,7 @@ int main(void) {
 	//it is not possible to make grid operations if they don't have the same size
 	std::cout << "Q: What happens when we try to divide two grids that don't have the same size?\n\n";
 	try {
-		subgrid.grid2D /= grid1.grid2D;
+		subgrid /= grid1;
 	} catch(const std::exception &e) {
 		std::cout << e.what();
 		std::cout << "\nA: this is not possible and throws an exception!\n";

@@ -25,25 +25,139 @@ namespace mio {
 Grid3DObject& Grid3DObject::operator=(const Grid3DObject& source) {
 	if(this != &source) {
 		grid3D = source.grid3D;
-		ncols = source.ncols;
-		nrows = source.nrows;
-		ndepths = source.ndepths;
 		cellsize = source.cellsize;
-		llcorner = source.llcorner;
+ 		llcorner = source.llcorner;
 		z = source.z;
 		z_is_absolute = source.z_is_absolute;
 	}
 	return *this;
 }
 
+Grid3DObject& Grid3DObject::operator=(const double& value) {
+	grid3D = value;
+	return *this;
+}
+
+Grid3DObject& Grid3DObject::operator+=(const double& rhs) {
+	grid3D += rhs;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator+(const double& rhs) {
+	Grid3DObject result = *this;
+	result.grid3D += rhs;
+	return result;
+}
+
+Grid3DObject& Grid3DObject::operator+=(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid3D += rhs.grid3D;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator+(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid3DObject result(*this);
+	result.grid3D += rhs.grid3D;
+	return result;
+}
+
+Grid3DObject& Grid3DObject::operator-=(const double& rhs) {
+	grid3D -= rhs;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator-(const double& rhs) {
+	Grid3DObject result(*this);
+	result.grid3D -= rhs;
+	return result;
+}
+
+Grid3DObject& Grid3DObject::operator-=(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid3D -= rhs.grid3D;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator-(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid3DObject result(*this);
+	result.grid3D -= rhs.grid3D;
+	return result;
+}
+
+Grid3DObject& Grid3DObject::operator*=(const double& rhs) {
+	grid3D *= rhs;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator*(const double& rhs) {
+	Grid3DObject result(*this);
+	result.grid3D *= rhs;
+	return result;
+}
+
+Grid3DObject& Grid3DObject::operator*=(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid3D *= rhs.grid3D;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator*(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid3DObject result(*this);
+	result.grid3D *= rhs.grid3D;
+	return result;
+}
+
+Grid3DObject& Grid3DObject::operator/=(const double& rhs) {
+	grid3D /= rhs;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator/(const double& rhs) {
+	Grid3DObject result(*this);
+	result.grid3D /= rhs;
+	return result;
+}
+
+Grid3DObject& Grid3DObject::operator/=(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid3D /= rhs.grid3D;
+	return *this;
+}
+
+const Grid3DObject Grid3DObject::operator/(const Grid3DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid3DObject result(*this);
+	result.grid3D /= rhs.grid3D;
+	return result;
+}
+
+bool Grid3DObject::operator==(const Grid3DObject& in) const {
+	return (isSameGeolocalization(in) && grid3D==in.grid3D);
+}
+
+bool Grid3DObject::operator!=(const Grid3DObject& in) const {
+	return !(*this==in);
+}
+
 Grid3DObject::Grid3DObject()
-             : grid3D(), z(), llcorner(), cellsize(0.), ncols(0), nrows(0), ndepths(0), z_is_absolute(true) {}
+             : grid3D(), z(), llcorner(), cellsize(0.), z_is_absolute(true) {}
 
 Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3D,
                            const size_t& i_nx, const size_t& i_ny, const size_t& i_nz,
                            const size_t& i_nwidths, const size_t& i_nheights, const size_t& i_ndepths)
       : grid3D(i_grid3D.grid3D, i_nx,i_ny,i_nz, i_nwidths,i_nheights,i_ndepths), z(i_grid3D.z), llcorner(i_grid3D.llcorner),
-        cellsize(i_grid3D.cellsize), ncols(i_nwidths), nrows(i_nheights), ndepths(i_ndepths), z_is_absolute(true)
+        cellsize(i_grid3D.cellsize), z_is_absolute(true)
 {
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
@@ -57,21 +171,20 @@ Grid3DObject::Grid3DObject(const Grid3DObject& i_grid3D,
 Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner)
               : grid3D(i_ncols, i_nrows, i_ndepths, IOUtils::nodata), z(), llcorner(i_llcorner),
-                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true) {}
+                cellsize(i_cellsize), z_is_absolute(true) {}
 
 Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                            const double& i_cellsize, const Coords& i_llcorner, const double& init)
               : grid3D(i_ncols, i_nrows, i_ndepths, init), z(), llcorner(i_llcorner),
-                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true) {}
+                cellsize(i_cellsize), z_is_absolute(true) {}
 
 Grid3DObject::Grid3DObject(const Grid3DObject& i_grid, const double& init)
-              : grid3D(i_grid.ncols, i_grid.nrows, i_grid.ndepths, init), z(i_grid.z), llcorner(i_grid.llcorner),
-                cellsize(i_grid.cellsize), ncols(i_grid.ncols), nrows(i_grid.nrows), ndepths(i_grid.ndepths), z_is_absolute(i_grid.z_is_absolute) {}
+              : grid3D(i_grid.grid3D.getNx(), i_grid.grid3D.getNy(), i_grid.grid3D.getNz(), init), z(i_grid.z), llcorner(i_grid.llcorner),
+                cellsize(i_grid.cellsize), z_is_absolute(i_grid.z_is_absolute) {}
 
-Grid3DObject::Grid3DObject(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
-                           const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
+Grid3DObject::Grid3DObject(const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
               : grid3D(i_grid3D), z(), llcorner(i_llcorner),
-                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows), ndepths(i_ndepths), z_is_absolute(true) {}
+                cellsize(i_cellsize), z_is_absolute(true) {}
 
 bool Grid3DObject::gridify(std::vector<Coords>& vec_points) const
 {
@@ -117,15 +230,18 @@ bool Grid3DObject::grid_to_WGS84(Coords& point) const
 		return false;
 	}
 
-	if(i>(signed)ncols || i<0 || j>(signed)nrows || j<0 || k>(signed)ndepths || k<0) {
+	const int ncols = (signed)getNx();
+	const int nrows = (signed)getNy();
+	const int ndepths = (signed)getNz();
+	if(i>ncols || i<0 || j>nrows || j<0 || k>ndepths || k<0) {
 		//the point is outside the grid, we reset the indices to the closest values
 		//still fitting in the grid and return an error
 		if(i<0) i=0;
 		if(j<0) j=0;
 		if(k<0) k=0;
-		if(i>(signed)ncols) i=(signed)ncols;
-		if(j>(signed)nrows) j=(signed)nrows;
-		if(k>(signed)ndepths) k=(signed)ndepths;
+		if(i>ncols) i=ncols;
+		if(j>nrows) j=nrows;
+		if(k>ndepths) k=ndepths;
 		point.setGridIndex(i, j, k, false);
 		return false;
 	}
@@ -179,24 +295,24 @@ bool Grid3DObject::WGS84_to_grid(Coords point) const
 		i=0;
 		error_code=false;
 	}
-	if(i>(signed)ncols) {
-		i=(signed)ncols;
+	if(i>(signed)grid3D.getNx()) {
+		i=(signed)grid3D.getNx();
 		error_code=false;
 	}
 	if(j<0) {
 		j=0;
 		error_code=false;
 	}
-	if(j>(signed)nrows) {
-		j=(signed)nrows;
+	if(j>(signed)grid3D.getNy()) {
+		j=(signed)grid3D.getNy();
 		error_code=false;
 	}
 	if(k<0) {
 		k=0;
 		error_code=false;
 	}
-	if(k>(signed)ndepths) {
-		k=(signed)ndepths;
+	if(k>(signed)grid3D.getNz()) {
+		k=(signed)grid3D.getNz();
 		error_code=false;
 	}
 
@@ -208,79 +324,62 @@ void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_
                        const double& i_cellsize, const Coords& i_llcorner)
 {
 	grid3D.resize(i_ncols, i_nrows, i_ndepths, IOUtils::nodata);
-	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
+	setValues(i_cellsize, i_llcorner);
 }
 
 void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
                        const double& i_cellsize, const Coords& i_llcorner, const double& init)
 {
 	grid3D.resize(i_ncols, i_nrows, i_ndepths, init);
-	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
+	setValues(i_cellsize, i_llcorner);
 }
 
-void Grid3DObject::set(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
-                       const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
+void Grid3DObject::set(const double& i_cellsize, const Coords& i_llcorner, const Array3D<double>& i_grid3D)
 {
-	//Test for equality in size: Only compatible Array3D<double> grids are permitted
-	if ((i_ncols != i_grid3D.getNx()) || (i_nrows != i_grid3D.getNy()) || (i_ndepths != i_grid3D.getNz())) {
-		std::ostringstream ss;
-		ss << "Trying to initialize a ( " << i_ncols << " x " << i_nrows << " x " << i_ndepths << " ) Grid3DObject with a ";
-		ss << "( " << i_grid3D.getNx() << " x " << i_grid3D.getNy() << " x " << i_grid3D.getNz() << " ) 3D array";
-		throw IOException(ss.str(), AT);
-	}
-
-	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize, i_llcorner);
+	setValues(i_cellsize, i_llcorner);
 	grid3D = i_grid3D; //copy by value
 }
 
 void Grid3DObject::size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) const
 {
-	o_ncols = ncols;
-	o_nrows = nrows;
-	o_ndepths = ndepths;
+	o_ncols = grid3D.getNx();
+	o_nrows = grid3D.getNy();
+	o_ndepths = grid3D.getNz();
 }
 
 size_t Grid3DObject::getNx() const {
-	return ncols;
+	return grid3D.getNx();
 }
 
 size_t Grid3DObject::getNy() const {
-	return nrows;
+	return grid3D.getNy();
 }
 
 size_t Grid3DObject::getNz() const {
-	return ndepths;
+	return grid3D.getNz();
 }
 
 void Grid3DObject::clear() {
 	grid3D.clear();
-	ncols = nrows = ndepths = 0;
 }
 
 bool Grid3DObject::isEmpty() const {
-	return (ncols==0 && nrows==0 && ndepths==0);
+	return (grid3D.getNx()==0 && grid3D.getNy()==0 && grid3D.getNz()==0);
 }
 
-void Grid3DObject::setValues(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
-                             const double& i_cellsize)
+void Grid3DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 {
-	ncols = i_ncols;
-	nrows = i_nrows;
-	ndepths = i_ndepths;
 	cellsize = i_cellsize;
-}
-
-void Grid3DObject::setValues(const size_t& i_ncols, const size_t& i_nrows, const size_t& i_ndepths,
-                             const double& i_cellsize, const Coords& i_llcorner)
-{
-	setValues(i_ncols, i_nrows, i_ndepths, i_cellsize);
 	llcorner = i_llcorner;
 }
 
-bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
+bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target) const
 {
-	if( ncols==target.ncols && nrows==target.nrows && ndepths==target.ndepths &&
-		cellsize==target.cellsize && llcorner==target.llcorner) {
+	if( grid3D.getNx()==target.grid3D.getNx() &&
+	    grid3D.getNy()==target.grid3D.getNy() &&
+	    grid3D.getNz()==target.grid3D.getNz() &&
+	    cellsize==target.cellsize &&
+	    llcorner==target.llcorner) {
 		return true;
 	} else {
 		return false;
@@ -289,6 +388,8 @@ bool Grid3DObject::isSameGeolocalization(const Grid3DObject& target)
 
 void Grid3DObject::extractLayer(const size_t& i_z, Grid2DObject& layer)
 {
+	const size_t ncols = grid3D.getNx();
+	const size_t nrows = grid3D.getNy();
 	layer.set(ncols, nrows, cellsize, llcorner);
 	for(size_t jj=0; jj<nrows; jj++) {
 		for(size_t ii=0; ii<ncols; ii++) {
@@ -317,16 +418,13 @@ const std::string Grid3DObject::toString() const {
 	std::ostringstream os;
 	os << "<Grid3DObject>\n";
 	os << llcorner.toString();
-	os << ncols << " x " << nrows  << " x " << ndepths << " @ " << cellsize << "m\n";
+	os << grid3D.getNx() << " x " << grid3D.getNy()  << " x " << grid3D.getNz() << " @ " << cellsize << "m\n";
 	os << grid3D.toString();
 	os << "</Grid3DObject>\n";
 	return os.str();
 }
 
 std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid) {
-	os.write(reinterpret_cast<const char*>(&grid.ncols), sizeof(grid.ncols));
-	os.write(reinterpret_cast<const char*>(&grid.nrows), sizeof(grid.nrows));
-	os.write(reinterpret_cast<const char*>(&grid.ndepths), sizeof(grid.ndepths));
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
 	os.write(reinterpret_cast<const char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
 
@@ -340,9 +438,6 @@ std::iostream& operator<<(std::iostream& os, const Grid3DObject& grid) {
 }
 
 std::iostream& operator>>(std::iostream& is, Grid3DObject& grid) {
-	is.read(reinterpret_cast<char*>(&grid.ncols), sizeof(grid.ncols));
-	is.read(reinterpret_cast<char*>(&grid.nrows), sizeof(grid.nrows));
-	is.read(reinterpret_cast<char*>(&grid.ndepths), sizeof(grid.ndepths));
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
 	is.read(reinterpret_cast<char*>(&grid.z_is_absolute), sizeof(grid.z_is_absolute));
 

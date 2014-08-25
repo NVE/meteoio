@@ -321,8 +321,6 @@ void NetCDFIO::copy_grid(const size_t& latlen, const size_t& lonlen, const doubl
 
 	if (resampling_factor_x != IOUtils::nodata) {
 		grid_out.grid2D = ResamplingAlgorithms2D::BilinearResampling(grid_out.grid2D, resampling_factor_x, resampling_factor_y);
-		grid_out.ncols = grid_out.grid2D.getNx();
-		grid_out.nrows = grid_out.grid2D.getNy();
 	}
 }
 
@@ -1009,9 +1007,9 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 	const bool is_record = (date != Date());
 	const bool exists = IOUtils::fileExists(filename);
 
-	double *lat_array = new double[grid_in.nrows];
-	double *lon_array = new double[grid_in.ncols];
-	double *data = new double[grid_in.nrows * grid_in.ncols];
+	double *lat_array = new double[grid_in.getNy()];
+	double *lon_array = new double[grid_in.getNx()];
+	double *data = new double[grid_in.getNy() * grid_in.getNx()];
 
 	calculate_dimensions(grid_in, lat_array, lon_array);
 	fill_data(grid_in, data);
@@ -1049,10 +1047,10 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 			get_dimension(ncid, varname, vid_var, dimid, dim_varid, dimname, dimlen);
 
 			if (is_record) {
-				if ((dimname.size() != 3) || (dimname[0] != cf_time) || (dimname[1] != cf_latitude) || (dimname[2] != cf_longitude) || (dimlen[1]!=grid_in.nrows) || (dimlen[2]!=grid_in.ncols))
+				if ((dimname.size() != 3) || (dimname[0] != cf_time) || (dimname[1] != cf_latitude) || (dimname[2] != cf_longitude) || (dimlen[1]!=grid_in.getNy()) || (dimlen[2]!=grid_in.getNx()))
 					throw IOException("Variable '" + varname  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
 			} else {
-				if ((dimname[0] != cf_latitude) || (dimname[1] != cf_longitude) || (dimlen[0]!=grid_in.nrows) || (dimlen[1]!=grid_in.ncols))
+				if ((dimname[0] != cf_latitude) || (dimname[1] != cf_longitude) || (dimlen[0]!=grid_in.getNy()) || (dimlen[1]!=grid_in.getNx()))
 					throw IOException("Variable '" + varname  + "' already defined with different dimensions in file '"+ filename  +"'", AT);
 			}
 		} else {
@@ -1089,7 +1087,7 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 
 	if (is_record) {
 		size_t pos_start = add_record(ncid, NetCDFIO::cf_time, vid_time, date.getModifiedJulianDate());
-		write_data(ncid, varname, vid_var, grid_in.nrows, grid_in.ncols, pos_start, data);
+		write_data(ncid, varname, vid_var, grid_in.getNy(), grid_in.getNx(), pos_start, data);
 	} else {
 		write_data(ncid, varname, vid_var, data);
 	}
@@ -1100,11 +1098,11 @@ void NetCDFIO::write2DGrid_internal(const Grid2DObject& grid_in, const std::stri
 
 void NetCDFIO::create_latlon_dimensions(const int& ncid, const Grid2DObject& grid_in, int& did_lat, int& did_lon, int& vid_lat, int& vid_lon)
 {
-	add_dimension(ncid, cf_latitude, grid_in.nrows, did_lat);
+	add_dimension(ncid, cf_latitude, grid_in.getNy(), did_lat);
 	add_1D_variable(ncid, cf_latitude, NC_DOUBLE, did_lat, vid_lat);
 	add_attributes_for_variable(ncid, vid_lat, cf_latitude);
 
-	add_dimension(ncid, cf_longitude, grid_in.ncols, did_lon);
+	add_dimension(ncid, cf_longitude, grid_in.getNx(), did_lon);
 	add_1D_variable(ncid, cf_longitude, NC_DOUBLE, did_lon, vid_lon);
 	add_attributes_for_variable(ncid, vid_lon, cf_longitude);
 }
@@ -1118,9 +1116,9 @@ void NetCDFIO::create_time_dimension(const int& ncid, int& did_time, int& vid_ti
 
 void NetCDFIO::fill_data(const Grid2DObject& grid, double*& data)
 {
-	for (size_t kk=0; kk<grid.nrows; ++kk) {
-		for (size_t ll=0; ll<grid.ncols; ++ll) {
-			data[kk*grid.ncols + ll] = grid.grid2D(ll,kk);
+	for (size_t kk=0; kk<grid.getNy(); ++kk) {
+		for (size_t ll=0; ll<grid.getNx(); ++ll) {
+			data[kk*grid.getNx() + ll] = grid.grid2D(ll,kk);
 		}
 	}
 }
@@ -1250,19 +1248,19 @@ void NetCDFIO::calculate_dimensions(const Grid2DObject& grid, double*& lat_array
 	// The idea is to use the difference in coordinates of the upper right and the lower left
 	// corner to calculate the lat/lon intervals between cells
 	Coords urcorner(grid.llcorner);
-	urcorner.setGridIndex(grid.ncols-1, grid.nrows-1, IOUtils::nodata, true);
+	urcorner.setGridIndex(grid.getNx()-1, grid.getNy()-1, IOUtils::nodata, true);
 	grid.gridify(urcorner);
 
-	const double lat_interval = (urcorner.getLat() - lat_array[0]) / (grid.nrows-1);
-	const double lon_interval = (urcorner.getLon() - lon_array[0]) / (grid.ncols-1);
+	const double lat_interval = (urcorner.getLat() - lat_array[0]) / (grid.getNy()-1);
+	const double lon_interval = (urcorner.getLon() - lon_array[0]) / (grid.getNx()-1);
 
 	// The method to use interval*ii is consistent with the corresponding
 	// calculation of the Grid2DObject::gridify method -> numerical stability
-	for (size_t ii=1; ii<grid.nrows; ++ii) {
+	for (size_t ii=1; ii<grid.getNy(); ++ii) {
 		lat_array[ii] = lat_array[0] + lat_interval*ii;
 	}
 
-	for (size_t ii=1; ii<grid.ncols; ++ii) {
+	for (size_t ii=1; ii<grid.getNx(); ++ii) {
 		lon_array[ii] = lon_array[0] + lon_interval*ii;
 	}
 }
@@ -1278,11 +1276,11 @@ void NetCDFIO::check_consistency(const int& ncid, const Grid2DObject& grid, doub
 	get_variable(ncid, cf_latitude, vid_lat);
 	get_variable(ncid, cf_longitude, vid_lon);
 
-	if ((latlen != grid.nrows) || (lonlen != grid.ncols))
+	if ((latlen != grid.getNy()) || (lonlen != grid.getNx()))
 		throw IOException("Error while writing grid - grid size and lat/lon coordinates are inconsistent", AT);
 
-	double *lat = new double[grid.nrows];
-	double *lon = new double[grid.ncols];
+	double *lat = new double[grid.getNy()];
+	double *lon = new double[grid.getNx()];
 
 	read_data(ncid, cf_latitude, vid_lat, lat);
 	read_data(ncid, cf_longitude, vid_lon, lon);

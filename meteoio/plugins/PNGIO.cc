@@ -298,7 +298,7 @@ void PNGIO::readPOI(std::vector<Coords>&)
 
 Grid2DObject PNGIO::scaleGrid(const Grid2DObject& grid_in)
 { //scale input image
-	const double factor = getScaleFactor(grid_in.ncols, grid_in.nrows);
+	const double factor = getScaleFactor(grid_in.getNx(), grid_in.getNy());
 	if(scaling=="nearest")
 		return ResamplingAlgorithms2D::NearestNeighbour(grid_in, factor);
 	else if(scaling=="bilinear")
@@ -393,8 +393,8 @@ size_t PNGIO::setLegend(const size_t &ncols, const size_t &nrows, const double &
 
 void PNGIO::writeDataSection(const Grid2DObject& grid, const Array2D<double>& legend_array, const Gradient& gradient, const size_t& full_width, const png_structp& png_ptr, png_infop& info_ptr)
 {
-	const size_t ncols = grid.ncols;
-	const size_t nrows = grid.nrows;
+	const size_t ncols = grid.getNx();
+	const size_t nrows = grid.getNy();
 
 	// Allocate memory for one row (3 bytes per pixel - RGB)
 	const unsigned char channels = (indexed_png)? 1 : 3; //4 for rgba
@@ -492,7 +492,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const std::string& filename
 
 	//scale input image
 	const Grid2DObject grid = scaleGrid(grid_in);
-	const size_t ncols = grid.ncols, nrows = grid.nrows;
+	const size_t ncols = grid.getNx(), nrows = grid.getNy();
 	if(ncols==0 || nrows==0) return;
 
 	const double min = grid.grid2D.getMin();
@@ -537,7 +537,7 @@ void PNGIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 
 	//scale input image
 	Grid2DObject grid = scaleGrid(grid_in);
-	const size_t ncols = grid.ncols, nrows = grid.nrows;
+	const size_t ncols = grid.getNx(), nrows = grid.getNy();
 	if(ncols==0 || nrows==0) return;
 
 	double min = grid.grid2D.getMin();
@@ -667,7 +667,7 @@ void PNGIO::writeWorldFile(const Grid2DObject& grid_in, const std::string& filen
 	const double cellsize = grid_in.cellsize;
 	Coords world_ref = grid_in.llcorner;
 	world_ref.setProj(coordout, coordoutparam);
-	world_ref.moveByXY(.5*cellsize, (double(grid_in.nrows)+.5)*cellsize); //moving to center of upper left cell
+	world_ref.moveByXY(.5*cellsize, (double(grid_in.getNy())+.5)*cellsize); //moving to center of upper left cell
 
 	std::ofstream fout;
 	fout.open(world_file.c_str());

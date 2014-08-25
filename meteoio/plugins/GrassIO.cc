@@ -239,17 +239,17 @@ void GrassIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 	fout << setprecision(6) << fixed;
 
 	try {
-		fout << "north:" << (llcorner.getNorthing()+grid_in.cellsize*(double)grid_in.nrows) << "\n";
+		fout << "north:" << (llcorner.getNorthing()+grid_in.cellsize*(double)grid_in.getNy()) << "\n";
 		fout << "south:" << llcorner.getNorthing() << "\n";
-		fout << "east:"  << (llcorner.getEasting()+grid_in.cellsize*(double)grid_in.ncols)  << "\n";
+		fout << "east:"  << (llcorner.getEasting()+grid_in.cellsize*(double)grid_in.getNx())  << "\n";
 		fout << "west:"  << llcorner.getEasting() << "\n";
-		fout << "rows:"  << grid_in.nrows << "\n";
-		fout << "cols:"  << grid_in.ncols << "\n";
+		fout << "rows:"  << grid_in.getNy() << "\n";
+		fout << "cols:"  << grid_in.getNx() << "\n";
 
-		if(grid_in.nrows>0) {
-			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
+		if(grid_in.getNy()>0) {
+			for (size_t kk=grid_in.getNy()-1; kk < grid_in.getNy(); kk--) {
 				size_t ll = 0;
-				for (ll=0; ll < (grid_in.ncols-1); ll++){
+				for (ll=0; ll < (grid_in.getNx()-1); ll++){
 					if (grid_in(ll,kk) == IOUtils::nodata) {
 						fout << "* ";
 					} else {

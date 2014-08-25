@@ -159,8 +159,8 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		Grid2DObject V;
 		readGridLayer("u", 2, grid_out); //U
 		readGridLayer("v", 2, V);
-		for(size_t jj=0; jj<grid_out.nrows; jj++) {
-			for(size_t ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for(size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = sqrt( Optim::pow2(grid_out(ii,jj)) + Optim::pow2(V(ii,jj)) );
 			}
 		}
@@ -169,8 +169,8 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		Grid2DObject V;
 		readGridLayer("u", 2, grid_out); //U
 		readGridLayer("v", 2, V);
-		for(size_t jj=0; jj<grid_out.nrows; jj++) {
-			for(size_t ii=0; ii<grid_out.ncols; ii++) {
+		for(size_t jj=0; jj<grid_out.getNy(); jj++) {
+			for(size_t ii=0; ii<grid_out.getNx(); ii++) {
 				grid_out(ii,jj) = fmod( atan2( grid_out(ii,jj), V(ii,jj) ) * Cst::to_deg + 360., 360.); // turn into degrees [0;360)
 			}
 		}
@@ -203,14 +203,14 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		dem.setUpdatePpt(DEMObject::SLOPE);
 		readGridLayer(dem_marker, 2, dem);
 		dem.update();
-		grid_out.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.slope);
+		grid_out.set(dem.cellsize, dem.llcorner, dem.slope);
 	}
 	if(parameter==MeteoGrids::AZI) {
 		DEMObject dem;
 		dem.setUpdatePpt(DEMObject::SLOPE);
 		readGridLayer(dem_marker, 2, dem);
 		dem.update();
-		grid_out.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, dem.azi);
+		grid_out.set(dem.cellsize, dem.llcorner, dem.azi);
 	}
 
 	if(grid_out.isEmpty()) {

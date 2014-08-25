@@ -605,7 +605,7 @@ template<class T> void Array3D<T>::abs() {
 }
 
 template<class T> const Array3D<T> Array3D<T>::getAbs() const {
-	Array3D<T> result = *this; //make a copy
+	Array3D<T> result(*this); //make a copy
 	result.abs(); //already implemented
 
 	return result;
@@ -672,7 +672,7 @@ template<class T> Array3D<T>& Array3D<T>::operator+=(const Array3D<T>& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator+(const Array3D<T>& rhs)
 {
-	Array3D<T> result = *this; //make a copy
+	Array3D<T> result(*this); //make a copy
 	result += rhs; //already implemented
 
 	return result;
@@ -698,7 +698,7 @@ template<class T> Array3D<T>& Array3D<T>::operator+=(const T& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator+(const T& rhs)
 {
-	Array3D<T> result = *this;
+	Array3D<T> result(*this);
 	result += rhs; //already implemented
 
 	return result;
@@ -733,7 +733,7 @@ template<class T> Array3D<T>& Array3D<T>::operator-=(const Array3D<T>& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator-(const Array3D<T>& rhs)
 {
-	Array3D<T> result = *this; //make a copy
+	Array3D<T> result(*this); //make a copy
 	result -= rhs; //already implemented
 
 	return result;
@@ -747,7 +747,7 @@ template<class T> Array3D<T>& Array3D<T>::operator-=(const T& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator-(const T& rhs)
 {
-	Array3D<T> result = *this;
+	Array3D<T> result(*this);
 	result += -rhs; //already implemented
 
 	return result;
@@ -782,7 +782,7 @@ template<class T> Array3D<T>& Array3D<T>::operator*=(const Array3D<T>& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator*(const Array3D<T>& rhs)
 {
-	Array3D<T> result = *this; //make a copy
+	Array3D<T> result(*this); //make a copy
 	result *= rhs; //already implemented
 
 	return result;
@@ -808,7 +808,7 @@ template<class T> Array3D<T>& Array3D<T>::operator*=(const T& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator*(const T& rhs)
 {
-	Array3D<T> result = *this;
+	Array3D<T> result(*this);
 	result *= rhs; //already implemented
 
 	return result;
@@ -843,7 +843,7 @@ template<class T> Array3D<T>& Array3D<T>::operator/=(const Array3D<T>& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator/(const Array3D<T>& rhs)
 {
-	Array3D<T> result = *this; //make a copy
+	Array3D<T> result(*this); //make a copy
 	result /= rhs; //already implemented
 
 	return result;
@@ -857,14 +857,14 @@ template<class T> Array3D<T>& Array3D<T>::operator/=(const T& rhs)
 
 template<class T> const Array3D<T> Array3D<T>::operator/(const T& rhs)
 {
-	Array3D<T> result = *this;
+	Array3D<T> result(*this);
 	result *= (1./rhs); //already implemented
 
 	return result;
 }
 
 template<class T> bool Array3D<T>::operator==(const Array3D<T>& in) const {
-	size_t in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz();
+	const size_t in_nx=in.getNx(), in_ny=in.getNy(), in_nz=in.getNz();
 
 	if(nx!=in_nx || ny!=in_ny || nz!=in_nz)
 		return false;

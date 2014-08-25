@@ -160,11 +160,11 @@ inline double Interpol2D::weightInvDistN(const double& d2)
 */
 void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
 {
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	grid.set(dem.getNx(), dem.getNy(), dem.cellsize, dem.llcorner);
 
 	//provide each point with an altitude dependant pressure... it is worth what it is...
-	for (size_t j=0; j<grid.nrows; j++) {
-		for (size_t i=0; i<grid.ncols; i++) {
+	for (size_t j=0; j<grid.getNy(); j++) {
+		for (size_t i=0; i<grid.getNx(); i++) {
 			const double& cell_altitude=dem(i,j);
 			if (cell_altitude!=IOUtils::nodata) {
 				grid(i,j) = Atmosphere::stdAirPressure(cell_altitude);
@@ -184,11 +184,11 @@ void Interpol2D::stdPressure(const DEMObject& dem, Grid2DObject& grid)
 */
 void Interpol2D::constant(const double& value, const DEMObject& dem, Grid2DObject& grid)
 {
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	grid.set(dem.getNx(), dem.getNy(), dem.cellsize, dem.llcorner);
 
 	//fills a data table with constant values
-	for (size_t j=0; j<grid.nrows; j++) {
-		for (size_t i=0; i<grid.ncols; i++) {
+	for (size_t j=0; j<grid.getNy(); j++) {
+		for (size_t i=0; i<grid.getNx(); i++) {
 			if (dem(i,j)!=IOUtils::nodata) {
 				grid(i,j) = value;
 			} else {
@@ -230,11 +230,11 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
                                const DEMObject& dem, const size_t& nrOfNeighbors,
                                Grid2DObject& grid)
 {
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	grid.set(dem.getNx(), dem.getNy(), dem.cellsize, dem.llcorner);
 
 	//run algorithm
-	for (size_t j=0; j<grid.nrows; j++) {
-		for (size_t i=0; i<grid.ncols; i++) {
+	for (size_t j=0; j<grid.getNy(); j++) {
+		for (size_t i=0; i<grid.getNx(); i++) {
 			//LL_IDW_pixel returns nodata when appropriate
 			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors); //TODO: precompute in vectors
 		}
@@ -319,7 +319,7 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 		return;
 	}
 
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	grid.set(dem.getNx(), dem.getNy(), dem.cellsize, dem.llcorner);
 	std::vector<double> vecEastings, vecNorthings;
 	buildPositionsVectors(vecStations_in, vecEastings, vecNorthings);
 
@@ -327,8 +327,8 @@ void Interpol2D::IDW(const std::vector<double>& vecData_in, const std::vector<St
 	const double xllcorner = dem.llcorner.getEasting();
 	const double yllcorner = dem.llcorner.getNorthing();
 	const double cellsize = dem.cellsize;
-	for (size_t jj=0; jj<grid.nrows; jj++) {
-		for (size_t ii=0; ii<grid.ncols; ii++) {
+	for (size_t jj=0; jj<grid.getNy(); jj++) {
+		for (size_t ii=0; ii<grid.getNx(); ii++) {
 			if (dem(ii,jj)!=IOUtils::nodata) {
 				grid(ii,jj) = IDWCore((xllcorner+double(ii)*cellsize), (yllcorner+double(jj)*cellsize),
 				                           vecData_in, vecEastings, vecNorthings);
@@ -429,8 +429,8 @@ void Interpol2D::CurvatureCorrection(DEMObject& dem, const Grid2DObject& ta, Gri
 
 	const double orig_mean = grid.grid2D.getMean();
 
-	for (size_t j=0;j<grid.nrows;j++) {
-		for (size_t i=0;i<grid.ncols;i++) {
+	for (size_t j=0;j<grid.getNy();j++) {
+		for (size_t i=0;i<grid.getNx();i++) {
 			if(ta(i,j)>273.15) continue; //modify the grid of precipitations only if air temperature is below or at freezing
 
 			const double slope = dem.slope(i, j);
@@ -511,8 +511,8 @@ double Interpol2D::depositAroundCell(const DEMObject& dem, const size_t& ii, con
  */
 void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObject& ta, Grid2DObject& grid)
 {
-	for (size_t jj=1; jj<(grid.nrows-1); jj++) {
-		for (size_t ii=1; ii<(grid.ncols-1); ii++) {
+	for (size_t jj=1; jj<(grid.getNy()-1); jj++) {
+		for (size_t ii=1; ii<(grid.getNx()-1); ii++) {
 			if(grid(ii,jj)==IOUtils::nodata) continue;
 			if(ta(ii, jj)>Cst::t_water_freezing_pt) continue; //modify precipitation only for air temperatures at or below freezing
 
@@ -536,7 +536,7 @@ void Interpol2D::SteepSlopeRedistribution(const DEMObject& dem, const Grid2DObje
 				ii_dest += d_i;
 				jj_dest += d_j;
 
-				if ((ii_dest==0) || (jj_dest==0) || (ii_dest==(grid.ncols-1))|| (jj_dest==(grid.nrows-1))){
+				if ((ii_dest==0) || (jj_dest==0) || (ii_dest==(grid.getNx()-1))|| (jj_dest==(grid.getNy()-1))){
 					//we are getting out of the domain: deposit local contribution
 					grid(ii_dest, jj_dest) += counter*increment;
 					break;
@@ -621,7 +621,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 	const double ref_altitude = dem(i, j);
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
 	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
-	const int ncols = static_cast<int>(dem.ncols), nrows = static_cast<int>(dem.nrows);
+	const int ncols = static_cast<int>(dem.getNx()), nrows = static_cast<int>(dem.getNy());
 
 	int ll=ii, mm=jj;
 
@@ -664,7 +664,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 */
 void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const double& in_bearing, Grid2DObject& grid)
 {
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	grid.set(dem.getNx(), dem.getNy(), dem.cellsize, dem.llcorner);
 
 	const double dmin = 20.;
 	const double bearing_inc = 5.;
@@ -673,7 +673,7 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 	double bearing2 = fmod( in_bearing + bearing_width/2., 360. );
 	if (bearing1>bearing2) std::swap(bearing1, bearing2);
 
-	const size_t ncols = dem.ncols, nrows = dem.nrows;
+	const size_t ncols = dem.getNx(), nrows = dem.getNy();
 	for(size_t jj = 0; jj<nrows; jj++) {
 		for(size_t ii = 0; ii<ncols; ii++) {
 			double sum = 0.;
@@ -818,7 +818,7 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 		return;
 	}
 
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner);
+	grid.set(dem.getNx(), dem.getNy(), dem.cellsize, dem.llcorner);
 	const size_t nrOfMeasurments = vecStations.size();
 	//precompute various coordinates in the grid
 	const double llcorner_x = grid.llcorner.getEasting();
@@ -858,8 +858,8 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 
 	Matrix G0(nrOfMeasurments+1, (size_t)1);
 	//now, calculate each point
-	for(size_t j=0; j<grid.nrows; j++) {
-		for(size_t i=0; i<grid.ncols; i++) {
+	for(size_t j=0; j<grid.getNy(); j++) {
+		for(size_t i=0; i<grid.getNx(); i++) {
 			const double x = llcorner_x+static_cast<double>(i)*cellsize;
 			const double y = llcorner_y+static_cast<double>(j)*cellsize;
 

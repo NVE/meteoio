@@ -72,8 +72,7 @@ class DEMObject : public Grid2DObject {
 		DEMObject(const size_t& ncols_in, const size_t& nrows_in,
 		          const double& cellsize_in, const Coords& llcorner_in, const slope_type& i_algorithm=DFLT);
 
-		DEMObject(const size_t& ncols_in, const size_t& nrows_in,
-		          const double& cellsize_in, const Coords& llcorner_in, const Array2D<double>& altitude_in,
+		DEMObject(const double& cellsize_in, const Coords& llcorner_in, const Array2D<double>& altitude_in,
 		          const bool& i_update=true, const slope_type& i_algorithm=DFLT);
 
 		DEMObject(const Grid2DObject& dem_in, const bool& i_update=true, const slope_type& i_algorithm=DFLT);
@@ -102,6 +101,32 @@ class DEMObject : public Grid2DObject {
 		void getPointsBetween(const Coords& point, const double& bearing, std::vector<GRID_POINT_2D>& vec_points);
 		double getHorizon(const Coords& point, const double& bearing);
 		void getHorizon(const Coords& point, const double& increment, std::vector<double>& horizon);
+
+		DEMObject& operator=(const Grid2DObject&); ///<Assignement operator
+		DEMObject& operator=(const double& value); ///<Assignement operator
+
+		DEMObject& operator+=(const double& rhs);
+		const DEMObject operator+(const double& rhs);
+		DEMObject& operator+=(const Grid2DObject& rhs);
+		const DEMObject operator+(const Grid2DObject& rhs);
+
+		DEMObject& operator-=(const double& rhs);
+		const DEMObject operator-(const double& rhs);
+		DEMObject& operator-=(const Grid2DObject& rhs);
+		const DEMObject operator-(const Grid2DObject& rhs);
+
+		DEMObject& operator*=(const double& rhs);
+		const DEMObject operator*(const double& rhs);
+		DEMObject& operator*=(const Grid2DObject& rhs);
+		const DEMObject operator*(const Grid2DObject& rhs);
+
+		DEMObject& operator/=(const double& rhs);
+		const DEMObject operator/(const double& rhs);
+		DEMObject& operator/=(const Grid2DObject& rhs);
+		const DEMObject operator/(const Grid2DObject& rhs);
+
+		bool operator==(const DEMObject& in) const; ///<Operator that tests for equality
+		bool operator!=(const DEMObject& in) const; ///<Operator that tests for inequality
 
 		friend std::iostream& operator<<(std::iostream& os, const DEMObject& dem);
 		friend std::iostream& operator>>(std::iostream& is, DEMObject& dem);

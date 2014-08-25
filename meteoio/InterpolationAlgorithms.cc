@@ -277,7 +277,7 @@ double NoneAlgorithm::getQualityRating(const Date& /*i_date*/, const MeteoData::
 }
 
 void NoneAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid) {
-	grid.set(dem.ncols, dem.nrows, dem.cellsize, dem.llcorner, IOUtils::nodata);
+	grid.set(dem.getNx(), dem.getNy(), dem.cellsize, dem.llcorner, IOUtils::nodata);
 }
 
 
@@ -517,8 +517,8 @@ void RHAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	retrend(dem, trend, grid);
 
 	//Recompute Rh from the interpolated td
-	for (size_t jj=0; jj<grid.nrows; jj++) {
-		for (size_t ii=0; ii<grid.ncols; ii++) {
+	for (size_t jj=0; jj<grid.getNy(); jj++) {
+		for (size_t ii=0; ii<grid.getNx(); ii++) {
 			double &value = grid(ii,jj);
 			if(value!=IOUtils::nodata)
 				value = Atmosphere::DewPointtoRh(value, ta(ii,jj), 1);
@@ -572,8 +572,8 @@ void ILWRAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	retrend(dem, trend, grid);
 
 	//Recompute Rh from the interpolated td
-	for (size_t jj=0; jj<grid.nrows; jj++) {
-		for (size_t ii=0; ii<grid.ncols; ii++) {
+	for (size_t jj=0; jj<grid.getNy(); jj++) {
+		for (size_t ii=0; ii<grid.getNx(); ii++) {
 			double &value = grid(ii,jj);
 			value = Atmosphere::blkBody_Radiation(value, ta(ii,jj));
 		}

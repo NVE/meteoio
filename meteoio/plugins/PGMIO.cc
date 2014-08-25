@@ -275,13 +275,13 @@ void PGMIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		fout << "#cellsize = " << setprecision(2) << grid_in.cellsize << " m\n";
 		fout << "#minimum = " << setprecision(6) << min_value << "\n";
 		fout << "#maximum = " << setprecision(6) << max_value << "\n";
-		fout << grid_in.ncols << " " << grid_in.nrows << "\n";
+		fout << grid_in.getNx() << " " << grid_in.getNy() << "\n";
 		fout << nr_colors << "\n";
 
 		//writing the data
-		if(grid_in.nrows>0) {
-			for (size_t kk=grid_in.nrows-1; kk < grid_in.nrows; kk--) {
-				for (size_t ll=0; ll < grid_in.ncols; ll++) {
+		if(grid_in.getNy()>0) {
+			for (size_t kk=grid_in.getNy()-1; kk < grid_in.getNy(); kk--) {
+				for (size_t ll=0; ll < grid_in.getNx(); ll++) {
 					const double value = grid_in(ll, kk);
 					if(value!=IOUtils::nodata)
 						fout << static_cast<unsigned int>( floor((grid_in(ll, kk)-min_value)*scaling)+1 ) << " ";

@@ -44,7 +44,6 @@ class Grid2DObject {
 			size_t iy; ///<grid index along Y
 		} grid_point_2d;
 
-		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
 		double& operator ()(const size_t& ix, const size_t& iy);
 		double operator ()(const size_t& ix, const size_t& iy) const;
 		double& operator ()(const size_t& i);
@@ -67,8 +66,7 @@ class Grid2DObject {
 
 		Grid2DObject(const Grid2DObject& i_grid, const double& init);
 
-		Grid2DObject(const size_t& ncols, const size_t& nrows,
-		             const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
+		Grid2DObject(const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
 		virtual ~Grid2DObject() {};
 
@@ -117,14 +115,11 @@ class Grid2DObject {
 		/**
 		* @brief Set all variables in one go. Notably the member grid2D of type
 		* Array2D\<double\> will be destroyed and recreated to size ncols x nrows.
-		* @param ncols number of colums in the grid2D
-		* @param nrows number of rows in the grid2D
 		* @param cellsize value for cellsize in grid2D
 		* @param i_llcorner lower left corner point
 		* @param grid2D_in grid to be copied by value
 		*/
-		void set(const size_t& ncols, const size_t& nrows,
-		         const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in); //TODO: const CArray would be better...
+		void set(const double& cellsize, const Coords& i_llcorner, const Array2D<double>& grid2D_in);
 
 		void set(const size_t& ncols, const size_t& nrows,
 		         const double& cellsize, const Coords& i_llcorner, const double& init);
@@ -165,17 +160,38 @@ class Grid2DObject {
 		*/
 		bool clusterization(const std::vector<double>& thresholds, const std::vector<double>& ids);
 
+		Grid2DObject& operator=(const Grid2DObject&); ///<Assignement operator
+		Grid2DObject& operator=(const double& value); ///<Assignement operator
+
+		Grid2DObject& operator+=(const double& rhs);
+		const Grid2DObject operator+(const double& rhs);
+		Grid2DObject& operator+=(const Grid2DObject& rhs);
+		const Grid2DObject operator+(const Grid2DObject& rhs);
+
+		Grid2DObject& operator-=(const double& rhs);
+		const Grid2DObject operator-(const double& rhs);
+		Grid2DObject& operator-=(const Grid2DObject& rhs);
+		const Grid2DObject operator-(const Grid2DObject& rhs);
+
+		Grid2DObject& operator*=(const double& rhs);
+		const Grid2DObject operator*(const double& rhs);
+		Grid2DObject& operator*=(const Grid2DObject& rhs);
+		const Grid2DObject operator*(const Grid2DObject& rhs);
+
+		Grid2DObject& operator/=(const double& rhs);
+		const Grid2DObject operator/(const double& rhs);
+		Grid2DObject& operator/=(const Grid2DObject& rhs);
+		const Grid2DObject operator/(const Grid2DObject& rhs);
+
+		bool operator==(const Grid2DObject& in) const; ///<Operator that tests for equality
+		bool operator!=(const Grid2DObject& in) const; ///<Operator that tests for inequality
+
 		Array2D<double> grid2D; ///<the grid itself (simple 2D table containing the values for each point)
 		Coords llcorner; ///<lower left corner of the grid
 		double cellsize; ///<dimension in meters of a cell (considered to be square)
-		size_t ncols; ///<number of columns in the grid //HACK should point to grid2D.nx
-		size_t nrows; ///<number of rows in the grid
 
  protected:
-		void setValues(const size_t& ncols, const size_t& nrows,
-		               const double& cellsize, const Coords& i_llcorner);
-		void setValues(const size_t& i_ncols, const size_t& i_nrows,
-		               const double& i_cellsize);
+		void setValues(const double& cellsize, const Coords& i_llcorner);
 
 		/**
 		* @brief Converts WGS84 coordinates into grid coordinates (i,j)

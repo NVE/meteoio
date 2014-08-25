@@ -413,7 +413,7 @@ const std::string BufferedIOHandler::toString() const
 	std::map<std::string, Grid2DObject>::const_iterator it1;
 	for (it1=mapBufferedGrids.begin(); it1 != mapBufferedGrids.end(); ++it1){
 		os << setw(10) << "Grid" << " = " << it1->first << ", ";
-		os << (it1->second).ncols << " x " << (it1->second).nrows << " @ " << (it1->second).cellsize << "m\n";
+		os << (it1->second).getNx() << " x " << (it1->second).getNy() << " @ " << (it1->second).cellsize << "m\n";
 	}
 
 	os << "</BufferedIOHandler>\n";

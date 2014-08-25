@@ -33,8 +33,8 @@ const Grid2DObject ResamplingAlgorithms2D::NearestNeighbour(const Grid2DObject &
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 	const double cellsize = i_grid.cellsize/factor;
-	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
-	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
+	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor ));
+	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor ));
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
 	NearestNeighbour(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
@@ -52,8 +52,8 @@ const Grid2DObject ResamplingAlgorithms2D::BilinearResampling(const Grid2DObject
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 	const double cellsize = i_grid.cellsize/factor;
-	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
-	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
+	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor ));
+	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor ));
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
 	Bilinear(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata
@@ -68,8 +68,8 @@ const Grid2DObject ResamplingAlgorithms2D::cubicBSplineResampling(const Grid2DOb
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 	const double cellsize = i_grid.cellsize/factor;
-	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.ncols)*factor ));
-	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.nrows)*factor ));
+	const size_t ncols = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNx())*factor ));
+	const size_t nrows = static_cast<size_t>(Optim::round( static_cast<double>(i_grid.getNy())*factor ));
 	Grid2DObject o_grid(ncols, nrows, cellsize, i_grid.llcorner);
 
 	cubicBSpline(o_grid.grid2D, i_grid.grid2D); //GridObjects always keep nodata

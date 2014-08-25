@@ -533,7 +533,7 @@ template<class T> void Array2D<T>::abs() {
 }
 
 template<class T> const Array2D<T> Array2D<T>::getAbs() const {
-	Array2D<T> result = *this; //make a copy
+	Array2D<T> result(*this); //make a copy
 	result.abs(); //already implemented
 
 	return result;
@@ -599,7 +599,7 @@ template<class T> Array2D<T>& Array2D<T>::operator+=(const Array2D<T>& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator+(const Array2D<T>& rhs)
 {
-	Array2D<T> result = *this; //make a copy
+	Array2D<T> result(*this); //make a copy
 	result += rhs; //already implemented
 
 	return result;
@@ -625,7 +625,7 @@ template<class T> Array2D<T>& Array2D<T>::operator+=(const T& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator+(const T& rhs)
 {
-	Array2D<T> result = *this;
+	Array2D<T> result(*this);
 	result += rhs; //already implemented
 
 	return result;
@@ -660,7 +660,7 @@ template<class T> Array2D<T>& Array2D<T>::operator-=(const Array2D<T>& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator-(const Array2D<T>& rhs)
 {
-	Array2D<T> result = *this; //make a copy
+	Array2D<T> result(*this); //make a copy
 	result -= rhs; //already implemented
 
 	return result;
@@ -674,7 +674,7 @@ template<class T> Array2D<T>& Array2D<T>::operator-=(const T& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator-(const T& rhs)
 {
-	Array2D<T> result = *this;
+	Array2D<T> result(*this);
 	result += -rhs; //already implemented
 
 	return result;
@@ -709,7 +709,7 @@ template<class T> Array2D<T>& Array2D<T>::operator*=(const Array2D<T>& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator*(const Array2D<T>& rhs)
 {
-	Array2D<T> result = *this; //make a copy
+	Array2D<T> result(*this); //make a copy
 	result *= rhs; //already implemented
 
 	return result;
@@ -735,7 +735,7 @@ template<class T> Array2D<T>& Array2D<T>::operator*=(const T& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator*(const T& rhs)
 {
-	Array2D<T> result = *this;
+	Array2D<T> result(*this);
 	result *= rhs; //already implemented
 
 	return result;
@@ -770,7 +770,7 @@ template<class T> Array2D<T>& Array2D<T>::operator/=(const Array2D<T>& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator/(const Array2D<T>& rhs)
 {
-	Array2D<T> result = *this; //make a copy
+	Array2D<T> result(*this); //make a copy
 	result /= rhs; //already implemented
 
 	return result;
@@ -784,14 +784,14 @@ template<class T> Array2D<T>& Array2D<T>::operator/=(const T& rhs)
 
 template<class T> const Array2D<T> Array2D<T>::operator/(const T& rhs)
 {
-	Array2D<T> result = *this;
+	Array2D<T> result(*this);
 	result *= (1./rhs); //already implemented
 
 	return result;
 }
 
 template<class T> bool Array2D<T>::operator==(const Array2D<T>& in) const {
-	size_t in_nx=in.getNx(), in_ny=in.getNy();
+	const size_t in_nx=in.getNx(), in_ny=in.getNy();
 
 	if(nx!=in_nx || ny!=in_ny)
 		return false;

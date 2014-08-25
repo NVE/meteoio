@@ -44,7 +44,6 @@ class Grid3DObject{
 			size_t iz; ///<grid index along Z
 		} grid_point_3d;
 
-		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
 		double& operator ()(const size_t& ix, const size_t& iy, const size_t& iz);
 		double operator ()(const size_t& ix, const size_t& iy, const size_t& iz) const;
 		double& operator ()(const size_t& i);
@@ -77,8 +76,7 @@ class Grid3DObject{
 
 		Grid3DObject(const Grid3DObject& i_grid, const double& init);
 
-		Grid3DObject(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
-		             const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D);
+		Grid3DObject(const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D);
 
 		/**
 		* @brief Set all variables in one go.
@@ -94,15 +92,11 @@ class Grid3DObject{
 		* @brief Set all variables in one go. Notably the member grid3D of type Array3D<double>
 		* will be destroyed and recreated to size ncols x nrows.
 		*
-		* @param ncols number of colums in the grid3D
-		* @param nrows number of rows in the grid3D
-		* @param ndepths number of depth in the grid3D (3rd dimension)
 		* @param cellsize value for cellsize in grid3D
 		* @param i_llcorner lower left corner coordinates
 		* @param grid3D_in grid to be copied by value
 		*/
-		void set(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
-		         const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D_in);
+		void set(const double& cellsize, const Coords& i_llcorner, const Array3D<double>& grid3D_in);
 
 		void set(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		         const double& cellsize, const Coords& i_llcorner, const double& init);
@@ -150,7 +144,7 @@ class Grid3DObject{
 		* @param target grid to compare to
 		* @return true if same geolocalization
 		*/
-		bool isSameGeolocalization(const Grid3DObject& target);
+		bool isSameGeolocalization(const Grid3DObject& target) const;
 
 		/**
 		* @brief Extract a 2D grid for a given height
@@ -159,18 +153,40 @@ class Grid3DObject{
 		*/
 		void extractLayer(const size_t& i_z, Grid2DObject& layer);
 
+		Grid3DObject& operator=(const Grid3DObject&); ///<Assignement operator
+		Grid3DObject& operator=(const double& value); ///<Assignement operator
+
+		Grid3DObject& operator+=(const double& rhs);
+		const Grid3DObject operator+(const double& rhs);
+		Grid3DObject& operator+=(const Grid3DObject& rhs);
+		const Grid3DObject operator+(const Grid3DObject& rhs);
+
+		Grid3DObject& operator-=(const double& rhs);
+		const Grid3DObject operator-(const double& rhs);
+		Grid3DObject& operator-=(const Grid3DObject& rhs);
+		const Grid3DObject operator-(const Grid3DObject& rhs);
+
+		Grid3DObject& operator*=(const double& rhs);
+		const Grid3DObject operator*(const double& rhs);
+		Grid3DObject& operator*=(const Grid3DObject& rhs);
+		const Grid3DObject operator*(const Grid3DObject& rhs);
+
+		Grid3DObject& operator/=(const double& rhs);
+		const Grid3DObject operator/(const double& rhs);
+		Grid3DObject& operator/=(const Grid3DObject& rhs);
+		const Grid3DObject operator/(const Grid3DObject& rhs);
+
+		bool operator==(const Grid3DObject& in) const; ///<Operator that tests for equality
+		bool operator!=(const Grid3DObject& in) const; ///<Operator that tests for inequality
+
 		Array3D<double> grid3D;
 		std::vector<double> z; ///> Vector of depths
 		Coords llcorner;
 		double cellsize;
-		size_t ncols, nrows, ndepths;
 		bool z_is_absolute; ///> Are z coordinates absolute or relative to a DEM?
 
  protected:
-		void setValues(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
-			const double& cellsize);
-		void setValues(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
-			const double& cellsize, const Coords& i_llcorner);
+		void setValues(const double& cellsize, const Coords& i_llcorner);
 
 		/**
 		* @brief Converts WGS84 coordinates into grid coordinates (i,j)

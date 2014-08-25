@@ -25,41 +25,154 @@ namespace mio {
 Grid2DObject& Grid2DObject::operator=(const Grid2DObject& source) {
 	if(this != &source) {
 		grid2D = source.grid2D;
-		ncols = source.ncols;
-		nrows = source.nrows;
 		cellsize = source.cellsize;
 		llcorner = source.llcorner;
 	}
 	return *this;
 }
 
+Grid2DObject& Grid2DObject::operator=(const double& value) {
+	grid2D = value;
+	return *this;
+}
+
+Grid2DObject& Grid2DObject::operator+=(const double& rhs) {
+	grid2D += rhs;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator+(const double& rhs) {
+	Grid2DObject result = *this;
+	result.grid2D += rhs;
+	return result;
+}
+
+Grid2DObject& Grid2DObject::operator+=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D += rhs.grid2D;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator+(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid2DObject result(*this);
+	result.grid2D += rhs.grid2D;
+	return result;
+}
+
+Grid2DObject& Grid2DObject::operator-=(const double& rhs) {
+	grid2D -= rhs;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator-(const double& rhs) {
+	Grid2DObject result(*this);
+	result.grid2D -= rhs;
+	return result;
+}
+
+Grid2DObject& Grid2DObject::operator-=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D -= rhs.grid2D;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator-(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid2DObject result(*this);
+	result.grid2D -= rhs.grid2D;
+	return result;
+}
+
+Grid2DObject& Grid2DObject::operator*=(const double& rhs) {
+	grid2D *= rhs;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator*(const double& rhs) {
+	Grid2DObject result(*this);
+	result.grid2D *= rhs;
+	return result;
+}
+
+Grid2DObject& Grid2DObject::operator*=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D *= rhs.grid2D;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator*(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid2DObject result(*this);
+	result.grid2D *= rhs.grid2D;
+	return result;
+}
+
+Grid2DObject& Grid2DObject::operator/=(const double& rhs) {
+	grid2D /= rhs;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator/(const double& rhs) {
+	Grid2DObject result(*this);
+	result.grid2D /= rhs;
+	return result;
+}
+
+Grid2DObject& Grid2DObject::operator/=(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	grid2D /= rhs.grid2D;
+	return *this;
+}
+
+const Grid2DObject Grid2DObject::operator/(const Grid2DObject& rhs) {
+	if (!isSameGeolocalization(rhs))
+		throw InvalidArgumentException("[E] grids must have the same geolocalization in order to do arithmetic operations!", AT);
+	Grid2DObject result(*this);
+	result.grid2D /= rhs.grid2D;
+	return result;
+}
+
+bool Grid2DObject::operator==(const Grid2DObject& in) const {
+	return (isSameGeolocalization(in) && grid2D==in.grid2D);
+}
+
+bool Grid2DObject::operator!=(const Grid2DObject& in) const {
+	return !(*this==in);
+}
+
 /*
  * Default constructor.
  * grid2D attribute is initialized by Array2D default constructor.
  */
-Grid2DObject::Grid2DObject() : grid2D(), llcorner(), cellsize(0.), ncols(0), nrows(0) {}
+Grid2DObject::Grid2DObject() : grid2D(), llcorner(), cellsize(0.) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
                            const double& i_cellsize, const Coords& i_llcorner)
               : grid2D(i_ncols, i_nrows, IOUtils::nodata), llcorner(i_llcorner),
-                cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows) {}
+                cellsize(i_cellsize) {}
 
-Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
-                           const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
-              : grid2D(i_grid2D), llcorner(i_llcorner), cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows) {}
+Grid2DObject::Grid2DObject(const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
+              : grid2D(i_grid2D), llcorner(i_llcorner), cellsize(i_cellsize) {}
 
 Grid2DObject::Grid2DObject(const size_t& i_ncols, const size_t& i_nrows,
                            const double& i_cellsize, const Coords& i_llcorner, const double& init)
-              : grid2D(i_ncols, i_nrows, init), llcorner(i_llcorner), cellsize(i_cellsize), ncols(i_ncols), nrows(i_nrows) {}
+              : grid2D(i_ncols, i_nrows, init), llcorner(i_llcorner), cellsize(i_cellsize) {}
 
 Grid2DObject::Grid2DObject(const Grid2DObject& i_grid, const double& init)
-              : grid2D(i_grid.ncols, i_grid.nrows, init), llcorner(i_grid.llcorner), cellsize(i_grid.cellsize),
-                ncols(i_grid.ncols), nrows(i_grid.nrows) {}
+              : grid2D(i_grid.grid2D.getNx(), i_grid.grid2D.getNy(), init),
+                llcorner(i_grid.llcorner), cellsize(i_grid.cellsize) {}
 
 Grid2DObject::Grid2DObject(const Grid2DObject& i_grid2Dobj, const size_t& i_nx, const size_t& i_ny,
                            const size_t& i_ncols, const size_t& i_nrows)
-              : grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows), llcorner(i_grid2Dobj.llcorner), cellsize(i_grid2Dobj.cellsize),
-                ncols(i_ncols), nrows(i_nrows)
+              : grid2D(i_grid2Dobj.grid2D, i_nx,i_ny, i_ncols,i_nrows), llcorner(i_grid2Dobj.llcorner), cellsize(i_grid2Dobj.cellsize)
 {
 	//we take the previous corner (so we use the same projection parameters)
 	//and we shift it by the correct X and Y distance
@@ -104,20 +217,22 @@ bool Grid2DObject::gridify(Coords& point) const {
 }
 
 bool Grid2DObject::grid_to_WGS84(Coords& point) const {
-	int i=point.getGridI(), j=point.getGridJ();
+	int i = point.getGridI(), j = point.getGridJ();
 
 	if(i==IOUtils::inodata || j==IOUtils::inodata) {
 		//the point is invalid (outside the grid or contains nodata)
 		return false;
 	}
 
-	if(i>(signed)ncols || i<0 || j>(signed)nrows || j<0) {
+	const int ncols = (signed)getNx();
+	const int nrows = (signed)getNy();
+	if(i>ncols || i<0 || j>nrows || j<0) {
 		//the point is outside the grid, we reset the indices to the closest values
 		//still fitting in the grid and return an error
 		if(i<0) i=0;
 		if(j<0) j=0;
-		if(i>(signed)ncols) i=(signed)ncols;
-		if(j>(signed)nrows) j=(signed)nrows;
+		if(i>ncols) i=ncols;
+		if(j>nrows) j=nrows;
 		point.setGridIndex(i, j, IOUtils::inodata, false);
 		return false;
 	}
@@ -169,16 +284,16 @@ bool Grid2DObject::WGS84_to_grid(Coords& point) const {
 		i=0;
 		error_code=false;
 	}
-	if(i>(signed)ncols) {
-		i=(signed)ncols;
+	if(i>(signed)getNx()) {
+		i=(signed)getNx();
 		error_code=false;
 	}
 	if(j<0) {
 		j=0;
 		error_code=false;
 	}
-	if(j>(signed)nrows) {
-		j=(signed)nrows;
+	if(j>(signed)getNy()) {
+		j=(signed)getNy();
 		error_code=false;
 	}
 
@@ -190,76 +305,56 @@ void Grid2DObject::set(const size_t& i_ncols, const size_t& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner)
 {
 	grid2D.resize(i_ncols, i_nrows, IOUtils::nodata);
-	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
+	setValues(i_cellsize, i_llcorner);
 }
 
 void Grid2DObject::set(const size_t& i_ncols, const size_t& i_nrows,
                        const double& i_cellsize, const Coords& i_llcorner, const double& init)
 {
 	grid2D.resize(i_ncols, i_nrows, init);
-	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
+	setValues(i_cellsize, i_llcorner);
 }
 
-void Grid2DObject::set(const size_t& i_ncols, const size_t& i_nrows,
-                       const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
+void Grid2DObject::set(const double& i_cellsize, const Coords& i_llcorner, const Array2D<double>& i_grid2D)
 {
-	//Test for equality in size: Only compatible Array2D<double> grids are permitted
-	if ((i_ncols != i_grid2D.getNx()) || (i_nrows != i_grid2D.getNy())) {
-		std::ostringstream ss;
-		ss << "Trying to initialize a ( " << i_ncols << " x " << i_nrows << " ) Grid2DObject with a ";
-		ss << "( " << i_grid2D.getNx() << " x " << i_grid2D.getNy() << " ) 2D array";
-		throw IOException(ss.str(), AT);
-	}
-
-	setValues(i_ncols, i_nrows, i_cellsize, i_llcorner);
-
-	//Copy by value, after destroying the old grid
+	setValues(i_cellsize, i_llcorner);
 	grid2D = i_grid2D;
 }
 
 void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {
-	o_ncols = ncols;
-	o_nrows = nrows;
+	o_ncols = getNx();
+	o_nrows = getNy();
 }
 
 size_t Grid2DObject::getNx() const {
-	return ncols;
+	return grid2D.getNx();
 }
 
 size_t Grid2DObject::getNy() const {
-	return nrows;
+	return grid2D.getNy();
 }
 
 
 void Grid2DObject::clear() {
 	grid2D.clear();
-	ncols = nrows = 0;
 }
 
 bool Grid2DObject::isEmpty() const {
-	return (ncols==0 && nrows==0);
+	return (grid2D.getNx()==0 && grid2D.getNy()==0);
 }
 
-void Grid2DObject::setValues(const size_t& i_ncols, const size_t& i_nrows,
-                             const double& i_cellsize)
+void Grid2DObject::setValues(const double& i_cellsize, const Coords& i_llcorner)
 {
-	ncols = i_ncols;
-	nrows = i_nrows;
 	cellsize = i_cellsize;
-}
-
-void Grid2DObject::setValues(const size_t& i_ncols, const size_t& i_nrows,
-                             const double& i_cellsize, const Coords& i_llcorner)
-{
-	setValues(i_ncols, i_nrows, i_cellsize);
 	llcorner = i_llcorner;
 }
 
 bool Grid2DObject::isSameGeolocalization(const Grid2DObject& target) const
 {
-	if( ncols==target.ncols && nrows==target.nrows &&
-		llcorner==target.llcorner &&
-		cellsize==target.cellsize) {
+	if( grid2D.getNx()==target.grid2D.getNx() &&
+	    grid2D.getNy()==target.grid2D.getNy() &&
+	    llcorner==target.llcorner &&
+	    cellsize==target.cellsize) {
 		return true;
 	} else {
 		return false;
@@ -274,7 +369,7 @@ bool Grid2DObject::clusterization(const std::vector<double>& thresholds, const s
 	if ((thresholds.size()+1) != ids.size()) {
 		throw IOException("Can't start clusterization, cluster definition list doesnt fit id definition list", AT);
 	}
-	const size_t count = ncols*nrows;
+	const size_t count = grid2D.getNx()*grid2D.getNy();
 	const size_t nscl = thresholds.size();
 	for (size_t jj = 0; jj< count; jj++){
 		const double& val = grid2D(jj);
@@ -309,15 +404,13 @@ const std::string Grid2DObject::toString() const {
 	std::ostringstream os;
 	os << "<Grid2DObject>\n";
 	os << llcorner.toString();
-	os << ncols << " x " << nrows << " @ " << cellsize << "m\n";
+	os << grid2D.getNx() << " x " << grid2D.getNy() << " @ " << cellsize << "m\n";
 	os << grid2D.toString();
 	os << "</Grid2DObject>\n";
 	return os.str();
 }
 
 std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid) {
-	os.write(reinterpret_cast<const char*>(&grid.ncols), sizeof(grid.ncols));
-	os.write(reinterpret_cast<const char*>(&grid.nrows), sizeof(grid.nrows));
 	os.write(reinterpret_cast<const char*>(&grid.cellsize), sizeof(grid.cellsize));
 	os << grid.llcorner;
 	os << grid.grid2D;
@@ -325,8 +418,6 @@ std::iostream& operator<<(std::iostream& os, const Grid2DObject& grid) {
 }
 
 std::iostream& operator>>(std::iostream& is, Grid2DObject& grid) {
-	is.read(reinterpret_cast<char*>(&grid.ncols), sizeof(grid.ncols));
-	is.read(reinterpret_cast<char*>(&grid.nrows), sizeof(grid.nrows));
 	is.read(reinterpret_cast<char*>(&grid.cellsize), sizeof(grid.cellsize));
 	is >> grid.llcorner;
 	is >> grid.grid2D;
