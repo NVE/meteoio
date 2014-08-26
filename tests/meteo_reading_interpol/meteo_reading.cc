@@ -26,7 +26,8 @@ const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	
 const double res_Met_9 []	= {84.79166651,		81.29166661,		67.83333342,		50.37500004,		88.41666666,		85.45833337,		87.4999999}; //RSWR
 const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
 const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
-const double res_Met_12 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.255830171,		3.593920512,		0.,			0.}; // HNW
+const double res_Met_12 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // TAU_CLD
+const double res_Met_13 []	= {IOUtils::nodata,	2.632907412,		IOUtils::nodata,	2.255830171,		3.593920512,		0.,			0.}; // HNW
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
@@ -154,6 +155,10 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on " << MeteoData::getParameterName(12) << " : " << std::setprecision(10) << datMeteo(12) << " != " << res_Met_12[i_results] << endl;
 		status = false;
 	}
+	if(!IOUtils::checkEpsilonEquality(datMeteo(13), res_Met_13[i_results], epsilon)){
+		cerr << "error on " << MeteoData::getParameterName(13) << " : " << std::setprecision(10) << datMeteo(13) << " != " << res_Met_13[i_results] << endl;
+		status = false;
+	}
 
 	MeteoData refMeteo(datDate);
 	refMeteo.standardizeNodata(IOUtils::nodata);
@@ -171,6 +176,7 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 	refMeteo(10)= res_Met_10[i_results];
 	refMeteo(11)= res_Met_11[i_results];
 	refMeteo(12)= res_Met_12[i_results];
+	refMeteo(13)= res_Met_13[i_results];
 	if(datMeteo != refMeteo){
 		cerr << "error on == operator for MeteoData :" << datMeteo.getNrOfParameters() << " - " << refMeteo.getNrOfParameters() << endl;
 		cerr << datMeteo.toString() << endl;

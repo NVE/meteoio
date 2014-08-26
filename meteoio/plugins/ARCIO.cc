@@ -345,17 +345,19 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		//so that we output is done in the same system as the inputs
 		llcorner.setProj(coordout, coordoutparam);
 
+		const size_t ncols = grid_in.getNx();
+		const size_t nrows = grid_in.getNy();
 		fout << fixed << showpoint << setprecision(6);
-		fout << "ncols " << setw(23-6) << grid_in.getNx() << "\n";
-		fout << "nrows " << setw(23-6) << grid_in.getNy() << "\n";
+		fout << "ncols " << setw(23-6) << ncols << "\n";
+		fout << "nrows " << setw(23-6) << nrows << "\n";
 		fout << "xllcorner " << setw(23-10) << setprecision(3) << llcorner.getEasting() << "\n";
 		fout << "yllcorner " << setw(23-10) << setprecision(3) << llcorner.getNorthing() << "\n";
 		fout << "cellsize " << setw(23-9) << setprecision(3) << grid_in.cellsize << "\n";
 		fout << "NODATA_value " << (int)(IOUtils::nodata) << "\n";
 
-		if(grid_in.getNy()>0) {
-			for (size_t kk=grid_in.getNy()-1; kk < grid_in.getNy(); kk--) {
-				for (size_t ll=0; ll < grid_in.getNx(); ll++){
+		if(nrows>0) {
+			for (size_t kk=nrows-1; kk-->0; ) {
+				for (size_t ll=0; ll < ncols; ll++){
 					fout << grid_in(ll, kk) << " ";
 				}
 				fout << "\n";

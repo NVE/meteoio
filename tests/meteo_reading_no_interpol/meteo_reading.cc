@@ -27,8 +27,8 @@ const double res_Met_8 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	
 const double res_Met_9 []	= {119.5,		105.5,			86.5,			67.,			120.5,			105.,			115.5}; //RSWR
 const double res_Met_10 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ISWR
 const double res_Met_11 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // ILWR
-const double res_Met_12 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	4.,			5.160045665,		0.,			IOUtils::nodata}; // HNW
-
+const double res_Met_12 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata}; // TAU_CLD
+const double res_Met_13 []	= {IOUtils::nodata,	IOUtils::nodata,	IOUtils::nodata,	4.,			5.160045665,		0.,			IOUtils::nodata}; // HNW
 
 // methode do controll content of Meteo Data !!
 // Also controlles != operator of containing special structures
@@ -156,6 +156,10 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 		cerr << "error on " << MeteoData::getParameterName(12) << " : " << std::setprecision(10) << datMeteo(12) << " != " << res_Met_12[i_results] << endl;
 		status = false;
 	}
+	if(!IOUtils::checkEpsilonEquality(datMeteo(13), res_Met_13[i_results], epsilon)){
+		cerr << "error on " << MeteoData::getParameterName(13) << " : " << std::setprecision(10) << datMeteo(13) << " != " << res_Met_13[i_results] << endl;
+		status = false;
+	}
 
 	MeteoData refMeteo(datDate);
 	refMeteo.standardizeNodata(IOUtils::nodata);
@@ -173,6 +177,7 @@ bool controllStation(MeteoData& datMeteo, int i_results, Date datDate){
 	refMeteo(10)= res_Met_10[i_results];
 	refMeteo(11)= res_Met_11[i_results];
 	refMeteo(12)= res_Met_12[i_results];
+	refMeteo(13)= res_Met_13[i_results];
 	if(datMeteo != refMeteo){
 		cerr << "error on == operator for MeteoData :" << datMeteo.getNrOfParameters() << " - " << refMeteo.getNrOfParameters() << endl;
 		cerr << datMeteo.toString() << endl;

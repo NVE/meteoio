@@ -67,7 +67,7 @@ class MeteoGrids {
 		                 ROT, ///< Total generated runoff
 		                 ALB, ///< Albedo
 		                 DEM, ///< Digital Elevation Model
-				 SHADE, ///< Hillshade
+		                 SHADE, ///< Hillshade
 		                 SLOPE, ///< DEM slope angle
 		                 AZI, ///< DEM slope azimuth
 		                 lastparam=AZI};
