@@ -643,8 +643,8 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		//we need to compute the wind at 7.5m
 		Grid2DObject Z0;
 		if(read2DGrid_indexed(83.2, 1, 0, date, Z0)) { //Z0
-			for(size_t jj=0; jj<grid_out.nrows; jj++) {
-				for(size_t ii=0; ii<grid_out.ncols; ii++) {
+			for(size_t jj=0; jj<grid_out.getNy(); jj++) {
+				for(size_t ii=0; ii<grid_out.getNx(); ii++) {
 					grid_out(ii,jj) = Atmosphere::windLogProfile(grid_out(ii,jj), 10., 7.5, Z0(ii,jj));
 				}
 			}
