@@ -55,6 +55,7 @@ bool MeteoGrids::initStaticData()
 	paramname.push_back("ROT");
 	paramname.push_back("ALB");
 	paramname.push_back("DEM");
+	paramname.push_back("SHADE");
 	paramname.push_back("SLOPE");
 	paramname.push_back("AZI");
 

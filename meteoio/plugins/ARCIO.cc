@@ -356,7 +356,7 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const std::string& name)
 		fout << "NODATA_value " << (int)(IOUtils::nodata) << "\n";
 
 		if(nrows>0) {
-			for (size_t kk=nrows-1; kk-->0; ) {
+			for (size_t kk=nrows; kk-->0; ) {
 				for (size_t ll=0; ll < ncols; ll++){
 					fout << grid_in(ll, kk) << " ";
 				}

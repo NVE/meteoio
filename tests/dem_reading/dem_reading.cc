@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/MeteoIO.h>
 
 using namespace mio; //The MeteoIO namespace is called mio
@@ -51,8 +52,9 @@ bool simpleDEMcontroll(DEMObject& dem, double results[]){
 }
 
 // Make output files
-bool makeDEMfiles(){
-
+bool makeDEMfiles()
+{
+	bool status=true;
 	cout << " ----- Read DEM, make subfiles and some basic controll \n";
 
 	cout << " ---- Init Values \n";
@@ -72,10 +74,18 @@ bool makeDEMfiles(){
 	io.readDEM(dem);
 
 	cout << " ---- Generate file with slope values \n";
+	if (MeteoGrids::getParameterName(MeteoGrids::SLOPE)!="SLOPE") {
+		std::cout << "getParameterName() returned " << MeteoGrids::getParameterName(MeteoGrids::SLOPE) << " when SLOPE was expected!\n";
+		status=false;
+	}
 	Grid2DObject slope(dem.cellsize, dem.llcorner, dem.slope);
 	io.write2DGrid(slope, MeteoGrids::SLOPE, Date(0.));
 
 	cout << " ---- Generate file with azimut values \n";
+	if (MeteoGrids::getParameterName(MeteoGrids::AZI)!="AZI") {
+		std::cout << "getParameterName() returned " << MeteoGrids::getParameterName(MeteoGrids::AZI) << " when AZI was expected!\n";
+		status=false;
+	}
 	Grid2DObject azi(dem.cellsize, dem.llcorner, dem.azi);
 	io.write2DGrid(azi, MeteoGrids::AZI, Date(0.));
 
@@ -95,7 +105,6 @@ bool makeDEMfiles(){
 	sub_dem.grid2D.setKeepNodata(true); //HACK this removes error, but should it not take it in constructor ???
 	io.write2DGrid(sub_dem, MeteoGrids::DEM, Date(0.));
 
-	bool status=true;
 	cout << " --- Controll some basic data from DEM\n";
 	if(!simpleDEMcontroll(dem, r_DEM)){
 		cerr << " Error on controlling basic values of DEM object !!! \n";
