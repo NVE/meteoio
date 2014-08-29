@@ -74,8 +74,8 @@ namespace mio {
  * - COORDSYS: output coordinate system (see Coords) specified in the [Output] section
  * - COORDPARAM: extra output coordinates parameters (see Coords) specified in the [Output] section
  * - GSN_URL: The URL of the RESTful web service e.g. http://planetdata.epfl.ch:22001/rest
- * - GSN_USER: The username to access the service
- * - GSN_PASS: The password to authenticate the USER
+ * - GSN_USER: The username to access the service (optional)
+ * - GSN_PASS: The password to authenticate the USER (optional)
  * - STATION#: station code for the given number #, e. g. la_fouly_1034 (case sensitive!)
  *
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
@@ -119,14 +119,12 @@ void GSNIO::initGSNConnection() {
 	default_timezone = IOUtils::nodata;
 	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
 
-	cfg.getValue("GSN_URL", "Input", endpoint, IOUtils::nothrow);
-	if (!endpoint.empty()){
-		if (*endpoint.rbegin() != '/') endpoint += "/";
-		cerr << "[i] Using GSN Endpoint: " << endpoint << endl;
-	}
+	cfg.getValue("GSN_URL", "Input", endpoint);
+	if (*endpoint.rbegin() != '/') endpoint += "/";
+	cerr << "[i] Using GSN URL: " << endpoint << endl;
 
-	cfg.getValue("GSN_USER", "Input", userid);
-	cfg.getValue("GSN_PASS", "Input", passwd);
+	cfg.getValue("GSN_USER", "Input", userid, IOUtils::nothrow);
+	cfg.getValue("GSN_PASS", "Input", passwd, IOUtils::nothrow);
 }
 
 void GSNIO::read2DGrid(Grid2DObject&, const std::string&)
@@ -184,7 +182,8 @@ void GSNIO::readMetaData()
 		for (size_t ii=0; ii<vecStationName.size(); ii++) {
 			for (size_t jj=0; jj<vecAllMeta.size(); jj++) {
 				if (vecAllMeta[jj].stationID == vecStationName[ii]) {
-					vecMeta.push_back(vecAllMeta[jj]);
+					vecMeta.push_back( vecAllMeta[jj] );
+					break; //move on to next station
 				}
 			}
 
@@ -230,18 +229,20 @@ void GSNIO::getAllStations()
 	const string name_str("# name:");
 
 	stringstream ss;
-	string line("");
+	string line;
 
 	vecAllMeta.clear();
 
-	if (curl_read(sensors_endpoint + "?username=" + userid + "&password=" + passwd, ss)) {
-		string name(""), id(""), azi("");
+	const string auth_request = sensors_endpoint + "?username=" + userid + "&password=" + passwd;
+	const string anon_request = sensors_endpoint;
+	const string request = (!userid.empty())? auth_request : anon_request;
+	if (curl_read(request, ss)) {
+		string name, id, azi;
 		double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
 		unsigned int valid = 0;
 
 		while (getline(ss, line)) {
 			if (!line.compare(0, vsname_str.size(), vsname_str)) {
-
 				if (valid == 15) { // Last station was valid: store StationData
 					save_station(id, name, lat, lon, alt, slope_angle, slope_azi);
 				}
@@ -319,8 +320,11 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	const string fields_str("# fields:");
 	const string units_str("# units:");
 
-	const string request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
+	const string auth_request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
 	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00" + "&username=" + userid + "&password=" + passwd;
+	const string anon_request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
+	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00";
+	const string request = (!userid.empty())? auth_request : anon_request;
 
 	stringstream ss;
 
@@ -331,7 +335,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		MeteoData tmpmeteo;
 		tmpmeteo.meta = vecMeta.at(stationindex);
 
-		string line(""), fields(""), units("");
+		string line, fields, units;
 		while (getline(ss, line)) { //parse header section
 
 			if (line.size() && (line[0] != '#')) break;
@@ -564,7 +568,7 @@ bool GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 	}
 
 	if(code!=CURLE_OK)
-		std::cout << "[E] " << curl_easy_strerror(code) << "\n";
+		std::cout << "[E] " << curl_easy_strerror(code) << "\t";
 
 	return (code==CURLE_OK);
 }
