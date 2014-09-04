@@ -1607,8 +1607,8 @@ void Coords::WGS84_to_local(double lat_in, double long_in, double& east_out, dou
 
 /**
 * @brief Coordinate conversion: from local grid as given in coordparam to WGS84 Lat/Long
-* @param east_in easting coordinate (Swiss system)
-* @param north_in northing coordinate (Swiss system)
+* @param east_in easting coordinate (in local system)
+* @param north_in northing coordinate (in local system)
 * @param lat_out Decimal Latitude
 * @param long_out Decimal Longitude
 */

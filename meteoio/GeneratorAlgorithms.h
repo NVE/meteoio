@@ -71,6 +71,7 @@ namespace mio {
  * The keywords defining the algorithms are the following:
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - RELHUM: relative humidity from other humidity measurements (see RhGenerator)
+ * - TS_OLWR: surface temperature from Outgoing Long Wave Radiation (see TssGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
  * - CLEARSKY_LW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
@@ -209,6 +210,23 @@ class RhGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 };
 
+/**
+ * @class TsGenerator
+ * @brief Surface temperature generator.
+ * Generate the surface temperature from the outgoing long wave (OLWR).
+ * @code
+ * TSS::generators = TS_OLWR
+ * @endcode
+ */
+class TsGenerator : public GeneratorAlgorithm {
+	public:
+		TsGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		static const double e_snow, e_soil, snow_thresh;
+};
 
 /**
  * @class ClearSkyLWGenerator

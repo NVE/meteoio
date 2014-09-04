@@ -38,6 +38,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new StandardPressureGenerator(vecArgs, i_algoname);
 	} else if (algoname == "RELHUM"){
 		return new RhGenerator(vecArgs, i_algoname);
+	} else if (algoname == "TS_OLWR"){
+		return new TsGenerator(vecArgs, i_algoname);
 	} else if (algoname == "CLEARSKY_LW"){
 		return new ClearSkyLWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ALLSKY_LW"){
@@ -243,6 +245,42 @@ bool RhGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo
 	}
 
 	return all_filled;
+}
+
+
+const double TsGenerator::e_snow = .983; //snow emissivity (0.969 - 0.997)
+const double TsGenerator::e_soil = .9805; //grass emissivity (0.975 - 0.986)
+const double TsGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+
+bool TsGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if(value == IOUtils::nodata) {
+		const double olwr = md("OLWR");
+		if (olwr==IOUtils::nodata) //nothing else we can do here
+			return false;
+
+		const double hs = md(MeteoData::HS);
+		const double ea = (hs==IOUtils::nodata)? .5*(e_snow+e_soil) : (hs>snow_thresh)? e_snow : e_soil;
+
+		//value = pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
+		value = Optim::invSqrt( Optim::invSqrt(olwr / ( ea * Cst::stefan_boltzmann )) );
+
+		if (value==IOUtils::nodata) return false;
+	}
+
+	return true; //all missing values could be filled
+}
+
+bool TsGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(vecMeteo.empty()) return true;
+
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		generate(param, vecMeteo[ii]);
+	}
+
+	return true; //all missing values could be filled
 }
 
 

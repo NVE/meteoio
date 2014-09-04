@@ -232,7 +232,7 @@ void SMETIO::identify_fields(const std::vector<std::string>& fields, std::vector
 		} else if (key == "OLWR") {
 			md.addParameter("OLWR");
 			indexes.push_back(md.getParameterIndex("OLWR"));
-		} else if (key == "PINT") {
+		} else if (key == "PINT") { //in mm/h
 			md.addParameter("PINT");
 			indexes.push_back(md.getParameterIndex("PINT"));
 		} else if (key == "julian") {
@@ -315,7 +315,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 	if ((timestamps.empty()) && (!julian_present)) return; //nothing to do
 
-	const bool olwr_present = md.param_exists("OLWR");
+	const bool pint_present = md.param_exists("PINT");
 	const bool data_wgs84 = myreader.location_in_data(smet::WGS84);
 	const bool data_epsg = myreader.location_in_data(smet::EPSG);
 
@@ -332,6 +332,7 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 
 	double lat=IOUtils::nodata, lon=IOUtils::nodata, east=IOUtils::nodata, north=IOUtils::nodata, alt=IOUtils::nodata;
 	size_t current_index = 0; //index to vec_data
+	double previous_ts = IOUtils::nodata;
 	for (size_t ii = 0; ii<nr_of_lines; ii++){
 		vecMeteo.push_back(md);
 		MeteoData& tmp_md = vecMeteo.back();
@@ -375,18 +376,18 @@ void SMETIO::copy_data(const smet::SMETReader& myreader,
 			current_index++;
 		}
 
-		if ((olwr_present) && (tmp_md(MeteoData::TSS) == IOUtils::nodata)) {//HACK
-			tmp_md(MeteoData::TSS) = olwr_to_tss(tmp_md("OLWR"));
+		if ((pint_present) && (tmp_md(MeteoData::HNW) == IOUtils::nodata)) {
+			const double pint = tmp_md("PINT");
+			if (pint==0.) {
+				tmp_md(MeteoData::HNW) = 0.;
+			} else if (previous_ts!=IOUtils::nodata) {
+				const double acc_period = (tmp_md.date.getJulian() - previous_ts) * 24.; //in hours
+				tmp_md(MeteoData::HNW) = pint * acc_period;
+			}
 		}
-	}
-}
 
-double SMETIO::olwr_to_tss(const double& olwr) {
-	const double ea = 1.;
-	if(olwr==IOUtils::nodata) return IOUtils::nodata;
-	if(olwr<0.) return IOUtils::nodata; //since olwr is NOT filtered, making sure no arithmetic exception would happen
-	if(olwr>1e4) return IOUtils::nodata; //since olwr is NOT filtered, making sure no arithmetic exception would happen
-	return pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
+		previous_ts = tmp_md.date.getJulian();
+	}
 }
 
 void SMETIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
