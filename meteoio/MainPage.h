@@ -355,10 +355,11 @@ namespace mio {
  *    @endcode
  * -# Adding the created implementation file to meteoFilters/CMakeLists.txt in a similar way as for the other
  *    filters
- * -# Adding the filter in the processing loop, in BlockFactory::getBlock(), by adding three lines similar to:
+ * -# Adding the filter in the processing loop, in meteoFilters/ProcessingBlock.cc in the BlockFactory::getBlock()
+ * method by adding three lines similar to:
  *    @code
  *     else if (blockname == "MIN_MAX"){
- *     		return new FilterMinMax(vec_args);
+ *     		return new FilterMinMax(vec_args, blockname);
  * 	}
  *    @endcode
  *    The key (here the string "MIN_MAX") is the key that the user will put in his io.ini to select the processing block.

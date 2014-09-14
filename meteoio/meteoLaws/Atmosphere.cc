@@ -108,6 +108,32 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 }
 
 /**
+* @brief Black Globe Temperature.
+* This is an estimation of the black globe temperature based on physical modeling as in
+* V. E. Dimiceli, S. F. Piltz and S. A. Amburn, <i>"Estimation of Black Globe Temperature for Calculation of the Wet Bulb Globe Temperature Index"</i> in World Congress on Engineering and Computer Science, <b>2</b>, 2011. 
+* @param TA air temperature (K)
+* @param RH relative humidity (between 0 and 1)
+* @param VW wind velocity (m/s)
+* @param iswr_dir direct solar SW radiation (W/m^2)
+* @param iswr_diff diffuse solar SW radiation (W/m^2)
+* @param cos_Z cosinus of the solar zenith angle
+* @return black globe temperature (K)
+*/
+double Atmosphere::blackGlobeTemperature(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z)
+{
+	const double a=1, b=1, c=1; //HACK: get real values!
+	
+	const double S = iswr_dir + iswr_diff;
+	const double h = a * pow(S, b) * pow(cos_Z, c);
+	const double emissivity = 0.575 * pow(RH*waterSaturationPressure(TA), 1./7.);
+	const double B = S * (iswr_dir/(4.*Cst::stefan_boltzmann*cos_Z) + 1.2/Cst::stefan_boltzmann*iswr_diff) + emissivity*Optim::pow4(TA);
+	const double C = h * pow(VW, 0.58) / 5.3865e-8;
+	
+	const double Tg = (B + C*TA + 7680000) / (C + 256000);
+	return Tg;
+}
+
+/**
 * @brief Wind log profile.
 * This is used to compute the equivalent wind speed at a different height.
 * @details It depends on the roughness length
@@ -180,6 +206,28 @@ double Atmosphere::heatIndex(const double& TA, const double& RH)
 	const double HI = c1 + c2*t + c3*rh + c4*t*rh + c5*t2 + c6*rh2 + c7*t2*rh + c8*t*rh2 + c9*t2*rh2;
 
 	return C_TO_K(HI);
+}
+
+/**
+* @brief Wet Bulb Globe Temperature index.
+* This is an index aiming at expressing the human-perceived air temperature due to humidity, wind and radiation.
+* This is the foundation of ISO 7243 and is widely used for physical activity safety evaluation (for example for physical training).
+* @param TA air temperature (K)
+* @param RH relative humidity (between 0 and 1)
+* @param VW wind velocity (m/s)
+* @param iswr_dir direct solar SW radiation (W/m^2)
+* @param iswr_diff diffuse solar SW radiation (W/m^2)
+* @param cos_Z cosinus of the solar zenith angle
+* @param altitude altitude of the point where to perform the calculation
+* @return Heat index (K)
+*/
+double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z, const double& altitude)
+{
+	const double NWB = wetBulbTemperature(TA, RH, altitude);
+	const double GT = blackGlobeTemperature(TA, RH, VW, iswr_dir, iswr_diff, cos_Z);
+	const double DB = TA;
+	
+	return 0.7*NWB + 0.2*GT + 0.1*DB;
 }
 
 /**

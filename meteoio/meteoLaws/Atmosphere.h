@@ -38,10 +38,12 @@ class Atmosphere {
 		static double virtualTemperatureFactor(const double& e, const double& p);
 		static double waterVaporDensity(const double& Temperature, const double& VaporPressure);
 		static double wetBulbTemperature(const double& T, const double& RH, const double& altitude);
+		static double blackGlobeTemperature(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z);
 		static double windLogProfile(const double& v_ref, const double& z_ref, const double& z, const double& z0=0.03);
 
 		static double windChill(const double& TA, const double& VW);
 		static double heatIndex(const double& TA, const double& RH);
+		static double WBGT_index(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z, const double& altitude);
 
 		//clear sky emissivity
 		static double Brutsaert_emissivity(const double& RH, const double& TA);
