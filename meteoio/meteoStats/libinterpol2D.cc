@@ -602,8 +602,12 @@ void Interpol2D::RyanWind(const DEMObject& dem, Grid2DObject& VW, Grid2DObject& 
 }
 
 /**
- * @brief compute the max slope angle looking toward the horizon in a given direction
- * The search distance is limited between dmin and dmax from the starting point (i,j).
+ * @brief compute the max slope angle looking toward the horizon in a given direction.
+ * The search distance is limited between dmin and dmax from the starting point (i,j) and the elvation difference
+ * must be at least 2 meters (otherwise it is considered flat). If a slope start to be positive/negative before turning negative/positive,
+ * the first one would be returned (so a pixel just behind a ridge would still see an uphill slope to the ridge even if the
+ * slope behind the ridge would be greater).
+ *
  * This is exactly identical with the Winstral Sx factor for a single direction. Or the upwind slope for Ryan.
  * @param[in] dem DEM to work with
  * @param[in] dmin minimum search distance (ie all points at less than dmin are skipped)
@@ -617,8 +621,10 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 {
 	const double inv_dmin = 1./dmin;
 	const double inv_dmax = 1./dmax;
-	const double alpha_rad = bearing*Cst::to_rad;
+	const double sin_alpha = sin(bearing*Cst::to_rad);
+	const double cos_alpha = cos(bearing*Cst::to_rad);
 	const double ref_altitude = dem(i, j);
+	const double altitude_thresh = 2.;
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
 	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
 	const int ncols = static_cast<int>(dem.getNx()), nrows = static_cast<int>(dem.getNy());
@@ -627,25 +633,26 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 
 	double max_tan_slope = 0.;
 	size_t nb_cells = 0;
-	while( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
+	while ( !(ll<0 || ll>ncols-1 || mm<0 || mm>nrows-1) ) {
 		const double altitude = dem(ll, mm);
-		if( (altitude!=mio::IOUtils::nodata) && !(ll==ii && mm==jj) ) {
+		if ( (altitude!=mio::IOUtils::nodata) && !(ll==ii && mm==jj) ) {
 			//compute local sx
 			const double delta_elev = altitude - ref_altitude;
 			const double inv_distance = Optim::invSqrt( cellsize_sq*(Optim::pow2(ll-ii) + Optim::pow2(mm-jj)) );
-			if(inv_distance<=inv_dmin) { //only for cells further than dmin
-				if(inv_distance<inv_dmax) break; //stop if distance>dmax
+			if (inv_distance<=inv_dmin && fabs(delta_elev)>=altitude_thresh) { //only for cells further than dmin
+				if (inv_distance<inv_dmax) break; //stop if distance>dmax
 
 				const double tan_slope = delta_elev*inv_distance;
 				//update max_tan_sx if necessary. We compare and tan(sx) in order to avoid computing atan()
-				if( fabs(tan_slope)>fabs(max_tan_slope) ) max_tan_slope = tan_slope;
+				if (max_tan_slope>=0. && tan_slope>max_tan_slope) max_tan_slope = tan_slope;
+				if (max_tan_slope<=0. && tan_slope<max_tan_slope) max_tan_slope = tan_slope;
 			}
 		}
 
 		//move to next cell
 		nb_cells++;
-		ll = ii + (int)round( ((double)nb_cells)*sin(alpha_rad) ); //alpha is a bearing
-		mm = jj + (int)round( ((double)nb_cells)*cos(alpha_rad) ); //alpha is a bearing
+		ll = ii + (int)round( ((double)nb_cells)*sin_alpha ); //alpha is a bearing
+		mm = jj + (int)round( ((double)nb_cells)*cos_alpha ); //alpha is a bearing
 	}
 
 	return max_tan_slope;
