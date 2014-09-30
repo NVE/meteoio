@@ -340,6 +340,14 @@ void Grid3DObject::set(const double& i_cellsize, const Coords& i_llcorner, const
 	grid3D = i_grid3D; //copy by value
 }
 
+void Grid3DObject::set(const Grid3DObject& i_grid, const double& init)
+{
+	setValues(i_grid.cellsize, i_grid.llcorner);
+	grid3D.resize(i_grid.grid3D.getNx(), i_grid.grid3D.getNy(), i_grid.grid3D.getNz(), init);
+	z = i_grid.z;
+	z_is_absolute = i_grid.z_is_absolute;
+}
+
 void Grid3DObject::size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) const
 {
 	o_ncols = grid3D.getNx();

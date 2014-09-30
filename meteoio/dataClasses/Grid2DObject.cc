@@ -321,6 +321,12 @@ void Grid2DObject::set(const double& i_cellsize, const Coords& i_llcorner, const
 	grid2D = i_grid2D;
 }
 
+void Grid2DObject::set(const Grid2DObject& i_grid, const double& init)
+{
+	setValues(i_grid.cellsize, i_grid.llcorner);
+	grid2D.resize(i_grid.grid2D.getNx(), i_grid.grid2D.getNy(), init);
+}
+
 void Grid2DObject::size(size_t& o_ncols, size_t& o_nrows) const {
 	o_ncols = getNx();
 	o_nrows = getNy();

@@ -101,6 +101,8 @@ class Grid3DObject{
 		void set(const size_t& ncols, const size_t& nrows, const size_t& ndepths,
 		         const double& cellsize, const Coords& i_llcorner, const double& init);
 
+		void set(const Grid3DObject& i_grid, const double& init);
+
 		void size(size_t& o_ncols, size_t& o_nrows, size_t& o_ndepths) const;
 		size_t getNx() const;
 		size_t getNy() const;
