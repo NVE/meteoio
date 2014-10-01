@@ -259,10 +259,16 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const std::string& filename) {
 
 void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& parameter, const Date& date)
 {
-	if(a3d_view_in) {
+	if (a3d_view_in) {
+		// the A3D grid viewer looks for the following extensions:
+		//sdp, tss, swr, lwr, swe, alb, wet
 		string ext;
-		if(parameter==MeteoGrids::HS)
+		if (parameter==MeteoGrids::HS)
 			ext="sdp";
+		else if (parameter==MeteoGrids::ISWR)
+			ext="swr";
+		else if (parameter==MeteoGrids::ILWR)
+			ext="lwr";
 		else {
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);

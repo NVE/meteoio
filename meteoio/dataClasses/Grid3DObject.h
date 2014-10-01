@@ -117,7 +117,7 @@ class Grid3DObject{
 		* @brief Check if a grid does not contain any data (but it can contain geolocalization)
 		* @return true if the grid is 0x0
 		*/
-		bool isEmpty() const;
+		bool empty() const;
 
 		/**
 		* @brief Compute the positional parameters that are not already known

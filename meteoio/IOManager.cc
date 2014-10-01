@@ -422,7 +422,7 @@ bool IOManager::getMeteoData(const Date& date, const DEMObject& dem, const Meteo
 	skip_virtual_stations = true;
 	interpolator.interpolate(date, dem, meteoparam, result, info_string);
 	skip_virtual_stations = false;
-	return (!result.isEmpty());
+	return (!result.empty());
 }
 
 void IOManager::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,

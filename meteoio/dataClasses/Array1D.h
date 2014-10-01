@@ -68,7 +68,7 @@ template<class T> class Array1D {
 		void resize(const size_t& asize);
 		void resize(const size_t& asize, const T& init);
 		void clear();
-		bool isEmpty() const;
+		bool empty() const;
 
 		void insertAt(const int& index, T e);
 		void removeAt(const size_t& index);
@@ -232,7 +232,7 @@ template<class T> void Array1D<T>::clear() {
 	nx = 0;
 }
 
-template<class T> bool Array1D<T>::isEmpty() const {
+template<class T> bool Array1D<T>::empty() const {
 	return (nx==0);
 }
 

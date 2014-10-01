@@ -345,7 +345,7 @@ void Grid2DObject::clear() {
 	grid2D.clear();
 }
 
-bool Grid2DObject::isEmpty() const {
+bool Grid2DObject::empty() const {
 	return (grid2D.getNx()==0 && grid2D.getNy()==0);
 }
 

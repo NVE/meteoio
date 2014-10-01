@@ -354,7 +354,7 @@ void Interpol2D::ListonWind(const DEMObject& i_dem, Grid2DObject& VW, Grid2DObje
 	}
 
 	//make sure dem has the curvature that we need
-	const bool recomputeDEM = i_dem.curvature.isEmpty();
+	const bool recomputeDEM = i_dem.curvature.empty();
 	DEMObject *intern_dem = NULL;
 	if(recomputeDEM) {
 		std::cerr << "[W] WIND_CURV spatial interpolations algorithm selected but no dem curvature available! Computing it...\n";

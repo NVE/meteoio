@@ -213,7 +213,7 @@ void ARPSIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& pa
 		grid_out.set(dem.cellsize, dem.llcorner, dem.azi);
 	}
 
-	if(grid_out.isEmpty()) {
+	if(grid_out.empty()) {
 		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << name << "\"";

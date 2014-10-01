@@ -371,7 +371,7 @@ void Grid3DObject::clear() {
 	grid3D.clear();
 }
 
-bool Grid3DObject::isEmpty() const {
+bool Grid3DObject::empty() const {
 	return (grid3D.getNx()==0 && grid3D.getNy()==0 && grid3D.getNz()==0);
 }
 

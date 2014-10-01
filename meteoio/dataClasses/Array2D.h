@@ -148,7 +148,7 @@ template<class T> class Array2D {
 		size_t getNy() const;
 
 		void clear();
-		bool isEmpty() const;
+		bool empty() const;
 
 		/**
 		* @brief returns the minimum value contained in the grid
@@ -397,7 +397,7 @@ template<class T> void Array2D<T>::clear() {
 	nx=ny=0;
 }
 
-template<class T> bool Array2D<T>::isEmpty() const {
+template<class T> bool Array2D<T>::empty() const {
 	return (nx==0 && ny==0);
 }
 

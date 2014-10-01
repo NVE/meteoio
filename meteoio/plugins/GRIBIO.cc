@@ -631,7 +631,7 @@ void GRIBIO::read2DGrid(const std::string& filename, Grid2DObject& grid_out, con
 		grid_out = VW;
 	}
 
-	if(grid_out.isEmpty()) {
+	if(grid_out.empty()) {
 		ostringstream ss;
 		ss << "No suitable data found for parameter " << MeteoGrids::getParameterName(parameter) << " ";
 		ss << "at time step " << date.toString(Date::ISO) << " in file \"" << filename << "\"";

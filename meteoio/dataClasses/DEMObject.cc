@@ -391,7 +391,7 @@ void DEMObject::sanitize() {
 */
 Grid2DObject DEMObject::getHillshade(const double& elev, const double& azimuth) const
 {
-	if(slope.isEmpty() || azi.isEmpty())
+	if(slope.empty() || azi.empty())
 		throw InvalidArgumentException("Hillshade computation requires slope and azimuth!", AT);
 
 	const double zenith_rad = (90.-elev)*Cst::to_rad;
@@ -491,31 +491,18 @@ double DEMObject::terrainDistance(Coords point1, const Coords& point2) {
 }
 
 /**
-* @brief Returns a list of grid points that are on the straight line between two coordinates
-* @param point1 first point (ie: origin)
-* @param point2 second point (ie: destination)
+* @brief Returns a list of grid points that are on the straight line between two coordinates.
+* This implements Bresenham's algorithm (see https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)
+* @param ix1 origin's abscissa
+* @param iy1 origin's ordinate
+* @param ix2 destination's abscissa
+* @param iy2 destination's ordinate
 * @param vec_points vector of points that are in between
 *
 */
-void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT_2D>& vec_points) {
-
-	if(point1.isSameProj(point2)==false) {
-		point1.copyProj(point2);
-	}
-
-	if(point1.getEasting() > point2.getEasting()) {
-		//we want xcoord1<xcoord2, so we swap the two points
-		const Coords tmp = point1;
-		point1 = point2;
-		point2 = tmp;
-	}
-
-	//extension of the line segment (pts1, pts2) along the X axis
-	const int ix1 = (int)floor( (point1.getEasting() - llcorner.getEasting())/cellsize );
-	const int iy1 = (int)floor( (point1.getNorthing() - llcorner.getNorthing())/cellsize );
-	const int ix2 = (int)floor( (point2.getEasting() - llcorner.getEasting())/cellsize );
-	const int iy2 = (int)floor( (point2.getNorthing() - llcorner.getNorthing())/cellsize );
-
+void DEMObject::getPointsBetween(const int& ix1, const int& iy1, const int& ix2, const int& iy2, std::vector<GRID_POINT_2D>& vec_points)
+{
+	vec_points.clear();
 	if(ix1==ix2) {
 		//special case of vertical alignement
 		for(int iy=min(iy1,iy2); iy<=max(iy1,iy2); iy++) {
@@ -557,6 +544,35 @@ void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_
 			}
 		}
 	}
+}
+
+/**
+* @brief Returns a list of grid points that are on the straight line between two coordinates
+* @param point1 first point (ie: origin)
+* @param point2 second point (ie: destination)
+* @param vec_points vector of points that are in between
+*
+*/
+void DEMObject::getPointsBetween(Coords point1, Coords point2, std::vector<GRID_POINT_2D>& vec_points) {
+
+	if(point1.isSameProj(point2)==false) {
+		point1.copyProj(point2);
+	}
+
+	if(point1.getEasting() > point2.getEasting()) {
+		//we want xcoord1<xcoord2, so we swap the two points
+		const Coords tmp = point1;
+		point1 = point2;
+		point2 = tmp;
+	}
+
+	//extension of the line segment (pts1, pts2) along the X axis
+	const int ix1 = (int)floor( (point1.getEasting() - llcorner.getEasting())/cellsize );
+	const int iy1 = (int)floor( (point1.getNorthing() - llcorner.getNorthing())/cellsize );
+	const int ix2 = (int)floor( (point2.getEasting() - llcorner.getEasting())/cellsize );
+	const int iy2 = (int)floor( (point2.getNorthing() - llcorner.getNorthing())/cellsize );
+
+	getPointsBetween(ix1, iy1, ix2, iy2, vec_points);
 }
 
 /**

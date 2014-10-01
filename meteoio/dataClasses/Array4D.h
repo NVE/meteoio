@@ -126,7 +126,7 @@ template<class T> class Array4D {
 		size_t getNy() const;
 		size_t getNz() const;
 		void clear();
-		bool isEmpty() const;
+		bool empty() const;
 
 		/**
 		* @brief returns the minimum value contained in the grid
@@ -398,7 +398,7 @@ template<class T> void Array4D<T>::clear() {
 	nw = nx = ny = nz = nwnx = nwnxny = 0;
 }
 
-template<class T> bool Array4D<T>::isEmpty() const {
+template<class T> bool Array4D<T>::empty() const {
 	return (nw==0 && nx==0 && ny==0 && nz==0);
 }
 

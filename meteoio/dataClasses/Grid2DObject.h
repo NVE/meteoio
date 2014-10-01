@@ -139,7 +139,7 @@ class Grid2DObject {
 		* @brief Check if a grid does not contain any data (but it can contain geolocalization)
 		* @return true if the grid is 0x0
 		*/
-		bool isEmpty() const;
+		bool empty() const;
 
 		/**
 		* @brief check if the current Grid2DObject has the same geolocalization attributes
