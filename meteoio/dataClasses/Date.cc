@@ -443,6 +443,27 @@ int Date::getYear(const bool& gmt) const {
 	}
 }
 
+
+/**
+* @brief Return time of the day.
+* @param hour_out
+* @param minute_out
+* @param gmt convert returned value to GMT? (default: false)
+*/
+void Date::getTime(int& hour_out, int& minute_out, const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
+	if(gmt) {
+		hour_out = gmt_hour;
+		minute_out = gmt_minute;
+	} else {
+		const double local_julian = GMTToLocal(gmt_julian);
+		int local_year, local_month, local_day;
+		calculateValues(local_julian, local_year, local_month, local_day, hour_out, minute_out);
+	}
+}
+
 /**
 * @brief Return year, month, day.
 * @param year_out

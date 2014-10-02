@@ -524,13 +524,21 @@ size_t Daily_solar::getNearestValidPt(const std::vector<MeteoData>& vecM, const 
 		}
 	}
 
-	if(indexP1!=IOUtils::npos && indexP2!=IOUtils::npos) {
-		const string msg = "More than one daily sum of solar radiation found between "+dateStart[stat_idx].toString(Date::ISO)+" and "+dateEnd[stat_idx].toString(Date::ISO);
-		throw IOException(msg, AT);
+	if (indexP1!=IOUtils::npos && indexP2!=IOUtils::npos) {
+		//if the data was provided at 00:00, a sum for each day has been found
+		//we only keep the later one as being the sum of the past day
+		int hour1, min1;
+		vecM[indexP1].date.getTime(hour1, min1);
+		if (hour1==0 && min1==0)
+			indexP1=IOUtils::npos;
+		else { //otherwise, this means multiple daily sums have been found for the same day
+			const string msg = "More than one daily sum of solar radiation found between "+dateStart[stat_idx].toString(Date::ISO)+" and "+dateEnd[stat_idx].toString(Date::ISO);
+			throw IOException(msg, AT);
+		}
 	}
 
-	if(indexP1!=IOUtils::npos) return indexP1;
-	if(indexP2!=IOUtils::npos) return indexP2;
+	if (indexP1!=IOUtils::npos) return indexP1;
+	if (indexP2!=IOUtils::npos) return indexP2;
 	return IOUtils::npos;
 }
 

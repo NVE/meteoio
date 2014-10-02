@@ -203,7 +203,7 @@ CosmoXMLIO::~CosmoXMLIO() throw()
 	closeIn_XML();
 }
 
-void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<Date,std::string> > &meteo_files) const
+void CosmoXMLIO::scanMeteoPath(const std::string& meteopath_in,  std::vector< std::pair<mio::Date,std::string> > &meteo_files) const
 {
 	meteo_files.clear();
 

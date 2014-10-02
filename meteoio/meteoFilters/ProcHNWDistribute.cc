@@ -38,17 +38,17 @@ void ProcHNWDistribute::process(const unsigned int& param, const std::vector<Met
 	const size_t nr_elems = ivec.size();
 
 	size_t ii=0;
-	while(ii<nr_elems) {
+	while (ii<nr_elems) {
 		const Date startDate = ovec[ii].date;
 		const Date endDate = startDate + measured_period;
 		const size_t endIdx = findNextAccumulation(param, ovec, endDate, ii+1);
 
-		if(endIdx==IOUtils::npos) { //no accumulation found
-			if(ovec.back().date<endDate) { //the proper end dat is not in our vector
+		if (endIdx==IOUtils::npos) { //no accumulation found
+			if (ovec.back().date<endDate) { //the proper end dat is not in our vector
 				fillInterval(param, ovec, ii, nr_elems-1, 0.); //fill the rest with 0
 				ii = nr_elems;
 			} else { //the next accumulation is really missing
-				if(is_soft) {
+				if (is_soft) {
 					fillInterval(param, ovec, ii, endIdx, 0.); //fill the interval with 0
 					ii = endIdx+1;
 				} else {
@@ -62,13 +62,19 @@ void ProcHNWDistribute::process(const unsigned int& param, const std::vector<Met
 		}
 
 		//we might have found an accumulation that comes too early -> ok for first point, otherwise multiple accumulations
-		if(ovec[endIdx].date<endDate && ii!=0) {
+		if (ovec[endIdx].date<endDate && ii!=0) {
 			const double interval = endDate.getJulian(true) - startDate.getJulian(true);
 			std::ostringstream ss;
 			const string param_name = ovec[0].getNameForParameter(param);
-			ss << "Accumulation period for \"" << param_name;
-			ss << "\" found to be " << fixed << setprecision(0) << interval*86400. << " for " << endDate.toString(Date::ISO);
-			ss << " when " << measured_period*86400. << " was given as arguments of \"" << getName() << "\"";
+
+			if (interval==measured_period) {
+				ss << "The precipitation must be provided at the end of the accumulation period ";
+				ss << "for the " << getName() << " filter, and this is not the case for " << endDate.toString(Date::ISO);
+			} else {
+				ss << "Accumulation period for \"" << param_name;
+				ss << "\" found to be " << fixed << setprecision(0) << interval*86400. << " for " << endDate.toString(Date::ISO);
+				ss << " when " << measured_period*86400. << " was given as arguments of \"" << getName() << "\"";
+			}
 			throw IOException(ss.str(), AT);
 		}
 
@@ -85,16 +91,16 @@ void ProcHNWDistribute::process(const unsigned int& param, const std::vector<Met
 size_t ProcHNWDistribute::findNextAccumulation(const unsigned int& param, const std::vector<MeteoData>& ivec, const Date& endDate, size_t ii)
 {
 	const size_t nr_elems = ivec.size();
-	while(ii<nr_elems && ivec[ii].date<=endDate && ivec[ii](param)==IOUtils::nodata) ii++;
+	while (ii<nr_elems && ivec[ii].date<=endDate && ivec[ii](param)==IOUtils::nodata) ii++;
 
-	if(ii==nr_elems || ivec[ii].date>endDate) return IOUtils::npos;
+	if (ii==nr_elems || ivec[ii].date>endDate) return IOUtils::npos;
 
 	return ii;
 }
 
 void ProcHNWDistribute::fillInterval(const unsigned int& param, std::vector<MeteoData>& ovec, const size_t& start, const size_t& end, const double value)
 {
-	for(size_t ii=start; ii<=end; ii++)
+	for (size_t ii=start; ii<=end; ii++)
 		ovec[ii](param) = value;
 }
 
@@ -105,10 +111,10 @@ void ProcHNWDistribute::parse_args(std::vector<std::string> vec_args)
 		is_soft = ProcessingBlock::is_soft(vec_args);
 	}
 
-	if(vec_args.size()>1)
+	if (vec_args.size()>1)
 		throw InvalidArgumentException("Too many arguments provided for filter "+getName(), AT);
 
-	if(vec_args.size()<1)
+	if (vec_args.size()<1)
 		throw InvalidArgumentException("Please at least provide the measured accumulation period for filter "+getName(), AT);
 
 	IOUtils::convertString(measured_period, vec_args[0]);
@@ -119,18 +125,18 @@ void ProcHNWDistribute::parse_args(std::vector<std::string> vec_args)
 //it also handles non-uniform sampling rates
 void ProcHNWDistribute::CstDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
 {
-	if(precip==IOUtils::nodata) return;
+	if (precip==IOUtils::nodata) return;
 
-	if(precip==0.) { //no precip, just fill with zeroes
-		for(size_t ii=start_idx; ii<=end_idx; ii++)
+	if (precip==0.) { //no precip, just fill with zeroes
+		for (size_t ii=start_idx; ii<=end_idx; ii++)
 			vecM[ii](paramindex) = 0.;
 		return;
 	} else {
-		if(start_idx==0)
+		if (start_idx==0)
 			throw IOException("Can not distribute without having the first data interval!", AT);
 
 		const double total_dur = vecM[end_idx].date.getJulian(true) - vecM[start_idx-1].date.getJulian(true);
-		for(size_t ii=start_idx; ii<=end_idx; ii++) {
+		for (size_t ii=start_idx; ii<=end_idx; ii++) {
 			const double dur = vecM[ii].date.getJulian(true) - vecM[ii-1].date.getJulian(true);
 			vecM[ii](paramindex) = precip * dur/total_dur;
 		}
@@ -141,13 +147,13 @@ void ProcHNWDistribute::CstDistributeHNW(const double& precip, const size_t& sta
 //it also handles non-uniform sampling rates
 void ProcHNWDistribute::SmartDistributeHNW(const double& precip, const size_t& start_idx, const size_t& end_idx, const size_t& paramindex, std::vector<MeteoData>& vecM)
 {
-	if(precip==IOUtils::nodata) return;
-	if(precip==0.) {
+	if (precip==IOUtils::nodata) return;
+	if (precip==0.) {
 		CstDistributeHNW(precip, start_idx, end_idx, paramindex, vecM);
 		return;
 	}
 
-	if(start_idx==0)
+	if (start_idx==0)
 		throw IOException("Can not distribute without having the first data interval!", AT);
 
 	const size_t nr_elems = end_idx-start_idx+1;
@@ -156,25 +162,25 @@ void ProcHNWDistribute::SmartDistributeHNW(const double& precip, const size_t& s
 	//assign a score for each timestep according to the possibility of precipitation
 	size_t nr_score1 = 0, nr_score2 = 0; //count how many in each possible score categories
 	double duration1 = 0., duration2 = 0.; //sum to calculate the total duration of each scores
-	for(size_t ii=0; ii<nr_elems; ii++) { //we keep a local index "ii" for the scores
+	for (size_t ii=0; ii<nr_elems; ii++) { //we keep a local index "ii" for the scores
 		unsigned char score = 0;
 		const double rh = vecM[ii+start_idx](MeteoData::RH);
 		const double ta = vecM[ii+start_idx](MeteoData::TA);
 		const double tss = vecM[ii+start_idx](MeteoData::TSS);
 
 		//assign the scores
-		if(rh!=IOUtils::nodata && rh>=thresh_rh) //enough moisture for precip
+		if (rh!=IOUtils::nodata && rh>=thresh_rh) //enough moisture for precip
 			score++;
 		if (ta!=IOUtils::nodata && tss!=IOUtils::nodata && (ta-tss)<=thresh_Dt ) //cloudy sky condition
 			score++;
 
 		//counters to know how many points received each possible scores
-		if(score==1) {
+		if (score==1) {
 			nr_score1++;
 			const double duration = vecM[ii+start_idx].date.getJulian(true) - vecM[ii+start_idx-1].date.getJulian(true);
 			duration1 += duration;
 		}
-		if(score==2) {
+		if (score==2) {
 			nr_score2++;
 			const double duration = vecM[ii+start_idx].date.getJulian(true) - vecM[ii+start_idx-1].date.getJulian(true);
 			duration2 += duration;
@@ -188,8 +194,8 @@ void ProcHNWDistribute::SmartDistributeHNW(const double& precip, const size_t& s
 	const double winning_duration = (winning_scores==2)? duration2 : (winning_scores==1)? duration1 : whole_duration;
 
 	//distribute the precipitation on the time steps that have the highest scores
-	for(size_t ii=0; ii<nr_elems; ii++) {
-		if(vecScores[ii]==winning_scores) {
+	for (size_t ii=0; ii<nr_elems; ii++) {
+		if (vecScores[ii]==winning_scores) {
 			const double duration = vecM[ii+start_idx].date.getJulian(true) - vecM[ii+start_idx-1].date.getJulian(true);
 			vecM[ii+start_idx](paramindex) = precip * duration/winning_duration;
 		} else

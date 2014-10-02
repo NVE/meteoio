@@ -224,7 +224,8 @@ class Accumulate : public ResamplingAlgorithms {
 
 /**
  * @brief Generate solar radiation out of daily sums.
- * Daily sums of solar radiation (once, per day, any time during the day) are compared to the potential radiation, leading to an atmospheric loss factor.
+ * Daily sums of solar radiation (once, per day, any time during the day. Data provided at midnight is considered to belong to the day that just finished)
+ * are compared to the potential radiation, leading to an atmospheric loss factor.
  * This loss factor is then applied to the potential solar radiation calculated at the requested time.
  * When using this algorithm for RSWR, an albedo is required. A default value of 0.5 is used. If the snow height is available and greater than a 10cm threshold,
  * a snow albedo is used. Below this threshold, a soil albedo is used.
