@@ -110,7 +110,7 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 /**
 * @brief Black Globe Temperature.
 * This is an estimation of the black globe temperature based on physical modeling as in
-* V. E. Dimiceli, S. F. Piltz and S. A. Amburn, <i>"Estimation of Black Globe Temperature for Calculation of the Wet Bulb Globe Temperature Index"</i> in World Congress on Engineering and Computer Science, <b>2</b>, 2011. 
+* V. E. Dimiceli, S. F. Piltz and S. A. Amburn, <i>"Estimation of Black Globe Temperature for Calculation of the Wet Bulb Globe Temperature Index"</i> in World Congress on Engineering and Computer Science, <b>2</b>, 2011.
 * @param TA air temperature (K)
 * @param RH relative humidity (between 0 and 1)
 * @param VW wind velocity (m/s)
@@ -122,13 +122,13 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 double Atmosphere::blackGlobeTemperature(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z)
 {
 	const double a=1, b=1, c=1; //HACK: get real values!
-	
+
 	const double S = iswr_dir + iswr_diff;
 	const double h = a * pow(S, b) * pow(cos_Z, c);
 	const double emissivity = 0.575 * pow(RH*waterSaturationPressure(TA), 1./7.);
 	const double B = S * (iswr_dir/(4.*Cst::stefan_boltzmann*cos_Z) + 1.2/Cst::stefan_boltzmann*iswr_diff) + emissivity*Optim::pow4(TA);
 	const double C = h * pow(VW, 0.58) / 5.3865e-8;
-	
+
 	const double Tg = (B + C*TA + 7680000) / (C + 256000);
 	return Tg;
 }
@@ -226,7 +226,7 @@ double Atmosphere::WBGT_index(const double& TA, const double& RH, const double& 
 	const double NWB = wetBulbTemperature(TA, RH, altitude);
 	const double GT = blackGlobeTemperature(TA, RH, VW, iswr_dir, iswr_diff, cos_Z);
 	const double DB = TA;
-	
+
 	return 0.7*NWB + 0.2*GT + 0.1*DB;
 }
 
