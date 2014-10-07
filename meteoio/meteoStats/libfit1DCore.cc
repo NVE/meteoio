@@ -135,6 +135,7 @@ bool FitLeastSquare::checkInputs()
 	return true;
 }
 
+//see http://mathworld.wolfram.com/NonlinearLeastSquaresFitting.html
 bool FitLeastSquare::computeFit() {
 	double max_delta;
 	initLambda();
@@ -147,17 +148,17 @@ bool FitLeastSquare::computeFit() {
 	unsigned int iter = 0;
 	do {
 		iter++;
+		//set dBeta matrix
+		for(size_t m=1; m<=nPts; m++) {
+			dBeta(m,1) = Y[m-1] - f(X[m-1]); //X and Y are vectors
+		}
+
 		//set A matrix
 		for(size_t m=1; m<=nPts; m++) {
 			for(size_t n=1; n<=nParam; n++) {
 				const double value = DDer( X[m-1], n ); //X is a vector
 				A(m,n) = value;
 			}
-		}
-
-		//set dBeta matrix
-		for(size_t m=1; m<=nPts; m++) {
-			dBeta(m,1) = Y[m-1] - f(X[m-1]); //X and Y are vectors
 		}
 
 		//calculate parameters deltas
@@ -167,9 +168,9 @@ bool FitLeastSquare::computeFit() {
 
 		//apply the deltas to the parameters, record maximum delta
 		max_delta = 0.;
-		for(size_t m=1; m<=nParam; m++) {
-			Lambda[m-1] += dLambda(m,1); //Lambda is a vector
-			if( fabs(dLambda(m,1))>max_delta ) max_delta=fabs(dLambda(m,1));
+		for(size_t n=1; n<=nParam; n++) {
+			Lambda[n-1] += dLambda(n,1); //Lambda is a vector
+			if( fabs(dLambda(n,1))>max_delta ) max_delta=fabs(dLambda(n,1));
 		}
 
 	} while (max_delta>eps_conv && iter<max_iter);
@@ -229,9 +230,10 @@ double FitLeastSquare::DDer(const double& x, const size_t& index) {
 	const double y1 = f(x);
 	Lambda[index-1] = v2;
 	const double y2 = f(x);
-	Lambda[index-1] = var;
 
-	return (y2-y1)/(v2-v1);
+	Lambda[index-1] = var; //restore initial value
+
+	return (y2-y1)/(2.*delta);
 }
 
 } //namespace

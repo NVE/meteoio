@@ -269,6 +269,8 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 			ext="swr";
 		else if (parameter==MeteoGrids::ILWR)
 			ext="lwr";
+		else if(parameter==MeteoGrids::DEM)
+			ext="asc";
 		else {
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);
@@ -382,12 +384,18 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 {
 	//the path will be added by write2DGrid
 	if(a3d_view_out) {
+		// the A3D grid viewer looks for the following extensions:
+		//sdp, tss, swr, lwr, swe, alb, wet
 		string ext;
-		if(parameter==MeteoGrids::HS) {
+		if (parameter==MeteoGrids::HS)
 			ext="sdp";
-		} else if(parameter==MeteoGrids::DEM) {
+		else if (parameter==MeteoGrids::ISWR)
+			ext="swr";
+		else if (parameter==MeteoGrids::ILWR)
+			ext="lwr";
+		else if(parameter==MeteoGrids::DEM)
 			ext="asc";
-		} else {
+		else {
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);
 		}

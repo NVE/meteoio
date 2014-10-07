@@ -58,7 +58,8 @@ class FitModel {
 /**
  * @class FitLeastSquare
  * @brief A class to perform non-linear least square fitting.
- * It works on a time serie and uses matrix arithmetic to perform an arbitrary fit.
+ * It works on a time serie and uses matrix arithmetic to perform an arbitrary fit
+ * (see http://mathworld.wolfram.com/NonlinearLeastSquaresFitting.html).
  *
  * @ingroup stats
  * @author Mathias Bavay

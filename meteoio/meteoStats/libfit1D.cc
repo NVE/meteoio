@@ -78,7 +78,16 @@ bool Fit1D::setModel(const regression& regType, const std::vector<double>& in_X,
 	if(regType==LINEARLS) model=new LinearLS;
 	if(regType==QUADRATIC) model=new Quadratic;
 
-	model->setData(in_X, in_Y);
+	//remove nodata points
+	std::vector<double> X, Y;
+	for (size_t ii=0; ii<in_X.size(); ii++) {
+		if(in_X[ii]!=IOUtils::nodata && in_Y[ii]!=IOUtils::nodata) {
+			X.push_back( in_X[ii] );
+			Y.push_back( in_Y[ii] );
+		}
+	}
+
+	model->setData(X, Y);
 	if(updatefit)
 		return fit();
 	else
@@ -294,7 +303,7 @@ double Quadratic::f(const double& x) const {
 }
 
 void Quadratic::setDefaultGuess() {
-	std::vector<double> der = Interpol1D::derivative(X, Y);
+	std::vector<double> der( Interpol1D::derivative(X, Y) );
 	const double acc = 0.5 * Interpol1D::arithmeticMean( Interpol1D::derivative(X, der) );
 	double xzero=der[0];
 	size_t xzero_idx=0;

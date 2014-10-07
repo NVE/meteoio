@@ -88,7 +88,7 @@ class LinearLS : public FitLeastSquare {
 
 class Quadratic : public FitLeastSquare {
 	public:
-		Quadratic() {fit_ready = false; nParam = 2; min_nb_pts = 3; regname = "Quadratic";};
+		Quadratic() {fit_ready = false; nParam = 3; min_nb_pts = 4; regname = "Quadratic";};
 		void setDefaultGuess();
 		double f(const double& x) const;
 };

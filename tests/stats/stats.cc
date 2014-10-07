@@ -237,6 +237,93 @@ bool check_derivative(const vector<double>& x, const vector<double>& y) {
 	return status;
 }
 
+bool check_regressions(const vector<double>& x, const vector<double>& y) {
+	bool status = true;
+
+	Fit1D fit(Fit1D::SIMPLE_LINEAR, x, y);
+	std::vector<double> coeff;
+	fit.getParams(coeff);
+	if (!IOUtils::checkEpsilonEquality(coeff[0], -0.500941, 1e-6) ||
+	    !IOUtils::checkEpsilonEquality(coeff[1], 12.810614, 1e-6)) {
+		std::cout << "wrong results for simple_linear regression: returned ";
+		std::cout << "a=" << setprecision(12) << coeff[0] << " and b=" << coeff[1] << "\n";
+		status = false;
+	}
+
+	fit.setModel(Fit1D::LINEARLS, x, y); //this should return the same values
+	fit.getParams(coeff);
+	if (!IOUtils::checkEpsilonEquality(coeff[0], -0.500941, 1e-6) ||
+	    !IOUtils::checkEpsilonEquality(coeff[1], 12.810614, 1e-6)) {
+		std::cout << "wrong results for linear_ls regression: returned ";
+		std::cout << "a=" << setprecision(12) << coeff[0] << " and b=" << coeff[1] << "\n";
+		status = false;
+	}
+
+	fit.setModel(Fit1D::NOISY_LINEAR, x, y);
+	const double y1 = fit.f(-700.), yres1 = 372.9869;
+	const double y2 = fit.f(-31.5), yres2 = 141.9284;
+	const double y3 = fit.f(45.), yres3 = 115.4871;
+	const double y4 = fit.f(250.781), yres4 = 44.3615;
+	const double y5 = fit.f(500.), yres5 = -41.7778;
+	if (!IOUtils::checkEpsilonEquality(y1, yres1, 1e-3) ||
+	    !IOUtils::checkEpsilonEquality(y2, yres2, 1e-3) ||
+	    !IOUtils::checkEpsilonEquality(y3, yres3, 1e-3) ||
+	    !IOUtils::checkEpsilonEquality(y4, yres4, 1e-3) ||
+	    !IOUtils::checkEpsilonEquality(y5, yres5, 1e-3) ) {
+		std::cout << "wrong results for noisy_linear regression:\n\texpected\treturned\n";
+		std::cout << setprecision(12);
+		std::cout << "\t" << yres1 << "\t\t" << y1 << "\n";
+		std::cout << "\t" << yres2 << "\t\t" << y2 << "\n";
+		std::cout << "\t" << yres3 << "\t\t" << y3 << "\n";
+		std::cout << "\t" << yres4 << "\t\t" << y4 << "\n";
+		std::cout << "\t" << yres5 << "\t\t" << y5 << "\n";
+		status = false;
+	}
+
+	fit.setModel(Fit1D::QUADRATIC, x, y);
+	fit.getParams(coeff);
+	if (!IOUtils::checkEpsilonEquality(coeff[0], 0.0016668, 1e-6) ||
+	    !IOUtils::checkEpsilonEquality(coeff[1], -0.3605318, 1e-6) ||
+	    !IOUtils::checkEpsilonEquality(coeff[2], -98.3815970, 1e-6)) {
+		std::cout << "wrong results for quadratic regression: returned ";
+		std::cout << "a=" << setprecision(12) << coeff[0] << " b=" << coeff[1] << " c=" << coeff[2] << "\n";
+		status = false;
+	}
+
+	//set the parameters and get the values
+	vector<double> lambda(3);
+	lambda[0] = 0.05; lambda[1] = 0.70; lambda[2] = 40.;
+
+	vector<double> X(11), Y(11);
+	X[0] = 2.; Y[0] = 0.102456;
+	X[1] = 5.; Y[1] = 0.180566;
+	X[2] = 7.; Y[2] = 0.231874;
+	X[3] = 10.; Y[3] = 0.307031;
+	X[4] = 14.; Y[4] = 0.402494;
+	X[5] = 19.; Y[5] = 0.51124;
+	X[6] = 22.; Y[6] = 0.569269;
+	X[7] = 39.; Y[7] = 0.749349;
+	X[8] = 60.; Y[8] = 0.75;
+	X[9] = 90.; Y[9] = 0.75;
+	X[10] = 100.; Y[10] = 0.75;
+
+	fit.setModel(Fit1D::SPHERICVARIO, X, Y, false);
+	fit.setGuess(lambda);
+	for (size_t ii=0; ii<X.size(); ii++) {
+		if ( !IOUtils::checkEpsilonEquality(fit.f(X[ii]), Y[ii], 1e-5) ) {
+			std::cout << "Wrong result when setting parameters: expected " << Y[ii];
+			std::cout << " received " << fit.f(X[ii]) << " instead\n";
+			status = false;
+		}
+	}
+
+	if (status)
+		std::cout << "Regressions: success\n";
+	else
+		std::cout << "Regressions: failed\n";
+	return status;
+}
+
 int main() {
 	vector<double> x,y;
 	//cr_rand_vectors(x, y);
@@ -248,8 +335,9 @@ int main() {
 	const bool covariance_status = check_covariance(x,y);
 	const bool der_status = check_derivative(x,y);
 	const bool quantiles_status = check_quantiles(x);
+	const bool regressions_status = check_regressions(x, y);
 
-	if(!basics_status || !sort_status || !bin_status || !quantiles_status || !covariance_status || !der_status)
+	if(!basics_status || !sort_status || !bin_status || !quantiles_status || !covariance_status || !der_status || !regressions_status)
 		throw IOException("Statistical functions error!", AT);
 
 
