@@ -700,7 +700,9 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
                       const size_t& stationindex, const std::vector<StationData>& vecStationIDs,
                       oracle::occi::Environment*& env, oracle::occi::Statement*& stmt)
 {
-	const double max_interval = 3./24.; //3 hours between two SWE values max
+	const double max_interval = 3./24.; //max hours between two SWE values
+	const double swe_threshold = 1.5; //precip less than this are delayed until its sum gets greater
+	const double eps_swe = 0.1; //very small variations on SWE are simply ignored
 
 	// Moving back to the IMIS timezone (UTC+1)
 	Date dateS(dateStart), dateE(dateEnd);
@@ -732,49 +734,57 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 		ResultSet *rs = stmt->executeQuery(); // execute the statement stmt
 		const vector<MetaData> cols = rs->getColumnListMetaData();
 
-		double prev_swe=IOUtils::nodata;
+		double prev_swe = IOUtils::nodata;
 		Date prev_date;
-		size_t ii_serie=0; //index in meteo time serie
+		size_t ii_serie = 0; //index in meteo time serie
 		const size_t serie_len = vecMeteo[stationindex].size();
+		double accumulator = 0.;
 
 		while (rs->next() == true) { //loop over timesteps
-			if(cols.size()!=2) {
+			if (cols.size()!=2) {
 				ostringstream ss;
 				ss << "For station " << vecStationIDs.at(stationindex).getStationID() << ", ";
 				ss << "snowpack SWE query returned " << cols.size() << " columns, while 2 were expected";
 				throw UnknownValueException(ss.str(), AT);
 			}
-			Date d;
-			IOUtils::convertString(d, rs->getString(1), 1.);
+			Date curr_date;
+			IOUtils::convertString(curr_date, rs->getString(1), 1.);
 			double curr_swe;
 			IOUtils::convertString(curr_swe, rs->getString(2));
+			if (curr_swe==IOUtils::nodata || curr_swe<0.) continue;
+
 			//looking for matching timestamp in the vecMeteo
-			while(ii_serie<serie_len && vecMeteo[stationindex][ii_serie].date<d) ii_serie++;
-			if(ii_serie>=serie_len) return;
+			while (ii_serie<serie_len && vecMeteo[stationindex][ii_serie].date<curr_date) ii_serie++;
+			if (ii_serie>=serie_len) return;
 
-			if(curr_swe>0.) vecMeteo[stationindex][ii_serie](MeteoData::HNW) = IOUtils::nodata; //invalidate any potential IMIS HNW
 
-			if(prev_swe!=IOUtils::nodata && curr_swe!=IOUtils::nodata) {
-				 //valid values for Delta computation
-				if((d.getJulian()-prev_date.getJulian())<=max_interval) {
-					//data not too far apart, so we accept it for Delta SWE
-					if(vecMeteo[stationindex][ii_serie].date==d) {
-						//we found the matching timestamp -> writing Delta(SWE) as hnw
-						const double new_hnw_sum = curr_swe - prev_swe;
-						if(curr_swe>0. && new_hnw_sum>=0.) vecMeteo[stationindex][ii_serie](MeteoData::HNW) = new_hnw_sum;
-						prev_swe = curr_swe;
-						prev_date = d;
-					}
-				} else {
-					//data points in SWE too far apart, we could not use it for hnw but we reset our prev_swe to this new point
-					prev_swe = curr_swe;
-					prev_date = d;
-				}
-			}
-			if(curr_swe!=IOUtils::nodata && prev_swe==IOUtils::nodata) {
+			if (prev_swe==IOUtils::nodata) {
 				 //this looks like the first valid data point that we find
 				prev_swe = curr_swe;
-				prev_date = d;
+				prev_date = curr_date;
+				continue;
+			}
+
+			if ((curr_date.getJulian()-prev_date.getJulian())<=max_interval || curr_swe==0.) {
+				vecMeteo[stationindex][ii_serie](MeteoData::HNW) = 0.;
+				//data not too far apart, so we accept it for Delta SWE
+				if (vecMeteo[stationindex][ii_serie].date==curr_date) {
+					//we found the matching timestamp -> writing Delta(SWE) as hnw
+					const double new_hnw_sum = curr_swe - prev_swe;
+					if (new_hnw_sum>eps_swe) {
+						accumulator += new_hnw_sum;
+						if (accumulator>=swe_threshold) {
+							vecMeteo[stationindex][ii_serie](MeteoData::HNW) = accumulator;
+							accumulator = 0.;
+						}
+					}
+				}
+				prev_swe = curr_swe;
+				prev_date = curr_date;
+			} else {
+				//data points in SWE too far apart, we could not use it for hnw but we reset our prev_swe to this new point
+				prev_swe = curr_swe;
+				prev_date = curr_date;
 			}
 		}
 
