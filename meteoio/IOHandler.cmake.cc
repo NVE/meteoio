@@ -423,6 +423,7 @@ void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 	if (excluded_params.empty()) return;
 
 	for (size_t station=0; station<vecVecMeteo.size(); ++station) {
+		if (vecVecMeteo[station].empty()) continue;
 		const string stationID = vecVecMeteo[station][0].meta.stationID;
 		const map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
 		if (it == excluded_params.end()) continue;
