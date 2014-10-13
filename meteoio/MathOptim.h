@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include <cmath>
+#include <string.h>
 
 //Quake3 fast 1/x² approximation
 // For Magic Derivation see: Chris Lomont http://www.lomont.org/Math/Papers/2003/InvSqrt.pdf
@@ -178,6 +179,8 @@ namespace Optim {
 
 	//see http://metamerist.com/cbrt/cbrt.htm
 	template <int n> inline float nth_rootf(float x) {
+		const bool sgn = (x<0.)? true : false;
+		if (sgn) x = -x;
 		const int ebits = 8;
 		const int fbits = 23;
 
@@ -185,10 +188,13 @@ namespace Optim {
 		int& i = reinterpret_cast<int&>(x);
 		i = (i - (bias << fbits)) / n + (bias << fbits);
 
-		return x;
+		if (sgn) return -x;
+		else return x;
 	}
 
 	template <int n> inline double nth_rootd(double x) {
+		const bool sgn = (x<0.)? true : false;
+		if (sgn) x = -x;
 		const int ebits = 11;
 		const int fbits = 52;
 
@@ -196,7 +202,8 @@ namespace Optim {
 		int64_t& i = reinterpret_cast<int64_t&>(x);
 		i = (i - (bias << fbits)) / n + (bias << fbits);
 
-		return x;
+		if (sgn) return -x;
+		else return x;
 	}
 
 	/**
