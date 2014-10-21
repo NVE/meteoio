@@ -63,25 +63,52 @@ double bearing(std::string bearing_str)
 	trim(bearing_str);
 	toUpper(bearing_str);
 
-	if(bearing_str=="N") return 0.;
-	if(bearing_str=="NNE") return 22.5;
-	if(bearing_str=="NE") return 45.;
-	if(bearing_str=="ENE") return 67.5;
-	if(bearing_str=="E") return 90.;
-	if(bearing_str=="ESE") return 112.5;
-	if(bearing_str=="SE") return 135.;
-	if(bearing_str=="SSE") return 157.5;
-	if(bearing_str=="S") return 180.;
-	if(bearing_str=="SSW") return 202.5;
-	if(bearing_str=="SW") return 225.;
-	if(bearing_str=="WSW") return 247.5;
-	if(bearing_str=="W") return 270.;
-	if(bearing_str=="WNW") return 292.5;
-	if(bearing_str=="NW") return 315.;
-	if(bearing_str=="NNW") return 337.5;
+	if (bearing_str=="N") return 0.;
+	if (bearing_str=="NNE") return 22.5;
+	if (bearing_str=="NE") return 45.;
+	if (bearing_str=="ENE") return 67.5;
+	if (bearing_str=="E") return 90.;
+	if (bearing_str=="ESE") return 112.5;
+	if (bearing_str=="SE") return 135.;
+	if (bearing_str=="SSE") return 157.5;
+	if (bearing_str=="S") return 180.;
+	if (bearing_str=="SSW") return 202.5;
+	if (bearing_str=="SW") return 225.;
+	if (bearing_str=="WSW") return 247.5;
+	if (bearing_str=="W") return 270.;
+	if (bearing_str=="WNW") return 292.5;
+	if (bearing_str=="NW") return 315.;
+	if (bearing_str=="NNW") return 337.5;
 
 	//no match
 	return nodata;
+}
+
+std::string bearing(double bearing)
+{
+	if (bearing==nodata) return "n/a";
+
+	bearing = fmod( fmod(bearing, 360.)+360., 360.); //from -infty to +infty back to [0, 360]
+
+	if (bearing<=11.25 || bearing>348.75) return "N";
+	if (bearing<=33.75) return "NNE";
+	if (bearing<=56.25) return "NE";
+	if (bearing<=78.75) return "ENE";
+	if (bearing<=101.25) return "E";
+	if (bearing<=123.75) return "ESE";
+	if (bearing<=146.25) return "SE";
+	if (bearing<=168.75) return "SSE";
+	if (bearing<=191.25) return "S";
+	if (bearing<=213.75) return "SSW";
+	if (bearing<=236.25) return "SW";
+	if (bearing<=258.75) return "WSW";
+	if (bearing<=281.25) return "W";
+	if (bearing<=303.75) return "WNW";
+	if (bearing<=326.25) return "NW";
+	if (bearing<=348.75) return "NNW";
+
+	//should not be reached
+	return "";
 }
 
 void stripComments(std::string& str)

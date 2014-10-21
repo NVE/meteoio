@@ -96,6 +96,12 @@ namespace IOUtils {
 	* @return bearing (0° on top, clockwise, in [0°, 360°[)
 	*/
 	double bearing(std::string bearing_str);
+	/**
+	* @brief Converts a compass bearing to a string bearing
+	* @param bearing (0° on top, clockwise, in [0°, 360°[)
+	* @return bearing_str as N, NE, SSW, etc
+	*/
+	std::string bearing(double bearing);
 
 	/**
 	* @brief Retrieve the user name
