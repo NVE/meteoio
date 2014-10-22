@@ -18,8 +18,8 @@ void cr_fixed_vectors(vector<double> &X, vector<double> &Y) {
 	X[4] = 57.4737; Y[4] = -377.073;
 	X[5] = 127.179; Y[5] = -376.651;
 	X[6] = 250.781; Y[6] = 24.0065;
-	X[7] = -999.; Y[7] = 496.798;
-	X[8] = 393.442; Y[8] = -999.;
+	X[7] = IOUtils::nodata; Y[7] = 496.798;
+	X[8] = 393.442; Y[8] = IOUtils::nodata;
 	X[9] = 408.396; Y[9] = 105.45;
 }
 
@@ -217,7 +217,7 @@ bool check_covariance(const vector<double>& x, const vector<double>& y) {
 }
 
 bool check_derivative(const vector<double>& x, const vector<double>& y) {
-	static const double results[] = {-999., -0.6146761, -0.454329, -11.377355, -3.8521071, -1.104764, 2.0748285, 3.241513, 0.516724, -999.};
+	static const double results[] = {IOUtils::nodata, -0.6146761, -0.454329, -11.377355, -3.8521071, -1.104764, 2.0748285, 3.241513, 0.516724, IOUtils::nodata};
 	vector<double> X(x), Y(y);
 	Interpol1D::sort(X, Y);
 	const vector<double> der = Interpol1D::derivative(X, Y);

@@ -546,7 +546,7 @@ template<class T> bool Array2D<T>::checkEpsilonEquality(const Array2D<double>& r
 
 	const size_t nxy = nx*ny;
 	for (size_t jj=0; jj<nxy; jj++)
-		if(IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
+		if (IOUtils::checkEpsilonEquality(vecData[jj], rhs.vecData[jj], epsilon)==false) return false;
 
 	return true;
 }

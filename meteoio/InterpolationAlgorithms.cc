@@ -260,11 +260,15 @@ void InterpolationAlgorithm::simpleWindInterpolate(const DEMObject& dem, const s
 	}
 
 	//recompute VW, DW in each cell
-	for (size_t ii=0; ii<VW.getNx()*VW.getNy(); ii++) {
+	const size_t nrCells = VW.getNx()*VW.getNy();
+	for (size_t ii=0; ii<nrCells; ii++) {
 		const double ve = VW(ii);
 		const double vn = DW(ii);
-		VW(ii) = sqrt(ve*ve + vn*vn);
-		DW(ii) = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+
+		if (ve!=IOUtils::nodata && vn!=IOUtils::nodata) {
+			VW(ii) = sqrt(ve*ve + vn*vn);
+			DW(ii) = fmod( atan2(ve,vn) * Cst::to_deg + 360., 360.);
+		}
 	}
 }
 
@@ -627,6 +631,7 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	if (param==MeteoData::VW) {
 		Grid2DObject DW;
 		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW);
+//std::cout << "DW=" << DW.toString();
 		Interpol2D::ListonWind(dem, grid, DW);
 	}
 	if (param==MeteoData::DW) {
