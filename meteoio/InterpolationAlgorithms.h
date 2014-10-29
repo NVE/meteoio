@@ -375,11 +375,12 @@ class ListonWindAlgorithm : public InterpolationAlgorithm {
 		ListonWindAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW() {}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
+		bool inputIsAllZeroes;
 };
 
 /**
@@ -398,11 +399,12 @@ class RyanAlgorithm : public InterpolationAlgorithm {
 		RyanAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
 					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW() {}
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		std::vector<double> vecDataVW, vecDataDW; ///<vectors of extracted VW and DW
+		bool inputIsAllZeroes;
 };
 
 /**
@@ -416,7 +418,9 @@ class RyanAlgorithm : public InterpolationAlgorithm {
  * to get a progressive softening of the terrain features.
  *
  * This method must therefore first use another algorithm to generate an initial precipitation field,
- * and then modifies this field accordingly. This base method is "idw_lapse" by default.
+ * and then modifies this field accordingly. By default, this base method is "idw_lapse" and switches to
+ * "cst" if only one station can provide the precipitation at a given time step.
+ *
  * Then it requires a synoptic wind direction that can be provided by different means:
  *  - without any extra argument, the stations are located in the DEM and their wind shading (or exposure)
  * is computed. If at least one station is found that is not sheltered from the wind (in every direction), it
@@ -442,13 +446,15 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
 		void initGrid(const DEMObject& dem, Grid2DObject& grid);
+		static bool windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station);
 		static bool isExposed(const DEMObject& dem, Coords location);
-		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, const std::string& algo);
+		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station);
 		static double getSynopticBearing(const std::vector<MeteoData>& vecMeteo);
 		static double getSynopticBearing(const DEMObject& dem, const std::vector<MeteoData>& vecMeteo);
 
 		std::string base_algo, ref_station;
 		double user_synoptic_bearing;
+		bool inputIsAllZeroes;
 		static const double dmax;
 };
 

@@ -607,6 +607,12 @@ double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData
 		}
 	}
 
+	if ( (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) ||
+	     (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) ) {
+		inputIsAllZeroes = true;
+		return 0.9;
+	}
+
 	if (nrOfMeasurments==0)
 		return 0.0;
 	if( (nrOfMeasurments<vecDataVW.size()/2) || ( nrOfMeasurments<2 ) )
@@ -620,18 +626,14 @@ void ListonWindAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	//if all data points are zero, simply fill the grid with zeroes
-	if (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) {
+	if (inputIsAllZeroes) {
 		Interpol2D::constant(0., dem, grid);
 		return;
 	}
-	if (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) {
-		Interpol2D::constant(0., dem, grid);
-		return;
-	}
+
 	if (param==MeteoData::VW) {
 		Grid2DObject DW;
 		simpleWindInterpolate(dem, vecDataVW, vecDataDW, grid, DW);
-//std::cout << "DW=" << DW.toString();
 		Interpol2D::ListonWind(dem, grid, DW);
 	}
 	if (param==MeteoData::DW) {
@@ -664,6 +666,12 @@ double RyanAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Para
 		}
 	}
 
+	if ( (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) ||
+	     (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) ) {
+		inputIsAllZeroes = true;
+		return 0.9;
+	}
+
 	if (nrOfMeasurments==0)
 		return 0.0;
 	if (nrOfMeasurments<2)
@@ -677,11 +685,7 @@ void RyanAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	//if all data points are zero, simply fill the grid with zeroes
-	if (param==MeteoData::VW && Interpol2D::allZeroes(vecDataVW)) {
-		Interpol2D::constant(0., dem, grid);
-		return;
-	}
-	if (param==MeteoData::DW && Interpol2D::allZeroes(vecDataDW)) {
+	if (inputIsAllZeroes) {
 		Interpol2D::constant(0., dem, grid);
 		return;
 	}
@@ -703,7 +707,8 @@ const double WinstralAlgorithm::dmax = 300.;
 
 WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
                                      const std::string& i_algo, IOManager& iom)
-                  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), base_algo("IDW_LAPSE"), ref_station(), user_synoptic_bearing(IOUtils::nodata)
+                  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), base_algo("IDW_LAPSE"), ref_station(),
+                    user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false)
 {
 	const size_t nr_args = vecArgs.size();
 	if (nr_args==1) {
@@ -737,9 +742,23 @@ double WinstralAlgorithm::getQualityRating(const Date& i_date, const MeteoData::
 	date = i_date;
 	param = in_param;
 	nrOfMeasurments = getData(date, param, vecData, vecMeta);
+	inputIsAllZeroes = Interpol2D::allZeroes(vecData);
+
+	if (inputIsAllZeroes)
+		return 0.99;
 
 	if (nrOfMeasurments==0)
 		return 0.0;
+
+	if (nrOfMeasurments==1 && ref_station.empty()) { //ie: still using default base_algo
+		base_algo = "CST";
+	}
+
+	//check that the necessary wind data is available
+	if (user_synoptic_bearing==IOUtils::nodata) {
+		if (!windIsAvailable(vecMeteo, ref_station))
+			return 0.0;
+	}
 
 	return 0.99;
 }
@@ -755,14 +774,31 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	info << algorithm->getInfo();
 }
 
-double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station, const std::string& algo)
+bool WinstralAlgorithm::windIsAvailable(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station)
+{
+	if (ref_station.empty()) {
+		for (size_t ii=0; ii<vecMeteo.size(); ii++) {
+			const double VW = vecMeteo[ii](MeteoData::VW);
+			const double DW = vecMeteo[ii](MeteoData::DW);
+			if(VW!=IOUtils::nodata && DW!=IOUtils::nodata)
+				return true; //at least one station is enough
+		}
+	} else {
+		if (getSynopticBearing(vecMeteo, ref_station) != IOUtils::nodata)
+			return true;
+	}
+
+	return false;
+}
+
+double WinstralAlgorithm::getSynopticBearing(const std::vector<MeteoData>& vecMeteo, const std::string& ref_station)
 {
 	for (size_t ii=0; ii<vecMeteo.size(); ++ii) {
 		if (vecMeteo[ii].meta.stationID==ref_station)
 			return vecMeteo[ii](MeteoData::DW);
 	}
 
-	throw InvalidArgumentException("Station \""+ref_station+"\" should be used as reference station for the "+algo+" algorithm but has not been found", AT);
+	return IOUtils::nodata;
 }
 
 //this method scans a square centered on the station for summmits
@@ -842,17 +878,15 @@ double WinstralAlgorithm::getSynopticBearing(const DEMObject& dem, const std::ve
 
 	std::vector<MeteoData> stationsSubset;
 	for (size_t ii=0; ii<vecMeteo.size(); ii++) {
-		if (isExposed(dem, vecMeteo[ii].meta.position)) {
-			//std::cout << "Station " << vecMeteo[ii].meta.stationID << " - " << vecMeteo[ii].meta.stationName << " -> DW=" << vecMeteo[ii](MeteoData::DW) << "\n";
+		if (isExposed(dem, vecMeteo[ii].meta.position))
 			stationsSubset.push_back( vecMeteo[ii] );
-		}
 	}
 
 	if (!stationsSubset.empty()) {
 		return getSynopticBearing(stationsSubset);
 	} else {
-		std::cerr << "[W] Synoptic wind direction computed from wind-sheltered stations only\n";
-		return  getSynopticBearing(vecMeteo);
+		//std::cerr << "[W] Synoptic wind direction computed from wind-sheltered stations only\n";
+		return getSynopticBearing(vecMeteo);
 	}
 }
 
@@ -861,7 +895,7 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	info.clear(); info.str("");
 
 	//if all data points are zero, simply fill the grid with zeroes
-	if (Interpol2D::allZeroes(vecData)) {
+	if (inputIsAllZeroes) {
 		Interpol2D::constant(0., dem, grid);
 		return;
 	}
@@ -870,12 +904,11 @@ void WinstralAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 	double synoptic_bearing = user_synoptic_bearing;
 	if (synoptic_bearing==IOUtils::nodata) {
 		if (!ref_station.empty())
-			synoptic_bearing = getSynopticBearing(vecMeteo, ref_station, algo);
+			synoptic_bearing = getSynopticBearing(vecMeteo, ref_station);
 		else
 			synoptic_bearing = getSynopticBearing(dem, vecMeteo);
 	}
 	info << "DW=" << synoptic_bearing << " - ";
-
 	initGrid(dem, grid);
 
 	//get TA interpolation from call back to Meteo2DInterpolator
