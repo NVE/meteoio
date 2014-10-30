@@ -17,8 +17,6 @@
 */
 #include <meteoio/InterpolationAlgorithms.h>
 #include <meteoio/meteoLaws/Atmosphere.h>
-#include <meteoio/Meteo2DInterpolator.h>
-#include <meteoio/IOManager.h>
 #include <meteoio/MathOptim.h>
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
@@ -29,42 +27,42 @@ namespace mio {
 
 InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algoname,
                                                        Meteo2DInterpolator& i_mi,
-                                                       const std::vector<std::string>& i_vecArgs, IOManager& iom)
+                                                       const std::vector<std::string>& i_vecArgs, TimeSeriesManager& tsm, GridsManager& gdm)
 {
 	const std::string algoname( IOUtils::strToUpper(i_algoname) );
 
 	if (algoname == "NONE"){// return a nodata grid
-		return new NoneAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new NoneAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "CST"){// constant fill
-		return new ConstAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new ConstAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "STD_PRESS"){// standard air pressure interpolation
-		return new StandardPressureAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new StandardPressureAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "CST_LAPSE"){// constant fill with an elevation lapse rate
-		return new ConstLapseRateAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new ConstLapseRateAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "IDW"){// Inverse Distance Weighting fill
-		return new IDWAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new IDWAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "IDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill
-		return new IDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new IDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "LIDW_LAPSE"){// Inverse Distance Weighting with an elevation lapse rate fill, restricted to a local scale
-		return new LocalIDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new LocalIDWLapseAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "RH"){// relative humidity interpolation
-		return new RHAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new RHAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "ILWR"){// long wave radiation interpolation
-		return new ILWRAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new ILWRAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "LISTON_WIND"){// wind velocity interpolation (using a heuristic terrain effect)
-		return new ListonWindAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new ListonWindAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "RYAN"){// RYAN wind direction
-		return new RyanAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new RyanAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "WINSTRAL"){// Winstral wind exposure factor
-		return new WinstralAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new WinstralAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "ODKRIG"){// ordinary kriging
-		return new OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "ODKRIG_LAPSE"){// ordinary kriging with lapse rate
-		return new LapseOrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, iom);
+		return new LapseOrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "USER"){// read user provided grid
-		return new USERInterpolation(i_mi, i_vecArgs, i_algoname, iom);
+		return new USERInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else if (algoname == "HNW_SNOW"){// precipitation interpolation according to (Magnusson, 2010)
-		return new SnowHNWInterpolation(i_mi, i_vecArgs, i_algoname, iom);
+		return new SnowHNWInterpolation(i_mi, i_vecArgs, i_algoname, tsm, gdm);
 	} else {
 		throw IOException("The interpolation algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -73,7 +71,7 @@ InterpolationAlgorithm* AlgorithmFactory::getAlgorithm(const std::string& i_algo
 size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Parameters& i_param,
                                        std::vector<double>& o_vecData)
 {
-	iomanager.getMeteoData(i_date, vecMeteo);
+	tsmanager.getMeteoData(i_date, vecMeteo);
 	o_vecData.clear();
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		const double& val = vecMeteo[ii](i_param);
@@ -88,7 +86,7 @@ size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Para
 size_t InterpolationAlgorithm::getData(const Date& i_date, const MeteoData::Parameters& i_param,
                                        std::vector<double>& o_vecData, std::vector<StationData>& o_vecMeta)
 {
-	iomanager.getMeteoData(i_date, vecMeteo);
+	tsmanager.getMeteoData(i_date, vecMeteo);
 	o_vecData.clear();
 	o_vecMeta.clear();
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
@@ -432,8 +430,8 @@ void IDWLapseAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 
 
 LocalIDWLapseAlgorithm::LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
-                                               const std::string& i_algo, IOManager& iom)
-                      : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), nrOfNeighbors(0)
+                                               const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                      : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), nrOfNeighbors(0)
 {
 	if (vecArgs.size() == 1) { //compute lapse rate on a reduced data set
 		IOUtils::convertString(nrOfNeighbors, vecArgs[0]);
@@ -477,7 +475,7 @@ double RHAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Parame
 	vecDataTA.clear(); vecDataRH.clear();
 
 	nrOfMeasurments = 0;
-	iomanager.getMeteoData(date, vecMeteo);
+	tsmanager.getMeteoData(date, vecMeteo);
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::RH) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::TA) != IOUtils::nodata)){
 			vecDataTA.push_back(vecMeteo[ii](MeteoData::TA));
@@ -597,7 +595,7 @@ double ListonWindAlgorithm::getQualityRating(const Date& i_date, const MeteoData
 	vecDataVW.clear(); vecDataDW.clear();
 
 	nrOfMeasurments = 0;
-	iomanager.getMeteoData(date, vecMeteo);
+	tsmanager.getMeteoData(date, vecMeteo);
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
 			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
@@ -656,7 +654,7 @@ double RyanAlgorithm::getQualityRating(const Date& i_date, const MeteoData::Para
 	vecDataVW.clear(); vecDataDW.clear();
 
 	nrOfMeasurments = 0;
-	iomanager.getMeteoData(date, vecMeteo);
+	tsmanager.getMeteoData(date, vecMeteo);
 	for (size_t ii=0; ii<vecMeteo.size(); ii++){
 		if ((vecMeteo[ii](MeteoData::VW) != IOUtils::nodata) && (vecMeteo[ii](MeteoData::DW) != IOUtils::nodata)){
 			vecDataVW.push_back(vecMeteo[ii](MeteoData::VW));
@@ -706,8 +704,8 @@ void RyanAlgorithm::calculate(const DEMObject& dem, Grid2DObject& grid)
 const double WinstralAlgorithm::dmax = 300.;
 
 WinstralAlgorithm::WinstralAlgorithm(Meteo2DInterpolator& i_mi, const std::vector<std::string>& i_vecArgs,
-                                     const std::string& i_algo, IOManager& iom)
-                  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), base_algo("IDW_LAPSE"), ref_station(),
+                                     const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                  : InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), base_algo("IDW_LAPSE"), ref_station(),
                     user_synoptic_bearing(IOUtils::nodata), inputIsAllZeroes(false)
 {
 	const size_t nr_args = vecArgs.size();
@@ -768,7 +766,7 @@ void WinstralAlgorithm::initGrid(const DEMObject& dem, Grid2DObject& grid)
 	//initialize precipitation grid with user supplied algorithm (IDW_LAPSE by default)
 	vector<string> vecArgs2;
 	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
-	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, tsmanager, gridsmanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
@@ -958,7 +956,7 @@ double USERInterpolation::getQualityRating(const Date& i_date, const MeteoData::
 
 void USERInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 {
-	iomanager.read2DGrid(grid, filename);
+	gridsmanager.read2DGrid(grid, filename);
 	if(!grid.isSameGeolocalization(dem)) {
 		throw InvalidArgumentException("[E] trying to load a grid(" + filename + ") that has not the same georeferencing as the DEM!", AT);
 	}
@@ -995,7 +993,7 @@ void SnowHNWInterpolation::calculate(const DEMObject& dem, Grid2DObject& grid)
 	IOUtils::toUpper(base_algo);
 	vector<string> vecArgs2;
 	mi.getArgumentsForAlgorithm(MeteoData::getParameterName(param), base_algo, vecArgs2);
-	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, iomanager));
+	auto_ptr<InterpolationAlgorithm> algorithm(AlgorithmFactory::getAlgorithm(base_algo, mi, vecArgs2, tsmanager, gridsmanager));
 	algorithm->getQualityRating(date, param);
 	algorithm->calculate(dem, grid);
 	info << algorithm->getInfo();
@@ -1049,7 +1047,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 
 	vecVecData.clear();
 	std::vector<MeteoData> Meteo;
-	iomanager.getMeteoData(d1, Meteo);
+	tsmanager.getMeteoData(d1, Meteo);
 	const size_t nrStations = Meteo.size();
 	vecVecData.insert(vecVecData.begin(), nrStations, std::vector<double>()); //allocation for the vectors
 
@@ -1064,7 +1062,7 @@ size_t OrdinaryKrigingAlgorithm::getTimeSeries(const bool& detrend_data, std::ve
 
 	//fill time series
 	for(; d1<=date; d1+=Tstep) {
-		iomanager.getMeteoData(d1, Meteo);
+		tsmanager.getMeteoData(d1, Meteo);
 		if (Meteo.size()!=nrStations) {
 			std::ostringstream ss;
 			ss << "Number of stations varying between " << nrStations << " and " << Meteo.size();

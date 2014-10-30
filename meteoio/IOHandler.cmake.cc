@@ -219,7 +219,8 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 		IOInterface *ioPtr = getPlugin(op_src);
 		if (ioPtr==NULL)
 			throw IOException("Cannot find plugin " + op_src + " as requested in file " + cfg.getSourceName() + ". Has it been activated through ccmake? Is it declared in IOHandler::getPlugin?", AT);
-		mapPlugins[op_src] = ioPtr;
+		else
+			mapPlugins[op_src] = ioPtr;
 	}
 
 	return mapPlugins[op_src];

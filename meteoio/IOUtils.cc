@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include <meteoio/IOUtils.h>
+#include <meteoio/MathOptim.h>
 #include <meteoio/Config.h>    // to avoid forward declaration hell
 #include <meteoio/dataClasses/MeteoData.h> // to avoid forward declaration hell
 
@@ -639,6 +640,96 @@ void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, cons
 		nx = nx_avg;
 		startx = remainder*(nx+1) + (wk-1-remainder)*nx;
 	}
+}
+
+double unitsPrefix(const char& prefix)
+{
+	if (prefix == 'f') {
+		return 1e-15;
+	} else if (prefix == 'p') {
+		return 1e-12;
+	} else if (prefix == 'n') {
+		return 1e-9;
+	} else if (prefix == 'u') {
+		return 1e-6;
+	} else if (prefix == 'm') {
+		return 1e-3;
+	} else if (prefix == 'c') {
+		return 1e-2;
+	} else if (prefix == 'd') {
+		return 1e-1;
+	} else if (prefix == 'h') {
+		return 1e2;
+	} else if (prefix == 'k') {
+		return 1e3;
+	} else if (prefix == 'M') {
+		return 1e6;
+	} else if (prefix == 'G') {
+		return 1e9;
+	} else if (prefix == 'T') {
+		return 1e12;
+	} else if (prefix == 'P') {
+		return 1e15;
+	}
+
+	const std::string prefix_str( 1, prefix );
+	throw IOException("Invalid unit prefix '"+prefix_str+"'", AT);
+}
+
+double unitsConversion(const double& val, std::string unitIn, std::string unitOut)
+{
+	if (val==IOUtils::nodata)
+		return IOUtils::nodata;
+	if (unitIn.empty() || unitOut.empty())
+		throw InvalidArgumentException("Units can not be empty!", AT);
+
+	if (unitIn=="degK" || unitIn=="°K" || unitIn=="Kelvin")
+		unitIn = "K";
+	if (unitOut=="degK" || unitOut=="°K" || unitOut=="Kelvin")
+		unitOut = "K";
+	if (unitIn=="degC" || unitIn=="Celsius")
+		unitIn = "°C";
+	if (unitOut=="degC" || unitOut=="Celsius")
+		unitOut = "°C";
+	if (unitIn=="degF" || unitIn=="Fahrenheit")
+		unitIn = "°F";
+	if (unitOut=="degF" || unitOut=="Fahrenheit")
+		unitOut = "°F";
+
+	if (unitIn=="°C" && unitOut=="K") {
+		return (val+Cst::t_water_triple_pt);
+	} else if (unitIn=="K" && unitOut=="°C") {
+		return (val-Cst::t_water_triple_pt);
+	} else if (unitIn=="K" && unitOut=="°F") {
+		return ((val-Cst::t_water_triple_pt)*1.8+32.);
+	} else if (unitIn=="°F" && unitOut=="K") {
+		return ((val-32.)/1.8+Cst::t_water_triple_pt);
+	}  else if (unitIn=="°F" && unitOut=="°C") {
+		return ((val-32.)/1.8);
+	}  else if (unitIn=="°C" && unitOut=="°F") {
+		return (val*1.8+32.);
+	} else {
+		const char In_last_char = unitIn[ unitIn.size()-1 ];
+		const char Out_last_char = unitOut[ unitOut.size()-1 ];
+		double ratio = 1.;
+
+		if (unitIn.size() > 1+isdigit(In_last_char)) {
+			ratio = unitsPrefix( unitIn[0] );
+		}
+		if (isdigit(In_last_char)) {
+			//ratio = pow(ratio,(int)(In_last_char-'0'));
+			const unsigned char exponent = static_cast<unsigned char>( In_last_char-'0' );
+			ratio = Optim::fastPow(ratio, exponent);
+		}
+		if (val==IOUtils::nodata) { //HACK
+			return ratio;
+		}
+		if (unitOut.size() > 1+isdigit(Out_last_char)) {
+			ratio /= unitsConversion(IOUtils::nodata, unitOut, unitIn); //HACK
+		}
+		return val*ratio;
+	}
+	throw ConversionFailedException("Unable to perform unit conversion.", AT);
 }
 
 } //namespace IOUtils

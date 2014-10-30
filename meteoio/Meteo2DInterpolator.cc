@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -22,25 +22,19 @@ using namespace std;
 
 namespace mio {
 
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, IOManager& i_iom)
-                    : cfg(i_cfg), iomanager(&i_iom), mapBufferedGrids(), mapBufferedInfos(),
-                      IndexBufferedGrids(), mapAlgorithms(), max_grids(10), algorithms_ready(false)
+Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+                    : cfg(i_cfg), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager),
+                      mapBufferedGrids(), mapBufferedInfos(), IndexBufferedGrids(), mapAlgorithms(),
+                      v_params(), v_coords(), v_stations(), virtual_point_cache(),
+                      max_grids(10), algorithms_ready(false), use_full_dem(false), downscaling(false), virtual_stations(false)
 {
 	setDfltBufferProperties();
 	setAlgorithms();
+	cfg.getValue("Virtual_stations", "Input", virtual_stations, IOUtils::nothrow);
+	if (virtual_stations) {
+		initVirtualStations();
+	}
 }
-
-Meteo2DInterpolator::Meteo2DInterpolator(const Config& i_cfg)
-                    : cfg(i_cfg), iomanager(NULL), mapBufferedGrids(), mapBufferedInfos(),
-                      IndexBufferedGrids(), mapAlgorithms(), max_grids(10), algorithms_ready(false)
-{
-	setDfltBufferProperties();
-	//setAlgorithms(); we can not call it since we don't have an iomanager yet!
-}
-
-Meteo2DInterpolator::Meteo2DInterpolator(const Meteo2DInterpolator& c)
-                    : cfg(c.cfg), iomanager(c.iomanager), mapBufferedGrids(c.mapBufferedGrids), mapBufferedInfos(c.mapBufferedInfos),
-                      IndexBufferedGrids(c.IndexBufferedGrids), mapAlgorithms(c.mapAlgorithms), max_grids(c.max_grids), algorithms_ready(c.algorithms_ready) {}
 
 Meteo2DInterpolator::~Meteo2DInterpolator()
 {
@@ -50,23 +44,6 @@ Meteo2DInterpolator::~Meteo2DInterpolator()
 		for (size_t ii=0; ii<vecAlgs.size(); ++ii)
 			delete vecAlgs[ii];
 	}
-}
-
-Meteo2DInterpolator& Meteo2DInterpolator::operator=(const Meteo2DInterpolator& source)
-{
-	//since this uses an IOManager on a given machine/node, since the pointers point to entry points
-	//in the compiled code, they should remain valid and therefore can be copied
-	if (this != &source) {
-		//cfg: can not be copied
-		iomanager = source.iomanager;
-		mapBufferedGrids = source.mapBufferedGrids;
-		mapBufferedInfos = source.mapBufferedInfos;
-		IndexBufferedGrids = source.IndexBufferedGrids;
-		mapAlgorithms = source.mapAlgorithms;
-		algorithms_ready = source.algorithms_ready;
-		max_grids = source.max_grids;
-	}
-	return *this;
 }
 
 void Meteo2DInterpolator::setDfltBufferProperties()
@@ -86,7 +63,7 @@ void Meteo2DInterpolator::addToBuffer(const Date& date, const DEMObject& dem, co
 	}
 
 	std::ostringstream ss;
-	ss << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << "::" << date.toString(Date::ISO) << "::" << MeteoData::getParameterName(meteoparam);
+	ss << dem.llcorner.printLatLon() << " " << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << "::" << date.toString(Date::ISO) << "::" << MeteoData::getParameterName(meteoparam);
 	mapBufferedGrids[ ss.str() ] = grid;
 	mapBufferedInfos[ ss.str() ] = info;
 	IndexBufferedGrids.push_back( ss.str()  );
@@ -98,7 +75,7 @@ bool Meteo2DInterpolator::getFromBuffer(const Date& date, const DEMObject& dem, 
 		return false;
 
 	std::ostringstream ss;
-	ss << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << "::" << date.toString(Date::ISO) << "::" << MeteoData::getParameterName(meteoparam);
+	ss << dem.llcorner.printLatLon() << " " << dem.getNx() << "x" << dem.getNy() << " @" << dem.cellsize << "::" << date.toString(Date::ISO) << "::" << MeteoData::getParameterName(meteoparam);
 
 	const std::map<std::string, std::string>::const_iterator it_info = mapBufferedInfos.find( ss.str() );
 	if (it_info != mapBufferedInfos.end()) {
@@ -114,10 +91,6 @@ bool Meteo2DInterpolator::getFromBuffer(const Date& date, const DEMObject& dem, 
 	return false;
 }
 
-void Meteo2DInterpolator::setIOManager(IOManager& i_iomanager) {
-	iomanager = &i_iomanager;
-}
-
 /* By reading the Config object build up a list of user configured algorithms
 * for each MeteoData::Parameters parameter (i.e. each member variable of MeteoData like ta, p, hnw, ...)
 * Concept of this constructor: loop over all MeteoData::Parameters and then look
@@ -125,6 +98,7 @@ void Meteo2DInterpolator::setIOManager(IOManager& i_iomanager) {
 */
 void Meteo2DInterpolator::setAlgorithms()
 {
+//HACK set callback to internal iomanager for virtual stations and downsampling!
 	set<string> set_of_used_parameters;
 	get_parameters(cfg, set_of_used_parameters);
 
@@ -138,7 +112,7 @@ void Meteo2DInterpolator::setAlgorithms()
 		for (size_t jj=0; jj<nrOfAlgorithms; jj++) {
 			std::vector<std::string> vecArgs;
 			getArgumentsForAlgorithm(parname, tmpAlgorithms[jj], vecArgs);
-			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, *iomanager);
+			vecAlgorithms[jj] = AlgorithmFactory::getAlgorithm( tmpAlgorithms[jj], *this, vecArgs, tsmanager, gridsmanager);
 		}
 
 		if (nrOfAlgorithms>0) {
@@ -175,8 +149,6 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
                                       Grid2DObject& result, std::string& InfoString)
 {
-	if (iomanager==NULL)
-		throw IOException("No IOManager reference has been set!", AT);
 	if (!algorithms_ready)
 		setAlgorithms();
 
@@ -226,7 +198,7 @@ void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, co
 
 //HACK make sure that skip_virtual_stations = true before calling this method when using virtual stations!
 void Meteo2DInterpolator::interpolate(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam,
-                            const std::vector<Coords>& in_coords, const bool& use_full_dem, std::vector<double>& result, std::string& info_string)
+                            const std::vector<Coords>& in_coords, std::vector<double>& result, std::string& info_string)
 {
 	result.clear();
 	vector<Coords> vec_coords(in_coords);
@@ -335,12 +307,127 @@ void Meteo2DInterpolator::check_projections(const DEMObject& dem, const std::vec
 	}
 }
 
+//get the stations' data to use for downscaling (=true measurements)
+size_t Meteo2DInterpolator::getVirtualMeteoData(const vstations_policy& strategy, const Date& i_date, METEO_SET& vecMeteo)
+{
+	if (strategy==VSTATIONS) {
+		return getVirtualStationsData(i_date, vecMeteo);
+	} else if (strategy==DOWNSCALING) {
+		//extract all grid points
+		return 0; //hack
+	} else if (strategy==SMART_DOWNSCALING) {
+		//for each parameter:
+		//call iomanager.read2DGrid()
+		//extract relevant points and fill vecMeteo
+		//and loop over all grids!
+		//
+		//Questions/tricks:
+		//   throw exception if grids don't match between parameters
+		//   should we recompute which points to take between each time steps? (ie more flexibility)
+		//   should the generated virtual stations data be filtered? (useful for applying corrections)
+		//          if so: have an own iomanager and use iomanager.push_meteo_data()
+		return 0; //hack
+	}
+
+	throw UnknownValueException("Unknown virtual station strategy", AT);
+}
+
+void Meteo2DInterpolator::initVirtualStations()
+{
+	if(!cfg.keyExists("DEM", "Input"))
+		throw NoAvailableDataException("In order to use virtual stations, please provide a DEM!", AT);
+	DEMObject dem;
+	gridsmanager.readDEM(dem);
+
+	//get virtual stations coordinates
+	std::string coordin, coordinparam, coordout, coordoutparam;
+	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
+
+	std::vector<std::string> vecStation;
+	cfg.getValues("Vstation", "INPUT", vecStation);
+	for(size_t ii=0; ii<vecStation.size(); ii++) {
+		Coords tmp(coordin, coordinparam, vecStation[ii]);
+		if(!tmp.isNodata())
+			v_coords.push_back( tmp );
+	}
+
+	//create stations' metadata
+	for(size_t ii=0; ii<v_coords.size(); ii++) {
+		if(!dem.gridify(v_coords[ii])) {
+			ostringstream ss;
+			ss << "Virtual station \"" << vecStation[ii] << "\" is not contained is provided DEM";
+			throw NoAvailableDataException(ss.str(), AT);
+		}
+
+		const size_t i = v_coords[ii].getGridI(), j = v_coords[ii].getGridJ();
+		v_coords[ii].setAltitude(dem(i,j), false);
+
+		ostringstream name;
+		name << "Virtual_Station_" << ii+1;
+		ostringstream id;
+		id << "VIR" << ii+1;
+		StationData sd(v_coords[ii], id.str(), name.str());
+		sd.setSlope(dem.slope(i,j), dem.azi(i,j));
+
+		v_stations.push_back( sd );
+	}
+
+	cfg.getValue("Interpol_Use_Full_DEM", "Input", use_full_dem, IOUtils::nothrow);
+}
+
+size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo)
+{ //HACK use own private iomanager and do caching in its private one
+	vecMeteo.clear();
+
+	// Check if data is available in cache
+	const map<Date, vector<MeteoData> >::const_iterator it = virtual_point_cache.find(i_date);
+	if (it != virtual_point_cache.end()){
+		vecMeteo = it->second;
+		return vecMeteo.size();
+	}
+
+	//get data from real input stations
+	METEO_SET vecTrueMeteo;
+	//getStationsMeteoData(i_date, vecTrueMeteo); //HACK
+	if (vecTrueMeteo.empty()) return 0;
+
+	if (v_params.empty()) {
+		//get parameters to interpolate if not already done
+		//we need valid data in order to handle extra parameters
+		std::vector<std::string> vecStr;
+		cfg.getValue("Virtual_parameters", "Input", vecStr);
+		for (size_t ii=0; ii<vecStr.size(); ii++) {
+			v_params.push_back( vecTrueMeteo[0].getParameterIndex(vecStr[ii]) );
+		}
+	}
+
+	//create stations without measurements
+	for (size_t ii=0; ii<v_stations.size(); ii++) {
+		MeteoData md(i_date, v_stations[ii]);
+		vecMeteo.push_back( md );
+	}
+
+	//fill meteo parameters
+	DEMObject dem;
+	gridsmanager.readDEM(dem); //this is not a big deal since it will be in the buffer
+	string info_string;
+	for (size_t param=0; param<v_params.size(); param++) {
+		std::vector<double> result;
+		interpolate(i_date, dem, static_cast<MeteoData::Parameters>(v_params[param]), v_coords, result, info_string);
+		for (size_t ii=0; ii<v_coords.size(); ii++)
+			vecMeteo[ii](v_params[param]) = result[ii];
+	}
+
+	return vecMeteo.size();
+}
+
 
 const std::string Meteo2DInterpolator::toString() const {
 	ostringstream os;
 	os << "<Meteo2DInterpolator>\n";
 	os << "Config& cfg = " << hex << &cfg << dec << "\n";
-	os << "IOManager& iomanager = "  << hex << &iomanager << dec << "\n";
+	os << "TimeSeriesManager& tsmanager = "  << hex << &tsmanager << dec << "\n";
+	os << "GridsManager& gridsmanager = "  << hex << &gridsmanager << dec << "\n";
 
 	os << "Spatial resampling algorithms:\n";
 	std::map<std::string, std::vector<InterpolationAlgorithm*> >::const_iterator iter;

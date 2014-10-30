@@ -27,7 +27,6 @@
 
 //list in alphabetical order
 //find meteoio -name "*.h" | sort | xargs -i echo "#include <{}>"
-#include <meteoio/BufferedIOHandler.h>
 #include <meteoio/Config.h>
 
 #include <meteoio/dataClasses/Array1D.h>
@@ -52,6 +51,8 @@
 #include <meteoio/IOExceptions.h>
 #include <meteoio/IOHandler.h>
 #include <meteoio/IOInterface.h>
+#include <meteoio/TimeSeriesManager.h>
+#include <meteoio/GridsManager.h>
 #include <meteoio/IOManager.h>
 #include <meteoio/IOUtils.h>
 //#include <meteoio/MainPage.h> //only for doxygen

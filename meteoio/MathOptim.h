@@ -132,7 +132,7 @@ namespace Optim {
 
 	//please do not use this method directly, call fastPow() instead!
 	inline double fastPowInternal(double a, double b) {
-	//see http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
+		//see http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
 		// calculate approximation with fraction of the exponent
 		int e = (int) b;
 		union {
@@ -244,6 +244,21 @@ namespace Optim {
 		const double x2 = x*x;
 		const double tmp = 1. + a1*x + a2*x*x + a3*x*x2 + a4*x2*x2;
 		return tmp*tmp;
+	}
+
+	template <typename T> T fastPow(T p, unsigned q) {
+		T r(1);
+
+		while (q != 0) {
+			if (q % 2 == 1) {    // q is odd
+				r *= p;
+				q--;
+			}
+			p *= p;
+			q /= 2;
+		}
+
+		return r;
 	}
 
 	/**

@@ -32,10 +32,10 @@
 #include <meteoio/meteoLaws/Meteoconst.h>
 
 #ifndef C_TO_K
-#define C_TO_K( T ) ( T + Cst::t_water_freezing_pt )	  // degree Celsius to kelvin
+#define C_TO_K( T ) ( T + Cst::t_water_triple_pt )	  // degree Celsius to kelvin
 #endif
 #ifndef K_TO_C
-#define K_TO_C( T ) ( T - Cst::t_water_freezing_pt )	  // kelvin to degree Celsius
+#define K_TO_C( T ) ( T - Cst::t_water_triple_pt )	  // kelvin to degree Celsius
 #endif
 
 namespace mio {
@@ -55,6 +55,14 @@ class Config;
 std::string getLibVersion();
 
 namespace IOUtils {
+	enum ProcessingLevel {
+		raw           = 1,
+		filtered      = 1 << 1,
+		resampled     = 1 << 2,
+		generated     = 1 << 3,
+		num_of_levels = 1 << 4
+	};
+
 	enum ThrowOptions { dothrow, nothrow };
 	const double nodata = -999.0; ///<This is the internal nodata value
 	//const double not_set = std::numeric_limits<double>::max()-2.;
@@ -292,6 +300,21 @@ namespace IOUtils {
 	*/
 	void getArraySliceParams(const size_t& dimx, const unsigned int& nbworkers, const unsigned int &wk, size_t& startx, size_t& nx);
 
+	/**
+	* @brief Convert a textual representation of a unit prefix (like 'm' or 'G') to multiplying factor
+	* @param prefix unit prefix
+	* return multiplying factor
+	*/
+	double unitsPrefix(const char& prefix);
+
+	/**
+	* @brief Performs simple unit conversion (supports temperature, prefixes and exponents)
+	* @param val value to convert
+	* @param unitIn units of the input
+	* @param unitOut units to convert to
+	* return value, expressed in unitOut
+	*/
+	double unitsConversion(const double& val, std::string unitIn, std::string unitOut);
 } //end namespace IOUtils
 
 } //end namespace mio

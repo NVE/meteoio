@@ -23,6 +23,9 @@
 #include <meteoio/meteoStats/libinterpol1D.h>
 #include <meteoio/meteoStats/libinterpol2D.h>
 #include <meteoio/meteoStats/libfit1D.h>
+#include <meteoio/TimeSeriesManager.h>
+#include <meteoio/GridsManager.h>
+#include <meteoio/Meteo2DInterpolator.h>
 
 #include <vector>
 #include <string>
@@ -30,7 +33,6 @@
 
 namespace mio {
 
-class IOManager;
 class Meteo2DInterpolator; // forward declaration, cyclic header include
 
 /**
@@ -142,9 +144,9 @@ class InterpolationAlgorithm {
 	public:
 		InterpolationAlgorithm(Meteo2DInterpolator& i_mi,
 		                       const std::vector<std::string>& i_vecArgs,
-		                       const std::string& i_algo, IOManager& iom) :
-		                      algo(i_algo), mi(i_mi), date(0., 0), vecArgs(i_vecArgs), vecMeteo(), vecData(),
-		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0), iomanager(iom) {};
+		                       const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager) :
+		                      algo(i_algo), mi(i_mi), tsmanager(i_tsmanager), gridsmanager(i_gridsmanager), date(0., 0), vecArgs(i_vecArgs), vecMeteo(), vecData(),
+		                      vecMeta(), info(), param(MeteoData::firstparam), nrOfMeasurments(0) {};
 		virtual ~InterpolationAlgorithm() {};
 		//if anything is not ok (wrong parameter for this algo, insufficient data, etc) -> return zero
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param) = 0;
@@ -163,6 +165,8 @@ class InterpolationAlgorithm {
 		void simpleWindInterpolate(const DEMObject& dem, const std::vector<double>& vecDataVW, const std::vector<double>& vecDataDW, Grid2DObject &VW, Grid2DObject &DW);
 
 		Meteo2DInterpolator& mi;
+		TimeSeriesManager& tsmanager;
+		GridsManager& gridsmanager;
 		Date date;
 		const std::vector<std::string> vecArgs; //we must keep our own copy, it is different for each algorithm!
 
@@ -172,14 +176,13 @@ class InterpolationAlgorithm {
 		std::ostringstream info; ///<to store some extra information about the interplation process
 		MeteoData::Parameters param; ///<the parameter that we will interpolate
 		size_t nrOfMeasurments; ///<the available number of measurements
-		IOManager& iomanager;
 };
 
 class AlgorithmFactory {
 	public:
 		static InterpolationAlgorithm* getAlgorithm(const std::string& i_algoname,
 		                                            Meteo2DInterpolator& i_mi,
-		                                            const std::vector<std::string>& i_vecArgs, IOManager& iom);
+		                                            const std::vector<std::string>& i_vecArgs, TimeSeriesManager& tsm, GridsManager& gdm);
 };
 
 /**
@@ -193,8 +196,8 @@ class NoneAlgorithm : public InterpolationAlgorithm {
 	public:
 		NoneAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
@@ -210,8 +213,8 @@ class ConstAlgorithm : public InterpolationAlgorithm {
 	public:
 		ConstAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), user_cst(0.), user_provided(false) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), user_cst(0.), user_provided(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -228,8 +231,8 @@ class StandardPressureAlgorithm : public InterpolationAlgorithm {
 	public:
 		StandardPressureAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
@@ -250,8 +253,8 @@ class ConstLapseRateAlgorithm : public InterpolationAlgorithm {
 	public:
 		ConstLapseRateAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
@@ -267,8 +270,8 @@ class IDWAlgorithm : public InterpolationAlgorithm {
 	public:
 		IDWAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
@@ -291,8 +294,8 @@ class IDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
 		IDWLapseAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
@@ -310,7 +313,7 @@ class LocalIDWLapseAlgorithm : public InterpolationAlgorithm {
 	public:
 		LocalIDWLapseAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom);
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -331,8 +334,8 @@ class RHAlgorithm : public InterpolationAlgorithm {
 	public:
 		RHAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataTA(), vecDataRH() {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataTA(), vecDataRH() {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -352,8 +355,8 @@ class ILWRAlgorithm : public InterpolationAlgorithm {
 	public:
 		ILWRAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataEA() {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataEA() {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -374,8 +377,8 @@ class ListonWindAlgorithm : public InterpolationAlgorithm {
 	public:
 		ListonWindAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -398,8 +401,8 @@ class RyanAlgorithm : public InterpolationAlgorithm {
 	public:
 		RyanAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), vecDataVW(), vecDataDW(), inputIsAllZeroes(false) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -441,7 +444,7 @@ class WinstralAlgorithm : public InterpolationAlgorithm {
 	public:
 		WinstralAlgorithm(Meteo2DInterpolator& i_mi,
 		                  const std::vector<std::string>& i_vecArgs,
-		                  const std::string& i_algo, IOManager& iom);
+		                  const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager);
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -477,8 +480,8 @@ class USERInterpolation : public InterpolationAlgorithm {
 	public:
 		USERInterpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), filename() {nrOfMeasurments=0;}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), filename() {nrOfMeasurments=0;}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	private:
@@ -511,8 +514,8 @@ class SnowHNWInterpolation : public InterpolationAlgorithm {
 	public:
 		SnowHNWInterpolation(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+  			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
@@ -543,8 +546,8 @@ class OrdinaryKrigingAlgorithm : public InterpolationAlgorithm {
 	public:
 		OrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, iom), variogram() {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: InterpolationAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager), variogram() {}
 		virtual double getQualityRating(const Date& i_date, const MeteoData::Parameters& in_param);
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 	protected:
@@ -571,8 +574,8 @@ class LapseOrdinaryKrigingAlgorithm : public OrdinaryKrigingAlgorithm {
 	public:
 		LapseOrdinaryKrigingAlgorithm(Meteo2DInterpolator& i_mi,
 					const std::vector<std::string>& i_vecArgs,
-					const std::string& i_algo, IOManager& iom)
-			: OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algo, iom) {}
+					const std::string& i_algo, TimeSeriesManager& i_tsmanager, GridsManager& i_gridsmanager)
+			: OrdinaryKrigingAlgorithm(i_mi, i_vecArgs, i_algo, i_tsmanager, i_gridsmanager) {}
 		virtual void calculate(const DEMObject& dem, Grid2DObject& grid);
 };
 

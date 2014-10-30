@@ -33,9 +33,10 @@ SET(meteoio_sources
 	IOUtils.cc
 	FileUtils.cc
 	Graphics.cc
+	GridsManager.cc
+	TimeSeriesManager.cc
 	IOManager.cc
 	IOHandler.cc
-	BufferedIOHandler.cc
 	MeteoProcessor.cc
 	ResamplingAlgorithms.cc
 	ResamplingAlgorithms2D.cc
