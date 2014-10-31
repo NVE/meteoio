@@ -66,15 +66,24 @@ class PSQLIO : public IOInterface {
 		void getParameters(const Config& cfg);
 		void create_shadow_map(const std::string& exclude_file);
 		void open_connection();
-		PGresult* get_data(const std::string& sqlcommand);
+		PGresult* sql_exec(const std::string& sqlcommand);
 		static bool replace(std::string& str, const std::string& from, const std::string& to);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
+		void readMetaData(const std::string& query, std::vector<StationData>& vecStation);
+		void add_meta_data(const unsigned int& index, const StationData& sd);
 		void map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index);
 		static void parse_row(PGresult* result, const int& row, const int& cols,
 		                      MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
 		void close_connection(PGconn *conn);
 		static bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
+		static size_t checkExistence(const std::vector<StationData>& vec_stations, const StationData& sd);
 		static void convertUnits(MeteoData& meteo);
+		static void convertUnitsBack(MeteoData& meteo);
+		static void checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, std::vector<bool>& vecParamInUse, std::vector<std::string>& vecColumnName);
+		void add_sensors(const unsigned int& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id);
+		int get_sensor_index();
+		int get_measurement_index();
+		void get_sensors(const unsigned int& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id);
 
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, port, dbname, userid, passwd; ///< Variables for endpoint configuration
