@@ -723,7 +723,6 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 					query += ",";
 				}
 				query += values;
-				
 				currentid++;
 			}
 		}
