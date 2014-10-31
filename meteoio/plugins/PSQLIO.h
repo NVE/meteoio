@@ -72,8 +72,8 @@ class PSQLIO : public IOInterface {
 		void readMetaData(const std::string& query, std::vector<StationData>& vecStation);
 		void add_meta_data(const unsigned int& index, const StationData& sd);
 		void map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index);
-		static void parse_row(PGresult* result, const int& row, const int& cols,
-		                      MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
+		void parse_row(PGresult* result, const int& row, const int& cols,
+		               MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo);
 		void close_connection(PGconn *conn);
 		static bool checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd);
 		static size_t checkExistence(const std::vector<StationData>& vec_stations, const StationData& sd);

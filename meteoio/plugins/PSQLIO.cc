@@ -378,7 +378,7 @@ void PSQLIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Me
 void PSQLIO::parse_row(PGresult* result, const int& row, const int& cols, MeteoData& md, std::vector<size_t>& index, std::vector<mio::MeteoData>& vecMeteo)
 {
 	MeteoData tmp(md);
-	IOUtils::convertString(md.date, PQgetvalue(result, row, 0), 0.0);
+	IOUtils::convertString(tmp.date, PQgetvalue(result, row, 0), default_timezone);
 
 	for (int ii=1; ii<cols; ii++) {
 		if (index[ii] != IOUtils::npos) {
@@ -437,13 +437,14 @@ void PSQLIO::map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>
 	}
 }
 
-/**
-* This function checks whether all the MeteoData elements in vecMeteo are consistent
-* regarding their meta data (position information, station name). If they are consistent
-* true is returned, otherwise false
-*/
 bool PSQLIO::checkConsistency(const std::vector<MeteoData>& vecMeteo, StationData& sd)
 {
+	/**
+	 * This function checks whether all the MeteoData elements in vecMeteo are consistent
+	 * regarding their meta data (position information, station name). If they are consistent
+	 * true is returned, otherwise false
+	 */
+
 	if (!vecMeteo.empty()) // to get the station data even when in bug 87 conditions
 		sd = vecMeteo[0].meta;
 
@@ -489,6 +490,7 @@ void PSQLIO::checkForUsedParameters(const std::vector<MeteoData>& vecMeteo, std:
 
 size_t PSQLIO::checkExistence(const std::vector<StationData>& vec_stations, const StationData& sd)
 {
+	//This function checks whether the station is already present in the DB
 	for (size_t ii=0; ii<vec_stations.size(); ii++) {
 		if (sd == vec_stations[ii]) return ii;
 	}
@@ -498,6 +500,8 @@ size_t PSQLIO::checkExistence(const std::vector<StationData>& vec_stations, cons
 
 void PSQLIO::add_meta_data(const unsigned int& index, const StationData& sd)
 {
+	//Adding a new station to the table FIXED_STATION
+
 	string stationName = (sd.stationName != "" ? sd.stationName : sd.stationID);
 
 	stringstream values;
@@ -515,6 +519,8 @@ void PSQLIO::add_meta_data(const unsigned int& index, const StationData& sd)
 
 int PSQLIO::get_sensor_index()
 {
+	//Get first id of new sensors
+
 	int sensor_index = 1;
 	string query = "SELECT max(id_fixed_sensor) from fixed_sensor;";
 
@@ -541,6 +547,8 @@ int PSQLIO::get_sensor_index()
 
 void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id)
 {
+	//Adding new sensors for station with id index to the table FIXED_SENSOR
+
 	string query = "SELECT id_measurement_type as id, meas_name from measurement_type order by id asc;";
 	int sensor_index = get_sensor_index();
 
@@ -592,6 +600,8 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 
 void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id)
 {
+	// Retrieve a mapping of all active meteo parameters and their respective sensor ids
+
 	stringstream ss;
 	ss << "SELECT id, station, meas_type, meas_name FROM "
 	   << "(SELECT id_fixed_sensor as id, fk_id_fixed_station as station, fk_id_measurement_type as meas_type from fixed_sensor where fk_id_fixed_station=" << index << ") a "
@@ -629,6 +639,8 @@ void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string
 
 int PSQLIO::get_measurement_index()
 {
+	//Get first id for new measurements to be added
+
 	int index = 1;
 	string query = "SELECT MAX(ID_FIXED_MEASUREMENT) from fixed_measurement;";
 
