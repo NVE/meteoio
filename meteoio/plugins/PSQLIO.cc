@@ -590,9 +590,41 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 	}
 }
 
-void PSQLIO::get_sensors(const unsigned int& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id)
+void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id)
 {
+	stringstream ss;
+	ss << "SELECT id, station, meas_type, meas_name FROM "
+	   << "(SELECT id_fixed_sensor as id, fk_id_fixed_station as station, fk_id_measurement_type as meas_type from fixed_sensor where fk_id_fixed_station=" << index << ") a "
+	   << "INNER JOIN measurement_type ON a.meas_type=measurement_type.id_measurement_type;";
+	
+	string query =  ss.str();
+	//cout << query << endl;
 
+	PGresult *result = sql_exec(query);	
+	if (result) {
+		int rows = PQntuples(result);
+
+		for (int ii=0; ii<rows; ii++) {
+			string id( PQgetvalue(result, ii, 0) );
+			string type( PQgetvalue(result, ii, 3) );
+
+			IOUtils::toUpper(type);
+			IOUtils::trim(type);
+
+			for (size_t jj=0; jj<vecColumnName.size(); jj++) {
+				if (type == vecColumnName[jj]) map_sensor_id[jj] = id;
+				if (type == "IPREC" && vecColumnName[jj] == "HNW") map_sensor_id[jj] = id;
+			}
+		}
+
+		PQclear(result);
+	} else {
+		throw;
+	}
+
+	for (map<size_t, string>::const_iterator it = map_sensor_id.begin(); it != map_sensor_id.end(); ++it) {
+		//cout << "Sensor for param: " << it->first << "  id: " << it->second << endl;
+	}
 }
 
 int PSQLIO::get_measurement_index()
@@ -646,19 +678,18 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 		sd.position.setProj(coordout, coordoutparam);
 		const bool isConsistent = checkConsistency(vecMeteo[ii], sd); // sd will hold valid meta info
-		size_t present_index = checkExistence(vecAllStations, sd);
+		const size_t present_index = checkExistence(vecAllStations, sd);
 		checkForUsedParameters(vecMeteo[ii], vecParamInUse, vecColumnName);
 
-
 		if (isConsistent) { //static station
-			present_index = IOUtils::npos;
 			if (present_index == IOUtils::npos) { //write into fixed_station
-				cout << "Inserting data for station '" << sd.stationName << "' with the id_fixed_station " << index << endl; 
+				cout << "Inserting data for station '" << sd.stationName << "' with the id_fixed_station " << index << endl;
 				add_meta_data(index, sd);
 				add_sensors(index, vecColumnName, map_sensor_id);
 				index++;
 			} else { // just get the sensor mappings
-				get_sensors((int)present_index, vecColumnName, map_sensor_id);				
+				cout << "Inserting data for station '" << sd.stationName << "' with the id_fixed_station " << vecAllStations[present_index].stationID << endl;
+				get_sensors(vecAllStations[present_index].stationID, vecColumnName, map_sensor_id);				
 			}
 		} else { //mobile station
 			throw IOException("Mobile station writing not implemented", AT);

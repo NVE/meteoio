@@ -83,7 +83,7 @@ class PSQLIO : public IOInterface {
 		void add_sensors(const unsigned int& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id);
 		int get_sensor_index();
 		int get_measurement_index();
-		void get_sensors(const unsigned int& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id);
+		void get_sensors(const std::string& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id);
 
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, port, dbname, userid, passwd; ///< Variables for endpoint configuration
