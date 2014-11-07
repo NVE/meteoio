@@ -65,8 +65,8 @@ class PSQLIO : public IOInterface {
 	private:
 		void getParameters(const Config& cfg);
 		void create_shadow_map(const std::string& exclude_file);
-		void open_connection();
-		PGresult* sql_exec(const std::string& sqlcommand);
+		void open_connection(const bool& input=true);
+		PGresult* sql_exec(const std::string& sqlcommand, const bool& input=true);
 		static bool replace(std::string& str, const std::string& from, const std::string& to);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
 		void readMetaData(const std::string& query, std::vector<StationData>& vecStation);
@@ -86,7 +86,10 @@ class PSQLIO : public IOInterface {
 		void get_sensors(const std::string& index, const std::vector<std::string>& vecColumnName, std::map<size_t, std::string>& map_sensor_id);
 
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
-		std::string endpoint, port, dbname, userid, passwd; ///< Variables for endpoint configuration
+		std::string in_endpoint, in_port, in_dbname, in_userid, in_passwd; ///< Variables for endpoint configuration
+		std::string out_endpoint, out_port, out_dbname, out_userid, out_passwd; ///< Variables for endpoint configuration
+		bool input_configured, output_configured;
+
 		PGconn *psql; ///<holds the current connection
 		double default_timezone;
 		std::vector<StationData> vecMeta;

@@ -90,26 +90,33 @@ namespace mio {
 
 const double PSQLIO::plugin_nodata = -999.; //plugin specific nodata value. It can also be read by the plugin (depending on what is appropriate)
 
-PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
-                                                dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(),
-                                                vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
+PSQLIO::PSQLIO(const std::string& configfile) : coordin(), coordinparam(), coordout(), coordoutparam(), in_endpoint(), in_port(),
+                                                in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
+                                                out_userid(), out_passwd(), input_configured(false), output_configured(false),
+                                                psql(NULL), default_timezone(1.), vecMeta(), vecFixedStationID(),
+                                                vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
 	Config cfg(configfile);
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getParameters(cfg);
 }
 
-PSQLIO::PSQLIO(const Config& cfg) : coordin(), coordinparam(), coordout(), coordoutparam(), endpoint(), port(),
-                                          dbname(), userid(), passwd(), psql(NULL), default_timezone(1.), vecMeta(),
-                                          vecFixedStationID(), vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
+PSQLIO::PSQLIO(const Config& cfg) : coordin(), coordinparam(), coordout(), coordoutparam(), in_endpoint(), in_port(),
+                                    in_dbname(), in_userid(), in_passwd(), out_endpoint(), out_port(), out_dbname(),
+                                    out_userid(), out_passwd(), input_configured(false), output_configured(false),
+                                    psql(NULL), default_timezone(1.), vecMeta(), vecFixedStationID(),
+                                    vecMobileStationID(), sql_meta(), sql_data(), shadowed_parameters()
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	getParameters(cfg);
 }
 
 PSQLIO::PSQLIO(const PSQLIO& in) : coordin(in.coordin), coordinparam(in.coordinparam), coordout(in.coordout),
-                                   coordoutparam(in.coordoutparam), endpoint(in.endpoint), port(in.port), dbname(in.dbname), userid(in.userid),
-                                   passwd(in.passwd), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta),
+                                   coordoutparam(in.coordoutparam), in_endpoint(in.in_endpoint), in_port(in.in_port), 
+                                   in_dbname(in.in_dbname), in_userid(in.in_userid), in_passwd(in.in_passwd),
+                                   out_endpoint(in.out_endpoint), out_port(in.out_port), out_dbname(in.out_dbname),
+                                   out_userid(in.out_userid), out_passwd(in.out_passwd), input_configured(false),
+                                   output_configured(false), psql(NULL), default_timezone(1.), vecMeta(in.vecMeta),
                                    vecFixedStationID(in.vecFixedStationID), vecMobileStationID(in.vecMobileStationID),
                                    sql_meta(in.sql_meta), sql_data(in.sql_data), shadowed_parameters(in.shadowed_parameters) {}
 
@@ -121,11 +128,18 @@ PSQLIO& PSQLIO::operator=(const PSQLIO& in)
 	 swap(coordinparam, tmp.coordinparam);
 	 swap(coordout, tmp.coordout);
 	 swap(coordoutparam, tmp.coordoutparam);
-	 swap(endpoint, tmp.endpoint);
-	 swap(port, tmp.port);
-	 swap(dbname, tmp.dbname);
-	 swap(userid, tmp.userid);
-	 swap(passwd, tmp.passwd);
+	 swap(in_endpoint, tmp.in_endpoint);
+	 swap(in_port, tmp.in_port);
+	 swap(in_dbname, tmp.in_dbname);
+	 swap(in_userid, tmp.in_userid);
+	 swap(in_passwd, tmp.in_passwd);
+	 swap(out_endpoint, tmp.out_endpoint);
+	 swap(out_port, tmp.out_port);
+	 swap(out_dbname, tmp.out_dbname);
+	 swap(out_userid, tmp.out_userid);
+	 swap(out_passwd, tmp.out_passwd);
+	 swap(input_configured, tmp.input_configured);
+	 swap(output_configured, tmp.output_configured);
 	 swap(psql, tmp.psql);
 	 swap(default_timezone, tmp.default_timezone);
 	 swap(vecMeta, tmp.vecMeta);
@@ -142,13 +156,33 @@ PSQLIO::~PSQLIO() throw() {}
 
 void PSQLIO::getParameters(const Config& cfg)
 {
-	port = "5432"; //The default PostgreSQL port
+	in_port = "5432"; //The default PostgreSQL port
+	out_port = "5432"; //The default PostgreSQL port
 
-	cfg.getValue("PSQL_URL", "Input", endpoint);
-	cfg.getValue("PSQL_PORT", "Input", port, IOUtils::nothrow);
-	cfg.getValue("PSQL_DB", "Input", dbname);
-	cfg.getValue("PSQL_USER", "Input", userid);
-	cfg.getValue("PSQL_PASS", "Input", passwd);
+	try {
+		cfg.getValue("PSQL_URL", "Input", in_endpoint);
+		cfg.getValue("PSQL_PORT", "Input", in_port, IOUtils::nothrow);
+		cfg.getValue("PSQL_DB", "Input", in_dbname);
+		cfg.getValue("PSQL_USER", "Input", in_userid);
+		cfg.getValue("PSQL_PASS", "Input", in_passwd);
+
+		cfg.getValue("SQL_META", "Input", sql_meta);
+		cfg.getValue("SQL_DATA", "Input", sql_data);
+		input_configured = true;
+	} catch (...) {
+		input_configured = false;
+	}
+
+	try {
+		cfg.getValue("PSQL_URL", "Output", out_endpoint);
+		cfg.getValue("PSQL_PORT", "Output", out_port, IOUtils::nothrow);
+		cfg.getValue("PSQL_DB", "Output", out_dbname);
+		cfg.getValue("PSQL_USER", "Output", out_userid);
+		cfg.getValue("PSQL_PASS", "Output", out_passwd);
+		output_configured = true;
+	} catch (...) {
+		output_configured = false;
+	}
 
 	string stations;
 	cfg.getValue("STATIONS", "Input", stations, IOUtils::nothrow);
@@ -164,9 +198,6 @@ void PSQLIO::getParameters(const Config& cfg)
 
 		create_shadow_map(exclude_file);
 	}
-
-	cfg.getValue("SQL_META", "Input", sql_meta);
-	cfg.getValue("SQL_DATA", "Input", sql_data);
 
 	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
 }
@@ -237,6 +268,8 @@ void PSQLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_ou
 
 void PSQLIO::readMetaData(const std::string& query, std::vector<StationData>& vecStation)
 {
+	if (!input_configured) throw IOException("Please configure all necessary parameters in the [Input] section", AT);
+
 	PGresult *result = sql_exec(query);
 	if (result) {
 		int rows = PQntuples(result);
@@ -275,6 +308,8 @@ void PSQLIO::readMetaData(const std::string& query, std::vector<StationData>& ve
 
 void PSQLIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 {
+	if (!input_configured) throw IOException("Please configure all necessary parameters in the [Input] section", AT);
+
 	if (!vecMeta.empty()) {
 		vecStation = vecMeta;
 		return;
@@ -310,6 +345,8 @@ void PSQLIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 void PSQLIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                            std::vector< std::vector<MeteoData> >& vecMeteo, const size_t& stationindex)
 {
+	if (!input_configured) throw IOException("Please configure all necessary parameters in the [Input] section", AT);
+
 	if (vecMeta.empty()) readStationData(dateStart, vecMeta);
 	if (vecMeta.empty()) return; //if there are no stations -> return
 
@@ -667,6 +704,8 @@ int PSQLIO::get_measurement_index()
 
 void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMeteo, const std::string&)
 {
+	if (!output_configured) throw IOException("Please configure all necessary parameters in the [Output] section", AT);
+
 	// Make sure we have an up to date set of all the stations already available in the DB
 	vector<StationData> vecAllStations;
 	readMetaData("select id_fixed_station as id, station_name as name, coord_x as x, coord_y as y, altitude, epsg from fixed_station ORDER BY id;", vecAllStations);
@@ -819,15 +858,24 @@ void PSQLIO::convertUnits(MeteoData& meteo)
 		p *= 100.;
 }
 
-void PSQLIO::open_connection()
+void PSQLIO::open_connection(const bool& input)
 {
-	const string connect = "hostaddr = '" + endpoint +
-		"' port = '" + port +
-		"' dbname = '" + dbname +
-		"' user = '" + userid +
-		"' password = '" + passwd +
-		"' connect_timeout = '10'";
-
+	string connect("");
+	if (input) {
+		connect = "hostaddr = '" + in_endpoint +
+			"' port = '" + in_port +
+			"' dbname = '" + in_dbname +
+			"' user = '" + in_userid +
+			"' password = '" + in_passwd +
+			"' connect_timeout = '10'";
+	} else {
+		connect = "hostaddr = '" + out_endpoint +
+			"' port = '" + out_port +
+			"' dbname = '" + out_dbname +
+			"' user = '" + out_userid +
+			"' password = '" + out_passwd +
+			"' connect_timeout = '10'";
+	}
 	psql = PQconnectdb(connect.c_str());
 
 	if (!psql) {
@@ -839,9 +887,9 @@ void PSQLIO::open_connection()
 	}
 }
 
-PGresult *PSQLIO::sql_exec(const string& sql_command)
+PGresult *PSQLIO::sql_exec(const string& sql_command, const bool& input)
 {
-	open_connection();
+	open_connection(input);
 
 	PGresult *result = PQexec(psql, sql_command.c_str());
 	ExecStatusType status = PQresultStatus(result);
