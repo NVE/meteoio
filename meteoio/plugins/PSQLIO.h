@@ -69,7 +69,7 @@ class PSQLIO : public IOInterface {
 		PGresult* sql_exec(const std::string& sqlcommand, const bool& input=true);
 		static bool replace(std::string& str, const std::string& from, const std::string& to);
 		void readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex);
-		void readMetaData(const std::string& query, std::vector<StationData>& vecStation);
+		void readMetaData(const std::string& query, std::vector<StationData>& vecStation, const bool& input=true);
 		void add_meta_data(const unsigned int& index, const StationData& sd);
 		void map_parameters(PGresult* result, MeteoData& md, std::vector<size_t>& index);
 		void parse_row(PGresult* result, const int& row, const int& cols,

@@ -266,11 +266,11 @@ void PSQLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_ou
 	throw IOException("Nothing implemented here", AT);
 }
 
-void PSQLIO::readMetaData(const std::string& query, std::vector<StationData>& vecStation)
+void PSQLIO::readMetaData(const std::string& query, std::vector<StationData>& vecStation, const bool& input)
 {
 	if (!input_configured) throw IOException("Please configure all necessary parameters in the [Input] section", AT);
 
-	PGresult *result = sql_exec(query);
+	PGresult *result = sql_exec(query, input);
 	if (result) {
 		int rows = PQntuples(result);
 
@@ -551,7 +551,7 @@ void PSQLIO::add_meta_data(const unsigned int& index, const StationData& sd)
 
 	string query = "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES " + values.str() + ";";
 	//cout << "EXEC: " << query << endl;
-	sql_exec(query);
+	sql_exec(query, false);
 }
 
 int PSQLIO::get_sensor_index()
@@ -561,7 +561,7 @@ int PSQLIO::get_sensor_index()
 	int sensor_index = 1;
 	string query = "SELECT max(id_fixed_sensor) from fixed_sensor;";
 
-	PGresult *result = sql_exec(query);	
+	PGresult *result = sql_exec(query, false);	
 	if (result) {
 		int rows = PQntuples(result);
 		int columns = PQnfields(result);
@@ -595,7 +595,7 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 
 	std::map<size_t, string> map_sensor_type;
 
-	PGresult *result = sql_exec(query);	
+	PGresult *result = sql_exec(query, false);	
 	if (result) {
 		int rows = PQntuples(result);
 		//int columns = PQnfields(result);
@@ -627,7 +627,7 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 
 		query = "INSERT INTO FIXED_SENSOR (ID_FIXED_SENSOR,FK_ID_FIXED_STATION,FK_ID_MEASUREMENT_TYPE,MEAS_HEIGHT) VALUES (" + sensor_id + "," + station_id + "," + type  + ",0.0);";
 		//cout << "EXEC: " << query << endl;
-		sql_exec(query);
+		sql_exec(query, false);
 
 		map_sensor_id[it->first] = sensor_id;
 
@@ -647,7 +647,7 @@ void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string
 	string query =  ss.str();
 	//cout << query << endl;
 
-	PGresult *result = sql_exec(query);	
+	PGresult *result = sql_exec(query, false);	
 	if (result) {
 		int rows = PQntuples(result);
 
@@ -681,7 +681,7 @@ int PSQLIO::get_measurement_index()
 	int index = 1;
 	string query = "SELECT MAX(ID_FIXED_MEASUREMENT) from fixed_measurement;";
 
-	PGresult *result = sql_exec(query);	
+	PGresult *result = sql_exec(query, false);	
 	if (result) {
 		int rows = PQntuples(result);
 		int columns = PQnfields(result);
@@ -708,7 +708,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 	// Make sure we have an up to date set of all the stations already available in the DB
 	vector<StationData> vecAllStations;
-	readMetaData("select id_fixed_station as id, station_name as name, coord_x as x, coord_y as y, altitude, epsg from fixed_station ORDER BY id;", vecAllStations);
+	readMetaData("select id_fixed_station as id, station_name as name, coord_x as x, coord_y as y, altitude, epsg from fixed_station ORDER BY id;", vecAllStations, false);
 
 	unsigned int index = 1;
 
@@ -780,7 +780,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 		
 		query += ";";
 		//cout << "EXEC: " << query << endl;
-		sql_exec(query);
+		sql_exec(query, false);
 	}
 }
 
