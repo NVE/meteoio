@@ -17,6 +17,10 @@
 */
 #include "GSNIO.h"
 
+#include <meteoio/dataClasses/Coords.h>
+#include <meteoio/IOExceptions.h>
+#include <meteoio/meteoLaws/Meteoconst.h>
+
 #include <algorithm>
 #include <sstream>
 #include <iostream>
@@ -93,25 +97,28 @@ namespace mio {
 
 const int GSNIO::http_timeout = 60; // seconds until connect time out for libcurl
 const std::string GSNIO::sensors_endpoint = "sensors";
+const std::string GSNIO::sensors_format = "format=csv";
 const std::string GSNIO::null_string = "null";
 
 GSNIO::GSNIO(const std::string& configfile)
-      : cfg(configfile), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(),
+      : cfg(configfile), vecStationName(), multiplier(), offset(), coordin(),
         coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
+
+	cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
 }
 
 GSNIO::GSNIO(const Config& cfgreader)
-      : cfg(cfgreader), vecStationName(), multiplier(), offset(), vecMeta(), vecAllMeta(), coordin(),
+      : cfg(cfgreader), vecStationName(), multiplier(), offset(), coordin(),
         coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
-}
 
-GSNIO::~GSNIO() throw(){}
+	cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
+}
 
 void GSNIO::initGSNConnection() {
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -158,50 +165,25 @@ void GSNIO::writeMeteoData(const std::vector< std::vector<MeteoData> >&,
 	throw IOException("Nothing implemented here", AT);
 }
 
-void GSNIO::readStationData(const Date&, std::vector<StationData>& vecStation)
+void GSNIO::readStationData(const Date& date, std::vector<StationData>& vecStation)
 {
 	vecStation.clear();
 
-	if (vecMeta.empty())
-		readMetaData();
-
-	vecStation = vecMeta;
-}
-
-void GSNIO::readMetaData()
-{
-	vecMeta.clear();
-
-	if (vecStationName.empty())
-		cfg.getValues("STATION", "INPUT", vecStationName); //reads station names into vector<string> vecStationName
-
-	//Get Meta Data for all stations first
-	getAllStations();
-
-	if (!vecStationName.empty()) { //if the user has specified a subset of stations
-		for (size_t ii=0; ii<vecStationName.size(); ii++) {
-			for (size_t jj=0; jj<vecAllMeta.size(); jj++) {
-				if (vecAllMeta[jj].stationID == vecStationName[ii]) {
-					vecMeta.push_back( vecAllMeta[jj] );
-					break; //move on to next station
-				}
-			}
-
-			if (vecMeta.size() != (ii+1)) { // could not find station in list of available stations
-				throw NoAvailableDataException("Could not retrieve meta data for station " + vecStationName[ii], AT);
-			}
-		}
-	} else { //otherwise use all available stations
-		vecMeta = vecAllMeta;
+	const size_t nrStations = vecStationName.size();
+	vector<MeteoData> vecMeteo;
+	for (size_t ii=0; ii<nrStations; ii++){ //loop through stations
+		vecMeteo.clear();
+		readData(date, date, vecMeteo, ii);
+		vecStation.push_back( vecMeteo[0].meta );
 	}
 }
 
-void GSNIO::save_station(const std::string& id, const std::string& name, const double& lat, const double& lon,
-                         const double& alt, const double& slope_angle, const double& slope_azi)
+void GSNIO::buildStation(const std::string& id, const std::string& name, const double& lat, const double& lon,
+                         const double& alt, const double& slope_angle, const double& slope_azi, StationData &sd) const
 {
 	Coords current_coord(coordin, coordinparam);
 	current_coord.setLatLon(lat, lon, alt);
-	StationData sd(current_coord, id, name);
+	sd.setStationData(current_coord, id, name);
 
 	if (slope_angle != IOUtils::nodata) {
 		if ((slope_angle == 0.) && (slope_azi == IOUtils::nodata)) {
@@ -210,155 +192,115 @@ void GSNIO::save_station(const std::string& id, const std::string& name, const d
 			sd.setSlope(slope_angle, slope_azi);
 		}
 	}
-
-	vecAllMeta.push_back(sd);
 }
 
-void GSNIO::getAllStations()
+bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &fields, std::string &units) const
 {
-	/**
-	 * Retrieve all station names, that are available in the current GSN instance
-	 * and which are accessible for the current user (see Input::GSN_USER)
-	 */
-	const string vsname_str("# vsname:");
+	const string vsname_str("# vs_name:");
 	const string altitude_str("# altitude:");
 	const string longitude_str("# longitude:");
 	const string latitude_str("# latitude:");
 	const string slope_str("# slope:");
 	const string exposition_str("# exposition:");
 	const string name_str("# name:");
+	const string fields_str("# fields:");
+	const string units_str("# units:");
 
-	stringstream ss;
+	string name, id, azi;
+	double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
+	unsigned int valid = 0;
+
 	string line;
-
-	vecAllMeta.clear();
-
-	const string auth_request = sensors_endpoint + "?username=" + userid + "&password=" + passwd;
-	const string anon_request = sensors_endpoint;
-	const string request = (!userid.empty())? auth_request : anon_request;
-	if (curl_read(request, ss)) {
-		string name, id, azi;
-		double lat=0., lon=0., alt=0., slope_angle=IOUtils::nodata, slope_azi=IOUtils::nodata;
-		unsigned int valid = 0;
-
-		while (getline(ss, line)) {
-			if (!line.compare(0, vsname_str.size(), vsname_str)) {
-				if (valid == 15) { // Last station was valid: store StationData
-					save_station(id, name, lat, lon, alt, slope_angle, slope_azi);
-				}
-
-				id = line.substr(vsname_str.size());
-				IOUtils::trim(id);
-				slope_angle = slope_azi = IOUtils::nodata;
-				name  = azi = "";
-				valid = 1;
-			} else if (!line.compare(0, altitude_str.size(), altitude_str)) {
-				IOUtils::convertString(alt, line.substr(altitude_str.size()));
-				valid |= 2;
-			} else if (!line.compare(0, latitude_str.size(), latitude_str)) {
-				IOUtils::convertString(lat, line.substr(latitude_str.size()));
-				valid |= 4;
-			} else if (!line.compare(0, longitude_str.size(), longitude_str)) {
-				IOUtils::convertString(lon, line.substr(longitude_str.size()));
-				valid |= 8;
-			} else if (!line.compare(0, name_str.size(), name_str)) { // optional
-				name = line.substr(name_str.size());
-				IOUtils::trim(name);
-			} else if (!line.compare(0, slope_str.size(), slope_str)) { //optional
-				IOUtils::convertString(slope_angle, line.substr(slope_str.size()));
-			} else if (!line.compare(0, exposition_str.size(), exposition_str)) { //optional
-				azi = line.substr(exposition_str.size());
-				if (IOUtils::isNumeric(azi)) {
-					IOUtils::convertString(slope_azi, azi);
-				} else {
-					slope_azi = IOUtils::bearing(azi);
-				}
+	std::streamoff streampos = ss.tellg();
+	while (getline(ss, line)) {
+		if (line.empty() || (line[0] != '#')) { //reached end of metadata
+			if (valid == 15) { // Last station was valid: store StationData
+				buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
+				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
 			}
+			return false; //no more stations left to read
 		}
 
-		if (valid == 15) { // Last station was valid: store StationData
-			save_station(id, name, lat, lon, alt, slope_angle, slope_azi);
+		if (!line.compare(0, vsname_str.size(), vsname_str)) { //sensor name
+			if (valid == 15) { // Last station was valid: store StationData
+				buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
+				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
+				return true; //more stations left to read
+			}
+			valid |= 1;
+		} else if (!line.compare(0, altitude_str.size(), altitude_str)) { //altitude
+			IOUtils::convertString(alt, line.substr(altitude_str.size()));
+			valid |= 2;
+		} else if (!line.compare(0, latitude_str.size(), latitude_str)) { //latitude
+			IOUtils::convertString(lat, line.substr(latitude_str.size()));
+			valid |= 4;
+		} else if (!line.compare(0, longitude_str.size(), longitude_str)) { //longitude
+			IOUtils::convertString(lon, line.substr(longitude_str.size()));
+			valid |= 8;
+		} else if (!line.compare(0, name_str.size(), name_str)) { // optional: full name
+			name = line.substr(name_str.size());
+			IOUtils::trim(name);
+		} else if (!line.compare(0, slope_str.size(), slope_str)) { //optional: slope
+			IOUtils::convertString(slope_angle, line.substr(slope_str.size()));
+		} else if (!line.compare(0, exposition_str.size(), exposition_str)) { //optional: exposition
+			azi = line.substr(exposition_str.size());
+			if (IOUtils::isNumeric(azi)) {
+				IOUtils::convertString(slope_azi, azi);
+			} else {
+				slope_azi = IOUtils::bearing(azi);
+			}
+		} else if (!line.compare(0, fields_str.size(), fields_str)) { //field
+			fields = line.substr(fields_str.size());
+		} else if (!line.compare(0, units_str.size(), units_str)) { //units
+			units = line.substr(units_str.size()) + " "; // the extra space is important if no units are specified
 		}
-	} else {
-		throw IOException("Could not retrieve list of sensors", AT);
 	}
+
+	if (valid == 15) { // Last station was valid: store StationData
+		buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
+		return true;
+	} else
+		return false; //no more metadata to read
 }
 
 void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
                           std::vector< std::vector<MeteoData> >& vecMeteo,
-                          const size_t& stationindex)
+                          const size_t& /*stationindex*/)
 {
-	if (vecMeta.empty())
-		readMetaData();
-
-	if (vecMeta.empty()) //if there are no stations -> return
-		return;
-
-	size_t indexStart=0, indexEnd=vecMeta.size();
-
-	//The following part decides whether all the stations are rebuffered or just one station
-	if (stationindex == IOUtils::npos){
-		vecMeteo.clear();
-		vecMeteo.insert(vecMeteo.begin(), vecMeta.size(), vector<MeteoData>());
-	} else {
-		if (stationindex < vecMeteo.size()){
-			indexStart = stationindex;
-			indexEnd   = stationindex+1;
-		} else {
-			throw IndexOutOfBoundsException("You tried to access a stationindex in readMeteoData that is out of bounds", AT);
-		}
-	}
-
-	for (size_t ii=indexStart; ii<indexEnd; ii++){ //loop through stations
+	const size_t nrStations = vecStationName.size();
+	vecMeteo.resize(nrStations, vector<MeteoData>());
+	for (size_t ii=0; ii<nrStations; ii++){ //loop through stations
 		readData(dateStart, dateEnd, vecMeteo[ii], ii);
 	}
-
 }
 
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
-	const string fields_str("# fields:");
-	const string units_str("# units:");
-
-	const string auth_request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
-	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00" + "&username=" + userid + "&password=" + passwd;
-	const string anon_request = sensors_endpoint + "/" + vecMeta[stationindex].stationID + "?from=" + dateStart.toString(Date::ISO) + ":00"
-	                 + "&to=" + dateEnd.toString(Date::ISO) + ":00";
-	const string request = (!userid.empty())? auth_request : anon_request;
+	const std::string station_id = vecStationName[stationindex];
+	const string anon_request = sensors_endpoint + "/" + station_id + "?" + sensors_format + "&from=" + dateStart.toString(Date::ISO) + ":00"
+	                            + "&to=" + dateEnd.toString(Date::ISO) + ":00";
+	const string auth = "&username=" + userid + "&password=" + passwd;
+	const string request = (!userid.empty())? anon_request+auth : anon_request;
 
 	stringstream ss;
-
 	if (curl_read(request, ss)) {
 		vector<size_t> index;
-		bool olwr_present = false;
+		string line, fields, units;
 
 		MeteoData tmpmeteo;
-		tmpmeteo.meta = vecMeta.at(stationindex);
-
-		string line, fields, units;
-		while (getline(ss, line)) { //parse header section
-
-			if (line.size() && (line[0] != '#')) break;
-
-			if (!line.compare(0, fields_str.size(), fields_str)) {
-				fields = line.substr(fields_str.size());
-			} else if (!line.compare(0, units_str.size(), units_str)) {
-				units = line.substr(units_str.size()) + " "; // the extra space is important if no units are specified
-			}
-		}
+		parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
 
 		if (units.empty() || fields.empty()) {
-			throw InvalidFormatException("Invalid header for station " + tmpmeteo.meta.stationID, AT);
+			throw InvalidFormatException("Invalid header for station " + station_id, AT);
 		}
-
 		map_parameters(fields, units, tmpmeteo, index);
-		olwr_present = tmpmeteo.param_exists("OLWR");
 
 		do { //parse data section, the first line should already be buffered
-			parse_streamElement(line, index, olwr_present, vecMeteo, tmpmeteo);
+			if (line.empty() || (line[0] == '#')) continue; //skip empty lines
+			parse_streamElement(line, index, vecMeteo, tmpmeteo);
 		} while (getline(ss, line));
 	} else {
-		throw IOException("Could not retrieve data for station " + vecMeta[stationindex].stationID, AT);
+		throw IOException("Could not retrieve data for station " + vecMeteo[stationindex].meta.stationID, AT);
 	}
 }
 
@@ -424,7 +366,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 			if (name == "%") {
 				multiplier[parindex] = 0.01;
 			} else if (name.size() == 2 && (int)((unsigned char)name[0]) == 176 && name[1] == 'C') { //in °C, UTF8
-				offset[parindex] = 273.15;
+				offset[parindex] = Cst::t_water_triple_pt;
 			}
 		}
 	}
@@ -436,7 +378,7 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	}
 }
 
-void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_t>& index, const bool& olwr_present, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo) const
+void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_t>& index, std::vector<MeteoData>& vecMeteo, MeteoData& tmpmeteo) const
 {
 	static vector<string> data;
 	static double timestamp;
@@ -450,29 +392,19 @@ void GSNIO::parse_streamElement(const std::string& line, const std::vector<size_
 	tmpmeteo.date.setUnixDate((time_t)(floor(timestamp/1000.0)));
 	tmpmeteo.date.setTimeZone(default_timezone);
 
+	size_t valid_idx=2; //index to keep track of valid parameters vs empty fields
 	for (size_t jj=2; jj<size; jj++) {
-		const string& value = data[jj];
+		const string value = data[jj];
+		if (value.empty()) continue; //skip empty values
+
+		const size_t idx = index[valid_idx++];
 		if (value != GSNIO::null_string){
-			IOUtils::convertString(tmpmeteo(index[jj]), value);
-		} else {
-			tmpmeteo(index[jj]) = IOUtils::nodata;
+			IOUtils::convertString(tmpmeteo(idx), value);
 		}
 	}
 
 	convertUnits(tmpmeteo);
-	if ((olwr_present) && (tmpmeteo(MeteoData::TSS) == IOUtils::nodata))
-		tmpmeteo(MeteoData::TSS) = olwr_to_tss(tmpmeteo("OLWR"));
-
-	vecMeteo.push_back(tmpmeteo);
-	tmpmeteo(MeteoData::TSS) = IOUtils::nodata; //if tss has been set, then it needs to be reset manually
-}
-
-double GSNIO::olwr_to_tss(const double& olwr) {
-	const double ea = 1.;
-	if (olwr == IOUtils::nodata)
-		return IOUtils::nodata;
-
-	return pow( olwr / ( ea * Cst::stefan_boltzmann ), 0.25);
+	vecMeteo.push_back( tmpmeteo );
 }
 
 void GSNIO::readAssimilationData(const Date&, Grid2DObject&)
