@@ -106,6 +106,18 @@ class Config {
 		void deleteKey(const std::string& key, const std::string& section=Config::defaultSection);
 
 		/**
+		 * @brief Delete keys matching a specific pattern from the internal map object, key/section are case insensitive
+		 * @param[in] keymatch A string representing the beginning of a key to search for
+		 * @param[in] section A string defining which section to search through (default: GENERAL)
+		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
+		 * @code
+		 *  Config cfg("io.ini");
+		 *  cfg.deleteKeys("STATION", "Input");
+		 * @endcode
+		*/
+		void deleteKeys(const std::string& keymatch, const std::string& section=Config::defaultSection, const bool& anywhere=false);
+
+		/**
 		 * @brief Add a specific key/value pair to the internal key/value map object.
 		 *        key and section are case insensitive
 		 * @param[in] key string representing the key to be added
@@ -290,11 +302,11 @@ class Config {
 		 * @param[in] anywhere Match substring anywhere in the key string (default=false, ie at the begining only)
 		 * @code
 		 *  vector<string> myVec;
-		 *  size_t nrOfMatches = findKeys(myVec, "TA::", "Filters");
+		 *  size_t nrOfMatches = cfg.findKeys(myVec, "TA::", "Filters");
 		 * @endcode
 		 */
 		size_t findKeys(std::vector<std::string>& vecResult,
-		               const std::string& keymatch, std::string section="GENERAL", const bool& anywhere=false) const;
+		               const std::string& keymatch, std::string section=Config::defaultSection, const bool& anywhere=false) const;
 
 		static const std::string defaultSection;
 
