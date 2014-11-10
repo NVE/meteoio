@@ -17,6 +17,7 @@
 */
 #include <meteoio/meteoFilters/ProcExpSmoothing.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 

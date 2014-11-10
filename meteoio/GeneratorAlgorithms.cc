@@ -21,6 +21,8 @@
 #include <meteoio/meteoLaws/Meteoconst.h>
 #include <meteoio/meteoFilters/ProcHNWDistribute.h> //for the precipitation distribution
 
+#include <algorithm>
+
 using namespace std;
 
 namespace mio {

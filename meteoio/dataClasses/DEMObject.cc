@@ -17,6 +17,7 @@
 */
 #include <cmath>
 #include <limits.h>
+#include <algorithm>
 
 #include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/MathOptim.h>

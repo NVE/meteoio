@@ -29,6 +29,10 @@
 #include <vector>
 #include <map>
 
+#ifdef _MSC_VER
+	#pragma warning(disable:4512) //we don't need any = operator!
+#endif
+
 namespace mio {
 
 class A3DIO : public IOInterface {

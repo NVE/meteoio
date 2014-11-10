@@ -21,11 +21,9 @@
 #include <fstream>
 
 #if defined _WIN32 || defined __MINGW32__
+	#define NOMINMAX
 	#include <windows.h>
 	#include "Shlwapi.h"
-	//removing two macros defined in windows.h
-	#undef max
-	#undef min
 #else
 	#include <dirent.h>
 	#include <sys/stat.h>

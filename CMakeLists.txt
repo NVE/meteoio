@@ -24,13 +24,12 @@ BuildVersion()
 
 IF(MSVC)
 	#SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited configs"  FORCE)
-	SET(WARNINGS "/W4")
+	SET(WARNINGS "/W4 /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
 	#SET(EXTRA_WARNINGS "/Wp64") #/Wall
 	SET(OPTIM "/O2 /DNDEBUG /MD /DNOSAFECHECKS")
 	SET(ARCH_OPTIM "/arch:SSE2")
 	SET(ARCH_SAFE "")
 	SET(DEBUG "/Z7 /Od /D__DEBUG /MDd")
-	LIST(APPEND CFLAGS " /D_CRT_SECURE_NO_WARNINGS /EHsc") #Za: strict ansi EHsc: handle c++ exceptions
 	SET(_VERSION "/D_VERSION=\\\"${_versionString}\\\"")
 	IF(BUILD_SHARED_LIBS)
 		ADD_DEFINITIONS(/DMIO_DLL)

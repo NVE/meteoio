@@ -21,6 +21,8 @@
 #include <meteoio/IOUtils.h>
 #include <meteoio/FileUtils.h>
 
+#include <algorithm>
+
 using namespace std;
 
 namespace mio {

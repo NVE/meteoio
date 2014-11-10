@@ -195,7 +195,7 @@ void Interpol1D::equalBin(const unsigned int k, std::vector<double> &X, std::vec
 	const double width = (Xmax - Xmin) / k;
 
 	std::vector<double> bins(k, 0.);
-	std::vector<size_t> counts(k, 0.);
+	std::vector<size_t> counts(k, 0);
 	for (size_t ii=0; ii<Xsize; ii++) {
 		if (X[ii]==IOUtils::nodata || Y[ii]==IOUtils::nodata) continue;
 

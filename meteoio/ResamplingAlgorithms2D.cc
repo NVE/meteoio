@@ -20,6 +20,7 @@
 #include <meteoio/ResamplingAlgorithms2D.h>
 #include <cmath>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 

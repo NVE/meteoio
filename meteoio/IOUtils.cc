@@ -17,6 +17,7 @@
 */
 #include <cmath>
 #include <cstring>
+#include <ctype.h>
 #include <algorithm>
 
 #include <meteoio/IOUtils.h>
@@ -345,7 +346,7 @@ template<> bool convertString<double>(double& t, const std::string& str, std::io
 	if (f == std::dec) {
 		//First check if string is empty
 		const char* start = str.c_str();
-		while(*start && std::isspace(*start)) start++;
+		while(*start && isspace(*start)) start++;
 		if (*start == '\0' || *start == '#' || *start == ';') { // line empty or comment
 			t = static_cast<double> (nodata);
 			return true;
@@ -358,7 +359,7 @@ template<> bool convertString<double>(double& t, const std::string& str, std::io
 		if (*end == '\0') { //conversion successful
 			return true;
 		} else { // conversion might have worked, let's check what is left
-			while((*end != '\0') && std::isspace(*end)) end++;
+			while((*end != '\0') && isspace(*end)) end++;
 
 			if (*end == '\0' || *end == '#' || *end == ';') { // we allow the number to be followed by a comment
 				return true;

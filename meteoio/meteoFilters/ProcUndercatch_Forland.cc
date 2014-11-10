@@ -111,6 +111,8 @@ double ProcUndercatch_Forland::solidPrecipitation(double TA, double VW)
 		beta1 = 0.13383;
 		beta2 = 0.009064;
 		beta3 = -0.005147;
+	} else {
+		throw InvalidArgumentException("Wrong rain gauge type for filter " + getName(), AT);
 	}
 
 	return exp( beta0 + beta1*VW + beta2*TA + beta3*VW*TA );
