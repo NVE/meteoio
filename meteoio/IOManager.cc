@@ -85,6 +85,11 @@ void IOManager::clear_cache()
 	gridsmanager.clear_cache();
 }
 
+void IOManager::add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo)
+{
+	tsmanager.add_to_points_cache(i_date, vecMeteo);
+}
+
 //data can be raw or processed (filtered, resampled)
 size_t IOManager::getMeteoData(const Date& i_date, METEO_SET& vecMeteo)
 {

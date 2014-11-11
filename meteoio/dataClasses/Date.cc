@@ -115,6 +115,7 @@ Date::Date(const int& in_year, const int& in_month, const int& in_day, const int
 void Date::setUndef(const bool& flag) {
 	undef = flag;
 }
+
 /**
 * @brief Set internal gmt time from system time as well as system time zone.
 */

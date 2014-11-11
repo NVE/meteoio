@@ -204,7 +204,7 @@ class IOManager {
 		 * @param i_date Representing a point in time
 		 * @param vecMeteo A vector of MeteoData objects to be copied into the point cache
 		 */
-		void add_to_cache(const Date& i_date, const METEO_SET& vecMeteo);
+		void add_to_points_cache(const Date& i_date, const METEO_SET& vecMeteo);
 
 		/**
 		 * @brief Clear the point cache. All resampled values are dismissed, will need to be recalculated.

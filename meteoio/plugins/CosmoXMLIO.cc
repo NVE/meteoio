@@ -26,6 +26,10 @@
 	#error Please enable XPATH and SAX1 in your version of libxml!
 #endif
 
+#ifdef _MSC_VER
+	#pragma warning(disable:4512) //we don't need any = operator!
+#endif
+
 using namespace std;
 
 namespace mio {

@@ -1,5 +1,5 @@
 /***********************************************************************************/
-/*  Copyright 2009 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
+/*  Copyright 2014 WSL Institute for Snow and Avalanche Research    SLF-DAVOS      */
 /***********************************************************************************/
 /* This file is part of MeteoIO.
     MeteoIO is free software: you can redistribute it and/or modify
@@ -104,11 +104,11 @@ void TimeSeriesManager::push_meteo_data(const IOUtils::ProcessingLevel& level, c
 		throw InvalidArgumentException(ss.str(), AT);
 	}
 
-	if (level == IOUtils::filtered){
+	if (level == IOUtils::filtered) {
 		fcache_start   = date_start;
 		fcache_end     = date_end;
 		filtered_cache = vecMeteo;
-	} else if (level == IOUtils::raw){
+	} else if (level == IOUtils::raw) {
 		fcache_start = fcache_end = Date(0.0, 0.);
 		filtered_cache.clear();
 		raw_start     = date_start;

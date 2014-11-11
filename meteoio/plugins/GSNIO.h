@@ -26,6 +26,10 @@
 #include <string>
 #include <vector>
 
+#ifdef _MSC_VER
+	#pragma warning(disable:4512) //we don't need any = operator!
+#endif
+
 namespace mio {
 
 /**
