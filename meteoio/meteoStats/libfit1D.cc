@@ -144,9 +144,15 @@ bool SimpleLinear::fit()
 		ss << mesg << "Computed regression with " << regname << " model - r=" << r;
 	} else {
 		a = fixed_lapse_rate;
-		Interpol1D::LinRegression(X, Y, a, b, r, mesg, true);
-		ss << mesg << "Computed regression with " << regname << " model ";
-		ss << "(fixed lapse rate=" << a << ") - r=" << r;
+		if (a!=0.) {
+			Interpol1D::LinRegression(X, Y, a, b, r, mesg, true);
+			ss << mesg << "Computed regression with " << regname << " model ";
+			ss << "(fixed lapse rate=" << a << ") - r=" << r;
+		} else {
+			a=0.;
+			b=0.;
+			ss << mesg << "Computed regression with " << regname << " model (no regression for null lapse rate)";
+		}
 	}
 	Lambda.push_back(a);
 	Lambda.push_back(b);
@@ -170,9 +176,15 @@ bool NoisyLinear::fit()
 		ss << mesg  << "Computed regression with " << regname << " model - r=" << r;
 	} else {
 		a = fixed_lapse_rate;
-		Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
-		ss << mesg  << "Computed regression with " << regname << " model ";
-		ss << "(fixed lapse rate=" << a << ") - r=" << r;
+		if (a!=0.) {
+			Interpol1D::NoisyLinRegression(X, Y, a, b, r, mesg, true);
+			ss << mesg  << "Computed regression with " << regname << " model ";
+			ss << "(fixed lapse rate=" << a << ") - r=" << r;
+		} else {
+			a=0.;
+			b=0.;
+			ss << mesg << "Computed regression with " << regname << " model (no regression for null lapse rate)";
+		}
 	}
 	Lambda.push_back(a);
 	Lambda.push_back(b);
