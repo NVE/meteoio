@@ -57,6 +57,7 @@ class StationData {
 		std::string getStationID() const;
 		std::string getStationName() const;
 		Coords getPosition() const;
+		std::string getHash() const;
 
 		/**
 		* @brief Get local slope angle

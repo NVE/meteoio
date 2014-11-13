@@ -151,7 +151,7 @@ bool SimpleLinear::fit()
 		} else {
 			a=0.;
 			b=0.;
-			ss << mesg << "Computed regression with " << regname << " model (no regression for null lapse rate)";
+			ss << mesg << "Computed regression with " << regname << " model";
 		}
 	}
 	Lambda.push_back(a);
@@ -183,7 +183,7 @@ bool NoisyLinear::fit()
 		} else {
 			a=0.;
 			b=0.;
-			ss << mesg << "Computed regression with " << regname << " model (no regression for null lapse rate)";
+			ss << mesg << "Computed regression with " << regname << " model";
 		}
 	}
 	Lambda.push_back(a);

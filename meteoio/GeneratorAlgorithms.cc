@@ -46,8 +46,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new ClearSkyLWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ALLSKY_LW"){
 		return new AllSkyLWGenerator(vecArgs, i_algoname);
-	} else if (algoname == "POT_RADIATION"){
-		return new PotRadGenerator(vecArgs, i_algoname);
+	} else if (algoname == "ALLSKY_SW"){
+		return new AllSkySWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "HS_SWE"){
 		return new HSSweGenerator(vecArgs, i_algoname);
 	} else {
@@ -490,10 +490,10 @@ bool AllSkyLWGenerator::generate(const size_t& param, std::vector<MeteoData>& ve
 }
 
 
-const double PotRadGenerator::soil_albedo = .23; //grass
-const double PotRadGenerator::snow_albedo = .85; //snow
-const double PotRadGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
-void PotRadGenerator::parse_args(const std::vector<std::string>& vecArgs)
+const double AllSkySWGenerator::soil_albedo = .23; //grass
+const double AllSkySWGenerator::snow_albedo = .85; //snow
+const double AllSkySWGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+void AllSkySWGenerator::parse_args(const std::vector<std::string>& vecArgs)
 {
 	//Get the optional arguments for the algorithm: constant value to use
 	if(!vecArgs.empty()) { //incorrect arguments, throw an exception
@@ -501,7 +501,7 @@ void PotRadGenerator::parse_args(const std::vector<std::string>& vecArgs)
 	}
 }
 
-bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
+bool AllSkySWGenerator::generate(const size_t& param, MeteoData& md)
 {
 	double &value = md(param);
 	if(value == IOUtils::nodata) {
@@ -551,7 +551,7 @@ bool PotRadGenerator::generate(const size_t& param, MeteoData& md)
 	return true; //all missing values could be filled
 }
 
-bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+bool AllSkySWGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
 	if(vecMeteo.empty()) return true;
 
@@ -606,7 +606,7 @@ bool PotRadGenerator::generate(const size_t& param, std::vector<MeteoData>& vecM
 	return all_filled;
 }
 
-double PotRadGenerator::getSolarIndex(const double& ta, const double& rh, const double& ilwr)
+double AllSkySWGenerator::getSolarIndex(const double& ta, const double& rh, const double& ilwr)
 {// this is based on Kartsen cloudiness, Dilley clear sky emissivity and Unsworth ILWR
 //this means that this solar index is the ratio of iswr for clear sky on a horizontal
 //surface and the measured iswr

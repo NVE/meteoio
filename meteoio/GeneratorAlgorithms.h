@@ -76,7 +76,7 @@ namespace mio {
  * - SIN: sinusoidal variation (see SinGenerator)
  * - CLEARSKY_LW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
  * - ALLSKY_LW: use an all sky model to generate ILWR from TA, RH and cloudiness (see AllSkyLWGenerator)
- * - POT_RADIATION: generate the potential incoming short wave radiation, corrected for cloudiness if possible (see PotRadGenerator)
+ * - ALLSKY_SW: generate the incoming short wave radiation from the potential radiation, corrected for cloudiness if possible (see AllSkySWGenerator)
  *
  * @section generators_biblio Bibliography
  * The data generators have been inspired by the following papers:
@@ -273,7 +273,7 @@ class ClearSkyLWGenerator : public GeneratorAlgorithm {
 /**
  * @class AllSkyLWGenerator
  * @brief ILWR all sky parametrization
- * Using air temperature (TA) and relative humidity (RH) and optionnally cloud fraction (TAU_CLD, but please note that this name is not definitive yet),
+ * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
  * this offers the choice of several all-sky parametrizations:
  *  - OMSTEDT -- from Omstedt, <i>"A coupled one-dimensional sea ice-ocean model applied to a semi-enclosed basin"</i>,
  * Tellus, <b>42 A</b>, 568-582, 1990, DOI:10.1034/j.1600-0870.1990.t01-3-00007.
@@ -284,10 +284,10 @@ class ClearSkyLWGenerator : public GeneratorAlgorithm {
  *  - CRAWFORD -- from Crawford and Duchon, <i>"An Improved Parametrization for Estimating Effective Atmospheric Emissivity for Use in Calculating Daytime
  * Downwelling Longwave Radiation"</i>, Journal of Applied Meteorology, <b>38</b>, 1999, pp 474-480
  *
- * If no cloudiness is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
+ * If no cloud transmissivity is provided in the data, it is calculated from the solar index (ratio of measured iswr to potential iswr, therefore using
  * the current location (lat, lon, altitude) and ISWR to parametrize the cloud cover). This relies on (Kasten and Czeplak, 1980)
  * except for Crawfor that provides its own parametrization.
- * The last evaluation of cloudiness is used all along during the times when no ISWR is available if such ratio
+ * The last evaluation of cloud transmissivity is used all along during the times when no ISWR is available if such ratio
  * is not too old (ie. no more than 1 day old).
  * If only RSWR is measured, the measured snow height is used to determine if there is snow on the ground or not.
  * In case of snow, a snow albedo of 0.85 is used while in the abscence of snow, a grass albedo of 0.23 is used
@@ -331,22 +331,25 @@ class AllSkyLWGenerator : public GeneratorAlgorithm {
 };
 
 /**
- * @class PotRadGenerator
- * @brief potential ISWR parametrization
- * This computes the potential incoming solar radiation, based on the position of the sun ine the sky
+ * @class AllSkySWGenerator
+ * @brief ISWR all sky parametrization
+ *
+ * Using air temperature (TA) and relative humidity (RH) and optionnally cloud transmissivity (TAU_CLD),
+ * This computes the potential incoming solar radiation, based on the position of the sun in the sky
  * (as a function of the location and the date). Please note that although this is the radiation as perceived
- * at ground level (on the horizontal). If an incoming long wave measurement is available, it corrects the
- * generated iswr for cloudiness (basically doing like UnsworthGenerator in reverse), otherwise this assumes
- * clear sky! If no TA or RH is available, average values will be used (in order to get an average value
+ * at ground level (on the horizontal). If a cloud transmissivity (TAU_CLD) has been provided, or if an
+ * incoming long wave measurement is available, it corrects the generated iswr for cloudiness
+ * (basically doing like UnsworthGenerator in reverse), otherwise this assumes clear sky!
+ * If no TA or RH is available, average values will be used (in order to get an average value
  * for the precipitable water vapor).
  * @note This relies on SunObject to perform the heavy duty computation.
  * @code
- * ISWR::generators = POT_RADIATION
+ * ISWR::generators = allsky_SW
  * @endcode
  */
-class PotRadGenerator : public GeneratorAlgorithm {
+class AllSkySWGenerator : public GeneratorAlgorithm {
 	public:
-		PotRadGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+		AllSkySWGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
 			: GeneratorAlgorithm(vecArgs, i_algo), sun() { parse_args(vecArgs); }
 		bool generate(const size_t& param, MeteoData& md);
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);

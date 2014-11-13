@@ -174,6 +174,7 @@ void InterpolationAlgorithm::getTrend(const std::vector<double>& vecAltitudes, c
 			const double avgData = Interpol1D::arithmeticMean(vecDat);
 			trend.setLapseRate(lapse_rate*avgData);
 			status = trend.fit();
+			if (lapse_rate*avgData==0.) status += " (null average input for frac lapse rate)";
 		} else {
 			throw InvalidArgumentException("Unknown argument \""+extraArg+"\" supplied for the "+algo+" algorithm", AT);
 		}

@@ -93,6 +93,10 @@ std::string StationData::getStationName() const {
 	return stationName;
 }
 
+std::string StationData::getHash() const {
+	return stationID+"::"+stationName;
+}
+
 double StationData::getSlopeAngle() const {
 	return slope;
 }
