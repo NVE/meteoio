@@ -39,6 +39,7 @@ class FitModel {
 		void getParams(std::vector<double>& o_coefficients) const;
 		std::string getName() const {return regname;};
 		std::string getInfo() const;
+		void setInfo(const std::string& info) {infoString=info;};
 		FitModel& operator =(const FitModel& source);
 		std::string toString() const;
 	protected:

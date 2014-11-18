@@ -233,6 +233,14 @@ class Fit1D {
 		*/
 		std::string getInfo() const {return model->getInfo();};
 
+		/**
+		* @brief Set the information string.
+		* This is useful to append some extra information to the information string.
+		* This should be called <b>after</b> computing the fit (otherwise it will be overwritten).
+		* @param info string
+		*/
+		void setInfo(const std::string& info) {model->setInfo(info);};
+
 		Fit1D& operator =(const Fit1D& source);
 
 		/**
