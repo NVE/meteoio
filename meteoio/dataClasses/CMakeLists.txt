@@ -9,4 +9,5 @@ SET(dataClasses_sources
 	dataClasses/DEMObject.cc
 	dataClasses/StationData.cc
 	dataClasses/MeteoData.cc
+	dataClasses/Buffer.cc
 )

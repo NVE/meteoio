@@ -41,6 +41,7 @@
 #include <meteoio/dataClasses/Matrix.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/StationData.h>
+#include <meteoio/dataClasses/Buffer.h>
 
 #include <meteoio/DataGenerator.h>
 #include <meteoio/exports.h>

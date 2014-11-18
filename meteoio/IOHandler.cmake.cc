@@ -524,16 +524,18 @@ const std::string IOHandler::toString() const
 	}
 	os << "</mapPlugins>\n";
 
-	os << "<excluded_params>\n";
-	std::map< std::string, std::set<std::string> >::const_iterator it_exc;
-	for (it_exc=excluded_params.begin(); it_exc != excluded_params.end(); ++it_exc) {
-		os << setw(10) << it_exc->first << " = ";
-		std::set<std::string>::const_iterator it_set;
-		for (it_set=(it_exc->second).begin(); it_set != (it_exc->second).end(); ++it_set)
-			os << *it_set << " ";
-		os << "\n";
+	if (!excluded_params.empty()) {
+		os << "<excluded_params>\n";
+		std::map< std::string, std::set<std::string> >::const_iterator it_exc;
+		for (it_exc=excluded_params.begin(); it_exc != excluded_params.end(); ++it_exc) {
+			os << setw(10) << it_exc->first << " = ";
+			std::set<std::string>::const_iterator it_set;
+			for (it_set=(it_exc->second).begin(); it_set != (it_exc->second).end(); ++it_set)
+				os << *it_set << " ";
+			os << "\n";
+		}
+		os << "</excluded_params>\n";
 	}
-	os << "</excluded_params>\n";
 
 	os << "</IOHandler>\n";
 	return os.str();
