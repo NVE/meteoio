@@ -268,7 +268,8 @@ void PSQLIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_ou
 
 void PSQLIO::readMetaData(const std::string& query, std::vector<StationData>& vecStation, const bool& input)
 {
-	if (!input_configured) throw IOException("Please configure all necessary parameters in the [Input] section", AT);
+	if (input && !input_configured) throw IOException("Please configure all necessary parameters in the [Input] section", AT);
+	if (!input && !output_configured) throw IOException("Please configure all necessary parameters in the [Output] section", AT);
 
 	PGresult *result = sql_exec(query, input);
 	if (result) {
