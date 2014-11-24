@@ -275,7 +275,9 @@ void ARCIO::read2DGrid(Grid2DObject& grid_out, const MeteoGrids::Parameters& par
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);
 		}
-		read2DGrid_internal(grid_out, grid2dpath_in + "/" + date.toString(Date::NUM)+"."+ext );
+		string dateStr( date.toString(Date::NUM) );
+		dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
+		read2DGrid_internal(grid_out, grid2dpath_in + "/" + dateStr + "." + ext );
 	} else {
 		std::string date_str = date.toString(Date::ISO);
 		std::replace( date_str.begin(), date_str.end(), ':', '.');
@@ -299,17 +301,12 @@ void ARCIO::readLanduse(Grid2DObject& landuse_out)
 
 void ARCIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
 {
-	int yyyy, MM, dd, hh, mm;
-	date_in.getDate(yyyy, MM, dd, hh, mm);
 	string filepath;
-
 	cfg.getValue("DAPATH", "Input", filepath);
 
-	ostringstream ss;
-	ss.fill('0');
-	ss << filepath << "/" << setw(4) << yyyy << setw(2) << MM << setw(2) <<  dd << setw(2) <<  hh <<  setw(2) <<  mm << ".sca";
-
-	read2DGrid_internal(da_out, ss.str());
+	string dateStr( date_in.toString(Date::NUM) );
+	dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
+	read2DGrid_internal(da_out, filepath+"/"+dateStr+".sca");
 }
 
 void ARCIO::readStationData(const Date&, std::vector<StationData>&)
@@ -399,7 +396,9 @@ void ARCIO::write2DGrid(const Grid2DObject& grid_in, const MeteoGrids::Parameter
 			ext = MeteoGrids::getParameterName(parameter);
 			IOUtils::toLower(ext);
 		}
-		write2DGrid(grid_in, date.toString(Date::NUM)+"."+ext );
+		string dateStr( date.toString(Date::NUM) );
+		dateStr.erase( dateStr.size()-2, string::npos); //remove the seconds
+		write2DGrid(grid_in, dateStr+"."+ext );
 	} else {
 		if(parameter==MeteoGrids::DEM || parameter==MeteoGrids::AZI || parameter==MeteoGrids::SLOPE) {
 			write2DGrid(grid_in, MeteoGrids::getParameterName(parameter) + grid2d_ext_out);

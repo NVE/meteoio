@@ -439,7 +439,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if(tz==nodata) return false;
-		t.setDate(year, month, day, hour, minute, tz);
+		t.setDate(year, month, day, hour, minute, second, tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%uT%u:%u:%lg%31s", &year, &month, &day, &hour, &minute, &second, rest) >= 6) { //ISO
@@ -447,7 +447,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if(tz==nodata) return false;
-		t.setDate(year, month, day, hour, minute, tz);
+		t.setDate(year, month, day, hour, minute, second, tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%u %u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
@@ -455,7 +455,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if(tz==nodata) return false;
-		t.setDate(year, month, day, hour, minute, tz);
+		t.setDate(year, month, day, hour, minute, (unsigned)0, tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%uT%u:%u%31s", &year, &month, &day, &hour, &minute, rest) >= 5) {
@@ -463,7 +463,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if(tz==nodata) return false;
-		t.setDate(year, month, day, hour, minute, tz);
+		t.setDate(year, month, day, hour, minute, (unsigned)0, tz);
 		return true;
 
 	} else if (sscanf(c_str, "%d-%u-%u%31s", &year, &month, &day, rest) >= 3) {
@@ -471,7 +471,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 		stripComments(timezone_iso);
 		const double tz = (timezone_iso.empty())? time_zone : Date::parseTimeZone(timezone_iso);
 		if(tz==nodata) return false;
-		t.setDate(year, month, day, (unsigned)0, (unsigned)0, tz);
+		t.setDate(year, month, day, (unsigned)0, (unsigned)0, (unsigned)0, tz);
 		return true;
 
 	} else if (sscanf(c_str, "%u:%u%31s", &hour, &minute, rest) >= 2) {
@@ -528,7 +528,7 @@ bool convertString(Date& t, const std::string& str, const double& time_zone, std
 			if(!timezone_iso.empty()) tz = Date::parseTimeZone(timezone_iso);
 		}
 
-		t.setDate( year, month, day, hour, minute, tz );
+		t.setDate( year, month, day, hour, minute, second, tz );
 	}
 
 	return true;

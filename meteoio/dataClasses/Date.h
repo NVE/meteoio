@@ -39,8 +39,7 @@ namespace mio {
  * class has to be recompiled with the proper define.
  *
  * Internally, the date is stored as true julian date in GMT.
- * The maximal precision is 1 minute (that can be easily brought to 1 seconds if
- * it would appear necessary/useful, with the limitation that leap seconds are currently not handled).
+ * The maximal precision is 1 second (however with the limitation that leap seconds are currently not handled).
  *
  * Please see Date::FORMATS for supported display formats and http://en.wikipedia.org/wiki/Julian_day for
  * the various date representation definitions. The following data representation are currently supported:
@@ -91,7 +90,11 @@ class Date {
 		void setDate(const Date& in_date);
 		void setDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& in_timezone, const bool& in_dst=false);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const int& second, const double& in_timezone, const bool& in_dst=false);
+		void setDate(const int& year, const int& month, const int& day, const int& hour, const int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& in_timezone, const bool& in_dst=false);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const unsigned int& second, const double& in_timezone, const bool& in_dst=false);
+		void setDate(const int& year, const unsigned int& month, const unsigned int& day, const unsigned int& hour, const unsigned int& minute, const double& second, const double& in_timezone, const bool& in_dst=false);
 		void setDate(const time_t& in_time, const bool& in_dst=false);
 		void setModifiedJulianDate(const double& julian_in, const double& in_timezone, const bool& in_dst=false);
 		void setUnixDate(const time_t& in_time, const bool& in_dst=false);
@@ -159,16 +162,16 @@ class Date {
 	protected:
 		double localToGMT(const double& in_julian) const;
 		double GMTToLocal(const double& in_gmt_julian) const;
-		double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
-		void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute) const;
+		double calculateJulianDate(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& i_second) const;
+		void calculateValues(const double& i_julian, int& out_year, int& out_month, int& out_day, int& out_hour, int& out_minute, int& o_second) const;
 		long getJulianDayNumber(const int&, const int&, const int&) const;
 		bool isLeapYear(const int&) const;
-		void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute) const;
+		void plausibilityCheck(const int& in_year, const int& in_month, const int& in_day, const int& in_hour, const int& in_minute, const double& in_second) const;
 
 		static const double epsilon;
 		double timezone;
 		double gmt_julian;
-		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute;
+		int gmt_year, gmt_month, gmt_day, gmt_hour, gmt_minute, gmt_second;
 		bool dst;
 		bool undef;
 };
