@@ -721,11 +721,11 @@ void ImisIO::readSWE(const Date& dateStart, const Date& dateEnd, std::vector< st
 		stmt->setPrefetchRowCount(max_row);
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
-		int year, month, day, hour, minutes;
-		dateS.getDate(year, month, day, hour, minutes);
-		const occi::Date begindate(env, year, month, day, hour, minutes);
-		dateE.getDate(year, month, day, hour, minutes);
-		const occi::Date enddate(env, year, month, day, hour, minutes);
+		int year, month, day, hour, minutes, seconds;
+		dateS.getDate(year, month, day, hour, minutes, seconds);
+		const occi::Date begindate(env, year, month, day, hour, minutes, seconds);
+		dateE.getDate(year, month, day, hour, minutes, seconds);
+		const occi::Date enddate(env, year, month, day, hour, minutes, seconds);
 		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
 		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)
@@ -998,11 +998,11 @@ bool ImisIO::getStationData(const std::string& stat_abk, const std::string& stao
 		stmt->setPrefetchRowCount(max_row);
 
 		// construct the oracle specific Date object: year, month, day, hour, minutes
-		int year, month, day, hour, minutes;
-		dateS.getDate(year, month, day, hour, minutes);
-		const occi::Date begindate(env, year, month, day, hour, minutes);
-		dateE.getDate(year, month, day, hour, minutes);
-		const occi::Date enddate(env, year, month, day, hour, minutes);
+		int year, month, day, hour, minutes, seconds;
+		dateS.getDate(year, month, day, hour, minutes, seconds);
+		const occi::Date begindate(env, year, month, day, hour, minutes, seconds);
+		dateE.getDate(year, month, day, hour, minutes, seconds);
+		const occi::Date enddate(env, year, month, day, hour, minutes, seconds);
 		stmt->setString(1, stat_abk); // set 1st variable's value (station name)
 		stmt->setString(2, stao_nr);  // set 2nd variable's value (station number)
 		stmt->setDate(3, begindate);  // set 3rd variable's value (begin date)

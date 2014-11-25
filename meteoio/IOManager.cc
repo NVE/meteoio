@@ -45,6 +45,7 @@ void IOManager::initIOManager()
 void IOManager::setProcessingLevel(const unsigned int& i_level)
 {
 	tsmanager.setProcessingLevel(i_level);
+	gridsmanager.setProcessingLevel(i_level);
 }
 
 void IOManager::setMinBufferRequirements(const double& buffer_size, const double& buff_before)

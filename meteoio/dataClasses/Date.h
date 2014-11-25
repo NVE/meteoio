@@ -116,7 +116,9 @@ class Date {
 		void getDate(int& year, int& month, int& day, const bool& gmt=false) const;
 		void getDate(int& year, int& month, int& day, int& hour, const bool& gmt=false) const;
 		void getDate(int& year, int& month, int& day, int& hour, int& minute, const bool& gmt=false) const;
+		void getDate(int& year, int& month, int& day, int& hour, int& minute, int& second, const bool& gmt=false) const;
 		void getTime(int& hour_out, int& minute_out, const bool& gmt=false) const;
+		void getTime(int& hour_out, int& minute_out, int& second_out, const bool& gmt=false) const;
 		int getYear(const bool& gmt=false) const;
 
 		int getJulianDayNumber(const bool& gmt=false) const;

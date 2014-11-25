@@ -277,8 +277,8 @@ void GSNIO::readMeteoData(const Date& dateStart, const Date& dateEnd,
 void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<MeteoData>& vecMeteo, const size_t& stationindex)
 {
 	const std::string station_id = vecStationName[stationindex];
-	const string anon_request = sensors_endpoint + "/" + station_id + "?" + sensors_format + "&from=" + dateStart.toString(Date::ISO) + ":00"
-	                            + "&to=" + dateEnd.toString(Date::ISO) + ":00";
+	const string anon_request = sensors_endpoint + "/" + station_id + "?" + sensors_format + "&from=" + dateStart.toString(Date::ISO)
+	                            + "&to=" + dateEnd.toString(Date::ISO);
 	const string auth = "&username=" + userid + "&password=" + passwd;
 	const string request = (!userid.empty())? anon_request+auth : anon_request;
 

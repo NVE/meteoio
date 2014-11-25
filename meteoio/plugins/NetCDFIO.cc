@@ -869,7 +869,7 @@ void NetCDFIO::create_meta_data(const int& ncid, const int& did, std::map<std::s
 // Create the parameter variables in the NetCDF dataset, allocate memory for the
 // respective C arrays and store the variable ids in the varid map.
 void NetCDFIO::create_parameters(const int& ncid, const int& did_time, const int& did_points, const size_t& number_of_records,
-						   const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
+                                 const size_t& number_of_stations, std::map<size_t, std::string>& map_param_name,
                                  std::map<std::string, double*>& map_data_2D, std::map<std::string, int>& varid)
 {
 	// At this point map_param_name holds all parameters that have values different from nodata

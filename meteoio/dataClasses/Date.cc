@@ -510,6 +510,28 @@ void Date::getTime(int& hour_out, int& minute_out, const bool& gmt) const {
 }
 
 /**
+* @brief Return time of the day.
+* @param hour_out
+* @param minute_out
+* @param second_out
+* @param gmt convert returned value to GMT? (default: false)
+*/
+void Date::getTime(int& hour_out, int& minute_out, int& second_out, const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
+	if(gmt) {
+		hour_out = gmt_hour;
+		minute_out = gmt_minute;
+		second_out = gmt_second;
+	} else {
+		const double local_julian = GMTToLocal(gmt_julian);
+		int local_year, local_month, local_day;
+		calculateValues(local_julian, local_year, local_month, local_day, hour_out, minute_out, second_out);
+	}
+}
+
+/**
 * @brief Return year, month, day.
 * @param year_out
 * @param month_out
@@ -578,6 +600,33 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, i
 		const double local_julian = GMTToLocal(gmt_julian);
 		int local_second;
 		calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out, local_second);
+	}
+}
+
+/**
+* @brief Return year, month, day.
+* @param year_out
+* @param month_out
+* @param day_out
+* @param hour_out
+* @param minute_out
+* @param second_out
+* @param gmt convert returned value to GMT? (default: false)
+*/
+void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, int& minute_out, int& second_out, const bool& gmt) const {
+	if(undef==true)
+		throw UnknownValueException("Date object is undefined!", AT);
+
+	if(gmt) {
+		year_out = gmt_year;
+		month_out = gmt_month;
+		day_out = gmt_day;
+		hour_out = gmt_hour;
+		minute_out = gmt_minute;
+		second_out = gmt_second;
+	} else {
+		const double local_julian = GMTToLocal(gmt_julian);
+		calculateValues(local_julian, year_out, month_out, day_out, hour_out, minute_out, second_out);
 	}
 }
 

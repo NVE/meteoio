@@ -92,25 +92,21 @@ void A3DIO::read2DGrid(Grid2DObject&, const MeteoGrids::Parameters&, const Date&
 	throw IOException("Nothing implemented here", AT);
 }
 
-void A3DIO::readDEM(DEMObject& dem_out)
+void A3DIO::readDEM(DEMObject& /*dem_out*/)
 {
 	//Nothing so far
-	(void)dem_out;
 	throw IOException("Nothing implemented here", AT);
 }
 
-void A3DIO::readLanduse(Grid2DObject& landuse_out)
+void A3DIO::readLanduse(Grid2DObject& /*landuse_out*/)
 {
 	//Nothing so far
-	(void)landuse_out;
 	throw IOException("Nothing implemented here", AT);
 }
 
-void A3DIO::readAssimilationData(const Date& date_in, Grid2DObject& da_out)
+void A3DIO::readAssimilationData(const Date& /*date_in*/, Grid2DObject& /*da_out*/)
 {
 	//Nothing so far
-	(void)date_in;
-	(void)da_out;
 	throw IOException("Nothing implemented here", AT);
 }
 
@@ -454,9 +450,8 @@ void A3DIO::constructMeteo2DFilenames(const Date& startDate, const Date& endDate
 {
 	filenames.clear();
 
-	int startyear=0, endyear=0, dummy=0;
-	startDate.getDate(startyear, dummy, dummy, dummy, dummy);
-	endDate.getDate(endyear, dummy, dummy, dummy, dummy);
+	const int startyear = startDate.getYear();
+	const int endyear = endDate.getYear();
 
 	std::string tmp;
 	cfg.getValue("METEOPATH", "Input", tmp);

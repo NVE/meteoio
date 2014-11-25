@@ -248,7 +248,7 @@ void GRIBIO::getDate(grib_handle* h, Date &base, double &d1, double &d2) {
 	GRIB_CHECK(grib_get_long(h,"dataTime",&dataTime),0);
 
 	const int year=static_cast<int>(dataDate/10000), month=static_cast<int>(dataDate/100-year*100), day=static_cast<int>(dataDate-month*100-year*10000);
-	const int hour=static_cast<int>(dataTime/100), minutes=static_cast<int>(dataTime-hour*100);
+	const int hour=static_cast<int>(dataTime/100), minutes=static_cast<int>(dataTime-hour*100); //HACK: handle seconds!
 	base.setDate(year, month, day, hour, minutes, tz_in);
 
 	//reading offset to base date/time, as used for forecast, computed at time t for t+offset
