@@ -81,6 +81,7 @@ namespace mio {
  * - GSN_USER: The username to access the service (optional)
  * - GSN_PASS: The password to authenticate the USER (optional)
  * - STATION#: station code for the given number #, e. g. la_fouly_1034 (case sensitive!)
+ * - GSN_DEBUG: print the full requests/answers from the server when something does not work as expected
  *
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
  * This may result in a long download.
@@ -102,7 +103,7 @@ const std::string GSNIO::null_string = "null";
 
 GSNIO::GSNIO(const std::string& configfile)
       : cfg(configfile), vecStationName(), multiplier(), offset(), coordin(),
-        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
+        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.), gsn_debug(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -112,7 +113,7 @@ GSNIO::GSNIO(const std::string& configfile)
 
 GSNIO::GSNIO(const Config& cfgreader)
       : cfg(cfgreader), vecStationName(), multiplier(), offset(), coordin(),
-        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.)
+        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.), gsn_debug(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -132,6 +133,7 @@ void GSNIO::initGSNConnection() {
 
 	cfg.getValue("GSN_USER", "Input", userid, IOUtils::nothrow);
 	cfg.getValue("GSN_PASS", "Input", passwd, IOUtils::nothrow);
+	cfg.getValue("GSN_DEBUG", "INPUT", gsn_debug, IOUtils::nothrow);
 }
 
 void GSNIO::read2DGrid(Grid2DObject&, const std::string&)
@@ -213,7 +215,12 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 	string line;
 	std::streamoff streampos = ss.tellg();
 	while (getline(ss, line)) {
-		if (line.empty() || (line[0] != '#')) { //reached end of metadata
+		if (line.empty() || ((line[0] != '#') && !isdigit(line[0])) ) {
+			continue;
+		}
+
+		if (isdigit(line[0])) {
+		//if (line.empty() || (line[0] != '#')) { //reached end of metadata
 			if (valid == 15) { // Last station was valid: store StationData
 				buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
 				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station
@@ -291,15 +298,21 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 		parseMetadata(ss, tmpmeteo.meta, fields, units); //read just one station
 
 		if (units.empty() || fields.empty()) {
+			if (gsn_debug) {
+				std::cout << "****\nRequest: " << request << "\n";
+				std::cout << "Reply: " << ss.str() << "\n****\n";
+			}
 			throw InvalidFormatException("Invalid header for station " + station_id, AT);
 		}
 		map_parameters(fields, units, tmpmeteo, index);
 
 		do { //parse data section, the first line should already be buffered
-			if (line.empty() || (line[0] == '#')) continue; //skip empty lines
+			if (line.empty() || (line[0] == '#') || !isdigit(line[0])) continue; //skip empty lines
 			parse_streamElement(line, index, vecMeteo, tmpmeteo);
 		} while (getline(ss, line));
 	} else {
+		if (gsn_debug)
+			std::cout << "****\nRequest: " << request << "\n****\n";
 		throw IOException("Could not retrieve data for station " + vecMeteo[stationindex].meta.stationID, AT);
 	}
 }
@@ -321,28 +334,28 @@ void GSNIO::map_parameters(const std::string& fields, const std::string& units, 
 	for (size_t ii=0; ii<field.size(); ii++) {
 		const string field_name( IOUtils::strToUpper(field[ii]) );
 
-		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID" || field_name == "REL_HUMIDITY") {
+		if (field_name == "RELATIVE_HUMIDITY" || field_name == "RH" || field_name == "AIR_HUMID" || field_name == "REL_HUMIDITY" || field_name == "RELATIVE_HUMIDITY_THYGAN") {
 			index.push_back(MeteoData::RH);
-		} else if (field_name == "AIR_TEMPERATURE" || field_name == "TA" || field_name == "AIR_TEMP") {
+		} else if (field_name == "AIR_TEMPERATURE" || field_name == "TA" || field_name == "AIR_TEMP" || field_name == "AIR_TEMP_THYGAN") {
 			index.push_back(MeteoData::TA);
-		} else if (field_name == "WIND_DIRECTION" || field_name == "DW") {
+		} else if (field_name == "WIND_DIRECTION" || field_name == "DW" || field_name == "WIND_DIRECTION_MEAN") {
 			index.push_back(MeteoData::DW);
 		} else if (field_name == "WIND_SPEED_MAX" || field_name == "VW_MAX") {
 			index.push_back(MeteoData::VW_MAX);
-		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW" || field_name == "WIND_SPEED") {
+		} else if (field_name == "WIND_SPEED_SCALAR_AV" || field_name == "VW" || field_name == "WIND_SPEED" || field_name == "WIND_SPEED_MEAN") {
 			index.push_back(MeteoData::VW);
-		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD") {
+		} else if (field_name == "INCOMING_SHORTWAVE_RADIATION" || field_name == "ISWR" || field_name == "SOLAR_RAD" || field_name == "SW_RADIATION_INCOMING") {
 			index.push_back(MeteoData::ISWR);
-		} else if (field_name == "INCOMING_LONGWAVE_RADIATION" || field_name == "ILWR") {
+		} else if (field_name == "INCOMING_LONGWAVE_RADIATION" || field_name == "ILWR" || field_name == "LW_RADIATION_INCOMING") {
 			index.push_back(MeteoData::ILWR);
 		} else if (field_name == "OUTGOING_SHORTWAVE_RADIATION" || field_name == "RSWR") {
 			index.push_back(MeteoData::RSWR);
-		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION" || field_name == "RLWR") { //is used to calculate TSS
+		} else if (field_name == "OUTGOING_LONGWAVE_RADIATION" || field_name == "RLWR" || field_name == "LW_RADIATION_OUTGOING") { //is used to calculate TSS
 			md.addParameter("OLWR");
 			index.push_back(md.getParameterIndex("OLWR"));
 		} else if (field_name == "SNOW_HEIGHT" || field_name == "HS1") {
 			index.push_back(MeteoData::HS);
-		} else if (field_name == "RAIN_METER" || field_name == "PINT") {
+		} else if (field_name == "RAIN_METER" || field_name == "PINT" || field_name == "PRECIPITATION") {
 			index.push_back(MeteoData::HNW);
 		} else if (field_name == "SURFACE_TEMP" || field_name == "TSS" || field_name == "SNOW_SURFACE_TEMPERATURE") {
 			index.push_back(MeteoData::TSS);
@@ -499,8 +512,11 @@ bool GSNIO::curl_read(const std::string& url_query, std::ostream& os)
 		curl_easy_cleanup(curl);
 	}
 
-	if(code!=CURLE_OK)
+	if(code!=CURLE_OK) {
+		if (gsn_debug)
+			std::cout << "****\nRequest: " << url_query << "\n****\n";
 		std::cout << "[E] " << curl_easy_strerror(code) << "\t";
+	}
 
 	return (code==CURLE_OK);
 }

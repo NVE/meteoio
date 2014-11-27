@@ -86,6 +86,7 @@ class GSNIO : public IOInterface {
 		std::string coordin, coordinparam, coordout, coordoutparam; //projection parameters
 		std::string endpoint, userid, passwd; ///< Variables for endpoint configuration
 		double default_timezone;
+		bool gsn_debug;
 
 		static const int http_timeout; //time out for http connections
 		static const std::string sensors_endpoint, sensors_format, null_string;

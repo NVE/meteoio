@@ -41,8 +41,11 @@ class MeteoBuffer {
 
 		const std::string toString() const;
 
+		//HACK: these should be removed in order to hide the internals!
+		//but this requires a re-write of MeteoProcessor
 		std::vector< METEO_SET >& getBuffer();
-
+		void setBufferStart(const Date& date);
+		void setBufferEnd(const Date& date);
 	private:
 		std::vector< METEO_SET > ts_buffer; ///< stores raw data
 		Date ts_start, ts_end; ///< store the beginning and the end date of the ts_buffer

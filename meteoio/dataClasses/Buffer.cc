@@ -194,6 +194,14 @@ std::vector< METEO_SET >& MeteoBuffer::getBuffer()
 	return ts_buffer;
 }
 
+void MeteoBuffer::setBufferStart(const Date& date) {
+	ts_start = date;
+}
+
+void MeteoBuffer::setBufferEnd(const Date& date) {
+	ts_end = date;
+}
+
 const std::string MeteoBuffer::toString() const
 {
 	ostringstream os;
