@@ -229,6 +229,8 @@ bool GSNIO::parseMetadata(std::stringstream& ss, StationData &sd, std::string &f
 		}
 
 		if (!line.compare(0, vsname_str.size(), vsname_str)) { //sensor name
+			name = line.substr(vsname_str.size());
+			IOUtils::trim(name);
 			if (valid == 15) { // Last station was valid: store StationData
 				buildStation(id, name, lat, lon, alt, slope_angle, slope_azi, sd);
 				ss.seekg(streampos, std::ios_base::beg); //point to the start of new station

@@ -33,14 +33,29 @@ namespace mio {
  * This multiplies all values by a given factor. Either a fixed value is given as single argument or a period
  * (hourly/daily/monthly) as well as a filename (and absolute or relative path) containing the factors to apply.
  * This file must contain in the first column the indices (months from 1 to 12 or days from 1 to 366 or hours from 0 to 23)
- * and the matching factor in the second column. Comments following the same syntax as in the ini file are accepted, missing
- * indices are treated as 1.
+ * and the matching factor in the second column (<a href="http://www.cplusplus.com/reference/cctype/isspace/">whitespace</a> delimited).
+ * Comments following the same syntax as in the ini file are accepted, missing indices are treated as 1.
  * @code
  * HNW::filter1	= mult
  * HNW::arg1	= 1.3
  *
  * ISWR::filter1	= mult
- * ISWR::arg1		= montlhy input/ISWR_corr.dat
+ * ISWR::arg1		= monthly input/ISWR_corr.dat
+ * @endcode
+ *
+ * Example of correction file (monthly correction, August will receive a correction of 1):
+ * @code
+ * 01 0.440593
+ * 02 0.815111
+ * 03 0.475562
+ * 04 0.674975
+ * 05 0.700086
+ * 06 0.886783
+ * 07 1.70733
+ * 09 1.26533
+ * 10 0.577152
+ * 11 0.394095
+ * 12 0.347335
  * @endcode
  */
 

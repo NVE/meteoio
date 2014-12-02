@@ -81,13 +81,22 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 	ovec.resize( nr_stations );
 
 	for (size_t ii=0; ii<nr_stations; ii++){ //for every station
-		if( ivec[ii].empty() ) continue; //no data, nothing to do!
+		if ( ivec[ii].empty() ) continue; //no data, nothing to do!
 
 		//pick one element and check whether the param_name parameter exists
 		const size_t param = ivec[ii].front().getParameterIndex(param_name);
 		if (param != IOUtils::npos){
 			//since all filters start with ovec=ivec, maybe we could just swap pointers instead for copying
 			std::vector<MeteoData> tmp( ivec[ii] );
+
+			#ifdef DATA_QA
+			for (size_t kk=0; kk<ivec[ii].size(); kk++) {
+				const double orig = ivec[ii][kk](param);
+				if (orig==IOUtils::nodata) {
+					cout << "[DATA_QA] Filtering " << param_name << " is nodata " << ivec[ii][kk].date.toString(Date::ISO_TZ) << "\n";
+				}
+			}
+			#endif
 
 			//Now call the filters one after another for the current station and parameter
 			bool appliedFilter = false;
@@ -104,13 +113,12 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 
 				if (tmp.size() == ovec[ii].size()){
 					#ifdef DATA_QA
-					for(size_t kk=0; kk<ovec[ii].size(); kk++) {
+					for (size_t kk=0; kk<ovec[ii].size(); kk++) {
 						const double orig = tmp[kk](param);
 						const double filtered = ovec[ii][kk](param);
-						if(orig!=filtered) {
-							const string parname = tmp[kk].getNameForParameter(param);
+						if (orig!=filtered) {
 							const string filtername = (*filter_stack[jj]).getName();
-							cout << "[DATA_QA] Filtering " << parname << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << "\n";
+							cout << "[DATA_QA] Filtering " << param_name << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << "\n";
 						}
 					}
 					#endif
@@ -141,7 +149,7 @@ const std::string ProcessingStack::toString() const
 	//os << "<ProcessingStack>";
 	os << setw(10) << param_name << "::";
 
-	for(size_t ii=0; ii<filter_stack.size(); ii++) {
+	for (size_t ii=0; ii<filter_stack.size(); ii++) {
 		os << setw(10) << (*filter_stack[ii]).toString();
 	}
 

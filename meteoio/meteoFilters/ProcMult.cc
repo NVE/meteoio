@@ -75,7 +75,8 @@ void ProcMult::parse_args(const std::vector<std::string>& vec_args)
 	const size_t nrArgs = vec_args.size();
 	if (nrArgs==1) {
 		type='c'; //constant
-		IOUtils::convertString(factor, vec_args[0]);
+		if (!IOUtils::convertString(factor, vec_args[0]))
+			throw InvalidArgumentException("Invalid factor \""+vec_args[0]+"\" specified for the "+getName()+" filter. If correcting for a period, please specify the period!", AT);
 	} else if (nrArgs==2) {
 		const string type_str=IOUtils::strToUpper( vec_args[0] );
 		if (type_str=="MONTHLY") type='m';

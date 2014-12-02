@@ -33,14 +33,28 @@ namespace mio {
  * This adds to all values a given offset. Either a fixed value is given as single argument or a period
  * (hourly/daily/monthly) as well as a filename (and absolute or relative path) containing the offsets to apply.
  * This file must contain in the first column the indices (months from 1 to 12 or days from 1 to 366 or hours from 0 to 23)
- * and the matching offset in the second column. Comments following the same syntax as in the ini file are accepted, missing
- * indices are treated as 0.
+ * and the matching offset in the second column (<a href="http://www.cplusplus.com/reference/cctype/isspace/">whitespace</a> delimited).
+ * Comments following the same syntax as in the ini file are accepted, missing indices are treated as 0.
  * @code
  * TA::filter1	= add
  * TA::arg1	= 2.5
  *
  * TSG::filter1	= add
  * TSG::arg1	= daily input/TSG_corr.dat
+ * @endcode
+ *
+ * Example of correction file (monthly correction, December will receive a correction of 0):
+ * @code
+ * 01 -0.375
+ * 02 -1.932
+ * 03 -4.304
+ * 04 -2.449
+ * 05 -1.629
+ * 06 -1.734
+ * 07 -2.414
+ * 09 -1.289
+ * 10 -1.086
+ * 11 -0.769
  * @endcode
  */
 

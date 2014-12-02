@@ -40,7 +40,7 @@ namespace mio {
  * There are two ways of supporting a given coordinate system: through the use of an adhoc implementation
  * (that becomes part of MeteoIO) or through the use of an external library, Proj4 [ref: http://trac.osgeo.org/proj/].
  * The current internal implementations are the following (given by their keyword):
- * - CH1903 for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
+ * - CH1903 or CH1903+ for coordinates in the Swiss Grid [ref: http://geomatics.ladetto.ch/ch1903_wgs84_de.pdf]
  * - UTM for UTM coordinates (the zone must be specified in the parameters, for example 31T) [ref: http://www.oc.nps.edu/oc2902w/maps/utmups.pdf]
  * - UPS for Universal Polar Stereographic coordinates (the zone, either N or S, must be specified in the parameters). [ref: J. Hager, J. Behensky, B. Drew, <i>THE UNIVERSAL GRIDS: Universal Transverse Mercator (UTM) and Universal Polar Stereographic (UPS)</i>, 1989, Defense Mapping Agency, DMATM 8358.2]
  * - LOCAL for local coordinate system (using the horizontal and vertical distance from a reference point, see Coords::geo_distances for the available choice of distance algorithms)
@@ -745,6 +745,7 @@ void Coords::copyProj(const Coords& source, const bool i_update) {
 */
 short int Coords::getEPSG() const {
 	if(coordsystem=="CH1903") return 21781;
+	if(coordsystem=="CH1903+") return 2056;
 	if(coordsystem=="UTM") {
 		//UTM Zone information
 		short int zoneNumber;
@@ -802,6 +803,11 @@ void Coords::setEPSG(const int epsg) {
 		coord_param.clear();
 		found=true;
 	}
+	if(!found && (epsg==2056)) {
+		coord_sys.assign("CH1903+");
+		coord_param.clear();
+		found=true;
+	}
 	if(!found && (epsg>=32601) && (epsg<=32660)) {
 		//northern hemisphere
 		coord_sys.assign("UTM");
@@ -849,6 +855,7 @@ void Coords::convert_to_WGS84(double i_easting, double i_northing, double& o_lat
 		if(coordsystem=="UTM") UTM_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if(coordsystem=="UPS") UPS_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if(coordsystem=="CH1903") CH1903_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
+		else if(coordsystem=="CH1903+") CH1903_to_WGS84(i_easting-2e6, i_northing-1e6, o_latitude, o_longitude);
 		else if(coordsystem=="LOCAL") local_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if(coordsystem=="PROJ4") PROJ4_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
 		else if(coordsystem=="NULL") NULL_to_WGS84(i_easting, i_northing, o_latitude, o_longitude);
@@ -872,6 +879,11 @@ void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o
 		if(coordsystem=="UTM") WGS84_to_UTM(i_latitude, i_longitude, o_easting, o_northing);
 		else if(coordsystem=="UPS") WGS84_to_UPS(i_latitude, i_longitude, o_easting, o_northing);
 		else if(coordsystem=="CH1903") WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
+		else if(coordsystem=="CH1903+") {
+			WGS84_to_CH1903(i_latitude, i_longitude, o_easting, o_northing);
+			o_easting += 2e6;
+			o_northing += 1e6;
+		}
 		else if(coordsystem=="LOCAL") WGS84_to_local(i_latitude, i_longitude, o_easting, o_northing);
 		else if(coordsystem=="PROJ4") WGS84_to_PROJ4(i_latitude, i_longitude, o_easting, o_northing);
 		else if(coordsystem=="NULL") WGS84_to_NULL(i_latitude, i_longitude, o_easting, o_northing);
