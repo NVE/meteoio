@@ -309,6 +309,7 @@ namespace IOUtils {
 
 	/**
 	* @brief Performs simple unit conversion (supports temperature, prefixes and exponents)
+	* NOTE "composite" units such as 'K/m' or 'N/m2' are currently NOT supported.
 	* @param val value to convert
 	* @param unitIn units of the input
 	* @param unitOut units to convert to

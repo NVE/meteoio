@@ -677,6 +677,8 @@ double unitsPrefix(const char& prefix)
 	throw IOException("Invalid unit prefix '"+prefix_str+"'", AT);
 }
 
+//currently, only the most simple ase of units are handled. Composite units
+//such as 'W/m2 <-> mW/cm2' are NOT handled.
 double unitsConversion(const double& val, std::string unitIn, std::string unitOut)
 {
 	if (val==IOUtils::nodata)
@@ -710,24 +712,21 @@ double unitsConversion(const double& val, std::string unitIn, std::string unitOu
 	}  else if (unitIn=="°C" && unitOut=="°F") {
 		return (val*1.8+32.);
 	} else {
-		const char In_last_char = unitIn[ unitIn.size()-1 ];
-		const char Out_last_char = unitOut[ unitOut.size()-1 ];
-		double ratio = 1.;
+		//extract the unit prefix
+		const double inPrefix_factor = (isalpha(unitIn[0]) && isalpha(unitIn[1]))? unitsPrefix( unitIn[0] ) : 1;
+		const double outPrefix_factor = (isalpha(unitOut[0]) && isalpha(unitOut[1]))? unitsPrefix( unitOut[0] ) : 1;
 
-		if (unitIn.size() > 1+isdigit(In_last_char)) {
-			ratio = unitsPrefix( unitIn[0] );
-		}
-		if (isdigit(In_last_char)) {
-			//ratio = pow(ratio,(int)(In_last_char-'0'));
-			const unsigned char exponent = static_cast<unsigned char>( In_last_char-'0' );
-			ratio = Optim::fastPow(ratio, exponent);
-		}
-		if (val==IOUtils::nodata) { //HACK
-			return ratio;
-		}
-		if (unitOut.size() > 1+isdigit(Out_last_char)) {
-			ratio /= unitsConversion(IOUtils::nodata, unitOut, unitIn); //HACK
-		}
+		//extract the unit exponent
+		const char in_last_char = unitIn[ unitIn.size()-1 ];
+		const char out_last_char = unitOut[ unitOut.size()-1 ];
+		const unsigned char inExponent = (isdigit(in_last_char))? static_cast<unsigned char>( in_last_char-'0' ) : static_cast<unsigned char>( 1 );
+		const unsigned char outExponent = (isdigit(out_last_char))? static_cast<unsigned char>( out_last_char-'0' ) : static_cast<unsigned char>( 1 );
+
+		//compute the input and output units factor
+		const double inFactor = (inExponent==1)? inPrefix_factor : Optim::fastPow(inPrefix_factor, inExponent);
+		const double outFactor = (outExponent==1)? outPrefix_factor : Optim::fastPow(outPrefix_factor, outExponent);
+
+		const double ratio = inFactor / outFactor;
 		return val*ratio;
 	}
 	throw ConversionFailedException("Unable to perform unit conversion.", AT);
