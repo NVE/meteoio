@@ -23,26 +23,87 @@
 
 namespace mio {
 
-//we start easy: this is NOT a true ring buffer, just the same as what we previously had (for now)
+/**
+ * @class MeteoBuffer
+ * @brief A class to buffer meteorological data.
+ * This class buffers MeteoData objects. It is currently NOT a proper ring buffer, this should come
+ * in a later implementation.
+ *
+ * @ingroup data_str
+ * @author Mathias Bavay
+ * @date   2014-12-01
+*/
 class MeteoBuffer {
 	public:
 		MeteoBuffer() : ts_buffer(), ts_start(), ts_end() {};
 
+		/**
+		 * @brief Get buffer data for a specific date
+		 * @param date        A Date object representing the date/time for the sought MeteoData objects
+		 * @param vecMeteo    A vector of MeteoData objects to be filled with data
+		 * @return            true if the data was in the buffer
+		 */
 		bool get(const Date& date, METEO_SET &vecMeteo) const;
+
+		/**
+		 * @brief Get buffer data between two dates
+		 * @param date_start      A Date object representing the beginning of an interval (inclusive)
+		 * @param date_end        A Date object representing the end of an interval (inclusive)
+		 * @param vecMeteo        A vector of vector<MeteoData> objects to be filled with data
+		 * @return            true if the data was in the buffer
+		 */
 		bool get(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo) const;
+
+		/**
+		 * @brief Returns the average sampling rate in the data.
+		 * This computes the average sampling rate of the data that is contained in the buffer. This is a quick
+		 * estimate, centered on how often a station measures "something" (ie, how many timestamps do we have
+		 * for this station in the buffer). if the station measures TA at h+0 and h+30 and
+		 * RH at h+15 and h+45, it would return 4 measurements per hour. If the station measures TA and RH at h+0 and h+30,
+		 * it would return 2 measurements per hour.
+		 * @return average sampling rate in Hz, nodata if the buffer is empty
+		 */
 		double getAvgSamplingRate() const;
+
+		/**
+		 * @brief Returns the begining of the buffer.
+		 * This is the start date of the <b>request</b> that was given to the IOHandler. If there was no data
+		 * at this date, then the date of the first data would be greater.
+		 * @return start date of the buffer
+		 */
 		Date getBufferStart() const;
+
+		/**
+		 * @brief Returns the end of the buffer.
+		 * This is the end date of the <b>request</b> that was given to the IOHandler. If there was no data
+		 * at this date, then the date of the last data would be less.
+		 * @return end date of the buffer
+		 */
 		Date getBufferEnd() const;
 
+		/**
+		* @brief Check if the buffer is empty
+		* @return true if the buffer is empty
+		*/
 		bool empty() const;
+
+		/**
+		* @brief Clear the buffer; the data is deleted and the start and end dates reset to <i>undef</i>
+		*/
 		void clear();
+
+		/**
+		 * @brief Add data representing the available data between two dates.
+		 * @param date_start      A Date object representing the beginning of an interval (inclusive)
+		 * @param date_end        A Date object representing the end of an interval (inclusive)
+		 * @param vecMeteo        A vector of vector<MeteoData> objects providing the data
+		 */
 		void push(const Date& date_start, const Date& date_end, const std::vector< METEO_SET >& vecMeteo);
 		//void push(const Date& date, const METEO_SET& vecMeteo);
 
 		const std::string toString() const;
 
-		//HACK: these should be removed in order to hide the internals!
-		//but this requires a re-write of MeteoProcessor
+		//HACK: these should be removed in order to hide the internals! But this requires a re-write of MeteoProcessor
 		std::vector< METEO_SET >& getBuffer();
 		void setBufferStart(const Date& date);
 		void setBufferEnd(const Date& date);

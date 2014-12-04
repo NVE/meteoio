@@ -346,6 +346,7 @@ void Meteo2DInterpolator::initVirtualStations()
 	std::vector<std::string> vecStation;
 	cfg.getValues("Vstation", "INPUT", vecStation);
 	for(size_t ii=0; ii<vecStation.size(); ii++) {
+		//The coordinate specification is given as either: "easting northing epsg" or "lat lon"
 		Coords tmp(coordin, coordinparam, vecStation[ii]);
 		if(!tmp.isNodata())
 			v_coords.push_back( tmp );
@@ -388,7 +389,7 @@ size_t Meteo2DInterpolator::getVirtualStationsData(const Date& i_date, METEO_SET
 
 	//get data from real input stations
 	METEO_SET vecTrueMeteo;
-	//getStationsMeteoData(i_date, vecTrueMeteo); //HACK
+	tsmanager.getMeteoData(i_date, vecTrueMeteo);
 	if (vecTrueMeteo.empty()) return 0;
 
 	if (v_params.empty()) {

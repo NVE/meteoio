@@ -121,15 +121,15 @@ double Atmosphere::wetBulbTemperature(const double& T, const double& RH, const d
 */
 double Atmosphere::blackGlobeTemperature(const double& TA, const double& RH, const double& VW, const double& iswr_dir, const double& iswr_diff, const double& cos_Z)
 {
-	const double a=1, b=1, c=1; //HACK: get real values!
-
 	const double S = iswr_dir + iswr_diff;
-	const double h = a * pow(S, b) * pow(cos_Z, c);
+	//const double a=1, b=1, c=1; //HACK: get real values!
+	//const double h = a * pow(S, b) * pow(cos_Z, c);
+	const double h = 0.315; //personnal communication from S. Amburn
 	const double emissivity = 0.575 * pow(RH*waterSaturationPressure(TA), 1./7.);
 	const double B = S * (iswr_dir/(4.*Cst::stefan_boltzmann*cos_Z) + 1.2/Cst::stefan_boltzmann*iswr_diff) + emissivity*Optim::pow4(TA);
 	const double C = h * pow(VW, 0.58) / 5.3865e-8;
 
-	const double Tg = (B + C*TA + 7680000) / (C + 256000);
+	const double Tg = (B + C*TA + 7680000.) / (C + 256000.);
 	return Tg;
 }
 

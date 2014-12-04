@@ -72,6 +72,7 @@ namespace mio {
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - RELHUM: relative humidity from other humidity measurements (see RhGenerator)
  * - TS_OLWR: surface temperature from Outgoing Long Wave Radiation (see TssGenerator)
+ * - ISWR_ALBEDO: ISWR from RSWR or RSWR from ISWR with either a snow or a soil albedo, depending on HS (see IswrAlbedoGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
  * - CLEARSKY_LW: use a clear sky model to generate ILWR from TA, RH (see ClearSkyLWGenerator)
@@ -226,6 +227,25 @@ class TsGenerator : public GeneratorAlgorithm {
 		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
 	private:
 		static const double e_snow, e_soil, snow_thresh;
+};
+
+/**
+ * @class IswrAlbedoGenerator
+ * @brief Incoming or reflected short wave generator.
+ * Generate the incoming short wave radiation from the reflected short wave radiation or the opposite. The albedo
+ * ie either a grassy soil albedo or a snow albedo depending on the snow height.
+ * @code
+ * ISWR::generators = ISWR_ALBEDO
+ * @endcode
+ */
+class IswrAlbedoGenerator : public GeneratorAlgorithm {
+	public:
+		IswrAlbedoGenerator(const std::vector<std::string>& vecArgs, const std::string& i_algo)
+			: GeneratorAlgorithm(vecArgs, i_algo) { parse_args(vecArgs); }
+		bool generate(const size_t& param, MeteoData& md);
+		bool generate(const size_t& param, std::vector<MeteoData>& vecMeteo);
+	private:
+		static const double soil_albedo, snow_albedo, snow_thresh;
 };
 
 /**

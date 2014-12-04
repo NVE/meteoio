@@ -42,6 +42,8 @@ GeneratorAlgorithm* GeneratorAlgorithmFactory::getAlgorithm(const std::string& i
 		return new RhGenerator(vecArgs, i_algoname);
 	} else if (algoname == "TS_OLWR"){
 		return new TsGenerator(vecArgs, i_algoname);
+	} else if (algoname == "ISWR_ALBEDO"){
+		return new IswrAlbedoGenerator(vecArgs, i_algoname);
 	} else if (algoname == "CLEARSKY_LW"){
 		return new ClearSkyLWGenerator(vecArgs, i_algoname);
 	} else if (algoname == "ALLSKY_LW"){
@@ -278,11 +280,57 @@ bool TsGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo
 {
 	if(vecMeteo.empty()) return true;
 
+	bool status = true;
 	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
-		generate(param, vecMeteo[ii]);
+		if (!generate(param, vecMeteo[ii]))
+			status = false;
+	}
+
+	return status;
+}
+
+
+const double IswrAlbedoGenerator::soil_albedo = .23; //grass
+const double IswrAlbedoGenerator::snow_albedo = .85; //snow
+const double IswrAlbedoGenerator::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
+
+bool IswrAlbedoGenerator::generate(const size_t& param, MeteoData& md)
+{
+	double &value = md(param);
+	if(value == IOUtils::nodata) {
+		const double HS=md(MeteoData::HS), RSWR=md(MeteoData::RSWR), ISWR=md(MeteoData::ISWR);
+
+		double albedo = .5;
+		if (HS!=IOUtils::nodata)
+			albedo = (HS>=snow_thresh)? snow_albedo : soil_albedo;
+
+		if (param==MeteoData::ISWR && (RSWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+			value = RSWR / albedo;
+			return true;
+		}
+
+		if (param==MeteoData::RSWR && (ISWR!=IOUtils::nodata && HS!=IOUtils::nodata)) {
+			value = ISWR * albedo;
+			return true;
+		}
+
+		return false;
 	}
 
 	return true; //all missing values could be filled
+}
+
+bool IswrAlbedoGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
+{
+	if(vecMeteo.empty()) return true;
+
+	bool status = true;
+	for(size_t ii=0; ii<vecMeteo.size(); ii++) {
+		if (!generate(param, vecMeteo[ii]))
+			status = false;
+	}
+
+	return status;
 }
 
 
