@@ -22,6 +22,7 @@
 #include <meteoio/MeteoProcessor.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/Coords.h>
+#include <meteoio/dataClasses/Buffer.h>
 #include <meteoio/IOHandler.h>
 #include <meteoio/Config.h>
 
@@ -138,9 +139,6 @@ class TimeSeriesManager {
 	private:
 		void setDfltBufferProperties();
 		void fill_filtered_cache();
-		bool read_filtered_cache(const Date& start_date, const Date& end_date,
-		                         std::vector< METEO_SET >& vec_meteo);
-		void getFromRawBuffer(const Date& date_start, const Date& date_end, std::vector< METEO_SET > &vecMeteo);
 		void fillRawBuffer(const Date& date_start, const Date& date_end);
 
 		const Config& cfg;
@@ -150,10 +148,9 @@ class TimeSeriesManager {
 
 		ProcessingProperties proc_properties; ///< buffer constraints in order to be able to compute the requested values
 		std::map<Date, METEO_SET > point_cache;  ///< stores already resampled data points
-		std::vector< METEO_SET > filtered_cache; ///< stores already filtered data intervals
-		std::vector< METEO_SET > raw_buffer; ///< stores raw data
-		Date fcache_start, fcache_end; ///< store the beginning and the end date of the filtered_cache
-		Date raw_start, raw_end; ///< store the beginning and the end date of the raw_buffer
+		MeteoBuffer raw_buffer; ///< stores raw data
+		MeteoBuffer filtered_cache; ///< stores already filtered data intervals
+
 		Duration chunk_size; ///< How much data to read at once
 		Duration buff_before; ///< How much data to read before the requested date in buffer
 		unsigned int processing_level;
