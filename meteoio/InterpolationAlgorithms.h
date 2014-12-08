@@ -93,8 +93,14 @@ class Meteo2DInterpolator; // forward declaration, cyclic header include
  * - ODKRIG_LAPSE: ordinary kriging with lapse rate (see LapseOrdinaryKrigingAlgorithm)
  * - USER: user provided grids to be read from disk (if available, see USERInterpolation)
  *
- * @section interpol2D_lapse Lapse rates
- * Several algorithms use elevation trends, currently modelled as a linear relation. The slope of this linear relation can
+ * @section interpol2D_trends Altitudinal trends
+ * Several algorithms use elevation trends, all of them relying on the same principles: the lapse rates are recomputed at each time steps
+ * (see section \ref interpol2D_lapse), all stations' data are detrended with this lapse rate, the residuals are spatially interpolated
+ * with the algorithm as configured by the user and finally, the values at each cell are retrended (ie the lapse rates are re-applied
+ * using the cell's elevation).
+ *
+ * @subsection interpol2D_lapse Lapse rates
+ * The altitudinal trends are currently modelled as a linear relation. The slope of this linear relation can
  * sometimes be provided by the end user (through his io.ini configuration file), otherwise it is computed from the data.
  * In order to bring slightly more robustness, if the correlation between the input data and the computed linear regression
  * is not good enought (below 0.7, as defined in Interpol2D::LinRegression), the same regression will get re-calculated
@@ -279,9 +285,9 @@ class IDWAlgorithm : public InterpolationAlgorithm {
 /**
  * @class IDWLapseAlgorithm
  * @brief Inverse Distance Weighting interpolation algorithm with elevation detrending/reprojection.
- * The input data is projected to a reference elevation and spatially interpolated using an Inverse Distance
+ * The input data is detrended and the residuals are spatially interpolated using an Inverse Distance
  * Weighting interpolation algorithm (see IDWAlgorithm). Then, each value is reprojected to the real
- * elevation of the relative cell. The lapse rate is either calculated from the data
+ * elevation of the relative cell (re-trending). The lapse rate is either calculated from the data
  * (if no extra argument is provided), or given by the user-provided the optional argument <i>"idw_lapse"</i>.
  * If followed by <i>"soft"</i>, then an attempt to calculate the lapse rate from the data is made, any only if
  * unsuccessful or too bad (r^2<0.6), then the user provided lapse rate is used as a fallback.
