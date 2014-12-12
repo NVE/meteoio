@@ -44,7 +44,7 @@ Meteo1DInterpolator::Meteo1DInterpolator(const Config& in_cfg)
 Meteo1DInterpolator::~Meteo1DInterpolator()
 {
 	map< string, ResamplingAlgorithms* >::iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it)
+	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it)
 		delete it->second;
 }
 
@@ -87,10 +87,10 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 	}
 
 	//now, perform the resampling
-	for(size_t ii=0; ii<md.getNrOfParameters(); ii++) {
+	for (size_t ii=0; ii<md.getNrOfParameters(); ii++) {
 		const std::string parname = md.getNameForParameter(ii); //Current parameter name
 		const map< string, ResamplingAlgorithms* >::const_iterator it = mapAlgorithms.find(parname);
-		if(it!=mapAlgorithms.end()) {
+		if (it!=mapAlgorithms.end()) {
 			it->second->resample(index, elementpos, ii, vecM, md);
 		} else { //we are dealing with an extra parameter, we need to add it to the map first, so it will exist next time...
 			vector<string> vecArgs;
@@ -100,9 +100,11 @@ bool Meteo1DInterpolator::resampleData(const Date& date, const std::vector<Meteo
 		}
 
 		#ifdef DATA_QA
-		if((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {
-			const string algo_name = it->second->getAlgo();
-			cout << "[DATA_QA] Resampling " << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << "\n";
+		const map< string, ResamplingAlgorithms* >::const_iterator it2 = mapAlgorithms.find(parname); //we have to re-find it in order to handle extra parameters
+		if ((index != IOUtils::npos) && vecM[index](ii)!=md(ii)) {
+			const string statID = md.meta.getStationID();
+			const string algo_name = it2->second->getAlgo();
+			cout << "[DATA_QA] Resampling " << statID << "::" << parname << "::" << algo_name << " " << md.date.toString(Date::ISO_TZ) << "\n";
 		}
 		#endif
 	}
@@ -124,14 +126,14 @@ string Meteo1DInterpolator::getInterpolationForParameter(const std::string& parn
 
 	cfg.getValue(parname+"::"+algo_name, "Interpolations1D", vecArguments, IOUtils::nothrow);
 
-	if(cfg.keyExists(parname+"::"+"args", "Interpolations1D")) //HACK: temporary until we consider everybody has migrated
+	if (cfg.keyExists(parname+"::"+"args", "Interpolations1D")) //HACK: temporary until we consider everybody has migrated
 		throw InvalidArgumentException("The syntax for Interpolations1D arguments has been changed. Please check the documentation and update your configuration file \""+cfg.getSourceName()+"\"", AT);
 
 	return algo_name;
 }
 
 Meteo1DInterpolator& Meteo1DInterpolator::operator=(const Meteo1DInterpolator& source) {
-	if(this != &source) {
+	if (this != &source) {
 		window_size = source.window_size;
 		mapAlgorithms= source.mapAlgorithms;
 	}
@@ -145,7 +147,7 @@ const std::string Meteo1DInterpolator::toString() const
 	os << "Config& cfg = " << hex << &cfg << dec <<"\n";
 	os << "Resampling algorithms:\n";
 	map< string, ResamplingAlgorithms* >::const_iterator it;
-	for(it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
+	for (it=mapAlgorithms.begin(); it!=mapAlgorithms.end(); ++it) {
 		//os << setw(10) << it->first << "::" << it->second->getAlgo() << "\n";
 		os << it->second->toString() << "\n";
 	}

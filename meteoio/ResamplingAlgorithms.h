@@ -100,7 +100,7 @@ class ResamplingAlgorithms {
 
 		virtual ~ResamplingAlgorithms() {};
 
-		std::string getAlgo() const {return algo;};
+		const std::string getAlgo() const {return algo;};
 
 		virtual void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
 		              const std::vector<MeteoData>& vecM, MeteoData& md) = 0;

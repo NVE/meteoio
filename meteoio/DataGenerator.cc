@@ -83,8 +83,24 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 			const size_t param = vecMeteo[station].getParameterIndex(it->first);
 			if(param==IOUtils::npos) continue;
 
+			#ifdef DATA_QA
+			double old_val = vecMeteo[station](param);
+			const string statID = vecMeteo[station].meta.getStationID();
+			#endif
+
+			bool status = false;
 			size_t jj=0;
-			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecMeteo[station]) != true) jj++;
+			while (jj<vecGenerators.size() && status != true) { //loop over the generators
+				status = vecGenerators[jj]->generate(param, vecMeteo[station]);
+				jj++;
+				#ifdef DATA_QA
+				if (vecMeteo[station](param) != old_val) {
+					const string parname = it->first;
+					const string algo_name = vecGenerators[jj-1]->getAlgo();
+					cout << "[DATA_QA] Generating " << statID << "::" << parname << "::" << algo_name << " " << vecMeteo[station].date.toString(Date::ISO_TZ) << "\n";
+				}
+				#endif
+			}
 		}
 	}
 }
@@ -108,8 +124,26 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 			const size_t param = vecVecMeteo[station][0].getParameterIndex(it->first);
 			if(param==IOUtils::npos) continue;
 
+			#ifdef DATA_QA
+			METEO_SET old_val = vecVecMeteo[station];
+			const string statID = old_val[0].meta.getStationID();
+			#endif
+
+			bool status = false;
 			size_t jj=0;
-			while (jj<vecGenerators.size() && vecGenerators[jj]->generate(param, vecVecMeteo[station]) != true) jj++;
+			while (jj<vecGenerators.size() && status != true) { //loop over the generators
+				status = vecGenerators[jj]->generate(param, vecVecMeteo[station]);
+				jj++;
+				#ifdef DATA_QA
+				const string parname = it->first;
+				const string algo_name = vecGenerators[jj-1]->getAlgo();
+				for (size_t kk=0; kk<old_val.size(); kk++) {
+					if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
+						cout << "[DATA_QA] Generating " << statID << "::" << parname << "::" << algo_name << " " << old_val[kk].date.toString(Date::ISO_TZ) << "\n";
+					}
+				}
+				#endif
+			}
 		}
 	}
 }

@@ -89,15 +89,6 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 			//since all filters start with ovec=ivec, maybe we could just swap pointers instead for copying
 			std::vector<MeteoData> tmp( ivec[ii] );
 
-			#ifdef DATA_QA
-			for (size_t kk=0; kk<ivec[ii].size(); kk++) {
-				const double orig = ivec[ii][kk](param);
-				if (orig==IOUtils::nodata) {
-					cout << "[DATA_QA] Filtering " << param_name << " is nodata " << ivec[ii][kk].date.toString(Date::ISO_TZ) << "\n";
-				}
-			}
-			#endif
-
 			//Now call the filters one after another for the current station and parameter
 			bool appliedFilter = false;
 			for (size_t jj=0; jj<nr_of_filters; jj++){
@@ -117,8 +108,9 @@ void ProcessingStack::process(const std::vector< std::vector<MeteoData> >& ivec,
 						const double orig = tmp[kk](param);
 						const double filtered = ovec[ii][kk](param);
 						if (orig!=filtered) {
+							const string statID = ovec[ii][kk].meta.getStationID();
 							const string filtername = (*filter_stack[jj]).getName();
-							cout << "[DATA_QA] Filtering " << param_name << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << "\n";
+							cout << "[DATA_QA] Filtering " << statID << "::" << param_name << "::" << filtername << " " << tmp[kk].date.toString(Date::ISO_TZ) << "\n";
 						}
 					}
 					#endif
