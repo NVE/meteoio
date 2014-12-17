@@ -631,6 +631,52 @@ void Date::getDate(int& year_out, int& month_out, int& day_out, int& hour_out, i
 }
 
 /**
+* @brief Return the day of the week for the current date.
+* The day of the week is between 1 (Monday) and 7 (Sunday).
+* @param gmt convert returned value to GMT? (default: false)
+*/
+unsigned short Date::getDayOfWeek(const bool& gmt) const {
+//principle: start from day julian=0 that is a Monday
+	if (gmt) {
+		const unsigned int dow = static_cast<unsigned int>(gmt_julian+.5) % 7 + 1;
+		return static_cast<unsigned short>(dow);
+	} else {
+		const double local_julian = GMTToLocal(gmt_julian);
+		const unsigned int dow = static_cast<unsigned int>(local_julian+.5) % 7 + 1;
+		return static_cast<unsigned short>(dow);
+	}
+}
+
+/**
+* @brief Return the ISO 8601 week number
+* The week number range from 1 to 53 for a leap year. The first week is the week that contains
+* the first Thursday of the year. Previous days are attributed to the last week of the previous
+* year (See https://en.wikipedia.org/wiki/ISO_week_date).
+* @param gmt convert returned value to GMT? (default: false)
+*/
+unsigned short Date::getISOWeekNr(const bool& gmt) const
+{
+	const double jdn = getJulianDayNumber(gmt);
+	const Date newYear( gmt_julian - jdn + 1 , timezone);
+	const unsigned short newYear_dow = newYear.getDayOfWeek(gmt);
+	const int firstThursday = (7 - newYear_dow + 4) % 7 + 1; //first Thursday of the year belongs to week 1
+	const int firstWeekMonday = firstThursday - 3; //this could be <0, for example if Jan 01 is a Thursday
+
+	if (jdn>=firstWeekMonday) { //at worst, we are in week 01, otherwise after...
+		return static_cast<unsigned short>( Optim::intPart( (jdn+3-(double)firstThursday) / 7 + 1 ) );
+	}
+
+	//we are *before* the Monday of the first week. This implies that dow>4 (otherwise, the current week would be week 01)
+	//so these few days belong to the last week of the previous year
+	else if (newYear_dow==5) return 53; // Friday indicates a leap year
+	else if (newYear_dow==7) return 52; // Sunday is no leap year
+	else { //Saturday depends on the year before...
+		if (isLeapYear(gmt_year-1)) return 53;
+		else return 52;
+	}
+}
+
+/**
 * @brief Return the julian day for the current date.
 * Return the day of the year index for the current Date object
 * @param gmt convert returned value to GMT? (default: false)

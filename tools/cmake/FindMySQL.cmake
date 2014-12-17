@@ -2,7 +2,7 @@
 # Find the native MySQL includes and library
 #
 #  MYSQL_INCLUDE_DIR - where to find mysql.h, etc.
-#  MYSQL_LIBRARIES   - List of libraries when using MySQL.
+#  MYSQL_LIBRARY   - List of libraries when using MySQL.
 #  MYSQL_FOUND       - True if MySQL found.
 
 IF (MYSQL_INCLUDE_DIR)

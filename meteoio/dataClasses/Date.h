@@ -121,6 +121,8 @@ class Date {
 		void getTime(int& hour_out, int& minute_out, int& second_out, const bool& gmt=false) const;
 		int getYear(const bool& gmt=false) const;
 
+		unsigned short getDayOfWeek(const bool& gmt=false) const;
+		unsigned short getISOWeekNr(const bool& gmt=false) const;
 		int getJulianDayNumber(const bool& gmt=false) const;
 		bool isLeapYear() const;
 
