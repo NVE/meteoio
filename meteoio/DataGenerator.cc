@@ -85,7 +85,9 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 
 			#ifdef DATA_QA
 			double old_val = vecMeteo[station](param);
+			const string statName = vecMeteo[station].meta.getStationName();
 			const string statID = vecMeteo[station].meta.getStationID();
+			const string stat = (!statID.empty())? statID : statName;
 			#endif
 
 			bool status = false;
@@ -97,7 +99,8 @@ void DataGenerator::fillMissing(METEO_SET& vecMeteo) const
 				if (vecMeteo[station](param) != old_val) {
 					const string parname = it->first;
 					const string algo_name = vecGenerators[jj-1]->getAlgo();
-					cout << "[DATA_QA] Generating " << statID << "::" << parname << "::" << algo_name << " " << vecMeteo[station].date.toString(Date::ISO_TZ) << "\n";
+					const Date date( vecMeteo[station].date );
+					cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << date.toString(Date::ISO_TZ) << " [" << date.toString(Date::ISO_WEEK) << "]\n";
 				}
 				#endif
 			}
@@ -126,7 +129,9 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 
 			#ifdef DATA_QA
 			METEO_SET old_val = vecVecMeteo[station];
+			const string statName = old_val[0].meta.getStationName();
 			const string statID = old_val[0].meta.getStationID();
+			const string stat = (!statID.empty())? statID : statName;
 			#endif
 
 			bool status = false;
@@ -139,7 +144,7 @@ void DataGenerator::fillMissing(std::vector<METEO_SET>& vecVecMeteo) const
 				const string algo_name = vecGenerators[jj-1]->getAlgo();
 				for (size_t kk=0; kk<old_val.size(); kk++) {
 					if (old_val[kk](param) != vecVecMeteo[station][kk](param)) {
-						cout << "[DATA_QA] Generating " << statID << "::" << parname << "::" << algo_name << " " << old_val[kk].date.toString(Date::ISO_TZ) << "\n";
+						cout << "[DATA_QA] Generating " << stat << "::" << parname << "::" << algo_name << " " << old_val[kk].date.toString(Date::ISO_TZ) << "\n";
 					}
 				}
 				#endif

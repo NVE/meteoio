@@ -62,7 +62,8 @@ class Date {
 			ISO_TZ, ///< ISO 8601 format (same as ISO) but with time zone specification
 			FULL, ///< ISO 8601 followed by the julian date (in parenthesis)
 			NUM, ///< ISO 8601 basic format date: YYYYMMDDHHmmSS (fields might be dropped, in the least to the most significant order)
-			DIN ///<DIN5008 format: DD.MM.YYYY HH:MM
+			DIN, ///<DIN5008 format: DD.MM.YYYY HH:MM
+			ISO_WEEK ///< ISO 8601 week date: YYYY-Www-D (for example: 2014-W41-1)
 		} FORMATS;
 
 		///Keywords for selecting rounding strategy

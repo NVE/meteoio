@@ -81,6 +81,7 @@ namespace mio {
  * - GSN_USER: The username to access the service (optional)
  * - GSN_PASS: The password to authenticate the USER (optional)
  * - STATION#: station code for the given number #, e. g. la_fouly_1034 (case sensitive!)
+ * - GSN_TIMEOUT: timeout (in seconds) for the connection to the server (default: 60s)
  * - GSN_DEBUG: print the full requests/answers from the server when something does not work as expected
  *
  * If no STATION keys are given, the full list of ALL stations available to the user in GSN will be used!
@@ -96,14 +97,15 @@ namespace mio {
  *
  */
 
-const int GSNIO::http_timeout = 60; // seconds until connect time out for libcurl
+const int GSNIO::http_timeout_dflt = 60; // seconds until connect time out for libcurl
 const std::string GSNIO::sensors_endpoint = "sensors";
 const std::string GSNIO::sensors_format = "format=csv";
 const std::string GSNIO::null_string = "null";
 
 GSNIO::GSNIO(const std::string& configfile)
       : cfg(configfile), vecStationName(), multiplier(), offset(), coordin(),
-        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.), gsn_debug(false)
+        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.),
+        http_timeout(http_timeout_dflt), gsn_debug(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -113,7 +115,8 @@ GSNIO::GSNIO(const std::string& configfile)
 
 GSNIO::GSNIO(const Config& cfgreader)
       : cfg(cfgreader), vecStationName(), multiplier(), offset(), coordin(),
-        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.), gsn_debug(false)
+        coordinparam(), coordout(), coordoutparam(), endpoint(), userid(), passwd(), default_timezone(1.),
+        http_timeout(http_timeout_dflt), gsn_debug(false)
 {
 	IOUtils::getProjectionParameters(cfg, coordin, coordinparam, coordout, coordoutparam);
 	initGSNConnection();
@@ -124,6 +127,7 @@ GSNIO::GSNIO(const Config& cfgreader)
 void GSNIO::initGSNConnection() {
 	curl_global_init(CURL_GLOBAL_ALL);
 
+	cfg.getValue("GSN_TIMEOUT", "Input", http_timeout, IOUtils::nothrow);
 	default_timezone = IOUtils::nodata;
 	cfg.getValue("TIME_ZONE", "Input", default_timezone, IOUtils::nothrow);
 
@@ -315,7 +319,7 @@ void GSNIO::readData(const Date& dateStart, const Date& dateEnd, std::vector<Met
 	} else {
 		if (gsn_debug)
 			std::cout << "****\nRequest: " << request << "\n****\n";
-		throw IOException("Could not retrieve data for station " + vecMeteo[stationindex].meta.stationID, AT);
+		throw IOException("Could not retrieve data for station " + station_id, AT);
 	}
 }
 

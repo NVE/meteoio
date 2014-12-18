@@ -1089,6 +1089,12 @@ const string Date::toString(FORMATS type, const bool& gmt) const
 			<< setw(2) << setfill('0') << minute_out << ":"
 			<< setw(2) << setfill('0') << second_out;
 			break;
+		case(ISO_WEEK):
+			tmpstr
+			<< setw(4) << setfill('0') << year_out << "-W"
+			<< setw(2) << setfill('0') << getISOWeekNr(gmt) << "-"
+			<< setw(2) << setfill('0') << getDayOfWeek(gmt);
+			break;
 		default:
 			throw InvalidArgumentException("Wrong date conversion format requested", AT);
 	}
