@@ -207,12 +207,29 @@ double Interpol2D::IDWCore(const double& x, const double& y, const std::vector<d
 	const double scale = 1.e3;
 	const double alpha = 1.;
 
-	for (size_t i=0; i<n_stations; i++) {
-		const double DX = x-vecEastings[i];
-		const double DY = y-vecNorthings[i];
+	for (size_t ii=0; ii<n_stations; ii++) {
+		const double DX = x-vecEastings[ii];
+		const double DY = y-vecNorthings[ii];
 		const double dist = Optim::invSqrt( DX*DX + DY*DY + scale*scale ); //use the optimized 1/sqrt approximation
 		const double weight = (alpha==1.)? dist : Optim::fastPow(dist, alpha);
-		parameter += weight*vecData_in[i];
+		parameter += weight*vecData_in[ii];
+		norm += weight;
+	}
+	return (parameter/norm); //normalization
+}
+
+double Interpol2D::IDWCore(const std::vector<double>& vecData_in, const std::vector<double>& vecDistance_sq)
+{
+	//The value at any given cell is the sum of the weighted contribution from each source
+	const size_t n_stations = vecDistance_sq.size();
+	double parameter = 0., norm = 0.;
+	const double scale = 1.e3;
+	const double alpha = 1.;
+
+	for (size_t ii=0; ii<n_stations; ii++) {
+		const double dist = Optim::invSqrt( vecDistance_sq[ii] + scale*scale ); //use the optimized 1/sqrt approximation
+		const double weight = (alpha==1.)? dist : Optim::fastPow(dist, alpha);
+		parameter += weight*vecData_in[ii];
 		norm += weight;
 	}
 	return (parameter/norm); //normalization
@@ -236,7 +253,7 @@ void Interpol2D::LocalLapseIDW(const std::vector<double>& vecData_in, const std:
 	for (size_t j=0; j<grid.getNy(); j++) {
 		for (size_t i=0; i<grid.getNx(); i++) {
 			//LL_IDW_pixel returns nodata when appropriate
-			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors); //TODO: precompute in vectors
+			grid(i,j) = LLIDW_pixel(i, j, vecData_in, vecStations_in, dem, nrOfNeighbors);
 		}
 	}
 }
@@ -247,52 +264,41 @@ double Interpol2D::LLIDW_pixel(const size_t& i, const size_t& j,
                                const DEMObject& dem, const size_t& nrOfNeighbors)
 {
 	const double cell_altitude = dem(i,j);
-	if(cell_altitude==IOUtils::nodata)
+	if (cell_altitude==IOUtils::nodata)
 		return IOUtils::nodata;
 
-	std::vector< std::pair<double, size_t> > list;
-	std::vector<double> X, Y;
-
-	//fill vectors with appropriate neighbors
+	//fill vectors with neighbors sorted by the square of their distance to (i,j)
 	const double x = dem.llcorner.getEasting()+static_cast<double>(i)*dem.cellsize;
 	const double y = dem.llcorner.getNorthing()+static_cast<double>(j)*dem.cellsize;
-	getNeighbors(x, y, vecStations_in, list);
-	const size_t max_stations = std::min(list.size(), nrOfNeighbors);
-	for(size_t st=0; st<max_stations; st++) {
-		const size_t st_index = list[st].second;
+	std::vector< std::pair<double, size_t> > sorted_neighbors;
+	getNeighbors(x, y, vecStations_in, sorted_neighbors);
+
+	//build the vectors of valid data, with max nrOfNeighbors
+	std::vector<double> altitudes, values, distances;
+	for (size_t st=0; st<sorted_neighbors.size(); st++) {
+		const size_t st_index = sorted_neighbors[st].second;
 		const double value = vecData_in[st_index];
-		const double alt = vecStations_in[st_index].position.getAltitude();
-		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
-			X.push_back( alt );
-			Y.push_back( value );
+		const double altitude = vecStations_in[st_index].position.getAltitude();
+		if ((value != IOUtils::nodata) && (altitude != IOUtils::nodata)) {
+			altitudes.push_back( altitude );
+			values.push_back( value );
+			distances.push_back( sorted_neighbors[st].first );
+			if (altitudes.size()>=nrOfNeighbors) break;
 		}
+
 	}
 
-	//compute lapse rate
-	if(X.empty()) return IOUtils::nodata;
-	const Fit1D trend(Fit1D::NOISY_LINEAR, X, Y);
-
-	//compute local pixel value
-	unsigned int count=0;
-	double pixel_value=0., norm=0.;
-	const double scale = 1.;
-	const double alpha = 1.;
-	for(size_t st=0; st<max_stations; st++) {
-		const size_t st_index = list[st].second;
-		const double alt = vecStations_in[st_index].position.getAltitude();
-		const double value = vecData_in[st_index];
-		if ((value != IOUtils::nodata) && (alt != IOUtils::nodata)) {
-			const double contrib = value - trend(alt);
-			const double dist = Optim::invSqrt( list[st].first + scale*scale + 1.e-6 );
-			const double weight = (alpha==1.)? dist : Optim::fastPow(dist, alpha);
-			pixel_value += weight*contrib;
-			norm += weight;
-			count++;
-		}
+	//compute lapse rate and detrend the stations' data
+	if (altitudes.empty()) return IOUtils::nodata;
+	const Fit1D trend(Fit1D::NOISY_LINEAR, altitudes, values);
+	for (size_t ii=0; ii<altitudes.size(); ii++) {
+		values[ii] -= trend( altitudes[ii] );
 	}
 
-	if(count>0)
-		return (pixel_value/norm) + trend(cell_altitude);
+	//compute the local pixel value, retrend
+	const double pixel_value = IDWCore(values, distances);
+	if (pixel_value!=IOUtils::nodata)
+		return pixel_value + trend(cell_altitude);
 	else
 		return IOUtils::nodata;
 }
