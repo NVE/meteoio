@@ -34,6 +34,7 @@
 #cmakedefine PLUGIN_GSNIO
 #cmakedefine PLUGIN_NETCDFIO
 #cmakedefine PLUGIN_PSQLIO
+#cmakedefine PLUGIN_SASEIO
 
 #include <meteoio/plugins/ARCIO.h>
 #include <meteoio/plugins/A3DIO.h>
@@ -74,6 +75,10 @@
 
 #ifdef PLUGIN_PSQLIO
 #include <meteoio/plugins/PSQLIO.h>
+#endif
+
+#ifdef PLUGIN_SASEIO
+#include <meteoio/plugins/SASEIO.h>
 #endif
 
 using namespace std;
@@ -119,6 +124,7 @@ namespace mio {
  * <tr><td>\subpage pgmio "PGM"</td><td>dem, grid2d</td><td>PGM grid files</td><td></td></tr>
  * <tr><td>\subpage pngio "PNG"</td><td>dem, grid2d</td><td>PNG grid files</td><td><A HREF="http://www.libpng.org/pub/png/libpng.html">libpng</A></td></tr>
  * <tr><td>\subpage psqlio "PSQL"</td><td>meteo</td><td>connects to PostgreSQL database</td><td><A HREF="http://www.postgresql.org/">PostgreSQL</A>'s libpq</td></tr>
+ * <tr><td>\subpage sase "SASE"</td><td>meteo</td><td>connects to the SASE database</td><td><A HREF="https://dev.mysql.com/doc/refman/5.0/en/c-api.html">MySQL's C API</A></td></tr>
  * <tr><td>\subpage smetio "SMET"</td><td>meteo, poi</td><td>SMET data files</td><td></td></tr>
  * <tr><td>\subpage snowpack "SNOWPACK"</td><td>meteo</td><td>original SNOWPACK meteo files</td><td></td></tr>
  * </table></center>
@@ -204,6 +210,9 @@ IOInterface* IOHandler::getPlugin(const std::string& plugin_name) const
 #endif
 #ifdef PLUGIN_PSQLIO
 	if (plugin_name == "PSQL") return new PSQLIO(cfg);
+#endif
+#ifdef PLUGIN_SASEIO
+	if (plugin_name == "SASE") return new SASEIO(cfg);
 #endif
 
 	return NULL; //no plugin found
