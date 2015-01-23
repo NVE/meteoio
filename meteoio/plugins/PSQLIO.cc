@@ -84,7 +84,7 @@ namespace mio {
  *      - SQL_META: SQL query to use to get the stations' metadata.
  *      - SQL_DATA: SQL query to use to get the stations' data.
  * - STATIONS: comma separated list of station ids that the user is interested in; [Input] section
- * - EXCLUDE: File containing a list of parameters to exclude listed per station id (optional; [Input] section)
+ * - EXCLUDE: File containing a list of parameters to exclude listed per station id (optional; [Input] section; this should now be deprecated and replaced by EXCLUDE_FILE that works for all plugins)
  *
  */
 
@@ -112,7 +112,7 @@ PSQLIO::PSQLIO(const Config& cfg) : coordin(), coordinparam(), coordout(), coord
 }
 
 PSQLIO::PSQLIO(const PSQLIO& in) : coordin(in.coordin), coordinparam(in.coordinparam), coordout(in.coordout),
-                                   coordoutparam(in.coordoutparam), in_endpoint(in.in_endpoint), in_port(in.in_port), 
+                                   coordoutparam(in.coordoutparam), in_endpoint(in.in_endpoint), in_port(in.in_port),
                                    in_dbname(in.in_dbname), in_userid(in.in_userid), in_passwd(in.in_passwd),
                                    out_endpoint(in.out_endpoint), out_port(in.out_port), out_dbname(in.out_dbname),
                                    out_userid(in.out_userid), out_passwd(in.out_passwd), input_configured(false),
@@ -329,7 +329,7 @@ void PSQLIO::readStationData(const Date&, std::vector<StationData>& vecStation)
 			station_list += "'" + *it + "'";
 		}
 	}
-	
+
 	string query = sql_meta + " (" + station_list + ") ORDER BY id;";
 	vector<StationData> tmp_station;
 	readMetaData(query, tmp_station);
@@ -543,12 +543,12 @@ void PSQLIO::add_meta_data(const unsigned int& index, const StationData& sd)
 	string stationName = (sd.stationName != "" ? sd.stationName : sd.stationID);
 
 	stringstream values;
-	values << "(" << index << "," 
+	values << "(" << index << ","
 		  << "'" << stationName << "'," << fixed
 		  << setprecision(2) << sd.position.getEasting() << ","
-		  << sd.position.getNorthing() << "," 
-		  << sd.position.getAltitude() << "," 
-		  << sd.position.getEPSG() << ")"; 
+		  << sd.position.getNorthing() << ","
+		  << sd.position.getAltitude() << ","
+		  << sd.position.getEPSG() << ")";
 
 	string query = "INSERT INTO FIXED_STATION (ID_FIXED_STATION,STATION_NAME,COORD_X,COORD_Y,ALTITUDE, EPSG) VALUES " + values.str() + ";";
 	//cout << "EXEC: " << query << endl;
@@ -562,7 +562,7 @@ int PSQLIO::get_sensor_index()
 	int sensor_index = 1;
 	string query = "SELECT max(id_fixed_sensor) from fixed_sensor;";
 
-	PGresult *result = sql_exec(query, false);	
+	PGresult *result = sql_exec(query, false);
 	if (result) {
 		int rows = PQntuples(result);
 		int columns = PQnfields(result);
@@ -596,7 +596,7 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 
 	std::map<size_t, string> map_sensor_type;
 
-	PGresult *result = sql_exec(query, false);	
+	PGresult *result = sql_exec(query, false);
 	if (result) {
 		int rows = PQntuples(result);
 		//int columns = PQnfields(result);
@@ -618,7 +618,7 @@ void PSQLIO::add_sensors(const unsigned int& index, const std::vector<std::strin
 	} else {
 		throw;
 	}
-	
+
 	// Now actually add all sensors that were identified
 	for (map<size_t, string>::const_iterator it = map_sensor_type.begin(); it != map_sensor_type.end(); ++it) {
 		ss.str("");
@@ -644,11 +644,11 @@ void PSQLIO::get_sensors(const std::string& index, const std::vector<std::string
 	ss << "SELECT id, station, meas_type, meas_name FROM "
 	   << "(SELECT id_fixed_sensor as id, fk_id_fixed_station as station, fk_id_measurement_type as meas_type from fixed_sensor where fk_id_fixed_station=" << index << ") a "
 	   << "INNER JOIN measurement_type ON a.meas_type=measurement_type.id_measurement_type;";
-	
+
 	string query =  ss.str();
 	//cout << query << endl;
 
-	PGresult *result = sql_exec(query, false);	
+	PGresult *result = sql_exec(query, false);
 	if (result) {
 		int rows = PQntuples(result);
 
@@ -682,7 +682,7 @@ int PSQLIO::get_measurement_index()
 	int index = 1;
 	string query = "SELECT MAX(ID_FIXED_MEASUREMENT) from fixed_measurement;";
 
-	PGresult *result = sql_exec(query, false);	
+	PGresult *result = sql_exec(query, false);
 	if (result) {
 		int rows = PQntuples(result);
 		int columns = PQnfields(result);
@@ -741,7 +741,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				index++;
 			} else { // just get the sensor mappings
 				cout << "Inserting data for station '" << sd.stationName << "' with the id_fixed_station " << vecAllStations[present_index].stationID << endl;
-				get_sensors(vecAllStations[present_index].stationID, vecColumnName, map_sensor_id);				
+				get_sensors(vecAllStations[present_index].stationID, vecColumnName, map_sensor_id);
 			}
 		} else { //mobile station
 			throw IOException("Mobile station writing not implemented", AT);
@@ -766,7 +766,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 
 				ss.str("");
 				ss << tmp(it->first);
-				string value(ss.str()); 
+				string value(ss.str());
 				string values = "(" + id + "," + it->second + ", TIMESTAMP '" + timestamp + "'," + value + ")";
 
 				if (!comma) {
@@ -778,7 +778,7 @@ void PSQLIO::writeMeteoData(const std::vector< std::vector<MeteoData> >& vecMete
 				currentid++;
 			}
 		}
-		
+
 		query += ";";
 		//cout << "EXEC: " << query << endl;
 		sql_exec(query, false);
@@ -822,7 +822,7 @@ void PSQLIO::convertUnitsBack(MeteoData& meteo)
 	if (rh != IOUtils::nodata)
 		rh *= 100.;
 
-	double& hs = meteo(MeteoData::HS); 
+	double& hs = meteo(MeteoData::HS);
 	if (hs != IOUtils::nodata)
 		hs *= 100.; //is in cm
 

@@ -71,7 +71,7 @@ namespace mio {
  * The keywords defining the algorithms are the following:
  * - STD_PRESS: standard atmospheric pressure as a function of the elevation of each station (see StandardPressureGenerator)
  * - RELHUM: relative humidity from other humidity measurements (see RhGenerator)
- * - TS_OLWR: surface temperature from Outgoing Long Wave Radiation (see TssGenerator)
+ * - TS_OLWR: surface temperature from Outgoing Long Wave Radiation (see TsGenerator)
  * - ISWR_ALBEDO: ISWR from RSWR or RSWR from ISWR with either a snow or a soil albedo, depending on HS (see IswrAlbedoGenerator)
  * - CST: constant value as provided in argument (see ConstGenerator)
  * - SIN: sinusoidal variation (see SinGenerator)
