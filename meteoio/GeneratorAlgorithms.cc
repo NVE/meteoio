@@ -688,10 +688,10 @@ bool HSSweGenerator::generate(const size_t& /*param*/, MeteoData& /*md*/)
 //run through a Cst=0 data generator afterward
 bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMeteo)
 {
-	if(param!=MeteoData::HNW)
+	if (param!=MeteoData::HNW)
 		throw InvalidArgumentException("Trying to use "+algo+" generator on " + MeteoData::getParameterName(param) + " but it can only be applied to HNW!!", AT);
 
-	if(vecMeteo.empty()) return true;
+	if (vecMeteo.empty()) return true;
 
 	//Find first point that is not IOUtils::nodata
 	size_t last_good = IOUtils::npos;
@@ -706,7 +706,7 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 		return false;
 
 	bool all_filled = (last_good>0)? false : true;
-	for(size_t ii=last_good+1; ii<vecMeteo.size(); ii++) {
+	for (size_t ii=last_good+1; ii<vecMeteo.size(); ii++) {
 		const double HS_curr = vecMeteo[ii](MeteoData::HS);
 		if(HS_curr==IOUtils::nodata) continue;
 
@@ -714,7 +714,7 @@ bool HSSweGenerator::generate(const size_t& param, std::vector<MeteoData>& vecMe
 		const double HS_prev = vecMeteo[last_good](MeteoData::HS);
 		const double HS_delta = HS_curr - HS_prev;
 
-		if(HS_delta>0.) {
+		if (HS_delta>0.) {
 			const double rho = newSnowDensity(vecMeteo[ii]);
 			const double precip = HS_delta * rho; //in kg/m2 or mm
 			ProcHNWDistribute::SmartDistributeHNW(precip, start_idx, ii, param, vecMeteo);
@@ -737,7 +737,7 @@ double HSSweGenerator::newSnowDensity(const MeteoData& md) const
 	const double beta01=3.28, beta1=0.03, beta02=-0.36, beta2=-0.75, beta3=0.3;
 
 	double arg = beta01 + beta1*ta + beta2*asin(sqrt(rh)) + beta3*log10(vw);
-	if(ta>=-14.)
+	if (ta>=-14.)
 		arg += beta02; // += beta2*ta;
 
 	return min( max(30., pow(10., arg)), 250. ); //limit the density to the [30, 250] kg/m3 range

@@ -897,13 +897,13 @@ void Coords::convert_from_WGS84(double i_latitude, double i_longitude, double& o
 /**
 * @brief Parse a latitude or longitude
 * It can be formatted as any of the following examples:
-* - 46° 48' 03" (with or without spaces, decimal or integer numbers)
+* - 46&deg; 48' 03" (with or without spaces, decimal or integer numbers)
 * - 46d 48' 03" (with or without spaces, decimal or integer numbers)
 * - 46 48' 03" (with spaces, decimal or integer numbers)
-* - 46° 48.02'(with or without spaces, decimal or integer numbers)
+* - 48&deg; 48.02'(with or without spaces, decimal or integer numbers)
 * - 46d 48.02'(with or without spaces, decimal or integer numbers)
 * - 46 48.02'(with spaces, decimal or integer numbers)
-* - 46.802°
+* - 46.802&deg;
 * - 46.802d
 * - 46.802
 * @param[in] dms string containing the coordinate
@@ -975,7 +975,7 @@ lat, double& lon)
 
 /**
 * @brief Converts a decimal latitude or longitude to degrees, minutes, seconds
-* It formats its arguments as in the following example: 46°48'03"
+* It formats its arguments as in the following example: 46&deg;48'03"
 * @param[in] decimal decimal coordinate to convert
 * @return string containing the formatted coordinate
 */

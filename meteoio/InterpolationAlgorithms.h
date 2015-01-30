@@ -214,6 +214,10 @@ class NoneAlgorithm : public InterpolationAlgorithm {
  * Fill the grid with the average of the inputs for this parameter.
  * Optionally, it is also possible to provide the constant that should be used if no measurements
  * are avaiblable.
+ * @code
+ * HNW::algorithms = CST
+ * HNW::cst        = 0.
+ * @endcode
  */
 class ConstAlgorithm : public InterpolationAlgorithm {
 	public:

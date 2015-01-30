@@ -61,7 +61,7 @@ namespace mio {
  *
  * @section gsn_units Units
  * The units of measurements are sometimes listed in the response headers, they are then parsed by the plugin and if known,
- * like <b>°C</b> or <b>\%</b>, offsets and multipliers are set to convert the data to MKSA
+ * like <b>&deg;C</b> or <b>\%</b>, offsets and multipliers are set to convert the data to MKSA
  *
  * Otherwise the units are assumed to be the following:
  * - temperatures in celsius

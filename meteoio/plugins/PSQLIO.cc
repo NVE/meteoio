@@ -65,7 +65,7 @@ namespace mio {
  *
  * @section psql_units Units
  * Units are assumed to be pure SI, except:
- *  - temperatures in °C
+ *  - temperatures in &deg;C
  *  - relative humidity in %
  *  - snow height in cm
  *  - pressure in mbar

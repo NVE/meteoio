@@ -65,7 +65,7 @@ for (( i=4 ; i<=${nb_sets} ; i++ )); do
 	BEGIN {
 		field='${i}'-2
 	}
-	/^[:space:]*[0-9\-]+/ {
+	/^[[:space:]]*[0-9\-]+/ {
 		printf("%s %s\n",$1, $(field))
 		}' ${INPUT}
 	printf "&\n"

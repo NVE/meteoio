@@ -33,6 +33,6 @@ int main(int argc, char** argv) {
 	std::cout << "And swapped back to timezone GMT+0:\n";
 	d1.setTimeZone(0.,false);
 	std::cout << d1 << std::endl;
-	
+
 	return 0;
 }

@@ -52,18 +52,18 @@ namespace mio {
  * <center><table>
  * <tr><th>Parameter</th><th>Units</th><th>Mandatory</th><th>Comments</th></tr>
  * <tr><td></td><td></td><td></td><td></td></tr>
- * <tr><td>Air temperature</td><td>K or °C</td><td>yes</td><td></td></tr>
+ * <tr><td>Air temperature</td><td>K or &deg;C</td><td>yes</td><td></td></tr>
  * <tr><td>Relative air humidity</td><td>[0-1] or %</td><td>yes</td><td></td></tr>
  * <tr><td>Wind velocity</td><td>m s<sup>-1</sup></td><td>yes</td><td>at snow station</td></tr>
  * <tr><td>Wind direction</td><td>degrees</td><td>no</td><td>At either snow or wind station</td></tr>
  * <tr><td>Incoming SW radiation</td><td>W m<sup>-2</sup></td><td>no</td><td></td></tr>
  * <tr><td>Reflected SW radiation</td><td>W m<sup>-2</sup></td><td>no</td><td></td></tr>
  * <tr><td>Incoming LW radiation or Cloudiness</td><td>W m<sup>-2 or [0-1]</sup></td><td>no</td><td></td></tr>
- * <tr><td>Snow surface temperature</td><td>K or °C</td><td>no</td><td></td></tr>
- * <tr><td>Bottom temperature</td><td>K or °C</td><td>no</td><td></td></tr>
+ * <tr><td>Snow surface temperature</td><td>K or &deg;C</td><td>no</td><td></td></tr>
+ * <tr><td>Bottom temperature</td><td>K or &deg;C</td><td>no</td><td></td></tr>
  * <tr><td>Precipitations per meteo step</td><td>kg m<sup>-2</sup> (mm H<sub>2</sub>O)</td><td>no</td><td></td></tr>
  * <tr><td>Snow depth</td><td>m</td><td>no</td><td></td></tr>
- * <tr><td>Measured temperatures in snow/soil</td><td>K or °C</td><td>no</td><td></td></tr>
+ * <tr><td>Measured temperatures in snow/soil</td><td>K or &deg;C</td><td>no</td><td></td></tr>
  * <tr><td>Wind velocity</td><td>m s<sup>-1</sup></td><td>no</td><td>at wind station</td></tr>
  * </table></center>
  *

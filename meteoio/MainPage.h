@@ -45,20 +45,7 @@ namespace mio {
 */
 
  /**
- * @mainpage Welcome to MeteoIO
- * @section intro_sec Introduction
- * This library aims at making data access easy and safe for numerical simulations in environmental sciences requiring general meteorological data. It's main design goals are:
- * - providing data format/protocol independent data access
- * - providing safe and robust I/O
- * - making I/O code as unobtrusive and simple as possible for the user
- * - providing ready to use data to the user, which means transparent caching, filtering, resampling, spatial interpolation.
- * - enabling unattended use from an IO point of view
- * - offering high modularity so that individual elements of the library can easily be replaced/expanded/added
- * - by its modularity, help interdisciplinary development, each module being targeted at a specific developer profile
- *
- * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>.
- *
- * @section table_of_content Table of content
+ * @mainpage Table of content
  * -# External Links
  *    -# <A HREF="https://models.slf.ch/p/meteoio/">MeteoIO's home page</A>
  *          -# <A HREF="https://models.slf.ch/p/meteoio/page/Getting-started/">Installation, compilation</A>
@@ -84,6 +71,15 @@ namespace mio {
  *    -# How to \subpage dev_processing "write a processing element"
  *    -# How to \subpage dev_DataGenerator "Write a data generator"
  *    -# How to \subpage dev_2Dinterpol "write a spatial interpolation algorithm"
+ * 
+ * <center><hr></center>
+ * <p><center><i><small>
+ * This library aims at making data access easy and safe for numerical simulations in environmental sciences requiring general meteorological data. A full
+ * description of its design goals and its architecture can be found in <br>
+ * M. Bavay and T. Egger, <a href="http://www.geosci-model-dev.net/7/3135/2014/gmd-7-3135-2014.pdf"><i>"MeteoIO 2.4. 2: a preprocessing library for meteorological data."</i></a>, Geoscientific Model Development, <b>7.6</b>, 2014, pp 3135-3151.
+ * <br>
+ * This library is available under LPGL version 3 or above, see <a href="http://www.gnu.org/licenses/lgpl.txt">www.gnu.org</a>.
+ * </small></i></center></p>
  */
 
  /**
