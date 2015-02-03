@@ -745,7 +745,10 @@ void Interpol2D::Winstral(const DEMObject& dem, const Grid2DObject& TA, const do
 			sum_deposition += deposited;
 		}
 	}
-
+	
+	//no cells can take the eroded mass or no cells even got freezing temperatures
+	if (sum_deposition==0 || sum_erosion==0) return;
+	
 	//deposition: garantee mass balance conservation
 	//-> we now have the proper scaling factor so we can deposit in individual cells
 	const double ratio = sum_erosion/sum_deposition;
