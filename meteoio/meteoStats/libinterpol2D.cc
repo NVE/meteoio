@@ -873,6 +873,11 @@ void Interpol2D::ODKriging(const std::vector<double>& vecData, const std::vector
 	//now, calculate each point
 	for(size_t j=0; j<grid.getNy(); j++) {
 		for(size_t i=0; i<grid.getNx(); i++) {
+			if (dem(i,j)==IOUtils::nodata) {
+				grid(i,j) = IOUtils::nodata;
+				continue;
+			}
+				
 			const double x = llcorner_x+static_cast<double>(i)*cellsize;
 			const double y = llcorner_y+static_cast<double>(j)*cellsize;
 
