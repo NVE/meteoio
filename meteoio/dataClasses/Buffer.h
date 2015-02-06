@@ -126,26 +126,29 @@ class MeteoBuffer {
 */
 class GridBuffer {
 	public:
-		GridBuffer(const size_t& in_max_grids) : dem_buffer(), mapBufferedGrids(), IndexBufferedGrids(), max_grids(in_max_grids) {};
+		GridBuffer(const size_t& in_max_grids);
 		
 		bool empty() const {return IndexBufferedGrids.empty();};
-		void clear() {mapBufferedGrids.clear(); IndexBufferedGrids.clear();};
+		void clear() {mapBufferedGrids.clear(); mapBufferedInfos.clear(); IndexBufferedGrids.clear();};
 		size_t size() const {return IndexBufferedGrids.size();};
 		
 		void setMaxGrids(const size_t& in_max_grids) {max_grids=in_max_grids;};
 		
-		bool get(Grid2DObject& grid, const std::string& grid_hash) const;
-		bool get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date) const;
 		bool get(DEMObject& grid) const;
+		bool get(Grid2DObject& grid, const std::string& grid_hash) const;
+		bool get(Grid2DObject& grid, const std::string& grid_hash, std::string& grid_info) const;
+		bool get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date) const;
 		
-		void push(const Grid2DObject& in_grid, const std::string& grid_hash);
-		void push(const Grid2DObject& in_grid, const MeteoGrids::Parameters& parameter, const Date& date);
-		void push(const DEMObject& in_grid);
+		void push(const DEMObject& grid);
+		void push(const Grid2DObject& grid, const std::string& grid_hash);
+		void push(const Grid2DObject& grid, const std::string& grid_hash, const std::string& grid_info);
+		void push(const Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date);
 		
 		const std::string toString() const;
-	private:
+	private:		
 		std::vector<DEMObject> dem_buffer;
-		std::map<std::string, Grid2DObject> mapBufferedGrids;
+		std::map<std::string, Grid2DObject> mapBufferedGrids;  ///< Buffer interpolated grids
+		std::map<std::string, std::string> mapBufferedInfos; ///< Buffer interpolations info messages
 		std::vector<std::string> IndexBufferedGrids; // this is required in order to know which grid is the oldest one
 		size_t max_grids; ///< How many grids to buffer (grids, dem, landuse and assimilation grids together)
 };

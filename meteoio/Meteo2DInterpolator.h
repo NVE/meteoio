@@ -21,6 +21,7 @@
 
 #include <meteoio/TimeSeriesManager.h>
 #include <meteoio/Config.h>
+#include <meteoio/dataClasses/Buffer.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/DEMObject.h>
@@ -168,20 +169,14 @@ class Meteo2DInterpolator {
 		static size_t get_parameters(const Config& cfg, std::set<std::string>& set_parameters);
 		static size_t getAlgorithmsForParameter(const Config& cfg, const std::string& parname, std::vector<std::string>& vecAlgorithms);
 
-		void addToBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, const Grid2DObject& grid, const std::string& info);
-		bool getFromBuffer(const Date& date, const DEMObject& dem, const MeteoData::Parameters& meteoparam, Grid2DObject& grid, std::string& info) const;
 		size_t getVirtualStationsData(const Date& i_date, METEO_SET& vecMeteo);
-		void setDfltBufferProperties();
 		void setAlgorithms();
 		void initVirtualStations();
 
 		const Config& cfg; ///< Reference to Config object, initialized during construction
 		TimeSeriesManager& tsmanager; ///< Reference to TimeSeriesManager object, used for callbacks, initialized during construction
 		GridsManager& gridsmanager; ///< Reference to GridsManager object, used for callbacks, initialized during construction
-
-		std::map<std::string, Grid2DObject> mapBufferedGrids; ///< Buffer interpolated grids
-		std::map<std::string, std::string> mapBufferedInfos; ///< Buffer interpolations info messages
-		std::vector<std::string> IndexBufferedGrids; ///< Keep position information for easy erase fo specific grids
+		GridBuffer grid_buffer;
 
 		std::map< std::string, std::vector<InterpolationAlgorithm*> > mapAlgorithms; //per parameter interpolation algorithms
 
@@ -190,7 +185,6 @@ class Meteo2DInterpolator {
 		std::vector<StationData> v_stations; ///< metadata for virtual stations
 		std::map<Date, METEO_SET > virtual_point_cache;  ///< stores already resampled virtual data points
 
-		size_t max_grids; ///< How many grids to buffer
 		bool algorithms_ready; ///< Have the algorithms objects been constructed?
 		bool use_full_dem; ///< use full dem for point-wise spatial interpolations
 		bool downscaling; ///< Are we downscaling meteo grids instead of interpolating stations' data?

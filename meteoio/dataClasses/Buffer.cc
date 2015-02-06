@@ -221,8 +221,14 @@ const std::string MeteoBuffer::toString() const
 	return os.str();
 }
 
-
+/********************************************************************************************/
 /****************************** GridBuffer class ***********************************************/
+/********************************************************************************************/
+
+GridBuffer::GridBuffer(const size_t& in_max_grids) 
+           : dem_buffer(), mapBufferedGrids(), mapBufferedInfos(), IndexBufferedGrids(), max_grids(in_max_grids) 
+{}
+
 
 bool GridBuffer::get(Grid2DObject& grid, const std::string& grid_hash) const
 {
@@ -235,6 +241,22 @@ bool GridBuffer::get(Grid2DObject& grid, const std::string& grid_hash) const
 		return true;
 	}
 
+	return false;
+}
+
+bool GridBuffer::get(Grid2DObject& grid, const std::string& grid_hash, std::string& grid_info) const
+{
+	grid_info.clear();
+	if (max_grids==0) return false;
+	
+	if (get(grid, grid_hash)==true) {
+		const std::map<std::string, std::string>::const_iterator it = mapBufferedInfos.find( grid_hash );
+		if (it != mapBufferedInfos.end()) { //found in map
+			grid_info = (*it).second;
+		}
+		return true;
+	}
+	
 	return false;
 }
 
@@ -271,7 +293,7 @@ bool GridBuffer::get(DEMObject& grid) const
 	return false;
 }
 
-void GridBuffer::push(const DEMObject& in_grid)
+void GridBuffer::push(const DEMObject& grid)
 {
 	//HACK: properly manage buffering multiple dems!
 	//std::ostringstream grid_hash;
@@ -281,25 +303,39 @@ void GridBuffer::push(const DEMObject& in_grid)
 	if (!dem_buffer.empty())
 		dem_buffer.clear();
 	
-	dem_buffer.push_back( in_grid );
+	dem_buffer.push_back( grid );
 }
 
-void GridBuffer::push(const Grid2DObject& in_grid, const std::string& grid_hash)
+void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash, const std::string& grid_info)
 {
 	if (max_grids==0) return;
 
 	if(IndexBufferedGrids.size() >= max_grids) { //we need to remove the oldest grid
-		mapBufferedGrids.erase( mapBufferedGrids.find( IndexBufferedGrids.front() ) );
-		IndexBufferedGrids.erase( IndexBufferedGrids.begin() );
+		const string tmp_hash = IndexBufferedGrids.front();
+		mapBufferedGrids.erase( mapBufferedGrids.find( tmp_hash ) );
+		mapBufferedInfos.erase( mapBufferedInfos.find( tmp_hash ) );
+		//IndexBufferedGrids.erase( IndexBufferedGrids.begin() );
+		swap( IndexBufferedGrids.front(), IndexBufferedGrids.back() );
+		IndexBufferedGrids.pop_back();
 	}
-	mapBufferedGrids[ grid_hash ] = in_grid;
-	IndexBufferedGrids.push_back( grid_hash  );
+	mapBufferedGrids[ grid_hash ] = grid;
+	mapBufferedInfos[ grid_hash ] = grid_info;
+	IndexBufferedGrids.push_back( grid_hash );
 }
 
-void GridBuffer::push(const Grid2DObject& in_grid, const MeteoGrids::Parameters& parameter, const Date& date)
+void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash)
 {
+	if (max_grids==0) return;
+	
+	push(grid, grid_hash, "");
+}
+
+void GridBuffer::push(const Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date)
+{
+	if (max_grids==0) return;
+	
 	const string grid_hash = date.toString(Date::ISO)+"::"+MeteoGrids::getParameterName(parameter);
-	push(in_grid, grid_hash);
+	push(grid, grid_hash, "");
 }
 
 const std::string GridBuffer::toString() const
