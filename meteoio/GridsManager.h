@@ -19,6 +19,7 @@
 #define __GRIDSMANAGER_H__
 
 #include <meteoio/DataGenerator.h>
+#include <meteoio/dataClasses/Buffer.h>
 #include <meteoio/dataClasses/MeteoData.h>
 #include <meteoio/dataClasses/Coords.h>
 #include <meteoio/IOHandler.h>
@@ -51,11 +52,8 @@ class GridsManager {
 
 		IOHandler& iohandler;
 		const Config& cfg;
+		GridBuffer buffer;
 
-		std::map<std::string, Grid2DObject> mapBufferedGrids;
-		std::vector<DEMObject> dem_buffer;
-		std::vector<std::string> IndexBufferedGrids; // this is required in order to know which grid is the oldest one
-		size_t max_grids; ///< How many grids to buffer (grids, dem, landuse and assimilation grids together)
 		unsigned int processing_level;
 };
 } //end namespace

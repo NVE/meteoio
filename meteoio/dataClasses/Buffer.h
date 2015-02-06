@@ -18,6 +18,8 @@
 #ifndef __BUFFER_H__
 #define __BUFFER_H__
 
+#include <meteoio/dataClasses/Grid2DObject.h>
+#include <meteoio/dataClasses/DEMObject.h>
 #include <meteoio/dataClasses/Date.h>
 #include <meteoio/dataClasses/MeteoData.h>
 
@@ -110,6 +112,42 @@ class MeteoBuffer {
 	private:
 		std::vector< METEO_SET > ts_buffer; ///< stores raw data
 		Date ts_start, ts_end; ///< store the beginning and the end date of the ts_buffer
+};
+
+/**
+ * @class GridBuffer
+ * @brief A class to buffer gridded data.
+ * This class buffers Grid2D objects. It implements a proper ring buffer, thus removing old bufered grids
+ * when necessary.
+ *
+ * @ingroup data_str
+ * @author Mathias Bavay
+ * @date   2015-02-06
+*/
+class GridBuffer {
+	public:
+		GridBuffer(const size_t& in_max_grids) : dem_buffer(), mapBufferedGrids(), IndexBufferedGrids(), max_grids(in_max_grids) {};
+		
+		bool empty() const {return IndexBufferedGrids.empty();};
+		void clear() {mapBufferedGrids.clear(); IndexBufferedGrids.clear();};
+		size_t size() const {return IndexBufferedGrids.size();};
+		
+		void setMaxGrids(const size_t& in_max_grids) {max_grids=in_max_grids;};
+		
+		bool get(Grid2DObject& grid, const std::string& grid_hash) const;
+		bool get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter, const Date& date) const;
+		bool get(DEMObject& grid) const;
+		
+		void push(const Grid2DObject& in_grid, const std::string& grid_hash);
+		void push(const Grid2DObject& in_grid, const MeteoGrids::Parameters& parameter, const Date& date);
+		void push(const DEMObject& in_grid);
+		
+		const std::string toString() const;
+	private:
+		std::vector<DEMObject> dem_buffer;
+		std::map<std::string, Grid2DObject> mapBufferedGrids;
+		std::vector<std::string> IndexBufferedGrids; // this is required in order to know which grid is the oldest one
+		size_t max_grids; ///< How many grids to buffer (grids, dem, landuse and assimilation grids together)
 };
 
 }

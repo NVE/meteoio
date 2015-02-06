@@ -317,8 +317,8 @@ const std::string TimeSeriesManager::toString() const {
 	os << "Processing level = " << processing_level << "\n";
 	os << dataGenerator.toString();
 
-	os << "RawBuffer:" << raw_buffer.toString();
-	os << "Filteredcache:" << raw_buffer.toString();
+	os << "RawBuffer:\n" << raw_buffer.toString();
+	os << "Filteredcache:\n" << raw_buffer.toString();
 
 	//display point_cache
 	size_t count=0;
