@@ -91,11 +91,11 @@ void GridsManager::readDEM(DEMObject& grid2D)
 	if (processing_level == IOUtils::raw){
 		iohandler.readDEM(grid2D);
 	} else {
-		if (buffer.get(grid2D))
+		if (buffer.get(grid2D, "/:DEM"))
 			return;
 
 		iohandler.readDEM(grid2D);
-		buffer.push(grid2D);
+		buffer.push(grid2D, "/:DEM");
 	}
 }
 

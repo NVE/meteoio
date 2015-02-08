@@ -226,7 +226,7 @@ const std::string MeteoBuffer::toString() const
 /********************************************************************************************/
 
 GridBuffer::GridBuffer(const size_t& in_max_grids) 
-           : dem_buffer(), mapBufferedGrids(), mapBufferedInfos(), IndexBufferedGrids(), max_grids(in_max_grids) 
+           : mapBufferedGrids(), mapBufferedDEMs(), mapBufferedInfos(), IndexBufferedGrids(), IndexBufferedDEMs(), max_grids(in_max_grids) 
 {}
 
 
@@ -266,22 +266,24 @@ bool GridBuffer::get(Grid2DObject& grid, const MeteoGrids::Parameters& parameter
 	return get(grid, grid_hash);
 }
 
-bool GridBuffer::get(DEMObject& grid) const
+bool GridBuffer::get(DEMObject& grid, const std::string& grid_hash) const
 {
-	if (max_grids==0) return false;
-	
-	if (!dem_buffer.empty()) {
-		//HACK: properly manage buffering multiple dems!
-		//already in buffer. If the update properties have changed,
-		//we copy the ones given in input and force the update of the object
+	if (IndexBufferedDEMs.empty())
+		return false;
+
+	const std::map<std::string, DEMObject>::const_iterator it = mapBufferedDEMs.find( grid_hash );
+	if (it != mapBufferedDEMs.end()) { //already in map
+		//properties of the passed dem
 		const DEMObject::update_type in_ppt = (DEMObject::update_type)grid.getUpdatePpt();
 		const DEMObject::slope_type in_slope_alg = (DEMObject::slope_type)grid.getDefaultAlgorithm();
 
-		grid = dem_buffer[0];
+		//get cached dem and its properties
+		grid = (*it).second;
 		const DEMObject::update_type buff_ppt = (DEMObject::update_type)grid.getUpdatePpt();
 		const DEMObject::slope_type buff_slope_alg = (DEMObject::slope_type)grid.getDefaultAlgorithm();
 
 		if (in_ppt!=buff_ppt || in_slope_alg!=buff_slope_alg) {
+			//if passed properties != cached properties -> set the returned one to the passed properties
 			grid.setDefaultAlgorithm(in_slope_alg);
 			grid.setUpdatePpt(in_ppt);
 			grid.update();
@@ -289,21 +291,23 @@ bool GridBuffer::get(DEMObject& grid) const
 
 		return true;
 	}
-	
+
 	return false;
 }
 
-void GridBuffer::push(const DEMObject& grid)
+void GridBuffer::push(const DEMObject& grid, const std::string& grid_hash)
 {
-	//HACK: properly manage buffering multiple dems!
-	//std::ostringstream grid_hash;
-	//grid_hash << dem_buffer[ii].llcorner.printLatLon() << " " << dem_buffer[ii].getNx() << "x" << dem_buffer[ii].getNy() << " @" << dem_buffer[ii].cellsize << "m";
 	if (max_grids==0) return;
-	
-	if (!dem_buffer.empty())
-		dem_buffer.clear();
-	
-	dem_buffer.push_back( grid );
+
+	if(IndexBufferedDEMs.size() >= max_grids) { //we need to remove the oldest grid
+		const string tmp_hash = IndexBufferedDEMs.front();
+		mapBufferedDEMs.erase( mapBufferedDEMs.find( tmp_hash ) );
+		//swap followed by pop_back is faster than erase()
+		swap( IndexBufferedDEMs.front(), IndexBufferedDEMs.back() );
+		IndexBufferedDEMs.pop_back();
+	}
+	mapBufferedDEMs[ grid_hash ] = grid;
+	IndexBufferedDEMs.push_back( grid_hash );
 }
 
 void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash, const std::string& grid_info)
@@ -314,7 +318,7 @@ void GridBuffer::push(const Grid2DObject& grid, const std::string& grid_hash, co
 		const string tmp_hash = IndexBufferedGrids.front();
 		mapBufferedGrids.erase( mapBufferedGrids.find( tmp_hash ) );
 		mapBufferedInfos.erase( mapBufferedInfos.find( tmp_hash ) );
-		//IndexBufferedGrids.erase( IndexBufferedGrids.begin() );
+		//swap followed by pop_back is faster than erase()
 		swap( IndexBufferedGrids.front(), IndexBufferedGrids.back() );
 		IndexBufferedGrids.pop_back();
 	}
@@ -345,20 +349,17 @@ const std::string GridBuffer::toString() const
 	os << "Max buffered grids = " << max_grids << "\n";
 
 	//cache content
-	os << "Current buffer content (" << mapBufferedGrids.size() << " grids):\n";
-	std::map<std::string, Grid2DObject>::const_iterator it1;
-	for (it1=mapBufferedGrids.begin(); it1 != mapBufferedGrids.end(); ++it1){
-		os << setw(10) << "Grid " << it1->first << "\n";
+	os << "Cached grids: " << mapBufferedGrids.size() << "\n";
+	std::map<std::string, Grid2DObject>::const_iterator it_grid;
+	for (it_grid=mapBufferedGrids.begin(); it_grid != mapBufferedGrids.end(); ++it_grid){
+		os << setw(10) << "Grid " << it_grid->first << "\n";
 	}
 	
 	//dem buffer
-	if (!dem_buffer.empty()) {
-		os << "Dem buffer content (" << dem_buffer.size() << " grids):\n";
-		for (size_t ii=0; ii<dem_buffer.size(); ++ii){
-			std::ostringstream ss;
-			ss << dem_buffer[ii].llcorner.printLatLon() << " " << dem_buffer[ii].getNx() << "x" << dem_buffer[ii].getNy() << " @" << dem_buffer[ii].cellsize << "m";
-			os << setw(10) << "Dem " << ss.str() << "\n";
-		}
+	os << "Cached dems: " << mapBufferedDEMs.size() << "\n";
+	std::map<std::string, DEMObject>::const_iterator it_dem;
+	for (it_dem=mapBufferedDEMs.begin(); it_dem != mapBufferedDEMs.end(); ++it_dem){
+		os << setw(10) << "Dem " << it_dem->first << "\n";
 	}
 
 	os << "</GridBuffer>\n";
