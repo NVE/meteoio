@@ -68,15 +68,18 @@ class IOHandler : public IOInterface {
 		IOInterface* getPlugin(const std::string& cfgkey, const std::string& cfgsection);
 		void parse_copy_config();
 		void create_exclude_map();
+		void create_keep_map();
 		void checkTimestamps(const std::vector<METEO_SET>& vecVecMeteo) const;
 		void exclude_params(std::vector<METEO_SET>& vecVecMeteo) const;
+		void keep_params(std::vector<METEO_SET>& vecVecMeteo) const;
 		void copy_parameters(const size_t& stationindex, std::vector< METEO_SET >& vecMeteo) const;
 
 		const Config& cfg;
 		std::map<std::string, IOInterface*> mapPlugins;
 		std::map< std::string, std::set<std::string> > excluded_params;
+		std::map< std::string, std::set<std::string> > kept_params;
 		std::vector<std::string> copy_parameter, copy_name;
-		bool enable_copying, excludes_ready;
+		bool enable_copying, excludes_ready, keeps_ready;
 };
 
 } //namespace

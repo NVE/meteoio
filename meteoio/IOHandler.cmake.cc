@@ -145,12 +145,16 @@ namespace mio {
  * followed by "::exclude" as key with a space delimited list of \ref meteoparam "meteorological parameters" to exclude for the station as key.
  * Another possibility is to provide a file containing one station ID per line followed by a space delimited list of \ref meteoparam "meteorological parameters"
  * to exclude for the station (the path to the file can be a relative path and will be properly resolved).
+ * 
+ * The exact opposite can also be done, excluding ALL parameters except the ones declared with the "::keep" statement (or a file containing one station ID
+ * per line followed by a space delimited list of \ref meteoparam "meteorological parameters" to keep for the station).
  *
  * @code
- * WFJ2::EXCLUDE = TA RH                         ;inline declaration of parameters exclusion
- * KLO3::EXCLUDE = HS HNW
+ * WFJ2::EXCLUDE = HS HNW                       ;inline declaration of parameters exclusion
+ * KLO3::KEEP = TA RH VW DW                     ;inline declaration of parameters to keep
  *
  * EXCLUDE_FILE = ../input/meteo/excludes.csv    ;parameters exclusions defined in a separate file
+ * KEEP_FILE = ../input/meteo/keeps.csv          ;parameters to keep defined in a separate file
  * @endcode
  *
  * In the second example (relying on a separate file), the file "../input/meteo/excludes.csv" could look like this:
@@ -237,12 +241,12 @@ IOInterface* IOHandler::getPlugin(const std::string& cfgkey, const std::string& 
 
 //Copy constructor
 IOHandler::IOHandler(const IOHandler& aio)
-           : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params),
-             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying), excludes_ready(aio.excludes_ready)
+           : IOInterface(), cfg(aio.cfg), mapPlugins(aio.mapPlugins), excluded_params(aio.excluded_params), kept_params(aio.kept_params),
+             copy_parameter(aio.copy_parameter), copy_name(aio.copy_name), enable_copying(aio.enable_copying), excludes_ready(aio.excludes_ready), keeps_ready(aio.keeps_ready)
 {}
 
 IOHandler::IOHandler(const Config& cfgreader)
-           : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), copy_parameter(), copy_name(), enable_copying(false), excludes_ready(false)
+           : IOInterface(), cfg(cfgreader), mapPlugins(), excluded_params(), kept_params(), copy_parameter(), copy_name(), enable_copying(false), excludes_ready(false), keeps_ready(false)
 {
 	parse_copy_config();
 }
@@ -260,10 +264,12 @@ IOHandler& IOHandler::operator=(const IOHandler& source) {
 	if(this != &source) {
 		mapPlugins = source.mapPlugins;
 		excluded_params = source.excluded_params;
+		kept_params = source.kept_params;
 		copy_parameter = source.copy_parameter;
 		copy_name = source.copy_name;
 		enable_copying = source.enable_copying;
 		excludes_ready = source.excludes_ready;
+		keeps_ready = source.keeps_ready;
 	}
 	return *this;
 }
@@ -305,9 +311,14 @@ void IOHandler::readMeteoData(const Date& dateStart, const Date& dateEnd,
 {
 	IOInterface *plugin = getPlugin("METEO", "Input");
 	plugin->readMeteoData(dateStart, dateEnd, vecMeteo, stationindex);
+	
 	checkTimestamps(vecMeteo);
+	
 	if (!excludes_ready) create_exclude_map();
 	exclude_params(vecMeteo);
+	
+	if (!keeps_ready) create_keep_map();
+	keep_params(vecMeteo);
 
 	copy_parameters(stationindex, vecMeteo);
 }
@@ -426,14 +437,77 @@ void IOHandler::create_exclude_map()
 	}
 }
 
+void IOHandler::create_keep_map()
+{
+	keeps_ready = true;
+	string keep_file;
+	cfg.getValue("KEEP_FILE", "Input", keep_file, IOUtils::nothrow);
+
+	if (!keep_file.empty()) {
+		//if this is a relative path, prefix the path with the current path
+		const std::string prefix = ( IOUtils::isAbsolutePath(keep_file) )? "" : cfg.getConfigRootDir()+"/";
+		const std::string path = IOUtils::getPath(prefix+keep_file, true);  //clean & resolve path
+		const std::string filename = path + "/" + IOUtils::getFilename(keep_file);
+
+		std::ifstream fin; //Input file streams
+		fin.open(filename.c_str(), std::ifstream::in);
+		if (fin.fail()) throw FileAccessException(filename, AT);
+
+		try {
+			const char eoln = IOUtils::getEoln(fin); //get the end of line character for the file
+
+			vector<string> tmpvec;
+			string line;
+
+			while (!fin.eof()) { //Go through file
+				getline(fin, line, eoln); //read complete line meta information
+				IOUtils::stripComments(line);
+				const size_t ncols = IOUtils::readLineToVec(line, tmpvec, ' ');
+
+				if (ncols > 1) {
+					for(vector<string>::iterator it = tmpvec.begin()+1; it != tmpvec.end(); ++it) {
+						IOUtils::toUpper(*it);
+					}
+
+					const set<string> tmpset(tmpvec.begin()+1, tmpvec.end());
+					kept_params[ tmpvec[0] ] = tmpset;
+				}
+			}
+		} catch (const std::exception&) {
+			fin.close();
+			throw;
+		}
+
+		fin.close();
+	}
+
+	vector<string> keep_keys;
+	const size_t nrOfStations = cfg.findKeys(keep_keys, "::KEEP", "Input", true);
+	for (size_t ii=0; ii<nrOfStations; ++ii) {
+		const size_t found = keep_keys[ii].find_first_of(":");
+		if (found==std::string::npos) continue;
+
+		const string station( keep_keys[ii].substr(0,found) );
+		std::vector<std::string> vecString;
+		cfg.getValue(keep_keys[ii], "Input", vecString);
+		if (vecString.empty()) throw InvalidArgumentException("Empty value for key \""+keep_keys[ii]+"\"", AT);
+		for(vector<string>::iterator it = vecString.begin(); it != vecString.end(); ++it) {
+			IOUtils::toUpper(*it);
+		}
+
+		const set<string> tmpset(vecString.begin(), vecString.end());
+		kept_params[ station ] = tmpset;
+	}
+}
+
 /**
-* reset to nodata the parameters marked as EXCLUDE on a per station basis
+* @brief reset to nodata the parameters marked as EXCLUDE on a per station basis
 */
 void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 {
 	if (excluded_params.empty()) return;
 
-	for (size_t station=0; station<vecVecMeteo.size(); ++station) {
+	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
 		if (vecVecMeteo[station].empty()) continue;
 		const string stationID = vecVecMeteo[station][0].meta.stationID;
 		const map< string, set<string> >::const_iterator it = excluded_params.find(stationID);
@@ -441,13 +515,47 @@ void IOHandler::exclude_params(std::vector<METEO_SET>& vecVecMeteo) const
 
 		const set<string> excluded = it->second;
 
-		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
+		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) { //loop over the timesteps
 			std::set<std::string>::const_iterator it_set;
 			for (it_set=excluded.begin(); it_set != excluded.end(); ++it_set) {
 				const string param = *it_set;
 				if (vecVecMeteo[station][ii].param_exists(param))
 					vecVecMeteo[station][ii](param) = IOUtils::nodata;
 			}
+		}
+	}
+}
+
+/**
+* @brief only keep the parameters marked as KEEP on a per station basis
+*/
+void IOHandler::keep_params(std::vector<METEO_SET>& vecVecMeteo) const
+{
+	if (kept_params.empty()) return;
+
+	for (size_t station=0; station<vecVecMeteo.size(); ++station) { //loop over the stations
+		if (vecVecMeteo[station].empty()) continue;
+		
+		const string stationID = vecVecMeteo[station][0].meta.stationID;
+		const map< string, set<string> >::const_iterator it = kept_params.find(stationID);
+		if (it == kept_params.end()) continue;
+
+		const set<string> kept = it->second;
+		
+		for (size_t ii=0; ii<vecVecMeteo[station].size(); ++ii) {
+			MeteoData& md_ref = vecVecMeteo[station][ii];
+			MeteoData md( md_ref );
+			md.reset(); //delete all meteo fields
+			
+			std::set<std::string>::const_iterator it_set;
+			for (it_set=kept.begin(); it_set != kept.end(); ++it_set) { //loop over the parameters to keep
+				const string param = *it_set;
+				if (!md.param_exists(param)) continue;
+				 md(param) = md_ref(param);
+			}
+			
+			//copy back the new object into vecVecMeteo
+			md_ref = md;
 		}
 	}
 }
