@@ -97,6 +97,15 @@ class Config {
 		 * @param[in] value string representing the matching value to be added
 		 */
 		void addKey(const std::string& key, const std::string& value);
+		
+		/**
+		 * @brief Add a specific key/value pair to the internal key/value map object.
+		 *        key and section are case insensitive
+		 * @param[in] key string representing the key to be added
+		 * @param[in] section std::string representing a section name; the key has to be part of this section
+		 * @param[in] value string representing the matching value to be added
+		 */
+		void addKey(const std::string& key, const std::string& section, const std::string& value);
 
 		/**
 		 * @brief Delete a specific key/value pair from the internal map object, key/section are case insensitive
@@ -116,15 +125,6 @@ class Config {
 		 * @endcode
 		*/
 		void deleteKeys(const std::string& keymatch, const std::string& section=Config::defaultSection, const bool& anywhere=false);
-
-		/**
-		 * @brief Add a specific key/value pair to the internal key/value map object.
-		 *        key and section are case insensitive
-		 * @param[in] key string representing the key to be added
-		 * @param[in] section std::string representing a section name; the key has to be part of this section
-		 * @param[in] value string representing the matching value to be added
-		 */
-		void addKey(const std::string& key, const std::string& section, const std::string& value);
 
 		/**
 		 * @brief Returns the filename that the Config object was constructed with.

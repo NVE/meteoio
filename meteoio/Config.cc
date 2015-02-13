@@ -239,7 +239,7 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 		return;
 
 	//if this is a section header, read it
-	if(line[0] == '[') {
+	if (line[0] == '[') {
 		const size_t endpos = line.find_last_of(']');
 		if ((endpos == string::npos) || (endpos < 2) || (endpos != (line.length()-1))) {
 			ostringstream tmp;
@@ -254,19 +254,19 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 
 	//this can only be a key value pair...
 	string key, value;
-	if(IOUtils::readKeyValuePair(line, "=", key, value, true)) {
-		if(key=="IMPORT_BEFORE") {
+	if (IOUtils::readKeyValuePair(line, "=", key, value, true)) {
+		if (key=="IMPORT_BEFORE") {
 			const std::string file_and_path = clean_import_path(value);
-			if(!accept_import_before)
+			if (!accept_import_before)
 				throw IOException("Error in \""+sourcename+"\": IMPORT_BEFORE key MUST occur before any other key!", AT);
-			if(std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
+			if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
 				throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
 			parseFile(file_and_path);
 			return;
 		}
-		if(key=="IMPORT_AFTER") {
+		if (key=="IMPORT_AFTER") {
 			const std::string file_and_path = clean_import_path(value);
-			if(std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
+			if (std::find(imported.begin(), imported.end(), file_and_path)!=imported.end())
 				throw IOException("Can not import \"" + value + "\" again: it has already been imported!", AT);
 			import_after.push_back(file_and_path);
 			return;
@@ -277,7 +277,15 @@ void Config::parseLine(const unsigned int& linenr, std::vector<std::string> &imp
 	} else {
 		ostringstream tmp;
 		tmp << linenr;
-		throw InvalidFormatException("Error reading key value pair in \"" + sourcename + "\" at line " + tmp.str(), AT);
+		
+		const string key_msg = (key.empty())? "" : "key "+key+" ";
+		const string key_value_link = (key.empty() && !value.empty())? "value " : "";
+		const string value_msg = (value.empty())? "" : value+" " ;
+		const string keyvalue_msg = (key.empty() && value.empty())? "key/value " : key_msg+key_value_link+value_msg;
+		const string section_msg = (section.empty())? "" : "in section "+section+" ";
+		const string source_msg = (sourcename.empty())? "" : "from \""+sourcename+"\" at line "+tmp.str();
+		
+		throw InvalidFormatException("Error reading "+keyvalue_msg+section_msg+source_msg, AT);
 	}
 
 }
@@ -375,10 +383,13 @@ void Config::write(const std::string& filename) const
 			}
 
 			const size_t key_start = key_full.find_first_of(":");
-			if(key_start!=string::npos) //start after the "::" marking the section prefix
-				fout << key_full.substr(key_start+2) << " = " << it->second << endl;
+			const string value = it->second;
+			if (value.empty()) continue;
+			
+			if (key_start!=string::npos) //start after the "::" marking the section prefix
+				fout << key_full.substr(key_start+2) << " = " << value << endl;
 			else //every key should have a section prefix, but just in case...
-				fout << key_full << " = " << it->second << endl;
+				fout << key_full << " = " << value << endl;
 		}
 	} catch(...) {
 		if (fout.is_open()) //close fout if open
