@@ -41,7 +41,7 @@ namespace mio {
  * In order to graphicaly explore the content and structure of NetCDF files, you can use the
  * <A REF="http://www.epic.noaa.gov/java/ncBrowse/">ncBrowse></A> java software.
  *
- * The <A HREF="http://cfconventions.org/1.6.html">conventions</A> for climate and forecast (CF) metadata
+ * The <A HREF="http://cfconventions.org">conventions</A> for climate and forecast (CF) metadata
  * are designed to promote the processing and sharing of netCDF files. The conventions define metadata
  * that provide a definitive description of what the data represents, and the spatial and temporal properties of the data.
  * This plugin follows such conventions as well as the naming extensions defined by the

@@ -24,6 +24,8 @@
 #include <meteoio/MathOptim.h> //math optimizations
 #include <meteoio/ResamplingAlgorithms2D.h> //for Winstral
 
+#include <meteoio/IOManager.h> //HACK HACK HACK
+
 using namespace std;
 
 namespace mio {
@@ -621,11 +623,11 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 	const double ref_altitude = dem(i, j);
 	if (ref_altitude==IOUtils::nodata) return 0.; //nothing better to do...
 	
-	const double inv_dmin = 1./dmin;
+	const double inv_dmin = (dmin>0.)? 1./dmin : Cst::dbl_max;
 	const double inv_dmax = 1./dmax;
 	const double sin_alpha = sin(bearing*Cst::to_rad);
 	const double cos_alpha = cos(bearing*Cst::to_rad);
-	const double altitude_thresh = 2.;
+	const double altitude_thresh = 1.;
 	const double cellsize_sq = Optim::pow2(dem.cellsize);
 	const int ii = static_cast<int>(i), jj = static_cast<int>(j);
 	const int ncols = static_cast<int>(dem.getNx()), nrows = static_cast<int>(dem.getNy());
@@ -655,7 +657,7 @@ double Interpol2D::getTanMaxSlope(const Grid2DObject& dem, const double& dmin, c
 		ll = ii + (int)round( ((double)nb_cells)*sin_alpha ); //alpha is a bearing
 		mm = jj + (int)round( ((double)nb_cells)*cos_alpha ); //alpha is a bearing
 	}
-
+	
 	return max_tan_slope;
 }
 
@@ -674,7 +676,7 @@ void Interpol2D::WinstralSX(const DEMObject& dem, const double& dmax, const doub
 {
 	grid.set(dem, IOUtils::nodata);
 
-	const double dmin = 20.;
+	const double dmin = 0.;
 	const double bearing_inc = 5.;
 	const double bearing_width = 30.;
 	double bearing1 = fmod( in_bearing - bearing_width/2., 360. );
