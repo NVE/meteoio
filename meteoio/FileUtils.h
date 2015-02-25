@@ -45,6 +45,8 @@ namespace IOUtils {
 	* @param pattern optional pattern that must be part of the file names
 	*/
 	void readDirectory(const std::string& path, std::list<std::string>& dirlist, const std::string& pattern="");
+	
+	std::list<std::string> readDirectory(const std::string& path, const std::string& pattern="");
 
 	bool validFileName(const std::string& filename);
 

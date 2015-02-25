@@ -4,6 +4,10 @@
 INPUT=$1
 FIELD=$2
 
+if [ $# -eq 1 ]; then
+	head -20 ${INPUT} | grep "fields" | cut -d'=' -f2 | tr -s ' \t' '\t' | xargs -i echo "Available fields: {}"
+fi
+
 #get generic info
 stat_id=`head -20 ${INPUT} | grep "station_id" | tr -s '\t' ' ' | cut -d' ' -f 3-`
 stat_name=`head -20 ${INPUT} | grep "station_name" | tr -s '\t' ' ' | cut -d' ' -f 3-`

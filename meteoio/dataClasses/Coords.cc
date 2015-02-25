@@ -229,8 +229,8 @@ const std::string Coords::toString() const {
 	os << "<Coords>\n";
 	os << "Altitude\t" << altitude << "\n";
 	os << "Lat/Long\t" << printLatLon() << "\n";
-	os << "Lat/Long\t" << "(" << getLat() << " , " << getLon() << ")" << "\n";
 	std::streamsize p = os.precision();
+	os << "Lat/Long\t" <<std::fixed << std::setprecision(6) << "(" << getLat() << " , " << getLon() << ")" << "\n";
 	os << "X/Y_coords\t" << std::fixed << std::setprecision(0) << "(" << getEasting() << " , " << getNorthing() << ")" << "\n";
 	os << std::resetiosflags(std::ios_base::fixed|std::ios_base::floatfield);
 	os.precision(p);

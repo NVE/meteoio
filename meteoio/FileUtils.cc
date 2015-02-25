@@ -148,6 +148,13 @@ bool isAbsolutePath(const std::string& in_path)
 #endif
 }
 
+std::list<std::string> readDirectory(const std::string& path, const std::string& pattern)
+{
+	std::list<std::string> dirlist;
+	readDirectory(path, dirlist, pattern);
+	return dirlist;
+}
+
 #if defined _WIN32 || defined __MINGW32__
 std::string getCWD()
 {

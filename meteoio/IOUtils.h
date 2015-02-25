@@ -72,8 +72,8 @@ namespace IOUtils {
 	const size_t npos    = (size_t)-1;  ///<npos is the out-of-range value
 
 	const double grid_epsilon = 5.; ///<What is an acceptable small distance on a grid, in meters
-	const double lon_epsilon = grid_epsilon / Cst::earth_R0; ///<in degrees. Small angle for longitudes, so sin(x)=x
-	const double lat_epsilon = lon_epsilon/2.; ///<in degrees. Small angle for latitudes. Since for longitudes it is for 360deg, it has to be 180deg for latitudes
+	const double lon_epsilon = grid_epsilon / Cst::earth_R0 *  Cst::to_deg; ///<in degrees. Small angle for longitudes, so sin(x)=x
+	const double lat_epsilon = lon_epsilon; ///<in degrees. Small angle for latitudes.
 
 	/**
 	* @brief Check whether two values are equal regarding a certain epsilon environment (within certain radius of each other)
