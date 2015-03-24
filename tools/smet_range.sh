@@ -21,20 +21,20 @@ files=`ls ${INPUT_DIR}/*.smet`
 
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
+		NAME=`basename ${SMET} .smet`
 		ALT=`head -15 ${SMET} | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
 		JULIAN=`head -15 ${SMET} | grep fields | grep julian`
 		ISO=`head -15 ${SMET} | grep fields | grep timestamp`
+		start=`head -20 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s ' \t' | cut -d' ' -f1`
+		end=`tail -5 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s ' \t' | cut -d' ' -f1`
+		nr_lines=`wc -l ${SMET} | cut -d' ' -f1`
 		if [ ! -z "${ISO}" ]; then
-			start=`head -20 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s ' \t' | cut -d' ' -f1`
-			end=`tail -5 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s ' \t' | cut -d' ' -f1`
-			printf "%04d [ %s - %s ] (%s)\n" "${ALT}" ${start} ${end} ${SMET}
+			printf "%04d m\t[ %s - %s ]\t%d lines (%s)\n" "${ALT}" ${start} ${end} ${nr_lines} ${NAME}
 		fi
 		if [ ! -z "${JULIAN}" ]; then
-			start=`head -20 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | head -1 | tr -s ' \t' | cut -d' ' -f1`
-			end=`tail -5 ${SMET} | grep -E "^[0-9][0-9][0-9][0-9]" | tail -1 | tr -s ' \t' | cut -d' ' -f1`
 			start_ISO=`echo ${start} | awk '{printf("%s", strftime("%FT%H:%m", ($1-2440587.5)*24*3600))}'`
 			end_ISO=`echo ${end} | awk '{printf("%s", strftime("%FT%H:%m", ($1-2440587.5)*24*3600))}'`
-			printf "%04d [ %s - %s ] (%s)\n" "${ALT}" ${start_ISO} ${end_ISO} ${SMET}
+			printf "%04d m\t[ %s - %s ]\t%d lines (%s)\n" "${ALT}" ${start_ISO} ${end_ISO} ${nr_lines} ${NAME}
 		fi
 	done
 	exit 0
