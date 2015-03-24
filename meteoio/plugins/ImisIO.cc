@@ -171,20 +171,6 @@ bool ImisIO::initStaticData()
 	mapAnetz["ZER4"] = AnetzData(2,"*ZER","*EVO","",2,0.8707182,0.988158355,IOUtils::nodata);
 	mapAnetz["ZNZ2"] = AnetzData(1,"*WFJ","","",1,0.9980525,IOUtils::nodata,IOUtils::nodata);
 
-	//For IRKIS Sudtirol
-	mapAnetz["GRAU2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["JAUF2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["LADU2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["PFEL2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["PIZL2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["PRET2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["SEXT2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["SULD2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-	mapAnetz["WBFE2"] = AnetzData(1,"*SCU","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-
-	//For Dorfberg
-	mapAnetz["DFBG1"] = AnetzData(1,"*WFJ","","",1,1.,IOUtils::nodata,IOUtils::nodata);
-
 	return true;
 }
 

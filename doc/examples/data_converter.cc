@@ -17,7 +17,7 @@ void real_main(int argc, char** argv) {
 	Config cfg("io.ini");
 	Date d1, d2;
 	const double TZ = cfg.get("TIME_ZONE", "Input");
-	const double Tstep = 0.5/24.; //sampling rate = 1/24 day = 1 hour
+	const double Tstep = 1./24.; //sampling rate = 1/24 day = 1 hour
 	IOUtils::convertString(d1,argv[1], TZ);
 	IOUtils::convertString(d2,argv[2], TZ);
 
