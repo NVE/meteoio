@@ -12,12 +12,12 @@ fi
 
 if [ $# -lt 2 ]; then
 	INPUT_DIR="."
+	param=$1
 else
 	INPUT_DIR=$1
+	param=$2
 fi
-
 files=`ls ${INPUT_DIR}/*.smet`
-param=$2
 
 if [ "${param}" = "time" ]; then
 	for SMET in ${files}; do
@@ -41,7 +41,10 @@ if [ "${param}" = "time" ]; then
 fi
 
 for SMET in ${files}; do
-	IJ=`echo ${SMET} | cut -d'.' -f 1 | cut -d'_' -f2,3 | tr "_" ","`
+	IJ=`head -15 ${SMET} | grep station_id | tr -s ' \t' | cut -d' ' -f3`
+	if [ -z "${IJ}" ]; then
+		IJ=`echo ${SMET} | cut -d'.' -f 1 | cut -d'_' -f2,3 | tr "_" ","`
+	fi
 	LAT=`head -15 ${SMET} | grep latitude | tr -s ' \t' | cut -d' ' -f3`
 	LON=`head -15 ${SMET} | grep longitude | tr -s ' \t' | cut -d' ' -f3`
 	ALT=`head -15 ${SMET} | grep altitude | tr -s ' \t' | cut -d' ' -f3 | cut -d'.' -f1`
@@ -87,15 +90,18 @@ for SMET in ${files}; do
 		if (f==-1 || count==0) exit 0
 		mean /= count
 		
-		if (param=="TA" || param=="TSG" || param=="TSS") {
-			offset = 0
+		if (param=="TA" || param=="TSG" || param=="TSS" || param=="TD") {
 			if (mean>100) {
 				offset = -273.15
+				min += offset
+				max += offset
+				mean += offset
 			}
-			
-			min += offset
-			max += offset
-			mean += offset
+		}
+		if (param=="RH" && mean>1) {
+			min /= 100
+			max /= 100
+			mean /= 100
 		}
 
 		printf("[ %7.3g - %7.3g ]\tavg = %7.3g\t(%s)\n", min, max, mean, "'"${IJ}"'")
