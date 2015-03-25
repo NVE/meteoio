@@ -9,7 +9,7 @@ else
 	INPUT_DIR=$1
 fi
 
-ls ${INPUT_DIR}/*.smet | xargs -i head -20 {} | awk '
+ls ${INPUT_DIR}/*.smet | xargs -i head -40 {} | awk '
 	BEGIN {
 		printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
 		printf("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
