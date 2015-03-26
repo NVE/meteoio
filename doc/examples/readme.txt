@@ -21,3 +21,8 @@ The necessary data set for these examples lies in "input" directory. It contains
 	sun.cc : calculate solar radiation at a given place and time
 	time.cc : time handling example
 
+4) Available scripts
+Several useful scripts are given in the "tools" subdirectory of MeteoIO's root sources directory. These scripts allow to 
+extract statictics from SMET input files, extract a single parameter, plot SMET files in xmGrace or in Matlab. There is also
+a script to convert the locations given in SMET files to a KML file that can be opened in a GIS or online mapping service 
+(such as google maps).
