@@ -67,6 +67,7 @@ namespace mio {
  *    -# <A HREF="modules.html">Modules list</a>
  *    -# \subpage examples "Usage examples"
  * -# Expanding MeteoIO
+ *    -# How to \subpage dev_coords "write a coordinate system support"
  *    -# How to \subpage dev_plugins "write a Plugin"
  *    -# How to \subpage dev_processing "write a processing element"
  *    -# How to \subpage dev_DataGenerator "Write a data generator"

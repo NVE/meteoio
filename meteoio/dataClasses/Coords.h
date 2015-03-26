@@ -25,6 +25,49 @@
 #include <iostream>
 
 namespace mio {
+	
+/**
+ * @page dev_coords Coordinate systems support developement guide
+ * Geographic coordinates are transparently supported (ie converted to/from lat/lon as well as between cartesian coordinate systems) through
+ * the Coords class. Therefore, coordinate system conversions are quite easy, as illustrated by the example below.
+ * @code
+ * Coords point1("CH1903","");
+ * point1.setXY(785425. , 191124., 1400.);
+ * std::cout << "Lat=" << point1.getLat() << " lon=" << point1.getLon() << "\n"
+ * @endcode
+ * Adding support for another cartesian coordinate system is simple, once you have the official conversion wgs84 to/from this system.
+ * 
+* @section coords_implementation Conversion implementation
+* National cartesian coordinate systems often come with an official conversion formula to and from WGS84 lat/lon. This could be found by
+* the national geographic authority. Then implement two <b>private</b> methods into the Coords class (replacing the 
+* "XXX" by an abbreviation for the coordinate system you are implementing):
+* @code
+ * void WGS84_to_XXX(double lat_in, double long_in, double& east_out, double& north_out) const;
+ * void XXX_to_WGS84(double east_in, double north_in, double& lat_out, double& long_out) const;
+ * @endcode
+ * It is highly recommended to add the link to the official conversion specification in the doxygen comments of these two methods.
+ * 
+ * @section coords_registering Registering the coordinate system
+ * Once these two methods have been implemented, they need to be registered for the user to be able to use them. This is done by following
+ * these steps:
+ *      -# retrieve the appropriate EPSG code at http://www.epsg-registry.org/ for the coordinate system. It is a good idea to use the associated abbreviation
+ *         as keyword/abbreviation in the source code as well as for the end user.
+ *      -# map the coordinate system abbreviation to its EPSG code in Coords::setEPSG()
+ *      -# map the coordinate system abbreviation to its EPSG code in Coords::getEPSG()
+ *      -# link the coordinate system abbreviation to the conversion methods you have implemented in Coords::convert_to_WGS84() and Coords::convert_from_WGS84()
+ * 
+ * @section coords_documentation Documenting the coordinate system
+ * Please update and expand the doxygen documentation at the begining of the Coords.cc file in order to specify the coordinate system keywords 
+ * that has been used (ie the the coordinate system abbreviation). Feel free to add links to official documentation about this coordinate system. 
+ * Please also properly document the conversion (with links to the official specification) in the conversion implementations. 
+ * 
+ * @section coord_testing Testing the implementation
+ * Try to set a Coords object constructed with the chosen keywords to a set of Easting/Northing and then retrieve the lat/lon as well as the 
+ * opposite. Make sure that for various points, including points close to the boundaries of the coordinate system definition, the conversion 
+ * remains correct. Often the official specifications come with a set of test coordinates that you can use. Then try to set the coordinate
+ * system by EPSG code and make sure Easting/Northing to and from WGS84 conversions work properly.
+ * 
+ */
 
 /**
  * @class Coords
