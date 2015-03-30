@@ -116,6 +116,8 @@ class ResamplingAlgorithms {
 		                               const double& window_size, size_t& indexP1, size_t& indexP2);
 		static double linearInterpolation(const double& x1, const double& y1,
 		                                  const double& x2, const double& y2, const double& x3);
+		static Date getDailyStart(const Date& resampling_date);
+		static size_t getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& pos, const Date& intervalStart, const Date& intervalEnd);
 
 		const std::string algo, parname;
 		double window_size;
@@ -241,11 +243,9 @@ class Daily_solar : public ResamplingAlgorithms {
 		              const std::vector<MeteoData>& vecM, MeteoData& md);
 		std::string toString() const;
 	private:
-		size_t getNearestValidPt(const std::vector<MeteoData>& vecM, const size_t& paramindex,  const size_t& stat_idx, const size_t& pos) const;
 		double getSolarInterpol(const Date& resampling_date, const size_t& stat_idx) const;
 		double compRadiation(const double& lat, const double& lon, const double& alt, const double& HS, const size_t& stat_idx);
 		size_t getStationIndex(const std::string& key);
-		void setDayStartAndEnd(const Date& resampling_date, const size_t& stat_idx);
 
 		std::vector< std::vector<double> > radiation;
 		std::vector<std::string> station_index;
@@ -254,6 +254,32 @@ class Daily_solar : public ResamplingAlgorithms {
 
 		static const double soil_albedo, snow_albedo, snow_thresh;
 		static const size_t samples_per_day;
+};
+
+/**
+ * @brief Generate daily variations of a given amplitude around a single daily average.
+ * The paremeter to be interpolated is assumed to be a daily average and a sinusoidal variation of the
+ * amplitude given as argument will be generated (it is also possible to provide the "phase" or the 
+ * fraction of the day when the minimum is reached). If data bearing the same name followed by "_MIN" or "_MAX"
+ * exist, there is no need to provide an amplitude as they will be used instead.
+ * 
+ * @note current limitations: this generates a discontinuity at midnight. If both the average (the parameter itself in the data set), 
+ * min and max are provided, an error message will be returned. 
+ * @code
+ * [Interpolations1D]
+ * TA::resample = daily_avg
+ * TA::daily_avg = 5                 ;assume that TA varies +/- 5K around its average during the day
+ * @endcode
+ */
+class DailyAverage : public ResamplingAlgorithms {
+	public:
+		DailyAverage(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs);
+
+		void resample(const size_t& index, const ResamplingPosition& position, const size_t& paramindex,
+		              const std::vector<MeteoData>& vecM, MeteoData& md);
+		std::string toString() const;
+	private:
+		double range, phase;
 };
 
 } //end namespace

@@ -43,6 +43,8 @@ ResamplingAlgorithms* ResamplingAlgorithmsFactory::getAlgorithm(const std::strin
 		return new Accumulate(algoname, parname, dflt_window_size, vecArgs);
 	} else if (algoname == "DAILY_SOLAR") {
 		return new Daily_solar(algoname, parname, dflt_window_size, vecArgs);
+	} else if (algoname == "DAILY_AVG") {
+		return new DailyAverage(algoname, parname, dflt_window_size, vecArgs);
 	} else {
 		throw IOException("The resampling algorithm '"+algoname+"' is not implemented" , AT);
 	}
@@ -142,6 +144,73 @@ double ResamplingAlgorithms::linearInterpolation(const double& x1, const double&
 	return (a*x + b);
 }
 
+/**
+ * @brief For a given date, find the start of the day, considering that for midnight we return the day before!
+ * (as is necessary for daily averages, sums, etc that can be provided at midnight for the day before)
+ * @param resampling_date current date
+ * @return start of the day or start of the day before in case of midnight
+ */
+Date ResamplingAlgorithms::getDailyStart(const Date& resampling_date)
+{
+	Date Start( resampling_date );
+	Start.rnd(24*3600, Date::DOWN);
+	if (Start==resampling_date) //if resampling_date=midnight GMT, the rounding lands on the exact same date
+		Start -= 1.;
+	
+	return Start;
+}
+
+/**
+ * @brief Find a unique value in a given time interval. 
+ * This is useful for retrieving a unique daily average, daily sum, etc
+ * @param vecM meteo data time series for the station
+ * @param paramindex index of the meteo parameter to process
+ * @param pos index of the current time step
+ * @param intervalStart start of the interval within which we will look for a valid value (often, start of the day)
+ * @param intervalEnd end of the interval within which we will look for a valid value (often, end of the day)
+ * @return index of the parameter's valid value
+ */
+size_t ResamplingAlgorithms::getDailyValue(const std::vector<MeteoData>& vecM, const size_t& paramindex, const size_t& pos, const Date& intervalStart, const Date& intervalEnd)
+{
+	size_t indexP1=IOUtils::npos;
+	size_t indexP2=IOUtils::npos;
+
+	//look for daily sum before the current point
+	for (size_t ii=pos; ii-- >0; ) {
+		if (vecM[ii].date < intervalStart) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata) {
+			indexP1 = ii;
+			break;
+		}
+	}
+
+	//look for daily sum after the current point
+	for (size_t ii=pos; ii<vecM.size(); ++ii) {
+		if (vecM[ii].date > intervalEnd) break;
+		if (vecM[ii](paramindex) != IOUtils::nodata) {
+			indexP2 = ii;
+			break;
+		}
+	}
+	
+	if (indexP1!=IOUtils::npos && indexP2!=IOUtils::npos) {
+		//if the data was provided at 00:00, a sum for each day has been found
+		//we only keep the later one as being the sum of the past day
+		int hour1, min1;
+		vecM[indexP1].date.getTime(hour1, min1);
+		if (hour1==0 && min1==0)
+			indexP1=IOUtils::npos;
+		else { //otherwise, this means multiple daily sums have been found for the same day
+			const string msg = "More than one daily sum of solar radiation found between "+intervalStart.toString(Date::ISO)+" and "+intervalEnd.toString(Date::ISO);
+			throw IOException(msg, AT);
+		}
+	}
+
+	if (indexP1!=IOUtils::npos) return indexP1;
+	if (indexP2!=IOUtils::npos) return indexP2;
+	return IOUtils::npos;
+}
+
 /**********************************************************************************
  * The following functions are implementations of different resampling algorithms *
  **********************************************************************************/
@@ -177,6 +246,8 @@ void NoResampling::resample(const size_t& index, const ResamplingPosition& posit
 	return;
 }
 
+
+/**********************************************************************************/
 NearestNeighbour::NearestNeighbour(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
                  : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
 {
@@ -258,6 +329,8 @@ void NearestNeighbour::resample(const size_t& index, const ResamplingPosition& p
 	}
 }
 
+
+/**********************************************************************************/
 LinearResampling::LinearResampling(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
                  : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), extrapolate(false)
 {
@@ -353,6 +426,7 @@ void LinearResampling::resample(const size_t& index, const ResamplingPosition& p
 }
 
 
+/**********************************************************************************/
 Accumulate::Accumulate(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
            : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs),
              accumulate_period(IOUtils::nodata), strict(false)
@@ -480,6 +554,7 @@ void Accumulate::resample(const size_t& index, const ResamplingPosition& positio
 }
 
 
+/**********************************************************************************/
 const double Daily_solar::soil_albedo = .23; //grass
 const double Daily_solar::snow_albedo = .85; //snow
 const double Daily_solar::snow_thresh = .1; //if snow height greater than this threshold -> snow albedo
@@ -499,48 +574,6 @@ std::string Daily_solar::toString() const
 	ostringstream ss;
 	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
 	return ss.str();
-}
-
-//look for the daily sum of solar radiation for the current day
-size_t Daily_solar::getNearestValidPt(const std::vector<MeteoData>& vecM, const size_t& paramindex,  const size_t& stat_idx, const size_t& pos) const
-{
-	size_t indexP1=IOUtils::npos;
-	size_t indexP2=IOUtils::npos;
-
-	//look for daily sum before the current point
-	for (size_t ii=pos; ii-- >0; ) {
-		if (vecM[ii].date < dateStart[stat_idx]) break;
-		if (vecM[ii](paramindex) != IOUtils::nodata) {
-			indexP1 = ii;
-			break;
-		}
-	}
-
-	//look for daily sum after the current point
-	for (size_t ii=pos; ii<vecM.size(); ++ii) {
-		if (vecM[ii].date > dateEnd[stat_idx]) break;
-		if (vecM[ii](paramindex) != IOUtils::nodata) {
-			indexP2 = ii;
-			break;
-		}
-	}
-
-	if (indexP1!=IOUtils::npos && indexP2!=IOUtils::npos) {
-		//if the data was provided at 00:00, a sum for each day has been found
-		//we only keep the later one as being the sum of the past day
-		int hour1, min1;
-		vecM[indexP1].date.getTime(hour1, min1);
-		if (hour1==0 && min1==0)
-			indexP1=IOUtils::npos;
-		else { //otherwise, this means multiple daily sums have been found for the same day
-			const string msg = "More than one daily sum of solar radiation found between "+dateStart[stat_idx].toString(Date::ISO)+" and "+dateEnd[stat_idx].toString(Date::ISO);
-			throw IOException(msg, AT);
-		}
-	}
-
-	if (indexP1!=IOUtils::npos) return indexP1;
-	if (indexP2!=IOUtils::npos) return indexP2;
-	return IOUtils::npos;
 }
 
 //compute the daily sum of solar radiation as well as fill a vector containing the solar radiation at a regular sampling rate
@@ -603,17 +636,6 @@ size_t Daily_solar::getStationIndex(const std::string& key)
 	return nr_stations; //the new index is the old nr_stations
 }
 
-void Daily_solar::setDayStartAndEnd(const Date& resampling_date, const size_t& stat_idx)
-{
-	dateStart[stat_idx] = resampling_date;
-	dateStart[stat_idx].rnd(24*3600, Date::DOWN);
-	if (dateStart[stat_idx]==resampling_date) //if resampling_date=midnight GMT, the rounding lands on the exact same date
-		dateStart[stat_idx] -= 1.;
-
-	dateEnd[stat_idx] = resampling_date;
-	dateEnd[stat_idx].rnd(24*3600, Date::UP);
-}
-
 void Daily_solar::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
                            const std::vector<MeteoData>& vecM, MeteoData& md)
 {
@@ -634,8 +656,10 @@ void Daily_solar::resample(const size_t& index, const ResamplingPosition& /*posi
 
 	//has the radiation already been calculated for this day and station?
 	if (md.date<dateStart[stat_idx] || md.date>=dateEnd[stat_idx]) {
-		setDayStartAndEnd(md.date, stat_idx);
-		const size_t indexP = getNearestValidPt(vecM, paramindex, stat_idx, index);
+		dateStart[stat_idx] = getDailyStart(md.date);
+		dateEnd[stat_idx] = dateStart[stat_idx]+1.;
+		//const size_t indexP = getNearestValidPt(vecM, paramindex, stat_idx, index);
+		const size_t indexP = getDailyValue(vecM, paramindex, index, dateStart[stat_idx], dateEnd[stat_idx]);
 		if (indexP==IOUtils::npos) { //no daily sum found for the current day
 			loss_factor[stat_idx] = IOUtils::nodata;
 			return;
@@ -659,6 +683,89 @@ void Daily_solar::resample(const size_t& index, const ResamplingPosition& /*posi
 		md(paramindex) = loss_factor[stat_idx] * rad * albedo;
 	}
 
+	md.setResampled(true);
+}
+
+
+/**********************************************************************************/
+DailyAverage::DailyAverage(const std::string& i_algoname, const std::string& i_parname, const double& dflt_window_size, const std::vector<std::string>& vecArgs)
+                 : ResamplingAlgorithms(i_algoname, i_parname, dflt_window_size, vecArgs), range(IOUtils::nodata), phase(0.)
+{
+	const size_t nr_args = vecArgs.size();
+	
+	if (nr_args==1) {
+		IOUtils::convertString(range, vecArgs[0]);
+	} else if (nr_args==2) {
+		IOUtils::convertString(range, vecArgs[0]);
+		IOUtils::convertString(phase, vecArgs[1]);
+	} else {
+		throw InvalidArgumentException("Wrong number of arguments for \""+i_parname+"::"+i_algoname+"\"", AT);
+	}
+}
+
+std::string DailyAverage::toString() const
+{
+	ostringstream ss;
+	ss << right << setw(10) << parname << "::"  << left << setw(15) << algo;
+	ss << "[ window_size=" << window_size;
+	if (range!=IOUtils::nodata) 
+		ss << " range=" << range;
+	if (phase!=0.)
+		ss << " phase=" << phase;
+	ss << " ]";
+	return ss.str();
+}
+
+void DailyAverage::resample(const size_t& index, const ResamplingPosition& /*position*/, const size_t& paramindex,
+                                const std::vector<MeteoData>& vecM, MeteoData& md)
+{
+	if (index >= vecM.size())
+		throw IOException("The index of the element to be resampled is out of bounds", AT);
+
+	const Date dayStart = getDailyStart(md.date);
+	const Date dayEnd = dayStart+1.;
+	const size_t indexP = getDailyValue(vecM, paramindex, index, dayStart, dayEnd);
+	if (indexP==IOUtils::npos)
+		return;
+	
+	const double avg = vecM[indexP](paramindex);
+	const double julian = md.date.getJulian();
+	
+	double local_range = 0.;
+	
+	if (range!=IOUtils::nodata) {
+		local_range = range;
+	} else {
+		//search for min or max or both
+		const string param_name = vecM[indexP].getNameForParameter(paramindex);
+		const bool min_exist =  vecM[indexP].param_exists( param_name+"_MIN" );
+		const bool max_exist =  vecM[indexP].param_exists( param_name+"_MAX" );
+		
+		if (min_exist && !max_exist)
+			local_range = (avg -  vecM[indexP]( param_name+"_MIN" )) * 2.;
+		else if (!min_exist && max_exist)
+			local_range = (vecM[indexP]( param_name+"_MAX" ) - avg) * 2.;
+		else if (!min_exist && !max_exist) 
+			return; // nothing else that we can do...
+		else { //we have both min, max and avg
+			throw InvalidArgumentException("Providing both AVG, MIN and MAX for \'"+algo+"\' is not supported!", AT);
+		}
+	}
+	
+	const double t = (julian - Optim::intPart(julian) - phase) + .25; //watch out: julian day starts at noon!
+	const double w = 2.*Cst::PI;
+	md(paramindex) = local_range * sin(w*t) + avg;
+	
+	//very basic range checking
+	//HACK this means that this should be implemented as a data creator so it could be filtered afterward
+	if (paramindex==MeteoData::RH) {
+		if (md(paramindex)<0.01) md(paramindex)==0.01;
+		if (md(paramindex)>1.) md(paramindex)==1.;
+	} else if (paramindex==MeteoData::TA ||  paramindex==MeteoData::VW ||  paramindex==MeteoData::VW_MAX || paramindex==MeteoData::ISWR || paramindex==MeteoData::RSWR || paramindex==MeteoData::ILWR || paramindex==MeteoData::TSG || paramindex==MeteoData::TSS || paramindex==MeteoData::TAU_CLD) {
+		if (md(paramindex)<0.)
+			md(paramindex)=0.;
+	}
+		
 	md.setResampled(true);
 }
 
