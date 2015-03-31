@@ -510,49 +510,49 @@ void SMETWriter::write_header()
 	write_signature();
 
 	fout << "[HEADER]" << "\n";
-	fout << "station_id          = " << header["station_id"] << "\n";
+	fout << "station_id       = " << header["station_id"] << "\n";
 
 	map<string,string>::const_iterator it = header.find("station_name");
 	if (it != header.end())
-		fout << "station_name    = " << it->second << "\n";
+		fout << "station_name     = " << it->second << "\n";
 
 	if (location_in_header){
 		if (location_wgs84 == 7){
-			fout << "latitude              = " << header["latitude"]  << "\n";
-			fout << "longitude           = " << header["longitude"] << "\n";
-			fout << "altitude              = " << header["altitude"]  << "\n";
+			fout << "latitude         = " << header["latitude"]  << "\n";
+			fout << "longitude        = " << header["longitude"] << "\n";
+			fout << "altitude         = " << header["altitude"]  << "\n";
 		}
 
 		if (location_epsg == 15){
-			fout << "easting               = " << header["easting"]   << "\n";
-			fout << "northing             = " << header["northing"]  << "\n";
+			fout << "easting          = " << header["easting"]   << "\n";
+			fout << "northing         = " << header["northing"]  << "\n";
 			if (location_wgs84 != 7)
-				fout << "altitude           = " << header["altitude"]  << "\n";
-			fout << "epsg                   = " << header["epsg"]  << "\n";
+				fout << "altitude        = " << header["altitude"]  << "\n";
+			fout << "epsg             = " << header["epsg"]  << "\n";
 		}
 	} else {
 		if (location_in_data_epsg)
-			fout << "epsg                   = " << header["epsg"]      << "\n";
+			fout << "epsg             = " << header["epsg"]      << "\n";
 	}
 
-	fout << "nodata               = " << header["nodata"] << "\n";
+	fout << "nodata           = " << header["nodata"] << "\n";
 
 	//Optional header keys:
 	it = header.find("tz");
 	if (it != header.end())
-		fout << "tz                        = " << it->second << "\n";
+		fout << "tz               = " << it->second << "\n";
 
 	it = header.find("creation");
 	if (it != header.end())
-		fout << "creation             = " << it->second << "\n";
+		fout << "creation         = " << it->second << "\n";
 
 	it = header.find("source");
 	if (it != header.end())
-		fout << "source               = " << it->second << "\n";
+		fout << "source           = " << it->second << "\n";
 
 	it = header.find("units_offset");
 	if (it != header.end())
-		fout << "units_offset       = " << it->second << "\n";
+		fout << "units_offset     = " << it->second << "\n";
 
 	it = header.find("units_multiplier");
 	if (it != header.end())
@@ -566,7 +566,7 @@ void SMETWriter::write_header()
 		fout << other_header_keys[ii] << " = " << header[other_header_keys[ii]] << "\n";
 	}
 
-	fout << "fields                  = " << header["fields"] << "\n";
+	fout << "fields           = " << header["fields"] << "\n";
 	fout << "[DATA]" << endl;
 }
 

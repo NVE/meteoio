@@ -3,6 +3,10 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/tools/cmake/")
 
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cmake.cc ${PROJECT_SOURCE_DIR}/meteoio/IOHandler.cc )
 
+IF(PLUGIN_ALPUG)
+	SET(plugins_sources ${plugins_sources} plugins/ALPUG.cc)
+ENDIF(PLUGIN_ALPUG)
+
 IF(PLUGIN_ARCIO)
 	SET(plugins_sources ${plugins_sources} plugins/ARCIO.cc)
 ENDIF(PLUGIN_ARCIO)
