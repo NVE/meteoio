@@ -142,6 +142,7 @@ ADD_SUBDIRECTORY(meteoio)
 ###########################################################
 #plugins
 SET(PLUGIN_A3DIO ON CACHE BOOL "Compilation A3DIO ON or OFF")
+SET(PLUGIN_ALPUG ON CACHE BOOL "Compilation ALPUG ON or OFF")
 SET(PLUGIN_ARCIO ON CACHE BOOL "Compilation ARCIO ON or OFF")
 SET(PLUGIN_ARPSIO ON CACHE BOOL "Compilation ARPSIO ON or OFF")
 SET(PLUGIN_BORMAIO OFF CACHE BOOL "Compilation BORMAIO ON or OFF")
